@@ -196,7 +196,7 @@ loss_metric_config = {
             "mode": "max",
             "module": "tensorflow.keras.metrics"
         },  # min if loss, max if metric
-        "DiceCoefficient": {
+        "DiceCoef": {
             "log_name": "dice_coef",
             "mode": "max",
             "module": "terra_ai.training.customlosses"
@@ -306,11 +306,18 @@ loss_metric_config = {
             "mode": "max",
             "module": "tensorflow.keras.metrics"
         },
-        "DiceCoef": {
-            "log_name": "dice_coef",
-            "mode": "max"
-        },
     }
+}
+
+type_choice_dict = {
+    "Image": "Изображение",
+    "Audio": "Аудио",
+    "Video": "Видео",
+    "Text": "Текст",
+    "Dataframe": "",
+    "str": "Класс",
+    "Graphic": "График",
+    "Table": "Таблица"
 }
 
 
@@ -373,7 +380,7 @@ class InteractiveCallback:
         }
 
         self.interactive_config = {
-            # 'loss_graphs': [
+            # 'loss_graph_data': [
             #     # {
             #     #     'id': 1,
             #     #     'output_idx': 2,
@@ -437,6 +444,7 @@ class InteractiveCallback:
         self.metrics_obj = self._prepare_metric_obj(metrics)
         self.interactive_config = initial_config.native()
         # print("INITIAL_CONFIG", self.interactive_config)
+        # print("INITIAL_CONFIG", initial_config)
         # self.dataset = dataset
         self._prepare_dataset_config(dataset, dataset_path)
         self.x_val = dataset.X.get("val") if dataset.data.group == DatasetGroupChoice.keras else None
@@ -603,10 +611,10 @@ class InteractiveCallback:
                 # TODO: пока берется последняя колонка как таргет,
                 #       когда поправят датасеты на указание кололонки таргета - скорректировать код
                 columns_num = dataset.data.outputs.get(out).shape[-1]
-                self.dataset_config["inputs"][f"{out}"]['cols_names'] = \
+                self.dataset_config["outputs"][f"{out}"]['cols_names'] = \
                     list(dataset.dataframe.get('train').columns)[-columns_num:]
                 # TODO: Добавить scaler
-                self.dataset_config["inputs"][f"{out}"]['scaler'] = None
+                self.dataset_config["outputs"][f"{out}"]['scaler'] = None
 
     @staticmethod
     def _get_classes_colors(dataset_output: DatasetOutputsData):
@@ -636,7 +644,7 @@ class InteractiveCallback:
                 if (
                         self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification
                         and self.dataset_config.get("outputs").get(out).get("use_generator")
-                        and self.dataset_config.get("dataframe")
+                        and dataset.data.group == DatasetGroupChoice.keras
                 ):
                     self.y_true.get(data_type)[out] = []
                     for column_name in self.dataset_config.get("dataframe").get(data_type).columns:
@@ -672,9 +680,21 @@ class InteractiveCallback:
                         and not self.dataset_config.get("outputs").get(out).get("use_generator")
                 ):
                     self.y_true[data_type][out] = dataset.Y.get(data_type).get(f"{out}")
-
+                elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries \
+                        and not self.dataset_config.get("outputs").get(out).get("use_generator"):
+                    self.y_true[data_type][out] = dataset.Y.get(data_type).get(f"{out}")
                 else:
                     pass
+
+    def _prepare_x_val(self, dataset: PrepareDataset):
+        if dataset.data.group == DatasetGroupChoice.keras:
+            return dataset.X.get("val")
+        else:
+            x_val = {}
+            for inp in dataset.data.inputs.keys():
+                if dataset.data.inputs.get(inp).task == LayerInputTypeChoice.Dataframe:
+                    x_val[f"{inp}"] = dataset.X.get("val").get(f"{inp}")
+            return x_val
 
     def _prepare_null_log_history_template(self):
         """
@@ -838,6 +858,27 @@ class InteractiveCallback:
                             / np.prod(self.y_true.get(data_type).get(out)[:, :, cl].shape))
                     dataset_balance[out][data_type]["presence_balance"] = class_count
                     dataset_balance[out][data_type]["percent_balance"] = class_percent
+            if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries:
+                for data_type in self.y_true.keys():
+                    dataset_balance[out][data_type] = {}
+                    for output_channel in self.dataset_config.get("outputs").get(out).get('cols_names'):
+                        dataset_balance[out][data_type][output_channel] = {
+                            'graphic': {},
+                            'dense_histogram': {}
+                        }
+                        dataset_balance[out][data_type][output_channel]['graphic'] = {
+                            "x": list(self.dataset_config.get("dataframe").index),
+                            "y": list(self.dataset_config.get("dataframe")[output_channel])
+                        }
+                        x, y = self._get_distribution_histogram(
+                            list(self.dataset_config.get("dataframe")[output_channel]),
+                            bins=50,
+                            categorical=False
+                        )
+                        dataset_balance[out][data_type][output_channel]['dense_histogram'] = {
+                            "x": x,
+                            "y": y
+                        }
             pass
         return dataset_balance
 
@@ -862,7 +903,7 @@ class InteractiveCallback:
         return class_idx
 
     def _prepare_seed(self):
-        if self.dataset_config.get('group') == 'keras':
+        if self.dataset_config.get('group') == DatasetGroupChoice.keras:
             data_lenth = np.arange(len(self.y_true.get("val").get(list(self.y_true.get("val").keys())[0])))
         else:
             data_lenth = np.arange(len(self.dataset_config.get("dataframe").get("val")))
@@ -899,6 +940,7 @@ class InteractiveCallback:
             interactive_log[out]['metrics'] = {}
             if len(self.metrics.keys()) == 1:
                 for metric_name in self.metrics.get(out):
+                    print(metric_name)
                     interactive_log[out]['metrics'][metric_name] = {}
                     interactive_log[out]['metrics'][metric_name] = {
                         'train': update_logs.get(loss_metric_config.get('metric').get(metric_name).get('log_name')),
@@ -973,6 +1015,20 @@ class InteractiveCallback:
                     example_idx = example_idx[:count]
                 if choice_type == "worst":
                     example_idx, _ = sort_dict(dice_dict, mode="ascending")
+                    example_idx = example_idx[:count]
+            elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries:
+                # TODO: добавить inverse_transform, пока без него
+                delta = np.abs(
+                    (self.y_true.get('val').get(out) - self.y_pred.get(out)) * 100 / self.y_true.get('val').get(out)
+                )
+                while len(delta.shape) != 1:
+                    delta = np.mean(delta, axis=-1)
+                delta_dict = dict(zip(np.arange(0, len(delta)), delta))
+                if choice_type == "best":
+                    example_idx, _ = sort_dict(delta_dict, mode="ascending")
+                    example_idx = example_idx[:count]
+                if choice_type == "worst":
+                    example_idx, _ = sort_dict(delta_dict, mode="descending")
                     example_idx = example_idx[:count]
             else:
                 pass
@@ -1117,34 +1173,34 @@ class InteractiveCallback:
                     self.log_history[out]['progress_state']['metrics'][metric_name]['mean_log_history'].append(
                         self._get_mean_log(self.log_history[out]['metrics'][metric_name]['val'])
                     )
-                loss_underfittng = self._evaluate_underfitting(
+                metric_underfittng = self._evaluate_underfitting(
                     metric_name,
                     self.log_history[out]['metrics'][metric_name]['train'][-1],
                     self.log_history[out]['metrics'][metric_name]['val'][-1],
                     metric_type='metric'
                 )
-                loss_overfittng = self._evaluate_overfitting(
+                metric_overfittng = self._evaluate_overfitting(
                     metric_name,
                     self.log_history[out]['progress_state']['metrics'][metric_name]['mean_log_history'],
                     metric_type='metric'
                 )
-                if loss_underfittng or loss_overfittng:
+                if metric_underfittng or metric_overfittng:
                     normal_state = False
                 else:
                     normal_state = True
 
                 if data_idx or data_idx == 0:
                     self.log_history[out]['progress_state']['metrics'][metric_name]['underfitting'][data_idx] = \
-                        loss_underfittng
+                        metric_underfittng
                     self.log_history[out]['progress_state']['metrics'][metric_name]['overfitting'][data_idx] = \
-                        loss_overfittng
+                        metric_overfittng
                     self.log_history[out]['progress_state']['metrics'][metric_name]['normal_state'][data_idx] = \
                         normal_state
                 else:
                     self.log_history[out]['progress_state']['metrics'][metric_name]['underfitting'].append(
-                        loss_underfittng)
+                        metric_underfittng)
                     self.log_history[out]['progress_state']['metrics'][metric_name]['overfitting'].append(
-                        loss_overfittng)
+                        metric_overfittng)
                     self.log_history[out]['progress_state']['metrics'][metric_name]['normal_state'].append(
                         normal_state)
 
@@ -1266,6 +1322,9 @@ class InteractiveCallback:
                 return 0.
             else:
                 return float(loss_obj()(y_true, y_pred).numpy())
+        elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Regression or \
+                self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries:
+            return float(loss_obj()(y_true, y_pred).numpy())
         else:
             return 0.
 
@@ -1315,6 +1374,10 @@ class InteractiveCallback:
             else:
                 metric_obj.update_state(y_true, y_pred)
                 return float(metric_obj.result().numpy())
+        elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Regression or \
+                self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries:
+            metric_obj.update_state(y_true, y_pred)
+            return float(metric_obj.result().numpy())
         else:
             return 0.
 
@@ -1341,7 +1404,7 @@ class InteractiveCallback:
             return False
 
     @staticmethod
-    def _evaluate_underfitting(metric_name: str, train_log: list, val_log: list, metric_type: str):
+    def _evaluate_underfitting(metric_name: str, train_log: float, val_log: float, metric_type: str):
         if train_log:
             if loss_metric_config.get(metric_type).get(metric_name).get("mode") == 'min' and \
                     (val_log - train_log) / train_log * 100 > 10:
@@ -1362,7 +1425,7 @@ class InteractiveCallback:
             # пример для всей модели
             {
                 'id': 1,
-                'graph_name': f'Output_{output_idx} - График ошибки обучения - Эпоха №{epoch_num}',
+                'graph_name': f'Выходной слой «{output_idx}» - График ошибки обучения - Эпоха №{epoch_num}',
                 'x_label': 'Эпоха',
                 'y_label': 'Значение',
                 'plot_data': [
@@ -1383,7 +1446,7 @@ class InteractiveCallback:
             # Пример для классов
             {
                 'id': 2,
-                'graph_name': f'Output_{output_idx} - График ошибки обучения по классам - Эпоха №{epoch_num}',
+                'graph_name': f'Выходной слой «{output_idx}» - График ошибки обучения по классам - Эпоха №{epoch_num}',
                 'x_label': 'Эпоха',
                 'y_label': 'Значение',
                 'plot_data': [
@@ -1398,6 +1461,7 @@ class InteractiveCallback:
         """
         data_return = []
         if not self.interactive_config.get('loss_graphs'):
+            # print("self.interactive_config.get('loss_graphs')", self.interactive_config.get('loss_graph_data'))
             return data_return
 
         for loss_graph_config in self.interactive_config.get('loss_graphs'):
@@ -1415,7 +1479,7 @@ class InteractiveCallback:
                 data_return.append(
                     {
                         "id": loss_graph_config.get('id'),
-                        "graph_name": f"Output_{loss_graph_config.get('output_idx')} - "
+                        "graph_name": f"Выходной слой «{loss_graph_config.get('output_idx')}» - "
                                       f"График ошибки обучения - Эпоха №{self.log_history.get('epochs')[-1]}",
                         "x_label": "Эпоха",
                         "y_label": "Значение",
@@ -1442,7 +1506,7 @@ class InteractiveCallback:
                 data_return.append(
                     {
                         "id": loss_graph_config.get('id'),
-                        "graph_name": f"Output_{loss_graph_config.get('output_idx')} - "
+                        "graph_name": f"Выходной слой «{loss_graph_config.get('output_idx')}» - "
                                       f"График ошибки обучения по классам - "
                                       f"Эпоха №{self.log_history.get('epochs')[-1]}",
                         "x_label": "Эпоха",
@@ -1476,7 +1540,7 @@ class InteractiveCallback:
 
             # пример для всей модели
             {
-                'graph_name': f'Output_{output_idx} - График метрики {metric_name} - Эпоха №{epoch_num}',
+                'graph_name': f'Выходной слой «{output_idx}» - График метрики {metric_name} - Эпоха №{epoch_num}',
                 'x_label': 'Эпоха',
                 'y_label': 'Значение',
                 'plot_data': [
@@ -1496,7 +1560,7 @@ class InteractiveCallback:
 
             # Пример для классов
             {
-                'graph_name': f'Output_{output_idx} - График метрики {metric_name} по классам - Эпоха №{epoch_num}',
+                'graph_name': f'Выходной слой «{output_idx}» - График метрики {metric_name} по классам - Эпоха №{epoch_num}',
                 'x_label': 'Эпоха',
                 'y_label': 'Значение',
                 'plot_data': [
@@ -1528,7 +1592,7 @@ class InteractiveCallback:
                 data_return.append(
                     {
                         "id": metric_graph_config.get('id'),
-                        "graph_name": f"Output_{metric_graph_config.get('output_idx')} - "
+                        "graph_name": f"Выходной слой «{metric_graph_config.get('output_idx')}» - "
                                       f"График метрики {metric_graph_config.get('show_metric')} - "
                                       f"Эпоха №{self.log_history.get('epochs')[-1]}",
                         "x_label": "Эпоха",
@@ -1556,7 +1620,7 @@ class InteractiveCallback:
                 data_return.append(
                     {
                         "id": metric_graph_config.get('id'),
-                        "graph_name": f"Output_{metric_graph_config.get('output_idx')} - "
+                        "graph_name": f"Выходной слой «{metric_graph_config.get('output_idx')}» - "
                                       f"График метрики {metric_graph_config.get('show_metric')} по классам - "
                                       f"Эпоха №{self.log_history.get('epochs')[-1]}",
                         "x_label": "Эпоха",
@@ -1595,16 +1659,16 @@ class InteractiveCallback:
                                 'type': 'image',
                                 'data': '/content/file.webm'
                             },
-                        # {
+                        # "Видео": {
                         #     'type': 'video',
                         #     'data': '/content/file.webm'
                         # },
-                        # {
-                        #     'type': 'text',
+                        # "Текст":{
+                        #      'type': 'text',
                         #     'data': text,
                         #     }
                         # },
-                        # {
+                        # "Аудио":{
                         #     'type': 'audio',
                         #     'data': '/content/file.webp'
                         # }
@@ -1616,10 +1680,6 @@ class InteractiveCallback:
                             'type': 'str',
                             'data': text,
                             'color_mark': None
-                            'tags_color': {
-                                    '<s1>': (255, 0, 0),
-                                    '<s2>': (255, 0, 0)
-                            },
                         }
                     }
                 },
@@ -1629,10 +1689,6 @@ class InteractiveCallback:
                             'type': str,
                             'data': text,
                             'color_mark': 'wrong', None, 'success'
-                            'tags_color': {
-                                '<s1>': (255, 0, 0),
-                                '<s2>': (255, 0, 0)
-                            },
                         }
                     }
                 },
@@ -1643,7 +1699,7 @@ class InteractiveCallback:
                 'statistic_values': {
                     Выход 2: {
                         'class name': {
-                            "value": str,
+                            "data": str,
                             'color_mark': 'wrong', None, 'success'
                         },
                     }
@@ -1666,15 +1722,18 @@ class InteractiveCallback:
                     return_data[idx + 1]['initial_data'] = {}
                 else:
                     for inp in self.dataset_config.get("inputs").keys():
-                        path, type_choice = self._postprocess_initial_data(
+                        return_data[idx + 1]['initial_data'][f"Входной слой {inp}"] = {}
+                        data, type_choice = self._postprocess_initial_data(
                             input_id=inp,
                             save_id=idx + 1,
                             example_idx=self.example_idx[idx],
                         )
-                        return_data[idx + 1]['initial_data'][f"Входной слой {inp}"] = {
-                            'data': path,
+                        return_data[idx + 1]['initial_data'][f"Входной слой {inp}"][
+                            type_choice_dict.get(type_choice)] = {
+                            'data': data,
                             'type': type_choice,
                         }
+
                 for out in self.dataset_config.get("outputs").keys():
                     true_value, predict_value, color_mark, stat, out_type = self._postprocess_result_data(
                         output_id=out,
@@ -2007,7 +2066,7 @@ class InteractiveCallback:
                 total = np.sum(cm[i])
                 for j in range(len(cm[i])):
                     cm_percent[i][j] = round(cm[i][j] * 100 / total, 1)
-        return cm.astype('float'), cm_percent.astype('float')
+        return cm.astype('float').tolist(), cm_percent.astype('float').tolist()
 
     @staticmethod
     def _get_classification_report(y_true, y_pred, labels):
@@ -2043,7 +2102,7 @@ class InteractiveCallback:
         """
         return x_data, y_data
         """
-        return np.arange(len(data)).astype('float'), np.array(data).astype('float')
+        return np.arange(len(data)).astype('float').tolist(), np.array(data).astype('float').tolist()
 
     def _get_correlation_matrix(self, data_frame):
         pass
@@ -2063,7 +2122,7 @@ class InteractiveCallback:
         else:
             data_series = np.array(data_series)
             bar_values, x_labels = np.histogram(data_series, bins=bins)
-            return x_labels.astype('float'), bar_values.astype('float')
+            return x_labels.astype('float').tolist(), bar_values.astype('float').tolist()
 
     @staticmethod
     def _get_autocorrelation_graphic(y_true, y_pred, depth=10):
@@ -2125,6 +2184,7 @@ class InteractiveCallback:
             ) if self.dataset_config.get("inputs").get(input_id).get("task") != LayerInputTypeChoice.Text else ""
         else:
             initial_file_path = ""
+
         if self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Image:
             if self.dataset_config.get("group") != 'keras':
                 img = Image.open(initial_file_path)
@@ -2144,20 +2204,68 @@ class InteractiveCallback:
         elif self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Text:
             text_str = self.dataset_config.get("dataframe").get('val').iat[example_idx, column_idx]
             return text_str, LayerInputTypeChoice.Text.name
+
         elif self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Video:
             clip = moviepy_editor.VideoFileClip(initial_file_path)
             # filepath = NamedTemporaryFile()
             save_path = f"/tmp/initial_data_video_{save_id}_input_{input_id}.webm"
             clip.write_videofile(save_path)
             return save_path, LayerInputTypeChoice.Video.name
+
         elif self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Audio:
             # filepath = NamedTemporaryFile()
             save_path = f"/tmp/initial_data_audio_{save_id}_input_{input_id}.webp"
             AudioSegment.from_file(initial_file_path).export(save_path, format="webm")
             return save_path, LayerInputTypeChoice.Audio.name
+
         elif self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Dataframe:
             # TODO: обсудить как пересылать датафреймы на фронт
-            return initial_file_path, LayerInputTypeChoice.Dataframe.name
+            time_series_choise = False
+            for out in self.dataset_config.get("outputs").keys():
+                if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries:
+                    time_series_choise = True
+                    break
+            if time_series_choise:
+                """
+                graphics = [
+                    {
+                        'id': 1,
+                        'graph_name': f'График канала «{channel_name}»',
+                        'x_label': 'Время',
+                        'y_label': 'Значение',
+                        'plot_data': {
+                                'x': []:
+                                'y': []
+                        },
+                    }
+                ]
+                """
+                graphics_data = []
+                for i, channel in enumerate(self.dataset_config["inputs"][input_id]['cols_names']):
+                    # TODO: scaler.inverse_transform
+                    graphics_data.append(
+                        {
+                            'id': i+1,
+                            'graph_name': f'График канала «{channel}»',
+                            'x_label': 'Время',
+                            'y_label': 'Значение',
+                            'plot_data': {
+                                'x': np.arange(self.x_val.get(input_id)[example_idx].shape[0]).astype('float'),
+                                'y': np.array(self.x_val.get(input_id)[example_idx][:, i]).astype('float')
+                            },
+                        }
+                    )
+                return graphics_data, "Graphic"
+            else:
+                """
+                dataframe_data = {
+                    "col_name": value: str
+                }
+                """
+                dataframe_data = {}
+                for col_name in self.dataset_config.get('dataframe').get('val').columns:
+                    dataframe_data[col_name] = self.dataset_config.get('dataframe').get('val')[col_name][example_idx]
+                return dataframe_data, LayerInputTypeChoice.Dataframe.name
         else:
             return initial_file_path, None
 
