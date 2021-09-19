@@ -273,6 +273,9 @@ class Project(BaseMixinData):
         self.training.interactive.loss_graphs = LossGraphsList(loss_graphs)
         self.training.interactive.metric_graphs = MetricGraphsList(metric_graphs)
         self.training.interactive.progress_table = ProgressTableList(progress_table)
+        self.training.interactive.intermediate_result.main_output = self.model.outputs[
+            0
+        ].id
 
     def set_training(self):
         defaults_data.update_by_model(self.model)
