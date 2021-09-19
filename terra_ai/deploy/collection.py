@@ -1,9 +1,10 @@
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
-from terra_ai.data.datasets.dataset import DatasetData
+from terra_ai.data.datasets.dataset import DatasetData, DatasetPathsData
 from terra_ai.data.deploy import tasks
 from terra_ai.data.deploy.extra import TaskTypeChoice
+from terra_ai.data.deploy.tasks import BaseCollection
 from terra_ai.data.deploy.collection import CollectionData
 
 
@@ -16,12 +17,15 @@ class Collection:
     __path: Optional[Path] = None
     __dataset: Optional[DatasetData] = None
     __type: Optional[TaskTypeChoice] = None
+    __data: List[BaseCollection] = []
 
     @property
     def data(self) -> Optional[CollectionData]:
         if not self.__type:
             return
-        return CollectionData(type=self.__type)
+        data = CollectionData(type=self.__type)
+        data.data = self.__data
+        return data
 
     def __define(self):
         __model = self.__dataset.model
@@ -37,15 +41,20 @@ class Collection:
             return
 
         for __task in __tasks:
-            _task_class = getattr(tasks, __task, None)
+            _task_class = getattr(tasks, f"{__task}Collection", None)
             if not _task_class:
                 continue
-            # print(_task_class())
+            task_instance = _task_class(
+                dataset=self.__dataset,
+                path=DatasetPathsData(basepath=self.__path).native(),
+            )
+            self.__data.append(task_instance)
 
     def __clear(self):
         self.__dataset = None
         self.__path = None
         self.__type = None
+        self.__data = []
 
     def update(
         self, dataset: Optional[DatasetData] = None, path: Optional[Path] = None

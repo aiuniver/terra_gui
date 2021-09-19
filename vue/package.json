@@ -1,6 +1,6 @@
 {
   "name": "vue_neural",
-  "version": "0.9.31",
+  "version": "0.9.34",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
@@ -16,6 +16,7 @@
     "v-video-embed": "^1.0.8",
     "vue": "^2.6.14",
     "vue-audio-better": "^3.0.1",
+    "vue-audio-visual": "^2.3.0",
     "vue-axios": "^3.2.4",
     "vue-papa-parse": "^2.0.0",
     "vue-plotly": "^1.1.0",

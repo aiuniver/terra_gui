@@ -18,7 +18,7 @@
             @click-btn="handleClick($event, handler.id)"
             @click.native="select(handler.id)"
           >
-            <template v-slot:header>{{ `${handler.name} ${handler.id}` }}</template>
+            <template v-slot:header>{{ `${handler.name}` }}</template>
             <template v-slot:default="{ data: { parameters, errors } }">
               <template v-for="(data, index) of formsHandler">
                 <t-auto-field
@@ -103,6 +103,12 @@ export default {
   methods: {
     change({ id, value, name }) {
       const index = this.handlers.findIndex(item => item.id === id);
+      if (name === 'name') {
+        this.handlers[index].name = value;
+      }
+      if (name === 'type') {
+        this.handlers[index].type = value;
+      }
       if (this.handlers[index]) {
         this.handlers[index].parameters[name] = value;
       }
@@ -130,7 +136,7 @@ export default {
         active: true,
         color: this.colors[this.handlers.length],
         layer: (this.handlers.length + 1).toString(),
-        type: 'String',
+        type: '',
         table: JSON.parse(JSON.stringify(this.table)),
         parameters: {},
       });

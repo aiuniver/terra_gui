@@ -111,6 +111,7 @@
 </template>
 
 <script>
+import { debounce } from '@/utils/core/utils';
 import ser from '../../assets/js/myserialize';
 import { mapGetters } from 'vuex';
 // import TCheckbox from '../global/new/forms/TCheckbox.vue';
@@ -129,6 +130,7 @@ export default {
     metricData: '',
     learningStop: false,
     status: '',
+    debounce: null,
   }),
   computed: {
     ...mapGetters({
@@ -219,32 +221,30 @@ export default {
       console.log(res);
     },
     async progress() {
-      setTimeout(async () => {
-        const res = await this.$store.dispatch('trainings/progress', {});
-        console.log(res);
-        if (res) {
-          const { finished, message, percent, data } = res.data;
-          console.log(percent);
-          this.$store.dispatch('messages/setProgressMessage', message);
-          this.$store.dispatch('messages/setProgress', percent);
-          if (data) {
-            const { info, states, train_data, train_usage } = data;
-            this.$store.dispatch('trainings/setInfo', info);
-            this.$store.dispatch('trainings/setStates', states);
-            this.$store.dispatch('trainings/setTrainData', train_data);
-            this.$store.dispatch('trainings/setTrainUsage', train_usage);
-          }
-          if (finished) {
-            console.log(res);
-          } else {
-            if (!this.learningStop) {
-              this.progress();
-            }
-          }
-        } else {
-          console.log(res);
+      const res = await this.$store.dispatch('trainings/progress', {});
+      console.log(res);
+      if (res) {
+        const { finished, message, percent, data } = res.data;
+        console.log(percent);
+        this.$store.dispatch('messages/setProgressMessage', message);
+        this.$store.dispatch('messages/setProgress', percent);
+        if (data) {
+          const { info, states, train_data, train_usage } = data;
+          this.$store.dispatch('trainings/setInfo', info);
+          this.$store.dispatch('trainings/setStates', states);
+          this.$store.dispatch('trainings/setTrainData', train_data);
+          this.$store.dispatch('trainings/setTrainUsage', train_usage);
         }
-      }, 1000);
+        if (finished) {
+          console.log(res);
+        } else {
+          if (!this.learningStop) {
+            this.debounce();
+          }
+        }
+      } else {
+        console.log(res);
+      }
     },
     parse({ parse, value, name }) {
       // console.log({ parse, value, name });
@@ -260,7 +260,9 @@ export default {
     },
   },
   created() {
-    // this.progress()
+    this.debounce = debounce(() => {
+      this.progress()
+    }, 1000);
   },
 };
 </script>

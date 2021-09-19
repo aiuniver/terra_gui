@@ -25,7 +25,7 @@ from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.utils import camelize, decamelize
 
-__version__ = 0.057
+__version__ = 0.058
 
 
 def sort_dict(dict_to_sort: dict, mode='by_name'):
@@ -524,9 +524,11 @@ class InteractiveCallback:
 
     def get_train_results(self, config: InteractiveData) -> Union[dict, None]:
         """Return dict with data for current interactive request"""
-        self.interactive_config = config if config else self.interactive_config
-        self.example_idx = self._prepare_example_idx_to_show()
-        if config.get('intermediate_result').get('show_results') or config.get('statistic_data').get('output_id'):
+        self.interactive_config = config.native() if config else self.interactive_config
+        if self.interactive_config.get('intermediate_result').get('show_results'):
+            self.example_idx = self._prepare_example_idx_to_show()
+        if config.native().get('intermediate_result').get('show_results') or \
+                config.native().get('statistic_data').get('output_id'):
             self.urgent_predict = True
             return
 
