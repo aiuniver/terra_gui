@@ -10,14 +10,18 @@
               <br />
               (сек.)
             </th>
-            <th v-for="(output, key) of outputs" :key="key" colspan="4">
-              {{ key }}
-            </th>
+            <template v-for="(output, key) of outputs">
+              <th v-show="isShow(key)" :key="key" colspan="4">
+                {{ key }}
+              </th>
+            </template>
           </tr>
           <tr class="callbacks_heads">
             <template v-for="(output, keyO) of outputs">
               <template v-for="(item, keyI) of output">
-                <th v-for="(th, key) of item" :key="keyI + key + keyO">{{ key }}</th>
+                <template v-for="(th, key) of item">
+                  <th v-show="isShow(keyO, keyI)" :key="keyI + key + keyO">{{ key }}</th>
+                </template>
               </template>
             </template>
           </tr>
@@ -28,11 +32,13 @@
             <td>{{ time | int }}</td>
             <template v-for="(output, keyO) of data">
               <template v-for="(metric, keyM) of output">
-                <td v-for="(item, keyI) of metric" class="value" :key="keyO + 't' + keyM + 'r' + keyI">
-                  <span>{{ item | int }}</span>
-                  <i>.</i>
-                  {{ item | drob }}
-                </td>
+                <template v-for="(item, keyI) of metric">
+                  <td v-show="isShow(keyO, keyM)" class="value" :key="keyO + 't' + keyM + 'r' + keyI">
+                    <span>{{ item | int }}</span>
+                    <i>.</i>
+                    {{ item | drob }}
+                  </td>
+                </template>
               </template>
             </template>
           </tr>
@@ -55,6 +61,10 @@ export default {
       type: Object,
       default: () => {},
     },
+    settings: {
+      type: Object,
+      default: () => {},
+    },
   },
   data: () => ({
     ops: {
@@ -65,11 +75,11 @@ export default {
     },
   }),
   mounted() {
-    console.log(this.$el.clientHiegth);
+    console.log(this.settings);
   },
   computed: {
-    isTable () {
-      return !!this.data?.[1]
+    isTable() {
+      return !!this.data?.[1];
     },
     outputs() {
       return this.data?.[1]?.data || {};
@@ -81,6 +91,15 @@ export default {
     },
     drob(val) {
       return (val % 1).toFixed(9).slice(2);
+    },
+  },
+  methods: {
+    isShow(layer, metrics) {
+      if (layer && metrics) {
+        return this.settings[layer][metrics];
+      } else {
+        return this.settings[layer].loss || this.settings[layer].metrics;
+      }
     },
   },
 };
