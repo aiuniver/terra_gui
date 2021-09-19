@@ -27,7 +27,7 @@ class InfoAPIView(BaseAPIView):
                 "deploy_collection",
                 dataset=request.project.dataset,
                 path=project_path.datasets,
-            )
+            ).native()
         )
 
 
