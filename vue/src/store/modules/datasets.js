@@ -88,7 +88,11 @@ export default {
         item.parameters.cols_names = colsNames[item.id]
         return item
       })
-      newDataset.obworkers = handlers
+      newDataset.obworkers = {}
+      handlers.forEach(el => {
+        console.log(el)
+        newDataset.obworkers[el.name] = el
+      })
       newDataset.source_path = sourcePath
       newDataset.inputs = inputs
       newDataset.outputs = outputs
