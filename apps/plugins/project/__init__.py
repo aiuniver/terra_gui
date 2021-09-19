@@ -19,6 +19,7 @@ from terra_ai.data.types import confilepath
 from terra_ai.data.extra import HardwareAcceleratorData, HardwareAcceleratorChoice
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.modeling.model import ModelDetailsData
+from terra_ai.data.modeling.layer import LayerData
 from terra_ai.data.presets.models import EmptyModelDetailsData
 from terra_ai.data.training.train import (
     TrainData,
@@ -30,7 +31,7 @@ from terra_ai.data.training.train import (
 from terra_ai.data.training.outputs import OutputsList
 from terra_ai.data.training.checkpoint import CheckpointData
 from terra_ai.data.training.extra import LossGraphShowChoice, MetricGraphShowChoice
-
+from terra_ai.data.deploy.collection import CollectionData
 
 from . import exceptions
 
@@ -111,6 +112,7 @@ class Project(BaseMixinData):
     dataset: Optional[DatasetData]
     model: ModelDetailsData = ModelDetailsData(**EmptyModelDetailsData)
     training: TrainingDetailsData = TrainingDetailsData()
+    deploy: Optional[CollectionData]
 
     @property
     def name_alias(self) -> str:
@@ -159,6 +161,7 @@ class Project(BaseMixinData):
             self.dataset = None
             self.model = ModelDetailsData(**EmptyModelDetailsData)
             self.set_training()
+            self.set_deploy()
             return
         model_init = dataset.model
         if self.model.inputs and len(self.model.inputs) != len(model_init.inputs):
@@ -169,12 +172,9 @@ class Project(BaseMixinData):
         if not self.model.inputs or not self.model.outputs:
             self.model = model_init
         else:
-            layers_init = {"input": [], "output": []}
-            for layer in model_init.inputs + model_init.outputs:
-                layers_init[layer.group.value].append(layer.native())
-            for layer in self.model.inputs + self.model.outputs:
-                layer_init = layers_init[layer.group.value].pop(0)
-                layer_data = layer.native()
+            for index, layer in enumerate(model_init.inputs):
+                layer_init = layer.native()
+                layer_data = self.model.inputs[index].native()
                 layer_data.update(
                     {
                         "type": layer_init.get("type"),
@@ -184,10 +184,24 @@ class Project(BaseMixinData):
                         "parameters": layer_init.get("parameters"),
                     }
                 )
-                self.model.layers.append(layer_data)
-                self.model.name = model_init.name
-                self.model.alias = model_init.alias
+                self.model.layers.append(LayerData(**layer_data))
+            for index, layer in enumerate(model_init.outputs):
+                layer_init = layer.native()
+                layer_data = self.model.outputs[index].native()
+                layer_data.update(
+                    {
+                        "type": layer_init.get("type"),
+                        "shape": layer_init.get("shape"),
+                        "task": layer_init.get("task"),
+                        "num_classes": layer_init.get("num_classes"),
+                        "parameters": layer_init.get("parameters"),
+                    }
+                )
+                self.model.layers.append(LayerData(**layer_data))
+            self.model.name = model_init.name
+            self.model.alias = model_init.alias
         self.set_training()
+        self.set_deploy()
 
     def set_model(self, model: ModelDetailsData):
         if self.dataset:
@@ -198,6 +212,13 @@ class Project(BaseMixinData):
                 raise exceptions.DatasetModelOutputsCountNotMatchException()
         self.model = model
         self.set_training()
+
+    def set_deploy(self):
+        self.deploy = agent_exchange(
+            "deploy_collection",
+            dataset=self.dataset,
+            path=project_path.datasets,
+        )
 
     def __update_training_base(self):
         outputs = []
@@ -288,3 +309,4 @@ except Exception:
 _config.update({"hardware": agent_exchange("hardware_accelerator")})
 project = Project(**_config)
 project.set_training()
+project.set_deploy()

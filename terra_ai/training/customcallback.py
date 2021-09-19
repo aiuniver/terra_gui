@@ -484,11 +484,12 @@ class InteractiveCallback:
         self.train_progress = data
 
     def update_state(self, y_pred, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
+        if self.interactive_config.get('intermediate_result').get('show_results'):
+            self.example_idx = self._prepare_example_idx_to_show()
         if on_epoch_end_flag:
             self.current_epoch = fit_logs.get('epoch')
             self.current_logs = self._reformat_fit_logs(fit_logs)
             self._reformat_y_pred(y_pred)
-            self.example_idx = self._prepare_example_idx_to_show()
             self._update_log_history()
             self._update_progress_table(current_epoch_time)
             if self.interactive_config.get('intermediate_result').get('show_results') and \
@@ -499,7 +500,6 @@ class InteractiveCallback:
                 self.statistic_result = self._get_statistic_data_request()
         else:
             self._reformat_y_pred(y_pred)
-            self.example_idx = self._prepare_example_idx_to_show()
             if self.interactive_config.get('intermediate_result').get('show_results'):
                 self.intermediate_result = self._get_intermediate_result_request()
             if self.interactive_config.get('statistic_data').get('output_id'):

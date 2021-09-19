@@ -43,6 +43,11 @@ class CreateDataset(object):
         self.source_path = creation_data.source_path  # исправить
         self.y_cls: list = []
 
+        self.columns_processing = {}
+        if creation_data.columns_processing:
+            for key, value in creation_data.columns_processing.items():
+                self.columns_processing[key] = value
+
         self.instructions: DatasetInstructionsData = self.create_instructions(creation_data)
         self.create_preprocessing(self.instructions)
         self.create_table(creation_data=creation_data)
