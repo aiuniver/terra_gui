@@ -266,7 +266,11 @@ class DatasetPathsData(BaseMixinData):
         always=True,
     )
     def _validate_internal_path(cls, value, values, field) -> Path:
-        return Path(values.get("basepath"), field.name)
+        path = Path(values.get("basepath"), field.name)
+        if path.is_dir():
+            return path
+        else:
+            return
 
 
 class DatasetInputsData(DatasetLayerData):

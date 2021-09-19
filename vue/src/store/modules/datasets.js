@@ -1,4 +1,4 @@
-import { createInputData, cloneInputData, changeStructTable } from '../const/datasets';
+import { createInputData, cloneInputData, changeStructTable, getNameToId } from '../const/datasets';
 export default {
   namespaced: true,
   state: () => ({
@@ -59,11 +59,40 @@ export default {
     },
   },
   actions: {
-    async createDataset({ commit, dispatch, state: { inputData, sourcePath } }, data) {
+    async createDataset({ commit, dispatch, state: { inputData, sourcePath }, rootState: { tables: { saveCols, handlers } } }, data) {
       commit("settings/SET_OVERLAY", true, { root: true });
       const newDataset = data
-      const inputs = inputData.filter(item => item.layer === 'input')
-      const outputs = inputData.filter(item => item.layer === 'output')
+      const colsNames = {}
+      for (let key in saveCols) {
+        colsNames[key] = {}
+        saveCols[key].forEach(el => {
+          console.log(el)
+          if (!colsNames[key][el.name]) {
+            colsNames[key][el.name] = []
+          }
+          if (el.value && !colsNames[key][el.name].includes(el.name)) {
+            colsNames[key][el.name].push(getNameToId(handlers, el.value))
+          }
+
+          // colsNames[key][el.label].push(el.value)
+        })
+      }
+      console.log(handlers)
+      console.log(colsNames)
+      const inputs = inputData.filter(item => item.layer === 'input').map(item => {
+        item.parameters.cols_names = colsNames[item.id]
+        return item
+      })
+
+      const outputs = inputData.filter(item => item.layer === 'output').map(item => {
+        item.parameters.cols_names = colsNames[item.id]
+        return item
+      })
+      newDataset.obworkers = {}
+      handlers.forEach(el => {
+        console.log(el)
+        newDataset.obworkers[el.name] = el
+      })
       newDataset.source_path = sourcePath
       newDataset.inputs = inputs
       newDataset.outputs = outputs
