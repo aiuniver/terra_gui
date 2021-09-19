@@ -1,37 +1,60 @@
 <template>
-<div class="audio">
-  <av-waveform
-    :canv-width="120"
-    :canv-height="23"
-    played-line-color="#2B5278"
-    noplayed-line-color="#2B5278"
-    :playtime="false"
-    :playtime-slider="false"
-    :canv-top="true"
-    audio-class="audio__player"
-    canv-class="audio__player"
-    canv-fill-color="#2B5278"
-    :audio-src="require('@/../public/sounds/sound1.mp3')"
-  ></av-waveform>
-</div>
+  <div class="item">
+    <div class="audio">
+      <div class="audio__card">
+        <av-waveform
+          :canv-width="90"
+          :canv-height="23"
+          played-line-color="#65B9F4"
+          noplayed-line-color="#2B5278"
+          :played-line-width="0"
+          :playtime="false"
+          :canv-top="true"
+          canv-class="custom-player"
+          canv-fill-color="#2B5278"
+          :audio-src="require('@/../public/sounds/sound1.mp3')"
+        ></av-waveform>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
 export default {
-  name: "TableAudio"
+  name: "TableAudio",
+  mounted() {
+    this.$el.querySelector('audio').setAttribute("controlsList", "nodownload")
+  }
 }
 </script>
 
 <style lang="scss">
+.item{
+  padding: 10px;
+}
 .audio{
+  padding: 10px;
   background: #242F3D;
   border: 1px solid #6C7883;
-  audio::-webkit-media-controls-panel{
-    background: #242F3D;
-    border-radius: 0;
+  border-radius: 4px;
+  width: 165px;
+  &__card{
+  .custom-player{
+    margin-left: 50px;
+    margin-top: 10px;
+    position: absolute;
+    z-index: 3;
   }
-  audio::-webkit-media-controls-play-button{
-    //background: #65B9F4;
+  audio{
+    width: 200px;
+    margin-left: -10px;
+    padding: 0;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+  }
+  audio::-webkit-media-controls-panel{
+    border-radius: 4px;
   }
   audio::-webkit-media-controls-timeline-container,
   audio::-webkit-media-controls-timeline,
@@ -49,7 +72,13 @@ export default {
   }
   audio::-webkit-media-controls-enclosure {
     border-radius: 0;
-    background-color: #242F3D;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    padding: 0;
+    width: 200px;
+    background-color: transparent;
+
   }
   audio::-webkit-media-controls-play-button, video::-webkit-media-controls-play-button {
     -webkit-appearance: media-play-button;
@@ -61,7 +90,6 @@ export default {
     width: 43px;
     height: 43px;
     line-height: 30px;
-    margin-left: 9px;
     margin-right: 9px;
     padding: 0;
     background-color: #65B9F4;
@@ -78,7 +106,6 @@ export default {
     height: 30px;
     margin: 43px 0 0 0;
     padding: 0;
-    padding-left: 10px;
     line-height: 19px;
     font-family: Open Sans;
     font-size: 9px;
@@ -91,6 +118,7 @@ export default {
     text-indent: 0;
     text-shadow: none;
     text-decoration: none;
+  }
   }
 }
 </style>
