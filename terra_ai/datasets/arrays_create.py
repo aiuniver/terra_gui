@@ -31,14 +31,17 @@ class CreateArray(object):
     def instructions_image(paths_list: list, **options: dict) -> dict:
 
         instructions = {'instructions': paths_list,
-                        'parameters': {'height': options['parameters']['height'],
-                                       'width': options['parameters']['width'],
-                                       'net': options['parameters']['net'],
-                                       'object_detection': options['parameters']['object_detection'],
-                                       'scaler': options['parameters']['scaler'],
-                                       'max_scaler': options['parameters']['max_scaler'],
-                                       'min_scaler': options['parameters']['min_scaler'],
-                                       'put': options['id']}}
+                        'parameters': {'height': options['height'],
+                                       'width': options['width'],
+                                       'net': options['net'],
+                                       # 'object_detection': options['object_detection'],
+                                       'scaler': options['scaler'],
+                                       'max_scaler': options['max_scaler'],
+                                       'min_scaler': options['min_scaler'],
+                                       'put': options['id'],
+                                       'cols_names': options['cols_names']
+                                       }
+                        }
 
         return instructions
 
@@ -365,16 +368,17 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def instructions_segmentation(paths_list: list, **options: dict) -> dict:
+    def instructions_image_segmentation(paths_list: list, **options: dict) -> dict:
 
         instructions = {'instructions': paths_list,
-                        'parameters': {'mask_range': options['parameters']['mask_range'],
-                                       'num_classes': len(options['parameters']['classes_names']),
-                                       'height': options['parameters']['height'],
-                                       'width': options['parameters']['width'],
+                        'parameters': {'mask_range': options['mask_range'],
+                                       'num_classes': len(options['classes_names']),
+                                       'height': options['height'],
+                                       'width': options['width'],
                                        'classes_colors': [Color(color).as_rgb_tuple() for color in
-                                                          options['parameters']['classes_colors']],
-                                       'classes_names': options['parameters']['classes_names'],
+                                                          options['classes_colors']],
+                                       'classes_names': options['classes_names'],
+                                       'cols_names': options['cols_names'],
                                        'put': options['id']
                                        }
                         }
@@ -510,15 +514,13 @@ class CreateArray(object):
     def cut_image(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
 
         for elem in paths_list:
-            os.makedirs(os.path.join(tmp_folder, f'{options["put"]}_image', os.path.basename(os.path.dirname(elem))),
-                        exist_ok=True)
-            shutil.copyfile(elem,
-                            os.path.join(tmp_folder, f'{options["put"]}_image', os.path.basename(os.path.dirname(elem)),
-                                         os.path.basename(elem)))
+            os.makedirs(os.path.join(tmp_folder, f'{options["cols_names"]}', os.path.basename(os.path.dirname(elem))), exist_ok=True)
+            shutil.copyfile(elem, os.path.join(tmp_folder, f'{options["cols_names"]}', os.path.basename(os.path.dirname(elem)), os.path.basename(elem)))
 
         if dataset_folder:
-            if not os.path.isdir(os.path.join(dataset_folder, f'{options["put"]}_image')):
-                shutil.move(os.path.join(tmp_folder, f'{options["put"]}_image'), dataset_folder)
+            if os.path.isdir(os.path.join(dataset_folder, f'{options["cols_names"]}')):
+                shutil.rmtree(os.path.join(dataset_folder, f'{options["cols_names"]}'))
+            shutil.move(os.path.join(tmp_folder, f'{options["cols_names"]}'), dataset_folder)
 
         instructions = {'instructions': paths_list,
                         'parameters': options}
@@ -665,18 +667,16 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_segmentation(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
+    def cut_image_segmentation(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
 
         for elem in paths_list:
-            os.makedirs(
-                os.path.join(tmp_folder, f'{options["put"]}_segmentation', os.path.basename(os.path.dirname(elem))),
-                exist_ok=True)
-            shutil.copyfile(elem, os.path.join(tmp_folder, f'{options["put"]}_segmentation',
-                                               os.path.basename(os.path.dirname(elem)), os.path.basename(elem)))
+            os.makedirs(os.path.join(tmp_folder, f'{options["cols_names"]}', os.path.basename(os.path.dirname(elem))), exist_ok=True)
+            shutil.copyfile(elem, os.path.join(tmp_folder, f'{options["cols_names"]}', os.path.basename(os.path.dirname(elem)), os.path.basename(elem)))
 
         if dataset_folder:
-            if not os.path.isdir(os.path.join(dataset_folder, f'{options["put"]}_segmentation')):
-                shutil.move(os.path.join(tmp_folder, f'{options["put"]}_segmentation'), dataset_folder)
+            if os.path.isdir(os.path.join(dataset_folder, f'{options["cols_names"]}')):
+                shutil.rmtree(os.path.join(dataset_folder, f'{options["cols_names"]}'))
+            shutil.move(os.path.join(tmp_folder, f'{options["cols_names"]}'), dataset_folder)
 
         instructions = {'instructions': paths_list,
                         'parameters': options}
@@ -844,7 +844,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def create_segmentation(image_path: str, **options) -> dict:
+    def create_image_segmentation(image_path: str, **options) -> dict:
 
         def cluster_to_ohe(mask_image):
 
@@ -1232,7 +1232,7 @@ class CreateArray(object):
         return array
 
     @staticmethod
-    def preprocess_segmentation(array: np.ndarray, **options) -> np.ndarray:
+    def preprocess_image_segmentation(array: np.ndarray, **options) -> np.ndarray:
 
         return array
 

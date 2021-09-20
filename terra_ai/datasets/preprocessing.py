@@ -106,7 +106,7 @@ class CreatePreprocessing(object):
             if options['scaler'] == 'min_max_scaler':
                 scaler = MinMaxScaler()
                 array = np.array(array).reshape(-1, 1) if isinstance(array, np.ndarray) or \
-                                                            isinstance(array, pd.DataFrame) else np.array([[0], [255]])
+                                                          isinstance(array, pd.DataFrame) else np.array([[0], [255]])
                 scaler.fit(array)
             elif options['scaler'] == 'standard_scaler':
                 scaler = StandardScaler()
@@ -116,7 +116,8 @@ class CreatePreprocessing(object):
                 scaler = TerraImageScaler(shape=(176, 220))  # УКАЗАТЬ РАЗМЕРНОСТЬ
                 for elem in array:
                     scaler.fit(elem)
-            self.preprocessing[put_id] = {'object_scaler': scaler}
+            self.preprocessing[put_id] = {f'{options["put"]}_{options["type"]}': None}
+            self.preprocessing[put_id][f'{options["put"]}_{options["type"]}'] = {'object_scaler': scaler}
 
         elif ("MinMaxScaler_cols" in options.keys() and options["MinMaxScaler_cols"]) or \
                 ("StandardScaler_cols" in options.keys() and options["StandardScaler_cols"]):
