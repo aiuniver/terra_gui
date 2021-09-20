@@ -1,23 +1,24 @@
 <template>
   <ul class="menu">
-    <li class="menu__item" @click="$emit('menu-click', 'add')">Добавить новый график</li>
-    <li class="menu__item" @click="$emit('menu-click', 'copy')">Копировать график</li>
-    <li v-if="data.length" class="menu__dropdown">
-      <i :class="['t-icon', 'icon-training-dropdown']"></i>
-      <span>Показать данные</span>
-      <ul class="menu">
-        <li class="menu__item" v-for="(item, idx) in data" :key="idx" @click="$emit('menu-click', item)">{{ item }}</li>
-      </ul>
-    </li>
-    <li v-if="metrics.length" class="menu__dropdown">
-      <i :class="['t-icon', 'icon-training-dropdown']"></i>
-      <span>Показать метрики</span>
-      <ul class="menu">
-        <li class="menu__item" v-for="(item, idx) in metrics" :key="idx" @click="$emit('menu-click', item)">
-          {{ item }}
-        </li>
-      </ul>
-    </li>
+    <!-- <li class="menu__item" @click="$emit('event', 'add')">Добавить новый график</li> -->
+    <li class="menu__item" @click="$emit('event', { name: 'general', data: 'hide' })">Свернуть</li>
+    <li class="menu__item" @click="$emit('event', { name: 'general', data: 'remove' })">Удалить</li>
+    <template v-for="({ name, list }, i) of menus">
+      <li class="menu__dropdown" :key="'menu_' + i">
+        <i :class="['t-icon', 'icon-training-dropdown']"></i>
+        <span>{{ name }}</span>
+        <ul class="menu">
+          <li
+            class="menu__item"
+            v-for="({ title, event }, idx) in list"
+            :key="`list_${i}_${idx}`"
+            @click="$emit('event', event)"
+          >
+            {{ title }}
+          </li>
+        </ul>
+      </li>
+    </template>
   </ul>
 </template>
 
@@ -25,11 +26,7 @@
 export default {
   name: 'PopUpMenu',
   props: {
-    data: {
-      type: Array,
-      default: () => [],
-    },
-    metrics: {
+    menus: {
       type: Array,
       default: () => [],
     },
@@ -52,6 +49,7 @@ export default {
   font-size: 14px;
 
   &__item {
+    justify-content: flex-end;
     user-select: none;
     cursor: pointer;
     width: 100%;
