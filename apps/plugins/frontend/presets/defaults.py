@@ -436,6 +436,77 @@ LayerAudioDefaults = [
 ]
 
 
+LayerDataframeDefaults = [
+    SourcesPaths,
+    {
+        "type": "checkbox",
+        "label": "Выровнять базу",
+        "name": "align_base",
+        "parse": "align_base",
+        "value": False,
+        "fields": {
+            "true": [
+                {
+                    "type": "radio",
+                    "name": "align_base_method",
+                    "parse": "align_base_method",
+                    "value": LayerDataframeAlignBaseMethodChoice.pad_sequences.name,
+                    "list": list(
+                        map(
+                            lambda item: {
+                                "value": item.name,
+                                "label": item.value,
+                            },
+                            list(LayerDataframeAlignBaseMethodChoice),
+                        )
+                    ),
+                    "fields": {
+                        "pad_sequences": [
+                            {
+                                "type": "number",
+                                "label": "Длина примера",
+                                "name": "example_length",
+                                "parse": "example_length",
+                            },
+                        ],
+                        "xlen_step": [
+                            {
+                                "type": "number",
+                                "label": "Длина",
+                                "name": "length",
+                                "parse": "length",
+                            },
+                            {
+                                "type": "number",
+                                "label": "Шаг",
+                                "name": "step",
+                                "parse": "step",
+                            },
+                        ],
+                    },
+                },
+                {
+                    "type": "select",
+                    "label": "Скейлер",
+                    "name": "scaler",
+                    "parse": "scaler",
+                    "value": LayerScalerChoice.no_scaler.name,
+                    "list": list(
+                        map(
+                            lambda item: {
+                                "value": item.name,
+                                "label": item.value,
+                            },
+                            list(LayerScalerChoice),
+                        )
+                    ),
+                },
+            ],
+        },
+    },
+]
+
+
 Defaults = {
     "datasets": {
         "creation": {
@@ -1223,77 +1294,7 @@ Defaults = {
                                 },
                             },
                         ],
-                        "Dataframe": [
-                            SourcesPaths,
-                            {
-                                "type": "checkbox",
-                                "label": "Выровнять базу",
-                                "name": "align_base",
-                                "parse": "align_base",
-                                "value": False,
-                                "fields": {
-                                    "true": [
-                                        {
-                                            "type": "radio",
-                                            "name": "align_base_method",
-                                            "parse": "align_base_method",
-                                            "value": LayerDataframeAlignBaseMethodChoice.pad_sequences.name,
-                                            "list": list(
-                                                map(
-                                                    lambda item: {
-                                                        "value": item.name,
-                                                        "label": item.value,
-                                                    },
-                                                    list(
-                                                        LayerDataframeAlignBaseMethodChoice
-                                                    ),
-                                                )
-                                            ),
-                                            "fields": {
-                                                "pad_sequences": [
-                                                    {
-                                                        "type": "number",
-                                                        "label": "Длина примера",
-                                                        "name": "example_length",
-                                                        "parse": "example_length",
-                                                    },
-                                                ],
-                                                "xlen_step": [
-                                                    {
-                                                        "type": "number",
-                                                        "label": "Длина",
-                                                        "name": "length",
-                                                        "parse": "length",
-                                                    },
-                                                    {
-                                                        "type": "number",
-                                                        "label": "Шаг",
-                                                        "name": "step",
-                                                        "parse": "step",
-                                                    },
-                                                ],
-                                            },
-                                        },
-                                        {
-                                            "type": "select",
-                                            "label": "Скейлер",
-                                            "name": "scaler",
-                                            "parse": "scaler",
-                                            "value": LayerScalerChoice.no_scaler.name,
-                                            "list": list(
-                                                map(
-                                                    lambda item: {
-                                                        "value": item.name,
-                                                        "label": item.value,
-                                                    },
-                                                    list(LayerScalerChoice),
-                                                )
-                                            ),
-                                        },
-                                    ],
-                                },
-                            },
-                        ],
+                        "Dataframe": LayerDataframeDefaults,
                     },
                 },
             ],
@@ -1320,6 +1321,7 @@ Defaults = {
                         "Image": LayerImageDefaults,
                         "Text": LayerTextDefaults,
                         "Audio": LayerAudioDefaults,
+                        "Dataframe": LayerDataframeDefaults,
                         "Classification": [
                             SourcesPaths,
                             {

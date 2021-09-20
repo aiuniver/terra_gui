@@ -229,12 +229,12 @@ class Exchange:
         """
         Создание датасета из исходников
         """
-        try:
-            data = CreationData(**kwargs)
-            creation = CreateDataset(data)
-            return creation.datasetdata
-        except Exception as error:
-            raise exceptions.FailedCreateDatasetException(str(error))
+        # try:
+        data = CreationData(**kwargs)
+        creation = CreateDataset(data)
+        return creation.datasetdata
+        # except Exception as error:
+        #     raise exceptions.FailedCreateDatasetException(str(error))
 
     def _call_datasets_sources(self, path: str) -> FilePathSourcesList:
         """
