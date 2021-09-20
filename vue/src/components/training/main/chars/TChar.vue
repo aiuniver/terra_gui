@@ -15,16 +15,14 @@
           :title="'roll down'"
           @click="popMenuShow = !popMenuShow"
         ></i>
-        <PopUpMenu
-          v-if="popMenuShow"
-          :menus="menus"
-          @event="event"
-        />
+        <PopUpMenu v-if="popMenuShow" :menus="menus" @event="event" />
       </div>
     </div>
     <div class="t-char__main" v-if="graphicShow">
       <Plotly :data="data" :layout="layout" :display-mode-bar="false"></Plotly>
+      <div v-if="!data.length" class="t-char__empty">Нет данных</div>
     </div>
+    <div></div>
   </div>
 </template>
 
@@ -61,12 +59,12 @@ export default {
     },
     menus: {
       type: Array,
-      default: () => []
+      default: () => [],
     },
     settings: {
       type: Object,
-      default: () => {}
-    }
+      default: () => {},
+    },
   },
   components: {
     Plotly,
@@ -146,9 +144,9 @@ export default {
   methods: {
     event({ name, data }) {
       if (data === 'hide') {
-        this.show()
+        this.show();
       }
-      this.$emit('event', { name, data })
+      this.$emit('event', { name, data });
       this.popMenuShow = false;
     },
     show() {
@@ -201,6 +199,19 @@ export default {
     order: 100;
   }
   &__main {
+    position: relative;
+  }
+  &__empty {
+    user-select: none;
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+    opacity: 0.7;
   }
   &__header {
     padding: 12px;

@@ -29,6 +29,8 @@ export default {
   },
   props: {
     metric: String,
+    outputs: Array,
+    interactive: Object,
   },
   data: () => ({
     charts: [],
@@ -53,9 +55,6 @@ export default {
     ...mapGetters({
       chars: 'trainings/getChars',
     }),
-    // filstrCharts() {
-    //   return this.data.filter((chart) => this.charts.includes(chart.id));
-    // },
     data() {
       return this.$store.getters['trainings/getTrainData'](this.metric) || [];
     },
@@ -72,10 +71,16 @@ export default {
         list,
       };
     },
+    outputIdx() {
+      return this.outputs.find(item => item.id).id;
+    },
   },
-  mounted() {},
+  mounted() {
+    console.log(this.outputs);
+    this.charts = this.interactive?.loss_graphs || [];
+  },
   methods: {
-    event({ name, data }, { id, graphID }) {
+    event({ name, data }, { id }) {
       // console.log(name, data, id);
       if (data === 'remove') {
         this.remove(id);
@@ -89,13 +94,13 @@ export default {
         });
       }
       if (name === 'data') {
-        this.send({
-          lost_graphs: {
-            id: id,
-            output_idx: graphID,
-            show: data,
-          },
-        });
+        this.charts = this.charts.map(item => {
+          if (item.id === id) {
+            item.show = data
+          }
+          return item
+        })
+        this.send(this.charts);
       }
     },
     getChart({ id }) {
@@ -104,20 +109,16 @@ export default {
     },
     add() {
       if (this.charts.length < 10) {
-        // const chart = this.data.find(item => item);
-        // if (chart) {
         let maxID = Math.max(0, ...this.charts.map(o => o.id));
         this.charts.push({ id: maxID + 1, output_idx: 2, show: 'model' });
         this.send(this.charts);
-        // }
       }
     },
     remove(id) {
       this.charts = this.charts.filter(item => item.id !== id);
-      // console.log(id);
     },
     async send(data) {
-      const res = await this.$store.dispatch('trainings/interactive', { lost_graphs: data });
+      const res = await this.$store.dispatch('trainings/interactive', { [this.metric]: data });
       console.log(`response`, res);
     },
   },
