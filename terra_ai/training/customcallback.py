@@ -1073,8 +1073,6 @@ class InteractiveCallback:
             elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation or \
                     self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation:
                 y_true = self.y_true.get("val").get(out)
-                # if self.ш
-                print("self.y_pred.get(out)", self.y_pred)
                 y_pred = to_categorical(
                     np.argmax(self.y_pred.get(out), axis=-1),
                     num_classes=self.dataset_config.get("outputs").get(out).get("num_classes")
@@ -1226,7 +1224,6 @@ class InteractiveCallback:
                 for data_type in ['train', 'val']:
                     # fill metrics
                     if data_idx or data_idx == 0:
-                        # print(data_idx,  self.log_history[f'{out}']['metrics'][metric_name])
                         self.log_history[out]['metrics'][metric_name][data_type][data_idx] = \
                             self.current_logs.get(out).get('metrics').get(metric_name).get(data_type) \
                                 if self.current_logs.get(out).get('metrics').get(metric_name).get(
@@ -1533,7 +1530,6 @@ class InteractiveCallback:
         """
         data_return = []
         if not self.interactive_config.get('loss_graphs'):
-            # print("self.interactive_config.get('loss_graphs')", self.interactive_config.get('loss_graph_data'))
             return data_return
 
         for loss_graph_config in self.interactive_config.get('loss_graphs'):
@@ -2439,7 +2435,6 @@ class InteractiveCallback:
     def _dice_coef(y_true, y_pred, batch_mode=True, smooth=1.0):
         axis = tuple(np.arange(1, len(y_true.shape))) if batch_mode else None
         intersection = np.sum(y_true * y_pred, axis=axis)
-        # print("y_true.shape, y_pred.shape", y_true.shape, y_pred.shape)
         union = np.sum(y_true, axis=axis) + np.sum(y_pred, axis=axis)
         return (2.0 * intersection + smooth) / (union + smooth)
 
