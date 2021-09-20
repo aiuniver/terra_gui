@@ -21,7 +21,7 @@ class ColumnProcessingVideoData(types.ParametersVideoData):
     pass
 
 
-class ColumnProcessingImageSegmentationData(types.ParametersImageSegmentationData):
+class ColumnProcessingSegmentationData(types.ParametersSegmentationData):
     pass
 
 

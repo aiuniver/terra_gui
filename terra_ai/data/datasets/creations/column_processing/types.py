@@ -107,7 +107,7 @@ class ParametersVideoData(ParametersBaseData, MinMaxScalerData):
         return value
 
 
-class ParametersImageSegmentationData(ParametersBaseData):
+class ParametersSegmentationData(ParametersBaseData):
     mask_range: PositiveInt
     classes_names: List[str]
     classes_colors: List[Color]

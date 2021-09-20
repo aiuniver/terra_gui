@@ -66,7 +66,6 @@ export default {
   position: relative;
   &__wrapper {
     display: flex;
-    justify-content: flex-end;
     gap: 5px;
     padding-left: 50px;
   }
@@ -107,7 +106,7 @@ export default {
     display: flex;
     gap: 18px;
     padding: 0 10px;
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     &-item {
       font-size: 9px;
       line-height: 14px;
