@@ -111,6 +111,8 @@ class ParametersSegmentationData(ParametersBaseData):
     mask_range: PositiveInt
     classes_names: List[str]
     classes_colors: List[Color]
+    height: Optional[PositiveInt]
+    width: Optional[PositiveInt]
 
 
 class ParametersClassificationData(ParametersBaseData):

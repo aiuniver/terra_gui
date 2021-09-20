@@ -97,52 +97,37 @@ class CreatePreprocessing(object):
 
         self.preprocessing[put_id] = {'dull': None}
 
-    def create_scaler(self, put_id: int, array=None, **options):
+    def create_scaler(self, array=None, **options):
+
         scaler = None
-        if "MinMaxScaler_cols" in options.keys() or 'trend' in options.keys():
-            array = pd.DataFrame(array)
+        # if "MinMaxScaler_cols" in options.keys() or 'trend' in options.keys():
+        #     array = pd.DataFrame(array)
 
         if options['scaler'] != 'no_scaler':
             if options['scaler'] == 'min_max_scaler':
                 scaler = MinMaxScaler()
-                array = np.array(array).reshape(-1, 1) if isinstance(array, np.ndarray) or \
-                                                            isinstance(array, pd.DataFrame) else np.array([[0], [255]])
+                array = np.array(array).reshape(-1, 1) if isinstance(array, np.ndarray) or isinstance(array,
+                                                                                                      pd.DataFrame)\
+                    else np.array([[0], [255]])
                 scaler.fit(array)
             elif options['scaler'] == 'standard_scaler':
                 scaler = StandardScaler()
                 array = np.array(array).reshape(-1, 1)
                 scaler.fit(array)
             elif options['scaler'] == 'terra_image_scaler':
-                scaler = TerraImageScaler(shape=(176, 220))  # УКАЗАТЬ РАЗМЕРНОСТЬ
+                scaler = TerraImageScaler(shape=(options['height'], options['width']))  # УКАЗАТЬ РАЗМЕРНОСТЬ
                 for elem in array:
                     scaler.fit(elem)
-            self.preprocessing[put_id] = {'object_scaler': scaler}
 
-        elif ("MinMaxScaler_cols" in options.keys() and options["MinMaxScaler_cols"]) or \
-                ("StandardScaler_cols" in options.keys() and options["StandardScaler_cols"]):
-            self.preprocessing[put_id] = {"object_scaler": {}}
-            if options["MinMaxScaler_cols"]:
-                for i in options["MinMaxScaler_cols"]:
-                    self.preprocessing[put_id]["object_scaler"][f"col_{i}"] = MinMaxScaler()
-                    self.preprocessing[put_id]["object_scaler"][f"col_{i}"].fit(
-                        array.iloc[:, [i]].values.reshape(-1, 1))
+        if not options['put'] in self.preprocessing.keys():
+            self.preprocessing[options['put']] = {}
+        self.preprocessing[options['put']].update([(options['cols_names'], scaler)])
 
-            if options["StandardScaler_cols"]:
-                for i in options["StandardScaler_cols"]:
-                    self.preprocessing[put_id]["object_scaler"][f"col_{i}"] = StandardScaler()
-                    self.preprocessing[put_id]["object_scaler"][f"col_{i}"].fit(
-                        array.iloc[:, [i]].values.reshape(-1, 1))
-
-        else:
-            self.preprocessing[put_id] = {'object_scaler': scaler}
-
-    def create_tokenizer(self, put_id: int, text_list: list, **options):
+    def create_tokenizer(self, text_list: list, **options):
 
         """
 
         Args:
-            put_id: int
-                Номер входа или выхода.
             text_list: list
                 Список слов для обучения токенайзера.
             **options: Параметры токенайзера:
@@ -172,15 +157,15 @@ class CreatePreprocessing(object):
                                  'oov_token': '<UNK>'})
         tokenizer.fit_on_texts(text_list)
 
-        self.preprocessing[put_id] = {'object_tokenizer': tokenizer}
+        if not options['put'] in self.preprocessing.keys():
+            self.preprocessing[options['put']] = {}
+        self.preprocessing[options['put']].update([(options['cols_names'], tokenizer)])
 
-    def create_word2vec(self, put_id: int, text_list: list, **options):
+    def create_word2vec(self, text_list: list, **options):
 
         """
 
         Args:
-            put_id: int
-                Номер входа или выхода.
             text_list: list
                 Список слов для обучения Word2Vec.
             **options: Параметры Word2Vec:
@@ -206,4 +191,6 @@ class CreatePreprocessing(object):
                                           'workers': 10,
                                           'iter': 10})
 
-        self.preprocessing[put_id] = {'object_word2vec': word2vec}
+        if not options['put'] in self.preprocessing.keys():
+            self.preprocessing[options['put']] = {}
+        self.preprocessing[options['put']].update([(options['cols_names'], word2vec)])
