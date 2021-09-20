@@ -1,7 +1,8 @@
 import { data, config } from "../temp/training";
 import { toolbar } from "../const/trainings";
 // import { predict } from "../temp/predict-training";
-import { predict_video } from "../temp/predict-training-video-audio";
+// import { predict_video } from "../temp/predict-training-video-audio";
+import { predict_text } from "../temp/predict-training-text";
 
 console.warn(data)
 export default {
@@ -10,7 +11,7 @@ export default {
     params: [],
     toolbar,
     stateParams: {},
-    predict: predict_video,
+    predict: predict_text,
     info: '',
     states: {},
     // trainData: {},
@@ -96,7 +97,7 @@ export default {
       return await dispatch('axios', { url: '/training/interactive/', data }, { root: true });
     },
     async progress({ dispatch }, data) {
-      const res =  await dispatch('axios', { url: '/training/progress/', data }, { root: true });
+      const res = await dispatch('axios', { url: '/training/progress/', data }, { root: true });
       console.log();
       dispatch('setButtons', res);
       return res

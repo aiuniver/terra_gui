@@ -20,8 +20,9 @@
               <div class="table__item" v-for="(input_val, key) in value" :key="key">
                 <TableImage v-if="input_val.type == 'image'" :image="input_val" />
                 <TableText v-if="input_val.type === 'str' || input_val.type === 'number'" :data="input_val" />
+                <TableColorText v-if="input_val.type === 'Text'" :data="input_val" />
                 <Embed v-if="input_val.type === 'video'" :src="input_val.data"></Embed>
-                <TableAudio v-if="input_val.type === 'audio'" :url="input_val.data"/>
+                <TableAudio v-if="input_val.type === 'audio'" :url="input_val.data" />
               </div>
             </div>
           </div>
@@ -36,8 +37,10 @@
               <div class="table__item" v-for="(input_val, key) in value" :key="key">
                 <TableImage v-if="input_val.type == 'image'" :image="input_val" />
                 <TableText v-if="input_val.type === 'str' || input_val.type === 'number'" :data="input_val" />
+                <TableColorText v-if="input_val.type === 'Text'" :data="input_val" />
+
                 <Embed v-if="input_val.type === 'video'" :src="input_val.data"></Embed>
-                <TableAudio v-if="input_val.type === 'audio'" :url="input_val.data"/>
+                <TableAudio v-if="input_val.type === 'audio'" :url="input_val.data" />
               </div>
             </div>
           </div>
@@ -52,8 +55,10 @@
               <div class="table__item" v-for="(input_val, key) in value" :key="key">
                 <TableImage v-if="input_val.type == 'image'" :image="input_val" />
                 <TableText v-if="input_val.type === 'str' || input_val.type === 'number'" :data="input_val" />
+                <TableColorText v-if="input_val.type === 'Text'" :data="input_val" />
+
                 <Embed v-if="input_val.type === 'video'" :src="input_val.data"></Embed>
-                <TableAudio v-if="input_val.type === 'audio'" :url="input_val.data"/>
+                <TableAudio v-if="input_val.type === 'audio'" :url="input_val.data" />
               </div>
             </div>
           </div>
@@ -68,6 +73,7 @@
               <div class="table__item" v-for="(input_val, key) in value" :key="key">
                 <TableImage v-if="input_val.type == 'image'" :image="input_val" />
                 <TableText v-if="input_val.type === 'str' || input_val.type === 'number'" :data="input_val" />
+                <TableColorText v-if="input_val.type === 'Text'" :data="input_val" />
               </div>
             </div>
           </div>
@@ -80,7 +86,8 @@
 <script>
 import TableImage from '@/components/training/main/prediction/components/TableImage.vue';
 import TableText from '@/components/training/main/prediction/components/TableText.vue';
-import TableAudio from "../audio/TableAudio";
+import TableColorText from '@/components/training/main/prediction/components/TableColorText.vue';
+import TableAudio from '../audio/TableAudio';
 import Embed from 'v-video-embed/src/embed';
 export default {
   name: 'TextTableTest',
@@ -88,6 +95,7 @@ export default {
     TableImage,
     TableText,
     TableAudio,
+    TableColorText,
     Embed,
   },
   props: {
