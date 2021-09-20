@@ -143,4 +143,3 @@ TERRA_AI_PROJECT_PATH = f"{tempfile.gettempdir()}/tai-project"
 USER_LOGIN = env.str("USER_LOGIN")
 USER_NAME = env.str("USER_NAME")
 USER_LASTNAME = env.str("USER_LASTNAME")
-USER_LANGUAGE = env.str("USER_LANGUAGE", 'ru')

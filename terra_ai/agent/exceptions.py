@@ -2,9 +2,7 @@ from pathlib import Path
 from typing import Any
 from enum import Enum
 
-from django.conf import settings
-
-user_lang = settings.USER_LANGUAGE
+from terra_ai.settings import LANGUAGE
 
 
 class ExceptionMessages(dict, Enum):
@@ -86,7 +84,7 @@ class ExchangeBaseException(Exception):
         message: ExceptionMessages = ExceptionMessages.UnknownError
 
     def __init__(self, *args, **kwargs):
-        error_msg = self.Meta.message.value.get(kwargs.get('lang', user_lang))
+        error_msg = self.Meta.message.value.get(kwargs.get('lang', LANGUAGE))
 
         if args:
             error_msg = error_msg % args
