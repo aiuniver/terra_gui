@@ -1224,8 +1224,7 @@ class InteractiveCallback:
                             metric_obj=self.metrics_obj.get(out).get(metric_name),
                             out=out,
                             y_true=self.y_true.get('val').get(out)[
-                                   :, :, :,
-                                   self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
+                                   :, :, self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
                                    ],
                             y_pred=self.y_pred.get(out)[
                                    :, :, :,
