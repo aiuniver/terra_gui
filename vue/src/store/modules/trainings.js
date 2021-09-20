@@ -13,8 +13,8 @@ export default {
     predict: predict_video,
     info: '',
     states: {},
-    // trainData: {},
-    trainData: data,
+    trainData: {},
+    // trainData: data,
     trainUsage: {},
     trainDisplay: config,
     buttons: {

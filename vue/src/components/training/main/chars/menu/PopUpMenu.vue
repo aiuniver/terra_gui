@@ -1,19 +1,19 @@
 <template>
   <ul class="menu">
-    <li class="menu__item" @click="$emit('menu-click', 'add')">Добавить новый график</li>
-    <li class="menu__item" @click="$emit('menu-click', 'copy')">Копировать график</li>
+    <!-- <li class="menu__item" @click="$emit('event', 'add')">Добавить новый график</li> -->
+    <li class="menu__item" @click="$emit('event', 'hide')">Свернуть</li>
     <li v-if="data.length" class="menu__dropdown">
       <i :class="['t-icon', 'icon-training-dropdown']"></i>
       <span>Показать данные</span>
       <ul class="menu">
-        <li class="menu__item" v-for="(item, idx) in data" :key="idx" @click="$emit('menu-click', item)">{{ item }}</li>
+        <li class="menu__item" v-for="(item, idx) in data" :key="idx" @click="$emit('event', item)">{{ item }}</li>
       </ul>
     </li>
     <li v-if="metrics.length" class="menu__dropdown">
       <i :class="['t-icon', 'icon-training-dropdown']"></i>
       <span>Показать метрики</span>
       <ul class="menu">
-        <li class="menu__item" v-for="(item, idx) in metrics" :key="idx" @click="$emit('menu-click', item)">
+        <li class="menu__item" v-for="(item, idx) in metrics" :key="idx" @click="$emit('event', item)">
           {{ item }}
         </li>
       </ul>

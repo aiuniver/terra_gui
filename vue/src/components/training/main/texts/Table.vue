@@ -95,10 +95,11 @@ export default {
   },
   methods: {
     isShow(layer, metrics) {
+      // console.log(layer, metrics)
       if (layer && metrics) {
-        return this.settings[layer][metrics];
+        return this.settings?.[layer]?.[metrics] ?? true;
       } else {
-        return this.settings[layer].loss || this.settings[layer].metrics;
+        return (this.settings?.[layer]?.loss ?? true) || (this.settings?.[layer]?.metrics ?? true);
       }
     },
   },
