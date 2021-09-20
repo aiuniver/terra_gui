@@ -60,7 +60,6 @@ class Metric(str, Enum):
     SparseCategoricalAccuracy = "SparseCategoricalAccuracy"
     SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
     SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
-
     DiceCoef = "DiceCoef"
 
 
@@ -176,35 +175,49 @@ TasksGroups = [
             Loss.MeanSquaredLogarithmicError,
             Loss.LogCosh,
             Loss.CosineSimilarity,
+            Loss.Hinge,
+            Loss.KLDivergence,
+            Loss.SquaredHinge
         ],
         "metrics": [
-            Metric.Accuracy,
+            # Metric.Accuracy,
             Metric.MeanAbsoluteError,
             Metric.MeanSquaredError,
             Metric.MeanAbsolutePercentageError,
             Metric.MeanSquaredLogarithmicError,
             Metric.LogCoshError,
             Metric.CosineSimilarity,
+            Metric.Hinge,
+            Metric.KLDivergence,
+            Metric.RootMeanSquaredError,
+            Metric.SquaredHinge
         ],
     },
     {
         "task": Task.Timeseries,
         "losses": [
-            Loss.MeanSquaredError,
+            Loss.CosineSimilarity,
+            Loss.Hinge,
+            Loss.Huber,
+            Loss.KLDivergence,
+            Loss.LogCosh,
             Loss.MeanAbsoluteError,
             Loss.MeanAbsolutePercentageError,
-            Loss.MeanSquaredLogarithmicError,
-            Loss.LogCosh,
-            Loss.CosineSimilarity,
+            Loss.MeanSquaredError,
+            Loss.MeanAbsolutePercentageError,
+            Loss.SquaredHinge
         ],
         "metrics": [
-            Metric.Accuracy,
-            Metric.MeanAbsoluteError,
-            Metric.MeanSquaredError,
-            Metric.MeanAbsolutePercentageError,
-            Metric.MeanSquaredLogarithmicError,
-            Metric.LogCoshError,
             Metric.CosineSimilarity,
+            Metric.Hinge,
+            Metric.KLDivergence,
+            Metric.LogCoshError,
+            Metric.MeanAbsoluteError,
+            Metric.MeanAbsolutePercentageError,
+            Metric.MeanSquaredError,
+            Metric.MeanSquaredLogarithmicError,
+            Metric.RootMeanSquaredError,
+            Metric.SquaredHinge
         ],
     },
 ]

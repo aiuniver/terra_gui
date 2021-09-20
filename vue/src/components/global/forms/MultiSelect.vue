@@ -33,7 +33,7 @@
         </div>
       </div>
     </div>
-    <MultiSelectTable v-if="selectedTable.length" :id="id" :table="selectedTable" label="Таблица" inline/>
+    <MultiSelectTable v-if="selectedTable.length" :id="id" :table="selectedTable" label="Таблица" inline @change="$emit('change', $event)"/>
   </div>
 </template>
 

@@ -65,4 +65,7 @@ const changeStructTable = function (data) {
   })
   return data;
 }
-export { createInputData, cloneInputData, changeStructTable };
+const getNameToId = function (handlers, id) {
+  return handlers.find(handler => handler.id === id).name
+}
+export { createInputData, cloneInputData, changeStructTable, getNameToId };

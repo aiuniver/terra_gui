@@ -31,7 +31,7 @@ from terra_ai.data.training.train import TrainData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.customcallback import InteractiveCallback
-from terra_ai.training.customlosses import DiceCoefficient, yolo_loss
+from terra_ai.training.customlosses import DiceCoef, yolo_loss
 from terra_ai.training.data import custom_losses_dict
 
 from matplotlib import pyplot as plt
@@ -86,7 +86,7 @@ class GUINN:
             if metric == MetricChoice.MeanIoU.value:
                 output.append(getattr(importlib.import_module("tensorflow.keras.metrics"), metric)(num_classes))
             elif metric == MetricChoice.DiceCoef:
-                output.append(DiceCoefficient())
+                output.append(DiceCoef())
             else:
                 output.append(getattr(importlib.import_module("tensorflow.keras.metrics"), metric)())
         return output

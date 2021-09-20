@@ -765,4 +765,57 @@ const data = {
   }
 }
 
-export { data }
+const config = {
+  "loss_graphs": [
+      {
+          "id": 1,
+          "output_idx": 2,
+          "show": "model"
+      },
+      {
+          "id": 2,
+          "output_idx": 2,
+          "show": "classes"
+      }
+  ],
+  "metric_graphs": [
+      {
+          "id": 1,
+          "output_idx": 2,
+          "show": "model",
+          "show_metric": "DiceCoef"
+      },
+      {
+          "id": 2,
+          "output_idx": 2,
+          "show": "classes",
+          "show_metric": "DiceCoef"
+      }
+  ],
+  "intermediate_result": {
+      "show_results": false,
+      "example_choice_type": "seed",
+      "main_output": 2,
+      "num_examples": 10,
+      "show_statistic": false,
+      "autoupdate": false
+  },
+  "progress_table": [
+      {
+          "output_idx": 2,
+          "show_loss": true,
+          "show_metrics": true
+      }
+  ],
+  "statistic_data": {
+      "output_id": [2],
+      "autoupdate": false
+  },
+  "data_balance": {
+      "show_train": false,
+      "show_val": false,
+      "sorted": "descending"
+  }
+}
+
+export { data, config }

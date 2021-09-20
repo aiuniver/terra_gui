@@ -38,7 +38,6 @@ export default {
   &__label {
     flex: 1 1 auto;
     color: #a7bed3;
-    line-height: 1;
     font-size: 0.75rem;
     padding: 0 0 10px 0;
     cursor: default;

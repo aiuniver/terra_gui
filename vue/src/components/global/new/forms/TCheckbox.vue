@@ -26,16 +26,19 @@ export default {
     checked: false,
   }),
   methods: {
-    label() {
-      this.checked = !this.checked
-    },
-    change(e) {
-      console.log(e);
-      const value = e.target.checked;
+    send(value) {
+      this.$emit('input', value);
       this.$emit('change', { name: this.name, value });
       this.$emit('parse', { parse: this.parse, value });
+    },
+    label() {
+      this.checked = !this.checked;
+      this.send(this.checked);
+    },
+    change(e) {
+      this.send(e.target.checked)
       if (this.error) {
-      this.$emit('cleanError', true);
+        this.$emit('cleanError', true);
       }
     },
   },

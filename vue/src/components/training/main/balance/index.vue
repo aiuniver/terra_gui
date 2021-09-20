@@ -4,16 +4,16 @@
       <div class="t-balance__wrapper">
         <div class="t-balance__checks">
           <t-field inline :label="'Показать тренировочную выборку'">
-            <t-checkbox-new />
+            <t-checkbox-new v-model="train" />
           </t-field>
           <t-field inline :label="'Показать проверочную выборку'">
-            <t-checkbox-new small />
+            <t-checkbox-new v-model="test" small />
           </t-field>
         </div>
         <t-field inline :label="'Сортировать'">
-          <t-select-new small :list="[]" />
+          <t-select-new small :list="sortOps" v-model="sortSelected"/>
         </t-field>
-        <t-button class="t-balance__btn">Показать</t-button>
+        <t-button class="t-balance__btn" @click="handleClick">Показать</t-button>
       </div>
     </div>
     <div class="t-balance__graphs">
@@ -34,11 +34,36 @@ export default {
   components: {
     Graph,
   },
+  data: () => ({
+    train: false,
+    test: false,
+    sortOps: [
+      { label: 'по имени', value: 'alphabetic' },
+      { label: 'по увеличению', value: 'ascending' },
+      { label: 'по убыванию', value: 'descending' }
+    ],
+    sortSelected: 'alphabetic'
+  }),
   computed: {
     dataDalance() {
       return this.$store.getters['trainings/getTrainData']('data_balance') || [];
-    },
+    }
   },
+  methods: {
+    async handleClick() {
+      const data = {
+        "data_balance": {
+          "show_train": this.train,
+          "show_val": this.test,
+          "sorted": this.sortSelected
+        }
+      }
+      this.$store.dispatch('trainings/setTrainDisplay', data)
+
+      const res = await this.$store.dispatch('trainings/interactive', this.$store.getters['trainings/getTrainDisplay'])
+      console.log(`response`, res);
+    }
+  }
 };
 </script>
 

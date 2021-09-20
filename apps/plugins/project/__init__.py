@@ -31,7 +31,6 @@ from terra_ai.data.training.train import (
 from terra_ai.data.training.outputs import OutputsList
 from terra_ai.data.training.checkpoint import CheckpointData
 from terra_ai.data.training.extra import LossGraphShowChoice, MetricGraphShowChoice
-from terra_ai.data.deploy.collection import CollectionData
 
 from . import exceptions
 
@@ -112,7 +111,6 @@ class Project(BaseMixinData):
     dataset: Optional[DatasetData]
     model: ModelDetailsData = ModelDetailsData(**EmptyModelDetailsData)
     training: TrainingDetailsData = TrainingDetailsData()
-    deploy: Optional[CollectionData]
 
     @property
     def name_alias(self) -> str:
@@ -161,7 +159,6 @@ class Project(BaseMixinData):
             self.dataset = None
             self.model = ModelDetailsData(**EmptyModelDetailsData)
             self.set_training()
-            self.set_deploy()
             return
         model_init = dataset.model
         if self.model.inputs and len(self.model.inputs) != len(model_init.inputs):
@@ -201,7 +198,6 @@ class Project(BaseMixinData):
             self.model.name = model_init.name
             self.model.alias = model_init.alias
         self.set_training()
-        self.set_deploy()
 
     def set_model(self, model: ModelDetailsData):
         if self.dataset:
@@ -212,13 +208,6 @@ class Project(BaseMixinData):
                 raise exceptions.DatasetModelOutputsCountNotMatchException()
         self.model = model
         self.set_training()
-
-    def set_deploy(self):
-        self.deploy = agent_exchange(
-            "deploy_collection",
-            dataset=self.dataset,
-            path=project_path.datasets,
-        )
 
     def __update_training_base(self):
         outputs = []
@@ -284,6 +273,9 @@ class Project(BaseMixinData):
         self.training.interactive.loss_graphs = LossGraphsList(loss_graphs)
         self.training.interactive.metric_graphs = MetricGraphsList(metric_graphs)
         self.training.interactive.progress_table = ProgressTableList(progress_table)
+        self.training.interactive.intermediate_result.main_output = (
+            self.model.outputs[0].id if len(self.model.outputs) else None
+        )
 
     def set_training(self):
         defaults_data.update_by_model(self.model)
@@ -309,4 +301,3 @@ except Exception:
 _config.update({"hardware": agent_exchange("hardware_accelerator")})
 project = Project(**_config)
 project.set_training()
-project.set_deploy()

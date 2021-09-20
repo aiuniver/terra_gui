@@ -28,6 +28,7 @@ class ExampleChoiceTypeChoice(str, Enum):
 class BalanceSortedChoice(str, Enum):
     descending = "descending"
     ascending = "ascending"
+    alphabetic = "alphabetic"
 
 
 class ArchitectureChoice(str, Enum):
@@ -117,7 +118,6 @@ class MetricChoice(str, Enum):
     SparseCategoricalAccuracy = "SparseCategoricalAccuracy"
     SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
     SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
-
     DiceCoef = "DiceCoef"
 
 

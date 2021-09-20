@@ -53,6 +53,7 @@ export default {
       this.mixinChange({ id, name: 'sources_paths', value })
     },
     mixinRemove(id) {
+      this.$store.dispatch('tables/setSaveCols', {id, value: []});
       this.mixinFiles = this.mixinFiles.map(item => {
         item.id = (item.id === id) ? 0 : item.id;
         return item;

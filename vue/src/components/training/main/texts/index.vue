@@ -1,21 +1,21 @@
 <template>
   <div class="t-texts">
     <div class="t-texts__header">
-      <div class="t-texts__block">
-        <p>output 1</p>
+      <div v-for="(layer, i) of layers" :key="'layer_' + i" class="t-texts__block">
+        <p>{{ layer }}</p>
         <t-field inline label="loss">
-          <t-checkbox-new />
+          <t-checkbox-new :value="true" name="loss" @change="change(layer, $event)" />
         </t-field>
         <t-field inline label="metrics">
-          <t-checkbox-new />
+          <t-checkbox-new :value="true" name="metrics" @change="change(layer, $event)" />
         </t-field>
       </div>
-      <div class="t-texts__block">
+      <!-- <div class="t-texts__block">
         <t-button>Показать</t-button>
-      </div>
+      </div> -->
     </div>
     <div class="t-texts__content">
-      <Table :data="data" />
+      <Table :data="data" :settings="settings" />
     </div>
   </div>
 </template>
@@ -28,6 +28,7 @@ export default {
     Table,
   },
   data: () => ({
+    settings: {},
     ops: {
       scrollPanel: {
         scrollingX: false,
@@ -36,9 +37,35 @@ export default {
     },
   }),
   computed: {
-    data() {
-      return this.$store.getters['trainings/getTrainData']('progress_table') || [];
+    layers() {
+      const obj = this.data['1'].data;
+      const layres = [];
+      for (let key in obj) {
+        layres.push(key);
+      }
+      return layres;
     },
+    data() {
+      return this.$store.getters['trainings/getTrainData']('progress_table') || {};
+    },
+  },
+  methods: {
+    change(layer, { name, value }) {
+      if (!this.settings[layer]) {
+        this.settings[layer] = {};
+      }
+      this.settings[layer][name] = value;
+      this.settings = {...this.settings}
+      console.log(this.settings)
+    },
+  },
+  created() {
+    this.layers.forEach(key => {
+      this.settings[key] = {
+        loss: true,
+        metrics: true,
+      };
+    });
   },
 };
 </script>
@@ -50,17 +77,21 @@ export default {
   &__header {
     display: flex;
     gap: 15px;
+    justify-self: start;
     align-items: center;
-  }
-  &__block {
     p {
-      margin: 0 0 5px 0;
-    }
-    &:last-child {
-      width: 150px;
-      margin-left: auto;
+      font-size: 14px;
     }
   }
+  // &__block {
+  //   p {
+  //     margin: 0 0 5px 0;
+  //   }
+  //   &:last-child {
+  //     width: 150px;
+  //     margin-left: auto;
+  //   }
+  // }
   &__content {
     display: flex;
     height: 100%;

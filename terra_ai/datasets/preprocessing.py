@@ -82,14 +82,14 @@ class CreatePreprocessing(object):
         self.preprocessing = {}
 
     def load_preprocesses(self, keys):
-
         for key in keys:
             preprocess = {}
             for param in ['augmentation', 'scaler', 'tokenizer', 'word2vec']:
-                if os.path.isfile(os.path.join(self.paths.__dict__[param], f'{key}.gz')):
-                    preprocess[f'object_{param}'] = joblib.load(os.path.join(self.paths.__dict__[param], f'{key}.gz'))
-                else:
-                    preprocess[f'object_{param}'] = None
+                if self.paths.__dict__[param]:
+                    if os.path.isfile(os.path.join(self.paths.__dict__[param], f'{key}.gz')):
+                        preprocess[f'object_{param}'] = joblib.load(os.path.join(self.paths.__dict__[param], f'{key}.gz'))
+                    else:
+                        preprocess[f'object_{param}'] = None
             self.preprocessing[key] = preprocess
         pass
 
