@@ -29,7 +29,7 @@ class LayerClassificationData(LayerBaseData, types.Classification.ParametersData
     pass
 
 
-class LayerSegmentationData(LayerBaseData, types.ImageSegmentation.ParametersData):
+class LayerSegmentationData(LayerBaseData, types.Segmentation.ParametersData):
     pass
 
 

@@ -35,7 +35,7 @@ class ParametersImageData(MinMaxScalerData, SourcesPathsData, ColumnProcessingDa
     net: LayerNetChoice
     scaler: LayerScalerImageChoice
 
-    put: Optional[str]
+    put: Optional[PositiveInt]
     augmentation: Optional[AugmentationData]
     deploy: Optional[bool] = False
     object_detection: Optional[bool] = False
