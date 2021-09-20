@@ -105,7 +105,7 @@ from . import (
     # MobileNetV3Large,
     # MobileNetV3Small,
     DenseNet121,
-    # DenseNet169,
+    DenseNet169,
     # DenseNet201,
     # EfficientNetB0,
     # EfficientNetB1,

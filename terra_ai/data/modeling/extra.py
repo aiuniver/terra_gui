@@ -103,6 +103,7 @@ class LayerTypeChoice(str, Enum):
     VGG19 = "VGG19"
     ResNet50 = "ResNet50"
     DenseNet121 = "DenseNet121"
+    DenseNet169 = "DenseNet169"
     CustomUNETBlock = "CustomUNETBlock"
     YOLOResBlock = "YOLOResBlock"
     YOLOConvBlock = "YOLOConvBlock"
