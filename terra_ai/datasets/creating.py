@@ -49,7 +49,7 @@ class CreateDataset(object):
                 self.columns_processing[key] = value
 
         self.instructions: DatasetInstructionsData = self.create_instructions(creation_data)
-        # self.create_preprocessing(self.instructions)
+        self.create_preprocessing(self.instructions)
         self.create_table(creation_data=creation_data)
 
         self.inputs: dict = self.create_input_parameters(creation_data=creation_data)
@@ -231,18 +231,17 @@ class CreateDataset(object):
     def create_preprocessing(self, instructions: DatasetInstructionsData):
 
         for put in list(instructions.inputs.values()) + list(instructions.outputs.values()):
-            if ('dataframe' in self.tags.values()) and ('scaler' in put.parameters.keys()):
-                self.preprocessing.create_scaler(put.parameters['put'], array=put.instructions, **put.parameters)
-            elif 'scaler' in put.parameters.keys() and put.parameters['scaler'] != LayerScalerImageChoice.no_scaler:
-                self.preprocessing.create_scaler(put.parameters['put'], **put.parameters)
-            elif 'prepare_method' in put.parameters.keys():
-                if put.parameters['prepare_method'] in [LayerPrepareMethodChoice.embedding,
-                                                        LayerPrepareMethodChoice.bag_of_words]:
-                    self.preprocessing.create_tokenizer(put.parameters['put'], put.instructions, **put.parameters)
-                elif put.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
-                    self.preprocessing.create_word2vec(put.parameters['put'], put.instructions, **put.parameters)
-            else:
-                self.preprocessing.create_dull(put.parameters['put'])
+            for col_name, data in put.items():
+                if 'scaler' in data.parameters.keys():
+                    if data.parameters['scaler'] != LayerScalerImageChoice.no_scaler:
+                        self.preprocessing.create_scaler(array=None, **data.parameters)
+                elif 'prepare_method' in data.parameters.keys():
+                    if data.parameters['prepare_method'] in [LayerPrepareMethodChoice.embedding,
+                                                             LayerPrepareMethodChoice.bag_of_words]:
+                        self.preprocessing.create_tokenizer(array=None, **data.parameters)
+                    elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
+                        self.preprocessing.create_word2vec(array=None, **data.parameters)
+
 
     def create_table(self, creation_data: CreationData):
 
