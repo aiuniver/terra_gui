@@ -19,7 +19,7 @@ LayerConfig = LayerConfigData(
             "value": 4,
             "validation": LayerValidationMethodChoice.fixed,
         },
-        "module": ModuleChoice.densenet169,
+        "module": ModuleChoice.densenet201,
         "module_type": ModuleTypeChoice.keras_pretrained_model,
     }
 )

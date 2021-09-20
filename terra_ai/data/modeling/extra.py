@@ -104,6 +104,7 @@ class LayerTypeChoice(str, Enum):
     ResNet50 = "ResNet50"
     DenseNet121 = "DenseNet121"
     DenseNet169 = "DenseNet169"
+    DenseNet201 = "DenseNet201"
     CustomUNETBlock = "CustomUNETBlock"
     YOLOResBlock = "YOLOResBlock"
     YOLOConvBlock = "YOLOConvBlock"

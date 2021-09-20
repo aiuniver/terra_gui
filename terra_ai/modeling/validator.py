@@ -1128,7 +1128,7 @@ class LayerValidation:
                         "`None` or `softmax`"
                     )
 
-            elif self.layer_type == "DenseNet121" or self.layer_type == "DenseNet169":
+            elif self.layer_type == "DenseNet121" or self.layer_type == "DenseNet169" or self.layer_type == "DenseNet201":
                 if self.layer_parameters.get("include_top") and self.inp_shape[0][1:] != (224, 224, 3):
 
                     return ValidatorMessages.InputShapeMustBeOnly.value % (

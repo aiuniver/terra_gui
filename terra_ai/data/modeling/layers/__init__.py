@@ -450,6 +450,11 @@ class LayerDenseNet169Data(LayerMixinData):
     extra: types.DenseNet169.ParametersExtraData = types.DenseNet169.ParametersExtraData()
 
 
+class LayerDenseNet201Data(LayerMixinData):
+    main: types.DenseNet201.ParametersMainData = types.DenseNet201.ParametersMainData()
+    extra: types.DenseNet201.ParametersExtraData = types.DenseNet201.ParametersExtraData()
+
+
 class LayerCustomUNETBlockData(LayerMixinData):
     main: types.CustomUNETBlock.ParametersMainData = (
         types.CustomUNETBlock.ParametersMainData()
