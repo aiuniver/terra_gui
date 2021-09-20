@@ -68,4 +68,12 @@ const changeStructTable = function (data) {
 const getNameToId = function (handlers, id) {
   return handlers.find(handler => handler.id === id).name
 }
-export { createInputData, cloneInputData, changeStructTable, getNameToId };
+const getIdToName = function (files, { name, table }) {
+  const cells = files.find(item => item.title === table)
+  // console.log(cells)
+  const index = cells.data.findIndex(item => item[0] === name)
+  // console.log(index)
+  return index
+
+}
+export { createInputData, cloneInputData, changeStructTable, getNameToId , getIdToName};
