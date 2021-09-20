@@ -3,51 +3,76 @@ from typing import Any
 from enum import Enum
 
 
-class ExceptionMessages(str, Enum):
+class ExceptionMessages(dict, Enum):
     # Agent
-    UnknownError = "Unknown error"
-    CallMethodNotFound = "Instance of `%s` must have method `%s`"
-    MethodNotCallable = "Method `%s` of instance of `%s` must be callable"
-    ModelAlreadyExists = "Model `%s` already exists"
-    FileNotFound = "No such file or directory: %s"
+    UnknownError = {"ru": "Неизвестная ошибка", "eng": "Unknown error"}
+    CallMethodNotFound = {"ru": "Метод у `%s` должен иметь вид `%s`",
+                          "eng": "Instance of `%s` must have method `%s`"}
+    MethodNotCallable = {"ru": "Метод `%s` у `%s` должен быть вызываемым",
+                         "eng": "Method `%s` of instance of `%s` must be callable"}
+    FileNotFound = {"ru": "Файл или директория отсутствует по пути: %s",
+                    "eng": "No such file or directory: %s"}
     # Project
-    ProjectAlreadyExists = "Project `%s` already exists"
-    ProjectNotFound = "Project `%s` not found in `%s`"
-    FailedGetProjectsInfo = "Error when getting projects info: %s"
-    FailedSaveProject = "Error when saving project: %s"
-    FailedLoadProject = "Error when loading project: %s"
+    ProjectAlreadyExists = {"ru": "Проект `%s` уже существует",
+                            "eng": "Project `%s` already exists"}
+    ProjectNotFound = {"ru": "Проект `%s` не найден по пути: `%s`",
+                       "eng": "Project `%s` not found in `%s`"}
+    FailedGetProjectsInfo = {"ru": "Не удалось получить информацию о проекте. %s",
+                             "eng": "Error when getting projects info: %s"}
+    FailedSaveProject = {"ru": "Не удалось сохранить проект. %s",
+                         "eng": "Error when saving project: %s"}
+    FailedLoadProject = {"ru": "Не удалось загрузить проект. %s",
+                         "eng": "Error when loading project: %s"}
     # Dataset
-    FailedChoiceDataset = "Error when choosing dataset: %s"
-    FailedDeleteDataset = "Dataset could not be deleted: %s"
-    DatasetCanNotBeDeleted = "Dataset `%s` from group `%s` can't be deleted"
-    FailedGetProgressDatasetChoice = (
-        "Could not get the progress of the dataset choice: %s"
-    )
-    FailedGetDatasetsInfo = "Error when getting datasets info: %s"
-    FailedLoadDatasetsSource = "Error when loading datasets sour: %s"
-    FailedLoadProgressDatasetsSource = (
-        "Error when loading progress of datasets info: %s"
-    )
-    FailedGetDatasetsSources = "Could not get the datasets info: %s"
-    FailedCreateDataset = "Ошибка создания датасета: %s"
+    FailedChoiceDataset = {"ru": "Не удалось выбрать датасет. %s",
+                           "eng": "Error when choosing dataset: %s"}
+    FailedDeleteDataset = {"ru": "Не удалось удалить датасет. %s",
+                           "eng": "Dataset could not be deleted: %s"}
+    DatasetCanNotBeDeleted = {"ru": "Датасет `%s` из группы `%s` не был удален",
+                              "eng": "Dataset `%s` from group `%s` can't be deleted"}
+    FailedGetProgressDatasetChoice = {"ru": "Не удалось получить прогресс выбора датасета. %s",
+                                      "eng": "Could not get the progress of the dataset choice: %s"}
+    FailedGetDatasetsInfo = {"ru": "Не удалось получить информацию о датасете. %s",
+                             "eng": "Error when getting datasets info: %s"}
+    FailedLoadDatasetsSource = {"ru": "Не удалось загрузить исходники датасета. %s",
+                                "eng": "Error when loading datasets source: %s"}
+    FailedLoadProgressDatasetsSource = {"ru": "Не удалось получить прогресс выбора датасета. %s",
+                                        "eng": "Error when loading progress of datasets info: %s"}
+    FailedGetDatasetsSources = {"ru": "Не удалось получить список исходников датасетов. %s",
+                                "eng": "Could not get the datasets sources info: %s"}
+    FailedCreateDataset = {"ru": "Не удалось создать датасет. %s",
+                           "eng": "Could not create dataset. %s"}
     # Modeling
-    FailedGetModelsList = "Could not get the models list: %s"
-    FailedGetModel = "Error when getting the model: %s"
-    FailedValidateModel = "Error when validating the model: %s"
-    FailedUpdateModel = "Error when updating the model: %s"
-    FailedCreateModel = "Error when creating the model: %s"
-    FailedDeleteModel = "Error when deleting the model: %s"
+    ModelAlreadyExists = {"ru": "Модель `%s` уже существует",
+                          "eng": "Model `%s` already exists"}
+    FailedGetModelsList = {"ru": "Не удалось получить список моделей. %s",
+                           "eng": "Could not get the models list: %s"}
+    FailedGetModel = {"ru": "Не удалось получить модель. %s",
+                      "eng": "Error when getting the model: %s"}
+    FailedValidateModel = {"ru": "Не удалось провести валидацию модели. %s",
+                           "eng": "Error when validating the model: %s"}
+    FailedUpdateModel = {"ru": "Не удалось обновить модель. %s",
+                         "eng": "Error when updating the model: %s"}
+    FailedCreateModel = {"ru": "Не удалось создать модель. %s",
+                         "eng": "Error when creating the model: %s"}
+    FailedDeleteModel = {"ru": "Не удалось удалить модель. %s",
+                         "eng": "Error when deleting the model: %s"}
     # Training
-    FailedStartTrain = "Error when start training model: %s"
-    FailedStopTrain = "Error when stop training model: %s"
-    FailedCleanTrain = "Error when clean training model: %s"
-    FailedSetInteractiveConfig = "Error when setting interactive config: %s"
-    FailedGetTrainingProgress = (
-        "Could not get the progress of the training progress: %s"
-    )
+    FailedStartTrain = {"ru": "Не удалось начать обучение. %s",
+                        "eng": "Error when start training. %s"}
+    FailedStopTrain = {"ru": "Ошибка при попытке остановить обучение: %s",
+                       "eng": "Error when stop training model: %s"}
+    FailedCleanTrain = {"ru": "Не удалось очистить обучение. %s",
+                        "eng": "Error when clean training model: %s"}
+    FailedSetInteractiveConfig = {"ru": "Не удалось обновить параметры обучения. %s",
+                                  "eng": "Error when setting interactive config: %s"}
+    FailedGetTrainingProgress = {"ru": "Не удалось получить прогресс обучения. %s",
+                                 "eng": "Could not get the progress of the training progress: %s"}
     # Deploy
-    FailedUploadDeploy = "Error when uploading deploy: %s"
-    FailedGetUploadDeployResult = "Error when getting upload deploy result: %s"
+    FailedUploadDeploy = {"ru": "Не удалось загрузить деплой. %s",
+                          "eng": "Error when uploading deploy: %s"}
+    FailedGetUploadDeployResult = {"ru": "Не удалось получить прогресс загрузки деплоя. %s",
+                                   "eng": "Error when getting upload deploy result: %s"}
 
 
 # Base Exceptions
@@ -59,13 +84,13 @@ class ExchangeBaseException(Exception):
 
     def __init__(self, *args, **kwargs):
         if not args:
-            args = (self.Meta.message.value,)
+            args = (self.Meta.message.value.get(kwargs.get('lang', 'ru')),)
         super().__init__(*args)
 
 
 class ValueException(ExchangeBaseException):
-    def __init__(self, __value: Any):
-        super().__init__(self.Meta.message.value % str(__value))
+    def __init__(self, __value: Any, lang: str = 'ru'):
+        super().__init__(self.Meta.message.value.get(lang) % str(__value))
 
 
 # Agent
@@ -80,16 +105,16 @@ class CallMethodNotFoundException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.CallMethodNotFound
 
-    def __init__(self, __class: Any, __method: str):
-        super().__init__(self.Meta.message.value % (str(__class), str(__method)))
+    def __init__(self, __class: Any, __method: str, lang: str = 'ru'):
+        super().__init__(self.Meta.message.value.get(lang) % (str(__class), str(__method)))
 
 
 class MethodNotCallableException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.MethodNotCallable
 
-    def __init__(self, __class: Any, __method: str):
-        super().__init__(self.Meta.message.value % (str(__method), str(__class)))
+    def __init__(self, __class: Any, __method: str, lang: str = 'ru'):
+        super().__init__(self.Meta.message.value.get(lang) % (str(__method), str(__class)))
 
 
 # Project exceptions
@@ -114,8 +139,8 @@ class ProjectNotFoundException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.ProjectNotFound
 
-    def __init__(self, __project: str, __target: Path):
-        super().__init__(self.Meta.message.value % ((str(__project)), str(__target)))
+    def __init__(self, __project: str, __target: Path, lang: str = 'ru'):
+        super().__init__(self.Meta.message.value.get(lang) % ((str(__project)), str(__target)))
 
 
 class ProjectAlreadyExistsException(ValueException):
@@ -165,8 +190,8 @@ class DatasetCanNotBeDeletedException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.DatasetCanNotBeDeleted
 
-    def __init__(self, __dataset: str, __group: str):
-        super().__init__(self.Meta.message.value % ((str(__dataset)), str(__group)))
+    def __init__(self, __dataset: str, __group: str, lang: str = 'ru'):
+        super().__init__(self.Meta.message.value.get(lang) % ((str(__dataset)), str(__group)))
 
 
 class FailedCreateDatasetException(ValueException):
