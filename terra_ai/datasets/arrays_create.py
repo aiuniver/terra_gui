@@ -1286,7 +1286,7 @@ class CreateArray(object):
         return array
 
     @staticmethod
-    def postprocess_results(array, options: DatasetData) -> dict:
+    def postprocess_results(array, options: DatasetData, save_path: str = "") -> dict:
         return_data = {}
         for i, output_id in enumerate(options.outputs.keys()):
             if len(options.outputs.keys()) > 1:
@@ -1300,7 +1300,7 @@ class CreateArray(object):
                 )
             elif options.outputs[output_id].task == LayerOutputTypeChoice.Segmentation:
                 return_data[output_id] = CreateArray().postprocess_segmentation(
-                    postprocess_array, options.outputs[output_id], output_id
+                    postprocess_array, options.outputs[output_id], output_id, save_path
                 )
         return return_data
 
@@ -1315,7 +1315,7 @@ class CreateArray(object):
         return labels_from_array
 
     @staticmethod
-    def postprocess_segmentation(array: np.ndarray, options: DatasetOutputsData, output_id: int) -> list:
+    def postprocess_segmentation(array: np.ndarray, options: DatasetOutputsData, output_id: int, save_path: str) -> list:
         array = np.expand_dims(np.argmax(array, axis=-1), axis=-1)
         for color_idx in range(len(options.classes_colors)):
             array = np.where(
@@ -1327,7 +1327,7 @@ class CreateArray(object):
         for i, img in enumerate(array):
             img = tensorflow.keras.utils.array_to_img(img)
             img = img.convert('RGB')
-            img_save_path = f"/tmp/image_segmentation_postprocessing_{i}_output_{output_id}.webp"
+            img_save_path = os.path.join(save_path, f"image_segmentation_postprocessing_{i}_output_{output_id}.webp")
             img.save(img_save_path, 'webp')
             img_from_array.append(img_save_path)
 

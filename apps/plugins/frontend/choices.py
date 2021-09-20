@@ -237,7 +237,7 @@ class ColumnProcessingTypeChoice(str, Enum):
     Text = "Текст"
     Audio = "Аудио"
     Video = "Видео"
-    ImageSegmentation = "Сегментация изображений"
+    Segmentation = "Сегментация"
     Classification = "Классификация"
     Regression = "Регрессия"
     Timeseries = "Временные ряды"

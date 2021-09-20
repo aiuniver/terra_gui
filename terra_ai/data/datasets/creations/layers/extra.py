@@ -26,7 +26,7 @@ class MinMaxScalerData(BaseMixinData):
 
 
 class ColumnProcessingData(BaseMixinData):
-    cols_names: Dict[str, List[str]] = {}
+    cols_names: Dict[int, List[int]] = {}
 
 
 class ParametersImageData(MinMaxScalerData, SourcesPathsData, ColumnProcessingData):
