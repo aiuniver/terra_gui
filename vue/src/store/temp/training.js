@@ -767,30 +767,30 @@ const data = {
 
 const config = {
   "loss_graphs": [
-      {
-          "id": 1,
-          "output_idx": 2,
-          "show": "model"
-      },
-      {
-          "id": 2,
-          "output_idx": 2,
-          "show": "classes"
-      }
+      // {
+      //     "id": 1,
+      //     "output_idx": 2,
+      //     "show": "model"
+      // },
+      // {
+      //     "id": 2,
+      //     "output_idx": 2,
+      //     "show": "classes"
+      // }
   ],
   "metric_graphs": [
-      {
-          "id": 1,
-          "output_idx": 2,
-          "show": "model",
-          "show_metric": "DiceCoef"
-      },
-      {
-          "id": 2,
-          "output_idx": 2,
-          "show": "classes",
-          "show_metric": "DiceCoef"
-      }
+      // {
+      //     "id": 1,
+      //     "output_idx": 2,
+      //     "show": "model",
+      //     "show_metric": "DiceCoef"
+      // },
+      // {
+      //     "id": 2,
+      //     "output_idx": 2,
+      //     "show": "classes",
+      //     "show_metric": "DiceCoef"
+      // }
   ],
   "intermediate_result": {
       "show_results": false,
