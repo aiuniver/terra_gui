@@ -172,20 +172,17 @@ class CreateDataset(object):
                 name = cols_names_dict[name_index]
                 instructions_data = None
                 for worker in put.parameters.cols_names[name_index]:  # На будущее после 1 октября - очень аккуратно!
-                    self.tags[put.id][f'{put.id}_{name}'] = decamelize(self.columns_processing[worker].type)
+                    self.tags[put.id][f'{put.id}_{name}'] = decamelize(self.columns_processing[str(worker)].type)
                     list_of_data = dataframe.loc[:, name].to_numpy().tolist()
 
                     instr = getattr(CreateArray(),
-                                    f'instructions_{decamelize(self.columns_processing[worker].type)}')(list_of_data, **{'cols_names': f'{put.id}_{name}', 'put': put.id}, **self.columns_processing[worker].parameters.native())
+                                    f'instructions_{decamelize(self.columns_processing[str(worker)].type)}')(list_of_data, **{'cols_names': f'{put.id}_{name}', 'put': put.id}, **self.columns_processing[str(worker)].parameters.native())
                     paths_list = [os.path.join(self.source_path, elem) for elem in instr['instructions']]
                     instructions_data = InstructionsData(
                         **getattr(CreateArray(),
-                                  f"cut_{decamelize(self.columns_processing[worker].type)}")(paths_list,
-                                                                                             self.temp_directory,
-                                                                                             os.path.join(
-                                                                                                 self.paths.sources,
-                                                                                                 f'{put.id}_{name}'),
-                                                                                             **instr['parameters']))
+                                  f"cut_{decamelize(self.columns_processing[str(worker)].type)}")(
+                            paths_list, self.temp_directory, os.path.join(self.paths.sources, f'{put.id}_{name}'),
+                            **instr['parameters']))
                     instructions_data.instructions = [
                         os.path.join('sources', instructions_data.parameters['cols_names'],
                                      path.replace(str(self.source_path) + os.path.sep, '')) for path in
