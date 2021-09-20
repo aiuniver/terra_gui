@@ -828,7 +828,7 @@ class InteractiveCallback:
                     for cl in classes:
                         class_percent[self.dataset_config.get("outputs").get(out).get("classes_names")[cl]] = np.round(
                             np.sum(self.y_true.get(data_type).get(out)[:, :, :, cl]) * 100
-                            / np.prod(self.y_true.get(data_type).get(out)[:, :, :, 0].shape))
+                            / np.prod(self.y_true.get(data_type).get(out)[:, :, :, 0].shape)).astype("float").tolist()
                         class_count[self.dataset_config.get("outputs").get(out).get("classes_names")[cl]] = 0
 
                     for img_array in np.argmax(self.y_true.get(data_type).get(out), axis=-1):
@@ -838,7 +838,7 @@ class InteractiveCallback:
                                     self.dataset_config.get("outputs").get(out).get("classes_names")[cl]
                                 ] += 1
                     dataset_balance[out][data_type]["presence_balance"] = class_count
-                    dataset_balance[out][data_type]["square_balance"] = class_percent.tolist()
+                    dataset_balance[out][data_type]["square_balance"] = class_percent
             if (
                     self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation
                     and self.dataset_config.get("outputs").get(out).get("encoding") == 'ohe'
