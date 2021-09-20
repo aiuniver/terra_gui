@@ -1,4 +1,4 @@
-import { createInputData, cloneInputData, changeStructTable, getNameToId } from '../const/datasets';
+import { createInputData, cloneInputData, changeStructTable, getIdToName } from '../const/datasets';
 export default {
   namespaced: true,
   state: () => ({
@@ -59,25 +59,27 @@ export default {
     },
   },
   actions: {
-    async createDataset({ commit, dispatch, state: { inputData, sourcePath }, rootState: { tables: { saveCols, handlers } } }, data) {
+    async createDataset({ commit, dispatch, state: { inputData, sourcePath, filesSource }, rootState: { tables: { saveCols, handlers } } }, data) {
       commit("settings/SET_OVERLAY", true, { root: true });
       const newDataset = data
       const colsNames = {}
+
       for (let key in saveCols) {
         colsNames[key] = {}
         saveCols[key].forEach(el => {
           console.log(el)
-          if (!colsNames[key][el.name]) {
-            colsNames[key][el.name] = []
+          const index = getIdToName(filesSource, el)
+          if (!colsNames[key][index]) {
+            colsNames[key][index] = []
           }
-          if (el.value && !colsNames[key][el.name].includes(el.name)) {
-            colsNames[key][el.name].push(getNameToId(handlers, el.value))
+          if (el.value && !colsNames[key][index].includes(index)) {
+            colsNames[key][index].push(el.value)
           }
 
           // colsNames[key][el.label].push(el.value)
         })
       }
-      console.log(handlers)
+      console.log(filesSource)
       console.log(colsNames)
       const inputs = inputData.filter(item => item.layer === 'input').map(item => {
         item.parameters.cols_names = colsNames[item.id]
@@ -88,10 +90,10 @@ export default {
         item.parameters.cols_names = colsNames[item.id]
         return item
       })
-      newDataset.obworkers = {}
+      newDataset.columns_processing = {}
       handlers.forEach(el => {
         console.log(el)
-        newDataset.obworkers[el.id] = el
+        newDataset.columns_processing[el.id] = el
       })
       newDataset.source_path = sourcePath
       newDataset.inputs = inputs

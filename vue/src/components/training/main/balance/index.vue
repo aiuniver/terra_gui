@@ -60,8 +60,7 @@ export default {
       }
       this.$store.dispatch('trainings/setTrainDisplay', data)
 
-      const res = await this.$store.dispatch('trainings/interactive', this.$store.getters['trainings/getTrainDisplay'])
-      console.log(`response`, res);
+      await this.$store.dispatch('trainings/interactive', this.$store.getters['trainings/getTrainDisplay'])
     }
   }
 };

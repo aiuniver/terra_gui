@@ -14,8 +14,8 @@ export default {
     predict: predict_text,
     info: '',
     states: {},
-    trainData: {},
-    // trainData: data,
+    // trainData: {},
+    trainData: data,
     trainUsage: {},
     trainDisplay: config,
     buttons: {
@@ -29,11 +29,11 @@ export default {
       },
       clear: {
         title: "Сбросить",
-        visible: true
+        visible: false
       },
       save: {
         title: "Сохранить",
-        visible: true
+        visible: false
       }
     }
   }),
@@ -81,6 +81,7 @@ export default {
       }).filter(item => item)
       const res = await dispatch('axios', { url: '/training/start/', data }, { root: true });
       dispatch('setButtons', res);
+      dispatch('setTrainData', {});
       return res
     },
     async stop({ dispatch }, data) {
@@ -150,7 +151,7 @@ export default {
       return trainUsage || {};
     },
     getTrainData: ({ trainData }) => (key) => {
-      return trainData?.[key] || {};
+      return trainData?.[key];
     },
     getTrainDisplay: ({ trainDisplay }) => {
       return trainDisplay;
