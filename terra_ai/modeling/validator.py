@@ -833,7 +833,7 @@ class LayerValidation:
         comment = self.input_dimension_validation()
         if comment:
             return comment
-        comment = self.specific_parameters_validation()
+        comment = self.specific_parameters_validation
         if comment:
             return comment
         else:
@@ -934,6 +934,7 @@ class LayerValidation:
             else:
                 return None
 
+    @property
     def specific_parameters_validation(self) -> str:
         """Validate specific layer parameters or its combination"""
 
@@ -1056,6 +1057,7 @@ class LayerValidation:
                     "using `weights` as `imagenet` with `include_top` as true",
                     1000,
                     self.layer_parameters.get('classes'))
+
             elif self.layer_type == "InceptionV3":
                 if self.layer_parameters.get("include_top") and self.inp_shape[0][
                                                                 1:
@@ -1119,11 +1121,33 @@ class LayerValidation:
                     self.layer_parameters.get("include_top")
                     and self.layer_parameters.get("weights")
                     and self.layer_parameters.get("classifier_activation") != "softmax"
+                    and self.layer_parameters.get("classifier_activation") is not None
                 ):
                     return ValidatorMessages.ActivationFunctionShouldBe.value % (
                         "using pretrained weights, with `include_top=True`",
                         "`None` or `softmax`"
                     )
+
+            elif self.layer_type == "DenseNet121":
+                if self.layer_parameters.get("include_top") and self.inp_shape[0][1:] != (224, 224, 3):
+
+                    return ValidatorMessages.InputShapeMustBeOnly.value % (
+                        "'include_top'=True",
+                        (224, 224, 3),
+                        self.inp_shape[0][1:]
+                    )
+                elif (
+                        not self.layer_parameters.get("include_top")
+                        and self.inp_shape[0][1] < 32
+                        or self.inp_shape[0][2] < 32
+                        or self.inp_shape[0][3] < 3
+                ):
+                    return ValidatorMessages.InputShapeMustBeInEchDim.value % (
+                        "greater or equal",
+                        (32, 32, 3),
+                        self.inp_shape[0][1:]
+                    )
+
             else:
                 pass
 

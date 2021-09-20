@@ -104,7 +104,7 @@ from . import (
     # TextVector,
     # MobileNetV3Large,
     # MobileNetV3Small,
-    # DenseNet121,
+    DenseNet121,
     # DenseNet169,
     # DenseNet201,
     # EfficientNetB0,
