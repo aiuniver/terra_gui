@@ -44,6 +44,7 @@ class UploadAPIView(BaseAPIView):
                     "source": Path("./TerraAI/tmp"),
                     "stage": 1,
                     "deploy": serializer.validated_data.get("deploy"),
+                    "env": "v1",
                     "user": {
                         "login": settings.USER_LOGIN,
                         "name": settings.USER_NAME,
