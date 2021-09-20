@@ -445,6 +445,11 @@ class LayerResNet50V2Data(LayerMixinData):
     extra: types.ResNet50V2.ParametersExtraData = types.ResNet50V2.ParametersExtraData()
 
 
+class LayerResNet101V2Data(LayerMixinData):
+    main: types.ResNet101V2.ParametersMainData = types.ResNet101V2.ParametersMainData()
+    extra: types.ResNet101V2.ParametersExtraData = types.ResNet101V2.ParametersExtraData()
+
+
 class LayerDenseNet121Data(LayerMixinData):
     main: types.DenseNet121.ParametersMainData = types.DenseNet121.ParametersMainData()
     extra: types.DenseNet121.ParametersExtraData = types.DenseNet121.ParametersExtraData()

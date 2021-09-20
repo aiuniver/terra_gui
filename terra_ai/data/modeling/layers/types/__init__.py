@@ -124,7 +124,7 @@ from . import (
     #  ResNet101,
     #  ResNet152,
     ResNet50,
-    # ResNet101V2,
+    ResNet101V2,
     # ResNet152V2,
     ResNet50V2,
     Xception,
