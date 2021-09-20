@@ -40,7 +40,7 @@ export default {
   }),
   computed: {
     values() {
-      console.log(this.plot_data[0]);
+      // console.log(this.plot_data[0]);
       return this.plot_data?.[0]?.values || [];
     },
     labels() {

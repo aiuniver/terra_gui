@@ -25,6 +25,7 @@ from apps.plugins.frontend.choices import (
     LayerVideoModeChoice,
     LayerDataframeAlignBaseMethodChoice,
     LayerYoloVersionChoice,
+    ColumnProcessingTypeChoice,
 )
 
 from ..fields import DirectoryPathField, DirectoryOrFilePathField
@@ -116,12 +117,12 @@ class LayerParametersAudioSerializer(MinMaxScalerSerializer, LayerParametersSeri
         _audio_mode = data.get("audio_mode")
         if _audio_mode == LayerAudioModeChoice.completely.name:
             self.fields.get("max_seconds").required = True
-            data["length"] = None
-            data["step"] = None
+            data.pop("length", None)
+            data.pop("step", None)
         elif _audio_mode == LayerAudioModeChoice.length_and_step.name:
             self.fields.get("length").required = True
             self.fields.get("step").required = True
-            data["max_seconds"] = None
+            data.pop("max_seconds", None)
 
         super().__init__(instance=instance, data=data, **kwargs)
 
@@ -143,35 +144,20 @@ class LayerParametersVideoSerializer(MinMaxScalerSerializer, LayerParametersSeri
         _video_mode = data.get("video_mode")
         if _video_mode == LayerAudioModeChoice.completely.name:
             self.fields.get("max_frames").required = True
+            data.pop("length", None)
+            data.pop("step", None)
         elif _video_mode == LayerAudioModeChoice.length_and_step.name:
             self.fields.get("length").required = True
             self.fields.get("step").required = True
+            data.pop("max_frames", None)
 
         super().__init__(instance=instance, data=data, **kwargs)
 
 
-class LayerParametersDataframeSerializer(
-    MinMaxScalerSerializer, LayerParametersSerializer
-):
-    separator = serializers.CharField()
-    transpose = serializers.BooleanField(default=False)
-    align_base = serializers.BooleanField(default=False)
-    align_base_method = serializers.ChoiceField(
-        required=False, choices=LayerDataframeAlignBaseMethodChoice.items_tuple()
+class LayerParametersDataframeSerializer(LayerParametersSerializer):
+    cols_names = serializers.DictField(
+        child=serializers.ListField(child=serializers.IntegerField()), default=dict
     )
-    example_length = serializers.IntegerField(required=False, min_value=1)
-    length = serializers.IntegerField(required=False, min_value=1)
-    step = serializers.IntegerField(required=False, min_value=1)
-    scaler = serializers.ChoiceField(
-        required=False, choices=LayerScalerChoice.items_tuple()
-    )
-
-    def __init__(self, instance=None, data=None, **kwargs):
-        if data.get("align_base"):
-            self.fields.get("align_base_method").required = True
-            self.fields.get("scaler").required = True
-
-        super().__init__(instance=instance, data=data, **kwargs)
 
 
 class LayerParametersClassificationSerializer(LayerParametersSerializer):
@@ -277,6 +263,11 @@ class CreateInfoSerializer(serializers.Serializer):
         return super().validate(attrs)
 
 
+class CreateColumnProcessingSerializer(serializers.Serializer):
+    type = serializers.ChoiceField(choices=ColumnProcessingTypeChoice.items_tuple())
+    parameters = serializers.DictField()
+
+
 class CreateSerializer(serializers.Serializer):
     alias = serializers.SerializerMethodField()
     name = serializers.CharField()
@@ -285,6 +276,9 @@ class CreateSerializer(serializers.Serializer):
     info = CreateInfoSerializer()
     tags = serializers.ListSerializer(child=CreateTagSerializer(), default=[])
     use_generator = serializers.BooleanField(default=False)
+    columns_processing = serializers.DictField(
+        child=CreateColumnProcessingSerializer(), default=dict
+    )
     inputs = serializers.ListSerializer(child=serializers.DictField())
     outputs = serializers.ListSerializer(child=serializers.DictField())
 

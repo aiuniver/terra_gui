@@ -17,6 +17,9 @@
     <div class="t-texts__content">
       <Table :data="data" :settings="settings" />
     </div>
+    <div v-if="!isData" class="t-texts__empty">
+      Нет данных
+    </div>
   </div>
 </template>
 
@@ -38,7 +41,7 @@ export default {
   }),
   computed: {
     layers() {
-      const obj = this.data['1'].data;
+      const obj = this.data?.['1']?.data || {};
       const layres = [];
       for (let key in obj) {
         layres.push(key);
@@ -48,6 +51,9 @@ export default {
     data() {
       return this.$store.getters['trainings/getTrainData']('progress_table') || {};
     },
+    isData() {
+      return Object.values(this.data).length
+    }
   },
   methods: {
     change(layer, { name, value }) {
@@ -95,6 +101,15 @@ export default {
   &__content {
     display: flex;
     height: 100%;
+  }
+  &__empty {
+    display: flex;
+    height: 100%;
+    justify-content: center;
+    padding-top: 10px;
+    font-size: 16px;
+    opacity: 0.5;
+    user-select: none;
   }
 }
 </style>

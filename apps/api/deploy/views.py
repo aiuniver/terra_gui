@@ -5,8 +5,6 @@ from pydantic import ValidationError
 
 from django.conf import settings
 
-from apps.plugins.project import project_path
-
 from terra_ai.agent import agent_exchange
 from terra_ai.agent.exceptions import ExchangeBaseException
 from terra_ai.exceptions.base import TerraBaseException
@@ -24,9 +22,7 @@ class InfoAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         return BaseResponseSuccess(
             agent_exchange(
-                "deploy_collection",
-                dataset=request.project.dataset,
-                path=project_path.datasets,
+                "deploy_collection", dataset=request.project.dataset
             ).native()
         )
 
@@ -44,6 +40,7 @@ class UploadAPIView(BaseAPIView):
                     "source": Path("./TerraAI/tmp"),
                     "stage": 1,
                     "deploy": serializer.validated_data.get("deploy"),
+                    "env": "v1",
                     "user": {
                         "login": settings.USER_LOGIN,
                         "name": settings.USER_NAME,

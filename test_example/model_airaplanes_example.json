@@ -1,0 +1,15 @@
+{
+  "model_name": "airplanes",
+  "weight": "test_example/airplanes",
+  "inputs": {
+    "1": {
+      "name": "\u0412\u0445\u043e\u0434 1", "datatype": "2D", "dtype": "uint8", "shape": [160, 192, 3],
+      "num_classes": 1, "classes_names": ["\u0421\u0430\u043c\u043e\u043b\u0435\u0442\u044b"], "classes_colors": null,
+      "encoding": "none", "task": "Image"}},
+  "outputs": {
+    "2": {
+      "name": "\u0412\u044b\u0445\u043e\u0434 2", "datatype": "2D", "dtype": "uint8", "shape": [160, 192, 2],
+      "num_classes": 2, "classes_names": ["\u041d\u0435\u0431\u043e", "\u0421\u0430\u043c\u043e\u043b\u0435\u0442"],
+      "classes_colors": null, "encoding": "ohe", "task": "Segmentation"}
+  }
+}
