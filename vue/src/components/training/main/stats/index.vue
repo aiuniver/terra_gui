@@ -18,7 +18,7 @@
     <div class="t-scatters__content">
       <template v-for="(output, key, i) of statisticData">
         <component :is="'Heatmap'"
-        v-if="isShowKeys.includes(key)"
+        v-if="isShowKeys.includes(+key)"
         v-bind="output"
         :key="i" />
       </template>
