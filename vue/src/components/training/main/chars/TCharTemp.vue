@@ -4,8 +4,7 @@
       <i class="t-icon icon-add-chart"></i>
       Добавить график
     </div>
-    <div class="t-char-temp__header">
-    </div>
+    <div class="t-char-temp__header"></div>
     <div class="t-char-temp__main" v-if="graphicShow">
       <Plotly :data="data" :layout="layout" :display-mode-bar="false"></Plotly>
     </div>
