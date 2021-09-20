@@ -846,7 +846,7 @@ Defaults = {
                                 },
                             },
                         ],
-                        "ImageSegmentation": [
+                        "Segmentation": [
                             {
                                 "type": "number",
                                 "label": "Диапазон каналов",
