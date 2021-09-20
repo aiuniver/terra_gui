@@ -225,7 +225,7 @@ export default {
       console.log(res);
       if (res) {
         const { finished, message, percent, data } = res.data;
-        console.log(percent);
+        // console.log(percent);
         this.$store.dispatch('messages/setProgressMessage', message);
         this.$store.dispatch('messages/setProgress', percent);
         if (data) {
@@ -238,9 +238,7 @@ export default {
         if (finished) {
           console.log(res);
         } else {
-          if (!this.learningStop) {
-            this.debounce();
-          }
+          this.debounce(this.learningStop);
         }
       } else {
         console.log(res);
@@ -260,8 +258,11 @@ export default {
     },
   },
   created() {
-    this.debounce = debounce(() => {
-      this.progress()
+    this.debounce = debounce(stop => {
+      console.log(stop)
+      if (!stop) {
+        this.progress();
+      }
     }, 1000);
   },
 };

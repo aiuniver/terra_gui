@@ -1,13 +1,9 @@
 <template>
-  <div class="charts">
+  <div class="t-charts">
     <!-- <div class="charts__title">Графики</div> -->
-    <div class="charts__content">
-      <div class="chart">
-        <TCharTemp />
-      </div>
-      <div v-for="(char, i) of lossGraphs" :key="'char1_' + i" class="chart">
-        <TChar :char="char" />
-      </div>
+    <div class="t-charts__content">
+        <TCharTemp class="t-chart" />
+        <TChar class="t-chart" v-for="(char, i) of lossGraphs" :key="'char1_' + i" :char="char" :index="i" />
     </div>
   </div>
 </template>
@@ -22,12 +18,15 @@ export default {
     TChar,
     TCharTemp,
   },
+  props: {
+    metric: String
+  },
   computed: {
     ...mapGetters({
       chars: 'trainings/getChars',
     }),
     lossGraphs() {
-      return this.$store.getters['trainings/getTrainData']('loss_graphs') || [];
+      return this.$store.getters['trainings/getTrainData'](this.metric) || [];
     },
   },
   mounted() {
@@ -38,20 +37,17 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.chart {
+.t-chart {
   width: 48%;
   margin: 0 0 20px 0;
 }
-.charts {
+.t-charts {
   margin-bottom: 20px;
+
   // &__title {
   // }
   &__content {
     margin-top: 10px;
-    display: -webkit-box;
-    display: -moz-box;
-    display: -ms-flexbox;
-    display: -webkit-flex;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;

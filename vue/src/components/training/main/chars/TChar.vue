@@ -1,5 +1,5 @@
 <template>
-  <div class="t-char">
+  <div class="t-char" :style="order">
     <div class="t-char__header" v-click-outside="outside">
       <div class="t-char__header--roll">
         <i :class="['t-icon', 'icon-training-roll-down']" :title="'roll down'" @click="show"></i>
@@ -15,7 +15,7 @@
           :title="'roll down'"
           @click="popMenuShow = !popMenuShow"
         ></i>
-        <PopUpMenu v-if="popMenuShow" :data="['Loss', 'Metrics']" :metrics="['Accuracy', 'Hinge']" />
+        <PopUpMenu v-if="popMenuShow" :data="['По всей модели', 'По классам']" :metrics="['Accuracy', 'Hinge']" @event="event"/>
       </div>
     </div>
     <div class="t-char__main" v-if="graphicShow">
@@ -34,6 +34,7 @@ export default {
       type: Object,
       default: () => {},
     },
+    index: Number,
   },
   components: {
     Plotly,
@@ -89,6 +90,9 @@ export default {
     },
   }),
   computed: {
+    order() {
+      return { order: !this.graphicShow ? 999 : this.index };
+    },
     layout() {
       const layout = this.defLayout;
       if (this.char) {
@@ -110,9 +114,14 @@ export default {
     console.log(this.char);
   },
   methods: {
+    event(event){
+      if (event === 'hide') {
+        this.graphicShow = !this.graphicShow;
+      }
+    },
     show() {
       if (this.graphicShow) {
-        this.popMenuShow = false
+        this.popMenuShow = false;
       }
       this.graphicShow = !this.graphicShow;
     },
@@ -156,6 +165,9 @@ export default {
   border-radius: 4px;
   box-shadow: 0 2px 10px 0 rgb(0 0 0 / 25%);
   position: relative;
+  &--order {
+    order: 100;
+  }
   &__main {
   }
   &__header {

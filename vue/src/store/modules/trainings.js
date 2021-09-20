@@ -14,8 +14,8 @@ export default {
     predict: predict_text,
     info: '',
     states: {},
-    // trainData: {},
-    trainData: data,
+    trainData: {},
+    // trainData: data,
     trainUsage: {},
     trainDisplay: config,
     buttons: {
