@@ -4,11 +4,10 @@
       <div class="wrapper">
         <at-collapse @on-change="change" class="mt-3">
           <at-collapse-item class="mt-3" title="Лоссы" center>
-            <LoadSpiner v-show="loading" />
-            <LossGraphs v-if="show" @isLoad="loading = false" />
+            <Graphs metric="loss_graphs"/>
           </at-collapse-item>
           <at-collapse-item class="mt-3" title="Метрики" center>
-            <MetricGraphs @isLoad="loading = false" />
+            <Graphs metric="metric_graphs" />
           </at-collapse-item>
           <at-collapse-item class="mt-3" title="Промежуточные результаты" center>
             <!-- <PrePesults/> -->
@@ -35,14 +34,12 @@
 
 <script>
 import { mapGetters } from 'vuex';
-// import Images from './main/images/index.vue';
-// import Images from "./main/images/index.vue";
 import Texts from './main/texts/index.vue';
 import Progress from './main/progress/';
-import LoadSpiner from '../forms/LoadSpiner.vue';
 import Stats from './main/stats';
 import Balance from './main/balance';
 import Prediction from './main/prediction';
+import Graphs from './main/chars/index';
 
 export default {
   name: 'Graphics',
@@ -51,15 +48,12 @@ export default {
     Texts,
     // Images,
     Progress,
-    LoadSpiner,
     Stats,
     Balance,
-    LossGraphs: () => import('./main/chars/LossGraphs.vue'),
-    MetricGraphs: () => import('./main/chars/MetricGraphs.vue'),
+    Graphs
   },
   data: () => ({
     collabse: [],
-    loading: true,
   }),
   computed: {
     ...mapGetters({

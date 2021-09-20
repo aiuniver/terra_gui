@@ -26,7 +26,7 @@ class MinMaxScalerData(BaseMixinData):
 
 
 class ColumnProcessingData(BaseMixinData):
-    cols_names: Dict[str, List[str]] = {}
+    cols_names: Dict[int, List[int]] = {}
 
 
 class ParametersImageData(MinMaxScalerData, SourcesPathsData, ColumnProcessingData):
@@ -97,3 +97,7 @@ class ParametersAudioData(MinMaxScalerData, SourcesPathsData, ColumnProcessingDa
             cls.__fields__["length"].required = True
             cls.__fields__["step"].required = True
         return value
+
+
+class ParametersDataframeData(SourcesPathsData, ColumnProcessingData):
+    pass

@@ -1,4 +1,8 @@
-from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice
+import tensorflow
+
+from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
+from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice, \
+    LayerOutputTypeChoice, LayerEncodingChoice
 from terra_ai.data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice, \
     LayerTextModeChoice, LayerAudioModeChoice, LayerVideoModeChoice, LayerScalerAudioChoice
 
@@ -1278,5 +1282,53 @@ class CreateArray(object):
 
     @staticmethod
     def preprocess_object_detection(array: list, **options):
-
         return array
+
+    @staticmethod
+    def postprocess_results(array, options: DatasetData) -> dict:
+        return_data = {}
+        for i, output_id in enumerate(options.outputs.keys()):
+            if len(options.outputs.keys()) > 1:
+                postprocess_array = array[i]
+            else:
+                postprocess_array = array
+
+            if options.outputs[output_id].task == LayerOutputTypeChoice.Classification:
+                return_data[output_id] = CreateArray().postprocess_classification(
+                    postprocess_array, options.outputs[output_id]
+                )
+            elif options.outputs[output_id].task == LayerOutputTypeChoice.Segmentation:
+                return_data[output_id] = CreateArray().postprocess_segmentation(
+                    postprocess_array, options.outputs[output_id], output_id
+                )
+        return return_data
+
+    @staticmethod
+    def postprocess_classification(array: np.ndarray, options: DatasetOutputsData) -> list:
+        labels = options.classes_names
+        ohe = True if options.encoding == LayerEncodingChoice.ohe else False
+        array = np.argmax(array, axis=-1) if ohe else array
+        labels_from_array = []
+        for i in array:
+            labels_from_array.append(labels[i])
+        return labels_from_array
+
+    @staticmethod
+    def postprocess_segmentation(array: np.ndarray, options: DatasetOutputsData, output_id: int) -> list:
+        array = np.expand_dims(np.argmax(array, axis=-1), axis=-1)
+        for color_idx in range(len(options.classes_colors)):
+            array = np.where(
+                array == [color_idx],
+                np.array(options.classes_colors[color_idx].as_rgb_tuple()),
+                array
+            )
+        img_from_array = []
+        for i, img in enumerate(array):
+            img = tensorflow.keras.utils.array_to_img(img)
+            img = img.convert('RGB')
+            img_save_path = f"/tmp/image_segmentation_postprocessing_{i}_output_{output_id}.webp"
+            img.save(img_save_path, 'webp')
+            img_from_array.append(img_save_path)
+
+        return img_from_array
+

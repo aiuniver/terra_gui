@@ -1,6 +1,10 @@
 from enum import Enum
 
 
+class EnvVersionChoice(str, Enum):
+    v1 = "v1"
+
+
 class TaskTypeChoice(str, Enum):
     image_segmentation = "image_segmentation"
     image_classification = "image_classification"

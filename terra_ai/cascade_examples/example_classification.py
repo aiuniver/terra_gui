@@ -1,7 +1,7 @@
 import os
 from collections import OrderedDict
 
-from terra_ai.common import ROOT_PATH, json2cascade, load_images
+from terra_ai.common import ROOT_PATH, json2model_cascade, load_images
 from terra_ai.cascades.cascade import CascadeElement, CascadeBlock
 
 import numpy as np
@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 
 # 0 is cat, 1 is dog
-cascade_pet = json2cascade(os.path.join(ROOT_PATH, "test_example/petImages/config.json"))
+cascade_pet = json2model_cascade(os.path.join(ROOT_PATH, "test_example/petImages/config.json"))
 print(cascade_pet)
 
 
