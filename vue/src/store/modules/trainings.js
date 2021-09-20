@@ -54,6 +54,9 @@ export default {
     SET_STATES(state, value) {
       state.states = { ...value };
     },
+    SET_PREDICT(state, value) {
+      state.predict = { ...value };
+    },
     SET_TRAIN(state, value) {
       state.trainData = { ...value };
     },
@@ -96,6 +99,7 @@ export default {
       return res
     },
     async interactive({ dispatch }, data) {
+      console.log(data)
       return await dispatch('axios', { url: '/training/interactive/', data }, { root: true });
     },
     async progress({ dispatch }, data) {
@@ -118,6 +122,9 @@ export default {
     },
     setTrainData({ commit }, data) {
       commit("SET_TRAIN", data);
+    },
+    setPredict({ commit }, data) {
+      commit("SET_PREDICT", data);
     },
     setTrainUsage({ commit }, data) {
       commit("SET_TRAIN_USAGE", data);
