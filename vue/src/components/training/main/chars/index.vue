@@ -1,17 +1,19 @@
 <template>
   <div class="t-charts">
     <!-- <div class="charts__title">Графики</div> -->
-    <div class="t-charts__content">
+    <div v-if="data.length" class="t-charts__content">
       <TCharTemp class="t-chart" @click.native="add" />
       <TChar
         v-for="(settings, i) of charts"
         v-bind="getChart(settings)"
         class="t-chart"
         :key="'char1_' + i"
+        :settings="settings"
         :menus="menus"
         @event="event($event, settings)"
       />
     </div>
+    <div v-else class="t-charts__empty">Нет данных</div>
   </div>
 </template>
 
@@ -70,18 +72,18 @@ export default {
     });
   },
   methods: {
-    event({ name, data}, { id }) {
+    event({ name, data }, { id }) {
       // console.log(name, data, id);
       if (data === 'remove') {
         this.remove(id);
       }
-      if(name === 'chart') {
+      if (name === 'chart') {
         this.charts = this.charts.map(item => {
           if (item.id === id) {
-            item.graphID = data
+            item.graphID = data;
           }
-          return item
-        })
+          return item;
+        });
       }
     },
     getChart({ graphID }) {
@@ -124,6 +126,15 @@ export default {
     align-content: flex-start;
     align-items: flex-start;
     gap: 2%;
+  }
+  &__empty {
+    display: flex;
+    height: 100%;
+    justify-content: center;
+    padding-top: 10px;
+    font-size: 16px;
+    opacity: 0.5;
+    user-select: none;
   }
 }
 </style>

@@ -62,6 +62,10 @@ export default {
     menus: {
       type: Array,
       default: () => []
+    },
+    settings: {
+      type: Object,
+      default: () => {}
     }
   },
   components: {
@@ -119,7 +123,7 @@ export default {
   }),
   computed: {
     order() {
-      return { order: !this.graphicShow ? 999 : this.id };
+      return { order: !this.graphicShow ? 999 : this.settings.id };
     },
     layout() {
       const layout = this.defLayout;
