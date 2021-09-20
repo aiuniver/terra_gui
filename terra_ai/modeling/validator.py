@@ -1097,8 +1097,8 @@ class LayerValidation:
                         (71, 71, 3),
                         self.inp_shape[0][1:]
                     )
-            elif self.layer_type == "VGG16" or self.layer_type == "ResNet50" \
-                    or self.layer_type == "VGG19":
+            elif self.layer_type == "VGG16" or self.layer_type == "ResNet50" or self.layer_type == "VGG19" \
+                    or self.layer_type == "ResNet50V2":
                 if self.layer_parameters.get("include_top") and self.inp_shape[0][1:] != (224, 224, 3):
 
                     return ValidatorMessages.InputShapeMustBeOnly.value % (

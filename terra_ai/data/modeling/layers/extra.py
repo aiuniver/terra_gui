@@ -195,6 +195,7 @@ class ModuleChoice(str, Enum):
     vgg16 = "tensorflow.keras.applications.vgg16"
     vgg19 = "tensorflow.keras.applications.vgg19"
     resnet50 = "tensorflow.keras.applications.resnet50"
+    resnet50v2 = "tensorflow.keras.applications.resnet_v2"
     densenet121 = "tensorflow.keras.applications.densenet"
     densenet169 = "tensorflow.keras.applications.densenet"
     densenet201 = "tensorflow.keras.applications.densenet"

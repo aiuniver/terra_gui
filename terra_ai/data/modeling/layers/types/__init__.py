@@ -126,7 +126,7 @@ from . import (
     ResNet50,
     # ResNet101V2,
     # ResNet152V2,
-    #  ResNet50V2,
+    ResNet50V2,
     Xception,
     VGG16,
     VGG19,
