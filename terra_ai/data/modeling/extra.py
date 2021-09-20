@@ -104,6 +104,7 @@ class LayerTypeChoice(str, Enum):
     ResNet50 = "ResNet50"
     ResNet50V2 = "ResNet50V2"
     ResNet101V2 = "ResNet101V2"
+    ResNet152V2 = "ResNet152V2"
     DenseNet121 = "DenseNet121"
     DenseNet169 = "DenseNet169"
     DenseNet201 = "DenseNet201"
