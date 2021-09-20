@@ -114,6 +114,12 @@ class ParametersSegmentationData(ParametersBaseData):
     height: Optional[PositiveInt]
     width: Optional[PositiveInt]
 
+    @validator("width", "height", pre=True)
+    def _validate_size(cls, value: PositiveInt) -> PositiveInt:
+        if not value:
+            value = None
+        return value
+
 
 class ParametersClassificationData(ParametersBaseData):
     one_hot_encoding: bool = True
