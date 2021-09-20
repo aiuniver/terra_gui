@@ -1,16 +1,14 @@
 import inspect
-import json
 import os
 from pathlib import Path
 
-from terra_ai import general_fucntions
-from terra_ai.cascades.cascade import BuildModelCascade
-
-from tensorflow.keras.models import load_model
 import tensorflow as tf
 
 
 ROOT_PATH = str(Path(__file__).parent.parent)
+
+
+make_path = lambda path: os.path.join(ROOT_PATH, path)
 
 
 def load_images(path):
@@ -41,37 +39,12 @@ def list2tuple(inp: dict):
     return inp
 
 
-def json2cascade(path: str):
-    with open(path) as cfg:
-        config = json.load(cfg)
+def make_preprocess(preprocess_list):
+    def fun(*x):
+        out = []
 
-    path_model = os.path.join(ROOT_PATH, config['weight'])
+        for i, (prep, element) in enumerate(zip(preprocess_list, x)):
+            out.append(prep(element))
 
-    model = load_model(path_model, compile=False, custom_objects=None)
-    model.load_weights(os.path.join(path_model, config['model_name'] + '_best.h5'))
-
-    type_model = config['tags'][0]['alias']
-    type_model_module = getattr(general_fucntions, type_model)
-
-    if config['preprocess']:
-        preprocess_functions = get_functions(getattr(type_model_module, 'preprocess'))
-
-        with open(os.path.join(ROOT_PATH, config['preprocess'])) as cfg:
-            preprocess = json.load(cfg)
-
-        preprocess = list2tuple(preprocess)
-        preprocess = [preprocess_functions[name](param) for name, param in preprocess.items()]
-        preprocess = getattr(type_model_module, 'make_preprocess')(preprocess)
-    else:
-        preprocess = None
-
-    if config['postprocessing']:  # пока так
-        postprocessing = None
-        pass
-    else:
-        postprocessing = None
-
-    model = BuildModelCascade(preprocess, model, postprocessing)
-
-    return model
-
+        return out
+    return fun

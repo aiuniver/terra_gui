@@ -1,12 +1,35 @@
 import os
 from collections import OrderedDict
+import json
+from pprint import pprint
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from terra_ai.cascades.cascade import CascadeElement, CascadeBlock
-from terra_ai.general_fucntions.image.preprocess import resize_img
-from terra_ai.common import json2cascade, ROOT_PATH, load_images
+from terra_ai.general_fucntions.image import change_size
+from terra_ai.common import json2model_cascade, ROOT_PATH, load_images
+from terra_ai.data.datasets.dataset import DatasetData
+from terra_ai.datasets.arrays_create import CreateArray
+from terra_ai.common import make_preprocess
+
+
+INPUT_TRDS_FRONT = load_images(os.path.join(ROOT_PATH, "TerraProjects/airplanes.trds/sources/1_image/Самолеты"))
+
+
+with open(os.path.join(ROOT_PATH, "test_example/airplanes/config.json")) as cfg:
+    config = json.load(cfg)
+pprint(config)
+
+data = DatasetData(**config)
+
+pprint(data.inputs.keys())
+
+for img in INPUT_TRDS_FRONT():
+
+    img = img.astype(np.int)
+    plt.imshow(img)
+    plt.show()
 
 
 def plot_mask_segmentation(predict, num_classes, classes_colors):
@@ -61,7 +84,7 @@ def plot_mask(num_classes, classes_colors):
 
 
 def masked_image(clas=1):
-    res = resize_img((192, 160))
+    res = change_size((192, 160))
 
     def mul_mask(image, mask):
         r = image[:, :, 0] * mask
@@ -81,7 +104,7 @@ def masked_image(clas=1):
 
 mask2image_cascade = CascadeElement(plot_mask(2, [[0, 0, 0], [255, 0, 0]]), "Изображение маски")
 
-cascade_air = json2cascade(os.path.join(ROOT_PATH, "test_example/airplanes/config.json"))
+cascade_air = json2model_cascade(os.path.join(ROOT_PATH, "test_example/airplanes/config.json"))
 
 INPUT_TRDS_FRONT = load_images(os.path.join(ROOT_PATH, "TerraProjects/airplanes.trds/sources/1_image/Самолеты"))
 mask_crop_cascade = CascadeElement(masked_image(1), name="Вырезание по маске")
