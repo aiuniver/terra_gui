@@ -11,6 +11,7 @@ class Cascade:
     - Этот объект вызываем (обязательно для всех функций и моделей)
     """
     name: str = "Каскад"
+    out = None
 
     def __init__(self, name: str):
         self.name = name if name is not None else self.name
@@ -26,7 +27,6 @@ class CascadeElement(Cascade):
     """
     Используются для вызова функции или модели
     """
-    out: None
 
     def __init__(self, fun: Callable, name: str = None):
         super(CascadeElement, self).__init__(name)
@@ -47,16 +47,18 @@ class CascadeOutput(Cascade):
         self.recorder = self.writer = None
 
     def choose_path(self, path: str):
-        self.writer, self.recorder = self.iter(path, **self.params)
+        out = self.iter(path, **self.params)
+
+        if isinstance(out, tuple):
+            self.writer, self.recorder = out[0], out[1]
+        else:
+            self.recorder = out
 
     def release(self):
         if self.writer:
             self.writer.release()
 
-    def __call__(self, img, path):
-        if not self.recorder:
-            self.choose_path(path)
-
+    def __call__(self, img):
         self.recorder(img)
 
 
@@ -84,24 +86,46 @@ class CascadeBlock(Cascade):
 
         global cascade
         for cascade, inp in self.adjacency_map.items():
-            if cascade(*[item if j == 'INPUT' else j.out for j in inp]) is None:
-                return None
+            cascade_input = []
+            for j in inp:
+                j = item if j == 'INPUT' else j.out
+
+                if j is None:
+                    return j
+
+                cascade_input.append(j)
+
+            cascade(*cascade_input)
 
         self.out = cascade.out
         return cascade.out
 
 
-class CompleteCascade(CascadeBlock):
-    def __init__(self, input_cascade: Callable, params: dict, adjacency_map: OrderedDict):
+class CompleteCascade(Cascade):
+    def __init__(self, input_cascade: Callable, adjacency_map: OrderedDict):
 
         self.input = input_cascade
+        self.output = []
 
-        super(CompleteCascade, self).__init__(adjacency_map)
+        for i in adjacency_map:
+            if isinstance(i, CascadeOutput):
+                self.output.append(i)
 
-    def __call__(self, input_path: str, output_path: str):
-        self.writer, self.iterator = self.input(output_path, )
+        self.cascade_block = CascadeBlock(adjacency_map)
+        super(CompleteCascade, self).__init__(self.cascade_block.name)
+
+    def __call__(self, input_path, output_path):
+
+        for i, out in enumerate(self.output):
+
+            path = output_path[:-4] + f"_{i}" + output_path[-4:]
+            out.choose_path(path)
+
         for img in self.input(input_path):
-            super(CompleteCascade, self).__call__(img)
+            self.cascade_block(img)
+
+        for i in self.output:
+            i.release()
 
 
 class BuildModelCascade(CascadeBlock):
