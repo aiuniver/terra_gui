@@ -122,7 +122,7 @@ from . import (
     #  NASNetLarge,
     NASNetMobile,
     ResNet101,
-    #  ResNet152,
+    ResNet152,
     ResNet50,
     ResNet101V2,
     ResNet152V2,
