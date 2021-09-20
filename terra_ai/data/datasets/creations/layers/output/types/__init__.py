@@ -4,7 +4,7 @@ from . import (
     Audio,
     Dataframe,
     Classification,
-    ImageSegmentation,
+    Segmentation,
     TextSegmentation,
     ObjectDetection,
     Regression,

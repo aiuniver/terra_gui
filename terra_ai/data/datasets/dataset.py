@@ -251,19 +251,21 @@ class DatasetPathsData(BaseMixinData):
     arrays: Optional[DirectoryPath]
     sources: Optional[DirectoryPath]
     instructions: Optional[DirectoryPath]
-    scaler: Optional[DirectoryPath]
-    tokenizer: Optional[DirectoryPath]
-    word2vec: Optional[DirectoryPath]
-    augmentation: Optional[DirectoryPath]
+    preprocessing: Optional[DirectoryPath]
+    # scaler: Optional[DirectoryPath]
+    # tokenizer: Optional[DirectoryPath]
+    # word2vec: Optional[DirectoryPath]
+    # augmentation: Optional[DirectoryPath]
 
     @validator(
         "arrays",
         "sources",
         "instructions",
-        "scaler",
-        "tokenizer",
-        "word2vec",
-        "augmentation",
+        "preprocessing",
+        # "scaler",
+        # "tokenizer",
+        # "word2vec",
+        # "augmentation",
         always=True,
     )
     def _validate_internal_path(cls, value, values, field) -> Path:

@@ -60,7 +60,7 @@ class CreateDataset(object):
             self.y_array = self.create_dataset_arrays(put_data=self.instructions.outputs)
             self.write_arrays(self.x_array, self.y_array)
 
-        # self.write_preprocesses_to_files()
+        self.write_preprocesses_to_files()
         self.write_instructions_to_files(creation_data=creation_data)
         self.datasetdata = DatasetData(**self.write_dataset_configure(creation_data=creation_data))
 
@@ -128,7 +128,7 @@ class CreateDataset(object):
 
         if creation_data.columns_processing:
             for worker_name, worker_params in creation_data.columns_processing.items():
-                if creation_data.columns_processing[worker_name].type == 'ImageSegmentation':
+                if creation_data.columns_processing[worker_name].type == 'Segmentation':
                     for w_name, w_params in creation_data.columns_processing.items():
                         if creation_data.columns_processing[w_name].type == 'Image':
                             creation_data.columns_processing[worker_name].parameters.height = \
@@ -140,7 +140,7 @@ class CreateDataset(object):
 
     def create_instructions(self, creation_data: CreationData) -> DatasetInstructionsData:
 
-        if self.columns_processing:
+        if creation_data.columns_processing:
             inputs = self.create_dataframe_put_instructions(data=creation_data.inputs)
             outputs = self.create_dataframe_put_instructions(data=creation_data.outputs)
         else:
@@ -158,23 +158,34 @@ class CreateDataset(object):
         put_parameters = {}
 
         for put in data:
+
+            df = pd.read_csv(put.parameters.sources_paths[0], nrows=0).columns
+            output_cols = list(put.parameters.cols_names.keys())
+            cols_names_dict = {str_idx: df[int(str_idx)] for str_idx in output_cols}
+
             self.tags[put.id] = {}
             put_columns = {}
             cols_names = list(put.parameters.cols_names.keys())
-            dataframe = pd.read_csv(put.parameters.sources_paths[0], usecols=cols_names)
-            for name in cols_names:
+            dataframe = pd.read_csv(put.parameters.sources_paths[0], usecols=[cols_names_dict[str_idx]
+                                                                              for str_idx in cols_names])
+            for idx, name_index in enumerate(cols_names):
+                name = cols_names_dict[name_index]
                 instructions_data = None
-                for worker in put.parameters.cols_names[name]:  # На будущее после 1 октября - очень аккуратно!
+                for worker in put.parameters.cols_names[name_index]:  # На будущее после 1 октября - очень аккуратно!
                     self.tags[put.id][f'{put.id}_{name}'] = decamelize(self.columns_processing[worker].type)
                     list_of_data = dataframe.loc[:, name].to_numpy().tolist()
+
                     instr = getattr(CreateArray(),
-                                    f'instructions_{decamelize(self.columns_processing[worker].type)}')(
-                        list_of_data, **{'cols_names': f'{put.id}_{name}', 'id': put.id},
-                        **self.columns_processing[worker].parameters.native())
+                                    f'instructions_{decamelize(self.columns_processing[worker].type)}')(list_of_data, **{'cols_names': f'{put.id}_{name}', 'put': put.id}, **self.columns_processing[worker].parameters.native())
                     paths_list = [os.path.join(self.source_path, elem) for elem in instr['instructions']]
                     instructions_data = InstructionsData(
                         **getattr(CreateArray(),
-                                  f"cut_{decamelize(self.columns_processing[worker].type)}")(paths_list, self.temp_directory, os.path.join(self.paths.sources, f'{put.id}_{name}'), **instr['parameters']))
+                                  f"cut_{decamelize(self.columns_processing[worker].type)}")(paths_list,
+                                                                                             self.temp_directory,
+                                                                                             os.path.join(
+                                                                                                 self.paths.sources,
+                                                                                                 f'{put.id}_{name}'),
+                                                                                             **instr['parameters']))
                     instructions_data.instructions = [
                         os.path.join('sources', instructions_data.parameters['cols_names'],
                                      path.replace(str(self.source_path) + os.path.sep, '')) for path in
@@ -186,11 +197,11 @@ class CreateDataset(object):
 
     def create_put_instructions(self, data: Union[CreationInputsList, CreationOutputsList]) -> dict:
 
-        instructions: dict = {}
-        for elem in data:
-            self.tags[elem.id] = decamelize(elem.type)
+        put_parameters: dict = {}
+        for put in data:
+            self.tags[put.id] = {f"{put.id}_{decamelize(put.type)}": decamelize(put.type)}
             paths_list: list = []
-            for paths in elem.parameters.sources_paths:
+            for paths in put.parameters.sources_paths:
                 if paths.is_dir():
                     for directory, folder, file_name in sorted(os.walk(os.path.join(self.source_directory, paths))):
                         if file_name:
@@ -198,35 +209,38 @@ class CreateDataset(object):
                             for name in sorted(file_name):
                                 paths_list.append(os.path.join(file_folder, name))
 
+            put.parameters.cols_names = f'{put.id}_{decamelize(put.type)}'
+            put.parameters.put = put.id
             temp_paths_list = [os.path.join(self.source_path, x) for x in paths_list]
-            instr = getattr(CreateArray(), f"instructions_{decamelize(elem.type)}")(temp_paths_list, **elem.native())
+            instr = getattr(CreateArray(), f"instructions_{decamelize(put.type)}")(temp_paths_list,
+                                                                                   **put.parameters.native())
 
-            if (not elem.type == LayerOutputTypeChoice.Classification) and ('dataframe' not in self.tags.values()):
-                y_classes = sorted(list(instr['instructions'].keys())) if \
-                    isinstance(instr['instructions'], dict) else instr['instructions']
+            if not put.type == LayerOutputTypeChoice.Classification:
+                y_classes = sorted(list(instr['instructions'].keys())) if isinstance(instr['instructions'], dict) else\
+                    instr['instructions']
                 self.y_cls = [os.path.basename(os.path.dirname(dir_name)) for dir_name in y_classes]
 
             instructions_data = InstructionsData(
-                **getattr(CreateArray(), f"cut_{decamelize(elem.type)}")(instr['instructions'], self.temp_directory,
-                                                                         os.path.join(self.paths.sources,
-                                                                                      f"{elem.id}_{decamelize(elem.type)}"),
-                                                                         **instr['parameters']))
-            if 'dataframe' not in self.tags.values():
-                if elem.type not in [LayerInputTypeChoice.Text, LayerOutputTypeChoice.Text,
-                                     LayerOutputTypeChoice.TextSegmentation, LayerOutputTypeChoice.Regression]:
-                    if elem.type in [LayerInputTypeChoice.Image, LayerOutputTypeChoice.Segmentation,
-                                     LayerOutputTypeChoice.Image, LayerOutputTypeChoice.ObjectDetection]:
-                        new_paths = [os.path.join('sources', f'{elem.id}_{decamelize(elem.type)}',
-                                                  path.replace(self.source_directory + os.path.sep, '')) for path in
-                                     instructions_data.instructions]
-                    else:
-                        new_paths = [os.path.join('sources', path.replace(self.temp_directory + os.path.sep, '')) for
-                                     path in instructions_data.instructions]
-                    instructions_data.instructions = new_paths
+                **getattr(CreateArray(), f"cut_{decamelize(put.type)}")(instr['instructions'], self.temp_directory,
+                                                                        os.path.join(self.paths.sources,
+                                                                                     f"{put.id}_{decamelize(put.type)}"),
+                                                                        **instr['parameters']))
 
-            instructions.update([(elem.id, instructions_data)])
+            if put.type not in [LayerInputTypeChoice.Text, LayerOutputTypeChoice.Text,
+                                LayerOutputTypeChoice.TextSegmentation, LayerOutputTypeChoice.Regression]:
+                if put.type in [LayerInputTypeChoice.Image, LayerOutputTypeChoice.Segmentation,
+                                LayerOutputTypeChoice.Image, LayerOutputTypeChoice.ObjectDetection]:
+                    new_paths = [os.path.join('sources', f'{put.id}_{decamelize(put.type)}',
+                                              path.replace(self.source_directory + os.path.sep, '')) for path in
+                                 instructions_data.instructions]
+                else:
+                    new_paths = [os.path.join('sources', path.replace(self.temp_directory + os.path.sep, '')) for
+                                 path in instructions_data.instructions]
+                instructions_data.instructions = new_paths
 
-        return instructions
+            put_parameters[put.id] = {f'{put.id}_{decamelize(put.type)}': instructions_data}
+
+        return put_parameters
 
     def create_preprocessing(self, instructions: DatasetInstructionsData):
 
@@ -241,7 +255,6 @@ class CreateDataset(object):
                         self.preprocessing.create_tokenizer(array=None, **data.parameters)
                     elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
                         self.preprocessing.create_word2vec(array=None, **data.parameters)
-
 
     def create_table(self, creation_data: CreationData):
 
@@ -299,10 +312,13 @@ class CreateDataset(object):
             # else:
             full_array = []
             for col_name, data in self.instructions.inputs[key].items():
+                prep = None
+                if self.preprocessing.preprocessing.get(key) and self.preprocessing.preprocessing.get(key).get(col_name):
+                    prep = self.preprocessing.preprocessing.get(key).get(col_name)
                 arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(
-                    os.path.join(self.paths.basepath, data.instructions[0]), **data.parameters) #  , **self.preprocessing.preprocessing.get(key))
+                    os.path.join(self.paths.basepath, data.instructions[0]), **data.parameters, **{'preprocess': prep})
                 full_array.append(getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(arr['instructions'],
-                                                                                         **arr['parameters']))
+                                                                                                   **arr['parameters']))
 
             array = np.concatenate(full_array, axis=0)
 
@@ -343,9 +359,11 @@ class CreateDataset(object):
             classes_names, classes_colors, num_classes, encoding = None, None, None, None
             full_array = []
             for col_name, data in self.instructions.outputs[key].items():
+                prep = None
+                if self.preprocessing.preprocessing.get(key) and self.preprocessing.preprocessing.get(key).get(col_name):
+                    prep = self.preprocessing.preprocessing.get(key).get(col_name)
                 arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(
-                    os.path.join(self.paths.basepath, data.instructions[0]),
-                    **data.parameters)  # , **self.preprocessing.preprocessing.get(key))
+                    os.path.join(self.paths.basepath, data.instructions[0]), **data.parameters, **{'preprocess': prep})
                 full_array.append(getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(arr['instructions'],
                                                                                                    **arr['parameters']))
                 cl_names = data.parameters.get('classes_names')
@@ -420,9 +438,13 @@ class CreateDataset(object):
                     # else:
                     full_array = []
                     for col_name, data in put_data[key].items():
+                        prep = None
+                        if self.preprocessing.preprocessing.get(key) and\
+                                self.preprocessing.preprocessing.get(key).get(col_name):
+                            prep = self.preprocessing.preprocessing.get(key).get(col_name)
                         arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(
                             os.path.join(self.paths.basepath, self.dataframe[split].loc[i, col_name]),
-                            **data.parameters)  # , **self.preprocessing.preprocessing.get(key))
+                            **data.parameters, **{'preprocess': prep})
                         full_array.append(getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(
                             arr['instructions'], **arr['parameters']))
 
@@ -470,12 +492,19 @@ class CreateDataset(object):
 
     def write_preprocesses_to_files(self):
 
-        for put in self.preprocessing.preprocessing.keys():
-            for param in self.preprocessing.preprocessing[put]:
-                if self.preprocessing.preprocessing[put][param] and param != 'dull':
-                    os.makedirs(self.paths.__dict__[param.split('_')[1]], exist_ok=True)
-                    joblib.dump(self.preprocessing.preprocessing[put][param],
-                                os.path.join(self.paths.__dict__[param.split('_')[1]], f'{put}.gz'))
+        # for put in self.preprocessing.preprocessing.keys():
+        #     for param in self.preprocessing.preprocessing[put]:
+        #         if self.preprocessing.preprocessing[put][param] and param != 'dull':
+        #             os.makedirs(self.paths.__dict__[param.split('_')[1]], exist_ok=True)
+        #             joblib.dump(self.preprocessing.preprocessing[put][param],
+        #                         os.path.join(self.paths.__dict__[param.split('_')[1]], f'{put}.gz'))
+
+        for put, proc in self.preprocessing.preprocessing.items():
+            for col_name, obj in proc.items():
+                if obj:
+                    folder_dir = os.path.join(self.paths.preprocessing, str(put))
+                    os.makedirs(folder_dir, exist_ok=True)
+                    joblib.dump(obj, os.path.join(folder_dir, f'{col_name}.gz'))
 
         pass
 

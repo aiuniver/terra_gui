@@ -42,7 +42,7 @@ class CreateArray(object):
                                        'scaler': options['scaler'],
                                        'max_scaler': options['max_scaler'],
                                        'min_scaler': options['min_scaler'],
-                                       'put': options['id'],
+                                       'put': options['put'],
                                        'cols_names': options['cols_names']
                                        }
                         }
@@ -372,7 +372,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def instructions_image_segmentation(paths_list: list, **options: dict) -> dict:
+    def instructions_segmentation(paths_list: list, **options: dict) -> dict:
 
         instructions = {'instructions': paths_list,
                         'parameters': {'mask_range': options['mask_range'],
@@ -383,7 +383,7 @@ class CreateArray(object):
                                                           options['classes_colors']],
                                        'classes_names': options['classes_names'],
                                        'cols_names': options['cols_names'],
-                                       'put': options['id']
+                                       'put': options['put']
                                        }
                         }
 
@@ -671,7 +671,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_image_segmentation(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
+    def cut_segmentation(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
 
         for elem in paths_list:
             os.makedirs(os.path.join(tmp_folder, f'{options["cols_names"]}', os.path.basename(os.path.dirname(elem))), exist_ok=True)
@@ -848,7 +848,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def create_image_segmentation(image_path: str, **options) -> dict:
+    def create_segmentation(image_path: str, **options) -> dict:
 
         def cluster_to_ohe(mask_image):
 
@@ -1055,12 +1055,11 @@ class CreateArray(object):
     def preprocess_image(array: np.ndarray, **options) -> np.ndarray:
 
         array = cv2.resize(array, (options['width'], options['height']))
-
         if options['net'] == LayerNetChoice.linear:
             array = array.reshape(np.prod(np.array(array.shape)))
-        if options['scaler'] != LayerScalerImageChoice.no_scaler and options.get('object_scaler'):
+        if options['scaler'] != LayerScalerImageChoice.no_scaler and options.get('preprocess'):
             orig_shape = array.shape
-            array = options['object_scaler'].transform(array.reshape(-1, 1))
+            array = options['preprocess'].transform(array.reshape(-1, 1))
             array = array.reshape(orig_shape)
 
         return array
@@ -1236,7 +1235,7 @@ class CreateArray(object):
         return array
 
     @staticmethod
-    def preprocess_image_segmentation(array: np.ndarray, **options) -> np.ndarray:
+    def preprocess_segmentation(array: np.ndarray, **options) -> np.ndarray:
 
         return array
 
