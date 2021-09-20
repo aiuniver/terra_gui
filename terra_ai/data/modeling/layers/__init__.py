@@ -440,6 +440,11 @@ class LayerResNet50Data(LayerMixinData):
     extra: types.ResNet50.ParametersExtraData = types.ResNet50.ParametersExtraData()
 
 
+class LayerResNet101Data(LayerMixinData):
+    main: types.ResNet101.ParametersMainData = types.ResNet101.ParametersMainData()
+    extra: types.ResNet101.ParametersExtraData = types.ResNet101.ParametersExtraData()
+
+
 class LayerResNet50V2Data(LayerMixinData):
     main: types.ResNet50V2.ParametersMainData = types.ResNet50V2.ParametersMainData()
     extra: types.ResNet50V2.ParametersExtraData = types.ResNet50V2.ParametersExtraData()

@@ -102,6 +102,7 @@ class LayerTypeChoice(str, Enum):
     VGG16 = "VGG16"
     VGG19 = "VGG19"
     ResNet50 = "ResNet50"
+    ResNet101 = "ResNet101"
     ResNet50V2 = "ResNet50V2"
     ResNet101V2 = "ResNet101V2"
     ResNet152V2 = "ResNet152V2"
