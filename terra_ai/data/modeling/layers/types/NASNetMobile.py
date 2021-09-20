@@ -1,5 +1,5 @@
 """
-## Тип слоя `DenseNet201`
+## Тип слоя `NASNetMobile`
 """
 from typing import Optional
 
@@ -19,7 +19,7 @@ LayerConfig = LayerConfigData(
             "value": 4,
             "validation": LayerValidationMethodChoice.fixed,
         },
-        "module": ModuleChoice.densenet201,
+        "module": ModuleChoice.nasnetmobile,
         "module_type": ModuleTypeChoice.keras_pretrained_model,
     }
 )

@@ -455,6 +455,11 @@ class LayerDenseNet201Data(LayerMixinData):
     extra: types.DenseNet201.ParametersExtraData = types.DenseNet201.ParametersExtraData()
 
 
+class LayerNASNetMobileData(LayerMixinData):
+    main: types.NASNetMobile.ParametersMainData = types.NASNetMobile.ParametersMainData()
+    extra: types.NASNetMobile.ParametersExtraData = types.NASNetMobile.ParametersExtraData()
+
+
 class LayerCustomUNETBlockData(LayerMixinData):
     main: types.CustomUNETBlock.ParametersMainData = (
         types.CustomUNETBlock.ParametersMainData()
