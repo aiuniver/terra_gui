@@ -2,6 +2,10 @@ from pathlib import Path
 from typing import Any
 from enum import Enum
 
+from django.conf import settings
+
+user_lang = settings.USER_LANGUAGE
+
 
 class ExceptionMessages(dict, Enum):
     # Agent
@@ -75,28 +79,24 @@ class ExceptionMessages(dict, Enum):
                                    "eng": "Error when getting upload deploy result: %s"}
 
 
-# Base Exceptions
-
+# Base Exception
 
 class ExchangeBaseException(Exception):
     class Meta:
         message: ExceptionMessages = ExceptionMessages.UnknownError
 
     def __init__(self, *args, **kwargs):
-        if not args:
-            args = (self.Meta.message.value.get(kwargs.get('lang', 'ru')),)
-        super().__init__(*args)
+        error_msg = self.Meta.message.value.get(kwargs.get('lang', user_lang))
 
+        if args:
+            error_msg = error_msg % args
 
-class ValueException(ExchangeBaseException):
-    def __init__(self, __value: Any, lang: str = 'ru'):
-        super().__init__(self.Meta.message.value.get(lang) % str(__value))
+        super().__init__(error_msg)
 
 
 # Agent
 
-
-class FileNotFoundException(ValueException):
+class FileNotFoundException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.FileNotFound
 
@@ -105,32 +105,31 @@ class CallMethodNotFoundException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.CallMethodNotFound
 
-    def __init__(self, __class: Any, __method: str, lang: str = 'ru'):
-        super().__init__(self.Meta.message.value.get(lang) % (str(__class), str(__method)))
+    def __init__(self, __class: Any, __method: str, **kwargs):
+        super().__init__(str(__class), str(__method), **kwargs)
 
 
 class MethodNotCallableException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.MethodNotCallable
 
-    def __init__(self, __class: Any, __method: str, lang: str = 'ru'):
-        super().__init__(self.Meta.message.value.get(lang) % (str(__method), str(__class)))
+    def __init__(self, __method: str, __class: Any, **kwargs):
+        super().__init__(str(__method), str(__class), **kwargs)
 
 
 # Project exceptions
 
-
-class FailedGetProjectsInfoException(ValueException):
+class FailedGetProjectsInfoException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.FailedGetProjectsInfo
 
 
-class FailedSaveProjectException(ValueException):
+class FailedSaveProjectException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.FailedSaveProject
 
 
-class FailedLoadProjectException(ValueException):
+class FailedLoadProjectException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.FailedLoadProject
 
@@ -139,49 +138,48 @@ class ProjectNotFoundException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.ProjectNotFound
 
-    def __init__(self, __project: str, __target: Path, lang: str = 'ru'):
-        super().__init__(self.Meta.message.value.get(lang) % ((str(__project)), str(__target)))
+    def __init__(self, __project: str, __target: Path, **kwargs):
+        super().__init__(str(__project), str(__target), **kwargs)
 
 
-class ProjectAlreadyExistsException(ValueException):
+class ProjectAlreadyExistsException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.ProjectAlreadyExists
 
 
 # Dataset exceptions
 
-
-class FailedChoiceDatasetException(ValueException):
+class FailedChoiceDatasetException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.FailedChoiceDataset
 
 
-class FailedDeleteDatasetException(ValueException):
+class FailedDeleteDatasetException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.FailedDeleteDataset
 
 
-class FailedGetProgressDatasetChoiceException(ValueException):
+class FailedGetProgressDatasetChoiceException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.FailedGetProgressDatasetChoice
 
 
-class FailedGetDatasetsInfoException(ValueException):
+class FailedGetDatasetsInfoException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.FailedGetDatasetsInfo
 
 
-class FailedLoadDatasetsSourceException(ValueException):
+class FailedLoadDatasetsSourceException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.FailedLoadDatasetsSource
 
 
-class FailedLoadProgressDatasetsSource(ValueException):
+class FailedLoadProgressDatasetsSource(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.FailedLoadProgressDatasetsSource
 
 
-class FailedGetDatasetsSourcesException(ValueException):
+class FailedGetDatasetsSourcesException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.FailedGetDatasetsSources
 
@@ -190,84 +188,81 @@ class DatasetCanNotBeDeletedException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.DatasetCanNotBeDeleted
 
-    def __init__(self, __dataset: str, __group: str, lang: str = 'ru'):
-        super().__init__(self.Meta.message.value.get(lang) % ((str(__dataset)), str(__group)))
+    def __init__(self, __dataset: str, __group: str, **kwargs):
+        super().__init__(str(__dataset), str(__group), **kwargs)
 
 
-class FailedCreateDatasetException(ValueException):
+class FailedCreateDatasetException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.FailedCreateDataset
 
 
 # Modeling exceptions
 
-
-class ModelAlreadyExistsException(ValueException):
+class ModelAlreadyExistsException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.ModelAlreadyExists
 
 
-class FailedGetModelException(ValueException):
+class FailedGetModelException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.FailedGetModel
 
 
-class FailedValidateModelException(ValueException):
+class FailedValidateModelException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.FailedValidateModel
 
 
-class FailedUpdateModelException(ValueException):
+class FailedUpdateModelException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.FailedUpdateModel
 
 
-class FailedGetModelsListException(ValueException):
+class FailedGetModelsListException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.FailedGetModelsList
 
 
-class FailedCreateModelException(ValueException):
+class FailedCreateModelException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.FailedCreateModel
 
 
-class FailedDeleteModelException(ValueException):
+class FailedDeleteModelException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.FailedDeleteModel
 
 
 # Training exceptions
 
-
-class FailedStopTrainException(ValueException):
+class FailedStopTrainException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.FailedStopTrain
 
 
-class FailedCleanTrainException(ValueException):
+class FailedCleanTrainException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.FailedCleanTrain
 
 
-class FailedGetTrainingProgressException(ValueException):
+class FailedGetTrainingProgressException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.FailedGetTrainingProgress
 
 
-class FailedSetInteractiveConfigException(ValueException):
+class FailedSetInteractiveConfigException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.FailedSetInteractiveConfig
 
 
 # Deploy exceptions
 
-
-class FailedUploadDeployException(ValueException):
+class FailedUploadDeployException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.FailedUploadDeploy
 
 
-class FailedGetUploadDeployResultException(ValueException):
+class FailedGetUploadDeployResultException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.FailedGetUploadDeployResult
