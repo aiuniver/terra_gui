@@ -7,7 +7,7 @@
     "1": {
       "tag": "model",
       "task": "Image",
-      "model": "test_example/model_airaplanes_example.json"
+      "model": "test_example/airplanes"
     },
     "2": {
       "tag": "function",
@@ -51,7 +51,6 @@
       "type": "video",
       "params": {
         "fps": 20,
-        "chunk_size": 120,
         "width": 1280,
         "height": 720
       }

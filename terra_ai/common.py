@@ -1,5 +1,4 @@
 import inspect
-import json
 import os
 from pathlib import Path
 
@@ -7,6 +6,9 @@ import tensorflow as tf
 
 
 ROOT_PATH = str(Path(__file__).parent.parent)
+
+
+make_path = lambda path: os.path.join(ROOT_PATH, path)
 
 
 def load_images(path):

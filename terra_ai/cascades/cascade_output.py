@@ -1,6 +1,7 @@
 import cv2
 import tensorflow
 import numpy as np
+import os
 
 
 def video(path, **params):
@@ -37,5 +38,17 @@ def image(path):
         img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
         cv2.imwrite(path, img)
+
+    return fun
+
+
+def text(path):
+    if not os.path.isfile(path):
+        with open(path, "w"):
+            pass
+
+    def fun(string):
+        with open(path, 'a') as f:
+            f.write(str(string) + '\n')
 
     return fun

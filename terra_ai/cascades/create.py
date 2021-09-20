@@ -1,4 +1,4 @@
-from terra_ai.cascades import input, output
+from terra_ai.cascades import cascade_input, cascade_output
 from terra_ai.cascades.cascade import CascadeElement, CascadeOutput, BuildModelCascade, CompleteCascade
 from terra_ai.utils import decamelize
 from terra_ai import general_fucntions
@@ -25,13 +25,35 @@ def make_preprocess(preprocess_list):
     return fun
 
 
-def json2model_cascade(path: str):
-    with open(path) as cfg:
-        config = json.load(cfg)
+def make_postprocess(post_list):
+    def fun(*x):
 
-    path_model = os.path.join(ROOT_PATH, config['model'])
-    model = load_model(path_model, compile=False, custom_objects=None)
-    model.load_weights(config['weight'])
+        out = []
+
+        print(post_list)
+        for prep, element in zip(post_list, x):
+            out.append(prep(element))
+
+        return out
+    return fun
+
+
+def json2model_cascade(path: str):
+    weight = None
+    model = None
+
+    for i in os.listdir(path):
+        if i[-3:] == '.h5' and 'best' in i:
+            weight = i
+        elif i[-4:] == '.trm':
+            model = i
+
+    model = load_model(os.path.join(path, model), compile=False, custom_objects=None)
+    model.load_weights(os.path.join(path, weight))
+
+    dataset_path = os.path.join(path, "dataset", "config.json")
+    with open(dataset_path) as cfg:
+        config = json.load(cfg)
 
     if config['inputs']:
         preprocess = []
@@ -44,9 +66,14 @@ def json2model_cascade(path: str):
     else:
         preprocess = None
 
-    if config['outputs']:  # пока так
-        postprocessing = None
-        pass
+    if config['outputs']:
+        postprocessing = []
+
+        for inp, param in config['outputs'].items():
+            type_module = getattr(general_fucntions, decamelize(param['task']))
+            postprocessing.append(getattr(type_module, 'main')(**param))
+
+        postprocessing = make_postprocess(postprocessing)
     else:
         postprocessing = None
 
@@ -79,13 +106,13 @@ def json2cascade(path: str):
 
 
 def create_input(**params):
-    iter = getattr(input, params['type'])
+    iter = getattr(cascade_input, params['type'])
 
     return iter
 
 
 def create_output(**params):
-    out = CascadeOutput(getattr(output, params['type']),
+    out = CascadeOutput(getattr(cascade_output, params['type']),
                         params['params'] if 'params' in params.keys() else {})
 
     return out

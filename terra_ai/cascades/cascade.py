@@ -116,10 +116,12 @@ class CompleteCascade(Cascade):
 
     def __call__(self, input_path, output_path):
 
-        for i, out in enumerate(self.output):
-
-            path = output_path[:-4] + f"_{i}" + output_path[-4:]
-            out.choose_path(path)
+        if len(self.output) == 1:
+            self.output[0].choose_path(output_path)
+        elif len(self.output) > 1:
+            for i, out in enumerate(self.output):
+                path = output_path[:-4] + f"_{i}" + output_path[-4:]
+                out.choose_path(path)
 
         for img in self.input(input_path):
             self.cascade_block(img)
