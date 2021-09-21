@@ -1,8 +1,10 @@
 <template>
   <ul class="menu">
     <!-- <li class="menu__item" @click="$emit('event', 'add')">Добавить новый график</li> -->
-    <li class="menu__item" @click="$emit('event', { name: 'general', data: 'hide' })">Свернуть</li>
-    <li class="menu__item" @click="$emit('event', { name: 'general', data: 'remove' })">Удалить</li>
+    <li class="menu__item" @click="$emit('event', { name: 'general', data: 'add' })">Добавить график</li>
+    <li class="menu__item" @click="$emit('event', { name: 'general', data: 'copy' })">Копировать график</li>
+    <li class="menu__item" @click="$emit('event', { name: 'general', data: 'hide' })">Свернуть график</li>
+    <li class="menu__item" @click="$emit('event', { name: 'general', data: 'remove' })">Удалить график</li>
     <template v-for="({ name, list }, i) of menus">
       <li class="menu__dropdown" :key="'menu_' + i">
         <i :class="['t-icon', 'icon-training-dropdown']"></i>
