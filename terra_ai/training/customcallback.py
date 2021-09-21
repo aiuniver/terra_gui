@@ -1857,8 +1857,8 @@ class InteractiveCallback:
                 )
                 return_data[f'{out}'] = dict(
                     id=_id,
-                    task_type=LayerOutputTypeChoice.Classification.name,
-                    graph_name=f"Output_{out} - Confusion matrix",
+                    type="Heatmap",
+                    graph_name=f"Выходной слой «{out}» - Confusion matrix",
                     x_label="Предсказание",
                     y_label="Истинное значение",
                     labels=self.dataset_config.get("outputs").get(f"{out}").get("classes_names"),
@@ -1880,16 +1880,18 @@ class InteractiveCallback:
                         np.prod(np.argmax(self.y_pred.get(f'{out}'), axis=-1).shape)).astype('int'),
                     get_percent=True
                 )
-                return_data[f"{out}"] = dict(
-                    id=_id,
-                    task_type=LayerOutputTypeChoice.Segmentation.name,
-                    graph_name=f"Выходной слой {out} - Confusion matrix",
-                    x_label="Предсказание",
-                    y_label="Истинное значение",
-                    labels=self.dataset_config.get("outputs").get(f"{out}").get("classes_names"),
-                    data_array=cm,
-                    data_percent_array=cm_percent
-                )
+                return_data[f"{out}"] = [
+                    dict(
+                        id=_id,
+                        type="Histogram",
+                        graph_name=f"Выходной слой «{out}» - Confusion matrix",
+                        x_label="Предсказание",
+                        y_label="Истинное значение",
+                        labels=self.dataset_config.get("outputs").get(f"{out}").get("classes_names"),
+                        data_array=cm,
+                        data_percent_array=cm_percent
+                    )
+                ]
                 _id += 1
 
             elif self.dataset_config.get("outputs").get(f"{out}").get("task") == LayerOutputTypeChoice.TextSegmentation \
@@ -1906,7 +1908,6 @@ class InteractiveCallback:
                 )
                 return_data[f"{out}"] = dict(
                     id=_id,
-                    task_type=LayerOutputTypeChoice.TextSegmentation.name,
                     graph_name=f"Выходной слой «{out}» - Отчет по классам",
                     type="Table",
                     table_data=report,
@@ -1920,11 +1921,11 @@ class InteractiveCallback:
                         "data": []
                     },
                     "mae_distribution": {
-                        "type": "Histogram",
+                        "type": "Distribution histogram",
                         "data": []
                     },
                     "me_distribution": {
-                        "type": "Histogram",
+                        "type": "Distribution histogram",
                         "data": []
                     }
                 }
@@ -1979,11 +1980,11 @@ class InteractiveCallback:
                         "data": []
                     },
                     "mae_distribution": {
-                        "type": "Histogram",
+                        "type": "Distribution histogram",
                         "data": []
                     },
                     "me_distribution": {
-                        "type": "Histogram",
+                        "type": "Distribution histogram",
                         "data": []
                     }
                 }
@@ -2127,7 +2128,7 @@ class InteractiveCallback:
                 return_data[out] = [
                     {
                         'id': _id,
-                        'type': 'histogram',
+                        'type': 'Histogram',
                         'graph_name': 'Тренировочная выборка',
                         'x_label': 'Название класса',
                         'y_label': 'Значение',
@@ -2140,7 +2141,7 @@ class InteractiveCallback:
                     },
                     {
                         'id': _id + 1,
-                        'type': 'histogram',
+                        'type': 'Histogram',
                         'graph_name': 'Проверчная выборка',
                         'x_label': 'Название класса',
                         'y_label': 'Значение',
@@ -2267,7 +2268,7 @@ class InteractiveCallback:
                     for histogram in self.dataset_balance[out][data_type]['histogram']:
                         return_data[out].append(
                             {
-                                'type': "Histogram",
+                                'type': "Distribution histogram",
                                 "short_name": histogram['name'],
                                 "graph_name": f"{data_type_name} выборка - "
                                               f"Гистограмма распределения колонки «{histogram['name']}»",
@@ -2316,7 +2317,7 @@ class InteractiveCallback:
                         return_data[out].append(
                             dict(
                                 id=_id + 1,
-                                type="Histogram",
+                                type="Distribution histogram",
                                 graph_name=f'{data_type_name} выборка - Гистограмма плотности канала «{out}»',
                                 x_label='Значение',
                                 y_label='Количество',
