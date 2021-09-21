@@ -1,10 +1,10 @@
+from dict_recursive_update import recursive_update
 from pydantic import ValidationError
 
 from terra_ai.agent import agent_exchange
 from terra_ai.agent.exceptions import ExchangeBaseException
 from terra_ai.exceptions.base import TerraBaseException
 from terra_ai.data.training.train import TrainData
-from terra_ai.data.training.extra import ArchitectureChoice
 
 from apps.plugins.project import project_path
 
@@ -19,8 +19,25 @@ from ..base import (
 class StartAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         try:
-            request.data["architecture"]["type"] = ArchitectureChoice.Basic
-            request.project.training.base = TrainData(**request.data)
+            training_base = request.project.training.base.native()
+            request_outputs = dict(
+                map(
+                    lambda item: (item.get("id"), item),
+                    request.data.get("architecture", {})
+                    .get("parameters", {})
+                    .get("outputs", []),
+                )
+            )
+            outputs = (
+                request.project.training.base.architecture.parameters.outputs.native()
+            )
+            for index, item in enumerate(outputs):
+                outputs[index] = recursive_update(
+                    item, request_outputs.get(item.get("id"), {})
+                )
+            training_base = recursive_update(training_base, request.data)
+            training_base["architecture"]["parameters"]["outputs"] = outputs
+            request.project.training.base = TrainData(**training_base)
             data = {
                 "dataset": request.project.dataset,
                 "model": request.project.model,
