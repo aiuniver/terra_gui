@@ -1,7 +1,7 @@
 <template>
   <div class="t-charts">
     <!-- <div class="charts__title">Графики</div> -->
-    <div v-if="data.length" class="t-charts__content">
+    <div class="t-charts__content">
       <TCharTemp class="t-chart" @click.native="add" />
       <TChar
         v-for="(settings, i) of charts"
@@ -9,11 +9,11 @@
         class="t-chart"
         :key="'char1_' + i"
         :settings="settings"
-        :menus="menus"
+        :menus="allMenus"
         @event="event($event, settings)"
       />
     </div>
-    <div v-else class="t-charts__empty">Нет данных</div>
+    <div v-if="!data.length" class="t-charts__empty">Нет данных</div>
   </div>
 </template>
 
@@ -29,6 +29,8 @@ export default {
   },
   props: {
     metric: String,
+    outputs: Array,
+    interactive: Object,
   },
   data: () => ({
     charts: [],
@@ -36,46 +38,53 @@ export default {
       {
         name: 'Показывать данные',
         list: [
-          { title: 'По всей модели', event: { name: 'data', data: 'loss' } },
-          { title: 'По классам', event: { name: 'data', data: 'metric' } },
+          { title: 'По всей модели', event: { name: 'data', data: 'model' } },
+          { title: 'По классам', event: { name: 'data', data: 'classes' } },
         ],
       },
-      {
-        name: 'Показывать метрики',
-        list: [
-          { title: 'Accuracy', event: { name: 'metric', data: 'Accuracy' } },
-          { title: 'Hinge', event: { name: 'metric', data: 'Hinge' } },
-        ],
-      },
+      // {
+      //   name: 'Показывать метрики',
+      //   list: [
+      //     { title: 'Accuracy', event: { name: 'metric', data: 'Accuracy' } },
+      //     { title: 'Hinge', event: { name: 'metric', data: 'Hinge' } },
+      //   ],
+      // },
     ],
   }),
   computed: {
     ...mapGetters({
       chars: 'trainings/getChars',
     }),
-    // filstrCharts() {
-    //   return this.data.filter((chart) => this.charts.includes(chart.id));
-    // },
     data() {
       return this.$store.getters['trainings/getTrainData'](this.metric) || [];
     },
+    allMenus() {
+      console.log([...this.menus, this.listChats]);
+      return [...this.menus, this.listChats];
+    },
+    listChats() {
+      const list = this.data.map(item => {
+        return { title: item.graph_name, event: { name: 'chart', data: item.id } };
+      });
+      return {
+        name: 'Выходы',
+        list,
+      };
+    },
+    outputIdx() {
+      return this.outputs.find(item => item.id).id;
+    },
   },
   mounted() {
-    this.$emit('isLoad', true);
-    console.log(this.data);
-    const list = this.data.map(item => {
-      return { title: item.graph_name, event: { name: 'chart', data: item.id } };
-    });
-    this.menus.push({
-      name: 'Выходы',
-      list,
-    });
+    console.log(this.outputs);
+    this.charts = this.interactive?.[this.metric] || [];
   },
   methods: {
     event({ name, data }, { id }) {
       // console.log(name, data, id);
       if (data === 'remove') {
         this.remove(id);
+        this.send(this.charts);
       }
       if (name === 'chart') {
         this.charts = this.charts.map(item => {
@@ -85,23 +94,33 @@ export default {
           return item;
         });
       }
+      if (name === 'data') {
+        this.charts = this.charts.map(item => {
+          if (item.id === id) {
+            item.show = data
+          }
+          return item
+        })
+        this.send(this.charts);
+      }
     },
-    getChart({ graphID }) {
+    getChart({ id }) {
       // console.log({ graphID });
-      return this.data.find(chart => chart.id === graphID);
+      return this.data.find(chart => chart.id === id);
     },
     add() {
       if (this.charts.length < 10) {
-        const chart = this.data.find(item => item);
-        if (chart) {
-          let maxID = Math.max(1, ...this.charts.map(o => o.id));
-          this.charts.push({ graphID: chart.id, id: maxID + 1 });
-        }
+        let maxID = Math.max(0, ...this.charts.map(o => o.id));
+        this.charts.push({ id: maxID + 1, output_idx: 2, show: 'model' });
+        this.send(this.charts);
       }
     },
     remove(id) {
       this.charts = this.charts.filter(item => item.id !== id);
-      // console.log(id);
+    },
+    async send(data) {
+      const res = await this.$store.dispatch('trainings/interactive', { [this.metric]: data });
+      console.log(`response`, res);
     },
   },
 };

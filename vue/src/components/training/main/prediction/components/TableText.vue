@@ -23,6 +23,9 @@ export default {
     color() {
       return this.data?.color_mark || '';
     },
+    tagsColor() {
+      return this.data?.tagsColor || '';
+    },
   },
 };
 </script>
