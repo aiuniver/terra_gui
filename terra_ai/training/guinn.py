@@ -28,6 +28,7 @@ from terra_ai.data.modeling.model import ModelDetailsData, ModelData
 from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, \
     CheckpointModeChoice
 from terra_ai.data.training.train import TrainData, InteractiveData
+from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.customcallback import InteractiveCallback
@@ -121,11 +122,12 @@ class GUINN:
                                    dataset_path=dataset_path, training_path=training_path,
                                    initial_config=initial_config)
 
-    def _set_callbacks(self, dataset: PrepareDataset, batch_size: int, epochs: int,
+    def _set_callbacks(self, dataset: PrepareDataset, dataset_data: DatasetData,
+                       batch_size: int, epochs: int,
                        checkpoint: dict, save_model_path: str) -> None:
         progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков...'})
         retrain_epochs = self.sum_epoch if interactive.get_states().get("status") == "addtrain" else self.epochs
-        callback = FitCallback(dataset=dataset, checkpoint_config=checkpoint,
+        callback = FitCallback(dataset=dataset, dataset_data=dataset_data, checkpoint_config=checkpoint,
                                batch_size=batch_size, epochs=epochs, retrain_epochs=retrain_epochs,
                                save_model_path=save_model_path, model_name=self.nn_name)
         self.callbacks = [callback]
@@ -228,7 +230,8 @@ class GUINN:
         if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.ObjectDetection:
             self.yolo_model_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
         else:
-            self.base_model_fit(params=training_params, dataset=self.dataset, verbose=0, save_model_path=model_path)
+            self.base_model_fit(params=training_params, dataset=self.dataset, dataset_data=dataset,
+                                verbose=0, save_model_path=model_path)
         return {"dataset": self.dataset, "metrics": self.metrics, "losses": self.loss}
 
     def nn_cleaner(self, retrain: bool = False) -> None:
@@ -251,7 +254,8 @@ class GUINN:
         return self
 
     @progress.threading
-    def base_model_fit(self, params: TrainData, dataset: PrepareDataset, save_model_path: str, verbose=0) -> None:
+    def base_model_fit(self, params: TrainData, dataset: PrepareDataset,
+                       dataset_data: DatasetData, save_model_path: str, verbose=0) -> None:
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели ...'})
         # self.set_custom_metrics()
         self.model.compile(loss=self.loss,
@@ -261,7 +265,7 @@ class GUINN:
         # self.model.load_weight(os.path.join(self.training_path, self.nn_name))
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели выполнена'})
 
-        self._set_callbacks(dataset=dataset, batch_size=params.batch,
+        self._set_callbacks(dataset=dataset, dataset_data=dataset_data, batch_size=params.batch,
                             epochs=params.epochs, save_model_path=save_model_path,
                             checkpoint=params.architecture.parameters.checkpoint.native())
         progress.pool(self.progress_name, finished=False, data={'status': 'Начало обучения ...'})
@@ -415,7 +419,8 @@ class MemoryUsage:
 class FitCallback(keras.callbacks.Callback):
     """CustomCallback for all task type"""
 
-    def __init__(self, dataset: PrepareDataset, checkpoint_config: dict, batch_size: int = None, epochs: int = None,
+    def __init__(self, dataset: PrepareDataset, dataset_data: DatasetData, checkpoint_config: dict,
+                 batch_size: int = None, epochs: int = None,
                  retrain_epochs: int = None, save_model_path: str = "./", model_name: str = "noname"):
         """
         Для примера
@@ -433,6 +438,7 @@ class FitCallback(keras.callbacks.Callback):
         super().__init__()
         self.usage_info = MemoryUsage(debug=False)
         self.dataset = dataset
+        self.dataset_data = dataset_data
         self.batch_size = batch_size
         self.epochs = epochs
         self.batch = 0
@@ -789,15 +795,22 @@ class FitCallback(keras.callbacks.Callback):
             if self._best_epoch_monitoring(logs):
                 if not os.path.exists(self.save_model_path):
                     os.mkdir(self.save_model_path)
+                if not os.path.exists(os.path.join(self.save_model_path, "deploy_presets")):
+                    os.mkdir(os.path.join(self.save_model_path, "deploy_presets"))
                 file_path_best: str = os.path.join(
                     self.save_model_path, f"best_weights_{self.metric_checkpoint}.h5"
                 )
                 self.model.save_weights(file_path_best)
                 print(f"Epoch {self.last_epoch} - best weights was successfully saved")
-                # if self.dataset.data.use_generator:
-                #     presets_predict = self.model.predict(self.dataset.dataset.get('val').batch(1))
-                # else:
-                #     presets_predict = self.model.predict(self.dataset.X.get('val'))
+                if self.dataset.data.use_generator:
+                    presets_predict = self.model.predict(self.dataset.dataset.get('val').batch(1))
+                else:
+                    presets_predict = self.model.predict(self.dataset.X.get('val'))
+                result = CreateArray().postprocess_results(array=presets_predict,
+                                                           options=self.dataset_data,
+                                                           save_path=os.path.join(self.save_model_path,
+                                                                                  "deploy_presets"))
+                # print(result)
         self._fill_log_history(self.last_epoch, logs)
         self.last_epoch += 1
 

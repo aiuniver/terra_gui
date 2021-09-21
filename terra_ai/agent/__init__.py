@@ -381,12 +381,6 @@ class Exchange:
         except Exception as error:
             raise exceptions.FailedCleanTrainException(str(error))
 
-    def _call_get_train_buttons_state(self):
-        """
-        Состояние кнопок обучения
-        """
-        return interactive.train_states
-
     def _call_training_interactive(self, **kwargs):
         """
         Обновление интерактивных параметров обучения
