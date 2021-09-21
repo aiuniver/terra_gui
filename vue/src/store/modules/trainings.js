@@ -36,11 +36,15 @@ export default {
         title: "Сохранить",
         visible: false
       }
-    }
+    },
+    interactive: {}
   }),
   mutations: {
     SET_PARAMS(state, value) {
       state.params = value;
+    },
+    SET_INTERACTIVE(state, value) {
+      state.interactive = {...value};
     },
     SET_BUTTONS(state, buttons) {
       state.buttons = { ...buttons };
@@ -98,8 +102,10 @@ export default {
       dispatch('setButtons', res);
       return res
     },
-    async interactive({ dispatch }, data) {
+    async interactive({ state: { interactive }, dispatch }, part) {
+      const data = {...interactive, part}
       console.log(data)
+      console.log(interactive)
       return await dispatch('axios', { url: '/training/interactive/', data }, { root: true });
     },
     async progress({ dispatch }, data) {
