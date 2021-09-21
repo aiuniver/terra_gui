@@ -397,3 +397,4 @@ terra_ai/test_modules/
 /test-model.py
 /terra_ai/training/test cars.py
 /terra_ai/training/test4.py
+/terra_ai/training/test mnist.py

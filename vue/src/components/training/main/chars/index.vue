@@ -42,13 +42,6 @@ export default {
           { title: 'По классам', event: { name: 'data', data: 'classes' } },
         ],
       },
-      // {
-      //   name: 'Показывать метрики',
-      //   list: [
-      //     { title: 'Accuracy', event: { name: 'metric', data: 'Accuracy' } },
-      //     { title: 'Hinge', event: { name: 'metric', data: 'Hinge' } },
-      //   ],
-      // },
     ],
   }),
   computed: {
@@ -59,17 +52,29 @@ export default {
       return this.$store.getters['trainings/getTrainData'](this.metric) || [];
     },
     allMenus() {
-      console.log([...this.menus, this.listChats]);
-      return [...this.menus, this.listChats];
+      // console.log([...this.menus, this.listChats]);
+      console.log(this.listChats);
+      return [...this.menus, ...this.listChats];
     },
     listChats() {
-      const list = this.data.map(item => {
-        return { title: item.graph_name, event: { name: 'chart', data: item.id } };
+      const listOutputs = this.outputs.map(item => {
+        return { title: `Выход ${item.id}`, event: { name: 'chart', data: item.id } };
       });
-      return {
-        name: 'Выходы',
-        list,
-      };
+      const metrics = this.outputs?.[0].metrics ?? [];
+      const listMetrics = metrics.map(item => {
+        return { title: `${item}`, event: { name: 'metric', data: item } };
+      });
+
+      return [
+        {
+          name: 'Показывать метрики',
+          list: listMetrics,
+        },
+        {
+          name: 'Показывать выход',
+          list: listOutputs,
+        },
+      ];
     },
     outputIdx() {
       return this.outputs.find(item => item.id).id;
@@ -77,46 +82,68 @@ export default {
   },
   mounted() {
     console.log(this.outputs);
-    this.charts = this.interactive?.[this.metric] || [];
+    const data = this.interactive?.[this.metric] || [];
+    this.charts = data.map(item => {
+      item.chart = item.id;
+      return item;
+    });
   },
   methods: {
     event({ name, data }, { id }) {
-      // console.log(name, data, id);
+      console.log(name, data, id);
+      if (data === 'add') {
+        this.add();
+      }
       if (data === 'remove') {
         this.remove(id);
-        this.send(this.charts);
+      }
+      if (data === 'copy') {
+        this.copy(id);
       }
       if (name === 'chart') {
         this.charts = this.charts.map(item => {
           if (item.id === id) {
-            item.graphID = data;
+            item.output_idx = data;
           }
           return item;
         });
+        this.send(this.charts);
       }
       if (name === 'data') {
         this.charts = this.charts.map(item => {
           if (item.id === id) {
-            item.show = data
+            item.show = data;
           }
-          return item
-        })
+          return item;
+        });
         this.send(this.charts);
       }
     },
     getChart({ id }) {
       // console.log({ graphID });
-      return this.data.find(chart => chart.id === id);
+      return this.data.find(item => item.id === id);
     },
     add() {
       if (this.charts.length < 10) {
         let maxID = Math.max(0, ...this.charts.map(o => o.id));
-        this.charts.push({ id: maxID + 1, output_idx: 2, show: 'model' });
+        this.charts.push({ id: maxID + 1, output_idx: 2, show: 'model', chart: 1, show_metric: 'Accuracy' });
+        this.send(this.charts);
+      }
+    },
+    copy(id) {
+      if (this.charts.length < 10) {
+        let maxID = Math.max(0, ...this.charts.map(o => o.id));
+        const char = { ...this.charts.find(item => item.id === id) };
+        if (char) {
+          char.id = maxID + 1;
+          this.charts = [...this.charts, char];
+        }
         this.send(this.charts);
       }
     },
     remove(id) {
       this.charts = this.charts.filter(item => item.id !== id);
+      this.send(this.charts);
     },
     async send(data) {
       const res = await this.$store.dispatch('trainings/interactive', { [this.metric]: data });

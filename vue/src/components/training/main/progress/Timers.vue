@@ -17,7 +17,7 @@
         <div class="t-time__timer">
           <span>Эпоха</span>
           <div>{{ epoch.current || 0 }}</div>
-          /
+          <i>/</i>
           <div>{{ epoch.total || 0 }}</div>
         </div>
       </div>
@@ -42,7 +42,7 @@
         <div class="t-time__timer">
           <span>Батч</span>
           <div>{{ batch.current || 0 }}</div>
-          /
+          <i>/</i>
           <div>{{ batch.total || 0 }}</div>
         </div>
       </div>
@@ -128,6 +128,10 @@ export default {
     margin-top: 20px;
   }
   &__timer {
+    i {
+      font-style: normal;
+      transform: translateY(25%);
+    }
     &:first-child div {
       border: 1px solid #65b9f4;
     }

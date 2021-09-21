@@ -1,4 +1,4 @@
-import { data, config } from "../temp/training";
+import { data } from "../temp/training";
 import { toolbar } from "../const/trainings";
 // import { predict } from "../temp/predict-training";
 // import { predict_video } from "../temp/predict-training-video-audio";
@@ -15,10 +15,8 @@ export default {
     predict: {},
     info: '',
     states: {},
-    // trainData: {},
-    trainData: data,
+    trainData: process.env.NODE_ENV === 'development' ? data : {},
     trainUsage: {},
-    trainDisplay: config,
     buttons: {
       train: {
         title: "Обучить",
@@ -37,9 +35,19 @@ export default {
         visible: false
       }
     },
-    training: {},
+    training: {
+      base: {},
+      interactive: {},
+      state: {}
+    },
   }),
   mutations: {
+    SET_INTERACTIV(state, value) {
+      if (state?.training?.interactive) {
+        state.training.interactive = { ...value };
+        state.training = { ...state.training }
+      }
+    },
     SET_PARAMS(state, value) {
       state.params = { ...value };
     },
@@ -69,14 +77,11 @@ export default {
     SET_TRAIN_USAGE(state, value) {
       state.trainUsage = { ...value };
     },
-    SET_TRAIN_DISPLAY(state, value) {
-      Object.assign(state.trainDisplay, value);
-    },
   },
   actions: {
     setButtons({ commit }, res) {
       if (res && res?.data) {
-        const { buttons } = res?.data?.data?.states || res?.data
+        const { buttons } = res?.data?.data?.states || res?.data.state
         if (buttons) {
           commit("SET_BUTTONS", buttons);
         }
@@ -104,8 +109,9 @@ export default {
       dispatch('setButtons', res);
       return res
     },
-    async interactive({ state: { training: { interactive } }, dispatch }, part) {
+    async interactive({ commit, state: { training: { interactive } }, dispatch }, part) {
       const data = { ...interactive, ...part }
+      commit("SET_INTERACTIV", data);
       return await dispatch('axios', { url: '/training/interactive/', data }, { root: true });
     },
     async progress({ dispatch }, data) {
@@ -145,8 +151,11 @@ export default {
     getInteractive({ training: { interactive } }) {
       return interactive || {}
     },
+    getStatus({ training: { state: { status } } }) {
+      return status || ''
+    },
     getOutputs({ training: { base } }) {
-      return base.architecture?.parameters?.outputs || []
+      return base?.architecture?.parameters?.outputs || []
     },
     getParams({ params }) {
       return params || []
@@ -154,26 +163,11 @@ export default {
     getToolbar({ toolbar }) {
       return toolbar;
     },
-    getChars({ data: { plots } }) {
-      return plots;
-    },
-    getScatters({ data: { scatters } }) {
-      return scatters;
-    },
-    getImages({ data: { images: { images } } }) {
-      return images;
-    },
-    getTexts({ data: { texts } }) {
-      return texts;
-    },
     getTrainUsage: ({ trainUsage }) => {
       return trainUsage || {};
     },
     getTrainData: ({ trainData }) => (key) => {
       return trainData?.[key];
-    },
-    getTrainDisplay: ({ trainDisplay }) => {
-      return trainDisplay;
     },
     getPredict({ predict }) {
       return predict || {}
