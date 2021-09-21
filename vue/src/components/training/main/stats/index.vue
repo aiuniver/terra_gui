@@ -25,6 +25,7 @@
       <Scatter />
       <Histogram />
       <Table />
+      <Graphic />
     </div>
   </div>
 </template>
@@ -34,6 +35,7 @@ import Heatmap from './Heatmap.vue';
 import Scatter from './Scatter.vue';
 import Histogram from './Histogram.vue';
 import Table from './Table.vue';
+import Graphic from './Graphic.vue';
 
 export default {
   name: 't-scatters',
@@ -41,7 +43,8 @@ export default {
     Heatmap,
     Scatter,
     Histogram,
-    Table
+    Table,
+    Graphic
   },
   computed: {
     statisticData() {
