@@ -4,28 +4,28 @@
     <div class="predictions__params">
       <div class="predictions__param">
         <t-field inline label="Показать тренировочную выборку">
-          <t-checkbox-new :value="true" small />
+          <t-checkbox-new v-model="checks.show_results" :value="true" small />
         </t-field>
       </div>
       <div class="predictions__param">
         <t-field inline label="Данные для расчета">
-          <t-select-new small />
+          <t-select-new :list="sortData" v-model="checks.example_choice_type" small />
         </t-field>
         <t-field inline label="Тип выбора данных">
-          <t-select-new small />
+          <t-select-new :list="sortOutput" v-model="checks.main_output" small />
         </t-field>
       </div>
       <div class="predictions__param">
         <t-field inline label="Показать примеров">
-          <t-input-new :value="10" type="number" small />
+          <t-input-new v-model.number="checks.num_examples" type="number" small />
         </t-field>
         <t-field inline label="Показать статистику">
-          <t-checkbox-new :value="true" small />
+          <t-checkbox-new v-model="checks.show_statistic" small />
         </t-field>
       </div>
       <div class="predictions__param">
         <t-field inline label="Автообновление">
-          <t-checkbox-new small />
+          <t-checkbox-new v-model="checks.autoupdate" small />
         </t-field>
       </div>
       <div class="predictions__param">
@@ -47,23 +47,46 @@ export default {
     outputs: Array,
     interactive: Object,
   },
-  computed: {
-    predictData() {
-      return this.$store.getters['trainings/getTrainData']('intermediate_result') || {};
-    },
-    train(){
-      return this.$store.getters['trainings/getTrainDisplay'] || {}
-    }
-  },
   data: () => ({
+    predictData: {},
+    checks: {
+      autoupdate: false,
+      show_statistic: false,
+      num_examples: 10,
+      show_results: false,
+      example_choice_type: 'seed',
+      main_output: 2,
+    },
+    sortOutput: [],
+    sortData: [
+      { label: 'Best', value: 'best' },
+      { label: 'Worst', value: 'worst' },
+      { label: 'Seed', value: 'seed' },
+      { label: 'Random', value: 'random' },
+    ],
     showTextTable: false,
   }),
-  methods:{
-    async show(){
-      await this.$store.dispatch('trainings/interactive', {'intermediate_result':this.train['intermediate_result']})
-
-    }
-  }
+  created() {
+    this.sortOutput = this.outputs.map(el => {
+      return {
+        label: `Выходной слой ${el.id}`,
+        value: el.id,
+      };
+    });
+  },
+  methods: {
+    async show() {
+      const { data, status } = await this.$store.dispatch('trainings/interactive', {
+        intermediate_result: { ...this.checks },
+      });
+      if (this.checks.show_results) {
+        if (status && data) {
+          this.predictData = data;
+          this.showTextTable = true;
+        }
+      }
+    },
+  },
 };
 </script>
 
