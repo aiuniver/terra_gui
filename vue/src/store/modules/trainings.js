@@ -15,8 +15,7 @@ export default {
     predict: {},
     info: '',
     states: {},
-    // trainData: {},
-    trainData: data,
+    trainData: process.env.NODE_ENV === 'development' ? data : {},
     trainUsage: {},
     trainDisplay: config,
     buttons: {
