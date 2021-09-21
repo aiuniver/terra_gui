@@ -77,13 +77,14 @@ export default {
   },
   mounted() {
     console.log(this.outputs);
-    this.charts = this.interactive?.loss_graphs || [];
+    this.charts = this.interactive?.[this.metric] || [];
   },
   methods: {
     event({ name, data }, { id }) {
       // console.log(name, data, id);
       if (data === 'remove') {
         this.remove(id);
+        this.send(this.charts);
       }
       if (name === 'chart') {
         this.charts = this.charts.map(item => {
