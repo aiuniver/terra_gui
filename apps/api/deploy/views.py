@@ -5,6 +5,8 @@ from pydantic import ValidationError
 
 from django.conf import settings
 
+from apps.media.utils import path_hash
+
 from terra_ai.agent import agent_exchange
 from terra_ai.agent.exceptions import ExchangeBaseException
 from terra_ai.exceptions.base import TerraBaseException
@@ -21,11 +23,10 @@ from .serializers import UploadSerializer
 class InfoAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         try:
-            return BaseResponseSuccess(
-                agent_exchange(
-                    "deploy_collection", dataset=request.project.dataset
-                ).native()
-            )
+            data = agent_exchange(
+                "deploy_collection", dataset=request.project.dataset
+            ).native()
+            return BaseResponseSuccess(data)
         except ValidationError as error:
             return BaseResponseErrorFields(error)
 
