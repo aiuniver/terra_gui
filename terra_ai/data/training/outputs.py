@@ -2,16 +2,14 @@
 ## Структура данных параметров `output`-слоев
 """
 
-from typing import List, Any
+from typing import List, Optional
 from pydantic import validator
 from pydantic.types import PositiveInt
-from pydantic.errors import EnumMemberError
 
 from ..mixins import UniqueListMixin, IDMixinData
 from ..presets.training import TasksGroups
 from ..exceptions import ValueNotInListException
 from .extra import TaskChoice, LossChoice, MetricChoice, TasksGroupsList
-from . import callbacks
 
 
 class OutputData(IDMixinData):
@@ -19,18 +17,20 @@ class OutputData(IDMixinData):
     Информация о `output`-слое
     """
 
-    classes_quantity: PositiveInt
+    classes_quantity: Optional[PositiveInt]
     "Количество классов"
-    task: TaskChoice
+    task: Optional[TaskChoice]
     "Задача"
-    loss: LossChoice
+    loss: Optional[LossChoice]
     "Loss"
-    metrics: List[MetricChoice]
+    metrics: List[MetricChoice] = []
     "Список метрик"
 
     @validator("loss")
     def _validate_loss(cls, value: LossChoice, values) -> LossChoice:
         __task = values.get("task")
+        if not __task:
+            return None
         __losses = TasksGroupsList(TasksGroups).get(__task).losses
         if value.value not in __losses:
             raise ValueNotInListException(value.value, __losses)
@@ -39,6 +39,8 @@ class OutputData(IDMixinData):
     @validator("metrics")
     def _validate_metrics(cls, value: MetricChoice, values) -> MetricChoice:
         __task = values.get("task")
+        if not __task:
+            return []
         __metrics = TasksGroupsList(TasksGroups).get(__task).metrics
         __value = list(map(lambda item: item.value, value))
         __not_in_list = list(set(__value) - set(__metrics))

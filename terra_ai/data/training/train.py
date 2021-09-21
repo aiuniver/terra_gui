@@ -37,7 +37,7 @@ class LossGraphsList(UniqueListMixin):
 class MetricGraphData(IDMixinData):
     output_idx: PositiveInt
     show: MetricGraphShowChoice
-    show_metric: MetricChoice
+    show_metric: Optional[MetricChoice]
 
 
 class MetricGraphsList(UniqueListMixin):
