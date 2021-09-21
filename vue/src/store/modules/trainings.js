@@ -37,9 +37,19 @@ export default {
         visible: false
       }
     },
-    training: {},
+    training: {
+      base: {},
+      interactive: {},
+      state: {}
+    },
   }),
   mutations: {
+    SET_INTERACTIV(state, value) {
+      if (state?.training?.interactive) {
+        state.training.interactive = { ...value };
+        state.training = { ...state.training }
+      }
+    },
     SET_PARAMS(state, value) {
       state.params = { ...value };
     },
@@ -104,8 +114,9 @@ export default {
       dispatch('setButtons', res);
       return res
     },
-    async interactive({ state: { training: { interactive } }, dispatch }, part) {
+    async interactive({ commit, state: { training: { interactive } }, dispatch }, part) {
       const data = { ...interactive, ...part }
+      commit("SET_INTERACTIV", data);
       return await dispatch('axios', { url: '/training/interactive/', data }, { root: true });
     },
     async progress({ dispatch }, data) {
