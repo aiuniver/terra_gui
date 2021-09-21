@@ -25,7 +25,9 @@ class StartAPIView(BaseAPIView):
                 "params": request.project.training.base,
                 "initial_config": request.project.training.interactive,
             }
-            return BaseResponseSuccess(agent_exchange("training_start", **data))
+            agent_exchange("training_start", **data)
+            request.project.training.set_state()
+            return BaseResponseSuccess(request.project.training.state.native())
         except ValidationError as error:
             return BaseResponseErrorFields(error)
         except (TerraBaseException, ExchangeBaseException) as error:
@@ -35,7 +37,9 @@ class StartAPIView(BaseAPIView):
 class StopAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         try:
-            return BaseResponseSuccess(agent_exchange("training_stop"))
+            agent_exchange("training_stop")
+            request.project.training.set_state()
+            return BaseResponseSuccess(request.project.training.state.native())
         except ExchangeBaseException as error:
             return BaseResponseErrorGeneral(str(error))
 
@@ -43,7 +47,9 @@ class StopAPIView(BaseAPIView):
 class ClearAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         try:
-            return BaseResponseSuccess(agent_exchange("training_clear"))
+            agent_exchange("training_clear")
+            request.project.training.set_state()
+            return BaseResponseSuccess(request.project.training.state.native())
         except ExchangeBaseException as error:
             return BaseResponseErrorGeneral(str(error))
 
@@ -61,6 +67,8 @@ class InteractiveAPIView(BaseAPIView):
 class ProgressAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         try:
-            return BaseResponseSuccess(agent_exchange("training_progress").native())
+            agent_exchange("training_progress")
+            request.project.training.set_state()
+            return BaseResponseSuccess(request.project.training.state.native())
         except ExchangeBaseException as error:
             return BaseResponseErrorGeneral(str(error))

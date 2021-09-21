@@ -246,11 +246,18 @@ export default {
     },
     parse({ parse, value, name }) {
       // console.log({ parse, value, name });
-      this.state = { [`${parse}`]: value };
+
       ser(this.obj, parse, value);
       this.obj = { ...this.obj };
       if (name === 'architecture_parameters_checkpoint_layer') {
+        console.log(name);
+        console.log(value);
         this.metricData = value;
+        if (value) {
+          this.state = { [`${parse}`]: value };
+        }
+      } else {
+        this.state = { [`${parse}`]: value };
       }
       if (name === 'optimizer') {
         this.optimizerValue = value;
