@@ -9096,38 +9096,38 @@ const data = {
 
 const config = {
   "loss_graphs": [
-    // {
-    //     "id": 1,
-    //     "output_idx": 2,
-    //     "show": "model"
-    // },
-    // {
-    //     "id": 2,
-    //     "output_idx": 2,
-    //     "show": "classes"
-    // }
+    {
+      "id": 1,
+      "output_idx": 2,
+      "show": "model"
+    },
+    {
+      "id": 2,
+      "output_idx": 2,
+      "show": "classes"
+    }
   ],
   "metric_graphs": [
-    // {
-    //     "id": 1,
-    //     "output_idx": 2,
-    //     "show": "model",
-    //     "show_metric": "DiceCoef"
-    // },
-    // {
-    //     "id": 2,
-    //     "output_idx": 2,
-    //     "show": "classes",
-    //     "show_metric": "DiceCoef"
-    // }
+    {
+      "id": 1,
+      "output_idx": 2,
+      "show": "model",
+      "show_metric": "Accuracy"
+    },
+    {
+      "id": 2,
+      "output_idx": 2,
+      "show": "classes",
+      "show_metric": "Accuracy"
+    }
   ],
   "intermediate_result": {
     "show_results": false,
     "example_choice_type": "seed",
     "main_output": 2,
     "num_examples": 10,
-    "show_statistic": false,
-    "autoupdate": false
+    "show_statistic": true,
+    "autoupdate": true
   },
   "progress_table": [
     {
@@ -9141,8 +9141,8 @@ const config = {
     "autoupdate": false
   },
   "data_balance": {
-    "show_train": false,
-    "show_val": false,
+    "show_train": true,
+    "show_val": true,
     "sorted": "descending"
   }
 }

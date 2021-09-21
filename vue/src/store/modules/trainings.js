@@ -45,7 +45,7 @@ export default {
       state.params = value;
     },
     SET_INTERACTIVE(state, value) {
-      state.interactive = {...value};
+      state.interactive = { ...value };
     },
     SET_OUTPUTS(state, value) {
       state.outputs = [...value];
@@ -107,7 +107,7 @@ export default {
       return res
     },
     async interactive({ state: { interactive }, dispatch }, part) {
-      const data = {...interactive, part}
+      const data = { ...interactive, part }
       console.log(data)
       console.log(interactive)
       return await dispatch('axios', { url: '/training/interactive/', data }, { root: true });
