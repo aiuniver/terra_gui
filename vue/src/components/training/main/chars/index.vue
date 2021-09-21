@@ -42,13 +42,13 @@ export default {
           { title: 'По классам', event: { name: 'data', data: 'classes' } },
         ],
       },
-      // {
-      //   name: 'Показывать метрики',
-      //   list: [
-      //     { title: 'Accuracy', event: { name: 'metric', data: 'Accuracy' } },
-      //     { title: 'Hinge', event: { name: 'metric', data: 'Hinge' } },
-      //   ],
-      // },
+      {
+        name: 'Показывать метрики',
+        list: [
+          { title: 'Accuracy', event: { name: 'metric', data: 'Accuracy' } },
+          { title: 'Hinge', event: { name: 'metric', data: 'Hinge' } },
+        ],
+      },
     ],
   }),
   computed: {
@@ -67,7 +67,7 @@ export default {
         return { title: item.graph_name, event: { name: 'chart', data: item.id } };
       });
       return {
-        name: 'Выходы',
+        name: 'Показывать выход',
         list,
       };
     },
@@ -82,9 +82,14 @@ export default {
   methods: {
     event({ name, data }, { id }) {
       // console.log(name, data, id);
+      if (data === 'add') {
+        this.add();
+      }
       if (data === 'remove') {
         this.remove(id);
-        this.send(this.charts);
+      }
+      if (data === 'copy') {
+        this.copy(id);
       }
       if (name === 'chart') {
         this.charts = this.charts.map(item => {
@@ -97,26 +102,38 @@ export default {
       if (name === 'data') {
         this.charts = this.charts.map(item => {
           if (item.id === id) {
-            item.show = data
+            item.show = data;
           }
-          return item
-        })
+          return item;
+        });
         this.send(this.charts);
       }
     },
-    getChart({ id }) {
+    getChart({ id, chart }) {
       // console.log({ graphID });
-      return this.data.find(chart => chart.id === id);
+      return this.data.find(item => item.id === chart) || this.data.find(item => item.id === id);
     },
     add() {
       if (this.charts.length < 10) {
         let maxID = Math.max(0, ...this.charts.map(o => o.id));
-        this.charts.push({ id: maxID + 1, output_idx: 2, show: 'model' });
+        this.charts.push({ id: maxID + 1, output_idx: 2, show: 'model', chart: 1, show_metric: 'Accuracy' });
+        this.send(this.charts);
+      }
+    },
+    copy(id) {
+      if (this.charts.length < 10) {
+        let maxID = Math.max(0, ...this.charts.map(o => o.id));
+        const char = this.charts.find(item => item.id === id);
+        if (char) {
+          char.id = maxID + 2;
+          this.charts = [...this.charts, char];
+        }
         this.send(this.charts);
       }
     },
     remove(id) {
       this.charts = this.charts.filter(item => item.id !== id);
+      this.send(this.charts);
     },
     async send(data) {
       const res = await this.$store.dispatch('trainings/interactive', { [this.metric]: data });

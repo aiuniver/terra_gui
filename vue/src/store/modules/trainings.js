@@ -37,18 +37,26 @@ export default {
         visible: false
       }
     },
-    interactive: {},
-    outputs: []
+    training: {
+      base: {},
+      interactive: {},
+      state: {}
+    },
   }),
   mutations: {
+    SET_INTERACTIV(state, value) {
+      if (state?.training?.interactive) {
+        state.training.interactive = { ...value };
+        state.training = { ...state.training }
+      }
+    },
     SET_PARAMS(state, value) {
-      state.params = value;
+      state.params = { ...value };
     },
-    SET_INTERACTIVE(state, value) {
-      state.interactive = {...value};
-    },
-    SET_OUTPUTS(state, value) {
-      state.outputs = [...value];
+    SET_CONFIG(state, value) {
+      console.log(value)
+      state.buttons = { ...value.state.buttons };
+      state.training = { ...value };
     },
     SET_BUTTONS(state, buttons) {
       state.buttons = { ...buttons };
@@ -78,7 +86,7 @@ export default {
   actions: {
     setButtons({ commit }, res) {
       if (res && res?.data) {
-        const { buttons } = res?.data?.data?.states || res?.data
+        const { buttons } = res?.data?.data?.states || res?.data.state
         if (buttons) {
           commit("SET_BUTTONS", buttons);
         }
@@ -106,15 +114,13 @@ export default {
       dispatch('setButtons', res);
       return res
     },
-    async interactive({ state: { interactive }, dispatch }, part) {
-      const data = {...interactive, part}
-      console.log(data)
-      console.log(interactive)
+    async interactive({ commit, state: { training: { interactive } }, dispatch }, part) {
+      const data = { ...interactive, ...part }
+      commit("SET_INTERACTIV", data);
       return await dispatch('axios', { url: '/training/interactive/', data }, { root: true });
     },
     async progress({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/progress/', data }, { root: true });
-      console.log();
       dispatch('setButtons', res);
       return res
     },
@@ -147,11 +153,11 @@ export default {
     getStateParams({ stateParams }) {
       return stateParams || {}
     },
-    getInteractive({ interactive }) {
+    getInteractive({ training: { interactive } }) {
       return interactive || {}
     },
-    getOutputs({ outputs }) {
-      return outputs || []
+    getOutputs({ training: { base } }) {
+      return base?.architecture?.parameters?.outputs || []
     },
     getParams({ params }) {
       return params || []

@@ -14,6 +14,7 @@ from apps.plugins.frontend import defaults_data
 from apps.plugins.frontend.presets.defaults import TrainingLosses, TrainingMetrics
 
 from terra_ai.agent import agent_exchange
+from terra_ai.training.guinn import interactive as training_interactive
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.types import confilepath
 from terra_ai.data.extra import HardwareAcceleratorData, HardwareAcceleratorChoice
@@ -24,6 +25,7 @@ from terra_ai.data.presets.models import EmptyModelDetailsData
 from terra_ai.data.training.train import (
     TrainData,
     InteractiveData,
+    StateData,
     LossGraphsList,
     MetricGraphsList,
     ProgressTableList,
@@ -101,6 +103,10 @@ class ProjectPathData(BaseMixinData):
 class TrainingDetailsData(BaseMixinData):
     base: TrainData = TrainData()
     interactive: InteractiveData = InteractiveData()
+    state: StateData = StateData()
+
+    def set_state(self):
+        self.state = StateData(**training_interactive.train_states)
 
 
 class Project(BaseMixinData):
@@ -216,9 +222,11 @@ class Project(BaseMixinData):
                 {
                     "id": layer.id,
                     "classes_quantity": layer.num_classes,
-                    "task": layer.task.value,
-                    "loss": TrainingLosses.get(layer.task)[0],
-                    "metrics": [TrainingMetrics.get(layer.task)[0]],
+                    "task": layer.task,
+                    "loss": TrainingLosses.get(layer.task)[0] if layer.task else None,
+                    "metrics": [TrainingMetrics.get(layer.task)[0]]
+                    if layer.task
+                    else [],
                 }
             )
         self.training.base.architecture.parameters.outputs = OutputsList(outputs)
@@ -246,7 +254,9 @@ class Project(BaseMixinData):
                     "id": index,
                     "output_idx": layer.id,
                     "show": MetricGraphShowChoice.model,
-                    "show_metric": TrainingMetrics.get(layer.task)[0],
+                    "show_metric": TrainingMetrics.get(layer.task)[0]
+                    if layer.task
+                    else None,
                 }
             )
             index += 1
@@ -262,7 +272,9 @@ class Project(BaseMixinData):
                     "id": index,
                     "output_idx": layer.id,
                     "show": MetricGraphShowChoice.classes,
-                    "show_metric": TrainingMetrics.get(layer.task)[0],
+                    "show_metric": TrainingMetrics.get(layer.task)[0]
+                    if layer.task
+                    else None,
                 }
             )
             progress_table.append(
@@ -277,10 +289,14 @@ class Project(BaseMixinData):
             self.model.outputs[0].id if len(self.model.outputs) else None
         )
 
+    def __update_training_state(self):
+        self.training.set_state()
+
     def set_training(self):
         defaults_data.update_by_model(self.model)
         self.__update_training_base()
         self.__update_training_interactive()
+        self.__update_training_state()
 
     def clear_model(self):
         if self.dataset:

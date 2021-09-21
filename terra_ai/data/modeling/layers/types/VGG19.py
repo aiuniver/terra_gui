@@ -1,12 +1,12 @@
 """
-## Тип слоя `VGG16`
+## Тип слоя `VGG19`
 """
 from typing import Optional
 
 from pydantic.types import PositiveInt
 
-from ....mixins import BaseMixinData
-from ..extra import LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice, \
+from terra_ai.data.mixins import BaseMixinData
+from terra_ai.data.modeling.layers.extra import LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice, \
     PretrainedModelWeightsChoice, PretrainedModelPoolingChoice, ActivationChoice
 
 LayerConfig = LayerConfigData(
@@ -19,7 +19,7 @@ LayerConfig = LayerConfigData(
             "value": 4,
             "validation": LayerValidationMethodChoice.fixed,
         },
-        "module": ModuleChoice.vgg16,
+        "module": ModuleChoice.vgg19,
         "module_type": ModuleTypeChoice.keras_pretrained_model,
     }
 )
@@ -37,16 +37,3 @@ class ParametersExtraData(BaseMixinData):
     classifier_activation: Optional[ActivationChoice] = ActivationChoice.softmax
     pass
 
-
-#
-# "output_layer": {
-#     "type": "str",
-#     "default": "last",
-#     "list": True,
-#     "available": ["block1_conv2",
-#                   "block2_conv2",
-#                   "block3_conv3",
-#                   "block4_conv3",
-#                   "block5_conv3",
-#                   "last"],
-# },
