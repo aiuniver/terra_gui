@@ -5,8 +5,6 @@ from pydantic import ValidationError
 
 from django.conf import settings
 
-from apps.media.utils import path_hash
-
 from terra_ai.agent import agent_exchange
 from terra_ai.agent.exceptions import ExchangeBaseException
 from terra_ai.exceptions.base import TerraBaseException
