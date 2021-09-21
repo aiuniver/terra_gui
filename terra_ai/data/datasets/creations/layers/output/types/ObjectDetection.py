@@ -8,3 +8,4 @@ class ParametersData(SourcesPathsData):
     yolo: LayerYoloChoice = LayerYoloChoice.v4
     classes_names: Optional[list]
     num_classes: Optional[PositiveInt]
+    put: Optional[PositiveInt]

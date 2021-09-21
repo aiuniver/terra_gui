@@ -15,3 +15,5 @@ class ParametersData(BaseMixinData):
     max_words: Optional[PositiveInt]
     length: Optional[PositiveInt]
     step: Optional[PositiveInt]
+    put: Optional[PositiveInt]
+    cols_names: Optional[str]

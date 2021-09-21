@@ -143,12 +143,15 @@ class CreateDataset(object):
         if creation_data.columns_processing:
             inputs = self.create_dataframe_put_instructions(data=creation_data.inputs)
             outputs = self.create_dataframe_put_instructions(data=creation_data.outputs)
+            print(outputs)
         else:
             inputs = self.create_put_instructions(data=creation_data.inputs)
             outputs = self.create_put_instructions(data=creation_data.outputs)
             for out in creation_data.outputs:
-                if out.type == LayerOutputTypeChoice.Classification and not out.parameters.cols_names:
-                    outputs[out.id].instructions = self.y_cls
+                if out.type == LayerOutputTypeChoice.Classification and self.y_cls:
+                    for col_name, data in outputs[out.id].items():
+                        data.instructions = self.y_cls
+
         instructions = DatasetInstructionsData(inputs=inputs, outputs=outputs)
 
         return instructions
@@ -177,16 +180,26 @@ class CreateDataset(object):
 
                     instr = getattr(CreateArray(),
                                     f'instructions_{decamelize(self.columns_processing[str(worker)].type)}')(list_of_data, **{'cols_names': f'{put.id}_{name}', 'put': put.id}, **self.columns_processing[str(worker)].parameters.native())
-                    paths_list = [os.path.join(self.source_path, elem) for elem in instr['instructions']]
+                    path_flag = False
+                    if self.columns_processing[str(worker)].type in [LayerInputTypeChoice.Image, LayerOutputTypeChoice.Image,
+                                                                     LayerInputTypeChoice.Video, LayerOutputTypeChoice.Segmentation,
+                                                                     LayerInputTypeChoice.Audio, LayerOutputTypeChoice.Audio,
+                                                                     LayerOutputTypeChoice.ObjectDetection]:
+                        paths_list = [os.path.join(self.source_path, elem) for elem in instr['instructions']]
+                        path_flag = True
+                    else:
+                        paths_list = instr['instructions']
                     instructions_data = InstructionsData(
                         **getattr(CreateArray(),
                                   f"cut_{decamelize(self.columns_processing[str(worker)].type)}")(
                             paths_list, self.temp_directory, os.path.join(self.paths.sources, f'{put.id}_{name}'),
                             **instr['parameters']))
-                    instructions_data.instructions = [
-                        os.path.join('sources', instructions_data.parameters['cols_names'],
-                                     path.replace(str(self.source_path) + os.path.sep, '')) for path in
-                        instructions_data.instructions]
+                    if path_flag:
+                        instructions_data.instructions = [os.path.join('sources',
+                                                                       instructions_data.parameters['cols_names'],
+                                                                       path.replace(str(self.source_path) +
+                                                                                    os.path.sep, ''))
+                                                          for path in instructions_data.instructions]
                 put_columns[f'{put.id}_{name}'] = instructions_data
             put_parameters[put.id] = put_columns
 
@@ -249,16 +262,19 @@ class CreateDataset(object):
                 elif 'prepare_method' in data.parameters.keys():
                     if data.parameters['prepare_method'] in [LayerPrepareMethodChoice.embedding,
                                                              LayerPrepareMethodChoice.bag_of_words]:
-                        self.preprocessing.create_tokenizer(array=None, **data.parameters)
+                        self.preprocessing.create_tokenizer(text_list=data.instructions, **data.parameters)
                     elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
-                        self.preprocessing.create_word2vec(array=None, **data.parameters)
+                        self.preprocessing.create_word2vec(text_list=data.instructions, **data.parameters)
 
     def create_table(self, creation_data: CreationData):
 
         for elem in creation_data.outputs:
             classes = self.instructions.outputs[elem.id][list(
                 self.instructions.outputs[elem.id].keys())[0]].instructions
-            if elem.type == LayerOutputTypeChoice.Classification:
+
+            if elem.type == LayerOutputTypeChoice.Classification or\
+                    self.columns_processing.get(str(elem.id)) is not None and\
+                    self.columns_processing.get(str(elem.id)).type == LayerOutputTypeChoice.Classification:
                 peg = [0]
                 prev_cls = classes[0]
                 for idx, x in enumerate(classes):
@@ -294,6 +310,7 @@ class CreateDataset(object):
         dataframe = pd.DataFrame(build_dataframe)
         for key, value in split_sequence.items():
             self.dataframe[key] = dataframe.loc[value, :].reset_index(drop=True)
+        print(self.dataframe['train'])
 
     def create_input_parameters(self, creation_data: CreationData) -> dict:
 
@@ -359,8 +376,26 @@ class CreateDataset(object):
                 prep = None
                 if self.preprocessing.preprocessing.get(key) and self.preprocessing.preprocessing.get(key).get(col_name):
                     prep = self.preprocessing.preprocessing.get(key).get(col_name)
-                arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(
-                    os.path.join(self.paths.basepath, data.instructions[0]), **data.parameters, **{'preprocess': prep})
+
+                # if creation_data.outputs.get(key).type == LayerOutputTypeChoice.Classification or\
+                #         self.columns_processing.get(str(key)) is not None and \
+                #         self.columns_processing.get(str(key)).type == LayerOutputTypeChoice.Classification:
+                #     data_to_pass = data.instructions[0]
+                if creation_data.outputs.get(key).type in [LayerOutputTypeChoice.Image,
+                                                           LayerOutputTypeChoice.Segmentation,
+                                                           LayerOutputTypeChoice.Audio] or\
+                        self.columns_processing.get(str(key)) is not None and \
+                        self.columns_processing.get(str(key)).type in [LayerOutputTypeChoice.Image,
+                                                                       LayerOutputTypeChoice.Segmentation,
+                                                                       LayerOutputTypeChoice.Audio]:
+                    data_to_pass = os.path.join(self.paths.basepath, data.instructions[0])
+                else:
+                    data_to_pass = data.instructions[0]
+
+                arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(data_to_pass,
+                                                                                   **data.parameters,
+                                                                                   **{'preprocess': prep})
+
                 full_array.append(getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(arr['instructions'],
                                                                                                    **arr['parameters']))
                 cl_names = data.parameters.get('classes_names')
@@ -432,16 +467,25 @@ class CreateDataset(object):
                     #     arr = getattr(CreateArray(), f'create_{self.tags[key]}')(self.dataframe[split].loc[i, f'{key}_{self.tags[key]}'], **put_data.get(key).parameters) #  , **self.preprocessing.preprocessing.get(key))
                     #     array = getattr(CreateArray(), f'preprocess_{self.tags[key]}')(arr['instructions'],
                     #                                                                     **arr['parameters'])
-                    # else:
+
                     full_array = []
-                    for col_name, data in put_data[key].items():
+                    for col_name, data in put_data[key].items(): # {'sghrtgdfb': InstructionsData}
+
                         prep = None
+                        if self.tags[key][col_name] in [decamelize(LayerInputTypeChoice.Text),
+                                                        decamelize(LayerOutputTypeChoice.Text),
+                                                        decamelize(LayerOutputTypeChoice.TextSegmentation),
+                                                        decamelize(LayerOutputTypeChoice.Classification)]:
+                            data_to_pass = self.dataframe[split].loc[i, col_name]
+                        else:
+                            data_to_pass = os.path.join(self.paths.basepath, self.dataframe[split].loc[i, col_name])
+
                         if self.preprocessing.preprocessing.get(key) and\
                                 self.preprocessing.preprocessing.get(key).get(col_name):
                             prep = self.preprocessing.preprocessing.get(key).get(col_name)
-                        arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(
-                            os.path.join(self.paths.basepath, self.dataframe[split].loc[i, col_name]),
-                            **data.parameters, **{'preprocess': prep})
+                        arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(data_to_pass,
+                                                                                           **{'preprocess': prep},
+                                                                                           **data.parameters)
                         full_array.append(getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(
                             arr['instructions'], **arr['parameters']))
 
@@ -452,6 +496,7 @@ class CreateDataset(object):
                 #     for n in range(num_arrays):
                 #         out_array[split][key + n] = np.array(globals()[f'current_arrays_{n + 1}'])
                 # else:
+                print(np.array(current_arrays).shape)
                 out_array[split][key] = np.array(current_arrays)
 
         return out_array
