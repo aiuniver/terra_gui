@@ -1835,7 +1835,7 @@ class InteractiveCallback:
         'statistic_data': {
             f'Output_{layer_id}': {
                 'id': 1,
-                'task_type': 'Classification',
+                'type': 'Heatmap',
                 'graph_name':  f'Output_{layer_id} - Confusion matrix',
                 'x_label': 'Предсказание',
                 'y_label': 'Истинное значение',
@@ -1883,7 +1883,7 @@ class InteractiveCallback:
                 return_data[f"{out}"] = [
                     dict(
                         id=_id,
-                        type="Histogram",
+                        type="Heatmap",
                         graph_name=f"Выходной слой «{out}» - Confusion matrix",
                         x_label="Предсказание",
                         y_label="Истинное значение",
@@ -2175,6 +2175,7 @@ class InteractiveCallback:
                 return_data[out] = [
                     {
                         'id': _id,
+                        'type': 'Histogram',
                         'graph_name': 'Тренировочная выборка - баланс присутсвия',
                         'x_label': 'Название класса',
                         'y_label': 'Значение',
@@ -2187,6 +2188,7 @@ class InteractiveCallback:
                     },
                     {
                         'id': _id + 1,
+                        'type': 'Histogram',
                         'graph_name': 'Проверочная выборка - баланс присутсвия',
                         'x_label': 'Название класса',
                         'y_label': 'Значение',
@@ -2199,6 +2201,7 @@ class InteractiveCallback:
                     },
                     {
                         'id': _id + 2,
+                        'type': 'Histogram',
                         'graph_name': 'Тренировочная выборка - процент пространства',
                         'x_label': 'Название класса',
                         'y_label': 'Значение',
@@ -2211,6 +2214,7 @@ class InteractiveCallback:
                     },
                     {
                         'id': _id + 3,
+                        'type': 'Histogram',
                         'graph_name': 'Проверочная выборка - процент пространства',
                         'x_label': 'Название класса',
                         'y_label': 'Значение',
@@ -2236,6 +2240,7 @@ class InteractiveCallback:
                 return_data[out] = [
                     {
                         'id': _id,
+                        'type': 'Histogram',
                         'graph_name': 'Тренировочная выборка - баланс присутсвия',
                         'x_label': 'Название класса',
                         'y_label': 'Значение',
@@ -2248,6 +2253,7 @@ class InteractiveCallback:
                     },
                     {
                         'id': _id + 1,
+                        'type': 'Histogram',
                         'graph_name': 'Проверочная выборка - баланс присутсвия',
                         'x_label': 'Название класса',
                         'y_label': 'Значение',
@@ -2282,7 +2288,7 @@ class InteractiveCallback:
                         )
                     return_data[out].append(
                         {
-                            "type": "Heatmap",
+                            "type": "Correlation heatmap",
                             "graph_name": f"{data_type_name} выборка - Матрица корреляций",
                             "x_label": "Колонка",
                             "y_label": "Колонка",
