@@ -22,6 +22,7 @@ class ParametersData(MinMaxScalerData, SourcesPathsData, ColumnProcessingData):
     length: Optional[PositiveInt]
     step: Optional[PositiveInt]
     scaler: LayerScalerVideoChoice
+    put: Optional[PositiveInt]
 
     deploy: Optional[bool] = False
 

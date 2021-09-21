@@ -52,7 +52,7 @@ class ParametersTextData(SourcesPathsData, ColumnProcessingData):
     max_words_count: Optional[PositiveInt]
     word_to_vec_size: Optional[PositiveInt]
 
-    put: Optional[str]
+    put: Optional[PositiveInt]
     deploy: Optional[bool] = False
     open_tags: Optional[str]
     close_tags: Optional[str]
@@ -86,6 +86,7 @@ class ParametersAudioData(MinMaxScalerData, SourcesPathsData, ColumnProcessingDa
     step: Optional[PositiveFloat]
     parameter: LayerAudioParameterChoice
     scaler: LayerScalerAudioChoice
+    put: Optional[PositiveInt]
 
     deploy: Optional[bool] = False
 
