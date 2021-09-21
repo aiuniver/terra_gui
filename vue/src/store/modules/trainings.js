@@ -37,7 +37,8 @@ export default {
         visible: false
       }
     },
-    interactive: {}
+    interactive: {},
+    outputs: []
   }),
   mutations: {
     SET_PARAMS(state, value) {
@@ -45,6 +46,9 @@ export default {
     },
     SET_INTERACTIVE(state, value) {
       state.interactive = {...value};
+    },
+    SET_OUTPUTS(state, value) {
+      state.outputs = [...value];
     },
     SET_BUTTONS(state, buttons) {
       state.buttons = { ...buttons };
@@ -142,6 +146,12 @@ export default {
   getters: {
     getStateParams({ stateParams }) {
       return stateParams || {}
+    },
+    getInteractive({ interactive }) {
+      return interactive || {}
+    },
+    getOutputs({ outputs }) {
+      return outputs || []
     },
     getParams({ params }) {
       return params || []

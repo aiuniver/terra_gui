@@ -62,14 +62,11 @@ export default {
     show() {
       return this.collabse.includes('0');
     },
-    training() {
-      return this.$store.getters['projects/getProjectData']('training') || {};
-    },
     outputs() {
-      return this.training.base?.architecture?.parameters?.outputs || [];
+      return this.$store.getters['trainings/getOutputs'];
     },
     interactive() {
-      return this.training.interactive || {};
+      return this.$store.getters['trainings/getInteractive'];
     },
   },
   methods: {
