@@ -3,6 +3,8 @@ from pydantic import ValidationError
 from terra_ai.agent import agent_exchange
 from terra_ai.agent.exceptions import ExchangeBaseException
 from terra_ai.exceptions.base import TerraBaseException
+from terra_ai.data.training.train import TrainData
+from terra_ai.data.training.extra import ArchitectureChoice
 
 from apps.plugins.project import project_path
 
@@ -17,6 +19,8 @@ from ..base import (
 class StartAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         try:
+            request.data["architecture"]["type"] = ArchitectureChoice.Basic
+            request.project.training.base = TrainData(**request.data)
             data = {
                 "dataset": request.project.dataset,
                 "model": request.project.model,
