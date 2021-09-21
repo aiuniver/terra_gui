@@ -97,3 +97,7 @@ class ParametersAudioData(MinMaxScalerData, SourcesPathsData, ColumnProcessingDa
             cls.__fields__["length"].required = True
             cls.__fields__["step"].required = True
         return value
+
+
+class ParametersDataframeData(SourcesPathsData, ColumnProcessingData):
+    pass

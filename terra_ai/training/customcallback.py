@@ -26,7 +26,7 @@ from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.utils import camelize, decamelize
 
-__version__ = 0.059
+__version__ = 0.060
 
 
 def sort_dict(dict_to_sort: dict, mode='by_name'):
@@ -551,6 +551,7 @@ class InteractiveCallback:
         )
 
     # Методы для set_attributes()
+
     @staticmethod
     def _reformat_metrics(metrics: dict) -> dict:
         output = {}

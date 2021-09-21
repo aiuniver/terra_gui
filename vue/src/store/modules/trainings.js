@@ -36,11 +36,17 @@ export default {
         title: "Сохранить",
         visible: false
       }
-    }
+    },
+    training: {},
   }),
   mutations: {
     SET_PARAMS(state, value) {
       state.params = value;
+    },
+    SET_CONFIG(state, value) {
+      console.log(value)
+      state.buttons = { ...value.state.buttons };
+      state.training = { ...value };
     },
     SET_BUTTONS(state, buttons) {
       state.buttons = { ...buttons };
@@ -98,13 +104,12 @@ export default {
       dispatch('setButtons', res);
       return res
     },
-    async interactive({ dispatch }, data) {
-      console.log(data)
+    async interactive({ state: { training: { interactive } }, dispatch }, part) {
+      const data = { ...interactive, ...part }
       return await dispatch('axios', { url: '/training/interactive/', data }, { root: true });
     },
     async progress({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/progress/', data }, { root: true });
-      console.log();
       dispatch('setButtons', res);
       return res
     },
@@ -136,6 +141,12 @@ export default {
   getters: {
     getStateParams({ stateParams }) {
       return stateParams || {}
+    },
+    getInteractive({ training: { interactive } }) {
+      return interactive || {}
+    },
+    getOutputs({ training: { base } }) {
+      return base.architecture?.parameters?.outputs || []
     },
     getParams({ params }) {
       return params || []

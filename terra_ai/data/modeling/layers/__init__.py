@@ -430,9 +430,59 @@ class LayerVGG16Data(LayerMixinData):
     extra: types.VGG16.ParametersExtraData = types.VGG16.ParametersExtraData()
 
 
+class LayerVGG19Data(LayerMixinData):
+    main: types.VGG19.ParametersMainData = types.VGG19.ParametersMainData()
+    extra: types.VGG19.ParametersExtraData = types.VGG19.ParametersExtraData()
+
+
 class LayerResNet50Data(LayerMixinData):
     main: types.ResNet50.ParametersMainData = types.ResNet50.ParametersMainData()
     extra: types.ResNet50.ParametersExtraData = types.ResNet50.ParametersExtraData()
+
+
+class LayerResNet101Data(LayerMixinData):
+    main: types.ResNet101.ParametersMainData = types.ResNet101.ParametersMainData()
+    extra: types.ResNet101.ParametersExtraData = types.ResNet101.ParametersExtraData()
+
+
+class LayerResNet152Data(LayerMixinData):
+    main: types.ResNet152.ParametersMainData = types.ResNet152.ParametersMainData()
+    extra: types.ResNet152.ParametersExtraData = types.ResNet152.ParametersExtraData()
+
+
+class LayerResNet50V2Data(LayerMixinData):
+    main: types.ResNet50V2.ParametersMainData = types.ResNet50V2.ParametersMainData()
+    extra: types.ResNet50V2.ParametersExtraData = types.ResNet50V2.ParametersExtraData()
+
+
+class LayerResNet101V2Data(LayerMixinData):
+    main: types.ResNet101V2.ParametersMainData = types.ResNet101V2.ParametersMainData()
+    extra: types.ResNet101V2.ParametersExtraData = types.ResNet101V2.ParametersExtraData()
+
+
+class LayerResNet152V2Data(LayerMixinData):
+    main: types.ResNet152V2.ParametersMainData = types.ResNet152V2.ParametersMainData()
+    extra: types.ResNet152V2.ParametersExtraData = types.ResNet152V2.ParametersExtraData()
+
+
+class LayerDenseNet121Data(LayerMixinData):
+    main: types.DenseNet121.ParametersMainData = types.DenseNet121.ParametersMainData()
+    extra: types.DenseNet121.ParametersExtraData = types.DenseNet121.ParametersExtraData()
+
+
+class LayerDenseNet169Data(LayerMixinData):
+    main: types.DenseNet169.ParametersMainData = types.DenseNet169.ParametersMainData()
+    extra: types.DenseNet169.ParametersExtraData = types.DenseNet169.ParametersExtraData()
+
+
+class LayerDenseNet201Data(LayerMixinData):
+    main: types.DenseNet201.ParametersMainData = types.DenseNet201.ParametersMainData()
+    extra: types.DenseNet201.ParametersExtraData = types.DenseNet201.ParametersExtraData()
+
+
+class LayerNASNetMobileData(LayerMixinData):
+    main: types.NASNetMobile.ParametersMainData = types.NASNetMobile.ParametersMainData()
+    extra: types.NASNetMobile.ParametersExtraData = types.NASNetMobile.ParametersExtraData()
 
 
 class LayerCustomUNETBlockData(LayerMixinData):

@@ -19,6 +19,7 @@ from .extra import (
     ExampleChoiceTypeChoice,
     BalanceSortedChoice,
     MetricChoice,
+    StateStatusChoice,
 )
 
 
@@ -84,6 +85,23 @@ class InteractiveData(BaseMixinData):
     progress_table: ProgressTableList = ProgressTableList()
     statistic_data: StatisticData = StatisticData()
     data_balance: BalanceData = BalanceData()
+
+
+class StateButtonData(BaseMixinData):
+    title: str
+    visible: bool
+
+
+class StateButtonsData(BaseMixinData):
+    train: StateButtonData = StateButtonData(title="Обучить", visible=False)
+    stop: StateButtonData = StateButtonData(title="Остановить", visible=False)
+    clear: StateButtonData = StateButtonData(title="Сбросить", visible=False)
+    save: StateButtonData = StateButtonData(title="Сохранить", visible=False)
+
+
+class StateData(BaseMixinData):
+    status: StateStatusChoice = StateStatusChoice.no_train
+    buttons: StateButtonsData = StateButtonsData()
 
 
 class OptimizerData(BaseMixinData):

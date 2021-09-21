@@ -29,7 +29,7 @@
         </t-field>
       </div>
       <div class="predictions__param">
-        <t-button style="width: 150px" @click.native="showTextTable = !showTextTable">Показать</t-button>
+        <t-button style="width: 150px" @click.native="show">Показать</t-button>
       </div>
     </div>
     <TextTable :show="showTextTable" :predict="predictData" />
@@ -38,7 +38,6 @@
 
 <script>
 import TextTable from './TextTableTest';
-// import { mapGetters } from 'vuex';
 export default {
   name: 'Predictions',
   components: {
@@ -48,23 +47,23 @@ export default {
     outputs: Array,
     interactive: Object,
   },
+  computed: {
+    predictData() {
+      return this.$store.getters['trainings/getTrainData']('intermediate_result') || {};
+    },
+    train(){
+      return this.$store.getters['trainings/getTrainDisplay'] || {}
+    }
+  },
   data: () => ({
     showTextTable: false,
-    predictData: {},
   }),
-  async created() {
-    const data = JSON.parse(JSON.stringify(this.interactive));
-    data.intermediate_result.show_results = true;
-    data.intermediate_result.show_statistic = true;
-    const res = await this.$store.dispatch('trainings/interactive', { data });
-    if (res.success) this.predictData = res.data;
-    console.log('Result predict', res);
-  },
-  // computed: {
-  //   ...mapGetters({
-  //     predictData: 'trainings/getPredict',
-  //   }),
-  // },
+  methods:{
+    async show(){
+      await this.$store.dispatch('trainings/interactive', {'intermediate_result':this.train['intermediate_result']})
+
+    }
+  }
 };
 </script>
 

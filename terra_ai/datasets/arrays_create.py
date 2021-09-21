@@ -1308,10 +1308,10 @@ class CreateArray(object):
     def postprocess_classification(array: np.ndarray, options: DatasetOutputsData) -> list:
         labels = options.classes_names
         ohe = True if options.encoding == LayerEncodingChoice.ohe else False
-        array = np.argmax(array, axis=-1) if ohe else array
+        array_argmax = np.argmax(array, axis=-1) if ohe else array
         labels_from_array = []
-        for i in array:
-            labels_from_array.append(labels[i])
+        for i, class_idx in enumerate(array_argmax):
+            labels_from_array.append((labels[class_idx], round(array[i][class_idx]*100, 2)))
         return labels_from_array
 
     @staticmethod

@@ -1,5 +1,5 @@
 """
-## Тип слоя `VGG16`
+## Тип слоя `ResNet101V2`
 """
 from typing import Optional
 
@@ -19,7 +19,7 @@ LayerConfig = LayerConfigData(
             "value": 4,
             "validation": LayerValidationMethodChoice.fixed,
         },
-        "module": ModuleChoice.vgg16,
+        "module": ModuleChoice.resnet101v2,
         "module_type": ModuleTypeChoice.keras_pretrained_model,
     }
 )
@@ -38,15 +38,12 @@ class ParametersExtraData(BaseMixinData):
     pass
 
 
-#
 # "output_layer": {
 #     "type": "str",
 #     "default": "last",
 #     "list": True,
-#     "available": ["block1_conv2",
-#                   "block2_conv2",
-#                   "block3_conv3",
-#                   "block4_conv3",
-#                   "block5_conv3",
+#     "available": ["conv2_block3_out",
+#                   "conv3_block4_out",
+#                   "conv4_block6_out",
 #                   "last"],
 # },
