@@ -630,6 +630,21 @@ class FitCallback(keras.callbacks.Callback):
     def _get_train_status() -> str:
         return interactive.get_states().get("status")
 
+    def _deploy_predict(self, presets_predict):
+        result = CreateArray().postprocess_results(array=presets_predict,
+                                                   options=self.dataset_data,
+                                                   save_path=os.path.join(self.save_model_path,
+                                                                          "deploy_presets"))
+        deploy_presets = []
+        for inp in self.dataset_data.inputs.keys():
+            for idx in range(len(list(result.values())[0])):
+                data = interactive._postprocess_initial_data(
+                    input_id=str(inp),
+                    example_idx=idx,
+                )
+                deploy_presets.append({"source": data, "data": list(result.values())[0][idx]})
+        # print(deploy_presets)
+
     def save_lastmodel(self) -> None:
         """
         Saving last model on each epoch end
@@ -802,15 +817,8 @@ class FitCallback(keras.callbacks.Callback):
                 )
                 self.model.save_weights(file_path_best)
                 print(f"Epoch {self.last_epoch} - best weights was successfully saved")
-                if self.dataset.data.use_generator:
-                    presets_predict = self.model.predict(self.dataset.dataset.get('val').batch(1))
-                else:
-                    presets_predict = self.model.predict(self.dataset.X.get('val'))
-                result = CreateArray().postprocess_results(array=presets_predict,
-                                                           options=self.dataset_data,
-                                                           save_path=os.path.join(self.save_model_path,
-                                                                                  "deploy_presets"))
-                # print(result)
+                self._deploy_predict(scheduled_predict)
+
         self._fill_log_history(self.last_epoch, logs)
         self.last_epoch += 1
 

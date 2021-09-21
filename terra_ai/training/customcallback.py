@@ -2437,7 +2437,7 @@ class InteractiveCallback:
         union = np.sum(y_true, axis=axis) + np.sum(y_pred, axis=axis)
         return (2.0 * intersection + smooth) / (union + smooth)
 
-    def _postprocess_initial_data(self, input_id: str, save_id: int, example_idx: int):
+    def _postprocess_initial_data(self, input_id: str, example_idx: int, save_id: int = None):
         """
         Видео в .webm
         import moviepy.editor as mp
@@ -2464,6 +2464,8 @@ class InteractiveCallback:
                 self.dataset_config.get("dataset_path"),
                 self.dataset_config.get("dataframe").get('val').iat[example_idx, column_idx]
             ) if self.dataset_config.get("inputs").get(input_id).get("task") != LayerInputTypeChoice.Text else ""
+            if not save_id:
+                return str(os.path.abspath(initial_file_path))
         else:
             initial_file_path = ""
 
