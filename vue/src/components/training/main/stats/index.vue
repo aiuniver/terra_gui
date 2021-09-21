@@ -23,6 +23,8 @@
         :key="i" />
       </template>
       <Scatter />
+      <Histogram />
+      <Table />
     </div>
   </div>
 </template>
@@ -30,12 +32,16 @@
 <script>
 import Heatmap from './Heatmap.vue';
 import Scatter from './Scatter.vue';
+import Histogram from './Histogram.vue';
+import Table from './Table.vue';
 
 export default {
   name: 't-scatters',
   components: {
     Heatmap,
-    Scatter
+    Scatter,
+    Histogram,
+    Table
   },
   computed: {
     statisticData() {
