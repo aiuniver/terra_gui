@@ -84,3 +84,9 @@ class ProgressAPIView(BaseAPIView):
             return BaseResponseSuccess(data)
         except ExchangeBaseException as error:
             return BaseResponseErrorGeneral(str(error))
+
+
+class SaveAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        agent_exchange("training_save")
+        return BaseResponseSuccess()
