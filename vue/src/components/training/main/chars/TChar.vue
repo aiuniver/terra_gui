@@ -4,9 +4,9 @@
       <div class="t-char__header--roll">
         <i :class="['t-icon', 'icon-training-roll-down']" :title="'roll down'" @click="show"></i>
       </div>
-      <div class="t-char__header--title">{{ char.graph_name || '' }}</div>
-      <div v-if="char.progress_state" :class="['t-char__header--condition', char.progress_state]">
-        <span>{{ char.progress_state || '' }}</span>
+      <div class="t-char__header--title">{{ graph_name }}</div>
+      <div v-if="progress_state" :class="['t-char__header--condition', progress_state]">
+        <span>{{ progress_state }}</span>
         <div class="indicator"></div>
       </div>
       <div class="t-char__header--additionally">
@@ -15,12 +15,14 @@
           :title="'roll down'"
           @click="popMenuShow = !popMenuShow"
         ></i>
-        <PopUpMenu v-if="popMenuShow" :data="['По всей модели', 'По классам']" :metrics="['Accuracy', 'Hinge']" @event="event"/>
+        <PopUpMenu v-if="popMenuShow" :menus="menus" @event="event" />
       </div>
     </div>
     <div class="t-char__main" v-if="graphicShow">
       <Plotly :data="data" :layout="layout" :display-mode-bar="false"></Plotly>
+      <div v-if="!data.length" class="t-char__empty">Нет данных</div>
     </div>
+    <div></div>
   </div>
 </template>
 
@@ -30,11 +32,39 @@ import PopUpMenu from './menu/PopUpMenu';
 export default {
   name: 't-char',
   props: {
-    char: {
+    id: Number,
+    progress_state: {
+      type: String,
+      default: '',
+    },
+    graph_name: {
+      type: String,
+      default: '',
+    },
+    x_label: {
+      type: String,
+      default: '',
+    },
+    y_label: {
+      type: String,
+      default: '',
+    },
+    plot_data: {
+      type: Array,
+      default: () => [],
+    },
+    type: {
+      type: String,
+      default: 'lines',
+    },
+    menus: {
+      type: Array,
+      default: () => [],
+    },
+    settings: {
       type: Object,
       default: () => {},
     },
-    index: Number,
   },
   components: {
     Plotly,
@@ -91,33 +121,33 @@ export default {
   }),
   computed: {
     order() {
-      return { order: !this.graphicShow ? 999 : this.index };
+      return { order: !this.graphicShow ? 998 : this.settings.id };
     },
     layout() {
       const layout = this.defLayout;
-      if (this.char) {
-        layout.title.text = this.char?.title || '';
-        layout.xaxis.title = this.char?.x_label || '';
-        layout.yaxis.title = this.char?.y_label || '';
+      if (this.plot_data) {
+        // layout.title.text = this.graph_name;
+        layout.xaxis.title = this.x_label;
+        layout.yaxis.title = this.y_label;
       }
       return layout;
     },
     data() {
-      const data = this.char.plot_data || [];
-      const arr = data.map(({ x, y, mode = 'lines', label }) => {
+      return this.plot_data.map(({ x, y, mode = this.type, label }) => {
         return { x, y, mode, label };
       });
-      return arr;
     },
   },
   mounted() {
-    console.log(this.char);
+    console.log(this.menus);
   },
   methods: {
-    event(event){
-      if (event === 'hide') {
-        this.graphicShow = !this.graphicShow;
+    event({ name, data }) {
+      if (data === 'hide') {
+        this.show();
       }
+      this.$emit('event', { name, data });
+      this.popMenuShow = false;
     },
     show() {
       if (this.graphicShow) {
@@ -169,6 +199,19 @@ export default {
     order: 100;
   }
   &__main {
+    position: relative;
+  }
+  &__empty {
+    user-select: none;
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+    opacity: 0.7;
   }
   &__header {
     padding: 12px;

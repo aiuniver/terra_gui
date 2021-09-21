@@ -1,7 +1,6 @@
-from pathlib import Path
 from typing import Optional, List
 
-from terra_ai.data.datasets.dataset import DatasetData, DatasetPathsData
+from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.deploy import tasks
 from terra_ai.data.deploy.extra import TaskTypeChoice
 from terra_ai.data.deploy.tasks import BaseCollection
@@ -14,7 +13,6 @@ TASKS_RELATIONS = {
 
 
 class Collection:
-    __path: Optional[Path] = None
     __dataset: Optional[DatasetData] = None
     __type: Optional[TaskTypeChoice] = None
     __data: List[BaseCollection] = []
@@ -41,29 +39,44 @@ class Collection:
             return
 
         for __task in __tasks:
-            _task_class = getattr(tasks, f"{__task}Collection", None)
+            _task_class = getattr(tasks, f"{__task}CollectionList", None)
             if not _task_class:
                 continue
-            task_instance = _task_class(
-                dataset=self.__dataset,
-                path=DatasetPathsData(basepath=self.__path).native(),
-            )
+            data = []
+            if __task == "ImageClassification":
+                data = [
+                    {
+                        "source": "/tmp/tai-project/datasets/sources/1_image/Мерседес/car__1.png",
+                        "data": [("Мерседес", 97), ("Феррари", 5), ("Рено", 2)],
+                    },
+                    {
+                        "source": "/tmp/tai-project/datasets/sources/1_image/Мерседес/car__10.png",
+                        "data": [("Мерседес", 99), ("Феррари", 0), ("Рено", 1)],
+                    },
+                    {
+                        "source": "/tmp/tai-project/datasets/sources/1_image/Феррари/car_Ferrari__5.png",
+                        "data": [("Мерседес", 0), ("Феррари", 100), ("Рено", 0)],
+                    },
+                ]
+            elif __task == "ImageSegmentation":
+                data = [
+                    {
+                        "source": "/tmp/tai-project/datasets/sources/1_image/Самолеты/2.jpg",
+                        "segment": "/tmp/tai-project/datasets/sources/2_segmentation/Сегменты/2.jpg",
+                        "data": [("Небо", (0, 0, 0)), ("Самолет", (255, 0, 0))],
+                    },
+                ]
+            task_instance = _task_class(data)
             self.__data.append(task_instance)
 
     def __clear(self):
         self.__dataset = None
-        self.__path = None
         self.__type = None
         self.__data = []
 
-    def update(
-        self, dataset: Optional[DatasetData] = None, path: Optional[Path] = None
-    ):
+    def update(self, dataset: Optional[DatasetData] = None):
         self.__clear()
-        if not dataset or not path:
+        if not dataset:
             return
-
         self.__dataset = dataset
-        self.__path = path
-
         self.__define()

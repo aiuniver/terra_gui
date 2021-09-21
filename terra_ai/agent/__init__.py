@@ -229,12 +229,12 @@ class Exchange:
         """
         Создание датасета из исходников
         """
-        try:
-            data = CreationData(**kwargs)
-            creation = CreateDataset(data)
-            return creation.datasetdata
-        except Exception as error:
-            raise exceptions.FailedCreateDatasetException(str(error))
+        # try:
+        data = CreationData(**kwargs)
+        creation = CreateDataset(data)
+        return creation.datasetdata
+        # except Exception as error:
+        #     raise exceptions.FailedCreateDatasetException(str(error))
 
     def _call_datasets_sources(self, path: str) -> FilePathSourcesList:
         """
@@ -400,9 +400,9 @@ class Exchange:
             raise exceptions.FailedGetTrainingProgressException(str(error))
 
     def _call_deploy_collection(
-        self, dataset: Optional[DatasetData] = None, path: Optional[Path] = None
+        self, dataset: Optional[DatasetData] = None
     ) -> Optional[DeployCollectionData]:
-        deploy_collect.update(dataset=dataset, path=path)
+        deploy_collect.update(dataset=dataset)
         return deploy_collect.data
 
     def _call_deploy_upload(self, source: Path, **kwargs):

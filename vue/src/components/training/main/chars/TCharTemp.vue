@@ -4,20 +4,7 @@
       <i class="t-icon icon-add-chart"></i>
       Добавить график
     </div>
-    <div class="t-char-temp__header">
-      <div class="t-char-temp__header-roll">
-        <i :class="['t-icon', 'icon-training-roll-down']" :title="'roll down'" @click="graphicShow = !graphicShow"></i>
-      </div>
-      <div class="t-char-temp__header-title">{{ char.graph_name || '' }}</div>
-      <div class="t-char-temp__header-additionally">
-        <i
-          :class="['t-icon', 'icon-training-additionally']"
-          :title="'roll down'"
-          @click="popMenuShow = !popMenuShow"
-        ></i>
-        <PopUpMenu v-if="popMenuShow" :data="dataList" :metrics="metrics" @menu-click="handleMenu" />
-      </div>
-    </div>
+    <div class="t-char-temp__header"></div>
     <div class="t-char-temp__main" v-if="graphicShow">
       <Plotly :data="data" :layout="layout" :display-mode-bar="false"></Plotly>
     </div>
@@ -26,12 +13,10 @@
 
 <script>
 import { Plotly } from 'vue-plotly';
-import PopUpMenu from './menu/PopUpMenu';
 export default {
   name: 't-char-temp',
   components: {
     Plotly,
-    PopUpMenu,
   },
   data: () => ({
     dataList: ['loss', 'Metrics'],
@@ -95,9 +80,9 @@ export default {
     layout() {
       const layout = this.defLayout;
       if (this.char) {
-        layout.title.text = this.char?.title || '';
-        layout.xaxis.title = this.char?.x_label || '';
-        layout.yaxis.title = this.char?.y_label || '';
+        // layout.title.text = this.char?.title || '';
+        // layout.xaxis.title = this.char?.x_label || '';
+        // layout.yaxis.title = this.char?.y_label || '';
       }
       return layout;
     },
@@ -149,10 +134,13 @@ export default {
 .t-char-temp {
   width: 100%;
   height: 100%;
-  background: #242f3d;
+  // background: #242f3d;
+  background: #242f3d3d;
+
   border-radius: 4px;
-  box-shadow: 0 2px 10px 0 rgb(0 0 0 / 25%);
+  // box-shadow: 0 2px 10px 0 rgb(0 0 0 / 25%);
   position: relative;
+  order: 999;
   &__overflow {
     user-select: none;
     position: absolute;
@@ -168,8 +156,13 @@ export default {
     font-size: 14px;
     line-height: 24px;
     color: aliceblue;
+    opacity: 0.5;
+    transition: opacity 0.3s ease-in-out, color 0.3s ease-in-out;
     i {
       margin-right: 20px;
+    }
+    &:hover {
+      opacity: 0.9;
     }
   }
   &__main {

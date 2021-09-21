@@ -37,21 +37,42 @@
 </template>
 
 <script>
-import TextTable from './TextTableTest';
 import { mapGetters } from 'vuex';
+import TextTable from './TextTableTest';
 export default {
   name: 'Predictions',
   components: {
     TextTable,
   },
+  props: {
+    outputs: Array,
+    interactive: Object,
+  },
   data: () => ({
     showTextTable: false,
+    predictData: {},
   }),
-  computed: {
+  computed:{
     ...mapGetters({
-      predictData: 'trainings/getPredict',
-    }),
+      trainDisplay: "projects/getProject"
+    })
+   
   },
+  async created() {
+
+    const data = JSON.parse(JSON.stringify(this.trainDisplay));
+    console.log('DATA', data)
+    // data.intermediate_result.show_results = true;
+    // data.intermediate_result.show_statistic = true;
+    // const res = await this.$store.dispatch('trainings/interactive', { data });
+    // if (res.success) this.predictData = res.data;
+    // console.log('Result predict', res);
+  },
+  // computed: {
+  //   ...mapGetters({
+  //     predictData: 'trainings/getPredict',
+  //   }),
+  // },
 };
 </script>
 

@@ -205,7 +205,7 @@ export default {
           this.progress();
         }
       }
-      console.log(res);
+      // console.log(res);
     },
     async stop() {
       this.learningStop = true;
@@ -222,7 +222,7 @@ export default {
     },
     async progress() {
       const res = await this.$store.dispatch('trainings/progress', {});
-      console.log(res);
+      // console.log(res);
       if (res) {
         const { finished, message, percent, data } = res.data;
         // console.log(percent);
@@ -236,12 +236,12 @@ export default {
           this.$store.dispatch('trainings/setTrainUsage', train_usage);
         }
         if (finished) {
-          console.log(res);
+          // console.log(res);
         } else {
           this.debounce(this.learningStop);
         }
       } else {
-        console.log(res);
+        // console.log(res);
       }
     },
     parse({ parse, value, name }) {
@@ -259,7 +259,7 @@ export default {
   },
   created() {
     this.debounce = debounce(stop => {
-      console.log(stop)
+      // console.log(stop)
       if (!stop) {
         this.progress();
       }
