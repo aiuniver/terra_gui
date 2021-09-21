@@ -17,7 +17,7 @@
       </div>
       <div class="predictions__param">
         <t-field inline label="Показать примеров">
-          <t-input-new v-model="checks.num_examples" type="number" small />
+          <t-input-new v-model.number="checks.num_examples" type="number" small />
         </t-field>
         <t-field inline label="Показать статистику">
           <t-checkbox-new v-model="checks.show_statistic" small />
