@@ -1343,18 +1343,18 @@ class InteractiveCallback:
             "data": {}
         }
         for out in self.dataset_config.get("outputs").keys():
-            self.progress_table[self.current_epoch]["data"][f"Выходной слой {out}"] = {
+            self.progress_table[self.current_epoch]["data"][f"Выходной слой «{out}»"] = {
                 'loss': {},
                 'metrics': {}
             }
-            self.progress_table[self.current_epoch]["data"][f"Выходной слой {out}"]["loss"] = {
+            self.progress_table[self.current_epoch]["data"][f"Выходной слой «{out}»"]["loss"] = {
                 'loss': self.log_history.get(out).get('loss').get(self.losses.get(out)).get('train')[-1],
                 'val_loss': self.log_history.get(out).get('loss').get(self.losses.get(out)).get('val')[-1]
             }
             for metric in self.metrics.get(out):
-                self.progress_table[self.current_epoch]["data"][f"Выходной слой {out}"]["metrics"][metric] = \
+                self.progress_table[self.current_epoch]["data"][f"Выходной слой «{out}»"]["metrics"][metric] = \
                     self.log_history.get(out).get('metrics').get(metric).get('train')[-1]
-                self.progress_table[self.current_epoch]["data"][f"Выходной слой {out}"]["metrics"][f"val_{metric}"] = \
+                self.progress_table[self.current_epoch]["data"][f"Выходной слой «{out}»"]["metrics"][f"val_{metric}"] = \
                     self.log_history.get(out).get('metrics').get(metric).get('val')[-1]
 
     def _get_loss_calculation(self, loss_name, loss_obj, out: str, y_true, y_pred):
@@ -1716,46 +1716,60 @@ class InteractiveCallback:
 
     def _get_intermediate_result_request(self) -> dict:
         """
-        'intermediate_result': {
-            1: {
-                'initial_value': {
-                    'Вход 1': {
-                        "Изображение":
-                            {
-                                'type': 'image',
-                                'data': '/content/file.webm'
-                            },
-                        # "Видео": {
-                        #     'type': 'video',
-                        #     'data': '/content/file.webm'
-                        # },
-                        # "Текст":{
-                        #      'type': 'text',
-                        #     'data': text,
-                        #     }
-                        # },
-                        # "Аудио":{
-                        #     'type': 'audio',
-                        #     'data': '/content/file.webp'
-                        # }
+        "intermediate_result": {
+            "1": {
+                  "initial_data": {
+                        "Выходной слой 2": {
+                              "type": "Text",
+                              "data": [
+                                    {
+                                          "title": "Изображение",
+                                          "data": "initial_data_image_1_input_1.webp",
+                                          "value": "0.3%",
+                                          "color_mark": null
+                                    },
+                                    {
+                                          "title": "automobile",
+                                          "value": "0.3%",
+                                          "color_mark": null
+                                    },
+                              ]
                     }
                 },
                 'true_value': {
-                    'Выход 2': {
-                        "Класс": {
-                            'type': 'str',
-                            'data': text,
-                            'color_mark': None
-                        }
+                    "Выходной слой 2": {
+                              "type": "Text",
+                              "data": [
+                                    {
+                                          "title": "Изображение",
+                                          "data": "initial_data_image_1_input_1.webp",
+                                          "value": "0.3%",
+                                          "color_mark": null
+                                    },
+                                    {
+                                          "title": "automobile",
+                                          "value": "0.3%",
+                                          "color_mark": null
+                                    },
+                              ]
                     }
                 },
                 'predict_value': {
-                    'Выход 2': {
-                        "Класс": {
-                            'type': str,
-                            'data': text,
-                            'color_mark': 'wrong', None, 'success'
-                        }
+                    "Выходной слой 2": {
+                          "type": "Text",
+                          "data": [
+                                {
+                                      "title": "Изображение",
+                                      "data": "initial_data_image_1_input_1.webp",
+                                      "value": "0.3%",
+                                      "color_mark": null
+                                },
+                                {
+                                      "title": "automobile",
+                                      "value": "0.3%",
+                                      "color_mark": null
+                                },
+                          ]
                     }
                 },
                 'tags_color': {
@@ -1763,11 +1777,21 @@ class InteractiveCallback:
                                 '<s2>': (255, 0, 0)
                 },
                 'statistic_values': {
-                    Выход 2: {
-                        'class name': {
-                            "data": str,
-                            'color_mark': 'wrong', None, 'success'
-                        },
+                    "Выходной слой 2": {
+                          "type": "Text",
+                          "data": [
+                                {
+                                      "title": "Изображение",
+                                      "data": "initial_data_image_1_input_1.webp",
+                                      "value": "0.3%",
+                                      "color_mark": null
+                                },
+                                {
+                                      "title": "automobile",
+                                      "value": "0.3%",
+                                      "color_mark": null
+                                },
+                          ]
                     }
                 }
             },
@@ -1776,58 +1800,45 @@ class InteractiveCallback:
         return_data = {}
         if self.interactive_config.get('intermediate_result').get('show_results'):
             for idx in range(self.interactive_config.get('intermediate_result').get('num_examples')):
-                return_data[idx + 1] = {
+                return_data[f"{idx + 1}"] = {
                     'initial_data': {},
                     'true_value': {},
                     'predict_value': {},
+                    'tags_color': {},
                     'statistic_values': {}
                 }
-                if len(self.dataset_config.get("outputs").keys()) == 1 and self.dataset_config.get("outputs").get(
-                        list(self.dataset_config.get("outputs").keys())[0]).get("task") == \
-                        LayerOutputTypeChoice.TextSegmentation:
-                    return_data[idx + 1]['initial_data'] = {}
-                else:
+                if not (
+                        len(self.dataset_config.get("outputs").keys()) == 1 and self.dataset_config.get("outputs").get(
+                        list(self.dataset_config.get("outputs").keys())[0]).get(
+                    "task") == LayerOutputTypeChoice.TextSegmentation
+                ):
                     for inp in self.dataset_config.get("inputs").keys():
-                        return_data[idx + 1]['initial_data'][f"Входной слой {inp}"] = {}
                         data, type_choice = self._postprocess_initial_data(
                             input_id=inp,
                             save_id=idx + 1,
                             example_idx=self.example_idx[idx],
                         )
-                        return_data[idx + 1]['initial_data'][f"Входной слой {inp}"][
-                            type_choice_dict.get(type_choice)] = {
-                            'data': data,
+                        return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
                             'type': type_choice,
+                            'data': data,
                         }
 
                 for out in self.dataset_config.get("outputs").keys():
-                    true_value, predict_value, color_mark, stat, out_type = self._postprocess_result_data(
+                    data = self._postprocess_result_data(
                         output_id=out,
                         data_type='val',
                         save_id=idx + 1,
                         example_idx=self.example_idx[idx],
                         show_stat=self.interactive_config.get('intermediate_result').get('show_statistic'),
                     )
-                    return_data[idx + 1]['true_value'][f"Выходной слой {out}"] = {
-                        "type": out_type,
-                        "data": true_value,
-                        "color_mark": None,
-                    } if true_value else {}
-                    return_data[idx + 1]['predict_value'][f"Выходной слой {out}"] = {
-                                                                                        "type": out_type,
-                                                                                        "data": predict_value,
-                                                                                        "color_mark": color_mark,
-                                                                                    },
-                    return_data[idx + 1]['tags_color'] = \
+                    return_data[f"{idx + 1}"]['true_value'][f"Выходной слой «{out}»"] = data.get('y_true')
+                    return_data[f"{idx + 1}"]['predict_value'][f"Выходной слой «{out}»"] = data.get('y_pred')
+                    return_data[f"{idx + 1}"]['tags_color'][f"Выходной слой «{out}»"] = \
                         self.dataset_config.get("outputs").get(out).get('classes_colors') if \
                             self.dataset_config.get("outputs").get(
                                 list(self.dataset_config.get("outputs").keys())[0]).get(
                                 "task") == LayerOutputTypeChoice.TextSegmentation else None
-                    if stat:
-                        return_data[idx + 1]['statistic_values'][f"Выходной слой {out}"] = {
-                            'type': "Text",
-                            "data": stat
-                        }
+                    return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
         return return_data
 
     def _get_statistic_data_request(self) -> dict:
@@ -2459,8 +2470,7 @@ class InteractiveCallback:
         from pydub import AudioSegment
         AudioSegment.from_file("audio_path").export("audio.webm", format="webm")
         """
-        # temp_file = tempfile.NamedTemporaryFile(delete=False)
-        # if not self.dataset.g
+
         column_idx = 0
         if self.dataset_config.get("group") != 'keras':
             for column_name in self.dataset_config.get("dataframe").get('val').columns:
@@ -2475,6 +2485,8 @@ class InteractiveCallback:
         else:
             initial_file_path = ""
 
+        data = []
+        data_type = ""
         if self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Image:
             if self.dataset_config.get("group") != 'keras':
                 img = Image.open(initial_file_path)
@@ -2485,33 +2497,58 @@ class InteractiveCallback:
             else:
                 img = image.array_to_img(self.x_val.get(input_id)[example_idx])
             img = img.convert('RGB')
-            # filepath = NamedTemporaryFile()
             save_path = os.path.join(
                 self.preset_path, f"initial_data_image_{save_id}_input_{input_id}.webp"
             )
             img.save(save_path, 'webp')
-            return save_path, LayerInputTypeChoice.Image.name
+            data_type = LayerInputTypeChoice.Image.name
+            data = [
+                {
+                    "Title": "Изображение",
+                    "value": save_path,
+                    "color_mark": None
+                }
+            ]
 
         elif self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Text:
             text_str = self.dataset_config.get("dataframe").get('val').iat[example_idx, column_idx]
-            return text_str, LayerInputTypeChoice.Text.name
+            data_type = LayerInputTypeChoice.Text.name
+            data = [
+                {
+                    "Title": "Текст",
+                    "value": text_str,
+                    "color_mark": None
+                }
+            ]
 
         elif self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Video:
             clip = moviepy_editor.VideoFileClip(initial_file_path)
-            # filepath = NamedTemporaryFile()
             save_path = os.path.join(
                 self.preset_path, f"initial_data_video_{save_id}_input_{input_id}.webm"
             )
             clip.write_videofile(save_path)
-            return save_path, LayerInputTypeChoice.Video.name
+            data_type = LayerInputTypeChoice.Video.name
+            data = [
+                {
+                    "Title": "Видео",
+                    "value": save_path,
+                    "color_mark": None
+                }
+            ]
 
         elif self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Audio:
-            # filepath = NamedTemporaryFile()
             save_path = os.path.join(
                 self.preset_path, f"initial_data_audio_{save_id}_input_{input_id}.webp"
             )
             AudioSegment.from_file(initial_file_path).export(save_path, format="webm")
-            return save_path, LayerInputTypeChoice.Audio.name
+            data_type = LayerInputTypeChoice.Audio.name
+            data = [
+                {
+                    "Title": "Аудио",
+                    "value": save_path,
+                    "color_mark": None
+                }
+            ]
 
         elif self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Dataframe:
             # TODO: обсудить как пересылать датафреймы на фронт
@@ -2521,22 +2558,12 @@ class InteractiveCallback:
                     time_series_choise = True
                     break
             if time_series_choise:
-                """
-                graphics = [
-                    {
-                        'id': 1,
-                        'graph_name': f'График канала «{channel_name}»',
-                        'x_label': 'Время',
-                        'y_label': 'Значение',
-                        'plot_data': {
-                                'x': []:
-                                'y': []
-                        },
-                    }
-                ]
-                """
                 graphics_data = []
+                names = ""
+                multi = False
                 for i, channel in enumerate(self.dataset_config["inputs"][input_id]['cols_names']):
+                    multi = True if i > 0 else False
+                    names += f"«{channel}», "
                     # TODO: scaler.inverse_transform
                     graphics_data.append(
                         {
@@ -2550,20 +2577,30 @@ class InteractiveCallback:
                             },
                         }
                     )
-                return graphics_data, "Graphic"
+                data_type = "Graphic"
+                data = [
+                    {
+                        "Title": f"График{'и' if multi else ''} по канал{'ам' if multi else 'у'} {names[:-2]}",
+                        "value": graphics_data,
+                        "color_mark": None
+                    }
+                ]
             else:
                 """
                 dataframe_data = {
                     "col_name": value: str
                 }
                 """
-                dataframe_data = {}
                 for col_name in self.dataset_config.get('dataframe').get('val').columns:
-                    dataframe_data[col_name] = self.dataset_config.get('dataframe').get('val')[col_name][example_idx]
-                return dataframe_data, LayerInputTypeChoice.Dataframe.name
+                    data.append(
+                        {
+                            "Title": col_name,
+                            "value": self.dataset_config.get('dataframe').get('val')[col_name][example_idx],
+                            "color_mark": None
+                        }
+                    )
 
-        else:
-            return initial_file_path, None
+        return data, data_type
 
     def _postprocess_result_data(self, output_id: str, data_type: str, save_id: int, example_idx: int, show_stat=True):
 
@@ -2619,21 +2656,50 @@ class InteractiveCallback:
                 colored_text.append(add_tags_to_word(word, labels[i]))
             return ' '.join(colored_text)
 
+        data = {
+            "y_true": {},
+            "y_pred": {},
+            "stat": {}
+        }
         if self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.Classification:
+
             labels = self.dataset_config.get("outputs").get(output_id).get("classes_names")
             ohe = True if self.dataset_config.get("outputs").get(output_id).get("encoding") == 'ohe' else False
 
             y_true = np.argmax(self.y_true.get(data_type).get(output_id)[example_idx]) if ohe \
                 else self.y_true.get(data_type).get(output_id)[example_idx]
+            data["y_true"] = {
+                "type": "str",
+                "data": [
+                    {
+                        "title": "Класс",
+                        "value": labels[y_true],
+                        "color_mark": None
+                    }
+                ]
+            }
 
             predict = self.y_pred.get(output_id)[example_idx]
             if y_true == np.argmax(predict):
                 color_mark = 'success'
             else:
                 color_mark = 'wrong'
+            data["y_pred"] = {
+                "type": "str",
+                "data": [
+                    {
+                        "title": "Класс",
+                        "value": labels[np.argmax(predict)],
+                        "color_mark": color_mark
+                    }
+                ]
+            }
 
-            class_stat = []
             if show_stat:
+                data["stat"] = {
+                    "type": "str",
+                    "data": []
+                }
                 for i, val in enumerate(predict):
                     if val == max(predict) and i == y_true:
                         class_color_mark = "success"
@@ -2641,14 +2707,9 @@ class InteractiveCallback:
                         class_color_mark = "wrong"
                     else:
                         class_color_mark = None
-                    class_stat.append(
-                        {
-                            'name': labels[i],
-                            'value': f"{round(val * 100, 1)}%",
-                            'color_mark': class_color_mark
-                        }
+                    data["stat"]["data"].append(
+                        dict(title=labels[i], value=f"{round(val * 100, 1)}%", color_mark=class_color_mark)
                     )
-            return labels[y_true], labels[np.argmax(predict)], color_mark, class_stat, "str"
 
         elif self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.Segmentation:
             labels = self.dataset_config.get("outputs").get(output_id).get("classes_names")
@@ -2669,7 +2730,16 @@ class InteractiveCallback:
                 self.preset_path, f"true_segmentation_data_image_{save_id}_output_{output_id}.webp"
             )
             y_true.save(y_true_save_path, 'webp')
-
+            data["y_true"] = {
+                "type": "Image",
+                "data": [
+                    {
+                        "title": "Изображение",
+                        "value": y_true_save_path,
+                        "color_mark": None
+                    }
+                ]
+            }
             # prepare y_pred image
             y_pred = np.expand_dims(np.argmax(self.y_pred.get(output_id)[example_idx], axis=-1), axis=-1)
             for color_idx in range(len(self.dataset_config.get("outputs").get(output_id).get("classes_colors"))):
@@ -2680,28 +2750,34 @@ class InteractiveCallback:
                 )
             y_pred = tensorflow.keras.utils.array_to_img(y_pred)
             y_pred = y_pred.convert('RGB')
-            # filepath_pred = NamedTemporaryFile()
             y_pred_save_path = os.path.join(
                 self.preset_path, f"predict_segmentation_data_image_{save_id}_output_{output_id}.webp"
             )
             y_pred.save(y_pred_save_path, 'webp')
-
-            class_stat = []
+            data["y_pred"] = {
+                "type": "Image",
+                "data": [
+                    {
+                        "title": "Изображение",
+                        "value": y_pred_save_path,
+                        "color_mark": None
+                    }
+                ]
+            }
             if show_stat:
+                data["stat"] = {
+                    "type": "str",
+                    "data": []
+                }
                 y_true = np.array(self.y_true.get(data_type).get(output_id)[example_idx]).astype('int')
                 y_pred = to_categorical(np.argmax(self.y_pred.get(output_id)[example_idx], axis=-1),
                                         self.dataset_config.get("outputs").get(output_id).get("num_classes"))
                 for idx, cls in enumerate(labels):
-                    dice_val = np.round(self._dice_coef(y_true[:, :, idx], y_pred[:, :, idx], batch_mode=False) * 100,
-                                        1)
-                    class_stat.append(
-                        {
-                            'name': cls,
-                            'value': f"{dice_val}%",
-                            'color_mark': 'success' if dice_val >= 90 else 'wrong'
-                        }
+                    dice_val = np.round(self._dice_coef(y_true[:, :, idx], y_pred[:, :, idx],
+                                                        batch_mode=False) * 100, 1)
+                    data["stat"]["data"].append(
+                        dict(title=cls, value=f"{dice_val}%", color_mark='success' if dice_val >= 90 else 'wrong')
                     )
-            return y_true_save_path, y_pred_save_path, None, class_stat, "Image"
 
         elif self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.TextSegmentation:
             # TODO: пока исходим что для сегментации текста есть только один вход с текстом, если будут сложные модели
@@ -2715,54 +2791,86 @@ class InteractiveCallback:
                 classes_names,
                 self.dataset_config.get("outputs").get(output_id).get('classes_colors')
             )
+            data["y_true"] = {
+                "type": "Text",
+                "data": [
+                    {
+                        "title": "Текст",
+                        "value": true_text_segmentation,
+                        "color_mark": None
+                    }
+                ]
+            }
             pred_text_segmentation = text_colorization(
                 text_for_preparation,
                 self.y_pred.get(output_id)[example_idx],
                 classes_names,
                 self.dataset_config.get("outputs").get(output_id).get('classes_colors')
             )
-            class_stat = []
+            data["y_pred"] = {
+                "type": "Text",
+                "data": [
+                    {
+                        "title": "Текст",
+                        "value": pred_text_segmentation,
+                        "color_mark": None
+                    }
+                ]
+            }
             if show_stat:
+                data["stat"] = {
+                    "type": "str",
+                    "data": []
+                }
                 y_true = np.array(self.y_true.get(data_type).get(output_id)[example_idx]).astype('int')
                 y_pred = np.where(self.y_pred.get(output_id)[example_idx] >= 0.9, 1., 0.)
                 for idx, cls in enumerate(classes_names):
                     if np.sum(y_true[:, idx]) == 0 and np.sum(y_pred[:, idx]) == 0:
-                        class_stat.append(
-                            {
-                                'name': cls,
-                                'value': "-",
-                                'color_mark': None
-                            }
+                        data["stat"]["data"].append(
+                            dict(name=cls, value="-", color_mark=None)
                         )
                     else:
                         dice_val = np.round(self._dice_coef(y_true[:, idx], y_pred[:, idx], batch_mode=False) * 100, 1)
-                        class_stat.append(
-                            {
-                                'name': cls,
-                                'value': f"{dice_val}%",
-                                'color_mark': 'success' if dice_val >= 90 else 'wrong'
-                            }
+                        data["stat"]["data"].append(
+                            dict(name=cls, value=f"{dice_val}%", color_mark='success' if dice_val >= 90 else 'wrong')
                         )
-            return true_text_segmentation, pred_text_segmentation, None, class_stat, "Text"
 
         elif self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.Regression:
             # TODO: inverse_transform
             column_name = self.dataset_config["outputs"][output_id]['cols_names'][
                 list(self.dataset_config["outputs"].keys()).index(output_id)]
             y_true = self.y_true.get(data_type).get(output_id)[example_idx]
+            data["y_true"] = {
+                "type": "Text",
+                "data": [
+                    {
+                        "title": column_name,
+                        "value": y_true,
+                        "color_mark": None
+                    }
+                ]
+            }
             y_pred = self.y_pred.get(output_id)[example_idx]
             deviation = (y_pred - y_true) * 100 / y_true
             color_mark = 'success' if deviation < 2 else "wrong"
-            stat = []
-            if show_stat:
-                stat.append(
+            data["y_pred"] = {
+                "type": "Text",
+                "data": [
                     {
-                        'name': column_name,
+                        "title": column_name,
+                        "value": y_pred,
+                        "color_mark": color_mark
+                    }
+                ]
+            }
+            if show_stat:
+                data["stat"]["data"].append(
+                    {
+                        'title': "Отклонение",
                         'value': f"{round(deviation, 2)}%",
                         'color_mark': color_mark
                     }
                 )
-            return f"{y_true}", f"{y_pred}", color_mark, stat, "str"
 
         elif self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.Timeseries:
             """
@@ -2797,7 +2905,7 @@ class InteractiveCallback:
             _id = 1
             for i, channel in enumerate(self.dataset_config["outputs"][output_id]['cols_names']):
                 for input in inputs:
-                    init_coloumn = self.dataset_config["inputs"][input]['cols_names'].index(channel)
+                    init_column = self.dataset_config["inputs"][input]['cols_names'].index(channel)
                     depth = self.y_true.get("val").get(output_id)[example_idx].shape[-2]
                     graphics.append(
                         {
@@ -2809,7 +2917,7 @@ class InteractiveCallback:
                                 'real_data': {
                                     'x': real_x.tolist(),
                                     'y': np.array(
-                                        self.x_val.get(input)[example_idx][:, init_coloumn]
+                                        self.x_val.get(input)[example_idx][:, init_column]
                                     ).astype('float').tolist()
                                 },
                                 'true_data': {
@@ -2825,13 +2933,22 @@ class InteractiveCallback:
                         }
                     )
                     _id += 1
-
+            data["y_pred"] = {
+                "type": "Image",
+                "data": [
+                    {
+                        "title": "Графики",
+                        "value": graphics,
+                        "color_mark": None
+                    }
+                ]
+            }
             stat = {}
             if show_stat:
                 """
                 stat = [
                     {
-                        "name": "channel",
+                        "title": "channel",
                         'value': {
                             "type": "Table",
                             "data": {
@@ -2858,42 +2975,34 @@ class InteractiveCallback:
                 ]
                 """
                 for i, channel in enumerate(self.dataset_config["outputs"][output_id]['cols_names']):
-                    stat.append(
-                        {
-                            "name": channel,
-                            "value": {
-                                "type": "Table",
-                                "data": {}
-                            }
-                        }
+                    data["stat"]["data"].append(
+                        dict(title=channel, value={"type": "Table", "data": {}}, color_mark=None)
                     )
                     for step in range(self.y_true.get("val").get(output_id)[example_idx].shape[-2]):
                         deviation = (self.y_pred.get(output_id)[step, i] -
                                      self.y_true.get("val").get(output_id)[step, i]) * 100 / \
                                     self.y_true.get("val").get(output_id)[step, i]
-                        stat[-1]["value"]["data"][f"{step + 1}"] = [
+                        data["stat"]["data"][-1]["value"]["data"][f"{step + 1}"] = [
                             {
-                                "name": "Истина",
+                                "title": "Истина",
                                 "value": self.y_true.get("val").get(output_id)[step, i],
                                 'color_mark': None
                             },
                             {
-                                "name": "Предсказание",
+                                "title": "Предсказание",
                                 "value": self.y_pred.get(output_id)[step, i],
                                 'color_mark': "success" if abs(deviation) < 2 else "wrong"
                             },
                             {
-                                "name": "Отклонение",
+                                "title": "Отклонение",
                                 "value": f"{deviation}%",
                                 'color_mark': "success" if abs(deviation) < 2 else "wrong"
                             }
                         ]
-            return None, graphics, None, stat, "Graphic"
 
         elif self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.ObjectDetection:
             # image with bb
             # accuracy, correlation bb for classes
             pass
 
-        else:
-            return None, None, None, None, None
+        return data
