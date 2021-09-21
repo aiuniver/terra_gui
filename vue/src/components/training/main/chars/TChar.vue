@@ -20,7 +20,7 @@
     </div>
     <div class="t-char__main" v-if="graphicShow">
       <Plotly :data="data" :layout="layout" :display-mode-bar="false"></Plotly>
-      <div v-if="!data.length" class="t-char__empty">Нет данных</div>
+      <div v-if="!data.length" class="t-char__empty">Ожидания получения данных...</div>
     </div>
     <div></div>
   </div>

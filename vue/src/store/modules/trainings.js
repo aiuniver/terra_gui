@@ -156,6 +156,9 @@ export default {
     getInteractive({ training: { interactive } }) {
       return interactive || {}
     },
+    getStatus({ training: { state: { status } } }) {
+      return status || ''
+    },
     getOutputs({ training: { base } }) {
       return base?.architecture?.parameters?.outputs || []
     },
@@ -164,18 +167,6 @@ export default {
     },
     getToolbar({ toolbar }) {
       return toolbar;
-    },
-    getChars({ data: { plots } }) {
-      return plots;
-    },
-    getScatters({ data: { scatters } }) {
-      return scatters;
-    },
-    getImages({ data: { images: { images } } }) {
-      return images;
-    },
-    getTexts({ data: { texts } }) {
-      return texts;
     },
     getTrainUsage: ({ trainUsage }) => {
       return trainUsage || {};

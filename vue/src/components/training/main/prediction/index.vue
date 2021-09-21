@@ -48,7 +48,6 @@ export default {
     interactive: Object,
   },
   data: () => ({
-    predictData: {},
     checks: {
       autoupdate: false,
       show_statistic: false,
@@ -74,16 +73,18 @@ export default {
       };
     });
   },
+  computed: {
+    predictData() {
+      return this.$store.getters['trainings/getTrainData']('intermediate_result') || {};
+    },
+  },
   methods: {
     async show() {
-      const { data, status } = await this.$store.dispatch('trainings/interactive', {
+      await this.$store.dispatch('trainings/interactive', {
         intermediate_result: { ...this.checks },
       });
       if (this.checks.show_results) {
-        if (status && data) {
-          this.predictData = data;
-          this.showTextTable = true;
-        }
+        this.showTextTable = true;
       }
     },
   },
