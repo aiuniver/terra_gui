@@ -132,8 +132,10 @@ export default {
             flex-direction: column;
             width: fit-content;
             * {
+                display: flex;
                 align-items: center;
                 justify-content: flex-end;
+                flex-basis: 40px;
             }
         }
         &--x-labels {
@@ -142,9 +144,11 @@ export default {
             justify-content: flex-end;
             width: 100%;
             * {
-                justify-content: center;
                 text-overflow: ellipsis;
+                overflow: hidden;
                 padding: 0 2px;
+                width: 40px;
+                text-align: center;
             }
         }
         &--y-labels, &--x-labels {
@@ -152,10 +156,6 @@ export default {
             color: #A7BED3;
             font-size: 9px;
             line-height: 14px;
-            * {
-                flex-basis: 40px;
-                display: flex;
-            }
         }
     }
     &__scale {

@@ -50,7 +50,7 @@ export default {
       return [4, 3, 2, 1, 0].map(item => (this.max / 4) * item);
     },
     max() {
-      return Math.round(this.maxValue / 100) * 100;
+      return Math.ceil(this.maxValue / 100) * 100;
     },
     maxValue() {
       return Math.max(...this.values);
