@@ -118,7 +118,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def instructions_text(paths_list: list, **options) -> dict:
+    def instructions_text(text_list: list, **options) -> dict:
 
         def read_text(file_path, lower, del_symbols, split, open_symbol=None, close_symbol=None) -> str:
 
@@ -140,7 +140,7 @@ class CreateArray(object):
 
             return ' '.join(words_list)
 
-        txt_list: dict = {}
+        txt_dict: dict = {}
         text: dict = {}
         lower: bool = True
         open_tags, close_tags = None, None
@@ -153,35 +153,38 @@ class CreateArray(object):
         length = options['length'] if options['text_mode'] == LayerTextModeChoice.length_and_step else \
             options['max_words']
 
-        for path in paths_list:
-            text_file = read_text(file_path=path, lower=lower, del_symbols=options['filters'], split=' ',
-                                  open_symbol=open_symbol, close_symbol=close_symbol)
-            if text_file:
-                txt_list[path] = text_file
-        ### ДОБАВИТЬ ОТКРЫТИЕ ИЗ ТАБЛИЦЫ
+        for idx, text_row in enumerate(text_list):
+            if os.path.isfile(text_row):
+                text_file = read_text(file_path=text_row, lower=lower, del_symbols=options['filters'], split=' ',
+                                      open_symbol=open_symbol, close_symbol=close_symbol)
+                if text_file:
+                    txt_dict[text_row] = text_file
+            else:
+                txt_dict[idx] = text_row
+
         if open_symbol:
-            for key in txt_list.keys():
+            for key in txt_dict.keys():
                 words = []
-                for word in txt_list[key].split(' '):
+                for word in txt_dict[key].split(' '):
                     if word not in open_tags + close_tags:
                         words.append(word)
-                txt_list[key] = ' '.join(words)
+                txt_dict[key] = ' '.join(words)
 
         if options['pymorphy']:
             pymorphy = pymorphy2.MorphAnalyzer()
-            for key, value in txt_list.items():
-                txt_list[key] = apply_pymorphy(value, pymorphy)
+            for key, value in txt_dict.items():
+                txt_dict[key] = apply_pymorphy(value, pymorphy)
 
-        for key, value in sorted(txt_list.items()):
+        for key, value in sorted(txt_dict.items()):
             if options['text_mode'] == LayerTextModeChoice.completely:
-                text[';'.join([key, f'[0-{options["max_words"]}]'])] = ' '.join(
+                text[';'.join([str(key), f'[0-{options["max_words"]}]'])] = ' '.join(
                     value.split(' ')[:options['max_words']])
             elif options['text_mode'] == LayerTextModeChoice.length_and_step:
                 max_length = len(value.split(' '))
                 cur_step = 0
                 stop_flag = False
                 while not stop_flag:
-                    text[';'.join([key, f'[{cur_step}-{cur_step + length}]'])] = ' '.join(
+                    text[';'.join([str(key), f'[{cur_step}-{cur_step + length}]'])] = ' '.join(
                         value.split(' ')[cur_step: cur_step + length])
                     cur_step += options['step']
                     if cur_step + options['length'] > max_length:

@@ -9,3 +9,4 @@ class ParametersData(SourcesPathsData):
     classes_names: Optional[list]
     num_classes: Optional[PositiveInt]
     put: Optional[PositiveInt]
+    cols_names: Optional[str]
