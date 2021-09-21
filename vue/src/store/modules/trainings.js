@@ -146,7 +146,7 @@ export default {
       return interactive || {}
     },
     getOutputs({ training: { base } }) {
-      return base.architecture?.parameters?.outputs || []
+      return base?.architecture?.parameters?.outputs || []
     },
     getParams({ params }) {
       return params || []
