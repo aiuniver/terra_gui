@@ -7,7 +7,7 @@
             </div>
         </div>
         <div class="t-heatmap__wrapper">
-            <div class="t-heatmap__title">{{ graph_name }}</div>
+            <p class="t-heatmap__title">{{ graph_name }}</p>
             <div class="t-heatmap__x-label">{{x_label}}</div>
             <div class="t-heatmap__y-label">{{y_label}}</div>
             <div class="t-heatmap__grid--y-labels">
@@ -92,7 +92,8 @@ export default {
         position: absolute;
         bottom: calc(100% + 10px);
         left: 50%;
-        transform: translate(-50%);
+        transform: translate(-40%);
+        white-space: nowrap;
     }
     &__x-label, &__y-label {
         position: absolute;

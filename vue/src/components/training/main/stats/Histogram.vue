@@ -76,7 +76,7 @@ export default {
         font-weight: 600;
         text-align: center;
         color: #A7BED3;
-        margin: 20px auto 10px;
+        margin: 10px auto;
     }
     &__plotly {
         border: 1px solid #6C7883;
