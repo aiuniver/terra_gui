@@ -39,10 +39,34 @@ class Collection:
             return
 
         for __task in __tasks:
-            _task_class = getattr(tasks, f"{__task}Collection", None)
+            _task_class = getattr(tasks, f"{__task}CollectionList", None)
             if not _task_class:
                 continue
-            task_instance = _task_class(dataset=self.__dataset)
+            data = []
+            if __task == "ImageClassification":
+                data = [
+                    {
+                        "source": "/tmp/tai-project/datasets/sources/1_image/Мерседес/car__1.png",
+                        "data": [("Мерседес", 97), ("Феррари", 5), ("Рено", 2)],
+                    },
+                    {
+                        "source": "/tmp/tai-project/datasets/sources/1_image/Мерседес/car__10.png",
+                        "data": [("Мерседес", 99), ("Феррари", 0), ("Рено", 1)],
+                    },
+                    {
+                        "source": "/tmp/tai-project/datasets/sources/1_image/Феррари/car_Ferrari__5.png",
+                        "data": [("Мерседес", 0), ("Феррари", 100), ("Рено", 0)],
+                    },
+                ]
+            elif __task == "ImageSegmentation":
+                data = [
+                    {
+                        "source": "/tmp/tai-project/datasets/sources/1_image/Самолеты/2.jpg",
+                        "segment": "/tmp/tai-project/datasets/sources/2_segmentation/Сегменты/2.jpg",
+                        "data": [("Небо", (0, 0, 0)), ("Самолет", (255, 0, 0))],
+                    },
+                ]
+            task_instance = _task_class(data)
             self.__data.append(task_instance)
 
     def __clear(self):
