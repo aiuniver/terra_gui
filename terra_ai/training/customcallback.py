@@ -439,7 +439,12 @@ class InteractiveCallback:
                        metrics: dict,
                        losses: dict,
                        dataset_path: str,
+                       training_path: str,
                        initial_config: InteractiveData):
+
+        self.preset_path = os.path.join(training_path, "presets")
+        if not os.path.exists(self.preset_path):
+            os.mkdir(self.preset_path)
         self.losses = losses
         self.metrics = self._reformat_metrics(metrics)
         self.loss_obj = self._prepare_loss_obj(losses)
@@ -495,22 +500,20 @@ class InteractiveCallback:
 
     def update_state(self, y_pred, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
         self._reformat_y_pred(y_pred)
+        if self.interactive_config.get('intermediate_result').get('show_results'):
+            self.example_idx = self._prepare_example_idx_to_show()
         if on_epoch_end_flag:
             self.current_epoch = fit_logs.get('epoch')
             self.current_logs = self._reformat_fit_logs(fit_logs)
             self._update_log_history()
             self._update_progress_table(current_epoch_time)
-            if self.interactive_config.get('intermediate_result').get('show_results'):
-                self.example_idx = self._prepare_example_idx_to_show()
-                if self.interactive_config.get('intermediate_result').get('autoupdate'):
-                    self.intermediate_result = self._get_intermediate_result_request()
+            if self.interactive_config.get('intermediate_result').get('autoupdate'):
+                self.intermediate_result = self._get_intermediate_result_request()
             if self.interactive_config.get('statistic_data').get('output_id') \
                     and self.interactive_config.get('statistic_data').get('autoupdate'):
                 self.statistic_result = self._get_statistic_data_request()
         else:
-            if self.interactive_config.get('intermediate_result').get('show_results'):
-                self.example_idx = self._prepare_example_idx_to_show()
-                self.intermediate_result = self._get_intermediate_result_request()
+            self.intermediate_result = self._get_intermediate_result_request()
             if self.interactive_config.get('statistic_data').get('output_id'):
                 self.statistic_result = self._get_statistic_data_request()
         self.urgent_predict = False
@@ -1524,7 +1527,7 @@ class InteractiveCallback:
         ]
         """
         data_return = []
-        if not self.interactive_config.get('loss_graphs'):
+        if not self.interactive_config.get('loss_graphs') or not self.log_history:
             return data_return
 
         for loss_graph_config in self.interactive_config.get('loss_graphs'):
@@ -1637,7 +1640,7 @@ class InteractiveCallback:
         ]
         """
         data_return = []
-        if not self.interactive_config.get('metric_graphs'):
+        if not self.interactive_config.get('metric_graphs')  or not self.log_history:
             return data_return
 
         for metric_graph_config in self.interactive_config.get('metric_graphs'):
@@ -2433,7 +2436,7 @@ class InteractiveCallback:
         union = np.sum(y_true, axis=axis) + np.sum(y_pred, axis=axis)
         return (2.0 * intersection + smooth) / (union + smooth)
 
-    def _postprocess_initial_data(self, input_id: str, save_id: int, example_idx: int):
+    def _postprocess_initial_data(self, input_id: str, example_idx: int, save_id: int = None):
         """
         Видео в .webm
         import moviepy.editor as mp
@@ -2460,6 +2463,8 @@ class InteractiveCallback:
                 self.dataset_config.get("dataset_path"),
                 self.dataset_config.get("dataframe").get('val').iat[example_idx, column_idx]
             ) if self.dataset_config.get("inputs").get(input_id).get("task") != LayerInputTypeChoice.Text else ""
+            if not save_id:
+                return str(os.path.abspath(initial_file_path))
         else:
             initial_file_path = ""
 

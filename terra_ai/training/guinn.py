@@ -27,7 +27,8 @@ from terra_ai.data.datasets.extra import LayerOutputTypeChoice
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
 from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, \
     CheckpointModeChoice
-from terra_ai.data.training.train import TrainData
+from terra_ai.data.training.train import TrainData, InteractiveData
+from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.customcallback import InteractiveCallback
@@ -92,7 +93,7 @@ class GUINN:
         return output
 
     def _set_training_params(self, dataset: DatasetData, params: TrainData, model_name: str,
-                             training_path: Path, dataset_path: str, initial_config: dict) -> None:
+                             training_path: str, dataset_path: str, initial_config: InteractiveData) -> None:
         self.dataset = self._prepare_dataset(dataset, dataset_path)
         self.training_path = training_path
         self.nn_name = model_name
@@ -118,13 +119,15 @@ class GUINN:
             self.loss.update({str(output_layer["id"]): output_layer["loss"]})
 
         interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss,
-                                   dataset_path=dataset_path, initial_config=initial_config)
+                                   dataset_path=dataset_path, training_path=training_path,
+                                   initial_config=initial_config)
 
-    def _set_callbacks(self, dataset: PrepareDataset, batch_size: int, epochs: int,
+    def _set_callbacks(self, dataset: PrepareDataset, dataset_data: DatasetData,
+                       batch_size: int, epochs: int,
                        checkpoint: dict, save_model_path: str) -> None:
         progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков...'})
         retrain_epochs = self.sum_epoch if interactive.get_states().get("status") == "addtrain" else self.epochs
-        callback = FitCallback(dataset=dataset, checkpoint_config=checkpoint,
+        callback = FitCallback(dataset=dataset, dataset_data=dataset_data, checkpoint_config=checkpoint,
                                batch_size=batch_size, epochs=epochs, retrain_epochs=retrain_epochs,
                                save_model_path=save_model_path, model_name=self.nn_name)
         self.callbacks = [callback]
@@ -198,10 +201,10 @@ class GUINN:
     def terra_fit(self,
                   dataset: DatasetData,
                   gui_model: ModelDetailsData,
-                  training_path: Path = "",
+                  training_path: str = "",
                   dataset_path: str = "",
                   training_params: TrainData = None,
-                  initial_config: dict = None
+                  initial_config: InteractiveData = None
                   ) -> dict:
         """
         This method created for using wth externally compiled models
@@ -216,18 +219,19 @@ class GUINN:
         Return:
             None
         """
-        model_path = os.path.join(training_path, gui_model.name)
+        model_path = os.path.join(training_path, gui_model.alias)
         if interactive.get_states().get("status") != "addtrain":
             self._save_params_for_deploy(dataset_path=dataset_path, training_path=model_path, params=training_params)
         self.nn_cleaner(retrain=True if interactive.get_states().get("status") == "training" else False)
-        self._set_training_params(dataset=dataset, dataset_path=dataset_path, model_name=gui_model.name,
+        self._set_training_params(dataset=dataset, dataset_path=dataset_path, model_name=gui_model.alias,
                                   params=training_params, training_path=training_path, initial_config=initial_config)
         nn_model = self._set_model(model=gui_model)
         self.model = nn_model
         if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.ObjectDetection:
             self.yolo_model_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
         else:
-            self.base_model_fit(params=training_params, dataset=self.dataset, verbose=0, save_model_path=model_path)
+            self.base_model_fit(params=training_params, dataset=self.dataset, dataset_data=dataset,
+                                verbose=0, save_model_path=model_path)
         return {"dataset": self.dataset, "metrics": self.metrics, "losses": self.loss}
 
     def nn_cleaner(self, retrain: bool = False) -> None:
@@ -250,7 +254,8 @@ class GUINN:
         return self
 
     @progress.threading
-    def base_model_fit(self, params: TrainData, dataset: PrepareDataset, save_model_path: str, verbose=0) -> None:
+    def base_model_fit(self, params: TrainData, dataset: PrepareDataset,
+                       dataset_data: DatasetData, save_model_path: str, verbose=0) -> None:
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели ...'})
         # self.set_custom_metrics()
         self.model.compile(loss=self.loss,
@@ -260,7 +265,7 @@ class GUINN:
         # self.model.load_weight(os.path.join(self.training_path, self.nn_name))
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели выполнена'})
 
-        self._set_callbacks(dataset=dataset, batch_size=params.batch,
+        self._set_callbacks(dataset=dataset, dataset_data=dataset_data, batch_size=params.batch,
                             epochs=params.epochs, save_model_path=save_model_path,
                             checkpoint=params.architecture.parameters.checkpoint.native())
         progress.pool(self.progress_name, finished=False, data={'status': 'Начало обучения ...'})
@@ -414,7 +419,8 @@ class MemoryUsage:
 class FitCallback(keras.callbacks.Callback):
     """CustomCallback for all task type"""
 
-    def __init__(self, dataset: PrepareDataset, checkpoint_config: dict, batch_size: int = None, epochs: int = None,
+    def __init__(self, dataset: PrepareDataset, dataset_data: DatasetData, checkpoint_config: dict,
+                 batch_size: int = None, epochs: int = None,
                  retrain_epochs: int = None, save_model_path: str = "./", model_name: str = "noname"):
         """
         Для примера
@@ -432,6 +438,7 @@ class FitCallback(keras.callbacks.Callback):
         super().__init__()
         self.usage_info = MemoryUsage(debug=False)
         self.dataset = dataset
+        self.dataset_data = dataset_data
         self.batch_size = batch_size
         self.epochs = epochs
         self.batch = 0
@@ -623,6 +630,21 @@ class FitCallback(keras.callbacks.Callback):
     def _get_train_status() -> str:
         return interactive.get_states().get("status")
 
+    def _deploy_predict(self, presets_predict):
+        result = CreateArray().postprocess_results(array=presets_predict,
+                                                   options=self.dataset_data,
+                                                   save_path=os.path.join(self.save_model_path,
+                                                                          "deploy_presets"))
+        deploy_presets = []
+        for inp in self.dataset_data.inputs.keys():
+            for idx in range(len(list(result.values())[0])):
+                data = interactive._postprocess_initial_data(
+                    input_id=str(inp),
+                    example_idx=idx,
+                )
+                deploy_presets.append({"source": data, "data": list(result.values())[0][idx]})
+        print(deploy_presets)
+
     def save_lastmodel(self) -> None:
         """
         Saving last model on each epoch end
@@ -788,11 +810,15 @@ class FitCallback(keras.callbacks.Callback):
             if self._best_epoch_monitoring(logs):
                 if not os.path.exists(self.save_model_path):
                     os.mkdir(self.save_model_path)
+                if not os.path.exists(os.path.join(self.save_model_path, "deploy_presets")):
+                    os.mkdir(os.path.join(self.save_model_path, "deploy_presets"))
                 file_path_best: str = os.path.join(
                     self.save_model_path, f"best_weights_{self.metric_checkpoint}.h5"
                 )
                 self.model.save_weights(file_path_best)
                 print(f"Epoch {self.last_epoch} - best weights was successfully saved")
+                self._deploy_predict(scheduled_predict)
+
         self._fill_log_history(self.last_epoch, logs)
         self.last_epoch += 1
 

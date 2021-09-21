@@ -399,6 +399,12 @@ class Exchange:
         except Exception as error:
             raise exceptions.FailedGetTrainingProgressException(str(error))
 
+    def _call_training_save(self):
+        """
+        Сохранение обучения
+        """
+        pass
+
     def _call_deploy_collection(
         self, dataset: Optional[DatasetData] = None
     ) -> Optional[DeployCollectionData]:

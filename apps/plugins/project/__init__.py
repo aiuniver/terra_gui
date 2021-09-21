@@ -222,9 +222,11 @@ class Project(BaseMixinData):
                 {
                     "id": layer.id,
                     "classes_quantity": layer.num_classes,
-                    "task": layer.task.value,
-                    "loss": TrainingLosses.get(layer.task)[0],
-                    "metrics": [TrainingMetrics.get(layer.task)[0]],
+                    "task": layer.task,
+                    "loss": TrainingLosses.get(layer.task)[0] if layer.task else None,
+                    "metrics": [TrainingMetrics.get(layer.task)[0]]
+                    if layer.task
+                    else [],
                 }
             )
         self.training.base.architecture.parameters.outputs = OutputsList(outputs)
@@ -252,7 +254,9 @@ class Project(BaseMixinData):
                     "id": index,
                     "output_idx": layer.id,
                     "show": MetricGraphShowChoice.model,
-                    "show_metric": TrainingMetrics.get(layer.task)[0],
+                    "show_metric": TrainingMetrics.get(layer.task)[0]
+                    if layer.task
+                    else None,
                 }
             )
             index += 1
@@ -268,7 +272,9 @@ class Project(BaseMixinData):
                     "id": index,
                     "output_idx": layer.id,
                     "show": MetricGraphShowChoice.classes,
-                    "show_metric": TrainingMetrics.get(layer.task)[0],
+                    "show_metric": TrainingMetrics.get(layer.task)[0]
+                    if layer.task
+                    else None,
                 }
             )
             progress_table.append(

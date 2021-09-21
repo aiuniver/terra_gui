@@ -4,32 +4,32 @@
     <div class="predictions__params">
       <div class="predictions__param">
         <t-field inline label="Показать тренировочную выборку">
-          <t-checkbox-new :value="true" small />
+          <t-checkbox-new v-model="checks.show_results" :value="true" small />
         </t-field>
       </div>
       <div class="predictions__param">
         <t-field inline label="Данные для расчета">
-          <t-select-new small />
+          <t-select-new :list="sortData" v-model="checks.example_choice_type" small />
         </t-field>
         <t-field inline label="Тип выбора данных">
-          <t-select-new small />
+          <t-select-new :list="sortOutput" v-model="checks.main_output" small />
         </t-field>
       </div>
       <div class="predictions__param">
         <t-field inline label="Показать примеров">
-          <t-input-new :value="10" type="number" small />
+          <t-input-new v-model.number="checks.num_examples" type="number" small />
         </t-field>
         <t-field inline label="Показать статистику">
-          <t-checkbox-new :value="true" small />
+          <t-checkbox-new v-model="checks.show_statistic" small />
         </t-field>
       </div>
       <div class="predictions__param">
         <t-field inline label="Автообновление">
-          <t-checkbox-new small />
+          <t-checkbox-new v-model="checks.autoupdate" small />
         </t-field>
       </div>
       <div class="predictions__param">
-        <t-button style="width: 150px" @click.native="showTextTable = !showTextTable">Показать</t-button>
+        <t-button style="width: 150px" @click.native="show">Показать</t-button>
       </div>
     </div>
     <TextTable :show="showTextTable" :predict="predictData" />
@@ -37,7 +37,6 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
 import TextTable from './TextTableTest';
 export default {
   name: 'Predictions',
@@ -49,30 +48,46 @@ export default {
     interactive: Object,
   },
   data: () => ({
+    checks: {
+      autoupdate: false,
+      show_statistic: false,
+      num_examples: 10,
+      show_results: false,
+      example_choice_type: 'seed',
+      main_output: 2,
+    },
+    sortOutput: [],
+    sortData: [
+      { label: 'Best', value: 'best' },
+      { label: 'Worst', value: 'worst' },
+      { label: 'Seed', value: 'seed' },
+      { label: 'Random', value: 'random' },
+    ],
     showTextTable: false,
-    predictData: {},
   }),
-  computed:{
-    ...mapGetters({
-      trainDisplay: "projects/getProject"
-    })
-   
+  created() {
+    this.sortOutput = this.outputs.map(el => {
+      return {
+        label: `Выходной слой ${el.id}`,
+        value: el.id,
+      };
+    });
   },
-  async created() {
-
-    const data = JSON.parse(JSON.stringify(this.trainDisplay));
-    console.log('DATA', data)
-    // data.intermediate_result.show_results = true;
-    // data.intermediate_result.show_statistic = true;
-    // const res = await this.$store.dispatch('trainings/interactive', { data });
-    // if (res.success) this.predictData = res.data;
-    // console.log('Result predict', res);
+  computed: {
+    predictData() {
+      return this.$store.getters['trainings/getTrainData']('intermediate_result') || {};
+    },
   },
-  // computed: {
-  //   ...mapGetters({
-  //     predictData: 'trainings/getPredict',
-  //   }),
-  // },
+  methods: {
+    async show() {
+      await this.$store.dispatch('trainings/interactive', {
+        intermediate_result: { ...this.checks },
+      });
+      if (this.checks.show_results) {
+        this.showTextTable = true;
+      }
+    },
+  },
 };
 </script>
 
