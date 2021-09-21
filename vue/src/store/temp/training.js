@@ -9122,7 +9122,7 @@ const config = {
     }
   ],
   "intermediate_result": {
-    "show_results": false,
+    "show_results": true,
     "example_choice_type": "seed",
     "main_output": 2,
     "num_examples": 10,
