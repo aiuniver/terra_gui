@@ -71,6 +71,9 @@ export default {
     getProject({ project }) {
       return project;
     },
+    getProjectData: ({ project }) => key => {
+      return project[key];
+    },
     getUser({ user }) {
       return user;
     },

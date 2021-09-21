@@ -22,17 +22,20 @@
         v-bind="output"
         :key="i" />
       </template>
+      <Scatter />
     </div>
   </div>
 </template>
 
 <script>
 import Heatmap from './Heatmap.vue';
+import Scatter from './Scatter.vue';
 
 export default {
   name: 't-scatters',
   components: {
     Heatmap,
+    Scatter
   },
   computed: {
     statisticData() {
@@ -40,6 +43,7 @@ export default {
     },
     outputLayers() {
       const layers = this.$store.getters['modeling/getModel'].layers
+      if (!layers) return []
       return layers.filter(item => item.group === 'output')
     }
   },
