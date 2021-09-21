@@ -1,5 +1,5 @@
 <template>
-<scrollbar :ops="ops">
+<scrollbar :ops="ops" style="width: initial;">
   <div class="t-graph">
     <p>{{ graph_name || '' }}</p>
     <div class="t-graph__wrapper">
