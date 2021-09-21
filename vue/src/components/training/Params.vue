@@ -200,7 +200,7 @@ export default {
       const res = await this.$store.dispatch('trainings/start', this.obj);
       if (res) {
         const { data } = res;
-        if (data.status) {
+        if (data?.state?.status) {
           this.learningStop = false;
           this.progress();
         }
