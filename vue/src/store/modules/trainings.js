@@ -1,7 +1,9 @@
 import { data, config } from "../temp/training";
 import { toolbar } from "../const/trainings";
 // import { predict } from "../temp/predict-training";
-import { predict_video } from "../temp/predict-training-video-audio";
+// import { predict_video } from "../temp/predict-training-video-audio";
+// import { predict_text } from "../temp/predict-training-text";
+// import { predict_audio } from "../temp/predict-training-audio";
 
 console.warn(data)
 export default {
@@ -10,11 +12,11 @@ export default {
     params: [],
     toolbar,
     stateParams: {},
-    predict: predict_video,
+    predict: {},
     info: '',
     states: {},
-    trainData: {},
-    // trainData: data,
+    // trainData: {},
+    trainData: data,
     trainUsage: {},
     trainDisplay: config,
     buttons: {
@@ -28,17 +30,25 @@ export default {
       },
       clear: {
         title: "Сбросить",
-        visible: true
+        visible: false
       },
       save: {
         title: "Сохранить",
-        visible: true
+        visible: false
       }
-    }
+    },
+    interactive: {},
+    outputs: []
   }),
   mutations: {
     SET_PARAMS(state, value) {
       state.params = value;
+    },
+    SET_INTERACTIVE(state, value) {
+      state.interactive = {...value};
+    },
+    SET_OUTPUTS(state, value) {
+      state.outputs = [...value];
     },
     SET_BUTTONS(state, buttons) {
       state.buttons = { ...buttons };
@@ -51,6 +61,9 @@ export default {
     },
     SET_STATES(state, value) {
       state.states = { ...value };
+    },
+    SET_PREDICT(state, value) {
+      state.predict = { ...value };
     },
     SET_TRAIN(state, value) {
       state.trainData = { ...value };
@@ -80,6 +93,7 @@ export default {
       }).filter(item => item)
       const res = await dispatch('axios', { url: '/training/start/', data }, { root: true });
       dispatch('setButtons', res);
+      dispatch('setTrainData', {});
       return res
     },
     async stop({ dispatch }, data) {
@@ -92,11 +106,14 @@ export default {
       dispatch('setButtons', res);
       return res
     },
-    async interactive({ dispatch }, data) {
+    async interactive({ state: { interactive }, dispatch }, part) {
+      const data = {...interactive, part}
+      console.log(data)
+      console.log(interactive)
       return await dispatch('axios', { url: '/training/interactive/', data }, { root: true });
     },
     async progress({ dispatch }, data) {
-      const res =  await dispatch('axios', { url: '/training/progress/', data }, { root: true });
+      const res = await dispatch('axios', { url: '/training/progress/', data }, { root: true });
       console.log();
       dispatch('setButtons', res);
       return res
@@ -116,6 +133,9 @@ export default {
     setTrainData({ commit }, data) {
       commit("SET_TRAIN", data);
     },
+    setPredict({ commit }, data) {
+      commit("SET_PREDICT", data);
+    },
     setTrainUsage({ commit }, data) {
       commit("SET_TRAIN_USAGE", data);
     },
@@ -126,6 +146,12 @@ export default {
   getters: {
     getStateParams({ stateParams }) {
       return stateParams || {}
+    },
+    getInteractive({ interactive }) {
+      return interactive || {}
+    },
+    getOutputs({ outputs }) {
+      return outputs || []
     },
     getParams({ params }) {
       return params || []
@@ -149,7 +175,7 @@ export default {
       return trainUsage || {};
     },
     getTrainData: ({ trainData }) => (key) => {
-      return trainData?.[key] || {};
+      return trainData?.[key];
     },
     getTrainDisplay: ({ trainDisplay }) => {
       return trainDisplay;

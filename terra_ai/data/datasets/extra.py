@@ -146,7 +146,7 @@ class ColumnProcessingTypeChoice(str, Enum):
     Text = "Text"
     Audio = "Audio"
     Video = "Video"
-    ImageSegmentation = "ImageSegmentation"
+    Segmentation = "Segmentation"
     Classification = "Classification"
     Regression = "Regression"
     Timeseries = "Timeseries"

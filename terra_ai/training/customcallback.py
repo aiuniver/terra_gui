@@ -8,6 +8,7 @@ from typing import Union
 import pandas as pd
 import tensorflow
 from PIL import Image, ImageDraw, ImageFont  # Модули работы с изображениями
+from pandas import DataFrame
 
 from tensorflow.keras.utils import to_categorical
 from pydub import AudioSegment
@@ -25,7 +26,8 @@ from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.utils import camelize, decamelize
 
-__version__ = 0.059
+__version__ = 0.060
+
 
 def sort_dict(dict_to_sort: dict, mode='by_name'):
     if mode == 'by_name':
@@ -353,6 +355,7 @@ class InteractiveCallback:
         self.statistic_result = {}
         self.train_progress = {}
         self.progress_name = "training"
+        self.preset_path = ""
 
         self.urgent_predict = False
 
@@ -491,23 +494,27 @@ class InteractiveCallback:
         self.train_progress = data
 
     def update_state(self, y_pred, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
-        if self.interactive_config.get('intermediate_result').get('show_results'):
-            self.example_idx = self._prepare_example_idx_to_show()
+        # if self.interactive_config.get('intermediate_result').get('show_results'):
+        #     self.example_idx = self._prepare_example_idx_to_show()
         if on_epoch_end_flag:
             self.current_epoch = fit_logs.get('epoch')
             self.current_logs = self._reformat_fit_logs(fit_logs)
             self._reformat_y_pred(y_pred)
             self._update_log_history()
             self._update_progress_table(current_epoch_time)
-            if self.interactive_config.get('intermediate_result').get('show_results') and \
-                    self.interactive_config.get('intermediate_result').get('autoupdate'):
-                self.intermediate_result = self._get_intermediate_result_request()
+            if self.interactive_config.get('intermediate_result').get('show_results'):
+                self.example_idx = self._prepare_example_idx_to_show()
+            if self.interactive_config.get('intermediate_result').get('show_results'):
+                self.example_idx = self._prepare_example_idx_to_show()
+                if self.interactive_config.get('intermediate_result').get('autoupdate'):
+                    self.intermediate_result = self._get_intermediate_result_request()
             if self.interactive_config.get('statistic_data').get('output_id') \
                     and self.interactive_config.get('statistic_data').get('autoupdate'):
                 self.statistic_result = self._get_statistic_data_request()
         else:
             self._reformat_y_pred(y_pred)
             if self.interactive_config.get('intermediate_result').get('show_results'):
+                self.example_idx = self._prepare_example_idx_to_show()
                 self.intermediate_result = self._get_intermediate_result_request()
             if self.interactive_config.get('statistic_data').get('output_id'):
                 self.statistic_result = self._get_statistic_data_request()
@@ -546,6 +553,7 @@ class InteractiveCallback:
         )
 
     # Методы для set_attributes()
+
     @staticmethod
     def _reformat_metrics(metrics: dict) -> dict:
         output = {}
@@ -681,8 +689,10 @@ class InteractiveCallback:
                         and not self.dataset_config.get("outputs").get(out).get("use_generator")
                 ):
                     self.y_true[data_type][out] = dataset.Y.get(data_type).get(f"{out}")
-                elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries \
-                        and not self.dataset_config.get("outputs").get(out).get("use_generator"):
+                elif (
+                        self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries or
+                        self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Regression
+                ) and not self.dataset_config.get("outputs").get(out).get("use_generator"):
                     self.y_true[data_type][out] = dataset.Y.get(data_type).get(f"{out}")
                 else:
                     pass
@@ -801,6 +811,36 @@ class InteractiveCallback:
                 },
             }
         }
+        return_timeseries = {
+            "output_name": {
+                'data_type': {
+                    'output_channel':
+                        graphic': {
+                            "type": "Graphic",
+                                "x": [],
+                                "y": []
+                        },
+                        'dense_histogram': {
+                            "type": "Histogram",
+                                "x": [],
+                                "y": []
+                        },
+                },
+            }
+        }
+        return_regression = {
+            "output_name": {
+                'data_type': {
+                    'output_channel': [
+                        {
+                            "type": "Histogram",
+                            "x": [],
+                            "y": []
+                        },...
+                    ]
+                },
+            }
+        }
         """
         dataset_balance = {}
         for out in self.dataset_config.get("outputs").keys():
@@ -827,7 +867,7 @@ class InteractiveCallback:
                     for cl in classes:
                         class_percent[self.dataset_config.get("outputs").get(out).get("classes_names")[cl]] = np.round(
                             np.sum(self.y_true.get(data_type).get(out)[:, :, :, cl]) * 100
-                            / np.prod(self.y_true.get(data_type).get(out)[:, :, :, 0].shape))
+                            / np.prod(self.y_true.get(data_type).get(out)[:, :, :, 0].shape)).astype("float").tolist()
                         class_count[self.dataset_config.get("outputs").get(out).get("classes_names")[cl]] = 0
 
                     for img_array in np.argmax(self.y_true.get(data_type).get(out), axis=-1):
@@ -868,19 +908,47 @@ class InteractiveCallback:
                             'dense_histogram': {}
                         }
                         dataset_balance[out][data_type][output_channel]['graphic'] = {
+                            "type": "Graphic",
                             "x": list(self.dataset_config.get("dataframe").index),
                             "y": list(self.dataset_config.get("dataframe")[output_channel])
                         }
                         x, y = self._get_distribution_histogram(
                             list(self.dataset_config.get("dataframe")[output_channel]),
-                            bins=50,
+                            bins=25,
                             categorical=False
                         )
                         dataset_balance[out][data_type][output_channel]['dense_histogram'] = {
+                            "type": "Histogram",
                             "x": x,
                             "y": y
                         }
-            pass
+            if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Regression:
+                for data_type in self.y_true.keys():
+                    dataset_balance[out][data_type] = {
+                        'histogram': [],
+                        'correlation': {}
+                    }
+                    for column in list(self.dataset_config.get("dataframe").get(data_type).columns):
+                        # TODO: нет инфы от фронта какие столбцы категорийные а какие нет, реализация временная
+                        column_data = list(self.dataset_config.get("dataframe").get(data_type)[column])
+                        try:
+                            x, y = self._get_distribution_histogram(column_data, bins=25, categorical=False)
+                        except:
+                            x, y = self._get_distribution_histogram(column_data, bins=25, categorical=True)
+                        dataset_balance[out][data_type]['histogram'].append(
+                            {
+                                "name": column,
+                                "x": x,
+                                "y": y
+                            }
+                        )
+                    labels, matrix = self._get_correlation_matrix(
+                        pd.DataFrame(self.dataset_config.get("dataframe").get(data_type))
+                    )
+                    dataset_balance[out][data_type]['correlation'] = {
+                        "labels": labels,
+                        "matrix": matrix
+                    }
         return dataset_balance
 
     def _prepare_class_idx(self) -> dict:
@@ -966,6 +1034,7 @@ class InteractiveCallback:
         }
         """
         self.y_pred = {}
+        print(y_pred.shape)
         for idx, out in enumerate(self.y_true.get('val').keys()):
             if len(self.y_true.get('val').keys()) == 1:
                 self.y_pred[out] = y_pred
@@ -1017,7 +1086,8 @@ class InteractiveCallback:
                 if choice_type == "worst":
                     example_idx, _ = sort_dict(dice_dict, mode="ascending")
                     example_idx = example_idx[:count]
-            elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries:
+            elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries or \
+                    self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Regression:
                 # TODO: добавить inverse_transform, пока без него
                 delta = np.abs(
                     (self.y_true.get('val').get(out) - self.y_pred.get(out)) * 100 / self.y_true.get('val').get(out)
@@ -1155,7 +1225,6 @@ class InteractiveCallback:
                 for data_type in ['train', 'val']:
                     # fill metrics
                     if data_idx or data_idx == 0:
-                        # print(data_idx,  self.log_history[f'{out}']['metrics'][metric_name])
                         self.log_history[out]['metrics'][metric_name][data_type][data_idx] = \
                             self.current_logs.get(out).get('metrics').get(metric_name).get(data_type) \
                                 if self.current_logs.get(out).get('metrics').get(metric_name).get(
@@ -1462,7 +1531,6 @@ class InteractiveCallback:
         """
         data_return = []
         if not self.interactive_config.get('loss_graphs'):
-            # print("self.interactive_config.get('loss_graphs')", self.interactive_config.get('loss_graph_data'))
             return data_return
 
         for loss_graph_config in self.interactive_config.get('loss_graphs'):
@@ -1747,7 +1815,7 @@ class InteractiveCallback:
                         "type": out_type,
                         "data": true_value,
                         "color_mark": None,
-                    }
+                    } if true_value else {}
                     return_data[idx + 1]['predict_value'][f"Выходной слой {out}"] = {
                                                                                         "type": out_type,
                                                                                         "data": predict_value,
@@ -1759,7 +1827,10 @@ class InteractiveCallback:
                                 list(self.dataset_config.get("outputs").keys())[0]).get(
                                 "task") == LayerOutputTypeChoice.TextSegmentation else None
                     if stat:
-                        return_data[idx + 1]['statistic_values'][f"Выходной слой {out}"] = stat
+                        return_data[idx + 1]['statistic_values'][f"Выходной слой {out}"] = {
+                            'type': "Text",
+                            "data": stat
+                        }
         return return_data
 
     def _get_statistic_data_request(self) -> dict:
@@ -1795,7 +1866,8 @@ class InteractiveCallback:
                     y_label="Истинное значение",
                     labels=self.dataset_config.get("outputs").get(f"{out}").get("classes_names"),
                     data_array=cm,
-                    data_percent_array=cm_percent)
+                    data_percent_array=cm_percent
+                )
                 _id += 1
 
             elif self.dataset_config.get("outputs").get(f"{out}").get("task") == LayerOutputTypeChoice.Segmentation or \
@@ -1838,19 +1910,165 @@ class InteractiveCallback:
                 return_data[f"{out}"] = dict(
                     id=_id,
                     task_type=LayerOutputTypeChoice.TextSegmentation.name,
-                    graph_name=f"Выходной слой {out} - Отчет по классам",
+                    graph_name=f"Выходной слой «{out}» - Отчет по классам",
                     type="Table",
                     table_data=report,
                 )
                 _id += 1
 
             elif self.dataset_config.get("outputs").get(f"{out}").get("task") == LayerOutputTypeChoice.Regression:
-                # Scatter
-                pass
+                return_data[f"{out}"] = {
+                    "scatter": {
+                        "type": "Scatter",
+                        "data": []
+                    },
+                    "mae_distribution": {
+                        "type": "Histogram",
+                        "data": []
+                    },
+                    "me_distribution": {
+                        "type": "Histogram",
+                        "data": []
+                    }
+                }
+                y_true = self.y_true.get("val").get(f'{out}')
+                y_pred = self.y_pred.get(f'{out}')
+                x_scatter, y_scatter = self._get_scatter(y_true, y_pred)
+                return_data[f"{out}"]["scatter"]["data"].append(
+                    {
+                        'name': f"Выходной слой «{out}» - Скаттер",
+                        'x_label': 'Истинные значения',
+                        'y_label': 'Предсказанные значения',
+                        "plot_data": {
+                            'x': x_scatter,
+                            'y': y_scatter
+                        }
+                    }
+                )
+                deviation = (y_pred - y_true) * 100 / y_true
+                x_mae, y_mae = self._get_distribution_histogram(np.abs(deviation), bins=25, categorical=False)
+                return_data[f"{out}"]["mae_distribution"]["data"].append(
+                    {
+                        'graph_name': f'Выходной слой «{out}» - Распределение абсолютной ошибки',
+                        'x_label': 'Время',
+                        'y_label': 'Значение',
+                        'plot_data': {
+                            'x': x_mae,
+                            'y': y_mae
+                        },
+                    }
+                )
+                x_me, y_me = self._get_distribution_histogram(deviation, bins=25, categorical=False)
+                return_data[f"{out}"]["me_distribution"]["data"].append(
+                    {
+                        'graph_name': f'Выходной слой «{out}» - Распределение ошибки',
+                        'x_label': 'Время',
+                        'y_label': 'Значение',
+                        'plot_data': {
+                            'x': x_me,
+                            'y': y_me
+                        },
+                    }
+                )
 
             elif self.dataset_config.get("outputs").get(f"{out}").get("task") == LayerOutputTypeChoice.Timeseries:
-                # autocorrelation
-                pass
+                return_data[f"{out}"] = {
+                    "predict_graph": {
+                        "type": "Graphic",
+                        "data": []
+                    },
+                    "autocorrelaton": {
+                        "type": "Graphic",
+                        "data": []
+                    },
+                    "mae_distribution": {
+                        "type": "Histogram",
+                        "data": []
+                    },
+                    "me_distribution": {
+                        "type": "Histogram",
+                        "data": []
+                    }
+                }
+                _id += 1
+                for channel in range(self.y_true.get("val").get(f'{out}').shape[-1]):
+                    channel_name = self.dataset_config.get("outputs").get('cols_names')[channel]
+                    return_data[f"{out}"][''] = {}
+                    for step in range(self.y_true.get("val").get(f'{out}').shape[-2]):
+                        y_true = self.y_true.get("val").get(f"{out}")[:, step, channel].astype('float')
+                        y_pred = self.y_pred.get(f"{out}")[:, step, channel].astype('float')
+
+                        return_data[f"{out}"]["predict_graph"]["data"].append(
+                            {
+                                'id': _id,
+                                'graph_name': f'Выходной слой «{out}» - Предсказание канала '
+                                              f'«{channel_name}» на {step + 1} шагов вперед',
+                                'x_label': 'Время',
+                                'y_label': 'Значение',
+                                'plot_data': {
+                                    'true_data': {
+                                        'x': np.arange(len(y_true)).astype('float').tolist(),
+                                        'y': y_true.tolist()
+                                    },
+                                    'predict_data': {
+                                        'x': np.arange(len(y_true)).astype('float').tolist(),
+                                        'y': y_pred.tolist()
+                                    },
+                                },
+                            }
+                        )
+                        x_axis, auto_corr_true, auto_corr_pred = self._get_autocorrelation_graphic(
+                            y_true, y_pred, depth=10
+                        )
+                        return_data[f"{out}"]["autocorrelaton"]["data"].append(
+                            {
+                                'id': _id + 1,
+                                'graph_name': f'Выходной слой «{out}» - Автокорреляция канала '
+                                              f'«{channel_name}» на {step + 1} шагов вперед',
+                                'x_label': 'Время',
+                                'y_label': 'Значение',
+                                'plot_data': {
+                                    'true_data': {
+                                        'x': x_axis,
+                                        'y': auto_corr_true
+                                    },
+                                    'predict_data': {
+                                        'x': x_axis,
+                                        'y': auto_corr_pred
+                                    },
+                                },
+                            }
+                        )
+                        deviation = (y_pred - y_true) * 100 / y_true
+                        x_mae, y_mae = self._get_distribution_histogram(np.abs(deviation), bins=25, categorical=False)
+                        return_data[f"{out}"]["mae_distribution"]["data"].append(
+                            {
+                                'id': _id + 2,
+                                'graph_name': f'Выходной слой «{out}» - Распределение абсолютной ошибки канала '
+                                              f'«{channel_name}» на {step + 1} шагов вперед',
+                                'x_label': 'Время',
+                                'y_label': 'Значение',
+                                'plot_data': {
+                                    'x': x_mae,
+                                    'y': y_mae
+                                },
+                            }
+                        )
+                        x_me, y_me = self._get_distribution_histogram(deviation, bins=25, categorical=False)
+                        return_data[f"{out}"]["me_distribution"]["data"].append(
+                            {
+                                'id': _id + 3,
+                                'graph_name': f'Выходной слой «{out}» - Распределение ошибки канала '
+                                              f'«{channel_name}» на {step + 1} шагов вперед',
+                                'x_label': 'Время',
+                                'y_label': 'Значение',
+                                'plot_data': {
+                                    'x': x_me,
+                                    'y': y_me
+                                },
+                            }
+                        )
+                        _id += 4
 
             elif self.dataset_config.get("outputs").get(f"{out}").get("task") == LayerOutputTypeChoice.ObjectDetection:
                 # accuracy for classes? smth else?
@@ -1912,6 +2130,7 @@ class InteractiveCallback:
                 return_data[out] = [
                     {
                         'id': _id,
+                        'type': 'histogram',
                         'graph_name': 'Тренировочная выборка',
                         'x_label': 'Название класса',
                         'y_label': 'Значение',
@@ -1924,6 +2143,7 @@ class InteractiveCallback:
                     },
                     {
                         'id': _id + 1,
+                        'type': 'histogram',
                         'graph_name': 'Проверчная выборка',
                         'x_label': 'Название класса',
                         'y_label': 'Значение',
@@ -2044,12 +2264,71 @@ class InteractiveCallback:
                 _id += 2
 
             if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Regression:
-                # histograms for result and any chosen categorizing column
-                pass
+                return_data[out] = []
+                for data_type in ["train", "val"]:
+                    data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
+                    for histogram in self.dataset_balance[out][data_type]['histogram']:
+                        return_data[out].append(
+                            {
+                                'type': "Histogram",
+                                "short_name": histogram['name'],
+                                "graph_name": f"{data_type_name} выборка - "
+                                              f"Гистограмма распределения колонки «{histogram['name']}»",
+                                "x_label": 'Значение',
+                                "y_label": 'Количество',
+                                "plot_data": {
+                                    'x': histogram["x"],
+                                    'y': histogram["y"]
+                                },
+                            }
+                        )
+                    return_data[out].append(
+                        {
+                            "type": "Heatmap",
+                            "graph_name": f"{data_type_name} выборка - Матрица корреляций",
+                            "x_label": "Колонка",
+                            "y_label": "Колонка",
+                            "labels": self.dataset_balance[out][data_type]['correlation']["labels"],
+                            "matrix": self.dataset_balance[out][data_type]['correlation']["matrix"],
+                        }
+                    )
 
             if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries:
-                # just graphic in case dataframe
-                pass
+                return_data[out] = []
+                _id += 1
+                for channel in list(self.dataset_config.get('dataframe').get('train').columns):
+                    channel_name = self.dataset_config.get("outputs").get('cols_names')[channel]
+                    for data_type in ["train", "val"]:
+                        data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
+                        y_true = list(self.dataset_config.get('dataframe').get(data_type)[channel_name])
+                        x_graph_axis = np.arange(len(y_true)).astype('float').tolist()
+                        x_hist, y_hist = self._get_distribution_histogram(y_true, bins=25, categorical=False)
+                        return_data[out].append(
+                            dict(
+                                id=_id,
+                                type="Graphic",
+                                graph_name=f'{data_type_name} выборка - График канала «{out}»',
+                                x_label='Время',
+                                y_label='Значение',
+                                plot_data={
+                                    'x': x_graph_axis,
+                                    'y': y_true
+                                },
+                            ),
+                        )
+                        return_data[out].append(
+                            dict(
+                                id=_id + 1,
+                                type="Histogram",
+                                graph_name=f'{data_type_name} выборка - Гистограмма плотности канала «{out}»',
+                                x_label='Значение',
+                                y_label='Количество',
+                                plot_data={
+                                    'x': x_hist,
+                                    'y': y_true
+                                },
+                            ),
+                        )
 
             if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.ObjectDetection:
                 # frequency of classes, like with segmentation
@@ -2089,7 +2368,7 @@ class InteractiveCallback:
             }
         return return_stat
 
-    def _get_error_distribution(self, y_true, y_pred, bins=20, absolute=True):
+    def _get_error_distribution(self, y_true, y_pred, bins=25, absolute=True):
         """
         return x_labels, bar_values
         """
@@ -2105,15 +2384,19 @@ class InteractiveCallback:
         """
         return np.arange(len(data)).astype('float').tolist(), np.array(data).astype('float').tolist()
 
-    def _get_correlation_matrix(self, data_frame):
-        pass
-
-    def _get_scatter(self, y_true, y_pred):
-        # TODO: добавить inverse_transform
-        pass
+    @staticmethod
+    def _get_correlation_matrix(data_frame: DataFrame):
+        corr = data_frame.corr()
+        labels = list(corr.columns)
+        return labels, np.array(np.round(corr, 2)).astype('float').tolist()
 
     @staticmethod
-    def _get_distribution_histogram(data_series, bins=20, categorical=True):
+    def _get_scatter(y_true, y_pred):
+        # TODO: добавить inverse_transform
+        return np.array(y_true).astype('float').tolist(), np.array(y_pred).astype('float').tolist()
+
+    @staticmethod
+    def _get_distribution_histogram(data_series, bins=25, categorical=True):
         """
         return x_labels, bar_values
         """
@@ -2140,7 +2423,7 @@ class InteractiveCallback:
                 auto_corr = auto_corr + temp
             return auto_corr
 
-        x_axis = np.arange(depth).astype('int')
+        x_axis = np.arange(depth).astype('int').tolist()
         auto_corr_true = []
         for i in range(depth):
             auto_corr_true.append(get_auto_corr(y_true, y_true, i + 1))
@@ -2189,7 +2472,7 @@ class InteractiveCallback:
         if self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Image:
             if self.dataset_config.get("group") != 'keras':
                 img = Image.open(initial_file_path)
-                img = img.change_size(
+                img = img.resize(
                     self.dataset_config.get("inputs").get(input_id).get("input_shape")[0:2][::-1],
                     Image.ANTIALIAS
                 )
@@ -2197,8 +2480,9 @@ class InteractiveCallback:
                 img = image.array_to_img(self.x_val.get(input_id)[example_idx])
             img = img.convert('RGB')
             # filepath = NamedTemporaryFile()
-            # save_path = f"/tmp/initial_data_image_{save_id}_input_{input_id}.webp"
-            save_path = f"initial_data_image_{save_id}_input_{input_id}.webp"
+            save_path = os.path.join(
+                self.preset_path, f"initial_data_image_{save_id}_input_{input_id}.webp"
+            )
             img.save(save_path, 'webp')
             return save_path, LayerInputTypeChoice.Image.name
 
@@ -2209,13 +2493,17 @@ class InteractiveCallback:
         elif self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Video:
             clip = moviepy_editor.VideoFileClip(initial_file_path)
             # filepath = NamedTemporaryFile()
-            save_path = f"/tmp/initial_data_video_{save_id}_input_{input_id}.webm"
+            save_path = os.path.join(
+                self.preset_path, f"initial_data_video_{save_id}_input_{input_id}.webm"
+            )
             clip.write_videofile(save_path)
             return save_path, LayerInputTypeChoice.Video.name
 
         elif self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Audio:
             # filepath = NamedTemporaryFile()
-            save_path = f"/tmp/initial_data_audio_{save_id}_input_{input_id}.webp"
+            save_path = os.path.join(
+                self.preset_path, f"initial_data_audio_{save_id}_input_{input_id}.webp"
+            )
             AudioSegment.from_file(initial_file_path).export(save_path, format="webm")
             return save_path, LayerInputTypeChoice.Audio.name
 
@@ -2246,13 +2534,13 @@ class InteractiveCallback:
                     # TODO: scaler.inverse_transform
                     graphics_data.append(
                         {
-                            'id': i+1,
+                            'id': i + 1,
                             'graph_name': f'График канала «{channel}»',
                             'x_label': 'Время',
                             'y_label': 'Значение',
                             'plot_data': {
-                                'x': np.arange(self.x_val.get(input_id)[example_idx].shape[0]).astype('float'),
-                                'y': np.array(self.x_val.get(input_id)[example_idx][:, i]).astype('float')
+                                'x': np.arange(self.x_val.get(input_id)[example_idx].shape[0]).astype('float').tolist(),
+                                'y': np.array(self.x_val.get(input_id)[example_idx][:, i]).astype('float').tolist()
                             },
                         }
                     )
@@ -2267,6 +2555,7 @@ class InteractiveCallback:
                 for col_name in self.dataset_config.get('dataframe').get('val').columns:
                     dataframe_data[col_name] = self.dataset_config.get('dataframe').get('val')[col_name][example_idx]
                 return dataframe_data, LayerInputTypeChoice.Dataframe.name
+
         else:
             return initial_file_path, None
 
@@ -2337,7 +2626,7 @@ class InteractiveCallback:
             else:
                 color_mark = 'wrong'
 
-            class_stat = {}
+            class_stat = []
             if show_stat:
                 for i, val in enumerate(predict):
                     if val == max(predict) and i == y_true:
@@ -2346,10 +2635,13 @@ class InteractiveCallback:
                         class_color_mark = "wrong"
                     else:
                         class_color_mark = None
-                    class_stat[labels[i]] = {
-                        "value": f"{round(val * 100, 1)}%",
-                        "color_mark": class_color_mark
-                    }
+                    class_stat.append(
+                        {
+                            'name': labels[i],
+                            'value': f"{round(val * 100, 1)}%",
+                            'color_mark': class_color_mark
+                        }
+                    )
             return labels[y_true], labels[np.argmax(predict)], color_mark, class_stat, "str"
 
         elif self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.Segmentation:
@@ -2367,8 +2659,9 @@ class InteractiveCallback:
             y_true = tensorflow.keras.utils.array_to_img(y_true)
             y_true = y_true.convert('RGB')
             # filepath_true = NamedTemporaryFile()
-            # y_true_save_path = f"/tmp/true_segmentation_data_image_{save_id}_output_{output_id}.webp"
-            y_true_save_path = f"true_segmentation_data_image_{save_id}_output_{output_id}.webp"
+            y_true_save_path = os.path.join(
+                self.preset_path, f"true_segmentation_data_image_{save_id}_output_{output_id}.webp"
+            )
             y_true.save(y_true_save_path, 'webp')
 
             # prepare y_pred image
@@ -2382,11 +2675,12 @@ class InteractiveCallback:
             y_pred = tensorflow.keras.utils.array_to_img(y_pred)
             y_pred = y_pred.convert('RGB')
             # filepath_pred = NamedTemporaryFile()
-            # y_pred_save_path = f"/tmp/predict_segmentation_data_image_{save_id}_output_{output_id}.webp"
-            y_pred_save_path = f"predict_segmentation_data_image_{save_id}_output_{output_id}.webp"
+            y_pred_save_path = os.path.join(
+                self.preset_path, f"predict_segmentation_data_image_{save_id}_output_{output_id}.webp"
+            )
             y_pred.save(y_pred_save_path, 'webp')
 
-            class_stat = {}
+            class_stat = []
             if show_stat:
                 y_true = np.array(self.y_true.get(data_type).get(output_id)[example_idx]).astype('int')
                 y_pred = to_categorical(np.argmax(self.y_pred.get(output_id)[example_idx], axis=-1),
@@ -2394,10 +2688,13 @@ class InteractiveCallback:
                 for idx, cls in enumerate(labels):
                     dice_val = np.round(self._dice_coef(y_true[:, :, idx], y_pred[:, :, idx], batch_mode=False) * 100,
                                         1)
-                    class_stat[cls] = {
-                        "value": f"{dice_val}%",
-                        "color_mark": 'success' if dice_val >= 90 else 'wrong'
-                    }
+                    class_stat.append(
+                        {
+                            'name': cls,
+                            'value': f"{dice_val}%",
+                            'color_mark': 'success' if dice_val >= 90 else 'wrong'
+                        }
+                    )
             return y_true_save_path, y_pred_save_path, None, class_stat, "Image"
 
         elif self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.TextSegmentation:
@@ -2418,33 +2715,179 @@ class InteractiveCallback:
                 classes_names,
                 self.dataset_config.get("outputs").get(output_id).get('classes_colors')
             )
-            class_stat = {}
+            class_stat = []
             if show_stat:
                 y_true = np.array(self.y_true.get(data_type).get(output_id)[example_idx]).astype('int')
                 y_pred = np.where(self.y_pred.get(output_id)[example_idx] >= 0.9, 1., 0.)
                 for idx, cls in enumerate(classes_names):
                     if np.sum(y_true[:, idx]) == 0 and np.sum(y_pred[:, idx]) == 0:
-                        class_stat[cls] = {
-                            "value": "-",
-                            "color_mark": None
-                        }
+                        class_stat.append(
+                            {
+                                'name': cls,
+                                'value': "-",
+                                'color_mark': None
+                            }
+                        )
                     else:
                         dice_val = np.round(self._dice_coef(y_true[:, idx], y_pred[:, idx], batch_mode=False) * 100, 1)
-                        class_stat[cls] = {
-                            "value": f"{dice_val}%",
-                            "color_mark": 'success' if dice_val >= 90 else 'wrong'
-                        }
+                        class_stat.append(
+                            {
+                                'name': cls,
+                                'value': f"{dice_val}%",
+                                'color_mark': 'success' if dice_val >= 90 else 'wrong'
+                            }
+                        )
             return true_text_segmentation, pred_text_segmentation, None, class_stat, "Text"
 
         elif self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.Regression:
-            # values
-            # stat - deviation
-            pass
+            # TODO: inverse_transform
+            column_name = self.dataset_config["outputs"][output_id]['cols_names'][
+                list(self.dataset_config["outputs"].keys()).index(output_id)]
+            y_true = self.y_true.get(data_type).get(output_id)[example_idx]
+            y_pred = self.y_pred.get(output_id)[example_idx]
+            deviation = (y_pred - y_true) * 100 / y_true
+            color_mark = 'success' if deviation < 2 else "wrong"
+            stat = []
+            if show_stat:
+                stat.append(
+                    {
+                        'name': column_name,
+                        'value': f"{round(deviation, 2)}%",
+                        'color_mark': color_mark
+                    }
+                )
+            return f"{y_true}", f"{y_pred}", color_mark, stat, "str"
+
         elif self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.Timeseries:
-            # values
-            # stat - deviation
-            pass
+            """
+            graphics = [
+                {
+                    'id': 1,
+                    'graph_name': f'График канала «{channel_name}»',
+                    'x_label': 'Время',
+                    'y_label': 'Значение',
+                    'plot_data': {
+                        'real_data':{
+                            'x': []:
+                            'y': []
+                        },
+                        'true_data': {
+                            'x': []:
+                            'y': []
+                        },
+                        'predict_data': {
+                            'x': []:
+                            'y': []
+                        },
+                    },
+                }
+            ]
+            """
+            # TODO: inverse_transform
+            graphics = []
+            inputs = list(self.dataset_config.get('inputs').keys())
+            real_x = np.arange(self.x_val.get(inputs[0])[example_idx].shape[0]).astype('float')
+
+            _id = 1
+            for i, channel in enumerate(self.dataset_config["outputs"][output_id]['cols_names']):
+                for input in inputs:
+                    init_coloumn = self.dataset_config["inputs"][input]['cols_names'].index(channel)
+                    depth = self.y_true.get("val").get(output_id)[example_idx].shape[-2]
+                    graphics.append(
+                        {
+                            'id': i + 1,
+                            'graph_name': f'График канала «{channel}»',
+                            'x_label': 'Время',
+                            'y_label': 'Значение',
+                            'plot_data': {
+                                'real_data': {
+                                    'x': real_x.tolist(),
+                                    'y': np.array(
+                                        self.x_val.get(input)[example_idx][:, init_coloumn]
+                                    ).astype('float').tolist()
+                                },
+                                'true_data': {
+                                    'x': np.arange(len(real_x), len(real_x) + depth).astype('float').tolist(),
+                                    'y': self.y_true.get("val").get(output_id)[example_idx][:, i
+                                         ].astype('float').tolist()
+                                },
+                                'predict_data': {
+                                    'x': np.arange(len(real_x), len(real_x) + depth).astype('float').tolist(),
+                                    'y': self.y_pred.get(output_id)[example_idx][:, i].astype('float').tolist()
+                                },
+                            },
+                        }
+                    )
+                    _id += 1
+
+            stat = {}
+            if show_stat:
+                """
+                stat = [
+                    {
+                        "name": "channel",
+                        'value': {
+                            "type": "Table",
+                            "data": {
+                                "step": [
+                                    {
+                                        "name": "Истина",
+                                        "value": float,
+                                        'color_mark': None
+                                    },
+                                    {
+                                        "name": "Предсказание",
+                                        "value": float,
+                                        'color_mark': 'wrong', 'success'
+                                    },
+                                    {
+                                        "name": "Отклонение",
+                                        "value": '100%',
+                                        'color_mark': 'wrong', 'success'
+                                    },
+                                ]
+                            }
+                        },
+                    }
+                ]
+                """
+                for i, channel in enumerate(self.dataset_config["outputs"][output_id]['cols_names']):
+                    stat.append(
+                        {
+                            "name": channel,
+                            "value": {
+                                "type": "Table",
+                                "data": {}
+                            }
+                        }
+                    )
+                    for step in range(self.y_true.get("val").get(output_id)[example_idx].shape[-2]):
+                        deviation = (self.y_pred.get(output_id)[step, i] -
+                                     self.y_true.get("val").get(output_id)[step, i]) * 100 / \
+                                    self.y_true.get("val").get(output_id)[step, i]
+                        stat[-1]["value"]["data"][f"{step + 1}"] = [
+                            {
+                                "name": "Истина",
+                                "value": self.y_true.get("val").get(output_id)[step, i],
+                                'color_mark': None
+                            },
+                            {
+                                "name": "Предсказание",
+                                "value": self.y_pred.get(output_id)[step, i],
+                                'color_mark': "success" if abs(deviation) < 2 else "wrong"
+                            },
+                            {
+                                "name": "Отклонение",
+                                "value": f"{deviation}%",
+                                'color_mark': "success" if abs(deviation) < 2 else "wrong"
+                            }
+                        ]
+            return None, graphics, None, stat, "Graphic"
+
         elif self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.ObjectDetection:
             # image with bb
             # accuracy, correlation bb for classes
             pass
+
+        else:
+            return None, None, None, None, None
