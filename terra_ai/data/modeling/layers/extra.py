@@ -193,7 +193,18 @@ class ModuleChoice(str, Enum):
     inception_v3 = "tensorflow.keras.applications.inception_v3"
     xception = "tensorflow.keras.applications.xception"
     vgg16 = "tensorflow.keras.applications.vgg16"
+    vgg19 = "tensorflow.keras.applications.vgg19"
     resnet50 = "tensorflow.keras.applications.resnet50"
+    resnet101 = "tensorflow.keras.applications.resnet"
+    resnet152 = "tensorflow.keras.applications.resnet"
+    resnet50v2 = "tensorflow.keras.applications.resnet_v2"
+    resnet101v2 = "tensorflow.keras.applications.resnet_v2"
+    resnet152v2 = "tensorflow.keras.applications.resnet_v2"
+    densenet121 = "tensorflow.keras.applications.densenet"
+    densenet169 = "tensorflow.keras.applications.densenet"
+    densenet201 = "tensorflow.keras.applications.densenet"
+    nasnetmobile = "tensorflow.keras.applications.nasnet"
+
 
 
 class ModuleTypeChoice(str, Enum):
