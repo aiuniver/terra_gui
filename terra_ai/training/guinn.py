@@ -643,7 +643,7 @@ class FitCallback(keras.callbacks.Callback):
                     example_idx=idx,
                 )
                 deploy_presets.append({"source": data, "data": list(result.values())[0][idx]})
-        # print(deploy_presets)
+        print(deploy_presets)
 
     def save_lastmodel(self) -> None:
         """

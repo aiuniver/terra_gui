@@ -1528,7 +1528,7 @@ class InteractiveCallback:
         ]
         """
         data_return = []
-        if not self.interactive_config.get('loss_graphs'):
+        if not self.interactive_config.get('loss_graphs') or not self.log_history:
             return data_return
 
         for loss_graph_config in self.interactive_config.get('loss_graphs'):
@@ -1641,7 +1641,7 @@ class InteractiveCallback:
         ]
         """
         data_return = []
-        if not self.interactive_config.get('metric_graphs'):
+        if not self.interactive_config.get('metric_graphs')  or not self.log_history:
             return data_return
 
         for metric_graph_config in self.interactive_config.get('metric_graphs'):
