@@ -41,7 +41,7 @@ export default {
   }),
   mutations: {
     SET_PARAMS(state, value) {
-      state.params = value;
+      state.params = { ...value };
     },
     SET_CONFIG(state, value) {
       console.log(value)
