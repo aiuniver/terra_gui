@@ -27,7 +27,7 @@ from terra_ai.data.datasets.extra import LayerOutputTypeChoice
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
 from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, \
     CheckpointModeChoice
-from terra_ai.data.training.train import TrainData
+from terra_ai.data.training.train import TrainData, InteractiveData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.customcallback import InteractiveCallback
@@ -92,7 +92,7 @@ class GUINN:
         return output
 
     def _set_training_params(self, dataset: DatasetData, params: TrainData, model_name: str,
-                             training_path: Path, dataset_path: str, initial_config: dict) -> None:
+                             training_path: str, dataset_path: str, initial_config: InteractiveData) -> None:
         self.dataset = self._prepare_dataset(dataset, dataset_path)
         self.training_path = training_path
         self.nn_name = model_name
@@ -118,7 +118,8 @@ class GUINN:
             self.loss.update({str(output_layer["id"]): output_layer["loss"]})
 
         interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss,
-                                   dataset_path=dataset_path, initial_config=initial_config)
+                                   dataset_path=dataset_path, training_path=training_path,
+                                   initial_config=initial_config)
 
     def _set_callbacks(self, dataset: PrepareDataset, batch_size: int, epochs: int,
                        checkpoint: dict, save_model_path: str) -> None:
@@ -198,10 +199,10 @@ class GUINN:
     def terra_fit(self,
                   dataset: DatasetData,
                   gui_model: ModelDetailsData,
-                  training_path: Path = "",
+                  training_path: str = "",
                   dataset_path: str = "",
                   training_params: TrainData = None,
-                  initial_config: dict = None
+                  initial_config: InteractiveData = None
                   ) -> dict:
         """
         This method created for using wth externally compiled models
@@ -216,11 +217,11 @@ class GUINN:
         Return:
             None
         """
-        model_path = os.path.join(training_path, gui_model.name)
+        model_path = os.path.join(training_path, gui_model.alias)
         if interactive.get_states().get("status") != "addtrain":
             self._save_params_for_deploy(dataset_path=dataset_path, training_path=model_path, params=training_params)
         self.nn_cleaner(retrain=True if interactive.get_states().get("status") == "training" else False)
-        self._set_training_params(dataset=dataset, dataset_path=dataset_path, model_name=gui_model.name,
+        self._set_training_params(dataset=dataset, dataset_path=dataset_path, model_name=gui_model.alias,
                                   params=training_params, training_path=training_path, initial_config=initial_config)
         nn_model = self._set_model(model=gui_model)
         self.model = nn_model
@@ -793,6 +794,10 @@ class FitCallback(keras.callbacks.Callback):
                 )
                 self.model.save_weights(file_path_best)
                 print(f"Epoch {self.last_epoch} - best weights was successfully saved")
+                # if self.dataset.data.use_generator:
+                #     presets_predict = self.model.predict(self.dataset.dataset.get('val').batch(1))
+                # else:
+                #     presets_predict = self.model.predict(self.dataset.X.get('val'))
         self._fill_log_history(self.last_epoch, logs)
         self.last_epoch += 1
 

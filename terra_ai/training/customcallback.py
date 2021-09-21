@@ -439,7 +439,12 @@ class InteractiveCallback:
                        metrics: dict,
                        losses: dict,
                        dataset_path: str,
+                       training_path: str,
                        initial_config: InteractiveData):
+
+        self.preset_path = os.path.join(training_path, "presets")
+        if not os.path.exists(self.preset_path):
+            os.mkdir(self.preset_path)
         self.losses = losses
         self.metrics = self._reformat_metrics(metrics)
         self.loss_obj = self._prepare_loss_obj(losses)
@@ -494,28 +499,21 @@ class InteractiveCallback:
         self.train_progress = data
 
     def update_state(self, y_pred, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
-        # if self.interactive_config.get('intermediate_result').get('show_results'):
-        #     self.example_idx = self._prepare_example_idx_to_show()
+        self._reformat_y_pred(y_pred)
+        if self.interactive_config.get('intermediate_result').get('show_results'):
+            self.example_idx = self._prepare_example_idx_to_show()
         if on_epoch_end_flag:
             self.current_epoch = fit_logs.get('epoch')
             self.current_logs = self._reformat_fit_logs(fit_logs)
-            self._reformat_y_pred(y_pred)
             self._update_log_history()
             self._update_progress_table(current_epoch_time)
-            if self.interactive_config.get('intermediate_result').get('show_results'):
-                self.example_idx = self._prepare_example_idx_to_show()
-            if self.interactive_config.get('intermediate_result').get('show_results'):
-                self.example_idx = self._prepare_example_idx_to_show()
-                if self.interactive_config.get('intermediate_result').get('autoupdate'):
-                    self.intermediate_result = self._get_intermediate_result_request()
+            if self.interactive_config.get('intermediate_result').get('autoupdate'):
+                self.intermediate_result = self._get_intermediate_result_request()
             if self.interactive_config.get('statistic_data').get('output_id') \
                     and self.interactive_config.get('statistic_data').get('autoupdate'):
                 self.statistic_result = self._get_statistic_data_request()
         else:
-            self._reformat_y_pred(y_pred)
-            if self.interactive_config.get('intermediate_result').get('show_results'):
-                self.example_idx = self._prepare_example_idx_to_show()
-                self.intermediate_result = self._get_intermediate_result_request()
+            self.intermediate_result = self._get_intermediate_result_request()
             if self.interactive_config.get('statistic_data').get('output_id'):
                 self.statistic_result = self._get_statistic_data_request()
         self.urgent_predict = False
