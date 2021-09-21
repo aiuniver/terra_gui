@@ -73,9 +73,8 @@ export default {
           "autoupdate": this.auto
         }
       }
-      this.$store.dispatch('trainings/setTrainDisplay', data)
 
-      await this.$store.dispatch('trainings/interactive', this.$store.getters['trainings/getTrainDisplay'])
+      await this.$store.dispatch('trainings/interactive', data)
     },
     autoChange(e) {
       this.auto = e.value
