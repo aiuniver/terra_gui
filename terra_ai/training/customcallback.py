@@ -553,6 +553,7 @@ class InteractiveCallback:
         )
 
     # Методы для set_attributes()
+
     @staticmethod
     def _reformat_metrics(metrics: dict) -> dict:
         output = {}
