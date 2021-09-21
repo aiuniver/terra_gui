@@ -60,7 +60,7 @@ export default {
   }),
   methods:{
     async show(){
-      await this.$store.dispatch('trainings/interactive', {'intermediate_result':this.train})
+      await this.$store.dispatch('trainings/interactive', {'intermediate_result':this.train['intermediate_result']})
 
     }
   }
