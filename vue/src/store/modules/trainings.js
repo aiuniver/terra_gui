@@ -1,4 +1,4 @@
-import { data, config } from "../temp/training";
+import { data } from "../temp/training";
 import { toolbar } from "../const/trainings";
 // import { predict } from "../temp/predict-training";
 // import { predict_video } from "../temp/predict-training-video-audio";
@@ -17,7 +17,6 @@ export default {
     states: {},
     trainData: process.env.NODE_ENV === 'development' ? data : {},
     trainUsage: {},
-    trainDisplay: config,
     buttons: {
       train: {
         title: "Обучить",
@@ -77,9 +76,6 @@ export default {
     },
     SET_TRAIN_USAGE(state, value) {
       state.trainUsage = { ...value };
-    },
-    SET_TRAIN_DISPLAY(state, value) {
-      Object.assign(state.trainDisplay, value);
     },
   },
   actions: {
@@ -172,9 +168,6 @@ export default {
     },
     getTrainData: ({ trainData }) => (key) => {
       return trainData?.[key];
-    },
-    getTrainDisplay: ({ trainDisplay }) => {
-      return trainDisplay;
     },
     getPredict({ predict }) {
       return predict || {}
