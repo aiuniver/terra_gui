@@ -24,7 +24,7 @@ export default {
         return;
       }
       const { project, user, defaults: { modeling: { layers_types, layer_form }, datasets: { creation }, training: { base } } } = data;
-      const { model, training: { interactive, base: baseProject } } = project;
+      const { model, training } = project;
       const list = layer_form[1]['list'] || []
       console.log(base)
       commit("SET_PROJECT", project);
@@ -33,17 +33,14 @@ export default {
       commit("modeling/SET_MODEL", model, { root: true });
       commit("datasets/SET_CREATION", creation, { root: true });
       commit("trainings/SET_PARAMS", base, { root: true });
-      commit("trainings/SET_INTERACTIVE", interactive, { root: true });
-      commit("trainings/SET_OUTPUTS", baseProject?.architecture?.parameters?.outputs || [], { root: true });
+      commit("trainings/SET_CONFIG", training, { root: true });
     },
     async saveNameProject({ dispatch }, name) {
-      console.log(name);
       const res = { url: "/project/name/", data: name };
       const { data } = await dispatch("axios", res, { root: true });
       if (!data) {
         return;
       }
-      console.log(data);
     },
     setProject({ commit }, data) {
       commit("SET_PROJECT", data);
