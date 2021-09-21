@@ -76,7 +76,7 @@ export default {
   actions: {
     setButtons({ commit }, res) {
       if (res && res?.data) {
-        const { buttons } = res?.data?.data?.states || res?.data
+        const { buttons } = res?.data?.data?.states || res?.data.state
         if (buttons) {
           commit("SET_BUTTONS", buttons);
         }
