@@ -233,7 +233,7 @@ export default {
       }
     },
     parse({ parse, value, name }) {
-      // console.log({ parse, value, name });
+      console.log({ parse, value, name });
       ser(this.obj, parse, value);
       this.obj = { ...this.obj };
       if (name === 'architecture_parameters_checkpoint_layer') {
@@ -246,6 +246,14 @@ export default {
       }
       if (name === 'optimizer') {
         this.optimizerValue = value;
+      }
+      if (name === 'metric_name') {
+        if (!value) {
+          const arr = this.state['architecture[parameters][outputs][2][metrics]'];
+          ser(this.obj, 'architecture[parameters][checkpoint][metric_name]', arr[0]);
+          this.obj = { ...this.obj };
+          this.state = { [`architecture[parameters][checkpoint][metric_name]`]: arr[0] };
+        }
       }
     },
   },
