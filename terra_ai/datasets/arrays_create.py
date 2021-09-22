@@ -1320,10 +1320,10 @@ class CreateArray(object):
 
     @staticmethod
     def postprocess_segmentation(array: np.ndarray, options: DatasetOutputsData, output_id: int, save_path: str) -> list:
-        array = np.expand_dims(np.argmax(array, axis=-1), axis=-1)
+        array = np.expand_dims(np.argmax(array, axis=-1), axis=-1) * 512
         for color_idx in range(len(options.classes_colors)):
             array = np.where(
-                array == [color_idx],
+                array == color_idx * 512,
                 np.array(options.classes_colors[color_idx].as_rgb_tuple()),
                 array
             )

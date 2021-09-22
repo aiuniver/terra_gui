@@ -999,7 +999,6 @@ class InteractiveCallback:
             interactive_log[out]['metrics'] = {}
             if len(self.metrics.keys()) == 1:
                 for metric_name in self.metrics.get(out):
-                    print(metric_name)
                     interactive_log[out]['metrics'][metric_name] = {}
                     interactive_log[out]['metrics'][metric_name] = {
                         'train': update_logs.get(loss_metric_config.get('metric').get(metric_name).get('log_name')),
@@ -1024,7 +1023,6 @@ class InteractiveCallback:
         }
         """
         self.y_pred = {}
-        print(y_pred.shape)
         for idx, out in enumerate(self.y_true.get('val').keys()):
             if len(self.y_true.get('val').keys()) == 1:
                 self.y_pred[out] = y_pred
@@ -2706,14 +2704,10 @@ class InteractiveCallback:
             labels = self.dataset_config.get("outputs").get(output_id).get("classes_names")
 
             # prepare y_true image
-            y_true = np.expand_dims(np.argmax(self.y_true.get(data_type).get(output_id)[example_idx], axis=-1), axis=-1)
-            for color_idx in range(len(self.dataset_config.get("outputs").get(output_id).get("classes_colors"))):
-                y_true = np.where(
-                    y_true == [color_idx],
-                    np.array(
-                        self.dataset_config.get("outputs").get(output_id).get("classes_colors")[color_idx]),
-                    y_true
-                )
+            y_true = np.expand_dims(
+                np.argmax(self.y_true.get(data_type).get(output_id)[example_idx], axis=-1), axis=-1) * 512
+            for i, color in enumerate(self.dataset_config.get("outputs").get(output_id).get("classes_colors")):
+                y_true = np.where(y_true == i * 512,  np.array(color), y_true)
             y_true = tensorflow.keras.utils.array_to_img(y_true)
             y_true = y_true.convert('RGB')
             # filepath_true = NamedTemporaryFile()
@@ -2732,13 +2726,9 @@ class InteractiveCallback:
                 ]
             }
             # prepare y_pred image
-            y_pred = np.expand_dims(np.argmax(self.y_pred.get(output_id)[example_idx], axis=-1), axis=-1)
-            for color_idx in range(len(self.dataset_config.get("outputs").get(output_id).get("classes_colors"))):
-                y_pred = np.where(
-                    y_pred == [color_idx],
-                    np.array(self.dataset_config.get("outputs").get(output_id).get("classes_colors")[color_idx]),
-                    y_pred
-                )
+            y_pred = np.expand_dims(np.argmax(self.y_pred.get(output_id)[example_idx], axis=-1), axis=-1) * 512
+            for i, color in enumerate(self.dataset_config.get("outputs").get(output_id).get("classes_colors")):
+                y_pred = np.where(y_true == i * 512, np.array(color), y_true)
             y_pred = tensorflow.keras.utils.array_to_img(y_pred)
             y_pred = y_pred.convert('RGB')
             y_pred_save_path = os.path.join(
