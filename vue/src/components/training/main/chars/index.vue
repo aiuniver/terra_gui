@@ -60,8 +60,7 @@ export default {
       const listOutputs = this.outputs.map(item => {
         return { title: `Выход ${item.id}`, event: { name: 'chart', data: item.id } };
       });
-      const metrics = this.outputs?.[0].metrics ?? [];
-      const listMetrics = metrics.map(item => {
+      const listMetrics = this.metrics.map(item => {
         return { title: `${item}`, event: { name: 'metric', data: item } };
       });
 
@@ -79,6 +78,9 @@ export default {
     outputIdx() {
       return this.outputs.find(item => item.id).id;
     },
+    metrics() {
+      return this.outputs?.[0].metrics ?? [];
+    }
   },
   mounted() {
     // console.log(this.outputs);
@@ -109,7 +111,7 @@ export default {
         });
         this.send(this.charts);
       }
-      if (name === 'data') {
+      if (name === 'metric') {
         this.charts = this.charts.map(item => {
           if (item.id === id) {
             item.show = data;
