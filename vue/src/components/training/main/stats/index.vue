@@ -17,11 +17,31 @@
     </div>
     <div class="t-scatters__content">
       <template v-for="(output, key, i) of statisticData">
-        <component :is="'Heatmap'" v-if="isShowKeys.includes(+key)" v-bind="output" :key="i" />
-        <component :is="'Table'" v-if="isShowKeys.includes(+key)" v-bind="output" :key="i" />
-        <component :is="'Scatter'" v-if="isShowKeys.includes(+key)" v-bind="output" :key="i" />
-        <component :is="'Graphic'" v-if="isShowKeys.includes(+key)" v-bind="output" :key="i" />
-        <component :is="'Histogram'" v-if="isShowKeys.includes(+key)" v-bind="output" :key="i" />
+        <component
+          :is="'Heatmap'"
+          v-if="isShowKeys.includes(+key) && output.type == 'Heatmap'"
+          v-bind="output"
+          :key="i"
+        />
+        <component :is="'Table'" v-if="isShowKeys.includes(+key) && output.type == 'Table'" v-bind="output" :key="i" />
+        <component
+          :is="'Scatter'"
+          v-if="isShowKeys.includes(+key) && output.type == 'Scatter'"
+          v-bind="output"
+          :key="i"
+        />
+        <component
+          :is="'Graphic'"
+          v-if="isShowKeys.includes(+key) && output.type == 'Graphic'"
+          v-bind="output"
+          :key="i"
+        />
+        <component
+          :is="'Histogram'"
+          v-if="isShowKeys.includes(+key) && output.type == 'Histogram'"
+          v-bind="output"
+          :key="i"
+        />
       </template>
     </div>
   </div>
