@@ -50,8 +50,8 @@ export default {
       return this.$store.getters['trainings/getTrainData']('data_balance') || [];
     },
     filter() {
-      console.log(Object.values(this.dataDalance))
-      return Object.values(this.dataDalance)[0].filter(item => this.selected.includes(item.graph_name));
+      const data = Object.values(this.dataDalance)[0] || []
+      return data.filter(item => this.selected.includes(item.graph_name)) ?? [];
     },
   },
   methods: {
