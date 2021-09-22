@@ -16,18 +16,12 @@
       </div>
     </div>
     <div class="t-scatters__content">
-      <template v-for="(output, key) of statisticData">
-        <template v-for="(item, i) of output">
-          <Heatmap v-if="selected.includes(key) && item.type === 'Heatmap'" v-bind="item" :key="`heatmap_${i}`" />
-          <Table v-if="selected.includes(key) && item.type === 'Table'" v-bind="item" :key="`table_${i}`" />
-          <Scatter v-if="selected.includes(key) && item.type === 'Scatter'" v-bind="item" :key="`scatter_${i}`" />
-          <Graphic v-if="selected.includes(key) && item.type === 'Graphic'" v-bind="item" :key="`graphic_${i}`" />
-          <Histogram
-            v-if="selected.includes(+key) && item.type === 'Histogram'"
-            v-bind="item"
-            :key="'Histogram' + i"
-          />
-        </template>
+      <template v-for="(item, i) of filtesLayers">
+        <Heatmap v-if="item.type === 'heatmap'" v-bind="item" :key="`heatmap_${i}`" />
+        <Table v-if="item.type === 'table'" v-bind="item" :key="`table_${i}`" />
+        <Scatter v-if="item.type === 'scatter'" v-bind="item" :key="`scatter_${i}`" />
+        <Graphic v-if="item.type === 'graphic'" v-bind="item" :key="`graphic_${i}`" />
+        <Histogram v-if="item.type === 'histogram'" v-bind="item" :key="'Histogram' + i" />
       </template>
     </div>
   </div>
@@ -48,7 +42,12 @@ export default {
   },
   computed: {
     statisticData() {
-      return this.$store.getters['trainings/getTrainData']('statistic_data') || [];
+      return this.$store.getters['trainings/getTrainData']('statistic_data') || {};
+    },
+    filtesLayers() {
+      return Object.entries(this.statisticData)
+        .filter(item => this.selected.includes(+item[0]))
+        .map(item => item[1]);
     },
     outputLayers() {
       return this.outputs.map(item => item.id);
@@ -57,18 +56,19 @@ export default {
   data: () => ({
     selected: [],
     auto: false,
+
   }),
   methods: {
     // isShow(layer, type) {
     //   ершыюisShowKeys.includes(+layer) && type === 'Heatmap';
     // },
     change(key) {
-      console.log(key)
-      console.log(typeof key)
+      // console.log(key)
 
       this.selected = !this.selected.includes(key)
         ? [...this.selected, key]
         : this.selected.filter(item => item !== key);
+      console.log(this.selected);
     },
     async handleClick() {
       const data = {
@@ -89,6 +89,8 @@ export default {
 
 <style lang="scss" scoped>
 .t-scatters {
+  position: relative;
+  margin-bottom: 20px;
   &__header {
     display: flex;
     gap: 25px;
