@@ -23,7 +23,7 @@ from tensorflow.keras.models import load_model
 
 from terra_ai import progress
 from terra_ai.data.datasets.dataset import DatasetData
-from terra_ai.data.datasets.extra import LayerOutputTypeChoice
+from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
 from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, \
     CheckpointModeChoice
@@ -833,7 +833,8 @@ class FitCallback(keras.callbacks.Callback):
                 )
                 self.model.save_weights(file_path_best)
                 print(f"Epoch {self.last_epoch} - best weights was successfully saved")
-                interactive.deploy_presets_data = self._deploy_predict(scheduled_predict)
+                if list(self.dataset.data.inputs.values())[0].task == LayerInputTypeChoice.Image:
+                    interactive.deploy_presets_data = self._deploy_predict(scheduled_predict)
 
         self._fill_log_history(self.last_epoch, logs)
         self.last_epoch += 1
