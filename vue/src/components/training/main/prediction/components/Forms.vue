@@ -1,10 +1,10 @@
 <template>
   <div>
-    <TableImage v-if="type === 'Image'" v-bind="data" />
+    <TableImage v-if="type === 'image'" v-bind="data" />
     <TableText v-if="type === 'str' || type === 'number'" v-bind="data" />
-    <TableTag v-if="type === 'Text'" :data="data" />
-    <Embed v-if="type === 'Video'" :src="data"></Embed>
-    <TableAudio v-if="type === 'Audio'" :url="data" />
+    <TableTag v-if="type === 'text'" :data="data" />
+    <Embed v-if="type === 'video'" :src="data"></Embed>
+    <TableAudio v-if="type === 'audio'" :url="data" />
   </div>
 </template>
 

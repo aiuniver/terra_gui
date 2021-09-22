@@ -14,8 +14,7 @@ export default {
   },
   computed: {
     src() {
-      return `/_media/blank/?hash=${this.value}`
-      // return window.location.host
+      return `/_media/blank/?path=${this.value}`
     }
   }
 };
