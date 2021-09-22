@@ -293,8 +293,10 @@ class DatasetData(AliasMixinData):
     group: Optional[DatasetGroupChoice]
     use_generator: bool = False
     tags: Optional[TagsList] = TagsList()
-    inputs: Dict[PositiveInt, DatasetInputsData] = {}
-    outputs: Dict[PositiveInt, DatasetOutputsData] = {}
+    inputs: Dict[PositiveInt, Dict[str, DatasetInputsData]] = {}
+    # inputs: Dict[PositiveInt, Dict[str, Dict[str, DatasetInputsData]]] = {}
+    outputs: Dict[PositiveInt, Dict[str, DatasetOutputsData]] = {}
+    # outputs: Dict[PositiveInt, Dict[str, Dict[str, DatasetOutputsData]]] = {}
 
     @property
     def model(self) -> ModelDetailsData:

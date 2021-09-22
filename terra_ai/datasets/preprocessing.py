@@ -81,17 +81,18 @@ class CreatePreprocessing(object):
             self.paths = DatasetPathsData(basepath=dataset_path)
         self.preprocessing = {}
 
-    def load_preprocesses(self, keys):
-        for key in keys:
-            preprocess = {}
-            for param in ['augmentation', 'scaler', 'tokenizer', 'word2vec']:
-                if self.paths.__dict__[param]:
-                    if os.path.isfile(os.path.join(self.paths.__dict__[param], f'{key}.gz')):
-                        preprocess[f'object_{param}'] = joblib.load(os.path.join(self.paths.__dict__[param], f'{key}.gz'))
-                    else:
-                        preprocess[f'object_{param}'] = None
-            self.preprocessing[key] = preprocess
-        pass
+    def load_preprocesses(self, inputs, outputs):
+
+        for inp in inputs.keys():
+            for col_name in inputs[inp].keys():
+                prep_path = os.path.join(self.paths.preprocessing, str(inp), f'{col_name}.gz')
+                if os.path.isfile(prep_path):
+                    self.preprocessing.update([(inp, {col_name: joblib.load(prep_path)})])
+        for out in outputs.keys():
+            for col_name in outputs[out].keys():
+                prep_path = os.path.join(self.paths.preprocessing, str(out), f'{col_name}.gz')
+                if os.path.isfile(prep_path):
+                    self.preprocessing.update([(out, {col_name: joblib.load(prep_path)})])
 
     def create_dull(self, put_id: int):
 
@@ -100,14 +101,11 @@ class CreatePreprocessing(object):
     def create_scaler(self, array=None, **options):
 
         scaler = None
-        # if "MinMaxScaler_cols" in options.keys() or 'trend' in options.keys():
-        #     array = pd.DataFrame(array)
-
         if options['scaler'] != 'no_scaler':
             if options['scaler'] == 'min_max_scaler':
                 scaler = MinMaxScaler(feature_range=(options['min_scaler'], options['max_scaler']))
                 array = np.array(array).reshape(-1, 1) if isinstance(array, np.ndarray) or isinstance(array,
-                                                                                                      pd.DataFrame)\
+                                                                                                      list)\
                     else np.array([[0], [255]])
                 scaler.fit(array)
             elif options['scaler'] == 'standard_scaler':
