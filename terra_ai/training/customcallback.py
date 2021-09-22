@@ -26,7 +26,7 @@ from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.utils import camelize, decamelize
 
-__version__ = 0.061
+__version__ = 0.062
 
 
 def sort_dict(dict_to_sort: dict, mode='by_name'):
@@ -347,6 +347,7 @@ class InteractiveCallback:
         self.preset_path = ""
 
         self.urgent_predict = False
+        self.deploy_presets_data = None
 
         self.train_states = {
             "status": "no_train",  # training, trained, stopped, retrain
@@ -483,6 +484,9 @@ class InteractiveCallback:
 
     def get_states(self):
         return self.train_states
+
+    def get_presets(self):
+        return self.deploy_presets_data
 
     def update_train_progress(self, data: dict):
         self.train_progress = data
@@ -995,7 +999,6 @@ class InteractiveCallback:
             interactive_log[out]['metrics'] = {}
             if len(self.metrics.keys()) == 1:
                 for metric_name in self.metrics.get(out):
-                    print(metric_name)
                     interactive_log[out]['metrics'][metric_name] = {}
                     interactive_log[out]['metrics'][metric_name] = {
                         'train': update_logs.get(loss_metric_config.get('metric').get(metric_name).get('log_name')),
@@ -1020,7 +1023,6 @@ class InteractiveCallback:
         }
         """
         self.y_pred = {}
-        print(y_pred.shape)
         for idx, out in enumerate(self.y_true.get('val').keys()):
             if len(self.y_true.get('val').keys()) == 1:
                 self.y_pred[out] = y_pred
@@ -1211,15 +1213,17 @@ class InteractiveCallback:
                 for data_type in ['train', 'val']:
                     # fill metrics
                     if data_idx or data_idx == 0:
-                        self.log_history[out]['metrics'][metric_name][data_type][data_idx] = \
-                            self.current_logs.get(out).get('metrics').get(metric_name).get(data_type) \
-                                if self.current_logs.get(out).get('metrics').get(metric_name).get(
-                                data_type) else 0.
+                        if self.current_logs:
+                            self.log_history[out]['metrics'][metric_name][data_type][data_idx] = \
+                                self.current_logs.get(out).get('metrics').get(metric_name).get(data_type) \
+                                    if self.current_logs.get(out).get('metrics').get(metric_name).get(
+                                    data_type) else 0
                     else:
-                        self.log_history[out]['metrics'][metric_name][data_type].append(
-                            self.current_logs.get(out).get('metrics').get(metric_name).get(data_type)
-                            if self.current_logs.get(out).get('metrics').get(metric_name).get(data_type) else 0.
-                        )
+                        if self.current_logs:
+                            self.log_history[out]['metrics'][metric_name][data_type].append(
+                                self.current_logs.get(out).get('metrics').get(metric_name).get(data_type)
+                                if self.current_logs.get(out).get('metrics').get(metric_name).get(data_type) else 0
+                            )
 
                 # fill metric progress state
                 if data_idx or data_idx == 0:
@@ -2700,14 +2704,10 @@ class InteractiveCallback:
             labels = self.dataset_config.get("outputs").get(output_id).get("classes_names")
 
             # prepare y_true image
-            y_true = np.expand_dims(np.argmax(self.y_true.get(data_type).get(output_id)[example_idx], axis=-1), axis=-1)
-            for color_idx in range(len(self.dataset_config.get("outputs").get(output_id).get("classes_colors"))):
-                y_true = np.where(
-                    y_true == [color_idx],
-                    np.array(
-                        self.dataset_config.get("outputs").get(output_id).get("classes_colors")[color_idx]),
-                    y_true
-                )
+            y_true = np.expand_dims(
+                np.argmax(self.y_true.get(data_type).get(output_id)[example_idx], axis=-1), axis=-1) * 512
+            for i, color in enumerate(self.dataset_config.get("outputs").get(output_id).get("classes_colors")):
+                y_true = np.where(y_true == i * 512,  np.array(color), y_true)
             y_true = tensorflow.keras.utils.array_to_img(y_true)
             y_true = y_true.convert('RGB')
             # filepath_true = NamedTemporaryFile()
@@ -2726,13 +2726,9 @@ class InteractiveCallback:
                 ]
             }
             # prepare y_pred image
-            y_pred = np.expand_dims(np.argmax(self.y_pred.get(output_id)[example_idx], axis=-1), axis=-1)
-            for color_idx in range(len(self.dataset_config.get("outputs").get(output_id).get("classes_colors"))):
-                y_pred = np.where(
-                    y_pred == [color_idx],
-                    np.array(self.dataset_config.get("outputs").get(output_id).get("classes_colors")[color_idx]),
-                    y_pred
-                )
+            y_pred = np.expand_dims(np.argmax(self.y_pred.get(output_id)[example_idx], axis=-1), axis=-1) * 512
+            for i, color in enumerate(self.dataset_config.get("outputs").get(output_id).get("classes_colors")):
+                y_pred = np.where(y_true == i * 512, np.array(color), y_true)
             y_pred = tensorflow.keras.utils.array_to_img(y_pred)
             y_pred = y_pred.convert('RGB')
             y_pred_save_path = os.path.join(
