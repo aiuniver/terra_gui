@@ -1,9 +1,9 @@
 <template>
   <div>
-    <TableImage v-if="type === 'imarge'" v-bind="data" />
+    <TableImage v-if="type === 'image'" v-bind="data" />
     <TableText v-if="type === 'str' || type === 'number'" v-bind="data" />
     <TableTag v-if="type === 'text'" :data="data" />
-    <TableVideo :src="data" />
+    <TableVideo v-if="type === 'video'" :src="data" />
     <TableAudio v-if="type === 'audio'" :url="data" />
   </div>
 </template>

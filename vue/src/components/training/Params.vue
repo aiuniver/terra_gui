@@ -247,9 +247,6 @@ export default {
       if (name === 'optimizer') {
         this.optimizerValue = value;
       }
-      if (name === 'metric_name') {
-        this.metric = value;
-      }
     },
   },
   created() {
