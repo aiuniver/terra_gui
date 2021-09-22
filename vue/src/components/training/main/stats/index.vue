@@ -17,48 +17,45 @@
     </div>
     <div class="t-scatters__content">
       <template v-for="(output, key, i) of statisticData">
-        <component :is="'Heatmap'"
-        v-if="isShowKeys.includes(+key)"
-        v-bind="output"
-        :key="i" />
+        <component :is="'Heatmap'" v-if="isShowKeys.includes(+key)" v-bind="output" :key="i" />
       </template>
-      <Scatter />
+      <!-- <Scatter />
       <Histogram />
       <Table />
-      <Graphic />
+      <Graphic /> -->
     </div>
   </div>
 </template>
 
 <script>
 import Heatmap from './Heatmap.vue';
-import Scatter from './Scatter.vue';
-import Histogram from './Histogram.vue';
-import Table from './Table.vue';
-import Graphic from './Graphic.vue';
+// import Scatter from './Scatter.vue';
+// import Histogram from './Histogram.vue';
+// import Table from './Table.vue';
+// import Graphic from './Graphic.vue';
 
 export default {
   name: 't-scatters',
   components: {
     Heatmap,
-    Scatter,
-    Histogram,
-    Table,
-    Graphic
+    // Scatter,
+    // Histogram,
+    // Table,
+    // Graphic,
   },
   computed: {
     statisticData() {
       return this.$store.getters['trainings/getTrainData']('statistic_data') || [];
     },
     outputLayers() {
-      const layers = this.$store.getters['modeling/getModel'].layers
-      if (!layers) return []
-      return layers.filter(item => item.group === 'output')
-    }
+      const layers = this.$store.getters['modeling/getModel'].layers;
+      if (!layers) return [];
+      return layers.filter(item => item.group === 'output');
+    },
   },
   data: () => ({
     isShowKeys: [],
-    auto: false
+    auto: false,
   }),
   methods: {
     change(e, key) {
@@ -68,18 +65,18 @@ export default {
     },
     async handleClick() {
       const data = {
-        "statistic_data": {
-          "output_id": this.isShowKeys,
-          "autoupdate": this.auto
-        }
-      }
+        statistic_data: {
+          output_id: this.isShowKeys,
+          autoupdate: this.auto,
+        },
+      };
 
-      await this.$store.dispatch('trainings/interactive', data)
+      await this.$store.dispatch('trainings/interactive', data);
     },
     autoChange(e) {
-      this.auto = e.value
-    }
-  }
+      this.auto = e.value;
+    },
+  },
 };
 </script>
 
