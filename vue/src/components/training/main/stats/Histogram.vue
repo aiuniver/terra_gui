@@ -21,11 +21,17 @@ export default {
     y_label: String,
     plot_data: Array,
   },
-  created() {
-    this.layout.xaxis.title.text = this.x_label;
-    this.layout.yaxis.title.text = this.y_label;
-  },
+
   computed: {
+    layout() {
+      const layout = this.defLayout;
+      if (this.plot_data) {
+        // layout.title.text = this.graph_name;
+        layout.xaxis.title.text = this.x_label;
+        layout.yaxis.title.text = this.y_label;
+      }
+      return layout;
+    },
     data() {
       return this.plot_data.map(el => {
         return {
@@ -38,7 +44,7 @@ export default {
     },
   },
   data: () => ({
-    layout: {
+    defLayout: {
       width: 636,
       height: 352,
       plot_bgcolor: '#fff0',
