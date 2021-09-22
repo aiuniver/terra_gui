@@ -3,24 +3,22 @@
     <!-- <h3>Параметры</h3> -->
     <div class="predictions__params">
       <div class="predictions__param">
-        <t-field inline label="Показать тренировочную выборку">
-          <t-checkbox-new v-model="checks.show_results" :value="true" small />
-        </t-field>
-      </div>
-      <div class="predictions__param">
         <t-field inline label="Данные для расчета">
           <t-select-new :list="sortData" v-model="checks.example_choice_type" small />
         </t-field>
         <t-field inline label="Тип выбора данных">
           <t-select-new :list="sortOutput" v-model="checks.main_output" small />
         </t-field>
-      </div>
-      <div class="predictions__param">
         <t-field inline label="Показать примеров">
           <t-input-new v-model.number="checks.num_examples" type="number" small />
         </t-field>
+      </div>
+      <div class="predictions__param">
         <t-field inline label="Показать статистику">
           <t-checkbox-new v-model="checks.show_statistic" small />
+        </t-field>
+        <t-field inline label="Показать тренировочную выборку">
+          <t-checkbox-new v-model="checks.show_results" :value="true" small />
         </t-field>
       </div>
       <div class="predictions__param">
@@ -33,17 +31,17 @@
       </div>
     </div>
     <div class="predictions__body">
-      <TextTable :predict="predictData" />
+      <PredictTable :predict="predictData" />
     </div>
   </div>
 </template>
 
 <script>
-import TextTable from './TextTableNew';
+import PredictTable from './PredictTable';
 export default {
   name: 'Predictions',
   components: {
-    TextTable,
+    PredictTable,
   },
   props: {
     outputs: Array,

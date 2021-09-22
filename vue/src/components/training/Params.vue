@@ -1,6 +1,7 @@
 <template>
   <div class="params">
     <div class="params__body">
+      <div v-if="status !== 'no_train'" class="params__overlay"></div>
       <scrollbar>
         <div class="params__items">
           <at-collapse :value="collapse">
@@ -222,26 +223,13 @@ export default {
     },
     async progress() {
       const res = await this.$store.dispatch('trainings/progress', {});
-      // console.log(res);
       if (res) {
-        const { finished, message, percent, data } = res.data;
-        // console.log(percent);
+        const { finished, message, percent } = res.data;
         this.$store.dispatch('messages/setProgressMessage', message);
         this.$store.dispatch('messages/setProgress', percent);
-        if (data) {
-          const { info, states, train_data, train_usage } = data;
-          this.$store.dispatch('trainings/setInfo', info);
-          this.$store.dispatch('trainings/setStates', states);
-          this.$store.dispatch('trainings/setTrainData', train_data);
-          this.$store.dispatch('trainings/setTrainUsage', train_usage);
-        }
-        if (finished) {
-          // console.log(res);
-        } else {
+        if (!finished) {
           this.debounce(this.learningStop);
         }
-      } else {
-        // console.log(res);
       }
     },
     parse({ parse, value, name }) {
@@ -302,6 +290,14 @@ export default {
   &__body {
     overflow: hidden;
     flex: 0 1 auto;
+    position: relative;
+  }
+  &__overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: rgb(14 22 33 / 30%);
+    z-index: 5;
   }
   &__footer {
     // width: 100%;

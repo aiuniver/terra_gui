@@ -26,7 +26,7 @@ LayerConfig = LayerConfigData(
 
 
 class ParametersMainData(BaseMixinData):
-    include_top: bool = False
+    include_top: bool = True
     weights: Optional[PretrainedModelWeightsChoice]
     pooling: Optional[PretrainedModelPoolingChoice]
     trainable: bool = False

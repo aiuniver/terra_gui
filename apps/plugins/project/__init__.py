@@ -122,10 +122,17 @@ class Project(BaseMixinData):
     def name_alias(self) -> str:
         return re.sub(r"([\-]+)", "_", slugify(self.name, language_code="ru"))
 
-    def _set_data(self, name: str, dataset: DatasetData, model: ModelDetailsData):
+    def _set_data(
+        self,
+        name: str,
+        dataset: DatasetData,
+        model: ModelDetailsData,
+        training: TrainingDetailsData,
+    ):
         self.name = name
         self.dataset = dataset
         self.model = model
+        self.training = training
 
     def dict(self, **kwargs):
         _data = super().dict(**kwargs)
@@ -133,12 +140,14 @@ class Project(BaseMixinData):
         return _data
 
     def reset(self):
+        agent_exchange("training_clear")
         shutil.rmtree(project_path.base, ignore_errors=True)
         ProjectPathData(**PROJECT_PATH)
         self._set_data(
             name=UNKNOWN_NAME,
             dataset=None,
             model=ModelDetailsData(**EmptyModelDetailsData),
+            training=TrainingDetailsData(),
         )
         self.save()
 
@@ -215,7 +224,7 @@ class Project(BaseMixinData):
         self.model = model
         self.set_training()
 
-    def __update_training_base(self):
+    def update_training_base(self):
         outputs = []
         for layer in self.model.outputs:
             outputs.append(
@@ -235,13 +244,17 @@ class Project(BaseMixinData):
                 **{"layer": self.model.outputs[0].id}
             )
 
-    def __update_training_interactive(self):
+    def update_training_interactive(self):
         loss_graphs = []
         metric_graphs = []
         progress_table = []
         index = 0
         for layer in self.model.outputs:
             index += 1
+            layer_for_metrics = self.training.base.architecture.parameters.outputs.get(
+                layer.id
+            )
+            metrics = layer_for_metrics.metrics if layer_for_metrics else None
             loss_graphs.append(
                 {
                     "id": index,
@@ -254,9 +267,7 @@ class Project(BaseMixinData):
                     "id": index,
                     "output_idx": layer.id,
                     "show": MetricGraphShowChoice.model,
-                    "show_metric": TrainingMetrics.get(layer.task)[0]
-                    if layer.task
-                    else None,
+                    "show_metric": metrics[0] if metrics else None,
                 }
             )
             index += 1
@@ -272,9 +283,7 @@ class Project(BaseMixinData):
                     "id": index,
                     "output_idx": layer.id,
                     "show": MetricGraphShowChoice.classes,
-                    "show_metric": TrainingMetrics.get(layer.task)[0]
-                    if layer.task
-                    else None,
+                    "show_metric": metrics[0] if metrics else None,
                 }
             )
             progress_table.append(
@@ -289,14 +298,14 @@ class Project(BaseMixinData):
             self.model.outputs[0].id if len(self.model.outputs) else None
         )
 
-    def __update_training_state(self):
+    def update_training_state(self):
         self.training.set_state()
 
     def set_training(self):
         defaults_data.update_by_model(self.model)
-        self.__update_training_base()
-        self.__update_training_interactive()
-        self.__update_training_state()
+        self.update_training_base()
+        self.update_training_interactive()
+        self.update_training_state()
 
     def clear_model(self):
         if self.dataset:

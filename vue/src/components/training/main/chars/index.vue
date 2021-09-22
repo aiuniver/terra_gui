@@ -57,36 +57,37 @@ export default {
       return [...this.menus, ...this.listChats];
     },
     listChats() {
+      const arr = [];
       const listOutputs = this.outputs.map(item => {
         return { title: `Выход ${item.id}`, event: { name: 'chart', data: item.id } };
       });
-      const metrics = this.outputs?.[0].metrics ?? [];
-      const listMetrics = metrics.map(item => {
-        return { title: `${item}`, event: { name: 'metric', data: item } };
-      });
 
-      return [
-        {
+      if (this.metric === 'metric_graphs') {
+        const listMetrics = this.metrics.map(item => {
+          return { title: `${item}`, event: { name: 'metric', data: item } };
+        });
+        arr.push({
           name: 'Показывать метрики',
           list: listMetrics,
-        },
-        {
-          name: 'Показывать выход',
-          list: listOutputs,
-        },
-      ];
+        });
+      }
+      arr.push({
+        name: 'Показывать выход',
+        list: listOutputs,
+      });
+      return arr;
     },
     outputIdx() {
       return this.outputs.find(item => item.id).id;
+    },
+    metrics() {
+      return this.outputs?.[0].metrics ?? [];
     },
   },
   mounted() {
     // console.log(this.outputs);
     const data = this.interactive?.[this.metric] || [];
-    this.charts = data.map(item => {
-      item.chart = item.id;
-      return item;
-    });
+    this.charts = data.map(item => item);
   },
   methods: {
     event({ name, data }, { id }) {
@@ -118,6 +119,15 @@ export default {
         });
         this.send(this.charts);
       }
+      if (name === 'metric') {
+        this.charts = this.charts.map(item => {
+          if (item.id === id) {
+            item.show_metric = data;
+          }
+          return item;
+        });
+        this.send(this.charts);
+      }
     },
     getChart({ id }) {
       // console.log({ graphID });
@@ -126,7 +136,11 @@ export default {
     add() {
       if (this.charts.length < 10) {
         let maxID = Math.max(0, ...this.charts.map(o => o.id));
-        this.charts.push({ id: maxID + 1, output_idx: 2, show: 'model', chart: 1, show_metric: 'Accuracy' });
+        if (this.metric === 'metric_graphs') {
+          this.charts.push({ id: maxID + 1, output_idx: 2, show: 'model', show_metric: this.metrics[0] });
+        } else {
+          this.charts.push({ id: maxID + 1, output_idx: 2, show: 'model' });
+        }
         this.send(this.charts);
       }
     },

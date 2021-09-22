@@ -17,7 +17,7 @@
                 <div v-if="id === '1'" class="t-table__title t-table__title--two">{{ key }}</div>
                 <div class="t-table__row">
                   <div class="t-table__col" v-for="(item, i) of data" :key="`initial layer ${i}`">
-                    <div v-if="id === '1'" class="t-table__title t-table__title--three">{{ item.Title }}</div>
+                    <div v-if="id === '1'" class="t-table__title t-table__title--three">{{ item.title }}</div>
                     <div class="t-table__row t-table__row--center">
                       <Forms :data="item" :type="type" :key="`initial data ${i}`" />
                     </div>
@@ -99,12 +99,6 @@
 
 <script>
 import Forms from './components/Forms';
-// import TableImage from './components/TableImage';
-// import TableText from './components/TableText';
-// import TableStatisticText from './components/TableStatisticText';
-// import TableTag from './components/TableTag.vue';
-// import TableAudio from './components/TableAudio';
-// import Embed from 'v-video-embed/src/embed';
 export default {
   name: 'TextTableTest',
   components: {
@@ -135,9 +129,10 @@ export default {
 .t-table {
   position: relative;
   height: 600px;
-  border: 1px solid #0e1621;
+
   &__body {
     padding: 66px 0 0 0;
+    border: 1px solid #0e1621;
   }
   &__rows {
     position: relative;

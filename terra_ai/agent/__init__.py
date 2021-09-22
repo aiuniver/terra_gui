@@ -381,12 +381,14 @@ class Exchange:
         except Exception as error:
             raise exceptions.FailedCleanTrainException(str(error))
 
-    def _call_training_interactive(self, **kwargs):
+    def _call_training_interactive(self, **kwargs) -> InteractiveData:
         """
         Обновление интерактивных параметров обучения
         """
         try:
-            interactive.get_train_results(config=InteractiveData(**kwargs))
+            data = InteractiveData(**kwargs)
+            interactive.get_train_results(config=data)
+            return data
         except Exception as error:
             raise exceptions.FailedSetInteractiveConfigException(str(error))
 
@@ -404,6 +406,12 @@ class Exchange:
         Сохранение обучения
         """
         pass
+
+    def _call_deploy_presets(self):
+        """
+        получение данных для отображения пресетов на странице деплоя
+        """
+        return interactive.deploy_presets_data
 
     def _call_deploy_collection(
         self, dataset: Optional[DatasetData] = None

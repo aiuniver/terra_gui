@@ -1,12 +1,9 @@
 import mimetypes
 
-from pathlib import Path
-
 from django.views import View
 from django.http.response import HttpResponse, HttpResponseNotFound
 
 from .serializers import RequestFileDataSerializer
-from .utils import path_hash
 
 
 class BaseMixinView(View):
@@ -15,12 +12,7 @@ class BaseMixinView(View):
         if not serializer.is_valid():
             return HttpResponseNotFound()
 
-        hashstr = serializer.data.get("hash")
-        path = path_hash(hashstr=hashstr)
-        if not path:
-            return HttpResponseNotFound()
-
-        path = Path(path)
+        path = serializer.data.get("path")
         with open(path, "rb") as path_ref:
             response_data = {"content": path_ref.read()}
             path_mimetype = mimetypes.guess_type(path)

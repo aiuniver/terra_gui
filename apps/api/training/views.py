@@ -1,8 +1,6 @@
 from dict_recursive_update import recursive_update
 from pydantic import ValidationError
 
-from apps.media.utils import path_hash
-
 from terra_ai.agent import agent_exchange
 from terra_ai.agent.exceptions import ExchangeBaseException
 from terra_ai.exceptions.base import TerraBaseException
@@ -40,6 +38,7 @@ class StartAPIView(BaseAPIView):
             training_base = recursive_update(training_base, request.data)
             training_base["architecture"]["parameters"]["outputs"] = outputs
             request.project.training.base = TrainData(**training_base)
+            request.project.update_training_interactive()
             data = {
                 "dataset": request.project.dataset,
                 "model": request.project.model,
@@ -51,7 +50,10 @@ class StartAPIView(BaseAPIView):
             agent_exchange("training_start", **data)
             request.project.training.set_state()
             return BaseResponseSuccess(
-                {"state": request.project.training.state.native()}
+                {
+                    "interactive": request.project.training.interactive.native(),
+                    "state": request.project.training.state.native(),
+                }
             )
         except ValidationError as error:
             return BaseResponseErrorFields(error)
@@ -86,10 +88,9 @@ class ClearAPIView(BaseAPIView):
 class InteractiveAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         try:
-            agent_exchange("training_interactive", **request.data)
-            return BaseResponseSuccess(
-                {"state": request.project.training.state.native()}
-            )
+            data = agent_exchange("training_interactive", **request.data)
+            request.project.training.interactive = data
+            return BaseResponseSuccess()
         except ExchangeBaseException as error:
             return BaseResponseErrorGeneral(str(error))
 
@@ -98,18 +99,6 @@ class ProgressAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         try:
             data = agent_exchange("training_progress").native()
-            try:
-                for _, result in (
-                    data.get("data", {})
-                    .get("train_data", {})
-                    .get("intermediate_result", {})
-                    .items()
-                ):
-                    for _, layer in result.get("initial_data", {}).items():
-                        for item in layer.get("data", []):
-                            item.update({"value": path_hash(path=item.get("value"))})
-            except Exception:
-                pass
             request.project.training.set_state()
             data.update({"state": request.project.training.state.native()})
             return BaseResponseSuccess(data)
