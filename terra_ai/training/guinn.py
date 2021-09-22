@@ -631,6 +631,9 @@ class FitCallback(keras.callbacks.Callback):
         return interactive.get_states().get("status")
 
     def _deploy_predict(self, presets_predict):
+        with open(os.path.join(self.save_model_path, "predict.txt"), "w", encoding="utf-8") as f:
+            f.write(str(presets_predict[0].tolist()))
+
         result = CreateArray().postprocess_results(array=presets_predict,
                                                    options=self.dataset_data,
                                                    save_path=os.path.join(self.save_model_path,
@@ -642,8 +645,21 @@ class FitCallback(keras.callbacks.Callback):
                     input_id=str(inp),
                     example_idx=idx,
                 )
-                deploy_presets.append({"source": data, "data": list(result.values())[0][idx]})
-        print(deploy_presets)
+                if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Classification:
+                    deploy_presets.append({
+                        "source": data,
+                        "data": list(result.values())[0][idx]
+                    })
+                elif list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Segmentation:
+                    deploy_presets.append({
+                        "source": data,
+                        "segment": list(result.values())[0][idx],
+                        "data": list(zip(
+                            list(self.dataset.data.outputs.values())[0].classes_names,
+                            [colors.as_rgb_tuple() for colors in list(self.dataset.data.outputs.values())[0].classes_colors]
+                        ))
+                    })
+        return deploy_presets
 
     def save_lastmodel(self) -> None:
         """
@@ -817,7 +833,7 @@ class FitCallback(keras.callbacks.Callback):
                 )
                 self.model.save_weights(file_path_best)
                 print(f"Epoch {self.last_epoch} - best weights was successfully saved")
-                self._deploy_predict(scheduled_predict)
+                interactive.deploy_presets_data = self._deploy_predict(scheduled_predict)
 
         self._fill_log_history(self.last_epoch, logs)
         self.last_epoch += 1
@@ -855,4 +871,3 @@ class FitCallback(keras.callbacks.Callback):
                 data=self._get_result_data(),
                 finished=True,
             )
-            # print(msg)

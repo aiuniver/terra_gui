@@ -347,6 +347,7 @@ class InteractiveCallback:
         self.preset_path = ""
 
         self.urgent_predict = False
+        self.deploy_presets_data = None
 
         self.train_states = {
             "status": "no_train",  # training, trained, stopped, retrain
@@ -483,6 +484,9 @@ class InteractiveCallback:
 
     def get_states(self):
         return self.train_states
+
+    def get_presets(self):
+        return self.deploy_presets_data
 
     def update_train_progress(self, data: dict):
         self.train_progress = data
@@ -1211,15 +1215,17 @@ class InteractiveCallback:
                 for data_type in ['train', 'val']:
                     # fill metrics
                     if data_idx or data_idx == 0:
-                        self.log_history[out]['metrics'][metric_name][data_type][data_idx] = \
-                            self.current_logs.get(out).get('metrics').get(metric_name).get(data_type) \
-                                if self.current_logs.get(out).get('metrics').get(metric_name).get(
-                                data_type) else 0.
+                        if self.current_logs:
+                            self.log_history[out]['metrics'][metric_name][data_type][data_idx] = \
+                                self.current_logs.get(out).get('metrics').get(metric_name).get(data_type) \
+                                    if self.current_logs.get(out).get('metrics').get(metric_name).get(
+                                    data_type) else 0
                     else:
-                        self.log_history[out]['metrics'][metric_name][data_type].append(
-                            self.current_logs.get(out).get('metrics').get(metric_name).get(data_type)
-                            if self.current_logs.get(out).get('metrics').get(metric_name).get(data_type) else 0.
-                        )
+                        if self.current_logs:
+                            self.log_history[out]['metrics'][metric_name][data_type].append(
+                                self.current_logs.get(out).get('metrics').get(metric_name).get(data_type)
+                                if self.current_logs.get(out).get('metrics').get(metric_name).get(data_type) else 0
+                            )
 
                 # fill metric progress state
                 if data_idx or data_idx == 0:

@@ -405,6 +405,12 @@ class Exchange:
         """
         pass
 
+    def _call_deploy_presets(self):
+        """
+        получение данных для отображения пресетов на странице деплоя
+        """
+        return interactive.deploy_presets_data
+
     def _call_deploy_collection(
         self, dataset: Optional[DatasetData] = None
     ) -> Optional[DeployCollectionData]:
