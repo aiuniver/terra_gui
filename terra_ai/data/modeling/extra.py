@@ -111,6 +111,7 @@ class LayerTypeChoice(str, Enum):
     DenseNet169 = "DenseNet169"
     DenseNet201 = "DenseNet201"
     NASNetMobile = "NASNetMobile"
+    NASNetLarge = "NASNetLarge"
     MobileNetV3Small = "MobileNetV3Small"
     MobileNetV2 = "MobileNetV2"
     EfficientNetB0 = "EfficientNetB0"
@@ -120,6 +121,7 @@ class LayerTypeChoice(str, Enum):
     VAEBlock = "VAEBlock"
     CustomBlock = "CustomBlock"
     SpaceToDepth = "space_to_depth"
+
 
     @staticmethod
     def values() -> list:

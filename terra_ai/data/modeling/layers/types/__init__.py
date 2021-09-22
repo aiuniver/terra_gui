@@ -119,7 +119,7 @@ from . import (
     InceptionV3,
     #  MobileNet,
     MobileNetV2,
-    #  NASNetLarge,
+    NASNetLarge,
     NASNetMobile,
     ResNet101,
     ResNet152,

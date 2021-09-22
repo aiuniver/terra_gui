@@ -485,6 +485,11 @@ class LayerNASNetMobileData(LayerMixinData):
     extra: types.NASNetMobile.ParametersExtraData = types.NASNetMobile.ParametersExtraData()
 
 
+class LayerNASNetLargeData(LayerMixinData):
+    main: types.NASNetLarge.ParametersMainData = types.NASNetLarge.ParametersMainData()
+    extra: types.NASNetLarge.ParametersExtraData = types.NASNetLarge.ParametersExtraData()
+
+
 class LayerMobileNetV3SmallData(LayerMixinData):
     main: types.MobileNetV3Small.ParametersMainData = types.MobileNetV3Small.ParametersMainData()
     extra: types.MobileNetV3Small.ParametersExtraData = types.MobileNetV3Small.ParametersExtraData()

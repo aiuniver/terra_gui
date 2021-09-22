@@ -1058,18 +1058,54 @@ class LayerValidation:
                     1000,
                     self.layer_parameters.get('classes'))
 
-            elif self.layer_type == "InceptionV3":
-                if self.layer_parameters.get("include_top") and self.inp_shape[0][
-                                                                1:
-                                                                ] != (299, 299, 3):
+            elif self.layer_type == "NASNetMobile":
+                if self.layer_parameters.get("weights") == 'imagenet' \
+                        and self.inp_shape[0][1:] != (224, 224, 3):
                     return ValidatorMessages.InputShapeMustBeOnly.value % (
-                        "'include_top'=True",
+                        "pre-loaded 'imagenet' weights",
+                        (224, 224, 3),
+                        self.inp_shape[0][1:]
+                    )
+                elif (
+                        self.inp_shape[0][1] < 32
+                        or self.inp_shape[0][2] < 32
+                        or self.inp_shape[0][3] < 3
+                ):
+                    return ValidatorMessages.InputShapeMustBeInEchDim.value % (
+                        "greater or equal",
+                        (32, 32, 3),
+                        self.inp_shape[0][1:]
+                    )
+
+            elif self.layer_type == "NASNetLarge":
+                if self.layer_parameters.get("weights") == 'imagenet' \
+                        and self.inp_shape[0][1:] != (331, 331, 3):
+                    return ValidatorMessages.InputShapeMustBeOnly.value % (
+                        "pre-loaded 'imagenet' weights",
+                        (331, 331, 3),
+                        self.inp_shape[0][1:]
+                    )
+                elif (
+                        self.inp_shape[0][1] < 32
+                        or self.inp_shape[0][2] < 32
+                        or self.inp_shape[0][3] < 3
+                ):
+                    return ValidatorMessages.InputShapeMustBeInEchDim.value % (
+                        "greater or equal",
+                        (32, 32, 3),
+                        self.inp_shape[0][1:]
+                    )
+
+            elif self.layer_type == "InceptionV3":
+                if self.layer_parameters.get("weights") == 'imagenet' \
+                        and self.inp_shape[0][1:] != (299, 299, 3):
+                    return ValidatorMessages.InputShapeMustBeOnly.value % (
+                        "pre-loaded 'imagenet' weights",
                         (299, 299, 3),
                         self.inp_shape[0][1:]
                     )
                 elif (
-                        not self.layer_parameters.get("include_top")
-                        and self.inp_shape[0][1] < 75
+                        self.inp_shape[0][1] < 75
                         or self.inp_shape[0][2] < 75
                         or self.inp_shape[0][3] < 3
                 ):
@@ -1078,17 +1114,26 @@ class LayerValidation:
                         (75, 75, 3),
                         self.inp_shape[0][1:]
                     )
+                elif (
+                        self.layer_parameters.get("include_top")
+                        and self.layer_parameters.get("weights")
+                        and self.layer_parameters.get("classifier_activation") != "softmax"
+                        and self.layer_parameters.get("classifier_activation") is not None
+                ):
+                    return ValidatorMessages.ActivationFunctionShouldBe.value % (
+                        "using pretrained weights, with `include_top=True`",
+                        "`None` or `softmax`"
+                    )
+
             elif self.layer_type == "Xception":
-                if self.layer_parameters.get("include_top") and self.inp_shape[0][
-                                                                1:
-                                                                ] != (299, 299, 3):
+                if self.layer_parameters.get("weights") == 'imagenet' and\
+                        self.inp_shape[0][1:] != (299, 299, 3):
                     return ValidatorMessages.InputShapeMustBeOnly.value % (
-                        "'include_top'=True",
+                        "pre-loaded 'imagenet' weights",
                         (299, 299, 3),
                         self.inp_shape[0][1:])
                 elif (
-                        not self.layer_parameters.get("include_top")
-                        and self.inp_shape[0][1] < 71
+                        self.inp_shape[0][1] < 71
                         or self.inp_shape[0][2] < 71
                         or self.inp_shape[0][3] < 3
                 ):
@@ -1097,18 +1142,29 @@ class LayerValidation:
                         (71, 71, 3),
                         self.inp_shape[0][1:]
                     )
+                elif (
+                        self.layer_parameters.get("include_top")
+                        and self.layer_parameters.get("weights")
+                        and self.layer_parameters.get("classifier_activation") != "softmax"
+                        and self.layer_parameters.get("classifier_activation") is not None
+                ):
+                    return ValidatorMessages.ActivationFunctionShouldBe.value % (
+                        "using pretrained weights, with `include_top=True`",
+                        "`None` or `softmax`"
+                    )
+
             elif self.layer_type in ["VGG16", "VGG19", "ResNet50", "ResNet101", "ResNet152", "ResNet50V2",
                                      "ResNet101V2", "ResNet152V2"]:
-                if self.layer_parameters.get("include_top") and self.inp_shape[0][1:] != (224, 224, 3):
+                if self.layer_parameters.get("include_top") and self.layer_parameters.get('weights') == 'imagenet' \
+                        and self.inp_shape[0][1:] != (224, 224, 3):
 
                     return ValidatorMessages.InputShapeMustBeOnly.value % (
-                        "'include_top'=True",
+                        "'include_top'=True and using pre-trained weights on 'imagenet'",
                         (224, 224, 3),
                         self.inp_shape[0][1:]
                     )
                 elif (
-                        not self.layer_parameters.get("include_top")
-                        and self.inp_shape[0][1] < 32
+                        self.inp_shape[0][1] < 32
                         or self.inp_shape[0][2] < 32
                         or self.inp_shape[0][3] < 3
                 ):
@@ -1128,17 +1184,17 @@ class LayerValidation:
                         "`None` or `softmax`"
                     )
 
-            elif self.layer_type in ["DenseNet121", "DenseNet169", "DenseNet201", "NASNetMobile"]:
-                if self.layer_parameters.get("include_top") and self.inp_shape[0][1:] != (224, 224, 3):
+            elif self.layer_type in ["DenseNet121", "DenseNet169", "DenseNet201"]:
+                if self.layer_parameters.get("weights") == 'imagenet' and self.layer_parameters.get("include_top") and\
+                        self.inp_shape[0][1:] != (224, 224, 3):
 
                     return ValidatorMessages.InputShapeMustBeOnly.value % (
-                        "'include_top'=True",
+                        "'include_top'=True and using pre-trained weights on 'imagenet'",
                         (224, 224, 3),
                         self.inp_shape[0][1:]
                     )
                 elif (
-                        not self.layer_parameters.get("include_top")
-                        and self.inp_shape[0][1] < 32
+                        self.inp_shape[0][1] < 32
                         or self.inp_shape[0][2] < 32
                         or self.inp_shape[0][3] < 3
                 ):
@@ -1147,7 +1203,8 @@ class LayerValidation:
                         (32, 32, 3),
                         self.inp_shape[0][1:]
                     )
-            elif self.layer_type in ["MobileNetV3Small", "MobileNetV2", "efficientnetb0"]:
+
+            elif self.layer_type in ["MobileNetV3Small", "MobileNetV2", "EfficientNetB0"]:
                 if (
                     self.layer_parameters.get("include_top")
                     and self.layer_parameters.get("weights")
