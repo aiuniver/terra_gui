@@ -23,17 +23,15 @@
         @parse="change"
       />
     </t-field>
-    <t-checkbox
-      v-if="type === 'checkbox'"
-      :value="getValue"
-      :label="label"
-      type="checkbox"
-      :parse="parse"
-      :name="name"
-      :inline="inline"
-      :disabled="disabled"
-      @parse="change"
-    />
+    <t-field v-if="type === 'checkbox'" :label="label" inline>
+      <t-checkbox-new
+        :value="getValue"
+        :parse="parse"
+        :name="name"
+        :disabled="disabled"
+        @parse="change"
+      />
+    </t-field>
     <t-field v-if="type === 'select'" :label="label" inline>
       <t-select-new
         :value="getValue"

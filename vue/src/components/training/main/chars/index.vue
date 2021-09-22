@@ -86,8 +86,9 @@ export default {
   },
   mounted() {
     // console.log(this.outputs);
-    const data = this.interactive?.[this.metric] || [];
-    this.charts = data.map(item => item);
+    // const data = this.interactive?.[this.metric] || [];
+    // this.charts = data.map(item => item);
+    this.charts = this.interactive?.[this.metric]
   },
   methods: {
     event({ name, data }, { id }) {
