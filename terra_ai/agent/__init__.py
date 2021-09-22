@@ -414,6 +414,8 @@ class Exchange:
     def _call_deploy_collection(
         self, dataset: Optional[DatasetData] = None
     ) -> Optional[DeployCollectionData]:
+        # with open("./ddd.json", "w") as f_ref:
+        #     f_ref.write(interactive.deploy_presets_data)
         deploy_collect.update(dataset=dataset)
         return deploy_collect.data
 
