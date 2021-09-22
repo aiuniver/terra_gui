@@ -316,6 +316,7 @@ class CreateDataset(object):
         creating_inputs_data = {}
         path_type_input_list = [LayerInputTypeChoice.Image, LayerInputTypeChoice.Video, LayerInputTypeChoice.Audio]
         for key in self.instructions.inputs.keys():
+            creating_inputs_data[key] = {}
             classes_names = [os.path.basename(x) for x in creation_data.inputs.get(key).parameters.sources_paths]
             num_classes = len(classes_names)
             for col_name, data in self.instructions.inputs[key].items():
@@ -346,7 +347,7 @@ class CreateDataset(object):
                                                   num_classes=num_classes,
                                                   encoding=LayerEncodingChoice.none
                                                   )
-                creating_inputs_data.update([(key, {col_name: current_input.native()})])
+                creating_inputs_data[key].update([(col_name, current_input.native())])
 
         return creating_inputs_data
 

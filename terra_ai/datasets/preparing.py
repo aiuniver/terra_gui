@@ -40,23 +40,6 @@ class PrepareDataset(object):
 
         pass
 
-    # [@staticmethod]
-    # def _set_language(name: str):
-
-    #     language = {'imdb': 'English',
-    #                 'boston_housing': 'English',
-    #                 'reuters': 'English',
-    #                 'заболевания': 'Russian',
-    #                 'договоры': 'Russian',
-    #                 'умный_дом': 'Russian',
-    #                 'квартиры': 'Russian'
-    #                 }
-
-    #     if name in language.keys():
-    #         return language[name]
-    #     else:
-    #         return None
-
     def train_generator(self):
 
         inputs = {}
@@ -216,6 +199,28 @@ class PrepareDataset(object):
 
             pass
 
+        def prepare_generator_parameters(put_data: dict, data_type: str):
+
+            return_data = {}
+            if data_type == 'shapes':
+                put_shape = None
+                for putt in put_data.keys():
+                    first_shape = False
+                    for col_name, data in put_data[putt].items():
+                        if not first_shape:
+                            put_shape = list(data.shape)
+                            first_shape = True
+                        else:
+                            put_shape[0] += data.shape[0]
+                    return_data[str(putt)] = put_shape
+
+            elif data_type == 'types':
+                for putt in put_data.keys():
+                    for col_name, data in put_data[putt].items():
+                        return_data[str(putt)] = data.dtype
+
+            return return_data
+
         if self.data.group == DatasetGroupChoice.keras:
 
             self.keras_datasets()
@@ -254,40 +259,35 @@ class PrepareDataset(object):
                         self.instructions[put][int(idx)] = getattr(CreateArray(),
                                                                    f'instructions_{decamelize(ins["type"])}')([], **ins)['parameters']
 
-                num_inputs = len(self.data.inputs)
-                num_outputs = len(self.data.outputs)
                 self.dataset['train'] = Dataset.from_generator(self.train_generator,
-                                                               output_shapes=({str(x): self.data.inputs[x].shape for x
-                                                                               in range(1, num_inputs + 1)},
-                                                                              {str(x): self.data.outputs[x].shape for x
-                                                                               in range(num_inputs + 1,
-                                                                                        num_outputs + 2)}),
-                                                               output_types=({str(x): self.data.inputs[x].dtype for x in
-                                                                              range(1, num_inputs + 1)},
-                                                                             {str(x): self.data.outputs[x].dtype for x
-                                                                              in
-                                                                              range(num_inputs + 1, num_outputs + 2)})
+                                                               output_shapes=(prepare_generator_parameters(
+                                                                   self.data.inputs, 'shapes'),
+                                                                              prepare_generator_parameters(
+                                                                                  self.data.outputs, 'shapes')),
+                                                               output_types=(prepare_generator_parameters(
+                                                                   self.data.inputs, 'types'),
+                                                                             prepare_generator_parameters(
+                                                                                 self.data.outputs, 'types'))
                                                                )
                 self.dataset['val'] = Dataset.from_generator(self.val_generator,
-                                                             output_shapes=({str(x): self.data.inputs[x].shape for x in
-                                                                             range(1, num_inputs + 1)},
-                                                                            {str(x): self.data.outputs[x].shape for x in
-                                                                             range(num_inputs + 1, num_outputs + 2)}),
-                                                             output_types=({str(x): self.data.inputs[x].dtype for x in
-                                                                            range(1, num_inputs + 1)},
-                                                                           {str(x): self.data.outputs[x].dtype for x in
-                                                                            range(num_inputs + 1, num_outputs + 2)})
+                                                             output_shapes=(prepare_generator_parameters(
+                                                                 self.data.inputs, 'shapes'),
+                                                                            prepare_generator_parameters(
+                                                                                self.data.outputs, 'shapes')),
+                                                             output_types=(prepare_generator_parameters(
+                                                                 self.data.inputs, 'types'),
+                                                                           prepare_generator_parameters(
+                                                                               self.data.outputs, 'types'))
                                                              )
                 self.dataset['test'] = Dataset.from_generator(self.test_generator,
-                                                              output_shapes=({str(x): self.data.inputs[x].shape for x in
-                                                                              range(1, num_inputs + 1)},
-                                                                             {str(x): self.data.outputs[x].shape for x
-                                                                              in
-                                                                              range(num_inputs + 1, num_outputs + 2)}),
-                                                              output_types=({str(x): self.data.inputs[x].dtype for x in
-                                                                             range(1, num_inputs + 1)},
-                                                                            {str(x): self.data.outputs[x].dtype for x in
-                                                                             range(num_inputs + 1, num_outputs + 2)})
+                                                              output_shapes=(prepare_generator_parameters(
+                                                                  self.data.inputs, 'shapes'),
+                                                                             prepare_generator_parameters(
+                                                                                 self.data.outputs, 'shapes')),
+                                                              output_types=(prepare_generator_parameters(
+                                                                  self.data.inputs, 'types'),
+                                                                            prepare_generator_parameters(
+                                                                                self.data.outputs, 'types'))
                                                               )
             else:
                 load_arrays()
