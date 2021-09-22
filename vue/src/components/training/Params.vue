@@ -1,7 +1,9 @@
 <template>
   <div class="params">
     <div class="params__body">
-      <div v-if="status !== 'no_train'" class="params__overlay"></div>
+      <div v-if="loading" class="params__overlay">
+        <LoadSpiner :text="'Запуск обучения...'" />
+      </div>
       <scrollbar>
         <div class="params__items">
           <at-collapse :value="collapse">
@@ -12,6 +14,7 @@
                   :key="'main_' + i"
                   :state="state"
                   :inline="false"
+                  :disabled="disabledAny"
                   @parse="parse"
                 />
               </template>
@@ -25,6 +28,7 @@
                     class="fit__item"
                     :state="state"
                     :inline="true"
+                    :disabled="disabledAny"
                     @parse="parse"
                   />
                 </template>
@@ -39,6 +43,7 @@
                     class="optimizer__item"
                     :state="state"
                     inline
+                    :disabled="disabledAny"
                     @parse="parse"
                   />
                 </template>
@@ -58,6 +63,7 @@
                           :key="'checkpoint_' + i"
                           :state="state"
                           :inline="true"
+                          :disabled="disabled"
                           @parse="parse"
                         />
                       </template>
@@ -76,6 +82,7 @@
                     name="metric_name"
                     :parse="'architecture[parameters][checkpoint][metric_name]'"
                     :value="getValue"
+                    :disabled="disabled"
                     @parse="parse"
                   />
                 </t-field>
@@ -86,6 +93,7 @@
                     class="checkpoint__item"
                     :state="state"
                     :inline="true"
+                    :disabled="disabled"
                     @parse="parse"
                   />
                 </template>
@@ -117,10 +125,11 @@ import ser from '../../assets/js/myserialize';
 import { mapGetters } from 'vuex';
 // import TCheckbox from '../global/new/forms/TCheckbox.vue';
 // import Checkbox from '@/components/forms/Checkbox.vue';
-
+import LoadSpiner from '@/components/forms/LoadSpiner';
 export default {
   name: 'params-traning',
   components: {
+    LoadSpiner,
     // TCheckbox,
     // Checkbox,
   },
@@ -131,6 +140,7 @@ export default {
     metricData: '',
     learningStop: false,
     debounce: null,
+    loading: false,
   }),
   computed: {
     ...mapGetters({
@@ -138,6 +148,14 @@ export default {
       button: 'trainings/getButtons',
       status: 'trainings/getStatus',
     }),
+    disabled() {
+      console.log(this.status);
+      return this.status !== 'no_train';
+    },
+    disabledAny() {
+      console.log(this.status);
+      return this.status !== 'no_train' && this.status !== 'stopped';
+    },
     getValue() {
       return this.state?.['architecture[parameters][checkpoint][metric_name]'] ?? 'Accuracy';
     },
@@ -198,6 +216,7 @@ export default {
     },
     async start() {
       console.log(JSON.stringify(this.obj, null, 2));
+      this.loading = true;
       const res = await this.$store.dispatch('trainings/start', this.obj);
       if (res) {
         const { data } = res;
@@ -206,6 +225,7 @@ export default {
           this.progress();
         }
       }
+      this.loading = false;
       // console.log(res);
     },
     async stop() {
@@ -233,7 +253,7 @@ export default {
       }
     },
     parse({ parse, value, name }) {
-      console.log({ parse, value, name });
+      // console.log({ parse, value, name });
       ser(this.obj, parse, value);
       this.obj = { ...this.obj };
       if (name === 'architecture_parameters_checkpoint_layer') {
@@ -302,6 +322,9 @@ export default {
   }
   &__overlay {
     position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
     height: 100%;
     background-color: rgb(14 22 33 / 30%);
