@@ -122,10 +122,17 @@ class Project(BaseMixinData):
     def name_alias(self) -> str:
         return re.sub(r"([\-]+)", "_", slugify(self.name, language_code="ru"))
 
-    def _set_data(self, name: str, dataset: DatasetData, model: ModelDetailsData):
+    def _set_data(
+        self,
+        name: str,
+        dataset: DatasetData,
+        model: ModelDetailsData,
+        training: TrainingDetailsData,
+    ):
         self.name = name
         self.dataset = dataset
         self.model = model
+        self.training = training
 
     def dict(self, **kwargs):
         _data = super().dict(**kwargs)
@@ -133,12 +140,14 @@ class Project(BaseMixinData):
         return _data
 
     def reset(self):
+        agent_exchange("training_clear")
         shutil.rmtree(project_path.base, ignore_errors=True)
         ProjectPathData(**PROJECT_PATH)
         self._set_data(
             name=UNKNOWN_NAME,
             dataset=None,
             model=ModelDetailsData(**EmptyModelDetailsData),
+            training=TrainingDetailsData(),
         )
         self.save()
 
