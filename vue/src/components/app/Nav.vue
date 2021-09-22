@@ -2,7 +2,7 @@
   <nav class="nav">
     <ul class="nav__menu">
       <template v-for="(route, i) in items">
-        <li :class="['nav__menu--item', { active: $route.path === route.path }]" :key="i" @click="nav(route)">
+        <li v-if="route.path !== '/profile'" :class="['nav__menu--item', { active: $route.path === route.path }]" :key="i" @click="nav(route)">
           {{ route.title }}
         </li>
       </template>

@@ -15,9 +15,11 @@
       >
         <i :class="[icon]"></i>
       </div>
-      <div class="header__right--icon">
-        <i class="profile"></i>
-      </div>
+      <router-link to="/profile">
+        <div class="header__right--icon">
+            <i class="profile"></i>
+        </div>
+      </router-link>
     </div>
     <CreateProject v-model="dialogCreate" @message="message" @start="dialogSave = true" />
     <LoadProject v-model="dialogLoad" @message="message" @start="dialogSave = true" />
