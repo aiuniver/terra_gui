@@ -19,19 +19,33 @@ export default {
     graph_name: String,
     x_label: String,
     y_label: String,
-    labels: Array,
     plot_data: Array,
   },
+  computed: {
+    layout() {
+      const layout = this.defLayout;
+      if (this.plot_data) {
+        // layout.title.text = this.graph_name;
+        layout.xaxis.title.text = this.x_label;
+        layout.yaxis.title.text = this.y_label;
+      }
+      return layout;
+    },
+    data() {
+      return this.plot_data.map(el => {
+        return {
+          type: 'scatter',
+          x: el.labels,
+          y: el.values,
+          name: 'Регрессия',
+          mode: 'markers',
+          marker: { size: 10 },
+        };
+      });
+    },
+  },
   data: () => ({
-    // data: [{
-    //     type: 'scatter',
-    //     x: [1,2,3,4,5,6,7],
-    //     y: [10,15,13,17,20,15,23],
-    //     mode: 'markers',
-    //     name: 'Регрессия',
-    //     marker: { size: 10 }
-    // }],
-    layout: {
+    defLayout: {
       width: 636,
       height: 352,
       plot_bgcolor: '#fff0',

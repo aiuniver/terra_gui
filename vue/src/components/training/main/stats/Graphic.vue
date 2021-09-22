@@ -1,7 +1,7 @@
 <template>
   <div class="t-graphic">
     <div class="t-graphic__title">{{ graph_name }}</div>
-    <Plotly class="t-graphic__plotly" :data="plot_data" :layout="layout" :display-mode-bar="false" />
+    <Plotly class="t-graphic__plotly" :data="data" :layout="layout" :display-mode-bar="false" />
   </div>
 </template>
 
@@ -19,33 +19,37 @@ export default {
     graph_name: String,
     x_label: String,
     y_label: String,
-    labels: Array,
     plot_data: Array,
   },
+
+  computed: {
+    layout() {
+      const layout = this.defLayout;
+      if (this.plot_data) {
+        // layout.title.text = this.graph_name;
+        layout.xaxis.title.text = this.x_label;
+        layout.yaxis.title.text = this.y_label;
+      }
+      return layout;
+    },
+    data() {
+      return this.plot_data.map(el => {
+        return {
+          type: 'scatter',
+          x: el.x,
+          y: el.y,
+          mode: 'lines',
+          name: 'Правильные данные',
+          line: {
+            width: 3,
+            color: '#89D764',
+          },
+        };
+      });
+    },
+  },
   data: () => ({
-    // data: [{
-    //     type: 'scatter',
-    //     x: [1,2,3,4,5,6,7],
-    //     y: [10,15,13,17,20,15,23],
-    //     mode: 'lines',
-    //     name: 'Правильные данные',
-    //     line: {
-    //         width: 3,
-    //         color: '#89D764'
-    //     }
-    // },
-    // {
-    //     type: 'scatter',
-    //     x: [2,3,4,5,6,7,8],
-    //     y: [10,15,13,17,20,15,23],
-    //     mode: 'lines',
-    //     name: 'Предсказанные данные',
-    //     line: {
-    //         width: 3,
-    //         color: '#FFB054'
-    //     }
-    // }],
-    layout: {
+    defLayout: {
       width: 636,
       height: 352,
       plot_bgcolor: '#fff0',

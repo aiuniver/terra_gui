@@ -1316,7 +1316,80 @@ const data =
       }
     }
   },
-  "statistic_data": {},
+  "statistic_data": {
+    "2": [
+      {
+        "id": 1,
+        "type": "Histogram",
+        "graph_name": "Тренировочная выборка",
+        "x_label": "Название класса",
+        "y_label": "Значение",
+        "plot_data": [
+          {
+            "labels": [
+              "airplane",
+              "automobile",
+              "bird",
+              "cat",
+              "deer",
+              "dog",
+              "frog",
+              "horse",
+              "ship",
+              "truck"
+            ],
+            "values": [
+              5000,
+              5000,
+              5000,
+              5000,
+              5000,
+              5000,
+              5000,
+              5000,
+              5000,
+              5000
+            ]
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "type": "Histogram",
+        "graph_name": "Проверчная выборка",
+        "x_label": "Название класса",
+        "y_label": "Значение",
+        "plot_data": [
+          {
+            "labels": [
+              "bird",
+              "automobile",
+              "deer",
+              "frog",
+              "horse",
+              "dog",
+              "cat",
+              "ship",
+              "airplane",
+              "truck"
+            ],
+            "values": [
+              529,
+              525,
+              513,
+              502,
+              500,
+              494,
+              493,
+              486,
+              484,
+              474
+            ]
+          }
+        ]
+      }
+    ]
+  },
   "data_balance": {
     "2": [
       {
