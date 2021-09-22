@@ -206,6 +206,7 @@ class ModuleChoice(str, Enum):
     nasnetmobile = "tensorflow.keras.applications.nasnet"
     mobilenetv3small = "tensorflow.keras.applications"
     mobilenetv2 = "tensorflow.keras.applications.mobilenet_v2"
+    efficientnetb0 = "tensorflow.keras.applications.efficientnet"
 
 
 class ModuleTypeChoice(str, Enum):

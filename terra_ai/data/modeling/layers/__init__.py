@@ -495,6 +495,11 @@ class LayerMobileNetV2Data(LayerMixinData):
     extra: types.MobileNetV2.ParametersExtraData = types.MobileNetV2.ParametersExtraData()
 
 
+class LayerEfficientNetB0Data(LayerMixinData):
+    main: types.EfficientNetB0.ParametersMainData = types.EfficientNetB0.ParametersMainData()
+    extra: types.EfficientNetB0.ParametersExtraData = types.EfficientNetB0.ParametersExtraData()
+
+
 class LayerCustomUNETBlockData(LayerMixinData):
     main: types.CustomUNETBlock.ParametersMainData = (
         types.CustomUNETBlock.ParametersMainData()

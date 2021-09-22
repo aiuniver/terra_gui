@@ -1147,7 +1147,7 @@ class LayerValidation:
                         (32, 32, 3),
                         self.inp_shape[0][1:]
                     )
-            elif self.layer_type in ["MobileNetV3Small", "MobileNetV2"]:
+            elif self.layer_type in ["MobileNetV3Small", "MobileNetV2", "efficientnetb0"]:
                 if (
                     self.layer_parameters.get("include_top")
                     and self.layer_parameters.get("weights")
