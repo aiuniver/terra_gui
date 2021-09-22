@@ -1,32 +1,33 @@
 <template>
-  <img class="table-prediction__image" :src="require('@/../public/imgs/' + path)" alt="img" />
+  <div class="t-predict-image">
+    <img width="auto" height="120" :src="src" :alt="'value'" />
+  </div>
 </template>
-
 <script>
 export default {
-  name: 'TableImage',
+  name: 't-table-image',
   props: {
-    image: {
-      type: [Object, Array],
-      default: () => {},
+    value: {
+      type: String,
+      default: '',
     },
   },
   computed: {
-    path() {
-      return this.image?.data || '';
-    },
-    type() {
-      return this.image?.type || null;
-    },
-  },
+    src() {
+      return this.value
+      // return window.location.host
+    }
+  }
 };
 </script>
 
 <style lang="scss" scoped>
-.table-prediction {
-  &__image {
-    width: 270px;
-    height: 160px;
-  }
+.t-predict-image {
+  height: 160px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 20px;
+  // &__image {}
 }
 </style>
