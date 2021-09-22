@@ -485,6 +485,11 @@ class LayerNASNetMobileData(LayerMixinData):
     extra: types.NASNetMobile.ParametersExtraData = types.NASNetMobile.ParametersExtraData()
 
 
+class LayerMobileNetV3SmallData(LayerMixinData):
+    main: types.MobileNetV3Small.ParametersMainData = types.MobileNetV3Small.ParametersMainData()
+    extra: types.MobileNetV3Small.ParametersExtraData = types.MobileNetV3Small.ParametersExtraData()
+
+
 class LayerCustomUNETBlockData(LayerMixinData):
     main: types.CustomUNETBlock.ParametersMainData = (
         types.CustomUNETBlock.ParametersMainData()

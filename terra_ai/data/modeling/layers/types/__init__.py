@@ -103,7 +103,7 @@ from . import (
     # StringLookup,
     # TextVector,
     # MobileNetV3Large,
-    # MobileNetV3Small,
+    MobileNetV3Small,
     DenseNet121,
     DenseNet169,
     DenseNet201,

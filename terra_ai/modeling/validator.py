@@ -1097,10 +1097,8 @@ class LayerValidation:
                         (71, 71, 3),
                         self.inp_shape[0][1:]
                     )
-            elif self.layer_type == "VGG16" or self.layer_type == "VGG19" or self.layer_type == "ResNet50"\
-                    or self.layer_type == "ResNet101" or self.layer_type == "ResNet152" \
-                    or self.layer_type == "ResNet50V2" or self.layer_type == "ResNet101V2" or \
-                    self.layer_type == "ResNet152V2":
+            elif self.layer_type in ["VGG16", "VGG19", "ResNet50", "ResNet101", "ResNet152", "ResNet50V2",
+                                     "ResNet101V2", "ResNet152V2"]:
                 if self.layer_parameters.get("include_top") and self.inp_shape[0][1:] != (224, 224, 3):
 
                     return ValidatorMessages.InputShapeMustBeOnly.value % (
@@ -1130,8 +1128,7 @@ class LayerValidation:
                         "`None` or `softmax`"
                     )
 
-            elif self.layer_type == "DenseNet121" or self.layer_type == "DenseNet169" or self.layer_type == "DenseNet201"\
-                    or self.layer_type == "NASNetMobile":
+            elif self.layer_type in ["DenseNet121", "DenseNet169", "DenseNet201", "NASNetMobile"]:
                 if self.layer_parameters.get("include_top") and self.inp_shape[0][1:] != (224, 224, 3):
 
                     return ValidatorMessages.InputShapeMustBeOnly.value % (
@@ -1150,7 +1147,22 @@ class LayerValidation:
                         (32, 32, 3),
                         self.inp_shape[0][1:]
                     )
-
+            elif self.layer_type == "MobileNetV3Small":
+                if (
+                    self.layer_parameters.get("include_top")
+                    and self.layer_parameters.get("weights")
+                    and self.layer_parameters.get("classifier_activation") != "softmax"
+                    and self.layer_parameters.get("classifier_activation") is not None
+                ):
+                    return ValidatorMessages.ActivationFunctionShouldBe.value % (
+                        "using pretrained weights, with `include_top=True`",
+                        "`None` or `softmax`"
+                    )
+                elif self.layer_parameters.get("dropout_rate") > 1.0 or self.layer_parameters.get("dropout_rate") < 0:
+                    return ValidatorMessages.CanTakeOneOfTheFollowingValues % (
+                        "Dropout_rate",
+                        "floats from range [0.0, 1.0]"
+                    )
             else:
                 pass
 
