@@ -112,6 +112,7 @@ class LayerTypeChoice(str, Enum):
     DenseNet201 = "DenseNet201"
     NASNetMobile = "NASNetMobile"
     MobileNetV3Small = "MobileNetV3Small"
+    MobileNetV2 = "MobileNetV2"
     CustomUNETBlock = "CustomUNETBlock"
     YOLOResBlock = "YOLOResBlock"
     YOLOConvBlock = "YOLOConvBlock"

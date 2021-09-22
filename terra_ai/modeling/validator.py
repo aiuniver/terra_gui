@@ -1147,7 +1147,7 @@ class LayerValidation:
                         (32, 32, 3),
                         self.inp_shape[0][1:]
                     )
-            elif self.layer_type == "MobileNetV3Small":
+            elif self.layer_type in ["MobileNetV3Small", "MobileNetV2"]:
                 if (
                     self.layer_parameters.get("include_top")
                     and self.layer_parameters.get("weights")
@@ -1158,7 +1158,8 @@ class LayerValidation:
                         "using pretrained weights, with `include_top=True`",
                         "`None` or `softmax`"
                     )
-                elif self.layer_parameters.get("dropout_rate") > 1.0 or self.layer_parameters.get("dropout_rate") < 0:
+                elif (self.layer_parameters.get("dropout_rate")) and \
+                        (self.layer_parameters.get("dropout_rate") > 1.0 or self.layer_parameters.get("dropout_rate") < 0):
                     return ValidatorMessages.CanTakeOneOfTheFollowingValues % (
                         "Dropout_rate",
                         "floats from range [0.0, 1.0]"

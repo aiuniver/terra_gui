@@ -490,6 +490,11 @@ class LayerMobileNetV3SmallData(LayerMixinData):
     extra: types.MobileNetV3Small.ParametersExtraData = types.MobileNetV3Small.ParametersExtraData()
 
 
+class LayerMobileNetV2Data(LayerMixinData):
+    main: types.MobileNetV2.ParametersMainData = types.MobileNetV2.ParametersMainData()
+    extra: types.MobileNetV2.ParametersExtraData = types.MobileNetV2.ParametersExtraData()
+
+
 class LayerCustomUNETBlockData(LayerMixinData):
     main: types.CustomUNETBlock.ParametersMainData = (
         types.CustomUNETBlock.ParametersMainData()
