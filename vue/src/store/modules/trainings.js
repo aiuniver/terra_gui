@@ -67,16 +67,23 @@ export default {
       }
     },
     async start({ dispatch }, parse) {
-      let data = JSON.parse(JSON.stringify(parse))
-      console.log(data)
-      const arht = data.architecture.parameters.outputs || []
-      data.architecture.parameters.outputs = arht.map((item, index) => {
-        return item ? { id: index, ...item } : null
-      }).filter(item => item)
-      const res = await dispatch('axios', { url: '/training/start/', data }, { root: true });
-      dispatch('setState', res);
-      dispatch('setTrainData', {});
-      return res
+      const valid = await dispatch('modeling/validateModel', {}, { root: true })
+      const isValid = !Object.values(valid).filter(item => item).length
+      if (isValid) {
+        let data = JSON.parse(JSON.stringify(parse))
+        console.log(data)
+        const arht = data.architecture.parameters.outputs || []
+        data.architecture.parameters.outputs = arht.map((item, index) => {
+          return item ? { id: index, ...item } : null
+        }).filter(item => item)
+        dispatch('messages/setMessage', { message: `Запуск обучения...` }, { root: true });
+        const res = await dispatch('axios', { url: '/training/start/', data }, { root: true });
+        await dispatch('projects/get', {}, { root: true })
+        dispatch('setState', res);
+        dispatch('setTrainData', {});
+        return res
+      }
+      return null
     },
     async stop({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/stop/', data }, { root: true });

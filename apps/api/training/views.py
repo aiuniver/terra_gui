@@ -38,6 +38,7 @@ class StartAPIView(BaseAPIView):
             training_base = recursive_update(training_base, request.data)
             training_base["architecture"]["parameters"]["outputs"] = outputs
             request.project.training.base = TrainData(**training_base)
+            request.project.update_training_interactive()
             data = {
                 "dataset": request.project.dataset,
                 "model": request.project.model,
@@ -49,7 +50,10 @@ class StartAPIView(BaseAPIView):
             agent_exchange("training_start", **data)
             request.project.training.set_state()
             return BaseResponseSuccess(
-                {"state": request.project.training.state.native()}
+                {
+                    "interactive": request.project.training.interactive.native(),
+                    "state": request.project.training.state.native(),
+                }
             )
         except ValidationError as error:
             return BaseResponseErrorFields(error)
@@ -84,10 +88,9 @@ class ClearAPIView(BaseAPIView):
 class InteractiveAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         try:
-            agent_exchange("training_interactive", **request.data)
-            return BaseResponseSuccess(
-                {"state": request.project.training.state.native()}
-            )
+            data = agent_exchange("training_interactive", **request.data)
+            request.project.training.interactive = data
+            return BaseResponseSuccess()
         except ExchangeBaseException as error:
             return BaseResponseErrorGeneral(str(error))
 

@@ -117,7 +117,8 @@ export default {
       commit("settings/SET_OVERLAY", false, { root: true });
       return res
     },
-    async choice({ dispatch }, dataset) {
+    async choice({ commit, dispatch }, dataset) {
+      commit('trainings/SET_STATE_PARAMS', {}, { root: true });
       return await dispatch('axios', { url: '/datasets/choice/', data: dataset }, { root: true });
     },
     async deleteDataset({ dispatch }, dataset) {
