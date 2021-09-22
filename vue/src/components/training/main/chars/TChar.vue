@@ -139,7 +139,7 @@ export default {
     },
   },
   mounted() {
-    console.log(this.menus);
+    // console.log(this.menus);
   },
   methods: {
     event({ name, data }) {
