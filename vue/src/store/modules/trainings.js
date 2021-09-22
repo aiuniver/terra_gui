@@ -17,24 +17,6 @@ export default {
     states: {},
     trainData: process.env.NODE_ENV === 'development' ? data : {},
     trainUsage: {},
-    buttons: {
-      train: {
-        title: "Обучить",
-        visible: true
-      },
-      stop: {
-        title: "Остановить",
-        visible: false
-      },
-      clear: {
-        title: "Сбросить",
-        visible: false
-      },
-      save: {
-        title: "Сохранить",
-        visible: false
-      }
-    },
     training: {
       base: {},
       interactive: {},
@@ -52,12 +34,7 @@ export default {
       state.params = { ...value };
     },
     SET_CONFIG(state, value) {
-      console.log(value)
-      state.buttons = { ...value.state.buttons };
       state.training = { ...value };
-    },
-    SET_BUTTONS(state, buttons) {
-      state.buttons = { ...buttons };
     },
     SET_STATE_PARAMS(state, value) {
       state.stateParams = { ...value };
@@ -65,8 +42,9 @@ export default {
     SET_INFO(state, value) {
       state.info = value;
     },
-    SET_STATES(state, value) {
-      state.states = { ...value };
+    SET_STATE(state, value) {
+      state.training.state = value;
+      state.training = { ...state.training }
     },
     SET_PREDICT(state, value) {
       state.predict = { ...value };
@@ -79,11 +57,12 @@ export default {
     },
   },
   actions: {
-    setButtons({ commit }, res) {
+    setState({ commit }, res) {
+      console.log(res)
       if (res && res?.data) {
-        const { buttons } = res?.data?.data?.states || res?.data.state
-        if (buttons) {
-          commit("SET_BUTTONS", buttons);
+        const state = res?.data?.data?.state || res?.data.state
+        if (state) {
+          commit("SET_STATE", state);
         }
       }
     },
@@ -95,18 +74,18 @@ export default {
         return item ? { id: index, ...item } : null
       }).filter(item => item)
       const res = await dispatch('axios', { url: '/training/start/', data }, { root: true });
-      dispatch('setButtons', res);
+      dispatch('setState', res);
       dispatch('setTrainData', {});
       return res
     },
     async stop({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/stop/', data }, { root: true });
-      dispatch('setButtons', res);
+      dispatch('setState', res);
       return res
     },
     async clear({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/clear/', data }, { root: true });
-      dispatch('setButtons', res);
+      dispatch('setState', res);
       return res
     },
     async interactive({ commit, state: { training: { interactive } }, dispatch }, part) {
@@ -116,7 +95,16 @@ export default {
     },
     async progress({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/progress/', data }, { root: true });
-      dispatch('setButtons', res);
+      if (res) {
+        const { data } = res.data;
+        if (data) {
+          const { info, train_data, train_usage } = data;
+          dispatch('setInfo', info);
+          dispatch('setState', res);
+          dispatch('setTrainData', train_data);
+          dispatch('setTrainUsage', train_usage);
+        }
+      }
       return res
     },
     setDrawer({ commit }, data) {
@@ -128,9 +116,9 @@ export default {
     setInfo({ commit }, info) {
       commit("SET_INFO", info);
     },
-    setStates({ commit }, data) {
-      commit("SET_STATES", data);
-    },
+    // setStates({ commit }, data) {
+    //   commit("SET_STATES", data);
+    // },
     setTrainData({ commit }, data) {
       commit("SET_TRAIN", data);
     },
@@ -154,6 +142,9 @@ export default {
     getStatus({ training: { state: { status } } }) {
       return status || ''
     },
+    getButtons({ training: { state: { buttons } } }) {
+      return buttons
+    },
     getOutputs({ training: { base } }) {
       return base?.architecture?.parameters?.outputs || []
     },
@@ -171,9 +162,6 @@ export default {
     },
     getPredict({ predict }) {
       return predict || {}
-    },
-    getButtons({ buttons }) {
-      return buttons
     },
   },
 };
