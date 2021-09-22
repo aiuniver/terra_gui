@@ -15,9 +15,11 @@ export default {
       type: [Object, Array],
       default: () => {},
     },
-    value: String,
   },
   computed: {
+    value() {
+      return this.data.name || '';
+    },
     color() {
       return this.data?.color_mark || '';
     },
