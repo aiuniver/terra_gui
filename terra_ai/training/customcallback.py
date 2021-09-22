@@ -1477,7 +1477,6 @@ class InteractiveCallback:
     def _get_loss_graph_data_request(self) -> list:
         """
         'loss_graphs': [
-
             # пример для всей модели
             {
                 'id': 1,
