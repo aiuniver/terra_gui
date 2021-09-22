@@ -259,7 +259,10 @@ class CreateDataset(object):
             for col_name, data in put.items():
                 if 'scaler' in data.parameters.keys():
                     if data.parameters['scaler'] != LayerScalerImageChoice.no_scaler:
-                        self.preprocessing.create_scaler(array=None, **data.parameters)
+                        if 'height' in data.parameters.keys():
+                            self.preprocessing.create_scaler(array=None, **data.parameters)
+                        else:
+                            self.preprocessing.create_scaler(array=put[col_name].instructions, **data.parameters)
                 elif 'prepare_method' in data.parameters.keys():
                     if data.parameters['prepare_method'] in [LayerPrepareMethodChoice.embedding,
                                                              LayerPrepareMethodChoice.bag_of_words]:
@@ -427,6 +430,11 @@ class CreateDataset(object):
 
     def create_dataset_arrays(self, put_data: dict) -> dict:
 
+        path_type_list = [decamelize(LayerInputTypeChoice.Image), decamelize(LayerOutputTypeChoice.Image),
+                          decamelize(LayerInputTypeChoice.Audio), decamelize(LayerOutputTypeChoice.Audio),
+                          decamelize(LayerInputTypeChoice.Video), decamelize(LayerOutputTypeChoice.ObjectDetection),
+                          decamelize(LayerOutputTypeChoice.Segmentation)]
+
         out_array = {'train': {}, 'val': {}, 'test': {}}
         for split in list(out_array.keys()):
             for key in put_data.keys():
@@ -438,13 +446,10 @@ class CreateDataset(object):
                     full_array = []
                     for col_name, data in put_data[key].items():
                         prep = None
-                        if self.tags[key][col_name] in [decamelize(LayerInputTypeChoice.Text),
-                                                        decamelize(LayerOutputTypeChoice.Text),
-                                                        decamelize(LayerOutputTypeChoice.TextSegmentation),
-                                                        decamelize(LayerOutputTypeChoice.Classification)]:
-                            data_to_pass = self.dataframe[split].loc[i, col_name]
-                        else:
+                        if self.tags[key][col_name] in path_type_list:
                             data_to_pass = os.path.join(self.paths.basepath, self.dataframe[split].loc[i, col_name])
+                        else:
+                            data_to_pass = self.dataframe[split].loc[i, col_name]
 
                         if self.preprocessing.preprocessing.get(key) and\
                                 self.preprocessing.preprocessing.get(key).get(col_name):
@@ -461,18 +466,17 @@ class CreateDataset(object):
                                 globals()[f'current_arrays_{n}'].append(arr[n])
                         else:
                             full_array.append(arr)
-
                     if not self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
                         array = np.concatenate(full_array, axis=0)
                         current_arrays.append(array)
 
-                if self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
-                    for n in range(6):
-                        print(np.array(globals()[f'current_arrays_{n}']).shape)
-                        out_array[split][key + n] = np.array(globals()[f'current_arrays_{n}'])
-                else:
-                    print(np.array(current_arrays).shape)
-                    out_array[split][key] = np.array(current_arrays)
+                # if self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
+                #     for n in range(6):
+                #         print(np.array(globals()[f'current_arrays_{n}']).shape)
+                #         out_array[split][key + n] = np.array(globals()[f'current_arrays_{n}'])
+                # else:
+                print(np.array(current_arrays).shape)
+                out_array[split][key] = np.array(current_arrays)
 
         return out_array
 

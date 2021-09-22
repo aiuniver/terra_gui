@@ -101,14 +101,11 @@ class CreatePreprocessing(object):
     def create_scaler(self, array=None, **options):
 
         scaler = None
-        # if "MinMaxScaler_cols" in options.keys() or 'trend' in options.keys():
-        #     array = pd.DataFrame(array)
-
         if options['scaler'] != 'no_scaler':
             if options['scaler'] == 'min_max_scaler':
                 scaler = MinMaxScaler(feature_range=(options['min_scaler'], options['max_scaler']))
                 array = np.array(array).reshape(-1, 1) if isinstance(array, np.ndarray) or isinstance(array,
-                                                                                                      pd.DataFrame)\
+                                                                                                      list)\
                     else np.array([[0], [255]])
                 scaler.fit(array)
             elif options['scaler'] == 'standard_scaler':

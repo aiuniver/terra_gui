@@ -65,37 +65,37 @@ DatasetsGroups = [
                 "name": "Mnist",
                 "group": "keras",
                 "inputs": {
-                    1: {"1_mnist": {"datatype": "2D",
+                    1: {"columns": {"1_mnist": {"datatype": "2D",
+                                                "dtype": "float32",
+                                                "name": "Вход 1",
+                                                "shape": (28, 28, 1),
+                                                "task": LayerInputTypeChoice.Image,
+                                                "num_classes": 1,
+                                                "classes_names": ["mnist"]
+                                                }
+                                    },
+                        "summary": {"datatype": "2D",
                                     "dtype": "float32",
                                     "name": "Вход 1",
-                                    "shape": (28, 28, 1),
-                                    "task": LayerInputTypeChoice.Image,
-                                    "num_classes": 1,
-                                    "classes_names": ["mnist"]
-                                    }
+                                    "shape": (28, 28, 1)}
                         }
                 },
                 "outputs": {
-                    2: {"2_classification": {"datatype": "DIM",
-                                             "dtype": "uint8",
-                                             "name": "Выход 1",
-                                             "shape": (10,),
-                                             "task": LayerOutputTypeChoice.Classification,
-                                             "num_classes": 10,
-                                             "classes_names": [
-                                                 "0",
-                                                 "1",
-                                                 "2",
-                                                 "3",
-                                                 "4",
-                                                 "5",
-                                                 "6",
-                                                 "7",
-                                                 "8",
-                                                 "9",
-                                             ],
-                                             "encoding": LayerEncodingChoice.ohe
-                                             }
+                    2: {"columns": {"2_classification": {"datatype": "DIM",
+                                                         "dtype": "uint8",
+                                                         "name": "Выход 1",
+                                                         "shape": (10,),
+                                                         "task": LayerOutputTypeChoice.Classification,
+                                                         "num_classes": 10,
+                                                         "classes_names": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+                                                         "encoding": LayerEncodingChoice.ohe
+                                                         },
+                                    "summary": {"datatype": "DIM",
+                                                "dtype": "uint8",
+                                                "name": "Выход 1",
+                                                "shape": (10,)
+                                                }
+                                    }
                         }
                 },
                 "tags": [
