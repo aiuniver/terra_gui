@@ -13,7 +13,7 @@ class StateStatusChoice(str, Enum):
     training = "training"
     trained = "trained"
     stopped = "stopped"
-    retrain = "retrain"
+    addtrain = "addtrain"
 
 
 class LossGraphShowChoice(str, Enum):
