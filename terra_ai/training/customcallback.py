@@ -310,17 +310,6 @@ loss_metric_config = {
     }
 }
 
-type_choice_dict = {
-    "Image": "Изображение",
-    "Audio": "Аудио",
-    "Video": "Видео",
-    "Text": "Текст",
-    "Dataframe": "",
-    "str": "Класс",
-    "Graphic": "График",
-    "Table": "Таблица"
-}
-
 
 class InteractiveCallback:
     """Callback for interactive requests"""
@@ -813,12 +802,12 @@ class InteractiveCallback:
                 'data_type': {
                     'output_channel':
                         graphic': {
-                            "type": "Graphic",
+                            "type": "graphic",
                                 "x": [],
                                 "y": []
                         },
                         'dense_histogram': {
-                            "type": "Histogram",
+                            "type": "histogram",
                                 "x": [],
                                 "y": []
                         },
@@ -830,7 +819,7 @@ class InteractiveCallback:
                 'data_type': {
                     'output_channel': [
                         {
-                            "type": "Histogram",
+                            "type": "histogram",
                             "x": [],
                             "y": []
                         },...
@@ -905,7 +894,7 @@ class InteractiveCallback:
                             'dense_histogram': {}
                         }
                         dataset_balance[out][data_type][output_channel]['graphic'] = {
-                            "type": "Graphic",
+                            "type": "graphic",
                             "x": list(self.dataset_config.get("dataframe").index),
                             "y": list(self.dataset_config.get("dataframe")[output_channel])
                         }
@@ -915,7 +904,7 @@ class InteractiveCallback:
                             categorical=False
                         )
                         dataset_balance[out][data_type][output_channel]['dense_histogram'] = {
-                            "type": "Histogram",
+                            "type": "histogram",
                             "x": x,
                             "y": y
                         }
@@ -1720,7 +1709,7 @@ class InteractiveCallback:
             "1": {
                   "initial_data": {
                         "Выходной слой 2": {
-                              "type": "Text",
+                              "type": "text",
                               "data": [
                                     {
                                           "title": "Изображение",
@@ -1738,11 +1727,10 @@ class InteractiveCallback:
                 },
                 'true_value': {
                     "Выходной слой 2": {
-                              "type": "Text",
+                              "type": "text",
                               "data": [
                                     {
                                           "title": "Изображение",
-                                          "data": "initial_data_image_1_input_1.webp",
                                           "value": "0.3%",
                                           "color_mark": null
                                     },
@@ -1756,11 +1744,10 @@ class InteractiveCallback:
                 },
                 'predict_value': {
                     "Выходной слой 2": {
-                          "type": "Text",
+                          "type": "text",
                           "data": [
                                 {
                                       "title": "Изображение",
-                                      "data": "initial_data_image_1_input_1.webp",
                                       "value": "0.3%",
                                       "color_mark": null
                                 },
@@ -1782,7 +1769,6 @@ class InteractiveCallback:
                           "data": [
                                 {
                                       "title": "Изображение",
-                                      "data": "initial_data_image_1_input_1.webp",
                                       "value": "0.3%",
                                       "color_mark": null
                                 },
@@ -1846,7 +1832,7 @@ class InteractiveCallback:
         'statistic_data': {
             f'Output_{layer_id}': {
                 'id': 1,
-                'type': 'Heatmap',
+                'type': 'heatmap',
                 'graph_name':  f'Output_{layer_id} - Confusion matrix',
                 'x_label': 'Предсказание',
                 'y_label': 'Истинное значение',
@@ -1868,7 +1854,7 @@ class InteractiveCallback:
                 )
                 return_data[f'{out}'] = dict(
                     id=_id,
-                    type="Heatmap",
+                    type="heatmap",
                     graph_name=f"Выходной слой «{out}» - Confusion matrix",
                     x_label="Предсказание",
                     y_label="Истинное значение",
@@ -1894,7 +1880,7 @@ class InteractiveCallback:
                 return_data[f"{out}"] = [
                     dict(
                         id=_id,
-                        type="Heatmap",
+                        type="heatmap",
                         graph_name=f"Выходной слой «{out}» - Confusion matrix",
                         x_label="Предсказание",
                         y_label="Истинное значение",
@@ -1920,7 +1906,7 @@ class InteractiveCallback:
                 return_data[f"{out}"] = dict(
                     id=_id,
                     graph_name=f"Выходной слой «{out}» - Отчет по классам",
-                    type="Table",
+                    type="table",
                     table_data=report,
                 )
                 _id += 1
@@ -1928,15 +1914,15 @@ class InteractiveCallback:
             elif self.dataset_config.get("outputs").get(f"{out}").get("task") == LayerOutputTypeChoice.Regression:
                 return_data[f"{out}"] = {
                     "scatter": {
-                        "type": "Scatter",
+                        "type": "scatter",
                         "data": []
                     },
                     "mae_distribution": {
-                        "type": "Distribution histogram",
+                        "type": "distribution histogram",
                         "data": []
                     },
                     "me_distribution": {
-                        "type": "Distribution histogram",
+                        "type": "distribution histogram",
                         "data": []
                     }
                 }
@@ -1983,19 +1969,19 @@ class InteractiveCallback:
             elif self.dataset_config.get("outputs").get(f"{out}").get("task") == LayerOutputTypeChoice.Timeseries:
                 return_data[f"{out}"] = {
                     "predict_graph": {
-                        "type": "Graphic",
+                        "type": "graphic",
                         "data": []
                     },
                     "autocorrelaton": {
-                        "type": "Graphic",
+                        "type": "graphic",
                         "data": []
                     },
                     "mae_distribution": {
-                        "type": "Distribution histogram",
+                        "type": "distribution histogram",
                         "data": []
                     },
                     "me_distribution": {
-                        "type": "Distribution histogram",
+                        "type": "distribution histogram",
                         "data": []
                     }
                 }
@@ -2299,7 +2285,7 @@ class InteractiveCallback:
                         )
                     return_data[out].append(
                         {
-                            "type": "Correlation heatmap",
+                            "type": "correlation heatmap",
                             "graph_name": f"{data_type_name} выборка - Матрица корреляций",
                             "x_label": "Колонка",
                             "y_label": "Колонка",
@@ -2504,7 +2490,7 @@ class InteractiveCallback:
             data_type = LayerInputTypeChoice.Image.name
             data = [
                 {
-                    "Title": "Изображение",
+                    "title": "Изображение",
                     "value": save_path,
                     "color_mark": None
                 }
@@ -2515,7 +2501,7 @@ class InteractiveCallback:
             data_type = LayerInputTypeChoice.Text.name
             data = [
                 {
-                    "Title": "Текст",
+                    "title": "Текст",
                     "value": text_str,
                     "color_mark": None
                 }
@@ -2530,7 +2516,7 @@ class InteractiveCallback:
             data_type = LayerInputTypeChoice.Video.name
             data = [
                 {
-                    "Title": "Видео",
+                    "title": "Видео",
                     "value": save_path,
                     "color_mark": None
                 }
@@ -2544,7 +2530,7 @@ class InteractiveCallback:
             data_type = LayerInputTypeChoice.Audio.name
             data = [
                 {
-                    "Title": "Аудио",
+                    "title": "Аудио",
                     "value": save_path,
                     "color_mark": None
                 }
@@ -2577,10 +2563,10 @@ class InteractiveCallback:
                             },
                         }
                     )
-                data_type = "Graphic"
+                data_type = "graphic"
                 data = [
                     {
-                        "Title": f"График{'и' if multi else ''} по канал{'ам' if multi else 'у'} {names[:-2]}",
+                        "title": f"График{'и' if multi else ''} по канал{'ам' if multi else 'у'} {names[:-2]}",
                         "value": graphics_data,
                         "color_mark": None
                     }
@@ -2594,13 +2580,13 @@ class InteractiveCallback:
                 for col_name in self.dataset_config.get('dataframe').get('val').columns:
                     data.append(
                         {
-                            "Title": col_name,
+                            "title": col_name,
                             "value": self.dataset_config.get('dataframe').get('val')[col_name][example_idx],
                             "color_mark": None
                         }
                     )
 
-        return data, data_type
+        return data, data_type.lower()
 
     def _postprocess_result_data(self, output_id: str, data_type: str, save_id: int, example_idx: int, show_stat=True):
 
@@ -2731,7 +2717,7 @@ class InteractiveCallback:
             )
             y_true.save(y_true_save_path, 'webp')
             data["y_true"] = {
-                "type": "Image",
+                "type": "image",
                 "data": [
                     {
                         "title": "Изображение",
@@ -2755,7 +2741,7 @@ class InteractiveCallback:
             )
             y_pred.save(y_pred_save_path, 'webp')
             data["y_pred"] = {
-                "type": "Image",
+                "type": "image",
                 "data": [
                     {
                         "title": "Изображение",
@@ -2792,7 +2778,7 @@ class InteractiveCallback:
                 self.dataset_config.get("outputs").get(output_id).get('classes_colors')
             )
             data["y_true"] = {
-                "type": "Text",
+                "type": "text",
                 "data": [
                     {
                         "title": "Текст",
@@ -2808,7 +2794,7 @@ class InteractiveCallback:
                 self.dataset_config.get("outputs").get(output_id).get('classes_colors')
             )
             data["y_pred"] = {
-                "type": "Text",
+                "type": "text",
                 "data": [
                     {
                         "title": "Текст",
@@ -2841,7 +2827,7 @@ class InteractiveCallback:
                 list(self.dataset_config["outputs"].keys()).index(output_id)]
             y_true = self.y_true.get(data_type).get(output_id)[example_idx]
             data["y_true"] = {
-                "type": "Text",
+                "type": "text",
                 "data": [
                     {
                         "title": column_name,
@@ -2854,7 +2840,7 @@ class InteractiveCallback:
             deviation = (y_pred - y_true) * 100 / y_true
             color_mark = 'success' if deviation < 2 else "wrong"
             data["y_pred"] = {
-                "type": "Text",
+                "type": "text",
                 "data": [
                     {
                         "title": column_name,
@@ -2934,7 +2920,7 @@ class InteractiveCallback:
                     )
                     _id += 1
             data["y_pred"] = {
-                "type": "Image",
+                "type": "image",
                 "data": [
                     {
                         "title": "Графики",
@@ -2950,7 +2936,7 @@ class InteractiveCallback:
                     {
                         "title": "channel",
                         'value': {
-                            "type": "Table",
+                            "type": "table",
                             "data": {
                                 "step": [
                                     {
@@ -2976,7 +2962,7 @@ class InteractiveCallback:
                 """
                 for i, channel in enumerate(self.dataset_config["outputs"][output_id]['cols_names']):
                     data["stat"]["data"].append(
-                        dict(title=channel, value={"type": "Table", "data": {}}, color_mark=None)
+                        dict(title=channel, value={"type": "table", "data": {}}, color_mark=None)
                     )
                     for step in range(self.y_true.get("val").get(output_id)[example_idx].shape[-2]):
                         deviation = (self.y_pred.get(output_id)[step, i] -
