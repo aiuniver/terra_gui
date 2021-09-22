@@ -14,7 +14,7 @@ export default {
   },
   computed: {
     src() {
-      return this.value
+      return `/_media/blank/?hash=${this.value}`
       // return window.location.host
     }
   }

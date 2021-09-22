@@ -134,6 +134,7 @@ export default {
 <style lang="scss" scoped>
 .t-table {
   position: relative;
+  height: 600px;
   &__body {
     padding: 70px 0 0 0;
   }
