@@ -114,6 +114,9 @@ class CompleteCascade(Cascade):
         self.cascade_block = CascadeBlock(adjacency_map)
         super(CompleteCascade, self).__init__(self.cascade_block.name)
 
+    def __getitem__(self, index):  # пока не ясно, стоит ли наследовать от CascadeBlock
+        return self.cascade_block[index]
+
     def __call__(self, input_path, output_path):
 
         if len(self.output) == 1:
