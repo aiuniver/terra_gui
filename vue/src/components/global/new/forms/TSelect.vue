@@ -29,7 +29,10 @@ export default {
   props: {
     type: String,
     placeholder: String,
-    value: [String, Number],
+    value: {
+      type: [String, Number],
+      default: ''
+    },
     name: String,
     parse: String,
     inputLabel: String,
@@ -50,23 +53,26 @@ export default {
     };
   },
   created() {
-    this.selected = this.list.find(item => item.value === this.value) || {};
-    // console.log(this.name, this.list);
+    // console.log(this.list)
+    // console.log(this.value)
+    const list = this.list ?? []
+    this.selected = list.find(item => item.value === this.value) || {};
     if (this.update) {
       this.send(this.value);//wtf
     }
   },
   computed: {
     filterList() {
-      return this.list;
+      return this.list ?? [];
     },
     search: {
       set(value) {
         this.input = value
       },
       get() {
-        const label = this.list.find(item => (item.value === this.selected?.value || item.value === this.value ))?.label || '';
-        return label
+        const list = this.list ?? []
+        const label = list.find(item => (item.value === this.selected?.value || item.value === this.value))?.label || '';
+        return label || ''
       },
     },
   },
@@ -104,7 +110,7 @@ export default {
       if(!value) {
         this.$emit('parse', { name: this.name, parse: this.parse, value });
       }
-      console.log(value)
+      // console.log(value)
     }
   }
 };

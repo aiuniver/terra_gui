@@ -122,10 +122,17 @@ class Project(BaseMixinData):
     def name_alias(self) -> str:
         return re.sub(r"([\-]+)", "_", slugify(self.name, language_code="ru"))
 
-    def _set_data(self, name: str, dataset: DatasetData, model: ModelDetailsData):
+    def _set_data(
+        self,
+        name: str,
+        dataset: DatasetData,
+        model: ModelDetailsData,
+        training: TrainingDetailsData,
+    ):
         self.name = name
         self.dataset = dataset
         self.model = model
+        self.training = training
 
     def dict(self, **kwargs):
         _data = super().dict(**kwargs)
@@ -133,12 +140,14 @@ class Project(BaseMixinData):
         return _data
 
     def reset(self):
+        agent_exchange("training_clear")
         shutil.rmtree(project_path.base, ignore_errors=True)
         ProjectPathData(**PROJECT_PATH)
         self._set_data(
             name=UNKNOWN_NAME,
             dataset=None,
             model=ModelDetailsData(**EmptyModelDetailsData),
+            training=TrainingDetailsData(),
         )
         self.save()
 
@@ -222,9 +231,11 @@ class Project(BaseMixinData):
                 {
                     "id": layer.id,
                     "classes_quantity": layer.num_classes,
-                    "task": layer.task.value,
-                    "loss": TrainingLosses.get(layer.task)[0],
-                    "metrics": [TrainingMetrics.get(layer.task)[0]],
+                    "task": layer.task,
+                    "loss": TrainingLosses.get(layer.task)[0] if layer.task else None,
+                    "metrics": [TrainingMetrics.get(layer.task)[0]]
+                    if layer.task
+                    else [],
                 }
             )
         self.training.base.architecture.parameters.outputs = OutputsList(outputs)
@@ -252,7 +263,9 @@ class Project(BaseMixinData):
                     "id": index,
                     "output_idx": layer.id,
                     "show": MetricGraphShowChoice.model,
-                    "show_metric": TrainingMetrics.get(layer.task)[0],
+                    "show_metric": TrainingMetrics.get(layer.task)[0]
+                    if layer.task
+                    else None,
                 }
             )
             index += 1
@@ -268,7 +281,9 @@ class Project(BaseMixinData):
                     "id": index,
                     "output_idx": layer.id,
                     "show": MetricGraphShowChoice.classes,
-                    "show_metric": TrainingMetrics.get(layer.task)[0],
+                    "show_metric": TrainingMetrics.get(layer.task)[0]
+                    if layer.task
+                    else None,
                 }
             )
             progress_table.append(

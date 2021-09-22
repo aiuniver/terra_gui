@@ -1,38 +1,48 @@
 <template>
-  <div class="table-prediction">
-    <p :class="['table-prediction__text']">
-      {{ value }}
-    </p>
-    <div :class="['table-prediction__color', { [`table-prediction__color--marked-${color}`]: color }]"></div>
+  <div class="t-predict-table">
+    <div v-if="index === '1'" :class="['t-predict-table__text']">
+      {{ name }}
+    </div>
+    <div class="t-predict-table__empty"></div>
+    <div :class="['t-predict-table__color', color]">{{ value }}</div>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'TableStatisticText',
+  name: 't-predict-table',
   props: {
-    data: {
-      type: [Object, Array],
-      default: () => {},
+    name: {
+      type: String,
+      default: '',
     },
-    value: String,
   },
   computed: {
-    color() {
-      return this.data?.color_mark || '';
+    value() {
+      return this.data.name || '';
     },
-    percent() {
-      return this.data?.value || '';
+    color() {
+      console.log(this.index);
+      return `t-predict-table__color--${this.color_mark}`;
     },
   },
 };
 </script>
 
 <style lang="scss" scoped>
-.table-prediction {
+.t-predict-table {
   display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
   &__text {
-    margin-right: 10px;
+    position: absolute;
+    width: 100%;
+    top: 0;
+    flex: 0 0 22px;
+    display: flex;
+    justify-content: center;
+    background-color: #242f3d;
     &--marked-success {
       color: green;
     }
@@ -40,10 +50,16 @@ export default {
       color: orange;
     }
   }
+  &__empty {
+    flex: 1 1 auto;
+  }
   &__color {
+    flex: 0 0 80px;
     width: 77px;
     height: 24px;
     border-radius: 4px;
+    display: flex;
+    justify-content: center;
     &--marked-success {
       background: green;
     }

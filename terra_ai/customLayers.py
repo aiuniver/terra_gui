@@ -432,8 +432,9 @@ class YOLOResBlock(Layer):
                  use_bias=False,
                  include_head=True,
                  include_add=True,
-                 all_narrow=False):
-        super(YOLOResBlock, self).__init__()
+                 all_narrow=False,
+                 **kwargs):
+        super(YOLOResBlock, self).__init__(**kwargs)
         self.mode = mode
         self.all_narrow = all_narrow
         self.filters = filters
@@ -581,8 +582,9 @@ class YOLOConvBlock(Layer):
                  use_bias=False,
                  first_conv_kernel=(1, 1),
                  first_conv_strides=(1, 1),
-                 first_conv_padding='same'):
-        super(YOLOConvBlock, self).__init__()
+                 first_conv_padding='same',
+                 **kwargs):
+        super(YOLOConvBlock, self).__init__(**kwargs)
         self.mode = mode
         self.use_bias = use_bias
         self.strides = first_conv_strides

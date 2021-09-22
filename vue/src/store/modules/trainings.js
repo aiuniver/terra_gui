@@ -1,4 +1,4 @@
-import { data, config } from "../temp/training";
+import { data } from "../temp/training";
 import { toolbar } from "../const/trainings";
 // import { predict } from "../temp/predict-training";
 // import { predict_video } from "../temp/predict-training-video-audio";
@@ -15,43 +15,26 @@ export default {
     predict: {},
     info: '',
     states: {},
-    // trainData: {},
-    trainData: data,
+    trainData: process.env.NODE_ENV === 'development' ? data : {},
     trainUsage: {},
-    trainDisplay: config,
-    buttons: {
-      train: {
-        title: "Обучить",
-        visible: true
-      },
-      stop: {
-        title: "Остановить",
-        visible: false
-      },
-      clear: {
-        title: "Сбросить",
-        visible: false
-      },
-      save: {
-        title: "Сохранить",
-        visible: false
-      }
+    training: {
+      base: {},
+      interactive: {},
+      state: {}
     },
-    interactive: {},
-    outputs: []
   }),
   mutations: {
+    SET_INTERACTIV(state, value) {
+      if (state?.training?.interactive) {
+        state.training.interactive = { ...value };
+        state.training = { ...state.training }
+      }
+    },
     SET_PARAMS(state, value) {
-      state.params = value;
+      state.params = { ...value };
     },
-    SET_INTERACTIVE(state, value) {
-      state.interactive = {...value};
-    },
-    SET_OUTPUTS(state, value) {
-      state.outputs = [...value];
-    },
-    SET_BUTTONS(state, buttons) {
-      state.buttons = { ...buttons };
+    SET_CONFIG(state, value) {
+      state.training = { ...value };
     },
     SET_STATE_PARAMS(state, value) {
       state.stateParams = { ...value };
@@ -59,8 +42,9 @@ export default {
     SET_INFO(state, value) {
       state.info = value;
     },
-    SET_STATES(state, value) {
-      state.states = { ...value };
+    SET_STATE(state, value) {
+      state.training.state = value;
+      state.training = { ...state.training }
     },
     SET_PREDICT(state, value) {
       state.predict = { ...value };
@@ -71,16 +55,14 @@ export default {
     SET_TRAIN_USAGE(state, value) {
       state.trainUsage = { ...value };
     },
-    SET_TRAIN_DISPLAY(state, value) {
-      Object.assign(state.trainDisplay, value);
-    },
   },
   actions: {
-    setButtons({ commit }, res) {
+    setState({ commit }, res) {
+      console.log(res)
       if (res && res?.data) {
-        const { buttons } = res?.data?.data?.states || res?.data
-        if (buttons) {
-          commit("SET_BUTTONS", buttons);
+        const state = res?.data?.data?.state || res?.data.state
+        if (state) {
+          commit("SET_STATE", state);
         }
       }
     },
@@ -92,30 +74,37 @@ export default {
         return item ? { id: index, ...item } : null
       }).filter(item => item)
       const res = await dispatch('axios', { url: '/training/start/', data }, { root: true });
-      dispatch('setButtons', res);
+      dispatch('setState', res);
       dispatch('setTrainData', {});
       return res
     },
     async stop({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/stop/', data }, { root: true });
-      dispatch('setButtons', res);
+      dispatch('setState', res);
       return res
     },
     async clear({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/clear/', data }, { root: true });
-      dispatch('setButtons', res);
+      dispatch('setState', res);
       return res
     },
-    async interactive({ state: { interactive }, dispatch }, part) {
-      const data = {...interactive, part}
-      console.log(data)
-      console.log(interactive)
+    async interactive({ commit, state: { training: { interactive } }, dispatch }, part) {
+      const data = { ...interactive, ...part }
+      commit("SET_INTERACTIV", data);
       return await dispatch('axios', { url: '/training/interactive/', data }, { root: true });
     },
     async progress({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/progress/', data }, { root: true });
-      console.log();
-      dispatch('setButtons', res);
+      if (res) {
+        const { data } = res.data;
+        if (data) {
+          const { info, train_data, train_usage } = data;
+          dispatch('setInfo', info);
+          dispatch('setState', res);
+          dispatch('setTrainData', train_data);
+          dispatch('setTrainUsage', train_usage);
+        }
+      }
       return res
     },
     setDrawer({ commit }, data) {
@@ -127,9 +116,9 @@ export default {
     setInfo({ commit }, info) {
       commit("SET_INFO", info);
     },
-    setStates({ commit }, data) {
-      commit("SET_STATES", data);
-    },
+    // setStates({ commit }, data) {
+    //   commit("SET_STATES", data);
+    // },
     setTrainData({ commit }, data) {
       commit("SET_TRAIN", data);
     },
@@ -147,11 +136,17 @@ export default {
     getStateParams({ stateParams }) {
       return stateParams || {}
     },
-    getInteractive({ interactive }) {
+    getInteractive({ training: { interactive } }) {
       return interactive || {}
     },
-    getOutputs({ outputs }) {
-      return outputs || []
+    getStatus({ training: { state: { status } } }) {
+      return status || ''
+    },
+    getButtons({ training: { state: { buttons } } }) {
+      return buttons
+    },
+    getOutputs({ training: { base } }) {
+      return base?.architecture?.parameters?.outputs || []
     },
     getParams({ params }) {
       return params || []
@@ -159,32 +154,14 @@ export default {
     getToolbar({ toolbar }) {
       return toolbar;
     },
-    getChars({ data: { plots } }) {
-      return plots;
-    },
-    getScatters({ data: { scatters } }) {
-      return scatters;
-    },
-    getImages({ data: { images: { images } } }) {
-      return images;
-    },
-    getTexts({ data: { texts } }) {
-      return texts;
-    },
     getTrainUsage: ({ trainUsage }) => {
       return trainUsage || {};
     },
     getTrainData: ({ trainData }) => (key) => {
       return trainData?.[key];
     },
-    getTrainDisplay: ({ trainDisplay }) => {
-      return trainDisplay;
-    },
     getPredict({ predict }) {
       return predict || {}
-    },
-    getButtons({ buttons }) {
-      return buttons
     },
   },
 };

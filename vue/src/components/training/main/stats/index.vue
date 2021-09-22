@@ -1,100 +1,109 @@
 <template>
   <div class="t-scatters">
     <div class="t-scatters__header">
-      <div class="checks">
+      <div class="t-scatters__checks">
         <template v-for="(item, i) of outputLayers">
-          <t-checkbox
-            :key="'check_' + i"
-            :inline="true"
-            :label="`Выходной слой «${item.id}»`"
-            :name="`${item.id}`"
-            @change="change($event, item.id)"
-          />
+          <t-field :key="'check_' + i" inline :label="`Выходной слой «${item}»`">
+            <t-checkbox-new small :name="`${item}`" @change="change(item)" />
+          </t-field>
         </template>
-        <t-checkbox :inline="true" v-model="auto" @change="autoChange" label="Автообновление" />
       </div>
-      <t-button class="t-scatters__btn" @click="handleClick">Показать</t-button>
+      <t-field inline :label="`Автообновление`">
+        <t-checkbox-new v-model="auto" small @change="autoChange" />
+      </t-field>
+      <div class="t-scatters__btn">
+        <t-button @click="handleClick">Показать</t-button>
+      </div>
     </div>
     <div class="t-scatters__content">
-      <template v-for="(output, key, i) of statisticData">
-        <component :is="'Heatmap'"
-        v-if="isShowKeys.includes(+key)"
-        v-bind="output"
-        :key="i" />
+      <template v-for="(item, i) of filtesLayers">
+        <Heatmap v-if="item.type === 'heatmap'" v-bind="item" :key="`heatmap_${i}`" />
+        <Table v-if="item.type === 'table'" v-bind="item" :key="`table_${i}`" />
+        <Scatter v-if="item.type === 'scatter'" v-bind="item" :key="`scatter_${i}`" />
+        <Graphic v-if="item.type === 'graphic'" v-bind="item" :key="`graphic_${i}`" />
+        <Histogram v-if="item.type === 'histogram'" v-bind="item" :key="'Histogram' + i" />
       </template>
-      <Scatter />
-      <Histogram />
-      <Table />
     </div>
   </div>
 </template>
 
 <script>
-import Heatmap from './Heatmap.vue';
-import Scatter from './Scatter.vue';
-import Histogram from './Histogram.vue';
-import Table from './Table.vue';
-
 export default {
   name: 't-scatters',
   components: {
-    Heatmap,
-    Scatter,
-    Histogram,
-    Table
+    Heatmap: () => import('./Heatmap'),
+    Scatter: () => import('./Scatter'),
+    Histogram: () => import('./Histogram'),
+    Table: () => import('./Table'),
+    Graphic: () => import('./Graphic'),
+  },
+  props: {
+    outputs: Array,
   },
   computed: {
     statisticData() {
-      return this.$store.getters['trainings/getTrainData']('statistic_data') || [];
+      return this.$store.getters['trainings/getTrainData']('statistic_data') || {};
+    },
+    filtesLayers() {
+      return Object.entries(this.statisticData)
+        .filter(item => this.selected.includes(+item[0]))
+        .map(item => item[1]);
     },
     outputLayers() {
-      const layers = this.$store.getters['modeling/getModel'].layers
-      if (!layers) return []
-      return layers.filter(item => item.group === 'output')
-    }
+      return this.outputs.map(item => item.id);
+    },
   },
   data: () => ({
-    isShowKeys: [],
-    auto: false
+    selected: [],
+    auto: false,
+
   }),
   methods: {
-    change(e, key) {
-      this.isShowKeys = !this.isShowKeys.includes(key)
-        ? [...this.isShowKeys, key]
-        : this.isShowKeys.filter(item => item !== key);
+    // isShow(layer, type) {
+    //   ершыюisShowKeys.includes(+layer) && type === 'Heatmap';
+    // },
+    change(key) {
+      // console.log(key)
+
+      this.selected = !this.selected.includes(key)
+        ? [...this.selected, key]
+        : this.selected.filter(item => item !== key);
+      console.log(this.selected);
     },
     async handleClick() {
       const data = {
-        "statistic_data": {
-          "output_id": this.isShowKeys,
-          "autoupdate": this.auto
-        }
-      }
-      this.$store.dispatch('trainings/setTrainDisplay', data)
+        statistic_data: {
+          output_id: this.selected,
+          autoupdate: this.auto,
+        },
+      };
 
-      await this.$store.dispatch('trainings/interactive', this.$store.getters['trainings/getTrainDisplay'])
+      await this.$store.dispatch('trainings/interactive', data);
     },
     autoChange(e) {
-      this.auto = e.value
-    }
-  }
+      this.auto = e.value;
+    },
+  },
 };
 </script>
 
 <style lang="scss" scoped>
 .t-scatters {
+  position: relative;
+  margin-bottom: 20px;
   &__header {
     display: flex;
     gap: 25px;
-    .checks {
-      display: flex;
-      flex-wrap: wrap;
-      flex-shrink: 0;
-      max-width: 320px;
-    }
-    button {
-      flex: 0 0 150px;
-    }
+  }
+  &__checks {
+    display: flex;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    max-width: 320px;
+  }
+  &__btn {
+    margin-left: auto;
+    flex: 0 0 150px;
   }
   &__content {
     display: flex;

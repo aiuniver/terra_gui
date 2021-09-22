@@ -58,9 +58,7 @@ export default {
           "sorted": this.sortSelected
         }
       }
-      this.$store.dispatch('trainings/setTrainDisplay', data)
-
-      await this.$store.dispatch('trainings/interactive', this.$store.getters['trainings/getTrainDisplay'])
+      await this.$store.dispatch('trainings/interactive', data)
     }
   }
 };

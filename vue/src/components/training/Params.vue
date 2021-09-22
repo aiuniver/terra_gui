@@ -1,6 +1,7 @@
 <template>
   <div class="params">
     <div class="params__body">
+      <div v-if="status !== 'no_train'" class="params__overlay"></div>
       <scrollbar>
         <div class="params__items">
           <at-collapse :value="collapse">
@@ -129,13 +130,13 @@ export default {
     optimizerValue: '',
     metricData: '',
     learningStop: false,
-    status: '',
     debounce: null,
   }),
   computed: {
     ...mapGetters({
       params: 'trainings/getParams',
       button: 'trainings/getButtons',
+      status: 'trainings/getStatus',
     }),
     getValue() {
       return this.state?.['architecture[parameters][checkpoint][metric_name]'] ?? 'Accuracy';
@@ -200,7 +201,7 @@ export default {
       const res = await this.$store.dispatch('trainings/start', this.obj);
       if (res) {
         const { data } = res;
-        if (data.status) {
+        if (data?.state?.status) {
           this.learningStop = false;
           this.progress();
         }
@@ -222,38 +223,32 @@ export default {
     },
     async progress() {
       const res = await this.$store.dispatch('trainings/progress', {});
-      // console.log(res);
       if (res) {
-        const { finished, message, percent, data } = res.data;
-        // console.log(percent);
+        const { finished, message, percent } = res.data;
         this.$store.dispatch('messages/setProgressMessage', message);
         this.$store.dispatch('messages/setProgress', percent);
-        if (data) {
-          const { info, states, train_data, train_usage } = data;
-          this.$store.dispatch('trainings/setInfo', info);
-          this.$store.dispatch('trainings/setStates', states);
-          this.$store.dispatch('trainings/setTrainData', train_data);
-          this.$store.dispatch('trainings/setTrainUsage', train_usage);
-        }
-        if (finished) {
-          // console.log(res);
-        } else {
+        if (!finished) {
           this.debounce(this.learningStop);
         }
-      } else {
-        // console.log(res);
       }
     },
     parse({ parse, value, name }) {
       // console.log({ parse, value, name });
-      this.state = { [`${parse}`]: value };
       ser(this.obj, parse, value);
       this.obj = { ...this.obj };
       if (name === 'architecture_parameters_checkpoint_layer') {
         this.metricData = value;
+        if (value) {
+          this.state = { [`${parse}`]: value };
+        }
+      } else {
+        this.state = { [`${parse}`]: value };
       }
       if (name === 'optimizer') {
         this.optimizerValue = value;
+      }
+      if (name === 'metric_name') {
+        this.metric = value;
       }
     },
   },
@@ -264,6 +259,9 @@ export default {
         this.progress();
       }
     }, 1000);
+    if (this.status === 'training') {
+      this.debounce(this.learningStop);
+    }
   },
 };
 </script>
@@ -295,6 +293,14 @@ export default {
   &__body {
     overflow: hidden;
     flex: 0 1 auto;
+    position: relative;
+  }
+  &__overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: rgb(14 22 33 / 30%);
+    z-index: 5;
   }
   &__footer {
     // width: 100%;

@@ -1400,7 +1400,6 @@ class ModelCreator:
         module = importlib.import_module(
             self.layer_config.get(terra_layer[0]).module.value
         )
-
         if len(terra_layer[3]) == 1:
             input_tensors = self.tensors[terra_layer[3][0]]
         else:

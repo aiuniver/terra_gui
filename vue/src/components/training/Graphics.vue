@@ -57,7 +57,7 @@ export default {
   }),
   computed: {
     ...mapGetters({
-      // height: "settings/autoHeight",
+      // status: "trainings/getStatus",
     }),
     show() {
       return this.collabse.includes('0');
