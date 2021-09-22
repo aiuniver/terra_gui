@@ -1,7 +1,7 @@
 <template>
   <div class="t-histogram">
     <p class="t-histogram__title">{{ graph_name }}</p>
-    <Plotly class="t-histogram__plotly" :data="plot_data" :layout="layout" :display-mode-bar="false" />
+    <Plotly class="t-histogram__plotly" :data="data" :layout="layout" :display-mode-bar="false" />
   </div>
 </template>
 
@@ -19,18 +19,25 @@ export default {
     graph_name: String,
     x_label: String,
     y_label: String,
-    labels: Array,
     plot_data: Array,
   },
+  created() {
+    this.layout.xaxis.title.text = this.x_label;
+    this.layout.yaxis.title.text = this.y_label;
+  },
+  computed: {
+    data() {
+      return this.plot_data.map(el => {
+        return {
+          type: 'histogram',
+          x: el.labels,
+          y: el.values,
+          name: 'Регрессия',
+        };
+      });
+    },
+  },
   data: () => ({
-    // data: [
-    //   {
-    //     type: 'histogram',
-    //     x: [1, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7],
-    //     y: [10, 15, 13, 17, 20, 15, 23, 10, 15, 13, 17, 20, 15, 23, 15, 13, 17, 20, 15, 23],
-    //     name: 'Регрессия',
-    //   },
-    // ],
     layout: {
       width: 636,
       height: 352,

@@ -16,32 +16,18 @@
       <t-button class="t-scatters__btn" @click="handleClick">Показать</t-button>
     </div>
     <div class="t-scatters__content">
-      <template v-for="(output, key, i) of statisticData">
-        <component
-          :is="'Heatmap'"
-          v-if="isShowKeys.includes(+key) && output.type == 'Heatmap'"
-          v-bind="output"
-          :key="i"
-        />
-        <component :is="'Table'" v-if="isShowKeys.includes(+key) && output.type == 'Table'" v-bind="output" :key="i" />
-        <component
-          :is="'Scatter'"
-          v-if="isShowKeys.includes(+key) && output.type == 'Scatter'"
-          v-bind="output"
-          :key="i"
-        />
-        <component
-          :is="'Graphic'"
-          v-if="isShowKeys.includes(+key) && output.type == 'Graphic'"
-          v-bind="output"
-          :key="i"
-        />
-        <component
-          :is="'Histogram'"
-          v-if="isShowKeys.includes(+key) && output.type == 'Histogram'"
-          v-bind="output"
-          :key="i"
-        />
+      <template v-for="(output, key) of statisticData">
+        <template v-for="(item, i) of output">
+          <Heatmap v-if="isShowKeys.includes(+key) && item.type === 'Heatmap'" v-bind="item" :key="'Heatmap' + i" />
+          <Table v-if="isShowKeys.includes(+key) && item.type === 'Table'" v-bind="item" :key="'Table' + i" />
+          <Scatter v-if="isShowKeys.includes(+key) && item.type === 'Scatter'" v-bind="item" :key="'Scatter' + i" />
+          <Graphic v-if="isShowKeys.includes(+key) && item.type === 'Graphic'" v-bind="item" :key="'Graphic' + i" />
+          <Histogram
+            v-if="isShowKeys.includes(+key) && item.type === 'Histogram'"
+            v-bind="item"
+            :key="'Histogram' + i"
+          />
+        </template>
       </template>
     </div>
   </div>

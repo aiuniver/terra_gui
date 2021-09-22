@@ -19,8 +19,25 @@ export default {
     graph_name: String,
     x_label: String,
     y_label: String,
-    labels: Array,
     plot_data: Array,
+  },
+  created() {
+    this.layout.xaxis.title.text = this.x_label;
+    this.layout.yaxis.title.text = this.y_label;
+  },
+  computed: {
+    data() {
+      return this.plot_data.map(el => {
+        return {
+          type: 'scatter',
+          x: el.labels,
+          y: el.values,
+          name: 'Регрессия',
+          mode: 'markers',
+          marker: { size: 10 },
+        };
+      });
+    },
   },
   data: () => ({
     // data: [{
