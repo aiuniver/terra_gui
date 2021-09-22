@@ -17,15 +17,32 @@
     </div>
     <div class="t-scatters__content">
       <template v-for="(output, key, i) of statisticData">
-        <component :is="'Heatmap'"
-        v-if="isShowKeys.includes(+key)"
-        v-bind="output"
-        :key="i" />
+        <component
+          :is="'Heatmap'"
+          v-if="isShowKeys.includes(+key) && output.type == 'Heatmap'"
+          v-bind="output"
+          :key="i"
+        />
+        <component :is="'Table'" v-if="isShowKeys.includes(+key) && output.type == 'Table'" v-bind="output" :key="i" />
+        <component
+          :is="'Scatter'"
+          v-if="isShowKeys.includes(+key) && output.type == 'Scatter'"
+          v-bind="output"
+          :key="i"
+        />
+        <component
+          :is="'Graphic'"
+          v-if="isShowKeys.includes(+key) && output.type == 'Graphic'"
+          v-bind="output"
+          :key="i"
+        />
+        <component
+          :is="'Histogram'"
+          v-if="isShowKeys.includes(+key) && output.type == 'Histogram'"
+          v-bind="output"
+          :key="i"
+        />
       </template>
-      <Scatter />
-      <Histogram />
-      <Table />
-      <Graphic />
     </div>
   </div>
 </template>
@@ -44,21 +61,21 @@ export default {
     Scatter,
     Histogram,
     Table,
-    Graphic
+    Graphic,
   },
   computed: {
     statisticData() {
       return this.$store.getters['trainings/getTrainData']('statistic_data') || [];
     },
     outputLayers() {
-      const layers = this.$store.getters['modeling/getModel'].layers
-      if (!layers) return []
-      return layers.filter(item => item.group === 'output')
-    }
+      const layers = this.$store.getters['modeling/getModel'].layers;
+      if (!layers) return [];
+      return layers.filter(item => item.group === 'output');
+    },
   },
   data: () => ({
     isShowKeys: [],
-    auto: false
+    auto: false,
   }),
   methods: {
     change(e, key) {
@@ -68,18 +85,18 @@ export default {
     },
     async handleClick() {
       const data = {
-        "statistic_data": {
-          "output_id": this.isShowKeys,
-          "autoupdate": this.auto
-        }
-      }
+        statistic_data: {
+          output_id: this.isShowKeys,
+          autoupdate: this.auto,
+        },
+      };
 
-      await this.$store.dispatch('trainings/interactive', data)
+      await this.$store.dispatch('trainings/interactive', data);
     },
     autoChange(e) {
-      this.auto = e.value
-    }
-  }
+      this.auto = e.value;
+    },
+  },
 };
 </script>
 

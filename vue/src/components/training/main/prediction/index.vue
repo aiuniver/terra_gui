@@ -32,12 +32,14 @@
         <t-button style="width: 150px" @click.native="show">Показать</t-button>
       </div>
     </div>
-    <TextTable :show="showTextTable" :predict="predictData" />
+    <div class="predictions__body">
+      <TextTable :predict="predictData" />
+    </div>
   </div>
 </template>
 
 <script>
-import TextTable from './TextTableTest';
+import TextTable from './TextTableNew';
 export default {
   name: 'Predictions',
   components: {

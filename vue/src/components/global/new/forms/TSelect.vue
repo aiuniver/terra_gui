@@ -53,8 +53,8 @@ export default {
     };
   },
   created() {
-    console.log(this.list)
-    console.log(this.value)
+    // console.log(this.list)
+    // console.log(this.value)
     const list = this.list ?? []
     this.selected = list.find(item => item.value === this.value) || {};
     if (this.update) {
@@ -110,7 +110,7 @@ export default {
       if(!value) {
         this.$emit('parse', { name: this.name, parse: this.parse, value });
       }
-      console.log(value)
+      // console.log(value)
     }
   }
 };
