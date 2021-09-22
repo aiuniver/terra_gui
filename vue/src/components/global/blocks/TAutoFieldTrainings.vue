@@ -24,13 +24,7 @@
       />
     </t-field>
     <t-field v-if="type === 'checkbox'" :label="label" inline>
-      <t-checkbox-new
-        :value="getValue"
-        :parse="parse"
-        :name="name"
-        :disabled="disabled"
-        @parse="change"
-      />
+      <t-checkbox-new :value="getValue" :parse="parse" :name="name" :disabled="disabled" @parse="change" />
     </t-field>
     <t-field v-if="type === 'select'" :label="label" inline>
       <t-select-new
@@ -45,17 +39,16 @@
       />
     </t-field>
 
-    <t-auto-complete
-      v-if="type === 'auto_complete'"
-      :value="getValue"
-      :label="label"
-      :list="list"
-      :parse="parse"
-      :name="name"
-      :inline="inline"
-      :disabled="disabled"
-      @parse="change"
-    />
+    <t-field v-if="type === 'auto_complete'" :label="label">
+      <t-auto-complete-new
+        :value="getValue"
+        :list="list"
+        :parse="parse"
+        :name="name"
+        :disabled="disabled"
+        @parse="change"
+      />
+    </t-field>
     <MegaMultiSelect
       v-if="type === 'multiselect'"
       :value="getValue"

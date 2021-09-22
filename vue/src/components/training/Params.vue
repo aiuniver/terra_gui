@@ -1,9 +1,9 @@
 <template>
   <div class="params">
+    <div v-if="loading" class="params__overlay">
+      <LoadSpiner :text="'Запуск обучения...'" />
+    </div>
     <div class="params__body">
-      <div v-if="loading" class="params__overlay">
-        <LoadSpiner :text="'Запуск обучения...'" />
-      </div>
       <scrollbar>
         <div class="params__items">
           <at-collapse :value="collapse">
@@ -315,10 +315,10 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  position: relative;
   &__body {
     overflow: hidden;
     flex: 0 1 auto;
-    position: relative;
   }
   &__overlay {
     position: absolute;
