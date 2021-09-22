@@ -1,5 +1,5 @@
 """
-## Тип слоя `VGG16`
+## Тип слоя `MobileNetV2`
 """
 from typing import Optional
 
@@ -19,7 +19,7 @@ LayerConfig = LayerConfigData(
             "value": 4,
             "validation": LayerValidationMethodChoice.fixed,
         },
-        "module": ModuleChoice.vgg16,
+        "module": ModuleChoice.mobilenetv2,
         "module_type": ModuleTypeChoice.keras_pretrained_model,
     }
 )
@@ -35,18 +35,6 @@ class ParametersMainData(BaseMixinData):
 class ParametersExtraData(BaseMixinData):
     classes: PositiveInt = 1000
     classifier_activation: Optional[ActivationChoice] = ActivationChoice.softmax
+    alpha: float = 1.0
     pass
 
-
-#
-# "output_layer": {
-#     "type": "str",
-#     "default": "last",
-#     "list": True,
-#     "available": ["block1_conv2",
-#                   "block2_conv2",
-#                   "block3_conv3",
-#                   "block4_conv3",
-#                   "block5_conv3",
-#                   "last"],
-# },

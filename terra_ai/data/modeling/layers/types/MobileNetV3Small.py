@@ -1,5 +1,5 @@
 """
-## Тип слоя `VGG16`
+## Тип слоя `MobileNetV3Small`
 """
 from typing import Optional
 
@@ -19,7 +19,7 @@ LayerConfig = LayerConfigData(
             "value": 4,
             "validation": LayerValidationMethodChoice.fixed,
         },
-        "module": ModuleChoice.vgg16,
+        "module": ModuleChoice.mobilenetv3small,
         "module_type": ModuleTypeChoice.keras_pretrained_model,
     }
 )
@@ -27,7 +27,7 @@ LayerConfig = LayerConfigData(
 
 class ParametersMainData(BaseMixinData):
     include_top: bool = True
-    weights: Optional[PretrainedModelWeightsChoice]
+    weights: Optional[PretrainedModelWeightsChoice] = 'imagenet'
     pooling: Optional[PretrainedModelPoolingChoice]
     trainable: bool = False
 
@@ -35,18 +35,9 @@ class ParametersMainData(BaseMixinData):
 class ParametersExtraData(BaseMixinData):
     classes: PositiveInt = 1000
     classifier_activation: Optional[ActivationChoice] = ActivationChoice.softmax
+    include_preprocessing: bool = False
+    dropout_rate: float = 0.2
+    minimalistic: bool = True  # почему-то не работает при minimalistic = False (причем в колабе работает)
+    alpha: float = 1.0
     pass
 
-
-#
-# "output_layer": {
-#     "type": "str",
-#     "default": "last",
-#     "list": True,
-#     "available": ["block1_conv2",
-#                   "block2_conv2",
-#                   "block3_conv3",
-#                   "block4_conv3",
-#                   "block5_conv3",
-#                   "last"],
-# },
