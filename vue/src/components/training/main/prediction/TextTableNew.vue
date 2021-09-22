@@ -135,20 +135,22 @@ export default {
 .t-table {
   position: relative;
   height: 600px;
+  border: 1px solid #0e1621;
   &__body {
-    padding: 70px 0 0 0;
+    padding: 66px 0 0 0;
   }
   &__rows {
     position: relative;
     display: flex;
     width: 100%;
-    // border: 1px solid #0e1621;
+    border-bottom: 1px solid #0e1621;
   }
   &__index {
     width: 70px;
     display: flex;
     align-items: center;
     justify-content: center;
+    border-right: 1px solid #0e1621;
   }
   &__title {
     display: flex;
@@ -173,13 +175,14 @@ export default {
     }
     &--index {
       width: 70px;
-      height: 70px;
+      height: 67px;
       top: -66px;
     }
   }
   &__row {
     display: flex;
     min-width: 200px;
+
     &--table {
       min-width: 100px;
     }
@@ -187,6 +190,8 @@ export default {
     &--center {
       align-items: center;
       justify-content: center;
+      border-right: 1px solid #0e1621;
+      border-left: 1px solid #0e1621;
     }
   }
   &__col {
