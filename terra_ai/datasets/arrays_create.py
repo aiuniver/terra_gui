@@ -1307,11 +1307,15 @@ class CreateArray(object):
     @staticmethod
     def postprocess_classification(array: np.ndarray, options: DatasetOutputsData) -> list:
         labels = options.classes_names
-        ohe = True if options.encoding == LayerEncodingChoice.ohe else False
-        array_argmax = np.argmax(array, axis=-1) if ohe else array
+        # ohe = True if options.encoding == LayerEncodingChoice.ohe else False
+        # array_argmax = np.argmax(array, axis=-1) if ohe else array
         labels_from_array = []
-        for i, class_idx in enumerate(array_argmax):
-            labels_from_array.append((labels[class_idx], round(array[i][class_idx]*100, 2)))
+        for class_idx in array:
+            class_dist = sorted(class_idx, reverse=True)
+            labels_dist = []
+            for j in class_dist:
+                labels_dist.append((labels[list(class_idx).index(j)], round(j * 100, 1)))
+            labels_from_array.append(labels_dist)
         return labels_from_array
 
     @staticmethod
