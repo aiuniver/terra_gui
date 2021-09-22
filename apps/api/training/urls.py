@@ -11,4 +11,5 @@ urlpatterns = [
     path("clear/", views.ClearAPIView.as_view(), name="clear"),
     path("interactive/", views.InteractiveAPIView.as_view(), name="interactive"),
     path("progress/", views.ProgressAPIView.as_view(), name="progress"),
+    path("save/", views.SaveAPIView.as_view(), name="save"),
 ]

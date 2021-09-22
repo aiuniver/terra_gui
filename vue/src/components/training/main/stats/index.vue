@@ -16,16 +16,19 @@
       <t-button class="t-scatters__btn" @click="handleClick">Показать</t-button>
     </div>
     <div class="t-scatters__content">
-      <template v-for="(output, key, i) of statisticData">
-        <component :is="'Heatmap'"
-        v-if="isShowKeys.includes(+key)"
-        v-bind="output"
-        :key="i" />
+      <template v-for="(output, key) of statisticData">
+        <template v-for="(item, i) of output">
+          <Heatmap v-if="isShowKeys.includes(+key) && item.type === 'Heatmap'" v-bind="item" :key="'Heatmap' + i" />
+          <Table v-if="isShowKeys.includes(+key) && item.type === 'Table'" v-bind="item" :key="'Table' + i" />
+          <Scatter v-if="isShowKeys.includes(+key) && item.type === 'Scatter'" v-bind="item" :key="'Scatter' + i" />
+          <Graphic v-if="isShowKeys.includes(+key) && item.type === 'Graphic'" v-bind="item" :key="'Graphic' + i" />
+          <Histogram
+            v-if="isShowKeys.includes(+key) && item.type === 'Histogram'"
+            v-bind="item"
+            :key="'Histogram' + i"
+          />
+        </template>
       </template>
-      <Scatter />
-      <Histogram />
-      <Table />
-      <Graphic />
     </div>
   </div>
 </template>
@@ -44,21 +47,21 @@ export default {
     Scatter,
     Histogram,
     Table,
-    Graphic
+    Graphic,
   },
   computed: {
     statisticData() {
       return this.$store.getters['trainings/getTrainData']('statistic_data') || [];
     },
     outputLayers() {
-      const layers = this.$store.getters['modeling/getModel'].layers
-      if (!layers) return []
-      return layers.filter(item => item.group === 'output')
-    }
+      const layers = this.$store.getters['modeling/getModel'].layers;
+      if (!layers) return [];
+      return layers.filter(item => item.group === 'output');
+    },
   },
   data: () => ({
     isShowKeys: [],
-    auto: false
+    auto: false,
   }),
   methods: {
     change(e, key) {
@@ -68,18 +71,18 @@ export default {
     },
     async handleClick() {
       const data = {
-        "statistic_data": {
-          "output_id": this.isShowKeys,
-          "autoupdate": this.auto
-        }
-      }
+        statistic_data: {
+          output_id: this.isShowKeys,
+          autoupdate: this.auto,
+        },
+      };
 
-      await this.$store.dispatch('trainings/interactive', data)
+      await this.$store.dispatch('trainings/interactive', data);
     },
     autoChange(e) {
-      this.auto = e.value
-    }
-  }
+      this.auto = e.value;
+    },
+  },
 };
 </script>
 

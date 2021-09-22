@@ -1,42 +1,47 @@
 <template>
-  <p :class="['table-prediction__text', { [`table-prediction__text--marked-${color}`]: color }]">
-    {{ text }}
-  </p>
+  <div class="t-predict-test">
+    <p :class="['t-predict-test__text', color]">
+      {{ value }}
+    </p>
+  </div>
 </template>
 
 <script>
 export default {
   name: 'TableText',
   props: {
-    data: {
-      type: [Object, Array],
-      default: () => {},
+    value: {
+      type: String,
+      default: '',
+    },
+    color_mark: {
+      type: String,
+      default: '',
+    },
+    tagsColor: {
+      type: String,
+      default: '',
     },
   },
   computed: {
-    text() {
-      return this.data?.data || '';
-    },
-    type() {
-      return this.data?.type || null;
-    },
     color() {
-      return this.data?.color_mark || '';
-    },
-    tagsColor() {
-      return this.data?.tagsColor || '';
-    },
-  },
+      return `t-predict-test__text--${this.color_mark}`
+    }
+  }
 };
 </script>
 
 <style lang="scss" scoped>
-.table-prediction {
+.t-predict-test {
+  display: flex;
+  height: 100%;
+  justify-content: center;
+  align-items: center;
   &__text {
-    &--marked-success {
+    &--success {
       color: green;
     }
-    &--marked-wrong {
+    &--wrong {
       color: orange;
     }
   }

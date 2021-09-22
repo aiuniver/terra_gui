@@ -1,4 +1,4 @@
-import { data, config } from "../temp/training";
+import { data } from "../temp/training";
 import { toolbar } from "../const/trainings";
 // import { predict } from "../temp/predict-training";
 // import { predict_video } from "../temp/predict-training-video-audio";
@@ -15,10 +15,8 @@ export default {
     predict: {},
     info: '',
     states: {},
-    // trainData: {},
-    trainData: data,
+    trainData: process.env.NODE_ENV === 'development' ? data : {},
     trainUsage: {},
-    trainDisplay: config,
     buttons: {
       train: {
         title: "Обучить",
@@ -78,9 +76,6 @@ export default {
     },
     SET_TRAIN_USAGE(state, value) {
       state.trainUsage = { ...value };
-    },
-    SET_TRAIN_DISPLAY(state, value) {
-      Object.assign(state.trainDisplay, value);
     },
   },
   actions: {
@@ -156,6 +151,9 @@ export default {
     getInteractive({ training: { interactive } }) {
       return interactive || {}
     },
+    getStatus({ training: { state: { status } } }) {
+      return status || ''
+    },
     getOutputs({ training: { base } }) {
       return base?.architecture?.parameters?.outputs || []
     },
@@ -165,26 +163,11 @@ export default {
     getToolbar({ toolbar }) {
       return toolbar;
     },
-    getChars({ data: { plots } }) {
-      return plots;
-    },
-    getScatters({ data: { scatters } }) {
-      return scatters;
-    },
-    getImages({ data: { images: { images } } }) {
-      return images;
-    },
-    getTexts({ data: { texts } }) {
-      return texts;
-    },
     getTrainUsage: ({ trainUsage }) => {
       return trainUsage || {};
     },
     getTrainData: ({ trainData }) => (key) => {
       return trainData?.[key];
-    },
-    getTrainDisplay: ({ trainDisplay }) => {
-      return trainDisplay;
     },
     getPredict({ predict }) {
       return predict || {}

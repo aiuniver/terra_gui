@@ -129,13 +129,13 @@ export default {
     optimizerValue: '',
     metricData: '',
     learningStop: false,
-    status: '',
     debounce: null,
   }),
   computed: {
     ...mapGetters({
       params: 'trainings/getParams',
       button: 'trainings/getButtons',
+      status: 'trainings/getStatus',
     }),
     getValue() {
       return this.state?.['architecture[parameters][checkpoint][metric_name]'] ?? 'Accuracy';
@@ -246,12 +246,9 @@ export default {
     },
     parse({ parse, value, name }) {
       // console.log({ parse, value, name });
-
       ser(this.obj, parse, value);
       this.obj = { ...this.obj };
       if (name === 'architecture_parameters_checkpoint_layer') {
-        console.log(name);
-        console.log(value);
         this.metricData = value;
         if (value) {
           this.state = { [`${parse}`]: value };
@@ -271,6 +268,9 @@ export default {
         this.progress();
       }
     }, 1000);
+    if (this.status === 'training') {
+      this.debounce(this.learningStop);
+    }
   },
 };
 </script>

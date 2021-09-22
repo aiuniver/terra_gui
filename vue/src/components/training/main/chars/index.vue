@@ -42,13 +42,6 @@ export default {
           { title: 'По классам', event: { name: 'data', data: 'classes' } },
         ],
       },
-      {
-        name: 'Показывать метрики',
-        list: [
-          { title: 'Accuracy', event: { name: 'metric', data: 'Accuracy' } },
-          { title: 'Hinge', event: { name: 'metric', data: 'Hinge' } },
-        ],
-      },
     ],
   }),
   computed: {
@@ -59,29 +52,45 @@ export default {
       return this.$store.getters['trainings/getTrainData'](this.metric) || [];
     },
     allMenus() {
-      console.log([...this.menus, this.listChats]);
-      return [...this.menus, this.listChats];
+      // console.log([...this.menus, this.listChats]);
+      // console.log(this.listChats);
+      return [...this.menus, ...this.listChats];
     },
     listChats() {
-      const list = this.data.map(item => {
-        return { title: item.graph_name, event: { name: 'chart', data: item.id } };
+      const listOutputs = this.outputs.map(item => {
+        return { title: `Выход ${item.id}`, event: { name: 'chart', data: item.id } };
       });
-      return {
-        name: 'Показывать выход',
-        list,
-      };
+      const metrics = this.outputs?.[0].metrics ?? [];
+      const listMetrics = metrics.map(item => {
+        return { title: `${item}`, event: { name: 'metric', data: item } };
+      });
+
+      return [
+        {
+          name: 'Показывать метрики',
+          list: listMetrics,
+        },
+        {
+          name: 'Показывать выход',
+          list: listOutputs,
+        },
+      ];
     },
     outputIdx() {
       return this.outputs.find(item => item.id).id;
     },
   },
   mounted() {
-    console.log(this.outputs);
-    this.charts = this.interactive?.[this.metric] || [];
+    // console.log(this.outputs);
+    const data = this.interactive?.[this.metric] || [];
+    this.charts = data.map(item => {
+      item.chart = item.id;
+      return item;
+    });
   },
   methods: {
     event({ name, data }, { id }) {
-      // console.log(name, data, id);
+      console.log(name, data, id);
       if (data === 'add') {
         this.add();
       }
@@ -94,10 +103,11 @@ export default {
       if (name === 'chart') {
         this.charts = this.charts.map(item => {
           if (item.id === id) {
-            item.graphID = data;
+            item.output_idx = data;
           }
           return item;
         });
+        this.send(this.charts);
       }
       if (name === 'data') {
         this.charts = this.charts.map(item => {
@@ -109,9 +119,9 @@ export default {
         this.send(this.charts);
       }
     },
-    getChart({ id, chart }) {
+    getChart({ id }) {
       // console.log({ graphID });
-      return this.data.find(item => item.id === chart) || this.data.find(item => item.id === id);
+      return this.data.find(item => item.id === id);
     },
     add() {
       if (this.charts.length < 10) {
@@ -123,9 +133,9 @@ export default {
     copy(id) {
       if (this.charts.length < 10) {
         let maxID = Math.max(0, ...this.charts.map(o => o.id));
-        const char = this.charts.find(item => item.id === id);
+        const char = { ...this.charts.find(item => item.id === id) };
         if (char) {
-          char.id = maxID + 2;
+          char.id = maxID + 1;
           this.charts = [...this.charts, char];
         }
         this.send(this.charts);
