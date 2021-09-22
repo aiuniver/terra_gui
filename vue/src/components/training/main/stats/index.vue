@@ -18,30 +18,30 @@
     <div class="t-scatters__content">
       <template v-for="(output, key, i) of statisticData">
         <component :is="'Heatmap'" v-if="isShowKeys.includes(+key)" v-bind="output" :key="i" />
+        <component :is="'Table'" v-if="isShowKeys.includes(+key)" v-bind="output" :key="i" />
+        <component :is="'Scatter'" v-if="isShowKeys.includes(+key)" v-bind="output" :key="i" />
+        <component :is="'Graphic'" v-if="isShowKeys.includes(+key)" v-bind="output" :key="i" />
+        <component :is="'Histogram'" v-if="isShowKeys.includes(+key)" v-bind="output" :key="i" />
       </template>
-      <!-- <Scatter />
-      <Histogram />
-      <Table />
-      <Graphic /> -->
     </div>
   </div>
 </template>
 
 <script>
 import Heatmap from './Heatmap.vue';
-// import Scatter from './Scatter.vue';
-// import Histogram from './Histogram.vue';
-// import Table from './Table.vue';
-// import Graphic from './Graphic.vue';
+import Scatter from './Scatter.vue';
+import Histogram from './Histogram.vue';
+import Table from './Table.vue';
+import Graphic from './Graphic.vue';
 
 export default {
   name: 't-scatters',
   components: {
     Heatmap,
-    // Scatter,
-    // Histogram,
-    // Table,
-    // Graphic,
+    Scatter,
+    Histogram,
+    Table,
+    Graphic,
   },
   computed: {
     statisticData() {
