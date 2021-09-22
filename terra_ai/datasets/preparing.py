@@ -188,10 +188,11 @@ class PrepareDataset(object):
         if self.data.alias in ['mnist', 'fashion_mnist']:
             x_train = x_train[..., None]
             x_val = x_val[..., None]
-
-        if self.data.outputs[2].task == LayerOutputTypeChoice.Classification:
-            y_train = utils.to_categorical(y_train, len(np.unique(y_train, axis=0)))
-            y_val = utils.to_categorical(y_val, len(np.unique(y_val, axis=0)))
+        for out in self.data.outputs.keys():
+            for col_name, data in self.data.outputs[out].items():
+                if data.task == LayerOutputTypeChoice.Classification:
+                    y_train = utils.to_categorical(y_train, len(np.unique(y_train, axis=0)))
+                    y_val = utils.to_categorical(y_val, len(np.unique(y_val, axis=0)))
 
         x_val, x_test, y_val, y_test = train_test_split(x_val, y_val, test_size=0.5, shuffle=True)
         self.X['train']['1'] = x_train
@@ -210,13 +211,8 @@ class PrepareDataset(object):
             for sample in os.listdir(self.paths.arrays):
                 for index in self.data.inputs.keys():
                     self.X[sample][str(index)] = joblib.load(os.path.join(self.paths.arrays, sample, f'{index}.gz'))
-                for index, data in self.data.outputs.items():
-                    if data.task == 'ObjectDetection':
-                        for i in range(6):
-                            self.Y[sample][str(index)] = joblib.load(
-                                os.path.join(self.paths.arrays, sample, f'{index}.gz'))
-                    else:
-                        self.Y[sample][str(index)] = joblib.load(os.path.join(self.paths.arrays, sample, f'{index}.gz'))
+                for index in self.data.outputs.keys():
+                    self.Y[sample][str(index)] = joblib.load(os.path.join(self.paths.arrays, sample, f'{index}.gz'))
 
             pass
 
@@ -225,10 +221,12 @@ class PrepareDataset(object):
             self.keras_datasets()
 
             if self.data.alias in ['mnist', 'fashion_mnist', 'cifar10', 'cifar100']:
-                self.preprocessing.create_scaler(put_id=1, array=self.X['train']['1'], scaler='min_max_scaler')
+                self.preprocessing.create_scaler(array=self.X['train']['1'], **{'put': 1, 'scaler': 'min_max_scaler',
+                                                                                'min_scaler': 0, 'max_scaler': 1,
+                                                                                'cols_names': f'1_{self.data.alias}'})
                 for key in self.X.keys():
                     for inp in self.X[key]:
-                        self.X[key][inp] = self.preprocessing.preprocessing[1]['object_scaler']\
+                        self.X[key][inp] = self.preprocessing.preprocessing[1][f'1_{self.data.alias}']\
                             .transform(self.X[key][inp].reshape(-1, 1)).reshape(self.X[key][inp].shape)
 
             if self.data.alias in ['imdb', 'reuters']:
@@ -245,7 +243,7 @@ class PrepareDataset(object):
                 self.dataframe[put] = pd.read_csv(os.path.join(self.paths.instructions, 'tables', f'{put}.csv'),
                                                   index_col=0)
 
-            self.preprocessing.load_preprocesses(list(self.data.inputs.keys()) + list(self.data.outputs.keys()))
+            self.preprocessing.load_preprocesses(self.data.inputs, self.data.outputs)
 
             if self.data.use_generator:
                 for instr in os.listdir(os.path.join(self.paths.instructions, 'parameters')):
