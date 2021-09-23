@@ -285,8 +285,8 @@ class DatasetData(AliasMixinData):
     group: Optional[DatasetGroupChoice]
     use_generator: bool = False
     tags: Optional[TagsList] = TagsList()
-    inputs: Optional[Dict[PositiveInt, DatasetInputsData]] = {}
-    outputs: Optional[Dict[PositiveInt, DatasetOutputsData]] = {}
+    inputs: Dict[PositiveInt, DatasetInputsData] = {}
+    outputs: Dict[PositiveInt, DatasetOutputsData] = {}
     columns: Dict[PositiveInt, Dict[str, Union[DatasetInputsData, DatasetOutputsData]]] = {}
 
     @property
