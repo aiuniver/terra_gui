@@ -4,43 +4,47 @@
       <div class="table__columns">
         <div class="table__column">
           <div class="table__item title size-1 layer-title">Слой</div>
-          <div class="table__item" v-for="(value, index) in Object.keys(this.predict).length" :key="index">
+          <div class="table__item" v-for="(value, index) in Object.keys(this.predict).length" :key="'key_sloy' + value">
             {{ index }}
           </div>
         </div>
 
-        <div
-          class="table__column"
-          v-if="Object.keys(this.predict).length > 0 && Object.keys(this.predict[1]['initial_data']).length > 0"
-        >
+        <div class="table__column" v-if="Object.keys(this.predict).length > 0">
           <div class="table__column">
             <div class="table__item title size-2">Исходные данные</div>
             <div class="table__row" v-for="(sloy, index) in predict" :key="'id_' + index">
               <div class="table__column" v-for="(value, input_name) in sloy.initial_data" :key="input_name">
                 <div class="table__item title size-2" v-if="index == 1">{{ input_name }}</div>
-                <div class="table__item">
-                  <TableImage v-if="value.type == 'Image'" :image="value" />
-                  <TableText v-if="value.type === 'str' || value.type === 'number'" :data="value" />
-                  <TableTag v-if="value.type === 'Text'" :data="value" />
+                <div v-for="(item, name) in value" :key="name" class="table__item">
+                  <TableImage v-if="item.type == 'Image'" :image="item" />
+                  <TableText v-if="item.type === 'str' || item.type === 'number'" :data="item" />
+                  <TableTag v-if="item.type === 'Text'" :data="item" />
 
-                  <Embed v-if="value.type === 'Video'" :src="value.data"></Embed>
-                  <TableAudio v-if="value.type === 'Audio'" :url="value.data" />
+                  <Embed v-if="item.type === 'Video'" :src="item.data"></Embed>
+                  <TableAudio v-if="item.type === 'Audio'" :url="item.data" />
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div
-          class="table__column"
-          v-if="Object.keys(this.predict).length > 0 && Object.keys(this.predict[1]['true_value']).length > 0"
-        >
+        <div class="table__column" v-if="Object.keys(this.predict).length > 0">
           <div class="table__column">
             <div class="table__item title size-2">Истинное значение</div>
             <div class="table__row" v-for="(sloy, index) in predict" :key="'id_' + index">
               <div class="table__column" v-for="(value, input_name) in sloy.true_value" :key="input_name">
                 <div class="table__item title size-2" v-if="index == 1">{{ input_name }}</div>
-                <div class="table__item">
+                <div v-if="Array.isArray(value)" class="table__item">
+                  <div v-for="(item, name) in value" :key="name">
+                    <TableImage v-if="item.type == 'Image'" :image="item" />
+                    <TableText v-if="item.type === 'str' || item.type === 'number'" :data="item" />
+                    <TableTag v-if="item.type === 'Text'" :data="item" />
+
+                    <Embed v-if="item.type === 'Video'" :src="item.data"></Embed>
+                    <TableAudio v-if="item.type === 'Audio'" :url="item.data" />
+                  </div>
+                </div>
+                <div v-else class="table__item">
                   <TableImage v-if="value.type == 'Image'" :image="value" />
                   <TableText v-if="value.type === 'str' || value.type === 'number'" :data="value" />
                   <TableTag v-if="value.type === 'Text'" :data="value" />
@@ -53,16 +57,23 @@
           </div>
         </div>
 
-        <div
-          class="table__column"
-          v-if="Object.keys(this.predict).length > 0 && Object.keys(this.predict[1]['predict_value']).length > 0"
-        >
+        <div class="table__column" v-if="Object.keys(this.predict).length > 0">
           <div class="table__column">
             <div class="table__item title size-2">Предсказание</div>
             <div class="table__row" v-for="(sloy, index) in predict" :key="'id_' + index">
               <div class="table__column" v-for="(value, input_name) in sloy.predict_value" :key="input_name">
                 <div class="table__item title size-2" v-if="index == 1">{{ input_name }}</div>
-                <div class="table__item">
+                <div v-if="Array.isArray(value)" class="table__item">
+                  <div v-for="(item, name) in value" :key="name">
+                    <TableImage v-if="item.type == 'Image'" :image="item" />
+                    <TableText v-if="item.type === 'str' || item.type === 'number'" :data="item" />
+                    <TableTag v-if="item.type === 'Text'" :data="item" />
+
+                    <Embed v-if="item.type === 'Video'" :src="item.data"></Embed>
+                    <TableAudio v-if="item.type === 'Audio'" :url="item.data" />
+                  </div>
+                </div>
+                <div v-else class="table__item">
                   <TableImage v-if="value.type == 'Image'" :image="value" />
                   <TableText v-if="value.type === 'str' || value.type === 'number'" :data="value" />
                   <TableTag v-if="value.type === 'Text'" :data="value" />
@@ -75,17 +86,14 @@
           </div>
         </div>
 
-        <div
-          class="table__column"
-          v-if="Object.keys(this.predict).length > 0 && Object.keys(this.predict[1]['statistic_values']).length > 0"
-        >
+        <div class="table__column" v-if="Object.keys(this.predict).length > 0">
           <div class="table__column">
             <div class="table__item title size-2">Статистика примеров</div>
             <div class="table__row" v-for="(sloy, index) in predict" :key="'id_' + index">
               <div class="table__column" v-for="(value, input_name) in sloy.statistic_values" :key="input_name">
                 <div class="table__item title size-2" v-if="index == 1">{{ input_name }}</div>
-                <div class="table__item" v-for="(input_val, key) in value" :key="key">
-                  <TableStatisticText :data="input_val" :value="key" />
+                <div class="table__item" v-for="(input_val, key) in value.data" :key="key">
+                  <TableStatisticText v-if="value.type == 'Text'" :data="input_val" />
                 </div>
               </div>
             </div>

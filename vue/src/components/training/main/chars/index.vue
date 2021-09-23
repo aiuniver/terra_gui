@@ -53,7 +53,7 @@ export default {
     },
     allMenus() {
       // console.log([...this.menus, this.listChats]);
-      console.log(this.listChats);
+      // console.log(this.listChats);
       return [...this.menus, ...this.listChats];
     },
     listChats() {
@@ -81,7 +81,7 @@ export default {
     },
   },
   mounted() {
-    console.log(this.outputs);
+    // console.log(this.outputs);
     const data = this.interactive?.[this.metric] || [];
     this.charts = data.map(item => {
       item.chart = item.id;

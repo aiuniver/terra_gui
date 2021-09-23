@@ -21,11 +21,10 @@ from .serializers import UploadSerializer
 class InfoAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         try:
-            return BaseResponseSuccess(
-                agent_exchange(
-                    "deploy_collection", dataset=request.project.dataset
-                ).native()
-            )
+            data = agent_exchange(
+                "deploy_collection", dataset=request.project.dataset
+            ).native()
+            return BaseResponseSuccess(data)
         except ValidationError as error:
             return BaseResponseErrorFields(error)
 

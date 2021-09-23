@@ -1,6 +1,8 @@
 from dict_recursive_update import recursive_update
 from pydantic import ValidationError
 
+from apps.media.utils import path_hash
+
 from terra_ai.agent import agent_exchange
 from terra_ai.agent.exceptions import ExchangeBaseException
 from terra_ai.exceptions.base import TerraBaseException
@@ -96,6 +98,18 @@ class ProgressAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         try:
             data = agent_exchange("training_progress").native()
+            try:
+                for _, result in (
+                    data.get("data", {})
+                    .get("train_data", {})
+                    .get("intermediate_result", {})
+                    .items()
+                ):
+                    for _, layer in result.get("initial_data", {}).items():
+                        for item in layer.get("data", []):
+                            item.update({"value": path_hash(path=item.get("value"))})
+            except Exception:
+                pass
             request.project.training.set_state()
             data.update({"state": request.project.training.state.native()})
             return BaseResponseSuccess(data)
