@@ -1,22 +1,12 @@
+from typing import Any
+
 from terra_ai.data.mixins import BaseMixinData
-from terra_ai.data.datasets.dataset import DatasetData
-from terra_ai.data.datasets.dataset import DatasetPathsData
+from terra_ai.data.deploy.extra import CollectionTypeChoice
 
 
 class BaseCollection(BaseMixinData):
-    path: DatasetPathsData
-
-    def __init__(self, dataset: DatasetData, **data):
-        super().__init__(**data)
-
-    def dict(self, **kwargs):
-        kwargs.update(
-            {
-                "exclude": {"path"},
-            }
-        )
-        return super().dict(**kwargs)
+    type: CollectionTypeChoice
+    data: Any
 
 
-class ImageClassificationCollection(BaseCollection):
-    pass
+# class

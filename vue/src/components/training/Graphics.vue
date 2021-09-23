@@ -4,27 +4,27 @@
       <div class="wrapper">
         <at-collapse @on-change="change" class="mt-3">
           <at-collapse-item class="mt-3" title="Лоссы" center>
-            <Graphs metric="loss_graphs"/>
+            <Graphs metric="loss_graphs" :outputs="outputs" :interactive="interactive" />
           </at-collapse-item>
           <at-collapse-item class="mt-3" title="Метрики" center>
-            <Graphs metric="metric_graphs" />
+            <Graphs metric="metric_graphs" :outputs="outputs" :interactive="interactive" />
           </at-collapse-item>
           <at-collapse-item class="mt-3" title="Промежуточные результаты" center>
             <!-- <PrePesults/> -->
             <!-- <Images /> -->
-            <Prediction />
+            <Prediction :outputs="outputs" :interactive="interactive" />
           </at-collapse-item>
           <at-collapse-item class="mt-3" title="Прогресс обучения" center>
-            <Progress />
+            <Progress :outputs="outputs" :interactive="interactive" />
           </at-collapse-item>
           <at-collapse-item class="mt-3" title="Таблица прогресса обучения" center>
-            <Texts />
+            <Texts :outputs="outputs" :interactive="interactive" />
           </at-collapse-item>
           <at-collapse-item class="mt-3" title="Статистические данные" center>
-            <Stats />
+            <Stats :outputs="outputs" :interactive="interactive" />
           </at-collapse-item>
           <at-collapse-item class="mt-3" title="Баланс данных" center>
-            <Balance />
+            <Balance :outputs="outputs" :interactive="interactive" />
           </at-collapse-item>
         </at-collapse>
       </div>
@@ -50,17 +50,23 @@ export default {
     Progress,
     Stats,
     Balance,
-    Graphs
+    Graphs,
   },
   data: () => ({
     collabse: [],
   }),
   computed: {
     ...mapGetters({
-      // height: "settings/autoHeight",
+      // status: "trainings/getStatus",
     }),
     show() {
       return this.collabse.includes('0');
+    },
+    outputs() {
+      return this.$store.getters['trainings/getOutputs'];
+    },
+    interactive() {
+      return this.$store.getters['trainings/getInteractive'];
     },
   },
   methods: {

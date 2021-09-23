@@ -18,15 +18,6 @@ from ..base import (
 from .serializers import UploadSerializer
 
 
-class InfoAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        return BaseResponseSuccess(
-            agent_exchange(
-                "deploy_collection", dataset=request.project.dataset
-            ).native()
-        )
-
-
 class UploadAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         serializer = UploadSerializer(data=request.data)

@@ -79,22 +79,6 @@ class CreateDataset(object):
                                         LayerInputTypeChoice.Audio, LayerInputTypeChoice.Video]:
                             out.parameters.sources_paths = inp.parameters.sources_paths
                         break
-                else:
-                    for inp in creation_data.inputs:
-                        if inp.type == LayerInputTypeChoice.Dataframe:
-                            inp.parameters.y_cols = out.parameters.cols_names
-                            out.parameters.xlen_step = inp.parameters.xlen_step
-                            out.parameters.xlen = inp.parameters.xlen
-                            out.parameters.step_len = inp.parameters.step_len
-                            out.parameters.separator = inp.parameters.separator
-            elif out.type == LayerOutputTypeChoice.Regression:
-                for inp in creation_data.inputs:
-                    if inp.type == LayerInputTypeChoice.Dataframe:
-                        inp.parameters.y_cols = out.parameters.cols_names
-                        # out.parameters.xlen_step = inp.parameters.xlen_step
-                        # out.parameters.xlen = inp.parameters.xlen
-                        # out.parameters.step_len = inp.parameters.step_len
-                        # out.parameters.separator = inp.parameters.separator
             elif out.type == LayerOutputTypeChoice.Segmentation:
                 for inp in creation_data.inputs:
                     if inp.type == LayerInputTypeChoice.Image:
@@ -111,15 +95,6 @@ class CreateDataset(object):
                         out.parameters.filters = inp.parameters.filters
                         inp.parameters.open_tags = out.parameters.open_tags
                         inp.parameters.close_tags = out.parameters.close_tags
-            elif out.type == LayerOutputTypeChoice.Timeseries:
-                for inp in creation_data.inputs:
-                    if inp.type == LayerInputTypeChoice.Dataframe:
-                        out.parameters.transpose = inp.parameters.transpose
-                        out.parameters.separator = inp.parameters.separator
-                        inp.parameters.step = out.parameters.step
-                        inp.parameters.length = out.parameters.length
-                        inp.parameters.trend = out.parameters.trend
-                        inp.parameters.depth = out.parameters.depth
             elif out.type == LayerOutputTypeChoice.ObjectDetection:
                 with open(creation_data.source_path.joinpath('obj.names'), 'r') as names:
                     names_list = names.read()
@@ -136,6 +111,23 @@ class CreateDataset(object):
                                 creation_data.columns_processing[w_name].parameters.height
                             creation_data.columns_processing[worker_name].parameters.width = \
                                 creation_data.columns_processing[w_name].parameters.width
+                elif creation_data.columns_processing[worker_name].type == 'Timeseries':
+                    for w_name, w_params in creation_data.columns_processing.items():
+                        if creation_data.columns_processing[w_name].type == 'Classification':
+                            creation_data.columns_processing[w_name].parameters.length = \
+                                creation_data.columns_processing[worker_name].parameters.length
+                            creation_data.columns_processing[w_name].parameters.depth = \
+                                creation_data.columns_processing[worker_name].parameters.depth
+                            creation_data.columns_processing[w_name].parameters.step = \
+                                creation_data.columns_processing[worker_name].parameters.step
+                    # for w_name, w_params in creation_data.columns_processing.items():
+                        if creation_data.columns_processing[w_name].type == 'Scaler':
+                            creation_data.columns_processing[w_name].parameters.length = \
+                                creation_data.columns_processing[worker_name].parameters.length
+                            creation_data.columns_processing[w_name].parameters.depth = \
+                                creation_data.columns_processing[worker_name].parameters.depth
+                            creation_data.columns_processing[w_name].parameters.step = \
+                                creation_data.columns_processing[worker_name].parameters.step
 
         return creation_data
 
@@ -162,7 +154,7 @@ class CreateDataset(object):
 
         for put in data:
 
-            df = pd.read_csv(put.parameters.sources_paths[0], nrows=0).columns
+            df = pd.read_csv(put.parameters.sources_paths[0], nrows=0, sep=None, engine='python').columns
             output_cols = list(put.parameters.cols_names.keys())
             cols_names_dict = {str_idx: df[int(str_idx)] for str_idx in output_cols}
 
@@ -170,7 +162,8 @@ class CreateDataset(object):
             put_columns = {}
             cols_names = list(put.parameters.cols_names.keys())
             dataframe = pd.read_csv(put.parameters.sources_paths[0], usecols=[cols_names_dict[str_idx]
-                                                                              for str_idx in cols_names])
+                                                                              for str_idx in cols_names],
+                                    sep=None, engine='python')
             for idx, name_index in enumerate(cols_names):
                 name = cols_names_dict[name_index]
                 instructions_data = None
@@ -333,6 +326,8 @@ class CreateDataset(object):
                         self.columns_processing.get(str(key)) is not None and \
                         self.columns_processing.get(str(key)).type in path_type_input_list:
                     data_to_pass = os.path.join(self.paths.basepath, data.instructions[0])
+                elif 'depth' in data.parameters.keys() and data.parameters['depth']:
+                    data_to_pass = data.instructions[0:data.parameters['length']]
                 else:
                     data_to_pass = data.instructions[0]
 
@@ -348,8 +343,15 @@ class CreateDataset(object):
                     arr['parameters'].get('classes_names')
 
                 num_classes = len(classes_names) if classes_names else None
-                task = self.columns_processing.get(str(key)).type if self.columns_processing else\
-                    creation_data.inputs.get(key).type
+                if creation_data.inputs.get(key).type == LayerInputTypeChoice.Dataframe:
+                    column_names = pd.read_csv(creation_data.inputs.get(key).parameters.sources_paths[0], nrows=0,
+                                               sep=None, engine='python').columns.to_list()
+                    current_col_name = '_'.join(col_name.split('_')[1:])
+                    idx = column_names.index(current_col_name)
+                    task = creation_data.columns_processing[
+                        str(creation_data.inputs.get(key).parameters.cols_names[idx][0])].type
+                else:
+                    task = creation_data.inputs.get(key).type
 
                 # Прописываем параметры для колонки
                 current_column = DatasetInputsData(datatype=DataType.get(len(array.shape), 'DIM'),
@@ -417,6 +419,12 @@ class CreateDataset(object):
                         self.columns_processing.get(str(key)) is not None and\
                         self.columns_processing.get(str(key)).type in path_type_outputs_list:
                     data_to_pass = os.path.join(self.paths.basepath, data.instructions[0])
+                elif 'trend' in data.parameters.keys():
+                    if data.parameters['trend']:
+                        data_to_pass = [data.instructions[0], data.instructions[data.parameters['length']]]
+                    else:
+                        data_to_pass = data.instructions[data.parameters['length']:data.parameters['length'] +
+                                                                                   data.parameters['depth']]
                 else:
                     data_to_pass = data.instructions[0]
 
@@ -435,8 +443,17 @@ class CreateDataset(object):
                 classes_names = cl_names if cl_names else [os.path.basename(x) for x in
                                                            creation_data.outputs.get(key).parameters.sources_paths]
                 num_classes = len(classes_names)
-                task = self.columns_processing.get(str(key)).type if self.columns_processing else\
-                    creation_data.outputs.get(key).type
+
+                if creation_data.outputs.get(key).type == LayerOutputTypeChoice.Dataframe:
+                    column_names = pd.read_csv(creation_data.outputs.get(key).parameters.sources_paths[0], nrows=0,
+                                               sep=None, engine='python').columns.to_list()
+                    current_col_name = '_'.join(col_name.split('_')[1:])
+                    idx = column_names.index(current_col_name)
+                    task = creation_data.columns_processing[
+                        str(creation_data.outputs.get(key).parameters.cols_names[idx][0])].type
+                else:
+                    task = creation_data.outputs.get(key).type
+
                 classes_colors = data.parameters.get('classes_colors')
 
                 if data.parameters.get('encoding'):
@@ -471,8 +488,11 @@ class CreateDataset(object):
                     self.columns[key + i] = {col_name: current_output.native()}
 
             if not creation_data.outputs.get(key).type == LayerOutputTypeChoice.ObjectDetection:
-                output_array = np.concatenate(output_array, axis=0)
-                output_array = np.expand_dims(output_array, 0)
+                if 'depth' in data.parameters.keys() and data.parameters['depth']:
+                    output_array = np.array(output_array)
+                else:
+                    output_array = np.concatenate(output_array, axis=0)
+                    output_array = np.expand_dims(output_array, 0)
             task, classes_colors, classes_names, encoding, num_classes = None, None, None, None, None
             if len(self.columns[key]) == 1:
                 for c_name, data in self.columns[key].items():
@@ -492,7 +512,6 @@ class CreateDataset(object):
                     if data['classes_names']:
                         classes_names += data['classes_names']
                 num_classes = len(classes_names) if classes_names else None
-
             for i in range(iters):
                 current_output = DatasetOutputsData(datatype=DataType.get(len(output_array[i].shape), 'DIM'),
                                                     dtype=str(output_array[i].dtype),
@@ -520,14 +539,34 @@ class CreateDataset(object):
             for key in put_data.keys():
                 current_arrays: list = []
                 col_name = None
+
+                length, depth, step = 0, 0, 1
+                for col_name, data in put_data[key].items():
+                    depth = data.parameters['depth'] if 'depth' in data.parameters.keys() and \
+                                                        data.parameters['depth'] else 0
+                    length = data.parameters['length'] if depth else 0
+                    step = data.parameters['step'] if depth else 1
+
                 for j in range(6):
                     globals()[f'current_arrays_{j}'] = []
-                for i in range(len(self.dataframe[split])):
+                for i in range(0, len(self.dataframe[split]) - length - depth, step):
+                # for i in range(len(self.dataframe[split])):
                     full_array = []
                     for col_name, data in put_data[key].items():
                         prep = None
                         if self.tags[key][col_name] in path_type_list:
                             data_to_pass = os.path.join(self.paths.basepath, self.dataframe[split].loc[i, col_name])
+
+                        elif 'depth' in data.parameters.keys() and data.parameters['depth']:
+                            if 'trend' in data.parameters.keys() and data.parameters['trend']:
+                                data_to_pass = [self.dataframe[split].loc[i, col_name],
+                                                self.dataframe[split].loc[i + data.parameters['length'] - 1, col_name]]
+                            elif 'trend' in data.parameters.keys():
+                                data_to_pass = self.dataframe[split].loc[i + data.parameters['length']:i +
+                                                                             data.parameters['length'] +
+                                                                             data.parameters['depth'] - 1, col_name]
+                            else:
+                                data_to_pass = self.dataframe[split].loc[i:i + data.parameters['length'] - 1, col_name]
                         else:
                             data_to_pass = self.dataframe[split].loc[i, col_name]
 
@@ -547,7 +586,10 @@ class CreateDataset(object):
                         else:
                             full_array.append(arr)
                     if not self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
-                        array = np.concatenate(full_array, axis=0)
+                        if depth:
+                            array = np.array(full_array)
+                        else:
+                            array = np.concatenate(full_array, axis=0)
                         current_arrays.append(array)
 
                 if self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):

@@ -12,10 +12,13 @@ import Checkbox from './forms/Checkbox';
 import Input from './forms/Input';
 import Select from './forms/Select';
 
+
+// _______________NEW____________________//
 import TInput from './new/forms/TInput';
 import TCheckbox from './new/forms/TCheckbox';
 import TSelect from './new/forms/TSelect';
 import TField from './forms/TField';
+import TAutoComplete from './new/forms/TAutoComplete';
 
 export default [
   FilesMenu,
@@ -34,5 +37,6 @@ export default [
   TInput,
   TCheckbox,
   TSelect,
+  TAutoComplete,
   TField
 ];

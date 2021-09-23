@@ -1,10 +1,10 @@
 {
   "cascades": {
-    "0": {
+    "input": {
       "tag": "input",
       "type": "image"
     },
-    "1": {
+    "model_conv": {
       "tag": "model",
       "task": "Image",
       "model": "test_example/ConvCars"
@@ -15,9 +15,9 @@
     }
   },
   "adjacency_map": {
-    "1": [
+    "model_conv": [
       "INPUT"
     ],
-    "2": ["1"]
+    "2": ["model_conv"]
   }
 }

@@ -5,8 +5,7 @@ from terra_ai.data.modeling.layer import LayersList
 from terra_ai.data.modeling.model import ModelDetailsData
 
 from apps.plugins.frontend.presets.defaults import (
-    TrainingLosses,
-    TrainingMetrics,
+    TrainingTasksRelations,
     TrainingLossSelect,
     TrainingMetricSelect,
     TrainingClassesQuantitySelect,
@@ -58,10 +57,11 @@ class DefaultsData(BaseMixinData):
         outputs = {}
         for layer in layers:
             losses_data = {**TrainingLossSelect}
+            training_task_rel = TrainingTasksRelations.get(layer.task)
             losses_list = list(
                 map(
                     lambda item: {"label": item.name, "value": item.value},
-                    TrainingLosses.get(layer.task, []),
+                    training_task_rel.losses,
                 )
             )
             losses_data.update(
@@ -76,7 +76,7 @@ class DefaultsData(BaseMixinData):
             metrics_list = list(
                 map(
                     lambda item: {"label": item.name, "value": item.value},
-                    TrainingMetrics.get(layer.task, []),
+                    training_task_rel.metrics,
                 )
             )
             metrics_data.update(

@@ -1,5 +1,8 @@
 <template>
   <div class="params">
+    <div v-if="loading" class="params__overlay">
+      <LoadSpiner :text="'Запуск обучения...'" />
+    </div>
     <div class="params__body">
       <scrollbar>
         <div class="params__items">
@@ -11,6 +14,7 @@
                   :key="'main_' + i"
                   :state="state"
                   :inline="false"
+                  :disabled="disabledAny"
                   @parse="parse"
                 />
               </template>
@@ -24,6 +28,7 @@
                     class="fit__item"
                     :state="state"
                     :inline="true"
+                    :disabled="disabledAny"
                     @parse="parse"
                   />
                 </template>
@@ -38,6 +43,7 @@
                     class="optimizer__item"
                     :state="state"
                     inline
+                    :disabled="disabledAny"
                     @parse="parse"
                   />
                 </template>
@@ -57,6 +63,7 @@
                           :key="'checkpoint_' + i"
                           :state="state"
                           :inline="true"
+                          :disabled="disabled"
                           @parse="parse"
                         />
                       </template>
@@ -75,6 +82,7 @@
                     name="metric_name"
                     :parse="'architecture[parameters][checkpoint][metric_name]'"
                     :value="getValue"
+                    :disabled="disabled"
                     @parse="parse"
                   />
                 </t-field>
@@ -85,6 +93,7 @@
                     class="checkpoint__item"
                     :state="state"
                     :inline="true"
+                    :disabled="disabled"
                     @parse="parse"
                   />
                 </template>
@@ -116,10 +125,11 @@ import ser from '../../assets/js/myserialize';
 import { mapGetters } from 'vuex';
 // import TCheckbox from '../global/new/forms/TCheckbox.vue';
 // import Checkbox from '@/components/forms/Checkbox.vue';
-
+import LoadSpiner from '@/components/forms/LoadSpiner';
 export default {
   name: 'params-traning',
   components: {
+    LoadSpiner,
     // TCheckbox,
     // Checkbox,
   },
@@ -129,14 +139,23 @@ export default {
     optimizerValue: '',
     metricData: '',
     learningStop: false,
-    status: '',
     debounce: null,
+    loading: false,
   }),
   computed: {
     ...mapGetters({
       params: 'trainings/getParams',
       button: 'trainings/getButtons',
+      status: 'trainings/getStatus',
     }),
+    disabled() {
+      console.log(this.status);
+      return this.status !== 'no_train';
+    },
+    disabledAny() {
+      console.log(this.status);
+      return this.status !== 'no_train' && this.status !== 'stopped';
+    },
     getValue() {
       return this.state?.['architecture[parameters][checkpoint][metric_name]'] ?? 'Accuracy';
     },
@@ -197,14 +216,16 @@ export default {
     },
     async start() {
       console.log(JSON.stringify(this.obj, null, 2));
+      this.loading = true;
       const res = await this.$store.dispatch('trainings/start', this.obj);
       if (res) {
         const { data } = res;
-        if (data.status) {
+        if (data?.state?.status) {
           this.learningStop = false;
           this.progress();
         }
       }
+      this.loading = false;
       // console.log(res);
     },
     async stop() {
@@ -222,38 +243,37 @@ export default {
     },
     async progress() {
       const res = await this.$store.dispatch('trainings/progress', {});
-      // console.log(res);
       if (res) {
-        const { finished, message, percent, data } = res.data;
-        // console.log(percent);
+        const { finished, message, percent } = res.data;
         this.$store.dispatch('messages/setProgressMessage', message);
         this.$store.dispatch('messages/setProgress', percent);
-        if (data) {
-          const { info, states, train_data, train_usage } = data;
-          this.$store.dispatch('trainings/setInfo', info);
-          this.$store.dispatch('trainings/setStates', states);
-          this.$store.dispatch('trainings/setTrainData', train_data);
-          this.$store.dispatch('trainings/setTrainUsage', train_usage);
-        }
-        if (finished) {
-          // console.log(res);
-        } else {
+        if (!finished) {
           this.debounce(this.learningStop);
         }
-      } else {
-        // console.log(res);
       }
     },
     parse({ parse, value, name }) {
       // console.log({ parse, value, name });
-      this.state = { [`${parse}`]: value };
       ser(this.obj, parse, value);
       this.obj = { ...this.obj };
       if (name === 'architecture_parameters_checkpoint_layer') {
         this.metricData = value;
+        if (value) {
+          this.state = { [`${parse}`]: value };
+        }
+      } else {
+        this.state = { [`${parse}`]: value };
       }
       if (name === 'optimizer') {
         this.optimizerValue = value;
+      }
+      if (name === 'metric_name') {
+        if (!value) {
+          const arr = this.state['architecture[parameters][outputs][2][metrics]'];
+          ser(this.obj, 'architecture[parameters][checkpoint][metric_name]', arr[0]);
+          this.obj = { ...this.obj };
+          this.state = { [`architecture[parameters][checkpoint][metric_name]`]: arr[0] };
+        }
       }
     },
   },
@@ -264,6 +284,9 @@ export default {
         this.progress();
       }
     }, 1000);
+    if (this.status === 'training') {
+      this.debounce(this.learningStop);
+    }
   },
 };
 </script>
@@ -292,9 +315,20 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  position: relative;
   &__body {
     overflow: hidden;
     flex: 0 1 auto;
+  }
+  &__overlay {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background-color: rgb(14 22 33 / 30%);
+    z-index: 5;
   }
   &__footer {
     // width: 100%;
