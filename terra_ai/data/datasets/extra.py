@@ -164,6 +164,9 @@ class LayerInputTypeChoice(str, Enum):
     Dataframe = "Dataframe"
     Video = "Video"
 
+    Classification = "Classification"
+    Scaler = "Scaler"
+
 
 class LayerOutputTypeChoice(str, Enum):
     """
