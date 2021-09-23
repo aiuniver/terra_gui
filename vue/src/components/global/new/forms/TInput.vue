@@ -8,6 +8,7 @@
     autocomplete="off"
     @blur="change"
     @focus="focus"
+    :disabled="isDisabled"
   />
 </template>
 
@@ -22,11 +23,19 @@ export default {
     small: Boolean,
     error: String,
     degree: Number, // for serialize
+    disabled: [Boolean, Array],
   },
   data: () => ({
     isChange: false,
   }),
   computed: {
+    isDisabled() {
+      if (Array.isArray(this.disabled)) {
+        return !!this.disabled.includes(this.name);
+      } else {
+        return this.disabled;
+      }
+    },
     input: {
       set(value) {
         this.$emit('input', value);
@@ -39,7 +48,7 @@ export default {
   },
   methods: {
     label() {
-      this.$el.focus()
+      this.$el.focus();
     },
     focus(e) {
       this.$emit('focus', e);

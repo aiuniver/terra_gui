@@ -6,7 +6,7 @@
       v-model="search"
       readonly
       :name="name"
-      :disabled="disabled"
+      :disabled="isDisabled"
       :placeholder="placeholder || ''"
       :autocomplete="'off'"
       @click="click"
@@ -31,7 +31,7 @@ export default {
     placeholder: String,
     value: {
       type: [String, Number],
-      default: ''
+      default: '',
     },
     name: String,
     parse: String,
@@ -40,7 +40,7 @@ export default {
       type: Array,
       default: () => [],
     },
-    disabled: Boolean,
+    disabled: [Boolean, Array],
     small: Boolean,
     error: String,
     update: Boolean, //wtf
@@ -55,24 +55,31 @@ export default {
   created() {
     // console.log(this.list)
     // console.log(this.value)
-    const list = this.list ?? []
+    const list = this.list ?? [];
     this.selected = list.find(item => item.value === this.value) || {};
     if (this.update) {
-      this.send(this.value);//wtf
+      this.send(this.value); //wtf
     }
   },
   computed: {
+    isDisabled() {
+      if (Array.isArray(this.disabled)) {
+        return !!this.disabled.includes(this.name);
+      } else {
+        return this.disabled;
+      }
+    },
     filterList() {
       return this.list ?? [];
     },
     search: {
       set(value) {
-        this.input = value
+        this.input = value;
       },
       get() {
-        const list = this.list ?? []
-        const label = list.find(item => (item.value === this.selected?.value || item.value === this.value))?.label || '';
-        return label || ''
+        const list = this.list ?? [];
+        const label = list.find(item => item.value === this.selected?.value || item.value === this.value)?.label || '';
+        return label || '';
       },
     },
   },
@@ -92,7 +99,7 @@ export default {
       if (item) {
         this.selected = item;
         this.send(item.value);
-        this.input = item.value
+        this.input = item.value;
       } else {
         // console.log(this.selected)
         // console.log(this.selected)
@@ -107,12 +114,12 @@ export default {
   },
   watch: {
     search(value) {
-      if(!value) {
+      if (!value) {
         this.$emit('parse', { name: this.name, parse: this.parse, value });
       }
       // console.log(value)
-    }
-  }
+    },
+  },
 };
 </script>
 

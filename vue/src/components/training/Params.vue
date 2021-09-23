@@ -101,16 +101,8 @@
             </at-collapse-item>
           </at-collapse>
         </div>
-        <!-- <div class="params__items">
-        <div class="params__items--item">
-          <t-field label="Мониторинг" inline>
-              <TCheckbox small @focus="click" />
-          </t-field>
-        </div>
-      </div> -->
       </scrollbar>
     </div>
-
     <div class="params__footer">
       <div v-for="({ title, visible }, key) of button" :key="key" class="params__btn">
         <t-button @click="btnEvent(key)" :disabled="!visible">{{ title }}</t-button>
@@ -123,22 +115,17 @@
 import { debounce } from '@/utils/core/utils';
 import ser from '../../assets/js/myserialize';
 import { mapGetters } from 'vuex';
-// import TCheckbox from '../global/new/forms/TCheckbox.vue';
-// import Checkbox from '@/components/forms/Checkbox.vue';
 import LoadSpiner from '@/components/forms/LoadSpiner';
 export default {
   name: 'params-traning',
   components: {
     LoadSpiner,
-    // TCheckbox,
-    // Checkbox,
   },
   data: () => ({
     obj: {},
     collapse: [0, 1, 2, 3, 4],
     optimizerValue: '',
     metricData: '',
-    learningStop: false,
     debounce: null,
     loading: false,
   }),
@@ -148,13 +135,14 @@ export default {
       button: 'trainings/getButtons',
       status: 'trainings/getStatus',
     }),
+    isLearning() {
+      return ['addtrain', 'training'].includes(this.status);
+    },
     disabled() {
-      console.log(this.status);
       return this.status !== 'no_train';
     },
     disabledAny() {
-      console.log(this.status);
-      return this.status !== 'no_train' && this.status !== 'stopped';
+      return this.status !== 'no_train' && this.status !== 'stopped' ? true : this.status !== 'no_train' ? ['epochs'] : false ;
     },
     getValue() {
       return this.state?.['architecture[parameters][checkpoint][metric_name]'] ?? 'Accuracy';
@@ -164,7 +152,6 @@ export default {
         this.$store.dispatch('trainings/setStateParams', value);
       },
       get() {
-        // console.log(this.$store.getters['trainings/getStateParams']);
         return this.$store.getters['trainings/getStateParams'];
       },
     },
@@ -175,7 +162,6 @@ export default {
       return this.params?.fit || {};
     },
     outputs() {
-      console.log(this.params?.outputs || {});
       return this.params?.outputs || {};
     },
     optimizerFields() {
@@ -215,13 +201,12 @@ export default {
       console.log(e);
     },
     async start() {
-      console.log(JSON.stringify(this.obj, null, 2));
+      // console.log(JSON.stringify(this.obj, null, 2));
       this.loading = true;
       const res = await this.$store.dispatch('trainings/start', this.obj);
       if (res) {
         const { data } = res;
         if (data?.state?.status) {
-          this.learningStop = false;
           this.progress();
         }
       }
@@ -229,26 +214,25 @@ export default {
       // console.log(res);
     },
     async stop() {
-      this.learningStop = true;
-      const res = await this.$store.dispatch('trainings/stop', {});
-      console.log(res);
+      this.$store.dispatch('trainings/stop', {});
     },
     async clear() {
-      const res = await this.$store.dispatch('trainings/clear', {});
-      console.log(res);
+      await this.$store.dispatch('trainings/clear', {});
     },
     async save() {
-      const res = await this.$store.dispatch('trainings/save', {});
-      console.log(res);
+      await this.$store.dispatch('trainings/save', {});
     },
     async progress() {
+      // console.log(this.isLearning);
       const res = await this.$store.dispatch('trainings/progress', {});
       if (res) {
         const { finished, message, percent } = res.data;
         this.$store.dispatch('messages/setProgressMessage', message);
         this.$store.dispatch('messages/setProgress', percent);
         if (!finished) {
-          this.debounce(this.learningStop);
+          if (this.isLearning) {
+            this.debounce();
+          }
         }
       }
     },
@@ -278,14 +262,14 @@ export default {
     },
   },
   created() {
-    this.debounce = debounce(stop => {
-      // console.log(stop)
-      if (!stop) {
-        this.progress();
-      }
+    this.debounce = debounce(() => {
+      // console.log('jghghhghghghhgh');
+      this.progress();
     }, 1000);
-    if (this.status === 'training') {
-      this.debounce(this.learningStop);
+
+    // console.log(this.isLearning);
+    if (this.isLearning) {
+      this.debounce();
     }
   },
 };

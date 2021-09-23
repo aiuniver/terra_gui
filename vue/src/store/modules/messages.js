@@ -25,7 +25,7 @@ export default {
   },
   actions: {
     setMessage({ commit }, { error, message, info }) {
-      console.log(message)
+      // console.log(message)
       commit('SET_COLOR', error ? 'error' : message ? 'success' : 'info');
       commit('SET_MESSAGE', error || message || info);
     },
