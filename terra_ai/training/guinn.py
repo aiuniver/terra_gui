@@ -638,29 +638,31 @@ class FitCallback(keras.callbacks.Callback):
 
         result = CreateArray().postprocess_results(array=presets_predict,
                                                    options=self.dataset_data,
+                                                   data_dataframe=self.dataset.dataframe.get("val"),
                                                    save_path=os.path.join(self.save_model_path,
                                                                           "deploy_presets"))
         deploy_presets = []
-        for inp in self.dataset_data.inputs.keys():
-            for idx in range(len(list(result.values())[0])):
-                data = interactive._postprocess_initial_data(
-                    input_id=str(inp),
-                    example_idx=idx,
-                )
-                if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Classification:
-                    deploy_presets.append({
-                        "source": data,
-                        "data": list(result.values())[0][idx]
-                    })
-                elif list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Segmentation:
-                    deploy_presets.append({
-                        "source": data,
-                        "segment": list(result.values())[0][idx],
-                        "data": list(zip(
-                            list(self.dataset.data.outputs.values())[0].classes_names,
-                            [colors.as_rgb_tuple() for colors in list(self.dataset.data.outputs.values())[0].classes_colors]
-                        ))
-                    })
+        if result:
+            for inp in self.dataset_data.inputs.keys():
+                for idx in range(len(list(result.values())[0])):
+                    data = interactive._postprocess_initial_data(
+                        input_id=str(inp),
+                        example_idx=idx,
+                    )
+                    if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Classification:
+                        deploy_presets.append({
+                            "source": data,
+                            "data": list(result.values())[0][idx]
+                        })
+                    elif list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Segmentation:
+                        deploy_presets.append({
+                            "source": data,
+                            "segment": list(result.values())[0][idx],
+                            "data": list(zip(
+                                list(self.dataset.data.outputs.values())[0].classes_names,
+                                [colors.as_rgb_tuple() for colors in list(self.dataset.data.outputs.values())[0].classes_colors]
+                            ))
+                        })
         return deploy_presets
 
     def save_lastmodel(self) -> None:
@@ -838,8 +840,7 @@ class FitCallback(keras.callbacks.Callback):
                 )
                 self.model.save_weights(file_path_best)
                 print(f"Epoch {self.last_epoch} - best weights was successfully saved")
-                if list(self.dataset.data.inputs.values())[0].task == LayerInputTypeChoice.Image:
-                    interactive.deploy_presets_data = self._deploy_predict(scheduled_predict)
+                interactive.deploy_presets_data = self._deploy_predict(scheduled_predict)
 
         self._fill_log_history(self.last_epoch, logs)
         self.last_epoch += 1

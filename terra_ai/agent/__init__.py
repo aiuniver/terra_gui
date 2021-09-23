@@ -28,12 +28,10 @@ from ..data.presets.datasets import DatasetsGroups
 from ..data.presets.models import ModelsGroups
 from ..data.projects.project import ProjectsInfoData, ProjectsList
 from ..data.training.train import TrainData, InteractiveData
-from ..data.deploy.collection import CollectionData as DeployCollectionData
 from ..datasets import loading as datasets_loading
 from ..datasets import utils as datasets_utils
 from ..datasets.creating import CreateDataset
 from ..deploy import loading as deploy_loading
-from ..deploy import collect as deploy_collect
 from ..modeling.validator import ModelValidator
 from ..progress import utils as progress_utils
 from ..training import training_obj
@@ -412,12 +410,6 @@ class Exchange:
         получение данных для отображения пресетов на странице деплоя
         """
         return interactive.deploy_presets_data
-
-    def _call_deploy_collection(
-        self, dataset: Optional[DatasetData] = None
-    ) -> Optional[DeployCollectionData]:
-        deploy_collect.update(dataset=dataset)
-        return deploy_collect.data
 
     def _call_deploy_upload(self, source: Path, **kwargs):
         """

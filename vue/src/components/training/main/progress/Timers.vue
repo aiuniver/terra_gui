@@ -99,7 +99,7 @@ export default {
       return { width: Math.round(current * 100  / total) + '%'};
     },
     formatTime(sec) {
-      return `${Math.floor(sec / 60 / 60)}h : ${Math.floor(sec / 60)}m : ${Math.floor(sec > 60 ? (sec / 60) % 60 : sec)}s`;
+      return `${Math.floor(sec / 3600)}h : ${Math.floor(sec % 3600 / 60)}m : ${Math.floor(sec % 3600 % 60)}s`;
     },
   },
 };

@@ -122,7 +122,6 @@ class LayerTypeChoice(str, Enum):
     CustomBlock = "CustomBlock"
     SpaceToDepth = "space_to_depth"
 
-
     @staticmethod
     def values() -> list:
         return list(map(lambda item: item.value, LayerTypeChoice))
