@@ -1,6 +1,7 @@
 from terra_ai.datasets.preprocessing import CreatePreprocessing
 from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice, \
-    LayerPrepareMethodChoice, LayerScalerImageChoice
+    LayerPrepareMethodChoice, LayerScalerImageChoice, ColumnProcessingTypeChoice, \
+    LayerTypeProcessingClassificationChoice
 from terra_ai.utils import decamelize
 from terra_ai.datasets.data import DataType, InstructionsData, DatasetInstructionsData
 from terra_ai.data.datasets.creation import CreationData, CreationInputsList, CreationOutputsList
@@ -176,9 +177,12 @@ class CreateDataset(object):
                         list_of_data, **{'cols_names': f'{put.id}_{name}', 'put': put.id},
                         **self.columns_processing[str(worker)].parameters.native())
                     path_flag = False
-                    if self.columns_processing[str(worker)].type in [LayerInputTypeChoice.Image, LayerOutputTypeChoice.Image,
-                                                                     LayerInputTypeChoice.Video, LayerOutputTypeChoice.Segmentation,
-                                                                     LayerInputTypeChoice.Audio, LayerOutputTypeChoice.Audio,
+                    if self.columns_processing[str(worker)].type in [LayerInputTypeChoice.Image,
+                                                                     LayerOutputTypeChoice.Image,
+                                                                     LayerInputTypeChoice.Video,
+                                                                     LayerOutputTypeChoice.Segmentation,
+                                                                     LayerInputTypeChoice.Audio,
+                                                                     LayerOutputTypeChoice.Audio,
                                                                      LayerOutputTypeChoice.ObjectDetection]:
                         paths_list = [os.path.join(self.source_path, elem) for elem in instr['instructions']]
                         path_flag = True
@@ -269,7 +273,9 @@ class CreateDataset(object):
         classes_dict = {}
         for out in self.instructions.outputs.keys():
             if creation_data.columns_processing.get(str(out)) is not None and\
-                    creation_data.columns_processing.get(str(out)).type == LayerOutputTypeChoice.Classification or\
+                    creation_data.columns_processing.get(str(out)).type == LayerOutputTypeChoice.Classification and \
+                    creation_data.columns_processing.get(str(out)).parameters.type_processing != \
+                    LayerTypeProcessingClassificationChoice.ranges or\
                     creation_data.outputs.get(out).type == LayerOutputTypeChoice.Classification:
                 for col_name, data in self.instructions.outputs[out].items():
                     class_names = list(dict.fromkeys(data.instructions))
@@ -336,6 +342,8 @@ class CreateDataset(object):
 
                 array = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(arr['instructions'],
                                                                                          **arr['parameters'])
+                if not array.shape:
+                    array = np.expand_dims(array, 0)
                 input_array.append(array)
 
                 classes_names = [os.path.basename(x) for x in creation_data.inputs.get(key).parameters.sources_paths]\
@@ -366,7 +374,12 @@ class CreateDataset(object):
                 self.columns[key].update([(col_name, current_column.native())])
 
             # Прописываем параметры для входа
-            input_array = np.concatenate(input_array, axis=0)
+            timeseries_flag = False
+            if creation_data.columns_processing:
+                for data in creation_data.columns_processing.values():
+                    if data.type == ColumnProcessingTypeChoice.Timeseries:
+                        timeseries_flag = True
+            input_array = np.concatenate(input_array, axis=0) if not timeseries_flag else np.array(input_array)
             task, classes_colors, classes_names, encoding, num_classes = None, None, None, None, None
             if len(self.columns[key]) == 1:
                 for c_name, data in self.columns[key].items():
@@ -424,7 +437,7 @@ class CreateDataset(object):
                         data_to_pass = [data.instructions[0], data.instructions[data.parameters['length']]]
                     else:
                         data_to_pass = data.instructions[data.parameters['length']:data.parameters['length'] +
-                                                                                   data.parameters['depth']]
+                                                         data.parameters['depth']]
                 else:
                     data_to_pass = data.instructions[0]
 
@@ -437,6 +450,8 @@ class CreateDataset(object):
                 if isinstance(array, list):  # Условие для ObjectDetection
                     output_array = [arr for arr in array]
                 else:
+                    if not array.shape:
+                        array = np.expand_dims(array, 0)
                     output_array.append(array)
 
                 cl_names = data.parameters.get('classes_names')
@@ -472,10 +487,11 @@ class CreateDataset(object):
 
                 if not creation_data.outputs.get(key).type == LayerOutputTypeChoice.ObjectDetection:
                     array = np.expand_dims(array, 0)
+
                 else:
                     iters = 6
                 for i in range(iters):
-                    current_output = DatasetOutputsData(datatype=DataType.get(len(array[i].shape), 'DIM'), # output_array
+                    current_output = DatasetOutputsData(datatype=DataType.get(len(array[i].shape), 'DIM'),
                                                         dtype=str(array[i].dtype),
                                                         shape=array[i].shape,
                                                         name=creation_data.outputs.get(key).name,
@@ -550,7 +566,6 @@ class CreateDataset(object):
                 for j in range(6):
                     globals()[f'current_arrays_{j}'] = []
                 for i in range(0, len(self.dataframe[split]) - length - depth, step):
-                # for i in range(len(self.dataframe[split])):
                     full_array = []
                     for col_name, data in put_data[key].items():
                         prep = None
@@ -563,8 +578,8 @@ class CreateDataset(object):
                                                 self.dataframe[split].loc[i + data.parameters['length'] - 1, col_name]]
                             elif 'trend' in data.parameters.keys():
                                 data_to_pass = self.dataframe[split].loc[i + data.parameters['length']:i +
-                                                                             data.parameters['length'] +
-                                                                             data.parameters['depth'] - 1, col_name]
+                                                                         data.parameters['length'] +
+                                                                         data.parameters['depth'] - 1, col_name]
                             else:
                                 data_to_pass = self.dataframe[split].loc[i:i + data.parameters['length'] - 1, col_name]
                         else:
