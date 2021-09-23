@@ -2,7 +2,7 @@
 ## Структура данных моделей
 """
 
-from typing import Optional, List, Tuple
+from typing import Optional, List
 from pydantic import validator
 from pydantic.types import PositiveInt
 

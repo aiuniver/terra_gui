@@ -11,12 +11,12 @@
       class="t-auto-complete__input"
       v-model="search"
       :name="name"
-      :disabled="disabled"
+      :disabled="isDisabled"
       :placeholder="placeholder || ''"
       :autocomplete="'off'"
       @click="click"
       @blur="select(false)"
-      @focus="$emit('focus', $event), $event.target.select();"
+      @focus="$emit('focus', $event), $event.target.select()"
     />
     <label :for="name">{{ inputLabel }}</label>
     <div class="t-auto-complete__content" v-show="show">
@@ -45,7 +45,7 @@ export default {
       type: Array,
       default: () => [],
     },
-    disabled: Boolean,
+    disabled: [Boolean, Array],
     small: Boolean,
     error: String,
     update: Boolean, //wtf
@@ -62,12 +62,19 @@ export default {
     // console.log(this.value)
     const list = this.list ?? [];
     this.selected = list.find(item => item.value === this.value) || {};
-    this.input = this.value
+    this.input = this.value;
     if (this.update) {
       this.send(this.value); //wtf
     }
   },
   computed: {
+    isDisabled() {
+      if (Array.isArray(this.disabled)) {
+        return !!this.disabled.includes(this.name);
+      } else {
+        return this.disabled;
+      }
+    },
     filterList() {
       return this.list
         ? this.list.filter(item => {

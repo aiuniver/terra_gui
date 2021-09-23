@@ -81,7 +81,7 @@ export default {
     id: Number,
     state: Object,
     inline: Boolean,
-    disabled: Boolean,
+    disabled: [Boolean, Array],
   },
   data: () => ({
     valueIn: null,

@@ -59,7 +59,7 @@ export default {
   },
   actions: {
     setState({ commit }, res) {
-      console.log(res)
+      // console.log(res)
       if (res && res?.data) {
         const state = res?.data?.data?.state || res?.data.state
         if (state) {

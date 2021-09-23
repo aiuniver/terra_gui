@@ -15,6 +15,7 @@ class ParametersData(MinMaxScalerData, ColumnProcessingData):
     trend_limit: Optional[str]
     depth: Optional[PositiveInt]
     scaler: Optional[LayerScalerTimeseriesChoice]
+    put: Optional[PositiveInt]
 
     transpose: Optional[bool]
     separator: Optional[str]
