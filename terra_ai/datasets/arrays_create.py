@@ -216,6 +216,8 @@ class CreateArray(object):
     def instructions_classification(paths_list: list, **options) -> dict:
 
         length = options['length'] if 'length' in options.keys() else None
+        depth = options['depth'] if 'depth' in options.keys() else None
+        step = options['step'] if 'step' in options.keys() else None
 
         type_processing = options['type_processing']
 
@@ -238,7 +240,9 @@ class CreateArray(object):
                                        'cols_names': options['cols_names'],
                                        'put': options['put'],
                                        'type_processing': type_processing,
-                                       'length': length
+                                       'length': length,
+                                       'step': step,
+                                       'depth': depth
                                        }
                         }
 
@@ -1028,11 +1032,12 @@ class CreateArray(object):
     @staticmethod
     def preprocess_scaler(array: np.ndarray, **options) -> np.ndarray:
 
-        # if options['scaler'] != LayerScalerImageChoice.no_scaler and options.get('preprocess'):
-        # col = options['cols_names']
-        # orig_shape = array.shape
-        array = options['preprocess'].transform(array.reshape(-1, 1))[0]
-        # array = array.reshape(orig_shape)
+        if array.shape != ():
+            orig_shape = array.shape
+            array = options['preprocess'].transform(array.reshape(-1, 1))
+            array = array.reshape(orig_shape)
+        else:
+            array = options['preprocess'].transform(array.reshape(-1, 1))[0]
 
         return array
 
@@ -1046,8 +1051,7 @@ class CreateArray(object):
     def preprocess_regression(array: np.ndarray, **options) -> np.ndarray:
 
         if options['scaler'] != LayerScalerImageChoice.no_scaler and options.get('preprocess'):
-            array = options['preprocess'].transform(array.reshape(-1, 1))
-            array = array[0]
+            array = options['preprocess'].transform(array.reshape(-1, 1))[0]
 
         return array
 

@@ -125,6 +125,9 @@ class ParametersClassificationData(ParametersBaseData):
     one_hot_encoding: bool = True
     type_processing: LayerTypeProcessingClassificationChoice
     ranges: Optional[str]
+    length: int = 0
+    depth: int = 0
+    step: int = 1
 
     @validator("type_processing")
     def _validate_type_processing(
@@ -159,3 +162,7 @@ class ParametersTimeseriesData(ParametersBaseData, MinMaxScalerData):
 
 class ParametersScalerData(ParametersBaseData, MinMaxScalerData):
     scaler: LayerScalerDefaultChoice
+    length: int = 0
+    depth: int = 0
+    step: int = 1
+
