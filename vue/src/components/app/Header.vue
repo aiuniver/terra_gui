@@ -1,7 +1,7 @@
 <template>
   <div class="header">
     <div class="header__left">
-      <a href="#" class="header__left--logo"></a>
+      <div href="#" class="header__left--logo"></div>
       <TProjectName @save="saveNameProject" />
     </div>
     <!-- <div class="header__center">Название задачи / Название эксперимента</div> -->
@@ -17,7 +17,7 @@
       </div>
       <router-link to="/profile">
         <div class="header__right--icon">
-            <i class="profile"></i>
+          <i class="profile"></i>
         </div>
       </router-link>
     </div>
