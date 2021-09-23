@@ -3,7 +3,7 @@ import re
 import json
 import shutil
 
-from typing import Optional
+from typing import Optional, Dict
 from pathlib import Path
 from pydantic import validator, DirectoryPath, FilePath
 from transliterate import slugify
@@ -11,7 +11,7 @@ from transliterate import slugify
 from django.conf import settings
 
 from apps.plugins.frontend import defaults_data
-from apps.plugins.frontend.presets.defaults import TrainingLosses, TrainingMetrics
+from apps.plugins.frontend.presets.defaults import TrainingTasksRelations
 
 from terra_ai.agent import agent_exchange
 from terra_ai.training.guinn import interactive as training_interactive
@@ -33,6 +33,8 @@ from terra_ai.data.training.train import (
 from terra_ai.data.training.outputs import OutputsList
 from terra_ai.data.training.checkpoint import CheckpointData
 from terra_ai.data.training.extra import LossGraphShowChoice, MetricGraphShowChoice
+from terra_ai.data.deploy.extra import TaskTypeChoice as DeployTaskTypeChoice
+from terra_ai.data.deploy.tasks import BaseCollection as DeployBaseCollection
 
 from . import exceptions
 
@@ -52,6 +54,10 @@ PROJECT_PATH = {
     "datasets": Path(settings.TERRA_AI_PROJECT_PATH, "datasets").absolute(),
     "modeling": Path(settings.TERRA_AI_PROJECT_PATH, "modeling").absolute(),
     "training": Path(settings.TERRA_AI_PROJECT_PATH, "training").absolute(),
+}
+
+TASKS_RELATIONS = {
+    DeployTaskTypeChoice.image_classification: {"ImageClassification"},
 }
 
 
@@ -85,12 +91,12 @@ class ProjectPathData(BaseMixinData):
     modeling: DirectoryPath
     training: DirectoryPath
 
-    @validator("base", "datasets", "modeling", "training", pre=True)
+    @validator("base", "datasets", "modeling", "training", allow_reuse=True, pre=True)
     def _validate_directory(cls, value: DirectoryPath) -> DirectoryPath:
         os.makedirs(value, exist_ok=True)
         return value
 
-    @validator("config", pre=True)
+    @validator("config", allow_reuse=True, pre=True)
     def _validate_config(cls, value: FilePath) -> FilePath:
         try:
             with open(PROJECT_PATH.get("config"), "x") as _config_ref:
@@ -109,6 +115,11 @@ class TrainingDetailsData(BaseMixinData):
         self.state = StateData(**training_interactive.train_states)
 
 
+class DeployDetailsData(BaseMixinData):
+    type: Optional[DeployTaskTypeChoice]
+    data: Dict[str, DeployBaseCollection] = {}
+
+
 class Project(BaseMixinData):
     name: str = UNKNOWN_NAME
     hardware: HardwareAcceleratorData = HardwareAcceleratorData(
@@ -117,6 +128,7 @@ class Project(BaseMixinData):
     dataset: Optional[DatasetData]
     model: ModelDetailsData = ModelDetailsData(**EmptyModelDetailsData)
     training: TrainingDetailsData = TrainingDetailsData()
+    deploy: DeployDetailsData = DeployDetailsData()
 
     @property
     def name_alias(self) -> str:
@@ -157,10 +169,12 @@ class Project(BaseMixinData):
                 _config = json.load(_config_ref)
                 _dataset = _config.get("dataset", None)
                 _model = _config.get("model", None)
+                _training = _config.get("training", None)
                 self._set_data(
                     name=_config.get("name", UNKNOWN_NAME),
                     dataset=DatasetData(**_dataset) if _dataset else None,
                     model=ModelDetailsData(**(_model or EmptyModelDetailsData)),
+                    training=TrainingDetailsData(**(_training or {})),
                 )
         except Exception:
             self.reset()
@@ -169,11 +183,45 @@ class Project(BaseMixinData):
         with open(project_path.config, "w") as _config_ref:
             json.dump(json.loads(self.json()), _config_ref)
 
+    def set_deploy(self):
+        model = self.dataset.model
+        tasks = {}
+        for _input in model.inputs:
+            for _output in model.outputs:
+                tasks.update(
+                    {
+                        f"{_input.group}{_input.id}_{_output.group}{_output.id}": f"{_input.task.name}{_output.task.name}"
+                    }
+                )
+        try:
+            _type = list(TASKS_RELATIONS.keys())[
+                list(TASKS_RELATIONS.values()).index(set(tasks.values()))
+            ]
+        except Exception:
+            self.deploy = DeployDetailsData()
+            return
+
+        data = {}
+        for _id, _task in tasks.items():
+            _task_class = getattr(tasks, f"{_task}CollectionList", None)
+            if not _task_class:
+                continue
+            data.update(
+                {
+                    _id: {
+                        "type": _task,
+                        "data": _task_class(),
+                    }
+                }
+            )
+        self.deploy = DeployDetailsData(**{"type": _type, "data": data})
+
     def set_dataset(self, dataset: DatasetData = None):
         if dataset is None:
             self.dataset = None
             self.model = ModelDetailsData(**EmptyModelDetailsData)
             self.set_training()
+            self.set_deploy()
             return
         model_init = dataset.model
         if self.model.inputs and len(self.model.inputs) != len(model_init.inputs):
@@ -213,6 +261,7 @@ class Project(BaseMixinData):
             self.model.name = model_init.name
             self.model.alias = model_init.alias
         self.set_training()
+        self.set_deploy()
 
     def set_model(self, model: ModelDetailsData):
         if self.dataset:
@@ -227,15 +276,24 @@ class Project(BaseMixinData):
     def update_training_base(self):
         outputs = []
         for layer in self.model.outputs:
+            training_task_rel = TrainingTasksRelations.get(layer.task)
+            training_losses = (
+                list(map(lambda item: item.name, training_task_rel.losses))
+                if training_task_rel
+                else None
+            )
+            training_metrics = (
+                list(map(lambda item: item.name, training_task_rel.metrics))
+                if training_task_rel
+                else None
+            )
             outputs.append(
                 {
                     "id": layer.id,
                     "classes_quantity": layer.num_classes,
                     "task": layer.task,
-                    "loss": TrainingLosses.get(layer.task)[0] if layer.task else None,
-                    "metrics": [TrainingMetrics.get(layer.task)[0]]
-                    if layer.task
-                    else [],
+                    "loss": training_losses[0] if training_losses else None,
+                    "metrics": [training_metrics[0]] if training_metrics else [],
                 }
             )
         self.training.base.architecture.parameters.outputs = OutputsList(outputs)

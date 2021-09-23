@@ -6,7 +6,6 @@ from . import views
 app_name = "deploy"
 
 urlpatterns = [
-    path("info/", views.InfoAPIView.as_view(), name="info"),
     path("upload/", views.UploadAPIView.as_view(), name="upload"),
     path(
         "upload/progress/",
