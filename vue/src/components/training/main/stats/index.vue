@@ -17,11 +17,7 @@
     </div>
     <div class="t-scatters__content">
       <template v-for="(item, i) of filtesLayers">
-        <Heatmap v-if="item.type === 'heatmap'" v-bind="item" :key="`heatmap_${i}`" />
-        <Table v-if="item.type === 'table'" v-bind="item" :key="`table_${i}`" />
-        <Scatter v-if="item.type === 'scatter'" v-bind="item" :key="`scatter_${i}`" />
-        <Graphic v-if="item.type === 'graphic'" v-bind="item" :key="`graphic_${i}`" />
-        <Histogram v-if="item.type === 'histogram'" v-bind="item" :key="'Histogram' + i" />
+        <component :is="item.type" v-bind="item" :key="`${item.type + i}`" />
       </template>
     </div>
   </div>

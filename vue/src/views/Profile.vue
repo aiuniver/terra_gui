@@ -5,10 +5,10 @@
             <t-input v-model="firstName" label="Имя" :error="errFirst" />
             <t-input v-model="lastName" label="Фамилия" :error="errLast" />
         </div>
-        <template v-if="isChanged">
+        <div v-if="isChanged" class="page-profile__btns">
             <button class="btn" @click="save">Сохранить</button>
             <button class="btn cancel" @click="cancel">Отменить</button>
-        </template>
+        </div>
         <hr>
         <div class="page-profile__block">
             <div class="page-profile__block--contact">
@@ -23,7 +23,7 @@
         <hr>
         <div class="page-profile__token">
             <p class="page-profile__label">Token</p>
-            <p class="page-profile__text" ref="token">a3b3a0f552d65df1eb3fc08b0f8a28854895814b434b2e7fbcadc60d6e1a76a4 <i class="btn-copy" @click="copy"></i></p>
+            <p class="page-profile__text" ref="token">a3b3a0f552d65df1eb3fc08b0f8a28854895814b434b2e7fbcadc60d6e1a76a4<i class="btn-copy" @click="copy"></i></p>
             <div @click="updateToken" class="btn-text">
                 Обновить токен
             </div>
@@ -104,10 +104,12 @@ export default {
             }
         },
         cancel() {
-            [this.errFirst, this.errLast] = ['', ''];
+            this.errFirst = this.errLast = ''
             this.firstName = this.cached[0]
             this.lastName = this.cached[1]
-            this.isChanged = false
+            setTimeout(() => {
+                this.isChanged = false
+            }, 1);
         },
         notify(msg) {
             clearTimeout(this.tId)
@@ -140,6 +142,9 @@ export default {
 .page-profile {
     margin: 30px 95px;
     max-width: 872px;
+    &__btns {
+        margin-top: 50px;
+    }
     &__notice {
         position: absolute;
         top: 85px;

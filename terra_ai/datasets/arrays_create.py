@@ -1,4 +1,5 @@
 import tensorflow
+from pandas import DataFrame
 
 from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice, \
@@ -1286,7 +1287,7 @@ class CreateArray(object):
         return array
 
     @staticmethod
-    def postprocess_results(array, options: DatasetData, save_path: str = "") -> dict:
+    def postprocess_results(array, options: DatasetData, data_dataframe: DataFrame, save_path: str = "") -> dict:
         return_data = {}
         for i, output_id in enumerate(options.outputs.keys()):
             if len(options.outputs.keys()) > 1:
@@ -1302,13 +1303,15 @@ class CreateArray(object):
                 return_data[output_id] = CreateArray().postprocess_segmentation(
                     postprocess_array, options.outputs[output_id], output_id, save_path
                 )
+            elif options.outputs[output_id].task == LayerOutputTypeChoice.TextSegmentation:
+                return_data[output_id] = CreateArray().postprocess_text_segmentation(
+                    postprocess_array, options.outputs[output_id], data_dataframe
+                )
         return return_data
 
     @staticmethod
     def postprocess_classification(array: np.ndarray, options: DatasetOutputsData) -> list:
         labels = options.classes_names
-        # ohe = True if options.encoding == LayerEncodingChoice.ohe else False
-        # array_argmax = np.argmax(array, axis=-1) if ohe else array
         labels_from_array = []
         for class_idx in array:
             class_dist = sorted(class_idx, reverse=True)
@@ -1337,3 +1340,98 @@ class CreateArray(object):
 
         return img_from_array
 
+    @staticmethod
+    def postprocess_text_segmentation(array: np.ndarray, options: DatasetOutputsData, data_dataframe: DataFrame):
+
+        def add_tags_to_word(word: str, tag: str):
+            """
+            Tag  = s1
+            """
+            if tag:
+                return f"<{tag}>{word}</{tag}>"
+            else:
+                return word
+
+        def color_mixer(colors: list):
+            if colors:
+                result = np.zeros((3,))
+                for color in colors:
+                    result += np.array(color)
+                return tuple((result / len(colors)).astype('int'))
+
+        def tag_mixer(tags: list, colors: dict):
+            tags = sorted(tags, reverse=False)
+            mix_tag = f"{tags[0]}"
+            for tag in tags[1:]:
+                mix_tag += f"+{tag}"
+            return mix_tag, color_mixer([colors[tag] for tag in tags])
+
+        def reformat_tags(y_array, tag_list: list, classes_names: dict, colors: dict, sensitivity: float = 0.9):
+            norm_array = np.where(y_array >= sensitivity, 1, 0).astype('int')
+            reformat_tags = []
+            for word_tag in norm_array:
+                if np.sum(word_tag) == 0:
+                    reformat_tags.append(None)
+                elif np.sum(word_tag) == 1:
+                    reformat_tags.append(tag_list[np.argmax(word_tag, axis=-1)])
+                else:
+                    mix_tag = []
+                    mix_name = ""
+                    for i, tag in enumerate(word_tag):
+                        if tag == 1:
+                            mix_tag.append(tag_list[i])
+                            mix_name += f"{classes_names[tag_list[i]]} + "
+                    mix_tag, mix_color = tag_mixer(mix_tag, colors)
+                    if mix_tag not in classes_names.keys():
+                        classes_names[mix_tag] = mix_name[:-3]
+                        colors[mix_tag] = mix_color
+                    reformat_tags.append(mix_tag)
+            return reformat_tags, classes_names, colors
+
+        def text_colorization(text: str, labels: list, tag_list: list, classes_names: dict, colors: dict):
+            text = text.split(" ")
+            labels, classes_names, colors = reformat_tags(labels, tag_list, classes_names, colors)
+            colored_text = []
+            for i, word in enumerate(text):
+                colored_text.append(add_tags_to_word(word, labels[i]))
+            return ' '.join(colored_text), classes_names, colors
+
+        # TODO: пока исходим что для сегментации текста есть только один вход с текстом, если будут сложные модели
+        #  на сегментацию текста на несколько входов то придется искать решения
+
+        return_data = []
+        classes_names = {}
+        if not options.classes_colors:
+            classes_colors = {}
+            for i, name in enumerate(options.classes_names):
+                classes_colors[f"s{i + 1}"] = tuple(np.random.randint(256, size=3))
+                classes_names[f"s{i + 1}"] = options.classes_names[i]
+        else:
+            classes_colors = options.classes_colors
+            for i, name in enumerate(classes_names):
+                classes_colors[f"s{i + 1}"] = options.classes_colors[i]
+                classes_names[f"s{i + 1}"] = options.classes_names[i]
+
+        for example_id in range(len(data_dataframe)):
+            initinal_text = data_dataframe.iat[example_id, 0]
+            text_segmentation, classes_names, colors = text_colorization(
+                initinal_text,
+                array[example_id],
+                list(classes_colors.keys()),
+                classes_names,
+                classes_colors
+            )
+            data = []
+            for tag in classes_colors.keys():
+                print(tag, classes_names[tag], classes_colors[tag])
+                data.append(
+                    (tag, classes_names[tag], classes_colors[tag])
+                )
+            return_data.append(
+                {
+                    "source": initinal_text,
+                    "format": text_segmentation,
+                    "data": data
+                }
+            )
+        return return_data

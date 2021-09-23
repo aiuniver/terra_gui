@@ -1,32 +1,32 @@
 <template>
   <div class="t-heatmap">
-    <div class="t-heatmap__scale">
+    <div class="t-heatmap__scale" ref="scale">
       <div class="t-heatmap__scale--gradient"></div>
       <div class="t-heatmap__scale--values">
         <span class="value" v-for="(item, idx) in stepValues" :key="idx">{{ item }}</span>
       </div>
+      <div class="t-heatmap__y-label">{{ y_label }}</div>
     </div>
-    <div class="t-heatmap__body">
+    <div class="t-heatmap__grid--y-labels" ref="label">
+      <span v-for="(item, idx) in labels" :key="idx">{{ item }}</span>
+    </div>
+    <div class="t-heatmap__body" :style="{ maxWidth: bodyWidth }">
+      <p class="t-heatmap__title">{{ graph_name }}</p>
+      <div class="t-heatmap__x-label">{{ x_label }}</div>
       <scrollbar :ops="ops">
         <div class="t-heatmap__wrapper">
-          <p class="t-heatmap__title">{{ graph_name }}</p>
-          <div class="t-heatmap__x-label">{{ x_label }}</div>
-          <div class="t-heatmap__y-label">{{ y_label }}</div>
-          <div class="t-heatmap__grid--y-labels">
-            <span v-for="(item, idx) in labels" :key="idx">{{ item }}</span>
-          </div>
-          <div class="t-heatmap__grid--x-labels">
-            <span v-for="(item, idx) in labels" :key="idx" :title="item">{{ item }}</span>
-          </div>
           <div
             class="t-heatmap__grid"
             :style="{ gridTemplate: `repeat(${data_array.length}, 40px) / repeat(${data_array.length}, 40px)` }"
           >
+          <div class="t-heatmap__grid--x-labels">
+            <span v-for="(item, idx) in labels" :key="idx" :title="item">{{ item }}</span>
+          </div>
             <div
               class="t-heatmap__grid--item"
               v-for="(item, i) in values"
               :key="'col_' + i"
-              :style="{ background: getColor(percent[i]) }"
+              :style="{ background: getColor(item) }"
               :title="`${item} / ${percent[i]}%`"
             >
               {{ `${item}` }}
@@ -58,8 +58,9 @@ export default {
       scrollPanel: {
         scrollingX: true,
         scrollingY: false,
-      },
+      }
     },
+    width: null
   }),
   computed: {
     values() {
@@ -75,18 +76,24 @@ export default {
       return [4, 3, 2, 1, 0].map(item => (this.max / 4) * item);
     },
     max() {
-      return Math.round(this.maxValue / 100) * 100;
+      return Math.ceil(this.maxValue / 10) * 10;
     },
     maxValue() {
       return Math.max(...this.values);
     },
+    bodyWidth() {
+      return `calc(100% - ${this.width + 10}px)`
+    }
   },
   methods: {
     getColor(val) {
-      const light = 66 - (val / 100) * 41;
+      const light = 66 - (val / this.max) * 41;
       return `hsl(212, 100%, ${light}%)`;
     },
   },
+  mounted() {
+    this.width = this.$refs.label.offsetWidth + this.$refs.scale.offsetWidth
+  }
 };
 </script>
 
@@ -94,23 +101,22 @@ export default {
 .t-heatmap {
   display: flex;
   justify-content: flex-start;
-  margin: 35px 0 70px;
-  gap: 35px;
-  width: 100%;
+  margin: 35px 0;
+  gap: 5px;
+  max-width: 100%;
   &__body {
-    overflow: hidden;
     position: relative;
-    width: 100%;
+    max-width: calc(100% - 60px);
   }
   &__title {
     color: #a7bed3;
     font-size: 14px;
     line-height: 17px;
     font-weight: 600;
+    top: calc(-1.2em - 10px);
     position: absolute;
-    bottom: calc(100% + 10px);
     left: 50%;
-    transform: translate(-40%);
+    transform: translate(-50%);
     white-space: nowrap;
   }
   &__x-label,
@@ -124,25 +130,27 @@ export default {
   &__x-label {
     top: 100%;
     left: 50%;
-    transform: translate(-50%, 200%);
+    transform: translate(-50%, 100%);
   }
   &__y-label {
     bottom: 50%;
-    right: 100%;
-    transform: rotate(-90deg) translateY(200%);
+    left: 0;
+    transform: rotate(-90deg);
     white-space: nowrap;
   }
   &__wrapper {
     display: flex;
     gap: 5px;
     position: relative;
+    width: fit-content;
+    padding-bottom: 10px;
   }
   &__grid {
     display: grid;
     font-size: 10px;
     text-align: center;
     border-radius: 4px;
-    overflow: hidden;
+    position: relative;
     &--item {
       display: flex;
       flex-direction: column;
@@ -151,7 +159,6 @@ export default {
     &--y-labels {
       flex-direction: column;
       width: fit-content;
-      overflow: hidden;
       * {
         display: flex;
         align-items: center;
@@ -161,7 +168,7 @@ export default {
     }
     &--x-labels {
       position: absolute;
-      top: 100%;
+      bottom: -1.5em;
       justify-content: flex-end;
       width: 100%;
       * {
@@ -184,6 +191,8 @@ export default {
     display: flex;
     height: 100%;
     gap: 5px;
+    padding-right: 35px;
+    padding-bottom: 10px;
     &--values {
       display: flex;
       flex-direction: column;
@@ -193,7 +202,7 @@ export default {
       line-height: 14px;
     }
     &--gradient {
-      background: linear-gradient(180deg, #003b7f 0%, #54a3ff 100%);
+      background: linear-gradient(180deg, hsl(212, 100%, 25%) 0%, hsl(212, 100%, 66%) 100%);
       border-radius: 4px;
       width: 24px;
     }

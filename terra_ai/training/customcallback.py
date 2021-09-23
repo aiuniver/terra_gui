@@ -26,6 +26,7 @@ from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.utils import camelize, decamelize
 
+
 __version__ = 0.062
 
 
@@ -350,7 +351,7 @@ class InteractiveCallback:
         self.deploy_presets_data = None
 
         self.train_states = {
-            "status": "no_train",  # training, trained, stopped, retrain
+            "status": "no_train",  # training, trained, stopped, addtrain
             "buttons": {
                 "train": {
                     "title": "Обучить",  # Возобновить, Дообучить
@@ -476,11 +477,20 @@ class InteractiveCallback:
             self.train_states["buttons"]["clear"]["visible"] = True
             self.train_states["buttons"]["save"]["visible"] = True
         else:
+            self.clear_history()
             self.train_states["buttons"]["train"]["title"] = "Обучить"
             self.train_states["buttons"]["train"]["visible"] = True
             self.train_states["buttons"]["stop"]["visible"] = False
             self.train_states["buttons"]["clear"]["visible"] = False
             self.train_states["buttons"]["save"]["visible"] = False
+
+    def clear_history(self):
+        self.log_history = {}
+        self.current_logs = {}
+        self.progress_table = {}
+        self.intermediate_result = {}
+        self.statistic_result = {}
+        self.train_progress = {}
 
     def get_states(self):
         return self.train_states
