@@ -40,8 +40,9 @@ class CreateDataset(object):
         self.tags: dict = {}
         self.preprocessing = CreatePreprocessing()
         self.use_generator: bool = False
-        self.source_path = creation_data.source_path  # исправить
+        self.source_path = creation_data.source_path
         self.y_cls: list = []
+        self.columns = {}
 
         self.columns_processing = {}
         if creation_data.columns_processing:
@@ -52,13 +53,13 @@ class CreateDataset(object):
         self.create_preprocessing(self.instructions)
         self.create_table(creation_data=creation_data)
 
-        self.inputs: dict = self.create_input_parameters(creation_data=creation_data)
-        self.outputs: dict = self.create_output_parameters(creation_data=creation_data)
+        self.inputs = self.create_input_parameters(creation_data=creation_data)
+        self.outputs = self.create_output_parameters(creation_data=creation_data)
 
         if not creation_data.use_generator:
-            self.x_array = self.create_dataset_arrays(put_data=self.instructions.inputs)
-            self.y_array = self.create_dataset_arrays(put_data=self.instructions.outputs)
-            self.write_arrays(self.x_array, self.y_array)
+            x_array = self.create_dataset_arrays(put_data=self.instructions.inputs)
+            y_array = self.create_dataset_arrays(put_data=self.instructions.outputs)
+            self.write_arrays(x_array, y_array)
 
         self.write_preprocesses_to_files()
         self.write_instructions_to_files(creation_data=creation_data)
@@ -319,9 +320,9 @@ class CreateDataset(object):
         creating_inputs_data = {}
         path_type_input_list = [LayerInputTypeChoice.Image, LayerInputTypeChoice.Video, LayerInputTypeChoice.Audio]
         for key in self.instructions.inputs.keys():
+            input_array = []
+            self.columns[key] = {}
             creating_inputs_data[key] = {}
-            classes_names = [os.path.basename(x) for x in creation_data.inputs.get(key).parameters.sources_paths]
-            num_classes = len(classes_names)
             for col_name, data in self.instructions.inputs[key].items():
                 prep = None
                 if self.preprocessing.preprocessing.get(key) and\
@@ -340,17 +341,61 @@ class CreateDataset(object):
 
                 array = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(arr['instructions'],
                                                                                          **arr['parameters'])
+                input_array.append(array)
 
-                current_input = DatasetInputsData(datatype=DataType.get(len(array.shape), 'DIM'),
-                                                  dtype=str(array.dtype),
-                                                  shape=array.shape,
-                                                  name=creation_data.inputs.get(key).name,
-                                                  task=creation_data.inputs.get(key).type,
-                                                  classes_names=classes_names,
-                                                  num_classes=num_classes,
-                                                  encoding=LayerEncodingChoice.none
-                                                  )
-                creating_inputs_data[key].update([(col_name, current_input.native())])
+                classes_names = [os.path.basename(x) for x in creation_data.inputs.get(key).parameters.sources_paths]\
+                    if not os.path.isfile(creation_data.inputs.get(key).parameters.sources_paths[0]) else\
+                    arr['parameters'].get('classes_names')
+
+                num_classes = len(classes_names) if classes_names else None
+                task = self.columns_processing.get(str(key)).type if self.columns_processing else\
+                    creation_data.inputs.get(key).type
+
+                # Прописываем параметры для колонки
+                current_column = DatasetInputsData(datatype=DataType.get(len(array.shape), 'DIM'),
+                                                   dtype=str(array.dtype),
+                                                   shape=array.shape,
+                                                   name=creation_data.inputs.get(key).name,
+                                                   task=task,
+                                                   classes_names=classes_names,
+                                                   num_classes=num_classes,
+                                                   encoding=LayerEncodingChoice.none
+                                                   )
+                self.columns[key].update([(col_name, current_column.native())])
+
+            # Прописываем параметры для входа
+            input_array = np.concatenate(input_array, axis=0)
+            task, classes_colors, classes_names, encoding, num_classes = None, None, None, None, None
+            if len(self.columns[key]) == 1:
+                for c_name, data in self.columns[key].items():
+                    task = data['task']
+                    classes_colors = data['classes_colors']
+                    classes_names = data['classes_names']
+                    num_classes = data['num_classes']
+                    encoding = data['encoding']
+                    break
+            else:
+                task = LayerInputTypeChoice.Dataframe
+                encoding = LayerEncodingChoice.none
+                classes_colors, classes_names, = [], []
+                for c_name, data in self.columns[key].items():
+                    if data['classes_colors']:
+                        classes_colors += data['classes_colors']
+                    if data['classes_names']:
+                        classes_names += data['classes_names']
+                num_classes = len(classes_names) if classes_names else None
+
+            current_input = DatasetInputsData(datatype=DataType.get(len(input_array.shape), 'DIM'),
+                                              dtype=str(input_array.dtype),
+                                              shape=input_array.shape,
+                                              name=creation_data.inputs.get(key).name,
+                                              task=task,
+                                              classes_colors=classes_colors,
+                                              classes_names=classes_names,
+                                              num_classes=num_classes,
+                                              encoding=encoding
+                                              )
+            creating_inputs_data[key] = current_input.native()
 
         return creating_inputs_data
 
@@ -360,7 +405,7 @@ class CreateDataset(object):
         path_type_outputs_list = [LayerOutputTypeChoice.Image, LayerOutputTypeChoice.Segmentation,
                                   LayerOutputTypeChoice.Audio, LayerOutputTypeChoice.ObjectDetection]
         for key in self.instructions.outputs.keys():
-            full_array = []
+            output_array = []
             iters = 1
             for col_name, data in self.instructions.outputs[key].items():
                 prep = None
@@ -375,26 +420,25 @@ class CreateDataset(object):
                 else:
                     data_to_pass = data.instructions[0]
 
-                arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(data_to_pass,
-                                                                                   **data.parameters,
+                arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(data_to_pass, **data.parameters,
                                                                                    **{'preprocess': prep})
 
-                arr = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(arr['instructions'],
-                                                                                       **arr['parameters'])
+                array = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(arr['instructions'],
+                                                                                         **arr['parameters'])
 
-                if creation_data.outputs.get(key).type == LayerOutputTypeChoice.ObjectDetection:
-                    for i in range(6):
-                        full_array.append(arr[i])
-                        iters = 6
+                if isinstance(array, list):  # Условие для ObjectDetection
+                    output_array = [arr for arr in array]
                 else:
-                    full_array.append(arr)
+                    output_array.append(array)
 
                 cl_names = data.parameters.get('classes_names')
                 classes_names = cl_names if cl_names else [os.path.basename(x) for x in
                                                            creation_data.outputs.get(key).parameters.sources_paths]
                 num_classes = len(classes_names)
-
+                task = self.columns_processing.get(str(key)).type if self.columns_processing else\
+                    creation_data.outputs.get(key).type
                 classes_colors = data.parameters.get('classes_colors')
+
                 if data.parameters.get('encoding'):
                     encoding = data.parameters.get('encoding')
                 elif data.parameters.get('one_hot_encoding'):
@@ -402,7 +446,6 @@ class CreateDataset(object):
                         encoding = LayerEncodingChoice.ohe
                     else:
                         encoding = LayerEncodingChoice.none
-
                 elif creation_data.outputs.get(key).type == LayerOutputTypeChoice.Segmentation:
                     encoding = LayerEncodingChoice.ohe
                 elif creation_data.outputs.get(key).type == LayerOutputTypeChoice.TextSegmentation:
@@ -411,20 +454,57 @@ class CreateDataset(object):
                     encoding = LayerEncodingChoice.none
 
                 if not creation_data.outputs.get(key).type == LayerOutputTypeChoice.ObjectDetection:
-                    full_array = np.concatenate(full_array, axis=0)
-                    full_array = np.expand_dims(full_array, 0)
+                    array = np.expand_dims(array, 0)
+                else:
+                    iters = 6
                 for i in range(iters):
-                    current_output = DatasetOutputsData(datatype=DataType.get(len(full_array[i].shape), 'DIM'),
-                                                        dtype=str(full_array[i].dtype),
-                                                        shape=full_array[i].shape,
+                    current_output = DatasetOutputsData(datatype=DataType.get(len(array[i].shape), 'DIM'), # output_array
+                                                        dtype=str(array[i].dtype),
+                                                        shape=array[i].shape,
                                                         name=creation_data.outputs.get(key).name,
-                                                        task=creation_data.outputs.get(key).type,
+                                                        task=task,
                                                         classes_names=classes_names,
                                                         classes_colors=classes_colors,
                                                         num_classes=num_classes,
                                                         encoding=encoding
                                                         )
-                    creating_outputs_data.update([(key + i, {col_name: current_output.native()})])
+                    self.columns[key + i] = {col_name: current_output.native()}
+
+            if not creation_data.outputs.get(key).type == LayerOutputTypeChoice.ObjectDetection:
+                output_array = np.concatenate(output_array, axis=0)
+                output_array = np.expand_dims(output_array, 0)
+            task, classes_colors, classes_names, encoding, num_classes = None, None, None, None, None
+            if len(self.columns[key]) == 1:
+                for c_name, data in self.columns[key].items():
+                    task = data['task']
+                    classes_colors = data['classes_colors']
+                    classes_names = data['classes_names']
+                    num_classes = data['num_classes']
+                    encoding = data['encoding']
+                    break
+            else:
+                task = LayerInputTypeChoice.Dataframe
+                encoding = LayerEncodingChoice.none
+                classes_colors, classes_names, = [], []
+                for c_name, data in self.columns[key].items():
+                    if data['classes_colors']:
+                        classes_colors += data['classes_colors']
+                    if data['classes_names']:
+                        classes_names += data['classes_names']
+                num_classes = len(classes_names) if classes_names else None
+
+            for i in range(iters):
+                current_output = DatasetOutputsData(datatype=DataType.get(len(output_array[i].shape), 'DIM'),
+                                                    dtype=str(output_array[i].dtype),
+                                                    shape=output_array[i].shape,
+                                                    name=creation_data.outputs.get(key).name,
+                                                    task=task,
+                                                    classes_colors=classes_colors,
+                                                    classes_names=classes_names,
+                                                    num_classes=num_classes,
+                                                    encoding=encoding
+                                                    )
+                creating_outputs_data[key + i] = current_output.native()
 
         return creating_outputs_data
 
@@ -470,13 +550,13 @@ class CreateDataset(object):
                         array = np.concatenate(full_array, axis=0)
                         current_arrays.append(array)
 
-                # if self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
-                #     for n in range(6):
-                #         print(np.array(globals()[f'current_arrays_{n}']).shape)
-                #         out_array[split][key + n] = np.array(globals()[f'current_arrays_{n}'])
-                # else:
-                print(np.array(current_arrays).shape)
-                out_array[split][key] = np.array(current_arrays)
+                if self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
+                    for n in range(6):
+                        print(np.array(globals()[f'current_arrays_{n}']).shape)
+                        out_array[split][key + n] = np.array(globals()[f'current_arrays_{n}'])
+                else:
+                    print(np.array(current_arrays).shape)
+                    out_array[split][key] = np.array(current_arrays)
 
         return out_array
 
@@ -549,7 +629,7 @@ class CreateDataset(object):
                 'size': {'value': size_bytes}
                 }
 
-        for attr in ["inputs", "outputs"]:
+        for attr in ['inputs', 'outputs', 'columns']:
             data[attr] = self.__dict__[attr]
 
         with open(os.path.join(self.paths.basepath, DATASET_CONFIG), 'w') as fp:

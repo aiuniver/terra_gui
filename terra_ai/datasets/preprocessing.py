@@ -81,18 +81,13 @@ class CreatePreprocessing(object):
             self.paths = DatasetPathsData(basepath=dataset_path)
         self.preprocessing = {}
 
-    def load_preprocesses(self, inputs, outputs):
+    def load_preprocesses(self, put_data):
 
-        for inp in inputs.keys():
-            for col_name in inputs[inp].keys():
-                prep_path = os.path.join(self.paths.preprocessing, str(inp), f'{col_name}.gz')
+        for put in put_data.keys():
+            for col_name in put_data[put].keys():
+                prep_path = os.path.join(self.paths.preprocessing, str(put), f'{col_name}.gz')
                 if os.path.isfile(prep_path):
-                    self.preprocessing.update([(inp, {col_name: joblib.load(prep_path)})])
-        for out in outputs.keys():
-            for col_name in outputs[out].keys():
-                prep_path = os.path.join(self.paths.preprocessing, str(out), f'{col_name}.gz')
-                if os.path.isfile(prep_path):
-                    self.preprocessing.update([(out, {col_name: joblib.load(prep_path)})])
+                    self.preprocessing.update([(put, {col_name: joblib.load(prep_path)})])
 
     def create_dull(self, put_id: int):
 
