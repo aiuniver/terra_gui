@@ -4,7 +4,6 @@ from ...extra import MinMaxScalerData, ColumnProcessingData
 from .....extra import LayerScalerRegressionChoice
 from ......types import confilepath
 from pydantic.types import PositiveInt
-from typing import Optional
 
 
 class ParametersData(MinMaxScalerData, ColumnProcessingData):

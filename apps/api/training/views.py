@@ -4,7 +4,8 @@ from pydantic import ValidationError
 from terra_ai.agent import agent_exchange
 from terra_ai.agent.exceptions import ExchangeBaseException
 from terra_ai.exceptions.base import TerraBaseException
-from terra_ai.data.training.train import TrainData
+from terra_ai.data.training.train import TrainData, InteractiveData
+from terra_ai.data.training.extra import StateStatusChoice
 
 from apps.plugins.project import project_path
 
@@ -38,7 +39,7 @@ class StartAPIView(BaseAPIView):
             training_base = recursive_update(training_base, request.data)
             training_base["architecture"]["parameters"]["outputs"] = outputs
             request.project.training.base = TrainData(**training_base)
-            request.project.update_training_interactive()
+            request.project.set_training()
             data = {
                 "dataset": request.project.dataset,
                 "model": request.project.model,
@@ -48,7 +49,6 @@ class StartAPIView(BaseAPIView):
                 "initial_config": request.project.training.interactive,
             }
             agent_exchange("training_start", **data)
-            request.project.training.set_state()
             return BaseResponseSuccess(
                 {
                     "interactive": request.project.training.interactive.native(),
@@ -88,8 +88,10 @@ class ClearAPIView(BaseAPIView):
 class InteractiveAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         try:
-            data = agent_exchange("training_interactive", **request.data)
-            request.project.training.interactive = data
+            config = InteractiveData(**request.data)
+            request.project.training.interactive = config
+            if request.project.training.state.status != StateStatusChoice.no_train:
+                agent_exchange("training_interactive", config=config)
             return BaseResponseSuccess()
         except ExchangeBaseException as error:
             return BaseResponseErrorGeneral(str(error))

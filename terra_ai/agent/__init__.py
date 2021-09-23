@@ -48,22 +48,38 @@ class Exchange:
 
         # Проверяем, существует ли метод
         if __method is None:
-            raise agent_exceptions.CallMethodNotFoundException(self.__class__, __method_name)
+            raise agent_exceptions.CallMethodNotFoundException(
+                self.__class__, __method_name
+            )
 
         # Проверяем, является ли метод вызываемым
         if not callable(__method):
-            raise agent_exceptions.MethodNotCallableException(__method_name, self.__class__)
+            raise agent_exceptions.MethodNotCallableException(
+                __method_name, self.__class__
+            )
 
         # Вызываем метод
         try:
             return __method(**kwargs)
         except tensorflow.errors.OpError as error:
-            err_msg = str(getattr(tf_exceptions, error.__class__.__name__, tf_exceptions.UnknownError)(error.message))
-            raise getattr(agent_utils.ExceptionClasses, method, agent_utils.ExceptionClasses.unknown).value(err_msg)
+            err_msg = str(
+                getattr(
+                    tf_exceptions, error.__class__.__name__, tf_exceptions.UnknownError
+                )(error.message)
+            )
+            raise getattr(
+                agent_utils.ExceptionClasses,
+                method,
+                agent_utils.ExceptionClasses.unknown,
+            ).value(err_msg)
         except agent_exceptions.ExchangeBaseException as error:
             raise error
         except Exception as error:
-            raise getattr(agent_utils.ExceptionClasses, method, agent_utils.ExceptionClasses.unknown).value(str(error))
+            raise getattr(
+                agent_utils.ExceptionClasses,
+                method,
+                agent_utils.ExceptionClasses.unknown,
+            ).value(str(error))
 
     @property
     def is_colab(self) -> bool:
@@ -114,9 +130,7 @@ class Exchange:
         Загрузка проекта
         """
         shutil.rmtree(target, ignore_errors=True)
-        destination = progress_utils.unpack(
-            "project_load", "Загрузка проекта", source
-        )
+        destination = progress_utils.unpack("project_load", "Загрузка проекта", source)
         shutil.move(destination, target)
 
     def _call_dataset_choice(
@@ -324,13 +338,11 @@ class Exchange:
         interactive.set_status("no_train")
         return interactive.train_states
 
-    def _call_training_interactive(self, **kwargs) -> InteractiveData:
+    def _call_training_interactive(self, config: InteractiveData):
         """
         Обновление интерактивных параметров обучения
         """
-        data = InteractiveData(**kwargs)
-        interactive.get_train_results(config=data)
-        return data
+        interactive.get_train_results(config=config)
 
     def _call_training_progress(self) -> progress.ProgressData:
         """

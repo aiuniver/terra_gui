@@ -276,7 +276,14 @@ class Project(BaseMixinData):
     def update_training_base(self):
         outputs = []
         for layer in self.model.outputs:
+            training_layer = self.training.base.architecture.parameters.outputs.get(
+                layer.id
+            )
             training_task_rel = TrainingTasksRelations.get(layer.task)
+            available_metrics = list(
+                set(training_layer.metrics)
+                & set(training_task_rel.metrics if training_task_rel else [])
+            )
             training_losses = (
                 list(map(lambda item: item.name, training_task_rel.losses))
                 if training_task_rel
@@ -292,15 +299,25 @@ class Project(BaseMixinData):
                     "id": layer.id,
                     "classes_quantity": layer.num_classes,
                     "task": layer.task,
-                    "loss": training_losses[0] if training_losses else None,
-                    "metrics": [training_metrics[0]] if training_metrics else [],
+                    "loss": training_layer.loss
+                    if training_layer
+                    else (training_losses[0] if training_losses else None),
+                    "metrics": available_metrics
+                    if available_metrics
+                    else ([training_metrics[0]] if training_metrics else []),
                 }
             )
         self.training.base.architecture.parameters.outputs = OutputsList(outputs)
         if self.model.outputs:
-            self.training.base.architecture.parameters.checkpoint = CheckpointData(
-                **{"layer": self.model.outputs[0].id}
+            checkpoint_data = (
+                self.training.base.architecture.parameters.checkpoint.native()
             )
+            if not checkpoint_data.get("layer"):
+                checkpoint_data.update({"layer": self.model.outputs[0].id})
+            self.training.base.architecture.parameters.checkpoint = CheckpointData(
+                **checkpoint_data
+            )
+        defaults_data.update_by_model(self.model, self.training)
 
     def update_training_interactive(self):
         loss_graphs = []
@@ -360,7 +377,6 @@ class Project(BaseMixinData):
         self.training.set_state()
 
     def set_training(self):
-        defaults_data.update_by_model(self.model)
         self.update_training_base()
         self.update_training_interactive()
         self.update_training_state()
