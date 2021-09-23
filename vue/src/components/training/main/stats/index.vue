@@ -1,80 +1,105 @@
 <template>
   <div class="t-scatters">
     <div class="t-scatters__header">
-      <div class="checks">
-        <template v-for="(item, key, i) of statisticData">
-          <t-checkbox
-            v-if="item.labels"
-            :key="'check_' + i"
-            :inline="true"
-            :label="`Выход ${key}`"
-            :value="true"
-            :name="key"
-            @change="change($event, key)"
-          />
+      <div class="t-scatters__checks">
+        <template v-for="(item, i) of outputLayers">
+          <t-field :key="'check_' + i" inline :label="`Выходной слой «${item}»`">
+            <t-checkbox-new small :name="`${item}`" @change="change(item)" />
+          </t-field>
         </template>
-        <t-checkbox :inline="true" label="Автообновление" />
       </div>
-      <t-button class="t-scatters__btn">Показать</t-button>
+      <t-field inline :label="`Автообновление`">
+        <t-checkbox-new v-model="auto" small @change="autoChange" />
+      </t-field>
+      <div class="t-scatters__btn">
+        <t-button @click="handleClick">Показать</t-button>
+      </div>
     </div>
-    <div v-if="showContent" class="t-scatters__content">
-      <template v-for="(output, key, i) of statisticData">
-        <Matrix v-if="output.data_array && isShowKeys.includes(key)" v-bind="output" :key="i" />
+    <div class="t-scatters__content">
+      <template v-for="(item, i) of filtesLayers">
+        <component :is="item.type" v-bind="item" :key="`${item.type + i}`" />
       </template>
     </div>
   </div>
 </template>
 
 <script>
-import Matrix from './Matrix.vue';
-
 export default {
   name: 't-scatters',
   components: {
-    Matrix,
+    Heatmap: () => import('./Heatmap'),
+    Scatter: () => import('./Scatter'),
+    Histogram: () => import('./Histogram'),
+    Table: () => import('./Table'),
+    Graphic: () => import('./Graphic'),
+  },
+  props: {
+    outputs: Array,
   },
   computed: {
     statisticData() {
-      return this.$store.getters['trainings/getTrainData']('statistic_data') || [];
+      return this.$store.getters['trainings/getTrainData']('statistic_data') || {};
+    },
+    filtesLayers() {
+      return Object.entries(this.statisticData)
+        .filter(item => this.selected.includes(+item[0]))
+        .map(item => item[1]);
+    },
+    outputLayers() {
+      return this.outputs.map(item => item.id);
     },
   },
   data: () => ({
-    showContent: true,
-    isShowKeys: [],
+    selected: [],
+    auto: false,
+
   }),
   methods: {
-    change(e, key) {
-      console.log(e);
-      this.isShowKeys = !this.isShowKeys.includes(key)
-        ? [...this.isShowKeys, key]
-        : this.isShowKeys.filter(item => item !== key);
+    // isShow(layer, type) {
+    //   ершыюisShowKeys.includes(+layer) && type === 'Heatmap';
+    // },
+    change(key) {
+      // console.log(key)
+
+      this.selected = !this.selected.includes(key)
+        ? [...this.selected, key]
+        : this.selected.filter(item => item !== key);
+      console.log(this.selected);
     },
-  },
-  created() {
-    this.isShowKeys = Object.keys(this.statisticData);
+    async handleClick() {
+      const data = {
+        statistic_data: {
+          output_id: this.selected,
+          autoupdate: this.auto,
+        },
+      };
+
+      await this.$store.dispatch('trainings/interactive', data);
+    },
+    autoChange(e) {
+      this.auto = e.value;
+    },
   },
 };
 </script>
 
 <style lang="scss" scoped>
 .t-scatters {
-  &__btn {
-    margin-left: auto;
-  }
+  position: relative;
+  margin-bottom: 20px;
   &__header {
     display: flex;
-    .checks {
-      display: flex;
-      flex-wrap: wrap;
-      flex-shrink: 0;
-      max-width: 320px;
-      * {
-        flex: 0 0 150px;
-      }
-    }
-    button {
-      flex: 0 0 150px;
-    }
+    gap: 25px;
+  }
+  &__checks {
+    display: flex;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    max-width: 320px;
+  }
+  &__btn {
+    margin-left: auto;
+    flex: 0 0 150px;
   }
   &__content {
     display: flex;

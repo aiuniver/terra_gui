@@ -52,4 +52,5 @@ def static_view(request, path, document_root=None):
 
 urlpatterns = [
     path("api/v1/", include("apps.api.urls", namespace="apps_api")),
+    path("_media/", include("apps.media.urls", namespace="apps_media")),
 ] + static(settings.VUE_URL, view=static_view, document_root=settings.VUE_ROOT)

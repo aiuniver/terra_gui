@@ -75,6 +75,16 @@ const router = new Router({
       component: () => import('@/views/Deploy'),
     },
     {
+      path: '/profile',
+      name: 'Profile',
+      meta: { 
+        title: 'Профиль',
+        access: true,
+        text: ``, 
+      },
+      component: () => import('@/views/Profile'),
+    },
+    {
       path: '/test',
       name: 'Test',
       meta: { 

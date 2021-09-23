@@ -8,6 +8,14 @@ from typing import List
 from ..mixins import BaseMixinData, UniqueListMixin
 
 
+class StateStatusChoice(str, Enum):
+    no_train = "no_train"
+    training = "training"
+    trained = "trained"
+    stopped = "stopped"
+    addtrain = "addtrain"
+
+
 class LossGraphShowChoice(str, Enum):
     model = "model"
     classes = "classes"

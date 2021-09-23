@@ -35,7 +35,7 @@ class ParametersMainData(BaseMixinData):
     padding: Tuple[
         Tuple[ConstrainedIntValueGe0, ConstrainedIntValueGe0],
         Tuple[ConstrainedIntValueGe0, ConstrainedIntValueGe0],
-    ] = ((1, 1), (1, 1))
+    ] = ((1, 0), (1, 0))
 
 
 class ParametersExtraData(BaseMixinData):

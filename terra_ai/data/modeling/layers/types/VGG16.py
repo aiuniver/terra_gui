@@ -8,7 +8,7 @@ from pydantic.types import PositiveInt
 from ....mixins import BaseMixinData
 from ..extra import LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice, \
     PretrainedModelWeightsChoice, PretrainedModelPoolingChoice, ActivationChoice
-print('  ')
+
 LayerConfig = LayerConfigData(
     **{
         "num_uplinks": {
@@ -26,7 +26,7 @@ LayerConfig = LayerConfigData(
 
 
 class ParametersMainData(BaseMixinData):
-    include_top: bool = False
+    include_top: bool = True
     weights: Optional[PretrainedModelWeightsChoice]
     pooling: Optional[PretrainedModelPoolingChoice]
     trainable: bool = False

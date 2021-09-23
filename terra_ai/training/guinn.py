@@ -23,11 +23,12 @@ from tensorflow.keras.models import load_model
 
 from terra_ai import progress
 from terra_ai.data.datasets.dataset import DatasetData
-from terra_ai.data.datasets.extra import LayerOutputTypeChoice
+from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
 from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, \
     CheckpointModeChoice
-from terra_ai.data.training.train import TrainData
+from terra_ai.data.training.train import TrainData, InteractiveData
+from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.customcallback import InteractiveCallback
@@ -92,7 +93,7 @@ class GUINN:
         return output
 
     def _set_training_params(self, dataset: DatasetData, params: TrainData, model_name: str,
-                             training_path: Path, dataset_path: str, initial_config: dict) -> None:
+                             training_path: str, dataset_path: str, initial_config: InteractiveData) -> None:
         self.dataset = self._prepare_dataset(dataset, dataset_path)
         self.training_path = training_path
         self.nn_name = model_name
@@ -118,13 +119,15 @@ class GUINN:
             self.loss.update({str(output_layer["id"]): output_layer["loss"]})
 
         interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss,
-                                   dataset_path=dataset_path, initial_config=initial_config)
+                                   dataset_path=dataset_path, training_path=training_path,
+                                   initial_config=initial_config)
 
-    def _set_callbacks(self, dataset: PrepareDataset, batch_size: int, epochs: int,
+    def _set_callbacks(self, dataset: PrepareDataset, dataset_data: DatasetData,
+                       batch_size: int, epochs: int,
                        checkpoint: dict, save_model_path: str) -> None:
         progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков...'})
         retrain_epochs = self.sum_epoch if interactive.get_states().get("status") == "addtrain" else self.epochs
-        callback = FitCallback(dataset=dataset, checkpoint_config=checkpoint,
+        callback = FitCallback(dataset=dataset, dataset_data=dataset_data, checkpoint_config=checkpoint,
                                batch_size=batch_size, epochs=epochs, retrain_epochs=retrain_epochs,
                                save_model_path=save_model_path, model_name=self.nn_name)
         self.callbacks = [callback]
@@ -198,10 +201,10 @@ class GUINN:
     def terra_fit(self,
                   dataset: DatasetData,
                   gui_model: ModelDetailsData,
-                  training_path: Path = "",
+                  training_path: str = "",
                   dataset_path: str = "",
                   training_params: TrainData = None,
-                  initial_config: dict = None
+                  initial_config: InteractiveData = None
                   ) -> dict:
         """
         This method created for using wth externally compiled models
@@ -216,18 +219,19 @@ class GUINN:
         Return:
             None
         """
-        model_path = os.path.join(training_path, gui_model.name)
+        model_path = os.path.join(training_path, gui_model.alias)
         if interactive.get_states().get("status") != "addtrain":
             self._save_params_for_deploy(dataset_path=dataset_path, training_path=model_path, params=training_params)
         self.nn_cleaner(retrain=True if interactive.get_states().get("status") == "training" else False)
-        self._set_training_params(dataset=dataset, dataset_path=dataset_path, model_name=gui_model.name,
+        self._set_training_params(dataset=dataset, dataset_path=dataset_path, model_name=gui_model.alias,
                                   params=training_params, training_path=training_path, initial_config=initial_config)
         nn_model = self._set_model(model=gui_model)
         self.model = nn_model
         if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.ObjectDetection:
             self.yolo_model_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
         else:
-            self.base_model_fit(params=training_params, dataset=self.dataset, verbose=0, save_model_path=model_path)
+            self.base_model_fit(params=training_params, dataset=self.dataset, dataset_data=dataset,
+                                verbose=0, save_model_path=model_path)
         return {"dataset": self.dataset, "metrics": self.metrics, "losses": self.loss}
 
     def nn_cleaner(self, retrain: bool = False) -> None:
@@ -250,7 +254,8 @@ class GUINN:
         return self
 
     @progress.threading
-    def base_model_fit(self, params: TrainData, dataset: PrepareDataset, save_model_path: str, verbose=0) -> None:
+    def base_model_fit(self, params: TrainData, dataset: PrepareDataset,
+                       dataset_data: DatasetData, save_model_path: str, verbose=0) -> None:
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели ...'})
         # self.set_custom_metrics()
         self.model.compile(loss=self.loss,
@@ -260,7 +265,7 @@ class GUINN:
         # self.model.load_weight(os.path.join(self.training_path, self.nn_name))
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели выполнена'})
 
-        self._set_callbacks(dataset=dataset, batch_size=params.batch,
+        self._set_callbacks(dataset=dataset, dataset_data=dataset_data, batch_size=params.batch,
                             epochs=params.epochs, save_model_path=save_model_path,
                             checkpoint=params.architecture.parameters.checkpoint.native())
         progress.pool(self.progress_name, finished=False, data={'status': 'Начало обучения ...'})
@@ -373,9 +378,11 @@ class MemoryUsage:
     def get_usage(self):
         usage_dict = {}
         if self.gpu:
+            gpu_name = N.nvmlDeviceGetName(N.nvmlDeviceGetHandleByIndex(0))
             gpu_utilization = N.nvmlDeviceGetUtilizationRates(N.nvmlDeviceGetHandleByIndex(0))
             gpu_memory = N.nvmlDeviceGetMemoryInfo(N.nvmlDeviceGetHandleByIndex(0))
             usage_dict["GPU"] = {
+                'gpu_name': gpu_name,
                 'gpu_utilization': f'{gpu_utilization.gpu: .2f}',
                 'gpu_memory_used': f'{gpu_memory.used / 1024 ** 3: .2f}GB',
                 'gpu_memory_total': f'{gpu_memory.total / 1024 ** 3: .2f}GB'
@@ -414,7 +421,8 @@ class MemoryUsage:
 class FitCallback(keras.callbacks.Callback):
     """CustomCallback for all task type"""
 
-    def __init__(self, dataset: PrepareDataset, checkpoint_config: dict, batch_size: int = None, epochs: int = None,
+    def __init__(self, dataset: PrepareDataset, dataset_data: DatasetData, checkpoint_config: dict,
+                 batch_size: int = None, epochs: int = None,
                  retrain_epochs: int = None, save_model_path: str = "./", model_name: str = "noname"):
         """
         Для примера
@@ -432,6 +440,7 @@ class FitCallback(keras.callbacks.Callback):
         super().__init__()
         self.usage_info = MemoryUsage(debug=False)
         self.dataset = dataset
+        self.dataset_data = dataset_data
         self.batch_size = batch_size
         self.epochs = epochs
         self.batch = 0
@@ -608,11 +617,11 @@ class FitCallback(keras.callbacks.Callback):
                 self.result["train_usage"]["timings"]["elapsed_time"] = param[key][1]
                 self.result["train_usage"]["timings"]["still_time"] = param[key][0]
                 self.result["train_usage"]["timings"]["avg_epoch_time"] = int(self._sum_epoch_time / self.last_epoch)
-                self.result["train_usage"]["timings"]["elapsed_epoch_time"] = int(
-                    self._sum_epoch_time / self.last_epoch) + param[key][2]
-                self.result["train_usage"]["timings"]["still_epoch_time"] = param[key][2]
-                self.result["train_usage"]["timings"]["epoch"] = param[key][3]
-                self.result["train_usage"]["timings"]["batch"] = param[key][4]
+                self.result["train_usage"]["timings"]["elapsed_epoch_time"] = param[key][2]
+                self.result["train_usage"]["timings"]["still_epoch_time"] = param[key][3]
+                self.result["train_usage"]["timings"]["epoch"] = param[key][4]
+                self.result["train_usage"]["timings"]["batch"] = param[key][5]
+        self.result["train_usage"]["hard_usage"] = self.usage_info.get_usage()
         # print(self.result["train_usage"]["timings"])
 
     def _get_result_data(self):
@@ -622,6 +631,37 @@ class FitCallback(keras.callbacks.Callback):
     @staticmethod
     def _get_train_status() -> str:
         return interactive.get_states().get("status")
+
+    def _deploy_predict(self, presets_predict):
+        # with open(os.path.join(self.save_model_path, "predict.txt"), "w", encoding="utf-8") as f:
+        #     f.write(str(presets_predict[0].tolist()))
+
+        result = CreateArray().postprocess_results(array=presets_predict,
+                                                   options=self.dataset_data,
+                                                   save_path=os.path.join(self.save_model_path,
+                                                                          "deploy_presets"))
+        deploy_presets = []
+        for inp in self.dataset_data.inputs.keys():
+            for idx in range(len(list(result.values())[0])):
+                data = interactive._postprocess_initial_data(
+                    input_id=str(inp),
+                    example_idx=idx,
+                )
+                if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Classification:
+                    deploy_presets.append({
+                        "source": data,
+                        "data": list(result.values())[0][idx]
+                    })
+                elif list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Segmentation:
+                    deploy_presets.append({
+                        "source": data,
+                        "segment": list(result.values())[0][idx],
+                        "data": list(zip(
+                            list(self.dataset.data.outputs.values())[0].classes_names,
+                            [colors.as_rgb_tuple() for colors in list(self.dataset.data.outputs.values())[0].classes_colors]
+                        ))
+                    })
+        return deploy_presets
 
     def save_lastmodel(self) -> None:
         """
@@ -708,18 +748,19 @@ class FitCallback(keras.callbacks.Callback):
             msg_epoch = {"current": self.last_epoch,
                          "total": self.retrain_epochs if interactive.get_states().get("status") == "addtrain"
                          else self.epochs}
-            elapsed_epoch_time = self.update_progress(self.num_batches, batch, self._time_first_step)
+            still_epoch_time = self.update_progress(self.num_batches, batch, self._time_first_step)
+            elapsed_epoch_time = time.time() - self._time_first_step
             elapsed_time = self.update_progress(self.num_batches * self.epochs + 1,
                                                 self.batch, self._start_time, finalize=True)
-            if self._get_train_status() == "retrain":
-                still_time = self.update_progress(self.num_batches * self.retrain_epochs + 1,
-                                                  self.batch, self._start_time)
-            elif self._get_train_status() == "addtrain":
-                still_time = self.update_progress(self.num_batches * self.epochs + 1, self.batch,
-                                                  self._start_time, stop_current=batch, stop_flag=True)
-                elapsed_time = self._sum_time + elapsed_time
-            else:
-                still_time = self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time)
+            # if self._get_train_status() == "retrain":
+            #     still_time = self.update_progress(self.num_batches * self.retrain_epochs + 1,
+            #                                       self.batch, self._start_time)
+            # elif self._get_train_status() == "addtrain":
+            #     still_time = self.update_progress(self.num_batches * self.epochs + 1, self.batch,
+            #                                       self._start_time, stop_current=batch, stop_flag=True)
+            #     elapsed_time = self._sum_time + elapsed_time
+            # else:
+            still_time = self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time)
             self.batch += 1
 
             if interactive.urgent_predict:
@@ -733,11 +774,13 @@ class FitCallback(keras.callbacks.Callback):
                 train_batch_data = interactive.update_state(y_pred=upred)
             if train_batch_data:
                 result_data = {
-                    'timings': [still_time, elapsed_time, elapsed_epoch_time, msg_epoch, msg_batch],
+                    'timings': [still_time, elapsed_time, elapsed_epoch_time,
+                                still_epoch_time, msg_epoch, msg_batch],
                     'train_data': train_batch_data
                 }
             else:
-                result_data = {'timings': [still_time, elapsed_time, elapsed_epoch_time, msg_epoch, msg_batch]}
+                result_data = {'timings': [still_time, elapsed_time, elapsed_epoch_time,
+                                           still_epoch_time, msg_epoch, msg_batch]}
             self._set_result_data(result_data)
             progress.pool(
                 self.progress_name,
@@ -788,11 +831,16 @@ class FitCallback(keras.callbacks.Callback):
             if self._best_epoch_monitoring(logs):
                 if not os.path.exists(self.save_model_path):
                     os.mkdir(self.save_model_path)
+                if not os.path.exists(os.path.join(self.save_model_path, "deploy_presets")):
+                    os.mkdir(os.path.join(self.save_model_path, "deploy_presets"))
                 file_path_best: str = os.path.join(
                     self.save_model_path, f"best_weights_{self.metric_checkpoint}.h5"
                 )
                 self.model.save_weights(file_path_best)
                 print(f"Epoch {self.last_epoch} - best weights was successfully saved")
+                if list(self.dataset.data.inputs.values())[0].task == LayerInputTypeChoice.Image:
+                    interactive.deploy_presets_data = self._deploy_predict(scheduled_predict)
+
         self._fill_log_history(self.last_epoch, logs)
         self.last_epoch += 1
 
@@ -829,4 +877,3 @@ class FitCallback(keras.callbacks.Callback):
                 data=self._get_result_data(),
                 finished=True,
             )
-            # print(msg)

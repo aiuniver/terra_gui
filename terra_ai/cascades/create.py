@@ -1,6 +1,7 @@
 from terra_ai.cascades import cascade_input, cascade_output
 from terra_ai.cascades.cascade import CascadeElement, CascadeOutput, BuildModelCascade, CompleteCascade
 from terra_ai.utils import decamelize
+from terra_ai.common import make_path
 from terra_ai import general_fucntions
 import json
 import os
@@ -26,11 +27,13 @@ def make_preprocess(preprocess_list):
 
 
 def make_postprocess(post_list):
+    if post_list is None:
+        return None
+
     def fun(*x):
 
         out = []
 
-        print(post_list)
         for prep, element in zip(post_list, x):
             out.append(prep(element))
 
@@ -71,7 +74,10 @@ def json2model_cascade(path: str):
 
         for inp, param in config['outputs'].items():
             type_module = getattr(general_fucntions, decamelize(param['task']))
-            postprocessing.append(getattr(type_module, 'main')(**param))
+            try:
+                postprocessing.append(getattr(type_module, 'main')(**param))
+            except:
+                postprocessing = None
 
         postprocessing = make_postprocess(postprocessing)
     else:
@@ -119,7 +125,7 @@ def create_output(**params):
 
 
 def create_model(**params):
-    model = json2model_cascade(params["model"])
+    model = json2model_cascade(make_path(params["model"]))
 
     return model
 
