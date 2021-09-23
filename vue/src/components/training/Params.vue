@@ -63,7 +63,7 @@
                           :key="'checkpoint_' + i"
                           :state="state"
                           :inline="true"
-                          :disabled="disabled"
+                          :disabled="data.disabled || disabled"
                           @parse="parse"
                         />
                       </template>
@@ -142,10 +142,16 @@ export default {
       return this.status !== 'no_train';
     },
     disabledAny() {
-      return this.status !== 'no_train' && this.status !== 'stopped' ? true : this.status !== 'no_train' ? ['epochs'] : false ;
+      return this.status !== 'no_train' && this.status !== 'stopped'
+        ? true
+        : this.status !== 'no_train'
+        ? ['epochs']
+        : false;
     },
     getValue() {
-      return this.state?.['architecture[parameters][checkpoint][metric_name]'] ?? 'Accuracy';
+      const data = Object.values(this.outputs.fields)?.[0]?.fields || [];
+      const metrics = data.find(item => item.type === 'multiselect');
+      return this.state?.['architecture[parameters][checkpoint][metric_name]'] ?? (metrics.value[0] || '');
     },
     state: {
       set(value) {
@@ -254,9 +260,11 @@ export default {
       if (name === 'metric_name') {
         if (!value) {
           const arr = this.state['architecture[parameters][outputs][2][metrics]'];
-          ser(this.obj, 'architecture[parameters][checkpoint][metric_name]', arr[0]);
-          this.obj = { ...this.obj };
-          this.state = { [`architecture[parameters][checkpoint][metric_name]`]: arr[0] };
+          if (arr) {
+            ser(this.obj, 'architecture[parameters][checkpoint][metric_name]', arr[0]);
+            this.obj = { ...this.obj };
+            this.state = { [`architecture[parameters][checkpoint][metric_name]`]: arr[0] };
+          }
         }
       }
     },
@@ -325,8 +333,6 @@ export default {
   &__btn {
     width: 45%;
     margin: 0 0 10px 0;
-    button {
-    }
   }
   &__items {
     padding-bottom: 20px;
