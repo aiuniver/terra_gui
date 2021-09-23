@@ -622,9 +622,9 @@ class CreateArray(object):
 
         array = np.array(array)
 
-        if options['scaler'] != LayerScalerVideoChoice.no_scaler and options['object_scaler']:
+        if options['scaler'] != LayerScalerVideoChoice.no_scaler and options['preprocess']:
             orig_shape = array.shape
-            array = options['object_scaler'].transform(array.reshape(-1, 1))
+            array = options['preprocess'].transform(array.reshape(-1, 1))
             array = array.reshape(orig_shape)
 
         instructions = {'instructions': array,
@@ -930,7 +930,7 @@ class CreateArray(object):
         if options['scaler'] != LayerScalerImageChoice.no_scaler and options.get('preprocess'):
             orig_shape = array.shape
             array = options['preprocess'].transform(array.reshape(-1, 1))
-            array = array.reshape(orig_shape)
+            array = array.reshape(orig_shape).astype('float32')
 
         return array
 
@@ -977,9 +977,9 @@ class CreateArray(object):
                                                   frame_mode=options['frame_mode']))
         array = np.array(resized_array)
 
-        if options['scaler'] != LayerScalerVideoChoice.no_scaler and options.get('object_scaler'):
+        if options['scaler'] != LayerScalerVideoChoice.no_scaler and options.get('preprocess'):
             orig_shape = array.shape
-            array = options['object_scaler'].transform(array.reshape(-1, 1))
+            array = options['preprocess'].transform(array.reshape(-1, 1))
             array = array.reshape(orig_shape)
 
         return array
@@ -987,9 +987,9 @@ class CreateArray(object):
     @staticmethod
     def preprocess_audio(array: np.ndarray, **options) -> np.ndarray:
 
-        if options['scaler'] != LayerScalerAudioChoice.no_scaler and options.get('object_scaler'):
+        if options['scaler'] != LayerScalerAudioChoice.no_scaler and options.get('preprocess'):
             orig_shape = array.shape
-            array = options['object_scaler'].transform(array.reshape(-1, 1))
+            array = options['preprocess'].transform(array.reshape(-1, 1))
             array = array.reshape(orig_shape)
 
         return array

@@ -172,10 +172,10 @@ class PrepareDataset(object):
             x_train = x_train[..., None]
             x_val = x_val[..., None]
         for out in self.data.outputs.keys():
-            for col_name, data in self.data.outputs[out].items():
-                if data.task == LayerOutputTypeChoice.Classification:
-                    y_train = utils.to_categorical(y_train, len(np.unique(y_train, axis=0)))
-                    y_val = utils.to_categorical(y_val, len(np.unique(y_val, axis=0)))
+            # for col_name, data in self.data.outputs[out].items():
+            if self.data.outputs[out].task == LayerOutputTypeChoice.Classification:
+                y_train = utils.to_categorical(y_train, len(np.unique(y_train, axis=0)))
+                y_val = utils.to_categorical(y_val, len(np.unique(y_val, axis=0)))
 
         x_val, x_test, y_val, y_test = train_test_split(x_val, y_val, test_size=0.5, shuffle=True)
         self.X['train']['1'] = x_train
@@ -198,28 +198,6 @@ class PrepareDataset(object):
                     self.Y[sample][str(index)] = joblib.load(os.path.join(self.paths.arrays, sample, f'{index}.gz'))
 
             pass
-
-        def prepare_generator_parameters(put_data: dict, data_type: str):
-
-            return_data = {}
-            if data_type == 'shapes':
-                put_shape = None
-                for putt in put_data.keys():
-                    first_shape = False
-                    for col_name, data in put_data[putt].items():
-                        if not first_shape:
-                            put_shape = list(data.shape)
-                            first_shape = True
-                        else:
-                            put_shape[0] += data.shape[0]
-                    return_data[str(putt)] = put_shape
-
-            elif data_type == 'types':
-                for putt in put_data.keys():
-                    for col_name, data in put_data[putt].items():
-                        return_data[str(putt)] = data.dtype
-
-            return return_data
 
         if self.data.group == DatasetGroupChoice.keras:
 
@@ -248,7 +226,7 @@ class PrepareDataset(object):
                 self.dataframe[put] = pd.read_csv(os.path.join(self.paths.instructions, 'tables', f'{put}.csv'),
                                                   index_col=0)
 
-            self.preprocessing.load_preprocesses(self.data.inputs, self.data.outputs)
+            self.preprocessing.load_preprocesses(self.data.columns)
 
             if self.data.use_generator:
                 for instr in os.listdir(os.path.join(self.paths.instructions, 'parameters')):
@@ -259,36 +237,36 @@ class PrepareDataset(object):
                         self.instructions[put][int(idx)] = getattr(CreateArray(),
                                                                    f'instructions_{decamelize(ins["type"])}')([], **ins)['parameters']
 
-                self.dataset['train'] = Dataset.from_generator(self.train_generator,
-                                                               output_shapes=(prepare_generator_parameters(
-                                                                   self.data.inputs, 'shapes'),
-                                                                              prepare_generator_parameters(
-                                                                                  self.data.outputs, 'shapes')),
-                                                               output_types=(prepare_generator_parameters(
-                                                                   self.data.inputs, 'types'),
-                                                                             prepare_generator_parameters(
-                                                                                 self.data.outputs, 'types'))
-                                                               )
-                self.dataset['val'] = Dataset.from_generator(self.val_generator,
-                                                             output_shapes=(prepare_generator_parameters(
-                                                                 self.data.inputs, 'shapes'),
-                                                                            prepare_generator_parameters(
-                                                                                self.data.outputs, 'shapes')),
-                                                             output_types=(prepare_generator_parameters(
-                                                                 self.data.inputs, 'types'),
-                                                                           prepare_generator_parameters(
-                                                                               self.data.outputs, 'types'))
-                                                             )
-                self.dataset['test'] = Dataset.from_generator(self.test_generator,
-                                                              output_shapes=(prepare_generator_parameters(
-                                                                  self.data.inputs, 'shapes'),
-                                                                             prepare_generator_parameters(
-                                                                                 self.data.outputs, 'shapes')),
-                                                              output_types=(prepare_generator_parameters(
-                                                                  self.data.inputs, 'types'),
-                                                                            prepare_generator_parameters(
-                                                                                self.data.outputs, 'types'))
-                                                              )
+                # self.dataset['train'] = Dataset.from_generator(self.train_generator,
+                #                                                output_shapes=(prepare_generator_parameters(
+                #                                                    self.data.inputs, 'shapes'),
+                #                                                               prepare_generator_parameters(
+                #                                                                   self.data.outputs, 'shapes')),
+                #                                                output_types=(prepare_generator_parameters(
+                #                                                    self.data.inputs, 'types'),
+                #                                                              prepare_generator_parameters(
+                #                                                                  self.data.outputs, 'types'))
+                #                                                )
+                # self.dataset['val'] = Dataset.from_generator(self.val_generator,
+                #                                              output_shapes=(prepare_generator_parameters(
+                #                                                  self.data.inputs, 'shapes'),
+                #                                                             prepare_generator_parameters(
+                #                                                                 self.data.outputs, 'shapes')),
+                #                                              output_types=(prepare_generator_parameters(
+                #                                                  self.data.inputs, 'types'),
+                #                                                            prepare_generator_parameters(
+                #                                                                self.data.outputs, 'types'))
+                #                                              )
+                # self.dataset['test'] = Dataset.from_generator(self.test_generator,
+                #                                               output_shapes=(prepare_generator_parameters(
+                #                                                   self.data.inputs, 'shapes'),
+                #                                                              prepare_generator_parameters(
+                #                                                                  self.data.outputs, 'shapes')),
+                #                                               output_types=(prepare_generator_parameters(
+                #                                                   self.data.inputs, 'types'),
+                #                                                             prepare_generator_parameters(
+                #                                                                 self.data.outputs, 'types'))
+                #                                               )
             else:
                 load_arrays()
 
