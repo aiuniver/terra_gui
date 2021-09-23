@@ -13,7 +13,7 @@ import time
 import pynvml as N
 
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Optional
 
 import numpy as np
 import tensorflow as tf
@@ -61,7 +61,7 @@ class GUINN:
         """
         self.nn_name: str = ''
         self.DTS = None
-        self.model = None
+        self.model: Optional[Model] = None
         self.training_path: str = ""
         self.optimizer = None
         self.loss: dict = {}
@@ -211,13 +211,14 @@ class GUINN:
 
         Args:
             dataset: DatasetData
-            gui_model: Keras model for fit
-            training_params:
-            training_path: TrainData
+            gui_model: Keras model for fit - ModelDetailsData
+            training_path:
             dataset_path: str
+            training_params: TrainData
+            initial_config: InteractiveData
 
         Return:
-            None
+            dict
         """
         model_path = os.path.join(training_path, gui_model.alias)
         if interactive.get_states().get("status") != "addtrain":
