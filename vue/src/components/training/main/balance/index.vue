@@ -13,7 +13,7 @@
         <t-field inline :label="'Сортировать'">
           <t-select-new small :list="sortOps" v-model="settings.sorted" />
         </t-field>
-        <t-button class="t-balance__btn" @click="handleClick">Показать</t-button>
+        <!-- <t-button class="t-balance__btn" @click="handleClick">Показать</t-button> -->
       </div>
     </div>
     <div class="t-balance__graphs">
@@ -51,34 +51,28 @@ export default {
     },
     settings: {
       set(value) {
-        this.$store.dispatch('trainings/setObjectInteractive', { 'data_balance': value })
+        this.$store.dispatch('trainings/setObjectInteractive', { data_balance: value });
       },
       get() {
-        return this.$store.getters['trainings/getObjectInteractive']('data_balance')
+        return this.$store.getters['trainings/getObjectInteractive']('data_balance');
       },
     },
   },
   methods: {
     filter(layer) {
-      return layer.filter(item => this.selected.includes(item.type_data));
-    },
-    change({ name, value }) {
-      const temp = name !== 'show_train' ? 'train' : 'val';
-      if (!value) {
-        this.selected = this.selected.filter(item => item !== temp);
-      } else {
-        this.selected.push(temp);
+      const arr = [];
+      if (this.settings.show_train) {
+        arr.push('train');
       }
-      console.log(this.selected);
+      if (this.settings.show_val) {
+        arr.push('val');
+      }
+      return layer.filter(item => arr.includes(item.type_data));
+    },
+    change() {
+      this.handleClick()
     },
     async handleClick() {
-      // const data = {
-      //   data_balance: {
-      //     show_train: this.train,
-      //     show_val: this.test,
-      //     sorted: this.sortSelected,
-      //   },
-      // };
       await this.$store.dispatch('trainings/interactive', {});
     },
   },
