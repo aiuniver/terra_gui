@@ -24,7 +24,7 @@ from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.utils import camelize, decamelize
 
-__version__ = 0.064
+__version__ = 0.065
 
 
 def sort_dict(dict_to_sort: dict, mode='by_name'):
@@ -600,7 +600,8 @@ class InteractiveCallback:
             "dataframe": dataset.dataframe,
             "use_generator": dataset.data.use_generator,
             "inputs": {},
-            "outputs": {}
+            "outputs": {},
+            "columns": dataset.data.columns
         }
         for inp in dataset.data.inputs.keys():
             self.dataset_config["inputs"][f"{inp}"] = {
@@ -868,6 +869,7 @@ class InteractiveCallback:
                         self.dataset_config.get("outputs").get(out).get("classes_names"),
                         self.dataset_config.get("outputs").get(out).get("encoding") == 'ohe'
                     )
+
             if (
                     self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation and
                     self.dataset_config.get("outputs").get(out).get("encoding") == 'ohe'
@@ -894,6 +896,7 @@ class InteractiveCallback:
                                 ] += 1
                     dataset_balance[out][data_type]["presence_balance"] = class_count
                     dataset_balance[out][data_type]["square_balance"] = class_percent
+
             if (
                     self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation
                     and self.dataset_config.get("outputs").get(out).get("encoding") == 'ohe'
@@ -915,6 +918,7 @@ class InteractiveCallback:
                             / np.prod(self.y_true.get(data_type).get(out)[:, :, cl].shape))
                     dataset_balance[out][data_type]["presence_balance"] = class_count
                     dataset_balance[out][data_type]["percent_balance"] = class_percent
+
             if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries:
                 for data_type in self.y_true.keys():
                     dataset_balance[out][data_type] = {}
@@ -938,6 +942,7 @@ class InteractiveCallback:
                             "x": x,
                             "y": y
                         }
+
             if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Regression:
                 for data_type in self.y_true.keys():
                     dataset_balance[out][data_type] = {
@@ -945,15 +950,20 @@ class InteractiveCallback:
                         'correlation': {}
                     }
                     for column in list(self.dataset_config.get("dataframe").get(data_type).columns):
-                        # TODO: нет инфы от фронта какие столбцы категорийные а какие нет, реализация временная
+                        column_id = int(column.split("_")[0])
                         column_data = list(self.dataset_config.get("dataframe").get(data_type)[column])
-                        try:
-                            x, y = self._get_distribution_histogram(column_data, bins=25, categorical=False)
-                        except:
+                        if self.dataset_config.get("columns").get(column_id).get(column).task == LayerInputTypeChoice.Text:
+                            continue
+                        elif self.dataset_config.get("columns").get(column_id).get(column).task == LayerInputTypeChoice.Classification:
                             x, y = self._get_distribution_histogram(column_data, bins=25, categorical=True)
+                            hist_type = "histogram"
+                        else:
+                            x, y = self._get_distribution_histogram(column_data, bins=25, categorical=False)
+                            hist_type = "distribution histogram"
                         dataset_balance[out][data_type]['histogram'].append(
                             {
-                                "name": column,
+                                "name": column.split("_", 1)[-1],
+                                "type": hist_type,
                                 "x": x,
                                 "y": y
                             }
@@ -2111,42 +2121,6 @@ class InteractiveCallback:
         return return_data
 
     def _get_balance_data_request(self) -> dict:
-        """
-        'data_balance': {
-            'output_id': [
-                {
-                    'id': 1,
-                    'type': 'histogram',
-                    'data': {
-                        'graph_name': 'Тренировочная выборка',
-                        'x_label': 'Название класса',
-                        'y_label': 'Значение',
-                        'plot_data': [
-                            {
-                                'labels': []:
-                                'values': []
-                            },
-                        }
-                    ]
-                },
-                {
-                    'id': 2,
-                    'type': 'histogram',
-                    'data': {
-                        'graph_name': 'Проверочная выборка',
-                        'x_label': 'Название класса',
-                        'y_label': 'Значение',
-                        'plot_data': [
-                            {
-                                'labels': []:
-                                'values': []
-                            },
-                        }
-                    ]
-                },
-            ]
-        }
-        """
         return_data = {}
         _id = 1
         for out in self.dataset_config.get("outputs").keys():
@@ -2311,12 +2285,16 @@ class InteractiveCallback:
 
             if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Regression:
                 return_data[out] = []
+
                 for data_type in ["train", "val"]:
+                    _id = 1
                     data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
                     for histogram in self.dataset_balance[out][data_type]['histogram']:
+
                         return_data[out].append(
                             {
-                                'type': "distribution histogram",
+                                "id": _id,
+                                'type': histogram["type"],
                                 "type_data": f"{data_type}",
                                 "short_name": histogram['name'],
                                 "graph_name": f"{data_type_name} выборка - "
@@ -2329,8 +2307,10 @@ class InteractiveCallback:
                                 },
                             }
                         )
+                        _id += 1
                     return_data[out].append(
                         {
+                            "id": _id,
                             "type": "correlation heatmap",
                             "type_data": f"{data_type}",
                             "graph_name": f"{data_type_name} выборка - Матрица корреляций",
@@ -2340,6 +2320,7 @@ class InteractiveCallback:
                             "matrix": self.dataset_balance[out][data_type]['correlation']["matrix"],
                         }
                     )
+                    _id += 1
 
             if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries:
                 return_data[out] = []
@@ -2432,7 +2413,10 @@ class InteractiveCallback:
     @staticmethod
     def _get_correlation_matrix(data_frame: DataFrame):
         corr = data_frame.corr()
-        labels = list(corr.columns)
+        # labels = list(corr.columns)
+        labels = []
+        for lbl in list(corr.columns):
+            labels.append(lbl.split("_", 1)[-1])
         return labels, np.array(np.round(corr, 2)).astype('float').tolist()
 
     @staticmethod
@@ -2447,7 +2431,7 @@ class InteractiveCallback:
         """
         if categorical:
             hist_data = pd.Series(data_series).value_counts()
-            return hist_data.index, hist_data
+            return list(hist_data.index), list(hist_data)
         else:
             data_series = np.array(data_series)
             bar_values, x_labels = np.histogram(data_series, bins=bins)
@@ -2501,11 +2485,11 @@ class InteractiveCallback:
         AudioSegment.from_file("audio_path").export("audio.webm", format="webm")
         """
 
-        column_idx = 0
+        column_idx = []
         if self.dataset_config.get("group") != 'keras':
             for column_name in self.dataset_config.get("dataframe").get('val').columns:
                 if column_name.split('_')[0] == input_id:
-                    column_idx = self.dataset_config.get("dataframe").get('val').columns.tolist().index(column_name)
+                    column_idx.append(self.dataset_config.get("dataframe").get('val').columns.tolist().index(column_name))
             if (
                     self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Text
                     or self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Dataframe
@@ -2514,7 +2498,7 @@ class InteractiveCallback:
             else:
                 initial_file_path = os.path.join(
                     self.dataset_config.get("dataset_path"),
-                    self.dataset_config.get("dataframe").get('val').iat[example_idx, column_idx]
+                    self.dataset_config.get("dataframe").get('val').iat[example_idx, column_idx[0]]
                 )
             if not save_id:
                 return str(os.path.abspath(initial_file_path))
@@ -2548,15 +2532,24 @@ class InteractiveCallback:
             ]
 
         elif self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Text:
-            text_str = self.dataset_config.get("dataframe").get('val').iat[example_idx, column_idx]
-            data_type = LayerInputTypeChoice.Text.name
-            data = [
-                {
-                    "title": "Текст",
-                    "value": text_str,
-                    "color_mark": None
-                }
-            ]
+            regression_task = False
+            for out in self.dataset_config.get("outputs").keys():
+                if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Regression:
+                    regression_task = True
+            for column in column_idx:
+                text_str = self.dataset_config.get("dataframe").get('val').iat[example_idx, column]
+                data_type = LayerInputTypeChoice.Text.name
+                title = "Текст"
+                for out in self.dataset_config.get("outputs").keys():
+                    if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Regression:
+                        title = self.dataset_config.get("dataframe").get('val').columns[column].split("_", 1)[-1]
+                data = [
+                    {
+                        "title": title,
+                        "value": text_str,
+                        "color_mark": None
+                    }
+                ]
 
         elif self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Video:
             clip = moviepy_editor.VideoFileClip(initial_file_path)
@@ -2623,15 +2616,11 @@ class InteractiveCallback:
                     }
                 ]
             else:
-                """
-                dataframe_data = {
-                    "col_name": value: str
-                }
-                """
-                for col_name in self.dataset_config.get('dataframe').get('val').columns:
+                data_type = LayerInputTypeChoice.Dataframe.name.lower()
+                for col_name in self.dataset_config.get('columns').get(int(input_id)).keys():
                     data.append(
                         {
-                            "title": col_name,
+                            "title": col_name.split("_", 1)[-1],
                             "value": self.dataset_config.get('dataframe').get('val')[col_name][example_idx],
                             "color_mark": None
                         }
@@ -2866,41 +2855,53 @@ class InteractiveCallback:
 
         elif self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.Regression:
             # TODO: inverse_transform
-            column_name = self.dataset_config["outputs"][output_id]['cols_names'][
-                list(self.dataset_config["outputs"].keys()).index(output_id)]
-            y_true = self.y_true.get(data_type).get(output_id)[example_idx]
+            column_names = list(self.dataset_config["columns"][int(output_id)].keys())
+            y_true = self.y_true.get(data_type).get(output_id)[example_idx].astype('float').tolist()
             data["y_true"] = {
                 "type": "text",
-                "data": [
+                "data": []
+            }
+            for i, name in enumerate(column_names):
+                data["y_true"]["data"].append(
                     {
-                        "title": column_name,
-                        "value": y_true,
+                        "title": name.split('_', 1)[-1],
+                        "value": y_true[i],
                         "color_mark": None
                     }
-                ]
-            }
+                )
+
             y_pred = self.y_pred.get(output_id)[example_idx]
-            deviation = (y_pred - y_true) * 100 / y_true
-            color_mark = 'success' if deviation < 2 else "wrong"
+            deviation = np.abs((y_pred - y_true) * 100 / y_true)
             data["y_pred"] = {
                 "type": "text",
-                "data": [
-                    {
-                        "title": column_name,
-                        "value": y_pred,
-                        "color_mark": color_mark
-                    }
-                ]
+                "data": []
             }
+            for i, name in enumerate(column_names):
+                color_mark = 'success' if deviation[i] < 2 else "wrong"
+                data["y_pred"]["data"].append(
+                    {
+                        "title": name.split('_', 1)[-1],
+                        "value": y_pred[i],
+                        "color_mark": None
+                    }
+                )
             if show_stat:
                 data["stat"] = {
                     "type": "text",
-                    "data": {
-                        'title': "Отклонение",
-                        'value': f"{np.round(deviation, 2)} %",
-                        'color_mark': color_mark
-                    }
+                    "data": []
                 }
+                for i, name in enumerate(column_names):
+                    color_mark = 'success' if deviation[i] < 2 else "wrong"
+                    data["stat"]["data"].append(
+                        {
+                            "type": "text",
+                            "data": {
+                                'title': f"Отклонение - «{name.split('_', 1)[-1]}»",
+                                'value': f"{np.round(deviation, 2)[i]} %",
+                                'color_mark': color_mark
+                            }
+                        }
+                    )
 
         elif self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.Timeseries:
             """
