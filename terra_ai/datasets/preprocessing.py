@@ -77,15 +77,14 @@ class CreatePreprocessing(object):
 
     def __init__(self, dataset_path=None):
 
-        if dataset_path:
-            self.paths = DatasetPathsData(basepath=dataset_path)
+        self.dataset_path = dataset_path
         self.preprocessing = {}
 
     def load_preprocesses(self, put_data):
 
         for put in put_data.keys():
             for col_name in put_data[put].keys():
-                prep_path = os.path.join(self.paths.preprocessing, str(put), f'{col_name}.gz')
+                prep_path = os.path.join(self.dataset_path, 'preprocessing', str(put), f'{col_name}.gz')
                 if os.path.isfile(prep_path):
                     self.preprocessing.update([(put, {col_name: joblib.load(prep_path)})])
 

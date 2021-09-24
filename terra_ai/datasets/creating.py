@@ -305,9 +305,11 @@ class CreateDataset(object):
         for inp in self.instructions.inputs.keys():
             for key, value in self.instructions.inputs[inp].items():
                 build_dataframe[key] = value.instructions
+                print(len(value.instructions))
         for out in self.instructions.outputs.keys():
             for key, value in self.instructions.outputs[out].items():
                 build_dataframe[key] = value.instructions
+                print(len(value.instructions))
 
         dataframe = pd.DataFrame(build_dataframe)
         for key, value in split_sequence.items():
@@ -346,7 +348,7 @@ class CreateDataset(object):
                     array = np.expand_dims(array, 0)
                 input_array.append(array)
 
-                classes_names = [os.path.basename(x) for x in creation_data.inputs.get(key).parameters.sources_paths]\
+                classes_names = sorted([os.path.basename(x) for x in creation_data.inputs.get(key).parameters.sources_paths])\
                     if not os.path.isfile(creation_data.inputs.get(key).parameters.sources_paths[0]) else\
                     arr['parameters'].get('classes_names')
 
@@ -455,8 +457,8 @@ class CreateDataset(object):
                     output_array.append(array)
 
                 cl_names = data.parameters.get('classes_names')
-                classes_names = cl_names if cl_names else [os.path.basename(x) for x in
-                                                           creation_data.outputs.get(key).parameters.sources_paths]
+                classes_names = cl_names if cl_names else\
+                    sorted([os.path.basename(x) for x in creation_data.outputs.get(key).parameters.sources_paths])
                 num_classes = len(classes_names)
 
                 if creation_data.outputs.get(key).type == LayerOutputTypeChoice.Dataframe:
@@ -641,6 +643,12 @@ class CreateDataset(object):
                 out = out.native()
                 del out['parameters']['sources_paths']
                 json.dump(out, cfg)
+
+        # if self.columns_processing:
+        #     with open(os.path.join(parameters_path, f'0_columns_preprocessing.json'), 'w') as cfg:
+        #         inp = inp.native()
+        #         del inp['parameters']['sources_paths']
+        #         json.dump(inp, cfg)
 
         os.makedirs(tables_path, exist_ok=True)
         for key in self.dataframe.keys():
