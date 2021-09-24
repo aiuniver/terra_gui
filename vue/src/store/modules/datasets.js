@@ -129,7 +129,8 @@ export default {
     async choiceProgress({ dispatch }, source) {
       return await dispatch('axios', { url: '/datasets/choice/progress/', data: source }, { root: true });
     },
-    async sourceLoad({ dispatch }, source) {
+    async sourceLoad({ commit, dispatch }, source) {
+      commit('SET_ERRORS', {});
       return await dispatch('axios', { url: '/datasets/source/load/', data: source }, { root: true });
     },
 
