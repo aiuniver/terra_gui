@@ -5,7 +5,7 @@
         <Fab @click="handleAdd" />
         <p>Обработчики</p>
         <div class="block-handlers__item--left" @click="show = !show">
-          <i class="t-icon icon-collapsable"></i>
+          <i :class="['t-icon icon-collapsable', { rotate: show }]"></i>
         </div>
       </div>
     </div>
@@ -159,6 +159,9 @@ export default {
   padding: 0 0 25px;
   &--hide {
     height: 30px;
+  }
+  .rotate{
+    transform: rotate(180deg);
   }
   p {
     font-size: 14px;
