@@ -491,6 +491,7 @@ class InteractiveCallback:
         self.intermediate_result = {}
         self.statistic_result = {}
         self.train_progress = {}
+        self.deploy_presets_data = None
 
     def get_states(self):
         return self.train_states
