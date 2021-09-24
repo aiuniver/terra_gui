@@ -17,11 +17,11 @@
       </div>
     </div>
     <div class="t-balance__graphs">
-      <!-- <template v-for="(id, index) of filter"> -->
-        <template v-for="(item, i) of filter">
-          <Graph :key="'graph_' + i + '/' + i" v-bind="item" />
+      <template v-for="(layer, index) of dataDalance">
+        <template v-for="(item, i) of filter(layer)">
+          <Graph :key="'graph_' + index + '/' + i" v-bind="item" />
         </template>
-      <!-- </template> -->
+      </template>
     </div>
   </div>
 </template>
@@ -49,14 +49,13 @@ export default {
     dataDalance() {
       return this.$store.getters['trainings/getTrainData']('data_balance') || [];
     },
-    filter() {
-      const data = Object.values(this.dataDalance)[0] || []
-      return data.filter(item => this.selected.includes(item.graph_name)) ?? [];
-    },
   },
   methods: {
+    filter(layer) {
+      return layer.filter(item => this.selected.includes(item.type_data))
+    },
     change({ name, value }) {
-      const temp = name !== 'test' ? 'Тренировочная выборка' : 'Проверчная выборка';
+      const temp = name !== 'test' ? 'train' : 'val';
       if (!value) {
         this.selected = this.selected.filter(item => item !== temp);
       } else {
