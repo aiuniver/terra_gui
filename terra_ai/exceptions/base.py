@@ -1,11 +1,24 @@
+from enum import Enum
+
+from .. import settings
+
+
+class Messages(dict, Enum):
+    Unknown = {"ru": "Неизвестная ошибка",
+               "eng": "Undefined error"}
+
+
 class TerraBaseException(Exception):
     class Meta:
-        message = "Undefined error"
+        message = Messages.Unknown
 
-    def __init__(self, *args, **kwargs):
-        if len(args):
-            __message = args[0]
-            args = args[1:]
-        else:
-            __message = self.Meta.message
-        super().__init__(__message, *args, **kwargs)
+    def __init__(self, *args, lang: str = settings.LANGUAGE):
+        error_msg = self.Meta.message.value.get(lang)
+
+        if args:
+            try:
+                error_msg = error_msg % args
+            except TypeError:
+                pass
+
+        super().__init__(error_msg)
