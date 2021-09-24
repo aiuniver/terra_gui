@@ -5,8 +5,7 @@ from terra_ai.data.modeling.layer import LayersList
 from terra_ai.data.modeling.model import ModelDetailsData
 
 from apps.plugins.frontend.presets.defaults import (
-    TrainingLosses,
-    TrainingMetrics,
+    TrainingTasksRelations,
     TrainingLossSelect,
     TrainingMetricSelect,
     TrainingClassesQuantitySelect,
@@ -54,36 +53,48 @@ class DefaultsData(BaseMixinData):
     modeling: DefaultsModelingData
     training: DefaultsTrainingData
 
-    def __update_training_outputs(self, layers: LayersList):
+    def __update_training_outputs(self, layers: LayersList, training_data):
         outputs = {}
         for layer in layers:
             losses_data = {**TrainingLossSelect}
+            training_task_rel = TrainingTasksRelations.get(layer.task)
+            training_layer = training_data.base.architecture.parameters.outputs.get(
+                layer.id
+            )
             losses_list = list(
                 map(
-                    lambda item: {"label": item.name, "value": item.value},
-                    TrainingLosses.get(layer.task, []),
+                    lambda item: {"label": item.value, "value": item.name},
+                    training_task_rel.losses,
                 )
             )
             losses_data.update(
                 {
                     "name": losses_data.get("name") % layer.id,
                     "parse": losses_data.get("parse") % layer.id,
-                    "value": losses_list[0].get("label") if losses_list else "",
+                    "value": training_layer.loss
+                    if training_layer
+                    else (losses_list[0].get("label") if losses_list else ""),
                     "list": losses_list,
                 }
             )
             metrics_data = {**TrainingMetricSelect}
             metrics_list = list(
                 map(
-                    lambda item: {"label": item.name, "value": item.value},
-                    TrainingMetrics.get(layer.task, []),
+                    lambda item: {"label": item.value, "value": item.name},
+                    training_task_rel.metrics,
                 )
+            )
+            available_metrics = list(
+                set(training_layer.metrics)
+                & set(training_task_rel.metrics if training_task_rel else [])
             )
             metrics_data.update(
                 {
                     "name": metrics_data.get("name") % layer.id,
                     "parse": metrics_data.get("parse") % layer.id,
-                    "value": [metrics_list[0].get("label")] if metrics_list else [],
+                    "value": available_metrics
+                    if available_metrics
+                    else ([metrics_list[0].get("label")] if metrics_list else []),
                     "list": metrics_list,
                 }
             )
@@ -132,6 +143,6 @@ class DefaultsData(BaseMixinData):
                     self.training.base.checkpoint.fields[index] = Field(**field_data)
                     break
 
-    def update_by_model(self, model: ModelDetailsData):
-        self.__update_training_outputs(model.outputs)
+    def update_by_model(self, model: ModelDetailsData, training_data):
+        self.__update_training_outputs(model.outputs, training_data)
         self.__update_training_checkpoint(model.outputs)

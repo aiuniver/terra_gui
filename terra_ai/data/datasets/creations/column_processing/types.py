@@ -111,12 +111,23 @@ class ParametersSegmentationData(ParametersBaseData):
     mask_range: PositiveInt
     classes_names: List[str]
     classes_colors: List[Color]
+    height: Optional[PositiveInt]
+    width: Optional[PositiveInt]
+
+    @validator("width", "height", pre=True)
+    def _validate_size(cls, value: PositiveInt) -> PositiveInt:
+        if not value:
+            value = None
+        return value
 
 
 class ParametersClassificationData(ParametersBaseData):
     one_hot_encoding: bool = True
     type_processing: LayerTypeProcessingClassificationChoice
     ranges: Optional[str]
+    length: int = 0
+    depth: int = 0
+    step: int = 1
 
     @validator("type_processing")
     def _validate_type_processing(
@@ -151,3 +162,7 @@ class ParametersTimeseriesData(ParametersBaseData, MinMaxScalerData):
 
 class ParametersScalerData(ParametersBaseData, MinMaxScalerData):
     scaler: LayerScalerDefaultChoice
+    length: int = 0
+    depth: int = 0
+    step: int = 1
+

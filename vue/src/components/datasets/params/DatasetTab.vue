@@ -21,7 +21,7 @@
       />
     </div>
     <div v-show="value === 'URL'" class="tabs__item">
-      <t-input label="Введите URL на архив исходников" @change="change" />
+      <t-input label="Введите URL на архив исходников" @input="change" />
     </div>
   </div>
 </template>
@@ -60,8 +60,8 @@ export default {
     selected({ value, label }) {
       this.$emit('select', { mode: 'GoogleDrive', value, label });
     },
-    change({ value }) {
-      this.$emit('select', { mode: 'URL', value: value.trim() });
+    change(value) {
+      this.$emit('select', { mode: 'URL', value: value ? value.trim() : '' });
     },
     click(mode) {
       this.select = mode;

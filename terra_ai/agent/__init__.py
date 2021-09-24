@@ -6,8 +6,10 @@ from typing import Any, NoReturn, Optional
 
 import tensorflow
 
-from . import exceptions
+from . import exceptions as agent_exceptions
+from . import utils as agent_utils
 from .. import settings, progress
+from ..exceptions import tensor_flow as tf_exceptions
 from ..data.datasets.creation import FilePathSourcesList
 from ..data.datasets.creation import SourceData, CreationData
 from ..data.datasets.dataset import (
@@ -28,12 +30,10 @@ from ..data.presets.datasets import DatasetsGroups
 from ..data.presets.models import ModelsGroups
 from ..data.projects.project import ProjectsInfoData, ProjectsList
 from ..data.training.train import TrainData, InteractiveData
-from ..data.deploy.collection import CollectionData as DeployCollectionData
 from ..datasets import loading as datasets_loading
 from ..datasets import utils as datasets_utils
 from ..datasets.creating import CreateDataset
 from ..deploy import loading as deploy_loading
-from ..deploy import collect as deploy_collect
 from ..modeling.validator import ModelValidator
 from ..progress import utils as progress_utils
 from ..training import training_obj
@@ -46,16 +46,40 @@ class Exchange:
         __method_name = f"_call_{method}"
         __method = getattr(self, __method_name, None)
 
-        # Проверяем существует ли метод
+        # Проверяем, существует ли метод
         if __method is None:
-            raise exceptions.CallMethodNotFoundException(self.__class__, __method_name)
+            raise agent_exceptions.CallMethodNotFoundException(
+                self.__class__, __method_name
+            )
 
-        # Проверяем является ли методом вызываемым
+        # Проверяем, является ли метод вызываемым
         if not callable(__method):
-            raise exceptions.MethodNotCallableException(self.__class__, __method_name)
+            raise agent_exceptions.MethodNotCallableException(
+                __method_name, self.__class__
+            )
 
         # Вызываем метод
-        return __method(**kwargs)
+        try:
+            return __method(**kwargs)
+        except tensorflow.errors.OpError as error:
+            err_msg = str(
+                getattr(
+                    tf_exceptions, error.__class__.__name__, tf_exceptions.UnknownError
+                )(error.message)
+            )
+            raise getattr(
+                agent_utils.ExceptionClasses,
+                method,
+                agent_utils.ExceptionClasses.unknown,
+            ).value(err_msg)
+        except agent_exceptions.ExchangeBaseException as error:
+            raise error
+        except Exception as error:
+            raise getattr(
+                agent_utils.ExceptionClasses,
+                method,
+                agent_utils.ExceptionClasses.unknown,
+            ).value(str(error))
 
     @property
     def is_colab(self) -> bool:
@@ -80,17 +104,12 @@ class Exchange:
         """
         Получение списка проектов
         """
-        try:
-            projects = ProjectsList()
-            for filename in os.listdir(path):
-                if filename.endswith("project"):
-                    projects.append({"value": Path(path, filename)})
-            projects.sort(key=lambda item: item.label)
-            return ProjectsInfoData(projects=projects.native())
-        except FileNotFoundError:
-            raise exceptions.FileNotFoundException(str(path))
-        except Exception as error:
-            raise exceptions.FailedGetProjectsInfoException(str(error))
+        projects = ProjectsList()
+        for filename in os.listdir(path):
+            if filename.endswith("project"):
+                projects.append({"value": Path(path, filename)})
+        projects.sort(key=lambda item: item.label)
+        return ProjectsInfoData(projects=projects.native())
 
     def _call_project_save(
         self, source: Path, target: Path, name: str, overwrite: bool
@@ -98,32 +117,21 @@ class Exchange:
         """
         Сохранение проекта
         """
-        try:
-            project_path = Path(target, f"{name}.{settings.PROJECT_EXT}")
-            if not overwrite and project_path.is_file():
-                raise exceptions.ProjectAlreadyExistsException(name)
-            zip_destination = progress_utils.pack(
-                "project_save", "Сохранение проекта", source, delete=False
-            )
-            try:
-                shutil.move(zip_destination.name, project_path)
-            except FileNotFoundError:
-                raise exceptions.ProjectNotFoundException(name, target)
-        except Exception as error:
-            raise exceptions.FailedSaveProjectException(str(error))
+        project_path = Path(target, f"{name}.{settings.PROJECT_EXT}")
+        if not overwrite and project_path.is_file():
+            raise agent_exceptions.ProjectAlreadyExistsException(name)
+        zip_destination = progress_utils.pack(
+            "project_save", "Сохранение проекта", source, delete=False
+        )
+        shutil.move(zip_destination.name, project_path)
 
     def _call_project_load(self, source: Path, target: Path):
         """
         Загрузка проекта
         """
-        try:
-            shutil.rmtree(target, ignore_errors=True)
-            destination = progress_utils.unpack(
-                "project_load", "Загрузка проекта", source
-            )
-            shutil.move(destination, target)
-        except Exception as error:
-            raise exceptions.FailedLoadProjectException(str(error))
+        shutil.rmtree(target, ignore_errors=True)
+        destination = progress_utils.unpack("project_load", "Загрузка проекта", source)
+        shutil.move(destination, target)
 
     def _call_dataset_choice(
         self, custom_path: Path, destination: Path, group: str, alias: str
@@ -131,22 +139,16 @@ class Exchange:
         """
         Выбор датасета
         """
-        try:
-            datasets_loading.choice(
-                DatasetLoadData(path=custom_path, group=group, alias=alias),
-                destination=destination,
-            )
-        except Exception as error:
-            raise exceptions.FailedChoiceDatasetException(str(error))
+        datasets_loading.choice(
+            DatasetLoadData(path=custom_path, group=group, alias=alias),
+            destination=destination,
+        )
 
     def _call_dataset_choice_progress(self) -> progress.ProgressData:
         """
         Прогресс выбора датасета
         """
-        try:
-            return progress.pool("dataset_choice")
-        except Exception as error:
-            raise exceptions.FailedGetProgressDatasetChoiceException(str(error))
+        return progress.pool("dataset_choice")
 
     def _call_dataset_delete(self, path: str, group: str, alias: str):
         """
@@ -157,51 +159,42 @@ class Exchange:
                 Path(path, f"{alias}.{settings.DATASET_EXT}"), ignore_errors=True
             )
         else:
-            raise exceptions.DatasetCanNotBeDeletedException(alias, group)
+            raise agent_exceptions.DatasetCanNotBeDeletedException(alias, group)
 
     def _call_datasets_info(self, path: Path) -> DatasetsGroupsList:
         """
         Получение данных для страницы датасетов: датасеты и теги
         """
-        try:
-            info = DatasetsGroupsList(DatasetsGroups)
-            for dirname in os.listdir(str(path.absolute())):
-                if dirname.endswith(settings.DATASET_EXT):
-                    dataset_config = CustomDatasetConfigData(path=Path(path, dirname))
-                    info.get(DatasetGroupChoice.custom.name).datasets.append(
-                        DatasetData(**dataset_config.config)
-                    )
-            return info
-        except Exception as error:
-            raise exceptions.FailedGetDatasetsInfoException(str(error))
+        info = DatasetsGroupsList(DatasetsGroups)
+        for dirname in os.listdir(str(path.absolute())):
+            if dirname.endswith(settings.DATASET_EXT):
+                dataset_config = CustomDatasetConfigData(path=Path(path, dirname))
+                info.get(DatasetGroupChoice.custom.name).datasets.append(
+                    DatasetData(**dataset_config.config)
+                )
+        return info
 
     def _call_dataset_source_load(self, mode: str, value: str):
         """
         Загрузка исходников датасета
         """
-        try:
-            datasets_loading.source(SourceData(mode=mode, value=value))
-        except Exception as error:
-            raise exceptions.FailedLoadDatasetsSourceException(str(error))
+        datasets_loading.source(SourceData(mode=mode, value=value))
 
     def _call_dataset_source_load_progress(self) -> progress.ProgressData:
         """
         Прогресс загрузки исходников датасета
         """
-        try:
-            progress_data = progress.pool("dataset_source_load")
-            if progress_data.finished and progress_data.data:
-                __path = progress_data.data.absolute()
-                file_manager = FileManagerItem(path=__path).native().get("children")
-                progress_data.data = {
-                    "file_manager": file_manager,
-                    "source_path": __path,
-                }
-            else:
-                progress.data = []
-            return progress_data
-        except Exception as error:
-            raise exceptions.FailedLoadProgressDatasetsSource(str(error))
+        progress_data = progress.pool("dataset_source_load")
+        if progress_data.finished and progress_data.data:
+            __path = progress_data.data.absolute()
+            file_manager = FileManagerItem(path=__path).native().get("children")
+            progress_data.data = {
+                "file_manager": file_manager,
+                "source_path": __path,
+            }
+        else:
+            progress.data = []
+        return progress_data
 
     def _call_dataset_source_segmentation_classes_autosearch(
         self, path: Path, num_classes: int, mask_range: int
@@ -209,99 +202,75 @@ class Exchange:
         """
         Автопоиск классов для сегментации при создании датасета
         """
-        try:
-            return datasets_utils.get_classes_autosearch(
-                path, num_classes, mask_range
-            ).native()
-        except Exception as error:
-            raise exceptions.ValueException(str(error))
+        return datasets_utils.get_classes_autosearch(
+            path, num_classes, mask_range
+        ).native()
 
     def _call_dataset_source_segmentation_classes_annotation(self, path: Path) -> dict:
         """
         Получение классов для сегментации при создании датасета с использованием файла аннотации
         """
-        try:
-            return datasets_utils.get_classes_annotation(path).native()
-        except Exception as error:
-            raise exceptions.ValueException(str(error))
+        return datasets_utils.get_classes_annotation(path).native()
 
     def _call_dataset_create(self, **kwargs) -> DatasetData:
         """
         Создание датасета из исходников
         """
-        # try:
         data = CreationData(**kwargs)
         creation = CreateDataset(data)
         return creation.datasetdata
-        # except Exception as error:
-        #     raise exceptions.FailedCreateDatasetException(str(error))
 
     def _call_datasets_sources(self, path: str) -> FilePathSourcesList:
         """
         Получение списка исходников датасетов
         """
-        try:
-            files = FilePathSourcesList()
-            for filename in os.listdir(path):
-                if filename.endswith(".zip"):
-                    filepath = Path(path, filename)
-                    files.append({"value": filepath})
-            files.sort(key=lambda item: item.label)
-            return files
-        except Exception as error:
-            raise exceptions.FailedGetDatasetsSourcesException(str(error))
+        files = FilePathSourcesList()
+        for filename in os.listdir(path):
+            if filename.endswith(".zip"):
+                filepath = Path(path, filename)
+                files.append({"value": filepath})
+        files.sort(key=lambda item: item.label)
+        return files
 
     def _call_models(self, path: str) -> ModelsGroupsList:
         """
         Получение списка моделей
         """
-        try:
-            models = ModelsGroupsList(ModelsGroups)
-            preset_models_path = Path(settings.ASSETS_PATH, "models")
-            custom_models_path = path
-            couples = (("preset", preset_models_path), ("custom", custom_models_path))
-            for models_group, models_path in couples:
-                for filename in os.listdir(models_path):
-                    if filename.endswith(".model"):
-                        models.get(
-                            getattr(ModelGroupChoice, models_group).name
-                        ).models.append({"value": Path(models_path, filename)})
-                models.get(getattr(ModelGroupChoice, models_group).name).models.sort(
-                    key=lambda item: item.label
-                )
-            return models
-        except Exception as error:
-            raise exceptions.FailedGetModelsListException(str(error))
+        models = ModelsGroupsList(ModelsGroups)
+        preset_models_path = Path(settings.ASSETS_PATH, "models")
+        custom_models_path = path
+        couples = (("preset", preset_models_path), ("custom", custom_models_path))
+        for models_group, models_path in couples:
+            for filename in os.listdir(models_path):
+                if filename.endswith(".model"):
+                    models.get(
+                        getattr(ModelGroupChoice, models_group).name
+                    ).models.append({"value": Path(models_path, filename)})
+            models.get(getattr(ModelGroupChoice, models_group).name).models.sort(
+                key=lambda item: item.label
+            )
+        return models
 
     def _call_model_get(self, value: str) -> ModelDetailsData:
         """
         Получение модели
         """
-        try:
-            data = ModelLoadData(value=value)
-            with open(data.value.absolute(), "r") as config_ref:
-                config = json.load(config_ref)
-                return ModelDetailsData(**config)
-        except Exception as error:
-            raise exceptions.FailedGetModelException(str(error))
+        data = ModelLoadData(value=value)
+        with open(data.value.absolute(), "r") as config_ref:
+            config = json.load(config_ref)
+            return ModelDetailsData(**config)
 
     def _call_model_update(self, model: dict) -> ModelDetailsData:
         """
         Обновление модели
         """
-        try:
-            return ModelDetailsData(**model)
-        except Exception as error:
-            raise exceptions.FailedUpdateModelException(str(error))
+        return ModelDetailsData(**model)
 
     def _call_model_validate(self, model: ModelDetailsData) -> tuple:
         """
         Валидация модели
         """
-        try:
-            return ModelValidator(model).get_validated()
-        except Exception as error:
-            raise exceptions.FailedValidateModelException(str(error))
+        return ModelValidator(model).get_validated()
 
     def _call_model_create(self, model: dict, path: Path, overwrite: bool):
         """
@@ -309,21 +278,15 @@ class Exchange:
         """
         model_path = Path(path, f'{model.get("name")}.{settings.MODEL_EXT}')
         if not overwrite and model_path.is_file():
-            raise exceptions.ModelAlreadyExistsException(model.get("name"))
-        try:
-            with open(model_path, "w") as model_ref:
-                json.dump(model, model_ref)
-        except Exception as error:
-            raise exceptions.FailedCreateModelException(str(error))
+            raise agent_exceptions.ModelAlreadyExistsException(model.get("name"))
+        with open(model_path, "w") as model_ref:
+            json.dump(model, model_ref)
 
     def _call_model_delete(self, path: Path):
         """
         Удаление модели
         """
-        try:
-            os.remove(path)
-        except FileNotFoundError as error:
-            raise exceptions.FailedDeleteModelException(str(error))
+        os.remove(path)
 
     def _call_training_start(
         self,
@@ -365,39 +328,27 @@ class Exchange:
         """
         Остановить обучение
         """
-        try:
-            interactive.set_status("stopped")
-            return interactive.train_states
-        except Exception as error:
-            raise exceptions.FailedStopTrainException(str(error))
+        interactive.set_status("stopped")
+        return interactive.train_states
 
     def _call_training_clear(self):
         """
         Очистить обучение
         """
-        try:
-            interactive.set_status("no_train")
-            return interactive.train_states
-        except Exception as error:
-            raise exceptions.FailedCleanTrainException(str(error))
+        interactive.set_status("no_train")
+        return interactive.train_states
 
-    def _call_training_interactive(self, **kwargs):
+    def _call_training_interactive(self, config: InteractiveData):
         """
         Обновление интерактивных параметров обучения
         """
-        try:
-            interactive.get_train_results(config=InteractiveData(**kwargs))
-        except Exception as error:
-            raise exceptions.FailedSetInteractiveConfigException(str(error))
+        interactive.get_train_results(config=config)
 
     def _call_training_progress(self) -> progress.ProgressData:
         """
         Прогресс обучения
         """
-        try:
-            return progress.pool("training")
-        except Exception as error:
-            raise exceptions.FailedGetTrainingProgressException(str(error))
+        return progress.pool("training")
 
     def _call_training_save(self):
         """
@@ -405,29 +356,23 @@ class Exchange:
         """
         pass
 
-    def _call_deploy_collection(
-        self, dataset: Optional[DatasetData] = None
-    ) -> Optional[DeployCollectionData]:
-        deploy_collect.update(dataset=dataset)
-        return deploy_collect.data
+    def _call_deploy_presets(self):
+        """
+        получение данных для отображения пресетов на странице деплоя
+        """
+        return interactive.deploy_presets_data
 
     def _call_deploy_upload(self, source: Path, **kwargs):
         """
         Деплой: загрузка
         """
-        try:
-            deploy_loading.upload(source, kwargs)
-        except Exception as error:
-            raise exceptions.FailedUploadDeployException(str(error))
+        deploy_loading.upload(source, kwargs)
 
     def _call_deploy_upload_progress(self) -> progress.ProgressData:
         """
         Деплой: прогресс загрузки
         """
-        try:
-            return progress.pool("deploy_upload")
-        except Exception as error:
-            raise exceptions.FailedGetUploadDeployResultException(str(error))
+        return progress.pool("deploy_upload")
 
 
 agent_exchange = Exchange()

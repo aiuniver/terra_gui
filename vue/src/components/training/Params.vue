@@ -1,5 +1,8 @@
 <template>
   <div class="params">
+    <div v-if="loading" class="params__overlay">
+      <LoadSpiner :text="'Запуск обучения...'" />
+    </div>
     <div class="params__body">
       <scrollbar>
         <div class="params__items">
@@ -11,6 +14,7 @@
                   :key="'main_' + i"
                   :state="state"
                   :inline="false"
+                  :disabled="disabledAny"
                   @parse="parse"
                 />
               </template>
@@ -24,6 +28,7 @@
                     class="fit__item"
                     :state="state"
                     :inline="true"
+                    :disabled="disabledAny"
                     @parse="parse"
                   />
                 </template>
@@ -38,6 +43,7 @@
                     class="optimizer__item"
                     :state="state"
                     inline
+                    :disabled="disabledAny"
                     @parse="parse"
                   />
                 </template>
@@ -57,6 +63,7 @@
                           :key="'checkpoint_' + i"
                           :state="state"
                           :inline="true"
+                          :disabled="data.disabled || disabled"
                           @parse="parse"
                         />
                       </template>
@@ -75,6 +82,7 @@
                     name="metric_name"
                     :parse="'architecture[parameters][checkpoint][metric_name]'"
                     :value="getValue"
+                    :disabled="disabled"
                     @parse="parse"
                   />
                 </t-field>
@@ -85,6 +93,7 @@
                     class="checkpoint__item"
                     :state="state"
                     :inline="true"
+                    :disabled="disabled"
                     @parse="parse"
                   />
                 </template>
@@ -92,16 +101,8 @@
             </at-collapse-item>
           </at-collapse>
         </div>
-        <!-- <div class="params__items">
-        <div class="params__items--item">
-          <t-field label="Мониторинг" inline>
-              <TCheckbox small @focus="click" />
-          </t-field>
-        </div>
-      </div> -->
       </scrollbar>
     </div>
-
     <div class="params__footer">
       <div v-for="({ title, visible }, key) of button" :key="key" class="params__btn">
         <t-button @click="btnEvent(key)" :disabled="!visible">{{ title }}</t-button>
@@ -114,22 +115,19 @@
 import { debounce } from '@/utils/core/utils';
 import ser from '../../assets/js/myserialize';
 import { mapGetters } from 'vuex';
-// import TCheckbox from '../global/new/forms/TCheckbox.vue';
-// import Checkbox from '@/components/forms/Checkbox.vue';
-
+import LoadSpiner from '@/components/forms/LoadSpiner';
 export default {
   name: 'params-traning',
   components: {
-    // TCheckbox,
-    // Checkbox,
+    LoadSpiner,
   },
   data: () => ({
     obj: {},
     collapse: [0, 1, 2, 3, 4],
     optimizerValue: '',
     metricData: '',
-    learningStop: false,
     debounce: null,
+    loading: false,
   }),
   computed: {
     ...mapGetters({
@@ -137,15 +135,29 @@ export default {
       button: 'trainings/getButtons',
       status: 'trainings/getStatus',
     }),
+    isLearning() {
+      return ['addtrain', 'training'].includes(this.status);
+    },
+    disabled() {
+      return this.status !== 'no_train';
+    },
+    disabledAny() {
+      return this.status !== 'no_train' && this.status !== 'stopped'
+        ? true
+        : this.status !== 'no_train'
+        ? ['epochs']
+        : false;
+    },
     getValue() {
-      return this.state?.['architecture[parameters][checkpoint][metric_name]'] ?? 'Accuracy';
+      const data = Object.values(this.outputs.fields)?.[0]?.fields || [];
+      const metrics = data.find(item => item.type === 'multiselect');
+      return this.state?.['architecture[parameters][checkpoint][metric_name]'] ?? (metrics.value[0] || '');
     },
     state: {
       set(value) {
         this.$store.dispatch('trainings/setStateParams', value);
       },
       get() {
-        // console.log(this.$store.getters['trainings/getStateParams']);
         return this.$store.getters['trainings/getStateParams'];
       },
     },
@@ -156,7 +168,6 @@ export default {
       return this.params?.fit || {};
     },
     outputs() {
-      console.log(this.params?.outputs || {});
       return this.params?.outputs || {};
     },
     optimizerFields() {
@@ -196,52 +207,39 @@ export default {
       console.log(e);
     },
     async start() {
-      console.log(JSON.stringify(this.obj, null, 2));
+      // console.log(JSON.stringify(this.obj, null, 2));
+      this.loading = true;
       const res = await this.$store.dispatch('trainings/start', this.obj);
       if (res) {
         const { data } = res;
         if (data?.state?.status) {
-          this.learningStop = false;
           this.progress();
         }
       }
+      this.loading = false;
       // console.log(res);
     },
     async stop() {
-      this.learningStop = true;
-      const res = await this.$store.dispatch('trainings/stop', {});
-      console.log(res);
+      this.$store.dispatch('trainings/stop', {});
     },
     async clear() {
-      const res = await this.$store.dispatch('trainings/clear', {});
-      console.log(res);
+      await this.$store.dispatch('trainings/clear', {});
     },
     async save() {
-      const res = await this.$store.dispatch('trainings/save', {});
-      console.log(res);
+      await this.$store.dispatch('trainings/save', {});
     },
     async progress() {
+      // console.log(this.isLearning);
       const res = await this.$store.dispatch('trainings/progress', {});
-      // console.log(res);
       if (res) {
-        const { finished, message, percent, data } = res.data;
-        // console.log(percent);
+        const { finished, message, percent } = res.data;
         this.$store.dispatch('messages/setProgressMessage', message);
         this.$store.dispatch('messages/setProgress', percent);
-        if (data) {
-          const { info, states, train_data, train_usage } = data;
-          this.$store.dispatch('trainings/setInfo', info);
-          this.$store.dispatch('trainings/setStates', states);
-          this.$store.dispatch('trainings/setTrainData', train_data);
-          this.$store.dispatch('trainings/setTrainUsage', train_usage);
+        if (!finished) {
+          if (this.isLearning) {
+            this.debounce();
+          }
         }
-        if (finished) {
-          // console.log(res);
-        } else {
-          this.debounce(this.learningStop);
-        }
-      } else {
-        // console.log(res);
       }
     },
     parse({ parse, value, name }) {
@@ -259,17 +257,27 @@ export default {
       if (name === 'optimizer') {
         this.optimizerValue = value;
       }
+      if (name === 'metric_name') {
+        if (!value) {
+          const arr = this.state['architecture[parameters][outputs][2][metrics]'];
+          if (arr) {
+            ser(this.obj, 'architecture[parameters][checkpoint][metric_name]', arr[0]);
+            this.obj = { ...this.obj };
+            this.state = { [`architecture[parameters][checkpoint][metric_name]`]: arr[0] };
+          }
+        }
+      }
     },
   },
   created() {
-    this.debounce = debounce(stop => {
-      // console.log(stop)
-      if (!stop) {
-        this.progress();
-      }
+    this.debounce = debounce(() => {
+      // console.log('jghghhghghghhgh');
+      this.progress();
     }, 1000);
-    if (this.status === 'training') {
-      this.debounce(this.learningStop);
+
+    // console.log(this.isLearning);
+    if (this.isLearning) {
+      this.debounce();
     }
   },
 };
@@ -299,9 +307,20 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  position: relative;
   &__body {
     overflow: hidden;
     flex: 0 1 auto;
+  }
+  &__overlay {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background-color: rgb(14 22 33 / 30%);
+    z-index: 5;
   }
   &__footer {
     // width: 100%;
@@ -314,8 +333,6 @@ export default {
   &__btn {
     width: 45%;
     margin: 0 0 10px 0;
-    button {
-    }
   }
   &__items {
     padding-bottom: 20px;

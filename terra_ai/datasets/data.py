@@ -33,8 +33,8 @@ class InstructionsData(BaseMixinData):
 
 
 class DatasetInstructionsData(BaseMixinData):
-    inputs: Dict[PositiveInt, InstructionsData]
-    outputs: Dict[PositiveInt, InstructionsData]
+    inputs: Dict[PositiveInt, Dict[Any, InstructionsData]]
+    outputs: Dict[PositiveInt, Dict[Any, InstructionsData]]
 
 
 class ColorHex(Color):

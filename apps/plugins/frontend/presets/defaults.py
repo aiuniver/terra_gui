@@ -7,7 +7,9 @@ from terra_ai.data.training.extra import (
     CheckpointIndicatorChoice,
     CheckpointTypeChoice,
     CheckpointModeChoice,
+    TasksGroupsList,
 )
+from terra_ai.data.presets.training import TasksGroups
 
 from ..extra import FieldTypeChoice
 from ..utils import prepare_pydantic_field
@@ -36,97 +38,8 @@ from ..choices import (
     ColumnProcessingTypeChoice,
 )
 
-TrainingLosses = {
-    LayerOutputTypeChoice.Classification.name: [
-        LossChoice.CategoricalCrossentropy,
-        LossChoice.BinaryCrossentropy,
-        LossChoice.MeanSquaredError,
-        LossChoice.SquaredHinge,
-        LossChoice.Hinge,
-        LossChoice.CategoricalHinge,
-        LossChoice.SparseCategoricalCrossentropy,
-        LossChoice.KLDivergence,
-        LossChoice.Poisson,
-    ],
-    LayerOutputTypeChoice.Segmentation.name: [
-        LossChoice.CategoricalCrossentropy,
-        LossChoice.BinaryCrossentropy,
-        LossChoice.SquaredHinge,
-        LossChoice.Hinge,
-        LossChoice.CategoricalHinge,
-        LossChoice.SparseCategoricalCrossentropy,
-        LossChoice.KLDivergence,
-        LossChoice.Poisson,
-    ],
-    LayerOutputTypeChoice.Regression.name: [
-        LossChoice.MeanSquaredError,
-        LossChoice.MeanAbsoluteError,
-        LossChoice.MeanAbsolutePercentageError,
-        LossChoice.MeanSquaredLogarithmicError,
-        LossChoice.LogCosh,
-        LossChoice.CosineSimilarity,
-    ],
-    LayerOutputTypeChoice.Timeseries.name: [
-        LossChoice.MeanSquaredError,
-        LossChoice.MeanAbsoluteError,
-        LossChoice.MeanAbsolutePercentageError,
-        LossChoice.MeanSquaredLogarithmicError,
-        LossChoice.LogCosh,
-        LossChoice.CosineSimilarity,
-    ],
-}
 
-
-TrainingMetrics = {
-    LayerOutputTypeChoice.Classification.name: [
-        MetricChoice.Accuracy,
-        MetricChoice.BinaryAccuracy,
-        MetricChoice.BinaryCrossentropy,
-        MetricChoice.CategoricalAccuracy,
-        MetricChoice.CategoricalCrossentropy,
-        MetricChoice.SparseCategoricalAccuracy,
-        MetricChoice.SparseCategoricalCrossentropy,
-        MetricChoice.TopKCategoricalAccuracy,
-        MetricChoice.SparseTopKCategoricalAccuracy,
-        MetricChoice.Hinge,
-        MetricChoice.KLDivergence,
-        MetricChoice.Poisson,
-    ],
-    LayerOutputTypeChoice.Segmentation.name: [
-        MetricChoice.DiceCoef,
-        MetricChoice.MeanIoU,
-        MetricChoice.Accuracy,
-        MetricChoice.BinaryAccuracy,
-        MetricChoice.BinaryCrossentropy,
-        MetricChoice.CategoricalAccuracy,
-        MetricChoice.CategoricalCrossentropy,
-        MetricChoice.SparseCategoricalAccuracy,
-        MetricChoice.SparseCategoricalCrossentropy,
-        MetricChoice.TopKCategoricalAccuracy,
-        MetricChoice.SparseTopKCategoricalAccuracy,
-        MetricChoice.Hinge,
-        MetricChoice.KLDivergence,
-        MetricChoice.Poisson,
-    ],
-    LayerOutputTypeChoice.Regression.name: [
-        MetricChoice.Accuracy,
-        MetricChoice.MeanAbsoluteError,
-        MetricChoice.MeanSquaredError,
-        MetricChoice.MeanAbsolutePercentageError,
-        MetricChoice.MeanSquaredLogarithmicError,
-        MetricChoice.LogCoshError,
-        MetricChoice.CosineSimilarity,
-    ],
-    LayerOutputTypeChoice.Timeseries.name: [
-        MetricChoice.Accuracy,
-        MetricChoice.MeanAbsoluteError,
-        MetricChoice.MeanSquaredError,
-        MetricChoice.MeanAbsolutePercentageError,
-        MetricChoice.MeanSquaredLogarithmicError,
-        MetricChoice.LogCoshError,
-        MetricChoice.CosineSimilarity,
-    ],
-}
+TrainingTasksRelations = TasksGroupsList(TasksGroups)
 
 
 TrainingLossSelect = {

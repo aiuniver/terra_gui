@@ -2,13 +2,19 @@
 ## Структура данных чекпоинтов
 """
 
+from pydantic.types import PositiveInt
+
 from ..mixins import BaseMixinData
-from ..types import IDType
-from .extra import CheckpointIndicatorChoice, CheckpointModeChoice, CheckpointTypeChoice, MetricChoice
+from .extra import (
+    CheckpointIndicatorChoice,
+    CheckpointModeChoice,
+    CheckpointTypeChoice,
+    MetricChoice,
+)
 
 
 class CheckpointData(BaseMixinData):
-    layer: IDType
+    layer: PositiveInt
     type: CheckpointTypeChoice = CheckpointTypeChoice.Metrics
     metric_name: MetricChoice = MetricChoice.Accuracy
     indicator: CheckpointIndicatorChoice = CheckpointIndicatorChoice.Val
