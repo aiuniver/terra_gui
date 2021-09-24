@@ -501,7 +501,7 @@ class InteractiveCallback:
         self.train_progress = data
 
     def update_state(self, y_pred, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
-        if self.log_history and self.log_history.get("epochs", {}):
+        if self.log_history:
             self._reformat_y_pred(y_pred)
             if self.interactive_config.get('intermediate_result').get('show_results'):
                 self.example_idx = self._prepare_example_idx_to_show()
