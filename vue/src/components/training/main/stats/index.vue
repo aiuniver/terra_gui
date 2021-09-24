@@ -16,8 +16,10 @@
       </div>
     </div>
     <div class="t-scatters__content">
-      <template v-for="(item, i) of filtesLayers">
-        <component :is="item.type" v-bind="item" :key="`${item.type + i}`" />
+      <template v-for="(layer, index) of statisticData">
+        <template v-for="(data, i) of layer">
+          <component v-if="selected.includes(+index)" :is="data.type" v-bind="data" :key="`${data.type + i + index}`" />
+        </template>
       </template>
     </div>
   </div>
@@ -40,11 +42,6 @@ export default {
     statisticData() {
       return this.$store.getters['trainings/getTrainData']('statistic_data') || {};
     },
-    filtesLayers() {
-      return Object.entries(this.statisticData)
-        .filter(item => this.selected.includes(+item[0]))
-        .map(item => item[1]);
-    },
     outputLayers() {
       return this.outputs.map(item => item.id);
     },
@@ -52,15 +49,9 @@ export default {
   data: () => ({
     selected: [],
     auto: false,
-
   }),
   methods: {
-    // isShow(layer, type) {
-    //   ершыюisShowKeys.includes(+layer) && type === 'Heatmap';
-    // },
     change(key) {
-      // console.log(key)
-
       this.selected = !this.selected.includes(key)
         ? [...this.selected, key]
         : this.selected.filter(item => item !== key);
@@ -73,7 +64,6 @@ export default {
           autoupdate: this.auto,
         },
       };
-
       await this.$store.dispatch('trainings/interactive', data);
     },
     autoChange(e) {

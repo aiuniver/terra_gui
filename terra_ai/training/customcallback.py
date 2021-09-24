@@ -24,7 +24,7 @@ from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.utils import camelize, decamelize
 
-__version__ = 0.063
+__version__ = 0.064
 
 
 def sort_dict(dict_to_sort: dict, mode='by_name'):
@@ -1882,15 +1882,17 @@ class InteractiveCallback:
     def _get_statistic_data_request(self) -> dict:
         """
         'statistic_data': {
-            f'Output_{layer_id}': {
-                'id': 1,
-                'type': 'heatmap',
-                'graph_name':  f'Output_{layer_id} - Confusion matrix',
-                'x_label': 'Предсказание',
-                'y_label': 'Истинное значение',
-                'labels': [],
-                'data_array': array
-            }
+            f'Output_{layer_id}': [
+                {
+                    'id': 1,
+                    'type': 'heatmap',
+                    'graph_name':  f'Output_{layer_id} - Confusion matrix',
+                    'x_label': 'Предсказание',
+                    'y_label': 'Истинное значение',
+                    'labels': [],
+                    'data_array': array
+                },
+            ]
         }
         """
         return_data = {}
@@ -1904,16 +1906,18 @@ class InteractiveCallback:
                     np.argmax(self.y_pred.get(f'{out}'), axis=-1),
                     get_percent=True
                 )
-                return_data[f'{out}'] = dict(
-                    id=_id,
-                    type="heatmap",
-                    graph_name=f"Выходной слой «{out}» - Confusion matrix",
-                    x_label="Предсказание",
-                    y_label="Истинное значение",
-                    labels=self.dataset_config.get("outputs").get(f"{out}").get("classes_names"),
-                    data_array=cm,
-                    data_percent_array=cm_percent
-                )
+                return_data[f'{out}'] = [
+                    {
+                        'id': _id,
+                        'type': "heatmap",
+                        'graph_name': f"Выходной слой «{out}» - Confusion matrix",
+                        'x_label': "Предсказание",
+                        'y_label': "Истинное значение",
+                        'labels': self.dataset_config.get("outputs").get(f"{out}").get("classes_names"),
+                        'data_array': cm,
+                        'data_percent_array': cm_percent
+                    }
+                ]
                 _id += 1
 
             elif self.dataset_config.get("outputs").get(f"{out}").get("task") == LayerOutputTypeChoice.Segmentation or \
@@ -1955,34 +1959,25 @@ class InteractiveCallback:
                     ),
                     self.dataset_config.get("outputs").get(f"{out}").get("classes_names")
                 )
-                return_data[f"{out}"] = dict(
-                    id=_id,
-                    graph_name=f"Выходной слой «{out}» - Отчет по классам",
-                    type="table",
-                    table_data=report,
-                )
+                return_data[f"{out}"] = [
+                    {
+                        'id': _id,
+                        'graph_name': f"Выходной слой «{out}» - Отчет по классам",
+                        'type': "table",
+                        'table_data': report
+                    }
+                ]
                 _id += 1
 
             elif self.dataset_config.get("outputs").get(f"{out}").get("task") == LayerOutputTypeChoice.Regression:
-                return_data[f"{out}"] = {
-                    "scatter": {
-                        "type": "scatter",
-                        "data": []
-                    },
-                    "mae_distribution": {
-                        "type": "distribution histogram",
-                        "data": []
-                    },
-                    "me_distribution": {
-                        "type": "distribution histogram",
-                        "data": []
-                    }
-                }
+                return_data[f"{out}"] = []
                 y_true = self.y_true.get("val").get(f'{out}')
                 y_pred = self.y_pred.get(f'{out}')
                 x_scatter, y_scatter = self._get_scatter(y_true, y_pred)
-                return_data[f"{out}"]["scatter"]["data"].append(
+                return_data[f"{out}"].append(
                     {
+                        'id': 1,
+                        "type": "scatter",
                         'name': f"Выходной слой «{out}» - Скаттер",
                         'x_label': 'Истинные значения',
                         'y_label': 'Предсказанные значения',
@@ -1994,62 +1989,49 @@ class InteractiveCallback:
                 )
                 deviation = (y_pred - y_true) * 100 / y_true
                 x_mae, y_mae = self._get_distribution_histogram(np.abs(deviation), bins=25, categorical=False)
-                return_data[f"{out}"]["mae_distribution"]["data"].append(
+                return_data[f"{out}"].append(
                     {
-                        'graph_name': f'Выходной слой «{out}» - Распределение абсолютной ошибки',
+                        'id': 2,
+                        "type": "distribution histogram",
+                        'name': f'Выходной слой «{out}» - Распределение абсолютной ошибки',
                         'x_label': 'Время',
                         'y_label': 'Значение',
-                        'plot_data': {
+                        "plot_data": {
                             'x': x_mae,
                             'y': y_mae
-                        },
+                        }
                     }
                 )
                 x_me, y_me = self._get_distribution_histogram(deviation, bins=25, categorical=False)
-                return_data[f"{out}"]["me_distribution"]["data"].append(
+                return_data[f"{out}"].append(
                     {
-                        'graph_name': f'Выходной слой «{out}» - Распределение ошибки',
+                        'id': 3,
+                        "type": "distribution histogram",
+                        'name': f'Выходной слой «{out}» - Распределение ошибки',
                         'x_label': 'Время',
                         'y_label': 'Значение',
-                        'plot_data': {
+                        "plot_data": {
                             'x': x_me,
                             'y': y_me
-                        },
+                        }
                     }
                 )
 
             elif self.dataset_config.get("outputs").get(f"{out}").get("task") == LayerOutputTypeChoice.Timeseries:
-                return_data[f"{out}"] = {
-                    "predict_graph": {
-                        "type": "graphic",
-                        "data": []
-                    },
-                    "autocorrelaton": {
-                        "type": "graphic",
-                        "data": []
-                    },
-                    "mae_distribution": {
-                        "type": "distribution histogram",
-                        "data": []
-                    },
-                    "me_distribution": {
-                        "type": "distribution histogram",
-                        "data": []
-                    }
-                }
+                return_data[f"{out}"] = []
                 _id += 1
                 for channel in range(self.y_true.get("val").get(f'{out}').shape[-1]):
                     channel_name = self.dataset_config.get("outputs").get(f'{out}').get('cols_names')[channel]
-                    return_data[f"{out}"][''] = {}
                     for step in range(self.y_true.get("val").get(f'{out}').shape[-2]):
                         y_true = self.y_true.get("val").get(f"{out}")[:, step, channel].astype('float')
                         y_pred = self.y_pred.get(f"{out}")[:, step, channel].astype('float')
 
-                        return_data[f"{out}"]["predict_graph"]["data"].append(
+                        return_data[f"{out}"].append(
                             {
                                 'id': _id,
-                                'graph_name': f'Выходной слой «{out}» - Предсказание канала '
-                                              f'«{channel_name}» на {step + 1} шагов вперед',
+                                'type': 'graphic',
+                                'graph_name': f"Выходной слой «{out}» - Предсказание канала "
+                                              f"«{channel_name}» на {step + 1} шаг{'ов' if step + 1 == 1 else ''} вперед",
                                 'x_label': 'Время',
                                 'y_label': 'Значение',
                                 'plot_data': {
@@ -2067,11 +2049,12 @@ class InteractiveCallback:
                         x_axis, auto_corr_true, auto_corr_pred = self._get_autocorrelation_graphic(
                             y_true, y_pred, depth=10
                         )
-                        return_data[f"{out}"]["autocorrelaton"]["data"].append(
+                        return_data[f"{out}"].append(
                             {
                                 'id': _id + 1,
-                                'graph_name': f'Выходной слой «{out}» - Автокорреляция канала '
-                                              f'«{channel_name}» на {step + 1} шагов вперед',
+                                'type': 'graphic',
+                                'graph_name': f"Выходной слой «{out}» - Автокорреляция канала "
+                                              f"«{channel_name}» на {step + 1} шаг{'ов' if step + 1 == 1 else ''} вперед",
                                 'x_label': 'Время',
                                 'y_label': 'Значение',
                                 'plot_data': {
@@ -2091,8 +2074,9 @@ class InteractiveCallback:
                         return_data[f"{out}"]["mae_distribution"]["data"].append(
                             {
                                 'id': _id + 2,
-                                'graph_name': f'Выходной слой «{out}» - Распределение абсолютной ошибки канала '
-                                              f'«{channel_name}» на {step + 1} шагов вперед',
+                                'type': 'distribution histogram',
+                                'graph_name': f"Выходной слой «{out}» - Распределение абсолютной ошибки канала "
+                                              f"«{channel_name}» на {step + 1} шаг{'ов' if step + 1 == 1 else ''} вперед",
                                 'x_label': 'Время',
                                 'y_label': 'Значение',
                                 'plot_data': {
@@ -2105,8 +2089,9 @@ class InteractiveCallback:
                         return_data[f"{out}"]["me_distribution"]["data"].append(
                             {
                                 'id': _id + 3,
-                                'graph_name': f'Выходной слой «{out}» - Распределение ошибки канала '
-                                              f'«{channel_name}» на {step + 1} шагов вперед',
+                                'type': 'distribution histogram',
+                                'graph_name': f"Выходной слой «{out}» - Распределение ошибки канала "
+                                              f"«{channel_name}» на {step + 1} шаг{'ов' if step + 1 == 1 else ''} вперед",
                                 'x_label': 'Время',
                                 'y_label': 'Значение',
                                 'plot_data': {
@@ -2177,7 +2162,8 @@ class InteractiveCallback:
                 return_data[out] = [
                     {
                         'id': _id,
-                        'type': 'Histogram',
+                        'type': 'histogram',
+                        "type_data": "train",
                         'graph_name': 'Тренировочная выборка',
                         'x_label': 'Название класса',
                         'y_label': 'Значение',
@@ -2190,7 +2176,8 @@ class InteractiveCallback:
                     },
                     {
                         'id': _id + 1,
-                        'type': 'Histogram',
+                        'type': 'histogram',
+                        "type_data": "val",
                         'graph_name': 'Проверчная выборка',
                         'x_label': 'Название класса',
                         'y_label': 'Значение',
@@ -2224,7 +2211,8 @@ class InteractiveCallback:
                 return_data[out] = [
                     {
                         'id': _id,
-                        'type': 'Histogram',
+                        'type': 'histogram',
+                        "type_data": "train",
                         'graph_name': 'Тренировочная выборка - баланс присутсвия',
                         'x_label': 'Название класса',
                         'y_label': 'Значение',
@@ -2237,7 +2225,8 @@ class InteractiveCallback:
                     },
                     {
                         'id': _id + 1,
-                        'type': 'Histogram',
+                        'type': 'histogram',
+                        "type_data": "val",
                         'graph_name': 'Проверочная выборка - баланс присутсвия',
                         'x_label': 'Название класса',
                         'y_label': 'Значение',
@@ -2250,7 +2239,8 @@ class InteractiveCallback:
                     },
                     {
                         'id': _id + 2,
-                        'type': 'Histogram',
+                        'type': 'histogram',
+                        "type_data": "train",
                         'graph_name': 'Тренировочная выборка - процент пространства',
                         'x_label': 'Название класса',
                         'y_label': 'Значение',
@@ -2263,7 +2253,8 @@ class InteractiveCallback:
                     },
                     {
                         'id': _id + 3,
-                        'type': 'Histogram',
+                        'type': 'histogram',
+                        "type_data": "val",
                         'graph_name': 'Проверочная выборка - процент пространства',
                         'x_label': 'Название класса',
                         'y_label': 'Значение',
@@ -2289,7 +2280,8 @@ class InteractiveCallback:
                 return_data[out] = [
                     {
                         'id': _id,
-                        'type': 'Histogram',
+                        'type': 'histogram',
+                        "type_data": "train",
                         'graph_name': 'Тренировочная выборка - баланс присутсвия',
                         'x_label': 'Название класса',
                         'y_label': 'Значение',
@@ -2302,7 +2294,8 @@ class InteractiveCallback:
                     },
                     {
                         'id': _id + 1,
-                        'type': 'Histogram',
+                        'type': 'histogram',
+                        "type_data": "val",
                         'graph_name': 'Проверочная выборка - баланс присутсвия',
                         'x_label': 'Название класса',
                         'y_label': 'Значение',
@@ -2323,7 +2316,8 @@ class InteractiveCallback:
                     for histogram in self.dataset_balance[out][data_type]['histogram']:
                         return_data[out].append(
                             {
-                                'type': "Distribution histogram",
+                                'type': "distribution histogram",
+                                "type_data": f"{data_type}",
                                 "short_name": histogram['name'],
                                 "graph_name": f"{data_type_name} выборка - "
                                               f"Гистограмма распределения колонки «{histogram['name']}»",
@@ -2338,6 +2332,7 @@ class InteractiveCallback:
                     return_data[out].append(
                         {
                             "type": "correlation heatmap",
+                            "type_data": f"{data_type}",
                             "graph_name": f"{data_type_name} выборка - Матрица корреляций",
                             "x_label": "Колонка",
                             "y_label": "Колонка",
@@ -2357,30 +2352,27 @@ class InteractiveCallback:
                         x_graph_axis = np.arange(len(y_true)).astype('float').tolist()
                         x_hist, y_hist = self._get_distribution_histogram(y_true, bins=25, categorical=False)
                         return_data[out].append(
-                            dict(
-                                id=_id,
-                                type="Graphic",
-                                graph_name=f'{data_type_name} выборка - График канала «{out}»',
-                                x_label='Время',
-                                y_label='Значение',
-                                plot_data={
+                            {
+                                'id': _id,
+                                'type': "graphic",
+                                "type_data": f"{data_type}",
+                                'graph_name': f'{data_type_name} выборка - График канала «{channel_name}»',
+                                'x_label': 'Время',
+                                'y_label': 'Значение',
+                                'plot_data': {
                                     'x': x_graph_axis,
                                     'y': y_true
-                                },
-                            ),
+                                }
+                            },
                         )
                         return_data[out].append(
-                            dict(
-                                id=_id + 1,
-                                type="Distribution histogram",
-                                graph_name=f'{data_type_name} выборка - Гистограмма плотности канала «{out}»',
-                                x_label='Значение',
-                                y_label='Количество',
-                                plot_data={
-                                    'x': x_hist,
-                                    'y': y_true
-                                },
-                            ),
+                            {'id': _id + 1, 'type': "distribution histogram", "type_data": f"{data_type}",
+                             'graph_name': f'{data_type_name} выборка - Гистограмма плотности канала «{channel_name}»',
+                             'x_label': 'Значение', 'y_label': 'Количество', 'plot_data': {
+                                'x': x_hist,
+                                'y': y_hist
+                            }
+                             },
                         )
 
             if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.ObjectDetection:
@@ -2901,13 +2893,14 @@ class InteractiveCallback:
                 ]
             }
             if show_stat:
-                data["stat"]["data"].append(
-                    {
+                data["stat"] = {
+                    "type": "text",
+                    "data": {
                         'title': "Отклонение",
-                        'value': f"{round(deviation, 2)}%",
+                        'value': f"{np.round(deviation, 2)} %",
                         'color_mark': color_mark
                     }
-                )
+                }
 
         elif self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.Timeseries:
             """

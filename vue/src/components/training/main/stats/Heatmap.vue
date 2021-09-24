@@ -19,9 +19,9 @@
             class="t-heatmap__grid"
             :style="{ gridTemplate: `repeat(${data_array.length}, 40px) / repeat(${data_array.length}, 40px)` }"
           >
-          <div class="t-heatmap__grid--x-labels">
-            <span v-for="(item, idx) in labels" :key="idx" :title="item">{{ item }}</span>
-          </div>
+            <div class="t-heatmap__grid--x-labels">
+              <span v-for="(item, idx) in labels" :key="idx" :title="item">{{ item }}</span>
+            </div>
             <div
               class="t-heatmap__grid--item"
               v-for="(item, i) in values"
@@ -58,9 +58,9 @@ export default {
       scrollPanel: {
         scrollingX: true,
         scrollingY: false,
-      }
+      },
     },
-    width: null
+    width: null,
   }),
   computed: {
     values() {
@@ -82,8 +82,8 @@ export default {
       return Math.max(...this.values);
     },
     bodyWidth() {
-      return `calc(100% - ${this.width + 10}px)`
-    }
+      return `calc(100% - ${this.width + 10}px)`;
+    },
   },
   methods: {
     getColor(val) {
@@ -92,8 +92,8 @@ export default {
     },
   },
   mounted() {
-    this.width = this.$refs.label.offsetWidth + this.$refs.scale.offsetWidth
-  }
+    this.width = this.$refs.label.offsetWidth + this.$refs.scale.offsetWidth;
+  },
 };
 </script>
 
@@ -113,11 +113,11 @@ export default {
     font-size: 14px;
     line-height: 17px;
     font-weight: 600;
-    top: calc(-1.2em - 10px);
+    top: calc(-3em - 10px);
     position: absolute;
     left: 50%;
     transform: translate(-50%);
-    white-space: nowrap;
+    // white-space: nowrap;
   }
   &__x-label,
   &__y-label {
