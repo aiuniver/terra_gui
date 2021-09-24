@@ -5,7 +5,7 @@
         <t-input-new
           class="block-footer__input-custom"
           v-model="nameProject"
-          :style="{ width: '100%'}"
+          :style="{ width: '150px'}"
           parse="[name]"
           small
           :error="nameError"
