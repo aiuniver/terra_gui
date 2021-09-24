@@ -14,11 +14,11 @@
         </t-field>
       </div>
       <div class="predictions__param">
-        <t-field inline label="Показать статистику">
-          <t-checkbox-new v-model="checks.show_statistic" small />
+        <t-field inline label="Выводить промежуточные результаты">
+          <t-checkbox-new v-model="checks.show_results" small />
         </t-field>
-        <t-field inline label="Показать тренировочную выборку">
-          <t-checkbox-new v-model="checks.show_results" :value="true" small />
+        <t-field inline label="Показать статистику">
+          <t-checkbox-new v-model="checks.show_statistic" :value="true" small />
         </t-field>
       </div>
       <div class="predictions__param">

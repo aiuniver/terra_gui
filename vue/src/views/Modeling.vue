@@ -39,8 +39,17 @@ export default {
     keras() {
       return this.$store.getters['modeling/getModel']?.keras || '';
     },
+    isNoTrain() {
+      return this.$store.getters['trainings/getStatus'] === 'no_train';
+    },
   },
   methods: {
+    async message() {
+      await this.$store.dispatch('messages/setModel', {
+        context: this,
+        content: 'Для загрузки другой модели остановите обучение',
+      });
+    },
     addBlock(type) {
       // console.log(type);
       // console.log(this.$refs.container.centerX);
@@ -75,7 +84,11 @@ export default {
     },
     actions(btn) {
       if (btn === 'load') {
-        this.dialogLoadModel = true;
+        if (this.isNoTrain) {
+          this.dialogLoadModel = true;
+        } else {
+          this.message()
+        }
       }
       if (btn === 'input' || btn === 'middle' || btn === 'output') {
         this.addBlock(btn);

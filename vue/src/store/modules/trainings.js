@@ -69,7 +69,7 @@ export default {
     },
     async start({ dispatch }, parse) {
       const valid = await dispatch('modeling/validateModel', {}, { root: true })
-      const isValid = !Object.values(valid).filter(item => item).length
+      const isValid = !Object.values(valid || {}).filter(item => item).length
       if (isValid) {
         let data = JSON.parse(JSON.stringify(parse))
         console.log(data)

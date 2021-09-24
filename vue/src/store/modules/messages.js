@@ -36,6 +36,20 @@ export default {
       // console.log(progress)
       commit('SET_PROGRESS', ~~progress);
     },
+    async setModel(_, { context, title = 'Предупреждение!', width = 300, okText = 'OK', showClose = true, content = 'Что не так ?!' }) {
+      console.log({
+        title,
+        width,
+        content,
+        showClose,
+        okText,
+      })
+      try {
+        return await context.$Modal.alert({ title, width, content, showClose, okText, });
+      } catch (error) {
+        return error
+      }
+    }
   },
   getters: {
     getProgress: ({ progress }) => progress,
