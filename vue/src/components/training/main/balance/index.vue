@@ -4,14 +4,14 @@
       <div class="t-balance__wrapper">
         <div class="t-balance__checks">
           <t-field inline :label="'Показать тренировочную выборку'">
-            <t-checkbox-new name="train" @change="change" />
+            <t-checkbox-new name="show_train" v-model="settings.show_train" @change="change" />
           </t-field>
           <t-field inline :label="'Показать проверочную выборку'">
-            <t-checkbox-new name="test" @change="change" />
+            <t-checkbox-new name="show_val" v-model="settings.show_val" @change="change" />
           </t-field>
         </div>
         <t-field inline :label="'Сортировать'">
-          <t-select-new small :list="sortOps" v-model="sortSelected" />
+          <t-select-new small :list="sortOps" v-model="settings.sorted" />
         </t-field>
         <t-button class="t-balance__btn" @click="handleClick">Показать</t-button>
       </div>
@@ -35,27 +35,35 @@ export default {
     Graph,
   },
   data: () => ({
-    train: false,
-    test: false,
+    // train: false,
+    // test: false,
     selected: [],
     sortOps: [
       { label: 'по имени', value: 'alphabetic' },
       { label: 'по увеличению', value: 'ascending' },
       { label: 'по убыванию', value: 'descending' },
     ],
-    sortSelected: 'alphabetic',
+    // sortSelected: 'alphabetic',
   }),
   computed: {
     dataDalance() {
       return this.$store.getters['trainings/getTrainData']('data_balance') || [];
     },
+    settings: {
+      set(value) {
+        this.$store.dispatch('trainings/setObjectInteractive', { 'data_balance': value })
+      },
+      get() {
+        return this.$store.getters['trainings/getObjectInteractive']('data_balance')
+      },
+    },
   },
   methods: {
     filter(layer) {
-      return layer.filter(item => this.selected.includes(item.type_data))
+      return layer.filter(item => this.selected.includes(item.type_data));
     },
     change({ name, value }) {
-      const temp = name !== 'test' ? 'train' : 'val';
+      const temp = name !== 'show_train' ? 'train' : 'val';
       if (!value) {
         this.selected = this.selected.filter(item => item !== temp);
       } else {
@@ -64,14 +72,14 @@ export default {
       console.log(this.selected);
     },
     async handleClick() {
-      const data = {
-        data_balance: {
-          show_train: this.train,
-          show_val: this.test,
-          sorted: this.sortSelected,
-        },
-      };
-      await this.$store.dispatch('trainings/interactive', data);
+      // const data = {
+      //   data_balance: {
+      //     show_train: this.train,
+      //     show_val: this.test,
+      //     sorted: this.sortSelected,
+      //   },
+      // };
+      await this.$store.dispatch('trainings/interactive', {});
     },
   },
 };

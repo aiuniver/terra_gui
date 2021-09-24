@@ -24,19 +24,20 @@ export default {
       interactive: {},
       state: {}
     },
+    interactive: {},
   }),
   mutations: {
     SET_INTERACTIV(state, value) {
-      if (state?.training?.interactive) {
-        state.training.interactive = { ...value };
-        state.training = { ...state.training }
-      }
+      state.interactive = { ...value };
     },
     SET_PARAMS(state, value) {
       state.params = { ...value };
     },
     SET_CONFIG(state, value) {
       state.training = { ...value };
+      if (!Object.keys(state.interactive).length) {
+        state.interactive = JSON.parse(JSON.stringify(value.interactive))
+      }
     },
     SET_STATE_PARAMS(state, value) {
       state.stateParams = { ...value };
@@ -86,6 +87,7 @@ export default {
         await dispatch('projects/get', {}, { root: true })
         dispatch('setState', res);
         dispatch('setTrainData', {});
+        dispatch('interactive', {});
         return res
       }
       return null
@@ -100,9 +102,10 @@ export default {
       dispatch('setState', res);
       return res
     },
-    async interactive({ commit, state: { training: { interactive } }, dispatch }, part) {
+    async interactive({ state: { interactive }, dispatch }, part) {
+      console.log(part)
       const data = { ...interactive, ...part }
-      commit("SET_INTERACTIV", data);
+      // commit("SET_INTERACTIV", data);
       return await dispatch('axios', { url: '/training/interactive/', data }, { root: true });
     },
     async progress({ dispatch }, data) {
@@ -144,19 +147,19 @@ export default {
       commit("SET_TRAIN_DISPLAY", data);
     },
     setСollapse({ commit }, data) {
-      console.log(data)
       commit("SET_COLLAPSE", data);
     },
-    setCharts({ state, commit }, charts) {
+    setObjectInteractive({ state, commit }, charts) {
       const data = { ...state.interactive, ...charts }
       commit("SET_INTERACTIV", data);
     },
   },
   getters: {
-    getCharts: ({ training: { interactive } }) => key => {
-      console.log(key)
-      console.log(interactive?.[key])
+    getObjectInteractive: ({ interactive }) => key => {
       return interactive?.[key] || {}
+    },
+    getArrayInteractive: ({ interactive }) => key => {
+      return interactive?.[key] || []
     },
     getStateParams({ stateParams }) {
       return stateParams || {}
