@@ -215,6 +215,7 @@ class Project(BaseMixinData):
                 }
             )
         self.deploy = DeployDetailsData(**{"type": _type, "data": data})
+        print(self.deploy)
 
     def set_dataset(self, dataset: DatasetData = None):
         if dataset is None:
@@ -281,7 +282,7 @@ class Project(BaseMixinData):
             )
             training_task_rel = TrainingTasksRelations.get(layer.task)
             available_metrics = list(
-                set(training_layer.metrics)
+                set(training_layer.metrics if training_layer else [])
                 & set(training_task_rel.metrics if training_task_rel else [])
             )
             training_losses = (
@@ -309,11 +310,14 @@ class Project(BaseMixinData):
             )
         self.training.base.architecture.parameters.outputs = OutputsList(outputs)
         if self.model.outputs:
-            checkpoint_data = (
-                self.training.base.architecture.parameters.checkpoint.native()
-            )
-            if not checkpoint_data.get("layer"):
-                checkpoint_data.update({"layer": self.model.outputs[0].id})
+            checkpoint_data = {"layer": self.model.outputs[0].id}
+            if self.training.base.architecture.parameters.checkpoint:
+                checkpoint_data = (
+                    self.training.base.architecture.parameters.checkpoint.native()
+                )
+                if not checkpoint_data.get("layer"):
+                    checkpoint_data.update({"layer": self.model.outputs[0].id})
+                checkpoint_data = CheckpointData(**checkpoint_data)
             self.training.base.architecture.parameters.checkpoint = CheckpointData(
                 **checkpoint_data
             )
