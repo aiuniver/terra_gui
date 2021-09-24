@@ -9,6 +9,7 @@ console.warn(data)
 export default {
   namespaced: true,
   state: () => ({
+    collapse: ['3'],
     params: [],
     toolbar,
     stateParams: {},
@@ -55,6 +56,9 @@ export default {
     },
     SET_TRAIN_USAGE(state, value) {
       state.trainUsage = { ...value };
+    },
+    SET_COLLAPSE(state, value) {
+      state.collapse = [ ...value ];
     },
   },
   actions: {
@@ -139,10 +143,17 @@ export default {
     setTrainDisplay({ commit }, data) {
       commit("SET_TRAIN_DISPLAY", data);
     },
+    setСollapse({ commit }, data) {
+      console.log(data)
+      commit("SET_COLLAPSE", data);
+    },
   },
   getters: {
     getStateParams({ stateParams }) {
       return stateParams || {}
+    },
+    getСollapse({ collapse }) {
+      return collapse || []
     },
     getInteractive({ training: { interactive } }) {
       return interactive || {}
