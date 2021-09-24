@@ -2,8 +2,6 @@ import copy
 import gc
 import importlib
 import sys
-from dataclasses import dataclass, field
-from terra_ai.data.datasets.dataset import DatasetData
 
 from typing import List, Optional, Tuple, Dict, Any, Union
 
@@ -26,7 +24,7 @@ from terra_ai.data.modeling.layers.extra import (
     LayerValidationMethodChoice,
     SpaceToDepthDataFormatChoice, LayerConfigData,
 )
-from terra_ai.exceptions.modeling import ValidatorMessages
+from terra_ai.exceptions import modeling as exceptions
 
 
 # @dataclass
@@ -282,7 +280,7 @@ class ModelValidator:
             self.valid = False
             for group in sub_graphs[1:]:
                 for layer in group:
-                    self.val_dictionary[layer] = ValidatorMessages.LayerNotConnectedToMainPart.value
+                    self.val_dictionary[layer] = str(exceptions.LayerNotConnectedToMainPartException())
 
     def _get_model_links(self) -> None:
         (
@@ -307,13 +305,13 @@ class ModelValidator:
             if idx not in input_layers.keys():
                 self.valid = False
                 self.layer_input_shapes[idx].append(None)
-                self.val_dictionary[idx] = ValidatorMessages.LayerDoesNotHaveInputShape.value
+                self.val_dictionary[idx] = str(exceptions.LayerDoesNotHaveInputShapeException())
 
         # check if plan input shapes is not None
         for _id, shape in self.input_shape.items():
             if not shape or None in shape:
                 self.valid = False
-                self.val_dictionary[_id] = ValidatorMessages.LayerDoesNotHaveInputShape.value
+                self.val_dictionary[_id] = str(exceptions.LayerDoesNotHaveInputShapeException())
 
     def _get_output_shape_check(self):
         """Check compatibility of dataset's and results model output shapes"""
@@ -328,10 +326,10 @@ class ModelValidator:
                             != self.layer_output_shapes[layer[0]][0][1:]
                     ):
                         self.valid = False
-                        self.val_dictionary[layer[0]] = ValidatorMessages.UnexpectedOutputShape % (
+                        self.val_dictionary[layer[0]] = str(exceptions.UnexpectedOutputShapeException(
                             self.output_shape[layer[0]][0],
                             self.layer_output_shapes[layer[0]]
-                        )
+                        ))
 
             # check unspecified output layers
             for idx in self.end_row:
@@ -339,7 +337,7 @@ class ModelValidator:
                     self.valid = False
                     self.val_dictionary[
                         idx
-                    ] = ValidatorMessages.UnspecifiedOutputLayer
+                    ] = str(exceptions.UnspecifiedOutputLayerException())
 
     def _model_validation(self) -> dict:
         """Full model modeling"""
@@ -823,7 +821,7 @@ class LayerValidation:
                     comment += (
                         f"{key}={problem_params[key][0]} ({problem_params[key][1]}); "
                     )
-            return ValidatorMessages.CheckFollowingParameters.value % comment[:-2]
+            return str(exceptions.BadParametersException(comment[:-2]))
 
     def primary_layer_validation(self) -> Optional[str]:
         """Whole modeling for specific parameters, uplink number and input dimension"""
@@ -842,27 +840,27 @@ class LayerValidation:
     def position_validation(self) -> Optional[str]:
         """Validate number of uplinks"""
         if None in self.inp_shape:
-            return ValidatorMessages.InputShapeEmpty.value
+            return str(exceptions.InputShapeEmptyException())
         elif (
                 isinstance(self.num_uplinks[0], int)
                 and self.num_uplinks[1] == LayerValidationMethodChoice.fixed
                 and len(self.inp_shape) != self.num_uplinks[0]
         ):
-            return ValidatorMessages.IncorrectQuantityInputShape.value % (
+            return str(exceptions.IncorrectQuantityInputShapeException(
                 self.num_uplinks[0],
                 's' if self.num_uplinks[0] > 1 else '',
                 len(self.inp_shape)
-            )
+            ))
         elif (
                 isinstance(self.num_uplinks[0], int)
                 and self.num_uplinks[1] == LayerValidationMethodChoice.minimal
                 and len(self.inp_shape) < self.num_uplinks[0]
         ):
-            return ValidatorMessages.IncorrectQuantityInputShape.value % (
+            return str(exceptions.IncorrectQuantityInputShapeException(
                 f"{self.num_uplinks[0]} or greater",
                 's' if self.num_uplinks[0] > 1 else '',
                 len(self.inp_shape)
-            )
+            ))
         elif (
                 isinstance(self.num_uplinks[0], tuple)
                 and self.num_uplinks[1]
@@ -872,10 +870,10 @@ class LayerValidation:
                 ]
                 and len(self.inp_shape) not in self.num_uplinks[0]
         ):
-            return ValidatorMessages.IncorrectQuantityInputShape.value % (
+            return str(exceptions.IncorrectQuantityInputShapeException(
                 f"one of {self.num_uplinks}",
                 "s",
-                len(self.inp_shape))
+                len(self.inp_shape)))
         else:
             return None
 
@@ -884,7 +882,7 @@ class LayerValidation:
         if len(self.inp_shape) > 1:
             for shape in self.inp_shape[1:]:
                 if len(self.inp_shape[0]) != len(shape):
-                    return ValidatorMessages.InputShapesHaveDifferentSizes.value % self.inp_shape
+                    return str(exceptions.InputShapesHaveDifferentSizesException(self.inp_shape))
             axis = self.layer_parameters.get("axis", None)
             if axis:
                 first_shape = list(self.inp_shape[0])
@@ -893,31 +891,31 @@ class LayerValidation:
                     shape = list(shape)
                     shape.pop(axis)
                     if shape != first_shape:
-                        return ValidatorMessages.MismatchedInputShapes.value % (
+                        return str(exceptions.MismatchedInputShapesException(
                             axis, self.inp_shape
-                        )
+                        ))
             else:
                 for shape in self.inp_shape[1:]:
                     if shape != self.inp_shape[0]:
-                        return ValidatorMessages.InputShapesAreDifferent.value % self.inp_shape
+                        return str(exceptions.InputShapesAreDifferentException()) % self.inp_shape
         else:
             if (
                     isinstance(self.input_dimension[0], int)
                     and self.input_dimension[1] == LayerValidationMethodChoice.fixed
                     and len(self.inp_shape[0]) != self.input_dimension[0]
             ):
-                return ValidatorMessages.IncorrectQuantityInputDimensions.value % (
+                return str(exceptions.IncorrectQuantityInputDimensionsException(
                     self.input_dimension[0], len(self.inp_shape[0])
-                )
+                ))
             elif (
                     isinstance(self.input_dimension[0], int)
                     and self.input_dimension[1] == LayerValidationMethodChoice.minimal
                     and len(self.inp_shape[0]) < self.input_dimension[0]
             ):
-                return ValidatorMessages.IncorrectQuantityInputDimensions.value % (
+                return str(exceptions.IncorrectQuantityInputDimensionsException(
                     f"{self.input_dimension[0]} or greater",
                     len(self.inp_shape[0]),
-                )
+                ))
             elif (
                     isinstance(self.input_dimension[0], tuple)
                     and self.input_dimension[1]
@@ -927,10 +925,10 @@ class LayerValidation:
                     ]
                     and len(self.inp_shape[0]) not in self.input_dimension[0]
             ):
-                return ValidatorMessages.IncorrectQuantityInputDimensions.value % (
+                return str(exceptions.IncorrectQuantityInputDimensionsException(
                     f"one of {self.input_dimension[0]}",
                     len(self.inp_shape[0])
-                )
+                ))
             else:
                 return None
 
@@ -944,13 +942,13 @@ class LayerValidation:
                     self.layer_parameters.get(key) == "identity"
                     and len(self.inp_shape[0]) != 2
             ):
-                return ValidatorMessages.InitializerCanTakeOnlyNDInputShape.value % (
+                return str(exceptions.InitializerCanTakeOnlyNDInputShapeException(
                     "'Identity'",
                     key,
                     2,
                     len(self.inp_shape[0]),
                     self.inp_shape[0]
-                )
+                ))
 
         # strides and dilation_rate in 1D layers
         if isinstance(self.layer_parameters.get("strides", None), int) and isinstance(
@@ -960,7 +958,7 @@ class LayerValidation:
                     self.layer_parameters.get("dilation_rate") > 1
                     and self.layer_parameters.get("strides") > 1
             ):
-                return ValidatorMessages.CannotHaveValue.value % ("'dilation_rate' and 'strides'", "> 1")
+                return str(exceptions.CannotHaveValueException("'dilation_rate' and 'strides'", "> 1"))
 
         # strides and dilation_rate in 2+D layers
         if isinstance(
@@ -970,7 +968,7 @@ class LayerValidation:
                     max(self.layer_parameters.get("dilation_rate")) > 1
                     and max(self.layer_parameters.get("strides")) > 1
             ):
-                return ValidatorMessages.CannotHaveValue % ("'dilation_rate' and 'strides'", "> 1")
+                return str(exceptions.CannotHaveValueException("'dilation_rate' and 'strides'", "> 1"))
 
         # value range for axis
         if self.layer_parameters.get("axis", None) and (
@@ -982,7 +980,7 @@ class LayerValidation:
                 np.arange(-len(self.inp_shape[0]) + 1, len(self.inp_shape[0]))
             )
             axis_values.pop(axis_values.index(0))
-            return ValidatorMessages.CanTakeOneOfTheFollowingValues.value % ('axis', axis_values)
+            return str(exceptions.CanTakeOneOfTheFollowingValuesException('axis', axis_values))
 
         # groups with data_format, filters and inp_shape
         if (
@@ -997,11 +995,11 @@ class LayerValidation:
                     != 0
                     or self.inp_shape[0][-1] % self.layer_parameters.get("groups") != 0
             ):
-                return ValidatorMessages.IncorrectNumberOfFiltersAndChannels.value % (
+                return str(exceptions.IncorrectNumberOfFiltersAndChannelsException(
                     self.layer_parameters.get('filters'),
                     self.inp_shape[0][-1],
                     self.layer_parameters.get('groups')
-                )
+                ))
 
             if self.layer_parameters.get("data_format") == "channels_first" and (
                     self.layer_parameters.get("filters")
@@ -1009,11 +1007,11 @@ class LayerValidation:
                     != 0
                     or self.inp_shape[0][dim] % self.layer_parameters.get("groups") != 0
             ):
-                return ValidatorMessages.IncorrectNumberOfFiltersAndChannels.value % (
+                return str(exceptions.IncorrectNumberOfFiltersAndChannelsException(
                     self.layer_parameters.get('filters'),
                     self.inp_shape[0][dim],
                     self.layer_parameters.get('groups')
-                )
+                ))
 
             if (
                     self.layer_parameters.get("data_format") == "channels_first"
@@ -1026,12 +1024,12 @@ class LayerValidation:
                         isinstance(self.layer_parameters.get("strides"), (tuple, list))
                         and max(self.layer_parameters.get("strides")) > 1
                 ):
-                    return ValidatorMessages.ParameterCanNotBeForInputShape.value % (
+                    return str(exceptions.ParameterCanNotBeForInputShapeException(
                         f"dim > {-dim + 1} and 'data_format'='channels_first'",
                         "strides",
                         "> 1",
                         self.layer_parameters.get('strides')
-                    )
+                    ))
 
         # maxwordcount
         if (
@@ -1040,11 +1038,11 @@ class LayerValidation:
                 and self.layer_parameters.get("input_dim", None)
         ):
             if self.layer_parameters.get("input_dim") < self.kwargs.get("maxwordcount"):
-                return ValidatorMessages.InputDimMustBeThenSizeOf.value % (
+                return str(exceptions.InputDimMustBeThenSizeOfException(
                     self.layer_parameters.get('input_dim'),
                     "equal or greater",
                     f"words dictionary (maxwordcount={self.kwargs.get('maxwordcount')})"
-                )
+                ))
 
         # pretrained models exclusions
         if self.module_type == layers.extra.ModuleTypeChoice.keras_pretrained_model:
@@ -1053,156 +1051,156 @@ class LayerValidation:
                     and self.layer_parameters.get("weights")
                     and self.layer_parameters.get("classes") != 1000
             ):
-                return ValidatorMessages.ClassesShouldBe.value % (
+                return str(exceptions.ClassesShouldBeException(
                     "using `weights` as `imagenet` with `include_top` as true",
                     1000,
-                    self.layer_parameters.get('classes'))
+                    self.layer_parameters.get('classes')))
 
             elif self.layer_type == "NASNetMobile":
                 if self.layer_parameters.get("weights") == 'imagenet' \
                         and self.inp_shape[0][1:] != (224, 224, 3):
-                    return ValidatorMessages.InputShapeMustBeOnly.value % (
+                    return str(exceptions.InputShapeMustBeOnlyException(
                         "pre-loaded 'imagenet' weights",
                         (224, 224, 3),
                         self.inp_shape[0][1:]
-                    )
+                    ))
                 elif (
                         self.inp_shape[0][1] < 32
                         or self.inp_shape[0][2] < 32
                         or self.inp_shape[0][3] < 3
                 ):
-                    return ValidatorMessages.InputShapeMustBeInEchDim.value % (
+                    return str(exceptions.InputShapeMustBeInEchDimException(
                         "greater or equal",
                         (32, 32, 3),
                         self.inp_shape[0][1:]
-                    )
+                    ))
 
             elif self.layer_type == "NASNetLarge":
                 if self.layer_parameters.get("weights") == 'imagenet' \
                         and self.inp_shape[0][1:] != (331, 331, 3):
-                    return ValidatorMessages.InputShapeMustBeOnly.value % (
+                    return str(exceptions.InputShapeMustBeOnlyException(
                         "pre-loaded 'imagenet' weights",
                         (331, 331, 3),
                         self.inp_shape[0][1:]
-                    )
+                    ))
                 elif (
                         self.inp_shape[0][1] < 32
                         or self.inp_shape[0][2] < 32
                         or self.inp_shape[0][3] < 3
                 ):
-                    return ValidatorMessages.InputShapeMustBeInEchDim.value % (
+                    return str(exceptions.InputShapeMustBeInEchDimException(
                         "greater or equal",
                         (32, 32, 3),
                         self.inp_shape[0][1:]
-                    )
+                    ))
 
             elif self.layer_type == "InceptionV3":
                 if self.layer_parameters.get("weights") == 'imagenet' \
                         and self.inp_shape[0][1:] != (299, 299, 3):
-                    return ValidatorMessages.InputShapeMustBeOnly.value % (
+                    return str(exceptions.InputShapeMustBeOnlyException(
                         "pre-loaded 'imagenet' weights",
                         (299, 299, 3),
                         self.inp_shape[0][1:]
-                    )
+                    ))
                 elif (
                         self.inp_shape[0][1] < 75
                         or self.inp_shape[0][2] < 75
                         or self.inp_shape[0][3] < 3
                 ):
-                    return ValidatorMessages.InputShapeMustBeInEchDim.value % (
+                    return str(exceptions.InputShapeMustBeInEchDimException(
                         "greater or equal",
                         (75, 75, 3),
                         self.inp_shape[0][1:]
-                    )
+                    ))
                 elif (
                         self.layer_parameters.get("include_top")
                         and self.layer_parameters.get("weights")
                         and self.layer_parameters.get("classifier_activation") != "softmax"
                         and self.layer_parameters.get("classifier_activation") is not None
                 ):
-                    return ValidatorMessages.ActivationFunctionShouldBe.value % (
+                    return str(exceptions.ActivationFunctionShouldBeException(
                         "using pretrained weights, with `include_top=True`",
                         "`None` or `softmax`"
-                    )
+                    ))
 
             elif self.layer_type == "Xception":
                 if self.layer_parameters.get("weights") == 'imagenet' and\
                         self.inp_shape[0][1:] != (299, 299, 3):
-                    return ValidatorMessages.InputShapeMustBeOnly.value % (
+                    return str(exceptions.InputShapeMustBeOnlyException(
                         "pre-loaded 'imagenet' weights",
                         (299, 299, 3),
-                        self.inp_shape[0][1:])
+                        self.inp_shape[0][1:]))
                 elif (
                         self.inp_shape[0][1] < 71
                         or self.inp_shape[0][2] < 71
                         or self.inp_shape[0][3] < 3
                 ):
-                    return ValidatorMessages.InputShapeMustBeInEchDim.value % (
+                    return str(exceptions.InputShapeMustBeInEchDimException(
                         "greater or equal",
                         (71, 71, 3),
                         self.inp_shape[0][1:]
-                    )
+                    ))
                 elif (
                         self.layer_parameters.get("include_top")
                         and self.layer_parameters.get("weights")
                         and self.layer_parameters.get("classifier_activation") != "softmax"
                         and self.layer_parameters.get("classifier_activation") is not None
                 ):
-                    return ValidatorMessages.ActivationFunctionShouldBe.value % (
+                    return str(exceptions.ActivationFunctionShouldBeException(
                         "using pretrained weights, with `include_top=True`",
                         "`None` or `softmax`"
-                    )
+                    ))
 
             elif self.layer_type in ["VGG16", "VGG19", "ResNet50", "ResNet101", "ResNet152", "ResNet50V2",
                                      "ResNet101V2", "ResNet152V2"]:
                 if self.layer_parameters.get("include_top") and self.layer_parameters.get('weights') == 'imagenet' \
                         and self.inp_shape[0][1:] != (224, 224, 3):
 
-                    return ValidatorMessages.InputShapeMustBeOnly.value % (
+                    return str(exceptions.InputShapeMustBeOnlyException(
                         "'include_top'=True and using pre-trained weights on 'imagenet'",
                         (224, 224, 3),
                         self.inp_shape[0][1:]
-                    )
+                    ))
                 elif (
                         self.inp_shape[0][1] < 32
                         or self.inp_shape[0][2] < 32
                         or self.inp_shape[0][3] < 3
                 ):
-                    return ValidatorMessages.InputShapeMustBeInEchDim.value % (
+                    return str(exceptions.InputShapeMustBeInEchDimException(
                         "greater or equal",
                         (32, 32, 3),
                         self.inp_shape[0][1:]
-                    )
+                    ))
                 elif (
                     self.layer_parameters.get("include_top")
                     and self.layer_parameters.get("weights")
                     and self.layer_parameters.get("classifier_activation") != "softmax"
                     and self.layer_parameters.get("classifier_activation") is not None
                 ):
-                    return ValidatorMessages.ActivationFunctionShouldBe.value % (
+                    return str(exceptions.ActivationFunctionShouldBeException(
                         "using pretrained weights, with `include_top=True`",
                         "`None` or `softmax`"
-                    )
+                    ))
 
             elif self.layer_type in ["DenseNet121", "DenseNet169", "DenseNet201"]:
                 if self.layer_parameters.get("weights") == 'imagenet' and self.layer_parameters.get("include_top") and\
                         self.inp_shape[0][1:] != (224, 224, 3):
 
-                    return ValidatorMessages.InputShapeMustBeOnly.value % (
+                    return str(exceptions.InputShapeMustBeOnlyException(
                         "'include_top'=True and using pre-trained weights on 'imagenet'",
                         (224, 224, 3),
                         self.inp_shape[0][1:]
-                    )
+                    ))
                 elif (
                         self.inp_shape[0][1] < 32
                         or self.inp_shape[0][2] < 32
                         or self.inp_shape[0][3] < 3
                 ):
-                    return ValidatorMessages.InputShapeMustBeInEchDim.value % (
+                    return str(exceptions.InputShapeMustBeInEchDimException(
                         "greater or equal",
                         (32, 32, 3),
                         self.inp_shape[0][1:]
-                    )
+                    ))
 
             elif self.layer_type in ["MobileNetV3Small", "MobileNetV2", "EfficientNetB0"]:
                 if (
@@ -1211,16 +1209,16 @@ class LayerValidation:
                     and self.layer_parameters.get("classifier_activation") != "softmax"
                     and self.layer_parameters.get("classifier_activation") is not None
                 ):
-                    return ValidatorMessages.ActivationFunctionShouldBe.value % (
+                    return str(exceptions.ActivationFunctionShouldBeException(
                         "using pretrained weights, with `include_top=True`",
                         "`None` or `softmax`"
-                    )
+                    ))
                 elif (self.layer_parameters.get("dropout_rate")) and \
                         (self.layer_parameters.get("dropout_rate") > 1.0 or self.layer_parameters.get("dropout_rate") < 0):
-                    return ValidatorMessages.CanTakeOneOfTheFollowingValues % (
+                    return str(exceptions.CanTakeOneOfTheFollowingValuesException(
                         "Dropout_rate",
                         "floats from range [0.0, 1.0]"
-                    )
+                    ))
             else:
                 pass
 
@@ -1231,13 +1229,13 @@ class LayerValidation:
                     or self.inp_shape[0][2] < 32
                     or self.inp_shape[0][3] < 3
             ):
-                return ValidatorMessages.InputShapeMustBeInEchDim % (
+                return str(exceptions.InputShapeMustBeInEchDimException(
                     "greater or equal",
                     (32, 32, 3),
                     self.inp_shape[0][1:]
-                )
+                ))
             if self.inp_shape[0][1] % 4 != 0 or self.inp_shape[0][2] % 4 != 0:
-                return ValidatorMessages.InputShapeMustBeWholeDividedBy.value % (self.inp_shape[0], 4)
+                return str(exceptions.InputShapeMustBeWholeDividedByException(self.inp_shape[0], 4))
 
         # space_to_depth dimensions
         if self.layer_type == LayerTypeChoice.SpaceToDepth:
@@ -1247,28 +1245,28 @@ class LayerValidation:
                     or self.layer_parameters.get("data_format")
                     == SpaceToDepthDataFormatChoice.NHWC
             ) and len(self.inp_shape[0]) != 4:
-                return ValidatorMessages.ExpectedOtherInputShapeDim.value % (
+                return str(exceptions.ExpectedOtherInputShapeDimException(
                     4, "`data_format`=`NHWC` or `NCHW`", len(self.inp_shape[0]), self.inp_shape[0]
-                )
+                ))
             if (
                     self.layer_parameters.get("data_format")
                     == SpaceToDepthDataFormatChoice.NCHW_VECT_C
                     and len(self.inp_shape[0]) != 5
             ):
-                return ValidatorMessages.ExpectedOtherInputShapeDim.value % (
+                return str(exceptions.ExpectedOtherInputShapeDimException(
                     5, "`data_format`=`NCHW_VECT_C`", len(self.inp_shape[0]), self.inp_shape[0]
-                )
+                ))
             if self.layer_parameters.get(
                     "data_format"
             ) == SpaceToDepthDataFormatChoice.NCHW_VECT_C and (
                     self.inp_shape[0][2] % self.layer_parameters.get("block_size") != 0
                     or self.inp_shape[0][3] % self.layer_parameters.get("block_size") != 0
             ):
-                return ValidatorMessages.DimensionSizeMustBeEvenlyDivisible.value % (
+                return str(exceptions.DimensionSizeMustBeEvenlyDivisibleException(
                     self.inp_shape[0][2:4],
                     f"input_shape {self.inp_shape[0]}",
                     f"block_size = {self.layer_parameters.get('block_size')}"
-                )
+                ))
 
 
 class CustomLayer(tensorflow.keras.layers.Layer):
