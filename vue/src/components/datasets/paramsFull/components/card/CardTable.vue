@@ -24,7 +24,7 @@
     </div>
 
     <div class="t-table__footer">
-      <span>Список файлов</span>
+      <span>{{ label }}</span>
       <div class="t-table__footer--btn" @click="show = true">
         <i class="t-icon icon-file-dot"></i>
       </div>
@@ -267,6 +267,7 @@ export default {
       cursor: pointer;
       i {
         width: 16px;
+        height: 13px;
       }
       &:hover {
       }
