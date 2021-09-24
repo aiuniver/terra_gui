@@ -232,7 +232,7 @@ class GUINN:
             self.yolo_model_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
         else:
             self.base_model_fit(params=training_params, dataset=self.dataset, dataset_data=dataset,
-                                verbose=0, save_model_path=model_path)
+                                verbose=1, save_model_path=model_path)
         return {"dataset": self.dataset, "metrics": self.metrics, "losses": self.loss}
 
     def nn_cleaner(self, retrain: bool = False) -> None:
@@ -275,7 +275,7 @@ class GUINN:
             self.dataset.dataset.get('train').batch(self.batch_size, drop_remainder=True).take(-1),
             batch_size=self.batch_size,
             shuffle=self.shuffle,
-            validation_data=self.dataset.dataset.get('val').batch(self.batch_size, drop_remainder=True).take(-1),
+            validation_data=self.dataset.dataset.get('val').batch(2, drop_remainder=True).take(-1),
             epochs=self.epochs,
             verbose=verbose,
             callbacks=self.callbacks

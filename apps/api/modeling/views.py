@@ -1,3 +1,4 @@
+import os
 import re
 import base64
 
@@ -213,7 +214,7 @@ class PreviewAPIView(BaseAPIView):
         serializer = PreviewSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
-        filepath = NamedTemporaryFile(suffix=".png")
+        filepath = NamedTemporaryFile(suffix=".png", delete=False)
         filepath.write(base64.b64decode(serializer.validated_data.get("preview")))
         autocrop_image_square(filepath.name, min_size=600)
         with open(filepath.name, "rb") as filepath_ref:
