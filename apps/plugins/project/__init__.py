@@ -185,15 +185,16 @@ class Project(BaseMixinData):
             json.dump(json.loads(self.json()), _config_ref)
 
     def set_deploy(self):
-        model = self.dataset.model
+        model = self.dataset.model if self.dataset else None
         tasks = {}
-        for _input in model.inputs:
-            for _output in model.outputs:
-                tasks.update(
-                    {
-                        f"{_input.group}{_input.id}_{_output.group}{_output.id}": f"{_input.task.name}{_output.task.name}"
-                    }
-                )
+        if model:
+            for _input in model.inputs:
+                for _output in model.outputs:
+                    tasks.update(
+                        {
+                            f"{_input.group}{_input.id}_{_output.group}{_output.id}": f"{_input.task.name}{_output.task.name}"
+                        }
+                    )
         try:
             _type = list(TASKS_RELATIONS.keys())[
                 list(TASKS_RELATIONS.values()).index(set(tasks.values()))
