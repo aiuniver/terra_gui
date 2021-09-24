@@ -160,13 +160,11 @@ export default {
   &--hide {
     height: 30px;
   }
-  .rotate{
+  .rotate {
     transform: rotate(180deg);
   }
-  p {
-    font-size: 14px;
-  }
   &__header {
+    user-select: none;
     height: 32px;
     background: #242f3d;
     display: flex;
@@ -182,7 +180,11 @@ export default {
     align-items: center;
     padding: 0 7px;
     p {
-      margin-left: 15px;
+      margin-left: 10px;
+      font-style: normal;
+      font-weight: normal;
+      font-size: 12px;
+      line-height: 16px;
     }
     &--left {
       height: 30px;
