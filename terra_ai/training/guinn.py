@@ -871,6 +871,9 @@ class FitCallback(keras.callbacks.Callback):
             interactive.set_status("trained")
             total_epochs = self.retrain_epochs if interactive.get_states().get('status') \
                                                   in ['addtrain', 'trained'] else self.epochs
+            if os.path.exists(self.save_model_path) and interactive.deploy_presets_data:
+                with open(os.path.join(self.save_model_path, "config.presets"), "w", encoding="utf-8") as presets:
+                    presets.write(str(interactive.deploy_presets_data))
             progress.pool(
                 self.progress_name,
                 percent=percent,

@@ -11,6 +11,9 @@ export default {
     loading: false,
   }),
   computed: {
+    isNoTrain() {
+      return this.$store.getters['trainings/getStatus'] === 'no_train';
+    },
     selected() {
       return this.$store.getters['datasets/getSelected'];
     },
@@ -19,6 +22,12 @@ export default {
     },
   },
   methods: {
+    async message() {
+      await this.$store.dispatch('messages/setModel', {
+        context: this,
+        content: 'Для выбора датасета остановите обучение',
+      });
+    },
     createInterval() {
       this.interval = setTimeout(async () => {
         const { data } = await this.$store.dispatch('datasets/choiceProgress', {});
@@ -53,13 +62,17 @@ export default {
       }, 1000);
     },
     async click() {
-      if (this.loading) return;
-      this.loading = true;
-      const { alias, group, name } = this.selected;
-      const { success } = await this.$store.dispatch('datasets/choice', { alias, group });
-      this.$store.dispatch('messages/setMessage', { message: `Загружаю датасет «${name}»` });
-      if (success) {
-        this.createInterval();
+      if (this.isNoTrain) {
+        if (this.loading) return;
+        this.loading = true;
+        const { alias, group, name } = this.selected;
+        const { success } = await this.$store.dispatch('datasets/choice', { alias, group });
+        this.$store.dispatch('messages/setMessage', { message: `Загружаю датасет «${name}»` });
+        if (success) {
+          this.createInterval();
+        }
+      } else {
+        this.message();
       }
     },
   },

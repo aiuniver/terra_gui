@@ -24,7 +24,7 @@ from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.utils import camelize, decamelize
 
-__version__ = 0.062
+__version__ = 0.063
 
 
 def sort_dict(dict_to_sort: dict, mode='by_name'):
@@ -501,56 +501,60 @@ class InteractiveCallback:
         self.train_progress = data
 
     def update_state(self, y_pred, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
-        self._reformat_y_pred(y_pred)
-        if self.interactive_config.get('intermediate_result').get('show_results'):
-            self.example_idx = self._prepare_example_idx_to_show()
-        if on_epoch_end_flag:
-            self.current_epoch = fit_logs.get('epoch')
-            self.current_logs = self._reformat_fit_logs(fit_logs)
-            self._update_log_history()
-            self._update_progress_table(current_epoch_time)
-            if self.interactive_config.get('intermediate_result').get('autoupdate'):
+        if self.log_history:
+            self._reformat_y_pred(y_pred)
+            if self.interactive_config.get('intermediate_result').get('show_results'):
+                self.example_idx = self._prepare_example_idx_to_show()
+            if on_epoch_end_flag:
+                self.current_epoch = fit_logs.get('epoch')
+                self.current_logs = self._reformat_fit_logs(fit_logs)
+                self._update_log_history()
+                self._update_progress_table(current_epoch_time)
+                if self.interactive_config.get('intermediate_result').get('autoupdate'):
+                    self.intermediate_result = self._get_intermediate_result_request()
+                if self.interactive_config.get('statistic_data').get('output_id') \
+                        and self.interactive_config.get('statistic_data').get('autoupdate'):
+                    self.statistic_result = self._get_statistic_data_request()
+            else:
                 self.intermediate_result = self._get_intermediate_result_request()
-            if self.interactive_config.get('statistic_data').get('output_id') \
-                    and self.interactive_config.get('statistic_data').get('autoupdate'):
-                self.statistic_result = self._get_statistic_data_request()
+                if self.interactive_config.get('statistic_data').get('output_id'):
+                    self.statistic_result = self._get_statistic_data_request()
+            self.urgent_predict = False
+            return {
+                'loss_graphs': self._get_loss_graph_data_request(),
+                'metric_graphs': self._get_metric_graph_data_request(),
+                'intermediate_result': self.intermediate_result,
+                'progress_table': self.progress_table,
+                'statistic_data': self.statistic_result,
+                'data_balance': self._get_balance_data_request(),
+            }
         else:
-            self.intermediate_result = self._get_intermediate_result_request()
-            if self.interactive_config.get('statistic_data').get('output_id'):
-                self.statistic_result = self._get_statistic_data_request()
-        self.urgent_predict = False
-        return {
-            'loss_graphs': self._get_loss_graph_data_request(),
-            'metric_graphs': self._get_metric_graph_data_request(),
-            'intermediate_result': self.intermediate_result,
-            'progress_table': self.progress_table,
-            'statistic_data': self.statistic_result,
-            'data_balance': self._get_balance_data_request(),
-        }
+            return {}
 
     def get_train_results(self, config: InteractiveData) -> Union[dict, None]:
         """Return dict with data for current interactive request"""
         self.interactive_config = config.native() if config else self.interactive_config
-        if self.interactive_config.get('intermediate_result').get('show_results'):
-            self.example_idx = self._prepare_example_idx_to_show()
-        if config.native().get('intermediate_result').get('show_results') or \
-                config.native().get('statistic_data').get('output_id'):
-            self.urgent_predict = True
-            return
+        if self.log_history and self.log_history.get("epochs", {}):
+            if self.interactive_config.get('intermediate_result').get('show_results'):
+                self.example_idx = self._prepare_example_idx_to_show()
+            if config.native().get('intermediate_result').get('show_results') or \
+                    config.native().get('statistic_data').get('output_id'):
+                self.urgent_predict = True
+                return
 
-        self.train_progress['train_data'] = {
-            'loss_graphs': self._get_loss_graph_data_request(),
-            'metric_graphs': self._get_metric_graph_data_request(),
-            'intermediate_result': self.intermediate_result,
-            'progress_table': self.progress_table,
-            'statistic_data': self.statistic_result,
-            'data_balance': self._get_balance_data_request(),
-        }
-        progress.pool(
-            self.progress_name,
-            data=self.train_progress,
-            finished=False,
-        )
+            self.train_progress['train_data'] = {
+                'loss_graphs': self._get_loss_graph_data_request(),
+                'metric_graphs': self._get_metric_graph_data_request(),
+                'intermediate_result': self.intermediate_result,
+                'progress_table': self.progress_table,
+                'statistic_data': self.statistic_result,
+                'data_balance': self._get_balance_data_request(),
+            }
+            progress.pool(
+                self.progress_name,
+                data=self.train_progress,
+                finished=False,
+            )
 
     # Методы для set_attributes()
     @staticmethod
@@ -1127,225 +1131,226 @@ class InteractiveCallback:
 
     def _update_log_history(self):
         data_idx = None
-        if self.current_epoch in self.log_history['epochs']:
-            data_idx = self.log_history['epochs'].index(self.current_epoch)
-        else:
-            self.log_history['epochs'].append(self.current_epoch)
-        for out in self.dataset_config.get("outputs").keys():
-            for loss_name in self.log_history.get(out).get('loss').keys():
-                for data_type in ['train', 'val']:
-                    # fill losses
-                    if data_idx or data_idx == 0:
-                        self.log_history[out]['loss'][loss_name][data_type][data_idx] = \
-                            self.current_logs.get(out).get('loss').get(loss_name).get(data_type) \
+        if self.log_history:
+            if self.current_epoch in self.log_history['epochs']:
+                data_idx = self.log_history['epochs'].index(self.current_epoch)
+            else:
+                self.log_history['epochs'].append(self.current_epoch)
+            for out in self.dataset_config.get("outputs").keys():
+                for loss_name in self.log_history.get(out).get('loss').keys():
+                    for data_type in ['train', 'val']:
+                        # fill losses
+                        if data_idx or data_idx == 0:
+                            self.log_history[out]['loss'][loss_name][data_type][data_idx] = \
+                                self.current_logs.get(out).get('loss').get(loss_name).get(data_type) \
+                                    if self.current_logs.get(out).get('loss').get(loss_name).get(data_type) else 0.
+                        else:
+                            self.log_history[out]['loss'][loss_name][data_type].append(
+                                self.current_logs.get(out).get('loss').get(loss_name).get(data_type)
                                 if self.current_logs.get(out).get('loss').get(loss_name).get(data_type) else 0.
-                    else:
-                        self.log_history[out]['loss'][loss_name][data_type].append(
-                            self.current_logs.get(out).get('loss').get(loss_name).get(data_type)
-                            if self.current_logs.get(out).get('loss').get(loss_name).get(data_type) else 0.
-                        )
-                # fill loss progress state
-                if data_idx or data_idx == 0:
-                    self.log_history[out]['progress_state']['loss'][loss_name]['mean_log_history'][data_idx] = \
-                        self._get_mean_log(self.log_history.get(out).get('loss').get(loss_name).get('val'))
-                else:
-                    self.log_history[out]['progress_state']['loss'][loss_name]['mean_log_history'].append(
-                        self._get_mean_log(self.log_history.get(out).get('loss').get(loss_name).get('val'))
-                    )
-                # get progress state data
-                loss_underfitting = self._evaluate_underfitting(
-                    loss_name,
-                    self.log_history[out]['loss'][loss_name]['train'][-1],
-                    self.log_history[out]['loss'][loss_name]['val'][-1],
-                    metric_type='loss'
-                )
-                loss_overfitting = self._evaluate_overfitting(
-                    loss_name,
-                    self.log_history[out]['progress_state']['loss'][loss_name]['mean_log_history'],
-                    metric_type='loss'
-                )
-                if loss_underfitting or loss_overfitting:
-                    normal_state = False
-                else:
-                    normal_state = True
-
-                if data_idx or data_idx == 0:
-                    self.log_history[out]['progress_state']['loss'][loss_name]['underfitting'][data_idx] = \
-                        loss_underfitting
-                    self.log_history[out]['progress_state']['loss'][loss_name]['overfitting'][data_idx] = \
-                        loss_overfitting
-                    self.log_history[out]['progress_state']['loss'][loss_name]['normal_state'][data_idx] = \
-                        normal_state
-                else:
-                    self.log_history[out]['progress_state']['loss'][loss_name]['underfitting'].append(
-                        loss_underfitting)
-                    self.log_history[out]['progress_state']['loss'][loss_name]['overfitting'].append(
-                        loss_overfitting)
-                    self.log_history[out]['progress_state']['loss'][loss_name]['normal_state'].append(
-                        normal_state)
-
-                if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification or \
-                        self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation or \
-                        self.dataset_config.get("outputs").get(out).get(
-                            "task") == LayerOutputTypeChoice.TextSegmentation:
-                    for cls in self.log_history.get(out).get('class_loss').keys():
-                        class_loss = 0.
-
-                        # get Classification loss
-                        if self.dataset_config.get("outputs").get(out).get(
-                                "task") == LayerOutputTypeChoice.Classification:
-                            class_loss = self._get_loss_calculation(
-                                loss_name=self.losses.get(out),
-                                loss_obj=self.loss_obj.get(out),
-                                out=out,
-                                y_true=self.y_true.get('val').get(out)[
-                                    self.class_idx.get('val').get(out).get(cls)],
-                                y_pred=self.y_pred.get(out)[self.class_idx.get('val').get(out).get(cls)],
                             )
-                        # get Segmentation loss
-                        if self.dataset_config.get("outputs").get(out).get(
-                                "task") == LayerOutputTypeChoice.Segmentation:
-                            class_loss = self._get_loss_calculation(
-                                loss_name=self.losses.get(out),
-                                loss_obj=self.loss_obj.get(out),
-                                out=out,
-                                y_true=self.y_true.get('val').get(out)[
-                                       :, :, :,
-                                       self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)],
-                                y_pred=self.y_pred.get(out)[
-                                       :, :, :,
-                                       self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)],
-                            )
-                        # get TextSegmentation loss
-                        if self.dataset_config.get("outputs").get(out).get(
-                                "task") == LayerOutputTypeChoice.TextSegmentation:
-                            class_loss = self._get_loss_calculation(
-                                loss_name=self.losses.get(out),
-                                loss_obj=self.loss_obj.get(out),
-                                out=out,
-                                y_true=self.y_true.get('val').get(out)[
-                                       :, :,
-                                       self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)],
-                                y_pred=self.y_pred.get(out)[
-                                       :, :,
-                                       self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)],
-                            )
-
-                        if data_idx or data_idx == 0:
-                            self.log_history[out]['class_loss'][cls][loss_name][data_idx] = \
-                                class_loss if class_loss else 0.
-                        else:
-                            self.log_history[out]['class_loss'][cls][loss_name].append(
-                                class_loss if class_loss else 0.
-                            )
-
-            for metric_name in self.log_history.get(out).get('metrics').keys():
-                for data_type in ['train', 'val']:
-                    # fill metrics
+                    # fill loss progress state
                     if data_idx or data_idx == 0:
-                        if self.current_logs:
-                            self.log_history[out]['metrics'][metric_name][data_type][data_idx] = \
-                                self.current_logs.get(out).get('metrics').get(metric_name).get(data_type) \
-                                    if self.current_logs.get(out).get('metrics').get(metric_name).get(
-                                    data_type) else 0
+                        self.log_history[out]['progress_state']['loss'][loss_name]['mean_log_history'][data_idx] = \
+                            self._get_mean_log(self.log_history.get(out).get('loss').get(loss_name).get('val'))
                     else:
-                        if self.current_logs:
-                            self.log_history[out]['metrics'][metric_name][data_type].append(
-                                self.current_logs.get(out).get('metrics').get(metric_name).get(data_type)
-                                if self.current_logs.get(out).get('metrics').get(metric_name).get(data_type) else 0
-                            )
-
-                # fill metric progress state
-                if data_idx or data_idx == 0:
-                    self.log_history[out]['progress_state']['metrics'][metric_name]['mean_log_history'][data_idx] = \
-                        self._get_mean_log(self.log_history[out]['metrics'][metric_name]['val'])
-                else:
-                    self.log_history[out]['progress_state']['metrics'][metric_name]['mean_log_history'].append(
-                        self._get_mean_log(self.log_history[out]['metrics'][metric_name]['val'])
+                        self.log_history[out]['progress_state']['loss'][loss_name]['mean_log_history'].append(
+                            self._get_mean_log(self.log_history.get(out).get('loss').get(loss_name).get('val'))
+                        )
+                    # get progress state data
+                    loss_underfitting = self._evaluate_underfitting(
+                        loss_name,
+                        self.log_history[out]['loss'][loss_name]['train'][-1],
+                        self.log_history[out]['loss'][loss_name]['val'][-1],
+                        metric_type='loss'
                     )
-                metric_underfittng = self._evaluate_underfitting(
-                    metric_name,
-                    self.log_history[out]['metrics'][metric_name]['train'][-1],
-                    self.log_history[out]['metrics'][metric_name]['val'][-1],
-                    metric_type='metric'
-                )
-                metric_overfittng = self._evaluate_overfitting(
-                    metric_name,
-                    self.log_history[out]['progress_state']['metrics'][metric_name]['mean_log_history'],
-                    metric_type='metric'
-                )
-                if metric_underfittng or metric_overfittng:
-                    normal_state = False
-                else:
-                    normal_state = True
+                    loss_overfitting = self._evaluate_overfitting(
+                        loss_name,
+                        self.log_history[out]['progress_state']['loss'][loss_name]['mean_log_history'],
+                        metric_type='loss'
+                    )
+                    if loss_underfitting or loss_overfitting:
+                        normal_state = False
+                    else:
+                        normal_state = True
 
-                if data_idx or data_idx == 0:
-                    self.log_history[out]['progress_state']['metrics'][metric_name]['underfitting'][data_idx] = \
-                        metric_underfittng
-                    self.log_history[out]['progress_state']['metrics'][metric_name]['overfitting'][data_idx] = \
-                        metric_overfittng
-                    self.log_history[out]['progress_state']['metrics'][metric_name]['normal_state'][data_idx] = \
-                        normal_state
-                else:
-                    self.log_history[out]['progress_state']['metrics'][metric_name]['underfitting'].append(
-                        metric_underfittng)
-                    self.log_history[out]['progress_state']['metrics'][metric_name]['overfitting'].append(
-                        metric_overfittng)
-                    self.log_history[out]['progress_state']['metrics'][metric_name]['normal_state'].append(
-                        normal_state)
+                    if data_idx or data_idx == 0:
+                        self.log_history[out]['progress_state']['loss'][loss_name]['underfitting'][data_idx] = \
+                            loss_underfitting
+                        self.log_history[out]['progress_state']['loss'][loss_name]['overfitting'][data_idx] = \
+                            loss_overfitting
+                        self.log_history[out]['progress_state']['loss'][loss_name]['normal_state'][data_idx] = \
+                            normal_state
+                    else:
+                        self.log_history[out]['progress_state']['loss'][loss_name]['underfitting'].append(
+                            loss_underfitting)
+                        self.log_history[out]['progress_state']['loss'][loss_name]['overfitting'].append(
+                            loss_overfitting)
+                        self.log_history[out]['progress_state']['loss'][loss_name]['normal_state'].append(
+                            normal_state)
 
-                if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification or \
-                        self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation or \
-                        self.dataset_config.get("outputs").get(out).get(
-                            "task") == LayerOutputTypeChoice.TextSegmentation:
-                    # fill class losses
-                    for cls in self.log_history.get(out).get('class_metrics').keys():
-                        class_metric = 0.
-                        if self.dataset_config.get("outputs").get(out).get(
-                                "task") == LayerOutputTypeChoice.Classification:
-                            class_metric = self._get_metric_calculation(
-                                metric_name=metric_name,
-                                metric_obj=self.metrics_obj.get(out).get(metric_name),
-                                out=out,
-                                y_true=self.y_true.get('val').get(out)[
-                                    self.class_idx.get('val').get(out).get(cls)],
-                                y_pred=self.y_pred.get(out)[self.class_idx.get('val').get(out).get(cls)],
-                            )
-                        if self.dataset_config.get("outputs").get(out).get(
-                                "task") == LayerOutputTypeChoice.Segmentation:
-                            class_metric = self._get_metric_calculation(
-                                metric_name=metric_name,
-                                metric_obj=self.metrics_obj.get(out).get(metric_name),
-                                out=out,
-                                y_true=self.y_true.get('val').get(out)[
-                                       :, :, :,
-                                       self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
-                                       ],
-                                y_pred=self.y_pred.get(out)[
-                                       :, :, :,
-                                       self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
-                                       ],
-                            )
-                        if self.dataset_config.get("outputs").get(out).get(
+                    if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification or \
+                            self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation or \
+                            self.dataset_config.get("outputs").get(out).get(
                                 "task") == LayerOutputTypeChoice.TextSegmentation:
-                            class_metric = self._get_metric_calculation(
-                                metric_name=metric_name,
-                                metric_obj=self.metrics_obj.get(out).get(metric_name),
-                                out=out,
-                                y_true=self.y_true.get('val').get(out)[
-                                       :, :, self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
-                                       ],
-                                y_pred=self.y_pred.get(out)[
-                                       :, :, self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
-                                       ],
-                            )
+                        for cls in self.log_history.get(out).get('class_loss').keys():
+                            class_loss = 0.
+
+                            # get Classification loss
+                            if self.dataset_config.get("outputs").get(out).get(
+                                    "task") == LayerOutputTypeChoice.Classification:
+                                class_loss = self._get_loss_calculation(
+                                    loss_name=self.losses.get(out),
+                                    loss_obj=self.loss_obj.get(out),
+                                    out=out,
+                                    y_true=self.y_true.get('val').get(out)[
+                                        self.class_idx.get('val').get(out).get(cls)],
+                                    y_pred=self.y_pred.get(out)[self.class_idx.get('val').get(out).get(cls)],
+                                )
+                            # get Segmentation loss
+                            if self.dataset_config.get("outputs").get(out).get(
+                                    "task") == LayerOutputTypeChoice.Segmentation:
+                                class_loss = self._get_loss_calculation(
+                                    loss_name=self.losses.get(out),
+                                    loss_obj=self.loss_obj.get(out),
+                                    out=out,
+                                    y_true=self.y_true.get('val').get(out)[
+                                           :, :, :,
+                                           self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)],
+                                    y_pred=self.y_pred.get(out)[
+                                           :, :, :,
+                                           self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)],
+                                )
+                            # get TextSegmentation loss
+                            if self.dataset_config.get("outputs").get(out).get(
+                                    "task") == LayerOutputTypeChoice.TextSegmentation:
+                                class_loss = self._get_loss_calculation(
+                                    loss_name=self.losses.get(out),
+                                    loss_obj=self.loss_obj.get(out),
+                                    out=out,
+                                    y_true=self.y_true.get('val').get(out)[
+                                           :, :,
+                                           self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)],
+                                    y_pred=self.y_pred.get(out)[
+                                           :, :,
+                                           self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)],
+                                )
+
+                            if data_idx or data_idx == 0:
+                                self.log_history[out]['class_loss'][cls][loss_name][data_idx] = \
+                                    class_loss if class_loss else 0.
+                            else:
+                                self.log_history[out]['class_loss'][cls][loss_name].append(
+                                    class_loss if class_loss else 0.
+                                )
+
+                for metric_name in self.log_history.get(out).get('metrics').keys():
+                    for data_type in ['train', 'val']:
+                        # fill metrics
                         if data_idx or data_idx == 0:
-                            self.log_history[out]['class_metrics'][cls][metric_name][data_idx] = \
-                                class_metric if class_metric else 0.
+                            if self.current_logs:
+                                self.log_history[out]['metrics'][metric_name][data_type][data_idx] = \
+                                    self.current_logs.get(out).get('metrics').get(metric_name).get(data_type) \
+                                        if self.current_logs.get(out).get('metrics').get(metric_name).get(
+                                        data_type) else 0
                         else:
-                            self.log_history[out]['class_metrics'][cls][metric_name].append(
-                                class_metric if class_metric else 0.
-                            )
+                            if self.current_logs:
+                                self.log_history[out]['metrics'][metric_name][data_type].append(
+                                    self.current_logs.get(out).get('metrics').get(metric_name).get(data_type)
+                                    if self.current_logs.get(out).get('metrics').get(metric_name).get(data_type) else 0
+                                )
+
+                    # fill metric progress state
+                    if data_idx or data_idx == 0:
+                        self.log_history[out]['progress_state']['metrics'][metric_name]['mean_log_history'][data_idx] = \
+                            self._get_mean_log(self.log_history[out]['metrics'][metric_name]['val'])
+                    else:
+                        self.log_history[out]['progress_state']['metrics'][metric_name]['mean_log_history'].append(
+                            self._get_mean_log(self.log_history[out]['metrics'][metric_name]['val'])
+                        )
+                    metric_underfittng = self._evaluate_underfitting(
+                        metric_name,
+                        self.log_history[out]['metrics'][metric_name]['train'][-1],
+                        self.log_history[out]['metrics'][metric_name]['val'][-1],
+                        metric_type='metric'
+                    )
+                    metric_overfittng = self._evaluate_overfitting(
+                        metric_name,
+                        self.log_history[out]['progress_state']['metrics'][metric_name]['mean_log_history'],
+                        metric_type='metric'
+                    )
+                    if metric_underfittng or metric_overfittng:
+                        normal_state = False
+                    else:
+                        normal_state = True
+
+                    if data_idx or data_idx == 0:
+                        self.log_history[out]['progress_state']['metrics'][metric_name]['underfitting'][data_idx] = \
+                            metric_underfittng
+                        self.log_history[out]['progress_state']['metrics'][metric_name]['overfitting'][data_idx] = \
+                            metric_overfittng
+                        self.log_history[out]['progress_state']['metrics'][metric_name]['normal_state'][data_idx] = \
+                            normal_state
+                    else:
+                        self.log_history[out]['progress_state']['metrics'][metric_name]['underfitting'].append(
+                            metric_underfittng)
+                        self.log_history[out]['progress_state']['metrics'][metric_name]['overfitting'].append(
+                            metric_overfittng)
+                        self.log_history[out]['progress_state']['metrics'][metric_name]['normal_state'].append(
+                            normal_state)
+
+                    if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification or \
+                            self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation or \
+                            self.dataset_config.get("outputs").get(out).get(
+                                "task") == LayerOutputTypeChoice.TextSegmentation:
+                        # fill class losses
+                        for cls in self.log_history.get(out).get('class_metrics').keys():
+                            class_metric = 0.
+                            if self.dataset_config.get("outputs").get(out).get(
+                                    "task") == LayerOutputTypeChoice.Classification:
+                                class_metric = self._get_metric_calculation(
+                                    metric_name=metric_name,
+                                    metric_obj=self.metrics_obj.get(out).get(metric_name),
+                                    out=out,
+                                    y_true=self.y_true.get('val').get(out)[
+                                        self.class_idx.get('val').get(out).get(cls)],
+                                    y_pred=self.y_pred.get(out)[self.class_idx.get('val').get(out).get(cls)],
+                                )
+                            if self.dataset_config.get("outputs").get(out).get(
+                                    "task") == LayerOutputTypeChoice.Segmentation:
+                                class_metric = self._get_metric_calculation(
+                                    metric_name=metric_name,
+                                    metric_obj=self.metrics_obj.get(out).get(metric_name),
+                                    out=out,
+                                    y_true=self.y_true.get('val').get(out)[
+                                           :, :, :,
+                                           self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
+                                           ],
+                                    y_pred=self.y_pred.get(out)[
+                                           :, :, :,
+                                           self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
+                                           ],
+                                )
+                            if self.dataset_config.get("outputs").get(out).get(
+                                    "task") == LayerOutputTypeChoice.TextSegmentation:
+                                class_metric = self._get_metric_calculation(
+                                    metric_name=metric_name,
+                                    metric_obj=self.metrics_obj.get(out).get(metric_name),
+                                    out=out,
+                                    y_true=self.y_true.get('val').get(out)[
+                                           :, :, self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
+                                           ],
+                                    y_pred=self.y_pred.get(out)[
+                                           :, :, self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
+                                           ],
+                                )
+                            if data_idx or data_idx == 0:
+                                self.log_history[out]['class_metrics'][cls][metric_name][data_idx] = \
+                                    class_metric if class_metric else 0.
+                            else:
+                                self.log_history[out]['class_metrics'][cls][metric_name].append(
+                                    class_metric if class_metric else 0.
+                                )
 
     def _update_progress_table(self, epoch_time: float):
         """
@@ -2511,7 +2516,6 @@ class InteractiveCallback:
                     self.dataset_config.get("dataset_path"),
                     self.dataset_config.get("dataframe").get('val').iat[example_idx, column_idx]
                 )
-                print(initial_file_path)
             if not save_id:
                 return str(os.path.abspath(initial_file_path))
         else:
