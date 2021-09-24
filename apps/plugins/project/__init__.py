@@ -317,7 +317,6 @@ class Project(BaseMixinData):
                 )
                 if not checkpoint_data.get("layer"):
                     checkpoint_data.update({"layer": self.model.outputs[0].id})
-                checkpoint_data = CheckpointData(**checkpoint_data)
             self.training.base.architecture.parameters.checkpoint = CheckpointData(
                 **checkpoint_data
             )
