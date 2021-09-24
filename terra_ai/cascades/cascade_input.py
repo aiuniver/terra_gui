@@ -32,3 +32,10 @@ def folder(path):
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = img[np.newaxis, ...]
         yield img
+
+
+def text(path):
+    with open(path, 'r', encoding='utf-8') as txt:
+        text = txt.read()
+
+    return text

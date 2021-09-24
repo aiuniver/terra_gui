@@ -2,4 +2,4 @@
 ## Структура данных для работы с деплоями
 """
 
-from . import stages, collection
+from . import stages

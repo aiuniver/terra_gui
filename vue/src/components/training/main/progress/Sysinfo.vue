@@ -5,7 +5,7 @@
       <div v-if="GPU.gpu_utilization">
         <div class="t-sysinfo__grid--item">GPU</div>
         <div :class="['t-sysinfo__grid--item', { warning: isWarning(GPU.gpu_utilization) }]">
-          <p class="t-sysinfo__gpu-name">NVIDIA GeForce GTX 1060 6 GB</p>
+          <p class="t-sysinfo__gpu-name">{{ GPU.gpu_name }}</p>
           <p>{{ `${GPU.gpu_utilization}% (${GPU.gpu_memory_used} / ${GPU.gpu_memory_total})` }}</p>
           <div class="t-sysinfo__progress-bar">
             <div class="t-sysinfo__progress-bar--fill" :style="{ width: (GPU.gpu_utilization) + '%' }"></div>

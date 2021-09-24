@@ -178,7 +178,7 @@ import json
 import os
 from pathlib import Path
 from datetime import datetime
-from typing import Optional, Dict, List, Tuple
+from typing import Optional, Dict, List, Tuple, Union
 from pydantic import validator, DirectoryPath
 from pydantic.types import PositiveInt
 from pydantic.color import Color
@@ -251,19 +251,13 @@ class DatasetPathsData(BaseMixinData):
     arrays: Optional[DirectoryPath]
     sources: Optional[DirectoryPath]
     instructions: Optional[DirectoryPath]
-    scaler: Optional[DirectoryPath]
-    tokenizer: Optional[DirectoryPath]
-    word2vec: Optional[DirectoryPath]
-    augmentation: Optional[DirectoryPath]
+    preprocessing: Optional[DirectoryPath]
 
     @validator(
         "arrays",
         "sources",
         "instructions",
-        "scaler",
-        "tokenizer",
-        "word2vec",
-        "augmentation",
+        "preprocessing",
         always=True,
     )
     def _validate_internal_path(cls, value, values, field) -> Path:
@@ -293,6 +287,7 @@ class DatasetData(AliasMixinData):
     tags: Optional[TagsList] = TagsList()
     inputs: Dict[PositiveInt, DatasetInputsData] = {}
     outputs: Dict[PositiveInt, DatasetOutputsData] = {}
+    columns: Optional[Dict[PositiveInt, Dict[str, Union[DatasetInputsData, DatasetOutputsData]]]] = {}
 
     @property
     def model(self) -> ModelDetailsData:

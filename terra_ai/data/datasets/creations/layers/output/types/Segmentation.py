@@ -12,3 +12,4 @@ class ParametersData(SourcesPathsData, ColumnProcessingData):
     classes_colors: List[Color]
     width: Optional[PositiveInt]
     height: Optional[PositiveInt]
+    put: Optional[PositiveInt]

@@ -4,7 +4,8 @@ from pydantic import ValidationError
 from terra_ai.agent import agent_exchange
 from terra_ai.agent.exceptions import ExchangeBaseException
 from terra_ai.exceptions.base import TerraBaseException
-from terra_ai.data.training.train import TrainData
+from terra_ai.data.training.train import TrainData, InteractiveData
+from terra_ai.data.training.extra import StateStatusChoice
 
 from apps.plugins.project import project_path
 
@@ -38,6 +39,7 @@ class StartAPIView(BaseAPIView):
             training_base = recursive_update(training_base, request.data)
             training_base["architecture"]["parameters"]["outputs"] = outputs
             request.project.training.base = TrainData(**training_base)
+            request.project.set_training()
             data = {
                 "dataset": request.project.dataset,
                 "model": request.project.model,
@@ -47,9 +49,11 @@ class StartAPIView(BaseAPIView):
                 "initial_config": request.project.training.interactive,
             }
             agent_exchange("training_start", **data)
-            request.project.training.set_state()
             return BaseResponseSuccess(
-                {"state": request.project.training.state.native()}
+                {
+                    "interactive": request.project.training.interactive.native(),
+                    "state": request.project.training.state.native(),
+                }
             )
         except ValidationError as error:
             return BaseResponseErrorFields(error)
@@ -84,10 +88,11 @@ class ClearAPIView(BaseAPIView):
 class InteractiveAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         try:
-            agent_exchange("training_interactive", **request.data)
-            return BaseResponseSuccess(
-                {"state": request.project.training.state.native()}
-            )
+            config = InteractiveData(**request.data)
+            request.project.training.interactive = config
+            if request.project.training.state.status != StateStatusChoice.no_train:
+                agent_exchange("training_interactive", config=config)
+            return BaseResponseSuccess()
         except ExchangeBaseException as error:
             return BaseResponseErrorGeneral(str(error))
 

@@ -121,7 +121,8 @@ export default {
         this.$Modal.alert({
           width: 250,
           title: 'Внимание!',
-          content: 'Загрузите датасет',
+          maskClosable: true,
+          content: 'Загрузите исходник датасета',
         });
       }
     },

@@ -13,7 +13,7 @@ import time
 import pynvml as N
 
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Optional
 
 import numpy as np
 import tensorflow as tf
@@ -23,7 +23,7 @@ from tensorflow.keras.models import load_model
 
 from terra_ai import progress
 from terra_ai.data.datasets.dataset import DatasetData
-from terra_ai.data.datasets.extra import LayerOutputTypeChoice
+from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
 from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, \
     CheckpointModeChoice
@@ -61,7 +61,7 @@ class GUINN:
         """
         self.nn_name: str = ''
         self.DTS = None
-        self.model = None
+        self.model: Optional[Model] = None
         self.training_path: str = ""
         self.optimizer = None
         self.loss: dict = {}
@@ -211,13 +211,14 @@ class GUINN:
 
         Args:
             dataset: DatasetData
-            gui_model: Keras model for fit
-            training_params:
-            training_path: TrainData
+            gui_model: Keras model for fit - ModelDetailsData
+            training_path:
             dataset_path: str
+            training_params: TrainData
+            initial_config: InteractiveData
 
         Return:
-            None
+            dict
         """
         model_path = os.path.join(training_path, gui_model.alias)
         if interactive.get_states().get("status") != "addtrain":
@@ -378,9 +379,11 @@ class MemoryUsage:
     def get_usage(self):
         usage_dict = {}
         if self.gpu:
+            gpu_name = N.nvmlDeviceGetName(N.nvmlDeviceGetHandleByIndex(0))
             gpu_utilization = N.nvmlDeviceGetUtilizationRates(N.nvmlDeviceGetHandleByIndex(0))
             gpu_memory = N.nvmlDeviceGetMemoryInfo(N.nvmlDeviceGetHandleByIndex(0))
             usage_dict["GPU"] = {
+                'gpu_name': gpu_name,
                 'gpu_utilization': f'{gpu_utilization.gpu: .2f}',
                 'gpu_memory_used': f'{gpu_memory.used / 1024 ** 3: .2f}GB',
                 'gpu_memory_total': f'{gpu_memory.total / 1024 ** 3: .2f}GB'
@@ -615,11 +618,11 @@ class FitCallback(keras.callbacks.Callback):
                 self.result["train_usage"]["timings"]["elapsed_time"] = param[key][1]
                 self.result["train_usage"]["timings"]["still_time"] = param[key][0]
                 self.result["train_usage"]["timings"]["avg_epoch_time"] = int(self._sum_epoch_time / self.last_epoch)
-                self.result["train_usage"]["timings"]["elapsed_epoch_time"] = int(
-                    self._sum_epoch_time / self.last_epoch) + param[key][2]
-                self.result["train_usage"]["timings"]["still_epoch_time"] = param[key][2]
-                self.result["train_usage"]["timings"]["epoch"] = param[key][3]
-                self.result["train_usage"]["timings"]["batch"] = param[key][4]
+                self.result["train_usage"]["timings"]["elapsed_epoch_time"] = param[key][2]
+                self.result["train_usage"]["timings"]["still_epoch_time"] = param[key][3]
+                self.result["train_usage"]["timings"]["epoch"] = param[key][4]
+                self.result["train_usage"]["timings"]["batch"] = param[key][5]
+        self.result["train_usage"]["hard_usage"] = self.usage_info.get_usage()
         # print(self.result["train_usage"]["timings"])
 
     def _get_result_data(self):
@@ -631,34 +634,36 @@ class FitCallback(keras.callbacks.Callback):
         return interactive.get_states().get("status")
 
     def _deploy_predict(self, presets_predict):
-        with open(os.path.join(self.save_model_path, "predict.txt"), "w", encoding="utf-8") as f:
-            f.write(str(presets_predict[0].tolist()))
+        # with open(os.path.join(self.save_model_path, "predict.txt"), "w", encoding="utf-8") as f:
+        #     f.write(str(presets_predict[0].tolist()))
 
         result = CreateArray().postprocess_results(array=presets_predict,
                                                    options=self.dataset_data,
+                                                   data_dataframe=self.dataset.dataframe.get("val"),
                                                    save_path=os.path.join(self.save_model_path,
                                                                           "deploy_presets"))
         deploy_presets = []
-        for inp in self.dataset_data.inputs.keys():
-            for idx in range(len(list(result.values())[0])):
-                data = interactive._postprocess_initial_data(
-                    input_id=str(inp),
-                    example_idx=idx,
-                )
-                if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Classification:
-                    deploy_presets.append({
-                        "source": data,
-                        "data": list(result.values())[0][idx]
-                    })
-                elif list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Segmentation:
-                    deploy_presets.append({
-                        "source": data,
-                        "segment": list(result.values())[0][idx],
-                        "data": list(zip(
-                            list(self.dataset.data.outputs.values())[0].classes_names,
-                            [colors.as_rgb_tuple() for colors in list(self.dataset.data.outputs.values())[0].classes_colors]
-                        ))
-                    })
+        if result:
+            for inp in self.dataset_data.inputs.keys():
+                for idx in range(len(list(result.values())[0])):
+                    data = interactive._postprocess_initial_data(
+                        input_id=str(inp),
+                        example_idx=idx,
+                    )
+                    if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Classification:
+                        deploy_presets.append({
+                            "source": data,
+                            "data": list(result.values())[0][idx]
+                        })
+                    elif list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Segmentation:
+                        deploy_presets.append({
+                            "source": data,
+                            "segment": list(result.values())[0][idx],
+                            "data": list(zip(
+                                list(self.dataset.data.outputs.values())[0].classes_names,
+                                [colors.as_rgb_tuple() for colors in list(self.dataset.data.outputs.values())[0].classes_colors]
+                            ))
+                        })
         return deploy_presets
 
     def save_lastmodel(self) -> None:
@@ -746,18 +751,19 @@ class FitCallback(keras.callbacks.Callback):
             msg_epoch = {"current": self.last_epoch,
                          "total": self.retrain_epochs if interactive.get_states().get("status") == "addtrain"
                          else self.epochs}
-            elapsed_epoch_time = self.update_progress(self.num_batches, batch, self._time_first_step)
+            still_epoch_time = self.update_progress(self.num_batches, batch, self._time_first_step)
+            elapsed_epoch_time = time.time() - self._time_first_step
             elapsed_time = self.update_progress(self.num_batches * self.epochs + 1,
                                                 self.batch, self._start_time, finalize=True)
-            if self._get_train_status() == "retrain":
-                still_time = self.update_progress(self.num_batches * self.retrain_epochs + 1,
-                                                  self.batch, self._start_time)
-            elif self._get_train_status() == "addtrain":
-                still_time = self.update_progress(self.num_batches * self.epochs + 1, self.batch,
-                                                  self._start_time, stop_current=batch, stop_flag=True)
-                elapsed_time = self._sum_time + elapsed_time
-            else:
-                still_time = self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time)
+            # if self._get_train_status() == "retrain":
+            #     still_time = self.update_progress(self.num_batches * self.retrain_epochs + 1,
+            #                                       self.batch, self._start_time)
+            # elif self._get_train_status() == "addtrain":
+            #     still_time = self.update_progress(self.num_batches * self.epochs + 1, self.batch,
+            #                                       self._start_time, stop_current=batch, stop_flag=True)
+            #     elapsed_time = self._sum_time + elapsed_time
+            # else:
+            still_time = self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time)
             self.batch += 1
 
             if interactive.urgent_predict:
@@ -771,11 +777,13 @@ class FitCallback(keras.callbacks.Callback):
                 train_batch_data = interactive.update_state(y_pred=upred)
             if train_batch_data:
                 result_data = {
-                    'timings': [still_time, elapsed_time, elapsed_epoch_time, msg_epoch, msg_batch],
+                    'timings': [still_time, elapsed_time, elapsed_epoch_time,
+                                still_epoch_time, msg_epoch, msg_batch],
                     'train_data': train_batch_data
                 }
             else:
-                result_data = {'timings': [still_time, elapsed_time, elapsed_epoch_time, msg_epoch, msg_batch]}
+                result_data = {'timings': [still_time, elapsed_time, elapsed_epoch_time,
+                                           still_epoch_time, msg_epoch, msg_batch]}
             self._set_result_data(result_data)
             progress.pool(
                 self.progress_name,
@@ -863,6 +871,9 @@ class FitCallback(keras.callbacks.Callback):
             interactive.set_status("trained")
             total_epochs = self.retrain_epochs if interactive.get_states().get('status') \
                                                   in ['addtrain', 'trained'] else self.epochs
+            if os.path.exists(self.save_model_path) and interactive.deploy_presets_data:
+                with open(os.path.join(self.save_model_path, "config.presets"), "w", encoding="utf-8") as presets:
+                    presets.write(str(interactive.deploy_presets_data))
             progress.pool(
                 self.progress_name,
                 percent=percent,

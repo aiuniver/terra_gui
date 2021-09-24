@@ -11,7 +11,7 @@
               (сек.)
             </th>
             <template v-for="(output, key) of outputs">
-              <th v-show="isShow(key)" :key="key" colspan="4">
+              <th v-show="isShow(key)" :key="key" colspan="100%">
                 {{ key }}
               </th>
             </template>
@@ -45,7 +45,7 @@
         </tbody>
         <tfoot>
           <tr>
-            <th colspan="6">{{ 'summary' }}</th>
+            <th colspan="100%">{{ 'summary' }}</th>
           </tr>
         </tfoot>
       </table>
