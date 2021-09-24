@@ -2,6 +2,7 @@ import os
 import re
 import json
 import shutil
+import random
 
 from typing import Optional, Dict
 from pathlib import Path
@@ -33,8 +34,8 @@ from terra_ai.data.training.train import (
 from terra_ai.data.training.outputs import OutputsList
 from terra_ai.data.training.checkpoint import CheckpointData
 from terra_ai.data.training.extra import LossGraphShowChoice, MetricGraphShowChoice
+from terra_ai.data.deploy import tasks as deploy_tasks
 from terra_ai.data.deploy.extra import TaskTypeChoice as DeployTaskTypeChoice
-from terra_ai.data.deploy.tasks import BaseCollection as DeployBaseCollection
 
 from . import exceptions
 
@@ -117,7 +118,7 @@ class TrainingDetailsData(BaseMixinData):
 
 class DeployDetailsData(BaseMixinData):
     type: Optional[DeployTaskTypeChoice]
-    data: Dict[str, DeployBaseCollection] = {}
+    data: Dict[str, deploy_tasks.BaseCollection] = {}
 
 
 class Project(BaseMixinData):
@@ -203,19 +204,23 @@ class Project(BaseMixinData):
 
         data = {}
         for _id, _task in tasks.items():
-            _task_class = getattr(tasks, f"{_task}CollectionList", None)
+            _task_class = getattr(deploy_tasks, f"{_task}CollectionList", None)
             if not _task_class:
                 continue
             data.update(
                 {
                     _id: {
                         "type": _task,
-                        "data": _task_class(),
+                        "data": _task_class(
+                            list(map(lambda item: None, list(range(10)))),
+                            path=Path(project_path.training, "deploy"),
+                        ),
                     }
                 }
             )
         self.deploy = DeployDetailsData(**{"type": _type, "data": data})
-        print(self.deploy)
+        for item in self.deploy.data.values():
+            item.data.reload(list(range(10)))
 
     def set_dataset(self, dataset: DatasetData = None):
         if dataset is None:
@@ -403,3 +408,4 @@ except Exception:
 _config.update({"hardware": agent_exchange("hardware_accelerator")})
 project = Project(**_config)
 project.set_training()
+project.set_deploy()
