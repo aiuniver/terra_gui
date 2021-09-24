@@ -33,7 +33,7 @@ export default {
     interactive: Object,
   },
   data: () => ({
-    charts: [],
+    // charts: [],
     menus: [
       {
         name: 'Показывать данные',
@@ -48,6 +48,14 @@ export default {
     ...mapGetters({
       chars: 'trainings/getChars',
     }),
+    charts: {
+      set(value) {
+        this.$store.dispatch('trainings/setCharts', value)
+      },
+      get() {
+        return this.$store.getters['trainings/getCharts'](this.metric)
+      }
+    },
     data() {
       return this.$store.getters['trainings/getTrainData'](this.metric) || [];
     },
@@ -88,7 +96,7 @@ export default {
     // console.log(this.outputs);
     // const data = this.interactive?.[this.metric] || [];
     // this.charts = data.map(item => item);
-    this.charts = this.interactive?.[this.metric]
+    // this.charts = this.interactive?.[this.metric]
   },
   methods: {
     event({ name, data }, { id }) {

@@ -58,7 +58,7 @@ export default {
       state.trainUsage = { ...value };
     },
     SET_COLLAPSE(state, value) {
-      state.collapse = [ ...value ];
+      state.collapse = [...value];
     },
   },
   actions: {
@@ -147,8 +147,17 @@ export default {
       console.log(data)
       commit("SET_COLLAPSE", data);
     },
+    setCharts({ state, commit }, charts) {
+      const data = { ...state.interactive, ...charts }
+      commit("SET_INTERACTIV", data);
+    },
   },
   getters: {
+    getCharts: ({ training: { interactive } }) => key => {
+      console.log(key)
+      console.log(interactive?.[key])
+      return interactive?.[key] || {}
+    },
     getStateParams({ stateParams }) {
       return stateParams || {}
     },
