@@ -827,7 +827,7 @@ class CreateArray(object):
                 index = options['classes_names'].index(class_name)
         else:
             for i, cl_name in enumerate(options['classes_names']):
-                if class_name <= int(cl_name):
+                if class_name <= float(cl_name):
                     index = i
                     break
         if options['one_hot_encoding']:
