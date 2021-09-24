@@ -698,7 +698,7 @@ class CreateArray(object):
             index = []
             for i in range(len(class_name)):
                 for j, cl_name in enumerate(options['classes_names']):
-                    if class_name[i] <= int(cl_name):
+                    if class_name[i] <= float(cl_name):
                         index.append(j)
                         break
         if options['one_hot_encoding']:
