@@ -533,26 +533,27 @@ class InteractiveCallback:
     def get_train_results(self, config: InteractiveData) -> Union[dict, None]:
         """Return dict with data for current interactive request"""
         self.interactive_config = config.native() if config else self.interactive_config
-        if self.interactive_config.get('intermediate_result').get('show_results'):
-            self.example_idx = self._prepare_example_idx_to_show()
-        if config.native().get('intermediate_result').get('show_results') or \
-                config.native().get('statistic_data').get('output_id'):
-            self.urgent_predict = True
-            return
+        if self.log_history:
+            if self.interactive_config.get('intermediate_result').get('show_results'):
+                self.example_idx = self._prepare_example_idx_to_show()
+            if config.native().get('intermediate_result').get('show_results') or \
+                    config.native().get('statistic_data').get('output_id'):
+                self.urgent_predict = True
+                return
 
-        self.train_progress['train_data'] = {
-            'loss_graphs': self._get_loss_graph_data_request(),
-            'metric_graphs': self._get_metric_graph_data_request(),
-            'intermediate_result': self.intermediate_result,
-            'progress_table': self.progress_table,
-            'statistic_data': self.statistic_result,
-            'data_balance': self._get_balance_data_request(),
-        }
-        progress.pool(
-            self.progress_name,
-            data=self.train_progress,
-            finished=False,
-        )
+            self.train_progress['train_data'] = {
+                'loss_graphs': self._get_loss_graph_data_request(),
+                'metric_graphs': self._get_metric_graph_data_request(),
+                'intermediate_result': self.intermediate_result,
+                'progress_table': self.progress_table,
+                'statistic_data': self.statistic_result,
+                'data_balance': self._get_balance_data_request(),
+            }
+            progress.pool(
+                self.progress_name,
+                data=self.train_progress,
+                finished=False,
+            )
 
     # Методы для set_attributes()
     @staticmethod
