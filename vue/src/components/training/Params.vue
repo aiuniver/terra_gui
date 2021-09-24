@@ -213,6 +213,7 @@ export default {
       if (res) {
         const { data } = res;
         if (data?.state?.status) {
+          localStorage.setItem('settingsTrainings', JSON.stringify(this.state));
           this.progress();
         }
       }
@@ -278,6 +279,14 @@ export default {
     // console.log(this.isLearning);
     if (this.isLearning) {
       this.debounce();
+    }
+    const settings = localStorage.getItem('settingsTrainings');
+    if (settings) {
+      try {
+        this.state = JSON.parse(settings);
+      } catch (error) {
+        console.warn(error);
+      }
     }
   },
 };
