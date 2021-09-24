@@ -149,7 +149,7 @@ export default {
         : false;
     },
     getValue() {
-      const data = Object.values(this.outputs.fields)?.[0]?.fields || [];
+      const data = Object.values(this.outputs?.fields || {})?.[0]?.fields || [];
       const metrics = data.find(item => item.type === 'multiselect');
       return this.state?.['architecture[parameters][checkpoint][metric_name]'] ?? (metrics.value[0] || '');
     },
