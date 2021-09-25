@@ -362,6 +362,9 @@ class Exchange:
         """
         return interactive.deploy_presets_data
 
+    def _call_deploy_cascades_create(self, training_path: str, model_name: str):
+        pass
+
     def _call_deploy_upload(self, source: Path, **kwargs):
         """
         Деплой: загрузка

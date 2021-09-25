@@ -1,6 +1,6 @@
 <template>
   <div class="img-card">
-    <img class="img-card__image" :src="require('@/../public/imgs/'+imgUrl)" :alt="ImgAlt">
+    <img class="img-card__image" :src="src" :alt="ImgAlt">
   </div>
 </template>
 
@@ -15,6 +15,11 @@ export default {
     imgAlt: {
       type: String,
       default: 'image'
+    }
+  },
+  computed: {
+    src() {
+      return `/_media/blank/?path=${this.imgUrl}`
     }
   }
 }

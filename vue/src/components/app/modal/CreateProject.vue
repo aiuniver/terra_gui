@@ -39,6 +39,7 @@ export default {
     async create(data) {
       try {
         const res = await this.$store.dispatch('projects/createProject', {});
+        localStorage.removeItem('settingsTrainings');
         if (res && !res.error) {
           this.$emit('message', { message: `Новый проект «${data.name}» создан` });
         }
@@ -57,10 +58,9 @@ export default {
       color: #d34444;
     }
   }
-  &__sub-body{
+  &__sub-body {
     display: flex;
     // justify-content: flex-end;
-    
   }
   &__link {
     text-decoration: underline;
