@@ -146,7 +146,7 @@ class GUINN:
             validator = ModelValidator(model)
             train_model = validator.get_keras_model()
         else:
-            train_model = load_model(os.path.join(self.training_path, self.nn_name))
+            train_model = load_model(os.path.join(self.training_path, self.nn_name, f"{self.nn_name}.trm"))
         return train_model
 
     @staticmethod

@@ -1,3 +1,4 @@
+import shutil
 import sys
 import os
 import json
@@ -5,7 +6,7 @@ import json
 from pydantic.color import Color
 
 
-class CascadeConfigCreator:
+class CascadeCreator:
 
     def create_config(self, model_path: str, out_path: str):
         dataset_path = os.path.join(model_path, "dataset", "config.json")
@@ -37,8 +38,17 @@ class CascadeConfigCreator:
 
         return config
 
+    @staticmethod
+    def copy_package(training_path):
+        if os.path.exists(os.path.join(training_path, "cascades")):
+            shutil.rmtree(os.path.join(training_path, "cascades"), ignore_errors=True)
+        shutil.copytree("../cascades", os.path.join(training_path, "cascades"))
+        shutil.copyfile("../datasets/preprocessing.py", os.path.join(training_path, "cascades", "preprocessing.py"))
+                        # ignore=shutil.ignore_patterns("sources", "arrays"))
+
 
 if __name__ == "__main__":
-    config = CascadeConfigCreator()
+    config = CascadeCreator()
     config.create_config("C:\\Users\\Леккс\\AppData\\Local\\Temp\\tai-project\\training\\my_cars_new",
                          "C:\\Users\\Леккс\\AppData\\Local\\Temp\\tai-project\\training")
+    config.copy_package("C:\\Users\\Леккс\\AppData\\Local\\Temp\\tai-project\\training")
