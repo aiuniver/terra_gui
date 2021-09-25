@@ -793,181 +793,321 @@ DatasetsGroups = [
             #         },
             #     },
             # },
-            # {
-            #     "alias": "cars",
-            #     "name": "Автомобили",
-            #     "group": DatasetGroupChoice.terra,
-            #     "tags": [
-            #         Tags.image,
-            #         Tags.classification,
-            #         Tags.terra_ai,
-            #     ],
-            #     "num_classes": {2: 3},
-            #     "classes_names": {2: ["Мерседес", "Рено", "Феррари"]},
-            #     "encoding": {2: "ohe"},
-            #     "task_type": {2: TaskChoice.Classification},
-            #     "inputs": {
-            #         1: {
-            #             "datatype": "2D",
-            #             "dtype": "float32",
-            #             "shape": (176, 220, 3),
-            #             "name": "Вход 1",
-            #             "task": LayerInputTypeChoice.Image,
-            #         },
-            #     },
-            #     "outputs": {
-            #         2: {
-            #             "datatype": "DIM",
-            #             "dtype": "uint8",
-            #             "shape": (3,),
-            #             "name": "Выход 1",
-            #             "task": LayerOutputTypeChoice.Classification,
-            #         },
-            #     },
-            # },
-            # {
-            #     "alias": "planes",
-            #     "name": "Самолеты",
-            #     "group": DatasetGroupChoice.terra,
-            #     "tags": [
-            #         Tags.image,
-            #         Tags.segmentation,
-            #         Tags.terra_ai,
-            #     ],
-            #     "num_classes": {2: 2},
-            #     "classes_colors": {2: [[0, 0, 0], [255, 0, 0]]},
-            #     "classes_names": {2: ["Небо", "Самолет"]},
-            #     "encoding": {2: "ohe"},
-            #     "task_type": {2: TaskChoice.Segmentation},
-            #     "inputs": {
-            #         1: {
-            #             "datatype": "2D",
-            #             "dtype": "float32",
-            #             "shape": (176, 220, 3),
-            #             "name": "Вход 1",
-            #             "task": LayerInputTypeChoice.Image,
-            #         },
-            #     },
-            #     "outputs": {
-            #         2: {
-            #             "datatype": "2D",
-            #             "dtype": "uint8",
-            #             "shape": (176, 220, 2),
-            #             "name": "Выход 1",
-            #             "task": LayerOutputTypeChoice.Segmentation,
-            #         },
-            #     },
-            # },
-            # {
-            #     "alias": "lips",
-            #     "name": "Губы",
-            #     "group": DatasetGroupChoice.terra,
-            #     "tags": [
-            #         Tags.image,
-            #         Tags.segmentation,
-            #         Tags.terra_ai,
-            #     ],
-            #     "num_classes": {2: 2},
-            #     "classes_colors": {2: [[0, 0, 0], [0, 255, 0]]},
-            #     "classes_names": {2: ["Фон", "Губы"]},
-            #     "encoding": {2: "ohe"},
-            #     "task_type": {2: TaskChoice.Segmentation},
-            #     "inputs": {
-            #         1: {
-            #             "datatype": "2D",
-            #             "dtype": "float32",
-            #             "shape": (176, 220, 3),
-            #             "name": "Вход 1",
-            #             "task": LayerInputTypeChoice.Image,
-            #         },
-            #     },
-            #     "outputs": {
-            #         2: {
-            #             "datatype": "2D",
-            #             "dtype": "uint8",
-            #             "shape": (176, 220, 2),
-            #             "name": "Выход 1",
-            #             "task": LayerOutputTypeChoice.Segmentation,
-            #         },
-            #     },
-            # },
-            # {
-            #     "alias": "diseases",
-            #     "name": "Заболевания",
-            #     "group": DatasetGroupChoice.terra,
-            #     "tags": [
-            #         Tags.text,
-            #         Tags.classification,
-            #         Tags.russian,
-            #         Tags.terra_ai,
-            #     ],
-            #     "num_classes": {2: 10},
-            #     "classes_names": {
-            #         2: [
-            #             "Аппендицит",
-            #             "Гастрит",
-            #             "Гепатит",
-            #             "Дуоденит",
-            #             "Колит",
-            #             "Панкреатит",
-            #             "Холецистит",
-            #             "Эзофагит",
-            #             "Энтерит",
-            #             "Язва",
-            #         ]
-            #     },
-            #     "encoding": {2: "ohe"},
-            #     "task_type": {2: TaskChoice.Classification},
-            #     "inputs": {
-            #         1: {
-            #             "datatype": "DIM",
-            #             "dtype": "uint32",
-            #             "shape": (100,),
-            #             "name": "Вход 1",
-            #             "task": LayerInputTypeChoice.Text,
-            #         },
-            #     },
-            #     "outputs": {
-            #         2: {
-            #             "datatype": "DIM",
-            #             "dtype": "uint8",
-            #             "shape": (10,),
-            #             "name": "Выход 1",
-            #             "task": LayerOutputTypeChoice.Classification,
-            #         },
-            #     },
-            # },
-            # {
-            #     "alias": "docs",
-            #     "name": "Договоры",
-            #     "group": DatasetGroupChoice.terra,
-            #     "tags": [
-            #         Tags.text,
-            #         Tags.text_segmentation,
-            #         Tags.russian,
-            #         Tags.terra_ai,
-            #     ],
-            #     "encoding": {2: "multi"},
-            #     "task_type": {2: TaskChoice.Segmentation},
-            #     "inputs": {
-            #         1: {
-            #             "datatype": "DIM",
-            #             "dtype": "uint32",
-            #             "shape": (200,),
-            #             "name": "Вход 1",
-            #             "task": LayerInputTypeChoice.Text,
-            #         },
-            #     },
-            #     "outputs": {
-            #         2: {
-            #             "datatype": "1D",
-            #             "dtype": "uint8",
-            #             "shape": (200, 6),
-            #             "name": "Выход 1",
-            #             "task": LayerOutputTypeChoice.TextSegmentation,
-            #         },
-            #     },
-            # },
+            {
+                "alias": "cars",
+                "name": "Автомобили",
+                "group": DatasetGroupChoice.terra,
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "shape": (120, 176, 3),
+                        "name": "Изображения автомобилей",
+                        "task": LayerInputTypeChoice.Image,
+                        "num_classes": 3,
+                        "classes_names": ["Мерседес", "Рено", "Феррари"],
+                        "encoding": LayerEncodingChoice.none
+                    },
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "uint8",
+                        "shape": (3,),
+                        "name": "Метки классов",
+                        "task": LayerOutputTypeChoice.Classification,
+                        "num_classes": 3,
+                        "classes_names": ['Мерседес', 'Рено', 'Феррари'],
+                        "encoding": LayerEncodingChoice.ohe
+                    },
+                },
+                "columns": {1: {"1_image": {"datatype": "2D",
+                                            "dtype": "float32",
+                                            "name": "Изображения автомобилей",
+                                            "shape": (120, 176, 3),
+                                            "task": LayerInputTypeChoice.Image,
+                                            "num_classes": 3,
+                                            "classes_names": ["Мерседес", "Рено", "Феррари"],
+                                            "encoding": LayerEncodingChoice.ohe
+                                            }
+                                },
+                            2: {"2_classification": {"datatype": "DIM",
+                                                     "dtype": "uint8",
+                                                     "name": "Метки классов",
+                                                     "shape": (3,),
+                                                     "task": LayerOutputTypeChoice.Classification,
+                                                     "num_classes": 3,
+                                                     "classes_names": ["Мерседес", "Рено", "Феррари"],
+                                                     "encoding": LayerEncodingChoice.ohe
+                                                     }
+                                }
+                            },
+                "tags": [
+                    Tags.image,
+                    Tags.classification,
+                    Tags.terra_ai,
+                ],
+                "use_generator": False,
+            },
+            {
+                "alias": "airplane",
+                "name": "Самолеты",
+                "group": DatasetGroupChoice.terra,
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "shape": (120, 176, 3),
+                        "name": "Изображения самолетов",
+                        "task": LayerInputTypeChoice.Image,
+                        "num_classes": 1,
+                        "classes_names": ['Самолеты'],
+                        "encoding": LayerEncodingChoice.none
+                    },
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "2D",
+                        "dtype": "uint8",
+                        "shape": (120, 176, 2),
+                        "name": "Маски сегментации",
+                        "task": LayerOutputTypeChoice.Segmentation,
+                        "num_classes": 2,
+                        "classes_names": ["Небо", "Самолет"],
+                        "classes_colors": ["black", "red"],
+                        "encoding": LayerEncodingChoice.ohe
+                    },
+                },
+                "tags": [
+                    Tags.image,
+                    Tags.segmentation,
+                    Tags.terra_ai,
+                ],
+                "columns": {1: {"1_image": {"datatype": "2D",
+                                            "dtype": "float32",
+                                            "shape": (120, 176, 3),
+                                            "name": "Изображения самолетов",
+                                            "task": LayerInputTypeChoice.Image,
+                                            "num_classes": 1,
+                                            "classes_names": ["Самолеты"],
+                                            "encoding": LayerEncodingChoice.ohe
+                                            }
+                                },
+                            2: {"2_classification": {"datatype": "DIM",
+                                                     "dtype": "uint8",
+                                                     "shape": (120, 176, 2),
+                                                     "name": "Маски сегментации",
+                                                     "task": LayerOutputTypeChoice.Segmentation,
+                                                     "num_classes": 2,
+                                                     "classes_names": ["Небо", "Самолет"],
+                                                     "encoding": LayerEncodingChoice.ohe
+                                                     }
+                                }
+                            },
+                "use_generator": False
+            },
+            {
+                "alias": "lips",
+                "name": "Губы",
+                "group": DatasetGroupChoice.terra,
+                "tags": [
+                    Tags.image,
+                    Tags.segmentation,
+                    Tags.terra_ai,
+                ],
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "shape": (120, 176, 3),
+                        "name": "Изображения",
+                        "task": LayerInputTypeChoice.Image,
+                        "classes_names": ['Оригинальные изображения'],
+                        "num_classes": 1,
+                        "encoding": LayerEncodingChoice.none
+
+                    },
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "2D",
+                        "dtype": "uint8",
+                        "shape": (120, 176, 2),
+                        "name": "Маски сегментации",
+                        "task": LayerOutputTypeChoice.Segmentation,
+                        "classes_names": ['Фон', 'Губы'],
+                        "classes_colors": ['black', 'lime'],
+                        "num_classes": 2,
+                        "encoding": LayerEncodingChoice.ohe
+                    },
+                },
+                'columns': {1: {'1_image': {'classes_names': ['Оригинальные изображения'],
+                                            'datatype': '2D',
+                                            'dtype': 'float32',
+                                            'encoding': 'none',
+                                            'name': 'Изображения',
+                                            'num_classes': 1,
+                                            'shape': (120, 176, 3),
+                                            'task': LayerInputTypeChoice.Image}},
+                            2: {'2_segmentation': {'classes_colors': ['black', 'lime'],
+                                                   'classes_names': ['Лицо', 'Губы'],
+                                                   'datatype': '2D',
+                                                   'dtype': 'uint8',
+                                                   'encoding': LayerEncodingChoice.ohe,
+                                                   'name': 'Маски сегментации',
+                                                   'num_classes': 2,
+                                                   'shape': (120, 176, 2),
+                                                   'task': LayerOutputTypeChoice.Segmentation}
+                                }
+                            },
+                "use_generator": False
+            },
+            {
+                "alias": "symptoms",
+                "name": "Заболевания",
+                "group": DatasetGroupChoice.terra,
+                "tags": [
+                    Tags.text,
+                    Tags.classification,
+                    Tags.russian,
+                    Tags.terra_ai,
+                ],
+                "inputs": {
+                    1: {
+                        "datatype": "DIM",
+                        "dtype": "uint32",
+                        "shape": (100,),
+                        "name": "Симптомы",
+                        "task": LayerInputTypeChoice.Text,
+                        "classes_names": ['Аппендицит',
+                                          'Гастрит',
+                                          'Гепатит',
+                                          'Дуоденит',
+                                          'Колит',
+                                          'Панкреатит',
+                                          'Холецистит',
+                                          'Эзофагит',
+                                          'Энтерит',
+                                          'Язва'],
+                        "num_classes": 10,
+                        "encoding": LayerEncodingChoice.none
+                    },
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "uint8",
+                        "shape": (10,),
+                        "name": "Метки классов",
+                        "task": LayerOutputTypeChoice.Classification,
+                        "classes_names": ['Аппендицит',
+                                          'Гастрит',
+                                          'Гепатит',
+                                          'Дуоденит',
+                                          'Колит',
+                                          'Панкреатит',
+                                          'Холецистит',
+                                          'Эзофагит',
+                                          'Энтерит',
+                                          'Язва'],
+                        'num_classes': 10,
+                        'encoding': LayerEncodingChoice.ohe,
+                    },
+                },
+                'columns': {1: {'1_text': {'classes_names': ['Аппендицит',
+                                                             'Гастрит',
+                                                             'Гепатит',
+                                                             'Дуоденит',
+                                                             'Колит',
+                                                             'Панкреатит',
+                                                             'Холецистит',
+                                                             'Эзофагит',
+                                                             'Энтерит',
+                                                             'Язва'],
+                                           'datatype': 'DIM',
+                                           'dtype': 'int64',
+                                           'encoding': LayerEncodingChoice.none,
+                                           'name': 'Симптомы',
+                                           'num_classes': 10,
+                                           'shape': (100,),
+                                           'task': LayerInputTypeChoice.Text}},
+                            2: {'2_classification': {'classes_names': ['Аппендицит',
+                                                                       'Гастрит',
+                                                                       'Гепатит',
+                                                                       'Дуоденит',
+                                                                       'Колит',
+                                                                       'Панкреатит',
+                                                                       'Холецистит',
+                                                                       'Эзофагит',
+                                                                       'Энтерит',
+                                                                       'Язва'],
+                                                     'datatype': 'DIM',
+                                                     'dtype': 'uint8',
+                                                     'encoding': LayerEncodingChoice.ohe,
+                                                     'name': 'Метки классов',
+                                                     'num_classes': 10,
+                                                     'shape': (10,),
+                                                     'task': LayerOutputTypeChoice.Classification}
+                                }
+                            },
+                "use_generator": False
+            },
+            {
+                "alias": "docs",
+                "name": "Договоры",
+                "group": DatasetGroupChoice.terra,
+                "tags": [
+                    Tags.text,
+                    Tags.text_segmentation,
+                    Tags.russian,
+                    Tags.terra_ai,
+                ],
+                "inputs": {
+                    1: {
+                        "datatype": "DIM",
+                        "dtype": "int64",
+                        "shape": (100,),
+                        "name": "Договора",
+                        "task": LayerInputTypeChoice.Text,
+                        "encoding": LayerEncodingChoice.none,
+                        "classes_names": ['Договора432'],
+                        "num_classes": 1
+                    },
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "1D",
+                        "dtype": "uint8",
+                        "shape": (100, 6),
+                        "name": "Сегментация договоров",
+                        "task": LayerOutputTypeChoice.TextSegmentation,
+                        "encoding": LayerEncodingChoice.multi,
+                        "classes_names": ['<s1>', '<s2>', '<s3>', '<s4>', '<s5>', '<s6>'],
+                        "num_classes": 6
+                    },
+                },
+                "columns": {1: {'1_text': {'classes_names': ['Договора432'],
+                                           'datatype': 'DIM',
+                                           'dtype': 'int64',
+                                           'encoding': LayerEncodingChoice.none,
+                                           'name': 'Договора',
+                                           'num_classes': 1,
+                                           'shape': [100],
+                                           'task': LayerInputTypeChoice.Text}
+                                },
+                            '2': {'2_text_segmentation': {'classes_names': ['<s1>', '<s2>', '<s3>',
+                                                                            '<s4>', '<s5>', '<s6>'],
+                                                          'datatype': '1D',
+                                                          'dtype': 'uint8',
+                                                          'encoding': LayerEncodingChoice.multi,
+                                                          'name': 'Сегментация договоров',
+                                                          'num_classes': 6,
+                                                          'shape': [100, 6],
+                                                          'task': LayerOutputTypeChoice.TextSegmentation}
+                                  }
+                            },
+                "use_generator": False
+            },
             # {
             #     "alias": "smart_home",
             #     "name": "Умный дом",
@@ -1004,67 +1144,137 @@ DatasetsGroups = [
             #         },
             #     },
             # },
-            # {
-            #     "alias": "trading",  # TODO
-            #     "name": "Трейдинг",
-            #     "group": DatasetGroupChoice.terra,
-            #     "tags": [
-            #         Tags.trading,
-            #         Tags.timeseries,
-            #         Tags.terra_ai,
-            #     ],
-            #     "encoding": {2: "none"},
-            #     "task_type": {2: "Timeseries"},
-            #     "inputs": {
-            #         1: {
-            #             "datatype": "2D",
-            #             "dtype": "float32",
-            #             "shape": (),
-            #             "name": "Вход 1",
-            #             "task": "",
-            #         },
-            #     },
-            #     "outputs": {
-            #         2: {
-            #             "datatype": "DIM",
-            #             "dtype": "uint8",
-            #             "shape": (100,),
-            #             "name": "Выход 1",
-            #             "task": LayerOutputTypeChoice.Timeseries,
-            #         },
-            #     },
-            # },
-            # {
-            #     "alias": "flats",  # TODO
-            #     "name": "Квартиры",
-            #     "group": DatasetGroupChoice.terra,
-            #     "tags": [
-            #         Tags.text,
-            #         Tags.regression,
-            #         Tags.russian,
-            #         Tags.terra_ai,
-            #     ],
-            #     "encoding": {2: "none"},
-            #     "task_type": {2: "Regression"},
-            #     "inputs": {
-            #         1: {
-            #             "datatype": "1D",
-            #             "dtype": "float32",
-            #             "shape": (),
-            #             "name": "Вход 1",
-            #             "task": "",
-            #         },
-            #     },
-            #     "outputs": {
-            #         2: {
-            #             "datatype": "DIM",
-            #             "dtype": "uint8",
-            #             "shape": (),
-            #             "name": "Выход 1",
-            #             "task": LayerOutputTypeChoice.Regression,
-            #         },
-            #     },
-            # },
+            {
+                "alias": "trading",
+                "name": "Трейдинг",
+                "group": DatasetGroupChoice.terra,
+                "tags": [
+                    Tags.trading,
+                    Tags.timeseries,
+                    Tags.terra_ai,
+                ],
+                "inputs": {
+                    1: {
+                        "datatype": "1D",
+                        "dtype": "float32",
+                        "shape": (4, 30),
+                        "name": "Вход 1",
+                        "task": LayerInputTypeChoice.Dataframe,
+                        "classes_names": [],
+                        "num_classes": 1,
+                        "encoding": LayerEncodingChoice.none
+                    },
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "int64",
+                        "shape": (1,),
+                        "name": "Выход 1",
+                        "task": LayerOutputTypeChoice.Timeseries,
+                        "num_classes": 3,
+                        "classes_names": ['Не изменился', 'Вверх', 'Вниз']
+                    },
+                },
+                'columns': {1: {
+                    '1_<CLOSE>': {
+                                  'datatype': 'DIM',
+                                  'dtype': 'float64',
+                                  'encoding': LayerEncodingChoice.none,
+                                  'name': 'Input 1',
+                                  'num_classes': 1,
+                                  'shape': (30,),
+                                  'task': 'Scaler'
+                    },
+                    '1_<HIGH>': {
+                                  'datatype': 'DIM',
+                                  'dtype': 'float64',
+                                  'encoding': LayerEncodingChoice.none,
+                                  'name': 'Input 1',
+                                  'num_classes': 1,
+                                  'shape': (30,),
+                                  'task': 'Scaler'
+                    },
+                    '1_<LOW>': {
+                                  'datatype': 'DIM',
+                                  'dtype': 'float64',
+                                  'encoding': LayerEncodingChoice.none,
+                                  'name': 'Input 1',
+                                  'num_classes': 1,
+                                  'shape': (30,),
+                                  'task': 'Scaler'
+                    },
+                    '1_<OPEN>': {
+                                   'datatype': 'DIM',
+                                   'dtype': 'float64',
+                                   'encoding': LayerEncodingChoice.none,
+                                   'name': 'Input 1',
+                                   'num_classes': 1,
+                                   'shape': (30,),
+                                   'task': 'Scaler'
+                    }
+                },
+                            2: {
+                    '2_<CLOSE>': {
+                                    'classes_names': ['Не изменился', 'Вверх', 'Вниз'],
+                                    'datatype': 'DIM',
+                                    'dtype': 'int64',
+                                    'encoding': LayerEncodingChoice.none,
+                                    'name': 'Output 1',
+                                    'num_classes': 3,
+                                    'shape': (1,),
+                                    'task': LayerOutputTypeChoice.Timeseries
+                    }
+                            }
+                },
+                "use_generator": False
+            },
+            {
+                "alias": "flats",
+                "name": "Квартиры",
+                "group": DatasetGroupChoice.terra,
+                "tags": [
+                    Tags.text,
+                    Tags.regression,
+                    Tags.russian,
+                    Tags.terra_ai,
+                ],
+                "inputs": {
+                    1: {
+                        "datatype": "DIM",
+                        "dtype": "uint8",
+                        "shape": (1010,),
+                        "name": "Вход 1",
+                        "task": LayerInputTypeChoice.Dataframe,
+                        "encoding": LayerEncodingChoice.none,
+                        "num_classes": 1010,
+                        "classes_names": []
+                    },
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "float64",
+                        "shape": (5000,),
+                        "name": "Описание квартиры",
+                        "task": LayerInputTypeChoice.Text,
+                        "encoding": LayerEncodingChoice.none,
+                        "num_classes": 1,
+                        "classes_names": ['flats.csv']
+                    }
+                },
+                "outputs": {
+                    3: {
+                        "datatype": "DIM",
+                        "dtype": "float64",
+                        "shape": (1,),
+                        "name": "Цена квартиры",
+                        "task": LayerOutputTypeChoice.Regression,
+                        "encoding": LayerEncodingChoice.none,
+                        "num_classes": 1,
+                        "classes_names": ['flats.csv']
+                    },
+                },
+                "use_generator": False
+            },
         ],
     },
     {

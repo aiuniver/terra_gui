@@ -2,7 +2,7 @@
   <div class="board">
     <scrollbar :ops="{ scrollPanel: { scrollingX: false } }">
       <div class="wrapper">
-        <at-collapse @on-change="change" class="mt-3">
+        <at-collapse :value="collapse" @on-change="change" class="mt-3">
           <at-collapse-item class="mt-3" title="Лоссы" center>
             <Graphs metric="loss_graphs" :outputs="outputs" :interactive="interactive" />
           </at-collapse-item>
@@ -53,12 +53,20 @@ export default {
     Graphs,
   },
   data: () => ({
-    collabse: [],
+    // collabse: [],
   }),
   computed: {
     ...mapGetters({
       // status: "trainings/getStatus",
     }),
+    collapse: {
+      set(value) {
+        this.$store.dispatch('trainings/setСollapse', value);
+      },
+      get() {
+        return this.$store.getters['trainings/getСollapse'];
+      },
+    },
     show() {
       return this.collabse.includes('0');
     },
@@ -71,7 +79,7 @@ export default {
   },
   methods: {
     change(e) {
-      this.$emit('collabse', this.collabse);
+      // this.$emit('collabse', this.collabse);
       this.collabse = e;
       console.log(e);
     },

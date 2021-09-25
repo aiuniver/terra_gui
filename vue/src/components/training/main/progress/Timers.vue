@@ -96,7 +96,8 @@ export default {
   },
   methods: {
     total({ total, current }) {
-      return { width: Math.round(current * 100  / total) + '%'};
+      const int = Math.round(current * 100  / total)
+      return { width: isNaN(int) ? 0 : int + '%'};
     },
     formatTime(sec) {
       return `${Math.floor(sec / 3600)}h : ${Math.floor(sec % 3600 / 60)}m : ${Math.floor(sec % 3600 % 60)}s`;

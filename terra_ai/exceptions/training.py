@@ -3,10 +3,11 @@ from enum import Enum
 from .base import TerraBaseException
 
 
-class TrainingMessages(str, Enum):
-    pass
+class TrainingMessages(dict, Enum):
+    Undefined = {"ru": "Неопределенная ошибка обучения",
+                 "eng": "Undefined error of training"}
 
 
 class TrainingException(TerraBaseException):
     class Meta:
-        message: str = "Undefined error of training"
+        message: dict = TrainingMessages.Undefined

@@ -1,9 +1,10 @@
 import tensorflow
 from pandas import DataFrame
 
+from terra_ai.datasets.utils import get_yolo_anchors
 from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice, \
-    LayerOutputTypeChoice, LayerEncodingChoice
+    LayerOutputTypeChoice
 from terra_ai.data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice, \
     LayerTextModeChoice, LayerAudioModeChoice, LayerVideoModeChoice, LayerScalerAudioChoice
 
@@ -102,7 +103,7 @@ class CreateArray(object):
                 stop_flag = False
                 sample_length = AudioSegment.from_file(elem).duration_seconds
                 while not stop_flag:
-                    audio.append(';'.join([elem, f'[{cur_step}-{cur_step + options["max_seconds"]}]']))
+                    audio.append(';'.join([elem, f'[{cur_step}-{round(cur_step + options["length"], 1)}]']))
                     cur_step += options['step']
                     cur_step = round(cur_step, 1)
                     if cur_step + options['length'] > sample_length:
@@ -155,13 +156,18 @@ class CreateArray(object):
             options['max_words']
 
         for idx, text_row in enumerate(text_list):
-            if os.path.isfile(text_row):
+            if os.path.isfile(str(text_row)):
                 text_file = read_text(file_path=text_row, lower=lower, del_symbols=options['filters'], split=' ',
                                       open_symbol=open_symbol, close_symbol=close_symbol)
                 if text_file:
                     txt_dict[text_row] = text_file
             else:
-                txt_dict[idx] = text_row
+                if not text_row:
+                    txt_dict[idx] = "nan"
+                elif not isinstance(text_row, str):
+                    txt_dict[idx] = str(text_row)
+                else:
+                    txt_dict[idx] = text_row
 
         if open_symbol:
             for key in txt_dict.keys():
@@ -411,7 +417,7 @@ class CreateArray(object):
             frames: np.ndarray = np.array([])
 
             if fill_mode == LayerVideoFillModeChoice.black_frames:
-                frames = np.zeros((frames_to_add, *orig_shape, 3), dtype='uint8')
+                frames = np.full((frames_to_add, *video_array[-1].shape), video_array[-1], dtype='uint8')
             elif fill_mode == LayerVideoFillModeChoice.average_value:
                 mean = np.mean(video_array, axis=0, dtype='uint16')
                 frames = np.full((frames_to_add, *mean.shape), mean, dtype='uint8')
@@ -486,12 +492,18 @@ class CreateArray(object):
             path, slicing = elem.split(';')
             name, ext = os.path.splitext(os.path.basename(path))
             slicing = [float(x) for x in slicing[1:-1].split('-')]
+            duration = round(slicing[1] - slicing[0], 1)
             os.makedirs(os.path.join(tmp_folder, f'{options["put"]}_audio', os.path.basename(os.path.dirname(path))),
                         exist_ok=True)
-            audio = AudioSegment.from_file(path, start_second=slicing[0], duration=slicing[1])
+            audio = AudioSegment.from_file(path, start_second=slicing[0], duration=duration)
+
+            if round(duration - audio.duration_seconds, 3) != 0:
+                duration_to_add = round(duration - audio.duration_seconds, 3)
+                audio = audio.append(audio[0:duration_to_add * 1000], crossfade=0)
+
             save_path = os.path.join(tmp_folder, f'{options["put"]}_audio', os.path.basename(os.path.dirname(path)),
                                      f'{name}_[{slicing[0]}-{slicing[1]}]{ext}')
-            audio.export(save_path)
+            audio.export(save_path, format=ext[1:])
             instructions_paths.append(save_path)
 
         if dataset_folder:
@@ -643,11 +655,10 @@ class CreateArray(object):
         array = []
         parameter = options['parameter']
         sample_rate = options['sample_rate']
-        y, sr = librosa_load(path=audio_path, sr=options.get('sample_rate'), res_type='kaiser_best')
+        y, sr = librosa_load(path=audio_path, sr=options.get('sample_rate'), res_type='kaiser_fast')
         if sample_rate > len(y):
             zeros = np.zeros((sample_rate - len(y),))
             y = np.concatenate((y, zeros))
-
         if parameter in ['chroma_stft', 'mfcc', 'spectral_centroid', 'spectral_bandwidth', 'spectral_rolloff']:
             array = getattr(librosa_feature, parameter)(y=y, sr=sr)
         elif parameter == 'rms':
@@ -842,16 +853,17 @@ class CreateArray(object):
         output_levels = len(strides)
         train_input_sizes = 416
         anchor_per_scale = 3
-        yolo_anchors = None
 
-        if options['yolo'] == 'v3':
-            yolo_anchors = [[[10, 13], [16, 30], [33, 23]],
-                            [[30, 61], [62, 45], [59, 119]],
-                            [[116, 90], [156, 198], [373, 326]]]
-        elif options['yolo'] == 'v4':
-            yolo_anchors = [[[12, 16], [19, 36], [40, 28]],
-                            [[36, 75], [76, 55], [72, 146]],
-                            [[142, 110], [192, 243], [459, 401]]]
+        yolo_anchors = get_yolo_anchors(options['yolo'])
+
+        # if options['yolo'] == 'v3':
+        #     yolo_anchors = [[[10, 13], [16, 30], [33, 23]],
+        #                     [[30, 61], [62, 45], [59, 119]],
+        #                     [[116, 90], [156, 198], [373, 326]]]
+        # elif options['yolo'] == 'v4':
+        #     yolo_anchors = [[[12, 16], [19, 36], [40, 28]],
+        #                     [[36, 75], [76, 55], [72, 146]],
+        #                     [[142, 110], [192, 243], [459, 401]]]
 
         anchors = (np.array(yolo_anchors).T / strides).T
         max_bbox_per_scale = 100
@@ -996,7 +1008,6 @@ class CreateArray(object):
             orig_shape = array.shape
             array = options['preprocess'].transform(array.reshape(-1, 1))
             array = array.reshape(orig_shape)
-
         return array
 
     @staticmethod

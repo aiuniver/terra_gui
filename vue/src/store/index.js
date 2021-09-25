@@ -7,6 +7,7 @@ import projects from './modules/projects';
 import trainings from './modules/trainings';
 import deploy from './modules/deploy';
 import tables from './modules/tables';
+import profile from './modules/profile';
 
 import axios from 'axios';
 // import Vue from 'vue';
@@ -20,7 +21,8 @@ export default {
     trainings,
     deploy,
     projects,
-    tables
+    tables,
+    profile
   },
   actions: {
     async axios({ dispatch }, { method = 'post', url, data = {} }) {

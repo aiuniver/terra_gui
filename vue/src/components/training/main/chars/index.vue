@@ -33,7 +33,7 @@ export default {
     interactive: Object,
   },
   data: () => ({
-    charts: [],
+    // charts: [],
     menus: [
       {
         name: 'Показывать данные',
@@ -48,6 +48,15 @@ export default {
     ...mapGetters({
       chars: 'trainings/getChars',
     }),
+    charts: {
+      set(value) {
+        console.log(value);
+        this.$store.dispatch('trainings/setObjectInteractive', { [this.metric]: value });
+      },
+      get() {
+        return this.$store.getters['trainings/getArrayInteractive'](this.metric);
+      },
+    },
     data() {
       return this.$store.getters['trainings/getTrainData'](this.metric) || [];
     },
@@ -88,7 +97,7 @@ export default {
     // console.log(this.outputs);
     // const data = this.interactive?.[this.metric] || [];
     // this.charts = data.map(item => item);
-    this.charts = this.interactive?.[this.metric]
+    // this.charts = this.interactive?.[this.metric]
   },
   methods: {
     event({ name, data }, { id }) {
@@ -109,7 +118,7 @@ export default {
           }
           return item;
         });
-        this.send(this.charts);
+        // this.send(this.charts);
       }
       if (name === 'data') {
         this.charts = this.charts.map(item => {
@@ -118,7 +127,7 @@ export default {
           }
           return item;
         });
-        this.send(this.charts);
+        // this.send(this.charts);
       }
       if (name === 'metric') {
         this.charts = this.charts.map(item => {
@@ -127,14 +136,16 @@ export default {
           }
           return item;
         });
-        this.send(this.charts);
+        // this.send(this.charts);
       }
+      this.send();
     },
     getChart({ id }) {
       // console.log({ graphID });
       return this.data.find(item => item.id === id);
     },
     add() {
+      console.log(this.charts);
       if (this.charts.length < 10) {
         let maxID = Math.max(0, ...this.charts.map(o => o.id));
         if (this.metric === 'metric_graphs') {
@@ -142,7 +153,8 @@ export default {
         } else {
           this.charts.push({ id: maxID + 1, output_idx: 2, show: 'model' });
         }
-        this.send(this.charts);
+        this.charts = [...this.charts];
+        this.send();
       }
     },
     copy(id) {
@@ -153,15 +165,15 @@ export default {
           char.id = maxID + 1;
           this.charts = [...this.charts, char];
         }
-        this.send(this.charts);
+        // this.send(this.charts);
       }
     },
     remove(id) {
       this.charts = this.charts.filter(item => item.id !== id);
-      this.send(this.charts);
+      // this.send(this.charts);
     },
-    async send(data) {
-      const res = await this.$store.dispatch('trainings/interactive', { [this.metric]: data });
+    async send() {
+      const res = await this.$store.dispatch('trainings/interactive', {});
       console.log(`response`, res);
     },
   },

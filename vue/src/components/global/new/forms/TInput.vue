@@ -1,15 +1,23 @@
 <template>
-  <input
-    v-model="input"
-    :class="['t-input', { 't-input--error': error }, { 't-input--small': small }]"
-    :type="type || 'text'"
-    :name="name || parse"
-    :data-degree="degree"
-    autocomplete="off"
-    @blur="change"
-    @focus="focus"
-    :disabled="isDisabled"
-  />
+  <div :class="['t-input']">
+    <input
+      v-model="input"
+      :class="['t-input__input', { 't-input__input--error': error }, { 't-input__input--small': small }]"
+      :type="type || 'text'"
+      :name="name || parse"
+      :data-degree="degree"
+      v-bind="$attrs"
+      autocomplete="off"
+      @blur="change"
+      @focus="focus"
+      :disabled="isDisabled"
+      @mouseover="hover = true"
+      @mouseleave="hover = false"
+    />
+    <div v-if="error && hover" class="t-field__hint">
+      <span>{{ error }}</span>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -27,6 +35,7 @@ export default {
   },
   data: () => ({
     isChange: false,
+    hover: false,
   }),
   computed: {
     isDisabled() {
@@ -73,29 +82,54 @@ export default {
 
 <style lang="scss" scoped>
 .t-input {
-  width: 100%;
-  height: 42px;
-  color: #fff;
-  background: #242f3d;
-  padding: 0 10px;
-  font-size: 0.875rem;
-  font-weight: 400;
-  border-radius: 4px;
-  border: 1px solid #6c7883;
-  transition: border-color 0.3s ease-in-out;
-  &:focus {
-    border-color: #fff;
+  &__input {
+    width: 100%;
+    height: 42px;
+    color: #fff;
+    background: #242f3d;
+    padding: 0 10px;
+    font-size: 0.875rem;
+    font-weight: 400;
+    border-radius: 4px;
+    border: 1px solid #6c7883;
+    transition: border-color 0.3s ease-in-out;
+    &:focus {
+      border-color: #fff;
+    }
+    &--small {
+      width: 100%;
+      height: 24px;
+      font-size: 12px;
+      line-height: 24px;
+      padding: 0 5px;
+    }
+    &--error {
+      border-color: #ca5035;
+      color: #ca5035;
+    }
   }
-  &--small {
-    height: 24px;
-    width: 109px;
-    font-size: 12px;
-    line-height: 24px;
-    padding: 0 5px;
-  }
-  &--error {
-    border-color: #b53b3b;
-    color: #b53b3b;
+  &__hint {
+    user-select: none;
+    position: absolute;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    padding: 0 5px 0 5px;
+    top: 25px;
+    background-color: #ca5035;
+    color: #fff;
+    border-radius: 4px;
+    z-index: 5;
+    // display: none;
+    span {
+      font-style: normal;
+      font-weight: normal;
+      font-size: 9px;
+      line-height: 12px;
+    }
+    // &--hover {
+    //   display: flex;
+    // }
   }
 }
 </style>

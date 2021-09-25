@@ -1,7 +1,6 @@
 from enum import Enum
 
 from .base import TerraBaseException
-from ..settings import LANGUAGE
 
 
 class ExceptionMessages(dict, Enum):
@@ -41,14 +40,6 @@ class ExceptionMessages(dict, Enum):
 class TFBaseException(TerraBaseException):
     class Meta:
         message = ExceptionMessages.Unknown
-
-    def __init__(self, *args, **kwargs):
-        err_msg = self.Meta.message.value.get(kwargs.get('lang', LANGUAGE))
-
-        if args:
-            err_msg = err_msg % args
-
-        super().__init__(err_msg)
 
 
 class AbortedError(TFBaseException):

@@ -5,7 +5,7 @@
         <Fab @click="handleAdd" />
         <p>Обработчики</p>
         <div class="block-handlers__item--left" @click="show = !show">
-          <i class="t-icon icon-collapsable"></i>
+          <i :class="['t-icon icon-collapsable', { rotate: show }]"></i>
         </div>
       </div>
     </div>
@@ -160,10 +160,11 @@ export default {
   &--hide {
     height: 30px;
   }
-  p {
-    font-size: 14px;
+  .rotate {
+    transform: rotate(180deg);
   }
   &__header {
+    user-select: none;
     height: 32px;
     background: #242f3d;
     display: flex;
@@ -179,7 +180,11 @@ export default {
     align-items: center;
     padding: 0 7px;
     p {
-      margin-left: 15px;
+      margin-left: 10px;
+      font-style: normal;
+      font-weight: normal;
+      font-size: 12px;
+      line-height: 16px;
     }
     &--left {
       height: 30px;

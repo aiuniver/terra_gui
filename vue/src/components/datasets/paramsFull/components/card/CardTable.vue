@@ -17,14 +17,14 @@
             {{ item }}
           </div>
           <div class="t-table__select">
-            <div v-for="(color, i) of all(row)" :key="'all' + i" :style="color"></div>
+            <div class="t-table__circle" v-for="(color, i) of all(row)" :key="'all' + i" :style="color"></div>
           </div>
         </div>
       </div>
     </div>
 
     <div class="t-table__footer">
-      <span>Список файлов</span>
+      <span>{{ label }}</span>
       <div class="t-table__footer--btn" @click="show = true">
         <i class="t-icon icon-file-dot"></i>
       </div>
@@ -51,7 +51,7 @@ export default {
     id: Number,
     cover: String,
     table: Array,
-    value: String
+    value: String,
   },
   data: () => ({
     show: false,
@@ -78,7 +78,6 @@ export default {
       },
     },
     selected: {
-
       set(value) {
         console.log(value);
         this.handlers = this.handlers.map(item => {
@@ -199,7 +198,7 @@ export default {
   }
 
   &__border {
-    padding: 1px 0;
+    // padding: 1px 0;
     display: flex;
     position: relative;
     // border-left: 1px solid #6c7883;
@@ -209,26 +208,26 @@ export default {
     top: -11px;
     width: 100%;
     display: flex;
-    gap: 1px;
+    gap: 2px;
     justify-content: center;
-    div {
-      height: 8px;
-      width: 8px;
-      border-radius: 4px;
-    }
+  }
+  &__circle {
+    height: 9px;
+    width: 9px;
+    border-radius: 4px;
   }
   &__col {
     display: flex;
     flex-direction: column;
-    padding: 1px;
+    margin: 1px;
     position: relative;
     &--active {
       // min-width: 100px;
-      padding: 0;
+      margin: 0;
       border: 1px solid #6c7883;
       border-radius: 4px;
       & > div {
-        top: -12px;
+        top: -11px;
       }
     }
   }
@@ -268,6 +267,7 @@ export default {
       cursor: pointer;
       i {
         width: 16px;
+        height: 13px;
       }
       &:hover {
       }
