@@ -35,6 +35,9 @@ export default {
       commit("trainings/SET_CONFIG", training, { root: true });
       commit("deploy/SET_CARDS", deploy.data, { root: true });
       commit("deploy/SET_DEPLOY_TYPE", deploy.type, { root: true });
+      if(training?.result) {
+        commit("trainings/SET_TRAIN", training.result, { root: true });
+      }
     },
     async saveNameProject({ dispatch }, name) {
       const res = { url: "/project/name/", data: name };
