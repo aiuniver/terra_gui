@@ -23,7 +23,7 @@ from tensorflow.keras.models import load_model
 
 from terra_ai import progress
 from terra_ai.data.datasets.dataset import DatasetData
-from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice
+from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice, DatasetGroupChoice
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
 from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, \
     CheckpointModeChoice
@@ -643,26 +643,31 @@ class FitCallback(keras.callbacks.Callback):
                                                                           "deploy_presets"))
         deploy_presets = []
         if result:
-            for inp in self.dataset_data.inputs.keys():
-                for idx in range(len(list(result.values())[0])):
-                    data = interactive._postprocess_initial_data(
-                        input_id=str(inp),
-                        example_idx=idx,
-                    )
-                    if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Classification:
-                        deploy_presets.append({
-                            "source": data,
-                            "data": list(result.values())[0][idx]
-                        })
-                    elif list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Segmentation:
-                        deploy_presets.append({
-                            "source": data,
-                            "segment": list(result.values())[0][idx],
-                            "data": list(zip(
-                                list(self.dataset.data.outputs.values())[0].classes_names,
-                                [colors.as_rgb_tuple() for colors in list(self.dataset.data.outputs.values())[0].classes_colors]
-                            ))
-                        })
+            if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Classification and \
+                    self.dataset.data.group == DatasetGroupChoice.keras:
+                deploy_presets = result
+            else:
+                for inp in self.dataset_data.inputs.keys():
+                    for idx in range(len(list(result.values())[0])):
+                        data = interactive._postprocess_initial_data(
+                            input_id=str(inp),
+                            example_idx=idx,
+                        )
+                        if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Classification:
+                            deploy_presets.append({
+                                "source": data,
+                                "data": list(result.values())[0][idx]
+                            })
+                        elif list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Segmentation:
+                            deploy_presets.append({
+                                "source": data,
+                                "segment": list(result.values())[0][idx],
+                                "data": list(zip(
+                                    list(self.dataset.data.outputs.values())[0].classes_names,
+                                    [colors.as_rgb_tuple() for colors in
+                                     list(self.dataset.data.outputs.values())[0].classes_colors]
+                                ))
+                            })
         return deploy_presets
 
     def save_lastmodel(self) -> None:
