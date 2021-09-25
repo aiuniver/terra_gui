@@ -1175,26 +1175,16 @@ DatasetsGroups = [
             #     "alias": "smart_home",
             #     "name": "Умный дом",
             #     "group": DatasetGroupChoice.terra,
-            #     "tags": [
-            #         Tags.audio,
-            #         Tags.classification,
-            #         Tags.smart_home,
-            #         Tags.russian,
-            #         Tags.terra_ai,
-            #     ],
-            #     "num_classes": {2: 4},
-            #     "classes_names": {
-            #         2: ["1_Кондиционер", "2_Свет", "3_Телевизор", "4_Шум"]
-            #     },
-            #     "encoding": {2: "ohe"},
-            #     "task_type": {2: TaskChoice.Classification},
             #     "inputs": {
             #         1: {
-            #             "datatype": "2D",
-            #             "dtype": "float32",
-            #             "shape": (),  # TODO
+            #             # "datatype": "2D",
+            #             # "dtype": "float32",
+            #             # "shape": (),  # TODO
             #             "name": "Вход 1",
             #             "task": LayerInputTypeChoice.Audio,
+            #             "num_classes": 4,
+            #             "classes_names": ["1_Кондиционер", "2_Свет", "3_Телевизор", "4_Шум"],
+            #             "encoding": LayerEncodingChoice.none
             #         },
             #     },
             #     "outputs": {
@@ -1202,10 +1192,40 @@ DatasetsGroups = [
             #             "datatype": "DIM",
             #             "dtype": "uint8",
             #             "shape": (4,),
-            #             "name": "Выход 1",
+            #             "name": "Метки классов",
             #             "task": LayerOutputTypeChoice.Classification,
+            #             "num_classes": 4,
+            #             "classes_names": ["1_Кондиционер", "2_Свет", "3_Телевизор", "4_Шум"],
+            #             "encoding": LayerEncodingChoice.ohe
             #         },
             #     },
+            #     "columns": {1: {"1_image": {"datatype": "2D",
+            #                                 "dtype": "float32",
+            #                                 "name": "Изображения автомобилей",
+            #                                 "shape": (120, 176, 3),
+            #                                 "task": LayerInputTypeChoice.Image,
+            #                                 "num_classes": 3,
+            #                                 "classes_names": ["Мерседес", "Рено", "Феррари"],
+            #                                 "encoding": LayerEncodingChoice.ohe
+            #                                 }
+            #                     },
+            #                 2: {"2_classification": {"datatype": "DIM",
+            #                                          "dtype": "uint8",
+            #                                          "name": "Метки классов",
+            #                                          "shape": (4,),
+            #                                          "task": LayerOutputTypeChoice.Classification,
+            #                                          "num_classes": 4,
+            #                                          "classes_names": ["1_Кондиционер", "2_Свет", "3_Телевизор", "4_Шум"],
+            #                                          "encoding": LayerEncodingChoice.ohe
+            #                                          }
+            #                     }
+            #                 },
+            #     "tags": [
+            #         Tags.audio,
+            #         Tags.classification,
+            #         Tags.terra_ai,
+            #     ],
+            #     "use_generator": False,
             # },
             {
                 "alias": "trading",
