@@ -64,7 +64,7 @@ class DefaultsData(BaseMixinData):
             losses_list = list(
                 map(
                     lambda item: {"label": item.value, "value": item.name},
-                    training_task_rel.losses,
+                    training_task_rel.losses if training_task_rel else [],
                 )
             )
             losses_data.update(
@@ -81,7 +81,7 @@ class DefaultsData(BaseMixinData):
             metrics_list = list(
                 map(
                     lambda item: {"label": item.value, "value": item.name},
-                    training_task_rel.metrics,
+                    training_task_rel.metrics if training_task_rel else [],
                 )
             )
             available_metrics = list(
