@@ -23,7 +23,7 @@ from tensorflow.keras.models import load_model
 
 from terra_ai import progress
 from terra_ai.data.datasets.dataset import DatasetData
-from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice
+from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice, DatasetGroupChoice
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
 from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, \
     CheckpointModeChoice
@@ -141,10 +141,12 @@ class GUINN:
         prepared_dataset.prepare_dataset()
         return prepared_dataset
 
-    @staticmethod
-    def _set_model(model: ModelDetailsData) -> ModelData:
-        validator = ModelValidator(model)
-        train_model = validator.get_keras_model()
+    def _set_model(self, model: ModelDetailsData) -> ModelData:
+        if interactive.get_states().get("status") == "training":
+            validator = ModelValidator(model)
+            train_model = validator.get_keras_model()
+        else:
+            train_model = load_model(os.path.join(self.training_path, self.nn_name))
         return train_model
 
     @staticmethod
@@ -226,8 +228,7 @@ class GUINN:
         self.nn_cleaner(retrain=True if interactive.get_states().get("status") == "training" else False)
         self._set_training_params(dataset=dataset, dataset_path=dataset_path, model_name=gui_model.alias,
                                   params=training_params, training_path=training_path, initial_config=initial_config)
-        nn_model = self._set_model(model=gui_model)
-        self.model = nn_model
+        self.model = self._set_model(model=gui_model)
         if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.ObjectDetection:
             self.yolo_model_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
         else:
@@ -638,32 +639,36 @@ class FitCallback(keras.callbacks.Callback):
         #     f.write(str(presets_predict[0].tolist()))
 
         result = CreateArray().postprocess_results(array=presets_predict,
-                                                   options=self.dataset_data,
-                                                   data_dataframe=self.dataset.dataframe.get("val"),
+                                                   options=self.dataset,
                                                    save_path=os.path.join(self.save_model_path,
                                                                           "deploy_presets"))
         deploy_presets = []
         if result:
-            for inp in self.dataset_data.inputs.keys():
-                for idx in range(len(list(result.values())[0])):
-                    data = interactive._postprocess_initial_data(
-                        input_id=str(inp),
-                        example_idx=idx,
-                    )
-                    if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Classification:
-                        deploy_presets.append({
-                            "source": data,
-                            "data": list(result.values())[0][idx]
-                        })
-                    elif list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Segmentation:
-                        deploy_presets.append({
-                            "source": data,
-                            "segment": list(result.values())[0][idx],
-                            "data": list(zip(
-                                list(self.dataset.data.outputs.values())[0].classes_names,
-                                [colors.as_rgb_tuple() for colors in list(self.dataset.data.outputs.values())[0].classes_colors]
-                            ))
-                        })
+            if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Classification and \
+                    self.dataset.data.group == DatasetGroupChoice.keras:
+                deploy_presets = result
+            else:
+                for inp in self.dataset_data.inputs.keys():
+                    for idx in range(len(list(result.values())[0])):
+                        data = interactive._postprocess_initial_data(
+                            input_id=str(inp),
+                            example_idx=idx,
+                        )
+                        if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Classification:
+                            deploy_presets.append({
+                                "source": data,
+                                "data": list(result.values())[0][idx]
+                            })
+                        elif list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Segmentation:
+                            deploy_presets.append({
+                                "source": data,
+                                "segment": list(result.values())[0][idx],
+                                "data": list(zip(
+                                    list(self.dataset.data.outputs.values())[0].classes_names,
+                                    [colors.as_rgb_tuple() for colors in
+                                     list(self.dataset.data.outputs.values())[0].classes_colors]
+                                ))
+                            })
         return deploy_presets
 
     def save_lastmodel(self) -> None:
