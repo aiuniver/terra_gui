@@ -92,7 +92,9 @@ class InteractiveAPIView(BaseAPIView):
             config = InteractiveData(**request.data)
             request.project.training.interactive = config
             if request.project.training.state.status != StateStatusChoice.no_train:
-                agent_exchange("training_interactive", config=config)
+                training_data = agent_exchange("training_interactive", config=config)
+                if training_data:
+                    request.project.training.interactive = training_data
             return BaseResponseSuccess()
         except ExchangeBaseException as error:
             return BaseResponseErrorGeneral(str(error))
