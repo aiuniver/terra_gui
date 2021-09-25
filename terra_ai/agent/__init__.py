@@ -2,7 +2,7 @@ import json
 import os
 import shutil
 from pathlib import Path
-from typing import Any, NoReturn
+from typing import Any, NoReturn, Optional
 
 import tensorflow
 
@@ -338,7 +338,7 @@ class Exchange:
         interactive.set_status("no_train")
         return interactive.train_states
 
-    def _call_training_interactive(self, config: InteractiveData):
+    def _call_training_interactive(self, config: InteractiveData) -> dict:
         """
         Обновление интерактивных параметров обучения
         """
