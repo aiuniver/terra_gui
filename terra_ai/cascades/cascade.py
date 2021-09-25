@@ -117,7 +117,7 @@ class CompleteCascade(Cascade):
     def __getitem__(self, index):  # пока не ясно, стоит ли наследовать от CascadeBlock
         return self.cascade_block[index]
 
-    def __call__(self, input_path, output_path):
+    def __call__(self, input_path, output_path=None):
 
         if len(self.output) == 1:
             self.output[0].choose_path(output_path)

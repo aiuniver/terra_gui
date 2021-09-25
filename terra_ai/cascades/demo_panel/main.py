@@ -2,7 +2,7 @@ import sys
 import os
 import json
 
-from terra_ai.common import ROOT_PATH, make_path
+from terra_ai.cascades.common import ROOT_PATH, make_path
 from pydantic.color import Color
 
 

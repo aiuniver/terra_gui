@@ -4,7 +4,7 @@ import json
 from pydantic.color import Color
 import numpy as np
 
-from terra_ai.common import make_path
+from terra_ai.cascades.common import make_path
 from terra_ai.cascades.create import json2cascade
 
 
