@@ -24,9 +24,8 @@ export default {
         return;
       }
       const { project, user, defaults: { modeling: { layers_types, layer_form }, datasets: { creation }, training: { base } } } = data;
-      const { model, training } = project;
+      const { model, training, deploy } = project;
       const list = layer_form[1]['list'] || []
-      console.log(base)
       commit("SET_PROJECT", project);
       commit("SET_USER", user);
       commit("modeling/SET_MODELING", { layers_types, list }, { root: true });
@@ -34,10 +33,8 @@ export default {
       commit("datasets/SET_CREATION", creation, { root: true });
       commit("trainings/SET_PARAMS", base, { root: true });
       commit("trainings/SET_CONFIG", training, { root: true });
-
-      if(training?.result) {
-        commit("trainings/SET_TRAIN", training.result, { root: true });
-      }
+      commit("deploy/SET_CARDS", deploy.data, { root: true });
+      commit("deploy/SET_DEPLOY_TYPE", deploy.type, { root: true });
     },
     async saveNameProject({ dispatch }, name) {
       const res = { url: "/project/name/", data: name };

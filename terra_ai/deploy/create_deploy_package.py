@@ -1,3 +1,4 @@
+import shutil
 import sys
 import os
 import json
@@ -5,10 +6,9 @@ import json
 from pydantic.color import Color
 
 
-class CascadeConfigCreator:
+class CascadeCreator:
 
-    @staticmethod
-    def create_config(model_path: str, out_path: str):
+    def create_config(self, model_path: str, out_path: str):
         dataset_path = os.path.join(model_path, "dataset", "config.json")
         with open(dataset_path) as cfg:
             dataset_config = json.load(cfg)
@@ -18,10 +18,10 @@ class CascadeConfigCreator:
         cascade_json_path = f"./demo_panel_templates/{tags}.json"
         with open(cascade_json_path) as cfg:
             config = json.load(cfg)
+        print(config)
 
-        config = getattr(sys.modules.get(__name__), f"make_{tags}")(config, dataset_config,
-                                                                    os.path.split(model_path)[-1])
-        with open(out_path, 'w') as f:
+        config = getattr(self, f"make_{tags}")(config, dataset_config, os.path.split(model_path)[-1])
+        with open(os.path.join(out_path, f"{os.path.split(model_path)[-1]}.cascade"), 'w', encoding="utf-8") as f:
             json.dump(config, f, indent=2)
 
     @staticmethod
@@ -38,8 +38,17 @@ class CascadeConfigCreator:
 
         return config
 
+    @staticmethod
+    def copy_package(training_path):
+        if os.path.exists(os.path.join(training_path, "cascades")):
+            shutil.rmtree(os.path.join(training_path, "cascades"), ignore_errors=True)
+        shutil.copytree("../cascades", os.path.join(training_path, "cascades"))
+        shutil.copyfile("../datasets/preprocessing.py", os.path.join(training_path, "cascades", "preprocessing.py"))
+                        # ignore=shutil.ignore_patterns("sources", "arrays"))
+
 
 if __name__ == "__main__":
-    config = CascadeConfigCreator()
-    config.create_config("C:\\Users\\Леккс\\AppData\\Local\\Temp\\tai-project\\training\\mnist",
+    config = CascadeCreator()
+    config.create_config("C:\\Users\\Леккс\\AppData\\Local\\Temp\\tai-project\\training\\my_cars_new",
                          "C:\\Users\\Леккс\\AppData\\Local\\Temp\\tai-project\\training")
+    config.copy_package("C:\\Users\\Леккс\\AppData\\Local\\Temp\\tai-project\\training")

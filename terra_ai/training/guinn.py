@@ -141,10 +141,12 @@ class GUINN:
         prepared_dataset.prepare_dataset()
         return prepared_dataset
 
-    @staticmethod
-    def _set_model(model: ModelDetailsData) -> ModelData:
-        validator = ModelValidator(model)
-        train_model = validator.get_keras_model()
+    def _set_model(self, model: ModelDetailsData) -> ModelData:
+        if interactive.get_states().get("status") == "training":
+            validator = ModelValidator(model)
+            train_model = validator.get_keras_model()
+        else:
+            train_model = load_model(os.path.join(self.training_path, self.nn_name, f"{self.nn_name}.trm"))
         return train_model
 
     @staticmethod
@@ -226,8 +228,7 @@ class GUINN:
         self.nn_cleaner(retrain=True if interactive.get_states().get("status") == "training" else False)
         self._set_training_params(dataset=dataset, dataset_path=dataset_path, model_name=gui_model.alias,
                                   params=training_params, training_path=training_path, initial_config=initial_config)
-        nn_model = self._set_model(model=gui_model)
-        self.model = nn_model
+        self.model = self._set_model(model=gui_model)
         if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.ObjectDetection:
             self.yolo_model_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
         else:
