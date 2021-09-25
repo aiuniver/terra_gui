@@ -39,7 +39,8 @@ class StartAPIView(BaseAPIView):
             training_base = recursive_update(training_base, request.data)
             training_base["architecture"]["parameters"]["outputs"] = outputs
             request.project.training.base = TrainData(**training_base)
-            request.project.set_training()
+            if request.project.training.state.status == StateStatusChoice.no_train:
+                request.project.set_training()
             data = {
                 "dataset": request.project.dataset,
                 "model": request.project.model,
