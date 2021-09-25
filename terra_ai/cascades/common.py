@@ -6,7 +6,7 @@ import re
 import tensorflow as tf
 
 
-ROOT_PATH = str(Path(__file__).parent.parent)
+ROOT_PATH = str(Path(__file__).parent.parent.parent)
 
 
 make_path = lambda path: os.path.join(ROOT_PATH, path)
