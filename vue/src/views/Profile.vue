@@ -2,8 +2,8 @@
   <main class="page-profile">
     <p class="page-profile__title">Мой профиль</p>
     <div class="page-profile__block">
-      <t-input v-model="firstName" label="Имя" :error="errFirst" />
-      <t-input v-model="lastName" label="Фамилия" :error="errLast" />
+      <t-input-new v-model="firstName" label="Имя" :error="errFirst" @input="errFirst=''" />
+      <t-input-new v-model="lastName" label="Фамилия" :error="errLast" @input="errLast=''" />
     </div>
     <div class="page-profile__btns">
       <button class="btn" @click="save">Сохранить</button>
