@@ -80,7 +80,6 @@ export default {
         const valid = await dispatch('modeling/validateModel', {}, { root: true })
         isValid = !Object.values(valid || {}).filter(item => item).length
       }
-
       if (isValid) {
         let data = JSON.parse(JSON.stringify(parse))
         console.log(data)
@@ -93,7 +92,6 @@ export default {
         await dispatch('projects/get', {}, { root: true })
         dispatch('setState', res);
         dispatch('setTrainData', {});
-        // dispatch('interactive', {});
         return res
       }
       return null
@@ -112,7 +110,12 @@ export default {
       console.log(part)
       const data = { ...interactive, ...part }
       // commit("SET_INTERACTIV", data);
-      return await dispatch('axios', { url: '/training/interactive/', data }, { root: true });
+      const res = await dispatch('axios', { url: '/training/interactive/', data }, { root: true });
+      if (res?.data?.result) {
+        dispatch('setTrainData', res?.data?.result);
+      }
+
+      return res
     },
     async progress({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/progress/', data }, { root: true });

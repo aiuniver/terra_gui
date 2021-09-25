@@ -142,11 +142,10 @@ export default {
       return this.status !== 'no_train';
     },
     disabledAny() {
-      return this.status !== 'no_train' && this.status !== 'stopped'
-        ? true
-        : this.status !== 'no_train'
-        ? ['epochs']
-        : false;
+      if (this.status !== 'no_train') {
+        return this.status === 'stopped' || this.status === 'trained' ? ['epochs'] : true
+      }
+      return false
     },
     getValue() {
       const data = Object.values(this.outputs?.fields || {})?.[0]?.fields || [];
@@ -214,7 +213,7 @@ export default {
         const { data } = res;
         if (data?.state?.status) {
           localStorage.setItem('settingsTrainings', JSON.stringify(this.state));
-          this.progress();
+          this.debounce();
         }
       }
       this.loading = false;

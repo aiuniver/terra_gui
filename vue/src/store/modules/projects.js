@@ -34,6 +34,10 @@ export default {
       commit("datasets/SET_CREATION", creation, { root: true });
       commit("trainings/SET_PARAMS", base, { root: true });
       commit("trainings/SET_CONFIG", training, { root: true });
+
+      if(training?.result) {
+        commit("trainings/SET_TRAIN", training.result, { root: true });
+      }
     },
     async saveNameProject({ dispatch }, name) {
       const res = { url: "/project/name/", data: name };
