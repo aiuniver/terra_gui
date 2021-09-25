@@ -110,6 +110,7 @@ class TrainingDetailsData(BaseMixinData):
     base: TrainData = TrainData()
     interactive: InteractiveData = InteractiveData()
     state: StateData = StateData()
+    result: Optional[dict]
 
     def set_state(self):
         self.state = StateData(**training_interactive.train_states)
