@@ -6,7 +6,7 @@ import pymorphy2
 import joblib
 from tensorflow.keras.preprocessing.text import text_to_word_sequence
 
-from terra_ai.utils import decamelize
+from terra_ai.cascades.common import decamelize
 
 
 def main(**params):
@@ -26,6 +26,9 @@ def main(**params):
             params['dataset_path'], 'preprocessing', str(params['key']),
             f'{params["key"]}_{decamelize(params["task"])}.gz')
     )
+    print(os.path.join(
+            params['dataset_path'], 'preprocessing', str(params['key']),
+            f'{params["key"]}_{decamelize(params["task"])}.gz'))
 
     def fun(text):
         if open_symbol:
@@ -59,12 +62,13 @@ def main(**params):
                     arr.append(0)
         elif params['prepare_method'] == "bag_of_words":
             array = preprocessing.texts_to_matrix(arr)
-        elif params['prepare_method'] == "word_to_vec":
-            for word in arr:
-                try:
-                    array.append(preprocessing[word])
-                except KeyError:
-                    array.append(np.zeros((params['parameters']['length'],)))
+        # elif params['prepare_method'] == "word_to_vec":
+        #     print(preprocessing)
+        #     for word in arr:
+        #         try:
+        #             array.append(preprocessing[word])
+        #         except KeyError:
+        #             array.append(np.zeros((params['parameters']['length'],)))
 
         # if len(array) < params['length']:
         #     if params['prepare_method'] in ["embedding", "bag_of_words"]:

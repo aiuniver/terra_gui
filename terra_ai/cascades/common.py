@@ -1,6 +1,7 @@
 import inspect
 import os
 from pathlib import Path
+import re
 
 import tensorflow as tf
 
@@ -9,6 +10,11 @@ ROOT_PATH = str(Path(__file__).parent.parent)
 
 
 make_path = lambda path: os.path.join(ROOT_PATH, path)
+
+
+def decamelize(camel_case_string: str):
+    string = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", camel_case_string)
+    return re.sub("([a-z0-9])([A-Z0-9])", r"\1_\2", string).lower()
 
 
 def load_images(path):
