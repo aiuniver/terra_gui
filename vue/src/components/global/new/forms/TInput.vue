@@ -14,7 +14,7 @@
       @mouseover="hover = true"
       @mouseleave="hover = false"
     />
-    <div v-if="error && hover" class="t-field__hint">
+    <div v-if="error && hover" :class="['t-field__hint', { 't-field__hint--big': !small }]">
       <span>{{ error }}</span>
     </div>
   </div>
@@ -82,6 +82,7 @@ export default {
 
 <style lang="scss" scoped>
 .t-input {
+  position: relative;
   &__input {
     width: 100%;
     height: 42px;
@@ -108,7 +109,7 @@ export default {
       color: #ca5035;
     }
   }
-  &__hint {
+  .t-field__hint {
     user-select: none;
     position: absolute;
     height: 22px;
@@ -120,16 +121,17 @@ export default {
     color: #fff;
     border-radius: 4px;
     z-index: 5;
-    // display: none;
     span {
       font-style: normal;
       font-weight: normal;
       font-size: 9px;
       line-height: 12px;
     }
-    // &--hover {
-    //   display: flex;
-    // }
+    &--big {
+      padding: 5px 25px;
+      top: 100%;
+      margin-top: 2px;
+    }
   }
 }
 </style>
