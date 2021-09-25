@@ -37,7 +37,7 @@ export default {
       state.training = { ...value };
       console.log(value)
       // if (!Object.keys(state.interactive).length) {
-        state.interactive = JSON.parse(JSON.stringify(value.interactive))
+      state.interactive = JSON.parse(JSON.stringify(value.interactive))
       // }
     },
     SET_STATE_PARAMS(state, value) {
@@ -73,9 +73,14 @@ export default {
         }
       }
     },
-    async start({ dispatch }, parse) {
-      const valid = await dispatch('modeling/validateModel', {}, { root: true })
-      const isValid = !Object.values(valid || {}).filter(item => item).length
+    async start({ state: { training: { state: { status } } }, dispatch }, parse) {
+      console.log(status)
+      let isValid = true
+      if (status === 'no_train') {
+        const valid = await dispatch('modeling/validateModel', {}, { root: true })
+        isValid = !Object.values(valid || {}).filter(item => item).length
+      }
+
       if (isValid) {
         let data = JSON.parse(JSON.stringify(parse))
         console.log(data)
