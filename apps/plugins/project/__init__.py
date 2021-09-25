@@ -2,7 +2,6 @@ import os
 import re
 import json
 import shutil
-import random
 
 from typing import Optional, Dict
 from pathlib import Path
@@ -11,9 +10,11 @@ from transliterate import slugify
 
 from django.conf import settings
 
+from apps.plugins.project import exceptions
 from apps.plugins.frontend import defaults_data
 from apps.plugins.frontend.presets.defaults import TrainingTasksRelations
 
+from terra_ai import settings as terra_settings
 from terra_ai.agent import agent_exchange
 from terra_ai.training.guinn import interactive as training_interactive
 from terra_ai.data.mixins import BaseMixinData
@@ -36,8 +37,6 @@ from terra_ai.data.training.checkpoint import CheckpointData
 from terra_ai.data.training.extra import LossGraphShowChoice, MetricGraphShowChoice
 from terra_ai.data.deploy import tasks as deploy_tasks
 from terra_ai.data.deploy.extra import TaskTypeChoice as DeployTaskTypeChoice
-
-from . import exceptions
 
 
 UNKNOWN_NAME = "NoName"
@@ -213,7 +212,12 @@ class Project(BaseMixinData):
                     _id: {
                         "type": _task,
                         "data": _task_class(
-                            list(map(lambda item: None, list(range(10)))),
+                            list(
+                                map(
+                                    lambda _: None,
+                                    list(range(terra_settings.DEPLOY_PRESET_COUNT)),
+                                )
+                            ),
                             path=Path(project_path.training, "deploy"),
                         ),
                     }
@@ -221,7 +225,8 @@ class Project(BaseMixinData):
             )
         self.deploy = DeployDetailsData(**{"type": _type, "data": data})
         for item in self.deploy.data.values():
-            item.data.reload(list(range(10)))
+            item.data.reload(list(range(terra_settings.DEPLOY_PRESET_COUNT)))
+            item.data.try_init()
 
     def set_dataset(self, dataset: DatasetData = None):
         if dataset is None:

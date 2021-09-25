@@ -26,7 +26,8 @@ MODEL_EXT = "model"
 
 # Deploy
 DEPLOY_URL = "https://dev.demo.neural-university.ru/autodeployterra_upload/"
+DEPLOY_PRESET_COUNT = 10
 
 # User settings
 
-LANGUAGE = 'ru'
+LANGUAGE = "ru"
