@@ -342,7 +342,7 @@ class Exchange:
         """
         Обновление интерактивных параметров обучения
         """
-        interactive.get_train_results(config=config)
+        return interactive.get_train_results(config=config)
 
     def _call_training_progress(self) -> progress.ProgressData:
         """
