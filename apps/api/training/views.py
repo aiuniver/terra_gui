@@ -94,6 +94,9 @@ class InteractiveAPIView(BaseAPIView):
             training_data: dict = None
             if request.project.training.state.status != StateStatusChoice.no_train:
                 training_data = agent_exchange("training_interactive", config=config)
+                request.project.training.result = (
+                    training_data.get("train_data") if training_data else None
+                )
             return BaseResponseSuccess(training_data)
         except ExchangeBaseException as error:
             return BaseResponseErrorGeneral(str(error))
@@ -108,6 +111,7 @@ class ProgressAPIView(BaseAPIView):
             if data.get("finished"):
                 for item in request.project.deploy.data.values():
                     item.data.try_init()
+            request.project.training.result = data.get("data", {}).get("train_data", {})
             return BaseResponseSuccess(data)
         except ExchangeBaseException as error:
             return BaseResponseErrorGeneral(str(error))
