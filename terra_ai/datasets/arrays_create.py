@@ -1,10 +1,11 @@
 import tensorflow
 from pandas import DataFrame
+from tensorflow.python.keras.preprocessing import image
 
 from terra_ai.datasets.utils import get_yolo_anchors
 from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice, \
-    LayerOutputTypeChoice
+    LayerOutputTypeChoice, DatasetGroupChoice
 from terra_ai.data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice, \
     LayerTextModeChoice, LayerAudioModeChoice, LayerVideoModeChoice, LayerScalerAudioChoice
 
@@ -1115,27 +1116,55 @@ class CreateArray(object):
         return array
 
     @staticmethod
-    def postprocess_results(array, options: DatasetData, data_dataframe: DataFrame, save_path: str = "") -> dict:
+    def postprocess_results(array, options, save_path: str = "") -> dict:
         return_data = {}
-        for i, output_id in enumerate(options.outputs.keys()):
-            if len(options.outputs.keys()) > 1:
+        for i, output_id in enumerate(options.data.outputs.keys()):
+            if len(options.data.outputs.keys()) > 1:
                 postprocess_array = array[i]
             else:
                 postprocess_array = array
 
-            if options.outputs[output_id].task == LayerOutputTypeChoice.Classification:
+            if options.data.outputs[output_id].task == LayerOutputTypeChoice.Classification and \
+                    options.data.group != DatasetGroupChoice.keras:
                 return_data[output_id] = CreateArray().postprocess_classification(
-                    postprocess_array, options.outputs[output_id]
+                    postprocess_array, options.data.outputs[output_id]
                 )
-            elif options.outputs[output_id].task == LayerOutputTypeChoice.Segmentation:
+            elif options.data.outputs[output_id].task == LayerOutputTypeChoice.Classification and \
+                    options.data.group == DatasetGroupChoice.keras:
+                return_data = []
+                for i, img_array in enumerate(array):
+                    return_data.append(
+                        {
+                            "source": CreateArray().postprocess_initial_keras_images(
+                                array=options.X.get("val").get(list(options.X.get("val").keys())[0])[i],
+                                image_id=i+1,
+                                save_path=save_path
+                            ),
+                            "data": CreateArray().postprocess_classification(
+                                array=np.expand_dims(postprocess_array[i], axis=0),
+                                options=options.data.outputs[output_id]
+                            )[0]
+                        }
+                    )
+            elif options.data.outputs[output_id].task == LayerOutputTypeChoice.Segmentation:
                 return_data[output_id] = CreateArray().postprocess_segmentation(
-                    postprocess_array, options.outputs[output_id], output_id, save_path
+                    postprocess_array, options.data.outputs[output_id], output_id, save_path
                 )
-            elif options.outputs[output_id].task == LayerOutputTypeChoice.TextSegmentation:
+            elif options.data.outputs[output_id].task == LayerOutputTypeChoice.TextSegmentation:
                 return_data[output_id] = CreateArray().postprocess_text_segmentation(
-                    postprocess_array, options.outputs[output_id], data_dataframe
+                    postprocess_array, options.data.outputs[output_id], options.dataframe.get("val")
                 )
         return return_data
+
+    @staticmethod
+    def postprocess_initial_keras_images(array: np.ndarray, image_id: int, save_path: str = "") -> str:
+        img = image.array_to_img(array)
+        img = img.convert('RGB')
+        img_path = os.path.join(
+            save_path, f"initial_keras_image_{image_id}.webp"
+        )
+        img.save(img_path, 'webp')
+        return img_path
 
     @staticmethod
     def postprocess_classification(array: np.ndarray, options: DatasetOutputsData) -> list:

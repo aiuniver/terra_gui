@@ -185,11 +185,6 @@ loss_metric_config = {
             "mode": "min",
             "module": "tensorflow.keras.metrics"
         },
-        'CohenKappa': {
-            "log_name": "cohen_kappa",
-            "mode": "max",
-            "module": "tensorflow_addons.metrics"
-        },
         "CosineSimilarity": {
             "log_name": "cosine_similarity",
             "mode": "max",
@@ -325,7 +320,7 @@ class InteractiveCallback:
         self.current_epoch = None
 
         # overfitting params
-        self.log_gap = 5
+        self.log_gap = 3
         self.progress_threashold = 5
 
         self.current_logs = {}
@@ -430,6 +425,7 @@ class InteractiveCallback:
                        training_path: str,
                        initial_config: InteractiveData):
 
+        print('set_attributes', initial_config)
         self.preset_path = os.path.join(training_path, "presets")
         if not os.path.exists(self.preset_path):
             os.mkdir(self.preset_path)
@@ -501,6 +497,7 @@ class InteractiveCallback:
         self.train_progress = data
 
     def update_state(self, y_pred, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
+        print(fit_logs)
         if self.log_history:
             self._reformat_y_pred(y_pred)
             if self.interactive_config.get('intermediate_result').get('show_results'):
@@ -533,6 +530,7 @@ class InteractiveCallback:
 
     def get_train_results(self, config: InteractiveData) -> Union[dict, None]:
         """Return dict with data for current interactive request"""
+        print('get_train_results', config)
         self.interactive_config = config.native() if config else self.interactive_config
         if self.log_history and self.log_history.get("epochs", {}):
             if self.interactive_config.get('intermediate_result').get('show_results'):
@@ -719,7 +717,8 @@ class InteractiveCallback:
                 else:
                     pass
 
-    def _prepare_x_val(self, dataset: PrepareDataset):
+    @staticmethod
+    def _prepare_x_val(dataset: PrepareDataset):
         if dataset.data.group == DatasetGroupChoice.keras:
             return dataset.X.get("val")
         else:
@@ -1509,12 +1508,12 @@ class InteractiveCallback:
             if loss_metric_config.get(metric_type).get(metric_name).get("mode") == 'min' and \
                     mean_log[-1] > min(mean_log) and \
                     (mean_log[-1] - min(mean_log)) * 100 / (
-            min(mean_log) if min(mean_log) else min(mean_log) + 0.0001) > 10:
+            min(mean_log) if min(mean_log) else min(mean_log) + 0.0001) > 5:
                 return True
             elif loss_metric_config.get(metric_type).get(metric_name).get("mode") == 'max' and \
                     mean_log[-1] < max(mean_log) and \
                     (max(mean_log) - mean_log[-1]) * 100 / (
-            max(mean_log) if max(mean_log) else max(mean_log) + 0.0001) > 10:
+            max(mean_log) if max(mean_log) else max(mean_log) + 0.0001) > 5:
                 return True
             else:
                 return False
@@ -1525,10 +1524,10 @@ class InteractiveCallback:
     def _evaluate_underfitting(metric_name: str, train_log: float, val_log: float, metric_type: str):
         if train_log:
             if loss_metric_config.get(metric_type).get(metric_name).get("mode") == 'min' and \
-                    (val_log - train_log) / train_log * 100 > 10:
+                    (val_log - train_log) / train_log * 100 > 5:
                 return True
             elif loss_metric_config.get(metric_type).get(metric_name).get("mode") == 'max' and \
-                    (train_log - val_log) / train_log * 100 > 10:
+                    (train_log - val_log) / train_log * 100 > 5:
                 return True
             else:
                 return False
