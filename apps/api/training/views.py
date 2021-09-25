@@ -91,13 +91,10 @@ class InteractiveAPIView(BaseAPIView):
         try:
             config = InteractiveData(**request.data)
             request.project.training.interactive = config
-            output_data: dict = None
+            training_data: dict = None
             if request.project.training.state.status != StateStatusChoice.no_train:
                 training_data = agent_exchange("training_interactive", config=config)
-                if training_data:
-                    request.project.training.interactive = training_data
-                    output_data = training_data.native()
-            return BaseResponseSuccess(output_data)
+            return BaseResponseSuccess(training_data)
         except ExchangeBaseException as error:
             return BaseResponseErrorGeneral(str(error))
 

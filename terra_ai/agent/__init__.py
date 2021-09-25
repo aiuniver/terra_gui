@@ -338,15 +338,11 @@ class Exchange:
         interactive.set_status("no_train")
         return interactive.train_states
 
-    def _call_training_interactive(
-        self, config: InteractiveData
-    ) -> Optional[InteractiveData]:
+    def _call_training_interactive(self, config: InteractiveData) -> dict:
         """
         Обновление интерактивных параметров обучения
         """
-        data = interactive.get_train_results(config=config)
-        if data:
-            return InteractiveData(**data.get("train_data"))
+        return interactive.get_train_results(config=config)
 
     def _call_training_progress(self) -> progress.ProgressData:
         """
