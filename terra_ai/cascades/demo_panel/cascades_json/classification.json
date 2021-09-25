@@ -8,16 +8,11 @@
       "tag": "model",
       "task": "Image",
       "model": "test_example/ConvCars"
-    },
-    "2": {
-      "tag": "output",
-      "type": "text"
     }
   },
   "adjacency_map": {
     "model": [
       "INPUT"
-    ],
-    "2": ["model"]
+    ]
   }
 }
