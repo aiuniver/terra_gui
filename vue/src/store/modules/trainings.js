@@ -35,9 +35,10 @@ export default {
     },
     SET_CONFIG(state, value) {
       state.training = { ...value };
-      if (!Object.keys(state.interactive).length) {
+      console.log(value)
+      // if (!Object.keys(state.interactive).length) {
         state.interactive = JSON.parse(JSON.stringify(value.interactive))
-      }
+      // }
     },
     SET_STATE_PARAMS(state, value) {
       state.stateParams = { ...value };
@@ -87,7 +88,7 @@ export default {
         await dispatch('projects/get', {}, { root: true })
         dispatch('setState', res);
         dispatch('setTrainData', {});
-        dispatch('interactive', {});
+        // dispatch('interactive', {});
         return res
       }
       return null
