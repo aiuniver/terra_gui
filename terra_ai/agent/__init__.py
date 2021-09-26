@@ -133,6 +133,12 @@ class Exchange:
         destination = progress_utils.unpack("project_load", "Загрузка проекта", source)
         shutil.move(destination, target)
 
+    def _call_profile_save(self, data: dict):
+        """
+        Сохранение профиля
+        """
+        pass
+
     def _call_dataset_choice(
         self, custom_path: Path, destination: Path, group: str, alias: str
     ) -> NoReturn:
