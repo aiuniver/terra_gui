@@ -128,10 +128,10 @@ export default {
         const { data } = res.data;
         if (data) {
           const { info, train_data, train_usage } = data;
-          dispatch('setInfo', info);
+          if (info) dispatch('setInfo', info);
           dispatch('setState', res);
-          dispatch('setTrainData', train_data);
-          dispatch('setTrainUsage', train_usage);
+          if (train_data) dispatch('setTrainData', train_data);
+          if (train_usage) dispatch('setTrainUsage', train_usage);
         }
       }
       return res
