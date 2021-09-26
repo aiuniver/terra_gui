@@ -129,8 +129,8 @@ export default {
     async choiceProgress({ dispatch }, source) {
       return await dispatch('axios', { url: '/datasets/choice/progress/', data: source }, { root: true });
     },
-    async sourceLoad({ commit, dispatch }, source) {
-      commit('SET_ERRORS', {});
+    async sourceLoad({ dispatch }, source) {
+      dispatch('resetDatasets', {});
       return await dispatch('axios', { url: '/datasets/source/load/', data: source }, { root: true });
     },
 
@@ -141,7 +141,12 @@ export default {
     async classesAutosearch({ dispatch }, data) {
       return await dispatch('axios', { url: '/datasets/source/segmentation/classes/autosearch/', data }, { root: true });
     },
-
+    resetDatasets({ commit, dispatch }) {
+      commit('SET_INPUT_DATA', []);
+      commit('SET_FILES_DROP', []);
+      commit('SET_ERRORS', {});
+      dispatch('tables/resetTable', {},{ root: true });
+    },
     async loadProgress({ dispatch }, source) {
       return await dispatch('axios', { url: '/datasets/source/load/progress/', data: source }, { root: true });
     },
