@@ -674,9 +674,10 @@ class FitCallback(keras.callbacks.Callback):
         return deploy_presets
 
     def _create_cascade(self):
-        config = CascadeCreator()
-        config.create_config(self.save_model_path, os.path.split(self.save_model_path)[0])
-        config.copy_package(os.path.split(self.save_model_path)[0])
+        if self.dataset.data.group != DatasetGroupChoice.keras:
+            config = CascadeCreator()
+            config.create_config(self.save_model_path, os.path.split(self.save_model_path)[0])
+            config.copy_package(os.path.split(self.save_model_path)[0])
 
     def save_lastmodel(self) -> None:
         """
