@@ -19,6 +19,7 @@ export default {
     trainData: {},
     // trainData: process.env.NODE_ENV === 'development' ? data : {},
     trainUsage: {},
+    statusTrain: 'no_train',
     training: {
       base: {},
       interactive: {},
@@ -62,6 +63,9 @@ export default {
     SET_COLLAPSE(state, value) {
       state.collapse = [...value];
     },
+    SET_STATUS_TRAIN(state, value) {
+      state.statusTrain = value;
+    },
   },
   actions: {
     setState({ commit }, res) {
@@ -98,12 +102,14 @@ export default {
     },
     async stop({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/stop/', data }, { root: true });
+      dispatch('setStatusTrain', 'stop');
       dispatch('setState', res);
       return res
     },
     async clear({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/clear/', data }, { root: true });
       dispatch('setState', res);
+      dispatch('setStatusTrain', 'no_train');
       dispatch('setTrainData', {});
       return res
     },
@@ -130,6 +136,7 @@ export default {
           dispatch('setTrainUsage', train_usage);
         }
       }
+      dispatch('setStatusTrain', 'training');
       return res
     },
     setDrawer({ commit }, data) {
@@ -163,8 +170,14 @@ export default {
       const data = { ...state.interactive, ...charts }
       commit("SET_INTERACTIV", data);
     },
+    setStatusTrain({ commit }, value) {
+      commit("SET_STATUS_TRAIN", value);
+    },
   },
   getters: {
+    getStatusTrain: ({ statusTrain }) => {
+      return statusTrain
+    },
     getObjectInteractive: ({ interactive }) => key => {
       return interactive?.[key] || {}
     },
