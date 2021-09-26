@@ -2,6 +2,7 @@ import gc
 import importlib
 import json
 import os
+import pathlib
 import re
 import shutil
 import sys
@@ -30,6 +31,7 @@ from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTy
 from terra_ai.data.training.train import TrainData, InteractiveData
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
+from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.training.customlosses import DiceCoef, yolo_loss
@@ -671,6 +673,11 @@ class FitCallback(keras.callbacks.Callback):
                             })
         return deploy_presets
 
+    def _create_cascade(self):
+        config = CascadeCreator()
+        config.create_config(self.save_model_path, os.path.split(self.save_model_path)[0])
+        config.copy_package(os.path.split(self.save_model_path)[0])
+
     def save_lastmodel(self) -> None:
         """
         Saving last model on each epoch end
@@ -854,6 +861,7 @@ class FitCallback(keras.callbacks.Callback):
     def on_train_end(self, logs=None):
         self._save_logs()
         self.save_lastmodel()
+        self._create_cascade()
         time_end = self.update_progress(self.num_batches * self.epochs + 1,
                                         self.batch, self._start_time, finalize=True)
         self._sum_time += time_end

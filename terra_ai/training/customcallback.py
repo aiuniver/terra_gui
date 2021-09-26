@@ -549,16 +549,12 @@ class InteractiveCallback:
                 'statistic_data': self.statistic_result,
                 'data_balance': self._get_balance_data_request(),
             }
-            if self.get_states().get("status") in ["training", "addtrain"]:
-                progress.pool(
+            progress.pool(
                     self.progress_name,
                     data=self.train_progress,
                     finished=False,
                 )
-                return None
-            else:
-                return self.train_progress
-
+            return self.train_progress
 
     # Методы для set_attributes()
     @staticmethod
