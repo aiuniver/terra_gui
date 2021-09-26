@@ -104,6 +104,7 @@ export default {
     async clear({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/clear/', data }, { root: true });
       dispatch('setState', res);
+      dispatch('setTrainData', {});
       return res
     },
     async interactive({ state: { interactive }, dispatch }, part) {
