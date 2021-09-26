@@ -417,9 +417,9 @@ class CreateArray(object):
 
             frames: np.ndarray = np.array([])
 
-            if fill_mode == LayerVideoFillModeChoice.black_frames:
-                frames = np.full((frames_to_add, *video_array[-1].shape), video_array[-1], dtype='uint8')
-            elif fill_mode == LayerVideoFillModeChoice.average_value:
+            # if fill_mode == LayerVideoFillModeChoice.black_frames:
+            #     frames = np.full((frames_to_add, *video_array[-1].shape), video_array[-1], dtype='uint8')
+            if fill_mode == LayerVideoFillModeChoice.average_value:
                 mean = np.mean(video_array, axis=0, dtype='uint16')
                 frames = np.full((frames_to_add, *mean.shape), mean, dtype='uint8')
             elif fill_mode == LayerVideoFillModeChoice.last_frames:

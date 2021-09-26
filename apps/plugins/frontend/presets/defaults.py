@@ -728,7 +728,7 @@ Defaults = {
                                 "label": "Заполнение недостающих кадров",
                                 "name": "fill_mode",
                                 "parse": "fill_mode",
-                                "value": LayerVideoFillModeChoice.black_frames.name,
+                                "value": LayerVideoFillModeChoice.average_value.name,
                                 "list": list(
                                     map(
                                         lambda item: {
@@ -1105,7 +1105,7 @@ Defaults = {
                                 "label": "Заполнение недостающих кадров",
                                 "name": "fill_mode",
                                 "parse": "fill_mode",
-                                "value": LayerVideoFillModeChoice.black_frames.name,
+                                "value": LayerVideoFillModeChoice.average_value.name,
                                 "list": list(
                                     map(
                                         lambda item: {
