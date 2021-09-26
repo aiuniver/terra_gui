@@ -68,17 +68,19 @@ export default {
     },
   },
   actions: {
-    setState({ commit }, res) {
+    setState({ dispatch, commit }, res) {
       // console.log(res)
       if (res && res?.data) {
         const state = res?.data?.data?.state || res?.data.state
         if (state) {
           commit("SET_STATE", state);
+          dispatch('setStatusTrain', state.status);
         }
       }
     },
     async start({ state: { training: { state: { status } } }, dispatch }, parse) {
       console.log(status)
+      dispatch('setStatusTrain', 'start');
       let isValid = true
       if (status === 'no_train') {
         const valid = await dispatch('modeling/validateModel', {}, { root: true })
@@ -102,14 +104,12 @@ export default {
     },
     async stop({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/stop/', data }, { root: true });
-      dispatch('setStatusTrain', 'stop');
       dispatch('setState', res);
       return res
     },
     async clear({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/clear/', data }, { root: true });
       dispatch('setState', res);
-      dispatch('setStatusTrain', 'no_train');
       dispatch('setTrainData', {});
       return res
     },
@@ -136,7 +136,6 @@ export default {
           dispatch('setTrainUsage', train_usage);
         }
       }
-      dispatch('setStatusTrain', 'training');
       return res
     },
     setDrawer({ commit }, data) {

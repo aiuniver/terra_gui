@@ -213,7 +213,6 @@ export default {
     },
     async start() {
       // console.log(JSON.stringify(this.obj, null, 2));
-      this.$store.dispatch('trainings/setStatusTrain', 'start');
       const res = await this.$store.dispatch('trainings/start', this.obj);
       if (res) {
         const { data } = res;
@@ -222,7 +221,6 @@ export default {
           this.debounce();
         }
       }
-      this.$store.dispatch('trainings/setStatusTrain', 'stop');
       // console.log(res);
     },
     async stop() {
