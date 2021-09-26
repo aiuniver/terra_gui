@@ -131,7 +131,7 @@ export default {
     async removeModel({ dispatch }, data) {
       return await dispatch('axios', { url: '/modeling/delete/', data }, { root: true });
     },
-    async updateModel({ commit, state: { blocks, links, errorsBlocks }, dispatch }, block) {
+    async updateModel({ commit, state: { blocks, links }, dispatch }, block) {
       const semdBlocks = JSON.parse(JSON.stringify(blocks))
       semdBlocks.forEach(block => {
         // if (block.group !== 'input') block.shape.input = null;
@@ -154,12 +154,14 @@ export default {
         const { data, error, success } = res
         console.log(data, error, success, block)
         if (error) {
-          const newError = {}
-          for (const key in error) {
-            newError[key.replace('fields', block.id)] = error[key]
-          }
-          // console.log(newError)
-          commit('SET_ERRORS_FIELDS', { ...errorsBlocks, ...newError });
+          // const { general, fields } = error
+
+          // const newError = {}
+          // for (const key in error) {
+          //   newError[key.replace('fields', block.id)] = error[key]
+          // }
+          console.log(error)
+          // commit('SET_ERRORS_FIELDS', { ...errorsBlocks, ...newError });
         }
       }
       return res
