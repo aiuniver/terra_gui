@@ -111,8 +111,8 @@ export default {
       const data = { ...interactive, ...part }
       // commit("SET_INTERACTIV", data);
       const res = await dispatch('axios', { url: '/training/interactive/', data }, { root: true });
-      if (res?.data?.result) {
-        dispatch('setTrainData', res?.data?.result);
+      if (res?.data?.train_data) {
+        dispatch('setTrainData', res?.data?.train_data);
       }
 
       return res
