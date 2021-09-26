@@ -1,12 +1,18 @@
 const toolbar = [
   {
-    title: "Лоссы",
+    title: "Прогресс обучения",
+    active: false,
+    disabled: false,
+    icon: "icon-training-progress",
+  },
+  {
+    title: "Метрики",
     active: false,
     disabled: false,
     icon: "icon-training-charts",
   },
   {
-    title: "Метрики",
+    title: "Лоссы",
     active: false,
     disabled: false,
     icon: "icon-training-charts",
@@ -16,12 +22,6 @@ const toolbar = [
     active: false,
     disabled: false,
     icon: "icon-training-images",
-  },
-  {
-    title: "Прогресс обучения",
-    active: false,
-    disabled: false,
-    icon: "icon-training-progress",
   },
   {
     title: "Таблица прогресса обучения",

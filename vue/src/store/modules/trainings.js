@@ -9,7 +9,7 @@ console.warn(data)
 export default {
   namespaced: true,
   state: () => ({
-    collapse: ['3'],
+    collapse: ['0', '1'],
     params: [],
     toolbar,
     stateParams: {},
