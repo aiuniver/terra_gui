@@ -227,7 +227,6 @@ export default {
       this.$store.dispatch('trainings/stop', {});
     },
     async clear() {
-      localStorage.removeItem('settingsTrainings');
       await this.$store.dispatch('trainings/clear', {});
     },
     async save() {

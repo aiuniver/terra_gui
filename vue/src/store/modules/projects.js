@@ -50,6 +50,7 @@ export default {
       commit("SET_PROJECT", data);
     },
     async createProject({ dispatch }, data) {
+      localStorage.removeItem('settingsTrainings');
       const res = await dispatch("axios", { url: "/project/create/", data }, { root: true });
       document.location.href = "/"; // "Миша, все хня, давай по новой" 
       return res

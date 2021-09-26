@@ -105,6 +105,8 @@ export default {
       const res = await dispatch('axios', { url: '/training/clear/', data }, { root: true });
       dispatch('setState', res);
       dispatch('setTrainData', {});
+      localStorage.removeItem('settingsTrainings');
+      await dispatch('projects/get', {}, { root: true })
       return res
     },
     async interactive({ state: { interactive }, dispatch }, part) {
