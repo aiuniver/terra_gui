@@ -141,8 +141,12 @@ export default {
       return this.status !== 'no_train';
     },
     disabledAny() {
-      if (this.status !== 'no_train') {
-        return this.status === 'stopped' || this.status === 'trained' ? ['epochs'] : true;
+      const status = this.status;
+      if (this.isLearning) {
+        if (status === 'stopped') {
+          return ['epochs'];
+        }
+        return true;
       }
       return false;
     },
