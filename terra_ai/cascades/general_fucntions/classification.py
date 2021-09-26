@@ -4,6 +4,7 @@ import numpy as np
 def main(**params):
 
     classes_names = params['classes_names'] if 'classes_names' in params.keys() else None
+    print(classes_names)
 
     def fun(acc):
         acc *= 100
@@ -12,7 +13,8 @@ def main(**params):
 
         if len(acc.shape) == 2:
             acc = acc[0]
-        acc = sorted(acc, reverse=True)
-        return list(zip(classes_names, acc))
+        acc = list(zip(classes_names, acc))
+
+        return sorted(acc, key=lambda x: x[1], reverse=True)
 
     return fun

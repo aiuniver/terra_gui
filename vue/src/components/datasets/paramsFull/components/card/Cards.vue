@@ -1,5 +1,5 @@
 <template>
-  <div class="t-cards" :style="style" @wheel="wheel">
+  <div class="t-cards" :style="style" @wheel.prevent="wheel">
     <scrollbar :ops="ops" ref="scrollCards">
       <div class="t-cards__items">
         <div class="t-cards__items--item">
@@ -32,6 +32,7 @@ export default {
   },
   methods: {
     wheel(e) {
+      e.stopPropagation();
       this.$refs.scrollCards.scrollBy(
         {
           dx: e.wheelDelta,

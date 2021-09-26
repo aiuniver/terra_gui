@@ -85,6 +85,7 @@ export default {
       if (status === 'no_train') {
         const valid = await dispatch('modeling/validateModel', {}, { root: true })
         isValid = !Object.values(valid || {}).filter(item => item).length
+        dispatch('setTrainData', {});
       }
       if (isValid) {
         let data = JSON.parse(JSON.stringify(parse))
@@ -97,7 +98,6 @@ export default {
         const res = await dispatch('axios', { url: '/training/start/', data }, { root: true });
         await dispatch('projects/get', {}, { root: true })
         dispatch('setState', res);
-        dispatch('setTrainData', {});
         return res
       }
       return null
@@ -110,20 +110,16 @@ export default {
     async clear({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/clear/', data }, { root: true });
       dispatch('setState', res);
-      dispatch('setTrainData', {});
-      localStorage.removeItem('settingsTrainings');
-      await dispatch('projects/get', {}, { root: true })
+      dispatch('resetTraining', {});
       return res
     },
     async interactive({ state: { interactive }, dispatch }, part) {
-      console.log(part)
       const data = { ...interactive, ...part }
-      // commit("SET_INTERACTIV", data);
       const res = await dispatch('axios', { url: '/training/interactive/', data }, { root: true });
       if (res?.data?.train_data) {
-        dispatch('setTrainData', res?.data?.train_data);
+        const { data: { train_data } } = res
+        dispatch('setTrainData', train_data);
       }
-
       return res
     },
     async progress({ dispatch }, data) {
@@ -132,13 +128,19 @@ export default {
         const { data } = res.data;
         if (data) {
           const { info, train_data, train_usage } = data;
-          dispatch('setInfo', info);
+          if (info) dispatch('setInfo', info);
           dispatch('setState', res);
-          dispatch('setTrainData', train_data);
-          dispatch('setTrainUsage', train_usage);
+          if (train_data) dispatch('setTrainData', train_data);
+          if (train_usage) dispatch('setTrainUsage', train_usage);
         }
       }
       return res
+    },
+    async resetTraining({ dispatch }) {
+      localStorage.removeItem('settingsTrainings');
+      dispatch('messages/resetProgress', {}, { root: true });
+      dispatch('setTrainData', {});
+      // await dispatch('projects/get', {}, { root: true })
     },
     setDrawer({ commit }, data) {
       commit("SET_DRAWER", data);

@@ -26,9 +26,6 @@ def main(**params):
             params['dataset_path'], 'preprocessing', str(params['key']),
             f'{params["key"]}_{decamelize(params["task"])}.gz')
     )
-    print(os.path.join(
-            params['dataset_path'], 'preprocessing', str(params['key']),
-            f'{params["key"]}_{decamelize(params["task"])}.gz'))
 
     def fun(text):
         if open_symbol:
