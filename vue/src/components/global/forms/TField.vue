@@ -43,7 +43,7 @@ export default {
     cursor: default;
     user-select: none;
     text-overflow: ellipsis;
-    overflow: hidden;
+    // overflow: hidden;
     line-height: 1;
   }
   &--inline {

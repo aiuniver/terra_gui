@@ -1,24 +1,24 @@
 <template>
 <div class="card">
   <div class="card__content">
-    <div v-if="type == 'card'">
+    <div v-if="deployType == 'image_classification'">
       <div class="card__original" >
-        <ImgCard v-if="original.type == 'image'" :imgUrl="original.imgUrl"/>
-        <TextCard v-if="original.type == 'text'" :style="origTextStyle">{{ original.data }}</TextCard>
+        <ImgCard v-if="deployType == 'image_classification'" :imgUrl="source"/>
+        <TextCard v-if="deployType == 'text'" :style="origTextStyle">{{ data }}</TextCard>
       </div>
       <div class="card__result">
-        <ImgCard v-if="result.type == 'image'" :imgUrl="result.imgUrl"/>
-        <TextCard v-if="result.type == 'text'" :style="original.type == 'image' ? { width: '224px' } : {}">{{ result.data }}</TextCard>
+        <ImgCard v-if="deployType == 'text'" :imgUrl="source"/>
+        <TextCard v-if="deployType == 'image_classification'" :style="deployType == 'image_classification' ? { width: '224px' } : {}">{{ data }}</TextCard>
       </div>
     </div>
-    <div class="card__graphic" v-if="type == 'graphic'">
+    <div class="card__graphic" v-if="deployType == 'graphic'">
        <Plotly :data="data" :layout="layout" :display-mode-bar="false"></Plotly>
     </div>
 <!--    <div class="card__table" v-if="type == 'table'">-->
 <!--      <Table/>-->
 <!--    </div>-->
   </div>
-  <div class="card__reload" v-if="type != 'table'"><button class="btn-reload" @click="ReloadCard"><i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i></button></div>
+  <div class="card__reload" v-if="deployType != 'table'"><button class="btn-reload" @click="ReloadCard"><i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i></button></div>
 </div>
 </template>
 
@@ -34,24 +34,19 @@ export default {
     TextCard,
     Plotly,
   },
-  data: () => ({
-  }),
+  data: () => ({}),
   props: {
-    original: {
-      type: Object,
+    source: {
+      type: Object, String,
       default: () => ({})
     },
-    result: {
-      type: Object,
+    data: {
+      type: Object, String,
       default: () => ({})
-    },
-    type: {
-      type: String,
-      default: ""
     },
   },
   mounted() {
-    console.log(this.graphicData)
+    console.log(this.deployType)
   },
   methods: {
     ReloadCard(){
@@ -63,6 +58,7 @@ export default {
       graphicData: 'deploy/getGraphicData',
       defaultLayout: 'deploy/getDefaultLayout',
       origTextStyle: 'deploy/getOrigTextStyle',
+      deployType: "deploy/getDeployType",
     }),
     layout() {
       const layout = this.defaultLayout;
@@ -73,10 +69,10 @@ export default {
       }
       return layout;
     },
-    data() {
-      const data = [this.graphicData] || [];
-      return data;
-    },
+    // data() {
+    //   const data = [this.graphicData] || [];
+    //   return data;
+    // },
   },
 }
 </script>

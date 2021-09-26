@@ -21,6 +21,8 @@ class ConfigAPIView(BaseAPIView):
                     "login": settings.USER_LOGIN,
                     "first_name": settings.USER_NAME,
                     "last_name": settings.USER_LASTNAME,
+                    "email": settings.USER_EMAIL,
+                    "token": settings.USER_TOKEN
                 },
             }
         )

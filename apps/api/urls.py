@@ -8,6 +8,7 @@ app_name = "apps_api"
 
 urlpatterns = [
     path("config/", views.ConfigAPIView.as_view(), name="config"),
+    path("profile/", include("apps.api.profile.urls", namespace="profile")),
     path("project/", include("apps.api.project.urls", namespace="project")),
     path("datasets/", include("apps.api.datasets.urls", namespace="datasets")),
     path("modeling/", include("apps.api.modeling.urls", namespace="modeling")),

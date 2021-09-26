@@ -125,10 +125,10 @@ export default {
       await this.$store.dispatch('modeling/typeBlock', { type: value, block: this.block });
     },
     async change({ type, name, value }) {
-      console.group();
+      // console.group();
       console.log({ type, name, value });
-      console.log(this.collapse);
-      console.groupEnd();
+      // console.log(this.collapse);
+      // console.groupEnd();
       if (this.block.parameters) {
         this.block.parameters[type][name] = value;
       } else {
