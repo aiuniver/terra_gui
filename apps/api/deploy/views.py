@@ -9,13 +9,26 @@ from terra_ai.agent import agent_exchange
 from terra_ai.agent.exceptions import ExchangeBaseException
 from terra_ai.exceptions.base import TerraBaseException
 
+from apps.plugins.project import project
 from ..base import (
     BaseAPIView,
     BaseResponseSuccess,
     BaseResponseErrorFields,
     BaseResponseErrorGeneral,
 )
-from .serializers import UploadSerializer
+from .serializers import UploadSerializer, ReloadSerializer
+
+
+class ReloadAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        serializer = ReloadSerializer(data=request.data)
+        if not serializer.is_valid():
+            return BaseResponseErrorFields(serializer.errors)
+        _id = serializer.validated_data.get("id")
+        project.deploy.data.get(_id).data.reload(
+            serializer.validated_data.get("indexes")
+        )
+        return BaseResponseSuccess(list(project.deploy.data.get(_id).data))
 
 
 class UploadAPIView(BaseAPIView):
