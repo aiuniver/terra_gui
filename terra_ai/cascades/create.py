@@ -1,7 +1,7 @@
-from terra_ai.cascades import cascade_input, cascade_output, general_fucntions
-from terra_ai.cascades.cascade import CascadeElement, CascadeOutput, BuildModelCascade, CompleteCascade
+from . import cascade_input, cascade_output, general_fucntions
+from .cascade import CascadeElement, CascadeOutput, BuildModelCascade, CompleteCascade
 
-from terra_ai.cascades.common import make_path, decamelize
+from .common import make_path, decamelize
 import json
 import os
 from tensorflow.keras.models import load_model
