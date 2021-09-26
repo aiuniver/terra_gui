@@ -146,7 +146,6 @@ class LayerTextModeChoice(str, Enum):
 
 
 class LayerVideoFillModeChoice(str, Enum):
-    black_frames = "Черными кадрами"
     average_value = "Средним значением"
     last_frames = "Последними кадрами"
 
