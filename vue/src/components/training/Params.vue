@@ -1,6 +1,6 @@
 <template>
   <div class="params">
-    <div v-if="loading" class="params__overlay">
+    <div v-if="statusTrain === 'start'" class="params__overlay">
       <LoadSpiner :text="'Запуск обучения...'" />
     </div>
     <div class="params__body">
@@ -127,7 +127,6 @@ export default {
     optimizerValue: '',
     metricData: '',
     debounce: null,
-    loading: false,
   }),
   computed: {
     ...mapGetters({
@@ -147,7 +146,7 @@ export default {
         if (status === 'stopped') {
           return ['epochs'];
         }
-        return true
+        return true;
       }
       return false;
     },
@@ -182,6 +181,9 @@ export default {
     checkpoint() {
       return this.params?.checkpoint || {};
     },
+    statusTrain() {
+      return this.$store.getters['trainings/getStatusTrain'];
+    },
     func() {
       let data = this.obj?.architecture?.parameters?.outputs || [];
       data = data?.[this.metricData]?.metrics || [];
@@ -211,7 +213,6 @@ export default {
     },
     async start() {
       // console.log(JSON.stringify(this.obj, null, 2));
-      this.loading = true;
       const res = await this.$store.dispatch('trainings/start', this.obj);
       if (res) {
         const { data } = res;
@@ -220,7 +221,6 @@ export default {
           this.debounce();
         }
       }
-      this.loading = false;
       // console.log(res);
     },
     async stop() {

@@ -19,6 +19,7 @@ export default {
     trainData: {},
     // trainData: process.env.NODE_ENV === 'development' ? data : {},
     trainUsage: {},
+    statusTrain: 'no_train',
     training: {
       base: {},
       interactive: {},
@@ -62,19 +63,24 @@ export default {
     SET_COLLAPSE(state, value) {
       state.collapse = [...value];
     },
+    SET_STATUS_TRAIN(state, value) {
+      state.statusTrain = value;
+    },
   },
   actions: {
-    setState({ commit }, res) {
+    setState({ dispatch, commit }, res) {
       // console.log(res)
       if (res && res?.data) {
         const state = res?.data?.data?.state || res?.data.state
         if (state) {
           commit("SET_STATE", state);
+          dispatch('setStatusTrain', state.status);
         }
       }
     },
     async start({ state: { training: { state: { status } } }, dispatch }, parse) {
       console.log(status)
+      dispatch('setStatusTrain', 'start');
       let isValid = true
       if (status === 'no_train') {
         const valid = await dispatch('modeling/validateModel', {}, { root: true })
@@ -165,8 +171,14 @@ export default {
       const data = { ...state.interactive, ...charts }
       commit("SET_INTERACTIV", data);
     },
+    setStatusTrain({ commit }, value) {
+      commit("SET_STATUS_TRAIN", value);
+    },
   },
   getters: {
+    getStatusTrain: ({ statusTrain }) => {
+      return statusTrain
+    },
     getObjectInteractive: ({ interactive }) => key => {
       return interactive?.[key] || {}
     },
