@@ -2,7 +2,7 @@ import json
 import os
 import shutil
 from pathlib import Path
-from typing import Any, NoReturn, Optional
+from typing import Any, NoReturn
 
 import tensorflow
 
@@ -168,10 +168,13 @@ class Exchange:
         info = DatasetsGroupsList(DatasetsGroups)
         for dirname in os.listdir(str(path.absolute())):
             if dirname.endswith(settings.DATASET_EXT):
-                dataset_config = CustomDatasetConfigData(path=Path(path, dirname))
-                info.get(DatasetGroupChoice.custom.name).datasets.append(
-                    DatasetData(**dataset_config.config)
-                )
+                try:
+                    dataset_config = CustomDatasetConfigData(path=Path(path, dirname))
+                    info.get(DatasetGroupChoice.custom.name).datasets.append(
+                        DatasetData(**dataset_config.config)
+                    )
+                except Exception:
+                    pass
         return info
 
     def _call_dataset_source_load(self, mode: str, value: str):
@@ -212,12 +215,11 @@ class Exchange:
         """
         return datasets_utils.get_classes_annotation(path).native()
 
-    def _call_dataset_create(self, **kwargs) -> DatasetData:
+    def _call_dataset_create(self, creation_data: CreationData) -> DatasetData:
         """
         Создание датасета из исходников
         """
-        data = CreationData(**kwargs)
-        creation = CreateDataset(data)
+        creation = CreateDataset(creation_data)
         return creation.datasetdata
 
     def _call_datasets_sources(self, path: str) -> FilePathSourcesList:
