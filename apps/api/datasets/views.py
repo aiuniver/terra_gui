@@ -1,7 +1,11 @@
+import shutil
+
 from pydantic import ValidationError
 
 from apps.plugins.project import data_path, project_path
 from apps.plugins.project import exceptions as project_exceptions
+
+from terra_ai.data.datasets.creation import CreationData
 from terra_ai.exceptions.base import TerraBaseException
 from terra_ai.agent import agent_exchange
 from terra_ai.agent.exceptions import ExchangeBaseException
@@ -134,12 +138,15 @@ class CreateAPIView(BaseAPIView):
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         try:
-            return BaseResponseSuccess(
-                data=agent_exchange("dataset_create", **serializer.data).native()
-            )
+            data = CreationData(**serializer.data)
         except ValidationError as error:
             return BaseResponseErrorFields(error)
+        try:
+            return BaseResponseSuccess(
+                data=agent_exchange("dataset_create", creation_data=data).native()
+            )
         except (TerraBaseException, ExchangeBaseException) as error:
+            shutil.rmtree(data.path, ignore_errors=True)
             return BaseResponseErrorGeneral(str(error))
 
 
