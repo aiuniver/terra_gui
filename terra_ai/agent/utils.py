@@ -10,6 +10,9 @@ class ExceptionClasses(Enum):
     projects_info = exceptions.FailedGetProjectsInfoException
     project_save = exceptions.FailedSaveProjectException
     project_load = exceptions.FailedLoadProjectException
+    # Profile
+    profile_update = exceptions.FailedUpdateProfileException
+    profile_update_token = exceptions.FailedUpdateUserTokenException
     # Dataset
     dataset_choice = exceptions.FailedChoiceDatasetException
     dataset_choice_progress = exceptions.FailedGetProgressDatasetChoiceException
