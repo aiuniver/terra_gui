@@ -107,9 +107,9 @@ class LayerParametersTextSerializer(LayerParametersSerializer):
 class LayerParametersAudioSerializer(MinMaxScalerSerializer, LayerParametersSerializer):
     sample_rate = serializers.IntegerField(min_value=1)
     audio_mode = serializers.ChoiceField(choices=LayerAudioModeChoice.items_tuple())
-    max_seconds = serializers.IntegerField(required=False, min_value=1, allow_null=True)
-    length = serializers.IntegerField(required=False, min_value=1, allow_null=True)
-    step = serializers.IntegerField(required=False, min_value=1, allow_null=True)
+    max_seconds = serializers.FloatField(required=False, min_value=0, allow_null=True)
+    length = serializers.FloatField(required=False, min_value=0, allow_null=True)
+    step = serializers.FloatField(required=False, min_value=0, allow_null=True)
     parameter = serializers.ChoiceField(choices=LayerAudioParameterChoice.items_tuple())
     scaler = serializers.ChoiceField(choices=LayerScalerAudioChoice.items_tuple())
 

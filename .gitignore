@@ -398,3 +398,8 @@ terra_ai/test_modules/
 /terra_ai/training/test cars.py
 /terra_ai/training/test4.py
 /terra_ai/training/test mnist.py
+/terra_ai/training/test chess.py
+/terra_ai/training/test flats.py
+/terra_ai/training/test ts.py
+/terra_ai/training/test ts-class.py
+/terra_ai/modeling/test validator.py
