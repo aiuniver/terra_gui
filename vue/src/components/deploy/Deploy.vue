@@ -7,10 +7,10 @@
             <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
             <span>Перезагрузить все</span>
           </button>
-          <div class="board__data-field" v-if="deployType != 'table'">
+          <div class="board__data-field" v-for="(block, index) in Cards" :key="'block-'+index">
             <div class="board__title">Исходные данные / Предсказанные данные</div>
             <div class="board__data">
-              <IndexCard v-for="(card, i) in Cards.input1_output2.data" :key="'card-' + i" v-bind="card" />
+              <IndexCard v-for="(card, i) in block.data" :key="'card-' + i" v-bind="card" />
               {{ card }}
             </div>
           </div>
@@ -40,6 +40,9 @@ export default {
       deployType: "deploy/getDeployType",
       height: 'settings/autoHeight',
     }),
+  },
+  async created() {
+    await this.$store.dispatch('projects/get');
   },
   mounted() {
     console.log(this.Cards)
