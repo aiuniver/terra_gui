@@ -38,6 +38,9 @@ class BaseCollectionList(List):
     def reload(self, range_indexes: List):
         raise MethodNotImplementedException("reload", self.__class__.__name__)
 
+    def prepare(self, training_path: Path):
+        raise MethodNotImplementedException("prepare", self.__class__.__name__)
+
 
 class ImageClassificationCollectionList(BaseCollectionList):
     def reload(self, range_indexes: List):
@@ -68,6 +71,9 @@ class ImageClassificationCollectionList(BaseCollectionList):
             label.append(json.dumps(item.get("data", [])))
         with open(labelfile, "w") as labelfile_ref:
             labelfile_ref.write("\n".join(label))
+
+    def prepare(self, training_path: Path):
+        print(training_path)
 
 
 class ImageSegmentationCollectionList(BaseCollectionList):
@@ -114,6 +120,9 @@ class ImageSegmentationCollectionList(BaseCollectionList):
             label.append(json.dumps(item.get("data", [])))
         with open(labelfile, "w") as labelfile_ref:
             labelfile_ref.write("\n".join(label))
+
+    def prepare(self, training_path: Path):
+        print(training_path)
 
 
 class BaseCollection(BaseMixinData):
