@@ -79,6 +79,7 @@ class ClearAPIView(BaseAPIView):
         try:
             agent_exchange("training_clear")
             request.project.training.set_state()
+            request.project.training.result = None
             return BaseResponseSuccess(
                 {"state": request.project.training.state.native()}
             )
