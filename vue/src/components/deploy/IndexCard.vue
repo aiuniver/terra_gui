@@ -3,10 +3,18 @@
   <div class="card__content">
     <div v-if="deployType == 'image_classification'">
       <div class="card__original" >
-        <ImgCard v-if="deployType == 'image_classification'" :imgUrl="source"/>
+        <ImgCard :imgUrl="source"/>
       </div>
       <div class="card__result">
-        <TextCard v-if="deployType == 'image_classification'" :style="{ width: '224px' }">{{ imageClassificationText }}</TextCard>
+        <TextCard  :style="{ width: '224px' }">{{ imageClassificationText }}</TextCard>
+      </div>
+    </div>
+    <div v-if="deployType == 'image_segmentation'">
+      <div class="card__original" >
+        <ImgCard :imgUrl="source"/>
+      </div>
+      <div class="card__result">
+        <ImgCard :imgUrl="segment"/>
       </div>
     </div>
     <div class="card__graphic" v-if="deployType == 'graphic'">
@@ -35,6 +43,10 @@ export default {
   data: () => ({}),
   props: {
     source: {
+      type: Object, String,
+      default: () => ({})
+    },
+    segment: {
       type: Object, String,
       default: () => ({})
     },

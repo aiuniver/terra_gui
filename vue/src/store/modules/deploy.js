@@ -36,6 +36,9 @@ export default {
         }
         return data.finished;
       },
+      async ReloadCard({ dispatch }, data) {
+        return await dispatch('axios', { url: '/deploy/reload/', data: data }, { root: true });
+      },
     },
     getters: {
       getModuleList: ({ moduleList }) => moduleList,
