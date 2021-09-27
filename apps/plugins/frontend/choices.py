@@ -21,8 +21,6 @@ class LayerOutputTypeChoice(str, Enum):
     Classification = "Классификация"
     Segmentation = "Сегментация изображений"
     TextSegmentation = "Сегментация текстов"
-    Regression = "Регрессия"
-    Timeseries = "Временные ряды"
     ObjectDetection = "Обнаружение объектов"
 
     @staticmethod
