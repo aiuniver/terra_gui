@@ -12,11 +12,10 @@ from sklearn.model_selection import train_test_split
 
 from terra_ai.utils import decamelize
 from terra_ai.datasets.preprocessing import CreatePreprocessing
-from terra_ai.data.datasets.dataset import DatasetData
-from terra_ai.data.datasets.extra import DatasetGroupChoice
-from terra_ai.data.datasets.dataset import DatasetPathsData
-from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice
+from terra_ai.data.datasets.dataset import DatasetData, DatasetPathsData
+from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice, DatasetGroupChoice
 from terra_ai.datasets.arrays_create import CreateArray
+from terra_ai.data.presets.datasets import KerasInstructions
 
 
 class PrepareDataset(object):
@@ -25,12 +24,22 @@ class PrepareDataset(object):
 
         self.data = data
         self.language = None
-        self.instructions: dict = {'inputs': {}, 'outputs': {}}
         self.dts_prepared: bool = False
         self.dataframe: dict = {}
+        self.instructions: dict = {}
         if self.data.group != 'keras':
             self.paths = DatasetPathsData(basepath=datasets_path)
             self.preprocessing = CreatePreprocessing(dataset_path=self.paths.basepath)
+
+            for put_id in list(self.data.inputs.keys()) + list(self.data.outputs.keys()):
+                self.instructions[put_id] = {}
+                for instr_json in os.listdir(os.path.join(self.paths.instructions, 'parameters')):
+                    idx, *name = os.path.splitext(instr_json)[0].split('_')
+                    name = '_'.join(name)
+                    if put_id == int(idx):
+                        with open(os.path.join(self.paths.instructions, 'parameters', instr_json),
+                                  'r') as instr:
+                            self.instructions[put_id].update([(f'{idx}_{name}', json.load(instr))])
         else:
             self.preprocessing = CreatePreprocessing()
 
@@ -42,125 +51,121 @@ class PrepareDataset(object):
 
     def train_generator(self):
 
+        path_type_list = [decamelize(LayerInputTypeChoice.Image), decamelize(LayerOutputTypeChoice.Image),
+                          decamelize(LayerInputTypeChoice.Audio), decamelize(LayerOutputTypeChoice.Audio),
+                          decamelize(LayerInputTypeChoice.Video), decamelize(LayerOutputTypeChoice.ObjectDetection),
+                          decamelize(LayerOutputTypeChoice.Segmentation)]
+
         inputs = {}
         outputs = {}
         for idx in range(len(self.dataframe['train'])):
-            for key, value in self.data.inputs.items():
-                if value.task == LayerInputTypeChoice.Text:
-                    sample = self.dataframe['train'].loc[idx, f'{key}_{decamelize(value.task)}']
-                else:
-                    sample = os.path.join(self.paths.basepath,
-                                          self.dataframe['train'].loc[idx, f'{key}_{decamelize(value.task)}'])
+            for inp_id in self.data.inputs.keys():
+                tmp = []
+                for col_name, data in self.instructions[inp_id].items():
+                    if data['put_type'] in path_type_list:
+                        sample = os.path.join(self.paths.basepath, self.dataframe['train'].loc[idx, col_name])
+                    else:
+                        sample = self.dataframe['train'].loc[idx, col_name]
+                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
+                        'preprocess': self.preprocessing.preprocessing[inp_id][col_name]}, **data)
+                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
+                                                                                     **array['parameters'])
+                    tmp.append(array)
+                inputs[str(inp_id)] = np.concatenate(tmp, axis=0)
 
-                arr = getattr(CreateArray(), f'create_{decamelize(value.task)}')(
-                    sample,
-                    **self.instructions['inputs'][key],
-                    **self.preprocessing.preprocessing.get(key))
-                inputs[str(key)] = getattr(CreateArray(), f'preprocess_{decamelize(value.task)}')(arr['instructions'],
-                                                                                                  **arr['parameters'])
-
-            for key, value in self.data.outputs.items():
-                if value.task in [LayerOutputTypeChoice.Text, LayerOutputTypeChoice.TextSegmentation]:
-                    sample = self.dataframe['train'].loc[idx, f'{key}_{decamelize(value.task)}']
-                else:
-                    sample = os.path.join(self.paths.basepath,
-                                          self.dataframe['train'].loc[idx, f'{key}_{decamelize(value.task)}'])
-
-                arr = getattr(CreateArray(), f'create_{decamelize(value.task)}')(
-                    sample,
-                    **self.instructions['outputs'][key],
-                    **self.preprocessing.preprocessing.get(key))
-                array = getattr(CreateArray(), f'preprocess_{decamelize(value.task)}')(arr['instructions'],
-                                                                                       **arr['parameters'])
-                if value.task == LayerOutputTypeChoice.ObjectDetection:
-                    for m in range(len(array)):
-                        outputs[str(key + m)] = array[m]
-                    break
-                else:
-                    outputs[str(key)] = array
+            for out_id in self.data.outputs.keys():
+                tmp = []
+                for col_name, data in self.instructions[out_id].items():
+                    if data['put_type'] in path_type_list:
+                        sample = os.path.join(self.paths.basepath, self.dataframe['train'].loc[idx, col_name])
+                    else:
+                        sample = self.dataframe['train'].loc[idx, col_name]
+                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
+                        'preprocess': self.preprocessing.preprocessing[out_id][col_name]}, **data)
+                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
+                                                                                     **array['parameters'])
+                    tmp.append(array)
+                outputs[str(out_id)] = np.concatenate(tmp, axis=0)
 
             yield inputs, outputs
 
     def val_generator(self):
 
+        path_type_list = [decamelize(LayerInputTypeChoice.Image), decamelize(LayerOutputTypeChoice.Image),
+                          decamelize(LayerInputTypeChoice.Audio), decamelize(LayerOutputTypeChoice.Audio),
+                          decamelize(LayerInputTypeChoice.Video), decamelize(LayerOutputTypeChoice.ObjectDetection),
+                          decamelize(LayerOutputTypeChoice.Segmentation)]
+
         inputs = {}
         outputs = {}
         for idx in range(len(self.dataframe['val'])):
-            for key, value in self.data.inputs.items():
-                if value.task == LayerInputTypeChoice.Text:
-                    sample = self.dataframe['val'].loc[idx, f'{key}_{decamelize(value.task)}']
-                else:
-                    sample = os.path.join(self.paths.basepath,
-                                          self.dataframe['val'].loc[idx, f'{key}_{decamelize(value.task)}'])
+            for inp_id in self.data.inputs.keys():
+                tmp = []
+                for col_name, data in self.instructions[inp_id].items():
+                    if data['put_type'] in path_type_list:
+                        sample = os.path.join(self.paths.basepath, self.dataframe['val'].loc[idx, col_name])
+                    else:
+                        sample = self.dataframe['val'].loc[idx, col_name]
+                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
+                        'preprocess': self.preprocessing.preprocessing[inp_id][col_name]}, **data)
+                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
+                                                                                     **array['parameters'])
+                    tmp.append(array)
+                inputs[str(inp_id)] = np.concatenate(tmp, axis=0)
 
-                arr = getattr(CreateArray(), f'create_{decamelize(value.task)}')(
-                    sample,
-                    **self.instructions['inputs'][key],
-                    **self.preprocessing.preprocessing.get(key))
-                inputs[str(key)] = getattr(CreateArray(), f'preprocess_{decamelize(value.task)}')(arr['instructions'],
-                                                                                                  **arr['parameters'])
-
-            for key, value in self.data.outputs.items():
-                if value.task in [LayerOutputTypeChoice.Text, LayerOutputTypeChoice.TextSegmentation]:
-                    sample = self.dataframe['val'].loc[idx, f'{key}_{decamelize(value.task)}']
-                else:
-                    sample = os.path.join(self.paths.basepath,
-                                          self.dataframe['val'].loc[idx, f'{key}_{decamelize(value.task)}'])
-
-                arr = getattr(CreateArray(), f'create_{decamelize(value.task)}')(
-                    sample,
-                    **self.instructions['outputs'][key],
-                    **self.preprocessing.preprocessing.get(key))
-                array = getattr(CreateArray(), f'preprocess_{decamelize(value.task)}')(arr['instructions'],
-                                                                                       **arr['parameters'])
-                if value.task == LayerOutputTypeChoice.ObjectDetection:
-                    for m in range(len(array)):
-                        outputs[str(key + m)] = array[m]
-                    break
-                else:
-                    outputs[str(key)] = array
+            for out_id in self.data.outputs.keys():
+                tmp = []
+                for col_name, data in self.instructions[out_id].items():
+                    if data['put_type'] in path_type_list:
+                        sample = os.path.join(self.paths.basepath, self.dataframe['val'].loc[idx, col_name])
+                    else:
+                        sample = self.dataframe['val'].loc[idx, col_name]
+                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
+                        'preprocess': self.preprocessing.preprocessing[out_id][col_name]}, **data)
+                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
+                                                                                     **array['parameters'])
+                    tmp.append(array)
+                outputs[str(out_id)] = np.concatenate(tmp, axis=0)
 
             yield inputs, outputs
 
     def test_generator(self):
 
+        path_type_list = [decamelize(LayerInputTypeChoice.Image), decamelize(LayerOutputTypeChoice.Image),
+                          decamelize(LayerInputTypeChoice.Audio), decamelize(LayerOutputTypeChoice.Audio),
+                          decamelize(LayerInputTypeChoice.Video), decamelize(LayerOutputTypeChoice.ObjectDetection),
+                          decamelize(LayerOutputTypeChoice.Segmentation)]
+
         inputs = {}
         outputs = {}
         for idx in range(len(self.dataframe['test'])):
-            for key, value in self.data.inputs.items():
+            for inp_id in self.data.inputs.keys():
+                tmp = []
+                for col_name, data in self.instructions[inp_id].items():
+                    if data['put_type'] in path_type_list:
+                        sample = os.path.join(self.paths.basepath, self.dataframe['test'].loc[idx, col_name])
+                    else:
+                        sample = self.dataframe['test'].loc[idx, col_name]
+                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
+                        'preprocess': self.preprocessing.preprocessing[inp_id][col_name]}, **data)
+                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
+                                                                                     **array['parameters'])
+                    tmp.append(array)
+                inputs[str(inp_id)] = np.concatenate(tmp, axis=0)
 
-                if value.task == LayerInputTypeChoice.Text:
-                    sample = self.dataframe['test'].loc[idx, f'{key}_{decamelize(value.task)}']
-                else:
-                    sample = os.path.join(self.paths.basepath,
-                                          self.dataframe['test'].loc[idx, f'{key}_{decamelize(value.task)}'])
-
-                arr = getattr(CreateArray(), f'create_{decamelize(value.task)}')(
-                    sample,
-                    **self.instructions['inputs'][key],
-                    **self.preprocessing.preprocessing.get(key))
-                inputs[str(key)] = getattr(CreateArray(), f'preprocess_{decamelize(value.task)}')(arr['instructions'],
-                                                                                                  **arr['parameters'])
-
-            for key, value in self.data.outputs.items():
-                if value.task in [LayerOutputTypeChoice.Text, LayerOutputTypeChoice.TextSegmentation]:
-                    sample = self.dataframe['test'].loc[idx, f'{key}_{decamelize(value.task)}']
-                else:
-                    sample = os.path.join(self.paths.basepath,
-                                          self.dataframe['test'].loc[idx, f'{key}_{decamelize(value.task)}'])
-
-                arr = getattr(CreateArray(), f'create_{decamelize(value.task)}')(
-                    sample,
-                    **self.instructions['outputs'][key],
-                    **self.preprocessing.preprocessing.get(key))
-                array = getattr(CreateArray(), f'preprocess_{decamelize(value.task)}')(arr['instructions'],
-                                                                                       **arr['parameters'])
-                if value.task == LayerOutputTypeChoice.ObjectDetection:
-                    for m in range(len(array)):
-                        outputs[str(key + m)] = array[m]
-                    break
-                else:
-                    outputs[str(key)] = array
+            for out_id in self.data.outputs.keys():
+                tmp = []
+                for col_name, data in self.instructions[out_id].items():
+                    if data['put_type'] in path_type_list:
+                        sample = os.path.join(self.paths.basepath, self.dataframe['test'].loc[idx, col_name])
+                    else:
+                        sample = self.dataframe['test'].loc[idx, col_name]
+                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
+                        'preprocess': self.preprocessing.preprocessing[out_id][col_name]}, **data)
+                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
+                                                                                     **array['parameters'])
+                    tmp.append(array)
+                outputs[str(out_id)] = np.concatenate(tmp, axis=0)
 
             yield inputs, outputs
 
@@ -203,6 +208,9 @@ class PrepareDataset(object):
 
             self.keras_datasets()
 
+            for put_id, data in KerasInstructions[self.data.alias].items():
+                self.instructions[put_id] = data
+
             if self.data.alias in ['mnist', 'fashion_mnist', 'cifar10', 'cifar100']:
                 self.preprocessing.create_scaler(array=self.X['train']['1'], **{'put': 1, 'scaler': 'min_max_scaler',
                                                                                 'min_scaler': 0, 'max_scaler': 1,
@@ -229,44 +237,45 @@ class PrepareDataset(object):
             self.preprocessing.load_preprocesses(self.data.columns)
 
             if self.data.use_generator:
-                for instr in os.listdir(os.path.join(self.paths.instructions, 'parameters')):
-                    with open(os.path.join(self.paths.instructions, 'parameters', instr), 'r') as instruction:
-                        ins = json.load(instruction)
-                        instr = instr[:instr.rfind('.')]
-                        idx, put = instr.split('_')
-                        self.instructions[put][int(idx)] = getattr(CreateArray(),
-                                                                   f'instructions_{decamelize(ins["type"])}')([], **ins)['parameters']
 
-                # self.dataset['train'] = Dataset.from_generator(self.train_generator,
-                #                                                output_shapes=(prepare_generator_parameters(
-                #                                                    self.data.inputs, 'shapes'),
-                #                                                               prepare_generator_parameters(
-                #                                                                   self.data.outputs, 'shapes')),
-                #                                                output_types=(prepare_generator_parameters(
-                #                                                    self.data.inputs, 'types'),
-                #                                                              prepare_generator_parameters(
-                #                                                                  self.data.outputs, 'types'))
-                #                                                )
-                # self.dataset['val'] = Dataset.from_generator(self.val_generator,
-                #                                              output_shapes=(prepare_generator_parameters(
-                #                                                  self.data.inputs, 'shapes'),
-                #                                                             prepare_generator_parameters(
-                #                                                                 self.data.outputs, 'shapes')),
-                #                                              output_types=(prepare_generator_parameters(
-                #                                                  self.data.inputs, 'types'),
-                #                                                            prepare_generator_parameters(
-                #                                                                self.data.outputs, 'types'))
-                #                                              )
-                # self.dataset['test'] = Dataset.from_generator(self.test_generator,
-                #                                               output_shapes=(prepare_generator_parameters(
-                #                                                   self.data.inputs, 'shapes'),
-                #                                                              prepare_generator_parameters(
-                #                                                                  self.data.outputs, 'shapes')),
-                #                                               output_types=(prepare_generator_parameters(
-                #                                                   self.data.inputs, 'types'),
-                #                                                             prepare_generator_parameters(
-                #                                                                 self.data.outputs, 'types'))
-                #                                               )
+                num_inputs = len(self.data.inputs)
+                num_outputs = len(self.data.outputs)
+                self.dataset['train'] = Dataset.from_generator(self.train_generator,
+                                                               output_shapes=({str(x): self.data.inputs[x].shape for x
+                                                                               in range(1, num_inputs+1)},
+                                                                              {str(x): self.data.outputs[x].shape for x
+                                                                               in range(num_inputs + 1,
+                                                                                        num_outputs + 2)}),
+                                                               output_types=({str(x): self.data.inputs[x].dtype for x
+                                                                              in range(1, num_inputs + 1)},
+                                                                             {str(x): self.data.outputs[x].dtype for x
+                                                                              in range(num_inputs + 1,
+                                                                                       num_outputs + 2)})
+                                                               )
+                self.dataset['val'] = Dataset.from_generator(self.val_generator,
+                                                             output_shapes=({str(x): self.data.inputs[x].shape for x
+                                                                             in range(1, num_inputs + 1)},
+                                                                            {str(x): self.data.outputs[x].shape for x
+                                                                             in range(num_inputs + 1,
+                                                                                      num_outputs + 2)}),
+                                                             output_types=({str(x): self.data.inputs[x].dtype for x
+                                                                            in range(1, num_inputs + 1)},
+                                                                           {str(x): self.data.outputs[x].dtype for x
+                                                                            in range(num_inputs + 1,
+                                                                                     num_outputs + 2)})
+                                                             )
+                self.dataset['test'] = Dataset.from_generator(self.test_generator,
+                                                              output_shapes=({str(x): self.data.inputs[x].shape for x
+                                                                              in range(1, num_inputs + 1)},
+                                                                             {str(x): self.data.outputs[x].shape for x
+                                                                              in range(num_inputs + 1,
+                                                                                       num_outputs + 2)}),
+                                                              output_types=({str(x): self.data.inputs[x].dtype for x
+                                                                             in range(1, num_inputs + 1)},
+                                                                            {str(x): self.data.outputs[x].dtype for x
+                                                                             in range(num_inputs + 1,
+                                                                                      num_outputs + 2)})
+                                                              )
             else:
                 load_arrays()
 
@@ -277,3 +286,24 @@ class PrepareDataset(object):
         self.dts_prepared = True
 
         pass
+
+    def deploy_export(self, folder_path: str):
+
+        parameters_path = os.path.join(folder_path, 'instructions', 'parameters')
+        os.makedirs(parameters_path, exist_ok=True)
+        for put in self.instructions.keys():
+            for col_name, data in self.instructions[put].items():
+                with open(os.path.join(parameters_path, f'{col_name}.json'), 'w') as instr:
+                    json.dump(data, instr)
+
+        preprocessing_path = os.path.join(folder_path, 'preprocessing')
+        os.makedirs(preprocessing_path, exist_ok=True)
+        for put, proc in self.preprocessing.preprocessing.items():
+            for col_name, obj in proc.items():
+                if obj:
+                    folder_dir = os.path.join(preprocessing_path, str(put))
+                    os.makedirs(folder_dir, exist_ok=True)
+                    joblib.dump(obj, os.path.join(folder_dir, f'{col_name}.gz'))
+
+        with open(os.path.join(folder_path, 'config.json'), 'w') as cfg:
+            json.dump(self.data.native(), cfg)
