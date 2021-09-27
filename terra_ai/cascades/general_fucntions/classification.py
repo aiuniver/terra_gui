@@ -4,7 +4,6 @@ import numpy as np
 def main(**params):
 
     classes_names = params['classes_names'] if 'classes_names' in params.keys() else None
-    print(classes_names)
 
     def fun(acc):
         acc *= 100

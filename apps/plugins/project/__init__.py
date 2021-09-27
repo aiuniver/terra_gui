@@ -59,6 +59,7 @@ PROJECT_PATH = {
 
 TASKS_RELATIONS = {
     DeployTaskTypeChoice.image_classification: {"ImageClassification"},
+    DeployTaskTypeChoice.image_segmentation: {"ImageSegmentation"},
 }
 
 

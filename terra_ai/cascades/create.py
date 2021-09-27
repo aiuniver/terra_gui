@@ -1,7 +1,7 @@
 from . import cascade_input, cascade_output, general_fucntions
 from .cascade import CascadeElement, CascadeOutput, BuildModelCascade, CompleteCascade
 
-from .common import make_path, decamelize
+from .common import decamelize
 import json
 import os
 from tensorflow.keras.models import load_model
@@ -61,11 +61,9 @@ def json2model_cascade(path: str):
         preprocess = []
 
         for inp, param in config['inputs'].items():
-
             with open(os.path.join(path, "dataset", "instructions", "parameters", f"{inp}_inputs.json")) as cfg:
                 spec_config = json.load(cfg)["parameters"]
-
-            param = param | spec_config
+            param.update(spec_config)
 
             type_module = getattr(general_fucntions, decamelize(param['task']))
             preprocess.append(getattr(type_module, 'main')(
@@ -98,7 +96,6 @@ def json2model_cascade(path: str):
 def json2cascade(path: str):
     with open(path) as cfg:
         config = json.load(cfg)
-
     cascades = {}
     input_cascade = None
 
@@ -132,7 +129,7 @@ def create_output(**params):
 
 
 def create_model(**params):
-    model = json2model_cascade(make_path(params["model"]))
+    model = json2model_cascade(str(Path(Path.cwd(), params["model"])))
 
     return model
 
@@ -143,5 +140,3 @@ def create_function(**params):
         getattr(function, params['name'])(**params['params']),
         f"функция {params['name']}")
     return function
-
-

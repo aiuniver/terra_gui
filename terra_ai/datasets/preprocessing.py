@@ -83,10 +83,13 @@ class CreatePreprocessing(object):
     def load_preprocesses(self, put_data):
 
         for put in put_data.keys():
+            self.preprocessing[put] = {}
             for col_name in put_data[put].keys():
                 prep_path = os.path.join(self.dataset_path, 'preprocessing', str(put), f'{col_name}.gz')
                 if os.path.isfile(prep_path):
-                    self.preprocessing.update([(put, {col_name: joblib.load(prep_path)})])
+                    self.preprocessing[put].update([(col_name, joblib.load(prep_path))])
+                else:
+                    self.preprocessing[put].update([(col_name, None)])
 
     def create_dull(self, put_id: int):
 
