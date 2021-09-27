@@ -4,11 +4,9 @@
     <div v-if="deployType == 'image_classification'">
       <div class="card__original" >
         <ImgCard v-if="deployType == 'image_classification'" :imgUrl="source"/>
-        <TextCard v-if="deployType == 'text'" :style="origTextStyle">{{ data }}</TextCard>
       </div>
       <div class="card__result">
-        <ImgCard v-if="deployType == 'text'" :imgUrl="source"/>
-        <TextCard v-if="deployType == 'image_classification'" :style="deployType == 'image_classification' ? { width: '224px' } : {}">{{ data }}</TextCard>
+        <TextCard v-if="deployType == 'image_classification'" :style="{ width: '224px' }">{{ imageClassificationText }}</TextCard>
       </div>
     </div>
     <div class="card__graphic" v-if="deployType == 'graphic'">
@@ -69,10 +67,16 @@ export default {
       }
       return layout;
     },
-    // data() {
-    //   const data = [this.graphicData] || [];
-    //   return data;
-    // },
+    imageClassificationText(){
+      let text = this.data;
+      let prepareText = "";
+      text.sort((a, b) => a[1] < b[1] ? 1 : -1);
+      for(let i=0; i<text.length; i++){
+        if(i > 2) break;
+        prepareText = prepareText + `${text[i][0]} - вероятность ${text[i][1]}% \n`;
+      }
+      return prepareText;
+    },
   },
 }
 </script>
