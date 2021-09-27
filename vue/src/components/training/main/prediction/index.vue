@@ -30,18 +30,24 @@
         <t-button style="width: 150px" @click.native="show">Показать</t-button>
       </div>
     </div>
-    <div class="predictions__body">
-      <PredictTable :predict="predictData" />
+    <div class="predictions__body" v-if="showPredict && (statusTrain === 'start' || statusTrain === 'training')">
+      <div class="predictions__overlay" v-if="loading || Object.keys(predictData).length === 0">
+        <LoadSpiner :text="'Получение данных...'" />
+      </div>
+      <PredictTable v-else :predict="predictData" />
     </div>
   </div>
 </template>
 
 <script>
 import PredictTable from './PredictTable';
+import LoadSpiner from '@/components/forms/LoadSpiner';
+
 export default {
   name: 'Predictions',
   components: {
     PredictTable,
+    LoadSpiner,
   },
   props: {
     outputs: Array,
@@ -56,6 +62,8 @@ export default {
       example_choice_type: 'seed',
       main_output: 2,
     },
+    loading: true,
+    showPredict: false,
     sortOutput: [],
     sortData: [
       { label: 'Best', value: 'best' },
@@ -77,6 +85,9 @@ export default {
     predictData() {
       return this.$store.getters['trainings/getTrainData']('intermediate_result') || {};
     },
+    statusTrain() {
+      return this.$store.getters['trainings/getStatusTrain'];
+    },
   },
   methods: {
     async show() {
@@ -84,8 +95,9 @@ export default {
         intermediate_result: { ...this.checks },
       });
       if (this.checks.show_results) {
-        this.showTextTable = true;
+        this.showPredict = true;
       }
+      this.loading = false;
     },
   },
 };
@@ -93,6 +105,19 @@ export default {
 
 <style lang="scss" scoped>
 .predictions {
+  position: relative;
+  &__overlay {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background-color: rgb(14 22 33 / 30%);
+    z-index: 5;
+    top: 0;
+    left: 0;
+  }
   &__params {
     display: flex;
     margin-top: 10px;

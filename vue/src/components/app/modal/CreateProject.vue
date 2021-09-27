@@ -39,7 +39,6 @@ export default {
     async create(data) {
       try {
         const res = await this.$store.dispatch('projects/createProject', {});
-        localStorage.removeItem('settingsTrainings');
         if (res && !res.error) {
           this.$emit('message', { message: `Новый проект «${data.name}» создан` });
         }

@@ -38,16 +38,7 @@ class CreateArray(object):
     def instructions_image(paths_list: list, **options: dict) -> dict:
 
         instructions = {'instructions': paths_list,
-                        'parameters': {'height': options['height'],
-                                       'width': options['width'],
-                                       'net': options['net'],
-                                       # 'object_detection': options['object_detection'],
-                                       'scaler': options['scaler'],
-                                       'max_scaler': options['max_scaler'],
-                                       'min_scaler': options['min_scaler'],
-                                       'put': options['put'],
-                                       'cols_names': options['cols_names']
-                                       }
+                        'parameters': options
                         }
 
         return instructions
@@ -76,18 +67,8 @@ class CreateArray(object):
                                 ';'.join([elem, f'[{frame_count - options["length"]}-{frame_count}]']))
 
         instructions = {'instructions': video,
-                        'parameters': {'height': options['height'],
-                                       'width': options['width'],
-                                       'put': options['put'],
-                                       'cols_names': options['cols_names'],
-                                       'min_scaler': options['min_scaler'],
-                                       'max_scaler': options['max_scaler'],
-                                       'scaler': options['scaler'],
-                                       'frame_mode': options['frame_mode'],
-                                       'fill_mode': options['fill_mode'],
-                                       'video_mode': options['video_mode'],
-                                       'length': options['length'],
-                                       'max_frames': options['max_frames']}}
+                        'parameters': options
+                        }
 
         return instructions
 
@@ -111,12 +92,7 @@ class CreateArray(object):
                         stop_flag = True
 
         instructions = {'instructions': audio,
-                        'parameters': {'sample_rate': options['sample_rate'],
-                                       'parameter': options['parameter'],
-                                       'scaler': options['scaler'],
-                                       'max_scaler': options['max_scaler'],
-                                       'min_scaler': options['min_scaler'],
-                                       'put': options['put']}}
+                        'parameters': options}
 
         return instructions
 
@@ -199,13 +175,9 @@ class CreateArray(object):
                         stop_flag = True
 
         instructions = {'instructions': text,
-                        'parameters': {'prepare_method': options['prepare_method'],
-                                       'put': options['put'],
-                                       'cols_names': options['cols_names'],
+                        'parameters': {**options,
                                        'length': length,
-                                       'max_words_count': options['max_words_count'],
                                        'word_to_vec_size': options.get('word_to_vec_size'),
-                                       'filters': options['filters']
                                        },
                         }
 
@@ -241,11 +213,9 @@ class CreateArray(object):
                     classes_names = options["ranges"].split(" ")
 
         instructions = {'instructions': paths_list,
-                        'parameters': {"one_hot_encoding": options['one_hot_encoding'],
+                        'parameters': {**options,
                                        "classes_names": classes_names,
                                        "num_classes": len(classes_names),
-                                       'cols_names': options['cols_names'],
-                                       'put': options['put'],
                                        'type_processing': type_processing,
                                        'length': length,
                                        'step': step,
@@ -267,16 +237,10 @@ class CreateArray(object):
     def instructions_segmentation(paths_list: list, **options: dict) -> dict:
 
         instructions = {'instructions': paths_list,
-                        'parameters': {'mask_range': options['mask_range'],
-                                       'num_classes': len(options['classes_names']),
-                                       'height': options['height'],
-                                       'width': options['width'],
+                        'parameters': {**options,
                                        'classes_colors': [Color(color).as_rgb_tuple() for color in
                                                           options['classes_colors']],
-                                       'classes_names': options['classes_names'],
-                                       'cols_names': options['cols_names'],
-                                       'put': options['put']
-                                       }
+                                       'num_classes': len(options['classes_names'])}
                         }
 
         return instructions
@@ -361,9 +325,9 @@ class CreateArray(object):
                         stop_flag = True
 
         instructions = {'instructions': text_segm_data,
-                        'parameters': {'num_classes': len(open_tags),
+                        'parameters': {**options,
+                                       'num_classes': len(open_tags),
                                        'classes_names': open_tags,
-                                       'put': options['put'],
                                        'length': length
                                        }
                         }
@@ -386,10 +350,8 @@ class CreateArray(object):
     def instructions_object_detection(paths_list: list, **options: dict) -> dict:
 
         instructions = {'instructions': paths_list,
-                        'parameters': {'yolo': options['yolo'],
-                                       'num_classes': options['num_classes'],
-                                       'classes_names': options['classes_names'],
-                                       'put': options['put']}}
+                        'parameters': options
+                        }
 
         return instructions
 
@@ -397,8 +359,10 @@ class CreateArray(object):
     def cut_image(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
 
         for elem in paths_list:
-            os.makedirs(os.path.join(tmp_folder, f'{options["cols_names"]}', os.path.basename(os.path.dirname(elem))), exist_ok=True)
-            shutil.copyfile(elem, os.path.join(tmp_folder, f'{options["cols_names"]}', os.path.basename(os.path.dirname(elem)), os.path.basename(elem)))
+            os.makedirs(os.path.join(tmp_folder, f'{options["cols_names"]}', os.path.basename(os.path.dirname(elem))),
+                        exist_ok=True)
+            shutil.copyfile(elem, os.path.join(tmp_folder, f'{options["cols_names"]}',
+                                               os.path.basename(os.path.dirname(elem)), os.path.basename(elem)))
 
         if dataset_folder:
             if os.path.isdir(os.path.join(dataset_folder, f'{options["cols_names"]}')):
@@ -406,7 +370,17 @@ class CreateArray(object):
             shutil.move(os.path.join(tmp_folder, f'{options["cols_names"]}'), dataset_folder)
 
         instructions = {'instructions': paths_list,
-                        'parameters': options}
+                        'parameters': {'height': options['height'],
+                                       'width': options['width'],
+                                       'net': options['net'],
+                                       # 'object_detection': options['object_detection'],
+                                       'scaler': options['scaler'],
+                                       'max_scaler': options['max_scaler'],
+                                       'min_scaler': options['min_scaler'],
+                                       'put': options['put'],
+                                       'cols_names': options['cols_names']
+                                       }
+                        }
 
         return instructions
 
@@ -417,9 +391,9 @@ class CreateArray(object):
 
             frames: np.ndarray = np.array([])
 
-            if fill_mode == LayerVideoFillModeChoice.black_frames:
-                frames = np.full((frames_to_add, *video_array[-1].shape), video_array[-1], dtype='uint8')
-            elif fill_mode == LayerVideoFillModeChoice.average_value:
+            # if fill_mode == LayerVideoFillModeChoice.black_frames:
+            #     frames = np.full((frames_to_add, *video_array[-1].shape), video_array[-1], dtype='uint8')
+            if fill_mode == LayerVideoFillModeChoice.average_value:
                 mean = np.mean(video_array, axis=0, dtype='uint16')
                 frames = np.full((frames_to_add, *mean.shape), mean, dtype='uint8')
             elif fill_mode == LayerVideoFillModeChoice.last_frames:
@@ -481,7 +455,19 @@ class CreateArray(object):
                 shutil.move(os.path.join(tmp_folder, f'{options["put"]}_video'), dataset_folder)
 
         instructions = {'instructions': instructions_paths,
-                        'parameters': options}
+                        'parameters': {'height': options['height'],
+                                       'width': options['width'],
+                                       'put': options['put'],
+                                       'cols_names': options['cols_names'],
+                                       'min_scaler': options['min_scaler'],
+                                       'max_scaler': options['max_scaler'],
+                                       'scaler': options['scaler'],
+                                       'frame_mode': options['frame_mode'],
+                                       'fill_mode': options['fill_mode'],
+                                       'video_mode': options['video_mode'],
+                                       'length': options['length'],
+                                       'max_frames': options['max_frames']}
+                        }
 
         return instructions
 
@@ -512,7 +498,12 @@ class CreateArray(object):
                 shutil.move(os.path.join(tmp_folder, f'{options["put"]}_audio'), dataset_folder)
 
         instructions = {'instructions': instructions_paths,
-                        'parameters': options}
+                        'parameters': {'sample_rate': options['sample_rate'],
+                                       'parameter': options['parameter'],
+                                       'scaler': options['scaler'],
+                                       'max_scaler': options['max_scaler'],
+                                       'min_scaler': options['min_scaler'],
+                                       'put': options['put']}}
 
         return instructions
 
@@ -524,7 +515,15 @@ class CreateArray(object):
             text_list.append(paths_list[elem])
 
         instructions = {'instructions': text_list,
-                        'parameters': options}
+                        'parameters': {'prepare_method': options['prepare_method'],
+                                       'put': options['put'],
+                                       'cols_names': options['cols_names'],
+                                       'length': options['length'],
+                                       'max_words_count': options['max_words_count'],
+                                       'word_to_vec_size': options['word_to_vec_size'],
+                                       'filters': options['filters']
+                                       }
+                        }
 
         return instructions
 
@@ -540,7 +539,17 @@ class CreateArray(object):
     def cut_classification(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
 
         instructions = {'instructions': paths_list,
-                        'parameters': options}
+                        'parameters': {"one_hot_encoding": options['one_hot_encoding'],
+                                       "classes_names": options['classes_names'],
+                                       "num_classes": options['classes_names'],
+                                       'cols_names': options['cols_names'],
+                                       'put': options['put'],
+                                       'type_processing': options['type_processing'],
+                                       'length': options['length'],
+                                       'step': options['step'],
+                                       'depth': options['depth']
+                                       }
+                        }
 
         return instructions
 
@@ -565,7 +574,16 @@ class CreateArray(object):
             shutil.move(os.path.join(tmp_folder, f'{options["cols_names"]}'), dataset_folder)
 
         instructions = {'instructions': paths_list,
-                        'parameters': options}
+                        'parameters': {'mask_range': options['mask_range'],
+                                       'num_classes': options['num_classes'],
+                                       'height': options['height'],
+                                       'width': options['width'],
+                                       'classes_colors': options['classes_colors'],
+                                       'classes_names': options['classes_names'],
+                                       'cols_names': options['cols_names'],
+                                       'put': options['put']
+                                       }
+                        }
 
         return instructions
 
@@ -577,7 +595,14 @@ class CreateArray(object):
             text_list.append(paths_list[elem])
 
         instructions = {'instructions': text_list,
-                        'parameters': options}
+                        'parameters': {'open_tags': options['open_tags'],
+                                       'close_tags': options['close_tags'],
+                                       'put': options['put'],
+                                       'num_classes': options['num_classes'],
+                                       'classes_names': options['open_tags'],
+                                       'length': options['length']
+                                       }
+                        }
 
         return instructions
 
@@ -606,7 +631,11 @@ class CreateArray(object):
                 shutil.move(os.path.join(tmp_folder, f'{options["put"]}_object_detection'), dataset_folder)
 
         instructions = {'instructions': paths_list,
-                        'parameters': options}
+                        'parameters': {'yolo': options['yolo'],
+                                       'num_classes': options['num_classes'],
+                                       'classes_names': options['classes_names'],
+                                       'put': options['put']}
+                        }
 
         return instructions
 

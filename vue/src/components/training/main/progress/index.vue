@@ -1,5 +1,8 @@
 <template>
-  <div class="t-progress">
+  <div class="overlay" v-if="statusTrain === 'start'">
+    <LoadSpiner :text="'Запуск обучения...'" />
+  </div>
+  <div v-else class="t-progress">
     <div class="t-progress__item t-progress__item--timers">
       <Timers v-bind="timings" />
     </div>
@@ -12,12 +15,14 @@
 <script>
 import Sysinfo from './Sysinfo.vue';
 import Timers from './Timers.vue';
+import LoadSpiner from '@/components/forms/LoadSpiner';
 
 export default {
   name: 't-progress',
   components: {
     Sysinfo,
     Timers,
+    LoadSpiner,
   },
   computed: {
     lossGraphs() {
@@ -29,7 +34,9 @@ export default {
     timings() {
       return this.lossGraphs?.timings || {};
     },
-
+    statusTrain() {
+      return this.$store.getters['trainings/getStatusTrain'];
+    },
   },
   mounted() {
     console.log(this.data);
@@ -47,8 +54,17 @@ export default {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 5px;
+  &__overlay {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background-color: rgb(14 22 33 / 30%);
+    z-index: 5;
+  }
   &__item {
-
     &--timers {
     }
     &--info {

@@ -89,7 +89,7 @@ class ParametersAudioData(ParametersBaseData, MinMaxScalerData):
 class ParametersVideoData(ParametersBaseData, MinMaxScalerData):
     width: PositiveInt
     height: PositiveInt
-    fill_mode: LayerVideoFillModeChoice = LayerVideoFillModeChoice.black_frames
+    fill_mode: LayerVideoFillModeChoice = LayerVideoFillModeChoice.average_value
     frame_mode: LayerVideoFrameModeChoice = LayerVideoFrameModeChoice.keep_proportions
     video_mode: LayerVideoModeChoice
     max_frames: Optional[PositiveInt]
@@ -165,4 +165,3 @@ class ParametersScalerData(ParametersBaseData, MinMaxScalerData):
     length: int = 0
     depth: int = 0
     step: int = 1
-

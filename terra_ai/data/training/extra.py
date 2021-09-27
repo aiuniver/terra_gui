@@ -28,7 +28,7 @@ class MetricGraphShowChoice(str, Enum):
 
 class ExampleChoiceTypeChoice(str, Enum):
     best = "best"
-    last = "last"
+    worst = "worst"
     seed = "seed"
     random = "random"
 

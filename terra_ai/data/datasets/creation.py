@@ -150,6 +150,7 @@ from pydantic.types import DirectoryPath
 from pydantic.networks import HttpUrl
 from pydantic.errors import EnumMemberError
 
+from ... import settings as terra_ai_settings
 from ..mixins import BaseMixinData, UniqueListMixin, AliasMixinData, IDMixinData
 from ..types import (
     confilepath,
@@ -396,6 +397,10 @@ class CreationData(AliasMixinData):
     "`input`-слои"
     outputs: CreationOutputsList = CreationOutputsList()
     "`output`-слои"
+
+    @property
+    def path(self) -> Path:
+        return Path(self.datasets_path, f"{self.alias}.{terra_ai_settings.DATASET_EXT}")
 
     @validator("inputs", "outputs")
     def _validate_required(cls, value: UniqueListMixin) -> UniqueListMixin:

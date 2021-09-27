@@ -40,11 +40,13 @@ export default {
   data: () => ({
     isChange: false,
     debounce: null,
+    temp: ''
   }),
   computed: {
     input: {
       set(value) {
         this.$emit('input', value);
+        this.temp = value
         this.isChange = true;
       },
       get() {
@@ -56,6 +58,13 @@ export default {
     this.debounce = debounce(e => {
       this.change(e);
     }, 500);
+  },
+  beforeDestroy() {
+    if (this.isChange) {
+      let value = this.temp.trim();
+      this.$emit('change', { name: this.name, value});
+      this.isChange = false;
+    }
   },
   methods: {
     enter(e) {

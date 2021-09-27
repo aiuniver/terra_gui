@@ -47,11 +47,13 @@ export default {
               { message: `Датасет «${dataset.name}» выбран` },
               { root: true }
             );
+            this.$store.dispatch('settings/setOverlay', false);
           } else {
             if (error) {
               this.$store.dispatch('messages/setMessage', { error });
               this.$store.dispatch('messages/setProgressMessage', '');
               this.$store.dispatch('messages/setProgress', 0);
+              this.$store.dispatch('settings/setOverlay', false);
               this.loading = false;
               return;
             }
@@ -65,6 +67,7 @@ export default {
       if (this.isNoTrain) {
         if (this.loading) return;
         this.loading = true;
+        this.$store.dispatch('settings/setOverlay', true);
         const { alias, group, name } = this.selected;
         const { success } = await this.$store.dispatch('datasets/choice', { alias, group });
         this.$store.dispatch('messages/setMessage', { message: `Загружаю датасет «${name}»` });
