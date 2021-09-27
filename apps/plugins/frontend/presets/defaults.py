@@ -933,7 +933,7 @@ Defaults = {
                     "parse": "name",
                 },
                 {
-                    "type": "select_creation_tasks",
+                    "type": "select",
                     "label": "Тип данных",
                     "name": "type",
                     "parse": "type",
@@ -1081,7 +1081,7 @@ Defaults = {
                     "parse": "name",
                 },
                 {
-                    "type": "select_creation_tasks",
+                    "type": "select",
                     "name": "type",
                     "label": "Тип задачи",
                     "parse": "type",
