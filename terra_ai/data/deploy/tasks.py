@@ -58,6 +58,26 @@ class ImageClassificationCollectionList(BaseCollectionList):
             self[index] = value
 
 
+class ImageSegmentationCollectionList(BaseCollectionList):
+    def reload(self, range_indexes: List):
+        source = interactive.deploy_presets_data
+        if not source:
+            self._reset()
+            return
+
+        # for index in range_indexes:
+        #     try:
+        #         os.remove(self[index].get("source"))
+        #     except Exception:
+        #         pass
+        #     value = source[random.randint(0, len(source) - 1)]
+        #     filepath = Path(value.get("source"))
+        #     destination = Path(self._path, f"{index+1}{filepath.suffix}")
+        #     shutil.copyfile(filepath.absolute(), destination)
+        #     value.update({"source": str(destination.absolute())})
+        #     self[index] = value
+
+
 class BaseCollection(BaseMixinData):
     type: CollectionTypeChoice
     data: BaseCollectionList
