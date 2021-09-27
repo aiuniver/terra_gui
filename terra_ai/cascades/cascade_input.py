@@ -20,10 +20,13 @@ def video(path):
 
 
 def image(path):
-    img = cv2.imread(path)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    img = img[np.newaxis, ...]
-    return img
+    # img = cv2.imread(path)
+    with open(path, "rb") as img_source:
+        img = img_source.read()
+    img_arr = np.frombuffer(img, dtype=np.uint8)
+    out_img = cv2.cvtColor(img_arr, cv2.COLOR_BGR2RGB)
+    out_img = out_img[np.newaxis, ...]
+    return out_img
 
 
 def folder(path):

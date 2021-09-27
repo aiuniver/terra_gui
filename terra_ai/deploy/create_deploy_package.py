@@ -48,6 +48,11 @@ class CascadeCreator:
         shutil.copyfile("terra_ai/datasets/preprocessing.py",
                         os.path.join(training_path, "cascades", "preprocessing.py"))
 
+    @staticmethod
+    def copy_script(training_path, function_name):
+        shutil.copyfile(f"terra_ai/deploy/deploy_scripts/{function_name}.py",
+                        os.path.join(training_path, "script.py"))
+
 
 if __name__ == "__main__":
     config = CascadeCreator()

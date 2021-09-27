@@ -6,7 +6,7 @@ import pymorphy2
 import joblib
 from tensorflow.keras.preprocessing.text import text_to_word_sequence
 
-from terra_ai.cascades.common import decamelize
+from ..common import decamelize
 
 
 def main(**params):
