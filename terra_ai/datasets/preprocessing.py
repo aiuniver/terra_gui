@@ -99,7 +99,7 @@ class CreatePreprocessing(object):
             if options['scaler'] == 'min_max_scaler':
                 scaler = MinMaxScaler(feature_range=(options['min_scaler'], options['max_scaler']))
                 array = np.array(array).reshape(-1, 1) if isinstance(array, np.ndarray) or isinstance(array,
-                                                                                                      list)\
+                                                                                                      list) \
                     else np.array([[0], [255]])
                 scaler.fit(array)
             elif options['scaler'] == 'standard_scaler':
@@ -187,12 +187,22 @@ class CreatePreprocessing(object):
             self.preprocessing[options['put']] = {}
         self.preprocessing[options['put']].update([(options['cols_names'], word2vec)])
 
-    def inverse_data(self, array: np.ndarray, put_id: str, col_name: str):
-        if type(self.preprocessing[put_id][col_name]) == StandardScaler or \
-                type(self.preprocessing[put_id][col_name]) == MinMaxScaler:
-            out_array = self.preprocessing[put_id][col_name].inverse_transform(array)
-            return out_array
-        else:
-            inv_tokenizer = {index: word for word, index in self.preprocessing[put_id][col_name].word_index.items()}
-            text = ' '.join([inv_tokenizer[seq] for seq in array])
-            return text
+    def inverse_data(self, options: dict):
+        out_dict = {}
+        for put_id, value in options.items():
+            out_dict[put_id] = {}
+            for col_name, array in value.items():
+                if type(self.preprocessing[put_id][col_name]) == StandardScaler or \
+                        type(self.preprocessing[put_id][col_name]) == MinMaxScaler:
+                    out_dict[put_id].update({col_name: self.preprocessing[put_id][col_name].inverse_transform(array)})
+
+                elif type(self.preprocessing[put_id][col_name]) == Tokenizer:
+                    inv_tokenizer = {index: word for word, index in
+                                     self.preprocessing[put_id][col_name].word_index.items()}
+                    out_dict[put_id].update({col_name: ' '.join([inv_tokenizer[seq] for seq in array])})
+
+                else:
+                    out_dict[put_id].update({col_name: ' '.join(
+                        [self.preprocessing[put_id][col_name].most_similar(
+                            positive=[seq], topn=1)[0][0] for seq in array])})
+        return out_dict

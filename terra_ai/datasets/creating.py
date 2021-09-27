@@ -60,6 +60,8 @@ class CreateDataset(object):
         if not creation_data.use_generator:
             x_array = self.create_dataset_arrays(put_data=self.instructions.inputs)
             y_array = self.create_dataset_arrays(put_data=self.instructions.outputs)
+            self.xx = x_array
+            self.yy = y_array
             self.write_arrays(x_array, y_array)
 
         self.write_preprocesses_to_files()
