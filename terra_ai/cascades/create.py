@@ -65,7 +65,7 @@ def json2model_cascade(path: str):
             with open(os.path.join(path, "dataset", "instructions", "parameters", f"{inp}_inputs.json")) as cfg:
                 spec_config = json.load(cfg)["parameters"]
 
-            param = param | spec_config
+            param.update(spec_config)
 
             type_module = getattr(general_fucntions, decamelize(param['task']))
             preprocess.append(getattr(type_module, 'main')(
