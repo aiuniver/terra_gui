@@ -1026,6 +1026,113 @@ DatasetsGroups = [
                 "use_generator": False
             },
             {
+                "alias": "bus_passengers",
+                "name": "Пассажиры автобусов",
+                "group": DatasetGroupChoice.terra,
+                "tags": [
+                    Tags.image,
+                    Tags.classification,
+                    Tags.terra_ai,
+                ],
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "shape": (200, 100, 3),
+                        "name": "Изображения",
+                        "task": LayerInputTypeChoice.Image,
+                        "classes_names": ['Входящий', 'Выходящий'],
+                        "num_classes": 2,
+                        "encoding": LayerEncodingChoice.none
+                    },
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "uint8",
+                        "shape": (2,),
+                        "name": "Метки классов",
+                        "task": LayerOutputTypeChoice.Classification,
+                        "num_classes": 2,
+                        "classes_names": ['Входящий', 'Выходящий'],
+                        "encoding": LayerEncodingChoice.ohe
+                    },
+                },
+                'columns': {1: {'1_image': {'classes_names': ['Входящий', 'Выходящий'],
+                                            'datatype': '2D',
+                                            'dtype': 'float32',
+                                            'encoding': LayerEncodingChoice.none,
+                                            'name': 'Изображения',
+                                            'num_classes': 2,
+                                            'shape': (200, 100, 3),
+                                            'task': LayerInputTypeChoice.Image}},
+                            2: {'2_classification': {'classes_names': ['Входящий', 'Выходящий'],
+                                                     'datatype': 'DIM',
+                                                     'dtype': 'uint8',
+                                                     'encoding': LayerEncodingChoice.ohe,
+                                                     'name': 'Метки классов',
+                                                     'num_classes': 2,
+                                                     'shape': (2,),
+                                                     'task': LayerOutputTypeChoice.Classification}
+                                }
+                            },
+                "use_generator": False
+            },
+            {
+                "alias": "marki_moloka",
+                "name": "Марки молока",
+                "group": DatasetGroupChoice.terra,
+                "tags": [
+                    Tags.image,
+                    Tags.classification,
+                    Tags.terra_ai,
+                ],
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "shape": (200, 100, 3),
+                        "name": "Изображения",
+                        "task": LayerInputTypeChoice.Image,
+                        "classes_names": ['Parmalat', 'Кубанская бурёнка', 'Семейный формат'],
+                        "num_classes": 3,
+                        "encoding": LayerEncodingChoice.none
+                    },
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "uint8",
+                        "shape": (3,),
+                        "name": "Метки классов",
+                        "task": LayerOutputTypeChoice.Classification,
+                        "num_classes": 2,
+                        "classes_names": ['Parmalat', 'Кубанская бурёнка', 'Семейный формат'],
+                        "encoding": LayerEncodingChoice.ohe
+                    },
+                },
+                'columns': {1: {'1_image': {'classes_names': ['Parmalat', 'Кубанская бурёнка', 'Семейный формат'],
+                                            'datatype': '2D',
+                                            'dtype': 'float32',
+                                            'encoding': LayerEncodingChoice.none,
+                                            'name': 'Изображения',
+                                            'num_classes': 2,
+                                            'shape': (200, 100, 3),
+                                            'task': LayerInputTypeChoice.Image}},
+                            2: {'2_classification': {'classes_names': ['Parmalat', 'Кубанская бурёнка',
+                                                                       'Семейный формат'],
+                                                     'datatype': 'DIM',
+                                                     'dtype': 'uint8',
+                                                     'encoding': LayerEncodingChoice.ohe,
+                                                     'name': 'Метки классов',
+                                                     'num_classes': 3,
+                                                     'shape': (3,),
+                                                     'task': LayerOutputTypeChoice.Classification}
+                                }
+                            },
+                "use_generator": False
+            },
+            {
                 "alias": "symptoms",
                 "name": "Заболевания",
                 "group": DatasetGroupChoice.terra,
