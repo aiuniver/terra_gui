@@ -539,8 +539,7 @@ class CreateArray(object):
     def cut_classification(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
 
         instructions = {'instructions': paths_list,
-                        'parameters': {"one_hot_encoding": options['one_hot_encoding'],
-                                       "classes_names": options['classes_names'],
+                        'parameters': {"classes_names": options['classes_names'],
                                        "num_classes": options['classes_names'],
                                        'cols_names': options['cols_names'],
                                        'put': options['put'],
@@ -742,11 +741,10 @@ class CreateArray(object):
                     if class_name[i] <= float(cl_name):
                         index.append(j)
                         break
-        if options['one_hot_encoding']:
-            if len(class_name) == 1:
-                index = utils.to_categorical(index[0], num_classes=options['num_classes'], dtype='uint8')
-            else:
-                index = utils.to_categorical(index, num_classes=options['num_classes'], dtype='uint8')
+        if len(class_name) == 1:
+            index = utils.to_categorical(index[0], num_classes=options['num_classes'], dtype='uint8')
+        else:
+            index = utils.to_categorical(index, num_classes=options['num_classes'], dtype='uint8')
 
         index = np.array(index)
 
