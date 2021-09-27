@@ -28,7 +28,7 @@ export default {
     },
     value: {
       type: Array,
-      default: () => []
+      default: () => [],
     },
     parse: String,
     name: String,
@@ -37,11 +37,13 @@ export default {
   },
   data: () => ({
     isChange: false,
+    temp: ''
   }),
   computed: {
     input: {
       set(value) {
         this.$emit('input', value.trim());
+        this.temp = value
         this.isChange = true;
       },
       get() {
@@ -49,6 +51,13 @@ export default {
         return this.value ? this.value.join() : '';
       },
     },
+  },
+  beforeDestroy() {
+    if (this.isChange) {
+      let value = this.temp.trim();
+      this.$emit('change', { name: this.name, value: value.length ? value.split(',') : null });
+      this.isChange = false;
+    }
   },
   methods: {
     change(e) {

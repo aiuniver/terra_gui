@@ -1,3 +1,4 @@
+import pathlib
 import shutil
 import sys
 import os
@@ -15,10 +16,9 @@ class CascadeCreator:
 
         tags = dataset_config['tags'][1]['alias']
 
-        cascade_json_path = f"./demo_panel_templates/{tags}.json"
+        cascade_json_path = f"terra_ai/deploy/demo_panel_templates/{tags}.json"
         with open(cascade_json_path) as cfg:
             config = json.load(cfg)
-        print(config)
 
         config = getattr(self, f"make_{tags}")(config, dataset_config, os.path.split(model_path)[-1])
         with open(os.path.join(out_path, f"{os.path.split(model_path)[-1]}.cascade"), 'w', encoding="utf-8") as f:
@@ -42,9 +42,16 @@ class CascadeCreator:
     def copy_package(training_path):
         if os.path.exists(os.path.join(training_path, "cascades")):
             shutil.rmtree(os.path.join(training_path, "cascades"), ignore_errors=True)
-        shutil.copytree("../cascades", os.path.join(training_path, "cascades"))
-        shutil.copyfile("../datasets/preprocessing.py", os.path.join(training_path, "cascades", "preprocessing.py"))
-                        # ignore=shutil.ignore_patterns("sources", "arrays"))
+        shutil.copytree("terra_ai/cascades",
+                        os.path.join(training_path, "cascades"),
+                        ignore=shutil.ignore_patterns("demo_panel", "cascades"))
+        shutil.copyfile("terra_ai/datasets/preprocessing.py",
+                        os.path.join(training_path, "cascades", "preprocessing.py"))
+
+    @staticmethod
+    def copy_script(training_path, function_name):
+        shutil.copyfile(f"terra_ai/deploy/deploy_scripts/{function_name}.py",
+                        os.path.join(training_path, "script.py"))
 
 
 if __name__ == "__main__":

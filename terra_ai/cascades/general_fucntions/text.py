@@ -6,7 +6,7 @@ import pymorphy2
 import joblib
 from tensorflow.keras.preprocessing.text import text_to_word_sequence
 
-from terra_ai.cascades.common import decamelize
+from ..common import decamelize
 
 
 def main(**params):
@@ -26,9 +26,6 @@ def main(**params):
             params['dataset_path'], 'preprocessing', str(params['key']),
             f'{params["key"]}_{decamelize(params["task"])}.gz')
     )
-    print(os.path.join(
-            params['dataset_path'], 'preprocessing', str(params['key']),
-            f'{params["key"]}_{decamelize(params["task"])}.gz'))
 
     def fun(text):
         if open_symbol:

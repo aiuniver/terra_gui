@@ -1,10 +1,10 @@
-from terra_ai.data.datasets.dataset import DatasetPathsData
+# from terra_ai.data.datasets.dataset import DatasetPathsData
 # from terra_ai.data.datasets.extra import LayerScalerImageChoice
 
 import os
 import joblib
 import numpy as np
-import pandas as pd
+# import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from gensim.models.word2vec import Word2Vec
 from tensorflow.keras.preprocessing.text import Tokenizer
@@ -83,10 +83,13 @@ class CreatePreprocessing(object):
     def load_preprocesses(self, put_data):
 
         for put in put_data.keys():
+            self.preprocessing[put] = {}
             for col_name in put_data[put].keys():
                 prep_path = os.path.join(self.dataset_path, 'preprocessing', str(put), f'{col_name}.gz')
                 if os.path.isfile(prep_path):
-                    self.preprocessing.update([(put, {col_name: joblib.load(prep_path)})])
+                    self.preprocessing[put].update([(col_name, joblib.load(prep_path))])
+                else:
+                    self.preprocessing[put].update([(col_name, None)])
 
     def create_dull(self, put_id: int):
 
@@ -99,7 +102,7 @@ class CreatePreprocessing(object):
             if options['scaler'] == 'min_max_scaler':
                 scaler = MinMaxScaler(feature_range=(options['min_scaler'], options['max_scaler']))
                 array = np.array(array).reshape(-1, 1) if isinstance(array, np.ndarray) or isinstance(array,
-                                                                                                      list)\
+                                                                                                      list) \
                     else np.array([[0], [255]])
                 scaler.fit(array)
             elif options['scaler'] == 'standard_scaler':
@@ -186,3 +189,23 @@ class CreatePreprocessing(object):
         if not options['put'] in self.preprocessing.keys():
             self.preprocessing[options['put']] = {}
         self.preprocessing[options['put']].update([(options['cols_names'], word2vec)])
+
+    def inverse_data(self, options: dict):
+        out_dict = {}
+        for put_id, value in options.items():
+            out_dict[put_id] = {}
+            for col_name, array in value.items():
+                if type(self.preprocessing[put_id][col_name]) == StandardScaler or \
+                        type(self.preprocessing[put_id][col_name]) == MinMaxScaler:
+                    out_dict[put_id].update({col_name: self.preprocessing[put_id][col_name].inverse_transform(array)})
+
+                elif type(self.preprocessing[put_id][col_name]) == Tokenizer:
+                    inv_tokenizer = {index: word for word, index in
+                                     self.preprocessing[put_id][col_name].word_index.items()}
+                    out_dict[put_id].update({col_name: ' '.join([inv_tokenizer[seq] for seq in array])})
+
+                else:
+                    out_dict[put_id].update({col_name: ' '.join(
+                        [self.preprocessing[put_id][col_name].most_similar(
+                            positive=[seq], topn=1)[0][0] for seq in array])})
+        return out_dict

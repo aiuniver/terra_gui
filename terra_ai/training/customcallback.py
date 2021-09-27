@@ -546,15 +546,12 @@ class InteractiveCallback:
                 'statistic_data': self.statistic_result,
                 'data_balance': self._get_balance_data_request(),
             }
-            if self.get_states().get("status") in ["training", "addtrain"]:
-                progress.pool(
+            progress.pool(
                     self.progress_name,
                     data=self.train_progress,
                     finished=False,
                 )
-                return None
-            else:
-                return self.train_progress
+            return self.train_progress
 
     # Методы для set_attributes()
     @staticmethod
@@ -2429,7 +2426,6 @@ class InteractiveCallback:
             elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.ObjectDetection:
                 # frequency of classes, like with segmentation
                 pass
-
             else:
                 pass
 
@@ -2556,13 +2552,6 @@ class InteractiveCallback:
         Audio to .webm
         from pydub import AudioSegment
         AudioSegment.from_file("audio_path").export("audio.webm", format="webm")
-        (
-                        self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries
-                        and self.dataset_config.get("outputs").get(out).get("classes_names") ==
-                        ['Не изменился', 'Вверх', 'Вниз']
-                    ):
-
-
         """
 
         column_idx = []
