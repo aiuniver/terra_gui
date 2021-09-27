@@ -11,6 +11,7 @@ import MultiSelect from './forms/MultiSelect';
 import Checkbox from './forms/Checkbox';
 import Input from './forms/Input';
 import Select from './forms/Select';
+import SelectTasks from './forms/SelectTasks';
 
 
 // _______________NEW____________________//
@@ -33,6 +34,7 @@ export default [
   SegmentationAnnotation,
   Autocomplete,
   MultiSelect,
+  SelectTasks,
 
   TInput,
   TCheckbox,
