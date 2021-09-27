@@ -37,6 +37,16 @@ export default {
     },
     onDrop({ dataTransfer }) {
       const data = JSON.parse(dataTransfer.getData('CardDataType'));
+      if (this.mixinFiles.length) {
+        if (this.mixinFiles.find(item => item.type !== data.type)) {
+          this.$Notify.warning({ title: 'Внимание!', message: 'Выбрать можно только одинаковый тип данных' });
+          return;
+        }
+        if (this.mixinFiles.find(item => item.type === 'table')) {
+          this.$Notify.warning({ title: 'Внимание!', message: 'Выбрать можно только одину таблицу' });
+          return;
+        }
+      }
       if (!this.mixinFiles.find(item => item.value === data.value)) {
         this.mixinFiles = [...this.mixinFiles, data];
       } else {
