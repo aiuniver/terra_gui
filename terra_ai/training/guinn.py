@@ -678,6 +678,13 @@ class FitCallback(keras.callbacks.Callback):
             config = CascadeCreator()
             config.create_config(self.save_model_path, os.path.split(self.save_model_path)[0])
             config.copy_package(os.path.split(self.save_model_path)[0])
+            input_key = list(self.dataset.data.inputs.keys())[0]
+            output_key = list(self.dataset.data.outputs.keys())[0]
+            config.copy_script(
+                training_path=os.path.split(self.save_model_path)[0],
+                function_name=f"{self.dataset.data.inputs[input_key].task.lower()}"
+                              f"_{self.dataset.data.outputs[output_key].task.lower()}"
+            )
 
     def save_lastmodel(self) -> None:
         """
