@@ -1,4 +1,5 @@
 import os
+import json
 import random
 import shutil
 
@@ -41,8 +42,14 @@ class BaseCollectionList(List):
 class ImageClassificationCollectionList(BaseCollectionList):
     def reload(self, range_indexes: List):
         source = interactive.deploy_presets_data
+        labelfile = Path(self._path, "label.txt")
+        label = []
         if not source:
             self._reset()
+            try:
+                os.remove(labelfile)
+            except Exception as error:
+                print(error)
             return
 
         for index in range_indexes:
@@ -57,6 +64,11 @@ class ImageClassificationCollectionList(BaseCollectionList):
             value.update({"source": str(destination.absolute())})
             self[index] = value
 
+        for item in self:
+            label.append(json.dumps(item.get("data", [])))
+        with open(labelfile, "w") as labelfile_ref:
+            labelfile_ref.write("\n".join(label))
+
 
 class ImageSegmentationCollectionList(BaseCollectionList):
     def reload(self, range_indexes: List):
@@ -65,8 +77,14 @@ class ImageSegmentationCollectionList(BaseCollectionList):
         os.makedirs(source_path, exist_ok=True)
         os.makedirs(segment_path, exist_ok=True)
         source = interactive.deploy_presets_data
+        labelfile = Path(self._path, "label.txt")
+        label = []
         if not source:
             self._reset()
+            try:
+                os.remove(labelfile)
+            except Exception as error:
+                print(error)
             return
 
         for index in range_indexes:
@@ -91,6 +109,11 @@ class ImageSegmentationCollectionList(BaseCollectionList):
                 }
             )
             self[index] = value
+
+        for item in self:
+            label.append(json.dumps(item.get("data", [])))
+        with open(labelfile, "w") as labelfile_ref:
+            labelfile_ref.write("\n".join(label))
 
 
 class BaseCollection(BaseMixinData):
