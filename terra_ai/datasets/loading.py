@@ -203,7 +203,10 @@ def __choice_from_terra(name: str, destination: Path, **kwargs):
             DATASET_CHOICE_UNPACK_TITLE % (DatasetGroupChoice.terra.value, name),
             zipfile_path,
         )
-        shutil.move(zip_destination, destination)
+        shutil.rmtree(destination, ignore_errors=True)
+        os.makedirs(destination, exist_ok=True)
+        for file in os.listdir(zip_destination):
+            shutil.move(str(Path(zip_destination, file).absolute()), destination)
         os.remove(zipfile_path.absolute())
     except (Exception, requests.exceptions.ConnectionError) as error:
         progress.pool(progress_name, error=str(error))

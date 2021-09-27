@@ -215,11 +215,11 @@ class CustomDatasetConfigData(BaseMixinData):
     path: DirectoryPath
     config: Optional[dict] = {}
 
-    @validator("path")
-    def _validate_path(cls, value: DirectoryPath) -> DirectoryPath:
-        if not str(value).endswith(f".{settings.DATASET_EXT}"):
-            raise TrdsDirExtException(value.name)
-        return value
+    # @validator("path")
+    # def _validate_path(cls, value: DirectoryPath) -> DirectoryPath:
+    #     if not str(value).endswith(f".{settings.DATASET_EXT}"):
+    #         raise TrdsDirExtException(value.name)
+    #     return value
 
     @validator("config", always=True)
     def _validate_config(cls, value: dict, values) -> dict:
@@ -287,7 +287,9 @@ class DatasetData(AliasMixinData):
     tags: Optional[TagsList] = TagsList()
     inputs: Dict[PositiveInt, DatasetInputsData] = {}
     outputs: Dict[PositiveInt, DatasetOutputsData] = {}
-    columns: Optional[Dict[PositiveInt, Dict[str, Union[DatasetInputsData, DatasetOutputsData]]]] = {}
+    columns: Optional[
+        Dict[PositiveInt, Dict[str, Union[DatasetInputsData, DatasetOutputsData]]]
+    ] = {}
 
     @property
     def model(self) -> ModelDetailsData:
