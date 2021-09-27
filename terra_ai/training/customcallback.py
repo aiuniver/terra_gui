@@ -24,7 +24,7 @@ from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.utils import camelize, decamelize
 
-__version__ = 0.068
+__version__ = 0.069
 
 def sort_dict(dict_to_sort: dict, mode='by_name'):
     if mode == 'by_name':
@@ -327,6 +327,7 @@ class InteractiveCallback:
         self.progress_table = {}
         self.dataset_balance = None
         self.class_idx = None
+        self.class_graphics = {}
 
         self.show_examples = 10
         self.ex_type_choice = 'seed'
@@ -435,12 +436,13 @@ class InteractiveCallback:
         self.interactive_config = initial_config.native()
         # print("INITIAL_CONFIG", self.interactive_config)
         # print("INITIAL_CONFIG", initial_config)
-        # self.dataset = dataset
+        print('self.losses', self.losses)
+        print('self.metrics', self.metrics)
 
         self._prepare_dataset_config(dataset, dataset_path)
         self.x_val = self._prepare_x_val(dataset)
         self._prepare_y_true(dataset)
-        # self._prepare_interactive_config()
+        self._class_metric_list()
 
         if not self.log_history:
             self._prepare_null_log_history_template()
@@ -497,25 +499,27 @@ class InteractiveCallback:
 
     def update_state(self, y_pred, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
         if self.log_history:
-            self._reformat_y_pred(y_pred)
-            if self.interactive_config.get('intermediate_result').get('show_results'):
-                self.example_idx = self._prepare_example_idx_to_show()
-            if on_epoch_end_flag:
-                self.current_epoch = fit_logs.get('epoch')
-                self.current_logs = self._reformat_fit_logs(fit_logs)
-                self._update_log_history()
-                self._update_progress_table(current_epoch_time)
-                if self.interactive_config.get('intermediate_result').get('autoupdate'):
+            if y_pred is not None:
+                self._reformat_y_pred(y_pred)
+                if self.interactive_config.get('intermediate_result').get('show_results'):
+                    self.example_idx = self._prepare_example_idx_to_show()
+                if on_epoch_end_flag:
+                    self.current_epoch = fit_logs.get('epoch')
+                    self.current_logs = self._reformat_fit_logs(fit_logs)
+                    self._update_log_history()
+                    self._update_progress_table(current_epoch_time)
+                    if self.interactive_config.get('intermediate_result').get('autoupdate'):
+                        self.intermediate_result = self._get_intermediate_result_request()
+                    if self.interactive_config.get('statistic_data').get('output_id') \
+                            and self.interactive_config.get('statistic_data').get('autoupdate'):
+                        self.statistic_result = self._get_statistic_data_request()
+                else:
                     self.intermediate_result = self._get_intermediate_result_request()
-                if self.interactive_config.get('statistic_data').get('output_id') \
-                        and self.interactive_config.get('statistic_data').get('autoupdate'):
-                    self.statistic_result = self._get_statistic_data_request()
-            else:
-                self.intermediate_result = self._get_intermediate_result_request()
-                if self.interactive_config.get('statistic_data').get('output_id'):
-                    self.statistic_result = self._get_statistic_data_request()
-            self.urgent_predict = False
+                    if self.interactive_config.get('statistic_data').get('output_id'):
+                        self.statistic_result = self._get_statistic_data_request()
+                self.urgent_predict = False
             return {
+                "class_graphics": self.class_graphics,
                 'loss_graphs': self._get_loss_graph_data_request(),
                 'metric_graphs': self._get_metric_graph_data_request(),
                 'intermediate_result': self.intermediate_result,
@@ -538,6 +542,7 @@ class InteractiveCallback:
                 return
 
             self.train_progress['train_data'] = {
+                "class_graphics": self.class_graphics,
                 'loss_graphs': self._get_loss_graph_data_request(),
                 'metric_graphs': self._get_metric_graph_data_request(),
                 'intermediate_result': self.intermediate_result,
@@ -710,6 +715,21 @@ class InteractiveCallback:
                     self.y_true[data_type][out] = dataset.Y.get(data_type).get(f"{out}")
                 else:
                     pass
+
+    def _class_metric_list(self):
+        self.class_graphics = {}
+        for out in self.losses.keys():
+            if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification or \
+                    self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation or \
+                    self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation or \
+                    (
+                            self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries
+                            and self.dataset_config.get("outputs").get(out).get("classes_names") ==
+                            ['Не изменился', 'Вверх', 'Вниз']
+                    ):
+                self.class_graphics[out] = True
+            else:
+                self.class_graphics[out] = False
 
     def _prepare_null_log_history_template(self):
         """

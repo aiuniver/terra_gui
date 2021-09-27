@@ -795,6 +795,8 @@ class FitCallback(keras.callbacks.Callback):
                 #     upred[data_type] = self.model.predict(self.dataset.X.get(data_type))
 
                 train_batch_data = interactive.update_state(y_pred=upred)
+            else:
+                train_batch_data = interactive.update_state(y_pred=None)
             if train_batch_data:
                 result_data = {
                     'timings': [still_time, elapsed_time, elapsed_epoch_time,
