@@ -327,6 +327,7 @@ class InteractiveCallback:
         self.progress_table = {}
         self.dataset_balance = None
         self.class_idx = None
+        self.class_graphics = {}
 
         self.show_examples = 10
         self.ex_type_choice = 'seed'
@@ -435,12 +436,13 @@ class InteractiveCallback:
         self.interactive_config = initial_config.native()
         # print("INITIAL_CONFIG", self.interactive_config)
         # print("INITIAL_CONFIG", initial_config)
-        # self.dataset = dataset
+        print('self.losses', self.losses)
+        print('self.metrics', self.metrics)
 
         self._prepare_dataset_config(dataset, dataset_path)
         self.x_val = self._prepare_x_val(dataset)
         self._prepare_y_true(dataset)
-        # self._prepare_interactive_config()
+        self._class_metric_list()
 
         if not self.log_history:
             self._prepare_null_log_history_template()
@@ -517,6 +519,7 @@ class InteractiveCallback:
                         self.statistic_result = self._get_statistic_data_request()
                 self.urgent_predict = False
             return {
+                "class_graphics": self.class_graphics,
                 'loss_graphs': self._get_loss_graph_data_request(),
                 'metric_graphs': self._get_metric_graph_data_request(),
                 'intermediate_result': self.intermediate_result,
@@ -539,6 +542,7 @@ class InteractiveCallback:
                 return
 
             self.train_progress['train_data'] = {
+                "class_graphics": self.class_graphics,
                 'loss_graphs': self._get_loss_graph_data_request(),
                 'metric_graphs': self._get_metric_graph_data_request(),
                 'intermediate_result': self.intermediate_result,
@@ -711,6 +715,21 @@ class InteractiveCallback:
                     self.y_true[data_type][out] = dataset.Y.get(data_type).get(f"{out}")
                 else:
                     pass
+
+    def _class_metric_list(self):
+        self.class_graphics = {}
+        for out in self.losses.keys():
+            if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification or \
+                    self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation or \
+                    self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation or \
+                    (
+                            self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries
+                            and self.dataset_config.get("outputs").get(out).get("classes_names") ==
+                            ['Не изменился', 'Вверх', 'Вниз']
+                    ):
+                self.class_graphics[out] = True
+            else:
+                self.class_graphics[out] = False
 
     def _prepare_null_log_history_template(self):
         """
