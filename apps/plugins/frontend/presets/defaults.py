@@ -1,8 +1,6 @@
 from terra_ai.data.modeling.layers import Layer, types
 from terra_ai.data.modeling.extra import LayerTypeChoice
 from terra_ai.data.training.extra import (
-    LossChoice,
-    MetricChoice,
     OptimizerChoice,
     CheckpointIndicatorChoice,
     CheckpointTypeChoice,
@@ -17,7 +15,6 @@ from ..choices import (
     LayerInputTypeChoice,
     LayerOutputTypeChoice,
     LayerNetChoice,
-    LayerScalerChoice,
     LayerScalerImageChoice,
     LayerScalerAudioChoice,
     LayerScalerVideoChoice,
@@ -25,13 +22,14 @@ from ..choices import (
     LayerScalerTimeseriesChoice,
     LayerScalerDefaultChoice,
     LayerAudioModeChoice,
+    LayerAudioFillModeChoice,
     LayerAudioParameterChoice,
+    LayerAudioResampleChoice,
     LayerTextModeChoice,
     LayerVideoFillModeChoice,
     LayerVideoFrameModeChoice,
     LayerVideoModeChoice,
     LayerPrepareMethodChoice,
-    LayerDataframeAlignBaseMethodChoice,
     LayerDefineClassesChoice,
     LayerYoloVersionChoice,
     LayerTypeProcessingClassificationChoice,
@@ -351,72 +349,6 @@ LayerAudioDefaults = [
 
 LayerDataframeDefaults = [
     SourcesPaths,
-    # {
-    #     "type": "checkbox",
-    #     "label": "Выровнять базу",
-    #     "name": "align_base",
-    #     "parse": "align_base",
-    #     "value": False,
-    #     "fields": {
-    #         "true": [
-    #             {
-    #                 "type": "radio",
-    #                 "name": "align_base_method",
-    #                 "parse": "align_base_method",
-    #                 "value": LayerDataframeAlignBaseMethodChoice.pad_sequences.name,
-    #                 "list": list(
-    #                     map(
-    #                         lambda item: {
-    #                             "value": item.name,
-    #                             "label": item.value,
-    #                         },
-    #                         list(LayerDataframeAlignBaseMethodChoice),
-    #                     )
-    #                 ),
-    #                 "fields": {
-    #                     "pad_sequences": [
-    #                         {
-    #                             "type": "number",
-    #                             "label": "Длина примера",
-    #                             "name": "example_length",
-    #                             "parse": "example_length",
-    #                         },
-    #                     ],
-    #                     "xlen_step": [
-    #                         {
-    #                             "type": "number",
-    #                             "label": "Длина",
-    #                             "name": "length",
-    #                             "parse": "length",
-    #                         },
-    #                         {
-    #                             "type": "number",
-    #                             "label": "Шаг",
-    #                             "name": "step",
-    #                             "parse": "step",
-    #                         },
-    #                     ],
-    #                 },
-    #             },
-    #             {
-    #                 "type": "select",
-    #                 "label": "Скейлер",
-    #                 "name": "scaler",
-    #                 "parse": "scaler",
-    #                 "value": LayerScalerChoice.no_scaler.name,
-    #                 "list": list(
-    #                     map(
-    #                         lambda item: {
-    #                             "value": item.name,
-    #                             "label": item.value,
-    #                         },
-    #                         list(LayerScalerChoice),
-    #                     )
-    #                 ),
-    #             },
-    #         ],
-    #     },
-    # },
 ]
 
 
@@ -519,44 +451,10 @@ Defaults = {
                                 "value": '–—!"#$%&()*+,-./:;<=>?@[\\]^«»№_`{|}~\t\n\xa0–\ufeff',
                             },
                             {
-                                "type": "select",
-                                "label": "Формат текстов",
-                                "name": "text_mode",
-                                "parse": "text_mode",
-                                "value": LayerTextModeChoice.completely.name,
-                                "list": list(
-                                    map(
-                                        lambda item: {
-                                            "value": item.name,
-                                            "label": item.value,
-                                        },
-                                        list(LayerTextModeChoice),
-                                    )
-                                ),
-                                "fields": {
-                                    "completely": [
-                                        {
-                                            "type": "number",
-                                            "label": "Количество слов",
-                                            "name": "max_words",
-                                            "parse": "max_words",
-                                        },
-                                    ],
-                                    "length_and_step": [
-                                        {
-                                            "type": "number",
-                                            "label": "Длина",
-                                            "name": "length",
-                                            "parse": "length",
-                                        },
-                                        {
-                                            "type": "number",
-                                            "label": "Шаг",
-                                            "name": "step",
-                                            "parse": "step",
-                                        },
-                                    ],
-                                },
+                                "type": "number",
+                                "label": "Количество слов",
+                                "name": "max_words",
+                                "parse": "max_words",
                             },
                             {
                                 "type": "checkbox",
@@ -620,44 +518,26 @@ Defaults = {
                                 "value": 22050,
                             },
                             {
+                                "type": "number",
+                                "label": "Длина аудио (сек.)",
+                                "name": "max_seconds",
+                                "parse": "max_seconds",
+                            },
+                            {
                                 "type": "select",
-                                "label": "Формат аудио",
-                                "name": "audio_mode",
-                                "parse": "audio_mode",
-                                "value": LayerAudioModeChoice.completely.name,
+                                "label": "Заполнение недостающих аудио-дорожек",
+                                "name": "fill_mode",
+                                "parse": "fill_mode",
+                                "value": LayerAudioFillModeChoice.last_millisecond.name,
                                 "list": list(
                                     map(
                                         lambda item: {
                                             "value": item.name,
                                             "label": item.value,
                                         },
-                                        list(LayerAudioModeChoice),
+                                        list(LayerAudioFillModeChoice),
                                     )
                                 ),
-                                "fields": {
-                                    "completely": [
-                                        {
-                                            "type": "number",
-                                            "label": "Длина аудио (сек.)",
-                                            "name": "max_seconds",
-                                            "parse": "max_seconds",
-                                        },
-                                    ],
-                                    "length_and_step": [
-                                        {
-                                            "type": "number",
-                                            "label": "Длина (сек.)",
-                                            "name": "length",
-                                            "parse": "length",
-                                        },
-                                        {
-                                            "type": "number",
-                                            "label": "Шаг (сек.)",
-                                            "name": "step",
-                                            "parse": "step",
-                                        },
-                                    ],
-                                },
                             },
                             {
                                 "type": "select",
@@ -672,6 +552,22 @@ Defaults = {
                                             "label": item.value,
                                         },
                                         list(LayerAudioParameterChoice),
+                                    )
+                                ),
+                            },
+                            {
+                                "type": "select",
+                                "label": "Ресемпл",
+                                "name": "resample",
+                                "parse": "resample",
+                                "value": LayerAudioResampleChoice.kaiser_best.name,
+                                "list": list(
+                                    map(
+                                        lambda item: {
+                                            "value": item.name,
+                                            "label": item.value,
+                                        },
+                                        list(LayerAudioResampleChoice),
                                     )
                                 ),
                             },
@@ -728,7 +624,7 @@ Defaults = {
                                 "label": "Заполнение недостающих кадров",
                                 "name": "fill_mode",
                                 "parse": "fill_mode",
-                                "value": LayerVideoFillModeChoice.average_value.name,
+                                "value": LayerVideoFillModeChoice.last_frames.name,
                                 "list": list(
                                     map(
                                         lambda item: {
@@ -756,44 +652,10 @@ Defaults = {
                                 ),
                             },
                             {
-                                "type": "select",
-                                "label": "Формат видео",
-                                "name": "video_mode",
-                                "parse": "video_mode",
-                                "value": LayerVideoModeChoice.completely.name,
-                                "list": list(
-                                    map(
-                                        lambda item: {
-                                            "value": item.name,
-                                            "label": item.value,
-                                        },
-                                        list(LayerVideoModeChoice),
-                                    )
-                                ),
-                                "fields": {
-                                    "completely": [
-                                        {
-                                            "type": "number",
-                                            "label": "Количество кадров",
-                                            "name": "max_frames",
-                                            "parse": "max_frames",
-                                        },
-                                    ],
-                                    "length_and_step": [
-                                        {
-                                            "type": "number",
-                                            "label": "Длина (кадров)",
-                                            "name": "length",
-                                            "parse": "length",
-                                        },
-                                        {
-                                            "type": "number",
-                                            "label": "Шаг (кадров)",
-                                            "name": "step",
-                                            "parse": "step",
-                                        },
-                                    ],
-                                },
+                                "type": "number",
+                                "label": "Количество кадров",
+                                "name": "max_frames",
+                                "parse": "max_frames",
                             },
                             {
                                 "type": "select",
@@ -1071,7 +933,8 @@ Defaults = {
                     "parse": "name",
                 },
                 {
-                    "type": "select_creation_tasks",
+                    # "type": "select_creation_tasks",
+                    "type": "select",
                     "label": "Тип данных",
                     "name": "type",
                     "parse": "type",
@@ -1219,7 +1082,8 @@ Defaults = {
                     "parse": "name",
                 },
                 {
-                    "type": "select_creation_tasks",
+                    # "type": "select_creation_tasks",
+                    "type": "select",
                     "name": "type",
                     "label": "Тип задачи",
                     "parse": "type",

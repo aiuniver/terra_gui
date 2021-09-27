@@ -15,7 +15,9 @@ from terra_ai.data.datasets.extra import (
     LayerTextModeChoice,
     LayerPrepareMethodChoice,
     LayerAudioModeChoice,
+    LayerAudioFillModeChoice,
     LayerAudioParameterChoice,
+    LayerAudioResampleChoice,
     LayerVideoFillModeChoice,
     LayerVideoFrameModeChoice,
     LayerVideoModeChoice,
@@ -37,7 +39,7 @@ class ParametersImageData(ParametersBaseData, MinMaxScalerData):
 
 class ParametersTextData(ParametersBaseData):
     filters: str = '–—!"#$%&()*+,-./:;<=>?@[\\]^«»№_`{|}~\t\n\xa0–\ufeff'
-    text_mode: LayerTextModeChoice
+    text_mode: LayerTextModeChoice = LayerTextModeChoice.completely
     max_words: Optional[PositiveInt]
     length: Optional[PositiveInt]
     step: Optional[PositiveInt]
@@ -69,11 +71,13 @@ class ParametersTextData(ParametersBaseData):
 
 class ParametersAudioData(ParametersBaseData, MinMaxScalerData):
     sample_rate: PositiveInt = 22050
-    audio_mode: LayerAudioModeChoice
+    audio_mode: LayerAudioModeChoice = LayerAudioModeChoice.completely
     max_seconds: Optional[PositiveFloat]
     length: Optional[PositiveFloat]
     step: Optional[PositiveFloat]
+    fill_mode: LayerAudioFillModeChoice = LayerAudioFillModeChoice.last_millisecond
     parameter: LayerAudioParameterChoice
+    resample: LayerAudioResampleChoice = LayerAudioResampleChoice.kaiser_best
     scaler: LayerScalerAudioChoice
 
     @validator("audio_mode")
@@ -89,9 +93,9 @@ class ParametersAudioData(ParametersBaseData, MinMaxScalerData):
 class ParametersVideoData(ParametersBaseData, MinMaxScalerData):
     width: PositiveInt
     height: PositiveInt
-    fill_mode: LayerVideoFillModeChoice = LayerVideoFillModeChoice.average_value
+    fill_mode: LayerVideoFillModeChoice = LayerVideoFillModeChoice.last_frames
     frame_mode: LayerVideoFrameModeChoice = LayerVideoFrameModeChoice.keep_proportions
-    video_mode: LayerVideoModeChoice
+    video_mode: LayerVideoModeChoice = LayerVideoModeChoice.completely
     max_frames: Optional[PositiveInt]
     length: Optional[PositiveInt]
     step: Optional[PositiveInt]
