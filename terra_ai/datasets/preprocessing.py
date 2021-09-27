@@ -1,10 +1,10 @@
-from terra_ai.data.datasets.dataset import DatasetPathsData
+# from terra_ai.data.datasets.dataset import DatasetPathsData
 # from terra_ai.data.datasets.extra import LayerScalerImageChoice
 
 import os
 import joblib
 import numpy as np
-import pandas as pd
+# import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from gensim.models.word2vec import Word2Vec
 from tensorflow.keras.preprocessing.text import Tokenizer
@@ -186,3 +186,13 @@ class CreatePreprocessing(object):
         if not options['put'] in self.preprocessing.keys():
             self.preprocessing[options['put']] = {}
         self.preprocessing[options['put']].update([(options['cols_names'], word2vec)])
+
+    def inverse_data(self, array: np.ndarray, put_id: str, col_name: str):
+        if type(self.preprocessing[put_id][col_name]) == StandardScaler or \
+                type(self.preprocessing[put_id][col_name]) == MinMaxScaler:
+            out_array = self.preprocessing[put_id][col_name].inverse_transform(array)
+            return out_array
+        else:
+            inv_tokenizer = {index: word for word, index in self.preprocessing[put_id][col_name].word_index.items()}
+            text = ' '.join([inv_tokenizer[seq] for seq in array])
+            return text
