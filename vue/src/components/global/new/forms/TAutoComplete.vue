@@ -9,7 +9,7 @@
     ></i>
     <input
       class="t-auto-complete__input"
-      v-model="search"
+      v-model="input"
       :name="name"
       :disabled="isDisabled"
       :placeholder="placeholder || ''"
