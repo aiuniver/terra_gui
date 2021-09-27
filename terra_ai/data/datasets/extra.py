@@ -45,6 +45,12 @@ class LayerAudioParameterChoice(str, Enum):
     zero_crossing_rate = "zero_crossing_rate"
 
 
+class LayerAudioResampleChoice(str, Enum):
+    kaiser_best = "kaiser_best"
+    kaiser_fast = "kaiser_fast"
+    scipy = "scipy"
+
+
 class LayerTextModeChoice(str, Enum):
     completely = "completely"
     length_and_step = "length_and_step"
@@ -53,6 +59,11 @@ class LayerTextModeChoice(str, Enum):
 class LayerAudioModeChoice(str, Enum):
     completely = "completely"
     length_and_step = "length_and_step"
+
+
+class LayerAudioFillModeChoice(str, Enum):
+    last_millisecond = "last_millisecond"
+    loop = "loop"
 
 
 class LayerScalerDefaultChoice(str, Enum):
@@ -96,8 +107,9 @@ class LayerScalerVideoChoice(str, Enum):
 
 
 class LayerVideoFillModeChoice(str, Enum):
-    average_value = "average_value"
     last_frames = "last_frames"
+    loop = "loop"
+    average_value = "average_value"
 
 
 class LayerVideoFrameModeChoice(str, Enum):
