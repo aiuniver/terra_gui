@@ -65,6 +65,19 @@ export default {
       // console.log(this.listChats);
       return [...this.menus, ...this.listChats];
     },
+    state: {
+      set(value) {
+        this.$store.dispatch('trainings/setStateParams', value);
+      },
+      get() {
+        return this.$store.getters['trainings/getStateParams'];
+      },
+    },
+    getValue() {
+      const data = Object.values(this.outputs?.fields || {})?.[0]?.fields || [];
+      const metrics = data.find(item => item.type === 'multiselect');
+      return this.state?.['architecture[parameters][checkpoint][metric_name]'] ?? (metrics.value[0] || '');
+    },
     listChats() {
       const arr = [];
       const listOutputs = this.outputs.map(item => {
@@ -72,7 +85,8 @@ export default {
       });
 
       if (this.metric === 'metric_graphs') {
-        const listMetrics = this.metrics.map(item => {
+        const temp = this.state?.['architecture[parameters][outputs][2][metrics]'] || []
+        const listMetrics = temp.map(item => {
           return { title: `${item}`, event: { name: 'metric', data: item } };
         });
         arr.push({

@@ -2,6 +2,7 @@ import gc
 import importlib
 import json
 import os
+import pathlib
 import re
 import shutil
 import sys
@@ -23,13 +24,14 @@ from tensorflow.keras.models import load_model
 
 from terra_ai import progress
 from terra_ai.data.datasets.dataset import DatasetData
-from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice
+from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice, DatasetGroupChoice
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
 from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, \
     CheckpointModeChoice
 from terra_ai.data.training.train import TrainData, InteractiveData
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
+from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.training.customlosses import DiceCoef, yolo_loss
@@ -141,10 +143,12 @@ class GUINN:
         prepared_dataset.prepare_dataset()
         return prepared_dataset
 
-    @staticmethod
-    def _set_model(model: ModelDetailsData) -> ModelData:
-        validator = ModelValidator(model)
-        train_model = validator.get_keras_model()
+    def _set_model(self, model: ModelDetailsData) -> ModelData:
+        if interactive.get_states().get("status") == "training":
+            validator = ModelValidator(model)
+            train_model = validator.get_keras_model()
+        else:
+            train_model = load_model(os.path.join(self.training_path, self.nn_name, f"{self.nn_name}.trm"))
         return train_model
 
     @staticmethod
@@ -226,8 +230,7 @@ class GUINN:
         self.nn_cleaner(retrain=True if interactive.get_states().get("status") == "training" else False)
         self._set_training_params(dataset=dataset, dataset_path=dataset_path, model_name=gui_model.alias,
                                   params=training_params, training_path=training_path, initial_config=initial_config)
-        nn_model = self._set_model(model=gui_model)
-        self.model = nn_model
+        self.model = self._set_model(model=gui_model)
         if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.ObjectDetection:
             self.yolo_model_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
         else:
@@ -638,33 +641,50 @@ class FitCallback(keras.callbacks.Callback):
         #     f.write(str(presets_predict[0].tolist()))
 
         result = CreateArray().postprocess_results(array=presets_predict,
-                                                   options=self.dataset_data,
-                                                   data_dataframe=self.dataset.dataframe.get("val"),
+                                                   options=self.dataset,
                                                    save_path=os.path.join(self.save_model_path,
                                                                           "deploy_presets"))
         deploy_presets = []
         if result:
-            for inp in self.dataset_data.inputs.keys():
-                for idx in range(len(list(result.values())[0])):
-                    data = interactive._postprocess_initial_data(
-                        input_id=str(inp),
-                        example_idx=idx,
-                    )
-                    if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Classification:
-                        deploy_presets.append({
-                            "source": data,
-                            "data": list(result.values())[0][idx]
-                        })
-                    elif list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Segmentation:
-                        deploy_presets.append({
-                            "source": data,
-                            "segment": list(result.values())[0][idx],
-                            "data": list(zip(
-                                list(self.dataset.data.outputs.values())[0].classes_names,
-                                [colors.as_rgb_tuple() for colors in list(self.dataset.data.outputs.values())[0].classes_colors]
-                            ))
-                        })
+            if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Classification and \
+                    self.dataset.data.group == DatasetGroupChoice.keras:
+                deploy_presets = result
+            else:
+                for inp in self.dataset_data.inputs.keys():
+                    for idx in range(len(list(result.values())[0])):
+                        data = interactive._postprocess_initial_data(
+                            input_id=str(inp),
+                            example_idx=idx,
+                        )
+                        if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Classification:
+                            deploy_presets.append({
+                                "source": data,
+                                "data": list(result.values())[0][idx]
+                            })
+                        elif list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Segmentation:
+                            deploy_presets.append({
+                                "source": data,
+                                "segment": list(result.values())[0][idx],
+                                "data": list(zip(
+                                    list(self.dataset.data.outputs.values())[0].classes_names,
+                                    [colors.as_rgb_tuple() for colors in
+                                     list(self.dataset.data.outputs.values())[0].classes_colors]
+                                ))
+                            })
         return deploy_presets
+
+    def _create_cascade(self):
+        if self.dataset.data.group != DatasetGroupChoice.keras:
+            config = CascadeCreator()
+            config.create_config(self.save_model_path, os.path.split(self.save_model_path)[0])
+            config.copy_package(os.path.split(self.save_model_path)[0])
+            input_key = list(self.dataset.data.inputs.keys())[0]
+            output_key = list(self.dataset.data.outputs.keys())[0]
+            config.copy_script(
+                training_path=os.path.split(self.save_model_path)[0],
+                function_name=f"{self.dataset.data.inputs[input_key].task.lower()}"
+                              f"_{self.dataset.data.outputs[output_key].task.lower()}"
+            )
 
     def save_lastmodel(self) -> None:
         """
@@ -849,6 +869,7 @@ class FitCallback(keras.callbacks.Callback):
     def on_train_end(self, logs=None):
         self._save_logs()
         self.save_lastmodel()
+        self._create_cascade()
         time_end = self.update_progress(self.num_batches * self.epochs + 1,
                                         self.batch, self._start_time, finalize=True)
         self._sum_time += time_end

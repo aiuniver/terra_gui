@@ -3,14 +3,15 @@
     <scrollbar>
       <div class="wrapper">
         <div class="content">
-          <button class="board__reload-all" v-if="Cards[0].type != 'table'" @click="ReloadAll">
+          <button class="board__reload-all" v-if="deployType != 'table'" @click="ReloadAll">
             <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
             <span>Перезагрузить все</span>
           </button>
-          <div class="board__data-field" v-if="Cards[0].type != 'table'">
+          <div class="board__data-field" v-if="deployType != 'table'">
             <div class="board__title">Исходные данные / Предсказанные данные</div>
             <div class="board__data">
-              <IndexCard v-for="(card, i) in Cards" :key="'card-' + i" v-bind="card" />
+              <IndexCard v-for="(card, i) in Cards.input1_output2.data" :key="'card-' + i" v-bind="card" />
+              {{ card }}
             </div>
           </div>
 <!--          <div class="board__table">-->
@@ -36,8 +37,12 @@ export default {
     ...mapGetters({
       dataLoaded: 'deploy/getDataLoaded',
       Cards: 'deploy/getCards',
+      deployType: "deploy/getDeployType",
       height: 'settings/autoHeight',
     }),
+  },
+  mounted() {
+    console.log(this.Cards)
   },
   methods: {
     click(dataset) {

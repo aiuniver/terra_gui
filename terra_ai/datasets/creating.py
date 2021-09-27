@@ -201,6 +201,10 @@ class CreateDataset(object):
                                                                        path.replace(str(self.source_path) +
                                                                                     os.path.sep, ''))
                                                           for path in instructions_data.instructions]
+
+                    instructions_data.parameters = {'put_type': decamelize(self.columns_processing[str(worker)].type),
+                                                    **instr['parameters']}
+
                 put_columns[f'{put.id}_{name}'] = instructions_data
             put_parameters[put.id] = put_columns
 
@@ -232,10 +236,15 @@ class CreateDataset(object):
                 self.y_cls = [os.path.basename(os.path.dirname(dir_name)) for dir_name in y_classes]
 
             instructions_data = InstructionsData(
-                **getattr(CreateArray(), f"cut_{decamelize(put.type)}")(
-                    instr['instructions'], self.temp_directory, os.path.join(self.paths.sources,
-                                                                             f"{put.id}_{decamelize(put.type)}"),
-                    **instr['parameters']))
+                **getattr(CreateArray(), f"cut_{decamelize(put.type)}")(instr['instructions'],
+                                                                        self.temp_directory,
+                                                                        os.path.join(self.paths.sources,
+                                                                                     f"{put.id}_"
+                                                                                     f"{decamelize(put.type)}"),
+                                                                        **instr['parameters']))
+
+            instructions_data.parameters = {'put_type': decamelize(put.type),
+                                            **instr['parameters']}
 
             if put.type not in [LayerInputTypeChoice.Text, LayerOutputTypeChoice.Text,
                                 LayerOutputTypeChoice.TextSegmentation, LayerOutputTypeChoice.Regression]:
@@ -307,11 +316,9 @@ class CreateDataset(object):
         for inp in self.instructions.inputs.keys():
             for key, value in self.instructions.inputs[inp].items():
                 build_dataframe[key] = value.instructions
-                print(len(value.instructions))
         for out in self.instructions.outputs.keys():
             for key, value in self.instructions.outputs[out].items():
                 build_dataframe[key] = value.instructions
-                print(len(value.instructions))
 
         dataframe = pd.DataFrame(build_dataframe)
         for key, value in split_sequence.items():
@@ -635,16 +642,28 @@ class CreateDataset(object):
         tables_path = os.path.join(self.paths.instructions, 'tables')
 
         os.makedirs(parameters_path, exist_ok=True)
-        for inp in creation_data.inputs:
-            with open(os.path.join(parameters_path, f'{inp.id}_inputs.json'), 'w') as cfg:
-                inp = inp.native()
-                del inp['parameters']['sources_paths']
-                json.dump(inp, cfg)
-        for out in creation_data.outputs:
-            with open(os.path.join(parameters_path, f'{out.id}_outputs.json'), 'w') as cfg:
-                out = out.native()
-                del out['parameters']['sources_paths']
-                json.dump(out, cfg)
+
+        # for inp in creation_data.inputs:
+        #     with open(os.path.join(parameters_path, f'{inp.id}_inputs.json'), 'w') as cfg:
+        #         inp = inp.native()
+        #         del inp['parameters']['sources_paths']
+        #         json.dump(inp, cfg)
+
+        # for out in creation_data.outputs:
+        #     with open(os.path.join(parameters_path, f'{out.id}_outputs.json'), 'w') as cfg:
+        #         out = out.native()
+        #         del out['parameters']['sources_paths']
+        #         json.dump(out, cfg)
+
+        for cols in self.instructions.inputs.values():
+            for col_name, data in cols.items():
+                with open(os.path.join(parameters_path, f'{col_name}.json'), 'w') as cfg:
+                    json.dump(data.parameters, cfg)
+
+        for cols in self.instructions.outputs.values():
+            for col_name, data in cols.items():
+                with open(os.path.join(parameters_path, f'{col_name}.json'), 'w') as cfg:
+                    json.dump(data.parameters, cfg)
 
         # if self.columns_processing:
         #     with open(os.path.join(parameters_path, f'0_columns_preprocessing.json'), 'w') as cfg:

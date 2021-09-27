@@ -15,7 +15,7 @@ from .....extra import (
 class ParametersData(MinMaxScalerData, SourcesPathsData, ColumnProcessingData):
     width: PositiveInt
     height: PositiveInt
-    fill_mode: LayerVideoFillModeChoice = LayerVideoFillModeChoice.black_frames
+    fill_mode: LayerVideoFillModeChoice = LayerVideoFillModeChoice.average_value
     frame_mode: LayerVideoFrameModeChoice = LayerVideoFrameModeChoice.keep_proportions
     video_mode: LayerVideoModeChoice
     max_frames: Optional[PositiveInt]

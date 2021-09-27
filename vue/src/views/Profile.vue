@@ -2,11 +2,11 @@
   <main class="page-profile">
     <p class="page-profile__title">Мой профиль</p>
     <div class="page-profile__block">
-      <t-input v-model="firstName" label="Имя" :error="errFirst" />
-      <t-input v-model="lastName" label="Фамилия" :error="errLast" />
+      <t-input-new v-model.trim="firstName" label="Имя" :error="errFirst" @input="errFirst=''" />
+      <t-input-new v-model.trim="lastName" label="Фамилия" :error="errLast" @input="errLast=''" />
     </div>
     <div class="page-profile__btns">
-      <button class="btn" @click="save">Сохранить</button>
+      <t-button class="btn" @click="save" :loading="isLoading" :disabled="isLoading">Сохранить</t-button>
       <!-- <button class="btn cancel" @click="cancel">Отменить</button> -->
     </div>
     <hr />
@@ -17,22 +17,22 @@
       </div>
       <div class="page-profile__block--contact">
         <p class="page-profile__label">E-mail</p>
-        <p class="page-profile__text">...</p>
+        <p class="page-profile__text">{{ user.email }}</p>
       </div>
     </div>
     <hr />
     <div class="page-profile__token">
       <p class="page-profile__label">Token</p>
       <p class="page-profile__text" ref="token">
-        a3b3a0f552d65df1eb3fc08b0f8a28854895814b434b2e7fbcadc60d6e1a76a4
+        {{ user.token }}
         <i class="btn-copy" @click="copy"></i>
       </p>
-      <div @click="updateToken" class="btn-text">Обновить токен</div>
+      <!-- <div @click="updateToken" class="btn-text">Обновить токен</div> -->
     </div>
     <hr />
     <div class="page-profile__subscription">
       <p class="page-profile__label">Подписка действительна до 06.10.2021</p>
-      <div class="btn-text">Продлить</div>
+      <!-- <div class="btn-text">Продлить</div> -->
     </div>
     <transition name="slide-fade">
       <div v-show="showNotice" class="page-profile__notice">
@@ -57,6 +57,7 @@ export default {
     errLast: '',
     cached: null,
     watcher: null,
+    isLoading: false
   }),
   computed: {
     ...mapGetters({
@@ -94,15 +95,19 @@ export default {
     updateToken() {
       this.notify('Ваш token успешно обновлен');
     },
-    save() {
+    async save() {
       if (!this.firstName) this.errFirst = 'Поле обязательно для заполнения';
       if (!this.lastName) this.errLast = 'Поле обязательно для заполнения';
+
       if (this.firstName && this.lastName) {
-        this.$store.dispatch('profile/save', {
-          fname: this.firstName,
-          lname: this.lastName,
+        this.isLoading = true;
+        const res = await this.$store.dispatch('profile/save', {
+          first_name: this.firstName,
+          last_name: this.lastName,
         });
-        this.notify('Ваши данные успешно изменены');
+        this.isLoading = false;
+
+        if (res.success) this.notify('Ваши данные успешно изменены');
       }
     },
     cancel() {

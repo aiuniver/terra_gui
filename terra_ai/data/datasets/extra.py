@@ -96,7 +96,6 @@ class LayerScalerVideoChoice(str, Enum):
 
 
 class LayerVideoFillModeChoice(str, Enum):
-    black_frames = "black_frames"
     average_value = "average_value"
     last_frames = "last_frames"
 

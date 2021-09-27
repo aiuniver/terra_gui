@@ -24,6 +24,10 @@ export default {
     },
   },
   actions: {
+    resetProgress({ commit }) {
+      commit('SET_PROGRESS_MESSAGE', '');
+      commit('SET_PROGRESS', 0);
+    },
     setMessage({ commit }, { error, message, info }) {
       // console.log(message)
       commit('SET_COLOR', error ? 'error' : message ? 'success' : 'info');

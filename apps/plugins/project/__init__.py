@@ -54,10 +54,12 @@ PROJECT_PATH = {
     "datasets": Path(settings.TERRA_AI_PROJECT_PATH, "datasets").absolute(),
     "modeling": Path(settings.TERRA_AI_PROJECT_PATH, "modeling").absolute(),
     "training": Path(settings.TERRA_AI_PROJECT_PATH, "training").absolute(),
+    "deploy": Path(settings.TERRA_AI_PROJECT_PATH, "deploy").absolute(),
 }
 
 TASKS_RELATIONS = {
     DeployTaskTypeChoice.image_classification: {"ImageClassification"},
+    DeployTaskTypeChoice.image_segmentation: {"ImageSegmentation"},
 }
 
 
@@ -90,8 +92,11 @@ class ProjectPathData(BaseMixinData):
     datasets: DirectoryPath
     modeling: DirectoryPath
     training: DirectoryPath
+    deploy: DirectoryPath
 
-    @validator("base", "datasets", "modeling", "training", allow_reuse=True, pre=True)
+    @validator(
+        "base", "datasets", "modeling", "training", "deploy", allow_reuse=True, pre=True
+    )
     def _validate_directory(cls, value: DirectoryPath) -> DirectoryPath:
         os.makedirs(value, exist_ok=True)
         return value
@@ -110,6 +115,7 @@ class TrainingDetailsData(BaseMixinData):
     base: TrainData = TrainData()
     interactive: InteractiveData = InteractiveData()
     state: StateData = StateData()
+    result: Optional[dict]
 
     def set_state(self):
         self.state = StateData(**training_interactive.train_states)
@@ -218,7 +224,7 @@ class Project(BaseMixinData):
                                     list(range(terra_settings.DEPLOY_PRESET_COUNT)),
                                 )
                             ),
-                            path=Path(project_path.training, "deploy"),
+                            path=Path(project_path.deploy),
                         ),
                     }
                 }

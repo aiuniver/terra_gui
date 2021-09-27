@@ -24,7 +24,8 @@ from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.utils import camelize, decamelize
 
-__version__ = 0.065
+
+__version__ = 0.067
 
 
 def sort_dict(dict_to_sort: dict, mode='by_name'):
@@ -185,11 +186,6 @@ loss_metric_config = {
             "mode": "min",
             "module": "tensorflow.keras.metrics"
         },
-        'CohenKappa': {
-            "log_name": "cohen_kappa",
-            "mode": "max",
-            "module": "tensorflow_addons.metrics"
-        },
         "CosineSimilarity": {
             "log_name": "cosine_similarity",
             "mode": "max",
@@ -326,7 +322,7 @@ class InteractiveCallback:
 
         # overfitting params
         self.log_gap = 5
-        self.progress_threashold = 5
+        self.progress_threashold = 3
 
         self.current_logs = {}
         self.log_history = {}
@@ -430,6 +426,7 @@ class InteractiveCallback:
                        training_path: str,
                        initial_config: InteractiveData):
 
+        print('set_attributes', initial_config)
         self.preset_path = os.path.join(training_path, "presets")
         if not os.path.exists(self.preset_path):
             os.mkdir(self.preset_path)
@@ -501,6 +498,7 @@ class InteractiveCallback:
         self.train_progress = data
 
     def update_state(self, y_pred, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
+        # print(fit_logs)
         if self.log_history:
             self._reformat_y_pred(y_pred)
             if self.interactive_config.get('intermediate_result').get('show_results'):
@@ -533,6 +531,7 @@ class InteractiveCallback:
 
     def get_train_results(self, config: InteractiveData) -> Union[dict, None]:
         """Return dict with data for current interactive request"""
+        # print('get_train_results', config)
         self.interactive_config = config.native() if config else self.interactive_config
         if self.log_history and self.log_history.get("epochs", {}):
             if self.interactive_config.get('intermediate_result').get('show_results'):
@@ -550,16 +549,12 @@ class InteractiveCallback:
                 'statistic_data': self.statistic_result,
                 'data_balance': self._get_balance_data_request(),
             }
-            if self.get_states().get("status") in ["training", "addtrain"]:
-                progress.pool(
+            progress.pool(
                     self.progress_name,
                     data=self.train_progress,
                     finished=False,
                 )
-                return None
-            else:
-                return self.train_progress
-
+            return self.train_progress
 
     # Методы для set_attributes()
     @staticmethod
@@ -719,7 +714,8 @@ class InteractiveCallback:
                 else:
                     pass
 
-    def _prepare_x_val(self, dataset: PrepareDataset):
+    @staticmethod
+    def _prepare_x_val(dataset: PrepareDataset):
         if dataset.data.group == DatasetGroupChoice.keras:
             return dataset.X.get("val")
         else:
@@ -1505,16 +1501,15 @@ class InteractiveCallback:
 
     @staticmethod
     def _evaluate_overfitting(metric_name: str, mean_log: list, metric_type: str):
+        # print('_evaluate_overfitting', metric_type, metric_name, mean_log)
         if min(mean_log) or max(mean_log):
             if loss_metric_config.get(metric_type).get(metric_name).get("mode") == 'min' and \
                     mean_log[-1] > min(mean_log) and \
-                    (mean_log[-1] - min(mean_log)) * 100 / (
-            min(mean_log) if min(mean_log) else min(mean_log) + 0.0001) > 10:
+                    (mean_log[-1] - min(mean_log)) * 100 / min(mean_log) > 2:
                 return True
             elif loss_metric_config.get(metric_type).get(metric_name).get("mode") == 'max' and \
                     mean_log[-1] < max(mean_log) and \
-                    (max(mean_log) - mean_log[-1]) * 100 / (
-            max(mean_log) if max(mean_log) else max(mean_log) + 0.0001) > 10:
+                    (max(mean_log) - mean_log[-1]) * 100 / max(mean_log) > 2:
                 return True
             else:
                 return False
@@ -1525,10 +1520,14 @@ class InteractiveCallback:
     def _evaluate_underfitting(metric_name: str, train_log: float, val_log: float, metric_type: str):
         if train_log:
             if loss_metric_config.get(metric_type).get(metric_name).get("mode") == 'min' and \
-                    (val_log - train_log) / train_log * 100 > 10:
+                    val_log < 1 and train_log < 1 and \
+                    (val_log - train_log) > 0.05:
+                return True
+            elif loss_metric_config.get(metric_type).get(metric_name).get("mode") == 'min' and \
+                    (val_log >= 1 or train_log >= 1) and (val_log - train_log) / train_log * 100 > 5:
                 return True
             elif loss_metric_config.get(metric_type).get(metric_name).get("mode") == 'max' and \
-                    (train_log - val_log) / train_log * 100 > 10:
+                    (train_log - val_log) / train_log * 100 > 3:
                 return True
             else:
                 return False
@@ -1577,7 +1576,7 @@ class InteractiveCallback:
         ]
         """
         data_return = []
-        if not self.interactive_config.get('loss_graphs') or not self.log_history:
+        if not self.interactive_config.get('loss_graphs') or not self.log_history.get("epochs"):
             return data_return
 
         for loss_graph_config in self.interactive_config.get('loss_graphs'):
@@ -1690,10 +1689,16 @@ class InteractiveCallback:
         ]
         """
         data_return = []
-        if not self.interactive_config.get('metric_graphs') or not self.log_history:
+        if not self.interactive_config.get('metric_graphs') or not self.log_history.get("epochs"):
             return data_return
 
         for metric_graph_config in self.interactive_config.get('metric_graphs'):
+            # print('overfitting', metric_graph_config.get('show_metric'),
+            #       self.log_history.get(f"{metric_graph_config.get('output_idx')}").get("progress_state").get(
+            #             "metrics").get(metric_graph_config.get('show_metric')).get('overfitting'))
+            # print('underfitting', metric_graph_config.get('show_metric'),
+            #       self.log_history.get(f"{metric_graph_config.get('output_idx')}").get("progress_state").get(
+            #           "metrics").get(metric_graph_config.get('show_metric')).get('underfitting'))
             if metric_graph_config.get('show') == "model":
                 if sum(self.log_history.get(f"{metric_graph_config.get('output_idx')}").get("progress_state").get(
                         "metrics").get(metric_graph_config.get('show_metric')).get(

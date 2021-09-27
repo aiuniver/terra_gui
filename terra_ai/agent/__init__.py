@@ -2,7 +2,7 @@ import json
 import os
 import shutil
 from pathlib import Path
-from typing import Any, NoReturn, Optional
+from typing import Any, NoReturn
 
 import tensorflow
 
@@ -133,6 +133,12 @@ class Exchange:
         destination = progress_utils.unpack("project_load", "Загрузка проекта", source)
         shutil.move(destination, target)
 
+    def _call_profile_save(self, data: dict):
+        """
+        Сохранение профиля
+        """
+        pass
+
     def _call_dataset_choice(
         self, custom_path: Path, destination: Path, group: str, alias: str
     ) -> NoReturn:
@@ -168,10 +174,13 @@ class Exchange:
         info = DatasetsGroupsList(DatasetsGroups)
         for dirname in os.listdir(str(path.absolute())):
             if dirname.endswith(settings.DATASET_EXT):
-                dataset_config = CustomDatasetConfigData(path=Path(path, dirname))
-                info.get(DatasetGroupChoice.custom.name).datasets.append(
-                    DatasetData(**dataset_config.config)
-                )
+                try:
+                    dataset_config = CustomDatasetConfigData(path=Path(path, dirname))
+                    info.get(DatasetGroupChoice.custom.name).datasets.append(
+                        DatasetData(**dataset_config.config)
+                    )
+                except Exception:
+                    pass
         return info
 
     def _call_dataset_source_load(self, mode: str, value: str):
@@ -212,12 +221,11 @@ class Exchange:
         """
         return datasets_utils.get_classes_annotation(path).native()
 
-    def _call_dataset_create(self, **kwargs) -> DatasetData:
+    def _call_dataset_create(self, creation_data: CreationData) -> DatasetData:
         """
         Создание датасета из исходников
         """
-        data = CreationData(**kwargs)
-        creation = CreateDataset(data)
+        creation = CreateDataset(creation_data)
         return creation.datasetdata
 
     def _call_datasets_sources(self, path: str) -> FilePathSourcesList:
@@ -338,15 +346,11 @@ class Exchange:
         interactive.set_status("no_train")
         return interactive.train_states
 
-    def _call_training_interactive(
-        self, config: InteractiveData
-    ) -> Optional[InteractiveData]:
+    def _call_training_interactive(self, config: InteractiveData) -> dict:
         """
         Обновление интерактивных параметров обучения
         """
-        data = interactive.get_train_results(config=config)
-        if data:
-            return InteractiveData(**data.get("train_data"))
+        return interactive.get_train_results(config=config)
 
     def _call_training_progress(self) -> progress.ProgressData:
         """
@@ -365,6 +369,9 @@ class Exchange:
         получение данных для отображения пресетов на странице деплоя
         """
         return interactive.deploy_presets_data
+
+    def _call_deploy_cascades_create(self, training_path: str, model_name: str):
+        pass
 
     def _call_deploy_upload(self, source: Path, **kwargs):
         """

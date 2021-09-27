@@ -57,10 +57,9 @@ export default {
       color: #d34444;
     }
   }
-  &__sub-body{
+  &__sub-body {
     display: flex;
     // justify-content: flex-end;
-    
   }
   &__link {
     text-decoration: underline;

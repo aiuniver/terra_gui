@@ -328,7 +328,9 @@ class ModelValidator:
                         self.valid = False
                         self.val_dictionary[layer[0]] = str(exceptions.UnexpectedOutputShapeException(
                             self.output_shape[layer[0]][0],
-                            self.layer_output_shapes[layer[0]]
+                            self.layer_output_shapes[layer[0]][0][1:] if len(self.layer_output_shapes[layer[0]]) == 1 \
+                                else [self.layer_output_shapes[layer[0]][i][1:] for i in
+                                      self.layer_output_shapes[layer[0]]]
                         ))
 
             # check unspecified output layers
@@ -1124,7 +1126,7 @@ class LayerValidation:
                     ))
 
             elif self.layer_type == "Xception":
-                if self.layer_parameters.get("weights") == 'imagenet' and\
+                if self.layer_parameters.get("weights") == 'imagenet' and \
                         self.inp_shape[0][1:] != (299, 299, 3):
                     return str(exceptions.InputShapeMustBeOnlyException(
                         "pre-loaded 'imagenet' weights",
@@ -1172,10 +1174,10 @@ class LayerValidation:
                         self.inp_shape[0][1:]
                     ))
                 elif (
-                    self.layer_parameters.get("include_top")
-                    and self.layer_parameters.get("weights")
-                    and self.layer_parameters.get("classifier_activation") != "softmax"
-                    and self.layer_parameters.get("classifier_activation") is not None
+                        self.layer_parameters.get("include_top")
+                        and self.layer_parameters.get("weights")
+                        and self.layer_parameters.get("classifier_activation") != "softmax"
+                        and self.layer_parameters.get("classifier_activation") is not None
                 ):
                     return str(exceptions.ActivationFunctionShouldBeException(
                         "using pretrained weights, with `include_top=True`",
@@ -1183,7 +1185,7 @@ class LayerValidation:
                     ))
 
             elif self.layer_type in ["DenseNet121", "DenseNet169", "DenseNet201"]:
-                if self.layer_parameters.get("weights") == 'imagenet' and self.layer_parameters.get("include_top") and\
+                if self.layer_parameters.get("weights") == 'imagenet' and self.layer_parameters.get("include_top") and \
                         self.inp_shape[0][1:] != (224, 224, 3):
 
                     return str(exceptions.InputShapeMustBeOnlyException(
@@ -1204,17 +1206,18 @@ class LayerValidation:
 
             elif self.layer_type in ["MobileNetV3Small", "MobileNetV2", "EfficientNetB0"]:
                 if (
-                    self.layer_parameters.get("include_top")
-                    and self.layer_parameters.get("weights")
-                    and self.layer_parameters.get("classifier_activation") != "softmax"
-                    and self.layer_parameters.get("classifier_activation") is not None
+                        self.layer_parameters.get("include_top")
+                        and self.layer_parameters.get("weights")
+                        and self.layer_parameters.get("classifier_activation") != "softmax"
+                        and self.layer_parameters.get("classifier_activation") is not None
                 ):
                     return str(exceptions.ActivationFunctionShouldBeException(
                         "using pretrained weights, with `include_top=True`",
                         "`None` or `softmax`"
                     ))
                 elif (self.layer_parameters.get("dropout_rate")) and \
-                        (self.layer_parameters.get("dropout_rate") > 1.0 or self.layer_parameters.get("dropout_rate") < 0):
+                        (self.layer_parameters.get("dropout_rate") > 1.0 or self.layer_parameters.get(
+                            "dropout_rate") < 0):
                     return str(exceptions.CanTakeOneOfTheFollowingValuesException(
                         "Dropout_rate",
                         "floats from range [0.0, 1.0]"

@@ -6,118 +6,8 @@ export default {
       graphicData: temp.data,
       defaultLayout: defLayout,
       origTextStyle: originaltextStyle,
-      Cards: [
-        {
-          type: "card",
-          original: {
-            type: "image",
-            imgUrl: '1.jpg'
-          },
-          result: {
-            type: "image",
-            imgUrl: 'segmentation/1.jpg'
-          }
-        },
-        {
-          type: "card",
-           original: {
-            type: "image",
-            imgUrl: '2.jpg'
-          },
-          result: {
-            type: "image",
-            imgUrl: 'segmentation/2.jpg'
-          }
-        },
-        {
-          type: "card",
-       original: {
-            type: "image",
-            imgUrl: '3.jpg'
-          },
-          result: {
-            type: "image",
-            imgUrl: 'segmentation/3.jpg'
-          }
-        },
-                {
-          type: "card",
-        original: {
-            type: "image",
-            imgUrl: '4.jpg'
-          },
-          result: {
-            type: "image",
-            imgUrl: 'segmentation/4.jpg'
-          }
-        },
-        {
-          type: "card",
-          original: {
-            type: "image",
-            imgUrl: '5.jpg'
-          },
-          result: {
-            type: "image",
-            imgUrl: 'segmentation/5.jpg'
-          }
-        },
-                {
-          type: "card",
-          original: {
-            type: "image",
-            imgUrl: '6.jpg'
-          },
-          result: {
-            type: "image",
-            imgUrl: 'segmentation/6.jpg'
-          }
-        },
-                {
-          type: "card",
-          original: {
-            type: "image",
-            imgUrl: '7.jpg'
-          },
-          result: {
-            type: "image",
-            imgUrl: 'segmentation/7.jpg'
-          }
-        },
-                {
-          type: "card",
-          original: {
-            type: "image",
-            imgUrl: '8.jpg'
-          },
-          result: {
-            type: "image",
-            imgUrl: 'segmentation/8.jpg'
-          }
-        },
-                {
-          type: "card",
-          original: {
-            type: "image",
-            imgUrl: '9.jpg'
-          },
-          result: {
-            type: "image",
-            imgUrl: 'segmentation/9.jpg'
-          }
-        },
-                {
-          type: "card",
-          original: {
-            type: "image",
-            imgUrl: '10.jpg'
-          },
-          result: {
-            type: "image",
-            imgUrl: 'segmentation/10.jpg'
-          }
-        },
-      ],
+      Cards: {},
+      deployType: "",
       moduleList: {
         api_text: "",
         url: "",
@@ -126,6 +16,12 @@ export default {
     mutations: {
       SET_MODULE_LIST(state, value) {
         state.moduleList = { ...state.moduleList, ...value};
+      },
+      SET_CARDS(state, value) {
+        state.Cards = { ...state.Cards, ...value}
+      },
+      SET_DEPLOY_TYPE(state, value) {
+        state.deployType = value;
       },
     },
     actions: {
@@ -147,5 +43,6 @@ export default {
       getDefaultLayout: ({ defaultLayout }) => defaultLayout,
       getOrigTextStyle: ({ origTextStyle }) => origTextStyle,
       getCards: ({ Cards }) => Cards,
+      getDeployType: ({ deployType }) => deployType,
     }
 }

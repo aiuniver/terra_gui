@@ -19,7 +19,7 @@ class LayerOutputTypeChoice(str, Enum):
     Audio = "Аудио"
     Dataframe = "Таблицы"
     Classification = "Классификация"
-    Segmentation = "Сегментация"
+    Segmentation = "Сегментация изображений"
     TextSegmentation = "Сегментация текстов"
     Regression = "Регрессия"
     Timeseries = "Временные ряды"
@@ -146,7 +146,6 @@ class LayerTextModeChoice(str, Enum):
 
 
 class LayerVideoFillModeChoice(str, Enum):
-    black_frames = "Черными кадрами"
     average_value = "Средним значением"
     last_frames = "Последними кадрами"
 

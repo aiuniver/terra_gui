@@ -9,7 +9,7 @@ console.warn(data)
 export default {
   namespaced: true,
   state: () => ({
-    collapse: ['3'],
+    collapse: ['0', '1'],
     params: [],
     toolbar,
     stateParams: {},
@@ -19,6 +19,7 @@ export default {
     trainData: {},
     // trainData: process.env.NODE_ENV === 'development' ? data : {},
     trainUsage: {},
+    statusTrain: 'no_train',
     training: {
       base: {},
       interactive: {},
@@ -37,7 +38,7 @@ export default {
       state.training = { ...value };
       console.log(value)
       // if (!Object.keys(state.interactive).length) {
-        state.interactive = JSON.parse(JSON.stringify(value.interactive))
+      state.interactive = JSON.parse(JSON.stringify(value.interactive))
       // }
     },
     SET_STATE_PARAMS(state, value) {
@@ -62,20 +63,30 @@ export default {
     SET_COLLAPSE(state, value) {
       state.collapse = [...value];
     },
+    SET_STATUS_TRAIN(state, value) {
+      state.statusTrain = value;
+    },
   },
   actions: {
-    setState({ commit }, res) {
+    setState({ dispatch, commit }, res) {
       // console.log(res)
       if (res && res?.data) {
         const state = res?.data?.data?.state || res?.data.state
         if (state) {
           commit("SET_STATE", state);
+          dispatch('setStatusTrain', state.status);
         }
       }
     },
-    async start({ dispatch }, parse) {
-      const valid = await dispatch('modeling/validateModel', {}, { root: true })
-      const isValid = !Object.values(valid || {}).filter(item => item).length
+    async start({ state: { training: { state: { status } } }, dispatch }, parse) {
+      console.log(status)
+      dispatch('setStatusTrain', 'start');
+      let isValid = true
+      if (status === 'no_train') {
+        const valid = await dispatch('modeling/validateModel', {}, { root: true })
+        isValid = !Object.values(valid || {}).filter(item => item).length
+        dispatch('setTrainData', {});
+      }
       if (isValid) {
         let data = JSON.parse(JSON.stringify(parse))
         console.log(data)
@@ -87,8 +98,6 @@ export default {
         const res = await dispatch('axios', { url: '/training/start/', data }, { root: true });
         await dispatch('projects/get', {}, { root: true })
         dispatch('setState', res);
-        dispatch('setTrainData', {});
-        // dispatch('interactive', {});
         return res
       }
       return null
@@ -101,13 +110,17 @@ export default {
     async clear({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/clear/', data }, { root: true });
       dispatch('setState', res);
+      dispatch('resetTraining', {});
       return res
     },
     async interactive({ state: { interactive }, dispatch }, part) {
-      console.log(part)
       const data = { ...interactive, ...part }
-      // commit("SET_INTERACTIV", data);
-      return await dispatch('axios', { url: '/training/interactive/', data }, { root: true });
+      const res = await dispatch('axios', { url: '/training/interactive/', data }, { root: true });
+      if (res?.data?.train_data) {
+        const { data: { train_data } } = res
+        dispatch('setTrainData', train_data);
+      }
+      return res
     },
     async progress({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/progress/', data }, { root: true });
@@ -115,13 +128,19 @@ export default {
         const { data } = res.data;
         if (data) {
           const { info, train_data, train_usage } = data;
-          dispatch('setInfo', info);
+          if (info) dispatch('setInfo', info);
           dispatch('setState', res);
-          dispatch('setTrainData', train_data);
-          dispatch('setTrainUsage', train_usage);
+          if (train_data) dispatch('setTrainData', train_data);
+          if (train_usage) dispatch('setTrainUsage', train_usage);
         }
       }
       return res
+    },
+    async resetTraining({ dispatch }) {
+      localStorage.removeItem('settingsTrainings');
+      dispatch('messages/resetProgress', {}, { root: true });
+      dispatch('setTrainData', {});
+      // await dispatch('projects/get', {}, { root: true })
     },
     setDrawer({ commit }, data) {
       commit("SET_DRAWER", data);
@@ -154,8 +173,14 @@ export default {
       const data = { ...state.interactive, ...charts }
       commit("SET_INTERACTIV", data);
     },
+    setStatusTrain({ commit }, value) {
+      commit("SET_STATUS_TRAIN", value);
+    },
   },
   getters: {
+    getStatusTrain: ({ statusTrain }) => {
+      return statusTrain
+    },
     getObjectInteractive: ({ interactive }) => key => {
       return interactive?.[key] || {}
     },

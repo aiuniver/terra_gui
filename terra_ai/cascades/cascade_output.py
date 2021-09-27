@@ -2,6 +2,7 @@ import cv2
 import tensorflow
 import numpy as np
 import os
+from PIL import Image
 
 
 def video(path, **params):
@@ -37,7 +38,9 @@ def image(path):
 
         img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
-        cv2.imwrite(path, img)
+        # cv2.imwrite(path, img)
+        im = Image.fromarray(img)
+        im.save(path)
 
     return fun
 
