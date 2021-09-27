@@ -34,9 +34,11 @@ def main(**params):
 
         if len(img.shape) == 3:
             img = img[np.newaxis, ...]
-
         if resize:
             img = resize(img)
+        if params['scaler'] == 'min_max_scaler':
+            std = (img - img.min()) / (img.max() - img.min())
+            img = std * (params['max_scaler'] - params['min_scaler']) + params['min_scaler']
         if retype:
             img = retype(img)
 
