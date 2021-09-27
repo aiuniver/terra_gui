@@ -64,7 +64,7 @@ export default {
   methods: {
     moveAll() {
       const files = this.$store.getters['datasets/getFilesSource'].flatMap(this.getFiles)
-      const drop = files.filter(item => item.dragndrop).map(item => ({
+      const drop = files.filter(item => (item.dragndrop && item.type === 'folder')).map(item => ({
         value: item.path,
         label: item.title,
         type: item.type,
