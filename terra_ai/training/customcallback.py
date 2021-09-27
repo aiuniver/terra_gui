@@ -26,7 +26,6 @@ from terra_ai.utils import camelize, decamelize
 
 __version__ = 0.068
 
-
 def sort_dict(dict_to_sort: dict, mode='by_name'):
     if mode == 'by_name':
         sorted_keys = sorted(dict_to_sort)
