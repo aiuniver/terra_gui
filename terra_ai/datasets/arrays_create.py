@@ -5,7 +5,7 @@ from pandas import DataFrame
 from tensorflow.python.keras.preprocessing import image
 
 from terra_ai.datasets.utils import get_yolo_anchors
-from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
+from terra_ai.data.datasets.dataset import DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice, \
     LayerOutputTypeChoice, DatasetGroupChoice, LayerInputTypeChoice
 from terra_ai.data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice, \
@@ -394,9 +394,9 @@ class CreateArray(object):
 
             frames: np.ndarray = np.array([])
 
-            # if fill_mode == LayerVideoFillModeChoice.black_frames:
-            #     frames = np.full((frames_to_add, *video_array[-1].shape), video_array[-1], dtype='uint8')
-            if fill_mode == LayerVideoFillModeChoice.average_value:
+            if fill_mode == LayerVideoFillModeChoice.black_frames:
+                frames = np.full((frames_to_add, *video_array[-1].shape), video_array[-1], dtype='uint8')
+            elif fill_mode == LayerVideoFillModeChoice.average_value:
                 mean = np.mean(video_array, axis=0, dtype='uint16')
                 frames = np.full((frames_to_add, *mean.shape), mean, dtype='uint8')
             elif fill_mode == LayerVideoFillModeChoice.last_frames:
@@ -488,8 +488,15 @@ class CreateArray(object):
             audio = AudioSegment.from_file(path, start_second=slicing[0], duration=duration)
 
             if round(duration - audio.duration_seconds, 3) != 0:
-                duration_to_add = round(duration - audio.duration_seconds, 3)
-                audio = audio.append(audio[0:duration_to_add * 1000], crossfade=0)
+                while not audio.duration_seconds == (slicing[1] - slicing[0]):
+                    if options['fill_mode'] == 'last_millisecond':
+                        audio = audio.append(audio[-2], crossfade=0)
+                    elif options['fill_mode'] == 'loop':
+                        duration_to_add = round(duration - audio.duration_seconds, 3)
+                        if audio.duration_seconds < duration_to_add:
+                            audio = audio.append(audio[0:audio.duration_seconds * 1000], crossfade=0)
+                        else:
+                            audio = audio.append(audio[0:duration_to_add * 1000], crossfade=0)
 
             save_path = os.path.join(tmp_folder, f'{options["put"]}_audio', os.path.basename(os.path.dirname(path)),
                                      f'{name}_[{slicing[0]}-{slicing[1]}]{ext}')
@@ -502,6 +509,7 @@ class CreateArray(object):
 
         instructions = {'instructions': instructions_paths,
                         'parameters': {'sample_rate': options['sample_rate'],
+                                       'resample': options['resample'],
                                        'parameter': options['parameter'],
                                        'scaler': options['scaler'],
                                        'max_scaler': options['max_scaler'],
@@ -567,8 +575,10 @@ class CreateArray(object):
     def cut_segmentation(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
 
         for elem in paths_list:
-            os.makedirs(os.path.join(tmp_folder, f'{options["cols_names"]}', os.path.basename(os.path.dirname(elem))), exist_ok=True)
-            shutil.copyfile(elem, os.path.join(tmp_folder, f'{options["cols_names"]}', os.path.basename(os.path.dirname(elem)), os.path.basename(elem)))
+            os.makedirs(os.path.join(tmp_folder, f'{options["cols_names"]}', os.path.basename(os.path.dirname(elem))),
+                        exist_ok=True)
+            shutil.copyfile(elem, os.path.join(tmp_folder, f'{options["cols_names"]}',
+                                               os.path.basename(os.path.dirname(elem)), os.path.basename(elem)))
 
         if dataset_folder:
             if os.path.isdir(os.path.join(dataset_folder, f'{options["cols_names"]}')):
@@ -687,7 +697,7 @@ class CreateArray(object):
         array = []
         parameter = options['parameter']
         sample_rate = options['sample_rate']
-        y, sr = librosa_load(path=audio_path, sr=options.get('sample_rate'), res_type='kaiser_fast')
+        y, sr = librosa_load(path=audio_path, sr=options.get('sample_rate'), res_type=options.get('resample'))
         if sample_rate > len(y):
             zeros = np.zeros((sample_rate - len(y),))
             y = np.concatenate((y, zeros))
@@ -976,9 +986,12 @@ class CreateArray(object):
         if options['net'] == LayerNetChoice.linear:
             array = array.reshape(np.prod(np.array(array.shape)))
         if options['scaler'] != LayerScalerImageChoice.no_scaler and options.get('preprocess'):
-            orig_shape = array.shape
-            array = options['preprocess'].transform(array.reshape(-1, 1))
-            array = array.reshape(orig_shape).astype('float32')
+            if options['scaler'] == 'min_max_scaler':
+                orig_shape = array.shape
+                array = options['preprocess'].transform(array.reshape(-1, 1))
+                array = array.reshape(orig_shape).astype('float32')
+            elif options['scaler'] == 'terra_image_scaler':
+                array = options['preprocess'].transform(array)
 
         return array
 
@@ -1055,7 +1068,7 @@ class CreateArray(object):
         elif options['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
             for word in text:
                 try:
-                    array.append(options['preprocess'][word])
+                    array.append(options['preprocess'].wv[word])
                 except KeyError:
                     array.append(np.zeros((options['length'],)))
 
@@ -1082,7 +1095,6 @@ class CreateArray(object):
             array = options['preprocess'].transform(array.reshape(-1, 1))[0]
 
         return array
-
 
     @staticmethod
     def preprocess_classification(array: np.ndarray, **options) -> np.ndarray:

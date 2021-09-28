@@ -10,6 +10,7 @@ from terra_ai.settings import DATASET_EXT, DATASET_CONFIG
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.data.datasets.extra import LayerEncodingChoice
 
+import cv2
 import os
 import random
 import numpy as np
@@ -52,15 +53,17 @@ class CreateDataset(object):
 
         self.instructions: DatasetInstructionsData = self.create_instructions(creation_data)
         self.create_preprocessing(self.instructions)
+        self.fit_preprocessing(put_data=self.instructions.inputs)
+        self.fit_preprocessing(put_data=self.instructions.outputs)
         self.create_table(creation_data=creation_data)
-
-        self.inputs = self.create_input_parameters(creation_data=creation_data)
-        self.outputs = self.create_output_parameters(creation_data=creation_data)
 
         if not creation_data.use_generator:
             x_array = self.create_dataset_arrays(put_data=self.instructions.inputs)
             y_array = self.create_dataset_arrays(put_data=self.instructions.outputs)
             self.write_arrays(x_array, y_array)
+
+        self.inputs = self.create_input_parameters(creation_data=creation_data)
+        self.outputs = self.create_output_parameters(creation_data=creation_data)
 
         self.write_preprocesses_to_files()
         self.write_instructions_to_files()
@@ -114,15 +117,7 @@ class CreateDataset(object):
                                 creation_data.columns_processing[w_name].parameters.width
                 elif creation_data.columns_processing[worker_name].type == 'Timeseries':
                     for w_name, w_params in creation_data.columns_processing.items():
-                        if creation_data.columns_processing[w_name].type == 'Classification':
-                            creation_data.columns_processing[w_name].parameters.length = \
-                                creation_data.columns_processing[worker_name].parameters.length
-                            creation_data.columns_processing[w_name].parameters.depth = \
-                                creation_data.columns_processing[worker_name].parameters.depth
-                            creation_data.columns_processing[w_name].parameters.step = \
-                                creation_data.columns_processing[worker_name].parameters.step
-                    # for w_name, w_params in creation_data.columns_processing.items():
-                        if creation_data.columns_processing[w_name].type == 'Scaler':
+                        if creation_data.columns_processing[w_name].type in ['Classification', 'Scaler']:
                             creation_data.columns_processing[w_name].parameters.length = \
                                 creation_data.columns_processing[worker_name].parameters.length
                             creation_data.columns_processing[w_name].parameters.depth = \
@@ -265,17 +260,45 @@ class CreateDataset(object):
         for put in list(instructions.inputs.values()) + list(instructions.outputs.values()):
             for col_name, data in put.items():
                 if 'scaler' in data.parameters.keys():
-                    if data.parameters['scaler'] != LayerScalerImageChoice.no_scaler:
-                        if 'height' in data.parameters.keys():
-                            self.preprocessing.create_scaler(array=None, **data.parameters)
-                        else:
-                            self.preprocessing.create_scaler(array=put[col_name].instructions, **data.parameters)
+                    # if data.parameters['scaler'] != LayerScalerImageChoice.no_scaler:
+                    #     if 'height' in data.parameters.keys():
+                    #         self.preprocessing.create_scaler(array=None, **data.parameters)
+                    #     else:
+                    self.preprocessing.create_scaler(**data.parameters)  # array=put[col_name].instructions,
                 elif 'prepare_method' in data.parameters.keys():
                     if data.parameters['prepare_method'] in [LayerPrepareMethodChoice.embedding,
                                                              LayerPrepareMethodChoice.bag_of_words]:
                         self.preprocessing.create_tokenizer(text_list=data.instructions, **data.parameters)
                     elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
                         self.preprocessing.create_word2vec(text_list=data.instructions, **data.parameters)
+
+    def fit_preprocessing(self, put_data):
+
+        path_type_list = [decamelize(LayerInputTypeChoice.Image), decamelize(LayerOutputTypeChoice.Image),
+                          decamelize(LayerInputTypeChoice.Audio), decamelize(LayerOutputTypeChoice.Audio),
+                          decamelize(LayerInputTypeChoice.Video), decamelize(LayerOutputTypeChoice.ObjectDetection),
+                          decamelize(LayerOutputTypeChoice.Segmentation)]
+
+        for key in put_data.keys():
+            for col_name, data in put_data[key].items():
+                if 'scaler' in data.parameters and data.parameters['scaler'] != LayerScalerImageChoice.no_scaler:
+                    if self.tags[key][col_name] in path_type_list:
+                        for i in range(len(data.instructions)):
+
+                            arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(
+                                os.path.join(self.paths.basepath, data.instructions[i]),
+                                **data.parameters)
+
+                            if data.parameters['put_type'] in [decamelize(LayerInputTypeChoice.Image),
+                                                               decamelize(LayerOutputTypeChoice.Image)]:
+                                arr = {'instructions': cv2.resize(arr['instructions'], (data.parameters['width'],
+                                                                                        data.parameters['height']))}
+                            if data.parameters['scaler'] == 'terra_image_scaler':
+                                self.preprocessing.preprocessing[key][col_name].fit(arr['instructions'])
+                            else:
+                                self.preprocessing.preprocessing[key][col_name].fit(arr['instructions'].reshape(-1, 1))
+                    else:
+                        self.preprocessing.preprocessing[key][col_name].fit(np.array(data.instructions).reshape(-1, 1))
 
     def create_table(self, creation_data: CreationData):
 
@@ -338,8 +361,8 @@ class CreateDataset(object):
                     prep = self.preprocessing.preprocessing.get(key).get(col_name)
 
                 if creation_data.inputs.get(key).type in path_type_input_list or\
-                        self.columns_processing.get(str(key)) is not None and \
-                        self.columns_processing.get(str(key)).type in path_type_input_list:
+                        creation_data.columns_processing.get(str(key)) is not None and \
+                        creation_data.columns_processing.get(str(key)).type in path_type_input_list:
                     data_to_pass = os.path.join(self.paths.basepath, data.instructions[0])
                 elif 'depth' in data.parameters.keys() and data.parameters['depth']:
                     data_to_pass = data.instructions[0:data.parameters['length']]
@@ -355,7 +378,8 @@ class CreateDataset(object):
                     array = np.expand_dims(array, 0)
                 input_array.append(array)
 
-                classes_names = sorted([os.path.basename(x) for x in creation_data.inputs.get(key).parameters.sources_paths])\
+                classes_names = sorted([os.path.basename(x) for x in
+                                        creation_data.inputs.get(key).parameters.sources_paths])\
                     if not os.path.isfile(creation_data.inputs.get(key).parameters.sources_paths[0]) else\
                     arr['parameters'].get('classes_names')
 
@@ -431,6 +455,7 @@ class CreateDataset(object):
         for key in self.instructions.outputs.keys():
             output_array = []
             iters = 1
+            data = None
             for col_name, data in self.instructions.outputs[key].items():
                 prep = None
                 if self.preprocessing.preprocessing.get(key) and\
@@ -438,8 +463,8 @@ class CreateDataset(object):
                     prep = self.preprocessing.preprocessing.get(key).get(col_name)
 
                 if creation_data.outputs.get(key).type in path_type_outputs_list or\
-                        self.columns_processing.get(str(key)) is not None and\
-                        self.columns_processing.get(str(key)).type in path_type_outputs_list:
+                        creation_data.columns_processing.get(str(key)) is not None and\
+                        creation_data.columns_processing.get(str(key)).type in path_type_outputs_list:
                     data_to_pass = os.path.join(self.paths.basepath, data.instructions[0])
                 elif 'trend' in data.parameters.keys():
                     if data.parameters['trend']:
