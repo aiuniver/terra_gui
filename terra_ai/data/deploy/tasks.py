@@ -39,37 +39,6 @@ class BaseCollectionList(List):
         raise MethodNotImplementedException("reload", self.__class__.__name__)
 
 
-class ImageClassificationCollectionList(BaseCollectionList):
-    def reload(self, range_indexes: List):
-        source = interactive.deploy_presets_data
-        labelfile = Path(self._path, "label.txt")
-        label = []
-        if not source:
-            self._reset()
-            try:
-                os.remove(labelfile)
-            except Exception as error:
-                print(error)
-            return
-
-        for index in range_indexes:
-            try:
-                os.remove(self[index].get("source"))
-            except Exception:
-                pass
-            value = source[random.randint(0, len(source) - 1)]
-            filepath = Path(value.get("source"))
-            destination = Path(self._path, f"{index+1}{filepath.suffix}")
-            shutil.copyfile(filepath.absolute(), destination)
-            value.update({"source": str(destination.absolute())})
-            self[index] = value
-
-        for item in self:
-            label.append(json.dumps(item.get("data", [])))
-        with open(labelfile, "w") as labelfile_ref:
-            labelfile_ref.write("\n".join(label))
-
-
 class ImageSegmentationCollectionList(BaseCollectionList):
     def reload(self, range_indexes: List):
         source_path = Path(self._path, "preset", "in")
@@ -84,7 +53,7 @@ class ImageSegmentationCollectionList(BaseCollectionList):
             try:
                 os.remove(labelfile)
             except Exception as error:
-                print(error)
+                pass
             return
 
         for index in range_indexes:
@@ -108,6 +77,37 @@ class ImageSegmentationCollectionList(BaseCollectionList):
                     "segment": str(destination_segment.absolute()),
                 }
             )
+            self[index] = value
+
+        for item in self:
+            label.append(json.dumps(item.get("data", [])))
+        with open(labelfile, "w") as labelfile_ref:
+            labelfile_ref.write("\n".join(label))
+
+
+class ImageClassificationCollectionList(BaseCollectionList):
+    def reload(self, range_indexes: List):
+        source = interactive.deploy_presets_data
+        labelfile = Path(self._path, "label.txt")
+        label = []
+        if not source:
+            self._reset()
+            try:
+                os.remove(labelfile)
+            except Exception as error:
+                pass
+            return
+
+        for index in range_indexes:
+            try:
+                os.remove(self[index].get("source"))
+            except Exception:
+                pass
+            value = source[random.randint(0, len(source) - 1)]
+            filepath = Path(value.get("source"))
+            destination = Path(self._path, f"{index+1}{filepath.suffix}")
+            shutil.copyfile(filepath.absolute(), destination)
+            value.update({"source": str(destination.absolute())})
             self[index] = value
 
         for item in self:
