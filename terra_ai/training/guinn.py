@@ -641,8 +641,7 @@ class FitCallback(keras.callbacks.Callback):
             if list(self.dataset.data.outputs.values())[0].task in [LayerOutputTypeChoice.Classification,
                                                                     LayerOutputTypeChoice.Segmentation,
                                                                     LayerOutputTypeChoice.TextSegmentation]:
-                deploy_presets = result
-
+                deploy_presets = list(result.values())[0]
         return deploy_presets
 
     def _create_cascade(self):
