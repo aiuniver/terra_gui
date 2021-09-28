@@ -1,6 +1,6 @@
 <template>
   <div class="t-predict-image">
-    <img width="auto" height="120" :src="src" :alt="'value'" />
+    <img width="auto" height="120" :src="src" :alt="'value'" :key="src" />
   </div>
 </template>
 <script>
@@ -11,10 +11,11 @@ export default {
       type: String,
       default: '',
     },
+    update: String
   },
   computed: {
     src() {
-      return `/_media/blank/?path=${this.value}`
+      return `/_media/blank/?path=${this.value}&r=${this.update}`
     }
   }
 };

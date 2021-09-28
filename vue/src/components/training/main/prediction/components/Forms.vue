@@ -1,10 +1,10 @@
 <template>
   <div>
-    <TableImage v-if="type === 'image'" v-bind="data" />
-    <TableText v-if="type === 'str' || type === 'number'" v-bind="data" />
-    <TableTag v-if="type === 'text'" :data="data" />
-    <TableVideo v-if="type === 'video'" :src="data" />
-    <TableAudio v-if="type === 'audio'" :url="data" />
+    <TableImage v-if="type === 'image'" v-bind="obj" />
+    <TableText v-if="type === 'str' || type === 'number'" v-bind="obj" />
+    <TableTag v-if="type === 'text'" :data="obj" />
+    <TableVideo v-if="type === 'video'" :src="obj" />
+    <TableAudio v-if="type === 'audio'" :url="obj" />
   </div>
 </template>
 
@@ -21,11 +21,20 @@ export default {
   props: {
     type: {
       type: String,
-      default: ''
+      default: '',
     },
     data: {
       type: Object,
-      default: () => {}
+      default: () => {},
+    },
+    update: {
+      type: String,
+      default: '',
+    },
+  },
+  computed: {
+    obj() {
+      return { ...this.data, update: this.update };
     },
   },
 };
