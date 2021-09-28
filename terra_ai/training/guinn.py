@@ -117,13 +117,13 @@ class GUINN:
                                    initial_config=initial_config)
 
     def _set_callbacks(self, dataset: PrepareDataset, dataset_data: DatasetData,
-                       batch_size: int, epochs: int,
+                       batch_size: int, epochs: int, dataset_path: str,
                        checkpoint: dict, save_model_path: str) -> None:
         progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков...'})
         retrain_epochs = self.sum_epoch if interactive.get_states().get("status") == "addtrain" else self.epochs
         callback = FitCallback(dataset=dataset, dataset_data=dataset_data, checkpoint_config=checkpoint,
                                batch_size=batch_size, epochs=epochs, retrain_epochs=retrain_epochs,
-                               save_model_path=save_model_path, model_name=self.nn_name)
+                               save_model_path=save_model_path, model_name=self.nn_name, dataset_path=dataset_path)
         self.callbacks = [callback]
         # checkpoint.update([('filepath', 'test_model.h5')])
         # self.callbacks.append(keras.callbacks.ModelCheckpoint(**checkpoint))
@@ -226,7 +226,7 @@ class GUINN:
             self.yolo_model_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
         else:
             self.base_model_fit(params=training_params, dataset=self.dataset, dataset_data=dataset,
-                                verbose=0, save_model_path=model_path)
+                                verbose=0, save_model_path=model_path, dataset_path=dataset_path)
         return {"dataset": self.dataset, "metrics": self.metrics, "losses": self.loss}
 
     def nn_cleaner(self, retrain: bool = False) -> None:
@@ -249,7 +249,7 @@ class GUINN:
         return self
 
     @progress.threading
-    def base_model_fit(self, params: TrainData, dataset: PrepareDataset,
+    def base_model_fit(self, params: TrainData, dataset: PrepareDataset, dataset_path: str,
                        dataset_data: DatasetData, save_model_path: str, verbose=0) -> None:
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели ...'})
         # self.set_custom_metrics()
@@ -261,7 +261,7 @@ class GUINN:
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели выполнена'})
 
         self._set_callbacks(dataset=dataset, dataset_data=dataset_data, batch_size=params.batch,
-                            epochs=params.epochs, save_model_path=save_model_path,
+                            epochs=params.epochs, save_model_path=save_model_path, dataset_path=dataset_path,
                             checkpoint=params.architecture.parameters.checkpoint.native())
         progress.pool(self.progress_name, finished=False, data={'status': 'Начало обучения ...'})
 
@@ -417,7 +417,7 @@ class FitCallback(keras.callbacks.Callback):
     """CustomCallback for all task type"""
 
     def __init__(self, dataset: PrepareDataset, dataset_data: DatasetData, checkpoint_config: dict,
-                 batch_size: int = None, epochs: int = None,
+                 batch_size: int = None, epochs: int = None, dataset_path: str = "",
                  retrain_epochs: int = None, save_model_path: str = "./", model_name: str = "noname"):
         """
         Для примера
@@ -436,6 +436,7 @@ class FitCallback(keras.callbacks.Callback):
         self.usage_info = MemoryUsage(debug=False)
         self.dataset = dataset
         self.dataset_data = dataset_data
+        self.dataset_path = dataset_path
         self.batch_size = batch_size
         self.epochs = epochs
         self.batch = 0
@@ -633,34 +634,15 @@ class FitCallback(keras.callbacks.Callback):
         result = CreateArray().postprocess_results(array=presets_predict,
                                                    options=self.dataset,
                                                    save_path=os.path.join(self.save_model_path,
-                                                                          "deploy_presets"))
+                                                                          "deploy_presets"),
+                                                   dataset_path=self.dataset_path)
         deploy_presets = []
         if result:
-            if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Classification and \
-                    self.dataset.data.group == DatasetGroupChoice.keras:
+            if list(self.dataset.data.outputs.values())[0].task in [LayerOutputTypeChoice.Classification,
+                                                                    LayerOutputTypeChoice.Segmentation,
+                                                                    LayerOutputTypeChoice.TextSegmentation]:
                 deploy_presets = result
-            else:
-                for inp in self.dataset_data.inputs.keys():
-                    for idx in range(len(list(result.values())[0])):
-                        data = interactive._postprocess_initial_data(
-                            input_id=str(inp),
-                            example_idx=idx,
-                        )
-                        if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Classification:
-                            deploy_presets.append({
-                                "source": data,
-                                "data": list(result.values())[0][idx]
-                            })
-                        elif list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Segmentation:
-                            deploy_presets.append({
-                                "source": data,
-                                "segment": list(result.values())[0][idx],
-                                "data": list(zip(
-                                    list(self.dataset.data.outputs.values())[0].classes_names,
-                                    [colors.as_rgb_tuple() for colors in
-                                     list(self.dataset.data.outputs.values())[0].classes_colors]
-                                ))
-                            })
+
         return deploy_presets
 
     def _create_cascade(self):
