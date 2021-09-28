@@ -1,0 +1,15 @@
+{
+  "cascades": {
+    "model": {
+      "tag": "model",
+      "task": "Text",
+      "model": "TerraProjects/models/psp_docs_emb_new"
+    },
+    ""
+  },
+  "adjacency_map": {
+    "model": [
+      "INPUT"
+    ]
+  }
+}
