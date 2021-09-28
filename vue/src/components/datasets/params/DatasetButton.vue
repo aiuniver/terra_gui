@@ -23,7 +23,7 @@ export default {
     async message() {
       await this.$store.dispatch('messages/setModel', {
         context: this,
-        content: 'Для выбора датасета остановите обучение',
+        content: 'Для выбора датасета необходимо сбросить/остановить обучение',
       });
     },
     createInterval() {
