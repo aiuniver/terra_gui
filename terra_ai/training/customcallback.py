@@ -2926,7 +2926,7 @@ class InteractiveCallback:
                 self.dataset_config.get("outputs").get(output_id).get('classes_colors')
             )
             data["y_true"] = {
-                "type": "text",
+                "type": "segmented text",
                 "data": [
                     {
                         "title": "Текст",
@@ -2942,7 +2942,7 @@ class InteractiveCallback:
                 self.dataset_config.get("outputs").get(output_id).get('classes_colors')
             )
             data["y_pred"] = {
-                "type": "text",
+                "type": "segmented text",
                 "data": [
                     {
                         "title": "Текст",
