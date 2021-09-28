@@ -43,24 +43,24 @@ export default {
   data: () => ({}),
   props: {
     source: {
-      type: Object, String,
-      default: () => ({})
+      type: String,
+      default: ""
     },
     segment: {
-      type: Object, String,
-      default: () => ({})
+      type: String,
+      default: ""
     },
     data: {
-      type: Object, String,
+      type: [Array, Object, String],
       default: () => ({})
     },
-  },
-  mounted() {
-    console.log(this.deployType)
+    block: String,
+    index: [String, Number],
   },
   methods: {
     ReloadCard(){
-      console.log("RELOAD_CARD")
+      // await this.$store.dispatch('deploy/ReloadCard', { id: this.block, indexes: [this.index.toString()]});
+      this.$emit('reload', { id: this.block, indexes: [this.index.toString()]})
     }
   },
   computed: {

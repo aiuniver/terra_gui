@@ -20,6 +20,10 @@ export default {
       SET_CARDS(state, value) {
         state.Cards = { ...state.Cards, ...value}
       },
+      SET_BLOCK_CARDS(state, { value, id }) {
+        state.Cards[id].data = value;
+        state.Cards = { ...state.Cards }
+      },
       SET_DEPLOY_TYPE(state, value) {
         state.deployType = value;
       },
@@ -30,14 +34,14 @@ export default {
       },
       async CheckProgress({ commit, dispatch }) {
         const { data } = await dispatch('axios', { url: '/deploy/upload/progress/'}, { root: true });
-        // console.log(data)
         if(data.finished){
           commit("SET_MODULE_LIST", data.data);
         }
         return data.finished;
       },
-      async ReloadCard({ dispatch }, data) {
-        return await dispatch('axios', { url: '/deploy/reload/', data: data }, { root: true });
+      async ReloadCard({ commit, dispatch }, values) {
+        const { data } = await dispatch('axios', { url: '/deploy/reload/', data: values }, { root: true });
+        commit("SET_BLOCK_CARDS", { value: data, id: values.id });
       },
     },
     getters: {

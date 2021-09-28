@@ -3,15 +3,14 @@
     <scrollbar>
       <div class="wrapper">
         <div class="content">
-          <button class="board__reload-all" v-if="deployType != 'table'" @click="ReloadAll">
-            <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
-            <span>Перезагрузить все</span>
-          </button>
           <div class="board__data-field" v-for="(block, index) in Cards" :key="'block-'+index">
+            <button class="board__reload-all" v-if="deployType != 'table'" @click="ReloadAll(index)">
+              <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
+              <span>Перезагрузить все</span>
+            </button>
             <div class="board__title">Исходные данные / Предсказанные данные</div>
             <div class="board__data">
-              <IndexCard v-for="(card, i) in block.data" :key="'card-' + i" v-bind="card" />
-              {{ card }}
+              <IndexCard v-for="(card, i) in block.data" :key="'card-' + i" v-bind="card" :block="index" :index="i" @reload="ReloadCard"/>
             </div>
           </div>
 <!--          <div class="board__table">-->
@@ -41,18 +40,19 @@ export default {
       height: 'settings/autoHeight',
     }),
   },
-  async created() {
-    await this.$store.dispatch('projects/get');
-  },
-  mounted() {
-    console.log(this.Cards)
-  },
+  // async created() {
+  //   await this.$store.dispatch('projects/get');
+  // },
   methods: {
-    click(dataset) {
-      console.log(dataset);
+    async ReloadCard(data){
+      await this.$store.dispatch('deploy/ReloadCard', data);
     },
-    ReloadAll() {
-      console.log('RELOAD_DATA');
+    async ReloadAll(id) {
+      let indexes = []
+      for(let i = 0; i < this.Cards[id].data.length; i++){
+        indexes.push(i.toString())
+      }
+      await this.$store.dispatch('deploy/ReloadCard', {id, indexes});
     },
   },
 };
@@ -92,6 +92,7 @@ export default {
     display: flex;
     width: 174px;
     padding: 8px 10px 10px 10px;
+    margin-bottom: 30px;
     justify-content: center;
     align-items: center;
     i {
