@@ -39,7 +39,7 @@ from terra_ai.training.data import custom_losses_dict
 
 from matplotlib import pyplot as plt
 
-__version__ = 0.01
+__version__ = 0.02
 
 from terra_ai.utils import camelize
 
