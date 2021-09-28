@@ -122,7 +122,6 @@ export default {
     LoadSpiner,
   },
   data: () => ({
-    obj: {},
     collapse: [0, 1, 2, 3, 4],
     optimizerValue: '',
     metricData: '',
@@ -163,6 +162,14 @@ export default {
         return this.$store.getters['trainings/getStateParams'];
       },
     },
+    trainSettings: {
+      set(value) {
+        this.$store.dispatch('trainings/setTrainSettings', value);
+      },
+      get() {
+        return this.$store.getters['trainings/getTrainSettings'];
+      },
+    },
     main() {
       return this.params?.main || {};
     },
@@ -185,7 +192,7 @@ export default {
       return this.$store.getters['trainings/getStatusTrain'];
     },
     func() {
-      let data = this.obj?.architecture?.parameters?.outputs || [];
+      let data = this.trainSettings?.architecture?.parameters?.outputs || [];
       data = data?.[this.metricData]?.metrics || [];
       data = data.map(item => {
         return { label: item, value: item };
@@ -212,8 +219,8 @@ export default {
       console.log(e);
     },
     async start() {
-      // console.log(JSON.stringify(this.obj, null, 2));
-      const res = await this.$store.dispatch('trainings/start', this.obj);
+      // console.log(JSON.stringify(this.trainSettings, null, 2));
+      const res = await this.$store.dispatch('trainings/start', this.trainSettings);
       if (res) {
         const { data } = res;
         if (data) {
@@ -252,8 +259,8 @@ export default {
     },
     parse({ parse, value, name }) {
       // console.log({ parse, value, name });
-      ser(this.obj, parse, value);
-      this.obj = { ...this.obj };
+      ser(this.trainSettings, parse, value);
+      this.trainSettings = { ...this.trainSettings };
       if (name === 'architecture_parameters_checkpoint_layer') {
         this.metricData = value;
         if (value) {
@@ -269,8 +276,8 @@ export default {
         if (!value) {
           const arr = this.state['architecture[parameters][outputs][2][metrics]'];
           if (arr) {
-            ser(this.obj, 'architecture[parameters][checkpoint][metric_name]', arr[0]);
-            this.obj = { ...this.obj };
+            ser(this.trainSettings, 'architecture[parameters][checkpoint][metric_name]', arr[0]);
+            this.trainSettings = { ...this.trainSettings };
             this.state = { [`architecture[parameters][checkpoint][metric_name]`]: arr[0] };
           }
         }

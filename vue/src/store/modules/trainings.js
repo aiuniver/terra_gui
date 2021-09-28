@@ -16,6 +16,7 @@ export default {
     predict: {},
     info: '',
     states: {},
+    trainSettings: {},
     trainData: {},
     // trainData: process.env.NODE_ENV === 'development' ? data : {},
     trainUsage: {},
@@ -30,6 +31,9 @@ export default {
   mutations: {
     SET_INTERACTIV(state, value) {
       state.interactive = { ...value };
+    },
+    SET_TRAIN_SETTINGS(state, value) {
+      state.trainSettings = { ...value };
     },
     SET_PARAMS(state, value) {
       state.params = { ...value };
@@ -180,8 +184,14 @@ export default {
     setStatusTrain({ commit }, value) {
       commit("SET_STATUS_TRAIN", value);
     },
+    setTrainSettings({ commit }, value) {
+      commit("SET_TRAIN_SETTINGS", value);
+    },
   },
   getters: {
+    getTrainSettings: ({ trainSettings }) => {
+      return trainSettings
+    },
     getStatusTrain: ({ statusTrain }) => {
       return statusTrain
     },

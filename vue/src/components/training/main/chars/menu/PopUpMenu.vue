@@ -7,22 +7,36 @@
       {{ show ? 'Свернуть' : 'Развернуть' }} график
     </li>
     <li class="menu__item" @click="$emit('event', { name: 'general', data: 'remove' })">Удалить график</li>
-    <template v-for="({ name, list }, i) of menus">
-      <li class="menu__dropdown" :key="'menu_' + i">
-        <i :class="['t-icon', 'icon-training-dropdown']"></i>
-        <span>{{ name }}</span>
-        <ul class="menu">
-          <li
-            class="menu__item"
-            v-for="({ title, event }, idx) in list"
-            :key="`list_${i}_${idx}`"
-            @click="$emit('event', event)"
-          >
-            {{ title }}
+    <li class="menu__dropdown">
+      <i :class="['t-icon', 'icon-training-dropdown']"></i>
+      <span>Показывать данные</span>
+      <ul class="menu">
+        <li class="menu__item" @click="$emit('event', { name: 'data', data: 'model' })">По всей модели</li>
+        <li v-if="isClass" class="menu__item" @click="$emit('event', { name: 'data', data: 'classes' })">По классам</li>
+      </ul>
+    </li>
+    <li class="menu__dropdown">
+      <i :class="['t-icon', 'icon-training-dropdown']"></i>
+      <span>Показывать метрики</span>
+      <ul class="menu">
+        <template v-for="(item, i) of metrics">
+          <li class="menu__item" :key="'metrics' + i" @click="$emit('event', { name: 'metric', data: item })">
+            {{ item }}
           </li>
-        </ul>
-      </li>
-    </template>
+        </template>
+      </ul>
+    </li>
+    <li class="menu__dropdown">
+      <i :class="['t-icon', 'icon-training-dropdown']"></i>
+      <span>Показывать выход</span>
+      <ul class="menu">
+        <template v-for="(item, i) of exits">
+          <li class="menu__item" :key="'output' + i" @click="$emit('event', { name: 'chart', data: item })">
+            Выход {{ item }}
+          </li>
+        </template>
+      </ul>
+    </li>
   </ul>
 </template>
 
@@ -31,10 +45,36 @@ export default {
   name: 'PopUpMenu',
   props: {
     menus: {
-      type: Array,
-      default: () => [],
+      type: Object,
+      default: () => {},
+    },
+    settings: {
+      type: Object,
+      default: () => {},
     },
     show: Boolean,
+  },
+  computed: {
+    show_metric() {
+      return this.settings?.show_metric || '';
+    },
+    id() {
+      return this.settings?.output_idx || 0;
+    },
+    isClass() {
+      const clas = this.menus?.isClass || {};
+      return clas[this.id];
+    },
+    outputs() {
+      return this.menus?.outputs || [];
+    },
+    exits() {
+      return this.outputs.map(item => item.id); //.filter(item => item !== this.id);
+    },
+    metrics() {
+      const metrics = this.outputs.find(item => item.id === this.id)?.metrics || [];
+      return metrics; //.filter(item => item !== this.show_metric);
+    },
   },
 };
 </script>

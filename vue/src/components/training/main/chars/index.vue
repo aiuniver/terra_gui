@@ -9,7 +9,7 @@
         class="t-chart"
         :key="'char1_' + i"
         :settings="settings"
-        :menus="allMenus"
+        :menus="menus"
         @event="event($event, settings)"
       />
     </div>
@@ -34,20 +34,26 @@ export default {
   },
   data: () => ({
     // charts: [],
-    menus: [
-      {
-        name: 'Показывать данные',
-        list: [
-          { title: 'По всей модели', event: { name: 'data', data: 'model' } },
-          { title: 'По классам', event: { name: 'data', data: 'classes' } },
-        ],
-      },
-    ],
   }),
   computed: {
     ...mapGetters({
       chars: 'trainings/getChars',
     }),
+    menus() {
+      return { isClass: this.classGraphics, outputs: this.allOutputs };
+    },
+    allOutputs() {
+      const data = this.$store.getters['trainings/getTrainSettings'];
+      const outputs = data?.architecture?.parameters?.outputs || [];
+      return outputs
+        .map((item, index) => {
+          return item ? { id: index, ...item } : null;
+        })
+        .filter(item => item);
+    },
+    classGraphics() {
+      return this.$store.getters['trainings/getTrainData']('class_graphics');
+    },
     charts: {
       set(value) {
         console.log(value);
@@ -59,46 +65,6 @@ export default {
     },
     data() {
       return this.$store.getters['trainings/getTrainData'](this.metric) || [];
-    },
-    allMenus() {
-      // console.log([...this.menus, this.listChats]);
-      // console.log(this.listChats);
-      return [...this.menus, ...this.listChats];
-    },
-    state: {
-      set(value) {
-        this.$store.dispatch('trainings/setStateParams', value);
-      },
-      get() {
-        return this.$store.getters['trainings/getStateParams'];
-      },
-    },
-    getValue() {
-      const data = Object.values(this.outputs?.fields || {})?.[0]?.fields || [];
-      const metrics = data.find(item => item.type === 'multiselect');
-      return this.state?.['architecture[parameters][checkpoint][metric_name]'] ?? (metrics.value[0] || '');
-    },
-    listChats() {
-      const arr = [];
-      const listOutputs = this.outputs.map(item => {
-        return { title: `Выход ${item.id}`, event: { name: 'chart', data: item.id } };
-      });
-
-      if (this.metric === 'metric_graphs') {
-        const temp = this.state?.['architecture[parameters][outputs][2][metrics]'] || []
-        const listMetrics = temp.map(item => {
-          return { title: `${item}`, event: { name: 'metric', data: item } };
-        });
-        arr.push({
-          name: 'Показывать метрики',
-          list: listMetrics,
-        });
-      }
-      arr.push({
-        name: 'Показывать выход',
-        list: listOutputs,
-      });
-      return arr;
     },
     outputIdx() {
       return this.outputs.find(item => item.id).id;
@@ -163,9 +129,9 @@ export default {
       if (this.charts.length < 10) {
         let maxID = Math.max(0, ...this.charts.map(o => o.id));
         if (this.metric === 'metric_graphs') {
-          this.charts.push({ id: maxID + 1, output_idx: 2, show: 'model', show_metric: this.metrics[0] });
+          this.charts.push({ id: maxID + 1, output_idx: this.outputIdx, show: 'model', show_metric: this.metrics[0] });
         } else {
-          this.charts.push({ id: maxID + 1, output_idx: 2, show: 'model' });
+          this.charts.push({ id: maxID + 1, output_idx: this.outputIdx, show: 'model' });
         }
         this.charts = [...this.charts];
         this.send();
