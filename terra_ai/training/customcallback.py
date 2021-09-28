@@ -1683,7 +1683,8 @@ class InteractiveCallback:
                         "progress_state": progress_state
                     }
                 )
-            elif loss_graph_config.get('show') == "classes":
+            elif loss_graph_config.get('show') == "classes" and \
+                    self.class_graphics.get(str(loss_graph_config.get('output_idx'))):
                 data_return.append(
                     {
                         "id": loss_graph_config.get('id'),
@@ -1797,7 +1798,8 @@ class InteractiveCallback:
                         "progress_state": progress_state
                     }
                 )
-            elif metric_graph_config.get('show') == 'classes':
+            elif metric_graph_config.get('show') == 'classes' and \
+                    self.class_graphics.get(str(metric_graph_config.get('output_idx'))):
                 data_return.append(
                     {
                         "id": metric_graph_config.get('id'),
