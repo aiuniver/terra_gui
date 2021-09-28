@@ -15,7 +15,7 @@
           :title="'roll down'"
           @click="popMenuShow = !popMenuShow"
         ></i>
-        <PopUpMenu v-if="popMenuShow" :menus="menus" :show="graphicShow" @event="event" />
+        <PopUpMenu v-if="popMenuShow" :settings="settings" :menus="menus" :show="graphicShow" @event="event" />
       </div>
     </div>
     <div class="t-char__main" v-if="graphicShow">
@@ -57,11 +57,11 @@ export default {
       type: String,
       default: 'lines',
     },
-    menus: {
-      type: Array,
-      default: () => [],
-    },
     settings: {
+      type: Object,
+      default: () => {},
+    },
+    menus: {
       type: Object,
       default: () => {},
     },
