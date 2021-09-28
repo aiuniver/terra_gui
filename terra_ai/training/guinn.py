@@ -274,7 +274,10 @@ class GUINN:
                             epochs=params.epochs, save_model_path=save_model_path,
                             checkpoint=params.architecture.parameters.checkpoint.native())
         progress.pool(self.progress_name, finished=False, data={'status': 'Начало обучения ...'})
-        critical_size = len(self.dataset.dataset.get('val'))
+        if self.dataset.data.use_generator:
+            critical_size = len(self.dataset.dataframe.get("val"))
+        else:
+            critical_size = len(self.dataset.dataset.get('val'))
         self.history = self.model.fit(
             self.dataset.dataset.get('train').batch(
                 self.batch_size if critical_size >= 32 else 1, drop_remainder=True).take(-1),
