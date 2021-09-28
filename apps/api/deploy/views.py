@@ -37,8 +37,6 @@ class UploadAPIView(BaseAPIView):
             return BaseResponseErrorFields(serializer.errors)
         try:
             sec = serializer.validated_data.get("sec")
-            for item in request.project.deploy.data.values():
-                item.data.prepare(project_path.training)
             agent_exchange(
                 "deploy_upload",
                 **{
