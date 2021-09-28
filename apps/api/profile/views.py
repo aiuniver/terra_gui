@@ -2,7 +2,6 @@ import requests
 
 from django.conf import settings
 
-from terra_ai.agent import agent_exchange
 from terra_ai.agent.exceptions import ExchangeBaseException
 
 from ..base import (
