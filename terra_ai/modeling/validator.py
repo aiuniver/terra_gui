@@ -608,7 +608,7 @@ class ModelValidator:
             else:
                 front_shape = []
                 for shape in self.layer_input_shapes.get(layer.id):
-                    if shape or shape != [None]:
+                    if shape and shape != [None]:
                         front_shape.append(shape[1:])
                     else:
                         front_shape.append([])
