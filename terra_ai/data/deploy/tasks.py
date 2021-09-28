@@ -80,7 +80,7 @@ class ImageSegmentationCollectionList(BaseCollectionList):
             self[index] = value
 
         for item in self:
-            label.append(json.dumps(item.get("data", [])))
+            label.append(json.dumps(item.get("data", []), ensure_ascii=False))
         with open(labelfile, "w") as labelfile_ref:
             labelfile_ref.write("\n".join(label))
 
@@ -111,7 +111,7 @@ class ImageClassificationCollectionList(BaseCollectionList):
             self[index] = value
 
         for item in self:
-            label.append(json.dumps(item.get("data", [])))
+            label.append(json.dumps(item.get("data", []), ensure_ascii=False))
         with open(labelfile, "w") as labelfile_ref:
             labelfile_ref.write("\n".join(label))
 
