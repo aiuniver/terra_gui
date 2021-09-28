@@ -2,8 +2,6 @@ import requests
 
 from django.conf import settings
 
-from terra_ai.agent.exceptions import ExchangeBaseException
-
 from ..base import (
     BaseAPIView,
     BaseResponseSuccess,
@@ -11,6 +9,7 @@ from ..base import (
     BaseResponseErrorGeneral,
 )
 from .serializers import SaveSerializer
+from . import utils
 
 
 class SaveAPIView(BaseAPIView):
@@ -33,8 +32,9 @@ class SaveAPIView(BaseAPIView):
                 return BaseResponseErrorGeneral(
                     "Не удалось обновить данные пользователя"
                 )
+            utils.update_env_file(**serializer.validated_data)
             return BaseResponseSuccess()
-        except ExchangeBaseException as error:
+        except Exception as error:
             return BaseResponseErrorGeneral(str(error))
 
 
@@ -53,6 +53,7 @@ class UpdateTokenAPIView(BaseAPIView):
                     "Не удалось обновить токен пользователя"
                 )
             new_token = response.json().get("new_token")
+            utils.update_env_file(token=new_token)
             return BaseResponseSuccess(data={"new_token": new_token})
-        except ExchangeBaseException as error:
+        except Exception as error:
             return BaseResponseErrorGeneral(str(error))

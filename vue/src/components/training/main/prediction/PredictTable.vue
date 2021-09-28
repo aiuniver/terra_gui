@@ -13,13 +13,13 @@
           <div v-if="isEmpty(initial_data)" class="t-table__col">
             <div v-if="id === '1'" class="t-table__title t-table__title--one">Исходные данные</div>
             <div class="t-table__row">
-              <div class="t-table__col" v-for="({ type, data }, key, i) in initial_data" :key="`initial ${i}`">
+              <div class="t-table__col" v-for="({ type, data, update}, key, i) in initial_data" :key="`initial ${i}`">
                 <div v-if="id === '1'" class="t-table__title t-table__title--two">{{ key }}</div>
                 <div class="t-table__row">
                   <div class="t-table__col" v-for="(item, i) of data" :key="`initial layer ${i}`">
                     <div v-if="id === '1'" class="t-table__title t-table__title--three">{{ item.title }}</div>
                     <div class="t-table__row t-table__row--center">
-                      <Forms :data="item" :type="type" :key="`initial data ${i}`" />
+                      <Forms :data="item" :update="update" :type="type" :key="`initial data ${i}`" />
                     </div>
                   </div>
                 </div>

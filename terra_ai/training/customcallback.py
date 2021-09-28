@@ -6,6 +6,8 @@ import re
 import string
 from typing import Union
 
+import matplotlib
+import matplotlib.pyplot as plt
 import pandas as pd
 import tensorflow
 from PIL import Image, ImageDraw, ImageFont  # Модули работы с изображениями
@@ -26,7 +28,7 @@ from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.utils import camelize, decamelize
 
-__version__ = 0.070
+__version__ = 0.072
 
 
 def sort_dict(dict_to_sort: dict, mode='by_name'):
@@ -428,7 +430,6 @@ class InteractiveCallback:
                        training_path: str,
                        initial_config: InteractiveData):
 
-        print('set_attributes', initial_config)
         self.preset_path = os.path.join(training_path, "presets")
         if not os.path.exists(self.preset_path):
             os.mkdir(self.preset_path)
@@ -437,10 +438,6 @@ class InteractiveCallback:
         self.loss_obj = self._prepare_loss_obj(losses)
         self.metrics_obj = self._prepare_metric_obj(metrics)
         self.interactive_config = initial_config.native()
-        # print("INITIAL_CONFIG", self.interactive_config)
-        # print("INITIAL_CONFIG", initial_config)
-        print('self.losses', self.losses)
-        print('self.metrics', self.metrics)
 
         self._prepare_dataset_config(dataset, dataset_path)
         self.x_val = self._prepare_x_val(dataset)
@@ -501,7 +498,6 @@ class InteractiveCallback:
         self.train_progress = data
 
     def update_state(self, y_pred, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
-        # print('fit_logs', fit_logs)
         if self.log_history:
             if y_pred is not None:
                 self._reformat_y_pred(y_pred)
@@ -2115,8 +2111,6 @@ class InteractiveCallback:
                 return_data[f"{out}"] = []
                 _id += 1
                 for i, channel_name in enumerate(self.dataset_config.get("columns").get(out).keys()):
-                    # channel_name = list(self.dataset_config.get("columns").get(out).keys())[channel]
-                    print(channel_name)
                     for step in range(self.y_true.get("val").get(f'{out}').shape[-1]):
                         y_true = self.y_true.get("val").get(f"{out}")[:, i, step].astype('float')
                         y_pred = self.y_pred.get(f"{out}")[:, i, step].astype('float')
@@ -2582,7 +2576,6 @@ class InteractiveCallback:
         from pydub import AudioSegment
         AudioSegment.from_file("audio_path").export("audio.webm", format="webm")
         """
-
         column_idx = []
         if self.dataset_config.get("group") != 'keras':
             for column_name in self.dataset_config.get("dataframe").get('val').columns:
@@ -2843,19 +2836,16 @@ class InteractiveCallback:
 
         elif self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.Segmentation:
             labels = self.dataset_config.get("outputs").get(output_id).get("classes_names")
-
             # prepare y_true image
             y_true = np.expand_dims(
                 np.argmax(self.y_true.get(data_type).get(output_id)[example_idx], axis=-1), axis=-1) * 512
             for i, color in enumerate(self.dataset_config.get("outputs").get(output_id).get("classes_colors")):
                 y_true = np.where(y_true == i * 512, np.array(color), y_true)
-            y_true = tensorflow.keras.utils.array_to_img(y_true)
-            y_true = y_true.convert('RGB')
-            # filepath_true = NamedTemporaryFile()
+            y_true = y_true.astype("uint8")
             y_true_save_path = os.path.join(
                 self.preset_path, f"true_segmentation_data_image_{save_id}_output_{output_id}.webp"
             )
-            y_true.save(y_true_save_path, 'webp')
+            matplotlib.image.imsave(y_true_save_path, y_true)
             data["y_true"] = {
                 "type": "image",
                 "data": [
@@ -2869,13 +2859,12 @@ class InteractiveCallback:
             # prepare y_pred image
             y_pred = np.expand_dims(np.argmax(self.y_pred.get(output_id)[example_idx], axis=-1), axis=-1) * 512
             for i, color in enumerate(self.dataset_config.get("outputs").get(output_id).get("classes_colors")):
-                y_pred = np.where(y_true == i * 512, np.array(color), y_true)
-            y_pred = tensorflow.keras.utils.array_to_img(y_pred)
-            y_pred = y_pred.convert('RGB')
+                y_pred = np.where(y_pred == i * 512, np.array(color), y_pred)
+            y_pred = y_pred.astype("uint8")
             y_pred_save_path = os.path.join(
                 self.preset_path, f"predict_segmentation_data_image_{save_id}_output_{output_id}.webp"
             )
-            y_pred.save(y_pred_save_path, 'webp')
+            matplotlib.image.imsave(y_pred_save_path, y_pred)
             data["y_pred"] = {
                 "type": "image",
                 "data": [
@@ -2893,12 +2882,11 @@ class InteractiveCallback:
                 }
                 y_true = np.array(self.y_true.get(data_type).get(output_id)[example_idx]).astype('int')
                 y_pred = to_categorical(np.argmax(self.y_pred.get(output_id)[example_idx], axis=-1),
-                                        self.dataset_config.get("outputs").get(output_id).get("num_classes"))
+                                        self.dataset_config.get("outputs").get(output_id).get("num_classes")).astype('int')
                 count = 0
                 mean_val = 0
                 for idx, cls in enumerate(labels):
-                    dice_val = np.round(self._dice_coef(y_true[:, :, idx], y_pred[:, :, idx],
-                                                        batch_mode=False) * 100, 1)
+                    dice_val = np.round(self._dice_coef(y_true[:, :, idx], y_pred[:, :, idx], batch_mode=False) * 100, 1)
                     count += 1
                     mean_val += dice_val
                     data["stat"]["data"].append(
