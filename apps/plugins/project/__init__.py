@@ -54,7 +54,7 @@ PROJECT_PATH = {
     "datasets": Path(settings.TERRA_AI_PROJECT_PATH, "datasets").absolute(),
     "modeling": Path(settings.TERRA_AI_PROJECT_PATH, "modeling").absolute(),
     "training": Path(settings.TERRA_AI_PROJECT_PATH, "training").absolute(),
-    "deploy": Path(settings.TERRA_AI_PROJECT_PATH, "deploy").absolute(),
+    "deploy": Path(settings.TERRA_AI_PROJECT_PATH, "training", "deploy").absolute(),
 }
 
 TASKS_RELATIONS = {
