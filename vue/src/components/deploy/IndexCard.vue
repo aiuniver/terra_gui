@@ -59,7 +59,6 @@ export default {
   },
   methods: {
     ReloadCard(){
-      // await this.$store.dispatch('deploy/ReloadCard', { id: this.block, indexes: [this.index.toString()]});
       this.$emit('reload', { id: this.block, indexes: [this.index.toString()]})
     }
   },
