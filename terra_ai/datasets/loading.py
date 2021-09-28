@@ -45,16 +45,16 @@ def __load_from_url(folder: Path, url: HttpUrl):
     # Сброс прогресс-бара
     progress_name = "dataset_source_load"
 
-    # Если папка датасета уже существует, просто выходим и говорим прогресс-бару,
-    # что загрузка завершена и возвращаем путь в прогресс-бар
+    # Что делаем, если папка датасета уже существует
     if dataset_path.exists():
-        progress.pool(
-            progress_name,
-            percent=100,
-            data=dataset_path.absolute(),
-            finished=True,
-        )
-        return
+        shutil.rmtree(dataset_path, ignore_errors=True)
+    #     progress.pool(
+    #         progress_name,
+    #         percent=100,
+    #         data=dataset_path.absolute(),
+    #         finished=True,
+    #     )
+    #     return
 
     # Запускаем загрузку
     try:
@@ -80,16 +80,16 @@ def __load_from_googledrive(folder: Path, zipfile_path: Path):
     # Имя прогресс-бара
     progress_name = "dataset_source_load"
 
-    # Если папка датасета уже существует, просто выходим и говорим прогресс-бару,
-    # что загрузка завершена и возвращаем путь в прогресс-бар
+    # Что делаем, если папка датасета уже существует
     if dataset_path.exists():
-        progress.pool(
-            progress_name,
-            percent=100,
-            data=dataset_path.absolute(),
-            finished=True,
-        )
-        return
+        shutil.rmtree(dataset_path, ignore_errors=True)
+    #     progress.pool(
+    #         progress_name,
+    #         percent=100,
+    #         data=dataset_path.absolute(),
+    #         finished=True,
+    #     )
+    #     return
 
     # Запускаем загрузку
     try:

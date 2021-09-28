@@ -216,9 +216,11 @@ export default {
       const res = await this.$store.dispatch('trainings/start', this.obj);
       if (res) {
         const { data } = res;
-        if (data?.state?.status) {
-          localStorage.setItem('settingsTrainings', JSON.stringify(this.state));
-          this.debounce();
+        if (data) {
+          if (data?.state?.status) {
+            localStorage.setItem('settingsTrainings', JSON.stringify(this.state));
+            this.debounce();
+          }
         }
       }
       // console.log(res);
@@ -243,6 +245,8 @@ export default {
           if (this.isLearning) {
             this.debounce();
           }
+        } else{
+          await this.$store.dispatch('projects/get');
         }
       }
     },

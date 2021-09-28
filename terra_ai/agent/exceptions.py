@@ -24,7 +24,12 @@ class ExceptionMessages(dict, Enum):
     FailedSaveProject = {"ru": "Не удалось сохранить проект. %s",
                          "eng": "Error when saving project: %s"}
     FailedLoadProject = {"ru": "Не удалось загрузить проект. %s",
-                         "eng": "Error when loading project: %s"}
+                         "eng": "Error when loading project. %s"}
+    # Profile
+    FailedUpdateProfile = {"ru": "Не удалось обновить данные пользователя. %s",
+                           "eng": "Failed to update user data. %s"}
+    FailedUpdateUserToken = {"ru": "Не удалось обновить токен пользователя",
+                             "eng": "Failed to update user token"}
     # Dataset
     FailedChoiceDataset = {"ru": "Не удалось выбрать датасет. %s",
                            "eng": "Error when choosing dataset: %s"}
@@ -71,7 +76,7 @@ class ExceptionMessages(dict, Enum):
     FailedGetTrainingProgress = {"ru": "Не удалось получить прогресс обучения. %s",
                                  "eng": "Could not get the progress of the training progress: %s"}
     FailedSaveTrain = {"ru": "Не удалось сохранить обучение. %s",
-                        "eng": "Error when save training. %s"}
+                       "eng": "Error when save training. %s"}
 
     # Deploy
     FailedGetDeployPresets = {"ru": "Не удалось получить данные пресетов деплоя. %s",
@@ -81,7 +86,7 @@ class ExceptionMessages(dict, Enum):
     FailedUploadDeploy = {"ru": "Не удалось загрузить деплой. %s",
                           "eng": "Error when uploading deploy: %s"}
     FailedGetUploadDeployProgress = {"ru": "Не удалось получить прогресс загрузки деплоя. %s",
-                                   "eng": "Error when getting upload deploy result: %s"}
+                                     "eng": "Error when getting upload deploy result: %s"}
 
 
 # Base Exception
@@ -150,6 +155,24 @@ class ProjectNotFoundException(ExchangeBaseException):
 class ProjectAlreadyExistsException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.ProjectAlreadyExists
+
+
+# Profile
+
+class FailedUpdateProfileException(ExchangeBaseException):
+    class Meta:
+        message = ExceptionMessages.FailedUpdateProfile
+
+    def __init__(self, __error: str = "", **kwargs):
+        super().__init__(str(__error), **kwargs)
+
+
+class FailedUpdateUserTokenException(ExchangeBaseException):
+    class Meta:
+        message = ExceptionMessages.FailedUpdateUserToken
+
+    def __init__(self, __error: str = "", **kwargs):
+        super().__init__(str(__error), **kwargs)
 
 
 # Dataset exceptions
