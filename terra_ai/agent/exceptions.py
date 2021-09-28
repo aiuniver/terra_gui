@@ -25,11 +25,6 @@ class ExceptionMessages(dict, Enum):
                          "eng": "Error when saving project: %s"}
     FailedLoadProject = {"ru": "Не удалось загрузить проект. %s",
                          "eng": "Error when loading project. %s"}
-    # Profile
-    FailedUpdateProfile = {"ru": "Не удалось обновить данные пользователя. %s",
-                           "eng": "Failed to update user data. %s"}
-    FailedUpdateUserToken = {"ru": "Не удалось обновить токен пользователя",
-                             "eng": "Failed to update user token"}
     # Dataset
     FailedChoiceDataset = {"ru": "Не удалось выбрать датасет. %s",
                            "eng": "Error when choosing dataset: %s"}
@@ -155,24 +150,6 @@ class ProjectNotFoundException(ExchangeBaseException):
 class ProjectAlreadyExistsException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.ProjectAlreadyExists
-
-
-# Profile
-
-class FailedUpdateProfileException(ExchangeBaseException):
-    class Meta:
-        message = ExceptionMessages.FailedUpdateProfile
-
-    def __init__(self, __error: str = "", **kwargs):
-        super().__init__(str(__error), **kwargs)
-
-
-class FailedUpdateUserTokenException(ExchangeBaseException):
-    class Meta:
-        message = ExceptionMessages.FailedUpdateUserToken
-
-    def __init__(self, __error: str = "", **kwargs):
-        super().__init__(str(__error), **kwargs)
 
 
 # Dataset exceptions

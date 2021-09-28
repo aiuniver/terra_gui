@@ -1,3 +1,4 @@
+import matplotlib
 import tensorflow
 from PIL import Image
 from pandas import DataFrame
@@ -1275,12 +1276,14 @@ class CreateArray(object):
                 np.array(options.classes_colors[color_idx].as_rgb_tuple()),
                 array
             )
+        array = array.astype("uint8")
         img_from_array = []
         for i, img in enumerate(array):
-            img = tensorflow.keras.utils.array_to_img(img)
-            img = img.convert('RGB')
+            # img = tensorflow.keras.utils.array_to_img(img)
+            # img = img.convert('RGB')
             img_save_path = os.path.join(save_path, f"image_segmentation_postprocessing_{i}_output_{output_id}.webp")
-            img.save(img_save_path, 'webp')
+            # img.save(img_save_path, 'webp')
+            matplotlib.image.imsave(img_save_path, img)
             img_from_array.append(img_save_path)
 
         return img_from_array
