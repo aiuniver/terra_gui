@@ -1146,8 +1146,8 @@ class CreateArray(object):
         return array
 
     @staticmethod
-    def postprocess_results(array, options, save_path: str = "", dataset_path: str = "") -> list:
-        return_data = []
+    def postprocess_results(array, options, save_path: str = "", dataset_path: str = "") -> dict:
+        return_data = {}
         for i, output_id in enumerate(options.data.outputs.keys()):
             if len(options.data.outputs.keys()) > 1:
                 postprocess_array = array[i]
@@ -1155,14 +1155,14 @@ class CreateArray(object):
                 postprocess_array = array
 
             if options.data.outputs[output_id].task == LayerOutputTypeChoice.Classification:
-                return_data = []
+                return_data[output_id] = []
                 for idx, img_array in enumerate(array):
                     actual_value, predict_values = CreateArray().postprocess_classification(
                         array=np.expand_dims(postprocess_array[idx], axis=0),
                         true_array=options.Y.get("val").get(f"{output_id}")[idx],
                         options=options.data.outputs[output_id],
                     )
-                    return_data.append(
+                    return_data[output_id].append(
                         {
                             "source": CreateArray().postprocess_initial_source(
                                 options=options,
@@ -1176,15 +1176,38 @@ class CreateArray(object):
                     )
 
             elif options.data.outputs[output_id].task == LayerOutputTypeChoice.Segmentation:
-                return_data[output_id] = CreateArray().postprocess_segmentation(
-                    postprocess_array, options.data.outputs[output_id], output_id, save_path
-                )
+                return_data[output_id] = []
+                data = []
+                for j, cls in enumerate(options.data.outputs.get(output_id).classes_names):
+                    data.append((cls, options.data.outputs.get(output_id).classes_colors[j].as_rgb_tuple()))
+                for idx, img_array in enumerate(array):
+                    return_data[output_id].append(
+                        {
+                            "source": CreateArray().postprocess_initial_source(
+                                options=options,
+                                image_id=idx,
+                                preset_path=save_path,
+                                dataset_path=dataset_path
+                            ),
+                            "segment": CreateArray().postprocess_segmentation(
+                                array=array[idx],
+                                options=options.data.outputs.get(output_id),
+                                output_id=output_id,
+                                image_id=idx,
+                                save_path=save_path
+                            ),
+                            "data": data
+                        }
+                    )
+                # return_data[output_id] = CreateArray().postprocess_segmentation(
+                #     postprocess_array, options.data.outputs[output_id], output_id, save_path
+                # )
             elif options.data.outputs[output_id].task == LayerOutputTypeChoice.TextSegmentation:
                 return_data[output_id] = CreateArray().postprocess_text_segmentation(
                     postprocess_array, options.data.outputs[output_id], options.dataframe.get("val")
                 )
             else:
-                return_data = []
+                return_data[output_id] = []
         return return_data
 
     @staticmethod
@@ -1268,33 +1291,24 @@ class CreateArray(object):
         return labels[actual_value], labels_from_array
 
     @staticmethod
-    def postprocess_segmentation(array: np.ndarray, options: DatasetOutputsData, output_id: int, save_path: str) -> list:
+    def postprocess_segmentation(array: np.ndarray, options: DatasetOutputsData, output_id: int, image_id: int,
+                                 save_path: str) -> str:
         array = np.expand_dims(np.argmax(array, axis=-1), axis=-1) * 512
-        for color_idx in range(len(options.classes_colors)):
+        for i, color in enumerate(options.classes_colors):
             array = np.where(
-                array == color_idx * 512,
-                np.array(options.classes_colors[color_idx].as_rgb_tuple()),
+                array == i * 512,
+                np.array(color.as_rgb_tuple()),
                 array
             )
         array = array.astype("uint8")
-        img_from_array = []
-        for i, img in enumerate(array):
-            # img = tensorflow.keras.utils.array_to_img(img)
-            # img = img.convert('RGB')
-            img_save_path = os.path.join(save_path, f"image_segmentation_postprocessing_{i}_output_{output_id}.webp")
-            # img.save(img_save_path, 'webp')
-            matplotlib.image.imsave(img_save_path, img)
-            img_from_array.append(img_save_path)
-
-        return img_from_array
+        img_save_path = os.path.join(save_path, f"image_segmentation_postprocessing_{image_id}_output_{output_id}.webp")
+        matplotlib.image.imsave(img_save_path, array)
+        return img_save_path
 
     @staticmethod
     def postprocess_text_segmentation(array: np.ndarray, options: DatasetOutputsData, data_dataframe: DataFrame):
 
         def add_tags_to_word(word: str, tag: str):
-            """
-            Tag  = s1
-            """
             if tag:
                 return f"<{tag}>{word}</{tag}>"
             else:
@@ -1360,7 +1374,7 @@ class CreateArray(object):
                 classes_colors[f"s{i + 1}"] = options.classes_colors[i]
                 classes_names[f"s{i + 1}"] = options.classes_names[i]
 
-        for example_id in range(len(data_dataframe)):
+        for example_id in range(len(array)):
             initinal_text = data_dataframe.iat[example_id, 0]
             text_segmentation, classes_names, colors = text_colorization(
                 initinal_text,
@@ -1371,7 +1385,6 @@ class CreateArray(object):
             )
             data = []
             for tag in classes_colors.keys():
-                print(tag, classes_names[tag], classes_colors[tag])
                 data.append(
                     (tag, classes_names[tag], classes_colors[tag])
                 )
