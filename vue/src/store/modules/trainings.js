@@ -79,8 +79,6 @@ export default {
       }
     },
     async start({ state: { training: { state: { status } } }, dispatch }, parse) {
-      console.log(status)
-      dispatch('setStatusTrain', 'start');
       let isValid = true
       if (status === 'no_train') {
         const valid = await dispatch('modeling/validateModel', {}, { root: true })
@@ -88,6 +86,7 @@ export default {
         dispatch('setTrainData', {});
       }
       if (isValid) {
+        dispatch('setStatusTrain', 'start');
         let data = JSON.parse(JSON.stringify(parse))
         console.log(data)
         const arht = data.architecture.parameters.outputs || []
@@ -96,8 +95,12 @@ export default {
         }).filter(item => item)
         dispatch('messages/setMessage', { message: `Запуск обучения...` }, { root: true });
         const res = await dispatch('axios', { url: '/training/start/', data }, { root: true });
-        await dispatch('projects/get', {}, { root: true })
-        dispatch('setState', res);
+        if (res && res?.data) {
+          await dispatch('projects/get', {}, { root: true })
+          dispatch('setState', res);
+        } else {
+          dispatch('setStatusTrain', 'no_train');
+        }
         return res
       }
       return null

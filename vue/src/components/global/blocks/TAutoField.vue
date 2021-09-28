@@ -104,6 +104,18 @@
       @cleanError="cleanError"
       @change="change"
     />
+    <t-select-tasks
+      v-if="type === 'select_creation_tasks'"
+      :value="getValue"
+      :label="label"
+      :lists="list"
+      :parse="parse"
+      :name="name"
+      :key="name + idKey"
+      :error="error"
+      @cleanError="cleanError"
+      @change="change"
+    />
     <template v-for="(data, i) of dataFields">
       <t-auto-field
         v-bind="data"
