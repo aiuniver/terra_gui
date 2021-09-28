@@ -1,11 +1,13 @@
+import matplotlib
 import tensorflow
+from PIL import Image
 from pandas import DataFrame
 from tensorflow.python.keras.preprocessing import image
 
 from terra_ai.datasets.utils import get_yolo_anchors
 from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice, \
-    LayerOutputTypeChoice, DatasetGroupChoice
+    LayerOutputTypeChoice, DatasetGroupChoice, LayerInputTypeChoice
 from terra_ai.data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice, \
     LayerTextModeChoice, LayerAudioModeChoice, LayerVideoModeChoice, LayerScalerAudioChoice
 
@@ -30,6 +32,7 @@ from tensorflow.keras import utils
 from tensorflow import concat as tf_concat
 from tensorflow import maximum as tf_maximum
 from tensorflow import minimum as tf_minimum
+import moviepy.editor as moviepy_editor
 
 
 class CreateArray(object):
@@ -1143,36 +1146,35 @@ class CreateArray(object):
         return array
 
     @staticmethod
-    def postprocess_results(array, options, save_path: str = "") -> dict:
-        return_data = {}
+    def postprocess_results(array, options, save_path: str = "", dataset_path: str = "") -> list:
+        return_data = []
         for i, output_id in enumerate(options.data.outputs.keys()):
             if len(options.data.outputs.keys()) > 1:
                 postprocess_array = array[i]
             else:
                 postprocess_array = array
 
-            if options.data.outputs[output_id].task == LayerOutputTypeChoice.Classification and \
-                    options.data.group != DatasetGroupChoice.keras:
-                return_data[output_id] = CreateArray().postprocess_classification(
-                    postprocess_array, options.data.outputs[output_id]
-                )
-            elif options.data.outputs[output_id].task == LayerOutputTypeChoice.Classification and \
-                    options.data.group == DatasetGroupChoice.keras:
+            if options.data.outputs[output_id].task == LayerOutputTypeChoice.Classification:
                 return_data = []
-                for i, img_array in enumerate(array):
+                for idx, img_array in enumerate(array):
+                    actual_value, predict_values = CreateArray().postprocess_classification(
+                        array=np.expand_dims(postprocess_array[idx], axis=0),
+                        true_array=options.Y.get("val").get(f"{output_id}")[idx],
+                        options=options.data.outputs[output_id],
+                    )
                     return_data.append(
                         {
-                            "source": CreateArray().postprocess_initial_keras_images(
-                                array=options.X.get("val").get(list(options.X.get("val").keys())[0])[i],
-                                image_id=i+1,
-                                save_path=save_path
+                            "source": CreateArray().postprocess_initial_source(
+                                options=options,
+                                image_id=idx,
+                                preset_path=save_path,
+                                dataset_path=dataset_path
                             ),
-                            "data": CreateArray().postprocess_classification(
-                                array=np.expand_dims(postprocess_array[i], axis=0),
-                                options=options.data.outputs[output_id]
-                            )[0]
+                            "actual": actual_value,
+                            "data": predict_values[0]
                         }
                     )
+
             elif options.data.outputs[output_id].task == LayerOutputTypeChoice.Segmentation:
                 return_data[output_id] = CreateArray().postprocess_segmentation(
                     postprocess_array, options.data.outputs[output_id], output_id, save_path
@@ -1181,20 +1183,80 @@ class CreateArray(object):
                 return_data[output_id] = CreateArray().postprocess_text_segmentation(
                     postprocess_array, options.data.outputs[output_id], options.dataframe.get("val")
                 )
+            else:
+                return_data = []
         return return_data
 
     @staticmethod
-    def postprocess_initial_keras_images(array: np.ndarray, image_id: int, save_path: str = "") -> str:
-        img = image.array_to_img(array)
-        img = img.convert('RGB')
-        img_path = os.path.join(
-            save_path, f"initial_keras_image_{image_id}.webp"
-        )
-        img.save(img_path, 'webp')
-        return img_path
+    def postprocess_initial_source(options, image_id: int, preset_path: str = "", dataset_path: str = "") -> str:
+        column_idx = []
+        input_id = list(options.data.inputs.keys())[0]
+        if options.data.group != DatasetGroupChoice.keras:
+            for column_name in options.dataframe.get('val').columns:
+                # TODO: сделано для одного входа
+                if column_name.split('_', 1)[0] == f"{input_id}":
+                    column_idx.append(options.dataframe.get('val').columns.tolist().index(column_name))
+            if (
+                    options.data.inputs.get(input_id).task == LayerInputTypeChoice.Text
+                    or options.data.inputs.get(input_id).task == LayerInputTypeChoice.Dataframe
+            ):
+                initial_file_path = ""
+            else:
+                initial_file_path = os.path.join(
+                    dataset_path,
+                    options.dataframe.get('val').iat[image_id, column_idx[0]]
+                )
+        else:
+            initial_file_path = ""
+
+        if options.data.inputs.get(input_id).task == LayerInputTypeChoice.Image:
+            if options.data.group != DatasetGroupChoice.keras:
+                img = Image.open(initial_file_path)
+                img = img.resize(options.data.inputs.get(input_id).shape[0:2][::-1], Image.ANTIALIAS)
+            else:
+                img = image.array_to_img(options.X.get("val").get(f"{input_id}")[image_id])
+            img = img.convert('RGB')
+            save_path = os.path.join(
+                preset_path, f"initial_data_image_{image_id+1}_input_{input_id}.webp"
+            )
+            img.save(save_path, 'webp')
+
+        # elif options.inputs.get(input_id).task == LayerInputTypeChoice.Text:
+        #     regression_task = False
+        #     for out in self.dataset_config.get("outputs").keys():
+        #         if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Regression:
+        #             regression_task = True
+        #     for column in column_idx:
+        #         text_str = self.dataset_config.get("dataframe").get('val').iat[example_idx, column]
+        #         data_type = LayerInputTypeChoice.Text.name
+        #         title = "Текст"
+        #         # for out in self.dataset_config.get("outputs").keys():
+        #         #     if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Regression:
+        #         if regression_task:
+        #             title = list(self.dataset_config.get("dataframe").get('val').columns)[column].split("_", 1)[-1]
+        #         data = [
+        #             {
+        #                 "title": title,
+        #                 "value": text_str,
+        #                 "color_mark": None
+        #             }
+        #         ]
+
+        elif options.data.inputs.get(input_id).task == LayerInputTypeChoice.Video:
+            clip = moviepy_editor.VideoFileClip(initial_file_path)
+            save_path = os.path.join(preset_path, f"initial_data_video_{image_id+1}_input_{input_id}.webm")
+            clip.write_videofile(save_path)
+
+        elif options.data.inputs.get(input_id).task == LayerInputTypeChoice.Audio:
+            save_path = os.path.join(preset_path, f"initial_data_audio_{image_id+1}_input_{input_id}.webp")
+            AudioSegment.from_file(initial_file_path).export(save_path, format="webm")
+        else:
+            save_path = ''
+        return save_path
 
     @staticmethod
-    def postprocess_classification(array: np.ndarray, options: DatasetOutputsData) -> list:
+    def postprocess_classification(array: np.ndarray, true_array: np.ndarray, options: DatasetOutputsData):
+        actual_value = np.argmax(true_array, axis=-1) if options.encoding == 'ohe' else true_array
         labels = options.classes_names
         labels_from_array = []
         for class_idx in array:
@@ -1203,7 +1265,7 @@ class CreateArray(object):
             for j in class_dist:
                 labels_dist.append((labels[list(class_idx).index(j)], round(j * 100, 1)))
             labels_from_array.append(labels_dist)
-        return labels_from_array
+        return labels[actual_value], labels_from_array
 
     @staticmethod
     def postprocess_segmentation(array: np.ndarray, options: DatasetOutputsData, output_id: int, save_path: str) -> list:
@@ -1214,12 +1276,14 @@ class CreateArray(object):
                 np.array(options.classes_colors[color_idx].as_rgb_tuple()),
                 array
             )
+        array = array.astype("uint8")
         img_from_array = []
         for i, img in enumerate(array):
-            img = tensorflow.keras.utils.array_to_img(img)
-            img = img.convert('RGB')
+            # img = tensorflow.keras.utils.array_to_img(img)
+            # img = img.convert('RGB')
             img_save_path = os.path.join(save_path, f"image_segmentation_postprocessing_{i}_output_{output_id}.webp")
-            img.save(img_save_path, 'webp')
+            # img.save(img_save_path, 'webp')
+            matplotlib.image.imsave(img_save_path, img)
             img_from_array.append(img_save_path)
 
         return img_from_array

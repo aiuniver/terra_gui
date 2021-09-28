@@ -23,17 +23,18 @@
     <hr />
     <div class="page-profile__token">
       <p class="page-profile__label">Token</p>
-      <p class="page-profile__text" ref="token">
-        {{ user.token }}
+      <p class="page-profile__text">
+        <span ref="token">{{ user.token }}</span>
         <i class="btn-copy" @click="copy"></i>
+        <span class="copy-msg"></span>
       </p>
-      <!-- <div @click="updateToken" class="btn-text">Обновить токен</div> -->
+      <div @click="updateToken" class="btn-text">Обновить токен</div>
     </div>
-    <hr />
+    <!-- <hr />
     <div class="page-profile__subscription">
       <p class="page-profile__label">Подписка действительна до 06.10.2021</p>
-      <!-- <div class="btn-text">Продлить</div> -->
-    </div>
+      <div class="btn-text">Продлить</div>
+    </div> -->
     <transition name="slide-fade">
       <div v-show="showNotice" class="page-profile__notice">
         <i class="notice__icon"></i>
@@ -52,11 +53,9 @@ export default {
     isChanged: false,
     showNotice: false,
     noticeMsg: '',
-    tId: null,
+    // tId: null,
     errFirst: '',
     errLast: '',
-    cached: null,
-    watcher: null,
     isLoading: false
   }),
   computed: {
@@ -64,16 +63,16 @@ export default {
       user: 'projects/getUser',
     }),
     firstName: {
-      set(val) {
-        this.$store.commit('projects/SET_USER', { first_name: val });
+      set(first_name) {
+        this.$store.commit('projects/SET_USER', { first_name });
       },
       get() {
         return this.user.first_name;
       },
     },
     lastName: {
-      set(val) {
-        this.$store.commit('projects/SET_USER', { last_name: val });
+      set(last_name) {
+        this.$store.commit('projects/SET_USER', { last_name });
       },
       get() {
         return this.user.last_name;
@@ -90,10 +89,14 @@ export default {
       selection.addRange(range);
       document.execCommand('copy');
       selection.removeAllRanges();
-      this.notify('Token скопирован в буфер обмена');
+      document.querySelector('.copy-msg').textContent = 'Token скопирован в буфер обмена'
     },
-    updateToken() {
-      this.notify('Ваш token успешно обновлен');
+    async updateToken() {
+      const res = await this.$store.dispatch('axios', { url: '/profile/update_token' });
+      if (res.success) {
+        // this.$refs.token.textContent = res.data.new_token;
+        this.$store.dispatch('messages/setMessage', { message: `Ваш token успешно обновлен` });
+      }
     },
     async save() {
       if (!this.firstName) this.errFirst = 'Поле обязательно для заполнения';
@@ -107,24 +110,16 @@ export default {
         });
         this.isLoading = false;
 
-        if (res.success) this.notify('Ваши данные успешно изменены');
+        if (res.success) this.$store.dispatch('messages/setMessage', { message: `Ваши данные успешно изменены` });
       }
     },
-    cancel() {
-      this.errFirst = this.errLast = '';
-      this.firstName = this.cached[0];
-      this.lastName = this.cached[1];
-      setTimeout(() => {
-        this.isChanged = false;
-      }, 1);
-    },
-    notify(msg) {
-      clearTimeout(this.tId);
-      this.showNotice = false;
-      this.noticeMsg = msg;
-      this.showNotice = true;
-      this.tId = setTimeout(() => (this.showNotice = false), 2000);
-    },
+    // notify(msg) {
+    //   clearTimeout(this.tId);
+    //   this.showNotice = false;
+    //   this.noticeMsg = msg;
+    //   this.showNotice = true;
+    //   this.tId = setTimeout(() => (this.showNotice = false), 2000);
+    // },
   },
   watch: {
     firstName() {
@@ -133,27 +128,16 @@ export default {
     lastName() {
       this.isChanged = true;
     },
-  },
-  mounted() {
-    this.watcher = this.$store.watch(
-      () => this.$store.getters['projects/getUser'],
-      async () => {
-        const user = { ...this.user };
-        this.cached = [user.first_name, user.last_name];
-        this.watcher();
-        this.isChanged = false;
-      }
-    );
-  },
+  }
 };
 </script>
 
 <style lang="scss" scoped>
 .page-profile {
-  margin: 30px 95px;
+  margin: 30px 20px;
   max-width: 872px;
   &__btns {
-    margin-top: 50px;
+    margin-top: 20px;
   }
   &__notice {
     position: absolute;
@@ -206,6 +190,9 @@ export default {
     font-weight: 600;
     margin-bottom: 30px;
   }
+  .token, .copy-msg {
+    vertical-align: middle;
+  }
   hr {
     border-color: #242f3d;
   }
@@ -239,7 +226,12 @@ export default {
   width: 24px;
   height: 24px;
   margin-left: 30px;
+  margin-right: 10px;
   background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjRweCIgZmlsbD0iI0E3QkVEMyI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0xNiAxSDRjLTEuMSAwLTIgLjktMiAydjE0aDJWM2gxMlYxem0zIDRIOGMtMS4xIDAtMiAuOS0yIDJ2MTRjMCAxLjEuOSAyIDIgMmgxMWMxLjEgMCAyLS45IDItMlY3YzAtMS4xLS45LTItMi0yem0wIDE2SDhWN2gxMXYxNHoiLz48L3N2Zz4=');
+}
+
+.copy-msg {
+  color: #3eba31;
 }
 
 .slide-fade-enter-active {
