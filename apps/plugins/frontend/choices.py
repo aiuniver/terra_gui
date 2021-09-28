@@ -21,8 +21,6 @@ class LayerOutputTypeChoice(str, Enum):
     Classification = "Классификация"
     Segmentation = "Сегментация изображений"
     TextSegmentation = "Сегментация текстов"
-    Regression = "Регрессия"
-    Timeseries = "Временные ряды"
     ObjectDetection = "Обнаружение объектов"
 
     @staticmethod
@@ -119,6 +117,15 @@ class LayerAudioModeChoice(str, Enum):
         return list(map(lambda item: (item.name, item.value), LayerAudioModeChoice))
 
 
+class LayerAudioFillModeChoice(str, Enum):
+    last_millisecond = "Последней миллисекундой"
+    loop = "Зациклить"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerAudioFillModeChoice))
+
+
 class LayerAudioParameterChoice(str, Enum):
     audio_signal = "Audio signal"
     chroma_stft = "Chroma STFT"
@@ -136,6 +143,16 @@ class LayerAudioParameterChoice(str, Enum):
         )
 
 
+class LayerAudioResampleChoice(str, Enum):
+    kaiser_best = "Kaiser best"
+    kaiser_fast = "Kaiser fast"
+    scipy = "Scipy"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerAudioResampleChoice))
+
+
 class LayerTextModeChoice(str, Enum):
     completely = "Целиком"
     length_and_step = "По длине и шагу"
@@ -146,8 +163,9 @@ class LayerTextModeChoice(str, Enum):
 
 
 class LayerVideoFillModeChoice(str, Enum):
+    last_frames = "Последним кадром"
+    loop = "Зациклить"
     average_value = "Средним значением"
-    last_frames = "Последними кадрами"
 
     @staticmethod
     def items_tuple() -> list:

@@ -23,7 +23,7 @@
       </div>
     </div>
 
-    <div class="t-table__footer">
+    <div class="t-table__footer" v-click-outside="outside">
       <span>{{ label }}</span>
       <div class="t-table__footer--btn" @click="show = true">
         <i class="t-icon icon-file-dot"></i>
@@ -95,6 +95,9 @@ export default {
     },
   },
   methods: {
+    outside() {
+      this.show = false;
+    },
     all([name]) {
       return this.handlers
         .filter(item => item.table[this.label].includes(name))
@@ -269,8 +272,6 @@ export default {
         width: 16px;
         height: 13px;
       }
-      &:hover {
-      }
     }
   }
   &__dropdown {
@@ -278,7 +279,7 @@ export default {
     background-color: #2b5278;
     border-radius: 4px;
     right: 3px;
-    bottom: 3px;
+    bottom: 8px;
     z-index: 100;
     &--item {
       position: relative;

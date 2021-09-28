@@ -1,7 +1,7 @@
 <template>
   <div class="text-card">
     <scrollbar>
-      <slot>TEXT</slot>
+      <pre><slot>TEXT</slot></pre>
     </scrollbar>
   </div>
 </template>
@@ -28,5 +28,10 @@ export default {
   font-size: 14px;
   line-height: 21px;
   color: #65B9F4;
+}
+pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: inherit;
 }
 </style>

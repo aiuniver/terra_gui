@@ -675,16 +675,19 @@ class FitCallback(keras.callbacks.Callback):
 
     def _create_cascade(self):
         if self.dataset.data.group != DatasetGroupChoice.keras:
-            config = CascadeCreator()
-            config.create_config(self.save_model_path, os.path.split(self.save_model_path)[0])
-            config.copy_package(os.path.split(self.save_model_path)[0])
             input_key = list(self.dataset.data.inputs.keys())[0]
             output_key = list(self.dataset.data.outputs.keys())[0]
-            config.copy_script(
-                training_path=os.path.split(self.save_model_path)[0],
-                function_name=f"{self.dataset.data.inputs[input_key].task.lower()}"
-                              f"_{self.dataset.data.outputs[output_key].task.lower()}"
-            )
+            if self.dataset.data.inputs[input_key].task == LayerInputTypeChoice.Image and (
+                    self.dataset.data.outputs[output_key].task in [LayerOutputTypeChoice.Classification,
+                                                                   LayerOutputTypeChoice.Segmentation]):
+                config = CascadeCreator()
+                config.create_config(self.save_model_path, os.path.split(self.save_model_path)[0])
+                config.copy_package(os.path.split(self.save_model_path)[0])
+                config.copy_script(
+                    training_path=os.path.split(self.save_model_path)[0],
+                    function_name=f"{self.dataset.data.inputs[input_key].task.lower()}"
+                                  f"_{self.dataset.data.outputs[output_key].task.lower()}"
+                )
 
     def save_lastmodel(self) -> None:
         """
@@ -795,6 +798,8 @@ class FitCallback(keras.callbacks.Callback):
                 #     upred[data_type] = self.model.predict(self.dataset.X.get(data_type))
 
                 train_batch_data = interactive.update_state(y_pred=upred)
+            else:
+                train_batch_data = interactive.update_state(y_pred=None)
             if train_batch_data:
                 result_data = {
                     'timings': [still_time, elapsed_time, elapsed_epoch_time,

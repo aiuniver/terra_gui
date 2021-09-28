@@ -1,6 +1,6 @@
 <template>
   <div class="img-card">
-    <img class="img-card__image" :src="src" :alt="ImgAlt">
+    <img class="img-card__image" :src="src">
   </div>
 </template>
 
@@ -12,10 +12,6 @@ export default {
       type: String,
       default: 'img.png'
     },
-    imgAlt: {
-      type: String,
-      default: 'image'
-    }
   },
   computed: {
     src() {

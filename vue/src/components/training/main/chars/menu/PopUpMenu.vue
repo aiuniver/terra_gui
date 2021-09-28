@@ -3,7 +3,9 @@
     <!-- <li class="menu__item" @click="$emit('event', 'add')">Добавить новый график</li> -->
     <li class="menu__item" @click="$emit('event', { name: 'general', data: 'add' })">Добавить график</li>
     <li class="menu__item" @click="$emit('event', { name: 'general', data: 'copy' })">Копировать график</li>
-    <li class="menu__item" @click="$emit('event', { name: 'general', data: 'hide' })">Свернуть график</li>
+    <li class="menu__item" @click="$emit('event', { name: 'general', data: 'hide' })">
+      {{ show ? 'Свернуть' : 'Развернуть' }} график
+    </li>
     <li class="menu__item" @click="$emit('event', { name: 'general', data: 'remove' })">Удалить график</li>
     <template v-for="({ name, list }, i) of menus">
       <li class="menu__dropdown" :key="'menu_' + i">
@@ -32,6 +34,7 @@ export default {
       type: Array,
       default: () => [],
     },
+    show: Boolean,
   },
 };
 </script>
