@@ -30,9 +30,7 @@ class SaveAPIView(BaseAPIView):
             response = requests.post(
                 f"{settings.TERRA_AI_EXCHANGE_API_URL}/update/", json=data
             )
-            if (
-                requests.status_codes.codes.get("ok") != response.status_code
-            ) or response.json().get("success"):
+            if not response.json().get("success"):
                 return BaseResponseErrorGeneral(
                     "Не удалось обновить данные пользователя"
                 )
@@ -51,9 +49,7 @@ class UpdateTokenAPIView(BaseAPIView):
             response = requests.post(
                 f"{settings.TERRA_AI_EXCHANGE_API_URL}/update_token/", json=data
             )
-            if (
-                requests.status_codes.codes.get("ok") != response.status_code
-            ) or response.json().get("new_token"):
+            if not response.json().get("new_token"):
                 return BaseResponseErrorGeneral(
                     "Не удалось обновить токен пользователя"
                 )
