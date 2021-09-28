@@ -540,7 +540,9 @@ class InteractiveCallback:
             if config.native().get('intermediate_result').get('show_results') or \
                     config.native().get('statistic_data').get('output_id'):
                 self.urgent_predict = True
-                return
+                self.intermediate_result = self._get_intermediate_result_request()
+                if self.interactive_config.get('statistic_data').get('output_id'):
+                    self.statistic_result = self._get_statistic_data_request()
 
             self.train_progress['train_data'] = {
                 "class_graphics": self.class_graphics,

@@ -10,6 +10,7 @@ from pydantic.color import Color
 class CascadeCreator:
 
     def create_config(self, model_path: str, out_path: str):
+        out_path = os.path.join(out_path, "deploy")
         dataset_path = os.path.join(model_path, "dataset", "config.json")
         with open(dataset_path) as cfg:
             dataset_config = json.load(cfg)
@@ -40,18 +41,26 @@ class CascadeCreator:
 
     @staticmethod
     def copy_package(training_path):
-        if os.path.exists(os.path.join(training_path, "cascades")):
-            shutil.rmtree(os.path.join(training_path, "cascades"), ignore_errors=True)
+        deploy_path = os.path.join(training_path, "deploy")
+        if os.path.exists(os.path.join(deploy_path, "cascades")):
+            shutil.rmtree(os.path.join(deploy_path, "cascades"), ignore_errors=True)
+        if os.path.exists(os.path.join(deploy_path, "model")):
+            shutil.rmtree(os.path.join(deploy_path, "model"), ignore_errors=True)
         shutil.copytree("terra_ai/cascades",
-                        os.path.join(training_path, "cascades"),
+                        os.path.join(deploy_path, "cascades"),
                         ignore=shutil.ignore_patterns("demo_panel", "cascades"))
+        shutil.copytree(os.path.join(training_path, "model"),
+                        os.path.join(deploy_path, "model"),
+                        ignore=shutil.ignore_patterns("deploy_presets", "interactive.history",
+                                                      "config.presets", "config.train", "log.history"))
         shutil.copyfile("terra_ai/datasets/preprocessing.py",
-                        os.path.join(training_path, "cascades", "preprocessing.py"))
+                        os.path.join(deploy_path, "cascades", "preprocessing.py"))
 
     @staticmethod
     def copy_script(training_path, function_name):
+        deploy_path = os.path.join(training_path, "deploy")
         shutil.copyfile(f"terra_ai/deploy/deploy_scripts/{function_name}.py",
-                        os.path.join(training_path, "script.py"))
+                        os.path.join(deploy_path, "script.py"))
 
 
 if __name__ == "__main__":
