@@ -94,7 +94,7 @@ export default {
     async updateToken() {
       const res = await this.$store.dispatch('axios', { url: '/profile/update_token' });
       if (res.success) {
-        // this.$refs.token.textContent = res.data.new_token;
+        this.$refs.token.textContent = res.data.new_token;
         this.$store.dispatch('messages/setMessage', { message: `Ваш token успешно обновлен` });
       }
     },
