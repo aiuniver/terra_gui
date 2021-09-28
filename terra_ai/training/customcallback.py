@@ -498,7 +498,7 @@ class InteractiveCallback:
         self.train_progress = data
 
     def update_state(self, y_pred, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
-        print('fit_logs', fit_logs)
+        # print('fit_logs', fit_logs)
         if self.log_history:
             if y_pred is not None:
                 self._reformat_y_pred(y_pred)
@@ -1643,7 +1643,6 @@ class InteractiveCallback:
         data_return = []
         if not self.interactive_config.get('loss_graphs') or not self.log_history.get("epochs"):
             return data_return
-
         for loss_graph_config in self.interactive_config.get('loss_graphs'):
             if loss_graph_config.get('show') == "model":
                 if sum(self.log_history.get(f"{loss_graph_config.get('output_idx')}").get("progress_state").get(
@@ -2629,9 +2628,10 @@ class InteractiveCallback:
                 text_str = self.dataset_config.get("dataframe").get('val').iat[example_idx, column]
                 data_type = LayerInputTypeChoice.Text.name
                 title = "Текст"
-                for out in self.dataset_config.get("outputs").keys():
-                    if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Regression:
-                        title = self.dataset_config.get("dataframe").get('val').columns[column].split("_", 1)[-1]
+                # for out in self.dataset_config.get("outputs").keys():
+                #     if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Regression:
+                if regression_task:
+                    title = list(self.dataset_config.get("dataframe").get('val').columns)[column].split("_", 1)[-1]
                 data = [
                     {
                         "title": title,
@@ -2830,6 +2830,7 @@ class InteractiveCallback:
                         dict(title=labels[i], value=f"{round(val * 100, 1)}%", color_mark=class_color_mark)
                     )
 
+
         elif self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.Segmentation:
             labels = self.dataset_config.get("outputs").get(output_id).get("classes_names")
 
@@ -2883,12 +2884,24 @@ class InteractiveCallback:
                 y_true = np.array(self.y_true.get(data_type).get(output_id)[example_idx]).astype('int')
                 y_pred = to_categorical(np.argmax(self.y_pred.get(output_id)[example_idx], axis=-1),
                                         self.dataset_config.get("outputs").get(output_id).get("num_classes"))
+                count = 0
+                mean_val = 0
                 for idx, cls in enumerate(labels):
                     dice_val = np.round(self._dice_coef(y_true[:, :, idx], y_pred[:, :, idx],
                                                         batch_mode=False) * 100, 1)
+                    count += 1
+                    mean_val += dice_val
                     data["stat"]["data"].append(
                         dict(title=cls, value=f"{dice_val}%", color_mark='success' if dice_val >= 90 else 'wrong')
                     )
+                data["stat"]["data"].insert(
+                    0,
+                    dict(
+                        title="Средняя точность",
+                        value=f"{round(mean_val / count, 2)}%",
+                        color_mark='success' if mean_val / count >= 90 else 'wrong'
+                    )
+                )
 
         elif self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.TextSegmentation:
             # TODO: пока исходим что для сегментации текста есть только один вход с текстом, если будут сложные модели
@@ -2935,6 +2948,8 @@ class InteractiveCallback:
                 }
                 y_true = np.array(self.y_true.get(data_type).get(output_id)[example_idx]).astype('int')
                 y_pred = np.where(self.y_pred.get(output_id)[example_idx] >= 0.9, 1., 0.)
+                count = 0
+                mean_val = 0
                 for idx, cls in enumerate(classes_names):
                     if np.sum(y_true[:, idx]) == 0 and np.sum(y_pred[:, idx]) == 0:
                         data["stat"]["data"].append(
@@ -2945,6 +2960,22 @@ class InteractiveCallback:
                         data["stat"]["data"].append(
                             dict(name=cls, value=f"{dice_val}%", color_mark='success' if dice_val >= 90 else 'wrong')
                         )
+                        count += 1
+                        mean_val += dice_val
+                if count and mean_val / count >= 90:
+                    mean_color_mark = "success"
+                elif count and mean_val / count < 90:
+                    mean_color_mark = "wrong"
+                else:
+                    mean_color_mark = None
+                data["stat"]["data"].insert(
+                    0,
+                    dict(
+                        title="Средняя точность",
+                        value=f"{round(mean_val / count, 2)}%" if count else "-",
+                        color_mark=mean_color_mark
+                    )
+                )
 
         elif self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.Regression:
             # TODO: inverse_transform
