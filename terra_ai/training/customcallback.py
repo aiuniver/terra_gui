@@ -26,7 +26,7 @@ from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.utils import camelize, decamelize
 
-__version__ = 0.070
+__version__ = 0.071
 
 
 def sort_dict(dict_to_sort: dict, mode='by_name'):
@@ -2580,7 +2580,6 @@ class InteractiveCallback:
         from pydub import AudioSegment
         AudioSegment.from_file("audio_path").export("audio.webm", format="webm")
         """
-
         column_idx = []
         if self.dataset_config.get("group") != 'keras':
             for column_name in self.dataset_config.get("dataframe").get('val').columns:
