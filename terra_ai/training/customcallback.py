@@ -1,7 +1,9 @@
 import copy
 import importlib
 import os
+import random
 import re
+import string
 from typing import Union
 
 import pandas as pd
@@ -24,7 +26,8 @@ from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.utils import camelize, decamelize
 
-__version__ = 0.069
+__version__ = 0.070
+
 
 def sort_dict(dict_to_sort: dict, mode='by_name'):
     if mode == 'by_name':
@@ -554,10 +557,10 @@ class InteractiveCallback:
                 'data_balance': self._get_balance_data_request(),
             }
             progress.pool(
-                    self.progress_name,
-                    data=self.train_progress,
-                    finished=False,
-                )
+                self.progress_name,
+                data=self.train_progress,
+                finished=False,
+            )
             return self.train_progress
 
     # Методы для set_attributes()
@@ -941,7 +944,7 @@ class InteractiveCallback:
 
             if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries and \
                     self.dataset_config.get("outputs").get(out).get("classes_names") != \
-                ['Не изменился', 'Вверх', 'Вниз']:
+                    ['Не изменился', 'Вверх', 'Вниз']:
                 for data_type in self.y_true.keys():
                     dataset_balance[out][data_type] = {}
                     for output_channel in self.dataset_config.get("columns").get(int(out)).keys():
@@ -1930,7 +1933,9 @@ class InteractiveCallback:
                             save_id=idx + 1,
                             example_idx=self.example_idx[idx],
                         )
+                        random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
                         return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
+                            'update': random_key,
                             'type': type_choice,
                             'data': data,
                         }
@@ -1981,7 +1986,8 @@ class InteractiveCallback:
         for out in self.interactive_config.get("statistic_data").get("output_id"):
             if self.dataset_config.get("outputs").get(f"{out}").get("task") == LayerOutputTypeChoice.Classification or \
                     (
-                            self.dataset_config.get("outputs").get(f"{out}").get("task") == LayerOutputTypeChoice.Timeseries
+                            self.dataset_config.get("outputs").get(f"{out}").get(
+                                "task") == LayerOutputTypeChoice.Timeseries
                             and self.dataset_config.get("outputs").get(f"{out}").get("classes_names") ==
                             ['Не изменился', 'Вверх', 'Вниз']
                     ):
