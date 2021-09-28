@@ -98,7 +98,7 @@ class GUINN:
                              training_path: str, dataset_path: str, initial_config: InteractiveData) -> None:
         self.dataset = self._prepare_dataset(dataset, dataset_path)
         self.training_path = training_path
-        self.nn_name = model_name
+        self.nn_name = "model"
 
         if interactive.get_states().get("status") == "addtrain":
             if self.callbacks[0].last_epoch - 1 >= self.sum_epoch:
@@ -148,7 +148,8 @@ class GUINN:
             validator = ModelValidator(model)
             train_model = validator.get_keras_model()
         else:
-            train_model = load_model(os.path.join(self.training_path, self.nn_name, f"{self.nn_name}.trm"))
+            train_model = load_model(os.path.join(self.training_path, self.nn_name, f"{self.nn_name}.trm"),
+                                     compile=False)
         return train_model
 
     @staticmethod
@@ -224,7 +225,7 @@ class GUINN:
         Return:
             dict
         """
-        model_path = os.path.join(training_path, gui_model.alias)
+        model_path = os.path.join(training_path, "model")
         if interactive.get_states().get("status") != "addtrain":
             self._save_params_for_deploy(dataset_path=dataset_path, training_path=model_path, params=training_params)
         self.nn_cleaner(retrain=True if interactive.get_states().get("status") == "training" else False)
@@ -889,22 +890,22 @@ class FitCallback(keras.callbacks.Callback):
                 msg = f'Затрачено времени на обучение: ' \
                       f'{self.eta_format(self._sum_time)} '
             self._set_result_data({'info': f"Обучение закончено. {msg}"})
-            percent = (self.last_epoch - 1) / (
-                self.retrain_epochs if interactive.get_states().get("status") ==
-                                       "addtrain" or interactive.get_states().get("status") == "stopped"
-                else self.epochs
-            ) * 100
-            interactive.set_status("trained")
-            total_epochs = self.retrain_epochs if interactive.get_states().get('status') \
-                                                  in ['addtrain', 'trained'] else self.epochs
-            if os.path.exists(self.save_model_path) and interactive.deploy_presets_data:
-                with open(os.path.join(self.save_model_path, "config.presets"), "w", encoding="utf-8") as presets:
-                    presets.write(str(interactive.deploy_presets_data))
-            progress.pool(
-                self.progress_name,
-                percent=percent,
-                message=f"Обучение завершено. Эпоха {self.last_epoch - 1} из "
-                        f"{total_epochs}",
-                data=self._get_result_data(),
-                finished=True,
-            )
+        percent = (self.last_epoch - 1) / (
+            self.retrain_epochs if interactive.get_states().get("status") ==
+                                   "addtrain" or interactive.get_states().get("status") == "stopped"
+            else self.epochs
+        ) * 100
+        interactive.set_status("trained")
+        total_epochs = self.retrain_epochs if interactive.get_states().get('status') \
+                                              in ['addtrain', 'trained'] else self.epochs
+        if os.path.exists(self.save_model_path) and interactive.deploy_presets_data:
+            with open(os.path.join(self.save_model_path, "config.presets"), "w", encoding="utf-8") as presets:
+                presets.write(str(interactive.deploy_presets_data))
+        progress.pool(
+            self.progress_name,
+            percent=percent,
+            message=f"Обучение завершено. Эпоха {self.last_epoch - 1} из "
+                    f"{total_epochs}",
+            data=self._get_result_data(),
+            finished=True,
+        )

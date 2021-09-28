@@ -30,24 +30,24 @@
         <t-button style="width: 150px" @click.native="show">Показать</t-button>
       </div>
     </div>
-    <div class="predictions__body" v-if="showPredict && (statusTrain === 'start' || statusTrain === 'training')">
-      <div class="predictions__overlay" v-if="loading || Object.keys(predictData).length === 0">
+    <div class="predictions__body" >
+      <!-- <div class="predictions__overlay" v-if="loading || Object.keys(predictData).length === 0">
         <LoadSpiner :text="'Получение данных...'" />
-      </div>
-      <PredictTable v-else :predict="predictData" />
+      </div> -->
+      <PredictTable :predict="predictData" />
     </div>
   </div>
 </template>
 
 <script>
 import PredictTable from './PredictTable';
-import LoadSpiner from '@/components/forms/LoadSpiner';
+// import LoadSpiner from '@/components/forms/LoadSpiner';
 
 export default {
   name: 'Predictions',
   components: {
     PredictTable,
-    LoadSpiner,
+    // LoadSpiner,
   },
   props: {
     outputs: Array,

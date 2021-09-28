@@ -1,6 +1,23 @@
 import numpy as np
 
 
+def probability2classes(**params):
+
+    classes = np.array(params['classes_names'])
+    alpha = params['alpha']
+
+    def fun(array):
+        while len(array.shape) > 2:
+            array = array[0]
+
+        out = []
+        for i in array:
+            out.append(list(classes[i > alpha]))
+        return out
+
+    return fun
+
+
 def main(**params):
 
     def fun(out):
