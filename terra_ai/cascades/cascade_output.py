@@ -33,12 +33,11 @@ def image(path):
 
     def fun(img):
 
-        if len(img.shape) == 4:
+        while len(img.shape) != 3:
             img = img[0]
 
         img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
-        # cv2.imwrite(path, img)
         im = Image.fromarray(img)
         im.save(path)
 

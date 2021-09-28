@@ -1,6 +1,5 @@
 import hashlib
 
-from pathlib import Path
 from pydantic import ValidationError
 
 from django.conf import settings
@@ -9,7 +8,7 @@ from terra_ai.agent import agent_exchange
 from terra_ai.agent.exceptions import ExchangeBaseException
 from terra_ai.exceptions.base import TerraBaseException
 
-from apps.plugins.project import project
+from apps.plugins.project import project, project_path
 from ..base import (
     BaseAPIView,
     BaseResponseSuccess,
@@ -38,10 +37,12 @@ class UploadAPIView(BaseAPIView):
             return BaseResponseErrorFields(serializer.errors)
         try:
             sec = serializer.validated_data.get("sec")
+            for item in request.project.deploy.data.values():
+                item.data.prepare(project_path.training)
             agent_exchange(
                 "deploy_upload",
                 **{
-                    "source": Path("./TerraAI/tmp"),
+                    "source": project_path.deploy,
                     "stage": 1,
                     "deploy": serializer.validated_data.get("deploy"),
                     "env": "v1",

@@ -55,6 +55,56 @@ OutputLayersDefaults = {
     },
 }
 
+KerasInstructions = {'mnist': {1: {'1_image': {'cols_names': '1_image',
+                                               'height': 28,
+                                               'width': 28,
+                                               'max_scaler': 1,
+                                               'min_scaler': 0,
+                                               'net': 'convolutional',
+                                               'put': 1,
+                                               'put_type': 'image',
+                                               'scaler': 'min_max_scaler'
+                                               }
+                                   }
+                               },
+                     'fashion_mnist': {1: {'1_image': {'cols_names': '1_image',
+                                                       'height': 28,
+                                                       'width': 28,
+                                                       'max_scaler': 1,
+                                                       'min_scaler': 0,
+                                                       'net': 'convolutional',
+                                                       'put': 1,
+                                                       'put_type': 'image',
+                                                       'scaler': 'min_max_scaler'
+                                                       }
+                                           }
+                                       },
+                     'cifar10': {1: {'1_image': {'cols_names': '1_image',
+                                                 'height': 32,
+                                                 'width': 32,
+                                                 'max_scaler': 1,
+                                                 'min_scaler': 0,
+                                                 'net': 'convolutional',
+                                                 'put': 1,
+                                                 'put_type': 'image',
+                                                 'scaler': 'min_max_scaler'
+                                                 }
+                                     }
+                                 },
+                     'cifar100': {1: {'1_image': {'cols_names': '1_image',
+                                                  'height': 32,
+                                                  'width': 32,
+                                                  'max_scaler': 1,
+                                                  'min_scaler': 0,
+                                                  'net': 'convolutional',
+                                                  'put': 1,
+                                                  'put_type': 'image',
+                                                  'scaler': 'min_max_scaler'
+                                                  }
+                                      }
+                                  },
+                     }
+
 DatasetsGroups = [
     {
         "alias": "keras",
