@@ -274,12 +274,14 @@ class GUINN:
                             epochs=params.epochs, save_model_path=save_model_path,
                             checkpoint=params.architecture.parameters.checkpoint.native())
         progress.pool(self.progress_name, finished=False, data={'status': 'Начало обучения ...'})
-
+        critical_size = len(self.dataset.dataset.get('val'))
         self.history = self.model.fit(
-            self.dataset.dataset.get('train').batch(self.batch_size, drop_remainder=True).take(-1),
+            self.dataset.dataset.get('train').batch(
+                self.batch_size if critical_size >= 32 else 1, drop_remainder=True).take(-1),
             batch_size=self.batch_size,
             shuffle=self.shuffle,
-            validation_data=self.dataset.dataset.get('val').batch(self.batch_size, drop_remainder=True).take(-1),
+            validation_data=self.dataset.dataset.get('val').batch(
+                self.batch_size if critical_size >= 32 else 1, drop_remainder=True).take(-1),
             epochs=self.epochs,
             verbose=verbose,
             callbacks=self.callbacks
@@ -794,6 +796,7 @@ class FitCallback(keras.callbacks.Callback):
                 if self.dataset.data.use_generator:
                     upred = self.model.predict(self.dataset.dataset.get('val').batch(1))
                 else:
+                    # size = len(self.dataset.X.get('val').get(self.dataset.X.get('val').keys()[0]))
                     upred = self.model.predict(self.dataset.X.get('val'))
                 # for data_type in ['train', 'val']:
                 #     upred[data_type] = self.model.predict(self.dataset.X.get(data_type))
@@ -830,6 +833,7 @@ class FitCallback(keras.callbacks.Callback):
         if self.dataset.data.use_generator:
             scheduled_predict = self.model.predict(self.dataset.dataset.get('val').batch(1))
         else:
+            # size = len(self.dataset.X.get('val').get(list(self.dataset.X.get('val').keys()[0]))
             scheduled_predict = self.model.predict(self.dataset.X.get('val'))
         interactive_logs = copy.deepcopy(logs)
         interactive_logs['epoch'] = self.last_epoch

@@ -498,6 +498,7 @@ class InteractiveCallback:
         self.train_progress = data
 
     def update_state(self, y_pred, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
+        print(fit_logs)
         if self.log_history:
             if y_pred is not None:
                 self._reformat_y_pred(y_pred)
