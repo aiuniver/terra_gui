@@ -13,28 +13,16 @@ import sys
 ROOT_PATH = str(Path(__file__).parent.parent.parent)
 
 
-def make_preprocess(preprocess_list):
+def make_processing(preprocess_list):
     def fun(*x):
 
         out = []
 
-        for i, (prep, element) in enumerate(zip(preprocess_list, x)):
-            out.append(prep(element))
-
-        return out
-    return fun
-
-
-def make_postprocess(post_list):
-    if post_list is None:
-        return None
-
-    def fun(*x):
-
-        out = []
-
-        for prep, element in zip(post_list, x):
-            out.append(prep(element))
+        for prep, element in zip(preprocess_list, x):
+            if prep:
+                out.append(prep(element))
+            else:
+                out.append(x)
 
         return out
     return fun
@@ -70,7 +58,7 @@ def json2model_cascade(path: str):
                 **param, dataset_path=os.path.join(path, "dataset"), key=inp)
             )
 
-        preprocess = make_preprocess(preprocess)
+        preprocess = make_processing(preprocess)
     else:
         preprocess = None
 
@@ -78,13 +66,21 @@ def json2model_cascade(path: str):
         postprocessing = []
 
         for inp, param in config['outputs'].items():
-            type_module = getattr(general_fucntions, decamelize(param['task']))
+            with open(os.path.join(path, "dataset", "instructions", "parameters", f"{inp}_outputs.json")) as cfg:
+                spec_config = json.load(cfg)["parameters"]
+
+            param.update(spec_config)
+
             try:
+                type_module = getattr(general_fucntions, decamelize(param['task']))
                 postprocessing.append(getattr(type_module, 'main')(**param))
             except:
-                postprocessing = None
+                postprocessing.append(None)
 
-        postprocessing = make_postprocess(postprocessing)
+        if any(postprocessing):
+            postprocessing = make_processing(postprocessing)
+        else:
+            postprocessing = None
     else:
         postprocessing = None
 
