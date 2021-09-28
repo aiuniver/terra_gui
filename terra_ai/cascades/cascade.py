@@ -119,12 +119,13 @@ class CompleteCascade(Cascade):
 
     def __call__(self, input_path, output_path=None):
 
-        if len(self.output) == 1:
-            self.output[0].choose_path(output_path)
-        elif len(self.output) > 1:
-            for i, out in enumerate(self.output):
-                path = output_path[:-4] + f"_{i}" + output_path[-4:]
-                out.choose_path(path)
+        if output_path:
+            if len(self.output) == 1:
+                self.output[0].choose_path(output_path)
+            elif len(self.output) > 1:
+                for i, out in enumerate(self.output):
+                    path = output_path[:-4] + f"_{i}" + output_path[-4:]
+                    out.choose_path(path)
 
         for img in self.input(input_path):
             self.cascade_block(img)
@@ -137,6 +138,7 @@ class BuildModelCascade(CascadeBlock):
     """
     Класс который вызывается при создании модели из json
     """
+
     def __init__(self, preprocess, model, postprocessing, name=None):
 
         self.preprocess = CascadeElement(preprocess, name="Препроцесс") if preprocess else preprocess

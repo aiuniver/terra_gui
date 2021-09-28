@@ -143,7 +143,8 @@ export default {
       localStorage.removeItem('settingsTrainings');
       dispatch('messages/resetProgress', {}, { root: true });
       dispatch('setTrainData', {});
-      // await dispatch('projects/get', {}, { root: true })
+      dispatch('setTrainUsage', {});
+      await dispatch('projects/get', {}, { root: true })
     },
     setDrawer({ commit }, data) {
       commit("SET_DRAWER", data);
