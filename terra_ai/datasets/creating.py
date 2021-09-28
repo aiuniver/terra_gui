@@ -63,7 +63,7 @@ class CreateDataset(object):
             self.write_arrays(x_array, y_array)
 
         self.write_preprocesses_to_files()
-        self.write_instructions_to_files(creation_data=creation_data)
+        self.write_instructions_to_files()
         self.datasetdata = DatasetData(**self.write_dataset_configure(creation_data=creation_data))
 
         shutil.rmtree(self.temp_directory)
@@ -634,24 +634,12 @@ class CreateDataset(object):
                     os.makedirs(os.path.join(self.paths.arrays, sample), exist_ok=True)
                     joblib.dump(array[sample][inp], os.path.join(self.paths.arrays, sample, f'{inp}.gz'))
 
-    def write_instructions_to_files(self, creation_data: CreationData):
+    def write_instructions_to_files(self):
 
         parameters_path = os.path.join(self.paths.instructions, 'parameters')
         tables_path = os.path.join(self.paths.instructions, 'tables')
 
         os.makedirs(parameters_path, exist_ok=True)
-
-        # for inp in creation_data.inputs:
-        #     with open(os.path.join(parameters_path, f'{inp.id}_inputs.json'), 'w') as cfg:
-        #         inp = inp.native()
-        #         del inp['parameters']['sources_paths']
-        #         json.dump(inp, cfg)
-
-        # for out in creation_data.outputs:
-        #     with open(os.path.join(parameters_path, f'{out.id}_outputs.json'), 'w') as cfg:
-        #         out = out.native()
-        #         del out['parameters']['sources_paths']
-        #         json.dump(out, cfg)
 
         for cols in self.instructions.inputs.values():
             for col_name, data in cols.items():
@@ -662,12 +650,6 @@ class CreateDataset(object):
             for col_name, data in cols.items():
                 with open(os.path.join(parameters_path, f'{col_name}.json'), 'w') as cfg:
                     json.dump(data.parameters, cfg)
-
-        # if self.columns_processing:
-        #     with open(os.path.join(parameters_path, f'0_columns_preprocessing.json'), 'w') as cfg:
-        #         inp = inp.native()
-        #         del inp['parameters']['sources_paths']
-        #         json.dump(inp, cfg)
 
         os.makedirs(tables_path, exist_ok=True)
         for key in self.dataframe.keys():

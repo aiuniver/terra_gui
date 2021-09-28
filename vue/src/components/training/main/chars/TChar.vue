@@ -15,7 +15,7 @@
           :title="'roll down'"
           @click="popMenuShow = !popMenuShow"
         ></i>
-        <PopUpMenu v-if="popMenuShow" :menus="menus" @event="event" />
+        <PopUpMenu v-if="popMenuShow" :menus="menus" :show="graphicShow" @event="event" />
       </div>
     </div>
     <div class="t-char__main" v-if="graphicShow">
