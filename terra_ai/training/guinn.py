@@ -98,7 +98,7 @@ class GUINN:
                              training_path: str, dataset_path: str, initial_config: InteractiveData) -> None:
         self.dataset = self._prepare_dataset(dataset, dataset_path)
         self.training_path = training_path
-        self.nn_name = model_name
+        self.nn_name = "model"
 
         if interactive.get_states().get("status") == "addtrain":
             if self.callbacks[0].last_epoch - 1 >= self.sum_epoch:
@@ -148,7 +148,8 @@ class GUINN:
             validator = ModelValidator(model)
             train_model = validator.get_keras_model()
         else:
-            train_model = load_model(os.path.join(self.training_path, self.nn_name, f"{self.nn_name}.trm"))
+            train_model = load_model(os.path.join(self.training_path, self.nn_name, f"{self.nn_name}.trm"),
+                                     compile=False)
         return train_model
 
     @staticmethod
@@ -224,7 +225,7 @@ class GUINN:
         Return:
             dict
         """
-        model_path = os.path.join(training_path, gui_model.alias)
+        model_path = os.path.join(training_path, "model")
         if interactive.get_states().get("status") != "addtrain":
             self._save_params_for_deploy(dataset_path=dataset_path, training_path=model_path, params=training_params)
         self.nn_cleaner(retrain=True if interactive.get_states().get("status") == "training" else False)

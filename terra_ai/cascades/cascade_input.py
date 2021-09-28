@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import os
+from tensorflow.keras.utils import load_img
 
 
 def video(path):
@@ -21,10 +22,10 @@ def video(path):
 
 def image(path):
     # img = cv2.imread(path)
-    with open(path, "rb") as img_source:
-        img = img_source.read()
-    img_arr = np.frombuffer(img, dtype=np.uint8)
-    out_img = cv2.cvtColor(img_arr, cv2.COLOR_BGR2RGB)
+    # img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+
+    img = load_img(path)
+    out_img = np.array(img)
     out_img = out_img[np.newaxis, ...]
     return out_img
 
