@@ -1,6 +1,7 @@
-import json
 import os
+import json
 import shutil
+
 from pathlib import Path
 from typing import Any, NoReturn
 
@@ -30,7 +31,6 @@ from ..data.presets.datasets import DatasetsGroups
 from ..data.presets.models import ModelsGroups
 from ..data.projects.project import ProjectsInfoData, ProjectsList
 from ..data.training.train import TrainData, InteractiveData
-from ..profile import utils as profile_utils
 from ..datasets import loading as datasets_loading
 from ..datasets import utils as datasets_utils
 from ..datasets.creating import CreateDataset
@@ -133,19 +133,6 @@ class Exchange:
         shutil.rmtree(target, ignore_errors=True)
         destination = progress_utils.unpack("project_load", "Загрузка проекта", source)
         shutil.move(destination, target)
-
-    def _call_profile_update(self, first_name: str, last_name: str):
-        """
-        Сохранение профиля
-        """
-        profile_utils.update_user_data(first_name, last_name)
-
-    def _call_profile_update_token(self) -> str:
-        """
-        Обновление токена
-        """
-        new_token = profile_utils.update_user_token()
-        return new_token
 
     def _call_dataset_choice(
         self, custom_path: Path, destination: Path, group: str, alias: str
