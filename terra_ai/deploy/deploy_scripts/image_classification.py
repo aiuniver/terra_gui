@@ -11,4 +11,4 @@ def predict(input_path):
             model = path
     main_block = json2cascade(model)
     main_block(input_path=input_path)
-    print(main_block.cascade_block[0][2].out)
+    return print(main_block.cascade_block[0][2].out)
