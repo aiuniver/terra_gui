@@ -39,7 +39,7 @@ class SaveAPIView(BaseAPIView):
 
 
 class UpdateTokenAPIView(BaseAPIView):
-    def post(self):
+    def post(self, request):
         try:
             data = {
                 "email": settings.USER_EMAIL,
