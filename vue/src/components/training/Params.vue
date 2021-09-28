@@ -245,6 +245,8 @@ export default {
           if (this.isLearning) {
             this.debounce();
           }
+        } else{
+          await this.$store.dispatch('projects/get');
         }
       }
     },
