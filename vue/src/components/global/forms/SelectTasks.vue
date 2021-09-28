@@ -26,7 +26,7 @@
 <script>
 // import { bus } from '@/main'
 export default {
-  name: 't-select',
+  name: 't-select-tasks',
   props: {
     label: {
       type: String,
