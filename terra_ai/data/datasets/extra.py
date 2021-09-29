@@ -99,6 +99,7 @@ class LayerScalerImageChoice(str, Enum):
 class LayerScalerAudioChoice(str, Enum):
     no_scaler = "no_scaler"
     min_max_scaler = "min_max_scaler"
+    standard_scaler = "standard_scaler"
 
 
 class LayerScalerVideoChoice(str, Enum):
