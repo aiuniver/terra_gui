@@ -28,7 +28,7 @@ from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.utils import camelize, decamelize
 
-__version__ = 0.073
+__version__ = 0.074
 
 
 def sort_dict(dict_to_sort: dict, mode='by_name'):
@@ -498,6 +498,7 @@ class InteractiveCallback:
         self.train_progress = data
 
     def update_state(self, y_pred, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
+        print(fit_logs)
         if self.log_history:
             if y_pred is not None:
                 self._reformat_y_pred(y_pred)
@@ -1682,7 +1683,8 @@ class InteractiveCallback:
                         "progress_state": progress_state
                     }
                 )
-            elif loss_graph_config.get('show') == "classes":
+            elif loss_graph_config.get('show') == "classes" and \
+                    self.class_graphics.get(str(loss_graph_config.get('output_idx'))):
                 data_return.append(
                     {
                         "id": loss_graph_config.get('id'),
@@ -1796,7 +1798,8 @@ class InteractiveCallback:
                         "progress_state": progress_state
                     }
                 )
-            elif metric_graph_config.get('show') == 'classes':
+            elif metric_graph_config.get('show') == 'classes' and \
+                    self.class_graphics.get(str(metric_graph_config.get('output_idx'))):
                 data_return.append(
                     {
                         "id": metric_graph_config.get('id'),
@@ -2925,7 +2928,7 @@ class InteractiveCallback:
                 self.dataset_config.get("outputs").get(output_id).get('classes_colors')
             )
             data["y_true"] = {
-                "type": "text",
+                "type": "segmented_text",
                 "data": [
                     {
                         "title": "Текст",
@@ -2941,7 +2944,7 @@ class InteractiveCallback:
                 self.dataset_config.get("outputs").get(output_id).get('classes_colors')
             )
             data["y_pred"] = {
-                "type": "text",
+                "type": "segmented_text",
                 "data": [
                     {
                         "title": "Текст",

@@ -2,7 +2,7 @@
   <div class="t-table">
     <scrollbar>
       <slot name="header"></slot>
-      <div class="t-table__body">
+      <div v-show="!isEmpty" class="t-table__body">
         <div
           class="t-table__rows"
           v-for="({ initial_data, true_value, predict_value, statistic_values }, id) of predict"

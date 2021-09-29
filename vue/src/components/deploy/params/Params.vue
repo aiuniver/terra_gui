@@ -1,17 +1,18 @@
 <template>
   <div class="params">
-    <scrollbar>
+    <scrollbar :ops="ops">
       <div class="params-container__name">Загрузка в демо-панель</div>
       <div class="params-container pa-5">
-        <div class="label">Название папки</div>
         <div class="t-input">
-          <label class="t-input__label">
+          <label class="label" for="deploy[deploy]">Название папки</label>
+          <div class="t-input__label">
             https://demo.neural-university.ru/{{ userData.login }}/{{ projectData.name_alias }}/{{ deploy }}
-          </label>
+          </div>
           <input
             v-model="deploy"
             class="t-input__input"
             type="text"
+            id="deploy[deploy]"
             name="deploy[deploy]"
             @blur="$emit('blur', $event.target.value)"
           />
@@ -19,10 +20,18 @@
         <Checkbox
           :label="'Перезаписать с таким же названием папки'"
           :type="'checkbox'"
+          parse="deploy[overwrite]"
+          name="deploy[overwrite]"
           class="pd__top"
           @change="UseReplace"
         />
-        <Checkbox :label="'Использовать пароль для просмотра страницы'" :type="'checkbox'" @change="UseSec" />
+        <Checkbox
+          :label="'Использовать пароль для просмотра страницы'"
+          parse="deploy[use_password]"
+          name="deploy[use_password]"
+          :type="'checkbox'"
+          @change="UseSec"
+        />
         <div class="password" v-if="use_sec">
           <div class="t-input">
             <input :type="passwordShow ? 'text' : 'password'" placeholder="Введите пароль" v-model="sec" />
@@ -90,11 +99,15 @@ export default {
     use_sec: false,
     sec: '',
     sec_accept: '',
-    send_disabled: true,
     DataSent: false,
     DataLoading: false,
     passwordShow: false,
-    pattern: /^(?=[a-zA-Z])[A-Z_a-z0-9]+$/,
+    ops: {
+      scrollPanel: {
+        scrollingX: false,
+        scrollingY: true,
+      },
+    },
   }),
   computed: {
     ...mapGetters({
@@ -104,24 +117,20 @@ export default {
       userData: 'projects/getUser',
     }),
     checkCorrect() {
-      return this.sec == this.sec_accept && this.sec.length > 5
+      return this.sec == this.sec_accept
         ? 'icon-deploy-password-correct'
         : 'icon-deploy-password-incorrect';
     },
-  },
-  mounted() {
-    // console.log(this.projectData)
-  },
-  watch: {
-    deploy(val) {
-      if (val !== '' && this.pattern.test(this.deploy)) this.send_disabled = false;
-      else this.send_disabled = true;
-    },
-    sec_accept(val) {
-      if (this.use_sec) {
-        if (val == this.sec && this.pattern.test(this.deploy)) this.send_disabled = false;
-        else this.send_disabled = true;
+    send_disabled(){
+      if(this.DataLoading){
+        return true;
       }
+      if(this.use_sec){
+        if(this.sec == this.sec_accept && this.sec.length > 5 && this.deploy.length != 0) return false;
+      } else{
+        if(this.deploy.length != 0) return false;
+      }
+      return true;
     },
   },
   methods: {
@@ -168,6 +177,7 @@ export default {
       } else {
         this.DataLoading = false;
         this.DataSent = true;
+        this.$emit("overlay", this.DataLoading);
       }
     },
     getProgress() {
@@ -189,9 +199,9 @@ export default {
         console.log(error, success);
         if (!error && success) {
           this.DataLoading = true;
+          this.$emit("overlay", this.DataLoading);
           this.getProgress();
         }
-        // this.getProgress();
       }
     },
   },
@@ -201,7 +211,7 @@ export default {
 <style lang="scss" scoped>
 .params {
   flex-shrink: 0;
-  width: 470px;
+  width: 400px;
   border-left: #0e1621 solid 1px;
 }
 .params-container__name {
@@ -228,26 +238,27 @@ button {
 }
 .loader {
   padding-top: 20px;
+  &__title {
+    font-size: 14px;
+    line-height: 24px;
+    text-align: center;
+  }
+  &__time {
+    padding-top: 20px;
+    font-size: 12px;
+    line-height: 24px;
+    color: #a7bed3;
+    width: 100%;
+    text-align: center;
+  }
+  &__progress {
+    padding-top: 20px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
 }
-.loader__title {
-  font-size: 14px;
-  line-height: 24px;
-  text-align: center;
-}
-.loader__time {
-  padding-top: 20px;
-  font-size: 12px;
-  line-height: 24px;
-  color: #a7bed3;
-  width: 100%;
-  text-align: center;
-}
-.loader__progress {
-  padding-top: 20px;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
+
 .progress-bar {
   width: 426px;
   background: #2b5278;
@@ -270,6 +281,12 @@ button {
     line-height: 1.25;
     font-size: 0.75rem;
     user-select: none;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    width: 350px;
+    display: inline-block;
+    vertical-align: middle;
+    overflow: hidden;
   }
   &__input {
     color: #fff;
@@ -308,7 +325,7 @@ button {
 }
 .password__icon {
   position: absolute;
-  width: 415px;
+  width: 345px;
   i {
     position: relative;
     float: right;

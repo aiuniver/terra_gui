@@ -4,13 +4,13 @@
       <div class="wrapper">
         <div class="content">
           <div class="board__data-field" v-for="(block, index) in Cards" :key="'block-'+index">
-            <button class="board__reload-all" v-if="deployType != 'table'" @click="ReloadAll(index)">
+            <button class="board__reload-all" @click="ReloadAll(index)">
               <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
               <span>Перезагрузить все</span>
             </button>
             <div class="board__title">Исходные данные / Предсказанные данные</div>
             <div class="board__data">
-              <IndexCard v-for="(card, i) in block.data" :key="'card-' + i" v-bind="card" :block="index" :index="i" @reload="ReloadCard"/>
+              <IndexCard v-for="(card, i) in block.data" :key="'card-' + i" v-bind="card" :type="block.type" :block="index" :index="i" @reload="ReloadCard"/>
             </div>
           </div>
 <!--          <div class="board__table">-->
@@ -36,9 +36,11 @@ export default {
     ...mapGetters({
       dataLoaded: 'deploy/getDataLoaded',
       Cards: 'deploy/getCards',
-      deployType: "deploy/getDeployType",
       height: 'settings/autoHeight',
     }),
+  },
+  created() {
+    this.$store.dispatch('projects/get');
   },
   methods: {
     async ReloadCard(data){
@@ -62,9 +64,6 @@ export default {
   &__data {
     display: flex;
     flex-wrap: wrap;
-  }
-  &__data-field {
-    padding-top: 30px;
   }
   &__title {
     font-size: 12px;
@@ -103,7 +102,7 @@ export default {
   }
 }
 .wrapper {
-  padding: 50px;
+  padding: 20px;
   height: 100%;
 }
 </style>

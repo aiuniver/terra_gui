@@ -64,6 +64,7 @@ export default {
   width: 100%;
   margin-bottom: 25px;
   position: relative;
+  margin-bottom: 50px;
   &__wrapper {
     display: flex;
     gap: 5px;
