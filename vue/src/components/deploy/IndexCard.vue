@@ -1,7 +1,7 @@
 <template>
 <div class="card">
   <div class="card__content">
-    <div v-if="deployType == 'image_classification'">
+    <div v-if="type == 'ImageClassification'">
       <div class="card__original" >
         <ImgCard :imgUrl="source"/>
       </div>
@@ -9,7 +9,7 @@
         <TextCard  :style="{ width: '224px' }">{{ imageClassificationText }}</TextCard>
       </div>
     </div>
-    <div v-if="deployType == 'image_segmentation'">
+    <div v-if="type == 'ImageSegmentation'">
       <div class="card__original" >
         <ImgCard :imgUrl="source"/>
       </div>
@@ -17,14 +17,14 @@
         <ImgCard :imgUrl="segment"/>
       </div>
     </div>
-    <div class="card__graphic" v-if="deployType == 'graphic'">
+    <div class="card__graphic" v-if="type == 'graphic'">
        <Plotly :data="data" :layout="layout" :display-mode-bar="false"></Plotly>
     </div>
 <!--    <div class="card__table" v-if="type == 'table'">-->
 <!--      <Table/>-->
 <!--    </div>-->
   </div>
-  <div class="card__reload" v-if="deployType != 'table'"><button class="btn-reload" @click="ReloadCard"><i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i></button></div>
+  <div class="card__reload" v-if="type != 'table'"><button class="btn-reload" @click="ReloadCard"><i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i></button></div>
 </div>
 </template>
 
@@ -56,18 +56,18 @@ export default {
     },
     block: String,
     index: [String, Number],
+    type: String,
   },
   methods: {
     ReloadCard(){
       this.$emit('reload', { id: this.block, indexes: [this.index.toString()]})
-    }
+    },
   },
   computed: {
     ...mapGetters({
       graphicData: 'deploy/getGraphicData',
       defaultLayout: 'deploy/getDefaultLayout',
       origTextStyle: 'deploy/getOrigTextStyle',
-      deployType: "deploy/getDeployType",
     }),
     layout() {
       const layout = this.defaultLayout;
@@ -84,7 +84,7 @@ export default {
       text.sort((a, b) => a[1] < b[1] ? 1 : -1);
       for(let i=0; i<text.length; i++){
         if(i > 2) break;
-        prepareText = prepareText + `${text[i][0]} - вероятность ${text[i][1]}% \n`;
+        prepareText = prepareText + `${text[i][0]} - ${text[i][1]}% \n`;
       }
       return prepareText;
     },

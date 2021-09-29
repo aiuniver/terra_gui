@@ -36,18 +36,19 @@
       </div> -->
       <PredictTable :predict="predictData" />
     </div>
+    <LoadSpiner v-show="loading" text="Загрузка данных..." class="overlay" />
   </div>
 </template>
 
 <script>
 import PredictTable from './PredictTable';
-// import LoadSpiner from '@/components/forms/LoadSpiner';
+import LoadSpiner from '@/components/forms/LoadSpiner';
 
 export default {
   name: 'Predictions',
   components: {
     PredictTable,
-    // LoadSpiner,
+    LoadSpiner,
   },
   props: {
     outputs: Array,
@@ -62,7 +63,7 @@ export default {
       example_choice_type: 'seed',
       main_output: 2,
     },
-    loading: true,
+    loading: false,
     showPredict: false,
     sortOutput: [],
     sortData: [
@@ -91,6 +92,7 @@ export default {
   },
   methods: {
     async show() {
+      this.loading = true
       await this.$store.dispatch('trainings/interactive', {
         intermediate_result: { ...this.checks },
       });
@@ -130,6 +132,19 @@ export default {
       margin-left: auto;
       padding: 0;
     }
+  }
+  .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgb(14 22 33 / 30%);
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
   }
 }
 </style>

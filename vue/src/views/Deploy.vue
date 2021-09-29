@@ -2,8 +2,9 @@
   <main class="page-deploy">
     <div class="cont">
       <Deploy />
-      <Params />
+      <Params @overlay="setOverlay"/>
     </div>
+    <div class="overlay" v-if="overlay"></div>
   </main>
 </template>
 
@@ -17,6 +18,14 @@ export default {
     Params,
     Deploy,
   },
+  data: () => ({
+    overlay: false
+  }),
+  methods: {
+    setOverlay(value){
+      this.overlay = value;
+    }
+  },
 };
 </script>
 
@@ -26,5 +35,14 @@ export default {
   padding: 0;
   display: flex;
   height: 100%;
+}
+.overlay{
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #0e1621;
+  opacity: 0.3;
 }
 </style>

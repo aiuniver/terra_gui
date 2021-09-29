@@ -135,7 +135,23 @@ LayerImageDefaults = [
                     "parse": "max_scaler",
                     "value": 1,
                 },
-            ]
+            ],
+            "terra_image_scaler": [
+                {
+                    "type": "number",
+                    "label": "Минимальный скейлер",
+                    "name": "min_scaler",
+                    "parse": "min_scaler",
+                    "value": 0,
+                },
+                {
+                    "type": "number",
+                    "label": "Максимальный скейлер",
+                    "name": "max_scaler",
+                    "parse": "max_scaler",
+                    "value": 1,
+                },
+            ],
         },
     },
 ]
@@ -438,7 +454,23 @@ Defaults = {
                                             "parse": "max_scaler",
                                             "value": 1,
                                         },
-                                    ]
+                                    ],
+                                    "terra_image_scaler": [
+                                        {
+                                            "type": "number",
+                                            "label": "Минимальный скейлер",
+                                            "name": "min_scaler",
+                                            "parse": "min_scaler",
+                                            "value": 0,
+                                        },
+                                        {
+                                            "type": "number",
+                                            "label": "Максимальный скейлер",
+                                            "name": "max_scaler",
+                                            "parse": "max_scaler",
+                                            "value": 1,
+                                        },
+                                    ],
                                 },
                             },
                         ],

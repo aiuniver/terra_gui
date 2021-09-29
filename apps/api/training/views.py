@@ -109,10 +109,13 @@ class ProgressAPIView(BaseAPIView):
             data = agent_exchange("training_progress").native()
             request.project.training.set_state()
             data.update({"state": request.project.training.state.native()})
-            if data.get("finished"):
+            _finished = data.get("finished")
+            if _finished:
                 for item in request.project.deploy.data.values():
                     item.data.try_init()
             request.project.training.result = data.get("data", {}).get("train_data", {})
+            if _finished:
+                request.project.save()
             return BaseResponseSuccess(data)
         except ExchangeBaseException as error:
             return BaseResponseErrorGeneral(str(error))

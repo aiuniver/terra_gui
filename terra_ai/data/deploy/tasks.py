@@ -63,7 +63,7 @@ class ImageSegmentationCollectionList(BaseCollectionList):
                 os.remove(self[index].get("segment"))
             except Exception:
                 pass
-            value = source[random.randint(0, len(source) - 1)]
+            value = dict(source[random.randint(0, len(source) - 1)])
             filepath_source = Path(value.get("source"))
             filepath_segment = Path(value.get("segment"))
             destination_source = Path(source_path, f"{index+1}.jpg")
@@ -104,7 +104,7 @@ class ImageClassificationCollectionList(BaseCollectionList):
                 os.remove(self[index].get("source"))
             except Exception:
                 pass
-            value = source[random.randint(0, len(source) - 1)]
+            value = dict(source[random.randint(0, len(source) - 1)])
             filepath = Path(value.get("source"))
             destination = Path(self._path, f"{index+1}.jpg")
             filepath_im = Image.open(filepath)
@@ -120,9 +120,9 @@ class ImageClassificationCollectionList(BaseCollectionList):
 
 class BaseCollection(BaseMixinData):
     type: CollectionTypeChoice
-    data: BaseCollectionList
+    data: Optional[BaseCollectionList]
 
     def dict(self, **kwargs):
         data = super().dict(**kwargs)
-        data.update({"data": self.data})
+        data.update({"data": self.data if len(list(filter(None, self.data))) else None})
         return data
