@@ -6,7 +6,7 @@
         <div class="t-input">
           <label class="label" for="deploy[deploy]">Название папки</label>
           <div class="t-input__label">
-            https://demo.neural-university.ru/{{ userData.login }}/{{ projectData.name_alias }}/{{ deploy }}
+            https://srv1.demo.neural-university.ru/{{ userData.login }}/{{ projectData.name_alias }}/{{ deploy }}
           </div>
           <input
             v-model="deploy"
