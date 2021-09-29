@@ -277,13 +277,19 @@ class GUINN:
             critical_size = len(self.dataset.dataframe.get("val"))
         else:
             critical_size = len(self.dataset.dataset.get('val'))
+        if (critical_size == self.batch_size) or (critical_size > self.batch_size):
+            n_repeat = 1
+        else:
+            n_repeat = (self.batch_size//critical_size)+1
+
         self.history = self.model.fit(
-            self.dataset.dataset.get('train').shuffle(1000).batch(
-                self.batch_size, drop_remainder=True).take(-1),
+            self.dataset.dataset.get('train').shuffle(len(self.dataset.dataframe.get("train"))).batch(
+                self.batch_size, drop_remainder=True).prefetch(buffer_size=tf.data.AUTOTUNE).take(-1),
             batch_size=self.batch_size,
             shuffle=self.shuffle,
-            validation_data=self.dataset.dataset.get('val').batch(
-                self.batch_size if critical_size >= 32 else 1, drop_remainder=True).take(-1),
+            validation_data=self.dataset.dataset.get('val').repeat(n_repeat).batch(
+                self.batch_size,
+                drop_remainder=True).take(-1).prefetch(buffer_size=tf.data.AUTOTUNE),
             epochs=self.epochs,
             verbose=verbose,
             callbacks=self.callbacks
