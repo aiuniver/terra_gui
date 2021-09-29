@@ -28,7 +28,7 @@ from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.utils import camelize, decamelize
 
-__version__ = 0.072
+__version__ = 0.074
 
 
 def sort_dict(dict_to_sort: dict, mode='by_name'):
@@ -498,6 +498,7 @@ class InteractiveCallback:
         self.train_progress = data
 
     def update_state(self, y_pred, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
+        print(fit_logs)
         if self.log_history:
             if y_pred is not None:
                 self._reformat_y_pred(y_pred)
@@ -1682,7 +1683,8 @@ class InteractiveCallback:
                         "progress_state": progress_state
                     }
                 )
-            elif loss_graph_config.get('show') == "classes":
+            elif loss_graph_config.get('show') == "classes" and \
+                    self.class_graphics.get(str(loss_graph_config.get('output_idx'))):
                 data_return.append(
                     {
                         "id": loss_graph_config.get('id'),
@@ -1796,7 +1798,8 @@ class InteractiveCallback:
                         "progress_state": progress_state
                     }
                 )
-            elif metric_graph_config.get('show') == 'classes':
+            elif metric_graph_config.get('show') == 'classes' and \
+                    self.class_graphics.get(str(metric_graph_config.get('output_idx'))):
                 data_return.append(
                     {
                         "id": metric_graph_config.get('id'),
@@ -2387,10 +2390,12 @@ class InteractiveCallback:
                                               f"Гистограмма распределения колонки «{histogram['name']}»",
                                 "x_label": 'Значение',
                                 "y_label": 'Количество',
-                                "plot_data": {
-                                    'x': histogram["x"],
-                                    'y': histogram["y"]
-                                },
+                                "plot_data": [
+                                    {
+                                        'x': histogram["x"],
+                                        'y': histogram["y"]
+                                    }
+                                ],
                             }
                         )
                         _id += 1
@@ -2428,20 +2433,29 @@ class InteractiveCallback:
                                 'graph_name': f'{data_type_name} выборка - График канала «{channel_name}»',
                                 'x_label': 'Время',
                                 'y_label': 'Значение',
-                                'plot_data': {
-                                    'x': x_graph_axis,
-                                    'y': y_true
-                                }
+                                'plot_data': [
+                                    {
+                                        'x': x_graph_axis,
+                                        'y': y_true
+                                    }
+                                ]
                             },
                         )
                         return_data[out].append(
-                            {'id': _id + 1, 'type': "distribution histogram", "type_data": f"{data_type}",
-                             'graph_name': f'{data_type_name} выборка - Гистограмма плотности канала «{channel_name}»',
-                             'x_label': 'Значение', 'y_label': 'Количество', 'plot_data': {
-                                'x': x_hist,
-                                'y': y_hist
-                            }
-                             },
+                            {
+                                'id': _id + 1,
+                                'type': "distribution histogram",
+                                "type_data": f"{data_type}",
+                                'graph_name': f'{data_type_name} выборка - Гистограмма плотности канала «{channel_name}»',
+                                'x_label': 'Значение',
+                                'y_label': 'Количество',
+                                'plot_data': [
+                                    {
+                                        'x': x_hist,
+                                        'y': y_hist
+                                    }
+                                ]
+                            },
                         )
 
             elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.ObjectDetection:
@@ -2880,11 +2894,13 @@ class InteractiveCallback:
                 }
                 y_true = np.array(self.y_true.get(data_type).get(output_id)[example_idx]).astype('int')
                 y_pred = to_categorical(np.argmax(self.y_pred.get(output_id)[example_idx], axis=-1),
-                                        self.dataset_config.get("outputs").get(output_id).get("num_classes")).astype('int')
+                                        self.dataset_config.get("outputs").get(output_id).get("num_classes")).astype(
+                    'int')
                 count = 0
                 mean_val = 0
                 for idx, cls in enumerate(labels):
-                    dice_val = np.round(self._dice_coef(y_true[:, :, idx], y_pred[:, :, idx], batch_mode=False) * 100, 1)
+                    dice_val = np.round(self._dice_coef(y_true[:, :, idx], y_pred[:, :, idx], batch_mode=False) * 100,
+                                        1)
                     count += 1
                     mean_val += dice_val
                     data["stat"]["data"].append(
@@ -2912,7 +2928,7 @@ class InteractiveCallback:
                 self.dataset_config.get("outputs").get(output_id).get('classes_colors')
             )
             data["y_true"] = {
-                "type": "text",
+                "type": "segmented_text",
                 "data": [
                     {
                         "title": "Текст",
@@ -2928,7 +2944,7 @@ class InteractiveCallback:
                 self.dataset_config.get("outputs").get(output_id).get('classes_colors')
             )
             data["y_pred"] = {
-                "type": "text",
+                "type": "segmented_text",
                 "data": [
                     {
                         "title": "Текст",

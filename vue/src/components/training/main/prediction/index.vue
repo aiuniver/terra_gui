@@ -4,84 +4,90 @@
     <div class="predictions__params">
       <div class="predictions__param">
         <t-field inline label="Данные для расчета">
-          <t-select-new :list="sortData" v-model="checks.example_choice_type" small />
+          <t-select-new :list="sortData" v-model="settings.example_choice_type" small />
         </t-field>
         <t-field inline label="Тип выбора данных">
-          <t-select-new :list="sortOutput" v-model="checks.main_output" small />
+          <t-select-new :list="sortOutput" v-model="settings.main_output" small />
         </t-field>
         <t-field inline label="Показать примеров">
-          <t-input-new v-model.number="checks.num_examples" type="number" small />
+          <t-input-new v-model.number="settings.num_examples" type="number" small />
         </t-field>
       </div>
       <div class="predictions__param">
         <t-field inline label="Выводить промежуточные результаты">
-          <t-checkbox-new v-model="checks.show_results" small />
+          <t-checkbox-new v-model="settings.show_results" small />
         </t-field>
         <t-field inline label="Показать статистику">
-          <t-checkbox-new v-model="checks.show_statistic" :value="true" small />
+          <t-checkbox-new v-model="settings.show_statistic" :value="true" small />
         </t-field>
       </div>
       <div class="predictions__param">
         <t-field inline label="Автообновление">
-          <t-checkbox-new v-model="checks.autoupdate" small />
+          <t-checkbox-new v-model="settings.autoupdate" small />
         </t-field>
       </div>
       <div class="predictions__param">
         <t-button style="width: 150px" @click.native="show">Показать</t-button>
       </div>
     </div>
-    <div class="predictions__body" >
-      <!-- <div class="predictions__overlay" v-if="loading || Object.keys(predictData).length === 0">
-        <LoadSpiner :text="'Получение данных...'" />
-      </div> -->
-      <PredictTable :predict="predictData" />
+    <div class="predictions__body">
+      <PredictTable v-if="settings.show_results && isEmpty" :predict="predictData" />
+      <div v-else class="predictions__overlay">
+        <LoadSpiner v-if="settings.show_results && isLearning" text="Загрузка данных..."  />
+      </div>
     </div>
   </div>
 </template>
 
 <script>
 import PredictTable from './PredictTable';
-// import LoadSpiner from '@/components/forms/LoadSpiner';
+import LoadSpiner from '@/components/forms/LoadSpiner';
+import { mapGetters } from 'vuex';
 
 export default {
   name: 'Predictions',
   components: {
     PredictTable,
-    // LoadSpiner,
+    LoadSpiner,
   },
   props: {
     outputs: Array,
     interactive: Object,
   },
   data: () => ({
-    checks: {
-      autoupdate: false,
-      show_statistic: false,
-      num_examples: 10,
-      show_results: false,
-      example_choice_type: 'seed',
-      main_output: 2,
-    },
-    loading: true,
-    showPredict: false,
-    sortOutput: [],
     sortData: [
       { label: 'Best', value: 'best' },
       { label: 'Worst', value: 'worst' },
       { label: 'Seed', value: 'seed' },
       { label: 'Random', value: 'random' },
     ],
-    showTextTable: false,
   }),
-  created() {
-    this.sortOutput = this.outputs.map(el => {
-      return {
-        label: `Выходной слой ${el.id}`,
-        value: el.id,
-      };
-    });
-  },
   computed: {
+    ...mapGetters({
+      status: 'trainings/getStatus',
+    }),
+    isLearning() {
+      return ['addtrain', 'training'].includes(this.status);
+    },
+    isEmpty() {
+      return Object.keys(this.predictData).length;
+    },
+    sortOutput() {
+      return this.outputs.map(item => {
+        return {
+          label: `Выходной слой ${item.id}`,
+          value: item.id,
+        };
+      });
+    },
+    settings: {
+      set(value) {
+        this.$store.dispatch('trainings/setObjectInteractive', { intermediate_result: value });
+      },
+      get() {
+        return this.$store.getters['trainings/getObjectInteractive']('intermediate_result');
+      },
+    },
     predictData() {
       return this.$store.getters['trainings/getTrainData']('intermediate_result') || {};
     },
@@ -91,13 +97,7 @@ export default {
   },
   methods: {
     async show() {
-      await this.$store.dispatch('trainings/interactive', {
-        intermediate_result: { ...this.checks },
-      });
-      if (this.checks.show_results) {
-        this.showPredict = true;
-      }
-      this.loading = false;
+      await this.$store.dispatch('trainings/interactive', {});
     },
   },
 };
@@ -106,13 +106,17 @@ export default {
 <style lang="scss" scoped>
 .predictions {
   position: relative;
+  &__body {
+    position: relative;
+    width: 100%;
+  }
   &__overlay {
-    position: absolute;
     display: flex;
     align-items: center;
     justify-content: center;
     width: 100%;
     height: 100%;
+    padding: 20px 0;
     background-color: rgb(14 22 33 / 30%);
     z-index: 5;
     top: 0;

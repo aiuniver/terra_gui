@@ -1,6 +1,6 @@
 <template>
   <div class="text-card">
-    <scrollbar>
+    <scrollbar :ops="ops">
       <pre><slot>TEXT</slot></pre>
     </scrollbar>
   </div>
@@ -15,6 +15,14 @@ export default {
       default: "text"
     }
   },
+  data: () => ({
+    ops: {
+      scrollPanel: {
+        scrollingX: false,
+        scrollingY: true,
+      },
+    },
+  })
 }
 </script>
 

@@ -5,7 +5,7 @@ from pandas import DataFrame
 from tensorflow.python.keras.preprocessing import image
 
 from terra_ai.datasets.utils import get_yolo_anchors
-from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
+from terra_ai.data.datasets.dataset import DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice, \
     LayerOutputTypeChoice, DatasetGroupChoice, LayerInputTypeChoice
 from terra_ai.data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice, \
@@ -394,12 +394,12 @@ class CreateArray(object):
 
             frames: np.ndarray = np.array([])
 
-            # if fill_mode == LayerVideoFillModeChoice.black_frames:
-            #     frames = np.full((frames_to_add, *video_array[-1].shape), video_array[-1], dtype='uint8')
-            if fill_mode == LayerVideoFillModeChoice.average_value:
+            if fill_mode == LayerVideoFillModeChoice.last_frames:
+                frames = np.full((frames_to_add, *video_array[-1].shape), video_array[-1], dtype='uint8')
+            elif fill_mode == LayerVideoFillModeChoice.average_value:
                 mean = np.mean(video_array, axis=0, dtype='uint16')
                 frames = np.full((frames_to_add, *mean.shape), mean, dtype='uint8')
-            elif fill_mode == LayerVideoFillModeChoice.last_frames:
+            elif fill_mode == LayerVideoFillModeChoice.loop:
                 current_frames = (total_frames - frames_to_add)
                 if current_frames > frames_to_add:
                     frames = np.flip(video_array[-frames_to_add:], axis=0)
@@ -488,8 +488,15 @@ class CreateArray(object):
             audio = AudioSegment.from_file(path, start_second=slicing[0], duration=duration)
 
             if round(duration - audio.duration_seconds, 3) != 0:
-                duration_to_add = round(duration - audio.duration_seconds, 3)
-                audio = audio.append(audio[0:duration_to_add * 1000], crossfade=0)
+                while not audio.duration_seconds == (slicing[1] - slicing[0]):
+                    if options['fill_mode'] == 'last_millisecond':
+                        audio = audio.append(audio[-2], crossfade=0)
+                    elif options['fill_mode'] == 'loop':
+                        duration_to_add = round(duration - audio.duration_seconds, 3)
+                        if audio.duration_seconds < duration_to_add:
+                            audio = audio.append(audio[0:audio.duration_seconds * 1000], crossfade=0)
+                        else:
+                            audio = audio.append(audio[0:duration_to_add * 1000], crossfade=0)
 
             save_path = os.path.join(tmp_folder, f'{options["put"]}_audio', os.path.basename(os.path.dirname(path)),
                                      f'{name}_[{slicing[0]}-{slicing[1]}]{ext}')
@@ -502,6 +509,7 @@ class CreateArray(object):
 
         instructions = {'instructions': instructions_paths,
                         'parameters': {'sample_rate': options['sample_rate'],
+                                       'resample': options['resample'],
                                        'parameter': options['parameter'],
                                        'scaler': options['scaler'],
                                        'max_scaler': options['max_scaler'],
@@ -567,8 +575,10 @@ class CreateArray(object):
     def cut_segmentation(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
 
         for elem in paths_list:
-            os.makedirs(os.path.join(tmp_folder, f'{options["cols_names"]}', os.path.basename(os.path.dirname(elem))), exist_ok=True)
-            shutil.copyfile(elem, os.path.join(tmp_folder, f'{options["cols_names"]}', os.path.basename(os.path.dirname(elem)), os.path.basename(elem)))
+            os.makedirs(os.path.join(tmp_folder, f'{options["cols_names"]}', os.path.basename(os.path.dirname(elem))),
+                        exist_ok=True)
+            shutil.copyfile(elem, os.path.join(tmp_folder, f'{options["cols_names"]}',
+                                               os.path.basename(os.path.dirname(elem)), os.path.basename(elem)))
 
         if dataset_folder:
             if os.path.isdir(os.path.join(dataset_folder, f'{options["cols_names"]}')):
@@ -671,11 +681,6 @@ class CreateArray(object):
 
         array = np.array(array)
 
-        if options['scaler'] != LayerScalerVideoChoice.no_scaler and options['preprocess']:
-            orig_shape = array.shape
-            array = options['preprocess'].transform(array.reshape(-1, 1))
-            array = array.reshape(orig_shape)
-
         instructions = {'instructions': array,
                         'parameters': options}
 
@@ -687,7 +692,7 @@ class CreateArray(object):
         array = []
         parameter = options['parameter']
         sample_rate = options['sample_rate']
-        y, sr = librosa_load(path=audio_path, sr=options.get('sample_rate'), res_type='kaiser_fast')
+        y, sr = librosa_load(path=audio_path, sr=options.get('sample_rate'), res_type=options.get('resample'))
         if sample_rate > len(y):
             zeros = np.zeros((sample_rate - len(y),))
             y = np.concatenate((y, zeros))
@@ -976,9 +981,12 @@ class CreateArray(object):
         if options['net'] == LayerNetChoice.linear:
             array = array.reshape(np.prod(np.array(array.shape)))
         if options['scaler'] != LayerScalerImageChoice.no_scaler and options.get('preprocess'):
-            orig_shape = array.shape
-            array = options['preprocess'].transform(array.reshape(-1, 1))
-            array = array.reshape(orig_shape).astype('float32')
+            if options['scaler'] == 'min_max_scaler':
+                orig_shape = array.shape
+                array = options['preprocess'].transform(array.reshape(-1, 1))
+                array = array.reshape(orig_shape).astype('float32')
+            elif options['scaler'] == 'terra_image_scaler':
+                array = options['preprocess'].transform(array)
 
         return array
 
@@ -1055,7 +1063,7 @@ class CreateArray(object):
         elif options['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
             for word in text:
                 try:
-                    array.append(options['preprocess'][word])
+                    array.append(options['preprocess'].wv[word])
                 except KeyError:
                     array.append(np.zeros((options['length'],)))
 
@@ -1082,7 +1090,6 @@ class CreateArray(object):
             array = options['preprocess'].transform(array.reshape(-1, 1))[0]
 
         return array
-
 
     @staticmethod
     def preprocess_classification(array: np.ndarray, **options) -> np.ndarray:
@@ -1146,8 +1153,8 @@ class CreateArray(object):
         return array
 
     @staticmethod
-    def postprocess_results(array, options, save_path: str = "", dataset_path: str = "") -> list:
-        return_data = []
+    def postprocess_results(array, options, save_path: str = "", dataset_path: str = "") -> dict:
+        return_data = {}
         for i, output_id in enumerate(options.data.outputs.keys()):
             if len(options.data.outputs.keys()) > 1:
                 postprocess_array = array[i]
@@ -1155,14 +1162,14 @@ class CreateArray(object):
                 postprocess_array = array
 
             if options.data.outputs[output_id].task == LayerOutputTypeChoice.Classification:
-                return_data = []
+                return_data[output_id] = []
                 for idx, img_array in enumerate(array):
                     actual_value, predict_values = CreateArray().postprocess_classification(
                         array=np.expand_dims(postprocess_array[idx], axis=0),
                         true_array=options.Y.get("val").get(f"{output_id}")[idx],
                         options=options.data.outputs[output_id],
                     )
-                    return_data.append(
+                    return_data[output_id].append(
                         {
                             "source": CreateArray().postprocess_initial_source(
                                 options=options,
@@ -1176,15 +1183,38 @@ class CreateArray(object):
                     )
 
             elif options.data.outputs[output_id].task == LayerOutputTypeChoice.Segmentation:
-                return_data[output_id] = CreateArray().postprocess_segmentation(
-                    postprocess_array, options.data.outputs[output_id], output_id, save_path
-                )
+                return_data[output_id] = []
+                data = []
+                for j, cls in enumerate(options.data.outputs.get(output_id).classes_names):
+                    data.append((cls, options.data.outputs.get(output_id).classes_colors[j].as_rgb_tuple()))
+                for idx, img_array in enumerate(array):
+                    return_data[output_id].append(
+                        {
+                            "source": CreateArray().postprocess_initial_source(
+                                options=options,
+                                image_id=idx,
+                                preset_path=save_path,
+                                dataset_path=dataset_path
+                            ),
+                            "segment": CreateArray().postprocess_segmentation(
+                                array=array[idx],
+                                options=options.data.outputs.get(output_id),
+                                output_id=output_id,
+                                image_id=idx,
+                                save_path=save_path
+                            ),
+                            "data": data
+                        }
+                    )
+                # return_data[output_id] = CreateArray().postprocess_segmentation(
+                #     postprocess_array, options.data.outputs[output_id], output_id, save_path
+                # )
             elif options.data.outputs[output_id].task == LayerOutputTypeChoice.TextSegmentation:
                 return_data[output_id] = CreateArray().postprocess_text_segmentation(
                     postprocess_array, options.data.outputs[output_id], options.dataframe.get("val")
                 )
             else:
-                return_data = []
+                return_data[output_id] = []
         return return_data
 
     @staticmethod
@@ -1268,33 +1298,24 @@ class CreateArray(object):
         return labels[actual_value], labels_from_array
 
     @staticmethod
-    def postprocess_segmentation(array: np.ndarray, options: DatasetOutputsData, output_id: int, save_path: str) -> list:
+    def postprocess_segmentation(array: np.ndarray, options: DatasetOutputsData, output_id: int, image_id: int,
+                                 save_path: str) -> str:
         array = np.expand_dims(np.argmax(array, axis=-1), axis=-1) * 512
-        for color_idx in range(len(options.classes_colors)):
+        for i, color in enumerate(options.classes_colors):
             array = np.where(
-                array == color_idx * 512,
-                np.array(options.classes_colors[color_idx].as_rgb_tuple()),
+                array == i * 512,
+                np.array(color.as_rgb_tuple()),
                 array
             )
         array = array.astype("uint8")
-        img_from_array = []
-        for i, img in enumerate(array):
-            # img = tensorflow.keras.utils.array_to_img(img)
-            # img = img.convert('RGB')
-            img_save_path = os.path.join(save_path, f"image_segmentation_postprocessing_{i}_output_{output_id}.webp")
-            # img.save(img_save_path, 'webp')
-            matplotlib.image.imsave(img_save_path, img)
-            img_from_array.append(img_save_path)
-
-        return img_from_array
+        img_save_path = os.path.join(save_path, f"image_segmentation_postprocessing_{image_id}_output_{output_id}.webp")
+        matplotlib.image.imsave(img_save_path, array)
+        return img_save_path
 
     @staticmethod
     def postprocess_text_segmentation(array: np.ndarray, options: DatasetOutputsData, data_dataframe: DataFrame):
 
         def add_tags_to_word(word: str, tag: str):
-            """
-            Tag  = s1
-            """
             if tag:
                 return f"<{tag}>{word}</{tag}>"
             else:
@@ -1360,7 +1381,7 @@ class CreateArray(object):
                 classes_colors[f"s{i + 1}"] = options.classes_colors[i]
                 classes_names[f"s{i + 1}"] = options.classes_names[i]
 
-        for example_id in range(len(data_dataframe)):
+        for example_id in range(len(array)):
             initinal_text = data_dataframe.iat[example_id, 0]
             text_segmentation, classes_names, colors = text_colorization(
                 initinal_text,
@@ -1371,7 +1392,6 @@ class CreateArray(object):
             )
             data = []
             for tag in classes_colors.keys():
-                print(tag, classes_names[tag], classes_colors[tag])
                 data.append(
                     (tag, classes_names[tag], classes_colors[tag])
                 )

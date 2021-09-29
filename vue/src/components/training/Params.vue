@@ -150,9 +150,10 @@ export default {
       return false;
     },
     getValue() {
-      const data = Object.values(this.outputs?.fields || {})?.[0]?.fields || [];
-      const metrics = data.find(item => item.type === 'multiselect');
-      return this.state?.['architecture[parameters][checkpoint][metric_name]'] ?? (metrics.value[0] || '');
+      let data = this.trainSettings?.architecture?.parameters?.outputs || [];
+      data = data?.[this.metricData]?.metrics || [];
+      this.saveValue(data);
+      return data[0] || '';
     },
     state: {
       set(value) {
@@ -201,6 +202,10 @@ export default {
     },
   },
   methods: {
+    saveValue([value]) {
+      ser(this.trainSettings, 'architecture[parameters][checkpoint][metric_name]', value);
+      this.trainSettings = { ...this.trainSettings };
+    },
     btnEvent(key) {
       if (key === 'train') {
         this.start();
@@ -252,8 +257,6 @@ export default {
           if (this.isLearning) {
             this.debounce();
           }
-        } else{
-          await this.$store.dispatch('projects/get');
         }
       }
     },
@@ -272,16 +275,17 @@ export default {
       if (name === 'optimizer') {
         this.optimizerValue = value;
       }
-      if (name === 'metric_name') {
-        if (!value) {
-          const arr = this.state['architecture[parameters][outputs][2][metrics]'];
-          if (arr) {
-            ser(this.trainSettings, 'architecture[parameters][checkpoint][metric_name]', arr[0]);
-            this.trainSettings = { ...this.trainSettings };
-            this.state = { [`architecture[parameters][checkpoint][metric_name]`]: arr[0] };
-          }
-        }
-      }
+      // if (name === 'metric_name') {
+      //   if (!value) {
+      //     const value = this.getValue;
+      //     console.log(name, value);
+      //     if (value) {
+      //       ser(this.trainSettings, 'architecture[parameters][checkpoint][metric_name]', value);
+      //       this.trainSettings = { ...this.trainSettings };
+      //       this.state = { [`architecture[parameters][checkpoint][metric_name]`]: value };
+      //     }
+      //   }
+      // }
     },
   },
   created() {
@@ -290,7 +294,7 @@ export default {
       this.progress();
     }, 1000);
 
-    // console.log(this.isLearning);
+    console.log(this.isLearning);
     if (this.isLearning) {
       this.debounce();
     }

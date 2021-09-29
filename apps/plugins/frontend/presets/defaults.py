@@ -135,7 +135,23 @@ LayerImageDefaults = [
                     "parse": "max_scaler",
                     "value": 1,
                 },
-            ]
+            ],
+            "terra_image_scaler": [
+                {
+                    "type": "number",
+                    "label": "Минимальный скейлер",
+                    "name": "min_scaler",
+                    "parse": "min_scaler",
+                    "value": 0,
+                },
+                {
+                    "type": "number",
+                    "label": "Максимальный скейлер",
+                    "name": "max_scaler",
+                    "parse": "max_scaler",
+                    "value": 1,
+                },
+            ],
         },
     },
 ]
@@ -296,6 +312,22 @@ LayerAudioDefaults = [
     },
     {
         "type": "select",
+        "label": "Заполнение недостающих аудио-дорожек",
+        "name": "fill_mode",
+        "parse": "fill_mode",
+        "value": LayerAudioFillModeChoice.last_millisecond.name,
+        "list": list(
+            map(
+                lambda item: {
+                    "value": item.name,
+                    "label": item.value,
+                },
+                list(LayerAudioFillModeChoice),
+            )
+        ),
+    },
+    {
+        "type": "select",
         "label": "Параметр",
         "name": "parameter",
         "parse": "parameter",
@@ -307,6 +339,22 @@ LayerAudioDefaults = [
                     "label": item.value,
                 },
                 list(LayerAudioParameterChoice),
+            )
+        ),
+    },
+    {
+        "type": "select",
+        "label": "Ресемпл",
+        "name": "resample",
+        "parse": "resample",
+        "value": LayerAudioResampleChoice.kaiser_best.name,
+        "list": list(
+            map(
+                lambda item: {
+                    "value": item.name,
+                    "label": item.value,
+                },
+                list(LayerAudioResampleChoice),
             )
         ),
     },
@@ -438,7 +486,23 @@ Defaults = {
                                             "parse": "max_scaler",
                                             "value": 1,
                                         },
-                                    ]
+                                    ],
+                                    "terra_image_scaler": [
+                                        {
+                                            "type": "number",
+                                            "label": "Минимальный скейлер",
+                                            "name": "min_scaler",
+                                            "parse": "min_scaler",
+                                            "value": 0,
+                                        },
+                                        {
+                                            "type": "number",
+                                            "label": "Максимальный скейлер",
+                                            "name": "max_scaler",
+                                            "parse": "max_scaler",
+                                            "value": 1,
+                                        },
+                                    ],
                                 },
                             },
                         ],

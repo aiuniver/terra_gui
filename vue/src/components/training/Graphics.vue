@@ -24,7 +24,7 @@
           <at-collapse-item class="mt-3" title="Статистические данные" center>
             <Stats :outputs="outputs" :interactive="interactive" />
           </at-collapse-item>
-          <at-collapse-item class="mt-3" title="Баланс данных" center>
+          <at-collapse-item class="mt-3" title="Баланс данных" center style="position: relative;">
             <Balance :outputs="outputs" :interactive="interactive" />
           </at-collapse-item>
         </at-collapse>

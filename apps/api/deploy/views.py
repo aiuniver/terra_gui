@@ -8,7 +8,7 @@ from terra_ai.agent import agent_exchange
 from terra_ai.agent.exceptions import ExchangeBaseException
 from terra_ai.exceptions.base import TerraBaseException
 
-from apps.plugins.project import project, project_path
+from apps.plugins.project import project_path
 from ..base import (
     BaseAPIView,
     BaseResponseSuccess,
@@ -24,10 +24,11 @@ class ReloadAPIView(BaseAPIView):
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         _id = serializer.validated_data.get("id")
-        project.deploy.data.get(_id).data.reload(
+        request.project.deploy.data.get(_id).data.reload(
             serializer.validated_data.get("indexes")
         )
-        return BaseResponseSuccess(list(project.deploy.data.get(_id).data))
+        request.project.save()
+        return BaseResponseSuccess(list(request.project.deploy.data.get(_id).data))
 
 
 class UploadAPIView(BaseAPIView):

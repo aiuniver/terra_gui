@@ -146,11 +146,13 @@ class Project(BaseMixinData):
         dataset: DatasetData,
         model: ModelDetailsData,
         training: TrainingDetailsData,
+        deploy: DeployDetailsData,
     ):
         self.name = name
         self.dataset = dataset
         self.model = model
         self.training = training
+        self.deploy = deploy
 
     def dict(self, **kwargs):
         _data = super().dict(**kwargs)
@@ -166,6 +168,7 @@ class Project(BaseMixinData):
             dataset=None,
             model=ModelDetailsData(**EmptyModelDetailsData),
             training=TrainingDetailsData(),
+            deploy=DeployDetailsData(),
         )
         self.save()
 
@@ -176,11 +179,13 @@ class Project(BaseMixinData):
                 _dataset = _config.get("dataset", None)
                 _model = _config.get("model", None)
                 _training = _config.get("training", None)
+                _deploy = _config.get("deploy", None)
                 self._set_data(
                     name=_config.get("name", UNKNOWN_NAME),
                     dataset=DatasetData(**_dataset) if _dataset else None,
                     model=ModelDetailsData(**(_model or EmptyModelDetailsData)),
                     training=TrainingDetailsData(**(_training or {})),
+                    deploy=DeployDetailsData(**(_deploy or {})),
                 )
         except Exception:
             self.reset()

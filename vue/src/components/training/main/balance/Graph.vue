@@ -1,23 +1,23 @@
 <template>
-<scrollbar :ops="ops" style="width: initial;">
-  <div class="t-graph">
-    <p>{{ graph_name || '' }}</p>
-    <div class="t-graph__wrapper">
-      <div class="t-graph__x-label">{{ x_label }}</div>
-      <div class="t-graph__y-label">{{ y_label }}</div>
-      <div class="t-graph__values">
-        <div v-for="(val, idx) in stepValues" :key="idx">{{ val }}</div>
-      </div>
-      <div class="t-graph__diagram">
-        <div class="t-graph__diagram-item" v-for="(val, idx) in values" :key="idx">
-          <span>{{ val }}</span>
-          <div class="t-graph__diagram-fill" :style="{ height: `${((val / max) * 100).toFixed()}%` }"></div>
-          <div class="t-graph__diagram-label" :title="labels[idx]">{{ labels[idx] }}</div>
+  <scrollbar :ops="ops" style="width: initial">
+    <div class="t-graph">
+      <p>{{ graph_name || '' }}</p>
+      <div class="t-graph__wrapper">
+        <div class="t-graph__x-label">{{ x_label }}</div>
+        <div class="t-graph__y-label">{{ y_label }}</div>
+        <div class="t-graph__values">
+          <div v-for="(val, idx) in stepValues" :key="idx">{{ val }}</div>
+        </div>
+        <div class="t-graph__diagram">
+          <div class="t-graph__diagram-item" v-for="(val, idx) in values" :key="idx">
+            <span>{{ val }}</span>
+            <div class="t-graph__diagram-fill" :style="{ height: `${((val / max) * 100).toFixed()}%` }"></div>
+            <div class="t-graph__diagram-label" :title="labels[idx]">{{ labels[idx] }}</div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</scrollbar>
+  </scrollbar>
 </template>
 
 <script>
@@ -29,6 +29,7 @@ export default {
     x_label: String,
     y_label: String,
     plot_data: Array,
+    sort: String,
   },
   data: () => ({
     ops: {
@@ -36,16 +37,41 @@ export default {
         scrollingX: true,
         scrollingY: false,
       },
-    }
+    },
+    labels: [],
+    values: [],
   }),
+  watch: {
+    sort(val) {
+      if (this.values && this.labels) return;
+      this.sorting(val);
+    },
+  },
+  created() {
+    this.labels = this.plot_data?.[0]?.labels || [];
+    this.values = this.plot_data?.[0]?.values || [];
+
+    if (this.values && this.labels) return;
+
+    this.sorting(this.sort);
+  },
+  methods: {
+    sorting(sortType) {
+      let temp = [];
+
+      if (sortType === 'alphabetic') {
+        temp = Array.from(this.labels.sort().keys());
+      } else if (sortType === 'ascending') {
+        temp = Array.from(this.values.sort((a, b) => a - b).keys());
+      } else if (sortType === 'descending') {
+        temp = Array.from(this.values.sort((a, b) => b - a).keys());
+      }
+
+      this.labels = temp.map(i => this.labels[i]);
+      this.values = temp.map(i => this.values[i]);
+    },
+  },
   computed: {
-    values() {
-      // console.log(this.plot_data[0]);
-      return this.plot_data?.[0]?.values || [];
-    },
-    labels() {
-      return this.plot_data?.[0]?.labels || [];
-    },
     stepValues() {
       return [4, 3, 2, 1, 0].map(item => (this.max / 4) * item);
     },
@@ -64,6 +90,7 @@ export default {
   width: 100%;
   margin-bottom: 25px;
   position: relative;
+  margin-bottom: 50px;
   &__wrapper {
     display: flex;
     gap: 5px;

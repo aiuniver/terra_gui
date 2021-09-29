@@ -40,7 +40,7 @@ export default {
       chars: 'trainings/getChars',
     }),
     menus() {
-      return { isClass: this.classGraphics, outputs: this.allOutputs };
+      return { isClass: this.classGraphics, outputs: this.allOutputs, type: this.metric };
     },
     allOutputs() {
       const data = this.$store.getters['trainings/getTrainSettings'];
