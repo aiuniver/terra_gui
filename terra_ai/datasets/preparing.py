@@ -177,7 +177,6 @@ class PrepareDataset(object):
             x_train = x_train[..., None]
             x_val = x_val[..., None]
         for out in self.data.outputs.keys():
-            # for col_name, data in self.data.outputs[out].items():
             if self.data.outputs[out].task == LayerOutputTypeChoice.Classification:
                 y_train = utils.to_categorical(y_train, len(np.unique(y_train, axis=0)))
                 y_val = utils.to_categorical(y_val, len(np.unique(y_val, axis=0)))
@@ -212,9 +211,10 @@ class PrepareDataset(object):
                 self.instructions[put_id] = data
 
             if self.data.alias in ['mnist', 'fashion_mnist', 'cifar10', 'cifar100']:
-                self.preprocessing.create_scaler(array=self.X['train']['1'], **{'put': 1, 'scaler': 'min_max_scaler',
-                                                                                'min_scaler': 0, 'max_scaler': 1,
-                                                                                'cols_names': f'1_{self.data.alias}'})
+                self.preprocessing.create_scaler(**{'put': 1, 'scaler': 'min_max_scaler',
+                                                    'min_scaler': 0, 'max_scaler': 1,
+                                                    'cols_names': f'1_{self.data.alias}'})
+                self.preprocessing.preprocessing[1][f'1_{self.data.alias}'].fit(self.X['train']['1'].reshape(-1, 1))
                 for key in self.X.keys():
                     for inp in self.X[key]:
                         self.X[key][inp] = self.preprocessing.preprocessing[1][f'1_{self.data.alias}']\

@@ -103,6 +103,12 @@ KerasInstructions = {'mnist': {1: {'1_image': {'cols_names': '1_image',
                                                   }
                                       }
                                   },
+                     'imdb': {1: {}
+                              },
+                     'boston_housing': {1: {}
+                                        },
+                     'reuters': {1: {}
+                                 }
                      }
 
 DatasetsGroups = [
