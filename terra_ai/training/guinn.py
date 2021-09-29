@@ -274,16 +274,19 @@ class GUINN:
                             checkpoint=params.architecture.parameters.checkpoint.native())
         progress.pool(self.progress_name, finished=False, data={'status': 'Начало обучения ...'})
         if self.dataset.data.use_generator:
-            critical_size = len(self.dataset.dataframe.get("val"))
+            critical_val_size = len(self.dataset.dataframe.get("val"))
+            upper_train_size = len(self.dataset.dataframe.get("train"))
         else:
-            critical_size = len(self.dataset.dataset.get('val'))
-        if (critical_size == self.batch_size) or (critical_size > self.batch_size):
+            critical_val_size = len(self.dataset.dataset.get('val'))
+            upper_train_size = len(self.dataset.dataset.get("train"))
+
+        if (critical_val_size == self.batch_size) or (critical_val_size > self.batch_size):
             n_repeat = 1
         else:
-            n_repeat = (self.batch_size//critical_size)+1
+            n_repeat = (self.batch_size//critical_val_size)+1
 
         self.history = self.model.fit(
-            self.dataset.dataset.get('train').shuffle(len(self.dataset.dataframe.get("train"))).batch(
+            self.dataset.dataset.get('train').shuffle(upper_train_size).batch(
                 self.batch_size, drop_remainder=True).prefetch(buffer_size=tf.data.AUTOTUNE).take(-1),
             batch_size=self.batch_size,
             shuffle=self.shuffle,
