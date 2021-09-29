@@ -19,7 +19,7 @@
     <div class="t-balance__graphs">
       <template v-for="(layer, index) of dataDalance">
         <template v-for="(item, i) of filter(layer)">
-          <Graph :key="'graph_' + index + '/' + i" v-bind="item" />
+          <Graph :key="'graph_' + index + '/' + i" v-bind="item" :sort="settings.sorted" />
         </template>
       </template>
     </div>

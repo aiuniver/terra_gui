@@ -152,6 +152,7 @@ export default {
     getValue() {
       let data = this.trainSettings?.architecture?.parameters?.outputs || [];
       data = data?.[this.metricData]?.metrics || [];
+      this.saveValue(data);
       return data[0] || '';
     },
     state: {
@@ -201,6 +202,10 @@ export default {
     },
   },
   methods: {
+    saveValue([value]) {
+      ser(this.trainSettings, 'architecture[parameters][checkpoint][metric_name]', value);
+      this.trainSettings = { ...this.trainSettings };
+    },
     btnEvent(key) {
       if (key === 'train') {
         this.start();
@@ -226,14 +231,15 @@ export default {
         if (data) {
           if (data?.state?.status) {
             localStorage.setItem('settingsTrainings', JSON.stringify(this.state));
-            this.debounce();
+            this.debounce(true);
           }
         }
       }
       // console.log(res);
     },
     async stop() {
-      this.$store.dispatch('trainings/stop', {});
+      this.debounce(false);
+      await this.$store.dispatch('trainings/stop', {});
     },
     async clear() {
       await this.$store.dispatch('trainings/clear', {});
@@ -242,16 +248,13 @@ export default {
       await this.$store.dispatch('trainings/save', {});
     },
     async progress() {
-      // console.log(this.isLearning);
       const res = await this.$store.dispatch('trainings/progress', {});
       if (res) {
         const { finished, message, percent } = res.data;
         this.$store.dispatch('messages/setProgressMessage', message);
         this.$store.dispatch('messages/setProgress', percent);
         if (!finished) {
-          if (this.isLearning) {
-            this.debounce();
-          }
+          this.debounce(this.isLearning);
         }
       }
     },
@@ -270,28 +273,18 @@ export default {
       if (name === 'optimizer') {
         this.optimizerValue = value;
       }
-      if (name === 'metric_name') {
-        if (!value) {
-          const arr = this.state['architecture[parameters][outputs][2][metrics]'];
-          if (arr) {
-            ser(this.trainSettings, 'architecture[parameters][checkpoint][metric_name]', arr[0]);
-            this.trainSettings = { ...this.trainSettings };
-            this.state = { [`architecture[parameters][checkpoint][metric_name]`]: arr[0] };
-          }
-        }
-      }
     },
   },
   created() {
-    this.debounce = debounce(() => {
-      // console.log('jghghhghghghhgh');
-      this.progress();
+    this.debounce = debounce(status => {
+      // console.log(status);
+      if (status) {
+        this.progress();
+      }
     }, 1000);
 
-    console.log(this.isLearning);
-    if (this.isLearning) {
-      this.debounce();
-    }
+    // console.log(this.isLearning);
+    this.debounce(this.isLearning);
     const settings = localStorage.getItem('settingsTrainings');
     if (settings) {
       try {
@@ -300,6 +293,9 @@ export default {
         console.warn(error);
       }
     }
+  },
+  beforeDestroy() {
+    this.debounce(false);
   },
 };
 </script>

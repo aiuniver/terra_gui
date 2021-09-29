@@ -18,7 +18,9 @@ from apps.plugins.frontend.choices import (
     LayerTextModeChoice,
     LayerPrepareMethodChoice,
     LayerAudioModeChoice,
+    LayerAudioFillModeChoice,
     LayerAudioParameterChoice,
+    LayerAudioResampleChoice,
     LayerVideoFillModeChoice,
     LayerVideoFrameModeChoice,
     LayerVideoModeChoice,
@@ -108,7 +110,9 @@ class LayerParametersAudioSerializer(MinMaxScalerSerializer, LayerParametersSeri
     max_seconds = serializers.FloatField(required=False, min_value=0, allow_null=True)
     length = serializers.FloatField(required=False, min_value=0, allow_null=True)
     step = serializers.FloatField(required=False, min_value=0, allow_null=True)
+    fill_mode = serializers.ChoiceField(choices=LayerAudioFillModeChoice.items_tuple())
     parameter = serializers.ChoiceField(choices=LayerAudioParameterChoice.items_tuple())
+    resample = serializers.ChoiceField(choices=LayerAudioResampleChoice.items_tuple())
     scaler = serializers.ChoiceField(choices=LayerScalerAudioChoice.items_tuple())
 
     def __init__(self, instance=None, data=None, **kwargs):

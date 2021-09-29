@@ -20,7 +20,9 @@
     </div>
     <div class="t-char__main" v-if="graphicShow">
       <Plotly :data="data" :layout="layout" :display-mode-bar="false"></Plotly>
-      <div v-if="!data.length" class="t-char__empty">Ожидание получения данных...</div>
+      <div v-if="!data.length" class="t-char__empty">
+        <LoadSpiner v-if="start" text="Загрузка данных..." />
+      </div>
     </div>
     <div></div>
   </div>
@@ -29,6 +31,7 @@
 <script>
 import { Plotly } from 'vue-plotly';
 import PopUpMenu from './menu/PopUpMenu';
+import LoadSpiner from '@/components/forms/LoadSpiner';
 export default {
   name: 't-char',
   props: {
@@ -65,10 +68,12 @@ export default {
       type: Object,
       default: () => {},
     },
+    start: Boolean
   },
   components: {
     Plotly,
     PopUpMenu,
+    LoadSpiner
   },
   data: () => ({
     graphicShow: true,

@@ -94,7 +94,6 @@ class CascadeBlock(Cascade):
                     return j
 
                 cascade_input.append(j)
-
             cascade(*cascade_input)
 
         self.out = cascade.out
