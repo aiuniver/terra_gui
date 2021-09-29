@@ -33,7 +33,7 @@
     <div class="predictions__body">
       <PredictTable v-if="isEmpty" :predict="predictData" />
       <div v-else class="predictions__overlay">
-        <LoadSpiner v-if="start && isLearning" text="Загрузка данных..." style="padding: 20px 0;"/>
+        <LoadSpiner v-if="start && isLearning" text="Загрузка данных..." />
       </div>
     </div>
   </div>

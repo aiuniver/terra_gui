@@ -18,7 +18,7 @@
           <component v-if="ids.includes(+index)" :is="data.type" v-bind="data" :key="`${data.type + i + index}`" />
         </template>
       </template>
-      <LoadSpiner v-if="isLearning && ids.length && !Object.keys(statisticData).length" class="overlay" text="Обновление..." />
+      <LoadSpiner v-if="isLearning && ids.length && !Object.keys(statisticData).length" class="overlay" text="Загрузка данных..." />
     </div>
   </div>
 </template>

@@ -17,18 +17,21 @@
     <div class="t-texts__content">
       <Table :data="data" :settings="settings" />
     </div>
-    <div v-if="!isData" class="t-texts__empty">
-      Нет данных
+    <div class="t-progress__overlay" v-if="!isData">
+      <LoadSpiner v-if="isLearning" text="Загрузка данных..." />
     </div>
   </div>
 </template>
 
 <script>
+import LoadSpiner from '@/components/forms/LoadSpiner';
 import Table from './Table';
+import { mapGetters } from 'vuex';
 export default {
   name: 'Texts',
   components: {
     Table,
+    LoadSpiner
   },
   data: () => ({
     settings: {},
@@ -40,6 +43,12 @@ export default {
     },
   }),
   computed: {
+    ...mapGetters({
+      status: 'trainings/getStatus',
+    }),
+    isLearning() {
+      return ['addtrain', 'training'].includes(this.status);
+    },
     layers() {
       const obj = this.data?.['1']?.data || {};
       const layres = [];
@@ -52,8 +61,8 @@ export default {
       return this.$store.getters['trainings/getTrainData']('progress_table') || {};
     },
     isData() {
-      return Object.values(this.data).length
-    }
+      return Object.values(this.data).length;
+    },
   },
   methods: {
     change(layer, { name, value }) {
@@ -61,8 +70,8 @@ export default {
         this.settings[layer] = {};
       }
       this.settings[layer][name] = value;
-      this.settings = {...this.settings}
-      console.log(this.settings)
+      this.settings = { ...this.settings };
+      console.log(this.settings);
     },
   },
   created() {
