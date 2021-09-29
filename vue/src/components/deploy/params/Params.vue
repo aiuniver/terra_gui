@@ -1,17 +1,18 @@
 <template>
   <div class="params">
-    <scrollbar>
+    <scrollbar :ops="ops">
       <div class="params-container__name">Загрузка в демо-панель</div>
       <div class="params-container pa-5">
-        <div class="label">Название папки</div>
         <div class="t-input">
-          <label class="t-input__label">
+          <label class="label" for="deploy[deploy]">Название папки</label>
+          <div class="t-input__label">
             https://demo.neural-university.ru/{{ userData.login }}/{{ projectData.name_alias }}/{{ deploy }}
-          </label>
+          </div>
           <input
             v-model="deploy"
             class="t-input__input"
             type="text"
+            id="deploy[deploy]"
             name="deploy[deploy]"
             @blur="$emit('blur', $event.target.value)"
           />
@@ -90,11 +91,16 @@ export default {
     use_sec: false,
     sec: '',
     sec_accept: '',
-    send_disabled: true,
     DataSent: false,
     DataLoading: false,
     passwordShow: false,
     pattern: /^(?=[a-zA-Z])[A-Z_a-z0-9]+$/,
+    ops: {
+      scrollPanel: {
+        scrollingX: false,
+        scrollingY: true,
+      },
+    },
   }),
   computed: {
     ...mapGetters({
@@ -104,23 +110,17 @@ export default {
       userData: 'projects/getUser',
     }),
     checkCorrect() {
-      return this.sec == this.sec_accept && this.sec.length > 5
+      return this.sec == this.sec_accept
         ? 'icon-deploy-password-correct'
         : 'icon-deploy-password-incorrect';
     },
-  },
-  mounted() {
-    // console.log(this.projectData)
-  },
-  watch: {
-    deploy(val) {
-      if (val !== '' && this.pattern.test(this.deploy)) this.send_disabled = false;
-      else this.send_disabled = true;
-    },
-    sec_accept(val) {
-      if (this.use_sec) {
-        if (val == this.sec && this.pattern.test(this.deploy)) this.send_disabled = false;
-        else this.send_disabled = true;
+    send_disabled(){
+      if(this.use_sec){
+        if(this.sec == this.sec_accept && this.sec.length > 5 && this.deploy.length != 0) return false;
+        else return true;
+      } else{
+        if(this.deploy.length != 0) return false;
+        else return true;
       }
     },
   },
@@ -270,6 +270,12 @@ button {
     line-height: 1.25;
     font-size: 0.75rem;
     user-select: none;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    width: 400px;
+    display: inline-block;
+    vertical-align: middle;
+    overflow: hidden;
   }
   &__input {
     color: #fff;
