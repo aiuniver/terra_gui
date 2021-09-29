@@ -10,7 +10,7 @@
           <t-select-new :list="sortOutput" v-model="settings.main_output" small />
         </t-field>
         <t-field inline label="Показать примеров">
-          <t-input-new v-model.number="settings.num_examples" type="number" small />
+          <t-input-new v-model.number="settings.num_examples" type="number" small style="width: 109px;" />
         </t-field>
       </div>
       <div class="predictions__param">
@@ -31,9 +31,9 @@
       </div>
     </div>
     <div class="predictions__body">
-      <PredictTable v-if="settings.show_results && isEmpty" :predict="predictData" />
+      <PredictTable v-if="isEmpty" :predict="predictData" />
       <div v-else class="predictions__overlay">
-        <LoadSpiner v-if="settings.show_results && isLearning" text="Загрузка данных..."  />
+        <LoadSpiner v-if="start && isLearning" text="Загрузка данных..." />
       </div>
     </div>
   </div>
@@ -55,6 +55,7 @@ export default {
     interactive: Object,
   },
   data: () => ({
+    start: false,
     sortData: [
       { label: 'Best', value: 'best' },
       { label: 'Worst', value: 'worst' },
@@ -97,9 +98,13 @@ export default {
   },
   methods: {
     async show() {
+      this.start = this.settings.show_results
       await this.$store.dispatch('trainings/interactive', {});
     },
   },
+  created() {
+    this.start = this.settings.show_results
+  }
 };
 </script>
 
@@ -116,11 +121,7 @@ export default {
     justify-content: center;
     width: 100%;
     height: 100%;
-    padding: 20px 0;
-    background-color: rgb(14 22 33 / 30%);
     z-index: 5;
-    top: 0;
-    left: 0;
   }
   &__params {
     display: flex;

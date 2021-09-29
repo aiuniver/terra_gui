@@ -28,7 +28,7 @@ from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.utils import camelize, decamelize
 
-__version__ = 0.074
+__version__ = 0.076
 
 
 def sort_dict(dict_to_sort: dict, mode='by_name'):
@@ -498,7 +498,6 @@ class InteractiveCallback:
         self.train_progress = data
 
     def update_state(self, y_pred, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
-        print(fit_logs)
         if self.log_history:
             if y_pred is not None:
                 self._reformat_y_pred(y_pred)
@@ -623,15 +622,6 @@ class InteractiveCallback:
                 'num_classes': dataset.data.outputs.get(out).num_classes,
                 'task': dataset.data.outputs.get(out).task.name
             }
-            # if dataset.data.outputs.get(out).task == LayerOutputTypeChoice.Regression or \
-            #         dataset.data.outputs.get(out).task == LayerOutputTypeChoice.Timeseries:
-            #     # TODO: пока берется последняя колонка как таргет,
-            #     #       когда поправят датасеты на указание кололонки таргета - скорректировать код
-            #     columns_num = dataset.data.outputs.get(out).shape[-1]
-            #     self.dataset_config["outputs"][f"{out}"]['cols_names'] = \
-            #         list(dataset.dataframe.get('train').columns)[-columns_num:]
-            #     # TODO: Добавить scaler
-            #     self.dataset_config["outputs"][f"{out}"]['scaler'] = None
 
     @staticmethod
     def _get_classes_colors(dataset_output: DatasetOutputsData):
@@ -661,8 +651,17 @@ class InteractiveCallback:
             if dataset.data.inputs.get(inp).task == LayerInputTypeChoice.Dataframe:
                 dataframe = True
                 break
-        if dataframe:
+        if dataframe and not dataset.data.use_generator:
             x_val = dataset.X.get("val")
+        elif dataframe and dataset.data.use_generator:
+            x_val = {}
+            for out in dataset.dataset['val'].keys():
+                x_val[out] = []
+                for x_val_, _ in dataset.dataset['val'].batch(1):
+                    x_val[out].extend(x_val_.get(f'{out}').numpy())
+                x_val[out] = np.array(x_val[out])
+        else:
+            pass
         return x_val
 
     def _prepare_y_true(self, dataset: PrepareDataset):
@@ -672,52 +671,59 @@ class InteractiveCallback:
         }
         for data_type in self.y_true.keys():
             for out in self.dataset_config.get("outputs").keys():
-                if (
-                        self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification
-                        and self.dataset_config.get("outputs").get(out).get("use_generator")
-                        and dataset.data.group == DatasetGroupChoice.keras
-                ):
-                    self.y_true.get(data_type)[out] = []
-                    for column_name in self.dataset_config.get("dataframe").get(data_type).columns:
-                        if column_name.split('_')[0] == out:
-                            for lbl in list(self.dataset_config.get("dataframe").get(data_type)[column_name]):
-                                self.y_true[data_type][out].append(
-                                    to_categorical(
-                                        self.dataset_config.get("outputs").get(out).get("classes_names").index(lbl),
-                                        num_classes=self.dataset_config.get("outputs").get(out).get("num_classes")
-                                    )
-                                    if self.dataset_config.get("outputs").get(out).get("encoding") == 'ohe'
-                                    else self.dataset_config.get("outputs").get(out).get("classes_names").index(lbl))
-                            self.y_true[data_type][f'{out}'] = np.array(self.y_true[data_type][f'{out}'])
-                            break
-                elif (
-                        self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification
-                        and not self.dataset_config.get("outputs").get(out).get("use_generator")
-                ):
+                if not dataset.data.use_generator:
                     self.y_true[data_type][out] = dataset.Y.get(data_type).get(f"{out}")
-                elif (
-                        self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation
-                        and self.dataset_config.get("outputs").get(out).get("use_generator")
-                ):
-                    # TODO: загрузка из генераторов занимает уйму времени, нужны другие варианты
+                else:
                     self.y_true[data_type][out] = []
                     for _, y_val in dataset.dataset[data_type].batch(1):
                         self.y_true[data_type][out].extend(y_val.get(f'{out}').numpy())
                     self.y_true[data_type][out] = np.array(self.y_true[data_type][out])
-                elif (
-                        self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation or
-                        self.dataset_config.get("outputs").get(out).get(
-                            "task") == LayerOutputTypeChoice.TextSegmentation
-                        and not self.dataset_config.get("outputs").get(out).get("use_generator")
-                ):
-                    self.y_true[data_type][out] = dataset.Y.get(data_type).get(f"{out}")
-                elif (
-                        self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries or
-                        self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Regression
-                ) and not self.dataset_config.get("outputs").get(out).get("use_generator"):
-                    self.y_true[data_type][out] = dataset.Y.get(data_type).get(f"{out}")
-                else:
-                    pass
+                # if (
+                #         self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification
+                #         and self.dataset_config.get("use_generator")
+                #         and dataset.data.group == DatasetGroupChoice.keras
+                # ):
+                #     self.y_true.get(data_type)[out] = []
+                #     for column_name in self.dataset_config.get("dataframe").get(data_type).columns:
+                #         if column_name.split('_')[0] == out:
+                #             for lbl in list(self.dataset_config.get("dataframe").get(data_type)[column_name]):
+                #                 self.y_true[data_type][out].append(
+                #                     to_categorical(
+                #                         self.dataset_config.get("outputs").get(out).get("classes_names").index(lbl),
+                #                         num_classes=self.dataset_config.get("outputs").get(out).get("num_classes")
+                #                     )
+                #                     if self.dataset_config.get("outputs").get(out).get("encoding") == 'ohe'
+                #                     else self.dataset_config.get("outputs").get(out).get("classes_names").index(lbl))
+                #             self.y_true[data_type][f'{out}'] = np.array(self.y_true[data_type][f'{out}'])
+                #             break
+                # elif (
+                #         self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification
+                #         and not self.dataset_config.get("use_generator")
+                # ):
+                #     self.y_true[data_type][out] = dataset.Y.get(data_type).get(f"{out}")
+                # elif (
+                #         self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation
+                #         and self.dataset_config.get("use_generator")
+                # ):
+                #     # TODO: загрузка из генераторов занимает уйму времени, нужны другие варианты
+                #     self.y_true[data_type][out] = []
+                #     for _, y_val in dataset.dataset[data_type].batch(1):
+                #         self.y_true[data_type][out].extend(y_val.get(f'{out}').numpy())
+                #     self.y_true[data_type][out] = np.array(self.y_true[data_type][out])
+                # elif (
+                #         self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation or
+                #         self.dataset_config.get("outputs").get(out).get(
+                #             "task") == LayerOutputTypeChoice.TextSegmentation
+                #         and not self.dataset_config.get("use_generator")
+                # ):
+                #     self.y_true[data_type][out] = dataset.Y.get(data_type).get(f"{out}")
+                # elif (
+                #         self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries or
+                #         self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Regression
+                # ) and not self.dataset_config.get("use_generator"):
+                #     self.y_true[data_type][out] = dataset.Y.get(data_type).get(f"{out}")
+                # else:
+                #     pass
 
     def _class_metric_list(self):
         self.class_graphics = {}
@@ -803,8 +809,6 @@ class InteractiveCallback:
                     "metrics": {}
                 }
             }
-            # if self.losses.get(f'{out}') and isinstance(self.losses.get(f'{out}'), str):
-            #     self.losses[f'{out}'] = self.losses.get(f'{out}')
             if self.metrics.get(out) and isinstance(self.metrics.get(out), str):
                 self.metrics[out] = [self.metrics.get(out)]
 
@@ -2556,7 +2560,8 @@ class InteractiveCallback:
                 auto_corr = auto_corr + temp
             return auto_corr
 
-        x_axis = np.arange(depth).astype('int').tolist()
+        x_axis = np.arange(depth).astype('float').tolist()
+
         auto_corr_true = []
         for i in range(depth):
             auto_corr_true.append(get_auto_corr(y_true, y_true, i + 1))
@@ -2706,7 +2711,7 @@ class InteractiveCallback:
                             'x_label': 'Время',
                             'y_label': 'Значение',
                             'plot_data': {
-                                'x': np.arange(self.x_val.get(input_id)[example_idx].shape[-1]).astype('int').tolist(),
+                                'x': np.arange(self.x_val.get(input_id)[example_idx].shape[-1]).astype('float').tolist(),
                                 'y': np.array(self.x_val.get(input_id)[example_idx][i]).astype('float').tolist()
                             },
                         }
@@ -2722,10 +2727,17 @@ class InteractiveCallback:
             else:
                 data_type = LayerInputTypeChoice.Dataframe.name.lower()
                 for col_name in self.dataset_config.get('columns').get(int(input_id)).keys():
+                    value = self.dataset_config.get('dataframe').get('val')[col_name][example_idx]
+                    if 'int' in type(value).__name__:
+                        value = int(value)
+                    elif 'float' in type(value).__name__:
+                        value = float(value)
+                    else:
+                        pass
                     data.append(
                         {
                             "title": col_name.split("_", 1)[-1],
-                            "value": self.dataset_config.get('dataframe').get('val')[col_name][example_idx],
+                            "value": value,
                             "color_mark": None
                         }
                     )
@@ -2893,9 +2905,9 @@ class InteractiveCallback:
                     "data": []
                 }
                 y_true = np.array(self.y_true.get(data_type).get(output_id)[example_idx]).astype('int')
-                y_pred = to_categorical(np.argmax(self.y_pred.get(output_id)[example_idx], axis=-1),
-                                        self.dataset_config.get("outputs").get(output_id).get("num_classes")).astype(
-                    'int')
+                y_pred = to_categorical(
+                    np.argmax(self.y_pred.get(output_id)[example_idx], axis=-1),
+                    self.dataset_config.get("outputs").get(output_id).get("num_classes")).astype('int')
                 count = 0
                 mean_val = 0
                 for idx, cls in enumerate(labels):
