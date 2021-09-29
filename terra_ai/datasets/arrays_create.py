@@ -394,12 +394,12 @@ class CreateArray(object):
 
             frames: np.ndarray = np.array([])
 
-            if fill_mode == LayerVideoFillModeChoice.black_frames:
+            if fill_mode == LayerVideoFillModeChoice.last_frames:
                 frames = np.full((frames_to_add, *video_array[-1].shape), video_array[-1], dtype='uint8')
             elif fill_mode == LayerVideoFillModeChoice.average_value:
                 mean = np.mean(video_array, axis=0, dtype='uint16')
                 frames = np.full((frames_to_add, *mean.shape), mean, dtype='uint8')
-            elif fill_mode == LayerVideoFillModeChoice.last_frames:
+            elif fill_mode == LayerVideoFillModeChoice.loop:
                 current_frames = (total_frames - frames_to_add)
                 if current_frames > frames_to_add:
                     frames = np.flip(video_array[-frames_to_add:], axis=0)
@@ -680,11 +680,6 @@ class CreateArray(object):
             cap.release()
 
         array = np.array(array)
-
-        if options['scaler'] != LayerScalerVideoChoice.no_scaler and options['preprocess']:
-            orig_shape = array.shape
-            array = options['preprocess'].transform(array.reshape(-1, 1))
-            array = array.reshape(orig_shape)
 
         instructions = {'instructions': array,
                         'parameters': options}
