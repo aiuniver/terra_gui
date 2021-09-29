@@ -260,11 +260,7 @@ class CreateDataset(object):
         for put in list(instructions.inputs.values()) + list(instructions.outputs.values()):
             for col_name, data in put.items():
                 if 'scaler' in data.parameters.keys():
-                    # if data.parameters['scaler'] != LayerScalerImageChoice.no_scaler:
-                    #     if 'height' in data.parameters.keys():
-                    #         self.preprocessing.create_scaler(array=None, **data.parameters)
-                    #     else:
-                    self.preprocessing.create_scaler(**data.parameters)  # array=put[col_name].instructions,
+                    self.preprocessing.create_scaler(**data.parameters)
                 elif 'prepare_method' in data.parameters.keys():
                     if data.parameters['prepare_method'] in [LayerPrepareMethodChoice.embedding,
                                                              LayerPrepareMethodChoice.bag_of_words]:
@@ -498,8 +494,15 @@ class CreateDataset(object):
                                                sep=None, engine='python').columns.to_list()
                     current_col_name = '_'.join(col_name.split('_')[1:])
                     idx = column_names.index(current_col_name)
-                    task = creation_data.columns_processing[
-                        str(creation_data.outputs.get(key).parameters.cols_names[idx][0])].type
+
+                    if creation_data.columns_processing[
+                        str(creation_data.outputs.get(key).parameters.cols_names[idx][0])].type == \
+                            LayerOutputTypeChoice.Timeseries and creation_data.columns_processing[
+                            str(creation_data.outputs.get(key).parameters.cols_names[idx][0])].parameters.trend is True:
+                        task = LayerOutputTypeChoice.Timeseries_trend
+                    else:
+                        task = creation_data.columns_processing[
+                            str(creation_data.outputs.get(key).parameters.cols_names[idx][0])].type
                 else:
                     task = creation_data.outputs.get(key).type
 
