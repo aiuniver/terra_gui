@@ -40,9 +40,7 @@ def main(**params):
         if params['pymorphy']:
             morphy = pymorphy2.MorphAnalyzer()
             text = ' '.join([morphy.parse(w)[0].normal_form for w in text.split(' ')])
-
         text = text.split()
-
         if params['text_mode'] == "completely":
             arr = [text[:params['max_words']]]
         elif params['text_mode'] == "length_and_step":
