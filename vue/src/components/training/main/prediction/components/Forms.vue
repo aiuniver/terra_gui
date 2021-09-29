@@ -2,9 +2,9 @@
   <div>
     <TableImage v-if="type === 'image'" v-bind="obj" />
     <TableText v-if="type === 'str' || type === 'number'" v-bind="obj" />
-    <TableTag v-if="type === 'text'" :data="obj" />
-    <TableVideo v-if="type === 'video'" :src="obj" />
-    <TableAudio v-if="type === 'audio'" :url="obj" />
+    <TableTag v-if="type === 'text'" v-bind="obj" />
+    <TableVideo v-if="type === 'video'" v-bind="obj" />
+    <TableAudio v-if="type === 'audio'" v-bind="obj" />
   </div>
 </template>
 
