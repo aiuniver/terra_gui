@@ -124,5 +124,5 @@ class BaseCollection(BaseMixinData):
 
     def dict(self, **kwargs):
         data = super().dict(**kwargs)
-        data.update({"data": self.data})
+        data.update({"data": self.data if len(list(filter(None, self.data))) else None})
         return data
