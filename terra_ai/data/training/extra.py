@@ -94,7 +94,7 @@ class LossChoice(str, Enum):
     Poisson = "Poisson"
     SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
     SquaredHinge = "SquaredHinge"
-
+    YoloLoss = "YoloLoss"
 
 class MetricChoice(str, Enum):
     AUC = "AUC"

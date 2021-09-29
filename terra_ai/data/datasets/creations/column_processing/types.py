@@ -154,6 +154,17 @@ class ParametersTimeseriesData(ParametersBaseData, MinMaxScalerData):
     depth: Optional[PositiveInt]
     scaler: Optional[LayerScalerTimeseriesChoice]
 
+    def __init__(self, **data):
+        try:
+            if data.get("trend"):
+                data.pop("depth")
+                data.pop("scaler")
+            else:
+                data.pop("trend_limit")
+        except KeyError:
+            pass
+        super().__init__(**data)
+
     @validator("trend")
     def _validate_trend(cls, value: bool) -> bool:
         if value:
@@ -169,3 +180,12 @@ class ParametersScalerData(ParametersBaseData, MinMaxScalerData):
     length: int = 0
     depth: int = 0
     step: int = 1
+
+    def __init__(self, **data):
+        try:
+            data.pop("length")
+            data.pop("depth")
+            data.pop("step")
+        except KeyError:
+            pass
+        super().__init__(**data)

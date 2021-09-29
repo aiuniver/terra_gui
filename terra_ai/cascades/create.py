@@ -1,5 +1,5 @@
 from . import cascade_input, cascade_output, general_fucntions
-from .cascade import CascadeElement, CascadeOutput, BuildModelCascade, CompleteCascade
+from .cascade import CascadeElement, CascadeOutput, BuildModelCascade, CompleteCascade, CascadeBlock
 
 from .common import decamelize
 import json
@@ -108,9 +108,10 @@ def json2cascade(path: str):
     for i, inp in config['adjacency_map'].items():
         adjacency_map[cascades[i]] = [j if j in ["INPUT"] else cascades[j] for j in inp]
 
-    main_block = CompleteCascade(input_cascade, adjacency_map)
+    if input_cascade is None:
+        return CascadeBlock(adjacency_map)
 
-    return main_block
+    return CompleteCascade(input_cascade, adjacency_map)
 
 
 def create_input(**params):

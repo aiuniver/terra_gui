@@ -1,8 +1,8 @@
 <template>
-  <div class="overlay" v-if="statusTrain === 'start'">
-    <LoadSpiner :text="'Запуск обучения...'" />
-  </div>
-  <div v-else class="t-progress">
+  <div class="t-progress">
+    <div class="t-progress__overlay" v-if="statusTrain === 'start' && !isEmpty">
+      <LoadSpiner text="Загрузка данных..." />
+    </div>
     <div class="t-progress__item t-progress__item--timers">
       <Timers v-bind="timings" />
     </div>
@@ -16,6 +16,7 @@
 import Sysinfo from './Sysinfo.vue';
 import Timers from './Timers.vue';
 import LoadSpiner from '@/components/forms/LoadSpiner';
+import { mapGetters } from 'vuex';
 
 export default {
   name: 't-progress',
@@ -25,6 +26,16 @@ export default {
     LoadSpiner,
   },
   computed: {
+    ...mapGetters({
+      status: 'trainings/getStatus',
+    }),
+    isLearning() {
+      return ['addtrain', 'training'].includes(this.status);
+    },
+    isEmpty() {
+      console.log(Object.keys(this.lossGraphs).length);
+      return Object.keys(this.lossGraphs).length;
+    },
     lossGraphs() {
       return this.$store.getters['trainings/getTrainUsage'] || {};
     },
@@ -54,6 +65,7 @@ export default {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 5px;
+  position: relative;
   &__overlay {
     position: absolute;
     display: flex;
@@ -65,10 +77,10 @@ export default {
     z-index: 5;
   }
   &__item {
-    &--timers {
-    }
     &--info {
-      width: 40%;
+      display: flex;
+      align-items: flex-end;
+      width: 30%;
     }
   }
 }
