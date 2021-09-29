@@ -283,7 +283,7 @@ button {
     user-select: none;
     white-space: nowrap;
     text-overflow: ellipsis;
-    width: 400px;
+    width: 350px;
     display: inline-block;
     vertical-align: middle;
     overflow: hidden;
