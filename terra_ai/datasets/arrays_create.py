@@ -975,6 +975,17 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
+    def create_raw(item, **options) -> dict:
+
+        if isinstance(item, str):
+            item = literal_eval(item)
+
+        instructions = {'instructions': np.array([item]),
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
     def preprocess_image(array: np.ndarray, **options) -> np.ndarray:
 
         array = cv2.resize(array, (options['width'], options['height']))
@@ -1150,6 +1161,12 @@ class CreateArray(object):
 
     @staticmethod
     def preprocess_object_detection(array: list, **options):
+
+        return array
+
+    @staticmethod
+    def preprocess_raw(array: np.ndarray, **options) -> np.ndarray:
+
         return array
 
     @staticmethod

@@ -178,6 +178,7 @@ class LayerInputTypeChoice(str, Enum):
 
     Classification = "Classification"
     Scaler = "Scaler"
+    Raw = "Raw"
 
 
 class LayerOutputTypeChoice(str, Enum):
@@ -196,3 +197,4 @@ class LayerOutputTypeChoice(str, Enum):
     Timeseries = "Timeseries"
     Timeseries_trend = "TimeseriesTrend"
     ObjectDetection = "ObjectDetection"
+    Raw = "Raw"
