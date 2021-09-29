@@ -21,8 +21,6 @@ export default {
         state.Cards = { ...state.Cards, ...value}
       },
       SET_BLOCK_CARDS(state, { value, id }) {
-        console.log(value);
-        console.log(id);
         state.Cards[id].data = value;
         state.Cards = { ...state.Cards }
       },

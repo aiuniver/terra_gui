@@ -1,6 +1,6 @@
 <template>
   <div :class="['t-field', { 't-inline': inline }]">
-    <label class="t-field__label" @click="clickLabel">
+    <label class="t-field__label" @click="clickLabel" :for="name">
       <slot>{{ label }}</slot>
     </label>
     <div class="t-field__switch">
@@ -11,6 +11,7 @@
         type="checkbox"
         :value="checVal"
         :name="parse"
+        :id="name"
         :data-reverse="reverse"
         @change="change"
         @mouseover="hover = true"

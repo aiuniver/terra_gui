@@ -20,10 +20,18 @@
         <Checkbox
           :label="'Перезаписать с таким же названием папки'"
           :type="'checkbox'"
+          parse="deploy[overwrite]"
+          name="deploy[overwrite]"
           class="pd__top"
           @change="UseReplace"
         />
-        <Checkbox :label="'Использовать пароль для просмотра страницы'" :type="'checkbox'" @change="UseSec" />
+        <Checkbox
+          :label="'Использовать пароль для просмотра страницы'"
+          parse="deploy[use_password]"
+          name="deploy[use_password]"
+          :type="'checkbox'"
+          @change="UseSec"
+        />
         <div class="password" v-if="use_sec">
           <div class="t-input">
             <input :type="passwordShow ? 'text' : 'password'" placeholder="Введите пароль" v-model="sec" />
