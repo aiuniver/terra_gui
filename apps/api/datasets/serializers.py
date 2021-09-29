@@ -9,7 +9,6 @@ from apps.plugins.frontend.choices import (
     LayerInputTypeChoice,
     LayerOutputTypeChoice,
     LayerNetChoice,
-    LayerScalerChoice,
     LayerScalerImageChoice,
     LayerScalerAudioChoice,
     LayerScalerVideoChoice,
@@ -23,7 +22,6 @@ from apps.plugins.frontend.choices import (
     LayerVideoFillModeChoice,
     LayerVideoFrameModeChoice,
     LayerVideoModeChoice,
-    LayerDataframeAlignBaseMethodChoice,
     LayerYoloVersionChoice,
     ColumnProcessingTypeChoice,
 )
