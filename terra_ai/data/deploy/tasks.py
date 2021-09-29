@@ -120,7 +120,7 @@ class ImageClassificationCollectionList(BaseCollectionList):
 
 class BaseCollection(BaseMixinData):
     type: CollectionTypeChoice
-    data: BaseCollectionList
+    data: Optional[BaseCollectionList]
 
     def dict(self, **kwargs):
         data = super().dict(**kwargs)
