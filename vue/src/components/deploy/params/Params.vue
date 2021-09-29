@@ -102,7 +102,6 @@ export default {
     DataSent: false,
     DataLoading: false,
     passwordShow: false,
-    pattern: /^(?=[a-zA-Z])[A-Z_a-z0-9]+$/,
     ops: {
       scrollPanel: {
         scrollingX: false,
@@ -123,13 +122,15 @@ export default {
         : 'icon-deploy-password-incorrect';
     },
     send_disabled(){
+      if(this.DataLoading){
+        return true;
+      }
       if(this.use_sec){
         if(this.sec == this.sec_accept && this.sec.length > 5 && this.deploy.length != 0) return false;
-        else return true;
       } else{
         if(this.deploy.length != 0) return false;
-        else return true;
       }
+      return true;
     },
   },
   methods: {
@@ -176,6 +177,7 @@ export default {
       } else {
         this.DataLoading = false;
         this.DataSent = true;
+        this.$emit("overlay", this.DataLoading);
       }
     },
     getProgress() {
@@ -197,9 +199,9 @@ export default {
         console.log(error, success);
         if (!error && success) {
           this.DataLoading = true;
+          this.$emit("overlay", this.DataLoading);
           this.getProgress();
         }
-        // this.getProgress();
       }
     },
   },
@@ -209,7 +211,7 @@ export default {
 <style lang="scss" scoped>
 .params {
   flex-shrink: 0;
-  width: 470px;
+  width: 400px;
   border-left: #0e1621 solid 1px;
 }
 .params-container__name {
@@ -236,26 +238,27 @@ button {
 }
 .loader {
   padding-top: 20px;
+  &__title {
+    font-size: 14px;
+    line-height: 24px;
+    text-align: center;
+  }
+  &__time {
+    padding-top: 20px;
+    font-size: 12px;
+    line-height: 24px;
+    color: #a7bed3;
+    width: 100%;
+    text-align: center;
+  }
+  &__progress {
+    padding-top: 20px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
 }
-.loader__title {
-  font-size: 14px;
-  line-height: 24px;
-  text-align: center;
-}
-.loader__time {
-  padding-top: 20px;
-  font-size: 12px;
-  line-height: 24px;
-  color: #a7bed3;
-  width: 100%;
-  text-align: center;
-}
-.loader__progress {
-  padding-top: 20px;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
+
 .progress-bar {
   width: 426px;
   background: #2b5278;
@@ -322,7 +325,7 @@ button {
 }
 .password__icon {
   position: absolute;
-  width: 415px;
+  width: 345px;
   i {
     position: relative;
     float: right;

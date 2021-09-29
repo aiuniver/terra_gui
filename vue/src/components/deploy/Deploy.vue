@@ -66,9 +66,6 @@ export default {
     display: flex;
     flex-wrap: wrap;
   }
-  &__data-field {
-    padding-top: 30px;
-  }
   &__title {
     font-size: 12px;
     line-height: 24px;
@@ -106,7 +103,7 @@ export default {
   }
 }
 .wrapper {
-  padding: 50px;
+  padding: 20px;
   height: 100%;
 }
 </style>

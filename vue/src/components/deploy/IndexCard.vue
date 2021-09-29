@@ -84,7 +84,7 @@ export default {
       text.sort((a, b) => a[1] < b[1] ? 1 : -1);
       for(let i=0; i<text.length; i++){
         if(i > 2) break;
-        prepareText = prepareText + `${text[i][0]} - вероятность ${text[i][1]}% \n`;
+        prepareText = prepareText + `${text[i][0]} - ${text[i][1]}% \n`;
       }
       return prepareText;
     },

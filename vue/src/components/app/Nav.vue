@@ -40,7 +40,6 @@ export default {
           showClose,
           okText: 'Загрузить датасет',
         });
-        console.log(data);
         if (data === 'confirm') {
           if (this.$route.path !== '/datasets') {
             this.$router.push('/datasets');
@@ -52,6 +51,7 @@ export default {
     },
     async nav({ path, access, text }) {
       // console.log(path, access, text);
+
       if (!this.project.dataset && access === false) {
         this.message({ text }, true);
       } else {
