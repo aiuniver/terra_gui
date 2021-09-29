@@ -1,5 +1,9 @@
 {
   "cascades": {
+    "input": {
+      "tag": "input",
+      "type": "text"
+    },
     "model": {
       "tag": "model",
       "task": "Text",

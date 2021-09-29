@@ -40,14 +40,17 @@ def main(**params):
         if params['pymorphy']:
             morphy = pymorphy2.MorphAnalyzer()
             text = ' '.join([morphy.parse(w)[0].normal_form for w in text.split(' ')])
+
         text = text.split()
+        arr = []
+
         if params['text_mode'] == "completely":
             arr = [text[:params['max_words']]]
         elif params['text_mode'] == "length_and_step":
-            arr = []
             for i in range(0, len(text) - length + params['step'], params['step']):
                 arr.append(text[i: i + length])
-
+            if len(text) < length:
+                arr.append(text)
         array = []
 
         if params['prepare_method'] == "embedding":
@@ -57,21 +60,25 @@ def main(**params):
                     arr.append(0)
         elif params['prepare_method'] == "bag_of_words":
             array = preprocessing.texts_to_matrix(arr)
-        # elif params['prepare_method'] == "word_to_vec":
-        #     print(preprocessing)
-        #     for word in arr:
-        #         try:
-        #             array.append(preprocessing[word])
-        #         except KeyError:
-        #             array.append(np.zeros((params['parameters']['length'],)))
+        elif params['prepare_method'] == "word_to_vec":
+            for word in arr:
+                try:
+                    array.append(preprocessing[word])
+                except KeyError:
+                    array.append(np.zeros((length,)))
+            array = np.array(array)
 
-        # if len(array) < params['length']:
-        #     if params['prepare_method'] in ["embedding", "bag_of_words"]:
-        #         words_to_add = [0 for _ in range((params['parameters']['length']) - len(array))]
-        #     elif params['prepare_method'] == "word_to_vec":
-        #         words_to_add = [[0 for _ in range(params['word_to_vec_size'])] for _ in
-        #                         range((params['length']) - len(array))]
-        #     array += words_to_add
+            if array.shape[1] < length:
+                new_array = np.zeros((1, length, params['word_to_vec_size']))
+                new_array[:, :array.shape[1]] += array
+                array = new_array
+            elif array.shape[1] > length:
+                n = (array.shape[0] % length) + 1
+                new_array = np.zeros((n, length, params['word_to_vec_size']))
+                for i in range(n):
+                    new_array[i][:len(array[i])] += array[i]
+
+                array = new_array
 
         array = np.array(array)
 
