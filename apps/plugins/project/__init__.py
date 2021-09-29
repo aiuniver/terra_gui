@@ -168,6 +168,7 @@ class Project(BaseMixinData):
             dataset=None,
             model=ModelDetailsData(**EmptyModelDetailsData),
             training=TrainingDetailsData(),
+            deploy=DeployDetailsData(),
         )
         self.save()
 

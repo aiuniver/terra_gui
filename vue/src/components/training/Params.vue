@@ -150,9 +150,9 @@ export default {
       return false;
     },
     getValue() {
-      const data = Object.values(this.outputs?.fields || {})?.[0]?.fields || [];
-      const metrics = data.find(item => item.type === 'multiselect');
-      return this.state?.['architecture[parameters][checkpoint][metric_name]'] ?? (metrics.value[0] || '');
+      let data = this.trainSettings?.architecture?.parameters?.outputs || [];
+      data = data?.[this.metricData]?.metrics || [];
+      return data[0] || '';
     },
     state: {
       set(value) {
@@ -288,7 +288,7 @@ export default {
       this.progress();
     }, 1000);
 
-    // console.log(this.isLearning);
+    console.log(this.isLearning);
     if (this.isLearning) {
       this.debounce();
     }
