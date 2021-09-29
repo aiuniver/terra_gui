@@ -4,7 +4,7 @@
 
 <script>
 export default {
-  name: 'TableTag',
+  name: 'TableTextSegmented',
   props: {
     value: {
       type: String,

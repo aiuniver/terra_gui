@@ -1,8 +1,9 @@
 <template>
   <div>
     <TableImage v-if="type === 'image'" v-bind="obj" />
-    <TableText v-if="type === 'str' || type === 'number'" v-bind="obj" />
-    <TableTag v-if="type === 'text'" v-bind="obj" />
+    <TableStr v-if="type === 'str' || type === 'number'" v-bind="obj" />
+    <TableText v-if="type === 'text'" v-bind="obj" />
+    <TableTextSegmented v-if="type === 'segmented_text'" v-bind="obj" />
     <TableVideo v-if="type === 'video'" v-bind="obj" />
     <TableAudio v-if="type === 'audio'" v-bind="obj" />
   </div>
@@ -15,7 +16,8 @@ export default {
     TableImage: () => import('./TableImage'),
     TableAudio: () => import('./TableAudio'),
     TableText: () => import('./TableText'),
-    TableTag: () => import('./TableTag'),
+    TableStr: () => import('./TableStr'),
+    TableTextSegmented: () => import('./TableTextSegmented'),
     TableVideo: () => import('./TableVideo.vue'),
   },
   props: {

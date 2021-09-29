@@ -1,9 +1,5 @@
 <template>
-  <div class="t-predict-test">
-    <p :class="['t-predict-test__text', color]">
-      {{ value }}
-    </p>
-  </div>
+  <p> {{ value }}</p>
 </template>
 
 <script>
@@ -15,35 +11,26 @@ export default {
       default: '',
     },
     color_mark: {
-      type: String,
-      default: '',
-    },
-    tagsColor: {
-      type: String,
-      default: '',
+      type: Array,
+      default: () => [],
     },
   },
+
   computed: {
-    color() {
-      return `t-predict-test__text--${this.color_mark}`
-    }
-  }
+    // text() {
+    //   const temp = this.value
+    //     .split(' ')
+    //     .map(el => {
+    //       const tag = el.substring(0, el.indexOf('>') + 1);
+    //       let temp = `<span style="color: rgb(${this.color_mark[tag].join(',')})">${el.replace(/<[^>]+>/g, '')}</span>`;
+    //       return temp;
+    //     })
+    //     .join(' ');
+    //   return temp;
+    // },
+    // type() {
+    //   return this.data?.type || null;
+    // },
+  },
 };
 </script>
-
-<style lang="scss" scoped>
-.t-predict-test {
-  display: flex;
-  height: 100%;
-  justify-content: center;
-  align-items: center;
-  &__text {
-    &--success {
-      color: green;
-    }
-    &--wrong {
-      color: orange;
-    }
-  }
-}
-</style>
