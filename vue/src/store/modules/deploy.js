@@ -7,7 +7,6 @@ export default {
       defaultLayout: defLayout,
       origTextStyle: originaltextStyle,
       Cards: {},
-      deployType: "",
       moduleList: {
         api_text: "",
         url: "",
@@ -23,9 +22,6 @@ export default {
       SET_BLOCK_CARDS(state, { value, id }) {
         state.Cards[id].data = value;
         state.Cards = { ...state.Cards }
-      },
-      SET_DEPLOY_TYPE(state, value) {
-        state.deployType = value;
       },
     },
     actions: {
@@ -50,7 +46,6 @@ export default {
       getDefaultLayout: ({ defaultLayout }) => defaultLayout,
       getOrigTextStyle: ({ origTextStyle }) => origTextStyle,
       getCards: ({ Cards }) => Cards,
-      getDeployType: ({ deployType }) => deployType,
       getRandId:({ Cards }) => {
         let id = Cards;
         let crypto = require("crypto");
