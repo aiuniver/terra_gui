@@ -10,6 +10,7 @@
         :key="'char1_' + i"
         :settings="settings"
         :menus="menus"
+        :start="isLearning"
         @event="event($event, settings)"
       />
     </div>
@@ -38,7 +39,11 @@ export default {
   computed: {
     ...mapGetters({
       chars: 'trainings/getChars',
+      status: 'trainings/getStatus',
     }),
+    isLearning() {
+      return ['addtrain', 'training'].includes(this.status);
+    },
     menus() {
       return { isClass: this.classGraphics, outputs: this.allOutputs, type: this.metric };
     },

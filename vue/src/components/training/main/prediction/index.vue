@@ -31,9 +31,9 @@
       </div>
     </div>
     <div class="predictions__body">
-      <PredictTable v-if="settings.show_results && isEmpty" :predict="predictData" />
+      <PredictTable v-if="isEmpty" :predict="predictData" />
       <div v-else class="predictions__overlay">
-        <LoadSpiner v-if="settings.show_results && isLearning" text="Загрузка данных..."  />
+        <LoadSpiner v-if="start && isLearning" text="Загрузка данных..." />
       </div>
     </div>
   </div>
@@ -55,6 +55,7 @@ export default {
     interactive: Object,
   },
   data: () => ({
+    start: false,
     sortData: [
       { label: 'Best', value: 'best' },
       { label: 'Worst', value: 'worst' },
@@ -97,9 +98,13 @@ export default {
   },
   methods: {
     async show() {
+      this.start = this.settings.show_results
       await this.$store.dispatch('trainings/interactive', {});
     },
   },
+  created() {
+    this.start = this.settings.show_results
+  }
 };
 </script>
 
