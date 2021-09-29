@@ -809,8 +809,6 @@ class InteractiveCallback:
                     "metrics": {}
                 }
             }
-            # if self.losses.get(f'{out}') and isinstance(self.losses.get(f'{out}'), str):
-            #     self.losses[f'{out}'] = self.losses.get(f'{out}')
             if self.metrics.get(out) and isinstance(self.metrics.get(out), str):
                 self.metrics[out] = [self.metrics.get(out)]
 
