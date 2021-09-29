@@ -30,6 +30,7 @@ from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.training.customlosses import DiceCoef
 from terra_ai.training.yolo_fit import create_yolo, CustomModelYolo, compute_loss
+from terra_ai.exceptions import training as exceptions
 
 
 __version__ = 0.02
@@ -92,6 +93,13 @@ class GUINN:
         self.dataset = self._prepare_dataset(dataset, dataset_path, model_path)
         self.training_path = training_path
         self.nn_name = "model"
+
+        if self.dataset.data.use_generator:
+            train_size = len(self.dataset.dataframe.get("train"))
+        else:
+            train_size = len(self.dataset.dataset.get('train'))
+        if self.batch_size > train_size:
+            raise exceptions.TooBigBatchSize(self.batch_size, train_size)
 
         if interactive.get_states().get("status") == "addtrain":
             if self.callbacks[0].last_epoch - 1 >= self.sum_epoch:
