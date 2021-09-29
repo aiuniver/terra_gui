@@ -40,6 +40,9 @@ export default {
       height: 'settings/autoHeight',
     }),
   },
+  created() {
+    this.$store.dispatch('projects/get');
+  },
   methods: {
     async ReloadCard(data){
       await this.$store.dispatch('deploy/ReloadCard', data);

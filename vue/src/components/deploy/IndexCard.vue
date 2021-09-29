@@ -60,7 +60,7 @@ export default {
   methods: {
     ReloadCard(){
       this.$emit('reload', { id: this.block, indexes: [this.index.toString()]})
-    }
+    },
   },
   computed: {
     ...mapGetters({
