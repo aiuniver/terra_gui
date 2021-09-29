@@ -660,8 +660,16 @@ class InteractiveCallback:
             if dataset.data.inputs.get(inp).task == LayerInputTypeChoice.Dataframe:
                 dataframe = True
                 break
-        if dataframe:
+        if dataframe and not dataset.data.use_generator:
             x_val = dataset.X.get("val")
+        elif dataframe and dataset.data.use_generator:
+            x_val = {}
+            for out in dataset.dataset['val'].keys():
+                for x_val_, _ in dataset.dataset['val'].batch(1):
+                    x_val[out].extend(x_val_.get(f'{out}').numpy())
+                self.y_true[data_type][out] = np.array(self.y_true[data_type][out])
+        else:
+            pass
         return x_val
 
     def _prepare_y_true(self, dataset: PrepareDataset):
@@ -2555,7 +2563,8 @@ class InteractiveCallback:
                 auto_corr = auto_corr + temp
             return auto_corr
 
-        x_axis = np.arange(depth).astype('int').tolist()
+        x_axis = np.arange(depth).astype('float').tolist()
+
         auto_corr_true = []
         for i in range(depth):
             auto_corr_true.append(get_auto_corr(y_true, y_true, i + 1))
@@ -2705,7 +2714,7 @@ class InteractiveCallback:
                             'x_label': 'Время',
                             'y_label': 'Значение',
                             'plot_data': {
-                                'x': np.arange(self.x_val.get(input_id)[example_idx].shape[-1]).astype('int').tolist(),
+                                'x': np.arange(self.x_val.get(input_id)[example_idx].shape[-1]).astype('float').tolist(),
                                 'y': np.array(self.x_val.get(input_id)[example_idx][i]).astype('float').tolist()
                             },
                         }
@@ -2721,10 +2730,17 @@ class InteractiveCallback:
             else:
                 data_type = LayerInputTypeChoice.Dataframe.name.lower()
                 for col_name in self.dataset_config.get('columns').get(int(input_id)).keys():
+                    value = self.dataset_config.get('dataframe').get('val')[col_name][example_idx]
+                    if 'int' in type(value).__name__:
+                        value = int(value)
+                    elif 'float' in type(value).__name__:
+                        value = float(value)
+                    else:
+                        pass
                     data.append(
                         {
                             "title": col_name.split("_", 1)[-1],
-                            "value": self.dataset_config.get('dataframe').get('val')[col_name][example_idx],
+                            "value": value,
                             "color_mark": None
                         }
                     )
@@ -2892,9 +2908,9 @@ class InteractiveCallback:
                     "data": []
                 }
                 y_true = np.array(self.y_true.get(data_type).get(output_id)[example_idx]).astype('int')
-                y_pred = to_categorical(np.argmax(self.y_pred.get(output_id)[example_idx], axis=-1),
-                                        self.dataset_config.get("outputs").get(output_id).get("num_classes")).astype(
-                    'int')
+                y_pred = to_categorical(
+                    np.argmax(self.y_pred.get(output_id)[example_idx], axis=-1),
+                    self.dataset_config.get("outputs").get(output_id).get("num_classes")).astype('int')
                 count = 0
                 mean_val = 0
                 for idx, cls in enumerate(labels):
