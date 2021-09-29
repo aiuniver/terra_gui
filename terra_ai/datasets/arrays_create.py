@@ -293,7 +293,6 @@ class CreateArray(object):
                         indexes.append(idx.copy())
                 except ValueError:
                     pass
-                    # print(word)
 
             return indexes
 

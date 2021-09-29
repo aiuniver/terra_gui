@@ -722,7 +722,6 @@ class LayerValidation:
                         tensorflow.keras.layers.Input(shape=inp_shape),
                         **self.layer_parameters,
                     )
-                    # print(type(tensor_shape_to_tuple(output.shape)))
                     return [tensor_shape_to_tuple(output.shape)], None
                 except Exception:
                     return output_shape, self.parameters_validation()
@@ -762,7 +761,6 @@ class LayerValidation:
                         getattr(tensorflow.nn, self.layer_type)(
                             tensorflow.keras.layers.Input(shape=inp_shape), **val_dict
                         )
-                        # print(self.module, self.layer_type)
                     if revert:
                         try:
                             if (
@@ -1472,116 +1470,9 @@ class ModelCreator:
         self._build_keras_model()
         return self.nnmodel
 
-    # def compile_model(self, loss=None, optimizer=Adam(), metrics=None):
-    #     """Compile tensorflow.keras.Model"""
-    #     if metrics is None:
-    #         metrics = {'output_1': ["accuracy"]}
-    #     if loss is None:
-    #         loss = {'output_1': ["categorical_crossentropy"]}
-    #     self.nnmodel.compile(optimizer=optimizer, loss=loss, metrics=metrics)
-
-    # def get_model(self) -> Model:
-    #     """Get keras.Model"""
-    #     return self.nnmodel
-
     def creator_cleaner(self) -> None:
         """clean and reset to default self.nnmodel"""
         clear_session()
         del self.nnmodel
         gc.collect()
         self.nnmodel = tensorflow.keras.Model()
-
-
-if __name__ == "__main__":
-    input_shape = [
-        (None, 100, 100, 28),
-        #     # (None, 54, 14, 32),
-        #     # (None, 54, 14, 32),
-        #     # (None, 54, 14, 32)
-    ]
-    # input_shape = [TensorShape([None, 64]), TensorShape([None, 64]), TensorShape([None, 64])]
-    params = {
-        # "size": 2,
-        # 'filters': 32,
-        # 'kernel_size': (2, 2),
-        'pool_size': 2,
-        'strides': 2,
-        # 'dilation_rate': (1, 1),
-        # 'groups': 2,
-        # 'depth_multiplier': 5,
-        # 'data_format': 'channels_first',
-        "padding": 'same',
-        # "output_padding": None,
-        # "kernel_initializer": "glorot_uniform",
-        # "beta_initializer": "glorot_uniform",
-        # "axis": -1,
-        # 'activation': 'relu',
-        # "max_value": 1,
-        # "rate": 0.2
-        # "epsilon": -0.1,
-        # "padding": ((1, 0), (-1, 0)),
-        # "cropping": ((10, 0), (5, 0)),
-        # 'mean': 2.,
-        # 'variance': 3.,
-        # "target_shape": (54, 168, 32),
-        # "input_dim": 2000,
-        # "output_dim": 64,
-        # 'return_state': True,
-        # 'return_sequences': True,
-        # 'units': 64,
-        # "n": 8,
-        # 'include_top': False,
-        # 'weights': "imagenet",
-        # 'pooling': "avg",
-        # "trainable": True,
-        # "classes": 1000,
-        # "classifier_activation": 'softmax',
-        # 'latent_size': 100,
-        # 'latent_regularizer': 'vae',
-        # 'beta': 5.,
-        # 'capacity': 128.,
-        # 'randomSample': True,
-        # 'roll_up': True,
-        # "block_size": 2,
-        # "data_format": SpaceToDepthDataFormatChoice.NCHW,
-    }
-
-    # layers.types.Conv2D.LayerConfig.num_uplinks.value = 3
-    kwarg = {
-        # "maxwordcount": 2000
-    }
-
-    layer_name = "MaxPool1D"
-    # print(get_layer_defaults(layer_name))
-    LV = LayerValidation()
-    LV.set_state(layer_name, input_shape, params, **kwarg)
-    print("\nlayer_type", LV.layer_type)
-    print("\nlayer_parameters", LV.layer_parameters)
-    print("\nnum_uplinks", LV.num_uplinks)
-    print("\ninput_dimension", LV.input_dimension)
-    print("\nmodule", LV.module)
-    print("\nmodule_type", LV.module_type)
-    x, y = LV.get_validated()
-    print("\n", x, y)
-
-    x = tensorflow.keras.layers.Input(input_shape[0][1:])
-    # x2 = tensorflow.keras.layers.Input(input_shape[1][1:])
-    # x3 = tensorflow.keras.layers.Input(input_shape[2][1:])
-    # x4 = tensorflow.keras.layers.Input(input_shape[3][1:])
-    # x = tensorflow.keras.layers.LSTM(return_state=True, return_sequences=False, units=64)(x)
-    x = getattr(tensorflow.keras.layers, layer_name)(**params)(x)
-    # params.pop('trainable')
-    # x = getattr(tensorflow.keras.applications.resnet50, layer_name)(**params)(x)
-    # x = getattr(tensorflow.keras.layers, layer_name)(**params)([x, x2, x3, x4])
-    # x = getattr(customLayers, layer_name)(**params)(x)
-    # x = tensorflow_addons.activations.mish(x)
-    # x = tensorflow.nn.space_to_depth(x, **params)
-    print(x.shape)
-
-    # import importlib
-    #
-    # module = importlib.import_module(def_layer.LayerConfig().module)
-    # class_type = getattr(module, layer_type)
-    # print(class_type)
-
-    pass
