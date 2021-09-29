@@ -28,7 +28,8 @@ from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.customcallback import InteractiveCallback
-from terra_ai.training.customlosses import DiceCoef, yolo_loss
+from terra_ai.training.customlosses import DiceCoef
+from terra_ai.training.yolo_fit import create_yolo, CustomModelYolo, compute_loss
 
 
 __version__ = 0.02
@@ -269,7 +270,7 @@ class GUINN:
         else:
             critical_size = len(self.dataset.dataset.get('val'))
         self.history = self.model.fit(
-            self.dataset.dataset.get('train').batch(
+            self.dataset.dataset.get('train').shuffle(1000).batch(
                 self.batch_size if critical_size >= 32 else 1, drop_remainder=True).take(-1),
             batch_size=self.batch_size,
             shuffle=self.shuffle,
@@ -293,76 +294,43 @@ class GUINN:
             [[10, 13], [16, 30], [33, 23], [30, 61], [62, 45], [59, 119], [116, 90], [156, 198], [373, 326]])
         num_anchors = len(anchors)  # Сохраняем количество анкоров
 
-        @tf.autograph.experimental.do_not_convert
-        def create_model(
-                input_shape: Tuple[int, int, int],
-                num_anchor: int,
-                model: Model,
-                num_classes: int,
-        ) -> Model:
-            """
-                Функция создания полной модели
-                    Входные параметры:
-                      input_shape - размерность входного изображения для модели YOLO
-                      num_anchors - общее количество анкоров
-                      model - спроектированная модель
-                      num_classes - количество классов
-            """
-            w, h, ch = input_shape  # Получаем ширину и высоту и глубину входного изображения
-            # inputs = keras.layers.Input(shape=(w, h, ch))  # Создаем входной слой модели, добавляя размерность для
-            # глубины цвета
-
-            # Создаем три входных слоя y_true с размерностями ((None, 13, 13, 3, 6), (None, 26, 26, 3, 6) и (None,
-            # 52, 52, 3, 6)) 2 и 3 параметры (13, 13) указывают размерность сетки, на которую условно будет разбито
-            # исходное изображение каждый уровень сетки отвечает за обнаружение объектов различных размеров (13 -
-            # крупных, 26 - средних, 52 - мелких) 4 параметр - количество анкоров на каждый уровень сетки 5 параметр
-            # - 4 параметра описывающие параметры анкора (координаты центра, ширина и высота) + вероятность
-            # обнаружения объекта + OHE номер класса
-            y_true = [
-                keras.layers.Input(shape=(w // 32, h // 32, num_anchor // 3, num_classes + 5), name="input_2"),
-                keras.layers.Input(shape=(w // 16, h // 16, num_anchor // 3, num_classes + 5), name="input_3"),
-                keras.layers.Input(shape=(w // 8, h // 8, num_anchor // 3, num_classes + 5), name="input_4")
-            ]
-
-            yolo_model = model  # create_YOLOv3(inputs, num_anchors // 3)  # Создаем модель YOLOv3
-            print('Создана модель YOLO. Количество классов: {}.'.format(
-                num_classes))  # Выводим сообщение о создании модели
-            print('model_yolo.summary()', yolo_model.summary())
-            # Создаем выходной слой Lambda (выходом которого будет значение ошибки модели)
-            # На вход слоя подается:
-            #   - model_yolo.output (выход модели model_yolo (то есть то, что посчитала сеть))
-            #   - y_true (оригинальные данные из обучающей выборки)
-            outputs = keras.layers.Lambda(yolo_loss, output_shape=(1,), name='yolo_loss',
-                                          arguments={'num_anchors': num_anchor})([*yolo_model.output, *y_true])
-
-            return Model([yolo_model.input, *y_true], outputs)  # Возвращаем модель
-
         # Создаем модель
-        model_yolo = create_model(input_shape=(416, 416, 3), num_anchor=num_anchors, model=self.model,
-                                  num_classes=list(self.dataset.data.num_classes.values())[0])
-        print(model_yolo.summary())
+        print(self.dataset.data.outputs.get(2).classes_names)
+        base_yolo = create_yolo(self.model, input_size=416, channels=3, training=True,
+                                 classes=self.dataset.data.outputs.get(2).classes_names)
+        # base_yolo.compile(optimizer=self.optimizer,
+        #                    loss=compute_loss)
+        print(base_yolo.summary())
+        model_yolo = CustomModelYolo(base_yolo, self.dataset, self.dataset.data.outputs.get(2).classes_names, self.epochs)
 
         # Компилируем модель
         print(('Компиляция модели', '...'))
         # self.set_custom_metrics()
         model_yolo.compile(optimizer=self.optimizer,
-                           loss={'yolo_loss': lambda y_true, y_pred: y_pred})
+                           loss=compute_loss)
         print(('Компиляция модели', 'выполнена'))
         print(('Начало обучения', '...'))
 
-        if not retrain:
-            self._set_callbacks(dataset=dataset, batch_size=params.batch,
-                                epochs=params.epochs, checkpoint=params.architecture.parameters.checkpoint.native())
+        # if not retrain:
+        #     self._set_callbacks(dataset=dataset, batch_size=params.batch,
+        #                         epochs=params.epochs, checkpoint=params.architecture.parameters.checkpoint.native())
 
         print(('Начало обучения', '...'))
+
+        if self.dataset.data.use_generator:
+            critical_size = len(self.dataset.dataframe.get("val"))
+        else:
+            critical_size = len(self.dataset.dataset.get('val'))
         self.history = model_yolo.fit(
-            self.dataset.dataset.get('train'),
+            self.dataset.dataset.get('train').shuffle(1000).batch(
+                self.batch_size if critical_size >= 32 else 1, drop_remainder=True).take(-1),
             batch_size=self.batch_size,
             shuffle=self.shuffle,
-            validation_data=self.dataset.dataset.get('val'),
+            validation_data=self.dataset.dataset.get('val').batch(
+                self.batch_size if critical_size >= 32 else 1, drop_remainder=True).take(-1),
             epochs=self.epochs,
             verbose=verbose,
-            callbacks=self.callbacks
+            # callbacks=self.callbacks
         )
 
 

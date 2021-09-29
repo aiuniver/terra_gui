@@ -10,6 +10,7 @@ class Task(str, Enum):
     Segmentation = "Segmentation"
     Regression = "Regression"
     Timeseries = "Timeseries"
+    ObjectDetection = "ObjectDetection"
 
 
 class Loss(str, Enum):
@@ -28,6 +29,7 @@ class Loss(str, Enum):
     Poisson = "Poisson"
     SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
     SquaredHinge = "SquaredHinge"
+    YoloLoss = "YoloLoss"
 
 
 class Metric(str, Enum):
@@ -61,7 +63,6 @@ class Metric(str, Enum):
     SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
     SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
     DiceCoef = "DiceCoef"
-
 
 TasksGroups = [
     {
@@ -218,6 +219,16 @@ TasksGroups = [
             Metric.KLDivergence,
             Metric.LogCoshError,
             Metric.SquaredHinge
+        ],
+    },
+    {
+        "task": Task.ObjectDetection,
+        "losses": [
+            Loss.YoloLoss
+        ],
+        "metrics": [
+            Metric.AUC,
+            Metric.Accuracy
         ],
     },
 ]
