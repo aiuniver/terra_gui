@@ -63,7 +63,7 @@ class ImageSegmentationCollectionList(BaseCollectionList):
                 os.remove(self[index].get("segment"))
             except Exception:
                 pass
-            value = source[random.randint(0, len(source) - 1)]
+            value = dict(source[random.randint(0, len(source) - 1)])
             filepath_source = Path(value.get("source"))
             filepath_segment = Path(value.get("segment"))
             destination_source = Path(source_path, f"{index+1}.jpg")
@@ -104,7 +104,7 @@ class ImageClassificationCollectionList(BaseCollectionList):
                 os.remove(self[index].get("source"))
             except Exception:
                 pass
-            value = source[random.randint(0, len(source) - 1)]
+            value = dict(source[random.randint(0, len(source) - 1)])
             filepath = Path(value.get("source"))
             destination = Path(self._path, f"{index+1}.jpg")
             filepath_im = Image.open(filepath)
