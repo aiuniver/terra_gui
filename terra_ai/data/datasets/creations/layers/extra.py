@@ -11,6 +11,8 @@ from ...extra import (
     LayerScalerAudioChoice,
     LayerAudioParameterChoice,
     LayerAudioModeChoice,
+    LayerAudioResampleChoice,
+    LayerAudioFillModeChoice
 )
 from ....mixins import BaseMixinData
 from ....types import confilepath
@@ -85,6 +87,8 @@ class ParametersAudioData(MinMaxScalerData, SourcesPathsData, ColumnProcessingDa
     length: Optional[PositiveFloat]
     step: Optional[PositiveFloat]
     parameter: LayerAudioParameterChoice
+    fill_mode: LayerAudioFillModeChoice
+    resample: LayerAudioResampleChoice
     scaler: LayerScalerAudioChoice
     put: Optional[PositiveInt]
 

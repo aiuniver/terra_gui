@@ -77,6 +77,7 @@ class LayerScalerVideoChoice(str, Enum):
 
 class LayerScalerAudioChoice(str, Enum):
     min_max_scaler = "MinMaxScaler"
+    standard_scaler = "StandardScaler"
     no_scaler = "Не применять"
 
     @staticmethod
