@@ -1,5 +1,6 @@
 <template>
   <div class="t-scatters">
+    <LoadSpiner class="overlay" v-show="isPending" text="Обновление..." />
     <div class="t-scatters__header">
       <div class="t-scatters__checks">
         <template v-for="(item, i) of outputLayers">
@@ -26,6 +27,8 @@
 </template>
 
 <script>
+import LoadSpiner from '@/components/forms/LoadSpiner';
+
 export default {
   name: 't-scatters',
   components: {
@@ -34,6 +37,7 @@ export default {
     Histogram: () => import('./Histogram'),
     Table: () => import('./Table'),
     Graphic: () => import('./Graphic'),
+    LoadSpiner
   },
   props: {
     outputs: Array,
@@ -49,6 +53,7 @@ export default {
   data: () => ({
     selected: [],
     auto: false,
+    isPending: false
   }),
   methods: {
     change(key) {
@@ -58,6 +63,7 @@ export default {
       console.log(this.selected);
     },
     async handleClick() {
+      this.isPending = true
       const data = {
         statistic_data: {
           output_id: this.selected,
@@ -65,6 +71,7 @@ export default {
         },
       };
       await this.$store.dispatch('trainings/interactive', data);
+      this.isPending = false
     },
     autoChange(e) {
       this.auto = e.value;
@@ -77,6 +84,7 @@ export default {
 .t-scatters {
   position: relative;
   margin-bottom: 20px;
+  min-height: 200px;
   &__header {
     display: flex;
     gap: 25px;
@@ -95,6 +103,19 @@ export default {
     display: flex;
     flex-wrap: wrap;
     gap: 50px;
+  }
+  .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgb(14 22 33 / 30%);
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
   }
 }
 </style>

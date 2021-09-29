@@ -3,7 +3,7 @@
     <div class="t-heatmap__scale" ref="scale">
       <div class="t-heatmap__scale--gradient"></div>
       <div class="t-heatmap__scale--values">
-        <span class="value" v-for="(item, idx) in stepValues" :key="idx">{{ item }}</span>
+        <span class="value" v-for="(item, idx) in stepValues" :key="idx">{{ item.toFixed() }}</span>
       </div>
       <div class="t-heatmap__y-label">{{ y_label }}</div>
     </div>
@@ -82,7 +82,7 @@ export default {
       return Math.max(...this.values);
     },
     bodyWidth() {
-      return `calc(100% - ${this.width + 10}px)`;
+      return `calc(100% - ${this.width - 10}px)`;
     },
   },
   methods: {
@@ -113,11 +113,12 @@ export default {
     font-size: 14px;
     line-height: 17px;
     font-weight: 600;
-    top: calc(-3em - 10px);
+    top: calc(-2em - 10px);
     position: absolute;
     left: 50%;
     transform: translate(-50%);
-    // white-space: nowrap;
+    width: 100%;
+    text-align: center;
   }
   &__x-label,
   &__y-label {
@@ -143,7 +144,7 @@ export default {
     gap: 5px;
     position: relative;
     width: fit-content;
-    padding-bottom: 10px;
+    padding-bottom: 15px;
   }
   &__grid {
     display: grid;
@@ -192,7 +193,7 @@ export default {
     height: 100%;
     gap: 5px;
     padding-right: 35px;
-    padding-bottom: 10px;
+    padding-bottom: 15px;
     &--values {
       display: flex;
       flex-direction: column;
