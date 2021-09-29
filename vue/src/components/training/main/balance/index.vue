@@ -11,7 +11,7 @@
           </t-field>
         </div>
         <t-field inline :label="'Сортировать'">
-          <t-select-new small :list="sortOps" v-model="settings.sorted" />
+          <t-select-new small :list="sortOps" v-model="settings.sorted" @input="select"/>
         </t-field>
         <!-- <t-button class="t-balance__btn" @click="handleClick">Показать</t-button> -->
       </div>
@@ -23,16 +23,19 @@
         </template>
       </template>
     </div>
+    <LoadSpiner v-show="isPending" class="overlay" text="Обновление..."/>
   </div>
 </template>
 
 <script>
 import Graph from './Graph';
+import LoadSpiner from '@/components/forms/LoadSpiner';
 
 export default {
   name: 't-balance',
   components: {
     Graph,
+    LoadSpiner
   },
   data: () => ({
     // train: false,
@@ -43,7 +46,7 @@ export default {
       { label: 'по увеличению', value: 'ascending' },
       { label: 'по убыванию', value: 'descending' },
     ],
-    // sortSelected: 'alphabetic',
+    isPending: false
   }),
   computed: {
     dataDalance() {
@@ -56,7 +59,7 @@ export default {
       get() {
         return this.$store.getters['trainings/getObjectInteractive']('data_balance');
       },
-    },
+    }
   },
   methods: {
     filter(layer) {
@@ -75,6 +78,13 @@ export default {
     async handleClick() {
       await this.$store.dispatch('trainings/interactive', {});
     },
+    async select(sorted) {
+      this.isPending = true
+      await this.$store.dispatch('trainings/interactive', {
+        data_balance: { sorted }
+      });
+      this.isPending = false
+    }
   },
 };
 </script>
@@ -86,7 +96,6 @@ export default {
     flex-wrap: wrap;
     gap: 30px;
     margin-top: 20px;
-    height: 300px;
   }
   &__btn {
     margin-left: auto;
@@ -105,5 +114,19 @@ export default {
   button {
     width: 150px;
   }
+  .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgb(14 22 33 / 30%);
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
 }
+
 </style>
