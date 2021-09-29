@@ -1,34 +1,31 @@
 <template>
   <div class="t-scatters">
-    <LoadSpiner class="overlay" v-show="isPending" text="Обновление..." />
     <div class="t-scatters__header">
       <div class="t-scatters__checks">
-        <template v-for="(item, i) of outputLayers">
-          <t-field :key="'check_' + i" inline :label="`Выходной слой «${item}»`">
-            <t-checkbox-new small :name="`${item}`" @change="change(item)" />
+        <template v-for="({ id, value }, i) of outputLayers">
+          <t-field :key="'check_' + i" inline :label="`Выходной слой «${id}»`">
+            <t-checkbox-new small :value="value" @change="change({ id, value: $event.value })" />
           </t-field>
         </template>
       </div>
       <t-field inline :label="`Автообновление`">
-        <t-checkbox-new v-model="auto" small @change="autoChange" />
+        <t-checkbox-new v-model="settings.autoupdate" small @change="send" />
       </t-field>
-      <div class="t-scatters__btn">
-        <t-button @click="handleClick">Показать</t-button>
-      </div>
     </div>
     <div class="t-scatters__content">
       <template v-for="(layer, index) of statisticData">
         <template v-for="(data, i) of layer">
-          <component v-if="selected.includes(+index)" :is="data.type" v-bind="data" :key="`${data.type + i + index}`" />
+          <component v-if="ids.includes(+index)" :is="data.type" v-bind="data" :key="`${data.type + i + index}`" />
         </template>
       </template>
+      <LoadSpiner v-if="isLearning && ids.length && !Object.keys(statisticData).length" class="overlay" text="Обновление..." />
     </div>
   </div>
 </template>
 
 <script>
 import LoadSpiner from '@/components/forms/LoadSpiner';
-
+import { mapGetters } from 'vuex';
 export default {
   name: 't-scatters',
   components: {
@@ -37,44 +34,48 @@ export default {
     Histogram: () => import('./Histogram'),
     Table: () => import('./Table'),
     Graphic: () => import('./Graphic'),
-    LoadSpiner
+    LoadSpiner,
   },
   props: {
     outputs: Array,
   },
   computed: {
+    ...mapGetters({
+      status: 'trainings/getStatus',
+    }),
+    isLearning() {
+      return ['addtrain', 'training'].includes(this.status);
+    },
+    settings: {
+      set(value) {
+        this.$store.dispatch('trainings/setObjectInteractive', { statistic_data: value });
+      },
+      get() {
+        return this.$store.getters['trainings/getObjectInteractive']('statistic_data');
+      },
+    },
     statisticData() {
       return this.$store.getters['trainings/getTrainData']('statistic_data') || {};
     },
     outputLayers() {
-      return this.outputs.map(item => item.id);
+      return this.outputs.map(item => {
+        return {
+          id: item.id,
+          value: this.ids.includes(item.id),
+        };
+      });
+    },
+    ids() {
+      return JSON.parse(JSON.stringify(this.settings.output_id || []));
     },
   },
-  data: () => ({
-    selected: [],
-    auto: false,
-    isPending: false
-  }),
   methods: {
-    change(key) {
-      this.selected = !this.selected.includes(key)
-        ? [...this.selected, key]
-        : this.selected.filter(item => item !== key);
-      console.log(this.selected);
+    change({ id, value }) {
+      this.settings.output_id = value ? [...this.ids, id] : [...this.ids.filter(item => item !== id)];
+      this.send();
     },
-    async handleClick() {
-      this.isPending = true
-      const data = {
-        statistic_data: {
-          output_id: this.selected,
-          autoupdate: this.auto,
-        },
-      };
-      await this.$store.dispatch('trainings/interactive', data);
-      this.isPending = false
-    },
-    autoChange(e) {
-      this.auto = e.value;
+    async send() {
+      await this.$store.dispatch('trainings/interactive', {});
     },
   },
 };
@@ -84,7 +85,6 @@ export default {
 .t-scatters {
   position: relative;
   margin-bottom: 20px;
-  min-height: 200px;
   &__header {
     display: flex;
     gap: 25px;
@@ -103,14 +103,11 @@ export default {
     display: flex;
     flex-wrap: wrap;
     gap: 50px;
+    position: relative;
   }
   .overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgb(14 22 33 / 30%);
     z-index: 5;
     display: flex;
     align-items: center;

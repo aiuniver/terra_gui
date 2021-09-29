@@ -14,7 +14,6 @@
         @event="event($event, settings)"
       />
     </div>
-    <div v-if="!data.length" class="t-charts__empty">Нет данных</div>
   </div>
 </template>
 

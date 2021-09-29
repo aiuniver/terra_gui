@@ -10,7 +10,7 @@
           <t-select-new :list="sortOutput" v-model="settings.main_output" small />
         </t-field>
         <t-field inline label="Показать примеров">
-          <t-input-new v-model.number="settings.num_examples" type="number" small />
+          <t-input-new v-model.number="settings.num_examples" type="number" small style="width: 109px;" />
         </t-field>
       </div>
       <div class="predictions__param">
@@ -33,7 +33,7 @@
     <div class="predictions__body">
       <PredictTable v-if="isEmpty" :predict="predictData" />
       <div v-else class="predictions__overlay">
-        <LoadSpiner v-if="start && isLearning" text="Загрузка данных..." />
+        <LoadSpiner v-if="start && isLearning" text="Загрузка данных..." style="padding: 20px 0;"/>
       </div>
     </div>
   </div>
@@ -121,11 +121,7 @@ export default {
     justify-content: center;
     width: 100%;
     height: 100%;
-    padding: 20px 0;
-    background-color: rgb(14 22 33 / 30%);
     z-index: 5;
-    top: 0;
-    left: 0;
   }
   &__params {
     display: flex;
