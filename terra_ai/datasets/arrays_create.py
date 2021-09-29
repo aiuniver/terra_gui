@@ -1169,7 +1169,19 @@ class CreateArray(object):
         return array
 
     @staticmethod
+    def get_y_true(options, output_id):
+        if not options.data.use_generator:
+            y_true = options.Y.get('val').get(f"{output_id}")
+        else:
+            y_true = []
+            for _, y_val in options.dataset['val'].batch(1):
+                y_true.extend(y_val.get(f'{output_id}').numpy())
+            y_true = np.array(y_true)
+        return y_true
+
+    @staticmethod
     def postprocess_results(array, options, save_path: str = "", dataset_path: str = "") -> dict:
+
         return_data = {}
         for i, output_id in enumerate(options.data.outputs.keys()):
             if len(options.data.outputs.keys()) > 1:
@@ -1178,11 +1190,12 @@ class CreateArray(object):
                 postprocess_array = array
 
             if options.data.outputs[output_id].task == LayerOutputTypeChoice.Classification:
+                y_true = CreateArray().get_y_true(options, output_id)
                 return_data[output_id] = []
                 for idx, img_array in enumerate(array):
                     actual_value, predict_values = CreateArray().postprocess_classification(
                         array=np.expand_dims(postprocess_array[idx], axis=0),
-                        true_array=options.Y.get("val").get(f"{output_id}")[idx],
+                        true_array=y_true[idx],
                         options=options.data.outputs[output_id],
                     )
                     return_data[output_id].append(
@@ -1222,9 +1235,6 @@ class CreateArray(object):
                             "data": data
                         }
                     )
-                # return_data[output_id] = CreateArray().postprocess_segmentation(
-                #     postprocess_array, options.data.outputs[output_id], output_id, save_path
-                # )
             elif options.data.outputs[output_id].task == LayerOutputTypeChoice.TextSegmentation:
                 return_data[output_id] = CreateArray().postprocess_text_segmentation(
                     postprocess_array, options.data.outputs[output_id], options.dataframe.get("val")

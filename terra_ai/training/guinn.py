@@ -737,10 +737,7 @@ class FitCallback(keras.callbacks.Callback):
                 if self.dataset.data.use_generator:
                     upred = self.model.predict(self.dataset.dataset.get('val').batch(1))
                 else:
-                    # size = len(self.dataset.X.get('val').get(self.dataset.X.get('val').keys()[0]))
                     upred = self.model.predict(self.dataset.X.get('val'))
-                # for data_type in ['train', 'val']:
-                #     upred[data_type] = self.model.predict(self.dataset.X.get(data_type))
 
                 train_batch_data = interactive.update_state(y_pred=upred)
             else:
@@ -774,7 +771,6 @@ class FitCallback(keras.callbacks.Callback):
         if self.dataset.data.use_generator:
             scheduled_predict = self.model.predict(self.dataset.dataset.get('val').batch(1))
         else:
-            # size = len(self.dataset.X.get('val').get(list(self.dataset.X.get('val').keys()[0]))
             scheduled_predict = self.model.predict(self.dataset.X.get('val'))
         interactive_logs = copy.deepcopy(logs)
         interactive_logs['epoch'] = self.last_epoch

@@ -403,3 +403,4 @@ terra_ai/test_modules/
 /terra_ai/training/test ts.py
 /terra_ai/training/test ts-class.py
 /terra_ai/modeling/test validator.py
+/terra_ai/training/yolov3_chess.h5
