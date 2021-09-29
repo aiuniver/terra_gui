@@ -271,7 +271,7 @@ class GUINN:
             critical_size = len(self.dataset.dataset.get('val'))
         self.history = self.model.fit(
             self.dataset.dataset.get('train').shuffle(1000).batch(
-                self.batch_size if critical_size >= 32 else 1, drop_remainder=True).take(-1),
+                self.batch_size, drop_remainder=True).take(-1),
             batch_size=self.batch_size,
             shuffle=self.shuffle,
             validation_data=self.dataset.dataset.get('val').batch(
