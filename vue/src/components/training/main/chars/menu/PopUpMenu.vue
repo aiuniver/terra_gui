@@ -15,7 +15,7 @@
         <li v-if="isClass" class="menu__item" @click="$emit('event', { name: 'data', data: 'classes' })">По классам</li>
       </ul>
     </li>
-    <li class="menu__dropdown">
+    <li v-if="type !== 'loss_graphs'" class="menu__dropdown">
       <i :class="['t-icon', 'icon-training-dropdown']"></i>
       <span>Показывать метрики</span>
       <ul class="menu">
@@ -64,6 +64,9 @@ export default {
     isClass() {
       const clas = this.menus?.isClass || {};
       return clas[this.id];
+    },
+    type() {
+      return this.menus?.type || '';
     },
     outputs() {
       return this.menus?.outputs || [];
