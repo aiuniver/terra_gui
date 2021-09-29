@@ -1,7 +1,7 @@
 <template>
   <div class="t-progress">
     <div class="t-progress__overlay" v-if="statusTrain === 'start' && !isEmpty">
-      <LoadSpiner :text="'Запуск обучения...'" />
+      <LoadSpiner text="Загрузка данных..." />
     </div>
     <div class="t-progress__item t-progress__item--timers">
       <Timers v-bind="timings" />
