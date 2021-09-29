@@ -28,7 +28,7 @@ def create_config(model, out_path):
 
     tags = dataset_config['tags'][1]['alias']
 
-    cascade_json_path = os.path.join(ROOT_PATH, "demo_panel", "cascades_json", tags + ".json")
+    cascade_json_path = os.path.join(ROOT_PATH, 'terra_ai', 'cascades', "demo_panel", "cascades_json", tags + ".json")
     with open(cascade_json_path) as cfg:
         config = json.load(cfg)
 

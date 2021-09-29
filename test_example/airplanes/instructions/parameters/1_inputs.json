@@ -1,1 +1,0 @@
-{"sources_paths": ["C:\\PycharmProjects\\terra_gui\\TerraAI\\datasets\\sources\\airplane\\\u0421\u0430\u043c\u043e\u043b\u0435\u0442\u044b"], "min_scaler": 0, "max_scaler": 1, "width": 192, "height": 160, "net": "convolutional", "scaler": "no_scaler", "put": 1, "cols_names": null, "deploy": false, "object_detection": false}
