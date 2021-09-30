@@ -762,6 +762,7 @@ class FitCallback(keras.callbacks.Callback):
                 result_data = {'timings': [still_time, elapsed_time, elapsed_epoch_time,
                                            still_epoch_time, msg_epoch, msg_batch]}
             self._set_result_data(result_data)
+            # print("PROGRESS", [type(num) for num in self._get_result_data().get("train_data", {}).get("data_balance", {}).get("2", ["0"])[0].get("plot_data", ["0"])[0].get("values")])
             progress.pool(
                 self.progress_name,
                 percent=(self.last_epoch - 1) / (
