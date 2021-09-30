@@ -21,7 +21,7 @@
     >
       <template v-for="(layer, index) of dataDalance">
         <template v-for="(item, i) of filter(layer)">
-          <Graph :key="'graph_' + index + '/' + i" v-bind="item" :sort="settings.sorted" />
+          <Graph :key="'graph_' + index + '/' + i" v-bind="item" />
         </template>
       </template>
     </div>
