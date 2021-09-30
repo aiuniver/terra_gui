@@ -1,10 +1,12 @@
 <template>
-  <p> {{ value }}</p>
+  <div class="t-predict-text">
+    <p class="t-predict-text__text">{{ value }}</p>
+  </div>
 </template>
 
 <script>
 export default {
-  name: 'TableText',
+  name: 'table-text',
   props: {
     value: {
       type: String,
@@ -15,22 +17,19 @@ export default {
       default: () => [],
     },
   },
-
-  computed: {
-    // text() {
-    //   const temp = this.value
-    //     .split(' ')
-    //     .map(el => {
-    //       const tag = el.substring(0, el.indexOf('>') + 1);
-    //       let temp = `<span style="color: rgb(${this.color_mark[tag].join(',')})">${el.replace(/<[^>]+>/g, '')}</span>`;
-    //       return temp;
-    //     })
-    //     .join(' ');
-    //   return temp;
-    // },
-    // type() {
-    //   return this.data?.type || null;
-    // },
-  },
 };
 </script>
+
+<style lang="scss" scoped>
+.t-predict-text {
+  display: flex;
+  height: 100%;
+  justify-content: center;
+  align-items: center;
+  width: 400px;
+  padding: 5px;
+  &__text {
+    text-align: center;
+  }
+}
+</style>

@@ -98,10 +98,11 @@ class GUINN:
             train_size = len(self.dataset.dataframe.get("train"))
         else:
             train_size = len(self.dataset.dataset.get('train'))
-        if self.batch_size > train_size:
-            raise exceptions.TooBigBatchSize(self.batch_size, train_size)
+        if params.batch > train_size:
+            interactive.set_status("stopped")
+            raise exceptions.TooBigBatchSize(params.batch, train_size)
 
-        if interactive.get_states().get("status") == "addtrain":
+        if interactive.get_states().get("status") == "addtrain" and self.callbacks:
             if self.callbacks[0].last_epoch - 1 >= self.sum_epoch:
                 self.sum_epoch += params.epochs
             if (self.callbacks[0].last_epoch - 1) < self.sum_epoch:
@@ -318,6 +319,7 @@ class GUINN:
         # base_yolo.compile(optimizer=self.optimizer,
         #                    loss=compute_loss)
         print(base_yolo.summary())
+
         model_yolo = CustomModelYolo(base_yolo, self.dataset, self.dataset.data.outputs.get(2).classes_names, self.epochs)
 
         # Компилируем модель
@@ -340,11 +342,11 @@ class GUINN:
             critical_size = len(self.dataset.dataset.get('val'))
         self.history = model_yolo.fit(
             self.dataset.dataset.get('train').shuffle(1000).batch(
-                self.batch_size if critical_size >= 32 else 1, drop_remainder=True).take(-1),
+                self.batch_size, drop_remainder=True).take(-1),
             batch_size=self.batch_size,
             shuffle=self.shuffle,
             validation_data=self.dataset.dataset.get('val').batch(
-                self.batch_size if critical_size >= 32 else 1, drop_remainder=True).take(-1),
+                self.batch_size, drop_remainder=True).take(-1),
             epochs=self.epochs,
             verbose=verbose,
             # callbacks=self.callbacks
