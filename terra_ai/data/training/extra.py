@@ -76,6 +76,7 @@ class TaskChoice(str, Enum):
     Regression = "Regression"
     Timeseries = "Timeseries"
     ObjectDetection = "ObjectDetection"
+Ф
 
 
 class LossChoice(str, Enum):
