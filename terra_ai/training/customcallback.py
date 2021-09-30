@@ -955,8 +955,8 @@ class InteractiveCallback:
                         }
                         dataset_balance[out][data_type][output_channel]['graphic'] = {
                             "type": "graphic",
-                            "x": list(self.dataset_config.get("dataframe").get(data_type).index),
-                            "y": list(self.dataset_config.get("dataframe").get(data_type)[output_channel])
+                            "x": np.array(self.dataset_config.get("dataframe").get(data_type).index).astype('float').tolist(),
+                            "y": np.array(self.dataset_config.get("dataframe").get(data_type)[output_channel]).astype('float').tolist()
                         }
                         x, y = self._get_distribution_histogram(
                             list(self.dataset_config.get("dataframe").get(data_type)[output_channel]),
@@ -2539,7 +2539,8 @@ class InteractiveCallback:
         """
         if categorical:
             hist_data = pd.Series(data_series).value_counts()
-            return list(hist_data.index), list(hist_data)
+            return np.array(hist_data.index).astype('float').tolist(), \
+                   np.array(hist_data).astype('float').tolist()
         else:
             data_series = np.array(data_series)
             bar_values, x_labels = np.histogram(data_series, bins=bins)
@@ -2856,7 +2857,6 @@ class InteractiveCallback:
                     data["stat"]["data"].append(
                         dict(title=labels[i], value=f"{round(val * 100, 1)}%", color_mark=class_color_mark)
                     )
-
 
         elif self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.Segmentation:
             labels = self.dataset_config.get("outputs").get(output_id).get("classes_names")
