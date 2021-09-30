@@ -935,10 +935,10 @@ class InteractiveCallback:
                     class_percent = {}
                     for cl in classes:
                         class_count[self.dataset_config.get("outputs").get(out).get("classes_names")[cl]] = \
-                            np.sum(self.y_true.get(data_type).get(out)[:, :, cl])
+                            np.sum(self.y_true.get(data_type).get(out)[:, :, cl]).item()
                         class_percent[self.dataset_config.get("outputs").get(out).get("classes_names")[cl]] = np.round(
                             np.sum(self.y_true.get(data_type).get(out)[:, :, cl]) * 100
-                            / np.prod(self.y_true.get(data_type).get(out)[:, :, cl].shape))
+                            / np.prod(self.y_true.get(data_type).get(out)[:, :, cl].shape)).item()
                     dataset_balance[out][data_type]["presence_balance"] = class_count
                     dataset_balance[out][data_type]["percent_balance"] = class_percent
 
