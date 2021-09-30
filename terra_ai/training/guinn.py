@@ -98,10 +98,11 @@ class GUINN:
             train_size = len(self.dataset.dataframe.get("train"))
         else:
             train_size = len(self.dataset.dataset.get('train'))
-        if self.batch_size > train_size:
-            raise exceptions.TooBigBatchSize(self.batch_size, train_size)
+        if params.batch > train_size:
+            interactive.set_status("stopped")
+            raise exceptions.TooBigBatchSize(params.batch, train_size)
 
-        if interactive.get_states().get("status") == "addtrain":
+        if interactive.get_states().get("status") == "addtrain" and self.callbacks:
             if self.callbacks[0].last_epoch - 1 >= self.sum_epoch:
                 self.sum_epoch += params.epochs
             if (self.callbacks[0].last_epoch - 1) < self.sum_epoch:
