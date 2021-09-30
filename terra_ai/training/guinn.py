@@ -643,11 +643,9 @@ class FitCallback(keras.callbacks.Callback):
         if self.dataset.data.alias not in ["imdb", "boston_housing", "reuters"]:
             input_key = list(self.dataset.data.inputs.keys())[0]
             output_key = list(self.dataset.data.outputs.keys())[0]
-            if self.dataset.data.inputs[input_key].task in [LayerInputTypeChoice.Image,
-                                                            LayerInputTypeChoice.Text] and (
+            if self.dataset.data.inputs[input_key].task in [LayerInputTypeChoice.Image] and (
                     self.dataset.data.outputs[output_key].task in [LayerOutputTypeChoice.Classification,
-                                                                   LayerOutputTypeChoice.Segmentation,
-                                                                   LayerOutputTypeChoice.TextSegmentation]):
+                                                                   LayerOutputTypeChoice.Segmentation]):
                 config = CascadeCreator()
                 config.create_config(self.save_model_path, os.path.split(self.save_model_path)[0])
                 config.copy_package(os.path.split(self.save_model_path)[0])
