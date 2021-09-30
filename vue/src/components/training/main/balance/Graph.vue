@@ -48,8 +48,8 @@ export default {
     },
   },
   created() {
-    this.labels = this.plot_data?.[0]?.labels || [];
-    this.values = this.plot_data?.[0]?.values || [];
+    this.labels = this.plot_data?.[0]?.x || [];
+    this.values = this.plot_data?.[0]?.y || [];
 
     if (this.values && this.labels) return;
 
