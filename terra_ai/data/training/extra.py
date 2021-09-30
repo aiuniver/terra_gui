@@ -76,7 +76,9 @@ class TaskChoice(str, Enum):
     Regression = "Regression"
     Timeseries = "Timeseries"
     ObjectDetection = "ObjectDetection"
-Ф
+    Dataframe = "Dataframe"
+    TextSegmentation = "TextSegmentation"
+    Timeseries_trend = "TimeseriesTrend"
 
 
 class LossChoice(str, Enum):
