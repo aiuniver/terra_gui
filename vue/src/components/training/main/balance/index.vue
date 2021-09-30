@@ -11,44 +11,49 @@
           </t-field>
         </div>
         <t-field inline :label="'Сортировать'">
-          <t-select-new small :list="sortOps" v-model="settings.sorted" @input="select"/>
+          <t-select-new small :list="sortOps" v-model="settings.sorted" @input="select" />
         </t-field>
-        <!-- <t-button class="t-balance__btn" @click="handleClick">Показать</t-button> -->
       </div>
     </div>
     <div class="t-balance__graphs">
       <template v-for="(layer, index) of dataDalance">
         <template v-for="(item, i) of filter(layer)">
-          <Graph :key="'graph_' + index + '/' + i" v-bind="item" />
+          <Graph :key="'graph_' + index + '/' + i" v-bind="item" :sort="settings.sorted" />
         </template>
       </template>
     </div>
-    <LoadSpiner v-show="isPending" class="overlay" text="Обновление..."/>
+    <div v-if="settings.show_train || settings.show_val" class="t-balance__overlay">
+      <LoadSpiner v-if="isLearning" text="Загрузка данных..." />
+    </div>
   </div>
 </template>
 
 <script>
 import Graph from './Graph';
 import LoadSpiner from '@/components/forms/LoadSpiner';
+import { mapGetters } from 'vuex';
 
 export default {
   name: 't-balance',
   components: {
     Graph,
-    LoadSpiner
+    LoadSpiner,
   },
   data: () => ({
-    // train: false,
-    // test: false,
     selected: [],
     sortOps: [
       { label: 'по имени', value: 'alphabetic' },
       { label: 'по увеличению', value: 'ascending' },
       { label: 'по убыванию', value: 'descending' },
     ],
-    isPending: false
   }),
   computed: {
+    ...mapGetters({
+      status: 'trainings/getStatus',
+    }),
+    isLearning() {
+      return ['addtrain', 'training'].includes(this.status);
+    },
     dataDalance() {
       return this.$store.getters['trainings/getTrainData']('data_balance') || [];
     },
@@ -59,7 +64,7 @@ export default {
       get() {
         return this.$store.getters['trainings/getObjectInteractive']('data_balance');
       },
-    }
+    },
   },
   methods: {
     filter(layer) {
@@ -73,18 +78,16 @@ export default {
       return layer.filter(item => arr.includes(item.type_data));
     },
     change() {
-      this.handleClick()
+      this.handleClick();
     },
     async handleClick() {
-      await this.$store.dispatch('trainings/interactive', {});
+      // await this.$store.dispatch('trainings/interactive', {});
     },
     async select(sorted) {
-      this.isPending = true
       await this.$store.dispatch('trainings/interactive', {
-        data_balance: { sorted }
+        data_balance: { sorted },
       });
-      this.isPending = false
-    }
+    },
   },
 };
 </script>
@@ -114,19 +117,13 @@ export default {
   button {
     width: 150px;
   }
-  .overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
+  &__overlay {
     width: 100%;
     height: 100%;
-    background-color: rgb(14 22 33 / 30%);
     z-index: 5;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-direction: column;
   }
 }
-
 </style>

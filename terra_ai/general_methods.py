@@ -287,7 +287,7 @@ def _load_model(**params):
 
 if __name__ == "__main__":
     # Проверка препроцеса (для изображений база 'самолеты')
-    params = {'model_name': 'airplanes',
+    params = {'model_name': 'airplanes_new',
               'path_file': [r"C:\Users\Anonim\Documents\terra_gui\TerraProjects\airplanes.trds\sources\1_image\Самолеты\0.jpg"]}
     x_input = _preprocess_model(**params)
     print(x_input.shape)

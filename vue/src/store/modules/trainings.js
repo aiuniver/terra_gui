@@ -150,6 +150,12 @@ export default {
       dispatch('setTrainUsage', {});
       await dispatch('projects/get', {}, { root: true })
     },
+    async resetAllTraining({ commit, dispatch }) {
+      dispatch('resetTraining', {});
+      dispatch('setTrainSettings', {});
+      dispatch('setTrainSettings', {});
+      commit("SET_STATE_PARAMS", {});
+    },
     setDrawer({ commit }, data) {
       commit("SET_DRAWER", data);
     },

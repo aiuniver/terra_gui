@@ -1,5 +1,5 @@
 from . import cascade_input, cascade_output, general_fucntions
-from .cascade import CascadeElement, CascadeOutput, BuildModelCascade, CompleteCascade
+from .cascade import CascadeElement, CascadeOutput, BuildModelCascade, CompleteCascade, CascadeBlock
 
 from .common import decamelize
 import json
@@ -50,7 +50,8 @@ def json2model_cascade(path: str):
 
         for inp, param in config['inputs'].items():
             with open(os.path.join(
-                    path, "dataset", "instructions", "parameters", f"{inp}_{decamelize(param['task'])}.json")) as cfg:
+                    path, "dataset", "instructions", "parameters",
+                    f"{inp}_{decamelize(param['task'])}.json")) as cfg:
                 spec_config = json.load(cfg)
             param.update(spec_config)
 
@@ -58,7 +59,6 @@ def json2model_cascade(path: str):
             preprocess.append(getattr(type_module, 'main')(
                 **param, dataset_path=os.path.join(path, "dataset"), key=inp)
             )
-
         preprocess = make_processing(preprocess)
     else:
         preprocess = None
@@ -68,7 +68,8 @@ def json2model_cascade(path: str):
 
         for inp, param in config['outputs'].items():
             with open(os.path.join(
-                    path, "dataset", "instructions", "parameters", f"{inp}_{decamelize(param['task'])}.json")) as cfg:
+                    path, "dataset", "instructions", "parameters",
+                    f"{inp}_{decamelize(param['task'])}.json")) as cfg:
                 spec_config = json.load(cfg)
 
             param.update(spec_config)
@@ -108,9 +109,10 @@ def json2cascade(path: str):
     for i, inp in config['adjacency_map'].items():
         adjacency_map[cascades[i]] = [j if j in ["INPUT"] else cascades[j] for j in inp]
 
-    main_block = CompleteCascade(input_cascade, adjacency_map)
+    if input_cascade is None:
+        return CascadeBlock(adjacency_map)
 
-    return main_block
+    return CompleteCascade(input_cascade, adjacency_map)
 
 
 def create_input(**params):

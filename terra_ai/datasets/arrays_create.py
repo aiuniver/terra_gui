@@ -293,7 +293,6 @@ class CreateArray(object):
                         indexes.append(idx.copy())
                 except ValueError:
                     pass
-                    # print(word)
 
             return indexes
 
@@ -394,12 +393,12 @@ class CreateArray(object):
 
             frames: np.ndarray = np.array([])
 
-            if fill_mode == LayerVideoFillModeChoice.black_frames:
+            if fill_mode == LayerVideoFillModeChoice.last_frames:
                 frames = np.full((frames_to_add, *video_array[-1].shape), video_array[-1], dtype='uint8')
             elif fill_mode == LayerVideoFillModeChoice.average_value:
                 mean = np.mean(video_array, axis=0, dtype='uint16')
                 frames = np.full((frames_to_add, *mean.shape), mean, dtype='uint8')
-            elif fill_mode == LayerVideoFillModeChoice.last_frames:
+            elif fill_mode == LayerVideoFillModeChoice.loop:
                 current_frames = (total_frames - frames_to_add)
                 if current_frames > frames_to_add:
                     frames = np.flip(video_array[-frames_to_add:], axis=0)
@@ -680,11 +679,6 @@ class CreateArray(object):
             cap.release()
 
         array = np.array(array)
-
-        if options['scaler'] != LayerScalerVideoChoice.no_scaler and options['preprocess']:
-            orig_shape = array.shape
-            array = options['preprocess'].transform(array.reshape(-1, 1))
-            array = array.reshape(orig_shape)
 
         instructions = {'instructions': array,
                         'parameters': options}
@@ -980,6 +974,17 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
+    def create_raw(item, **options) -> dict:
+
+        if isinstance(item, str):
+            item = literal_eval(item)
+
+        instructions = {'instructions': np.array([item]),
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
     def preprocess_image(array: np.ndarray, **options) -> np.ndarray:
 
         array = cv2.resize(array, (options['width'], options['height']))
@@ -1155,10 +1160,28 @@ class CreateArray(object):
 
     @staticmethod
     def preprocess_object_detection(array: list, **options):
+
         return array
 
     @staticmethod
+    def preprocess_raw(array: np.ndarray, **options) -> np.ndarray:
+
+        return array
+
+    @staticmethod
+    def get_y_true(options, output_id):
+        if not options.data.use_generator:
+            y_true = options.Y.get('val').get(f"{output_id}")
+        else:
+            y_true = []
+            for _, y_val in options.dataset['val'].batch(1):
+                y_true.extend(y_val.get(f'{output_id}').numpy())
+            y_true = np.array(y_true)
+        return y_true
+
+    @staticmethod
     def postprocess_results(array, options, save_path: str = "", dataset_path: str = "") -> dict:
+
         return_data = {}
         for i, output_id in enumerate(options.data.outputs.keys()):
             if len(options.data.outputs.keys()) > 1:
@@ -1167,11 +1190,12 @@ class CreateArray(object):
                 postprocess_array = array
 
             if options.data.outputs[output_id].task == LayerOutputTypeChoice.Classification:
+                y_true = CreateArray().get_y_true(options, output_id)
                 return_data[output_id] = []
                 for idx, img_array in enumerate(array):
                     actual_value, predict_values = CreateArray().postprocess_classification(
                         array=np.expand_dims(postprocess_array[idx], axis=0),
-                        true_array=options.Y.get("val").get(f"{output_id}")[idx],
+                        true_array=y_true[idx],
                         options=options.data.outputs[output_id],
                     )
                     return_data[output_id].append(
@@ -1211,9 +1235,6 @@ class CreateArray(object):
                             "data": data
                         }
                     )
-                # return_data[output_id] = CreateArray().postprocess_segmentation(
-                #     postprocess_array, options.data.outputs[output_id], output_id, save_path
-                # )
             elif options.data.outputs[output_id].task == LayerOutputTypeChoice.TextSegmentation:
                 return_data[output_id] = CreateArray().postprocess_text_segmentation(
                     postprocess_array, options.data.outputs[output_id], options.dataframe.get("val")
