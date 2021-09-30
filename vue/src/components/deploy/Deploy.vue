@@ -4,13 +4,15 @@
       <div class="wrapper">
         <div class="content">
           <div class="board__data-field" v-for="(block, index) in Cards" :key="'block-'+index">
-            <button class="board__reload-all" @click="ReloadAll(index)">
-              <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
-              <span>Перезагрузить все</span>
-            </button>
-            <div class="board__title">Исходные данные / Предсказанные данные</div>
-            <div class="board__data">
-              <IndexCard v-for="(card, i) in block.data" :key="'card-' + i" v-bind="card" :type="block.type" :block="index" :index="i" @reload="ReloadCard"/>
+            <div v-if="block.data != null">
+              <button class="board__reload-all" @click="ReloadAll(index)">
+                <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
+                <span>Перезагрузить все</span>
+              </button>
+              <div class="board__title">Исходные данные / Предсказанные данные</div>
+              <div class="board__data">
+                <IndexCard v-for="(card, i) in block.data" :key="'card-' + i" v-bind="card" :type="block.type" :block="index" :index="i" @reload="ReloadCard"/>
+              </div>
             </div>
           </div>
 <!--          <div class="board__table">-->
