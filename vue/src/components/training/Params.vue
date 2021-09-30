@@ -255,6 +255,8 @@ export default {
         this.$store.dispatch('messages/setProgress', percent);
         if (!finished) {
           this.debounce(this.isLearning);
+        } else {
+          this.$store.dispatch('projects/get');
         }
       }
     },

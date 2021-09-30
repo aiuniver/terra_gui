@@ -4,10 +4,13 @@ import re
 
 def put_tag(**params):
     tags = {i: j for i, j in zip(params['open_tag'].split(), params['close_tag'].split())}
-
     classes = np.array(params['open_tag'].split())
 
     def fun(text, array):
+
+        CLEANR = re.compile('<.*?>')
+
+        text = re.sub(CLEANR, '', text)
 
         array = np.array(array)
         while len(array.shape) > 2:
@@ -15,7 +18,6 @@ def put_tag(**params):
 
         indexes = []
         word = ''
-        text = text.lower()
         for index, ch in enumerate(text):
             if re.match('[0-9А-Яа-яЁёa-zA-Z]', ch):
                 word += ch
@@ -29,7 +31,6 @@ def put_tag(**params):
 
         for i, j in zip(array, indexes):
             i = list(classes[i > params['alpha']])
-            print(i)
             for tag in i:
                 if tag not in past_tag:
                     new_text += tag

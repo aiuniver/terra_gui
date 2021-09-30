@@ -38,8 +38,10 @@ def folder(path):
         yield img
 
 
-def text(path):
-    with open(path, 'r', encoding='utf-8') as txt:
-        text = txt.read()
-
-    return text
+def text(paths):
+    if isinstance(paths, str):
+        paths = [paths]
+    for path in paths:
+        with open(path, 'r', encoding='utf-8') as txt:
+            text = txt.read()
+        yield text

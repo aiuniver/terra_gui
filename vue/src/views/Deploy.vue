@@ -43,6 +43,6 @@ export default {
   width: 100%;
   height: 100%;
   background-color: #0e1621;
-  opacity: 0.3;
+  opacity: 0.45;
 }
 </style>
