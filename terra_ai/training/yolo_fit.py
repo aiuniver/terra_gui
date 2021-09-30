@@ -390,14 +390,14 @@ def create_yolo(model, input_size=416, channels=3, training=False, classes=[]):
     #     if YOLO_TYPE == "yolov3":
     #         conv_tensors = YOLOv3(input_layer, NUM_CLASS)
     conv_tensors = model(input_layer)
-    print(conv_tensors)
+    # print(conv_tensors)
     output_tensors = []
     for i, conv_tensor in enumerate(conv_tensors):
         pred_tensor = decode(conv_tensor, num_class, i)
         if training: output_tensors.append(conv_tensor)
         output_tensors.append(pred_tensor)
     output_tensors.reverse()
-    print(output_tensors)
+    # print(output_tensors)
     yolo = tf.keras.Model(input_layer, output_tensors)
     return yolo
 
@@ -463,10 +463,10 @@ class CustomModelYolo(keras.Model):
     # optimizer = tf.keras.optimizers.Adam()
 
     def train_step(self, data):
-        print(data)
+        # print(data)
         image_data, target = data[0], data[1:]
-        print(image_data)
-        print(target)
+        # print(image_data)
+        # print(target)
         with tf.GradientTape() as tape:
             pred_result = self.yolo(image_data['1'], training=True)
             giou_loss = conf_loss = prob_loss = 0
@@ -493,7 +493,7 @@ class CustomModelYolo(keras.Model):
             # update learning rate
             # about warmup: https://arxiv.org/pdf/1812.01187.pdf&usg=ALkJrhglKOPDjNt6SHGbphTHyMcT0cuMJg
             self.global_steps.assign_add(1)
-            print(self.global_steps.value())
+            # print(self.global_steps.value())
 
             if tf.less(self.global_steps.value(), self.warmup_steps) is not None:  # and not TRAIN_TRANSFER:
                 lr = self.global_steps.value() / self.warmup_steps * self.TRAIN_LR_INIT
