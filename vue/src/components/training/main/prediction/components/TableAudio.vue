@@ -12,7 +12,7 @@
           :canv-top="true"
           canv-class="custom-player"
           canv-fill-color="#2B5278"
-          :audio-src="require('@/../public/sounds/'+url)"
+          :audio-src="src"
         ></av-waveform>
       </div>
     </div>
@@ -21,110 +21,122 @@
 
 <script>
 export default {
-  name: "TableAudio",
+  name: 'TableAudio',
   props: {
-    url:{
+    value: {
       type: String,
-      default: "sound1.mp3"
-    }
+      default: '',
+    },
+    update: {
+      type: String,
+      default: '',
+    },
+
+  },
+  computed: {
+    src() {
+      return `/_media/blank/?path=${this.value}&r=${this.update}`;
+    },
   },
   mounted() {
-    this.$el.querySelector('audio').setAttribute("controlsList", "nodownload")
-  }
-}
+    this.$el.querySelector('audio').setAttribute('controlsList', 'nodownload');
+  },
+};
 </script>
 
 <style lang="scss">
-.item{
+.item {
   padding: 10px;
 }
-.audio{
+.audio {
   padding: 10px;
-  background: #242F3D;
-  border: 1px solid #6C7883;
+  background: #242f3d;
+  border: 1px solid #6c7883;
   border-radius: 4px;
   width: 165px;
-  &__card{
-  .custom-player{
-    margin-left: 50px;
-    margin-top: 10px;
-    position: absolute;
-    z-index: 3;
-  }
-  audio{
-    width: 200px;
-    margin-left: -10px;
-    padding: 0;
-    display: flex;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-  }
-  audio::-webkit-media-controls-panel{
-    border-radius: 4px;
-  }
-  audio::-webkit-media-controls-timeline-container,
-  audio::-webkit-media-controls-timeline,
-  audio::-webkit-media-controls-volume-slider-container,
-  audio::-webkit-media-controls-volume-control-container,
-  audio::-webkit-media-controls-volume-slider,
-  audio::-webkit-media-controls-seek-back-button,
-  audio::-webkit-media-controls-seek-forward-button,
-  audio::-webkit-media-controls-fullscreen-button,
-  audio::-webkit-media-controls-rewind-button,
-  audio::-webkit-media-controls-return-to-realtime-button,
-  audio::-webkit-media-slider-thumb,
-  audio::-webkit-media-controls-toggle-closed-captions-button{
-    display: none !important;
-  }
-  audio::-webkit-media-controls-enclosure {
-    border-radius: 0;
-    display: flex;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    padding: 0;
-    width: 200px;
-    background-color: transparent;
-  }
-  audio::-webkit-media-controls-play-button, video::-webkit-media-controls-play-button {
-    -webkit-appearance: media-play-button;
-    display: flex;
-    flex: none;
-    border: none;
-    box-sizing: border-box;
-    border-radius: 20px;
-    width: 43px;
-    height: 43px;
-    line-height: 30px;
-    margin-right: 9px;
-    padding: 0;
-    background-color: #65B9F4;
-    color: inherit;
-}
-  audio::-webkit-media-controls-current-time-display, video::-webkit-media-controls-current-time-display,
-  audio::-webkit-media-controls-time-remaining-display, video::-webkit-media-controls-time-remaining-display {
-    -webkit-appearance: media-current-time-display;
-    -webkit-user-select: none;
-    flex: none;
-    display: flex;
-    border: none;
-    cursor: default;
-    height: 30px;
-    margin: 43px 0 0 0;
-    padding: 0;
-    line-height: 19px;
-    font-family: Open Sans;
-    font-size: 9px;
-    font-weight: normal;
-    font-style: normal;
-    color: #A7BED3;
-    letter-spacing: normal;
-    word-spacing: normal;
-    text-transform: none;
-    text-indent: 0;
-    text-shadow: none;
-    text-decoration: none;
-
-  }
+  &__card {
+    .custom-player {
+      margin-left: 50px;
+      margin-top: 10px;
+      position: absolute;
+      z-index: 3;
+    }
+    audio {
+      width: 200px;
+      margin-left: -10px;
+      padding: 0;
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+    }
+    audio::-webkit-media-controls-panel {
+      border-radius: 4px;
+    }
+    audio::-webkit-media-controls-timeline-container,
+    audio::-webkit-media-controls-timeline,
+    audio::-webkit-media-controls-volume-slider-container,
+    audio::-webkit-media-controls-volume-control-container,
+    audio::-webkit-media-controls-volume-slider,
+    audio::-webkit-media-controls-seek-back-button,
+    audio::-webkit-media-controls-seek-forward-button,
+    audio::-webkit-media-controls-fullscreen-button,
+    audio::-webkit-media-controls-rewind-button,
+    audio::-webkit-media-controls-return-to-realtime-button,
+    audio::-webkit-media-slider-thumb,
+    audio::-webkit-media-controls-toggle-closed-captions-button {
+      display: none !important;
+    }
+    audio::-webkit-media-controls-enclosure {
+      border-radius: 0;
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+      padding: 0;
+      width: 200px;
+      background-color: transparent;
+    }
+    audio::-webkit-media-controls-play-button,
+    video::-webkit-media-controls-play-button {
+      -webkit-appearance: media-play-button;
+      display: flex;
+      flex: none;
+      border: none;
+      box-sizing: border-box;
+      border-radius: 20px;
+      width: 43px;
+      height: 43px;
+      line-height: 30px;
+      margin-right: 9px;
+      padding: 0;
+      background-color: #65b9f4;
+      color: inherit;
+    }
+    audio::-webkit-media-controls-current-time-display,
+    video::-webkit-media-controls-current-time-display,
+    audio::-webkit-media-controls-time-remaining-display,
+    video::-webkit-media-controls-time-remaining-display {
+      -webkit-appearance: media-current-time-display;
+      -webkit-user-select: none;
+      flex: none;
+      display: flex;
+      border: none;
+      cursor: default;
+      height: 30px;
+      margin: 43px 0 0 0;
+      padding: 0;
+      line-height: 19px;
+      font-family: Open Sans;
+      font-size: 9px;
+      font-weight: normal;
+      font-style: normal;
+      color: #a7bed3;
+      letter-spacing: normal;
+      word-spacing: normal;
+      text-transform: none;
+      text-indent: 0;
+      text-shadow: none;
+      text-decoration: none;
+    }
   }
 }
 </style>
