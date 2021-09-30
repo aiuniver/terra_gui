@@ -26,4 +26,4 @@ while True:
     main_block(input_path, output_path)
     mask = main_block[0][1].out
     sum_list = [np.sum(mask[:, :, :, i]) for i in range(mask.shape[-1])]
-    print(str([(names[i], colors[i]) for i, count in enumerate(sum_list) if count > 0]))
+    # print(str([(names[i], colors[i]) for i, count in enumerate(sum_list) if count > 0]))
