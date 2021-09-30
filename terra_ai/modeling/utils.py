@@ -141,11 +141,11 @@ class ClassLoader:
 
         # check if saved correctly
         loaded_plan = self.nn_plan_load(filepath)
-        for i in dir(my_plan):
-            if i not in dir(loaded_plan):
-                print("Error: failed to save: ", i)
-            if getattr(my_plan, i) != getattr(loaded_plan, i) and str(i)[:2] != "__":
-                print("Error: failed to save: ", i)
+        # for i in dir(my_plan):
+        #     if i not in dir(loaded_plan):
+        #         print("Error: failed to save: ", i)
+        #     if getattr(my_plan, i) != getattr(loaded_plan, i) and str(i)[:2] != "__":
+        #         print("Error: failed to save: ", i)
         pass
 
 
@@ -233,7 +233,7 @@ class ModelVisualizer:
             "and install graphviz (https://graphviz.org/download/) to OS, ",
             "for `pydotprint` to work.",
         )
-        print(message)
+        # print(message)
 
     def plot_nnmodel(self, adv_plan, verbose=1, show_size=0, file_path='') -> None:
 
@@ -263,7 +263,7 @@ class ModelVisualizer:
         for i in range(len(adv_plan)):
 
             if adv_plan[i][8] != 'Pass':
-                print(f'Problem with layer {adv_plan[i][0]}: {adv_plan[i][8]}')
+                # print(f'Problem with layer {adv_plan[i][0]}: {adv_plan[i][8]}')
                 layer_comm = f'<br/>{adv_plan[i][8]}'
             else:
                 layer_comm = ''

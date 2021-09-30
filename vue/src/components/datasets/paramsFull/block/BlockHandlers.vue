@@ -130,9 +130,10 @@ export default {
       if (!this.show) return;
       console.log(this.table);
       this.deselect();
+      let maxID = Math.max(0, ...this.handlers.map(o => o.id));
       this.handlers.push({
-        id: this.handlers.length + 1,
-        name: 'Name',
+        id: (maxID + 1),
+        name: 'Name_' + (maxID + 1),
         active: true,
         color: this.colors[this.handlers.length],
         layer: (this.handlers.length + 1).toString(),
