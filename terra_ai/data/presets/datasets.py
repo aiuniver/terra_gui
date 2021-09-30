@@ -1135,6 +1135,82 @@ DatasetsGroups = [
                 "use_generator": False
             },
             {
+                "alias": "heads",
+                "name": "Пассажиры автобусов (попарно)",
+                "group": DatasetGroupChoice.terra,
+                "tags": [
+                    Tags.image,
+                    Tags.classification,
+                    Tags.terra_ai,
+                ],
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "shape": (100, 100, 3),
+                        "name": "Пассажир 1",
+                        "task": LayerInputTypeChoice.Image,
+                        "classes_names": ['Heads.csv'],
+                        "num_classes": 1,
+                        "encoding": LayerEncodingChoice.none
+                    },
+                    2: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "shape": (100, 100, 3),
+                        "name": "Пассажир 2",
+                        "task": LayerInputTypeChoice.Image,
+                        "classes_names": ['Heads.csv'],
+                        "num_classes": 1,
+                        "encoding": LayerEncodingChoice.none
+                    },
+                },
+                "outputs": {
+                    3: {
+                        "datatype": "DIM",
+                        "dtype": "uint8",
+                        "shape": (2,),
+                        "name": "Метки классов",
+                        "task": LayerOutputTypeChoice.Classification,
+                        "num_classes": 2,
+                        "classes_names": ['Не совпадают', 'Совпадают'],
+                        "encoding": LayerEncodingChoice.ohe
+                    },
+                },
+                'columns': {1: {'1_First image': {'classes_names': ['Heads.csv'],
+                                                  'datatype': '2D',
+                                                  'dtype': 'float32',
+                                                  'encoding': LayerEncodingChoice.none,
+                                                  'name': 'Пассажир 1',
+                                                  'num_classes': 1,
+                                                  'shape': (100, 100, 3),
+                                                  'task': LayerInputTypeChoice.Image
+                                                  }
+                                },
+                            2: {'2_Second image': {'classes_names': ['Heads.csv'],
+                                                   'datatype': '2D',
+                                                   'dtype': 'float32',
+                                                   'encoding': LayerEncodingChoice.none,
+                                                   'name': 'Пассажир 2',
+                                                   'num_classes': 1,
+                                                   'shape': (100, 100, 3),
+                                                   'task': LayerInputTypeChoice.Image
+                                                   }
+                                },
+                            3: {'3_Label': {'classes_names': ['Не совпадают', 'Совпадают'],
+                                            'datatype': 'DIM',
+                                            'dtype': 'uint8',
+                                            'encoding': LayerEncodingChoice.ohe,
+                                            'name': 'Метка класса',
+                                            'num_classes': 2,
+                                            'shape': (2,),
+                                            'task': LayerOutputTypeChoice.Classification
+                                            }
+                                }
+                            },
+                "use_generator": False
+            },
+            {
                 "alias": "marki_moloka",
                 "name": "Марки молока",
                 "group": DatasetGroupChoice.terra,
@@ -1190,7 +1266,7 @@ DatasetsGroups = [
             },
             {
                 "alias": "symptoms",
-                "name": "Заболевания",
+                "name": "Симптомы",
                 "group": DatasetGroupChoice.terra,
                 "tags": [
                     Tags.text,
