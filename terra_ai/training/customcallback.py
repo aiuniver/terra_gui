@@ -28,7 +28,7 @@ from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.utils import camelize, decamelize
 
-__version__ = 0.077
+__version__ = 0.078
 
 
 def sort_dict(dict_to_sort: dict, mode='by_name'):
