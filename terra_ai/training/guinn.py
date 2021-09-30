@@ -318,6 +318,7 @@ class GUINN:
         # base_yolo.compile(optimizer=self.optimizer,
         #                    loss=compute_loss)
         print(base_yolo.summary())
+
         model_yolo = CustomModelYolo(base_yolo, self.dataset, self.dataset.data.outputs.get(2).classes_names, self.epochs)
 
         # Компилируем модель
@@ -340,11 +341,11 @@ class GUINN:
             critical_size = len(self.dataset.dataset.get('val'))
         self.history = model_yolo.fit(
             self.dataset.dataset.get('train').shuffle(1000).batch(
-                self.batch_size if critical_size >= 32 else 1, drop_remainder=True).take(-1),
+                self.batch_size, drop_remainder=True).take(-1),
             batch_size=self.batch_size,
             shuffle=self.shuffle,
             validation_data=self.dataset.dataset.get('val').batch(
-                self.batch_size if critical_size >= 32 else 1, drop_remainder=True).take(-1),
+                self.batch_size, drop_remainder=True).take(-1),
             epochs=self.epochs,
             verbose=verbose,
             # callbacks=self.callbacks
