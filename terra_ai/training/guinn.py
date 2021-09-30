@@ -99,7 +99,10 @@ class GUINN:
         else:
             train_size = len(self.dataset.dataset.get('train'))
         if params.batch > train_size:
-            interactive.set_status("stopped")
+            if interactive.get_states().get("status") == "addtrain":
+                interactive.set_status("stopped")
+            else:
+                interactive.set_status("no_train")
             raise exceptions.TooBigBatchSize(params.batch, train_size)
 
         if interactive.get_states().get("status") == "addtrain" and self.callbacks:
