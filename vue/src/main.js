@@ -117,6 +117,9 @@ Vue.use(VuePapaParse)
 import AudioVisual from 'vue-audio-visual'
 Vue.use(AudioVisual)
 
+import Embed from 'v-video-embed'
+Vue.use(Embed);
+
 Vue.config.productionTip = false;
 Vue.use(Vuex);
 Vue.use(VueAxios, axios);
