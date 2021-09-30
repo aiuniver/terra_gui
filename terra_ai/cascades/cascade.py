@@ -127,6 +127,7 @@ class CompleteCascade(Cascade):
                     out.choose_path(path)
 
         for img in self.input(input_path):
+            print(img)
             self.cascade_block(img)
 
         for i in self.output:
