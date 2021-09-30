@@ -10,9 +10,6 @@
           <t-checkbox-new :value="true" name="metrics" @change="change(layer, $event)" />
         </t-field>
       </div>
-      <!-- <div class="t-texts__block">
-        <t-button>Показать</t-button>
-      </div> -->
     </div>
     <div class="t-texts__content">
       <Table :data="data" :settings="settings" />
@@ -94,19 +91,18 @@ export default {
     gap: 15px;
     justify-self: start;
     align-items: center;
+    padding: 5px 0;
     p {
       font-size: 14px;
     }
   }
-  // &__block {
-  //   p {
-  //     margin: 0 0 5px 0;
-  //   }
-  //   &:last-child {
-  //     width: 150px;
-  //     margin-left: auto;
-  //   }
-  // }
+  &__block {
+    display: flex;
+    gap: 10px;
+    p {
+      margin: 0 0 10px 0;
+    }
+  }
   &__content {
     display: flex;
     height: 100%;

@@ -268,9 +268,18 @@ class CreateDataset(object):
         return put_parameters
 
     def create_preprocessing(self, instructions: DatasetInstructionsData):
-
         for put in list(instructions.inputs.values()) + list(instructions.outputs.values()):
             for col_name, data in put.items():
+                if 'timeseries' in data.parameters.values():
+                    length = data.parameters['length']
+                    depth = data.parameters['depth']
+                    step = data.parameters['step']
+                    for pt in list(instructions.inputs.values()) + list(instructions.outputs.values()):
+                        for col_nm, dt in pt.items():
+                            if 'raw' in dt.parameters.values():
+                                dt.parameters['length'] = length
+                                dt.parameters['depth'] = depth
+                                dt.parameters['step'] = step
                 if 'scaler' in data.parameters.keys():
                     self.preprocessing.create_scaler(**data.parameters)
                 elif 'prepare_method' in data.parameters.keys():
@@ -664,7 +673,6 @@ class CreateDataset(object):
                         # print(np.array(globals()[f'current_arrays_{n}']).shape)
                         out_array[split][key + n] = np.array(globals()[f'current_arrays_{n}'])
                 else:
-                    # print(np.array(current_arrays).shape)
                     out_array[split][key] = np.array(current_arrays)
 
         return out_array

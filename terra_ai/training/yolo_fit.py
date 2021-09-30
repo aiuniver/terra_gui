@@ -247,7 +247,11 @@ def bbox_ciou(boxes1, boxes2):
 #
 #     def __call__(self, y_true, y_pred, sample_weight=None):
 
-def compute_loss(pred, conv, label, bboxes, i=0, CLASSES=[], STRIDES=[8, 16, 32], YOLO_IOU_LOSS_THRESH=0.5):
+def compute_loss(pred, conv, label, bboxes, i=0, CLASSES=None, STRIDES=None, YOLO_IOU_LOSS_THRESH=0.5):
+    if STRIDES is None:
+        STRIDES = [8, 16, 32]
+    if CLASSES is None:
+        CLASSES = []
     NUM_CLASS = len(CLASSES)
     conv_shape = tf.shape(conv)
     batch_size = conv_shape[0]
@@ -386,14 +390,14 @@ def create_yolo(model, input_size=416, channels=3, training=False, classes=[]):
     #     if YOLO_TYPE == "yolov3":
     #         conv_tensors = YOLOv3(input_layer, NUM_CLASS)
     conv_tensors = model(input_layer)
-    print(conv_tensors)
+    # print(conv_tensors)
     output_tensors = []
     for i, conv_tensor in enumerate(conv_tensors):
         pred_tensor = decode(conv_tensor, num_class, i)
         if training: output_tensors.append(conv_tensor)
         output_tensors.append(pred_tensor)
     output_tensors.reverse()
-    print(output_tensors)
+    # print(output_tensors)
     yolo = tf.keras.Model(input_layer, output_tensors)
     return yolo
 
@@ -459,10 +463,10 @@ class CustomModelYolo(keras.Model):
     # optimizer = tf.keras.optimizers.Adam()
 
     def train_step(self, data):
-        print(data)
+        # print(data)
         image_data, target = data[0], data[1:]
-        print(image_data)
-        print(target)
+        # print(image_data)
+        # print(target)
         with tf.GradientTape() as tape:
             pred_result = self.yolo(image_data['1'], training=True)
             giou_loss = conf_loss = prob_loss = 0
@@ -489,12 +493,15 @@ class CustomModelYolo(keras.Model):
             # update learning rate
             # about warmup: https://arxiv.org/pdf/1812.01187.pdf&usg=ALkJrhglKOPDjNt6SHGbphTHyMcT0cuMJg
             self.global_steps.assign_add(1)
-            if self.global_steps < self.warmup_steps:  # and not TRAIN_TRANSFER:
-                lr = self.global_steps / self.warmup_steps * self.TRAIN_LR_INIT
+            # print(self.global_steps.value())
+
+            if tf.less(self.global_steps.value(), self.warmup_steps) is not None:  # and not TRAIN_TRANSFER:
+                lr = self.global_steps.value() / self.warmup_steps * self.TRAIN_LR_INIT
             else:
                 lr = self.TRAIN_LR_END + 0.5 * (self.TRAIN_LR_INIT - self.TRAIN_LR_END) * (
-                    (1 + tf.cos((self.global_steps - self.warmup_steps) / (self.total_steps - self.warmup_steps) * np.pi)))
-            self.optimizer.lr.assign(lr.numpy())
+                    (1 + tf.cos((self.global_steps.value() - self.warmup_steps) /
+                                (self.total_steps - self.warmup_steps) * np.pi)))
+            self.optimizer.lr.assign(tf.cast(lr, tf.float32))
 
             # # writing summary data
             # with writer.as_default():
@@ -505,27 +512,30 @@ class CustomModelYolo(keras.Model):
             #     tf.summary.scalar("loss/prob_loss", prob_loss, step=global_steps)
             # writer.flush()
 
-        return self.global_steps.numpy(), self.optimizer.lr.numpy(), giou_loss.numpy(), conf_loss.numpy(), prob_loss.numpy(),total_loss.numpy()
+        return {'global_steps': self.global_steps.value(), "optimizer.lr": self.optimizer.lr.value(),
+                "giou_loss": giou_loss, "conf_loss": conf_loss, "prob_loss": prob_loss, "total_loss": total_loss}
 
     # validate_writer = tf.summary.create_file_writer(TRAIN_LOGDIR)
 
-    def validate_step(self, image_data, target):
+    def validate_step(self, data):
+        image_data, target = data[0], data[1:]
         with tf.GradientTape() as tape:
-            pred_result = self.yolo(image_data[1], training=False)
+            pred_result = self.yolo(image_data['1'], training=False)
             giou_loss = conf_loss = prob_loss = 0
 
             # optimizing process
             grid = 3 #if not TRAIN_YOLO_TINY else 2
             for i, elem in enumerate([[2, 3], [4, 5], [6, 7]]):
                 conv, pred = pred_result[i * 2], pred_result[i * 2 + 1]
-                loss_items = compute_loss(pred, conv, *(target[elem[0]], target[elem[1]]), i, CLASSES=self.CLASSES)
+                loss_items = self.loss_fn(pred, conv, *(target[0].get(str(elem[0])), target[0].get(str(elem[1]))),
+                                          i, CLASSES=self.CLASSES)
                 giou_loss += loss_items[0]
                 conf_loss += loss_items[1]
                 prob_loss += loss_items[2]
 
             total_loss = giou_loss + conf_loss + prob_loss
 
-        return giou_loss.numpy(), conf_loss.numpy(), prob_loss.numpy(), total_loss.numpy()
+        return {"giou_loss": giou_loss, "conf_loss": conf_loss, "prob_loss": prob_loss, "total_loss": total_loss}
 
     # mAP_model = Create_Yolo(input_size=YOLO_INPUT_SIZE, CLASSES=TRAIN_CLASSES)  # create second model to measure mAP
     # test_set = 70

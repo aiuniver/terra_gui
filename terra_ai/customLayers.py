@@ -693,5 +693,5 @@ if __name__ == "__main__":
     #                     "use_bias": False, "include_head": True, "include_add": True,
     #                     "all_narrow": True})
     x = YOLOConvBlock(**{'mode': "YOLOv5", "filters": 64, "num_conv": 5, 'activation': 'Swish'})
-    print(x.compute_output_shape(input_shape=(None, 32, 32, 64)))
+    # print(x.compute_output_shape(input_shape=(None, 32, 32, 64)))
     pass

@@ -1,0 +1,32 @@
+{
+  "cascades": {
+    "input": {
+      "tag": "input",
+      "type": "text"
+    },
+    "model": {
+      "tag": "model",
+      "task": "Text",
+      "model": "TerraProjects/models/psp_docs_emb_new"
+    },
+    "2": {
+      "tag": "function",
+      "task": "TextSegmentation",
+      "name": "put_tag",
+      "params": {
+        "open_tag": "<s1> <s2> <s3> <s4> <s5> <s6>",
+        "close_tag": "</s1> </s2> </s3> </s4> </s5> </s6>",
+        "alpha": 0.9
+      }
+    }
+  },
+
+  "adjacency_map": {
+    "model": [
+      "INPUT"
+    ],
+    "2": [
+      "INPUT", "model"
+    ]
+  }
+}

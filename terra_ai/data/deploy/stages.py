@@ -12,7 +12,7 @@ from .extra import TaskTypeChoice, EnvVersionChoice
 
 
 class StageUploadUserData(BaseMixinData):
-    login: constr(regex=r"^[a-z]+[a-z0-9\-_]*$")
+    login: constr(regex=r"^[a-z]+[a-z0-9_]*$")
     name: str
     lastname: str
     sec: Optional[str]

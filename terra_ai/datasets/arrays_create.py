@@ -975,11 +975,21 @@ class CreateArray(object):
 
     @staticmethod
     def create_raw(item, **options) -> dict:
-
         if isinstance(item, str):
-            item = literal_eval(item)
+            try:
+                item = literal_eval(item)
+            except:
+                pass
+            item = np.array([item])
+        elif isinstance(item, list):
+            item = np.array(item)
+        elif isinstance(item, pd.Series):
+            item = item.values
+        else:
+            item = np.array([item])
 
-        instructions = {'instructions': np.array([item]),
+
+        instructions = {'instructions': item,
                         'parameters': options}
 
         return instructions

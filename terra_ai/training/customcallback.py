@@ -28,8 +28,7 @@ from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.utils import camelize, decamelize
 
-__version__ = 0.076
-
+__version__ = 0.077
 
 def sort_dict(dict_to_sort: dict, mode='by_name'):
     if mode == 'by_name':
@@ -936,10 +935,10 @@ class InteractiveCallback:
                     class_percent = {}
                     for cl in classes:
                         class_count[self.dataset_config.get("outputs").get(out).get("classes_names")[cl]] = \
-                            np.sum(self.y_true.get(data_type).get(out)[:, :, cl])
+                            np.sum(self.y_true.get(data_type).get(out)[:, :, cl]).item()
                         class_percent[self.dataset_config.get("outputs").get(out).get("classes_names")[cl]] = np.round(
                             np.sum(self.y_true.get(data_type).get(out)[:, :, cl]) * 100
-                            / np.prod(self.y_true.get(data_type).get(out)[:, :, cl].shape))
+                            / np.prod(self.y_true.get(data_type).get(out)[:, :, cl].shape)).item()
                     dataset_balance[out][data_type]["presence_balance"] = class_count
                     dataset_balance[out][data_type]["percent_balance"] = class_percent
 
@@ -955,8 +954,8 @@ class InteractiveCallback:
                         }
                         dataset_balance[out][data_type][output_channel]['graphic'] = {
                             "type": "graphic",
-                            "x": list(self.dataset_config.get("dataframe").get(data_type).index),
-                            "y": list(self.dataset_config.get("dataframe").get(data_type)[output_channel])
+                            "x": np.array(self.dataset_config.get("dataframe").get(data_type).index).astype('float').tolist(),
+                            "y": np.array(self.dataset_config.get("dataframe").get(data_type)[output_channel]).astype('float').tolist()
                         }
                         x, y = self._get_distribution_histogram(
                             list(self.dataset_config.get("dataframe").get(data_type)[output_channel]),
@@ -2539,7 +2538,8 @@ class InteractiveCallback:
         """
         if categorical:
             hist_data = pd.Series(data_series).value_counts()
-            return list(hist_data.index), list(hist_data)
+            return np.array(hist_data.index).astype('float').tolist(), \
+                   np.array(hist_data).astype('float').tolist()
         else:
             data_series = np.array(data_series)
             bar_values, x_labels = np.histogram(data_series, bins=bins)
@@ -2856,7 +2856,6 @@ class InteractiveCallback:
                     data["stat"]["data"].append(
                         dict(title=labels[i], value=f"{round(val * 100, 1)}%", color_mark=class_color_mark)
                     )
-
 
         elif self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.Segmentation:
             labels = self.dataset_config.get("outputs").get(output_id).get("classes_names")
