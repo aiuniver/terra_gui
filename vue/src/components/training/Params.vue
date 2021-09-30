@@ -104,8 +104,8 @@
       </scrollbar>
     </div>
     <div class="params__footer">
-      <div v-for="({ title, visible }, key) of button" :key="key" class="params__btn">
-        <t-button @click="btnEvent(key)" :disabled="!visible">{{ title }}</t-button>
+      <div v-for="({ title, visible }, key) of button" :key="key" class="params__btn" :class="{ 'params__save': key === 'clear' }">
+        <t-button v-if="key !== 'save'" :disabled="!visible" @click="btnEvent(key)" >{{ title }}</t-button>
       </div>
     </div>
   </div>
@@ -351,6 +351,10 @@ export default {
   }
   &__btn {
     width: 45%;
+    margin: 0 0 10px 0;
+  }
+  &__save {
+    width: 95%;
     margin: 0 0 10px 0;
   }
   &__items {
