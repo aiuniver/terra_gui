@@ -1,16 +1,18 @@
-from django.urls import path
+from django.urls import path, re_path
+from django.conf.urls import include
 
-from . import views as api_views
+from . import views
 
 
 app_name = "apps_api"
 
 urlpatterns = [
-    path("exchange/<name>/", api_views.ExchangeAPIView.as_view(), name="exchange"),
-    path("layers-types/", api_views.LayersTypesAPIView.as_view(), name="layers-types"),
-    path(
-        "datasets-sources/",
-        api_views.DatasetsSourcesAPIView.as_view(),
-        name="datasets-sources",
-    ),
+    path("config/", views.ConfigAPIView.as_view(), name="config"),
+    path("profile/", include("apps.api.profile.urls", namespace="profile")),
+    path("project/", include("apps.api.project.urls", namespace="project")),
+    path("datasets/", include("apps.api.datasets.urls", namespace="datasets")),
+    path("modeling/", include("apps.api.modeling.urls", namespace="modeling")),
+    path("training/", include("apps.api.training.urls", namespace="training")),
+    path("deploy/", include("apps.api.deploy.urls", namespace="deploy")),
+    re_path("^.*", views.NotFoundAPIView.as_view(), name="not_found"),
 ]

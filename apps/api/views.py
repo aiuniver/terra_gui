@@ -1,41 +1,28 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
+import json
 
-from apps.plugins.terra import terra_exchange
-from .data.exchange import ExchangeData
+from django.conf import settings
 
+from apps.plugins.frontend import defaults_data
 
-class ExchangeAPIView(APIView):
-    def post(self, request, *args, **kwargs):
-        data = ExchangeData(name=kwargs.get("name"), data=request.data)
-        return Response(data.__dict__)
+from .base import BaseAPIView, BaseResponseSuccess
 
 
-class LayersTypesAPIView(APIView):
-    def get(self, request, *args, **kwargs):
-        term = request.GET.get("term").lower()
-        available = list(
-            filter(
-                lambda item: item.lower().find(term) != -1,
-                terra_exchange.project.layers_types.keys(),
-            )
+class NotFoundAPIView(BaseAPIView):
+    pass
+
+
+class ConfigAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        return BaseResponseSuccess(
+            {
+                "defaults": json.loads(defaults_data.json()),
+                "project": json.loads(request.project.json()),
+                "user": {
+                    "login": settings.USER_LOGIN,
+                    "first_name": settings.USER_NAME,
+                    "last_name": settings.USER_LASTNAME,
+                    "email": settings.USER_EMAIL,
+                    "token": settings.USER_TOKEN
+                },
+            }
         )
-        items = []
-        for item in available:
-            items.append({"id": item, "label": item, "value": item})
-        return Response(items)
-
-
-class DatasetsSourcesAPIView(APIView):
-    def get(self, request, *args, **kwargs):
-        term = request.GET.get("term").lower()
-        available = list(
-            filter(
-                lambda item: item.lower().find(term) != -1,
-                terra_exchange.datasets_sources,
-            )
-        )
-        items = []
-        for item in available:
-            items.append({"id": item, "label": item, "value": item})
-        return Response(items)

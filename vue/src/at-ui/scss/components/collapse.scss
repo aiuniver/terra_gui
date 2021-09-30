@@ -1,0 +1,101 @@
+/**
+ * Collapse Style
+ */
+@import "../variables/index.scss";
+
+.at-collapse {
+  // border: 1px solid $collapse-border-color;
+  // border-radius: $collapse-border-radius;
+  // overflow: hidden;
+
+  /* element */
+  &__item {
+    // border-bottom: 1px solid $collapse-border-color;
+    margin-bottom: 10px;
+
+    &:last-of-type {
+      border-bottom: none;
+    }
+
+    &--active {
+      > .at-collapse__header {
+        .at-collapse__icon {
+          transform: rotate(180deg);
+        }
+      }
+    }
+    &--disabled {
+      .at-collapse__header {
+        color: $collapse-header-text-color-disabled;
+        cursor: not-allowed;
+      }
+      .at-collapse__icon {
+        color: $collapse-header-text-color-disabled;
+      }
+    }
+    &--not-change {
+      .at-collapse__header {
+        cursor: default;
+      }
+    }
+  }
+  &__header {
+    position: relative;
+    padding: 4px 20px;
+    font-size: 0.75rem;
+    color: $collapse-header-text-color;
+    background-color: $collapse-header-bg-color;
+    // transition: all .3s;
+    cursor: pointer;
+    &--center {
+      text-align: center;
+    }
+  }
+  &__icon {
+    position: absolute;
+    top: 5px;
+    right: 20px;
+    color: $collapse-icon-color;
+    font-size: $collapse-icon-size;
+    font-weight: bold;
+    // transition: all .3s;
+    &.old__icon {
+      display: block;
+      content: "";
+      width: 8px;
+      height: 9px;
+      margin: -5px 0 0 0;
+      position: absolute;
+      top: 50%;
+      right: 20px;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: contain;
+      transform: rotate(0deg);
+      background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOCIgaGVpZ2h0PSI5IiB2aWV3Qm94PSIwIDAgOCA5IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTAuOTMzMzMzIDlMLTQuMTM0ODZlLTA4IDguMDU0MDVMNCA0TDggOC4wNTQwNUw3LjA2NjY3IDlMNCA1Ljg5MTg5TDAuOTMzMzMzIDlaIiBmaWxsPSIjNkM3ODgzIi8+CjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNMC45MzMzMzMgNUwtNC4xMzQ4NmUtMDggNC4wNTQwNUw0IC0xLjc0ODQ2ZS0wN0w4IDQuMDU0MDVMNy4wNjY2NyA1TDQgMS44OTE4OUwwLjkzMzMzMyA1WiIgZmlsbD0iIzZDNzg4MyIvPgo8L3N2Zz4K);
+    }
+  }
+  &__body {
+    will-change: height;
+  }
+  &__content {
+    padding: 10px 20px 0 20px;
+    color: $collapse-body-text-color;
+    border-radius: 0 0 $collapse-border-radius $collapse-border-radius;
+    background-color: $collapse-body-bg-color;
+    // overflow: hidden;
+  }
+
+  /* modifier */
+  &--simple {
+    border: none;
+
+    .at-collapse__item {
+      border-bottom: none;
+    }
+    .at-collapse__header {
+      border-bottom: 1px solid $collapse-border-color;
+      background-color: transparent;
+    }
+  }
+}

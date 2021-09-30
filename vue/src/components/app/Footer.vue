@@ -1,0 +1,211 @@
+<template>
+  <div class="footer">
+    <div class="footer__message">
+      <div :class="['footer__message--text', color]" @click="click(color)">
+        {{ message }}
+      </div>
+    </div>
+    <div class="footer__progress">
+      <div class="footer__progress--item">
+        <i :style="{ width: progress + '%' }">
+          <span>
+            {{ progressMessage }}
+          </span>
+        </i>
+        <span>{{ progressMessage }}</span>
+      </div>
+    </div>
+    <div class="footer__state">
+      <div class="footer__state--text">
+        <span :style="style"></span>
+        {{ protsessor.type }}
+      </div>
+    </div>
+    <div class="footer__copyright">
+      {{ `Copyright © «Университет искусственного интеллекта», ${new Date().getFullYear()}` }}
+      <span v-if="version" class="footer__version">{{ version }}</span>
+    </div>
+    <CopyModal v-model="dialogError" :title="'Ошибка!'">{{ message }}</CopyModal>
+  </div>
+</template>
+
+<script>
+import { mapGetters } from 'vuex';
+import CopyModal from '../global/modals/CopyModal';
+export default {
+  components: {
+    CopyModal,
+  },
+  data: () => ({
+    dialogError: false,
+  }),
+  computed: {
+    ...mapGetters({
+      message: 'messages/getMessage',
+      color: 'messages/getColor',
+      progress: 'messages/getProgress',
+      project: 'projects/getProject',
+      progressMessage: 'messages/getProgressMessage',
+    }),
+    protsessor() {
+      return this.project?.hardware || '';
+    },
+    style() {
+      return { backgroundColor: '#' + this.protsessor.color };
+    },
+    version() {
+      return this.$config.isDev ? `ver. ${this.$config.version}` : '';
+    },
+  },
+  methods: {
+    click(color) {
+      if (color === 'error') {
+        this.dialogError = true;
+      }
+    },
+  },
+};
+</script>
+
+<style lang="scss" scoped>
+.error {
+  color: #ffb054 !important;
+  cursor: pointer;
+}
+.info {
+  color: #a7bed3 !important;
+  cursor: pointer;
+}
+.success {
+  color: #0f0 !important;
+}
+.footer {
+  border-top: solid 1px #0e1621;
+}
+.state {
+  text-transform: uppercase;
+}
+
+.footer {
+  color: #a7bed3;
+  background: #17212b;
+  width: 100%;
+  line-height: 30px;
+  position: fixed;
+  left: 0;
+  bottom: 30px;
+  z-index: 900;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  user-select: none;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  align-content: stretch;
+  align-items: stretch;
+  &__version{
+    color: ivory;
+  }
+  &__copy-buffer {
+    display: flex;
+    align-items: center;
+    p {
+      margin-left: 5px;
+    }
+  }
+  &__message {
+    border-right: #0e1621 1px solid;
+    overflow: hidden;
+    order: 0;
+    flex: 1 1 auto;
+    align-self: auto;
+    &--text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding: 0 20px;
+    }
+  }
+  &__state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    &--text {
+      text-transform: uppercase;
+      padding: 0 10px;
+      width: 59px;
+      & > span {
+        display: inline-block;
+        content: '';
+        width: 10px;
+        height: 10px;
+        margin: 0 5px 0 0;
+        border-radius: 50%;
+        vertical-align: middle;
+      }
+    }
+  }
+  &__progress {
+    border-right: #0e1621 1px solid;
+    &--item {
+      width: 339px;
+      height: 100%;
+      padding: 3px;
+      position: relative;
+      > i {
+        background-color: #242f3d;
+        display: block;
+        width: 0;
+        height: 100%;
+        position: relative;
+        z-index: 1;
+        font-style: normal;
+        overflow: hidden;
+        > span {
+          color: #fff;
+          line-height: 24px;
+          position: absolute;
+          left: 0;
+          top: 0;
+          padding: 0 7px;
+        }
+      }
+      > span {
+        color: #2b5278;
+        display: block;
+        line-height: 30px;
+        padding: 0 10px;
+        position: absolute;
+        left: 0;
+        top: 0;
+        z-index: 0;
+        width: 100%;
+        white-space: nowrap;
+      }
+    }
+  }
+  &__copyright {
+    position: fixed;
+    width: 100%;
+    left: 0;
+    bottom: 0;
+    z-index: 901;
+    user-select: none;
+    line-height: 30px;
+    padding: 0 10px;
+    color: #a7bed3;
+    font-size: 0.6875rem;
+    text-align: right;
+    background-color: #0e1621;
+  }
+}
+.t-pre {
+  height: 400px;
+  padding-bottom: 10px;
+  p {
+    white-space: break-spaces;
+    font-family: monospace;
+  }
+}
+</style>

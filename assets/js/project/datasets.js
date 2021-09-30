@@ -6,7 +6,6 @@
 
     let filters, datasets, params, dataset_load, dataset_prepare;
 
-
     let RemoveDataset = $("#modal-window-remove-dataset").ModalWindow({
         title:"Удалить датасет",
         width:300,
@@ -176,7 +175,7 @@
             if (!this.length) return this;
 
             let task_type_input = ['images', 'text', 'audio', 'dataframe'],
-                data_type_output = ['images', 'text', 'audio', 'classification', 'segmentation', 'text_segmentation', 'regression', 'timeseries'],
+                data_type_output = ['images', 'text', 'audio', 'classification', 'segmentation', 'text_segmentation', 'regression', 'timeseries', 'object_detection'],
                 dataset_params;
 
             function componentToHex(c) {
@@ -324,7 +323,7 @@
                     }).bind("change", (event) => {
                         let output_item = $("#output_"+i);
                         output_item.find(".layout-parameters").empty();
-                        let params = dataset_params[$(event.currentTarget).val()];
+                        let params = dataset_params[$(event.currentTarget).val()] || {};
                         load_layout_params(output_item, params, "output")
                         if($(event.currentTarget).val() === "segmentation"){
                             $("select[name='outputs[output_" + i + "][parameters][input_type]']").selectmenu({
@@ -647,8 +646,8 @@
                     }
                 }
                 let serialize_data = this.find("form").serializeJSON();
-
                 for(let input in serialize_data.outputs){
+                    if (!serialize_data.outputs[input].parameters) serialize_data.outputs[input].parameters = {};
                     if(classes_names[input].length != 0 && classes_colors[input].length != 0){
                         serialize_data.outputs[input].parameters.classes_names = classes_names[input]
                         serialize_data.outputs[input].parameters.classes_colors = classes_colors[input]

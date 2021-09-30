@@ -4,10 +4,14 @@
 
 import json
 
-from typing import List, Union, Optional
-from pydantic import validator, BaseModel
+from typing import List, Union, Optional, Any
+from pydantic import BaseModel
 
-from . import validators
+from .types import AliasType, IDType
+from .exceptions import (
+    UniqueListIdentifierException,
+    UniqueListUndefinedIdentifierException,
+)
 
 
 class BaseMixinData(BaseModel):
@@ -18,27 +22,29 @@ class BaseMixinData(BaseModel):
     def __init__(self, **data):
         for __name, __field in self.__fields__.items():
             __type = __field.type_
-            try:
-                if UniqueListMixin in __type.__mro__:
-                    data.update({__name: __type(data.get(__name, __type()))})
-            except AttributeError:
-                pass
+            if hasattr(__type, "__mro__") and UniqueListMixin in __type.__mro__:
+                data.update({__name: __type(data.get(__name, __type()))})
         super().__init__(**data)
 
     def dict(self, **kwargs):
-        """
-        Необходима предобработка на случай, если структура основана на [`mixins.UniqueListMixin`](mixins.html#data.mixins.UniqueListMixin)
-        """
-        data = super().dict()
+        data = super().dict(**kwargs)
         for __name, __field in self.__fields__.items():
             __type = __field.type_
-            try:
-                if UniqueListMixin in __type.__mro__:
-                    __value = map(lambda item: item.dict(), data.get(__name, __type()))
-                    data.update({__name: list(__value)})
-            except AttributeError:
-                pass
+            if hasattr(__type, "__mro__") and UniqueListMixin in __type.__mro__:
+                __value = map(lambda item: item.dict(), data.get(__name, __type()))
+                data.update({__name: list(__value)})
         return data
+
+    def native(self) -> dict:
+        return json.loads(self.json())
+
+
+class IDMixinData(BaseMixinData):
+    """
+    Расширение модели идентификатором `id`.
+    """
+
+    id: IDType
 
 
 class AliasMixinData(BaseMixinData):
@@ -46,20 +52,17 @@ class AliasMixinData(BaseMixinData):
     Расширение модели идентификатором `alias`.
     """
 
-    alias: str
-    "Применяется валидатор [`data.validators.validate_alias`](validators.html#data.validators.validate_alias)"
-
-    _validate_alias = validator("alias", allow_reuse=True)(validators.validate_alias)
+    alias: AliasType
 
 
 class UniqueListMixin(List):
     """
-    Уникальный список, состоящий из [`data.mixins.BaseMixinData`](mixins.html#data.mixins.BaseMixinData), идентификатор которого определяется в [`Meta.identifier`](mixins.html#data.mixins.UniqueListMixin.Meta)
+    Уникальный список, состоящий из `BaseModel`, идентификатор которого определяется в `Meta`
     ```
-    class SomeData(data.mixins.AliasMixinData):
+    class SomeData(AliasMixinData):
         name: str
 
-    class SomeUniqueList(data.mixins.UniqueListMixin):
+    class SomeUniqueList(UniqueListMixin):
         class Meta:
             source = SomeData
             identifier = "alias"
@@ -89,29 +92,17 @@ class UniqueListMixin(List):
         """
         Мета-данные необходимые для определения типа данных в списке и поля-идентификатора
         ```
-        source: BaseMixinData = BaseMixinData
+        source: BaseModel = BaseModel
         ```
-        - может быть любой структурой, основанной на [`data.mixins.BaseMixinData`](mixins.html#data.mixins.BaseMixinData)
+        - может быть любой структурой, основанной на `BaseModel`
         ```
         identifier: str
         ```
-        - поле-идентификатор, обычно используется [`data.mixins.AliasMixinData.alias`](mixins.html#data.mixins.AliasMixinData.alias)
+        - поле-идентификатор
         """
 
         source: BaseMixinData = BaseMixinData
         identifier: str
-
-    def __init__(self, data: Optional[List[Union[dict, Meta.source]]] = None):
-        if not data:
-            data = []
-        data = list(map(lambda item: self.Meta.source(**item), data))
-        __data = []
-        for item in data:
-            if item.dict().get(self.Meta.identifier) not in list(
-                map(lambda item: item.dict().get(self.Meta.identifier), __data)
-            ):
-                __data.append(item)
-        super().__init__(__data)
 
     @property
     def ids(self) -> list:
@@ -130,12 +121,31 @@ class UniqueListMixin(List):
         if not len(self):
             return []
         if self.Meta.identifier not in self[0].schema().get("properties").keys():
-            raise AttributeError(
-                f'Identifier "{self.Meta.identifier}" is undefined as attribute of {self.Meta.source}'
-            )
-        return list(map(lambda item: item.dict().get(self.Meta.identifier), self))
+            raise UniqueListIdentifierException(self.Meta.identifier, self.Meta.source)
+        return list(map(lambda item: getattr(item, self.Meta.identifier), self))
 
-    def get(self, name: str) -> Optional[Meta.source]:
+    def __init__(self, data: Optional[List[Union[dict, Meta.source]]] = None):
+        if data is None:
+            data = []
+        data = list(map(lambda item: self.Meta.source(**item), data))
+        __data = []
+        for item in data:
+            __identifier = getattr(self.Meta, "identifier", None)
+            if __identifier is None:
+                raise UniqueListUndefinedIdentifierException(self.Meta.source)
+            if item.dict().get(__identifier) not in list(
+                map(lambda item: item.dict().get(self.Meta.identifier), __data)
+            ):
+                __data.append(item)
+        super().__init__(__data)
+
+    def __iadd__(self, *args, **kwargs):
+        if isinstance(args[0], UniqueListMixin):
+            for item in args[0]:
+                self.append(item)
+        return self
+
+    def get(self, name: Any) -> Optional[Meta.source]:
         """
         Получение элемента по уникальному идентификатору
         ```
@@ -195,7 +205,13 @@ class UniqueListMixin(List):
         <class 'str'>
         ```
         """
-        return json.dumps(self.dict(), **kwargs)
+        __items = []
+        for __item in self:
+            __items.append(json.loads(__item.json()))
+        return json.dumps(__items, **kwargs)
+
+    def native(self) -> dict:
+        return json.loads(self.json())
 
     def append(self, __object: Union[dict, Meta.source]):
         """
