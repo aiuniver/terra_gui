@@ -40,6 +40,14 @@ class CascadeCreator:
         return config
 
     @staticmethod
+    def make_text_segmentation(config, dataset_config, model):
+        config['cascades']['model']['model'] = model
+        config['cascades']['2']['params']['open_tag'] = dataset_config['columns']['1']['1_text']['classes_names']
+        config['cascades']['2']['params']['close_tag'] = dataset_config['columns']['1']['1_text']['classes_names']
+
+        return config
+
+    @staticmethod
     def copy_package(training_path):
         deploy_path = os.path.join(training_path, "deploy")
         if os.path.exists(os.path.join(deploy_path, "cascades")):

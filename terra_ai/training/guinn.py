@@ -35,7 +35,7 @@ from terra_ai.exceptions import training as exceptions
 
 __version__ = 0.02
 
-from terra_ai.utils import camelize
+from terra_ai.utils import camelize, decamelize
 
 interactive = InteractiveCallback()
 
@@ -622,6 +622,13 @@ class FitCallback(keras.callbacks.Callback):
     def _get_train_status() -> str:
         return interactive.get_states().get("status")
 
+    def _get_predict(self):
+        if self.dataset.data.use_generator:
+            current_predict = self.model.predict(self.dataset.dataset.get('val').batch(1))
+        else:
+            current_predict = self.model.predict(self.dataset.X.get('val'))
+        return current_predict
+
     def _deploy_predict(self, presets_predict):
         # with open(os.path.join(self.save_model_path, "predict.txt"), "w", encoding="utf-8") as f:
         #     f.write(str(presets_predict[0].tolist()))
@@ -643,16 +650,23 @@ class FitCallback(keras.callbacks.Callback):
         if self.dataset.data.alias not in ["imdb", "boston_housing", "reuters"]:
             input_key = list(self.dataset.data.inputs.keys())[0]
             output_key = list(self.dataset.data.outputs.keys())[0]
-            if self.dataset.data.inputs[input_key].task in [LayerInputTypeChoice.Image] and (
-                    self.dataset.data.outputs[output_key].task in [LayerOutputTypeChoice.Classification,
-                                                                   LayerOutputTypeChoice.Segmentation]):
+            input_tasks = [LayerInputTypeChoice.Image, LayerInputTypeChoice.Text]
+            output_tasks = [LayerOutputTypeChoice.Classification, LayerOutputTypeChoice.Segmentation,
+                            LayerOutputTypeChoice.TextSegmentation]
+            if self.dataset.data.inputs[input_key].task in input_tasks and (
+                    self.dataset.data.outputs[output_key].task in output_tasks):
+                if self.dataset.data.outputs[output_key].task == LayerOutputTypeChoice.TextSegmentation:
+                    func_name = decamelize(LayerOutputTypeChoice.TextSegmentation)
+                    print(func_name)
+                else:
+                    func_name = f"{self.dataset.data.inputs[input_key].task.lower()}_" \
+                                f"{self.dataset.data.outputs[output_key].task.lower()}"
                 config = CascadeCreator()
                 config.create_config(self.save_model_path, os.path.split(self.save_model_path)[0])
                 config.copy_package(os.path.split(self.save_model_path)[0])
                 config.copy_script(
                     training_path=os.path.split(self.save_model_path)[0],
-                    function_name=f"{self.dataset.data.inputs[input_key].task.lower()}"
-                                  f"_{self.dataset.data.outputs[output_key].task.lower()}"
+                    function_name=func_name
                 )
 
     def save_lastmodel(self) -> None:
@@ -748,11 +762,7 @@ class FitCallback(keras.callbacks.Callback):
             self.batch += 1
 
             if interactive.urgent_predict:
-                if self.dataset.data.use_generator:
-                    upred = self.model.predict(self.dataset.dataset.get('val').batch(1))
-                else:
-                    upred = self.model.predict(self.dataset.X.get('val'))
-
+                upred = self._get_predict()
                 train_batch_data = interactive.update_state(y_pred=upred)
             else:
                 train_batch_data = interactive.update_state(y_pred=None)
@@ -783,10 +793,7 @@ class FitCallback(keras.callbacks.Callback):
         Returns:
             {}:
         """
-        if self.dataset.data.use_generator:
-            scheduled_predict = self.model.predict(self.dataset.dataset.get('val').batch(1))
-        else:
-            scheduled_predict = self.model.predict(self.dataset.X.get('val'))
+        scheduled_predict = self._get_predict()
         interactive_logs = copy.deepcopy(logs)
         interactive_logs['epoch'] = self.last_epoch
         current_epoch_time = time.time() - self._time_first_step
@@ -823,12 +830,13 @@ class FitCallback(keras.callbacks.Callback):
                 )
                 self.model.save_weights(file_path_best)
                 # print(f"Epoch {self.last_epoch} - best weights was successfully saved")
-                interactive.deploy_presets_data = self._deploy_predict(scheduled_predict)
 
         self._fill_log_history(self.last_epoch, logs)
         self.last_epoch += 1
 
     def on_train_end(self, logs=None):
+        deploy_predict = self._get_predict()
+        interactive.deploy_presets_data = self._deploy_predict(deploy_predict)
         self._save_logs()
         self.save_lastmodel()
         self._create_cascade()
