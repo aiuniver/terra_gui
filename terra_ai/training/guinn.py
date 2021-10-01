@@ -279,10 +279,10 @@ class GUINN:
         progress.pool(self.progress_name, finished=False, data={'status': 'Начало обучения ...'})
         if self.dataset.data.use_generator:
             critical_val_size = len(self.dataset.dataframe.get("val"))
-            upper_train_size = len(self.dataset.dataframe.get("train"))
+            buffer_size = 100
         else:
             critical_val_size = len(self.dataset.dataset.get('val'))
-            upper_train_size = len(self.dataset.dataset.get("train"))
+            buffer_size = 1000
 
         if (critical_val_size == self.batch_size) or (critical_val_size > self.batch_size):
             n_repeat = 1
@@ -290,7 +290,7 @@ class GUINN:
             n_repeat = (self.batch_size//critical_val_size)+1
 
         self.history = self.model.fit(
-            self.dataset.dataset.get('train').shuffle(upper_train_size).batch(
+            self.dataset.dataset.get('train').shuffle(buffer_size).batch(
                 self.batch_size, drop_remainder=True).prefetch(buffer_size=tf.data.AUTOTUNE).take(-1),
             batch_size=self.batch_size,
             shuffle=self.shuffle,
@@ -624,9 +624,10 @@ class FitCallback(keras.callbacks.Callback):
 
     def _get_predict(self):
         if self.dataset.data.use_generator:
-            current_predict = self.model.predict(self.dataset.dataset.get('val').batch(1))
+            current_predict = self.model.predict(self.dataset.dataset.get('val').batch(1),
+                                                 batch_size=1)
         else:
-            current_predict = self.model.predict(self.dataset.X.get('val'))
+            current_predict = self.model.predict(self.dataset.X.get('val'), batch_size=self.batch_size)
         return current_predict
 
     def _deploy_predict(self, presets_predict):
