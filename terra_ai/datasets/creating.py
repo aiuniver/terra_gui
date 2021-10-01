@@ -432,7 +432,22 @@ class CreateDataset(object):
                 for data in creation_data.columns_processing.values():
                     if data.type == ColumnProcessingTypeChoice.Timeseries:
                         timeseries_flag = True
-            input_array = np.concatenate(input_array, axis=0) if not timeseries_flag else np.array(input_array)
+            if not timeseries_flag:
+                input_array = np.concatenate(input_array, axis=0)
+            else:
+                try:
+                    input_array = np.array(input_array)
+                except:
+                    tmp_array = []
+                    for el in input_array:
+                        if type(el[0]) == np.ndarray:
+                            tmp = []
+                            for j in range(len(el)):
+                                tmp.append(el[j])
+                            tmp_array.append(tmp)
+                        else:
+                            tmp_array.append(el.tolist())
+                    input_array = np.array(tmp_array)
             task, classes_colors, classes_names, encoding, num_classes = None, None, None, None, None
             if len(self.columns[key]) == 1:
                 for c_name, data in self.columns[key].items():
@@ -663,7 +678,19 @@ class CreateDataset(object):
                             full_array.append(arr)
                     if not self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
                         if depth:
-                            array = np.array(full_array)
+                            try:
+                                array = np.array(full_array)
+                            except:
+                                array = []
+                                for el in full_array:
+                                    if type(el[0]) == np.ndarray:
+                                        tmp = []
+                                        for j in range(len(el)):
+                                            tmp.append(el[j])
+                                        array.append(tmp)
+                                    else:
+                                        array.append(el.tolist())
+                                array = np.array(array)
                         else:
                             array = np.concatenate(full_array, axis=0)
                         current_arrays.append(array)
