@@ -45,3 +45,11 @@ def text(paths):
         with open(path, 'r', encoding='utf-8') as txt:
             text = txt.read()
         yield text
+
+
+def audio(paths):
+    if isinstance(paths, str):
+        paths = [paths]
+
+    for path in paths:
+        yield path

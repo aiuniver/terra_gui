@@ -209,7 +209,6 @@ class GUINN:
               f'callbacks = {self.callbacks}, batch_size = {self.batch_size},shuffle = {self.shuffle}, \n' \
               f'loss = {self.loss}, metrics = {self.metrics} \n'
 
-        # print(msg)
         pass
 
     def save_model(self) -> None:
