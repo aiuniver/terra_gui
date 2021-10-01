@@ -30,7 +30,7 @@ class Loss(str, Enum):
     MeanSquaredError = "MeanSquaredError"
     MeanSquaredLogarithmicError = "MeanSquaredLogarithmicError"
     Poisson = "Poisson"
-    SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
+    # SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
     SquaredHinge = "SquaredHinge"
     YoloLoss = "YoloLoss"
 
@@ -62,9 +62,9 @@ class Metric(str, Enum):
     TopKCategoricalAccuracy = "TopKCategoricalAccuracy"
     TrueNegatives = "TrueNegatives"
     TruePositives = "TruePositives"
-    SparseCategoricalAccuracy = "SparseCategoricalAccuracy"
-    SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
-    SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
+    # SparseCategoricalAccuracy = "SparseCategoricalAccuracy"
+    # SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
+    # SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
     DiceCoef = "DiceCoef"
 
 TasksGroups = [
@@ -84,7 +84,7 @@ TasksGroups = [
             Loss.MeanSquaredError,
             Loss.MeanSquaredLogarithmicError,
             Loss.Poisson,
-            Loss.SparseCategoricalCrossentropy,
+            # Loss.SparseCategoricalCrossentropy,
             Loss.SquaredHinge
         ],
         "metrics": [
@@ -114,9 +114,9 @@ TasksGroups = [
             Metric.TopKCategoricalAccuracy,
             Metric.TrueNegatives,
             Metric.TruePositives,
-            Metric.SparseCategoricalAccuracy,
-            Metric.SparseCategoricalCrossentropy,
-            Metric.SparseTopKCategoricalAccuracy
+            # Metric.SparseCategoricalAccuracy,
+            # Metric.SparseCategoricalCrossentropy,
+            # Metric.SparseTopKCategoricalAccuracy
         ],
     },
     {
@@ -136,7 +136,7 @@ TasksGroups = [
             Loss.MeanSquaredLogarithmicError,
             Loss.Poisson,
             Loss.SquaredHinge,
-            Loss.SparseCategoricalCrossentropy,
+            # Loss.SparseCategoricalCrossentropy,
         ],
         "metrics": [
             Metric.DiceCoef,
@@ -165,9 +165,9 @@ TasksGroups = [
             Metric.SquaredHinge,
             Metric.TrueNegatives,
             Metric.TruePositives,
-            Metric.SparseCategoricalAccuracy,
-            Metric.SparseCategoricalCrossentropy,
-            Metric.SparseTopKCategoricalAccuracy,
+            # Metric.SparseCategoricalAccuracy,
+            # Metric.SparseCategoricalCrossentropy,
+            # Metric.SparseTopKCategoricalAccuracy,
         ],
     },
     {
@@ -250,7 +250,7 @@ TasksGroups = [
             Loss.MeanSquaredError,
             Loss.MeanSquaredLogarithmicError,
             Loss.Poisson,
-            Loss.SparseCategoricalCrossentropy,
+            # Loss.SparseCategoricalCrossentropy,
             Loss.SquaredHinge
         ],
         "metrics": [
@@ -280,9 +280,9 @@ TasksGroups = [
             Metric.TopKCategoricalAccuracy,
             Metric.TrueNegatives,
             Metric.TruePositives,
-            Metric.SparseCategoricalAccuracy,
-            Metric.SparseCategoricalCrossentropy,
-            Metric.SparseTopKCategoricalAccuracy
+            # Metric.SparseCategoricalAccuracy,
+            # Metric.SparseCategoricalCrossentropy,
+            # Metric.SparseTopKCategoricalAccuracy
         ],
     },
     {
@@ -302,7 +302,7 @@ TasksGroups = [
             Loss.MeanSquaredLogarithmicError,
             Loss.Poisson,
             Loss.SquaredHinge,
-            Loss.SparseCategoricalCrossentropy,
+            # Loss.SparseCategoricalCrossentropy,
         ],
         "metrics": [
             Metric.DiceCoef,
@@ -331,9 +331,9 @@ TasksGroups = [
             Metric.SquaredHinge,
             Metric.TrueNegatives,
             Metric.TruePositives,
-            Metric.SparseCategoricalAccuracy,
-            Metric.SparseCategoricalCrossentropy,
-            Metric.SparseTopKCategoricalAccuracy,
+            # Metric.SparseCategoricalAccuracy,
+            # Metric.SparseCategoricalCrossentropy,
+            # Metric.SparseTopKCategoricalAccuracy,
         ],
     }
 ]

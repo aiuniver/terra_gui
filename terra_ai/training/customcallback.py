@@ -2175,7 +2175,13 @@ class InteractiveCallback:
 
     @staticmethod
     def _get_scatter(y_true, y_pred):
-        return np.array(y_true).astype('float').tolist(), np.array(y_pred).astype('float').tolist()
+        # sort = pd.DataFrame({
+        #     'y_true': np.array(y_true).squeeze(),
+        #     'y_pred': np.array(y_pred).squeeze(),
+        # })
+        # sort = sort[sort['y_true'] > sort['y_true'].quantile(0.05)]
+        # sort = sort[sort['y_true'] < sort['y_true'].quantile(0.95)]
+        return InteractiveCallback().clean_data_series([y_true, y_pred], mode="duo")
 
     @staticmethod
     def _get_distribution_histogram(data_series, bins=25, categorical=True):
@@ -2183,9 +2189,28 @@ class InteractiveCallback:
             hist_data = pd.Series(data_series).value_counts()
             return hist_data.index.to_list(), hist_data.to_list()
         else:
-            data_series = np.array(data_series)
+            data_series = InteractiveCallback().clean_data_series([data_series], mode="mono")
             bar_values, x_labels = np.histogram(data_series, bins=bins)
             return x_labels.astype('float').tolist(), bar_values.astype('int').tolist()
+
+    @staticmethod
+    def clean_data_series(data_series: list, mode="mono"):
+        if mode == "mono":
+            sort_x = pd.Series(data_series[0])
+            sort_x = sort_x[sort_x > sort_x.quantile(0.02)]
+            sort_x = sort_x[sort_x < sort_x.quantile(0.98)]
+            data_series = np.array(sort_x)
+            return data_series
+        elif mode == "duo":
+            sort = pd.DataFrame({
+                'y_true': np.array(data_series[0]).squeeze(),
+                'y_pred': np.array(data_series[1]).squeeze(),
+            })
+            sort = sort[sort['y_true'] > sort['y_true'].quantile(0.05)]
+            sort = sort[sort['y_true'] < sort['y_true'].quantile(0.95)]
+            return sort['y_true'].to_list(), sort['y_pred'].to_list()
+        else:
+            return None
 
     @staticmethod
     def _get_autocorrelation_graphic(y_true, y_pred, depth=10):
@@ -2273,8 +2298,6 @@ class InteractiveCallback:
                 text_str = self.dataset_config.get("dataframe").get('val').iat[example_idx, column]
                 data_type = LayerInputTypeChoice.Text.name
                 title = "Текст"
-                # for out in self.dataset_config.get("outputs").keys():
-                #     if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Regression:
                 if regression_task:
                     title = list(self.dataset_config.get("dataframe").get('val').columns)[column].split("_", 1)[-1]
                 data = [
@@ -2318,7 +2341,8 @@ class InteractiveCallback:
             time_series_choice = False
             for out in self.dataset_config.get("outputs").keys():
                 if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries or \
-                        self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries_trend:
+                        self.dataset_config.get("outputs").get(out).get(
+                            "task") == LayerOutputTypeChoice.Timeseries_trend:
                     time_series_choice = True
                     break
 
