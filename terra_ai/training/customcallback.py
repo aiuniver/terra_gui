@@ -2381,7 +2381,8 @@ class InteractiveCallback:
                 result = np.zeros((3,))
                 for color in colors:
                     result += np.array(color)
-                return tuple((result / len(colors)).astype('int'))
+                result = result / len(colors)
+                return tuple(result.astype('int').tolist())
 
         def tag_mixer(tags: list, colors: dict):
             tags = list(set(sorted(tags, reverse=True)))
