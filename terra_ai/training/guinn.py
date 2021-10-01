@@ -98,10 +98,14 @@ class GUINN:
             train_size = len(self.dataset.dataframe.get("train"))
         else:
             train_size = len(self.dataset.dataset.get('train'))
-        if self.batch_size > train_size:
-            raise exceptions.TooBigBatchSize(self.batch_size, train_size)
+        if params.batch > train_size:
+            if interactive.get_states().get("status") == "addtrain":
+                interactive.set_status("stopped")
+            else:
+                interactive.set_status("no_train")
+            raise exceptions.TooBigBatchSize(params.batch, train_size)
 
-        if interactive.get_states().get("status") == "addtrain":
+        if interactive.get_states().get("status") == "addtrain" and self.callbacks:
             if self.callbacks[0].last_epoch - 1 >= self.sum_epoch:
                 self.sum_epoch += params.epochs
             if (self.callbacks[0].last_epoch - 1) < self.sum_epoch:
@@ -185,7 +189,7 @@ class GUINN:
         output the parameters of the neural network: batch_size, epochs, shuffle, callbacks, loss, metrics,
         x_train_shape, num_classes
         """
-        print("\nself.DTS.classes_names", self.DTS.classes_names)
+        # print("\nself.DTS.classes_names", self.DTS.classes_names)
         x_shape = []
         v_shape = []
         t_shape = []
@@ -199,7 +203,7 @@ class GUINN:
               f'callbacks = {self.callbacks}, batch_size = {self.batch_size},shuffle = {self.shuffle}, \n' \
               f'loss = {self.loss}, metrics = {self.metrics} \n'
 
-        print(msg)
+        # print(msg)
         pass
 
     def terra_fit(self,
@@ -312,28 +316,28 @@ class GUINN:
         num_anchors = len(anchors)  # Сохраняем количество анкоров
 
         # Создаем модель
-        print(self.dataset.data.outputs.get(2).classes_names)
+        # print(self.dataset.data.outputs.get(2).classes_names)
         base_yolo = create_yolo(self.model, input_size=416, channels=3, training=True,
                                  classes=self.dataset.data.outputs.get(2).classes_names)
         # base_yolo.compile(optimizer=self.optimizer,
         #                    loss=compute_loss)
-        print(base_yolo.summary())
+        # print(base_yolo.summary())
 
         model_yolo = CustomModelYolo(base_yolo, self.dataset, self.dataset.data.outputs.get(2).classes_names, self.epochs)
 
         # Компилируем модель
-        print(('Компиляция модели', '...'))
+        # print(('Компиляция модели', '...'))
         # self.set_custom_metrics()
         model_yolo.compile(optimizer=self.optimizer,
                            loss=compute_loss)
-        print(('Компиляция модели', 'выполнена'))
-        print(('Начало обучения', '...'))
+        # print(('Компиляция модели', 'выполнена'))
+        # print(('Начало обучения', '...'))
 
         # if not retrain:
         #     self._set_callbacks(dataset=dataset, batch_size=params.batch,
         #                         epochs=params.epochs, checkpoint=params.architecture.parameters.checkpoint.native())
 
-        print(('Начало обучения', '...'))
+        # print(('Начало обучения', '...'))
 
         if self.dataset.data.use_generator:
             critical_size = len(self.dataset.dataframe.get("val"))
@@ -548,7 +552,7 @@ class FitCallback(keras.callbacks.Callback):
             for metric in logs:
                 self.log_history['logs'][metric] = []
             self._get_metric_name_checkpoint(logs)
-            print(f"Chosen {self.metric_checkpoint} for monitoring")
+            # print(f"Chosen {self.metric_checkpoint} for monitoring")
         self.log_history['epoch'].append(epoch)
         for metric in logs:
             self.log_history['logs'][metric].append(logs.get(metric))
@@ -639,7 +643,7 @@ class FitCallback(keras.callbacks.Callback):
         if self.dataset.data.alias not in ["imdb", "boston_housing", "reuters"]:
             input_key = list(self.dataset.data.inputs.keys())[0]
             output_key = list(self.dataset.data.outputs.keys())[0]
-            if self.dataset.data.inputs[input_key].task == LayerInputTypeChoice.Image and (
+            if self.dataset.data.inputs[input_key].task in [LayerInputTypeChoice.Image] and (
                     self.dataset.data.outputs[output_key].task in [LayerOutputTypeChoice.Classification,
                                                                    LayerOutputTypeChoice.Segmentation]):
                 config = CascadeCreator()
@@ -762,6 +766,7 @@ class FitCallback(keras.callbacks.Callback):
                 result_data = {'timings': [still_time, elapsed_time, elapsed_epoch_time,
                                            still_epoch_time, msg_epoch, msg_batch]}
             self._set_result_data(result_data)
+            # print("PROGRESS", [type(num) for num in self._get_result_data().get("train_data", {}).get("data_balance", {}).get("2", ["0"])[0].get("plot_data", ["0"])[0].get("values")])
             progress.pool(
                 self.progress_name,
                 percent=(self.last_epoch - 1) / (
@@ -817,7 +822,7 @@ class FitCallback(keras.callbacks.Callback):
                     self.save_model_path, f"best_weights_{self.metric_checkpoint}.h5"
                 )
                 self.model.save_weights(file_path_best)
-                print(f"Epoch {self.last_epoch} - best weights was successfully saved")
+                # print(f"Epoch {self.last_epoch} - best weights was successfully saved")
                 interactive.deploy_presets_data = self._deploy_predict(scheduled_predict)
 
         self._fill_log_history(self.last_epoch, logs)

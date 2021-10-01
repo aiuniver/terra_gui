@@ -1,29 +1,26 @@
 <template>
-  <div class="t-predict-video">
-    <iframe v-if="autoStart"
-      loading="lazy"
-      sandbox="allow-forms allow-scripts allow-pointer-lock allow-same-origin allow-top-navigation allow-presentation"
-      class="t-predict-video__item"
-      allowfullscreen
-      :src="src"
-    ></iframe>
+  <div id="app">
+    <Media :kind="'video'" :controls="true" :src="src"       :style="{width: '200px'}"></Media>
   </div>
 </template>
 
-
-
 <script>
+import Media from '@dongido/vue-viaudio';
+
 export default {
+  components: {
+    Media,
+  },
   props: {
     value: { type: String, default: '' },
   },
   computed: {
     src() {
-      return `/_media/blank/?path=${this.value}`
-    }
+      return `/_media/blank/?path=${this.value}`;
+    },
   },
-  data:() => ({
-    autoStart: false
+  data: () => ({
+    autoStart: false,
   }),
 };
 </script>

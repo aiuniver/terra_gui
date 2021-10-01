@@ -65,7 +65,7 @@ def main(**params):
                 try:
                     array.append(preprocessing[word])
                 except KeyError:
-                    array.append(np.zeros((length,)))
+                    array.append(np.zeros((length, params['word_to_vec_size'])))
             array = np.array(array)
 
             if array.shape[1] < length:

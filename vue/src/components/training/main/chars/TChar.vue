@@ -139,7 +139,7 @@ export default {
     },
     data() {
       return this.plot_data.map(({ x, y, mode = this.type, label }) => {
-        return { x, y, mode, label };
+        return { x, y, mode, name:label };
       });
     },
   },

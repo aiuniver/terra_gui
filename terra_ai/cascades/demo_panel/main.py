@@ -11,6 +11,10 @@ def make_classification(config, dataset_config, model):
     return config
 
 
+def make_text_classification(config, dataset_config, model):
+    return make_classification(config, dataset_config, model)
+
+
 def make_segmentation(config, dataset_config, model):
     config['cascades']['model']['model'] = model
     config['cascades']['2']['params']['num_class'] = dataset_config['outputs']['2']['num_classes']
@@ -20,11 +24,25 @@ def make_segmentation(config, dataset_config, model):
     return config
 
 
+def make_text_segmentation(config, dataset_config, model):
+    config['cascades']['model']['model'] = model
+    config['cascades']['2']['params']['open_tag'] = dataset_config['columns']['1']['1_text']['open_tags']
+    config['cascades']['2']['params']['close_tag'] = dataset_config['columns']['1']['1_text']['open_tags']
+
+    return config
+
+
 def create_config(model, out_path):
     path = make_path(model)
     dataset_path = os.path.join(path, "dataset", "config.json")
     with open(dataset_path) as cfg:
         dataset_config = json.load(cfg)
+
+    for i in dataset_config['columns'].keys():
+        for file in dataset_config['columns'][i].keys():
+            with open(os.path.join(path, "dataset/instructions/parameters/" + file + ".json"), 'r') as f:
+                f = json.load(f)
+                dataset_config['columns'][i][file].update(f)
 
     tags = dataset_config['tags'][1]['alias']
 
