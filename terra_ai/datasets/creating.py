@@ -361,7 +361,7 @@ class CreateDataset(object):
         dataframe = pd.DataFrame(build_dataframe)
         for key, value in split_sequence.items():
             self.dataframe[key] = dataframe.loc[value, :].reset_index(drop=True)
-        print(self.dataframe['train'])
+        # print(self.dataframe['train'])
 
     def create_input_parameters(self, creation_data: CreationData) -> dict:
 
@@ -677,7 +677,7 @@ class CreateDataset(object):
 
                 if self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
                     for n in range(6):
-                        print(np.array(globals()[f'current_arrays_{n}']).shape)
+                        # print(np.array(globals()[f'current_arrays_{n}']).shape)
                         out_array[split][key + n] = np.array(globals()[f'current_arrays_{n}'])
                 else:
                     out_array[split][key] = np.array(current_arrays)
@@ -758,6 +758,6 @@ class CreateDataset(object):
 
         with open(os.path.join(self.paths.basepath, DATASET_CONFIG), 'w') as fp:
             json.dump(DatasetData(**data).native(), fp)
-        print(DatasetData(**data).native())
+        # print(DatasetData(**data).native())
 
         return data
