@@ -1313,32 +1313,32 @@ class InteractiveCallback:
         ohe = self.dataset_config.get("outputs").get(out).get("encoding") == "ohe"
         if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification or \
                 self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries_trend:
-            if loss_name == Loss.SparseCategoricalCrossentropy:
-                return float(loss_obj()(np.argmax(y_true, axis=-1) if ohe else np.squeeze(y_true), y_pred).numpy())
-            else:
-                return float(loss_obj()(
-                    y_true if ohe else to_categorical(y_true, self.dataset_config.get(
-                        "outputs").get(out).get("num_classes")), y_pred
-                ).numpy())
+            # if loss_name == Loss.SparseCategoricalCrossentropy:
+            #     return float(loss_obj()(np.argmax(y_true, axis=-1) if ohe else np.squeeze(y_true), y_pred).numpy())
+            # else:
+            return float(loss_obj()(
+                y_true if ohe else to_categorical(y_true, self.dataset_config.get(
+                    "outputs").get(out).get("num_classes")), y_pred
+            ).numpy())
 
         elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation or \
                 (self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation and
                  self.dataset_config.get("outputs").get(out).get("encoding") == "ohe"):
-            if loss_name == Loss.SparseCategoricalCrossentropy:
-                return float(loss_obj()(
-                    np.expand_dims(np.argmax(y_true, axis=-1), axis=-1) if ohe else np.squeeze(y_true), y_pred
-                ).numpy())
-            else:
-                return float(loss_obj()(
-                    y_true if ohe else to_categorical(y_true, self.dataset_config.get(
-                        "outputs").get(out).get("num_classes")), y_pred
-                ).numpy())
+            # if loss_name == Loss.SparseCategoricalCrossentropy:
+            #     return float(loss_obj()(
+            #         np.expand_dims(np.argmax(y_true, axis=-1), axis=-1) if ohe else np.squeeze(y_true), y_pred
+            #     ).numpy())
+            # else:
+            return float(loss_obj()(
+                y_true if ohe else to_categorical(y_true, self.dataset_config.get(
+                    "outputs").get(out).get("num_classes")), y_pred
+            ).numpy())
         elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation and \
                 self.dataset_config.get("outputs").get(out).get("encoding") == "multi":
-            if loss_name == Loss.SparseCategoricalCrossentropy:
-                return 0.
-            else:
-                return float(loss_obj()(y_true, y_pred).numpy())
+            # if loss_name == Loss.SparseCategoricalCrossentropy:
+            #     return 0.
+            # else:
+            return float(loss_obj()(y_true, y_pred).numpy())
         elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Regression or \
                 self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries:
             return float(loss_obj()(y_true, y_pred).numpy())
@@ -1354,10 +1354,10 @@ class InteractiveCallback:
                     np.argmax(y_true, axis=-1) if self.dataset_config.get("outputs").get(out).get("encoding") == "ohe"
                     else y_true, np.argmax(y_pred, axis=-1)
                 )
-            elif metric_name == Metric.SparseCategoricalAccuracy or \
-                    metric_name == Metric.SparseTopKCategoricalAccuracy or \
-                    metric_name == Metric.SparseCategoricalCrossentropy:
-                metric_obj.update_state(np.argmax(y_true, axis=-1) if ohe else np.squeeze(y_true), y_pred)
+            # elif metric_name == Metric.SparseCategoricalAccuracy or \
+            #         metric_name == Metric.SparseTopKCategoricalAccuracy or \
+            #         metric_name == Metric.SparseCategoricalCrossentropy:
+            #     metric_obj.update_state(np.argmax(y_true, axis=-1) if ohe else np.squeeze(y_true), y_pred)
             else:
                 metric_obj.update_state(
                     y_true if ohe else to_categorical(y_true, self.dataset_config.get(
@@ -1368,27 +1368,27 @@ class InteractiveCallback:
         elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation or \
                 (self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation and
                  self.dataset_config.get("outputs").get(out).get("encoding") == "ohe"):
-            if metric_name == Metric.SparseCategoricalAccuracy or \
-                    metric_name == Metric.SparseTopKCategoricalAccuracy or \
-                    metric_name == Metric.SparseCategoricalCrossentropy:
-                metric_obj.update_state(
-                    np.expand_dims(np.argmax(y_true, axis=-1), axis=-1) if ohe else np.squeeze(y_true), y_pred
-                )
-            else:
-                metric_obj.update_state(
-                    y_true if ohe else to_categorical(y_true, self.dataset_config.get(
-                        "outputs").get(out).get("num_classes")), y_pred
-                )
+            # if metric_name == Metric.SparseCategoricalAccuracy or \
+            #         metric_name == Metric.SparseTopKCategoricalAccuracy or \
+            #         metric_name == Metric.SparseCategoricalCrossentropy:
+            #     metric_obj.update_state(
+            #         np.expand_dims(np.argmax(y_true, axis=-1), axis=-1) if ohe else np.squeeze(y_true), y_pred
+            #     )
+            # else:
+            metric_obj.update_state(
+                y_true if ohe else to_categorical(y_true, self.dataset_config.get(
+                    "outputs").get(out).get("num_classes")), y_pred
+            )
             return float(metric_obj.result().numpy())
         elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation and \
                 self.dataset_config.get("outputs").get(out).get("encoding") == "multi":
-            if metric_name == Metric.SparseCategoricalAccuracy or \
-                    metric_name == Metric.SparseTopKCategoricalAccuracy or \
-                    metric_name == Metric.SparseCategoricalCrossentropy:
-                return 0.
-            else:
-                metric_obj.update_state(y_true, y_pred)
-                return float(metric_obj.result().numpy())
+            # if metric_name == Metric.SparseCategoricalAccuracy or \
+            #         metric_name == Metric.SparseTopKCategoricalAccuracy or \
+            #         metric_name == Metric.SparseCategoricalCrossentropy:
+            #     return 0.
+            # else:
+            metric_obj.update_state(y_true, y_pred)
+            return float(metric_obj.result().numpy())
         elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Regression or \
                 self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries:
             metric_obj.update_state(y_true, y_pred)
