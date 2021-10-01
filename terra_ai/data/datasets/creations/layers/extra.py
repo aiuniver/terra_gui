@@ -12,7 +12,7 @@ from ...extra import (
     LayerAudioParameterChoice,
     LayerAudioModeChoice,
     LayerAudioResampleChoice,
-    LayerAudioFillModeChoice
+    LayerAudioFillModeChoice,
 )
 from ....mixins import BaseMixinData
 from ....types import confilepath
@@ -58,6 +58,10 @@ class ParametersTextData(SourcesPathsData, ColumnProcessingData):
     deploy: Optional[bool] = False
     open_tags: Optional[str]
     close_tags: Optional[str]
+
+    def __init__(self, **data):
+        data.update({"cols_names": {}})
+        super().__init__(**data)
 
     @validator("text_mode")
     def _validate_text_mode(cls, value: LayerTextModeChoice) -> LayerTextModeChoice:

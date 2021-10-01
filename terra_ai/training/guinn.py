@@ -649,7 +649,8 @@ class FitCallback(keras.callbacks.Callback):
         current_model = deploy_model if deploy_model else self.model
 
         if self.dataset.data.use_generator:
-            current_predict = current_model.predict(self.dataset.dataset.get('val').batch(1))
+            current_predict = current_model.predict(self.dataset.dataset.get('val').batch(1),
+                                                 batch_size=1)
         else:
             current_predict = current_model.predict(self.dataset.X.get('val'), batch_size=self.batch_size)
         return current_predict

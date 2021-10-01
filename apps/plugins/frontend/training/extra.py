@@ -41,7 +41,7 @@ class LossChoice(str, Enum):
     MeanSquaredError = "MeanSquaredError"
     MeanSquaredLogarithmicError = "MeanSquaredLogarithmicError"
     Poisson = "Poisson"
-    SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
+    # SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
     SquaredHinge = "SquaredHinge"
 
 
@@ -72,9 +72,9 @@ class MetricChoice(str, Enum):
     TopKCategoricalAccuracy = "TopKCategoricalAccuracy"
     TrueNegatives = "TrueNegatives"
     TruePositives = "TruePositives"
-    SparseCategoricalAccuracy = "SparseCategoricalAccuracy"
-    SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
-    SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
+    # SparseCategoricalAccuracy = "SparseCategoricalAccuracy"
+    # SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
+    # SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
     DiceCoef = "DiceCoef"
 
 

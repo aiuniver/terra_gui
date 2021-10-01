@@ -28,6 +28,8 @@ class OutputData(IDMixinData):
 
     @validator("loss")
     def _validate_loss(cls, value: LossChoice, values) -> LossChoice:
+        if not value:
+            return value
         __task = values.get("task")
         if not __task:
             return None
