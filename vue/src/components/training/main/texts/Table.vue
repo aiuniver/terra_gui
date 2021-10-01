@@ -29,15 +29,13 @@
         <tbody>
           <tr v-for="({ time, data }, key, i) of data" :key="'epoch_' + i">
             <td class="epoch_num">{{ key }}</td>
-            <td>{{ time | int }}</td>
+            <td>{{ time | ceil }}</td>
             <template v-for="(output, keyO) of data">
               <template v-for="(metric, keyM) of output">
                 <template v-for="(item, keyI) of metric">
                   <td v-show="isShow(keyO, keyM)" class="value" :key="keyO + 't' + keyM + 'r' + keyI">
                     <span>{{ item | int }}</span>
-                    <i>.</i>
-                    {{ item | drob }}
-                  </td>
+                    <i>.</i>{{ item | drob }}</td>
                 </template>
               </template>
             </template>
@@ -88,6 +86,9 @@ export default {
   filters: {
     int(val) {
       return ~~val;
+    },
+    ceil(val) {
+      return Math.ceil(val);
     },
     drob(val) {
       return (val % 1).toFixed(9).slice(2);

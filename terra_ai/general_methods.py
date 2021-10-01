@@ -162,7 +162,7 @@ def _preprocess_model(**params):
         dataset_data = DatasetData(**json.load(cfg))
 
     path_dataset = os.path.join(MODEL_PATH, dataset_data.alias)
-    print(path_dataset)
+    # print(path_dataset)
     createarray = CreateArray(DATASET_PATH)  # здесь лежат препроцессы
 
     def load_instructions(path, dataset_data):
@@ -181,7 +181,7 @@ def _preprocess_model(**params):
             creation['parameters']['sources_paths'] = []
             creation['parameters']['deploy'] = True
             inputs[key] = CreationInputData(**creation)
-        print(creation)
+        # print(creation)
         return inputs, instructions, dataset_data
 
     def load_preprocess(path_dataset, inputs, createarray):
@@ -193,14 +193,14 @@ def _preprocess_model(**params):
         instr = {'instructions': {f'{input}_{decamelize(dataset_data.inputs[1].task)}': path},
                  'parameters': inputs[input]}
         arr = []
-        print(dataset_data)
-        print(dataset_data.inputs[1].task)
-        print(f'create_{decamelize(dataset_data.inputs[1].task)}')
+        # print(dataset_data)
+        # print(dataset_data.inputs[1].task)
+        # print(f'create_{decamelize(dataset_data.inputs[1].task)}')
         for elem in instr['instructions'][f'{input}_{decamelize(dataset_data.inputs[1].task)}']:
             arr.append(
                 getattr(createarray, f'create_{decamelize(dataset_data.inputs[1].task)}')('', elem, **
                 instructions[input]))
-        print(instructions[input])
+        # print(instructions[input])
 
         return np.array(arr)
 
@@ -218,14 +218,15 @@ def _postprocess_model(**params):
     path_model = os.path.join(MODEL_PATH, params['model_name'])
     with open(os.path.join(path_model, 'config.json'), 'r') as cfg:
         dataset_data = DatasetData(**json.load(cfg))
-    print(dataset_data)
+    # print(dataset_data)
     for key in dataset_data.outputs.keys():
-        print(dataset_data.outputs.get(key).task)
+        # print(dataset_data.outputs.get(key).task)
         if dataset_data.outputs.get(key).task == 'Segmentation':
             out = _plot_mask_segmentation(pred, dataset_data.num_classes.get(key),
                                           [x.as_rgb_tuple() for x in dataset_data.classes_colors.get(key)])
         elif dataset_data.outputs.get(key).task == 'Classification':
-            print(dataset_data.outputs.get(key).task)
+            # print(dataset_data.outputs.get(key).task)
+            pass
 
     return out
 
@@ -257,15 +258,15 @@ def _plot_mask_segmentation(predict, num_classes, classes_colors):
 
         colored_mask = []
         shape_mask = mask.shape
-        print(shape_mask)
+        # print(shape_mask)
         mask = mask.reshape(-1, num_cls)
-        print(mask.shape)
+        # print(mask.shape)
         for pix in range(len(mask)):
             colored_mask.append(
                 _index2color(mask[pix], num_cls, cls_colors)
             )
         colored_mask = np.array(colored_mask).astype(np.uint8)
-        print(colored_mask.shape)
+        # print(colored_mask.shape)
         colored_mask = colored_mask.reshape((shape_mask[0], shape_mask[1], 3))
         return colored_mask
 
@@ -290,7 +291,7 @@ if __name__ == "__main__":
     params = {'model_name': 'airplanes_new',
               'path_file': [r"C:\Users\Anonim\Documents\terra_gui\TerraProjects\airplanes.trds\sources\1_image\Самолеты\0.jpg"]}
     x_input = _preprocess_model(**params)
-    print(x_input.shape)
+    # print(x_input.shape)
     plt.imshow(x_input[0])
     plt.show()
 

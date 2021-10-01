@@ -7,7 +7,7 @@ from random import randrange
 
 
 path = make_path("terra_ai/cascades/demo_panel/cascades_json/text_segmentation.json")
-print(path)
+# print(path)
 main_block = json2cascade(path)
 
 with open(path) as cfg:
@@ -37,9 +37,9 @@ with open(output_path, 'w') as f:
     f.write(str(format_out))
 
 main_block(input_path)
-print(main_block[-1].out)
+# print(main_block[-1].out)
 
 while True:
     input_path = input()
     main_block(input_path)
-    print(main_block[-1].out)
+    # print(main_block[-1].out)

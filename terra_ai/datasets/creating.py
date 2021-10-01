@@ -268,9 +268,18 @@ class CreateDataset(object):
         return put_parameters
 
     def create_preprocessing(self, instructions: DatasetInstructionsData):
-
         for put in list(instructions.inputs.values()) + list(instructions.outputs.values()):
             for col_name, data in put.items():
+                if 'timeseries' in data.parameters.values():
+                    length = data.parameters['length']
+                    depth = data.parameters['depth']
+                    step = data.parameters['step']
+                    for pt in list(instructions.inputs.values()) + list(instructions.outputs.values()):
+                        for col_nm, dt in pt.items():
+                            if 'raw' in dt.parameters.values():
+                                dt.parameters['length'] = length
+                                dt.parameters['depth'] = depth
+                                dt.parameters['step'] = step
                 if 'scaler' in data.parameters.keys():
                     self.preprocessing.create_scaler(**data.parameters)
                 elif 'prepare_method' in data.parameters.keys():
@@ -363,17 +372,36 @@ class CreateDataset(object):
             self.columns[key] = {}
             creating_inputs_data[key] = {}
             for col_name, data in self.instructions.inputs[key].items():
+                column_names = []
+                if creation_data.inputs.get(key).type == LayerInputTypeChoice.Dataframe:
+                    column_names = pd.read_csv(creation_data.inputs.get(key).parameters.sources_paths[0], nrows=0,
+                                               sep=None, engine='python').columns.to_list()
+                    current_col_name = '_'.join(col_name.split('_')[1:])
+                    idx = column_names.index(current_col_name)
+                    try:
+                        task = creation_data.columns_processing[
+                            str(creation_data.inputs.get(key).parameters.cols_names[idx][0])].type
+                    except IndexError:
+                        task = LayerInputTypeChoice.Raw
+                else:
+                    task = creation_data.inputs.get(key).type
+
                 prep = None
-                if self.preprocessing.preprocessing.get(key) and \
-                        self.preprocessing.preprocessing.get(key).get(col_name):
+                if self.preprocessing.preprocessing.get(key) and self.preprocessing.preprocessing.get(key).get(col_name):
                     prep = self.preprocessing.preprocessing.get(key).get(col_name)
 
-                if creation_data.inputs.get(key).type in path_type_input_list or \
-                        creation_data.columns_processing.get(str(key)) is not None and \
-                        creation_data.columns_processing.get(str(key)).type in path_type_input_list:
-                    data_to_pass = os.path.join(self.paths.basepath, data.instructions[0])
+                if creation_data.inputs.get(key).type == LayerInputTypeChoice.Dataframe:
+                    data_to_pass = data.instructions[0]
+                    c_name = '_'.join(col_name.split('_')[1:])
+                    c_idx = column_names.index(c_name)
+                    if creation_data.inputs.get(key).parameters.cols_names[c_idx]:
+                        c_data_idx = creation_data.inputs.get(key).parameters.cols_names[c_idx][0]
+                        if creation_data.columns_processing.get(str(c_data_idx)).type in path_type_input_list:
+                            data_to_pass = os.path.join(self.paths.basepath, data.instructions[0])
                 elif 'depth' in data.parameters.keys() and data.parameters['depth']:
                     data_to_pass = data.instructions[0:data.parameters['length']]
+                elif creation_data.inputs.get(key).type in path_type_input_list:
+                    data_to_pass = os.path.join(self.paths.basepath, data.instructions[0])
                 else:
                     data_to_pass = data.instructions[0]
 
@@ -392,18 +420,6 @@ class CreateDataset(object):
                     arr['parameters'].get('classes_names')
 
                 num_classes = len(classes_names) if classes_names else None
-                if creation_data.inputs.get(key).type == LayerInputTypeChoice.Dataframe:
-                    column_names = pd.read_csv(creation_data.inputs.get(key).parameters.sources_paths[0], nrows=0,
-                                               sep=None, engine='python').columns.to_list()
-                    current_col_name = '_'.join(col_name.split('_')[1:])
-                    idx = column_names.index(current_col_name)
-                    try:
-                        task = creation_data.columns_processing[
-                            str(creation_data.inputs.get(key).parameters.cols_names[idx][0])].type
-                    except IndexError:
-                        task = LayerInputTypeChoice.Raw
-                else:
-                    task = creation_data.inputs.get(key).type
 
                 # Прописываем параметры для колонки
                 current_column = DatasetInputsData(datatype=DataType.get(len(array.shape), 'DIM'),
@@ -664,7 +680,6 @@ class CreateDataset(object):
                         # print(np.array(globals()[f'current_arrays_{n}']).shape)
                         out_array[split][key + n] = np.array(globals()[f'current_arrays_{n}'])
                 else:
-                    # print(np.array(current_arrays).shape)
                     out_array[split][key] = np.array(current_arrays)
 
         return out_array

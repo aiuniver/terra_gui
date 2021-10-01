@@ -167,6 +167,7 @@ export default {
     &--three {
       top: -22px;
       font-size: 14px;
+      white-space: nowrap;
     }
     &--index {
       width: 70px;
