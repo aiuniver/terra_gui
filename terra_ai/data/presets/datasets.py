@@ -110,7 +110,7 @@ KerasInstructions = {'mnist': {1: {'1_image': {'cols_names': '1_image',
                      'reuters': {1: {}
                                  }
                      }
-
+# Конфиги
 DatasetsGroups = [
     {
         "alias": "keras",
