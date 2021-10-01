@@ -16,6 +16,10 @@ class CascadeCreator:
             dataset_config = json.load(cfg)
 
         tags = dataset_config['tags'][1]['alias']
+        if tags == "text_segmentation":
+            dataset_path = os.path.join(model_path, "dataset", "instructions", "parameters", f"2_{tags}.json")
+            with open(dataset_path) as cfg:
+                dataset_config = json.load(cfg)
 
         cascade_json_path = f"terra_ai/deploy/demo_panel_templates/{tags}.json"
         with open(cascade_json_path) as cfg:
@@ -36,6 +40,14 @@ class CascadeCreator:
         config['cascades']['2']['params']['num_class'] = dataset_config['outputs']['2']['num_classes']
         config['cascades']['2']['params']['classes_colors'] = [Color(i).as_rgb_tuple() for i in
                                                                dataset_config['outputs']['2']['classes_colors']]
+
+        return config
+
+    @staticmethod
+    def make_text_segmentation(config, dataset_config, model):
+        config['cascades']['model']['model'] = model
+        config['cascades']['2']['params']['open_tag'] = dataset_config['open_tags']
+        config['cascades']['2']['params']['close_tag'] = dataset_config['close_tags']
 
         return config
 

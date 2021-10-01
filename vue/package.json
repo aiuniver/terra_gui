@@ -1,6 +1,6 @@
 {
   "name": "vue_neural",
-  "version": "0.9.84",
+  "version": "0.9.88",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
@@ -8,12 +8,12 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@dongido/vue-viaudio": "^0.3.5",
     "axios": "^0.21.1",
     "core-js": "^3.6.5",
     "deepmerge": "^4.2.2",
     "package.json": "^2.0.1",
     "papaparse": "^5.3.1",
-    "v-video-embed": "^1.0.8",
     "vue": "^2.6.14",
     "vue-audio-better": "^3.0.1",
     "vue-audio-visual": "^2.3.0",

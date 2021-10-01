@@ -15,15 +15,18 @@
         </t-field>
       </div>
     </div>
-    <div class="t-balance__graphs">
+    <div
+      class="t-balance__graphs"
+      v-if="(settings.show_train || settings.show_val) && Object.keys(dataDalance).length > 0"
+    >
       <template v-for="(layer, index) of dataDalance">
         <template v-for="(item, i) of filter(layer)">
-          <Graph :key="'graph_' + index + '/' + i" v-bind="item" :sort="settings.sorted" />
+          <Graph :key="'graph_' + index + '/' + i" v-bind="item" />
         </template>
       </template>
     </div>
-    <div v-if="settings.show_train || settings.show_val" class="t-balance__overlay">
-      <LoadSpiner v-if="isLearning" text="Загрузка данных..." />
+    <div class="t-balance__overlay">
+      <LoadSpiner v-if="isLearning && Object.keys(dataDalance).length === 0" text="Загрузка данных..." />
     </div>
   </div>
 </template>

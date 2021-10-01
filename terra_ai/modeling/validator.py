@@ -711,6 +711,7 @@ class LayerValidation:
                     return output_shape, None
                 except Exception:
                     return output_shape, self.parameters_validation()
+
             if self.module_type == ModuleTypeChoice.tensorflow:
                 try:
                     inp_shape = (
@@ -741,7 +742,8 @@ class LayerValidation:
                             self.module_type == ModuleTypeChoice.keras
                             or self.module_type == ModuleTypeChoice.terra_layer
                     ):
-                        del val_dict["name"]
+                        if "name" in val_dict.keys():
+                            val_dict.pop("name")
                         getattr(self.module, self.layer_type)(
                             **val_dict
                         ).compute_output_shape(
