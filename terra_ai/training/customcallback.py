@@ -592,7 +592,7 @@ class InteractiveCallback:
         elif dataset_output.task == LayerOutputTypeChoice.TextSegmentation and \
                 not dataset_output.classes_colors:
             for tag in dataset_output.classes_names:
-                colors[tag] = tuple(np.random.randint(256, size=3))
+                colors[tag] = tuple(np.random.randint(256, size=3).astype('int').tolist())
             return colors
         elif dataset_output.task == LayerOutputTypeChoice.Segmentation:
             return [classes_color.as_rgb_tuple() for classes_color in dataset_output.classes_colors]
