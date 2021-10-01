@@ -123,10 +123,12 @@ export default {
     async interactive({ state: { interactive }, dispatch }, part) {
       const data = { ...interactive, ...part }
       const res = await dispatch('axios', { url: '/training/interactive/', data }, { root: true });
+      if (res) {
+        dispatch('setObjectInteractive', data);
+      }
       if (res?.data?.train_data) {
         const { data: { train_data } } = res
         dispatch('setTrainData', train_data);
-        dispatch('setObjectInteractive', data);
       }
       return res
     },
