@@ -4,30 +4,32 @@
     <div class="predictions__params">
       <div class="predictions__param">
         <t-field inline label="Данные для расчета">
-          <t-select-new :list="sortData" v-model="settings.example_choice_type" small />
+          <t-select-new :list="sortData" v-model="example_choice_type" small />
         </t-field>
         <t-field inline label="Тип выбора данных">
-          <t-select-new :list="sortOutput" v-model="settings.main_output" small />
+          <t-select-new :list="sortOutput" v-model="main_output" small />
         </t-field>
         <t-field inline label="Показать примеров">
-          <t-input-new v-model.number="settings.num_examples" type="number" small style="width: 109px;" />
+          <t-input-new v-model.number="num_examples" type="number" small style="width: 109px" :error="isError" />
         </t-field>
       </div>
       <div class="predictions__param">
         <t-field inline label="Выводить промежуточные результаты">
-          <t-checkbox-new v-model="settings.show_results" small />
+          <t-checkbox-new v-model="show_results" small />
         </t-field>
         <t-field inline label="Показать статистику">
-          <t-checkbox-new v-model="settings.show_statistic" :value="true" small />
+          <t-checkbox-new v-model="show_statistic" small />
         </t-field>
       </div>
       <div class="predictions__param">
         <t-field inline label="Автообновление">
-          <t-checkbox-new v-model="settings.autoupdate" small />
+          <t-checkbox-new v-model="autoupdate" small />
         </t-field>
       </div>
       <div class="predictions__param">
-        <t-button style="width: 150px" @click.native="show">Показать</t-button>
+        <t-button style="width: 150px" @click.native="show" :disabled="!!isError">
+          {{ !update ? 'Показать' : 'Обновить' }}
+        </t-button>
       </div>
     </div>
     <div class="predictions__body">
@@ -62,6 +64,13 @@ export default {
       { label: 'Seed', value: 'seed' },
       { label: 'Random', value: 'random' },
     ],
+    autoupdate: false,
+    example_choice_type: 'seed',
+    main_output: 2,
+    num_examples: 10,
+    show_results: true,
+    show_statistic: true,
+    max: 10,
   }),
   computed: {
     ...mapGetters({
@@ -81,13 +90,29 @@ export default {
         };
       });
     },
-    settings: {
-      set(value) {
-        this.$store.dispatch('trainings/setObjectInteractive', { intermediate_result: value });
-      },
-      get() {
-        return this.$store.getters['trainings/getObjectInteractive']('intermediate_result');
-      },
+    update() {
+      for (let key in this.settings) {
+        if (this[key] !== this.settings[key]) {
+          return true;
+        }
+      }
+      return false;
+    },
+    isError() {
+      const value = this.num_examples;
+      if (value === '') {
+        return 'Поле не может быть пустым';
+      }
+      if (value > 10) {
+        return 'Не больше 10 примеров';
+      }
+      if (value < 1) {
+        return 'Не меньше 1 примера';
+      }
+      return '';
+    },
+    settings() {
+      return this.$store.getters['trainings/getObjectInteractive']('intermediate_result');
     },
     predictData() {
       return this.$store.getters['trainings/getTrainData']('intermediate_result') || {};
@@ -98,13 +123,24 @@ export default {
   },
   methods: {
     async show() {
-      this.start = this.settings.show_results
-      await this.$store.dispatch('trainings/interactive', {});
+      this.start = this.settings.show_results;
+      const data = {
+        autoupdate: this.autoupdate,
+        example_choice_type: this.example_choice_type,
+        main_output: this.main_output,
+        num_examples: this.num_examples > 10 ? 10 : this.num_examples,
+        show_results: this.show_results,
+        show_statistic: this.show_statistic,
+      };
+      await this.$store.dispatch('trainings/interactive', { intermediate_result: data });
     },
   },
   created() {
-    this.start = this.settings.show_results
-  }
+    for (let key in this.settings) {
+      this[key] = this.settings[key];
+    }
+    this.start = this.settings.show_results;
+  },
 };
 </script>
 

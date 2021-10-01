@@ -126,6 +126,7 @@ export default {
       if (res?.data?.train_data) {
         const { data: { train_data } } = res
         dispatch('setTrainData', train_data);
+        dispatch('setObjectInteractive', data);
       }
       return res
     },
