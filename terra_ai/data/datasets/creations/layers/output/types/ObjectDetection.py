@@ -10,3 +10,7 @@ class ParametersData(SourcesPathsData):
     num_classes: Optional[PositiveInt]
     put: Optional[PositiveInt]
     cols_names: Optional[str]
+
+    def __init__(self, **data):
+        data.update({"cols_names": None})
+        super().__init__(**data)
