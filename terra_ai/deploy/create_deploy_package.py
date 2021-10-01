@@ -16,10 +16,14 @@ class CascadeCreator:
             dataset_config = json.load(cfg)
 
         tags = dataset_config['tags'][1]['alias']
+        if dataset_config["tags"][0]["alias"] == "text" and tags != "text_segmentation":
+            tags = f"text_{tags}"
         if tags == "text_segmentation":
             dataset_path = os.path.join(model_path, "dataset", "instructions", "parameters", f"2_{tags}.json")
             with open(dataset_path) as cfg:
                 dataset_config = json.load(cfg)
+
+
 
         cascade_json_path = f"terra_ai/deploy/demo_panel_templates/{tags}.json"
         with open(cascade_json_path) as cfg:
@@ -30,7 +34,12 @@ class CascadeCreator:
             json.dump(config, f, indent=2)
 
     @staticmethod
-    def make_classification(config, dataset_config, model):
+    def make_image_classification(config, dataset_config, model):
+        config['cascades']['model']['model'] = model
+        return config
+
+    @staticmethod
+    def make_text_classification(config, dataset_config, model):
         config['cascades']['model']['model'] = model
         return config
 
