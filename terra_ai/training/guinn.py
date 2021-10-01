@@ -253,7 +253,7 @@ class GUINN:
         self._set_training_params(dataset=dataset, dataset_path=dataset_path, model_path=model_path,
                                   params=training_params, training_path=training_path, initial_config=initial_config)
         self.model = self._set_model(model=gui_model)
-        if interactive.get_states().get("status") == "no_train":
+        if interactive.get_states().get("status") == "training":
             self.save_model()
         if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.ObjectDetection:
             self.yolo_model_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
