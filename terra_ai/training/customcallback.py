@@ -1634,6 +1634,8 @@ class InteractiveCallback:
                         "task") == LayerOutputTypeChoice.TextSegmentation:
                         return_data[f"{idx + 1}"]['tags_color'][f"Выходной слой «{out}»"] = \
                             self.dataset_config.get("outputs").get(out).get('classes_colors')
+                        for color in [colors for colors in self.dataset_config.get("outputs").get(out).get('classes_colors').values()]:
+                            print([type(elem) for elem in color])
                     else:
                         return_data[f"{idx + 1}"]['tags_color'] = {}
                     if data.get('stat'):
