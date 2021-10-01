@@ -381,7 +381,7 @@ class InteractiveCallback:
                        training_path: str,
                        initial_config: InteractiveData):
 
-        print('initial_config', initial_config)
+        # print('initial_config', initial_config)
         self.preset_path = os.path.join(training_path, "presets")
         if not os.path.exists(self.preset_path):
             os.mkdir(self.preset_path)
@@ -1634,8 +1634,8 @@ class InteractiveCallback:
                         "task") == LayerOutputTypeChoice.TextSegmentation:
                         return_data[f"{idx + 1}"]['tags_color'][f"Выходной слой «{out}»"] = \
                             self.dataset_config.get("outputs").get(out).get('classes_colors')
-                        for color in [colors for colors in self.dataset_config.get("outputs").get(out).get('classes_colors').values()]:
-                            print([type(elem) for elem in color])
+                        # for color in [colors for colors in self.dataset_config.get("outputs").get(out).get('classes_colors').values()]:
+                        #     print([type(elem) for elem in color])
                     else:
                         return_data[f"{idx + 1}"]['tags_color'] = {}
                     if data.get('stat'):
