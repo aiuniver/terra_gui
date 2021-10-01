@@ -139,7 +139,7 @@ export default {
     for (let key in this.settings) {
       this[key] = this.settings[key];
     }
-    this.start = this.settings.show_results;
+    this.start = this.settings.show_results && this.autoupdate;
   },
 };
 </script>
