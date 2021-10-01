@@ -402,7 +402,7 @@ class InteractiveCallback:
         self.class_idx = self._prepare_class_idx()
         self.seed_idx = self._prepare_seed()
         # self.example_idx = self._prepare_example_idx_to_show()
-        print('data_balance', self._get_balance_data_request())
+        # print('data_balance', self._get_balance_data_request())
 
     def set_status(self, status):
         self.train_states["status"] = status
