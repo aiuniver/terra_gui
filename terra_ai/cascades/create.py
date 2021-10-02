@@ -31,7 +31,6 @@ def make_processing(preprocess_list):
 def json2model_cascade(path: str):
     weight = None
     model = None
-
     for i in os.listdir(path):
         if i[-3:] == '.h5' and 'best' in i:
             weight = i
@@ -129,7 +128,7 @@ def create_output(**params):
 
 
 def create_model(**params):
-    model = json2model_cascade(str(Path(Path.cwd(), params["model"])))
+    model = json2model_cascade(str(Path(ROOT_PATH, params["model"])))
 
     return model
 
