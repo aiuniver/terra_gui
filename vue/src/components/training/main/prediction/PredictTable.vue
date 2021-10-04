@@ -5,7 +5,7 @@
       <div class="t-table__body">
         <div
           class="t-table__rows"
-          v-for="({ initial_data, true_value, predict_value, statistic_values }, id) of predict"
+          v-for="({ initial_data, true_value, predict_value, statistic_values, tags_color }, id) of predict"
           :key="'rows_' + id"
         >
           <div v-if="id === '1'" class="t-table__title t-table__title--index">Слой</div>
@@ -19,7 +19,7 @@
                   <div class="t-table__col" v-for="(item, i) of data" :key="`initial layer ${i}`">
                     <div v-if="id === '1'" class="t-table__title t-table__title--three">{{ item.title }}</div>
                     <div class="t-table__row t-table__row--center">
-                      <Forms :data="item" :update="update" :type="type" :key="`initial data ${i}`" />
+                      <Forms :data="item" :tags_color="tags_color" :layer="key" :update="update" :type="type" :key="`initial data ${i}`" />
                     </div>
                   </div>
                 </div>
@@ -35,7 +35,7 @@
                   <div class="t-table__col" v-for="(item, i) of data" :key="`true layer ${i}`">
                     <div v-if="id === '1'" class="t-table__title t-table__title--three">{{ item.title }}</div>
                     <div class="t-table__row t-table__row--center">
-                      <Forms :data="item" :type="type" :key="`true data ${i}`" />
+                      <Forms :data="item" :tags_color="tags_color" :layer="key" :type="type" :key="`true data ${i}`" />
                     </div>
                   </div>
                 </div>
@@ -51,7 +51,7 @@
                   <div class="t-table__col" v-for="(item, i) of data" :key="`predict layer ${i}`">
                     <div v-if="id === '1'" class="t-table__title t-table__title--three">{{ item.title }}</div>
                     <div class="t-table__row t-table__row--center">
-                      <Forms :data="item" :type="type" :key="`predict data ${i}`" />
+                      <Forms :data="item" :tags_color="tags_color" :layer="key" :type="type" :key="`predict data ${i}`" />
                     </div>
                   </div>
                 </div>

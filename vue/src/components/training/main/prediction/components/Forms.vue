@@ -29,6 +29,14 @@ export default {
       type: Object,
       default: () => {},
     },
+    tags_color: {
+      type: Object,
+      default: () => {},
+    },
+    layer: {
+      type: String,
+      default: '',
+    },
     update: {
       type: String,
       default: '',
@@ -36,7 +44,7 @@ export default {
   },
   computed: {
     obj() {
-      return { ...this.data, update: this.update };
+      return { ...this.data, update: this.update, tags_color: this.tags_color, layer: this.layer };
     },
   },
 };

@@ -4,20 +4,13 @@ import os
 from tensorflow.keras.utils import load_img
 
 
-def video(path):
+def video(paths):
 
-    cap = cv2.VideoCapture(path)
+    if isinstance(paths, str):
+        paths = [paths]
 
-    while cap.isOpened:
-
-        ret, frame = cap.read()
-
-        if not ret:
-            break
-
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-        yield frame
+    for path in paths:
+        yield path
 
 
 def image(path):
@@ -45,3 +38,11 @@ def text(paths):
         with open(path, 'r', encoding='utf-8') as txt:
             text = txt.read()
         yield text
+
+
+def audio(paths):
+    if isinstance(paths, str):
+        paths = [paths]
+
+    for path in paths:
+        yield path

@@ -1,7 +1,7 @@
 <template>
   <div class="load__answer">
-    <scrollbar>
-      <div class="apiBlock">
+    <scrollbar :ops="ops">
+      <div class="answer__text">
         {{ moduleList }}
       </div>
 <!--      <div class="terra-url">https://srv2.demo.neural-university.ru</div>-->
@@ -39,6 +39,14 @@ export default {
       default: () => ""
     }
   },
+  data: () => ({
+    ops: {
+      scrollPanel: {
+        scrollingX: false,
+        scrollingY: true,
+      },
+    },
+  })
 }
 </script>
 
@@ -51,6 +59,12 @@ export default {
   border: 1px solid #6C7883;
   box-sizing: border-box;
   border-radius: 4px;
+}
+.answer{
+  &__text{
+    width: 325px;
+    height: 430px;
+  }
 }
 .terra-url{
   color: #65B9F4;

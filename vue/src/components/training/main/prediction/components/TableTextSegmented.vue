@@ -1,5 +1,7 @@
 <template>
-  <p> {{ value }}</p>
+  <div class="t-text-segmented">
+    <p class="t-text-segmented__text" v-html="text">{{}}</p>
+  </div>
 </template>
 
 <script>
@@ -14,23 +16,35 @@ export default {
       type: Array,
       default: () => [],
     },
+    tags_color: {
+      type: Object,
+      default: () => {},
+    },
+    layer: {
+      type: String,
+      default: '',
+    },
   },
 
   computed: {
-    // text() {
-    //   const temp = this.value
-    //     .split(' ')
-    //     .map(el => {
-    //       const tag = el.substring(0, el.indexOf('>') + 1);
-    //       let temp = `<span style="color: rgb(${this.color_mark[tag].join(',')})">${el.replace(/<[^>]+>/g, '')}</span>`;
-    //       return temp;
-    //     })
-    //     .join(' ');
-    //   return temp;
-    // },
-    // type() {
-    //   return this.data?.type || null;
-    // },
+    text() {
+      let text = this.value.replace(/<\/[^>]+>/g, '</span>');
+      const layer = this.tags_color[this.layer];
+      for (let key in layer) {
+        const [r, g, b] = layer[key];
+        text = text.replaceAll(key, `<span style="background-color: rgb(${r} ${g} ${b}); border-radius: 4px; padding: 0 5px 0 5px;">`);
+      }
+      return text;
+    },
   },
 };
 </script>
+
+<style lang="scss" scoped>
+.t-text-segmented {
+  width: 500px;
+  padding: 10px;
+  &__text {
+  }
+}
+</style>

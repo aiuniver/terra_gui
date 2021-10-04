@@ -49,6 +49,9 @@
               <i :class="['t-icon', checkCorrect]" :title="'is correct'"></i>
             </div>
           </div>
+          <div class="password__rule">
+            <p>Пароль должен содержать не менее 6 символов</p>
+          </div>
         </div>
         <button :disabled="send_disabled" @click="SendData" v-if="!DataSent">Загрузить</button>
         <div class="loader" v-if="DataLoading">
@@ -323,13 +326,20 @@ button {
     }
   }
 }
-.password__icon {
-  position: absolute;
-  width: 345px;
-  i {
-    position: relative;
-    float: right;
-    margin-top: -34px;
+.password{
+  &__icon {
+    position: absolute;
+    width: 345px;
+    i {
+      position: relative;
+      float: right;
+      margin-top: -34px;
+    }
+  }
+  &__rule{
+    p{
+      font-size: 12px;
+    }
   }
 }
 </style>
