@@ -8,6 +8,7 @@ import trainings from './modules/trainings';
 import deploy from './modules/deploy';
 import tables from './modules/tables';
 import profile from './modules/profile';
+import logging from './modules/logging';
 
 import axios from 'axios';
 // import Vue from 'vue';
@@ -22,10 +23,11 @@ export default {
     deploy,
     projects,
     tables,
-    profile
+    profile,
+    logging
   },
   actions: {
-    async axios({ dispatch }, { method = 'post', url, data = {} }) {
+    async axios ({ dispatch }, { method = 'post', url, data = {} }) {
       try {
         const response = await axios({ method, url: '/api/v1' + url, data });
         const { error, success } = response.data;
@@ -33,10 +35,12 @@ export default {
           dispatch('messages/setMessage', '');
         } else {
           dispatch('messages/setMessage', { error: JSON.stringify(error, null, 2) });
+          dispatch('logging/setError', JSON.stringify(error, null, 2));
         }
         return response.data;
       } catch (error) {
         dispatch('messages/setMessage', { error: JSON.stringify(error, null, 2) });
+        dispatch('logging/setError', JSON.stringify(error, null, 2));
         dispatch('settings/setOverlay', false);
         return null;
       }

@@ -261,7 +261,7 @@ export default {
       }
     },
     parse({ parse, value, name }) {
-      console.log({ parse, value, name });
+      // console.log({ parse, value, name });
       ser(this.trainSettings, parse, value);
       this.trainSettings = { ...this.trainSettings };
       if (name === 'architecture_parameters_checkpoint_layer') {
