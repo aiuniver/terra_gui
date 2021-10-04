@@ -1,6 +1,9 @@
 <template>
   <div>
-    <t-button :disabled="!selected" @click.native="click">Выбрать датасет</t-button>
+    <t-button :disabled="!selected" @click.native="click">
+      <span v-if="selected">Выбрать датасет</span>
+      <span v-else>{{ btnText }}</span>
+    </t-button>
   </div>
 </template>
 
@@ -18,6 +21,11 @@ export default {
     selectedIndex() {
       return this.$store.getters['datasets/getSelectedIndex'];
     },
+    btnText() {
+      const name = this.$store.getters['projects/getProject']?.dataset?.name;
+      if (name) return 'Выбран: ' + name;
+      return 'Выберите датасет';
+    }
   },
   methods: {
     async message() {
