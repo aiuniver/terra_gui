@@ -49,7 +49,7 @@ class PrepareDataset(object):
 
         pass
 
-    def train_generator(self):
+    def train_generator(self, split_name):
 
         path_type_list = [decamelize(LayerInputTypeChoice.Image), decamelize(LayerOutputTypeChoice.Image),
                           decamelize(LayerInputTypeChoice.Audio), decamelize(LayerOutputTypeChoice.Audio),
@@ -58,14 +58,14 @@ class PrepareDataset(object):
 
         inputs = {}
         outputs = {}
-        for idx in range(len(self.dataframe['train'])):
+        for idx in range(len(self.dataframe[split_name])):
             for inp_id in self.data.inputs.keys():
                 tmp = []
                 for col_name, data in self.instructions[inp_id].items():
                     if data['put_type'] in path_type_list:
-                        sample = os.path.join(self.paths.basepath, self.dataframe['train'].loc[idx, col_name])
+                        sample = os.path.join(self.paths.basepath, self.dataframe[split_name].loc[idx, col_name])
                     else:
-                        sample = self.dataframe['train'].loc[idx, col_name]
+                        sample = self.dataframe[split_name].loc[idx, col_name]
                     array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
                         'preprocess': self.preprocessing.preprocessing[inp_id][col_name]}, **data)
                     array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
@@ -77,9 +77,9 @@ class PrepareDataset(object):
                 tmp = []
                 for col_name, data in self.instructions[out_id].items():
                     if data['put_type'] in path_type_list:
-                        sample = os.path.join(self.paths.basepath, self.dataframe['train'].loc[idx, col_name])
+                        sample = os.path.join(self.paths.basepath, self.dataframe[split_name].loc[idx, col_name])
                     else:
-                        sample = self.dataframe['train'].loc[idx, col_name]
+                        sample = self.dataframe[split_name].loc[idx, col_name]
                     array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
                         'preprocess': self.preprocessing.preprocessing[out_id][col_name]}, **data)
                     array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
@@ -89,16 +89,16 @@ class PrepareDataset(object):
 
             yield inputs, outputs
 
-    def train_generator_3(self):
+    def train_generator_3(self, split_name):
         inputs = {}
         outputs = {}
         service = {}
 
-        for idx in range(len(self.dataframe['train'])):
+        for idx in range(len(self.dataframe[split_name])):
             for inp_id in self.data.inputs.keys():
                 tmp = []
                 for col_name, data in self.instructions[inp_id].items():
-                    sample = os.path.join(self.paths.basepath, self.dataframe['train'].loc[idx, col_name])
+                    sample = os.path.join(self.paths.basepath, self.dataframe[split_name].loc[idx, col_name])
                     array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
                         'preprocess': self.preprocessing.preprocessing[inp_id][col_name]}, **data)
                     array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
@@ -108,149 +108,7 @@ class PrepareDataset(object):
 
             for out_id in self.data.outputs.keys():
                 for col_name, data in self.instructions[out_id].items():
-                    sample = os.path.join(self.paths.basepath, self.dataframe['train'].loc[idx, col_name])
-                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
-                        'preprocess': self.preprocessing.preprocessing[out_id][col_name]}, **data)
-                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
-                                                                                     **array['parameters'])
-                    for n in range(6):
-                        if n <= 2:
-                            outputs[str(out_id + n)] = np.array(array[n])
-                        else:
-                            service[str(out_id + n)] = np.array(array[n])
-            yield inputs, outputs, service
-
-    def val_generator(self):
-
-        path_type_list = [decamelize(LayerInputTypeChoice.Image), decamelize(LayerOutputTypeChoice.Image),
-                          decamelize(LayerInputTypeChoice.Audio), decamelize(LayerOutputTypeChoice.Audio),
-                          decamelize(LayerInputTypeChoice.Video), decamelize(LayerOutputTypeChoice.ObjectDetection),
-                          decamelize(LayerOutputTypeChoice.Segmentation)]
-
-        inputs = {}
-        outputs = {}
-        for idx in range(len(self.dataframe['val'])):
-            for inp_id in self.data.inputs.keys():
-                tmp = []
-                for col_name, data in self.instructions[inp_id].items():
-                    if data['put_type'] in path_type_list:
-                        sample = os.path.join(self.paths.basepath, self.dataframe['val'].loc[idx, col_name])
-                    else:
-                        sample = self.dataframe['val'].loc[idx, col_name]
-                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
-                        'preprocess': self.preprocessing.preprocessing[inp_id][col_name]}, **data)
-                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
-                                                                                     **array['parameters'])
-                    tmp.append(array)
-                inputs[str(inp_id)] = np.concatenate(tmp, axis=0)
-
-            for out_id in self.data.outputs.keys():
-                tmp = []
-                for col_name, data in self.instructions[out_id].items():
-                    if data['put_type'] in path_type_list:
-                        sample = os.path.join(self.paths.basepath, self.dataframe['val'].loc[idx, col_name])
-                    else:
-                        sample = self.dataframe['val'].loc[idx, col_name]
-                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
-                        'preprocess': self.preprocessing.preprocessing[out_id][col_name]}, **data)
-                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
-                                                                                     **array['parameters'])
-                    tmp.append(array)
-                outputs[str(out_id)] = np.concatenate(tmp, axis=0)
-
-            yield inputs, outputs
-
-    def val_generator_3(self):
-        inputs = {}
-        outputs = {}
-        service = {}
-
-        for idx in range(len(self.dataframe['val'])):
-            for inp_id in self.data.inputs.keys():
-                tmp = []
-                for col_name, data in self.instructions[inp_id].items():
-                    sample = os.path.join(self.paths.basepath, self.dataframe['train'].loc[idx, col_name])
-                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
-                        'preprocess': self.preprocessing.preprocessing[inp_id][col_name]}, **data)
-                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
-                                                                                     **array['parameters'])
-                    tmp.append(array)
-                inputs[str(inp_id)] = np.concatenate(tmp, axis=0)
-
-            for out_id in self.data.outputs.keys():
-                for col_name, data in self.instructions[out_id].items():
-                    sample = os.path.join(self.paths.basepath, self.dataframe['train'].loc[idx, col_name])
-                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
-                        'preprocess': self.preprocessing.preprocessing[out_id][col_name]}, **data)
-                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
-                                                                                     **array['parameters'])
-                    for n in range(6):
-                        if n <= 2:
-                            outputs[str(out_id + n)] = np.array(array[n])
-                        else:
-                            service[str(out_id + n)] = np.array(array[n])
-            yield inputs, outputs, service
-
-    def test_generator(self):
-
-        path_type_list = [decamelize(LayerInputTypeChoice.Image), decamelize(LayerOutputTypeChoice.Image),
-                          decamelize(LayerInputTypeChoice.Audio), decamelize(LayerOutputTypeChoice.Audio),
-                          decamelize(LayerInputTypeChoice.Video), decamelize(LayerOutputTypeChoice.ObjectDetection),
-                          decamelize(LayerOutputTypeChoice.Segmentation)]
-
-        inputs = {}
-        outputs = {}
-        for idx in range(len(self.dataframe['test'])):
-            for inp_id in self.data.inputs.keys():
-                tmp = []
-                for col_name, data in self.instructions[inp_id].items():
-                    if data['put_type'] in path_type_list:
-                        sample = os.path.join(self.paths.basepath, self.dataframe['test'].loc[idx, col_name])
-                    else:
-                        sample = self.dataframe['test'].loc[idx, col_name]
-                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
-                        'preprocess': self.preprocessing.preprocessing[inp_id][col_name]}, **data)
-                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
-                                                                                     **array['parameters'])
-                    tmp.append(array)
-                inputs[str(inp_id)] = np.concatenate(tmp, axis=0)
-
-            for out_id in self.data.outputs.keys():
-                tmp = []
-                for col_name, data in self.instructions[out_id].items():
-                    if data['put_type'] in path_type_list:
-                        sample = os.path.join(self.paths.basepath, self.dataframe['test'].loc[idx, col_name])
-                    else:
-                        sample = self.dataframe['test'].loc[idx, col_name]
-                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
-                        'preprocess': self.preprocessing.preprocessing[out_id][col_name]}, **data)
-                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
-                                                                                     **array['parameters'])
-                    tmp.append(array)
-                outputs[str(out_id)] = np.concatenate(tmp, axis=0)
-
-            yield inputs, outputs
-
-    def test_generator_3(self):
-        inputs = {}
-        outputs = {}
-        service = {}
-
-        for idx in range(len(self.dataframe['test'])):
-            for inp_id in self.data.inputs.keys():
-                tmp = []
-                for col_name, data in self.instructions[inp_id].items():
-                    sample = os.path.join(self.paths.basepath, self.dataframe['train'].loc[idx, col_name])
-                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
-                        'preprocess': self.preprocessing.preprocessing[inp_id][col_name]}, **data)
-                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
-                                                                                     **array['parameters'])
-                    tmp.append(array)
-                inputs[str(inp_id)] = np.concatenate(tmp, axis=0)
-
-            for out_id in self.data.outputs.keys():
-                for col_name, data in self.instructions[out_id].items():
-                    sample = os.path.join(self.paths.basepath, self.dataframe['train'].loc[idx, col_name])
+                    sample = os.path.join(self.paths.basepath, self.dataframe[split_name].loc[idx, col_name])
                     array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
                         'preprocess': self.preprocessing.preprocessing[out_id][col_name]}, **data)
                     array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
@@ -334,8 +192,6 @@ class PrepareDataset(object):
                 num_outputs = len(self.data.outputs)
                 if self.data.tags[num_inputs].alias == decamelize(LayerOutputTypeChoice.ObjectDetection):
                     train_gen = self.train_generator_3
-                    val_gen = self.val_generator_3
-                    test_gen = self.test_generator_3
                     out_shapes = ({str(x): self.data.inputs[x].shape for x in range(1, num_inputs + 1)},
                                   {str(x): self.data.outputs[x].shape for x in range(num_inputs + 1,
                                                                                      num_outputs + num_inputs - 2)},
@@ -350,8 +206,6 @@ class PrepareDataset(object):
                                  )
                 else:
                     train_gen = self.train_generator
-                    val_gen = self.val_generator
-                    test_gen = self.test_generator
                     out_shapes = ({str(x): self.data.inputs[x].shape for x in range(1, num_inputs + 1)},
                                   {str(x): self.data.outputs[x].shape for x in range(num_inputs + 1,
                                                                                      num_outputs + 2)})
@@ -359,11 +213,14 @@ class PrepareDataset(object):
                                  {str(x): self.data.outputs[x].dtype for x in range(num_inputs + 1,
                                                                                     num_outputs + 2)})
 
-                self.dataset['train'] = Dataset.from_generator(train_gen, output_shapes=out_shapes,
+                self.dataset['train'] = Dataset.from_generator(lambda: train_gen(split_name='train'),
+                                                               output_shapes=out_shapes,
                                                                output_types=out_types)
-                self.dataset['val'] = Dataset.from_generator(val_gen, output_shapes=out_shapes,
+                self.dataset['val'] = Dataset.from_generator(lambda: train_gen(split_name='val'),
+                                                             output_shapes=out_shapes,
                                                              output_types=out_types)
-                self.dataset['test'] = Dataset.from_generator(test_gen, output_shapes=out_shapes,
+                self.dataset['test'] = Dataset.from_generator(lambda: train_gen(split_name='test'),
+                                                              output_shapes=out_shapes,
                                                               output_types=out_types)
             else:
                 load_arrays()
