@@ -93,7 +93,7 @@ export default {
             uid: 'custom',
           };
         }),
-      ].filter(el => !!~el.label.indexOf(this.search));
+      ].filter(el => el.label.match(new RegExp(this.search, 'i')));
     },
     dialog: {
       set(value) {
