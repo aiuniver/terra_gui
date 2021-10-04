@@ -74,19 +74,18 @@ def get_idx_line(model_plan: List[tuple]):
                 if down_link not in row_idx_s:
                     row_idx_s.append(down_link)
 
+        row_idx_s_copy = copy.deepcopy(row_idx_s)
         for link in row_idx_s:
-
             if (
                     len(up_links.get(link)) > 1
                     and len(set(idx2remove) & set(up_links.get(link))) != 0
             ):
-                row_idx_s.pop(row_idx_s.index(link))
+                row_idx_s_copy.pop(row_idx_s_copy.index(link))
+        row_idx_s = row_idx_s_copy
 
         distribution.append(row_idx_s)
         for idx in row_idx_s:
             idx2remove.pop(idx2remove.index(idx))
-        if count > 100:
-            idx2remove = None
     idx_line = []
     for row in distribution:
         idx_line.extend(row)
@@ -220,8 +219,6 @@ class ModelValidator:
         self._build_model_plan()
 
     def _build_model_plan(self):
-        # оставить описание
-        # self.model_plan.plan_name = self.model.alias
         for layer in self.model.layers:
             if layer.group == LayerGroupChoice.input:
                 self.input_shape[layer.id] = layer.shape.input
