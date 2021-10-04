@@ -966,9 +966,9 @@ class CreateArray(object):
         label_sbbox, label_mbbox, label_lbbox = label
         sbboxes, mbboxes, lbboxes = bboxes_xywh
 
-        instructions = {'instructions': [np.array(label_sbbox, dtype='float32'), np.array(sbboxes, dtype='float32'),
-                                         np.array(label_mbbox, dtype='float32'), np.array(mbboxes, dtype='float32'),
-                                         np.array(label_lbbox, dtype='float32'), np.array(lbboxes, dtype='float32')],
+        instructions = {'instructions': [np.array(label_sbbox, dtype='float32'), np.array(label_mbbox, dtype='float32'),
+                                         np.array(label_lbbox, dtype='float32'), np.array(sbboxes, dtype='float32'),
+                                         np.array(mbboxes, dtype='float32'), np.array(lbboxes, dtype='float32')],
                         'parameters': options}
 
         return instructions

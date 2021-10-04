@@ -72,6 +72,32 @@ class CreateDataset(object):
         shutil.rmtree(self.temp_directory)
         pass
 
+    def postprocess_timeseries(self, full_array):
+        try:
+            new_array = np.array(full_array).transpose()
+        except:
+            new_array = []
+            array = []
+            for el in full_array:
+                if type(el[0]) == np.ndarray:
+                    tmp = []
+                    for j in range(len(el)):
+                        tmp.append(list(el[j]))
+                    array.append(tmp)
+                else:
+                    array.append(el.tolist())
+            array = np.array(array).transpose().tolist()
+            for i in array:
+                tmp = []
+                for j in i:
+                    if type(j) == list:
+                        tmp.extend(j)
+                    else:
+                        tmp.append(j)
+                new_array.append(tmp)
+            new_array = np.array(new_array)
+        return new_array
+
     @staticmethod
     def preprocess_creation_data(creation_data):
 
@@ -442,19 +468,7 @@ class CreateDataset(object):
             if not timeseries_flag:
                 input_array = np.concatenate(input_array, axis=0)
             else:
-                try:
-                    input_array = np.array(input_array)
-                except:
-                    tmp_array = []
-                    for el in input_array:
-                        if type(el[0]) == np.ndarray:
-                            tmp = []
-                            for j in range(len(el)):
-                                tmp.append(el[j])
-                            tmp_array.append(tmp)
-                        else:
-                            tmp_array.append(el.tolist())
-                    input_array = np.array(tmp_array)
+                input_array = self.postprocess_timeseries(input_array)
             task, classes_colors, classes_names, encoding, num_classes = None, None, None, None, None
             if len(self.columns[key]) == 1:
                 for c_name, data in self.columns[key].items():
@@ -588,9 +602,11 @@ class CreateDataset(object):
                                                         )
                     self.columns[key + i] = {col_name: current_output.native()}
 
+            depth_flag = False
             if not creation_data.outputs.get(key).type == LayerOutputTypeChoice.ObjectDetection:
                 if 'depth' in data.parameters.keys() and data.parameters['depth']:
-                    output_array = np.array(output_array)
+                    depth_flag = True
+                    output_array = self.postprocess_timeseries(output_array)
                 else:
                     output_array = np.concatenate(output_array, axis=0)
                     output_array = np.expand_dims(output_array, 0)
@@ -614,9 +630,13 @@ class CreateDataset(object):
                         classes_names += data['classes_names']
                 num_classes = len(classes_names) if classes_names else None
             for i in range(iters):
+                if depth_flag:
+                    shp = output_array.shape
+                else:
+                    shp = output_array[i].shape
                 current_output = DatasetOutputsData(datatype=DataType.get(len(output_array[i].shape), 'DIM'),
                                                     dtype=str(output_array[i].dtype),
-                                                    shape=output_array[i].shape,
+                                                    shape=shp,
                                                     name=creation_data.outputs.get(key).name,
                                                     task=task,
                                                     classes_colors=classes_colors,
@@ -685,19 +705,7 @@ class CreateDataset(object):
                             full_array.append(arr)
                     if not self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
                         if depth:
-                            try:
-                                array = np.array(full_array)
-                            except:
-                                array = []
-                                for el in full_array:
-                                    if type(el[0]) == np.ndarray:
-                                        tmp = []
-                                        for j in range(len(el)):
-                                            tmp.append(el[j])
-                                        array.append(tmp)
-                                    else:
-                                        array.append(el.tolist())
-                                array = np.array(array)
+                            array = self.postprocess_timeseries(full_array)
                         else:
                             array = np.concatenate(full_array, axis=0)
                         current_arrays.append(array)
