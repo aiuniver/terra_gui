@@ -1,10 +1,13 @@
 <template>
   <at-modal v-model="dialog" width="680" showClose>
-    <div slot="header" style="text-align: center; display:flex;">
+    <div slot="header" class="t-model__header">
       <span>Загрузка модели</span>
-      <t-field inline label style="margin-left: 15px;">
-        <t-input-new v-model="search" placeholder="Найти модель" type="text" small style="width: 109px" />
-      </t-field>
+      <div class="t-model__search">
+        <i class="t-icon icon-search"></i>
+        <t-field inline label class="t-model__field">
+          <t-input-new v-model="search" placeholder="Найти модель" type="text" small style="width: 109px" />
+        </t-field>
+      </div>
     </div>
     <div class="row at-row">
       <div class="col-16 models-list scroll-area">
@@ -24,6 +27,9 @@
                 v-if="list.uid === 'custom'"
                 @click="removeModel(list.value)"
               ></div>
+            </li>
+            <li v-if="!models.length" class="loaded-list__item">
+              <span class="loaded-list__item--empty">Модель "{{ search }}" не найдена</span>
             </li>
           </ul>
         </scrollbar>
@@ -153,6 +159,26 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.t-model {
+  &__header {
+    text-align: center;
+    display: flex;
+    align-items: center;
+    user-select: none;
+  }
+  &__search {
+    display: flex;
+    margin: 0 15px 0 auto;
+    i {
+      margin: 0 10px 0 0;
+      width: 18px;
+      opacity: 0.7;
+    }
+    div {
+      margin: 0;
+    }
+  }
+}
 .scroll-area {
   height: 350px;
 }
@@ -167,6 +193,14 @@ export default {
     border-radius: 0 4px 4px 0;
     padding: 10px 15px 10px 20px;
     margin-right: 15px;
+    &--empty {
+      line-height: 1;
+      padding-left: 10px;
+      font-size: 0.875rem;
+      user-select: none;
+      text-align: center;
+      opacity: 0.7;
+    }
     &--active {
       background: #2b5278;
       color: #65b9f4;
