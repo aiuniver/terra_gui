@@ -147,10 +147,57 @@ export default {
     id: Number,
     root: Boolean,
     parameters: Object,
-    update: Object
+    update: Object,
+    isAudio: Number,
   },
   data: () => ({
     valueIn: null,
+    audio: [
+      {
+        type: 'select',
+        name: 'parameter',
+        label: 'Параметр',
+        parse: 'parameter',
+        value: 'audio_signal',
+        disabled: false,
+        list: [
+          {
+            value: 'audio_signal',
+            label: 'Audio signal',
+          },
+          {
+            value: 'chroma_stft',
+            label: 'Chroma STFT',
+          },
+          {
+            value: 'mfcc',
+            label: 'MFCC',
+          },
+          {
+            value: 'rms',
+            label: 'RMS',
+          },
+          {
+            value: 'spectral_centroid',
+            label: 'Spectral centroid',
+          },
+          {
+            value: 'spectral_bandwidth',
+            label: 'Spectral bandwidth',
+          },
+          {
+            value: 'spectral_rolloff',
+            label: 'Spectral roll-off',
+          },
+          {
+            value: 'zero_crossing_rate',
+            label: 'Zero-crossing rate',
+          },
+        ],
+        fields: null,
+        api: null,
+      },
+    ],
   }),
   computed: {
     getValue() {
@@ -164,10 +211,14 @@ export default {
       return this.errors?.[key]?.[0] || this.errors?.parameters?.[key]?.[0] || '';
     },
     dataFields() {
-      if (!!this.fields && !!this.fields[this.valueIn]) {
-        return this.fields[this.valueIn];
+      if (this.name === 'type' && this.valueIn === 'Audio' && this.isAudio !== this.id) {
+        return this.audio;
       } else {
-        return [];
+        if (!!this.fields && !!this.fields[this.valueIn]) {
+          return this.fields[this.valueIn];
+        } else {
+          return [];
+        }
       }
     },
   },
