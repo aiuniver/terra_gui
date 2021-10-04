@@ -1,0 +1,19 @@
+{
+  "cascades": {
+    "input": {
+      "tag": "input",
+      "type": "video"
+    },
+    "model": {
+      "tag": "model",
+      "task": "Audio",
+      "model": "TerraProjects/models/sport_new"
+    }
+  },
+
+  "adjacency_map": {
+    "model": [
+      "INPUT"
+    ]
+  }
+}

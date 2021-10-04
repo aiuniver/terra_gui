@@ -25,6 +25,7 @@
                     :idKey="'key_' + index"
                     :id="inputData.id"
                     :update="mixinUpdateDate"
+                    :isAudio="isAudio"
                     root
                     @multiselect="mixinUpdate"
                     @change="mixinChange"
@@ -70,11 +71,14 @@ export default {
       input: 'datasets/getTypeInput',
       inputData: 'datasets/getInputData',
     }),
+    isAudio() {
+      const [audio] = this.inputDataInput.filter(item => item.type === 'Audio');
+      return audio?.id;
+    },
     inputDataInput() {
       const arr = this.inputData.filter(item => {
         return item.layer === 'input';
       });
-
       return arr;
     },
     height() {
