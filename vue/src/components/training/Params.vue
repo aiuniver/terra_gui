@@ -153,7 +153,7 @@ export default {
       let data = this.trainSettings?.architecture?.parameters?.outputs || [];
       data = data?.[this.metricData]?.metrics || [];
       this.saveValue(data);
-      return data[0] || '';
+      return this.state?.['architecture[parameters][checkpoint][metric_name]'] || data[0] || '';
     },
     state: {
       set(value) {
@@ -261,7 +261,7 @@ export default {
       }
     },
     parse({ parse, value, name }) {
-      // console.log({ parse, value, name });
+      console.log({ parse, value, name });
       ser(this.trainSettings, parse, value);
       this.trainSettings = { ...this.trainSettings };
       if (name === 'architecture_parameters_checkpoint_layer') {
