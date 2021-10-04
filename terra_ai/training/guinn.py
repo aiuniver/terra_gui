@@ -307,7 +307,7 @@ class GUINN:
         if (critical_val_size == self.batch_size) or (critical_val_size > self.batch_size):
             n_repeat = 1
         else:
-            n_repeat = (self.batch_size//critical_val_size)+1
+            n_repeat = (self.batch_size // critical_val_size) + 1
 
         self.history = self.model.fit(
             self.dataset.dataset.get('train').shuffle(buffer_size).batch(
