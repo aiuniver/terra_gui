@@ -46,6 +46,7 @@
         :parse="parse"
         :name="name"
         :disabled="disabled"
+        all
         @parse="change"
       />
     </t-field>
