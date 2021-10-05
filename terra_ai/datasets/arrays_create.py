@@ -1192,10 +1192,10 @@ class CreateArray(object):
 
     @staticmethod
     def get_x_array(options):
-        x_val = None
-        inverse_x_val = None
+        x_array = None
+        inverse_x_array = None
         if options.data.group == DatasetGroupChoice.keras:
-            x_val = options.X.get("val")
+            x_array = options.X.get("val")
         dataframe = False
         for inp in options.data.inputs.keys():
             if options.data.inputs.get(inp).task == LayerInputTypeChoice.Dataframe:
@@ -1208,34 +1208,34 @@ class CreateArray(object):
                 ts = True
                 break
         if dataframe and not options.data.use_generator:
-            x_val = options.X.get("val")
+            x_array = options.X.get("val")
 
         elif dataframe and options.data.use_generator:
-            x_val = {}
+            x_array = {}
             for inp in options.dataset['val'].keys():
-                x_val[inp] = []
-                for x_val_, _ in options.dataset['val'].batch(1):
-                    x_val[inp].extend(x_val_.get(f'{inp}').numpy())
-                x_val[inp] = np.array(x_val[inp])
+                x_array[inp] = []
+                for x_array_, _ in options.dataset['val'].batch(1):
+                    x_array[inp].extend(x_array_.get(f'{inp}').numpy())
+                x_array[inp] = np.array(x_array[inp])
         else:
             pass
 
         if ts:
-            inverse_x_val = {}
-            for input in x_val.keys():
+            inverse_x_array = {}
+            for input in x_array.keys():
                 preprocess_dict = options.preprocessing.preprocessing.get(int(input))
-                inverse_x = np.zeros_like(x_val.get(input)[:, 0:1, :])
+                inverse_x = np.zeros_like(x_array.get(input)[:, 0:1, :])
                 for i, column in enumerate(preprocess_dict.keys()):
                     if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
                         _options = {
-                            int(input): {column: x_val.get(input)[:, i:i + 1, :]}
+                            int(input): {column: x_array.get(input)[:, i:i + 1, :]}
                         }
                         inverse_col = options.preprocessing.inverse_data(_options).get(int(input)).get(column)
                     else:
-                        inverse_col = x_val.get(input)[:, i:i + 1, :]
+                        inverse_col = x_array.get(input)[:, i:i + 1, :]
                     inverse_x = np.concatenate([inverse_x, inverse_col], axis=1)
-                inverse_x_val[input] = inverse_x[:, 1:, :]
-        return x_val, inverse_x_val
+                inverse_x_array[input] = inverse_x[:, 1:, :]
+        return x_array, inverse_x_array
 
     @staticmethod
     def postprocess_results(array, options, save_path: str = "", dataset_path: str = "") -> dict:
@@ -1249,6 +1249,7 @@ class CreateArray(object):
             if options.data.outputs[output_id].task == LayerOutputTypeChoice.Classification:
                 y_true = CreateArray().get_y_true(options, output_id)
                 return_data[output_id] = []
+                print(options.dataframe.get("val"))
                 for idx, img_array in enumerate(array):
                     input_id = list(options.data.inputs.keys())[0]
                     source = CreateArray().postprocess_initial_source(
@@ -1256,11 +1257,11 @@ class CreateArray(object):
                         dataframe=options.dataframe.get("val"),
                         input_id=input_id,
                         save_id=idx + 1,
-                        example_idx=idx,
+                        example_id=idx,
                         dataset_path=dataset_path,
                         preset_path=save_path,
-                        x_array=None if not x_array else x_array.get(input_id),
-                        inverse_x_array=None if not inverse_x_array else inverse_x_array.get(input_id),
+                        x_array=None if not x_array else x_array.get(f"{input_id}"),
+                        inverse_x_array=None if not inverse_x_array else inverse_x_array.get(f"{input_id}"),
                         return_mode='deploy'
                     )
                     actual_value, predict_values = CreateArray().postprocess_classification(
@@ -1282,13 +1283,25 @@ class CreateArray(object):
                 for j, cls in enumerate(options.data.outputs.get(output_id).classes_names):
                     data.append((cls, options.data.outputs.get(output_id).classes_colors[j].as_rgb_tuple()))
                 for idx, img_array in enumerate(array):
+                    input_id = list(options.data.inputs.keys())[0]
                     return_data[output_id].append(
                         {
                             "source": CreateArray().postprocess_initial_source(
-                                options=options,
-                                image_id=idx,
+                                options=options.data,
+                                dataframe=options.dataframe.get("val"),
+                                input_id=input_id,
+                                save_id=idx + 1,
+                                example_id=idx,
+                                dataset_path=dataset_path,
                                 preset_path=save_path,
-                                dataset_path=dataset_path
+                                x_array=None if not x_array else x_array.get(f"{input_id}"),
+                                inverse_x_array=None if not inverse_x_array else inverse_x_array.get(f"{input_id}"),
+                                return_mode='deploy'
+                                #
+                                # options=options,
+                                # image_id=idx,
+                                # preset_path=save_path,
+                                # dataset_path=dataset_path
                             ),
                             "segment": CreateArray().postprocess_segmentation(
                                 array=array[idx],
@@ -1391,7 +1404,7 @@ class CreateArray(object):
             options: DatasetData,
             dataframe: DataFrame,
             input_id: int,
-            example_idx: int,
+            example_id: int,
             dataset_path: str,
             preset_path: str,
             save_id: int = None,
@@ -1403,12 +1416,12 @@ class CreateArray(object):
         input_task = options.inputs.get(input_id).task
         if options.group != DatasetGroupChoice.keras:
             for column_name in dataframe.columns:
-                if column_name.split('_')[0] == input_id:
+                if column_name.split('_')[0] == f"{input_id}":
                     column_idx.append(dataframe.columns.tolist().index(column_name))
             if input_task == LayerInputTypeChoice.Text or input_task == LayerInputTypeChoice.Dataframe:
                 initial_file_path = ""
             else:
-                initial_file_path = os.path.join(dataset_path, dataframe.iat[example_idx, column_idx[0]])
+                initial_file_path = os.path.join(dataset_path, dataframe.iat[example_id, column_idx[0]])
             if not save_id:
                 return str(os.path.abspath(initial_file_path))
         else:
@@ -1425,7 +1438,7 @@ class CreateArray(object):
                     Image.ANTIALIAS
                 )
             else:
-                img = image.array_to_img(x_array[example_idx])
+                img = image.array_to_img(x_array[example_id])
             img = img.convert('RGB')
             source = os.path.join(preset_path, f"initial_data_image_{save_id}_input_{input_id}.webp")
             img.save(source, 'webp')
@@ -1444,7 +1457,7 @@ class CreateArray(object):
                 if options.outputs.get(out).task == LayerOutputTypeChoice.Regression:
                     regression_task = True
             for column in column_idx:
-                source = dataframe.iat[example_idx, column]
+                source = dataframe.iat[example_id, column]
                 data_type = LayerInputTypeChoice.Text.name
                 title = "Текст"
                 if regression_task:
@@ -1503,8 +1516,8 @@ class CreateArray(object):
                             'x_label': 'Время',
                             'y_label': 'Значение',
                             'plot_data': {
-                                'x': np.arange(inverse_x_array[example_idx].shape[-1]).astype('int').tolist(),
-                                'y': inverse_x_array[example_idx][i].astype('float').tolist()
+                                'x': np.arange(inverse_x_array[example_id].shape[-1]).astype('int').tolist(),
+                                'y': inverse_x_array[example_id][i].astype('float').tolist()
                             },
                         }
                     )
@@ -1519,7 +1532,7 @@ class CreateArray(object):
             else:
                 data_type = "str"
                 for col_name in options.columns.get(int(input_id)).keys():
-                    value = dataframe[col_name].to_list()[example_idx]
+                    value = dataframe[col_name].to_list()[example_id]
                     data.append(
                         {
                             "title": col_name.split("_", 1)[-1],
