@@ -9,27 +9,30 @@ from pydantic.color import Color
 
 class CascadeCreator:
 
-    def create_config(self, model_path: str, out_path: str):
+    def create_config(self, model_path: str, out_path: str, func_name: str):
         out_path = os.path.join(out_path, "deploy")
-        dataset_path = os.path.join(model_path, "dataset", "config.json")
+        if func_name == "text_segmentation":
+            dataset_path = os.path.join(model_path, "dataset", "instructions", "parameters", f"2_{func_name}.json")
+        else:
+            dataset_path = os.path.join(model_path, "dataset", "config.json")
         with open(dataset_path) as cfg:
             dataset_config = json.load(cfg)
 
-        tags = dataset_config['tags'][1]['alias']
-        if dataset_config["tags"][0]["alias"] == "text" and tags != "text_segmentation":
-            tags = f"text_{tags}"
-        elif dataset_config["tags"][0]["alias"] != "text":
-            tags = f"{dataset_config['tags'][0]['alias']}_{tags}"
-        if tags == "text_segmentation":
-            dataset_path = os.path.join(model_path, "dataset", "instructions", "parameters", f"2_{tags}.json")
-            with open(dataset_path) as cfg:
-                dataset_config = json.load(cfg)
+        # tags = dataset_config['tags'][1]['alias']
+        # if dataset_config["tags"][0]["alias"] == "text" and tags != "text_segmentation":
+        #     tags = f"text_{tags}"
+        # elif dataset_config["tags"][0]["alias"] != "text":
+        #     tags = f"{dataset_config['tags'][0]['alias']}_{tags}"
+        # if tags == "text_segmentation":
+        #     dataset_path = os.path.join(model_path, "dataset", "instructions", "parameters", f"2_{tags}.json")
+        #     with open(dataset_path) as cfg:
+        #         dataset_config = json.load(cfg)
 
-        cascade_json_path = f"terra_ai/deploy/demo_panel_templates/{tags}.json"
+        cascade_json_path = f"terra_ai/deploy/demo_panel_templates/{func_name}.json"
         with open(cascade_json_path) as cfg:
             config = json.load(cfg)
 
-        config = getattr(self, f"make_{tags}")(config, dataset_config, os.path.split(model_path)[-1])
+        config = getattr(self, f"make_{func_name}")(config, dataset_config, os.path.split(model_path)[-1])
         with open(os.path.join(out_path, f"{os.path.split(model_path)[-1]}.cascade"), 'w', encoding="utf-8") as f:
             json.dump(config, f, indent=2)
 
