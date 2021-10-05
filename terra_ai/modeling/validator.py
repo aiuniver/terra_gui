@@ -17,7 +17,7 @@ from terra_ai.data.modeling.extra import LayerGroupChoice, LayerTypeChoice
 from terra_ai.data.modeling.layer import LayerData
 from terra_ai.data.modeling.model import ModelDetailsData
 
-__version__ = 0.056
+__version__ = 0.057
 
 from terra_ai.data.modeling.layers.extra import (
     ModuleTypeChoice,
