@@ -171,7 +171,6 @@ class ModelValidator:
 
     def __init__(self, model: ModelDetailsData):
         self.validator: LayerValidation = LayerValidation()
-        # self.model_plan: TerraModel = TerraModel()
         self.model: ModelDetailsData = model
         self.filled_model: ModelDetailsData = model
         self.output_shape = {}
@@ -434,6 +433,68 @@ class ModelValidator:
 
         return block_output, block_comment
 
+    # def get_layer_str(self, _layer,  name_dict={}, identifier="", _block_uplinks=None):
+    #     _layer_str = ""
+    #     if _block_uplinks:
+    #         _block_uplinks[_layer[0]] = f"{identifier}_{_layer[1]}_{_layer[0]}"
+    #
+    #     if _layer[1] == LayerTypeChoice.Input:
+    #         _layer_str = (
+    #             f"{_block_uplinks[_layer[0]] if _block_uplinks else name_dict[_layer[0]]} = "
+    #             f"{_layer[1]}(shape={self.input_shape[_layer[0]][0]}, "
+    #             f"name='{_layer[2].get('name')}')\n"
+    #         )
+    #     else:
+    #         _params = ""
+    #         for key in _layer[2].keys():
+    #             if key not in ["trainable", "output_layer"]:
+    #                 if isinstance(_layer[2][key], str):
+    #                     _params += f"{key}='{_layer[2][key]}', "
+    #                 else:
+    #                     _params += f"{key}={_layer[2][key]}, "
+    #         if len(_layer[3]) == 1:
+    #             if _block_uplinks:
+    #                 uplink = f"{_block_uplinks[_layer[3][0]]}"
+    #             else:
+    #                 uplink = f"{name_dict[_layer[3][0]]}"
+    #         else:
+    #             uplink = "["
+    #             for up in _layer[3]:
+    #                 if _block_uplinks:
+    #                     uplink += f"{_block_uplinks[up]}, "
+    #                 else:
+    #                     uplink += f"{name_dict[up]}, "
+    #             uplink = f"{uplink[:-2]}]"
+    #
+    #         if self.layers_config.get(_layer[0]).module_type.value == ModuleTypeChoice.tensorflow:
+    #             _layer_str = (
+    #                 f"{_block_uplinks[_layer[0]] if _block_uplinks else name_dict[_layer[0]]} = "
+    #                 f"{_layer[1]}({uplink}, {_params[:-2]})\n"
+    #             )
+    #         elif self.layers_config.get(_layer[0]).module_type.value != ModuleTypeChoice.keras_pretrained_model:
+    #             _layer_str = (
+    #                 f"{_block_uplinks[_layer[0]] if _block_uplinks else name_dict[_layer[0]]} = "
+    #                 f"{_layer[1]}({_params[:-2]})({uplink})\n"
+    #             )
+    #         elif self.layers_config.get(_layer[0]).module_type.value == ModuleTypeChoice.keras_pretrained_model:
+    #             if "trainable" in _layer[2].keys():
+    #                 block_name = f"{_block_uplinks[_layer[0]] if _block_uplinks else name_dict[_layer[0]]}"
+    #                 if _layer[2].get("output_layer") == "last":
+    #                     out_layer_str = f"{block_name}.output"
+    #                 else:
+    #                     out_layer_str = f"{block_name}.get_layer('{_layer[2].get('output_layer')}.output'"
+    #                 _layer_str = (
+    #                     f"\n{block_name} = {_layer[1]}({_params[:-2]})\n"
+    #                     f"for layer in {block_name}.layers:\n"
+    #                     f"    layer.trainable = {_layer[3].get('trainable', False)}\n"
+    #                     f"{block_name} = Model({block_name}.input, {out_layer_str}).output, "
+    #                     f"name='{block_name}')\n"
+    #                     f"{name_dict[_layer[0]]} = {block_name}({uplink})\n\n"
+    #                 )
+    #         else:
+    #             pass
+    #     return _layer_str
+
     def compile_keras_code(self) -> None:
         """Create keras code from model plan"""
 
@@ -443,19 +504,14 @@ class ModelValidator:
         input_list = []
         output_list = []
         for layer in self.model_plan:
-            # Keras код под block_plan пока не готов
-            # layer_type = layer[1] if layer[1] != 'space_to_depth' else 'SpaceToDepth'
-
             if (
                     layer[1] not in layers_import.values()
-                    and self.layers_config.get(layer[0]).module_type.value
-                    != ModuleTypeChoice.block_plan
+                    and self.layers_config.get(layer[0]).module_type.value != ModuleTypeChoice.block_plan
             ):
                 layers_import[layer[0]] = layer[1]
 
             if (
-                    self.layers_config.get(layer[0]).module_type.value
-                    == ModuleTypeChoice.block_plan
+                    self.layers_config.get(layer[0]).module_type.value == ModuleTypeChoice.block_plan
             ):
                 for block_layer in self.block_plans.get(layer[0]):
                     if block_layer[1] not in layers_import.values():
@@ -472,7 +528,6 @@ class ModelValidator:
 
         layers_str = ""
         for _id, _layer_name in layers_import.items():
-            # layer_type = i if i != 'space_to_depth' else 'SpaceToDepth'
             layers_str += (
                 f"from {self.layers_config.get(_id).module.value} import {_layer_name}\n"
             )
@@ -521,40 +576,32 @@ class ModelValidator:
                             uplink += f"{name_dict[up]}, "
                     uplink = f"{uplink[:-2]}]"
 
-                if (
-                        self.layers_config.get(_layer[0]).module_type.value
-                        == ModuleTypeChoice.tensorflow
-                ):
+                if self.layers_config.get(_layer[0]).module_type.value == ModuleTypeChoice.tensorflow:
                     _layer_str = (
                         f"{_block_uplinks[_layer[0]] if _block_uplinks else name_dict[_layer[0]]} = "
                         f"{_layer[1]}({uplink}, {_params[:-2]})\n"
                     )
-                elif (
-                        self.layers_config.get(_layer[0]).module_type.value
-                        != ModuleTypeChoice.keras_pretrained_model
-                ):
+                elif self.layers_config.get(_layer[0]).module_type.value != ModuleTypeChoice.keras_pretrained_model:
                     _layer_str = (
                         f"{_block_uplinks[_layer[0]] if _block_uplinks else name_dict[_layer[0]]} = "
                         f"{_layer[1]}({_params[:-2]})({uplink})\n"
                     )
-                elif (
-                        self.layers_config.get(_layer[0]).module_type.value
-                        == ModuleTypeChoice.keras_pretrained_model
-                ):
-                    if "trainable" in _layer[2].keys():
-                        block_name = f"{_block_uplinks[_layer[0]] if _block_uplinks else name_dict[_layer[0]]}"
-                        if _layer[2].get("output_layer") == "last":
-                            out_layer_str = f"{block_name}.output"
-                        else:
-                            out_layer_str = f"{block_name}.get_layer('{_layer[2].get('output_layer')}.output'"
-                        _layer_str = (
-                            f"\n{block_name} = {_layer[1]}({_params[:-2]})\n"
-                            f"for layer in {block_name}.layers:\n"
-                            f"    layer.trainable = {_layer[3].get('trainable', False)}\n"
-                            f"{block_name} = Model({block_name}.input, {out_layer_str}).output, "
-                            f"name='{block_name}')\n"
-                            f"{name_dict[_layer[0]]} = {block_name}({uplink})\n\n"
-                        )
+                elif self.layers_config.get(_layer[0]).module_type.value == ModuleTypeChoice.keras_pretrained_model:
+                    # if "trainable" in _layer[2].keys():
+                    block_name = f"{_block_uplinks[_layer[0]] if _block_uplinks else name_dict[_layer[0]]}"
+                    # if _layer[2].get("output_layer") == "last":
+                    #     out_layer_str = f"{block_name}.output"
+                    # else:
+                    #     out_layer_str = f"{block_name}.get_layer('{_layer[2].get('output_layer')}.output'"
+                    _layer_str = (
+                        f"\n{block_name} = {_layer[1]}({_params[:-2]})\n" 
+                        f"for layer in {block_name}.layers:\n" 
+                        f"    layer.trainable = {_layer[2].get('trainable', False)}\n" 
+                        f"{name_dict[_layer[0]]} = {block_name}({uplink})\n\n"
+                    )
+                    # f"{block_name} = Model({block_name}.input, {out_layer_str}).output, " \
+                    # f"name='{block_name}')\n" \
+                    # f"{name_dict[_layer[0]]} = {block_name}({uplink})\n\n"
                 else:
                     pass
             return _layer_str
@@ -571,7 +618,6 @@ class ModelValidator:
                     )
                 layer_str = f"\n{layer_str}\n"
             else:
-
                 layer_str = get_layer_str(layer)
             self.keras_code += layer_str
 
@@ -1306,6 +1352,7 @@ class ModelCreator:
 
     def __init__(self, model_plan, input_shapes, block_plans, layer_config):
         super().__init__()
+        print(model_plan)
         self.model_plan = model_plan
         self.block_plans = block_plans
         self.input_shape = input_shapes
@@ -1410,6 +1457,7 @@ class ModelCreator:
 
     def _pretrained_model_init_(self, terra_layer):
         """Create pretrained model as layer_obj from terra_plan layer"""
+        # print('module', self.layer_config.get(terra_layer[0]).module.value)
         module = importlib.import_module(
             self.layer_config.get(terra_layer[0]).module.value
         )
@@ -1428,15 +1476,15 @@ class ModelCreator:
                     layer.trainable = terra_layer[2].get("trainable")
                 except KeyError:
                     continue
-            if terra_layer[2].get("output_layer") == "last":
-                block_output = layer_object.output
-            else:
-                block_output = layer_object.get_layer(
-                    terra_layer[2].get("output_layer")
-                ).output
-            layer_object = Model(
-                layer_object.input, block_output, name=terra_layer[2].get("name")
-            )
+            # if terra_layer[2].get("output_layer") == "last":
+            #     block_output = layer_object.output
+            # else:
+            #     block_output = layer_object.get_layer(
+            #         terra_layer[2].get("output_layer")
+            #     ).output
+            # layer_object = Model(
+            #     layer_object.input, block_output, name=terra_layer[2].get("name")
+            # )
         self.tensors[terra_layer[0]] = layer_object(self.tensors[terra_layer[3][0]])
 
     def _custom_block_init(self, terra_layer):

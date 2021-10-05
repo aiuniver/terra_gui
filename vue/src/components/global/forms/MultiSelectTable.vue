@@ -74,7 +74,7 @@ export default {
     },
     selected: {
       set(value) {
-        this.$store.dispatch('tables/setSaveCols', {id: this.id, value});
+        this.$store.dispatch('tables/setSaveCols', { id: this.id, value });
       },
       get() {
         return this.$store.getters['tables/getSaveCols'](this.id);
@@ -88,7 +88,10 @@ export default {
       return this.errors?.[key]?.[0] || this.errors?.parameters?.[key]?.[0] || '';
     },
     input() {
-      return this.selected.map(item => item.label).join();
+      const labels = this.selected.map(item => item.label);
+      const name = this.filterList.filter(item => labels.includes(item.label)).map(item => item.label);
+      this.clear(name);
+      return name.join();
     },
     checkAll() {
       return this.filterList.length === this.selected.length;
@@ -138,6 +141,9 @@ export default {
     },
   },
   methods: {
+    clear(name) {
+      this.selected = this.selected.filter(item => name.includes(item.label));
+    },
     click() {
       this.show = true;
       if (this.error) {
@@ -191,10 +197,10 @@ export default {
   //   }
   // },
   created() {
-    console.log('created')
+    console.log('created');
   },
   mounted() {
-    console.log('moudsd')
+    console.log('moudsd');
   },
   watch: {
     // filterList() {
