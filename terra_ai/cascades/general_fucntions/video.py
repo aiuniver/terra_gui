@@ -38,8 +38,12 @@ def main(**params):
         out = []
         array = []
 
-        while cap.isOpened():
+        while True:
             ret, frame = cap.read()
+
+            if not ret:
+                break
+
             frame = frame[:, :, [2, 1, 0]]
 
             if params['scaler'] == 'min_max_scaler':
