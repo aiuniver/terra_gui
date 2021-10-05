@@ -1657,7 +1657,7 @@ class CreateArray(object):
             class_dist = sorted(class_idx, reverse=True)
             labels_dist = []
             for j in class_dist:
-                labels_dist.append((labels[list(class_idx).index(j)], round(j * 100, 1)))
+                labels_dist.append((labels[list(class_idx).index(j)], round(float(j) * 100, 1)))
             labels_from_array.append(labels_dist)
         return labels[actual_value], labels_from_array
 
@@ -1690,7 +1690,8 @@ class CreateArray(object):
                 result = np.zeros((3,))
                 for color in colors:
                     result += np.array(color)
-                return tuple((result / len(colors)).astype('int'))
+                result = result / len(colors)
+                return tuple(result.astype('int').tolist())
 
         def tag_mixer(tags: list, colors: dict):
             tags = sorted(tags, reverse=False)
@@ -1737,7 +1738,7 @@ class CreateArray(object):
         if not options.classes_colors:
             classes_colors = {}
             for i, name in enumerate(options.classes_names):
-                classes_colors[f"s{i + 1}"] = tuple(np.random.randint(256, size=3))
+                classes_colors[f"s{i + 1}"] = tuple(np.random.randint(256, size=3).tolist())
                 classes_names[f"s{i + 1}"] = options.classes_names[i]
         else:
             classes_colors = options.classes_colors
@@ -1756,8 +1757,15 @@ class CreateArray(object):
             )
             data = []
             for tag in classes_colors.keys():
+                if len(tag.split("+")) == 1:
+                    name = f"Распознанный класс текст {tag[1:]}"
+                else:
+                    name = "Распознанные классы "
+                    for tag_ in tag.split("+"):
+                        name += f"текст {tag_[1:]}, "
+                    name = name[:-2]
                 data.append(
-                    (tag, classes_names[tag], classes_colors[tag])
+                    (f"<{tag}>", name, classes_colors[tag])
                 )
             return_data.append(
                 {
