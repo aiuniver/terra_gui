@@ -56,7 +56,7 @@ class UploadAPIView(BaseAPIView):
                     "project": {
                         "name": request.project.name,
                     },
-                    "task": "image_classification",
+                    "task": request.project.deploy.type,
                     "replace": serializer.validated_data.get("replace"),
                 }
             )
