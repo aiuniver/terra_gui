@@ -1455,13 +1455,13 @@ class CreateArray(object):
         if not options.classes_colors:
             classes_colors = {}
             for i, name in enumerate(options.classes_names):
-                classes_colors[f"s{i + 1}"] = tuple(np.random.randint(256, size=3).tolist())
-                classes_names[f"s{i + 1}"] = options.classes_names[i]
+                classes_colors[f"tag{i + 1}"] = tuple(np.random.randint(256, size=3).tolist())
+                classes_names[f"tag{i + 1}"] = options.classes_names[i]
         else:
             classes_colors = options.classes_colors
             for i, name in enumerate(classes_names):
-                classes_colors[f"s{i + 1}"] = options.classes_colors[i]
-                classes_names[f"s{i + 1}"] = options.classes_names[i]
+                classes_colors[f"tag{i + 1}"] = options.classes_colors[i]
+                classes_names[f"tag{i + 1}"] = options.classes_names[i]
 
         for example_id in range(len(array)):
             initinal_text = data_dataframe.iat[example_id, 0]
@@ -1474,15 +1474,15 @@ class CreateArray(object):
             )
             data = []
             for tag in classes_colors.keys():
-                if len(tag.split("+")) == 1:
-                    name = f"Распознанный класс текст {tag[1:]}"
-                else:
-                    name = "Распознанные классы "
-                    for tag_ in tag.split("+"):
-                        name += f"текст {tag_[1:]}, "
-                    name = name[:-2]
+                # if len(tag.split("+")) == 1:
+                #     name = f"Распознанный класс текст {tag[1:]}"
+                # else:
+                #     name = "Распознанные классы "
+                #     for tag_ in tag.split("+"):
+                #         name += f"текст {tag_[1:]}, "
+                #     name = name[:-2]
                 data.append(
-                    (f"<{tag}>", name, classes_colors[tag])
+                    (f"<{tag}>", classes_names[tag], classes_colors[tag])
                 )
             return_data.append(
                 {
