@@ -1474,13 +1474,6 @@ class CreateArray(object):
             )
             data = []
             for tag in classes_colors.keys():
-                # if len(tag.split("+")) == 1:
-                #     name = f"Распознанный класс текст {tag[1:]}"
-                # else:
-                #     name = "Распознанные классы "
-                #     for tag_ in tag.split("+"):
-                #         name += f"текст {tag_[1:]}, "
-                #     name = name[:-2]
                 data.append(
                     (f"<{tag}>", classes_names[tag], classes_colors[tag])
                 )
