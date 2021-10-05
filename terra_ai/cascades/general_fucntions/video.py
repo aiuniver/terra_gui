@@ -42,6 +42,10 @@ def main(**params):
             ret, frame = cap.read()
             frame = frame[:, :, [2, 1, 0]]
 
+            if params['scaler'] == 'min_max_scaler':
+                std = (frame - frame.min()) / (frame.max() - frame.min())
+                frame = std * (params['max_scaler'] - params['min_scaler']) + params['min_scaler']
+
             if params['video_mode'] == 'completely' and params['max_frames'] > len(array) or\
                params['video_mode'] == 'length_and_step' and params['length'] > len(array):
 
