@@ -1246,7 +1246,6 @@ class CreateArray(object):
                 postprocess_array = array[i]
             else:
                 postprocess_array = array
-
             if options.data.outputs[output_id].task == LayerOutputTypeChoice.Classification:
                 y_true = CreateArray().get_y_true(options, output_id)
                 return_data[output_id] = []
