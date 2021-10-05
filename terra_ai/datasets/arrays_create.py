@@ -990,7 +990,6 @@ class CreateArray(object):
         else:
             item = np.array([item])
 
-
         instructions = {'instructions': item,
                         'parameters': options}
 
@@ -1258,62 +1257,6 @@ class CreateArray(object):
         return return_data
 
     @staticmethod
-    def postprocess_callback_results(interactive_config: dict, dataset_config: dict, example_idx: list) -> dict:
-        return_data = {}
-        if interactive_config.get('intermediate_result').get('show_results'):
-            for idx in range(interactive_config.get('intermediate_result').get('num_examples')):
-                return_data[f"{idx + 1}"] = {
-                    'initial_data': {},
-                    'true_value': {},
-                    'predict_value': {},
-                    'tags_color': {},
-                    'statistic_values': {}
-                }
-                if not (
-                        len(dataset_config.get("outputs").keys()) == 1 and dataset_config.get("outputs").get(
-                    list(dataset_config.get("outputs").keys())[0]).get(
-                    "task") == LayerOutputTypeChoice.TextSegmentation
-                ):
-                    for inp in dataset_config.get("inputs").keys():
-                        data, type_choice = self._postprocess_initial_data(
-                            input_id=inp,
-                            save_id=idx + 1,
-                            example_idx=example_idx[idx],
-                        )
-                        random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
-                        return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
-                            'update': random_key,
-                            'type': type_choice,
-                            'data': data,
-                        }
-
-                for out in dataset_config.get("outputs").keys():
-                    data = self._postprocess_result_data(
-                        output_id=out,
-                        data_type='val',
-                        save_id=idx + 1,
-                        example_idx=example_idx[idx],
-                        show_stat=interactive_config.get('intermediate_result').get('show_statistic'),
-                    )
-                    if data.get('y_true'):
-                        return_data[f"{idx + 1}"]['true_value'][f"Выходной слой «{out}»"] = data.get('y_true')
-                    return_data[f"{idx + 1}"]['predict_value'][f"Выходной слой «{out}»"] = data.get('y_pred')
-                    if dataset_config.get("outputs").get(
-                            list(dataset_config.get("outputs").keys())[0]).get(
-                        "task") == LayerOutputTypeChoice.TextSegmentation:
-                        return_data[f"{idx + 1}"]['tags_color'][f"Выходной слой «{out}»"] = \
-                            dataset_config.get("outputs").get(out).get('classes_colors')
-                        # for color in [colors for colors in self.dataset_config.get("outputs").get(out).get('classes_colors').values()]:
-                        #     print([type(elem) for elem in color])
-                    else:
-                        return_data[f"{idx + 1}"]['tags_color'] = {}
-                    if data.get('stat'):
-                        return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
-                    else:
-                        return_data[f"{idx + 1}"]['statistic_values'] = {}
-        return return_data
-
-    @staticmethod
     def postprocess_initial_source(options, image_id: int, preset_path: str = "", dataset_path: str = "") -> str:
         column_idx = []
         input_id = list(options.data.inputs.keys())[0]
@@ -1341,27 +1284,27 @@ class CreateArray(object):
                 img = image.array_to_img(options.X.get("val").get(f"{input_id}")[image_id])
             img = img.convert('RGB')
             save_path = os.path.join(
-                preset_path, f"initial_data_image_{image_id+1}_input_{input_id}.webp"
+                preset_path, f"initial_data_image_{image_id + 1}_input_{input_id}.webp"
             )
             img.save(save_path, 'webp')
 
         elif task == LayerInputTypeChoice.Text:
-            regression_task = False
-            for out in options.data.outputs.keys():
-                if options.data.outputs.get(out).task == LayerOutputTypeChoice.Regression:
-                    regression_task = True
-            if regression_task:
-                save_path = options.dataframe.get('val').iat[image_id, column_idx[0]]
-            else:
-                task = LayerInputTypeChoice.Dataframe
+            # regression_task = False
+            # for out in options.data.outputs.keys():
+            #     if options.data.outputs.get(out).task == LayerOutputTypeChoice.Regression:
+            #         regression_task = True
+            # if regression_task:
+            save_path = options.dataframe.get('val').iat[image_id, column_idx[0]]
+            # else:
+            #     task = LayerInputTypeChoice.Dataframe
 
         elif task == LayerInputTypeChoice.Video:
             clip = moviepy_editor.VideoFileClip(initial_file_path)
-            save_path = os.path.join(preset_path, f"initial_data_video_{image_id+1}_input_{input_id}.webm")
+            save_path = os.path.join(preset_path, f"initial_data_video_{image_id + 1}_input_{input_id}.webm")
             clip.write_videofile(save_path)
 
         elif task == LayerInputTypeChoice.Audio:
-            save_path = os.path.join(preset_path, f"initial_data_audio_{image_id+1}_input_{input_id}.webp")
+            save_path = os.path.join(preset_path, f"initial_data_audio_{image_id + 1}_input_{input_id}.webp")
             AudioSegment.from_file(initial_file_path).export(save_path, format="webm")
 
         # elif task == LayerInputTypeChoice.Dataframe:
@@ -1418,11 +1361,8 @@ class CreateArray(object):
         #                 }
         #             )
 
-
         else:
             save_path = ''
-
-
         return save_path
 
     @staticmethod
@@ -1434,7 +1374,7 @@ class CreateArray(object):
             class_dist = sorted(class_idx, reverse=True)
             labels_dist = []
             for j in class_dist:
-                labels_dist.append((labels[list(class_idx).index(j)], round(j * 100, 1)))
+                labels_dist.append((labels[list(class_idx).index(j)], round(float(j) * 100, 1)))
             labels_from_array.append(labels_dist)
         return labels[actual_value], labels_from_array
 
@@ -1467,7 +1407,8 @@ class CreateArray(object):
                 result = np.zeros((3,))
                 for color in colors:
                     result += np.array(color)
-                return tuple((result / len(colors)).astype('int'))
+                result = result / len(colors)
+                return tuple(result.astype('int').tolist())
 
         def tag_mixer(tags: list, colors: dict):
             tags = sorted(tags, reverse=False)
@@ -1514,7 +1455,7 @@ class CreateArray(object):
         if not options.classes_colors:
             classes_colors = {}
             for i, name in enumerate(options.classes_names):
-                classes_colors[f"s{i + 1}"] = tuple(np.random.randint(256, size=3))
+                classes_colors[f"s{i + 1}"] = tuple(np.random.randint(256, size=3).tolist())
                 classes_names[f"s{i + 1}"] = options.classes_names[i]
         else:
             classes_colors = options.classes_colors
@@ -1533,8 +1474,15 @@ class CreateArray(object):
             )
             data = []
             for tag in classes_colors.keys():
+                if len(tag.split("+")) == 1:
+                    name = f"Распознанный класс текст {tag[1:]}"
+                else:
+                    name = "Распознанные классы "
+                    for tag_ in tag.split("+"):
+                        name += f"текст {tag_[1:]}, "
+                    name = name[:-2]
                 data.append(
-                    (tag, classes_names[tag], classes_colors[tag])
+                    (f"<{tag}>", name, classes_colors[tag])
                 )
             return_data.append(
                 {
@@ -1544,7 +1492,6 @@ class CreateArray(object):
                 }
             )
         return return_data
-
 
     @staticmethod
     def postprocess_regression():
