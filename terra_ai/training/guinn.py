@@ -707,7 +707,8 @@ class FitCallback(keras.callbacks.Callback):
         if self.dataset.data.alias not in ["imdb", "boston_housing", "reuters"]:
             input_key = list(self.dataset.data.inputs.keys())[0]
             output_key = list(self.dataset.data.outputs.keys())[0]
-            input_tasks = [LayerInputTypeChoice.Image, LayerInputTypeChoice.Text]
+            input_tasks = [LayerInputTypeChoice.Image, LayerInputTypeChoice.Text,
+                           LayerInputTypeChoice.Audio, LayerInputTypeChoice.Video]
             output_tasks = [LayerOutputTypeChoice.Classification, LayerOutputTypeChoice.Segmentation,
                             LayerOutputTypeChoice.TextSegmentation]
             if self.dataset.data.inputs[input_key].task in input_tasks and (
