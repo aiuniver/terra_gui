@@ -1,3 +1,5 @@
+import string
+
 import matplotlib
 import tensorflow
 from PIL import Image
@@ -1256,6 +1258,62 @@ class CreateArray(object):
         return return_data
 
     @staticmethod
+    def postprocess_callback_results(interactive_config: dict, dataset_config: dict, example_idx: list) -> dict:
+        return_data = {}
+        if interactive_config.get('intermediate_result').get('show_results'):
+            for idx in range(interactive_config.get('intermediate_result').get('num_examples')):
+                return_data[f"{idx + 1}"] = {
+                    'initial_data': {},
+                    'true_value': {},
+                    'predict_value': {},
+                    'tags_color': {},
+                    'statistic_values': {}
+                }
+                if not (
+                        len(dataset_config.get("outputs").keys()) == 1 and dataset_config.get("outputs").get(
+                    list(dataset_config.get("outputs").keys())[0]).get(
+                    "task") == LayerOutputTypeChoice.TextSegmentation
+                ):
+                    for inp in dataset_config.get("inputs").keys():
+                        data, type_choice = self._postprocess_initial_data(
+                            input_id=inp,
+                            save_id=idx + 1,
+                            example_idx=example_idx[idx],
+                        )
+                        random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
+                        return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
+                            'update': random_key,
+                            'type': type_choice,
+                            'data': data,
+                        }
+
+                for out in dataset_config.get("outputs").keys():
+                    data = self._postprocess_result_data(
+                        output_id=out,
+                        data_type='val',
+                        save_id=idx + 1,
+                        example_idx=example_idx[idx],
+                        show_stat=interactive_config.get('intermediate_result').get('show_statistic'),
+                    )
+                    if data.get('y_true'):
+                        return_data[f"{idx + 1}"]['true_value'][f"Выходной слой «{out}»"] = data.get('y_true')
+                    return_data[f"{idx + 1}"]['predict_value'][f"Выходной слой «{out}»"] = data.get('y_pred')
+                    if dataset_config.get("outputs").get(
+                            list(dataset_config.get("outputs").keys())[0]).get(
+                        "task") == LayerOutputTypeChoice.TextSegmentation:
+                        return_data[f"{idx + 1}"]['tags_color'][f"Выходной слой «{out}»"] = \
+                            dataset_config.get("outputs").get(out).get('classes_colors')
+                        # for color in [colors for colors in self.dataset_config.get("outputs").get(out).get('classes_colors').values()]:
+                        #     print([type(elem) for elem in color])
+                    else:
+                        return_data[f"{idx + 1}"]['tags_color'] = {}
+                    if data.get('stat'):
+                        return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
+                    else:
+                        return_data[f"{idx + 1}"]['statistic_values'] = {}
+        return return_data
+
+    @staticmethod
     def postprocess_initial_source(options, image_id: int, preset_path: str = "", dataset_path: str = "") -> str:
         column_idx = []
         input_id = list(options.data.inputs.keys())[0]
@@ -1288,13 +1346,14 @@ class CreateArray(object):
             img.save(save_path, 'webp')
 
         elif task == LayerInputTypeChoice.Text:
-            # regression_task = False
-            # for out in options.data.outputs.keys():
-            #     if options.data.outputs.get(out).task == LayerOutputTypeChoice.Regression:
-            #         regression_task = True
-            save_path = options.dataframe.get('val').iat[image_id, column_idx[0]]
-            # if regression_task:
-            #     pass
+            regression_task = False
+            for out in options.data.outputs.keys():
+                if options.data.outputs.get(out).task == LayerOutputTypeChoice.Regression:
+                    regression_task = True
+            if regression_task:
+                save_path = options.dataframe.get('val').iat[image_id, column_idx[0]]
+            else:
+                task = LayerInputTypeChoice.Dataframe
 
         elif task == LayerInputTypeChoice.Video:
             clip = moviepy_editor.VideoFileClip(initial_file_path)
@@ -1485,3 +1544,138 @@ class CreateArray(object):
                 }
             )
         return return_data
+
+
+    @staticmethod
+    def postprocess_regression():
+        # column_names = list(self.dataset_config["columns"][int(output_id)].keys())
+        # y_true = self.inverse_y_true.get(data_type).get(output_id)[example_idx]
+        # y_pred = self.inverse_y_pred.get(output_id)[example_idx]
+        # data["y_true"] = {
+        #     "type": "str",
+        #     "data": []
+        # }
+        # for i, name in enumerate(column_names):
+        #     data["y_true"]["data"].append(
+        #         {
+        #             "title": name.split('_', 1)[-1],
+        #             "value": f"{y_true[i]: .2f}",
+        #             "color_mark": None
+        #         }
+        #     )
+        # deviation = np.abs((y_pred - y_true) * 100 / y_true)
+        # data["y_pred"] = {
+        #     "type": "str",
+        #     "data": []
+        # }
+        # for i, name in enumerate(column_names):
+        #     color_mark = 'success' if deviation[i] < 2 else "wrong"
+        #     data["y_pred"]["data"].append(
+        #         {
+        #             "title": name.split('_', 1)[-1],
+        #             "value": f"{y_pred[i]: .2f}",
+        #             "color_mark": color_mark
+        #         }
+        #     )
+        # if show_stat:
+        #     data["stat"] = {
+        #         "type": "str",
+        #         "data": []
+        #     }
+        #     for i, name in enumerate(column_names):
+        #         color_mark = 'success' if deviation[i] < 2 else "wrong"
+        #         data["stat"]["data"].append(
+        #             {
+        #                 'title': f"Отклонение - «{name.split('_', 1)[-1]}»",
+        #                 'value': f"{np.round(deviation[i], 2)} %",
+        #                 'color_mark': color_mark
+        #             }
+        #         )
+        pass
+
+    @staticmethod
+    def postprocess_time_series():
+        # graphics = []
+        # real_x = np.arange(
+        #     self.inverse_x_val.get(list(self.inverse_x_val.keys())[0]).shape[-1]).astype('float').tolist()
+        # depth = self.inverse_y_true.get("val").get(output_id)[example_idx].shape[-1]
+        #
+        # _id = 1
+        # for i, channel in enumerate(self.dataset_config["columns"][int(output_id)].keys()):
+        #     for input in self.dataset_config.get('inputs').keys():
+        #         for input_column in self.dataset_config["columns"][int(input)].keys():
+        #             if channel.split("_", 1)[-1] == input_column.split("_", 1)[-1]:
+        #                 init_column = list(self.dataset_config["columns"][int(input)].keys()).index(input_column)
+        #                 graphics.append(
+        #                     {
+        #                         'id': _id + 1,
+        #                         'graph_name': f'График канала «{channel.split("_", 1)[-1]}»',
+        #                         'x_label': 'Время',
+        #                         'y_label': 'Значение',
+        #                         'plot_data': [
+        #                             {
+        #                                 'label': "Исходное значение",
+        #                                 'x': real_x,
+        #                                 'y': np.array(
+        #                                     self.inverse_x_val.get(f"{input}")[example_idx][init_column]
+        #                                 ).astype('float').tolist()
+        #                             },
+        #                             {
+        #                                 'label': "Истинное значение",
+        #                                 'x': np.arange(len(real_x), len(real_x) + depth).astype('int').tolist(),
+        #                                 'y': self.inverse_y_true.get("val").get(
+        #                                     output_id)[example_idx][i].astype('float').tolist()
+        #                             },
+        #                             {
+        #                                 'label': "Предсказанное значение",
+        #                                 'x': np.arange(len(real_x), len(real_x) + depth).astype('float').tolist(),
+        #                                 'y': self.inverse_y_pred.get(output_id)[
+        #                                     example_idx][i].astype('float').tolist()
+        #                             },
+        #                         ]
+        #                     }
+        #                 )
+        #                 _id += 1
+        #                 break
+        # data["y_pred"] = {
+        #     "type": "graphic",
+        #     "data": [
+        #         {
+        #             "title": "Графики",
+        #             "value": graphics,
+        #             "color_mark": None
+        #         }
+        #     ]
+        # }
+        # if show_stat:
+        #     data["stat"]["data"] = []
+        #     for i, channel in enumerate(self.dataset_config["columns"][int(output_id)].keys()):
+        #         data["stat"]["data"].append(
+        #             dict(title=channel.split("_", 1)[-1], value={"type": "table", "data": {}}, color_mark=None)
+        #         )
+        #         for step in range(self.inverse_y_true.get("val").get(output_id)[example_idx].shape[-1]):
+        #             deviation = (self.inverse_y_pred.get(output_id)[example_idx, i, step] -
+        #                          self.inverse_y_true.get("val").get(output_id)[example_idx, i, step]) * 100 / \
+        #                         self.inverse_y_true.get("val").get(output_id)[example_idx, i, step]
+        #             data["stat"]["data"][-1]["value"]["data"][f"{step + 1}"] = [
+        #                 {
+        #                     "title": "Истина",
+        #                     "value": f"{round(self.inverse_y_true.get('val').get(output_id)[example_idx][i, step].astype('float'), 2)}",
+        #                     'color_mark': None
+        #                 },
+        #                 {
+        #                     "title": "Предсказание",
+        #                     "value": f"{round(self.inverse_y_pred.get(output_id)[example_idx][i, step].astype('float'), 2)}",
+        #                     'color_mark': "success" if abs(deviation) < 2 else "wrong"
+        #                 },
+        #                 {
+        #                     "title": "Отклонение",
+        #                     "value": f"{round(deviation, 2)} %",
+        #                     'color_mark': "success" if abs(deviation) < 2 else "wrong"
+        #                 }
+        #             ]
+        pass
+
+    @staticmethod
+    def postprocess_object_detection():
+        pass
