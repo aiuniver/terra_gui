@@ -3,6 +3,7 @@ import numpy as np
 import joblib
 import json
 import pandas as pd
+import tensorflow as tf
 
 from tensorflow.keras import utils
 from tensorflow.keras import datasets as load_keras_datasets
@@ -49,7 +50,7 @@ class PrepareDataset(object):
 
         pass
 
-    def train_generator(self, split_name):
+    def generator_common(self, split_name):
 
         path_type_list = [decamelize(LayerInputTypeChoice.Image), decamelize(LayerOutputTypeChoice.Image),
                           decamelize(LayerInputTypeChoice.Audio), decamelize(LayerOutputTypeChoice.Audio),
@@ -89,7 +90,7 @@ class PrepareDataset(object):
 
             yield inputs, outputs
 
-    def train_generator_3(self, split_name):
+    def generator_object_detection(self, split_name):
         inputs = {}
         outputs = {}
         service = {}
@@ -191,37 +192,28 @@ class PrepareDataset(object):
                 num_inputs = len(self.data.inputs)
                 num_outputs = len(self.data.outputs)
                 if self.data.tags[num_inputs].alias == decamelize(LayerOutputTypeChoice.ObjectDetection):
-                    train_gen = self.train_generator_3
-                    out_shapes = ({str(x): self.data.inputs[x].shape for x in range(1, num_inputs + 1)},
-                                  {str(x): self.data.outputs[x].shape for x in range(num_inputs + 1,
-                                                                                     num_outputs + num_inputs - 2)},
-                                  {str(x): self.data.outputs[x].shape for x in range(num_outputs + num_inputs - 2,
-                                                                                     num_outputs + num_inputs + 1)}
-                                  )
-                    out_types = ({str(x): self.data.inputs[x].dtype for x in range(1, num_inputs + 1)},
-                                 {str(x): self.data.outputs[x].dtype for x in range(num_inputs + 1,
-                                                                                    num_outputs + num_inputs - 2)},
-                                 {str(x): self.data.outputs[x].dtype for x in range(num_outputs + num_inputs - 2,
-                                                                                    num_outputs + num_inputs + 1)}
-                                 )
+                    gen = self.generator_object_detection
+                    out_signature = (
+                        {str(x): tf.TensorSpec(shape=self.data.inputs[x].shape, dtype=self.data.inputs[x].dtype)
+                         for x in range(1, num_inputs + 1)},
+                        {str(x): tf.TensorSpec(shape=self.data.outputs[x].shape, dtype=self.data.outputs[x].dtype)
+                         for x in range(num_inputs + 1, num_outputs + num_inputs - 2)},
+                        {str(x): tf.TensorSpec(shape=self.data.outputs[x].shape, dtype=self.data.outputs[x].dtype)
+                         for x in range(num_outputs + num_inputs - 2, num_outputs + num_inputs + 1)})
                 else:
-                    train_gen = self.train_generator
-                    out_shapes = ({str(x): self.data.inputs[x].shape for x in range(1, num_inputs + 1)},
-                                  {str(x): self.data.outputs[x].shape for x in range(num_inputs + 1,
-                                                                                     num_outputs + 2)})
-                    out_types = ({str(x): self.data.inputs[x].dtype for x in range(1, num_inputs + 1)},
-                                 {str(x): self.data.outputs[x].dtype for x in range(num_inputs + 1,
-                                                                                    num_outputs + 2)})
+                    gen = self.generator_common
+                    out_signature = (
+                        {str(x): tf.TensorSpec(shape=self.data.inputs[x].shape, dtype=self.data.inputs[x].dtype)
+                         for x in range(1, num_inputs + 1)},
+                        {str(x): tf.TensorSpec(shape=self.data.outputs[x].shape, dtype=self.data.outputs[x].dtype)
+                         for x in range(num_inputs + 1, num_outputs + num_inputs + 1)})
 
-                self.dataset['train'] = Dataset.from_generator(lambda: train_gen(split_name='train'),
-                                                               output_shapes=out_shapes,
-                                                               output_types=out_types)
-                self.dataset['val'] = Dataset.from_generator(lambda: train_gen(split_name='val'),
-                                                             output_shapes=out_shapes,
-                                                             output_types=out_types)
-                self.dataset['test'] = Dataset.from_generator(lambda: train_gen(split_name='test'),
-                                                              output_shapes=out_shapes,
-                                                              output_types=out_types)
+                self.dataset['train'] = Dataset.from_generator(lambda: gen(split_name='train'),
+                                                               output_signature=out_signature)
+                self.dataset['val'] = Dataset.from_generator(lambda: gen(split_name='val'),
+                                                             output_signature=out_signature)
+                self.dataset['test'] = Dataset.from_generator(lambda: gen(split_name='test'),
+                                                              output_signature=out_signature)
             else:
                 load_arrays()
 
