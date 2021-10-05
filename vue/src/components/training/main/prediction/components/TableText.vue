@@ -1,7 +1,7 @@
 <template>
   <div class="t-predict-text">
     <p class="t-predict-text__text">{{ text }}</p>
-    <button v-if="length" @click.native="show">{{ textBtn[isShow] }}</button>
+    <button v-if="length" @click="show">{{ textBtn[Number(isShow)] }}</button>
   </div>
 </template>
 
@@ -34,10 +34,7 @@ export default {
   methods:{
     show(){
       this.isShow = !this.isShow
-      if(this.isShow)
-        this.text = this.value
-      else
-        this.text = this.value.substring(0, 99) + "..."
+      this.text = this.isShow? this.value : this.value.substring(0, 99) + "..."
     }
   }
 };
