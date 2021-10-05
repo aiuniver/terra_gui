@@ -15,7 +15,7 @@
       <div v-if="CPU.cpu_utilization">
         <div class="t-sysinfo__grid--item">CPU</div>
         <div :class="['t-sysinfo__grid--item', isWarning(CPU.cpu_utilization)]">
-          <p>{{`${CPU.cpu_utilization || 0}% (${CPU.cpu_memory_used || 0} / ${CPU.cpu_memory_total || 0})`}}</p>
+          <p>{{`${CPU.cpu_utilization || 0}%`}}</p>
           <div class="t-sysinfo__progress-bar">
             <div class="t-sysinfo__progress-bar--fill" :style="{ width: `${CPU.cpu_utilization || 0}%` }"></div>
           </div>
