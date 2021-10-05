@@ -1,6 +1,17 @@
 <template>
   <div class="t-segmentation-search">
-    <t-input v-model="qty" label="Количество классов" type="number" name="classes" inline @change="change" />
+    <t-input
+      v-model="qty"
+      label="Количество классов"
+      type="number"
+      name="classes"
+      min="1"
+      max="99"
+      size="1"
+      maxlength="2"
+      inline
+      @change="change"
+    />
     <div :class="['t-inline']">
       <label class="t-field__label"><slot></slot></label>
       <t-button class="t-field__button" :disabled="disabled" @click.native="getApi" :loading="loading">Найти</t-button>
@@ -57,11 +68,24 @@ export default {
     loading: false,
     isShow: false,
     items: [],
-    qty: 2,
     classes_names: [],
-    classes_colors: []
+    classes_colors: [],
+    qtyTemp: 2,
   }),
-  computed: {},
+  computed: {
+    qty: {
+      set(value) {
+        if (+value >= 1 && +value < 100) {
+          this.qtyTemp = +value;
+        } else {
+          this.qtyTemp = 1;
+        }
+      },
+      get() {
+        return this.qtyTemp;
+      },
+    },
+  },
   methods: {
     async getApi() {
       if (this.loading) return;
@@ -98,8 +122,8 @@ export default {
       this.loading = false;
     },
     change({ value }, index) {
-      console.log(value,index)
-      this.classes_names[index] = value
+      console.log(value, index);
+      this.classes_names[index] = value;
       this.$emit('change', { name: 'classes_names', value: this.classes_names });
     },
   },

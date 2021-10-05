@@ -1,5 +1,6 @@
 import copy
 import importlib
+import math
 import os
 import random
 import re
@@ -28,7 +29,7 @@ from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.utils import camelize, decamelize
 
-__version__ = 0.081
+__version__ = 0.082
 
 
 def sort_dict(dict_to_sort: dict, mode='by_name'):
@@ -381,7 +382,6 @@ class InteractiveCallback:
                        training_path: str,
                        initial_config: InteractiveData):
 
-        # print('initial_config', initial_config)
         self.preset_path = os.path.join(training_path, "presets")
         if not os.path.exists(self.preset_path):
             os.mkdir(self.preset_path)
@@ -583,6 +583,7 @@ class InteractiveCallback:
 
     @staticmethod
     def _get_classes_colors(dataset_output: DatasetOutputsData):
+        # print(dataset_output)
         colors = {}
         if dataset_output.task == LayerOutputTypeChoice.TextSegmentation and \
                 dataset_output.classes_colors:
@@ -897,39 +898,35 @@ class InteractiveCallback:
 
         for out in self.metrics.keys():
             interactive_log[out] = {}
-
-            if len(self.losses.keys()) == 1:
-                interactive_log[out]['loss'] = {
-                    self.losses.get(out): {
-                        'train': update_logs.get('loss'),
-                        'val': update_logs.get('val_loss')
-                    }
-                }
+            if len(self.metrics.keys()) == 1:
+                train_loss = update_logs.get('loss')
+                val_loss = update_logs.get('val_loss')
             else:
-                interactive_log[out]['loss'] = {}
-                interactive_log[out]['loss'][self.losses.get(out)] = {
-                    'train': update_logs.get(f'{out}_loss'),
-                    'val': update_logs.get(f'val_{out}_loss')
+                train_loss = update_logs.get(f'{out}_loss')
+                val_loss = update_logs.get(f'val_{out}_loss')
+            interactive_log[out]['loss'] = {
+                self.losses.get(out): {
+                    'train': float(train_loss) if not math.isnan(float(train_loss)) else None,
+                    'val': float(val_loss) if not math.isnan(float(val_loss)) else None,
                 }
+            }
 
             interactive_log[out]['metrics'] = {}
-            if len(self.metrics.keys()) == 1:
-                for metric_name in self.metrics.get(out):
-                    interactive_log[out]['metrics'][metric_name] = {}
-                    interactive_log[out]['metrics'][metric_name] = {
-                        'train': update_logs.get(loss_metric_config.get('metric').get(metric_name).get('log_name')),
-                        'val': update_logs.get(
+            for metric_name in self.metrics.get(out):
+                interactive_log[out]['metrics'][metric_name] = {}
+                if len(self.metrics.keys()) == 1:
+                    train_metric = update_logs.get(loss_metric_config.get('metric').get(metric_name).get('log_name'))
+                    val_metric = update_logs.get(
                             f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}")
-                    }
-            else:
-                for metric_name in self.metrics.get(out):
-                    interactive_log[out]['metrics'][metric_name] = {}
-                    interactive_log[out]['metrics'][metric_name] = {
-                        'train': update_logs.get(
-                            f"{out}_{loss_metric_config.get('metric').get(metric_name).get('log_name')}"),
-                        'val': update_logs.get(
-                            f"val_{out}_{loss_metric_config.get('metric').get(metric_name).get('log_name')}")
-                    }
+                else:
+                    train_metric = update_logs.get(
+                        f"{out}_{loss_metric_config.get('metric').get(metric_name).get('log_name')}")
+                    val_metric = update_logs.get(
+                        f"val_{out}_{loss_metric_config.get('metric').get(metric_name).get('log_name')}")
+                interactive_log[out]['metrics'][metric_name] = {
+                    'train': float(train_metric) if not math.isnan(float(train_metric)) else None,
+                    'val': float(val_metric) if not math.isnan(float(val_metric)) else None
+                }
         return interactive_log
 
     def _reformat_y_pred(self, y_pred):
@@ -1055,12 +1052,12 @@ class InteractiveCallback:
                         # fill losses
                         if data_idx or data_idx == 0:
                             self.log_history[out]['loss'][loss_name][data_type][data_idx] = \
-                                self.current_logs.get(out).get('loss').get(loss_name).get(data_type) \
-                                    if self.current_logs.get(out).get('loss').get(loss_name).get(data_type) else 0.
+                                self.current_logs.get(out).get('loss').get(loss_name).get(data_type)
+                                    # if self.current_logs.get(out).get('loss').get(loss_name).get(data_type) else 0.
                         else:
                             self.log_history[out]['loss'][loss_name][data_type].append(
                                 self.current_logs.get(out).get('loss').get(loss_name).get(data_type)
-                                if self.current_logs.get(out).get('loss').get(loss_name).get(data_type) else 0.
+                                # if self.current_logs.get(out).get('loss').get(loss_name).get(data_type) else 0.
                             )
                     # fill loss progress state
                     if data_idx or data_idx == 0:
@@ -1102,28 +1099,18 @@ class InteractiveCallback:
                         self.log_history[out]['progress_state']['loss'][loss_name]['normal_state'].append(
                             normal_state)
 
-                    if self.dataset_config.get("outputs").get(out).get(
-                            "task") == LayerOutputTypeChoice.Classification or \
-                            self.dataset_config.get("outputs").get(out).get(
-                                "task") == LayerOutputTypeChoice.Segmentation or \
-                            self.dataset_config.get("outputs").get(out).get(
-                                "task") == LayerOutputTypeChoice.TextSegmentation or \
-                            self.dataset_config.get("outputs").get(out).get(
-                                "task") == LayerOutputTypeChoice.Timeseries_trend:
+                    out_task = self.dataset_config.get("outputs").get(out).get("task")
+                    if out_task == LayerOutputTypeChoice.Classification or \
+                            out_task == LayerOutputTypeChoice.Segmentation or \
+                            out_task == LayerOutputTypeChoice.TextSegmentation or \
+                            out_task == LayerOutputTypeChoice.Timeseries_trend:
                         for cls in self.log_history.get(out).get('class_loss').keys():
                             class_loss = 0.
 
                             # get Classification loss
-                            if self.dataset_config.get("outputs").get(out).get(
-                                    "task") == LayerOutputTypeChoice.Classification or \
-                                    (
-                                            self.dataset_config.get("outputs").get(out).get(
-                                                "task") == LayerOutputTypeChoice.Timeseries
-                                            and self.dataset_config.get("outputs").get(out).get("classes_names") ==
-                                            ['Не изменился', 'Вверх', 'Вниз']
-                                    ):
+                            if out_task == LayerOutputTypeChoice.Classification or \
+                                    out_task == LayerOutputTypeChoice.Timeseries_trend:
                                 class_loss = self._get_loss_calculation(
-                                    loss_name=self.losses.get(out),
                                     loss_obj=self.loss_obj.get(out),
                                     out=out,
                                     y_true=self.y_true.get('val').get(out)[
@@ -1131,40 +1118,31 @@ class InteractiveCallback:
                                     y_pred=self.y_pred.get(out)[self.class_idx.get('val').get(out).get(cls)],
                                 )
                             # get Segmentation loss
-                            if self.dataset_config.get("outputs").get(out).get(
-                                    "task") == LayerOutputTypeChoice.Segmentation:
+                            if out_task == LayerOutputTypeChoice.Segmentation:
+                                class_idx = self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
                                 class_loss = self._get_loss_calculation(
-                                    loss_name=self.losses.get(out),
                                     loss_obj=self.loss_obj.get(out),
                                     out=out,
-                                    y_true=self.y_true.get('val').get(out)[
-                                           :, :, :,
-                                           self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)],
-                                    y_pred=self.y_pred.get(out)[
-                                           :, :, :,
-                                           self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)],
+                                    y_true=self.y_true.get('val').get(out)[:, :, :, class_idx],
+                                    y_pred=self.y_pred.get(out)[:, :, :, class_idx],
                                 )
                             # get TextSegmentation loss
-                            if self.dataset_config.get("outputs").get(out).get(
-                                    "task") == LayerOutputTypeChoice.TextSegmentation:
+                            if out_task == LayerOutputTypeChoice.TextSegmentation:
+                                class_idx = self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
                                 class_loss = self._get_loss_calculation(
-                                    loss_name=self.losses.get(out),
                                     loss_obj=self.loss_obj.get(out),
                                     out=out,
-                                    y_true=self.y_true.get('val').get(out)[
-                                           :, :,
-                                           self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)],
-                                    y_pred=self.y_pred.get(out)[
-                                           :, :,
-                                           self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)],
+                                    y_true=self.y_true.get('val').get(out)[:, :, class_idx],
+                                    y_pred=self.y_pred.get(out)[:, :, class_idx],
                                 )
+                                # print("TextSegmentation loss", cls, class_loss)
 
                             if data_idx or data_idx == 0:
                                 self.log_history[out]['class_loss'][cls][loss_name][data_idx] = \
-                                    class_loss if class_loss else 0.
+                                    class_loss # if class_loss else 0.
                             else:
                                 self.log_history[out]['class_loss'][cls][loss_name].append(
-                                    class_loss if class_loss else 0.
+                                    class_loss # if class_loss else 0.
                                 )
 
                 for metric_name in self.log_history.get(out).get('metrics').keys():
@@ -1173,14 +1151,14 @@ class InteractiveCallback:
                         if data_idx or data_idx == 0:
                             if self.current_logs:
                                 self.log_history[out]['metrics'][metric_name][data_type][data_idx] = \
-                                    self.current_logs.get(out).get('metrics').get(metric_name).get(data_type) \
-                                        if self.current_logs.get(out).get('metrics').get(metric_name).get(
-                                        data_type) else 0
+                                    self.current_logs.get(out).get('metrics').get(metric_name).get(data_type)
+                                        # if self.current_logs.get(out).get('metrics').get(metric_name).get(
+                                        # data_type) else 0
                         else:
                             if self.current_logs:
                                 self.log_history[out]['metrics'][metric_name][data_type].append(
                                     self.current_logs.get(out).get('metrics').get(metric_name).get(data_type)
-                                    if self.current_logs.get(out).get('metrics').get(metric_name).get(data_type) else 0
+                                    # if self.current_logs.get(out).get('metrics').get(metric_name).get(data_type) else 0
                                 )
 
                     # fill metric progress state
@@ -1222,25 +1200,16 @@ class InteractiveCallback:
                         self.log_history[out]['progress_state']['metrics'][metric_name]['normal_state'].append(
                             normal_state)
 
-                    if self.dataset_config.get("outputs").get(out).get(
-                            "task") == LayerOutputTypeChoice.Classification or \
-                            self.dataset_config.get("outputs").get(out).get(
-                                "task") == LayerOutputTypeChoice.Segmentation or \
-                            self.dataset_config.get("outputs").get(out).get(
-                                "task") == LayerOutputTypeChoice.TextSegmentation or \
-                            self.dataset_config.get("outputs").get(out).get(
-                                "task") == LayerOutputTypeChoice.Timeseries_trend:
+                    out_task = self.dataset_config.get("outputs").get(out).get("task")
+                    if out_task == LayerOutputTypeChoice.Classification or \
+                            out_task == LayerOutputTypeChoice.Segmentation or \
+                            out_task == LayerOutputTypeChoice.TextSegmentation or \
+                            out_task == LayerOutputTypeChoice.Timeseries_trend:
                         # fill class losses
                         for cls in self.log_history.get(out).get('class_metrics').keys():
                             class_metric = 0.
-                            if self.dataset_config.get("outputs").get(out).get(
-                                    "task") == LayerOutputTypeChoice.Classification or \
-                                    (
-                                            self.dataset_config.get("outputs").get(out).get(
-                                                "task") == LayerOutputTypeChoice.Timeseries
-                                            and self.dataset_config.get("outputs").get(out).get("classes_names") ==
-                                            ['Не изменился', 'Вверх', 'Вниз']
-                                    ):
+                            if out_task == LayerOutputTypeChoice.Classification or \
+                                    out_task == LayerOutputTypeChoice.Timeseries_trend:
                                 class_metric = self._get_metric_calculation(
                                     metric_name=metric_name,
                                     metric_obj=self.metrics_obj.get(out).get(metric_name),
@@ -1249,42 +1218,30 @@ class InteractiveCallback:
                                         self.class_idx.get('val').get(out).get(cls)],
                                     y_pred=self.y_pred.get(out)[self.class_idx.get('val').get(out).get(cls)],
                                 )
-                            if self.dataset_config.get("outputs").get(out).get(
-                                    "task") == LayerOutputTypeChoice.Segmentation:
+                            if out_task == LayerOutputTypeChoice.Segmentation:
+                                class_idx = self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
                                 class_metric = self._get_metric_calculation(
                                     metric_name=metric_name,
                                     metric_obj=self.metrics_obj.get(out).get(metric_name),
                                     out=out,
-                                    y_true=self.y_true.get('val').get(out)[
-                                           :, :, :,
-                                           self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
-                                           ],
-                                    y_pred=self.y_pred.get(out)[
-                                           :, :, :,
-                                           self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
-                                           ],
+                                    y_true=self.y_true.get('val').get(out)[:, :, :, class_idx],
+                                    y_pred=self.y_pred.get(out)[:, :, :, class_idx],
                                 )
-                            if self.dataset_config.get("outputs").get(out).get(
-                                    "task") == LayerOutputTypeChoice.TextSegmentation:
+                            if out_task == LayerOutputTypeChoice.TextSegmentation:
+                                class_idx = self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
                                 class_metric = self._get_metric_calculation(
                                     metric_name=metric_name,
                                     metric_obj=self.metrics_obj.get(out).get(metric_name),
                                     out=out,
-                                    y_true=self.y_true.get('val').get(out)[
-                                           :, :,
-                                           self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
-                                           ],
-                                    y_pred=self.y_pred.get(out)[
-                                           :, :,
-                                           self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
-                                           ],
+                                    y_true=self.y_true.get('val').get(out)[:, :, class_idx],
+                                    y_pred=self.y_pred.get(out)[:, :, class_idx],
                                 )
                             if data_idx or data_idx == 0:
                                 self.log_history[out]['class_metrics'][cls][metric_name][data_idx] = \
-                                    class_metric if class_metric else 0.
+                                    class_metric #if class_metric else 0.
                             else:
                                 self.log_history[out]['class_metrics'][cls][metric_name].append(
-                                    class_metric if class_metric else 0.
+                                    class_metric #if class_metric else 0.
                                 )
 
     def _update_progress_table(self, epoch_time: float):
@@ -1307,14 +1264,14 @@ class InteractiveCallback:
                 self.progress_table[self.current_epoch]["data"][f"Выходной слой «{out}»"]["metrics"][f"val_{metric}"] = \
                     self.log_history.get(out).get('metrics').get(metric).get('val')[-1]
 
-    def _get_loss_calculation(self, loss_name, loss_obj, out: str, y_true, y_pred):
+    def _get_loss_calculation(self, loss_obj, out: str, y_true, y_pred):
         ohe = self.dataset_config.get("outputs").get(out).get("encoding") == "ohe"
         if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification or \
                 self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries_trend:
             # if loss_name == Loss.SparseCategoricalCrossentropy:
             #     return float(loss_obj()(np.argmax(y_true, axis=-1) if ohe else np.squeeze(y_true), y_pred).numpy())
             # else:
-            return float(loss_obj()(
+            loss_value = float(loss_obj()(
                 y_true if ohe else to_categorical(y_true, self.dataset_config.get(
                     "outputs").get(out).get("num_classes")), y_pred
             ).numpy())
@@ -1327,21 +1284,27 @@ class InteractiveCallback:
             #         np.expand_dims(np.argmax(y_true, axis=-1), axis=-1) if ohe else np.squeeze(y_true), y_pred
             #     ).numpy())
             # else:
-            return float(loss_obj()(
+            loss_value = float(loss_obj()(
                 y_true if ohe else to_categorical(y_true, self.dataset_config.get(
                     "outputs").get(out).get("num_classes")), y_pred
             ).numpy())
+
         elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation and \
                 self.dataset_config.get("outputs").get(out).get("encoding") == "multi":
             # if loss_name == Loss.SparseCategoricalCrossentropy:
             #     return 0.
             # else:
-            return float(loss_obj()(y_true, y_pred).numpy())
+            loss_value = float(loss_obj()(y_true, y_pred).numpy())
+
         elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Regression or \
                 self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries:
-            return float(loss_obj()(y_true, y_pred).numpy())
+            loss_value = float(loss_obj()(y_true, y_pred).numpy())
+
         else:
-            return 0.
+            loss_value = 0.
+
+        # print(loss_value, type(loss_value), loss_value == float('NaN'), math.isnan(loss_value))
+        return round(loss_value, 6) if not math.isnan(loss_value) else None
 
     def _get_metric_calculation(self, metric_name, metric_obj, out: str, y_true, y_pred):
         ohe = self.dataset_config.get("outputs").get(out).get("encoding") == "ohe"
@@ -1361,7 +1324,7 @@ class InteractiveCallback:
                     y_true if ohe else to_categorical(y_true, self.dataset_config.get(
                         "outputs").get(out).get("num_classes")), y_pred
                 )
-            return float(metric_obj.result().numpy())
+            metric_value = float(metric_obj.result().numpy())
 
         elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation or \
                 (self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation and
@@ -1377,7 +1340,8 @@ class InteractiveCallback:
                 y_true if ohe else to_categorical(y_true, self.dataset_config.get(
                     "outputs").get(out).get("num_classes")), y_pred
             )
-            return float(metric_obj.result().numpy())
+            metric_value = float(metric_obj.result().numpy())
+
         elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation and \
                 self.dataset_config.get("outputs").get(out).get("encoding") == "multi":
             # if metric_name == Metric.SparseCategoricalAccuracy or \
@@ -1386,19 +1350,26 @@ class InteractiveCallback:
             #     return 0.
             # else:
             metric_obj.update_state(y_true, y_pred)
-            return float(metric_obj.result().numpy())
+            metric_value = float(metric_obj.result().numpy())
+
         elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Regression or \
                 self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Timeseries:
             metric_obj.update_state(y_true, y_pred)
-            return float(metric_obj.result().numpy())
+            metric_value = float(metric_obj.result().numpy())
+
         else:
-            return 0.
+            metric_value = 0.
+
+        return round(metric_value, 6) if not math.isnan(metric_value) else None
 
     def _get_mean_log(self, logs):
-        if len(logs) < self.log_gap:
-            return float(np.mean(logs))
-        else:
-            return float(np.mean(logs[-self.log_gap:]))
+        try:
+            if len(logs) < self.log_gap:
+                return float(np.mean(logs))
+            else:
+                return float(np.mean(logs[-self.log_gap:]))
+        except TypeError:
+            return 0.
 
     @staticmethod
     def _evaluate_overfitting(metric_name: str, mean_log: list, metric_type: str):
@@ -1508,6 +1479,7 @@ class InteractiveCallback:
                         "plot_data": []
                     }
                 )
+        # print('loss', data_return)
         return data_return
 
     def _get_metric_graph_data_request(self) -> list:
@@ -1585,6 +1557,7 @@ class InteractiveCallback:
                         "plot_data": []
                     }
                 )
+        # print('metric', data_return)
         return data_return
 
     def _get_intermediate_result_request(self) -> dict:
@@ -2704,7 +2677,6 @@ class InteractiveCallback:
                     )
 
         elif task == LayerOutputTypeChoice.Timeseries:
-            # TODO: inverse_transform
             graphics = []
             real_x = np.arange(
                 self.inverse_x_val.get(list(self.inverse_x_val.keys())[0]).shape[-1]).astype('float').tolist()

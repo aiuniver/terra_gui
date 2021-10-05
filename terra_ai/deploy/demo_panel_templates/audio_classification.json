@@ -1,0 +1,19 @@
+{
+  "cascades": {
+    "input": {
+      "tag": "input",
+      "type": "audio"
+    },
+    "model": {
+      "tag": "model",
+      "task": "Audio",
+      "model": "TerraProjects/models/phone_audio"
+    }
+  },
+
+  "adjacency_map": {
+    "model": [
+      "INPUT"
+    ]
+  }
+}

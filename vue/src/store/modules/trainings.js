@@ -135,13 +135,16 @@ export default {
     async progress({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/progress/', data }, { root: true });
       if (res) {
-        const { data } = res.data;
+        const { data, error } = res.data;
         if (data) {
           const { info, train_data, train_usage } = data;
           if (info) dispatch('setInfo', info);
           dispatch('setState', res);
           if (train_data) dispatch('setTrainData', train_data);
           if (train_usage) dispatch('setTrainUsage', train_usage);
+        }
+        if (error) {
+          dispatch('messages/setMessage', { error: error }, { root: true });
         }
       }
       return res
