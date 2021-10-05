@@ -7,7 +7,7 @@ from pandas import DataFrame
 from tensorflow.python.keras.preprocessing import image
 
 from terra_ai.datasets.utils import get_yolo_anchors
-from terra_ai.data.datasets.dataset import DatasetOutputsData
+from terra_ai.data.datasets.dataset import DatasetOutputsData, DatasetData
 from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice, \
     LayerOutputTypeChoice, DatasetGroupChoice, LayerInputTypeChoice
 from terra_ai.data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice, \
@@ -990,7 +990,6 @@ class CreateArray(object):
         else:
             item = np.array([item])
 
-
         instructions = {'instructions': item,
                         'parameters': options}
 
@@ -1192,8 +1191,55 @@ class CreateArray(object):
         return y_true
 
     @staticmethod
-    def postprocess_results(array, options, save_path: str = "", dataset_path: str = "") -> dict:
+    def get_x_array(options):
+        x_val = None
+        inverse_x_val = None
+        if options.data.group == DatasetGroupChoice.keras:
+            x_val = options.X.get("val")
+        dataframe = False
+        for inp in options.data.inputs.keys():
+            if options.data.inputs.get(inp).task == LayerInputTypeChoice.Dataframe:
+                dataframe = True
+                break
+        ts = False
+        for out in options.data.outputs.keys():
+            if options.data.outputs.get(out).task == LayerOutputTypeChoice.Timeseries or \
+                    options.data.outputs.get(out).task == LayerOutputTypeChoice.Timeseries_trend:
+                ts = True
+                break
+        if dataframe and not options.data.use_generator:
+            x_val = options.X.get("val")
 
+        elif dataframe and options.data.use_generator:
+            x_val = {}
+            for inp in options.dataset['val'].keys():
+                x_val[inp] = []
+                for x_val_, _ in options.dataset['val'].batch(1):
+                    x_val[inp].extend(x_val_.get(f'{inp}').numpy())
+                x_val[inp] = np.array(x_val[inp])
+        else:
+            pass
+
+        if ts:
+            inverse_x_val = {}
+            for input in x_val.keys():
+                preprocess_dict = options.preprocessing.preprocessing.get(int(input))
+                inverse_x = np.zeros_like(x_val.get(input)[:, 0:1, :])
+                for i, column in enumerate(preprocess_dict.keys()):
+                    if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
+                        _options = {
+                            int(input): {column: x_val.get(input)[:, i:i + 1, :]}
+                        }
+                        inverse_col = options.preprocessing.inverse_data(_options).get(int(input)).get(column)
+                    else:
+                        inverse_col = x_val.get(input)[:, i:i + 1, :]
+                    inverse_x = np.concatenate([inverse_x, inverse_col], axis=1)
+                inverse_x_val[input] = inverse_x[:, 1:, :]
+        return x_val, inverse_x_val
+
+    @staticmethod
+    def postprocess_results(array, options, save_path: str = "", dataset_path: str = "") -> dict:
+        x_array, inverse_x_array = CreateArray().get_x_array(options)
         return_data = {}
         for i, output_id in enumerate(options.data.outputs.keys()):
             if len(options.data.outputs.keys()) > 1:
@@ -1205,6 +1251,19 @@ class CreateArray(object):
                 y_true = CreateArray().get_y_true(options, output_id)
                 return_data[output_id] = []
                 for idx, img_array in enumerate(array):
+                    input_id = list(options.data.inputs.keys())[0]
+                    source = CreateArray().postprocess_initial_source(
+                        options=options.data,
+                        dataframe=options.dataframe.get("val"),
+                        input_id=input_id,
+                        save_id=idx + 1,
+                        example_idx=idx,
+                        dataset_path=dataset_path,
+                        preset_path=save_path,
+                        x_array=None if not x_array else x_array.get(input_id),
+                        inverse_x_array=None if not inverse_x_array else inverse_x_array.get(input_id),
+                        return_mode='deploy'
+                    )
                     actual_value, predict_values = CreateArray().postprocess_classification(
                         array=np.expand_dims(postprocess_array[idx], axis=0),
                         true_array=y_true[idx],
@@ -1212,12 +1271,7 @@ class CreateArray(object):
                     )
                     return_data[output_id].append(
                         {
-                            "source": CreateArray().postprocess_initial_source(
-                                options=options,
-                                image_id=idx,
-                                preset_path=save_path,
-                                dataset_path=dataset_path
-                            ),
+                            "source": source,
                             "actual": actual_value,
                             "data": predict_values[0]
                         }
@@ -1258,7 +1312,21 @@ class CreateArray(object):
         return return_data
 
     @staticmethod
-    def postprocess_callback_results(interactive_config: dict, dataset_config: dict, example_idx: list) -> dict:
+    def postprocess_callback_results(
+            interactive_config: dict,
+            options: DatasetData,
+            dataframe: DataFrame,
+            example_id: list,
+            dataset_path: str = "",
+            preset_path: str = "",
+            x_array: list = None
+    ) -> dict:
+        """
+        options = self.dataset_config.get('data')
+        dataframe = self.dataset_config.get("dataframe").get('val')
+        dataset_path = self.dataset_config.get('dataset_path')
+        x_array = [self.x_val, self.inverse_x_val]
+        """
         return_data = {}
         if interactive_config.get('intermediate_result').get('show_results'):
             for idx in range(interactive_config.get('intermediate_result').get('num_examples')):
@@ -1270,15 +1338,22 @@ class CreateArray(object):
                     'statistic_values': {}
                 }
                 if not (
-                        len(dataset_config.get("outputs").keys()) == 1 and dataset_config.get("outputs").get(
-                    list(dataset_config.get("outputs").keys())[0]).get(
-                    "task") == LayerOutputTypeChoice.TextSegmentation
+                        len(options.outputs.keys()) == 1 and
+                        options.outputs.get(list(options.outputs.keys())[0]).task ==
+                        LayerOutputTypeChoice.TextSegmentation
                 ):
-                    for inp in dataset_config.get("inputs").keys():
-                        data, type_choice = self._postprocess_initial_data(
+                    for inp in options.inputs.keys():
+                        data, type_choice = CreateArray().postprocess_initial_source(
+                            options=options,
+                            dataframe=dataframe,
                             input_id=inp,
                             save_id=idx + 1,
-                            example_idx=example_idx[idx],
+                            example_idx=example_id[idx],
+                            dataset_path=dataset_path,
+                            preset_path=preset_path,
+                            x_array=x_array[0].get(f"{inp}") if x_array[0] else None,
+                            inverse_x_array=x_array[1].get(f"{inp}") if x_array[1] else None,
+                            return_mode='callback'
                         )
                         random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
                         return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
@@ -1286,7 +1361,6 @@ class CreateArray(object):
                             'type': type_choice,
                             'data': data,
                         }
-
                 for out in dataset_config.get("outputs").keys():
                     data = self._postprocess_result_data(
                         output_id=out,
@@ -1314,116 +1388,265 @@ class CreateArray(object):
         return return_data
 
     @staticmethod
-    def postprocess_initial_source(options, image_id: int, preset_path: str = "", dataset_path: str = "") -> str:
+    def postprocess_initial_source(
+            options: DatasetData,
+            dataframe: DataFrame,
+            input_id: int,
+            example_idx: int,
+            dataset_path: str,
+            preset_path: str,
+            save_id: int = None,
+            x_array=None,
+            inverse_x_array=None,
+            return_mode='deploy'
+    ):
         column_idx = []
-        input_id = list(options.data.inputs.keys())[0]
-        task = options.data.inputs.get(input_id).task
-        if options.data.group != DatasetGroupChoice.keras:
-            for column_name in options.dataframe.get('val').columns:
-                # TODO: сделано для одного входа
-                if column_name.split('_', 1)[0] == f"{input_id}":
-                    column_idx.append(options.dataframe.get('val').columns.tolist().index(column_name))
-            if task == LayerInputTypeChoice.Text or task == LayerInputTypeChoice.Dataframe:
+        input_task = options.inputs.get(input_id).task
+        if options.group != DatasetGroupChoice.keras:
+            for column_name in dataframe.columns:
+                if column_name.split('_')[0] == input_id:
+                    column_idx.append(dataframe.columns.tolist().index(column_name))
+            if input_task == LayerInputTypeChoice.Text or input_task == LayerInputTypeChoice.Dataframe:
                 initial_file_path = ""
             else:
-                initial_file_path = os.path.join(
-                    dataset_path,
-                    options.dataframe.get('val').iat[image_id, column_idx[0]]
-                )
+                initial_file_path = os.path.join(dataset_path, dataframe.iat[example_idx, column_idx[0]])
+            if not save_id:
+                return str(os.path.abspath(initial_file_path))
         else:
             initial_file_path = ""
 
-        if task == LayerInputTypeChoice.Image:
-            if options.data.group != DatasetGroupChoice.keras:
+        data = []
+        data_type = ""
+        source = ""
+        if input_task == LayerInputTypeChoice.Image:
+            if options.group != DatasetGroupChoice.keras:
                 img = Image.open(initial_file_path)
-                img = img.resize(options.data.inputs.get(input_id).shape[0:2][::-1], Image.ANTIALIAS)
+                img = img.resize(
+                    options.inputs.get(input_id).shape[0:2][::-1],
+                    Image.ANTIALIAS
+                )
             else:
-                img = image.array_to_img(options.X.get("val").get(f"{input_id}")[image_id])
+                img = image.array_to_img(x_array[example_idx])
             img = img.convert('RGB')
-            save_path = os.path.join(
-                preset_path, f"initial_data_image_{image_id+1}_input_{input_id}.webp"
-            )
-            img.save(save_path, 'webp')
+            source = os.path.join(preset_path, f"initial_data_image_{save_id}_input_{input_id}.webp")
+            img.save(source, 'webp')
+            data_type = LayerInputTypeChoice.Image.name
+            data = [
+                {
+                    "title": "Изображение",
+                    "value": source,
+                    "color_mark": None
+                }
+            ]
 
-        elif task == LayerInputTypeChoice.Text:
+        elif input_task == LayerInputTypeChoice.Text:
             regression_task = False
-            for out in options.data.outputs.keys():
-                if options.data.outputs.get(out).task == LayerOutputTypeChoice.Regression:
+            for out in options.outputs.keys():
+                if options.outputs.get(out).task == LayerOutputTypeChoice.Regression:
                     regression_task = True
-            if regression_task:
-                save_path = options.dataframe.get('val').iat[image_id, column_idx[0]]
-            else:
-                task = LayerInputTypeChoice.Dataframe
+            for column in column_idx:
+                source = dataframe.iat[example_idx, column]
+                data_type = LayerInputTypeChoice.Text.name
+                title = "Текст"
+                if regression_task:
+                    title = list(dataframe.columns)[column].split("_", 1)[-1]
+                data = [
+                    {
+                        "title": title,
+                        "value": source,
+                        "color_mark": None
+                    }
+                ]
 
-        elif task == LayerInputTypeChoice.Video:
+        elif input_task == LayerInputTypeChoice.Video:
             clip = moviepy_editor.VideoFileClip(initial_file_path)
-            save_path = os.path.join(preset_path, f"initial_data_video_{image_id+1}_input_{input_id}.webm")
-            clip.write_videofile(save_path)
+            source = os.path.join(preset_path, f"initial_data_video_{save_id}_input_{input_id}.webm")
+            clip.write_videofile(source)
+            data_type = LayerInputTypeChoice.Video.name
+            data = [
+                {
+                    "title": "Видео",
+                    "value": source,
+                    "color_mark": None
+                }
+            ]
 
-        elif task == LayerInputTypeChoice.Audio:
-            save_path = os.path.join(preset_path, f"initial_data_audio_{image_id+1}_input_{input_id}.webp")
-            AudioSegment.from_file(initial_file_path).export(save_path, format="webm")
+        elif input_task == LayerInputTypeChoice.Audio:
+            source = os.path.join(preset_path, f"initial_data_audio_{save_id}_input_{input_id}.webp")
+            AudioSegment.from_file(initial_file_path).export(source, format="webm")
+            data_type = LayerInputTypeChoice.Audio.name
+            data = [
+                {
+                    "title": "Аудио",
+                    "value": source,
+                    "color_mark": None
+                }
+            ]
 
-        # elif task == LayerInputTypeChoice.Dataframe:
-        #     time_series_choice = False
-        #     for out in options.data.outputs.keys():
-        #         if options.data.outputs.get(out).task == LayerOutputTypeChoice.Timeseries or \
-        #                 options.data.outputs.get(out).task == LayerOutputTypeChoice.Timeseries_trend:
-        #             time_series_choice = True
-        #             break
-        #
-        #     if time_series_choice:
-        #         graphics_data = []
-        #         names = ""
-        #         multi = False
-        #         for i, channel in enumerate(self.dataset_config.get("columns").get(int(input_id)).keys()):
-        #             multi = True if i > 0 else False
-        #             names += f"«{channel.split('_', 1)[-1]}», "
-        #             graphics_data.append(
-        #                 {
-        #                     'id': i + 1,
-        #                     'graph_name': f"График канала «{channel.split('_', 1)[-1]}»",
-        #                     'x_label': 'Время',
-        #                     'y_label': 'Значение',
-        #                     'plot_data': {
-        #                         'x': np.arange(self.inverse_x_val.get(input_id)[example_idx].shape[-1]).astype(
-        #                             'int').tolist(),
-        #                         'y': self.inverse_x_val.get(input_id)[example_idx][i].astype('float').tolist()
-        #                     },
-        #                 }
-        #             )
-        #         data_type = "graphic"
-        #         data = [
-        #             {
-        #                 "title": f"График{'и' if multi else ''} по канал{'ам' if multi else 'у'} {names[:-2]}",
-        #                 "value": graphics_data,
-        #                 "color_mark": None
-        #             }
-        #         ]
-        #     else:
-        #         data_type = LayerInputTypeChoice.Dataframe.name
-        #         for col_name in self.dataset_config.get('columns').get(int(input_id)).keys():
-        #             value = self.dataset_config.get('dataframe').get('val')[col_name][example_idx]
-        #             if 'int' in type(value).__name__:
-        #                 value = int(value)
-        #             elif 'float' in type(value).__name__:
-        #                 value = float(value)
-        #             else:
-        #                 pass
-        #             data.append(
-        #                 {
-        #                     "title": col_name.split("_", 1)[-1],
-        #                     "value": value,
-        #                     "color_mark": None
-        #                 }
-        #             )
+        elif input_task == LayerInputTypeChoice.Dataframe:
+            time_series_choice = False
+            for out in options.outputs.keys():
+                if options.outputs.get(out).task == LayerOutputTypeChoice.Timeseries or \
+                        options.outputs.get(out).task == LayerOutputTypeChoice.Timeseries_trend:
+                    time_series_choice = True
+                    break
+            if time_series_choice:
+                graphics_data = []
+                names = ""
+                multi = False
+                for i, channel in enumerate(options.columns.get(input_id).keys()):
+                    multi = True if i > 0 else False
+                    names += f"«{channel.split('_', 1)[-1]}», "
+                    graphics_data.append(
+                        {
+                            'id': i + 1,
+                            'graph_name': f"График канала «{channel.split('_', 1)[-1]}»",
+                            'x_label': 'Время',
+                            'y_label': 'Значение',
+                            'plot_data': {
+                                'x': np.arange(inverse_x_array[example_idx].shape[-1]).astype('int').tolist(),
+                                'y': inverse_x_array[example_idx][i].astype('float').tolist()
+                            },
+                        }
+                    )
+                data_type = "graphic"
+                data = [
+                    {
+                        "title": f"График{'и' if multi else ''} по канал{'ам' if multi else 'у'} {names[:-2]}",
+                        "value": graphics_data,
+                        "color_mark": None
+                    }
+                ]
+            else:
+                data_type = "str"
+                for col_name in options.columns.get(int(input_id)).keys():
+                    value = dataframe[col_name].to_list()[example_idx]
+                    data.append(
+                        {
+                            "title": col_name.split("_", 1)[-1],
+                            "value": value,
+                            "color_mark": None
+                        }
+                    )
+        if return_mode == 'deploy':
+            return source
+        if return_mode == 'callback':
+            return data, data_type.lower()
 
-
-        else:
-            save_path = ''
-
-
-        return save_path
+    # @staticmethod
+    # def postprocess_initial_source(
+    #         options,
+    #         image_id: int,
+    #         preset_path: str = "",
+    #         dataset_path: str = ""
+    # ) -> str:
+    #     column_idx = []
+    #     input_id = list(options.data.inputs.keys())[0]
+    #     task = options.data.inputs.get(input_id).task
+    #     if options.data.group != DatasetGroupChoice.keras:
+    #         for column_name in options.dataframe.get('val').columns:
+    #             # TODO: сделано для одного входа
+    #             if column_name.split('_', 1)[0] == f"{input_id}":
+    #                 column_idx.append(options.dataframe.get('val').columns.tolist().index(column_name))
+    #         if task == LayerInputTypeChoice.Text or task == LayerInputTypeChoice.Dataframe:
+    #             initial_file_path = ""
+    #         else:
+    #             initial_file_path = os.path.join(
+    #                 dataset_path,
+    #                 options.dataframe.get('val').iat[image_id, column_idx[0]]
+    #             )
+    #     else:
+    #         initial_file_path = ""
+    #
+    #     if task == LayerInputTypeChoice.Image:
+    #         if options.data.group != DatasetGroupChoice.keras:
+    #             img = Image.open(initial_file_path)
+    #             img = img.resize(options.data.inputs.get(input_id).shape[0:2][::-1], Image.ANTIALIAS)
+    #         else:
+    #             img = image.array_to_img(options.X.get("val").get(f"{input_id}")[image_id])
+    #         img = img.convert('RGB')
+    #         save_path = os.path.join(
+    #             preset_path, f"initial_data_image_{image_id + 1}_input_{input_id}.webp"
+    #         )
+    #         img.save(save_path, 'webp')
+    #
+    #     elif task == LayerInputTypeChoice.Text:
+    #         regression_task = False
+    #         for out in options.data.outputs.keys():
+    #             if options.data.outputs.get(out).task == LayerOutputTypeChoice.Regression:
+    #                 regression_task = True
+    #         if not regression_task:
+    #             save_path = options.dataframe.get('val').iat[image_id, column_idx[0]]
+    #         else:
+    #             task = LayerInputTypeChoice.Dataframe
+    #
+    #     elif task == LayerInputTypeChoice.Video:
+    #         clip = moviepy_editor.VideoFileClip(initial_file_path)
+    #         save_path = os.path.join(preset_path, f"initial_data_video_{image_id + 1}_input_{input_id}.webm")
+    #         clip.write_videofile(save_path)
+    #
+    #     elif task == LayerInputTypeChoice.Audio:
+    #         save_path = os.path.join(preset_path, f"initial_data_audio_{image_id + 1}_input_{input_id}.webp")
+    #         AudioSegment.from_file(initial_file_path).export(save_path, format="webm")
+    #
+    #     # elif task == LayerInputTypeChoice.Dataframe:
+    #     #     time_series_choice = False
+    #     #     for out in options.data.outputs.keys():
+    #     #         if options.data.outputs.get(out).task == LayerOutputTypeChoice.Timeseries or \
+    #     #                 options.data.outputs.get(out).task == LayerOutputTypeChoice.Timeseries_trend:
+    #     #             time_series_choice = True
+    #     #             break
+    #     #
+    #     #     if time_series_choice:
+    #     #         graphics_data = []
+    #     #         names = ""
+    #     #         multi = False
+    #     #         for i, channel in enumerate(self.dataset_config.get("columns").get(int(input_id)).keys()):
+    #     #             multi = True if i > 0 else False
+    #     #             names += f"«{channel.split('_', 1)[-1]}», "
+    #     #             graphics_data.append(
+    #     #                 {
+    #     #                     'id': i + 1,
+    #     #                     'graph_name': f"График канала «{channel.split('_', 1)[-1]}»",
+    #     #                     'x_label': 'Время',
+    #     #                     'y_label': 'Значение',
+    #     #                     'plot_data': {
+    #     #                         'x': np.arange(self.inverse_x_val.get(input_id)[example_idx].shape[-1]).astype(
+    #     #                             'int').tolist(),
+    #     #                         'y': self.inverse_x_val.get(input_id)[example_idx][i].astype('float').tolist()
+    #     #                     },
+    #     #                 }
+    #     #             )
+    #     #         data_type = "graphic"
+    #     #         data = [
+    #     #             {
+    #     #                 "title": f"График{'и' if multi else ''} по канал{'ам' if multi else 'у'} {names[:-2]}",
+    #     #                 "value": graphics_data,
+    #     #                 "color_mark": None
+    #     #             }
+    #     #         ]
+    #     #     else:
+    #     #         data_type = LayerInputTypeChoice.Dataframe.name
+    #     #         for col_name in self.dataset_config.get('columns').get(int(input_id)).keys():
+    #     #             value = self.dataset_config.get('dataframe').get('val')[col_name][example_idx]
+    #     #             if 'int' in type(value).__name__:
+    #     #                 value = int(value)
+    #     #             elif 'float' in type(value).__name__:
+    #     #                 value = float(value)
+    #     #             else:
+    #     #                 pass
+    #     #             data.append(
+    #     #                 {
+    #     #                     "title": col_name.split("_", 1)[-1],
+    #     #                     "value": value,
+    #     #                     "color_mark": None
+    #     #                 }
+    #     #             )
+    #
+    #     else:
+    #         save_path = ''
+    #
+    #     return save_path
 
     @staticmethod
     def postprocess_classification(array: np.ndarray, true_array: np.ndarray, options: DatasetOutputsData):
@@ -1544,7 +1767,6 @@ class CreateArray(object):
                 }
             )
         return return_data
-
 
     @staticmethod
     def postprocess_regression():
