@@ -2,12 +2,14 @@
   <div class="t-mega-select">
     <div class="t-mega-select__header">{{ label }}</div>
     <div :class="['t-mega-select__body', { 't-mega-select__body--disabled': disabled }]">
-      <div v-for="({ label, value }, i) of list" :key="'mega_' + i" class="t-mega-select__list" @click="click(value)">
-        <div :class="['t-mega-select__list--switch', { 't-mega-select__list--active': isActive(value) }]">
-          <span></span>
+      <scrollbar :ops="ops">
+        <div v-for="({ label, value }, i) of list" :key="'mega_' + i" class="t-mega-select__list" @click="click(value)">
+          <div :class="['t-mega-select__list--switch', { 't-mega-select__list--active': isActive(value) }]">
+            <span></span>
+          </div>
+          <div class="t-mega-select__list--label">{{ label }}</div>
         </div>
-        <div class="t-mega-select__list--label">{{ label }}</div>
-      </div>
+      </scrollbar>
       <div v-show="!list.length" class="t-mega-select__body--empty">Нет данных</div>
     </div>
   </div>
@@ -29,6 +31,13 @@ export default {
   },
   data: () => ({
     valueTemp: [],
+    ops: {
+      bar: { background: '#17212b' },
+      scrollPanel: {
+        scrollingX: false,
+        scrollingY: true,
+      },
+    },
   }),
   methods: {
     isActive(value) {
@@ -68,9 +77,10 @@ export default {
   &__body {
     border: 1px solid #6c7883;
     border-radius: 4px;
-    padding: 5px;
+    padding: 5px 0 5px 5px;
     overflow: hidden;
     background: #242f3d;
+    height: 200px;
     &--empty {
       color: #a7bed3;
       font-size: 0.7em;
