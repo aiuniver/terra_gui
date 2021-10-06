@@ -67,8 +67,10 @@ class CreateDataset(object):
 
         self.write_preprocesses_to_files()
         self.write_instructions_to_files()
-        self.zip_dataset(self.paths.basepath, os.path.join(self.temp_directory, f'{creation_data.alias}.{DATASET_EXT}',
-                                                           creation_data.alias))
+        # self.zip_dataset(self.paths.basepath, os.path.join(self.temp_directory, f'{creation_data.alias}.{DATASET_EXT}',
+                                                           # 'dataset'))
+        self.zip_dataset(self.paths.basepath, os.path.join(self.temp_directory, 'dataset'))
+        shutil.move(os.path.join(self.temp_directory, 'dataset.zip'), self.paths.basepath)
         for key, value in self.paths.__dict__.items():
             if not key == 'basepath':
                 shutil.rmtree(value)
