@@ -32,7 +32,7 @@ DOWNLOAD_SOURCE_TITLE = "Загрузка исходников датасета"
 DATASET_SOURCE_UNPACK_TITLE = "Распаковка исходников датасета"
 DATASET_CHOICE_TITLE = "Загрузка датасета %s.%s"
 DATASET_CHOICE_UNPACK_TITLE = "Распаковка датасета %s.%s"
-DATASET_CHOICE_TERRA_URL = "https://storage.googleapis.com/terra_ai/DataSets/terra_v2/"
+DATASET_CHOICE_TERRA_URL = "https://storage.googleapis.com/terra_ai/DataSets/Numpy/"
 DATASETS_SOURCE_DIR = Path(settings.TMP_DIR, "datasets", "sources")
 
 os.makedirs(DATASETS_SOURCE_DIR, exist_ok=True)
