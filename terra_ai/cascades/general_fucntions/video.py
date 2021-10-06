@@ -31,15 +31,18 @@ def main(**params):
     retype = change_type(getattr(np, params['dtype'])) if 'dtype' in params.keys() else None
 
     def fun(path):
-        print(path)
 
         cap = cv2.VideoCapture(path)
 
         out = []
         array = []
 
-        while cap.isOpened():
+        while True:
             ret, frame = cap.read()
+
+            if not ret:
+                break
+
             frame = frame[:, :, [2, 1, 0]]
 
             if params['scaler'] == 'min_max_scaler':

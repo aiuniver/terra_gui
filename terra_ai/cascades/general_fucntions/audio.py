@@ -9,9 +9,19 @@ def main(**params):
     def fun(audio):
 
         y, sr = librosa.load(audio, sr=params['sample_rate'], res_type=params['resample'])
+
+        y = y[:params['sample_rate']]
+
         if params['sample_rate'] > len(y):
-            zeros = np.zeros((params['sample_rate'] - len(y),))
-            y = np.concatenate((y, zeros))
+            if params['fill_mode'] == 'last_millisecond':
+                y = np.concatenate((
+                    y, np.full((params['sample_rate'] - y.shape[0]), y[-1])
+                ))
+            elif params['fill_mode'] == 'loop':
+                while len(y) < params['sample_rate']:
+                    y = np.concatenate((
+                        y, y[:params['sample_rate'] - len(y)]
+                    ))
 
         if parameter in ['chroma_stft', 'mfcc', 'spectral_centroid', 'spectral_bandwidth', 'spectral_rolloff']:
             array = getattr(librosa.feature, parameter)(y=y, sr=sr)
