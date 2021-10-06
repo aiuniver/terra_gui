@@ -1,7 +1,9 @@
 import os
 import sys
+import uuid
 import shutil
 import base64
+import tempfile
 import requests
 
 from pathlib import Path
@@ -155,9 +157,22 @@ def __choice_from_custom(name: str, destination: Path, source: Path, **kwargs):
         data = CustomDatasetConfigData(
             path=Path(source, f"{name}.{settings.DATASET_EXT}")
         )
+        zip_dirpath = Path(tempfile.gettempdir(), str(uuid.uuid4()))
+        shutil.copytree(data.path, zip_dirpath)
+        os.chmod(zip_dirpath, 0o755)
+        zip_filepath = Path(zip_dirpath, "dataset.zip")
+        unpacked = progress_utils.unpack(
+            progress_name,
+            DATASET_CHOICE_UNPACK_TITLE % (DatasetGroupChoice.custom.value, name),
+            zip_filepath,
+        )
+        os.remove(zip_filepath)
+        for item in os.listdir(unpacked):
+            shutil.move(str(Path(unpacked, item).absolute()), zip_dirpath)
         shutil.rmtree(destination)
-        shutil.copytree(data.path, destination)
+        os.rename(zip_dirpath, destination)
         dataset = DatasetData(**data.config)
+        shutil.rmtree(unpacked)
         if dataset:
             progress.pool(progress_name, percent=100, data=dataset, finished=True)
         else:
