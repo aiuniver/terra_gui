@@ -70,6 +70,12 @@ KerasInstructions = {
                 "put_type": "image",
                 "scaler": "min_max_scaler",
             }
+        },
+        2: {
+            "2_classification": {
+                "one_hot_encoding": True,
+                "type_processing": "categorical"
+            }
         }
     },
     "fashion_mnist": {
@@ -84,6 +90,12 @@ KerasInstructions = {
                 "put": 1,
                 "put_type": "image",
                 "scaler": "min_max_scaler",
+            }
+        },
+        2: {
+            "2_classification": {
+                "one_hot_encoding": True,
+                "type_processing": "categorical"
             }
         }
     },
@@ -100,6 +112,12 @@ KerasInstructions = {
                 "put_type": "image",
                 "scaler": "min_max_scaler",
             }
+        },
+        2: {
+            "2_classification": {
+                "one_hot_encoding": True,
+                "type_processing": "categorical"
+            }
         }
     },
     "cifar100": {
@@ -115,11 +133,14 @@ KerasInstructions = {
                 "put_type": "image",
                 "scaler": "min_max_scaler",
             }
+        },
+        2: {
+            "2_classification": {
+                "one_hot_encoding": True,
+                "type_processing": "categorical"
+            }
         }
-    },
-    "imdb": {1: {}},
-    "boston_housing": {1: {}},
-    "reuters": {1: {}},
+    }
 }
 # Конфиги
 DatasetsGroups = [
@@ -632,287 +653,7 @@ DatasetsGroups = [
                     Tags.tensorflow_keras,
                 ],
                 "use_generator": False,
-            },
-            {
-                "alias": "imdb",
-                "name": "Imdb",
-                "group": DatasetGroupChoice.keras,
-                "tags": [
-                    Tags.text,
-                    Tags.classification,
-                    Tags.english,
-                    Tags.tensorflow_keras,
-                ],
-                "inputs": {
-                    1: {
-                        "datatype": "DIM",
-                        "dtype": "int",
-                        "shape": (218,),  # шейп невозможно выявить. взял первый вектор
-                        "name": "Вход 1",
-                        "task": LayerInputTypeChoice.Text,
-                        "classes_names": ["imdb"],
-                        "num_classes": 1,
-                    }
-                },
-                "outputs": {
-                    2: {
-                        "datatype": "DIM",
-                        "dtype": "float32",
-                        "shape": (2,),
-                        "name": "Выход 1",
-                        "task": LayerOutputTypeChoice.Classification,
-                        "classes_names": ["Отрицательный отзыв", "Положительный отзыв"],
-                        "num_classes": 2,
-                        "encoding": "ohe",
-                    }
-                },
-                "columns": {
-                    1: {
-                        "1_imdb": {
-                            "datatype": "DIM",
-                            "dtype": "int",
-                            "shape": (
-                                218,
-                            ),  # шейп невозможно выявить. взял первый вектор
-                            "name": "Вход 1",
-                            "task": LayerInputTypeChoice.Text,
-                            "classes_names": ["imdb"],
-                            "num_classes": 1,
-                        }
-                    },
-                    2: {
-                        "2_classification": {
-                            "datatype": "DIM",
-                            "dtype": "float32",
-                            "shape": (2,),
-                            "name": "Выход 1",
-                            "task": LayerOutputTypeChoice.Classification,
-                            "classes_names": [
-                                "Отрицательный отзыв",
-                                "Положительный отзыв",
-                            ],
-                            "num_classes": 2,
-                            "encoding": "ohe",
-                        }
-                    },
-                },
-            },
-            {
-                "alias": "boston_housing",
-                "name": "Boston housing",
-                "group": DatasetGroupChoice.keras,
-                "tags": [
-                    Tags.text,
-                    Tags.regression,
-                    Tags.english,
-                    Tags.tensorflow_keras,
-                ],
-                "inputs": {
-                    1: {
-                        "datatype": "DIM",
-                        "dtype": "float64",
-                        "shape": (13,),
-                        "name": "Вход 1",
-                        "task": LayerInputTypeChoice.Text,
-                        "classes_names": ["boston_housing"],
-                        "num_classes": 1,
-                    }
-                },
-                "outputs": {
-                    2: {
-                        "datatype": "DIM",
-                        "dtype": "float64",
-                        "shape": (1,),
-                        "name": "Выход 1",
-                        "task": LayerOutputTypeChoice.Regression,
-                        "classes_names": ["Цена"],
-                        "num_classes": 1,
-                        "encoding": "none",
-                    },
-                },
-                "columns": {
-                    1: {
-                        "1_boston_housing": {
-                            "datatype": "DIM",
-                            "dtype": "float64",
-                            "shape": (13,),
-                            "name": "Вход 1",
-                            "task": LayerInputTypeChoice.Text,
-                            "classes_names": ["boston_housing"],
-                            "num_classes": 1,
-                        }
-                    },
-                    2: {
-                        "2_regression": {
-                            "datatype": "DIM",
-                            "dtype": "float64",
-                            "shape": (1,),
-                            "name": "Выход 1",
-                            "task": LayerOutputTypeChoice.Regression,
-                            "classes_names": ["Цена"],
-                            "num_classes": 1,
-                            "encoding": "none",
-                        }
-                    },
-                },
-            },
-            {
-                "alias": "reuters",
-                "name": "Reuters",
-                "group": DatasetGroupChoice.keras,
-                "tags": [
-                    Tags.text,
-                    Tags.classification,
-                    Tags.english,
-                    Tags.tensorflow_keras,
-                ],
-                "inputs": {
-                    1: {
-                        "datatype": "DIM",
-                        "dtype": "int",
-                        "shape": (87,),  # шейп невозможно выявить. взял первый вектор
-                        "name": "Вход 1",
-                        "task": LayerInputTypeChoice.Text,
-                        "classes_names": ["boston_housing"],
-                        "num_classes": 1,
-                        "encoding": "none",
-                    }
-                },
-                "outputs": {
-                    2: {
-                        "datatype": "DIM",
-                        "dtype": "float32",
-                        "shape": (46,),
-                        "name": "Выход 1",
-                        "task": LayerOutputTypeChoice.Classification,
-                        "classes_names": [
-                            "cocoa",
-                            "grain",
-                            "veg-oil",
-                            "earn",
-                            "acq",
-                            "wheat",
-                            "copper",
-                            "housing",
-                            "money-supply",
-                            "coffee",
-                            "sugar",
-                            "trade",
-                            "reserves",
-                            "ship",
-                            "cotton",
-                            "carcass",
-                            "crude",
-                            "nat-gas",
-                            "cpi",
-                            "money-fx",
-                            "interest",
-                            "gnp",
-                            "meal-feed",
-                            "alum",
-                            "oilseed",
-                            "gold",
-                            "tin",
-                            "strategic-metal",
-                            "livestock",
-                            "retail",
-                            "ipi",
-                            "iron-steel",
-                            "rubber",
-                            "heat",
-                            "jobs",
-                            "lei",
-                            "bop",
-                            "zinc",
-                            "orange",
-                            "pet-chem",
-                            "dlr",
-                            "gas",
-                            "silver",
-                            "wpi",
-                            "hog",
-                            "lead",
-                        ],
-                        "num_classes": 46,
-                        "encoding": "ohe",
-                    }
-                },
-                "columns": {
-                    1: {
-                        "1_reuters": {
-                            "datatype": "DIM",
-                            "dtype": "int",
-                            "shape": (
-                                87,
-                            ),  # шейп невозможно выявить. взял первый вектор
-                            "name": "Вход 1",
-                            "task": LayerInputTypeChoice.Text,
-                            "classes_names": ["boston_housing"],
-                            "num_classes": 1,
-                            "encoding": "none",
-                        }
-                    },
-                    2: {
-                        "2_classification": {
-                            "datatype": "DIM",
-                            "dtype": "float32",
-                            "shape": (46,),
-                            "name": "Выход 1",
-                            "task": LayerOutputTypeChoice.Classification,
-                            "classes_names": [
-                                "cocoa",
-                                "grain",
-                                "veg-oil",
-                                "earn",
-                                "acq",
-                                "wheat",
-                                "copper",
-                                "housing",
-                                "money-supply",
-                                "coffee",
-                                "sugar",
-                                "trade",
-                                "reserves",
-                                "ship",
-                                "cotton",
-                                "carcass",
-                                "crude",
-                                "nat-gas",
-                                "cpi",
-                                "money-fx",
-                                "interest",
-                                "gnp",
-                                "meal-feed",
-                                "alum",
-                                "oilseed",
-                                "gold",
-                                "tin",
-                                "strategic-metal",
-                                "livestock",
-                                "retail",
-                                "ipi",
-                                "iron-steel",
-                                "rubber",
-                                "heat",
-                                "jobs",
-                                "lei",
-                                "bop",
-                                "zinc",
-                                "orange",
-                                "pet-chem",
-                                "dlr",
-                                "gas",
-                                "silver",
-                                "wpi",
-                                "hog",
-                                "lead",
-                            ],
-                            "num_classes": 46,
-                            "encoding": "ohe",
-                        }
-                    },
-                },
-            },
+            }
         ],
     },
     {
@@ -1704,6 +1445,244 @@ DatasetsGroups = [
                             "name": "Метки классов",
                             "num_classes": 10,
                             "shape": (10,),
+                            "task": LayerOutputTypeChoice.Classification,
+                        }
+                    },
+                },
+                "use_generator": False,
+            },
+            {
+                "alias": "writers",
+                "name": "Тексты писателей",
+                "group": DatasetGroupChoice.terra,
+                "tags": [
+                    Tags.text,
+                    Tags.classification,
+                    Tags.russian,
+                    Tags.terra_ai,
+                ],
+                "inputs": {
+                    1: {
+                        "datatype": "DIM",
+                        "dtype": "int64",
+                        "shape": (1000,),
+                        "name": "Тексты писателей",
+                        "task": LayerInputTypeChoice.Text,
+                        "classes_names": [
+                            "Булгаков",
+                            "Клиффорд Саймак",
+                            "Макс Фрай",
+                            "О. Генри",
+                            "Рэй Брэдберри",
+                            "Стругацкие"
+                        ],
+                        "num_classes": 6,
+                        "encoding": LayerEncodingChoice.none,
+                    },
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "uint8",
+                        "shape": (6,),
+                        "name": "Метки классов",
+                        "task": LayerOutputTypeChoice.Classification,
+                        "classes_names": [
+                            "Булгаков",
+                            "Клиффорд Саймак",
+                            "Макс Фрай",
+                            "О. Генри",
+                            "Рэй Брэдберри",
+                            "Стругацкие"
+                        ],
+                        "num_classes": 6,
+                        "encoding": LayerEncodingChoice.ohe,
+                    },
+                },
+                "columns": {
+                    1: {
+                        "1_text": {
+                            "classes_names": [
+                                "Булгаков",
+                                "Клиффорд Саймак",
+                                "Макс Фрай",
+                                "О. Генри",
+                                "Рэй Брэдберри",
+                                "Стругацкие"
+                            ],
+                            "datatype": "DIM",
+                            "dtype": "int64",
+                            "encoding": LayerEncodingChoice.none,
+                            "name": "Тексты писателей",
+                            "num_classes": 6,
+                            "shape": (1000,),
+                            "task": LayerInputTypeChoice.Text,
+                        }
+                    },
+                    2: {
+                        "2_classification": {
+                            "classes_names": [
+                                "Булгаков",
+                                "Клиффорд Саймак",
+                                "Макс Фрай",
+                                "О. Генри",
+                                "Рэй Брэдберри",
+                                "Стругацкие"
+                            ],
+                            "datatype": "DIM",
+                            "dtype": "uint8",
+                            "encoding": LayerEncodingChoice.ohe,
+                            "name": "Метки классов",
+                            "num_classes": 6,
+                            "shape": (6,),
+                            "task": LayerOutputTypeChoice.Classification,
+                        }
+                    },
+                },
+                "use_generator": False,
+            },
+            {
+                "alias": "tesla",
+                "name": "Отзывы на Теслу",
+                "group": DatasetGroupChoice.terra,
+                "tags": [
+                    Tags.text,
+                    Tags.classification,
+                    Tags.russian,
+                    Tags.terra_ai,
+                ],
+                "inputs": {
+                    1: {
+                        "datatype": "DIM",
+                        "dtype": "int64",
+                        "shape": (100,),
+                        "name": "Отзывы",
+                        "task": LayerInputTypeChoice.Text,
+                        "classes_names": [
+                            "Негативные",
+                            "Позитивные"
+                        ],
+                        "num_classes": 2,
+                        "encoding": LayerEncodingChoice.none,
+                    },
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "uint8",
+                        "shape": (2,),
+                        "name": "Метки классов",
+                        "task": LayerOutputTypeChoice.Classification,
+                        "classes_names": [
+                            "Негативные",
+                            "Позитивные"
+                        ],
+                        "num_classes": 2,
+                        "encoding": LayerEncodingChoice.ohe,
+                    },
+                },
+                "columns": {
+                    1: {
+                        "1_text": {
+                            "classes_names": [
+                                "Негативные",
+                                "Позитивные"
+                            ],
+                            "datatype": "DIM",
+                            "dtype": "int64",
+                            "encoding": LayerEncodingChoice.none,
+                            "name": "Отзывы",
+                            "num_classes": 2,
+                            "shape": (100,),
+                            "task": LayerInputTypeChoice.Text,
+                        }
+                    },
+                    2: {
+                        "2_classification": {
+                            "classes_names": [
+                                "Негативные",
+                                "Позитивные"
+                            ],
+                            "datatype": "DIM",
+                            "dtype": "uint8",
+                            "encoding": LayerEncodingChoice.ohe,
+                            "name": "Метки классов",
+                            "num_classes": 2,
+                            "shape": (2,),
+                            "task": LayerOutputTypeChoice.Classification,
+                        }
+                    },
+                },
+                "use_generator": False,
+            },
+            {
+                "alias": "rezjume",
+                "name": "Резюме",
+                "group": DatasetGroupChoice.terra,
+                "tags": [
+                    Tags.text,
+                    Tags.classification,
+                    Tags.russian,
+                    Tags.terra_ai,
+                ],
+                "inputs": {
+                    1: {
+                        "datatype": "DIM",
+                        "dtype": "int64",
+                        "shape": (20,),
+                        "name": "Вход 1",
+                        "task": LayerInputTypeChoice.Text,
+                        "classes_names": [
+                            "да",
+                            "нет"
+                        ],
+                        "num_classes": 2,
+                        "encoding": LayerEncodingChoice.none,
+                    },
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "uint8",
+                        "shape": (2,),
+                        "name": "Выход 2",
+                        "task": LayerOutputTypeChoice.Classification,
+                        "classes_names": [
+                            "да",
+                            "нет"
+                        ],
+                        "num_classes": 2,
+                        "encoding": LayerEncodingChoice.ohe,
+                    },
+                },
+                "columns": {
+                    1: {
+                        "1_text": {
+                            "classes_names": [
+                                "да",
+                                "нет"
+                            ],
+                            "datatype": "DIM",
+                            "dtype": "int64",
+                            "encoding": LayerEncodingChoice.none,
+                            "name": "Отзывы",
+                            "num_classes": 2,
+                            "shape": (20,),
+                            "task": LayerInputTypeChoice.Text,
+                        }
+                    },
+                    2: {
+                        "2_classification": {
+                            "classes_names": [
+                                "да",
+                                "нет"
+                            ],
+                            "datatype": "DIM",
+                            "dtype": "uint8",
+                            "encoding": LayerEncodingChoice.ohe,
+                            "name": "Выход 2",
+                            "num_classes": 2,
+                            "shape": (2,),
                             "task": LayerOutputTypeChoice.Classification,
                         }
                     },
