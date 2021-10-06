@@ -67,8 +67,6 @@ class CreateDataset(object):
 
         self.write_preprocesses_to_files()
         self.write_instructions_to_files()
-        # self.zip_dataset(self.paths.basepath, os.path.join(self.temp_directory, f'{creation_data.alias}.{DATASET_EXT}',
-                                                           # 'dataset'))
         self.zip_dataset(self.paths.basepath, os.path.join(self.temp_directory, 'dataset'))
         shutil.move(os.path.join(self.temp_directory, 'dataset.zip'), self.paths.basepath)
         for key, value in self.paths.__dict__.items():
@@ -262,18 +260,6 @@ class CreateDataset(object):
 
             instructions_data.parameters = {'put_type': decamelize(put.type),
                                             **instr['parameters']}
-
-            # if put.type not in [LayerInputTypeChoice.Text, LayerOutputTypeChoice.Text,
-            #                     LayerOutputTypeChoice.TextSegmentation, LayerOutputTypeChoice.Regression]:
-            #     if put.type in [LayerInputTypeChoice.Image, LayerOutputTypeChoice.Segmentation,
-            #                     LayerOutputTypeChoice.Image, LayerOutputTypeChoice.ObjectDetection]:
-            #         new_paths = [os.path.join('sources', f'{put.id}_{decamelize(put.type)}',
-            #                                   path.replace(self.source_directory + os.path.sep, '')) for path in
-            #                      instructions_data.instructions]
-            #     else:
-            #         new_paths = [os.path.join('sources', path.replace(self.temp_directory + os.path.sep, '')) for
-            #                      path in instructions_data.instructions]
-            #     instructions_data.instructions = new_paths
 
             if decamelize(put.type) in path_type_list:
                 new_paths = [os.path.join('sources', f'{put.id}_{decamelize(put.type)}',
