@@ -31,7 +31,6 @@ def main(**params):
     retype = change_type(getattr(np, params['dtype'])) if 'dtype' in params.keys() else None
 
     def fun(path):
-        print(path)
 
         cap = cv2.VideoCapture(path)
 
