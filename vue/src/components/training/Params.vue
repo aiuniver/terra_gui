@@ -39,7 +39,7 @@
                 <template v-for="(data, i) of optimizerFields">
                   <t-auto-field-trainings
                     v-bind="data"
-                    :key="'optimizer_' + i"
+                    :key="'optimizer_' + i + data.parse"
                     class="optimizer__item"
                     :state="state"
                     inline
@@ -60,7 +60,7 @@
                       <template v-for="(data, i) of field.fields">
                         <t-auto-field-trainings
                           v-bind="data"
-                          :key="'checkpoint_' + i"
+                          :key="'checkpoint_' + i + data.parse"
                           :state="state"
                           :inline="true"
                           :disabled="data.disabled || disabled"
@@ -104,8 +104,13 @@
       </scrollbar>
     </div>
     <div class="params__footer">
-      <div v-for="({ title, visible }, key) of button" :key="key" class="params__btn" :class="{ 'params__save': key === 'clear' }">
-        <t-button v-if="key !== 'save'" :disabled="!visible" @click="btnEvent(key)" >{{ title }}</t-button>
+      <div
+        v-for="({ title, visible }, key) of button"
+        :key="key"
+        class="params__btn"
+        :class="{ params__save: key === 'clear' }"
+      >
+        <t-button v-if="key !== 'save'" :disabled="!visible" @click="btnEvent(key)">{{ title }}</t-button>
       </div>
     </div>
   </div>
@@ -153,7 +158,7 @@ export default {
       let data = this.trainSettings?.architecture?.parameters?.outputs || [];
       data = data?.[this.metricData]?.metrics || [];
       this.saveValue(data);
-      return data[0] || '';
+      return this.state?.['architecture[parameters][checkpoint][metric_name]'] || data[0] || '';
     },
     state: {
       set(value) {

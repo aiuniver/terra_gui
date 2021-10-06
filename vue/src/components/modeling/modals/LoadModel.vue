@@ -1,7 +1,13 @@
 <template>
   <at-modal v-model="dialog" width="680" showClose>
-    <div slot="header" style="text-align: center">
+    <div slot="header" class="t-model__header">
       <span>Загрузка модели</span>
+      <div class="t-model__search">
+        <i class="t-icon icon-search"></i>
+        <t-field inline label class="t-model__field">
+          <t-input-new v-model="search" placeholder="Найти модель" type="text" small style="width: 109px" />
+        </t-field>
+      </div>
     </div>
     <div class="row at-row">
       <div class="col-16 models-list scroll-area">
@@ -9,25 +15,21 @@
           <ul class="loaded-list">
             <li
               :class="['loaded-list__item', { 'loaded-list__item--active': selected === list.label }]"
-              v-for="(list, i) of preset"
-              :key="`preset_${i}`"
+              v-for="(list, i) in models"
+              :key="`model_${i}`"
               @click="getModel(list), (selected = list.label)"
             >
               <i class="loaded-list__item--icon"></i>
               <span class="loaded-list__item--text">{{ list.label }}</span>
+              <!-- <div class="loaded-list__item--empty"></div> -->
+              <div
+                class="loaded-list__item--remove"
+                v-if="list.uid === 'custom'"
+                @click="removeModel(list.value)"
+              ></div>
             </li>
-            <li
-              :class="['loaded-list__item', { 'loaded-list__item--active': selected === list.label }]"
-              v-for="(list, i) of custom"
-              :key="`custom_${i}`"
-              @click="getModel(list), (selected = list.label)"
-            >
-              <i class="loaded-list__item--icon"></i>
-              <span class="loaded-list__item--text">{{ list.label }}</span>
-              <div class="loaded-list__item--empty"></div>
-              <div class="loaded-list__item--remove" @click="removeModel(list.value)">
-                <i></i>
-              </div>
+            <li v-if="!models.length" class="loaded-list__item">
+              <span class="loaded-list__item--empty">Модель "{{ search }}" не найдена</span>
             </li>
           </ul>
         </scrollbar>
@@ -63,7 +65,6 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
 export default {
   name: 'ModalLoadModel',
   props: {
@@ -74,19 +75,31 @@ export default {
     info: {},
     model: null,
     selected: '',
+    search: '',
   }),
   mounted() {
     console.log(this.$el.getElementsByClassName('at-modal__footer')[0].remove());
   },
+  created() {
+    this.load();
+  },
   computed: {
-    ...mapGetters({}),
-    preset() {
-      // console.log(this.lists[0]?.models);
-      return this.lists[0]?.models || [];
-    },
-    custom() {
-      // console.log(this.lists[1]?.models);
-      return this.lists[1]?.models || [];
+    models() {
+      console.log(this.lists);
+      return [
+        ...(this.lists[0]?.models || []).map(el => {
+          return {
+            ...el,
+            uid: 'preset',
+          };
+        }),
+        ...(this.lists[1]?.models || []).map(el => {
+          return {
+            ...el,
+            uid: 'custom',
+          };
+        }),
+      ].filter(el => el.label.match(new RegExp(this.search, 'i')));
     },
     dialog: {
       set(value) {
@@ -146,6 +159,26 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.t-model {
+  &__header {
+    text-align: center;
+    display: flex;
+    align-items: center;
+    user-select: none;
+  }
+  &__search {
+    display: flex;
+    margin: 0 15px 0 auto;
+    i {
+      margin: 0 10px 0 0;
+      width: 18px;
+      opacity: 0.7;
+    }
+    div {
+      margin: 0;
+    }
+  }
+}
 .scroll-area {
   height: 350px;
 }
@@ -160,6 +193,14 @@ export default {
     border-radius: 0 4px 4px 0;
     padding: 10px 15px 10px 20px;
     margin-right: 15px;
+    &--empty {
+      line-height: 1;
+      padding-left: 10px;
+      font-size: 0.875rem;
+      user-select: none;
+      text-align: center;
+      opacity: 0.7;
+    }
     &--active {
       background: #2b5278;
       color: #65b9f4;

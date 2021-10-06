@@ -4,6 +4,8 @@ import json
 import re
 import copy
 import os
+import threading
+
 import psutil
 import time
 import pynvml as N
@@ -11,10 +13,12 @@ import pynvml as N
 from typing import Tuple, Optional
 
 import numpy as np
+
 import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow import keras
 from tensorflow.keras.models import load_model
+from tensorflow.python.framework.errors_impl import ResourceExhaustedError
 
 from terra_ai import progress
 from terra_ai.data.datasets.dataset import DatasetData
@@ -31,6 +35,8 @@ from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.training.customlosses import DiceCoef
 from terra_ai.training.yolo_fit import create_yolo, CustomModelYolo, compute_loss
 from terra_ai.exceptions import training as exceptions
+from terra_ai.exceptions.tensor_flow import ResourceExhaustedError as resource
+from terra_ai.agent.exceptions import FileNotFoundException as no_file
 
 
 __version__ = 0.02
@@ -224,6 +230,15 @@ class GUINN:
         )
         self.model.save(file_path_model)
 
+    def _kill_last_training(self):
+        for one_thread in threading.enumerate():
+            if one_thread.getName() == "current_train":
+                current_status = interactive.get_states().get("status")
+                interactive.set_status("stopped")
+                progress.pool(self.progress_name, message="Найдено незавершенное обучение. Идет очистка. Подождите.")
+                one_thread.join()
+                interactive.set_status(current_status)
+
     def terra_fit(self,
                   dataset: DatasetData,
                   gui_model: ModelDetailsData,
@@ -246,6 +261,9 @@ class GUINN:
         Return:
             dict
         """
+        self._kill_last_training()
+        progress.pool.reset(self.progress_name)
+
         model_path = os.path.join(training_path, "model")
         if interactive.get_states().get("status") != "addtrain":
             self._save_params_for_deploy(training_path=model_path, params=training_params)
@@ -281,9 +299,17 @@ class GUINN:
 
         return self
 
+    @staticmethod
+    def _check_interactive_status():
+        if interactive.get_states().get("status") == "addtrain":
+            interactive.set_status("stopped")
+        else:
+            interactive.set_status("no_train")
+
     @progress.threading
     def base_model_fit(self, params: TrainData, dataset: PrepareDataset, dataset_path: str,
                        dataset_data: DatasetData, save_model_path: str, verbose=0) -> None:
+        threading.enumerate()[-1].setName("current_train")
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели ...'})
         # self.set_custom_metrics()
         self.model.compile(loss=self.loss,
@@ -307,20 +333,26 @@ class GUINN:
         if (critical_val_size == self.batch_size) or (critical_val_size > self.batch_size):
             n_repeat = 1
         else:
-            n_repeat = (self.batch_size // critical_val_size) + 1
-
-        self.history = self.model.fit(
-            self.dataset.dataset.get('train').shuffle(buffer_size).batch(
-                self.batch_size, drop_remainder=True).prefetch(buffer_size=tf.data.AUTOTUNE).take(-1),
-            batch_size=self.batch_size,
-            shuffle=self.shuffle,
-            validation_data=self.dataset.dataset.get('val').repeat(n_repeat).batch(
-                self.batch_size,
-                drop_remainder=True).take(-1).prefetch(buffer_size=tf.data.AUTOTUNE),
-            epochs=self.epochs,
-            verbose=verbose,
-            callbacks=self.callbacks
-        )
+            n_repeat = (self.batch_size//critical_val_size) + 1
+        try:
+            self.history = self.model.fit(
+                self.dataset.dataset.get('train').shuffle(buffer_size).batch(
+                    self.batch_size, drop_remainder=True).prefetch(buffer_size=tf.data.AUTOTUNE).take(-1),
+                batch_size=self.batch_size,
+                shuffle=self.shuffle,
+                validation_data=self.dataset.dataset.get('val').repeat(n_repeat).batch(
+                    self.batch_size,
+                    drop_remainder=True).take(-1).prefetch(buffer_size=tf.data.AUTOTUNE),
+                epochs=self.epochs,
+                verbose=verbose,
+                callbacks=self.callbacks
+            )
+        except ResourceExhaustedError as error:
+            self._check_interactive_status()
+            progress.pool(self.progress_name, error=resource(error).__str__())
+        except FileNotFoundError as error:
+            self._check_interactive_status()
+            progress.pool(self.progress_name, error=no_file(error).__str__())
 
         if (interactive.get_states().get("status") == "stopped"
             and self.callbacks[0].last_epoch < params.epochs) or \
@@ -675,7 +707,8 @@ class FitCallback(keras.callbacks.Callback):
         if self.dataset.data.alias not in ["imdb", "boston_housing", "reuters"]:
             input_key = list(self.dataset.data.inputs.keys())[0]
             output_key = list(self.dataset.data.outputs.keys())[0]
-            input_tasks = [LayerInputTypeChoice.Image, LayerInputTypeChoice.Text]
+            input_tasks = [LayerInputTypeChoice.Image, LayerInputTypeChoice.Text,
+                           LayerInputTypeChoice.Audio, LayerInputTypeChoice.Video]
             output_tasks = [LayerOutputTypeChoice.Classification, LayerOutputTypeChoice.Segmentation,
                             LayerOutputTypeChoice.TextSegmentation]
             if self.dataset.data.inputs[input_key].task in input_tasks and (
@@ -686,7 +719,7 @@ class FitCallback(keras.callbacks.Callback):
                     func_name = f"{self.dataset.data.inputs[input_key].task.lower()}_" \
                                 f"{self.dataset.data.outputs[output_key].task.lower()}"
                 config = CascadeCreator()
-                config.create_config(self.save_model_path, os.path.split(self.save_model_path)[0])
+                config.create_config(self.save_model_path, os.path.split(self.save_model_path)[0], func_name=func_name)
                 config.copy_package(os.path.split(self.save_model_path)[0])
                 config.copy_script(
                     training_path=os.path.split(self.save_model_path)[0],
@@ -854,7 +887,8 @@ class FitCallback(keras.callbacks.Callback):
                 self.save_model_path, f"last_weights_{self.metric_checkpoint}.h5"
             )
             self.model.save_weights(file_path_last)
-
+        if not os.path.exists(os.path.join(self.save_model_path, "deploy_presets")):
+            os.mkdir(os.path.join(self.save_model_path, "deploy_presets"))
         self._prepare_deploy()
 
         time_end = self.update_progress(self.num_batches * self.epochs + 1,

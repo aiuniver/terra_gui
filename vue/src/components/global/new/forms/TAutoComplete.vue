@@ -47,6 +47,7 @@ export default {
     },
     disabled: [Boolean, Array],
     small: Boolean,
+    all: Boolean,
     error: String,
     update: Boolean, //wtf
   },
@@ -78,7 +79,7 @@ export default {
     filterList() {
       return this.list
         ? this.list.filter(item => {
-            const search = this.input;
+            const search = !this.all ? this.input : '';
             return search ? item.label.toLowerCase().includes(search.toLowerCase()) : true;
           })
         : [];
