@@ -555,31 +555,12 @@ class InteractiveCallback:
             "preprocessing": dataset.preprocessing,
             "dataset_path": dataset_path,
             "data": dataset.data,
-            # "group": dataset.data.group.name,
             "dataframe": dataset.dataframe,
-            # "use_generator": dataset.data.use_generator,
-            # "inputs": {},
-            # "outputs": {},
-            # "columns": dataset.data.columns,
+            "instructions": dataset.instructions,
             'classes_colors': {}
         }
-        # for inp in dataset.data.inputs.keys():
-        #     self.dataset_config["inputs"][f"{inp}"] = {
-        #         'encoding': dataset.data.inputs.get(inp).encoding.name,
-        #         'task': dataset.data.inputs.get(inp).task.name,
-        #         "input_shape": dataset.data.inputs.get(inp).shape
-        #     }
-        #     if dataset.data.inputs.get(inp).task == LayerInputTypeChoice.Dataframe:
-        #         self.dataset_config["inputs"][f"{inp}"]['cols_names'] = list(dataset.dataframe.get('train').columns)
         for out in dataset.data.outputs.keys():
             self.dataset_config['classes_colors'][f"{out}"] = self._get_classes_colors(dataset.data.outputs.get(out))
-            # self.dataset_config["outputs"][f"{out}"] = {
-            #     'classes_colors': self._get_classes_colors(dataset.data.outputs.get(out)),
-            #     'classes_names': dataset.data.outputs.get(out).classes_names,
-            #     'encoding': dataset.data.outputs.get(out).encoding.name,
-            #     'num_classes': dataset.data.outputs.get(out).num_classes,
-            #     'task': dataset.data.outputs.get(out).task.name
-            # }
 
     @staticmethod
     def _get_classes_colors(dataset_output: DatasetOutputsData):
