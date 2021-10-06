@@ -42,7 +42,7 @@ class DeployDataset(object):
             for col_name, data in cols_names.items():
                 instr = getattr(CreateArray(), f'instructions_{data["put_type"]}')(paths_dict[put_id][col_name], **data)
                 cut = getattr(CreateArray(), f'cut_{data["put_type"]}')(instr['instructions'],
-                                                                        tmp_folder=temp_directory,
+                                                                        dataset_folder=temp_directory,
                                                                         **instr['parameters'])
                 temp_array[put_id][col_name] = []
                 for elem in cut['instructions']:

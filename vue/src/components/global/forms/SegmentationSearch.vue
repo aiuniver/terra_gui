@@ -10,6 +10,8 @@
       size="1"
       maxlength="2"
       inline
+      :error="error"
+      @focus="error = ''"
       @change="change"
     />
     <div :class="['t-inline']">
@@ -61,7 +63,7 @@ export default {
     inline: Boolean,
     disabled: Boolean,
     small: Boolean,
-    error: String,
+    // error: String,
     id: Number,
   },
   data: () => ({
@@ -70,24 +72,16 @@ export default {
     items: [],
     classes_names: [],
     classes_colors: [],
-    qtyTemp: 2,
+    qty: 2,
+    error: '',
   }),
-  computed: {
-    qty: {
-      set(value) {
-        if (+value >= 1 && +value < 100) {
-          this.qtyTemp = +value;
-        } else {
-          this.qtyTemp = 1;
-        }
-      },
-      get() {
-        return this.qtyTemp;
-      },
-    },
-  },
   methods: {
     async getApi() {
+      const value = +this.qty;
+      if (!value || value < 0 || value > 99) {
+        this.error = 'Значение должно быть от 1 до 99';
+        return;
+      }
       if (this.loading) return;
       const path = this.mixinFiles.find(item => item.id === this.id)?.value;
       const mask_range = document.getElementsByName('mask_range')[0].value;

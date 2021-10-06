@@ -7,7 +7,6 @@ import pandas as pd
 from tensorflow.keras import utils
 from tensorflow.keras import datasets as load_keras_datasets
 from tensorflow.python.data.ops.dataset_ops import DatasetV2 as Dataset
-from tensorflow.python.ops.ragged.ragged_factory_ops import constant
 from sklearn.model_selection import train_test_split
 
 from terra_ai.utils import decamelize
@@ -210,20 +209,14 @@ class PrepareDataset(object):
             for put_id, data in KerasInstructions[self.data.alias].items():
                 self.instructions[put_id] = data
 
-            if self.data.alias in ['mnist', 'fashion_mnist', 'cifar10', 'cifar100']:
-                self.preprocessing.create_scaler(**{'put': 1, 'scaler': 'min_max_scaler',
-                                                    'min_scaler': 0, 'max_scaler': 1,
-                                                    'cols_names': f'1_{self.data.alias}'})
-                self.preprocessing.preprocessing[1][f'1_{self.data.alias}'].fit(self.X['train']['1'].reshape(-1, 1))
-                for key in self.X.keys():
-                    for inp in self.X[key]:
-                        self.X[key][inp] = self.preprocessing.preprocessing[1][f'1_{self.data.alias}']\
-                            .transform(self.X[key][inp].reshape(-1, 1)).reshape(self.X[key][inp].shape)
-
-            if self.data.alias in ['imdb', 'reuters']:
-                for key in self.X.keys():
-                    for inp in self.X[key]:
-                        self.X[key][inp] = constant(self.X[key][inp])
+            self.preprocessing.create_scaler(**{'put': 1, 'scaler': 'min_max_scaler',
+                                                'min_scaler': 0, 'max_scaler': 1,
+                                                'cols_names': f'1_{self.data.alias}'})
+            self.preprocessing.preprocessing[1][f'1_{self.data.alias}'].fit(self.X['train']['1'].reshape(-1, 1))
+            for key in self.X.keys():
+                for inp in self.X[key]:
+                    self.X[key][inp] = self.preprocessing.preprocessing[1][f'1_{self.data.alias}']\
+                        .transform(self.X[key][inp].reshape(-1, 1)).reshape(self.X[key][inp].shape)
 
             self.dataset['train'] = Dataset.from_tensor_slices((self.X['train'], self.Y['train']))
             self.dataset['val'] = Dataset.from_tensor_slices((self.X['val'], self.Y['val']))
