@@ -214,7 +214,6 @@ export default {
     }
   &__scale {
     display: flex;
-    height: 100%;
     gap: 5px;
     padding-right: 35px;
     padding-bottom: 20px;
