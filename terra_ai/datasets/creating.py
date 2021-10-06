@@ -19,6 +19,7 @@ import json
 import joblib
 import tempfile
 import shutil
+import zipfile
 from pathlib import Path
 from typing import Union
 from datetime import datetime
@@ -31,10 +32,9 @@ class CreateDataset(object):
 
         creation_data = self.preprocess_creation_data(cr_data)
 
-        os.makedirs(Path(creation_data.datasets_path, f'{creation_data.alias}.{DATASET_EXT}'), exist_ok=True)
-        self.paths = DatasetPathsData(
-            basepath=Path(creation_data.datasets_path, f'{creation_data.alias}.{DATASET_EXT}'))
         self.temp_directory = tempfile.mkdtemp()
+        os.makedirs(Path(self.temp_directory, f'{creation_data.alias}.{DATASET_EXT}'), exist_ok=True)
+        self.paths = DatasetPathsData(basepath=Path(self.temp_directory, f'{creation_data.alias}.{DATASET_EXT}'))
 
         self.source_directory: str = str(creation_data.source_path)
         self.dataframe: dict = {}
@@ -67,10 +67,17 @@ class CreateDataset(object):
 
         self.write_preprocesses_to_files()
         self.write_instructions_to_files()
+        self.zip_dataset(self.paths.basepath, os.path.join(self.temp_directory, f'{creation_data.alias}.{DATASET_EXT}',
+                                                           creation_data.alias))
+        for key, value in self.paths.__dict__.items():
+            if not key == 'basepath':
+                shutil.rmtree(value)
         self.datasetdata = DatasetData(**self.write_dataset_configure(creation_data=creation_data))
 
+        if Path(creation_data.datasets_path, f'{creation_data.alias}.{DATASET_EXT}').is_dir():
+            shutil.rmtree(Path(creation_data.datasets_path, f'{creation_data.alias}.{DATASET_EXT}'))
+        shutil.move(str(self.paths.basepath), creation_data.datasets_path)
         shutil.rmtree(self.temp_directory)
-        pass
 
     @staticmethod
     def preprocess_creation_data(creation_data):
@@ -165,8 +172,7 @@ class CreateDataset(object):
                 instructions_data = None
                 list_of_data = dataframe.loc[:, name].to_numpy().tolist()
                 if put.parameters.cols_names[name_index]:
-                    for worker in put.parameters.cols_names[
-                        name_index]:  # На будущее после 1 октября - очень аккуратно!
+                    for worker in put.parameters.cols_names[name_index]:  # На будущее после 1 октября - очень аккуратно!
                         self.tags[put.id][f'{put.id}_{name}'] = decamelize(self.columns_processing[str(worker)].type)
                         instr = getattr(CreateArray(),
                                         f'instructions_{decamelize(self.columns_processing[str(worker)].type)}')(
@@ -187,7 +193,7 @@ class CreateDataset(object):
                         instructions_data = InstructionsData(
                             **getattr(CreateArray(),
                                       f"cut_{decamelize(self.columns_processing[str(worker)].type)}")(
-                                paths_list, self.temp_directory, os.path.join(self.paths.sources, f'{put.id}_{name}'),
+                                paths_list, os.path.join(self.paths.sources, f'{put.id}_{name}'),
                                 **instr['parameters']))
                         if path_flag:
                             instructions_data.instructions = [os.path.join('sources',
@@ -217,6 +223,11 @@ class CreateDataset(object):
 
     def create_put_instructions(self, data: Union[CreationInputsList, CreationOutputsList]) -> dict:
 
+        path_type_list = [decamelize(LayerInputTypeChoice.Image), decamelize(LayerOutputTypeChoice.Image),
+                          decamelize(LayerInputTypeChoice.Audio), decamelize(LayerOutputTypeChoice.Audio),
+                          decamelize(LayerInputTypeChoice.Video), decamelize(LayerOutputTypeChoice.ObjectDetection),
+                          decamelize(LayerOutputTypeChoice.Segmentation)]
+
         put_parameters: dict = {}
         for put in data:
             self.tags[put.id] = {f"{put.id}_{decamelize(put.type)}": decamelize(put.type)}
@@ -242,7 +253,6 @@ class CreateDataset(object):
 
             instructions_data = InstructionsData(
                 **getattr(CreateArray(), f"cut_{decamelize(put.type)}")(instr['instructions'],
-                                                                        self.temp_directory,
                                                                         os.path.join(self.paths.sources,
                                                                                      f"{put.id}_"
                                                                                      f"{decamelize(put.type)}"),
@@ -251,16 +261,22 @@ class CreateDataset(object):
             instructions_data.parameters = {'put_type': decamelize(put.type),
                                             **instr['parameters']}
 
-            if put.type not in [LayerInputTypeChoice.Text, LayerOutputTypeChoice.Text,
-                                LayerOutputTypeChoice.TextSegmentation, LayerOutputTypeChoice.Regression]:
-                if put.type in [LayerInputTypeChoice.Image, LayerOutputTypeChoice.Segmentation,
-                                LayerOutputTypeChoice.Image, LayerOutputTypeChoice.ObjectDetection]:
-                    new_paths = [os.path.join('sources', f'{put.id}_{decamelize(put.type)}',
-                                              path.replace(self.source_directory + os.path.sep, '')) for path in
-                                 instructions_data.instructions]
-                else:
-                    new_paths = [os.path.join('sources', path.replace(self.temp_directory + os.path.sep, '')) for
-                                 path in instructions_data.instructions]
+            # if put.type not in [LayerInputTypeChoice.Text, LayerOutputTypeChoice.Text,
+            #                     LayerOutputTypeChoice.TextSegmentation, LayerOutputTypeChoice.Regression]:
+            #     if put.type in [LayerInputTypeChoice.Image, LayerOutputTypeChoice.Segmentation,
+            #                     LayerOutputTypeChoice.Image, LayerOutputTypeChoice.ObjectDetection]:
+            #         new_paths = [os.path.join('sources', f'{put.id}_{decamelize(put.type)}',
+            #                                   path.replace(self.source_directory + os.path.sep, '')) for path in
+            #                      instructions_data.instructions]
+            #     else:
+            #         new_paths = [os.path.join('sources', path.replace(self.temp_directory + os.path.sep, '')) for
+            #                      path in instructions_data.instructions]
+            #     instructions_data.instructions = new_paths
+
+            if decamelize(put.type) in path_type_list:
+                new_paths = [os.path.join('sources', f'{put.id}_{decamelize(put.type)}',
+                                          path.replace(self.source_directory + os.path.sep, '')) for path in
+                             instructions_data.instructions]
                 instructions_data.instructions = new_paths
 
             put_parameters[put.id] = {f'{put.id}_{decamelize(put.type)}': instructions_data}
@@ -268,6 +284,7 @@ class CreateDataset(object):
         return put_parameters
 
     def create_preprocessing(self, instructions: DatasetInstructionsData):
+
         for put in list(instructions.inputs.values()) + list(instructions.outputs.values()):
             for col_name, data in put.items():
                 if 'timeseries' in data.parameters.values():
@@ -761,3 +778,14 @@ class CreateDataset(object):
         # print(DatasetData(**data).native())
 
         return data
+
+    @staticmethod
+    def zip_dataset(src, dst):
+        zf = zipfile.ZipFile("%s.zip" % (dst), "w", zipfile.ZIP_DEFLATED)
+        abs_src = os.path.abspath(src)
+        for dirname, subdirs, files in os.walk(src):
+            for filename in files:
+                absname = os.path.abspath(os.path.join(dirname, filename))
+                arcname = absname[len(abs_src) + 1:]
+                zf.write(absname, arcname)
+        zf.close()
