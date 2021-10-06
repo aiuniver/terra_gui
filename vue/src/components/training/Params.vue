@@ -147,10 +147,11 @@ export default {
     disabledAny() {
       const status = this.status;
       if (this.isLearning) {
+        return true;
+      } else {
         if (status === 'stopped') {
           return ['epochs'];
         }
-        return true;
       }
       return false;
     },
