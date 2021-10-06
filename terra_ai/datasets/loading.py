@@ -207,6 +207,7 @@ def __choice_from_terra(name: str, destination: Path, **kwargs):
         finished=False,
     )
 
+    # Выбор датасета
     try:
         zipfile_path = progress_utils.download(
             progress_name,
@@ -218,19 +219,23 @@ def __choice_from_terra(name: str, destination: Path, **kwargs):
             DATASET_CHOICE_UNPACK_TITLE % (DatasetGroupChoice.terra.value, name),
             zipfile_path,
         )
-        shutil.rmtree(destination, ignore_errors=True)
-        os.makedirs(destination, exist_ok=True)
-        for file in os.listdir(zip_destination):
-            shutil.move(str(Path(zip_destination, file).absolute()), destination)
-        os.remove(zipfile_path.absolute())
-    except (Exception, requests.exceptions.ConnectionError) as error:
-        progress.pool(progress_name, error=str(error))
-        return
-
-    # Выбор датасета
-    try:
-        data = CustomDatasetConfigData(path=destination)
+        data = CustomDatasetConfigData(path=Path(zip_destination))
+        zip_dirpath = Path(tempfile.gettempdir(), str(uuid.uuid4()))
+        shutil.copytree(data.path, zip_dirpath)
+        os.chmod(zip_dirpath, 0o755)
+        zip_filepath = Path(zip_dirpath, "dataset.zip")
+        unpacked = progress_utils.unpack(
+            progress_name,
+            DATASET_CHOICE_UNPACK_TITLE % (DatasetGroupChoice.terra.value, name),
+            zip_filepath,
+        )
+        os.remove(zip_filepath)
+        for item in os.listdir(unpacked):
+            shutil.move(str(Path(unpacked, item).absolute()), zip_dirpath)
+        shutil.rmtree(destination)
+        os.rename(zip_dirpath, destination)
         dataset = DatasetData(**data.config)
+        shutil.rmtree(unpacked)
         if dataset:
             progress.pool(progress_name, percent=100, data=dataset, finished=True)
         else:
@@ -250,6 +255,8 @@ def __choice_from_terra(name: str, destination: Path, **kwargs):
                     ),
                 )
                 return
+        progress.pool(progress_name, error=str(error))
+    except (Exception, requests.exceptions.ConnectionError) as error:
         progress.pool(progress_name, error=str(error))
     except Exception as error:
         progress.pool(progress_name, error=str(error))
