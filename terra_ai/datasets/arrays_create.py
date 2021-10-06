@@ -1248,8 +1248,13 @@ class CreateArray(object):
                     )
 
             elif options.data.outputs[output_id].task == LayerOutputTypeChoice.TextSegmentation:
+                output_column = list(options.instructions.get(output_id).keys())[0]
+                print(output_column)
                 return_data[output_id] = CreateArray().postprocess_text_segmentation(
-                    postprocess_array, options.data.outputs[output_id], options.dataframe.get("val")
+                    postprocess_array,
+                    options.data.outputs[output_id],
+                    options.dataframe.get("val"),
+                    options.instructions.get(output_id).get(output_column).get('parameters')
                 )
 
             else:
@@ -1394,11 +1399,16 @@ class CreateArray(object):
         return img_save_path
 
     @staticmethod
-    def postprocess_text_segmentation(array: np.ndarray, options: DatasetOutputsData, data_dataframe: DataFrame):
+    def postprocess_text_segmentation(
+            array: np.ndarray,
+            options: DatasetOutputsData,
+            data_dataframe: DataFrame,
+            dataset_params: dict
+    ):
 
         def add_tags_to_word(word: str, tag: str):
             if tag:
-                return f"<{tag}>{word}</{tag}>"
+                return f"<{tag[1:-1]}>{word}</{tag[1:-1]}>"
             else:
                 return word
 
@@ -1412,10 +1422,10 @@ class CreateArray(object):
 
         def tag_mixer(tags: list, colors: dict):
             tags = sorted(tags, reverse=False)
-            mix_tag = f"{tags[0]}"
+            mix_tag = f"{tags[0][1:-1]}"
             for tag in tags[1:]:
-                mix_tag += f"+{tag}"
-            return mix_tag, color_mixer([colors[tag] for tag in tags])
+                mix_tag += f"+{tag[1:-1]}"
+            return f"<{mix_tag}>", color_mixer([colors[tag] for tag in tags])
 
         def reformat_tags(y_array, tag_list: list, classes_names: dict, colors: dict, sensitivity: float = 0.9):
             norm_array = np.where(y_array >= sensitivity, 1, 0).astype('int')
@@ -1452,16 +1462,17 @@ class CreateArray(object):
 
         return_data = []
         classes_names = {}
+        dataset_tags = dataset_params.get("open_tags").split()
         if not options.classes_colors:
             classes_colors = {}
             for i, name in enumerate(options.classes_names):
-                classes_colors[f"tag{i + 1}"] = tuple(np.random.randint(256, size=3).tolist())
-                classes_names[f"tag{i + 1}"] = options.classes_names[i]
+                classes_colors[dataset_tags[i]] = tuple(np.random.randint(256, size=3).tolist())
+                classes_names[dataset_tags[i]] = options.classes_names[i]
         else:
             classes_colors = options.classes_colors
             for i, name in enumerate(classes_names):
-                classes_colors[f"tag{i + 1}"] = options.classes_colors[i]
-                classes_names[f"tag{i + 1}"] = options.classes_names[i]
+                classes_colors[dataset_tags[i]] = options.classes_colors[i]
+                classes_names[dataset_tags[i]] = options.classes_names[i]
 
         for example_id in range(len(array)):
             initinal_text = data_dataframe.iat[example_id, 0]
@@ -1475,7 +1486,7 @@ class CreateArray(object):
             data = []
             for tag in classes_colors.keys():
                 data.append(
-                    (f"<{tag}>", classes_names[tag], classes_colors[tag])
+                    (tag, classes_names[tag], classes_colors[tag])
                 )
             return_data.append(
                 {
