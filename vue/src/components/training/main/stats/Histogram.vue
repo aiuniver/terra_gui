@@ -35,10 +35,10 @@ export default {
     data() {
       return this.plot_data.map(el => {
         return {
-          type: 'histogram',
+          type: 'bar',
           x: el.labels,
           y: el.values,
-          name: el.label,
+          name: el.label || 'Регрессия',
           marker: {
             color: '#2a8cff',
           },

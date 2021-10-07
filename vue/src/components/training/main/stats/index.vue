@@ -15,10 +15,14 @@
     <div class="t-scatters__content">
       <template v-for="(layer, index) of statisticData">
         <template v-for="(data, i) of layer">
-          <component v-if="ids.includes(+index)" :is="data.type" v-bind="data" :key="`${data.type + i + index}`" />
+          <component v-if="ids.includes(+index)" :is="type[data.type]" v-bind="data" :key="`${data.type + i + index}`" />
         </template>
       </template>
-      <LoadSpiner v-if="isLearning && ids.length && !Object.keys(statisticData).length" class="overlay" text="Загрузка данных..." />
+      <LoadSpiner
+        v-if="isLearning && ids.length && !Object.keys(statisticData).length"
+        class="overlay"
+        text="Загрузка данных..."
+      />
     </div>
   </div>
 </template>
@@ -39,6 +43,17 @@ export default {
   props: {
     outputs: Array,
   },
+  data: () => ({
+    type: {
+      heatmap: 'heatmap',
+      'correlation heatmap': 'CorrelationHeatmap',
+      scatter: 'scatter',
+      'distribution histogram': 'histogram',
+      histogram: 'histogram',
+      table: 'table',
+      graphic: 'graphic',
+    },
+  }),
   computed: {
     ...mapGetters({
       status: 'trainings/getStatus',

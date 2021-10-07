@@ -1,7 +1,7 @@
 <template>
-  <div class="t-scatter">
-    <p class="t-scatter__title">{{ graph_name }}</p>
-    <Plotly class="t-scatter__plotly" :data="data" :layout="layout" :display-mode-bar="false" />
+  <div class="t-bar">
+    <p class="t-bar__title">{{ graph_name }}</p>
+    <Plotly class="t-bar__plotly" :data="data" :layout="layout" :display-mode-bar="false" />
   </div>
 </template>
 
@@ -9,7 +9,7 @@
 import { Plotly } from 'vue-plotly';
 
 export default {
-  name: 't-scatter',
+  name: 't-bar',
   components: {
     Plotly,
   },
@@ -20,7 +20,10 @@ export default {
     x_label: String,
     y_label: String,
     plot_data: Array,
+    data_array: Array,
+    labels: Array,
   },
+
   computed: {
     layout() {
       const layout = this.defLayout;
@@ -32,16 +35,20 @@ export default {
       return layout;
     },
     data() {
-      return this.plot_data.map(el => {
-        return {
-          type: 'scatter',
-          x: el.x,
-          y: el.y,
-          name: 'Регрессия',
-          mode: 'markers',
-          marker: { size: 10 },
-        };
-      });
+      return [
+        {
+          z: this.data_array,
+          x: this.labels,
+          y: ['Morning', 'Afternoon', 'Evening'],
+          type: 'heatmap',
+          hoverongaps: false,
+          showscale: false,
+          colorscale: [
+            [0, '#003B7F'],
+            [1, '#F99F35'],
+          ],
+        },
+      ];
     },
   },
   data: () => ({
@@ -51,6 +58,7 @@ export default {
       plot_bgcolor: '#fff0',
       paper_bgcolor: '#242F3D',
       showlegend: true,
+      bargap: 0.1,
       legend: {
         orientation: 'h',
         yanchor: 'top',
@@ -93,7 +101,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.t-scatter {
+.t-bar {
   &__title {
     font-size: 14px;
     line-height: 17px;
