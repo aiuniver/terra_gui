@@ -26,7 +26,7 @@
             <span
               class="files-menu__title--text"
               v-text="node.title"
-              :style="{ cursor: node.type === 'folder' ? 'grab' : '' }"
+              :style="{ cursor: node.type === 'folder' ? 'grab' : '', flex: '1' }"
             />
           </div>
         </div>
