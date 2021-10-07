@@ -19,7 +19,7 @@ from terra_ai.agent import agent_exchange
 from terra_ai.training.guinn import interactive as training_interactive
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.types import confilepath
-from terra_ai.data.extra import HardwareAcceleratorData, HardwareAcceleratorChoice
+from terra_ai.data.extra import HardwareAcceleratorData
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.modeling.layer import LayerData
