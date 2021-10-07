@@ -3,10 +3,12 @@ import numpy as np
 import joblib
 import json
 import pandas as pd
+import tensorflow as tf
 
 from tensorflow.keras import utils
 from tensorflow.keras import datasets as load_keras_datasets
 from tensorflow.python.data.ops.dataset_ops import DatasetV2 as Dataset
+from tensorflow.python.ops.ragged.ragged_factory_ops import constant
 from sklearn.model_selection import train_test_split
 
 from terra_ai.utils import decamelize
@@ -48,7 +50,7 @@ class PrepareDataset(object):
 
         pass
 
-    def train_generator(self):
+    def generator_common(self, split_name):
 
         path_type_list = [decamelize(LayerInputTypeChoice.Image), decamelize(LayerOutputTypeChoice.Image),
                           decamelize(LayerInputTypeChoice.Audio), decamelize(LayerOutputTypeChoice.Audio),
@@ -57,14 +59,14 @@ class PrepareDataset(object):
 
         inputs = {}
         outputs = {}
-        for idx in range(len(self.dataframe['train'])):
+        for idx in range(len(self.dataframe[split_name])):
             for inp_id in self.data.inputs.keys():
                 tmp = []
                 for col_name, data in self.instructions[inp_id].items():
                     if data['put_type'] in path_type_list:
-                        sample = os.path.join(self.paths.basepath, self.dataframe['train'].loc[idx, col_name])
+                        sample = os.path.join(self.paths.basepath, self.dataframe[split_name].loc[idx, col_name])
                     else:
-                        sample = self.dataframe['train'].loc[idx, col_name]
+                        sample = self.dataframe[split_name].loc[idx, col_name]
                     array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
                         'preprocess': self.preprocessing.preprocessing[inp_id][col_name]}, **data)
                     array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
@@ -76,9 +78,9 @@ class PrepareDataset(object):
                 tmp = []
                 for col_name, data in self.instructions[out_id].items():
                     if data['put_type'] in path_type_list:
-                        sample = os.path.join(self.paths.basepath, self.dataframe['train'].loc[idx, col_name])
+                        sample = os.path.join(self.paths.basepath, self.dataframe[split_name].loc[idx, col_name])
                     else:
-                        sample = self.dataframe['train'].loc[idx, col_name]
+                        sample = self.dataframe[split_name].loc[idx, col_name]
                     array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
                         'preprocess': self.preprocessing.preprocessing[out_id][col_name]}, **data)
                     array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
@@ -88,23 +90,16 @@ class PrepareDataset(object):
 
             yield inputs, outputs
 
-    def val_generator(self):
-
-        path_type_list = [decamelize(LayerInputTypeChoice.Image), decamelize(LayerOutputTypeChoice.Image),
-                          decamelize(LayerInputTypeChoice.Audio), decamelize(LayerOutputTypeChoice.Audio),
-                          decamelize(LayerInputTypeChoice.Video), decamelize(LayerOutputTypeChoice.ObjectDetection),
-                          decamelize(LayerOutputTypeChoice.Segmentation)]
-
+    def generator_object_detection(self, split_name):
         inputs = {}
         outputs = {}
-        for idx in range(len(self.dataframe['val'])):
+        service = {}
+
+        for idx in range(len(self.dataframe[split_name])):
             for inp_id in self.data.inputs.keys():
                 tmp = []
                 for col_name, data in self.instructions[inp_id].items():
-                    if data['put_type'] in path_type_list:
-                        sample = os.path.join(self.paths.basepath, self.dataframe['val'].loc[idx, col_name])
-                    else:
-                        sample = self.dataframe['val'].loc[idx, col_name]
+                    sample = os.path.join(self.paths.basepath, self.dataframe[split_name].loc[idx, col_name])
                     array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
                         'preprocess': self.preprocessing.preprocessing[inp_id][col_name]}, **data)
                     array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
@@ -113,60 +108,18 @@ class PrepareDataset(object):
                 inputs[str(inp_id)] = np.concatenate(tmp, axis=0)
 
             for out_id in self.data.outputs.keys():
-                tmp = []
                 for col_name, data in self.instructions[out_id].items():
-                    if data['put_type'] in path_type_list:
-                        sample = os.path.join(self.paths.basepath, self.dataframe['val'].loc[idx, col_name])
-                    else:
-                        sample = self.dataframe['val'].loc[idx, col_name]
+                    sample = os.path.join(self.paths.basepath, self.dataframe[split_name].loc[idx, col_name])
                     array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
                         'preprocess': self.preprocessing.preprocessing[out_id][col_name]}, **data)
                     array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
                                                                                      **array['parameters'])
-                    tmp.append(array)
-                outputs[str(out_id)] = np.concatenate(tmp, axis=0)
-
-            yield inputs, outputs
-
-    def test_generator(self):
-
-        path_type_list = [decamelize(LayerInputTypeChoice.Image), decamelize(LayerOutputTypeChoice.Image),
-                          decamelize(LayerInputTypeChoice.Audio), decamelize(LayerOutputTypeChoice.Audio),
-                          decamelize(LayerInputTypeChoice.Video), decamelize(LayerOutputTypeChoice.ObjectDetection),
-                          decamelize(LayerOutputTypeChoice.Segmentation)]
-
-        inputs = {}
-        outputs = {}
-        for idx in range(len(self.dataframe['test'])):
-            for inp_id in self.data.inputs.keys():
-                tmp = []
-                for col_name, data in self.instructions[inp_id].items():
-                    if data['put_type'] in path_type_list:
-                        sample = os.path.join(self.paths.basepath, self.dataframe['test'].loc[idx, col_name])
-                    else:
-                        sample = self.dataframe['test'].loc[idx, col_name]
-                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
-                        'preprocess': self.preprocessing.preprocessing[inp_id][col_name]}, **data)
-                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
-                                                                                     **array['parameters'])
-                    tmp.append(array)
-                inputs[str(inp_id)] = np.concatenate(tmp, axis=0)
-
-            for out_id in self.data.outputs.keys():
-                tmp = []
-                for col_name, data in self.instructions[out_id].items():
-                    if data['put_type'] in path_type_list:
-                        sample = os.path.join(self.paths.basepath, self.dataframe['test'].loc[idx, col_name])
-                    else:
-                        sample = self.dataframe['test'].loc[idx, col_name]
-                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
-                        'preprocess': self.preprocessing.preprocessing[out_id][col_name]}, **data)
-                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
-                                                                                     **array['parameters'])
-                    tmp.append(array)
-                outputs[str(out_id)] = np.concatenate(tmp, axis=0)
-
-            yield inputs, outputs
+                    for n in range(6):
+                        if n <= 2:
+                            outputs[str(out_id + n)] = np.array(array[n])
+                        else:
+                            service[str(out_id + n)] = np.array(array[n])
+            yield inputs, outputs, service
 
     def keras_datasets(self):
 
@@ -230,45 +183,31 @@ class PrepareDataset(object):
             self.preprocessing.load_preprocesses(self.data.columns)
 
             if self.data.use_generator:
-
                 num_inputs = len(self.data.inputs)
                 num_outputs = len(self.data.outputs)
-                self.dataset['train'] = Dataset.from_generator(self.train_generator,
-                                                               output_shapes=({str(x): self.data.inputs[x].shape for x
-                                                                               in range(1, num_inputs+1)},
-                                                                              {str(x): self.data.outputs[x].shape for x
-                                                                               in range(num_inputs + 1,
-                                                                                        num_outputs + 2)}),
-                                                               output_types=({str(x): self.data.inputs[x].dtype for x
-                                                                              in range(1, num_inputs + 1)},
-                                                                             {str(x): self.data.outputs[x].dtype for x
-                                                                              in range(num_inputs + 1,
-                                                                                       num_outputs + 2)})
-                                                               )
-                self.dataset['val'] = Dataset.from_generator(self.val_generator,
-                                                             output_shapes=({str(x): self.data.inputs[x].shape for x
-                                                                             in range(1, num_inputs + 1)},
-                                                                            {str(x): self.data.outputs[x].shape for x
-                                                                             in range(num_inputs + 1,
-                                                                                      num_outputs + 2)}),
-                                                             output_types=({str(x): self.data.inputs[x].dtype for x
-                                                                            in range(1, num_inputs + 1)},
-                                                                           {str(x): self.data.outputs[x].dtype for x
-                                                                            in range(num_inputs + 1,
-                                                                                     num_outputs + 2)})
-                                                             )
-                self.dataset['test'] = Dataset.from_generator(self.test_generator,
-                                                              output_shapes=({str(x): self.data.inputs[x].shape for x
-                                                                              in range(1, num_inputs + 1)},
-                                                                             {str(x): self.data.outputs[x].shape for x
-                                                                              in range(num_inputs + 1,
-                                                                                       num_outputs + 2)}),
-                                                              output_types=({str(x): self.data.inputs[x].dtype for x
-                                                                             in range(1, num_inputs + 1)},
-                                                                            {str(x): self.data.outputs[x].dtype for x
-                                                                             in range(num_inputs + 1,
-                                                                                      num_outputs + 2)})
-                                                              )
+                if self.data.tags[num_inputs].alias == decamelize(LayerOutputTypeChoice.ObjectDetection):
+                    gen = self.generator_object_detection
+                    out_signature = (
+                        {str(x): tf.TensorSpec(shape=self.data.inputs[x].shape, dtype=self.data.inputs[x].dtype)
+                         for x in range(1, num_inputs + 1)},
+                        {str(x): tf.TensorSpec(shape=self.data.outputs[x].shape, dtype=self.data.outputs[x].dtype)
+                         for x in range(num_inputs + 1, num_outputs + num_inputs - 2)},
+                        {str(x): tf.TensorSpec(shape=self.data.outputs[x].shape, dtype=self.data.outputs[x].dtype)
+                         for x in range(num_outputs + num_inputs - 2, num_outputs + num_inputs + 1)})
+                else:
+                    gen = self.generator_common
+                    out_signature = (
+                        {str(x): tf.TensorSpec(shape=self.data.inputs[x].shape, dtype=self.data.inputs[x].dtype)
+                         for x in range(1, num_inputs + 1)},
+                        {str(x): tf.TensorSpec(shape=self.data.outputs[x].shape, dtype=self.data.outputs[x].dtype)
+                         for x in range(num_inputs + 1, num_outputs + num_inputs + 1)})
+
+                self.dataset['train'] = Dataset.from_generator(lambda: gen(split_name='train'),
+                                                               output_signature=out_signature)
+                self.dataset['val'] = Dataset.from_generator(lambda: gen(split_name='val'),
+                                                             output_signature=out_signature)
+                self.dataset['test'] = Dataset.from_generator(lambda: gen(split_name='test'),
+                                                              output_signature=out_signature)
             else:
                 load_arrays()
 
