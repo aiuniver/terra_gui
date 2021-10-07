@@ -38,7 +38,10 @@ export default {
           type: 'histogram',
           x: el.labels,
           y: el.values,
-          name: 'Регрессия',
+          name: el.label,
+          marker: {
+            color: '#2a8cff',
+          },
         };
       });
     },
