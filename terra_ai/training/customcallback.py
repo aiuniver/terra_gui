@@ -1235,6 +1235,7 @@ class InteractiveCallback:
             # if loss_name == Loss.SparseCategoricalCrossentropy:
             #     return float(loss_obj()(np.argmax(y_true, axis=-1) if ohe else np.squeeze(y_true), y_pred).numpy())
             # else:
+            print(y_true.shape, y_pred.shape)
             loss_value = float(loss_obj()(y_true if encoding == LayerEncodingChoice.ohe
                                           else to_categorical(y_true, num_classes), y_pred).numpy())
         elif task == LayerOutputTypeChoice.Segmentation or \
