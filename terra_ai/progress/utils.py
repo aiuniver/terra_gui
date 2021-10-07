@@ -56,16 +56,16 @@ def pack(progress_name: str, title: str, source: Path, delete=True) -> Path:
 
 
 def unpack(progress_name: str, title: str, zipfile_path: Path) -> Path:
+    zip_destination: Path = mkdtemp()
     pool.reset(progress_name, message=title, finished=False)
-    tmp_destination = mkdtemp()
     try:
         with zipfile.ZipFile(zipfile_path) as zipfile_ref:
             __tqdm = tqdm(zipfile_ref.infolist())
             for member in __tqdm:
-                zipfile_ref.extract(member, tmp_destination)
+                zipfile_ref.extract(member, zip_destination)
                 pool(progress_name, percent=__tqdm.n / __tqdm.total * 100)
             pool(progress_name, percent=100)
     except Exception as error:
-        shutil.rmtree(tmp_destination, ignore_errors=True)
+        shutil.rmtree(zip_destination, ignore_errors=True)
         raise Exception(error)
-    return tmp_destination
+    return zip_destination

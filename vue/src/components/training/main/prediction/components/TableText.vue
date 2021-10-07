@@ -1,7 +1,7 @@
 <template>
   <div class="t-predict-text">
     <p class="t-predict-text__text">{{ text }}</p>
-    <button v-if="length" @click.native="show">Показать больше</button>
+    <button v-if="length" @click="show">{{ textBtn[Number(isShow)] }}</button>
   </div>
 </template>
 
@@ -21,6 +21,7 @@ export default {
   data: () => ({
     text: '',
     isShow: false,
+    textBtn: ["Показать больше", "Скрыть"]
   }),
   mounted(){
     this.text = this.length ? this.value.substring(0, 99) + "..." : this.value
@@ -32,12 +33,8 @@ export default {
   },
   methods:{
     show(){
-      if(this.length && this.isShow)
-        this.text = this.value
-      else
-        this.text = this.value.substring(0, 99) + "..."
-
       this.isShow = !this.isShow
+      this.text = this.isShow? this.value : this.value.substring(0, 99) + "..."
     }
   }
 };
@@ -51,8 +48,10 @@ export default {
   align-items: center;
   width: 400px;
   padding: 5px;
+  flex-direction: column;
   &__text {
     text-align: center;
+    margin-bottom: 10px;
   }
 }
 </style>

@@ -87,8 +87,13 @@ export default {
       // await this.$store.dispatch('trainings/interactive', {});
     },
     async select(sorted) {
+      console.log(sorted)
       await this.$store.dispatch('trainings/interactive', {
-        data_balance: { sorted },
+        data_balance: { 
+          sorted,
+          show_val: this.settings.show_val,
+          show_train: this.settings.show_train
+        },
       });
     },
   },

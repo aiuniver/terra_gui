@@ -360,18 +360,12 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_image(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
+    def cut_image(paths_list: list, dataset_folder=None, **options: dict):
 
         for elem in paths_list:
-            os.makedirs(os.path.join(tmp_folder, f'{options["cols_names"]}', os.path.basename(os.path.dirname(elem))),
-                        exist_ok=True)
-            shutil.copyfile(elem, os.path.join(tmp_folder, f'{options["cols_names"]}',
-                                               os.path.basename(os.path.dirname(elem)), os.path.basename(elem)))
-
-        if dataset_folder:
-            if os.path.isdir(os.path.join(dataset_folder, f'{options["cols_names"]}')):
-                shutil.rmtree(os.path.join(dataset_folder, f'{options["cols_names"]}'))
-            shutil.move(os.path.join(tmp_folder, f'{options["cols_names"]}'), dataset_folder)
+            os.makedirs(os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem))), exist_ok=True)
+            shutil.copyfile(elem, os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
+                                               os.path.basename(elem)))
 
         instructions = {'instructions': paths_list,
                         'parameters': {'height': options['height'],
@@ -389,7 +383,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_video(paths_list: list, tmp_folder=None, dataset_folder=None, **options):
+    def cut_video(paths_list: list, dataset_folder=None, **options):
 
         def add_frames(video_array, fill_mode, frames_to_add, total_frames):
 
@@ -419,7 +413,7 @@ class CreateArray(object):
 
         for elem in paths_list:
             tmp_array = []
-            os.makedirs(os.path.join(tmp_folder, f'{options["put"]}_video', os.path.basename(os.path.dirname(elem))),
+            os.makedirs(os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem))),
                         exist_ok=True)
             path, slicing = elem.split(';')
             slicing = [int(x) for x in slicing[1:-1].split('-')]
@@ -429,9 +423,10 @@ class CreateArray(object):
             orig_shape = (int(cap.get(3)), int(cap.get(4)))
             frames_count = int(cap.get(7))
             frames_number = 0
-            save_path = os.path.join(tmp_folder, f'{options["put"]}_video', os.path.basename(os.path.dirname(elem)),
+            save_path = os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
                                      f'{name}_[{slicing[0]}-{slicing[1]}]{ext}')
             instructions_paths.append(save_path)
+            print(save_path)
             output_movie = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'XVID'), int(cap.get(5)), orig_shape)
             stop_flag = False
             while not stop_flag:
@@ -445,18 +440,21 @@ class CreateArray(object):
                     stop_flag = True
             if options['video_mode'] == 'completely' and options['max_frames'] > frames_count or \
                     options['video_mode'] == 'length_and_step' and options['length'] > frames_count:
+                fr_to_add, tot_frames = 0, 0
+                if options['video_mode'] == 'completely':
+                    fr_to_add = options['max_frames'] - frames_count
+                    tot_frames = options['max_frames']
+                elif options['video_mode'] == 'length_and_step':
+                    fr_to_add = options['length'] - frames_count
+                    tot_frames = options['length']
                 frames_to_add = add_frames(video_array=np.array(tmp_array),
                                            fill_mode=options['fill_mode'],
-                                           frames_to_add=options['max_frames'] - frames_count,
-                                           total_frames=options['max_frames'])
+                                           frames_to_add=fr_to_add,
+                                           total_frames=tot_frames)
                 for arr in frames_to_add:
                     output_movie.write(arr)
 
             output_movie.release()
-
-        if dataset_folder:
-            if not os.path.isdir(os.path.join(dataset_folder, f'{options["put"]}_video')):
-                shutil.move(os.path.join(tmp_folder, f'{options["put"]}_video'), dataset_folder)
 
         instructions = {'instructions': instructions_paths,
                         'parameters': {'height': options['height'],
@@ -476,7 +474,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_audio(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
+    def cut_audio(paths_list: list, dataset_folder=None, **options: dict):
 
         instructions_paths = []
         for elem in paths_list:
@@ -484,7 +482,7 @@ class CreateArray(object):
             name, ext = os.path.splitext(os.path.basename(path))
             slicing = [float(x) for x in slicing[1:-1].split('-')]
             duration = round(slicing[1] - slicing[0], 1)
-            os.makedirs(os.path.join(tmp_folder, f'{options["put"]}_audio', os.path.basename(os.path.dirname(path))),
+            os.makedirs(os.path.join(dataset_folder, os.path.basename(os.path.dirname(path))),
                         exist_ok=True)
             audio = AudioSegment.from_file(path, start_second=slicing[0], duration=duration)
 
@@ -499,14 +497,10 @@ class CreateArray(object):
                         else:
                             audio = audio.append(audio[0:duration_to_add * 1000], crossfade=0)
 
-            save_path = os.path.join(tmp_folder, f'{options["put"]}_audio', os.path.basename(os.path.dirname(path)),
+            save_path = os.path.join(dataset_folder, os.path.basename(os.path.dirname(path)),
                                      f'{name}_[{slicing[0]}-{slicing[1]}]{ext}')
             audio.export(save_path, format=ext[1:])
             instructions_paths.append(save_path)
-
-        if dataset_folder:
-            if not os.path.isdir(os.path.join(dataset_folder, f'{options["put"]}_audio')):
-                shutil.move(os.path.join(tmp_folder, f'{options["put"]}_audio'), dataset_folder)
 
         instructions = {'instructions': instructions_paths,
                         'parameters': {'sample_rate': options['sample_rate'],
@@ -520,7 +514,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_text(paths_list: dict, tmp_folder=None, dataset_folder=None, **options: dict):
+    def cut_text(paths_list: dict, dataset_folder=None, **options: dict):
 
         text_list = []
         for elem in sorted(paths_list.keys()):
@@ -540,7 +534,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_scaler(number_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
+    def cut_scaler(number_list: list, dataset_folder=None, **options: dict):
 
         instructions = {'instructions': number_list,
                         'parameters': options}
@@ -548,7 +542,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_classification(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
+    def cut_classification(paths_list: list, dataset_folder=None, **options: dict):
 
         instructions = {'instructions': paths_list,
                         'parameters': {"classes_names": options['classes_names'],
@@ -565,7 +559,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_regression(number_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
+    def cut_regression(number_list: list, dataset_folder=None, **options: dict):
 
         instructions = {'instructions': number_list,
                         'parameters': options}
@@ -573,18 +567,12 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_segmentation(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
+    def cut_segmentation(paths_list: list, dataset_folder=None, **options: dict):
 
         for elem in paths_list:
-            os.makedirs(os.path.join(tmp_folder, f'{options["cols_names"]}', os.path.basename(os.path.dirname(elem))),
-                        exist_ok=True)
-            shutil.copyfile(elem, os.path.join(tmp_folder, f'{options["cols_names"]}',
-                                               os.path.basename(os.path.dirname(elem)), os.path.basename(elem)))
-
-        if dataset_folder:
-            if os.path.isdir(os.path.join(dataset_folder, f'{options["cols_names"]}')):
-                shutil.rmtree(os.path.join(dataset_folder, f'{options["cols_names"]}'))
-            shutil.move(os.path.join(tmp_folder, f'{options["cols_names"]}'), dataset_folder)
+            os.makedirs(os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem))), exist_ok=True)
+            shutil.copyfile(elem, os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
+                                               os.path.basename(elem)))
 
         instructions = {'instructions': paths_list,
                         'parameters': {'mask_range': options['mask_range'],
@@ -601,7 +589,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_text_segmentation(paths_list: dict, tmp_folder=None, dataset_folder=None, **options: dict):
+    def cut_text_segmentation(paths_list: dict, dataset_folder=None, **options: dict):
 
         text_list = []
         for elem in sorted(paths_list.keys()):
@@ -620,7 +608,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_timeseries(paths_list: dict, tmp_folder=None, dataset_folder=None, **options: dict):
+    def cut_timeseries(paths_list: dict, dataset_folder=None, **options: dict):
 
         instructions = {'instructions': paths_list,
                         'parameters': options}
@@ -628,20 +616,24 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_object_detection(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict) -> dict:
+    def cut_object_detection(paths_list: list, dataset_folder=None, **options: dict) -> dict:
 
         for elem in paths_list:
-            os.makedirs(
-                os.path.join(tmp_folder, f'{options["put"]}_object_detection', os.path.basename(os.path.dirname(elem))),
-                exist_ok=True)
-            shutil.copyfile(elem,
-                            os.path.join(tmp_folder, f'{options["put"]}_object_detection',
-                                         os.path.basename(os.path.dirname(elem)),
-                                         os.path.basename(elem)))
-
-        if dataset_folder:
-            if not os.path.isdir(os.path.join(dataset_folder, f'{options["put"]}_object_detection')):
-                shutil.move(os.path.join(tmp_folder, f'{options["put"]}_object_detection'), dataset_folder)
+            os.makedirs(os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem))), exist_ok=True)
+            shutil.copyfile(elem, os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
+                                               os.path.basename(elem)))
+        # for elem in paths_list:
+        #     os.makedirs(
+        #         os.path.join(tmp_folder, f'{options["put"]}_object_detection', os.path.basename(os.path.dirname(elem))),
+        #         exist_ok=True)
+        #     shutil.copyfile(elem,
+        #                     os.path.join(tmp_folder, f'{options["put"]}_object_detection',
+        #                                  os.path.basename(os.path.dirname(elem)),
+        #                                  os.path.basename(elem)))
+        #
+        # if dataset_folder:
+        #     if not os.path.isdir(os.path.join(dataset_folder, f'{options["put"]}_object_detection')):
+        #         shutil.move(os.path.join(tmp_folder, f'{options["put"]}_object_detection'), dataset_folder)
 
         instructions = {'instructions': paths_list,
                         'parameters': {'yolo': options['yolo'],
@@ -990,7 +982,6 @@ class CreateArray(object):
         else:
             item = np.array([item])
 
-
         instructions = {'instructions': item,
                         'parameters': options}
 
@@ -1249,68 +1240,17 @@ class CreateArray(object):
                     )
 
             elif options.data.outputs[output_id].task == LayerOutputTypeChoice.TextSegmentation:
+                output_column = list(options.instructions.get(output_id).keys())[0]
+                print(output_column)
                 return_data[output_id] = CreateArray().postprocess_text_segmentation(
-                    postprocess_array, options.data.outputs[output_id], options.dataframe.get("val")
+                    postprocess_array,
+                    options.data.outputs[output_id],
+                    options.dataframe.get("val"),
+                    options.instructions.get(output_id).get(output_column).get('parameters')
                 )
 
             else:
                 return_data[output_id] = []
-        return return_data
-
-    @staticmethod
-    def postprocess_callback_results(interactive_config: dict, dataset_config: dict, example_idx: list) -> dict:
-        return_data = {}
-        if interactive_config.get('intermediate_result').get('show_results'):
-            for idx in range(interactive_config.get('intermediate_result').get('num_examples')):
-                return_data[f"{idx + 1}"] = {
-                    'initial_data': {},
-                    'true_value': {},
-                    'predict_value': {},
-                    'tags_color': {},
-                    'statistic_values': {}
-                }
-                if not (
-                        len(dataset_config.get("outputs").keys()) == 1 and dataset_config.get("outputs").get(
-                    list(dataset_config.get("outputs").keys())[0]).get(
-                    "task") == LayerOutputTypeChoice.TextSegmentation
-                ):
-                    for inp in dataset_config.get("inputs").keys():
-                        data, type_choice = self._postprocess_initial_data(
-                            input_id=inp,
-                            save_id=idx + 1,
-                            example_idx=example_idx[idx],
-                        )
-                        random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
-                        return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
-                            'update': random_key,
-                            'type': type_choice,
-                            'data': data,
-                        }
-
-                for out in dataset_config.get("outputs").keys():
-                    data = self._postprocess_result_data(
-                        output_id=out,
-                        data_type='val',
-                        save_id=idx + 1,
-                        example_idx=example_idx[idx],
-                        show_stat=interactive_config.get('intermediate_result').get('show_statistic'),
-                    )
-                    if data.get('y_true'):
-                        return_data[f"{idx + 1}"]['true_value'][f"Выходной слой «{out}»"] = data.get('y_true')
-                    return_data[f"{idx + 1}"]['predict_value'][f"Выходной слой «{out}»"] = data.get('y_pred')
-                    if dataset_config.get("outputs").get(
-                            list(dataset_config.get("outputs").keys())[0]).get(
-                        "task") == LayerOutputTypeChoice.TextSegmentation:
-                        return_data[f"{idx + 1}"]['tags_color'][f"Выходной слой «{out}»"] = \
-                            dataset_config.get("outputs").get(out).get('classes_colors')
-                        # for color in [colors for colors in self.dataset_config.get("outputs").get(out).get('classes_colors').values()]:
-                        #     print([type(elem) for elem in color])
-                    else:
-                        return_data[f"{idx + 1}"]['tags_color'] = {}
-                    if data.get('stat'):
-                        return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
-                    else:
-                        return_data[f"{idx + 1}"]['statistic_values'] = {}
         return return_data
 
     @staticmethod
@@ -1341,27 +1281,27 @@ class CreateArray(object):
                 img = image.array_to_img(options.X.get("val").get(f"{input_id}")[image_id])
             img = img.convert('RGB')
             save_path = os.path.join(
-                preset_path, f"initial_data_image_{image_id+1}_input_{input_id}.webp"
+                preset_path, f"initial_data_image_{image_id + 1}_input_{input_id}.webp"
             )
             img.save(save_path, 'webp')
 
         elif task == LayerInputTypeChoice.Text:
-            regression_task = False
-            for out in options.data.outputs.keys():
-                if options.data.outputs.get(out).task == LayerOutputTypeChoice.Regression:
-                    regression_task = True
-            if regression_task:
-                save_path = options.dataframe.get('val').iat[image_id, column_idx[0]]
-            else:
-                task = LayerInputTypeChoice.Dataframe
+            # regression_task = False
+            # for out in options.data.outputs.keys():
+            #     if options.data.outputs.get(out).task == LayerOutputTypeChoice.Regression:
+            #         regression_task = True
+            # if regression_task:
+            save_path = options.dataframe.get('val').iat[image_id, column_idx[0]]
+            # else:
+            #     task = LayerInputTypeChoice.Dataframe
 
         elif task == LayerInputTypeChoice.Video:
             clip = moviepy_editor.VideoFileClip(initial_file_path)
-            save_path = os.path.join(preset_path, f"initial_data_video_{image_id+1}_input_{input_id}.webm")
+            save_path = os.path.join(preset_path, f"initial_data_video_{image_id + 1}_input_{input_id}.webm")
             clip.write_videofile(save_path)
 
         elif task == LayerInputTypeChoice.Audio:
-            save_path = os.path.join(preset_path, f"initial_data_audio_{image_id+1}_input_{input_id}.webp")
+            save_path = os.path.join(preset_path, f"initial_data_audio_{image_id + 1}_input_{input_id}.webp")
             AudioSegment.from_file(initial_file_path).export(save_path, format="webm")
 
         # elif task == LayerInputTypeChoice.Dataframe:
@@ -1418,11 +1358,8 @@ class CreateArray(object):
         #                 }
         #             )
 
-
         else:
             save_path = ''
-
-
         return save_path
 
     @staticmethod
@@ -1434,7 +1371,7 @@ class CreateArray(object):
             class_dist = sorted(class_idx, reverse=True)
             labels_dist = []
             for j in class_dist:
-                labels_dist.append((labels[list(class_idx).index(j)], round(j * 100, 1)))
+                labels_dist.append((labels[list(class_idx).index(j)], round(float(j) * 100, 1)))
             labels_from_array.append(labels_dist)
         return labels[actual_value], labels_from_array
 
@@ -1454,11 +1391,16 @@ class CreateArray(object):
         return img_save_path
 
     @staticmethod
-    def postprocess_text_segmentation(array: np.ndarray, options: DatasetOutputsData, data_dataframe: DataFrame):
+    def postprocess_text_segmentation(
+            array: np.ndarray,
+            options: DatasetOutputsData,
+            data_dataframe: DataFrame,
+            dataset_params: dict
+    ):
 
         def add_tags_to_word(word: str, tag: str):
             if tag:
-                return f"<{tag}>{word}</{tag}>"
+                return f"<{tag[1:-1]}>{word}</{tag[1:-1]}>"
             else:
                 return word
 
@@ -1467,14 +1409,15 @@ class CreateArray(object):
                 result = np.zeros((3,))
                 for color in colors:
                     result += np.array(color)
-                return tuple((result / len(colors)).astype('int'))
+                result = result / len(colors)
+                return tuple(result.astype('int').tolist())
 
         def tag_mixer(tags: list, colors: dict):
             tags = sorted(tags, reverse=False)
-            mix_tag = f"{tags[0]}"
+            mix_tag = f"{tags[0][1:-1]}"
             for tag in tags[1:]:
-                mix_tag += f"+{tag}"
-            return mix_tag, color_mixer([colors[tag] for tag in tags])
+                mix_tag += f"+{tag[1:-1]}"
+            return f"<{mix_tag}>", color_mixer([colors[tag] for tag in tags])
 
         def reformat_tags(y_array, tag_list: list, classes_names: dict, colors: dict, sensitivity: float = 0.9):
             norm_array = np.where(y_array >= sensitivity, 1, 0).astype('int')
@@ -1511,16 +1454,17 @@ class CreateArray(object):
 
         return_data = []
         classes_names = {}
+        dataset_tags = dataset_params.get("open_tags").split()
         if not options.classes_colors:
             classes_colors = {}
             for i, name in enumerate(options.classes_names):
-                classes_colors[f"s{i + 1}"] = tuple(np.random.randint(256, size=3))
-                classes_names[f"s{i + 1}"] = options.classes_names[i]
+                classes_colors[dataset_tags[i]] = tuple(np.random.randint(256, size=3).tolist())
+                classes_names[dataset_tags[i]] = options.classes_names[i]
         else:
             classes_colors = options.classes_colors
             for i, name in enumerate(classes_names):
-                classes_colors[f"s{i + 1}"] = options.classes_colors[i]
-                classes_names[f"s{i + 1}"] = options.classes_names[i]
+                classes_colors[dataset_tags[i]] = options.classes_colors[i]
+                classes_names[dataset_tags[i]] = options.classes_names[i]
 
         for example_id in range(len(array)):
             initinal_text = data_dataframe.iat[example_id, 0]
@@ -1544,7 +1488,6 @@ class CreateArray(object):
                 }
             )
         return return_data
-
 
     @staticmethod
     def postprocess_regression():

@@ -55,7 +55,9 @@
               <img alt="" width="100" height="200" :src="'data:image/png;base64,' + info.image || ''" />
             </div>
             <div v-if="!info.image" class="model-arch__empty"><span>Нет картинки</span></div>
-            <div class="model-arch__btn"><t-button :disabled="!model" @click="download">Загрузить</t-button></div>
+            <div class="model-arch__btn">
+              <t-button :disabled="!model || loading" :loading="loading" @click="download">Загрузить</t-button>
+            </div>
           </div>
         </div>
       </div>
@@ -76,6 +78,7 @@ export default {
     model: null,
     selected: '',
     search: '',
+    loading: true,
   }),
   mounted() {
     console.log(this.$el.getElementsByClassName('at-modal__footer')[0].remove());
@@ -135,15 +138,19 @@ export default {
       }
     },
     async getModel(value) {
+      this.loading = true;
       const { data } = await this.$store.dispatch('modeling/getModel', value);
       if (data) {
         this.info = data;
         this.model = value;
       }
+      this.loading = false;
     },
     async download() {
-      await this.$store.dispatch('modeling/load', this.model);
-      this.$emit('input', false);
+      if (!this.loading) {
+        await this.$store.dispatch('modeling/load', this.model);
+        this.$emit('input', false);
+      }
     },
   },
   watch: {
