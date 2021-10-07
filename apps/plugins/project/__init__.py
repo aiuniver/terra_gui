@@ -19,7 +19,7 @@ from terra_ai.agent import agent_exchange
 from terra_ai.training.guinn import interactive as training_interactive
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.types import confilepath
-from terra_ai.data.extra import HardwareAcceleratorData, HardwareAcceleratorChoice
+from terra_ai.data.extra import HardwareAcceleratorData
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.modeling.layer import LayerData
@@ -60,6 +60,8 @@ PROJECT_PATH = {
 TASKS_RELATIONS = {
     DeployTaskTypeChoice.image_classification: {"ImageClassification"},
     DeployTaskTypeChoice.image_segmentation: {"ImageSegmentation"},
+    DeployTaskTypeChoice.text_classification: {"TextClassification"},
+    DeployTaskTypeChoice.text_segmentation: {"TextTextSegmentation"},
 }
 
 
@@ -309,10 +311,6 @@ class Project(BaseMixinData):
                 layer.id
             )
             training_task_rel = TrainingTasksRelations.get(layer.task)
-            available_metrics = list(
-                set(training_layer.metrics if training_layer else [])
-                & set(training_task_rel.metrics if training_task_rel else [])
-            )
             training_losses = (
                 list(map(lambda item: item.name, training_task_rel.losses))
                 if training_task_rel
@@ -323,17 +321,20 @@ class Project(BaseMixinData):
                 if training_task_rel
                 else None
             )
+            need_loss = training_layer.loss if training_layer else None
+            if need_loss:
+                loss = need_loss if need_loss in training_losses else training_losses[0]
+            else:
+                loss = training_losses[0]
+            need_metrics = training_layer.metrics if training_layer else []
+            metrics = list(set(need_metrics) & set(training_metrics))
             outputs.append(
                 {
                     "id": layer.id,
                     "classes_quantity": layer.num_classes,
                     "task": layer.task,
-                    "loss": training_layer.loss
-                    if training_layer
-                    else (training_losses[0] if training_losses else None),
-                    "metrics": available_metrics
-                    if available_metrics
-                    else ([training_metrics[0]] if training_metrics else []),
+                    "loss": loss,
+                    "metrics": metrics if len(metrics) else [training_metrics[0]],
                 }
             )
         self.training.base.architecture.parameters.outputs = OutputsList(outputs)
