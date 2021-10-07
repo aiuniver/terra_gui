@@ -1640,6 +1640,7 @@ class CreateArray(object):
             output_id: int,
             image_id: int,
             save_path: str,
+            colors: list = None,
             return_mode='deploy',
             show_stat: bool = False
     ):
@@ -1653,7 +1654,7 @@ class CreateArray(object):
             for i, color in enumerate(options.classes_colors):
                 array = np.where(
                     array == i * 512,
-                    np.array(color),
+                    np.array(color.as_rgb_tuple()),
                     array
                 )
             array = array.astype("uint8")
@@ -1666,7 +1667,7 @@ class CreateArray(object):
 
         if return_mode == 'callback':
             y_true = np.expand_dims(np.argmax(true_array, axis=-1), axis=-1) * 512
-            for i, color in enumerate(options.classes_colors):
+            for i, color in enumerate(colors):
                 y_true = np.where(y_true == i * 512, np.array(color), y_true)
             y_true = y_true.astype("uint8")
             y_true_save_path = os.path.join(
@@ -1687,7 +1688,7 @@ class CreateArray(object):
             }
 
             y_pred = np.expand_dims(np.argmax(predict_array, axis=-1), axis=-1) * 512
-            for i, color in enumerate(options.classes_colors):
+            for i, color in enumerate(colors):
                 y_pred = np.where(y_pred == i * 512, np.array(color), y_pred)
             y_pred = y_pred.astype("uint8")
             y_pred_save_path = os.path.join(
@@ -1744,6 +1745,7 @@ class CreateArray(object):
             dataset_params: dict,
             example_id: int,
             return_mode='deploy',
+            class_colors: list = None,
             show_stat: bool = False,
             true_array: np.ndarray = None,
     ):
@@ -1805,9 +1807,13 @@ class CreateArray(object):
         classes_names = {}
         dataset_tags = dataset_params.get("open_tags").split()
         colors = {}
-        if options.classes_colors:
+        if options.classes_colors and return_mode == 'deploy':
             for i, name in enumerate(dataset_tags):
-                colors[name] = options.classes_colors[i]
+                colors[name] = options.classes_colors[i].as_rgb_tuple()
+                classes_names[name] = options.classes_names[i]
+        elif not class_colors and return_mode == 'callback':
+            for i, name in enumerate(dataset_tags):
+                colors[name] = class_colors[i]
                 classes_names[name] = options.classes_names[i]
         else:
             for i, name in enumerate(dataset_tags):

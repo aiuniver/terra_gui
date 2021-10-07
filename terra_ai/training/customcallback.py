@@ -321,6 +321,7 @@ class InteractiveCallback:
         self.loss_obj = None
         self.metrics_obj = None
         self.options: PrepareDataset = None
+        self.class_colors = []
         self.dataset_path = None
         self.x_val = None
         self.inverse_x_val = None
@@ -575,13 +576,13 @@ class InteractiveCallback:
             if task == LayerOutputTypeChoice.TextSegmentation and classes_colors:
                 for color in classes_colors:
                     colors.append(color.as_rgb_tuple())
-                self.options.data.outputs.get(out).classes_colors = colors
+                self.class_colors = colors
             elif task == LayerOutputTypeChoice.TextSegmentation and not classes_colors:
                 for _ in self.options.data.outputs.get(out).classes_names:
                     colors.append(tuple(np.random.randint(256, size=3).astype('int').tolist()))
-                self.options.data.outputs.get(out).classes_colors = colors
+                self.class_colors = colors
             elif task == LayerOutputTypeChoice.Segmentation:
-                self.options.data.outputs.get(out).classes_colors = [color.as_rgb_tuple() for color in classes_colors]
+                self.class_colors = [color.as_rgb_tuple() for color in classes_colors]
             else:
                 pass
 
@@ -1547,6 +1548,7 @@ class InteractiveCallback:
                             predict_array=self.y_pred.get(f'{out}')[self.example_idx[idx]],
                             true_array=self.y_true.get('val').get(f'{out}')[self.example_idx[idx]],
                             options=self.options.data.outputs.get(out),
+                            colors=self.class_colors,
                             output_id=out,
                             image_id=idx,
                             save_path=self.preset_path,
