@@ -3,8 +3,8 @@
     <div v-if="statusTrain === 'start'" class="params__overlay">
       <LoadSpiner :text="'Запуск обучения...'" />
     </div>
-    <div class="params__body">
-      <scrollbar>
+    <scrollbar>
+      <div class="params__body">
         <div class="params__items">
           <at-collapse :value="collapse">
             <at-collapse-item class="mt-3" :title="''">
@@ -101,8 +101,8 @@
             </at-collapse-item>
           </at-collapse>
         </div>
-      </scrollbar>
-    </div>
+      </div>
+    </scrollbar>
     <div class="params__footer">
       <div
         v-for="({ title, visible }, key) of button"
@@ -127,7 +127,7 @@ export default {
     LoadSpiner,
   },
   data: () => ({
-    collapse: [0, 1, 2, 3, 4],
+    collapse: [0, 1, 3, 4],
     optimizerValue: '',
     metricData: '',
     debounce: null,
@@ -147,10 +147,11 @@ export default {
     disabledAny() {
       const status = this.status;
       if (this.isLearning) {
+        return true;
+      } else {
         if (status === 'stopped') {
           return ['epochs'];
         }
-        return true;
       }
       return false;
     },

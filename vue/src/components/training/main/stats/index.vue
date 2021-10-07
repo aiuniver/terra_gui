@@ -104,6 +104,7 @@ export default {
     flex-wrap: wrap;
     gap: 50px;
     position: relative;
+    align-items: flex-start;
   }
   .overlay {
     width: 100%;

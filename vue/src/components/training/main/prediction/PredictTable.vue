@@ -2,97 +2,118 @@
   <div class="t-table">
     <scrollbar>
       <slot name="header"></slot>
-      <div class="t-table__body">
-        <div
-          class="t-table__rows"
-          v-for="({ initial_data, true_value, predict_value, statistic_values, tags_color }, id) of predict"
-          :key="'rows_' + id"
-        >
-          <div v-if="id === '1'" class="t-table__title t-table__title--index">Слой</div>
-          <div class="t-table__index">{{ id }}</div>
-          <div v-if="isEmpty(initial_data)" class="t-table__col">
-            <div v-if="id === '1'" class="t-table__title t-table__title--one">Исходные данные</div>
-            <div class="t-table__row">
-              <div class="t-table__col" v-for="({ type, data, update}, key, i) in initial_data" :key="`initial ${i}`">
-                <div v-if="id === '1'" class="t-table__title t-table__title--two">{{ key }}</div>
-                <div class="t-table__row">
-                  <div class="t-table__col" v-for="(item, i) of data" :key="`initial layer ${i}`">
-                    <div v-if="id === '1'" class="t-table__title t-table__title--three">{{ item.title }}</div>
-                    <div class="t-table__row t-table__row--center">
-                      <Forms :data="item" :tags_color="tags_color" :layer="key" :update="update" :type="type" :key="`initial data ${i}`" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div v-if="isEmpty(true_value)" class="t-table__col">
-            <div v-if="id === '1'" class="t-table__title t-table__title--one">Истинное значение</div>
-            <div class="t-table__row">
-              <div class="t-table__col" v-for="({ type, data }, key, i) in true_value" :key="`true ${i}`">
-                <div v-if="id === '1'" class="t-table__title t-table__title--two">{{ key }}</div>
-                <div class="t-table__row">
-                  <div class="t-table__col" v-for="(item, i) of data" :key="`true layer ${i}`">
-                    <div v-if="id === '1'" class="t-table__title t-table__title--three">{{ item.title }}</div>
-                    <div class="t-table__row t-table__row--center">
-                      <Forms :data="item" :tags_color="tags_color" :layer="key" :type="type" :key="`true data ${i}`" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div v-if="isEmpty(predict_value)" class="t-table__col">
-            <div v-if="id === '1'" class="t-table__title t-table__title--one">Предсказание</div>
-            <div class="t-table__row">
-              <div class="t-table__col" v-for="({ type, data }, key, i) in predict_value" :key="`predict ${i}`">
-                <div v-if="id === '1'" class="t-table__title t-table__title--two">{{ key }}</div>
-                <div class="t-table__row">
-                  <div class="t-table__col" v-for="(item, i) of data" :key="`predict layer ${i}`">
-                    <div v-if="id === '1'" class="t-table__title t-table__title--three">{{ item.title }}</div>
-                    <div class="t-table__row t-table__row--center">
-                      <Forms :data="item" :tags_color="tags_color" :layer="key" :type="type" :key="`predict data ${i}`" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div v-if="isEmpty(statistic_values)" class="t-table__col">
-            <div v-if="id === '1'" class="t-table__title t-table__title--one">Статистика примеров</div>
-            <div class="t-table__row">
-              <div class="t-table__col" v-for="({ type, data }, key, i) in statistic_values" :key="`statistic ${i}`">
-                <div v-if="id === '1'" class="t-table__title t-table__title--two">{{ key }}</div>
-                <div class="t-table__row">
-                  <div class="t-table__col" v-for="(item, i) of data" :key="`statistic layer ${i}`">
-                    <div v-if="id === '1'" class="t-table__title t-table__title--three">{{ item.title }}</div>
-                    <div class="t-table__row t-table__row--center t-table__row--table">
-                      <Forms :data="item" :type="type" :key="`statistic data ${i}`" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- <div v-if="isEmpty(tags_color)" class="t-table__col">
-            <div v-if="id === '1'" class="t-table__title t-table__title--one">Статистика примеров</div>
-            <div class="t-table__row">
-              <div class="t-table__col" v-for="({ type, data }, key, i) in tags_color" :key="`tags ${i}`">
-                <div v-if="id === '1'" class="t-table__title t-table__title--two">{{ key }}</div>
-                <div class="t-table__row">
-                  <div class="t-table__col" v-for="(item, i) of data" :key="`tags layer ${i}`">
-                    <div v-if="id === '1'" class="t-table__title t-table__title--three">{{ item.title }}</div>
-                    <div class="t-table__row t-table__row--center t-table__row--table">
-                      {{ type}}
-                      <Forms :data="item" :type="type" :key="`tags data ${i}`" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div> -->
-        </div>
-      </div>
+      <table>
+        <thead>
+          <tr>
+            <th rowspan="3">Слой</th>
+            <th>Исходные данные</th>
+            <th>Истинное значение</th>
+            <th>Предсказание</th>
+            <th :colspan="colspan">Статистика примеров</th>
+          </tr>
+
+            <template v-for="({ initial_data, true_value, predict_value, statistic_values }, id) of predict">
+              <template v-if="id === '1'">
+
+                <tr :key="'tr_' + id">
+                  
+                  <template v-for="(data, key) of initial_data">
+                    <th :key="'th_' + key">{{ key }}</th>
+                  </template>
+
+                  <template v-for="(data, key) of true_value">
+                    <th :key="'th_' + key">{{ key }}</th>
+                  </template>
+
+                  <template v-for="(data, key) of predict_value">
+                    <th :key="'th_' + key">{{ key }}</th>
+                  </template>
+
+                  <template v-for="(data, key) of statistic_values">
+                    <th :colspan="colspan" :key="'th_' + key">{{ key }}</th>
+                  </template>
+
+                </tr>
+
+                <tr :key="'tr_' + id">
+
+                  <template v-for="key of initial_data">
+                    <template v-for="(item, i) in key.data">
+                      <th :key="'th' + i">{{ item.title }}</th>
+                    </template>
+                  </template>
+
+                  <template v-for="key of true_value">
+                    <template v-for="(item, i) in key.data">
+                      <th :key="'th' + i">{{ item.title }}</th>
+                    </template>
+                  </template>
+
+                  <template v-for="key of predict_value">
+                    <template v-for="(item, i) in key.data">
+                      <th :key="'th' + i">{{ item.title }}</th>
+                    </template>
+                  </template>
+
+                  <template v-for="key of statistic_values">
+                    <template v-for="(item, i) in key.data">
+                      <th :key="'th' + i">{{ item.title }}</th>
+                    </template>
+                  </template>
+
+                </tr>
+
+              </template>
+            </template>
+        </thead>
+
+        <tbody>
+          
+          <template v-for="({ initial_data, true_value, predict_value, statistic_values, tags_color }, id) of predict">
+
+            <tr :key="'rows_' + id">
+              <td>
+                {{ id }}
+              </td>
+
+              <template v-for="({ type, data, update }, key) in initial_data">
+                <template v-for="(item, i) of data">
+                  <td :key="'initial_layer_' + i">
+                    <Forms :data="item" :tags_color="tags_color" :layer="key" :update="update" :type="type" />
+                  </td>
+                </template>
+              </template>
+
+              <template v-for="({ type, data }, key) in true_value">
+                <template v-for="(item, i) of data">
+                  <td :key="'true_layer_' + i">
+                    <Forms :data="item" :tags_color="tags_color" :layer="key" :type="type" />
+                  </td>
+                </template>
+              </template>
+
+              <template v-for="({ type, data }, key) in predict_value">
+                <template v-for="(item, i) of data">
+                  <td :key="'predict_layer_' + i">
+                    <Forms :data="item" :tags_color="tags_color" :layer="key" :type="type" />
+                  </td>
+                </template>
+              </template>
+
+              <template v-for="{ type, data } in statistic_values">
+                <template v-for="(item, i) of data">
+                  <td :key="'statistic_layer_' + i">
+                    <Forms :data="item" :type="type" />
+                  </td>
+                </template>
+              </template>
+
+            </tr>
+
+          </template>
+        </tbody>
+
+      </table>
     </scrollbar>
   </div>
 </template>
@@ -103,7 +124,6 @@ export default {
   name: 'TextTableTest',
   components: {
     Forms,
-    // TableStatisticText,
   },
   props: {
     show: Boolean,
@@ -112,91 +132,34 @@ export default {
       default: () => ({}),
     },
   },
-  data: () => ({}),
-  computed: {},
-  methods: {
-    isEmpty(obj) {
-      return Object.keys(obj).length;
+  computed: {
+    colspan() {
+      return Object.keys(this.predict[1].statistic_values[Object.keys(this.predict[1].statistic_values)[0]].data)
+        .length;
     },
-  },
-  created() {
-    console.log('Predict', this.predict);
   },
 };
 </script>
 
 <style lang="scss" scoped>
+th {
+  background-color: #242f3d;
+  font-weight: normal;
+}
+table,
+th,
+td {
+  border: 1px solid #0e1621;
+  padding: 10px;
+  text-align: center;
+}
+table {
+  width: 100%;
+  text-align: center;
+  border-radius: 4px;
+}
 .t-table {
   position: relative;
   height: 600px;
-
-  &__body {
-    padding: 66px 0 0 0;
-    border: 1px solid #0e1621;
-  }
-  &__rows {
-    position: relative;
-    display: flex;
-    width: 100%;
-    border-bottom: 1px solid #0e1621;
-  }
-  &__index {
-    width: 70px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-right: 1px solid #0e1621;
-  }
-  &__title {
-    display: flex;
-    justify-content: center;
-    position: absolute;
-    align-items: center;
-    background-color: #242f3d;
-    border: 1px solid #0e1621;
-    padding: 0 10px;
-    width: 100%;
-    z-index: 5;
-    &--one {
-      top: -66px;
-    }
-    &--two {
-      top: -44px;
-      font-size: 14px;
-    }
-    &--three {
-      top: -22px;
-      font-size: 14px;
-      white-space: nowrap;
-    }
-    &--index {
-      width: 70px;
-      height: 67px;
-      top: -66px;
-    }
-  }
-  &__row {
-    display: flex;
-    min-width: 200px;
-
-    &--table {
-      min-width: 100px;
-    }
-    flex: 1;
-    &--center {
-      align-items: center;
-      justify-content: center;
-      border-right: 1px solid #0e1621;
-      border-left: 1px solid #0e1621;
-    }
-  }
-  &__col {
-    display: flex;
-    flex-direction: column;
-    // flex: 1 0 auto;
-    position: relative;
-    &--main {
-    }
-  }
 }
 </style>

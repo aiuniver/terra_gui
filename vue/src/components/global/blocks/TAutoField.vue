@@ -12,7 +12,6 @@
     <t-segmentation-manual
       v-if="type === 'segmentation_manual'"
       :id="id"
-      :value="getValue"
       :label="label"
       type="text"
       :parse="parse"

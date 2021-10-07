@@ -128,9 +128,6 @@ class DeployDetailsData(BaseMixinData):
 
 class Project(BaseMixinData):
     name: str = UNKNOWN_NAME
-    hardware: HardwareAcceleratorData = HardwareAcceleratorData(
-        type=HardwareAcceleratorChoice.CPU
-    )
     dataset: Optional[DatasetData]
     model: ModelDetailsData = ModelDetailsData(**EmptyModelDetailsData)
     training: TrainingDetailsData = TrainingDetailsData()
@@ -139,6 +136,10 @@ class Project(BaseMixinData):
     @property
     def name_alias(self) -> str:
         return re.sub(r"([\-]+)", "_", slugify(self.name, language_code="ru"))
+
+    @property
+    def hardware(self) -> HardwareAcceleratorData:
+        return agent_exchange("hardware_accelerator")
 
     def _set_data(
         self,
@@ -156,7 +157,12 @@ class Project(BaseMixinData):
 
     def dict(self, **kwargs):
         _data = super().dict(**kwargs)
-        _data.update({"name_alias": self.name_alias})
+        _data.update(
+            {
+                "name_alias": self.name_alias,
+                "hardware": self.hardware,
+            }
+        )
         return _data
 
     def reset(self):

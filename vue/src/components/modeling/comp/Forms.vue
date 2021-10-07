@@ -40,7 +40,7 @@
       />
       <Select
         v-if="type === 'select'"
-        :value="getValue(valueDef[name], value)"
+        :value="valueDef[name]"
         :label="label"
         :lists="list"
         :parse="parse"

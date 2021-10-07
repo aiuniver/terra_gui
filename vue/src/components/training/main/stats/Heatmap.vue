@@ -1,5 +1,5 @@
 <template>
-  <div class="t-heatmap">
+  <div class="t-heatmap" :class="['t-heatmap', { 't-heatmap--small': isSmallMap }]">
     <div class="t-heatmap__scale" ref="scale">
       <div class="t-heatmap__scale--gradient"></div>
       <div class="t-heatmap__scale--values">
@@ -17,7 +17,7 @@
         <div class="t-heatmap__wrapper">
           <div
             class="t-heatmap__grid"
-            :style="{ gridTemplate: `repeat(${data_array.length}, 40px) / repeat(${data_array.length}, 40px)` }"
+            :style="gridTemplate"
           >
             <div class="t-heatmap__grid--x-labels">
               <span v-for="(item, idx) in labels" :key="idx" :title="item">{{ item }}</span>
@@ -84,6 +84,13 @@ export default {
     bodyWidth() {
       return `calc(100% - ${this.width - 10}px)`;
     },
+    isSmallMap() {
+      return this.data_array.length < 5
+    },
+    gridTemplate() {
+      const width = this.isSmallMap ? '80px': '40px'
+      return { gridTemplate: `repeat(${this.data_array.length}, ${width}) / repeat(${this.data_array.length}, ${width})` }
+    }
   },
   methods: {
     getColor(val) {
@@ -144,7 +151,7 @@ export default {
     gap: 5px;
     position: relative;
     width: fit-content;
-    padding-bottom: 15px;
+    padding-bottom: 20px;
   }
   &__grid {
     display: grid;
@@ -188,12 +195,28 @@ export default {
       line-height: 14px;
     }
   }
+  &.t-heatmap--small {
+      .t-heatmap__grid {
+        font-size: 14px;
+      }
+      .t-heatmap__grid--x-labels, .t-heatmap__grid--y-labels {
+        font-size: 12px;
+        line-height: 16px;
+      }
+      .t-heatmap__grid--y-labels {
+        * {
+          flex-basis: 80px;
+        }
+      }
+      .t-heatmap__grid--x-labels * {
+        width: 80px;
+      }
+    }
   &__scale {
     display: flex;
-    height: 100%;
     gap: 5px;
     padding-right: 35px;
-    padding-bottom: 15px;
+    padding-bottom: 20px;
     &--values {
       display: flex;
       flex-direction: column;

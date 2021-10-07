@@ -361,18 +361,12 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_image(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
+    def cut_image(paths_list: list, dataset_folder=None, **options: dict):
 
         for elem in paths_list:
-            os.makedirs(os.path.join(tmp_folder, f'{options["cols_names"]}', os.path.basename(os.path.dirname(elem))),
-                        exist_ok=True)
-            shutil.copyfile(elem, os.path.join(tmp_folder, f'{options["cols_names"]}',
-                                               os.path.basename(os.path.dirname(elem)), os.path.basename(elem)))
-
-        if dataset_folder:
-            if os.path.isdir(os.path.join(dataset_folder, f'{options["cols_names"]}')):
-                shutil.rmtree(os.path.join(dataset_folder, f'{options["cols_names"]}'))
-            shutil.move(os.path.join(tmp_folder, f'{options["cols_names"]}'), dataset_folder)
+            os.makedirs(os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem))), exist_ok=True)
+            shutil.copyfile(elem, os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
+                                               os.path.basename(elem)))
 
         instructions = {'instructions': paths_list,
                         'parameters': {'height': options['height'],
@@ -390,7 +384,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_video(paths_list: list, tmp_folder=None, dataset_folder=None, **options):
+    def cut_video(paths_list: list, dataset_folder=None, **options):
 
         def add_frames(video_array, fill_mode, frames_to_add, total_frames):
 
@@ -420,7 +414,7 @@ class CreateArray(object):
 
         for elem in paths_list:
             tmp_array = []
-            os.makedirs(os.path.join(tmp_folder, f'{options["put"]}_video', os.path.basename(os.path.dirname(elem))),
+            os.makedirs(os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem))),
                         exist_ok=True)
             path, slicing = elem.split(';')
             slicing = [int(x) for x in slicing[1:-1].split('-')]
@@ -430,9 +424,10 @@ class CreateArray(object):
             orig_shape = (int(cap.get(3)), int(cap.get(4)))
             frames_count = int(cap.get(7))
             frames_number = 0
-            save_path = os.path.join(tmp_folder, f'{options["put"]}_video', os.path.basename(os.path.dirname(elem)),
+            save_path = os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
                                      f'{name}_[{slicing[0]}-{slicing[1]}]{ext}')
             instructions_paths.append(save_path)
+            print(save_path)
             output_movie = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'XVID'), int(cap.get(5)), orig_shape)
             stop_flag = False
             while not stop_flag:
@@ -446,18 +441,21 @@ class CreateArray(object):
                     stop_flag = True
             if options['video_mode'] == 'completely' and options['max_frames'] > frames_count or \
                     options['video_mode'] == 'length_and_step' and options['length'] > frames_count:
+                fr_to_add, tot_frames = 0, 0
+                if options['video_mode'] == 'completely':
+                    fr_to_add = options['max_frames'] - frames_count
+                    tot_frames = options['max_frames']
+                elif options['video_mode'] == 'length_and_step':
+                    fr_to_add = options['length'] - frames_count
+                    tot_frames = options['length']
                 frames_to_add = add_frames(video_array=np.array(tmp_array),
                                            fill_mode=options['fill_mode'],
-                                           frames_to_add=options['max_frames'] - frames_count,
-                                           total_frames=options['max_frames'])
+                                           frames_to_add=fr_to_add,
+                                           total_frames=tot_frames)
                 for arr in frames_to_add:
                     output_movie.write(arr)
 
             output_movie.release()
-
-        if dataset_folder:
-            if not os.path.isdir(os.path.join(dataset_folder, f'{options["put"]}_video')):
-                shutil.move(os.path.join(tmp_folder, f'{options["put"]}_video'), dataset_folder)
 
         instructions = {'instructions': instructions_paths,
                         'parameters': {'height': options['height'],
@@ -477,7 +475,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_audio(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
+    def cut_audio(paths_list: list, dataset_folder=None, **options: dict):
 
         instructions_paths = []
         for elem in paths_list:
@@ -485,7 +483,7 @@ class CreateArray(object):
             name, ext = os.path.splitext(os.path.basename(path))
             slicing = [float(x) for x in slicing[1:-1].split('-')]
             duration = round(slicing[1] - slicing[0], 1)
-            os.makedirs(os.path.join(tmp_folder, f'{options["put"]}_audio', os.path.basename(os.path.dirname(path))),
+            os.makedirs(os.path.join(dataset_folder, os.path.basename(os.path.dirname(path))),
                         exist_ok=True)
             audio = AudioSegment.from_file(path, start_second=slicing[0], duration=duration)
 
@@ -500,14 +498,10 @@ class CreateArray(object):
                         else:
                             audio = audio.append(audio[0:duration_to_add * 1000], crossfade=0)
 
-            save_path = os.path.join(tmp_folder, f'{options["put"]}_audio', os.path.basename(os.path.dirname(path)),
+            save_path = os.path.join(dataset_folder, os.path.basename(os.path.dirname(path)),
                                      f'{name}_[{slicing[0]}-{slicing[1]}]{ext}')
             audio.export(save_path, format=ext[1:])
             instructions_paths.append(save_path)
-
-        if dataset_folder:
-            if not os.path.isdir(os.path.join(dataset_folder, f'{options["put"]}_audio')):
-                shutil.move(os.path.join(tmp_folder, f'{options["put"]}_audio'), dataset_folder)
 
         instructions = {'instructions': instructions_paths,
                         'parameters': {'sample_rate': options['sample_rate'],
@@ -521,7 +515,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_text(paths_list: dict, tmp_folder=None, dataset_folder=None, **options: dict):
+    def cut_text(paths_list: dict, dataset_folder=None, **options: dict):
 
         text_list = []
         for elem in sorted(paths_list.keys()):
@@ -541,7 +535,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_scaler(number_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
+    def cut_scaler(number_list: list, dataset_folder=None, **options: dict):
 
         instructions = {'instructions': number_list,
                         'parameters': options}
@@ -549,7 +543,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_classification(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
+    def cut_classification(paths_list: list, dataset_folder=None, **options: dict):
 
         instructions = {'instructions': paths_list,
                         'parameters': {"classes_names": options['classes_names'],
@@ -566,7 +560,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_regression(number_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
+    def cut_regression(number_list: list, dataset_folder=None, **options: dict):
 
         instructions = {'instructions': number_list,
                         'parameters': options}
@@ -574,18 +568,12 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_segmentation(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
+    def cut_segmentation(paths_list: list, dataset_folder=None, **options: dict):
 
         for elem in paths_list:
-            os.makedirs(os.path.join(tmp_folder, f'{options["cols_names"]}', os.path.basename(os.path.dirname(elem))),
-                        exist_ok=True)
-            shutil.copyfile(elem, os.path.join(tmp_folder, f'{options["cols_names"]}',
-                                               os.path.basename(os.path.dirname(elem)), os.path.basename(elem)))
-
-        if dataset_folder:
-            if os.path.isdir(os.path.join(dataset_folder, f'{options["cols_names"]}')):
-                shutil.rmtree(os.path.join(dataset_folder, f'{options["cols_names"]}'))
-            shutil.move(os.path.join(tmp_folder, f'{options["cols_names"]}'), dataset_folder)
+            os.makedirs(os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem))), exist_ok=True)
+            shutil.copyfile(elem, os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
+                                               os.path.basename(elem)))
 
         instructions = {'instructions': paths_list,
                         'parameters': {'mask_range': options['mask_range'],
@@ -602,7 +590,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_text_segmentation(paths_list: dict, tmp_folder=None, dataset_folder=None, **options: dict):
+    def cut_text_segmentation(paths_list: dict, dataset_folder=None, **options: dict):
 
         text_list = []
         for elem in sorted(paths_list.keys()):
@@ -621,7 +609,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_timeseries(paths_list: dict, tmp_folder=None, dataset_folder=None, **options: dict):
+    def cut_timeseries(paths_list: dict, dataset_folder=None, **options: dict):
 
         instructions = {'instructions': paths_list,
                         'parameters': options}
@@ -629,20 +617,24 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_object_detection(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict) -> dict:
+    def cut_object_detection(paths_list: list, dataset_folder=None, **options: dict) -> dict:
 
         for elem in paths_list:
-            os.makedirs(
-                os.path.join(tmp_folder, f'{options["put"]}_object_detection', os.path.basename(os.path.dirname(elem))),
-                exist_ok=True)
-            shutil.copyfile(elem,
-                            os.path.join(tmp_folder, f'{options["put"]}_object_detection',
-                                         os.path.basename(os.path.dirname(elem)),
-                                         os.path.basename(elem)))
-
-        if dataset_folder:
-            if not os.path.isdir(os.path.join(dataset_folder, f'{options["put"]}_object_detection')):
-                shutil.move(os.path.join(tmp_folder, f'{options["put"]}_object_detection'), dataset_folder)
+            os.makedirs(os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem))), exist_ok=True)
+            shutil.copyfile(elem, os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
+                                               os.path.basename(elem)))
+        # for elem in paths_list:
+        #     os.makedirs(
+        #         os.path.join(tmp_folder, f'{options["put"]}_object_detection', os.path.basename(os.path.dirname(elem))),
+        #         exist_ok=True)
+        #     shutil.copyfile(elem,
+        #                     os.path.join(tmp_folder, f'{options["put"]}_object_detection',
+        #                                  os.path.basename(os.path.dirname(elem)),
+        #                                  os.path.basename(elem)))
+        #
+        # if dataset_folder:
+        #     if not os.path.isdir(os.path.join(dataset_folder, f'{options["put"]}_object_detection')):
+        #         shutil.move(os.path.join(tmp_folder, f'{options["put"]}_object_detection'), dataset_folder)
 
         instructions = {'instructions': paths_list,
                         'parameters': {'yolo': options['yolo'],
