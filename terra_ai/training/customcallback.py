@@ -2176,7 +2176,7 @@ class InteractiveCallback:
         else:
             data_series = InteractiveCallback().clean_data_series([data_series], mode="mono")
             bar_values, x_labels = np.histogram(data_series, bins=bins)
-            return x_labels.astype('float').tolist(), bar_values.astype('int').tolist()
+            return x_labels[:-1].astype('float').tolist(), bar_values.astype('int').tolist()
 
     @staticmethod
     def clean_data_series(data_series: list, mode="mono"):
