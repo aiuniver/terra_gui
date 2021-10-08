@@ -427,7 +427,7 @@ class CreateArray(object):
             save_path = os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
                                      f'{name}_[{slicing[0]}-{slicing[1]}]{ext}')
             instructions_paths.append(save_path)
-            print(save_path)
+            # print(save_path)
             output_movie = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'XVID'), int(cap.get(5)), orig_shape)
             stop_flag = False
             while not stop_flag:
