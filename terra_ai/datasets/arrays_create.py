@@ -1314,7 +1314,7 @@ class CreateArray(object):
                         options=options.data.outputs[output_id],
                         dataframe=options.dataframe.get("val"),
                         example_id=idx,
-                        dataset_params=options.instructions.get(output_id).get(output_column).get('parameters'),
+                        dataset_params=options.instructions.get(output_id).get(output_column),
                         return_mode='deploy'
                     )
                     return_data[output_id].append(
