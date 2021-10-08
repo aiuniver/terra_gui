@@ -695,3 +695,82 @@ if __name__ == "__main__":
     x = YOLOConvBlock(**{'mode': "YOLOv5", "filters": 64, "num_conv": 5, 'activation': 'Swish'})
     # print(x.compute_output_shape(input_shape=(None, 32, 32, 64)))
     pass
+
+
+class CONVBlock(Layer):
+    """Conv block layer """
+
+    def __init__(self,
+                 nConvLayers=2,
+                 filters=16,
+                 activation='relu',
+                 kernel_size=(3, 3),
+                 strides=(1, 1),
+                 dilation=(1, 1),
+                 padding='same',
+                 batchNormLayer=True,
+                 dropoutLayer=True,
+                 dropoutRate=0.1,
+                 **kwargs):
+
+        super(CONVBlock, self).__init__(**kwargs)
+        self.nConvLayers = nConvLayers
+        self.filters = filters
+        self.activation = activation
+        self.kernel_size = kernel_size
+        self.strides = strides
+        self.dilation = dilation
+        self.padding = padding
+        self.batchNormLayer = batchNormLayer
+        self.dropoutLayer = dropoutLayer
+        self.dropoutRate = dropoutRate
+
+        self.batchNormLayer = layers.BatchNormalization()
+        self.dropoutLayer = layers.Dropout(rate=self.dropoutRate)
+
+        for i in range(self.nConvLayers):
+            setattr(self, f"conv_{i}",
+                    layers.Conv2D(filters=self.filters, kernel_size=self.kernel_size, strides=self.strides,
+                                  padding=self.padding, activation=self.activation, data_format='channels_last',
+                                  dilation_rate=self.dilation, groups=1, use_bias=True,
+                                  kernel_initializer='glorot_uniform',
+                                  bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
+                                  activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
+
+    def call(self, input, training=True):
+
+        if not isinstance(a, (np.int32, np.float64, np.float32, np.float16)):
+            input = cast(input, 'float16')
+
+        x = getattr(self, f'conv_{0}')(input)
+
+        for i in range(1, self.nConvLayers):
+            x = getattr(self, f'conv_{i}')(x)
+
+        if self.batchNormLayer:
+            x = self.batchNormLayer(x)
+
+        if self.dropoutLayer:
+            x = self.dropoutLayer(x)
+
+        return x
+
+    def get_config(self):
+        config = {
+            'nConvLayers': self.nConvLayers,
+            'filters': self.filters,
+            'activation': self.activation,
+            'kernel_size': self.kernel_size,
+            'strides': self.strides,
+            'dilation': self.dilation,
+            'padding': self.padding,
+            'batchNormLayer': self.batchNormLayer,
+            'dropoutLayer': self.dropoutLayer,
+            'dropoutRate': self.dropoutRate
+        }
+        base_config = super(CONVBlock, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
