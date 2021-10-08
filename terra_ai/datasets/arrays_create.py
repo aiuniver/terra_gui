@@ -1990,12 +1990,14 @@ class CreateArray(object):
             output_id: int,
             depth: int,
             show_stat: bool = False,
+            templates: list = None
     ):
         """
         real_x = self.inverse_x_val.get(f"{input}")[example_idx]
         inverse_y_true = self.inverse_y_true.get("val").get(output_id)[example_idx]
         inverse_y_pred = self.inverse_y_pred.get(output_id)[example_idx]
         depth = self.inverse_y_true.get("val").get(output_id)[example_idx].shape[-1]
+        templates = [self._fill_graph_plot_data, self._fill_graph_front_structure]
         """
         data = {
             "y_true": {},
@@ -2010,29 +2012,31 @@ class CreateArray(object):
                     if channel.split("_", 1)[-1] == input_column.split("_", 1)[-1]:
                         init_column = list(options.columns.get(inp).keys()).index(input_column)
                         graphics.append(
-                            {
-                                'id': _id + 1,
-                                'graph_name': f'График канала «{channel.split("_", 1)[-1]}»',
-                                'x_label': 'Время',
-                                'y_label': 'Значение',
-                                'plot_data': [
-                                    {
-                                        'label': "Исходное значение",
-                                        'x': np.arange(real_x.shape[-1]).astype('int').tolist(),
-                                        'y': np.array(real_x[init_column]).astype('float').tolist()
-                                    },
-                                    {
-                                        'label': "Истинное значение",
-                                        'x': np.arange(real_x.shape[-1], real_x.shape[-1] + depth).astype('int').tolist(),
-                                        'y': inverse_y_true[i].astype('float').tolist()
-                                    },
-                                    {
-                                        'label': "Предсказанное значение",
-                                        'x': np.arange(real_x.shape[-1], real_x.shape[-1] + depth).astype('int').tolist(),
-                                        'y': inverse_y_pred[i].astype('float').tolist()
-                                    },
-                                ]
-                            }
+                            templates[1](
+                                _id=_id,
+                                _type='graphic',
+                                graph_name=f'График канала «{channel.split("_", 1)[-1]}»',
+                                short_name=f"«{channel.split('_', 1)[-1]}»",
+                                x_label="Время",
+                                y_label="Значение",
+                                plot_data=[
+                                    templates[0](
+                                        label="Исходное значение",
+                                        x=np.arange(real_x.shape[-1]).astype('int').tolist(),
+                                        y=np.array(real_x[init_column]).astype('float').tolist()
+                                    ),
+                                    templates[0](
+                                        label="Истинное значение",
+                                        x=np.arange(real_x.shape[-1], real_x.shape[-1] + depth).astype('int').tolist(),
+                                        y=inverse_y_true[i].astype('float').tolist()
+                                    ),
+                                    templates[0](
+                                        label="Предсказанное значение",
+                                        x=np.arange(real_x.shape[-1], real_x.shape[-1] + depth).astype('int').tolist(),
+                                        y=inverse_y_pred[i].astype('float').tolist()
+                                    ),
+                                ],
+                            )
                         )
                         _id += 1
                         break
@@ -2047,34 +2051,25 @@ class CreateArray(object):
             ]
         }
         if show_stat:
-            data["stat"]["data"] = []
+            data["stat"] = {
+                "type": "table",
+                "data": []
+            }
             for i, channel in enumerate(options.columns.get(output_id).keys()):
-                data["stat"]["data"].append(
-                    {
-                        'title': channel.split("_", 1)[-1],
-                        'value': {"type": "table", "data": {}},
-                        'color_mark': None
-                    }
-                )
+                data["stat"]["data"].append({'title': channel.split("_", 1)[-1], 'value': [], 'color_mark': None})
                 for step in range(inverse_y_true.shape[-1]):
                     deviation = (inverse_y_pred[i, step] - inverse_y_true[i, step]) * 100 / inverse_y_true[i, step]
-                    data["stat"]["data"][-1]["value"]["data"][f"{step + 1}"] = [
+                    data["stat"]["data"][-1]["value"].append(
                         {
-                            "title": "Истина",
-                            "value": f"{round(inverse_y_true[i, step].astype('float'), 2)}",
-                            'color_mark': None
-                        },
-                        {
-                            "title": "Предсказание",
-                            "value": f"{round(inverse_y_pred[i, step].astype('float'), 2)}",
-                            'color_mark': "success" if abs(deviation) < 2 else "wrong"
-                        },
-                        {
-                            "title": "Отклонение",
-                            "value": f"{round(deviation, 2)} %",
-                            'color_mark': "success" if abs(deviation) < 2 else "wrong"
+                            "Шаг": f"{step + 1}",
+                            "Истина": f"{inverse_y_true[i, step].astype('float'): .2f}",
+                            "Предсказание": f"{inverse_y_pred[i, step].astype('float'): .2f}",
+                            "Отклонение": {
+                                "value": f"{deviation: .2f} %",
+                                "color_mark": "success" if abs(deviation) < 2 else "wrong"
+                            }
                         }
-                    ]
+                    )
         return data
 
     @staticmethod

@@ -798,7 +798,8 @@ class InteractiveCallback:
                         dataset_balance[f"{out}"][data_type][output_channel]['graphic'] = {
                             "type": "graphic",
                             "x": np.array(self.options.dataframe.get(data_type).index).astype('float').tolist(),
-                            "y": np.array(self.options.dataframe.get(data_type)[output_channel]).astype('float').tolist()
+                            "y": np.array(self.options.dataframe.get(data_type)[output_channel]).astype(
+                                'float').tolist()
                         }
                         x, y = self._get_distribution_histogram(
                             list(self.options.dataframe.get(data_type)[output_channel]),
@@ -1131,7 +1132,8 @@ class InteractiveCallback:
                                 )
 
                     if data_idx or data_idx == 0:
-                        self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['mean_log_history'][data_idx] = \
+                        self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['mean_log_history'][
+                            data_idx] = \
                             self._get_mean_log(self.log_history[f"{out}"]['metrics'][metric_name]['val'])
                     else:
                         self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['mean_log_history'].append(
@@ -1349,6 +1351,49 @@ class InteractiveCallback:
             return False
 
     # Методы для конечных данных для вывода
+    @staticmethod
+    def _fill_graph_plot_data(x: list, y: list, label=None):
+        return {'label': label, 'x': x, 'y': y}
+
+    @staticmethod
+    def _fill_graph_front_structure(_id: int, _type: str, graph_name: str, short_name: str,
+                                    x_label: str, y_label: str, plot_data: list,
+                                    type_data: str = None, progress_state: str = None):
+        return {
+            'id': _id,
+            'type': _type,
+            'type_data': type_data,
+            'graph_name': graph_name,
+            'short_name': short_name,
+            'x_label': x_label,
+            'y_label': y_label,
+            'plot_data': plot_data,
+            'progress_state': progress_state
+        }
+
+    @staticmethod
+    def _fill_heatmap_front_structure(_id: int, _type: str, graph_name: str, short_name: str,
+                                      x_label: str, y_label: str, labels: list, data_array: list,
+                                      type_data: str = None, data_percent_array: list = None,
+                                      progress_state: str = None):
+        return {
+            'id': _id,
+            'type': _type,
+            'type_data': type_data,
+            'graph_name': graph_name,
+            'short_name': short_name,
+            'x_label': x_label,
+            'y_label': y_label,
+            'labels': labels,
+            'data_array': data_array,
+            'data_percent_array': data_percent_array,
+            'progress_state': progress_state
+        }
+
+    @staticmethod
+    def _fill_table_front_structure(_id: int, graph_name: str, plot_data: list):
+        return {'id': _id, 'type': 'table', 'graph_name': graph_name, 'plot_data': plot_data}
+
     def _get_loss_graph_data_request(self) -> list:
         data_return = []
         if not self.interactive_config.loss_graphs or not self.log_history.get("epochs"):
@@ -1365,60 +1410,53 @@ class InteractiveCallback:
                     progress_state = "underfitting"
                 else:
                     progress_state = "normal"
-                data_return.append(
-                    {
-                        "id": loss_graph_config.id,
-                        "graph_name": f"Выходной слой «{loss_graph_config.output_idx}» - "
-                                      f"График ошибки обучения - Эпоха №{self.log_history.get('epochs')[-1]}",
-                        "x_label": "Эпоха",
-                        "y_label": "Значение",
-                        "plot_data": [
-                            {
-                                "label": "Тренировочная выборка",
-                                "x": self.log_history.get("epochs"),
-                                "y": self.log_history.get(f"{loss_graph_config.output_idx}").get('loss').get(
-                                    self.losses.get(f"{loss_graph_config.output_idx}")).get('train')
-                            },
-                            {
-                                "label": "Проверочная выборка",
-                                "x": self.log_history.get("epochs"),
-                                "y": self.log_history.get(
-                                    f"{loss_graph_config.output_idx}").get('loss').get(
-                                    self.losses.get(f"{loss_graph_config.output_idx}")).get("val")
-                            }
-                        ],
-                        "progress_state": progress_state
-                    }
+
+                train_plot = self._fill_graph_plot_data(
+                    x=self.log_history.get("epochs"),
+                    y=self.log_history.get(f"{loss_graph_config.output_idx}").get('loss').get(
+                        self.losses.get(f"{loss_graph_config.output_idx}")).get('train'),
+                    label="Тренировочная выборка"
                 )
-            elif loss_graph_config.show == LossGraphShowChoice.classes and \
+                val_plot = self._fill_graph_plot_data(
+                    x=self.log_history.get("epochs"),
+                    y=self.log_history.get(f"{loss_graph_config.output_idx}").get('loss').get(
+                        self.losses.get(f"{loss_graph_config.output_idx}")).get("val"),
+                    label="Проверочная выборка"
+                )
+                data_return.append(
+                    self._fill_graph_front_structure(
+                        _id=loss_graph_config.id,
+                        _type='graphic',
+                        graph_name=f"Выходной слой «{loss_graph_config.output_idx}» - "
+                                   f"График ошибки обучения - Эпоха №{self.log_history.get('epochs')[-1]}",
+                        short_name=f"{loss_graph_config.output_idx} - График ошибки обучения",
+                        x_label="Эпоха",
+                        y_label="Значение",
+                        plot_data=[train_plot, val_plot],
+                        progress_state=progress_state
+                    )
+                )
+            if loss_graph_config.show == LossGraphShowChoice.classes and \
                     self.class_graphics.get(str(loss_graph_config.output_idx)):
                 data_return.append(
-                    {
-                        "id": loss_graph_config.id,
-                        "graph_name": f"Выходной слой «{loss_graph_config.output_idx}» - "
-                                      f"График ошибки обучения по классам - "
-                                      f"Эпоха №{self.log_history.get('epochs')[-1]}",
-                        "x_label": "Эпоха",
-                        "y_label": "Значение",
-                        "plot_data": [
-                            {
-                                'label': f'Класс {class_name}',
-                                'x': self.log_history.get("epochs"),
-                                'y': self.log_history.get(
-                                    f"{loss_graph_config.output_idx}").get('class_loss').get(class_name).get(
-                                    self.losses.get(f"{loss_graph_config.output_idx}"))
-                            } for class_name in self.options.data.outputs.get(loss_graph_config.output_idx).classes_names
-                        ]
-                    }
-                )
-            else:
-                data_return.append(
-                    {
-                        "graph_name": "",
-                        "x_label": "",
-                        "y_label": "",
-                        "plot_data": []
-                    }
+                    self._fill_graph_front_structure(
+                        _id=loss_graph_config.id,
+                        _type='graphic',
+                        graph_name=f"Выходной слой «{loss_graph_config.output_idx}» - График ошибки обучения по классам"
+                                   f" - Эпоха №{self.log_history.get('epochs')[-1]}",
+                        short_name=f"{loss_graph_config.output_idx} - График ошибки обучения по классам",
+                        x_label="Эпоха",
+                        y_label="Значение",
+                        plot_data=[
+                            self._fill_graph_plot_data(
+                                x=self.log_history.get("epochs"),
+                                y=self.log_history.get(f"{loss_graph_config.output_idx}").get('class_loss').get(
+                                    class_name).get(self.losses.get(f"{loss_graph_config.output_idx}")),
+                                label=f"Класс {class_name}"
+                            ) for class_name in
+                            self.options.data.outputs.get(loss_graph_config.output_idx).classes_names
+                        ],
+                    )
                 )
         return data_return
 
@@ -1439,63 +1477,56 @@ class InteractiveCallback:
                     progress_state = 'underfitting'
                 else:
                     progress_state = 'normal'
-                data_return.append(
-                    {
-                        "id": metric_graph_config.id,
-                        "graph_name": f"Выходной слой «{metric_graph_config.output_idx}» - "
-                                      f"График метрики {metric_graph_config.show_metric.name} - "
-                                      f"Эпоха №{self.log_history.get('epochs')[-1]}",
-                        "x_label": "Эпоха",
-                        "y_label": "Значение",
-                        "plot_data": [
-                            {
-                                "label": "Тренировочная выборка",
-                                "x": self.log_history.get("epochs"),
-                                "y": self.log_history.get(
-                                    f"{metric_graph_config.output_idx}").get('metrics').get(
-                                    metric_graph_config.show_metric.name).get("train")
-                            },
-                            {
-                                "label": "Проверочная выборка",
-                                "x": self.log_history.get("epochs"),
-                                "y": self.log_history.get(
-                                    f"{metric_graph_config.output_idx}").get('metrics').get(
-                                    metric_graph_config.show_metric.name).get("val")
-                            }
-                        ],
-                        "progress_state": progress_state
-                    }
+
+                train_plot = self._fill_graph_plot_data(
+                    x=self.log_history.get("epochs"),
+                    y=self.log_history.get(f"{metric_graph_config.output_idx}").get('metrics').get(
+                        metric_graph_config.show_metric.name).get("train"),
+                    label="Тренировочная выборка"
                 )
-            elif metric_graph_config.show == LossGraphShowChoice.classes and \
+                val_plot = self._fill_graph_plot_data(
+                    x=self.log_history.get("epochs"),
+                    y=self.log_history.get(f"{metric_graph_config.output_idx}").get('metrics').get(
+                        metric_graph_config.show_metric.name).get("val"),
+                    label="Проверочная выборка"
+                )
+                data_return.append(
+                    self._fill_graph_front_structure(
+                        _id=metric_graph_config.id,
+                        _type='graphic',
+                        graph_name=f"Выходной слой «{metric_graph_config.output_idx}» - График метрики "
+                                   f"{metric_graph_config.show_metric.name} - Эпоха №{self.log_history.get('epochs')[-1]}",
+                        short_name=f"{metric_graph_config.output_idx} - {metric_graph_config.show_metric.name}",
+                        x_label="Эпоха",
+                        y_label="Значение",
+                        plot_data=[train_plot, val_plot],
+                        progress_state=progress_state
+                    )
+                )
+
+            if metric_graph_config.show == LossGraphShowChoice.classes and \
                     self.class_graphics.get(str(metric_graph_config.output_idx)):
                 data_return.append(
-                    {
-                        "id": metric_graph_config.id,
-                        "graph_name": f"Выходной слой «{metric_graph_config.output_idx}» - "
-                                      f"График метрики {metric_graph_config.show_metric.name} по классам - "
-                                      f"Эпоха №{self.log_history.get('epochs')[-1]}",
-                        "x_label": "Эпоха",
-                        "y_label": "Значение",
-                        "plot_data": [
-                            {
-                                'label': f'Класс {class_name}',
-                                'x': self.log_history.get("epochs"),
-                                'y': self.log_history.get(
-                                    f"{metric_graph_config.output_idx}").get('class_metrics').get(
-                                    class_name).get(metric_graph_config.show_metric.name)
-                            } for class_name in self.options.data.outputs.get(metric_graph_config.output_idx).classes_names
-                        ]
-                    }
+                    self._fill_graph_front_structure(
+                        _id=metric_graph_config.id,
+                        _type='graphic',
+                        graph_name=f"Выходной слой «{metric_graph_config.output_idx}» - График метрики "
+                                   f"{metric_graph_config.show_metric.name} по классам - Эпоха №{self.log_history.get('epochs')[-1]}",
+                        short_name=f"{metric_graph_config.output_idx} - {metric_graph_config.show_metric.name} по классам",
+                        x_label="Эпоха",
+                        y_label="Значение",
+                        plot_data=[
+                            self._fill_graph_plot_data(
+                                x=self.log_history.get("epochs"),
+                                y=self.log_history.get(f"{metric_graph_config.output_idx}").get('class_loss').get(
+                                    class_name).get(self.losses.get(f"{metric_graph_config.output_idx}")),
+                                label=f"Класс {class_name}"
+                            ) for class_name in
+                            self.options.data.outputs.get(metric_graph_config.output_idx).classes_names
+                        ],
+                    )
                 )
-            else:
-                data_return.append(
-                    {
-                        "graph_name": "",
-                        "x_label": "",
-                        "y_label": "",
-                        "plot_data": []
-                    }
-                )
+
         return data_return
 
     def _get_intermediate_result_request(self) -> dict:
@@ -1569,6 +1600,7 @@ class InteractiveCallback:
                             example_id=self.example_idx[idx],
                             dataset_params=self.options.instructions.get(out).get(output_col).get('parameters'),
                             return_mode='callback',
+                            class_colors=self.class_colors,
                             show_stat=self.interactive_config.intermediate_result.show_statistic
                         )
 
@@ -1589,7 +1621,8 @@ class InteractiveCallback:
                             inverse_y_pred=self.inverse_y_pred.get(f"{out}")[self.example_idx[idx]],
                             output_id=out,
                             depth=self.inverse_y_true.get("val").get(f"{out}")[self.example_idx[idx]].shape[-1],
-                            show_stat=self.interactive_config.intermediate_result.show_statistic
+                            show_stat=self.interactive_config.intermediate_result.show_statistic,
+                            templates=[self._fill_graph_plot_data, self._fill_graph_front_structure]
                         )
 
                     elif task == LayerOutputTypeChoice.Dataframe:
@@ -1631,57 +1664,9 @@ class InteractiveCallback:
                     else:
                         return_data[f"{idx + 1}"]['statistic_values'] = {}
         return return_data
-        # return_data = {}
-        # if self.interactive_config.intermediate_result.show_results:
-        #     for idx in range(self.interactive_config.intermediate_result.num_examples):
-        #         return_data[f"{idx + 1}"] = {
-        #             'initial_data': {},
-        #             'true_value': {},
-        #             'predict_value': {},
-        #             'tags_color': {},
-        #             'statistic_values': {}
-        #         }
-        #         if not (
-        #                 len(self.options.data.outputs.keys()) == 1 and
-        #                 self.options.data.outputs.get(list(self.options.data.outputs.keys())[0]).task ==
-        #                 LayerOutputTypeChoice.TextSegmentation
-        #         ):
-        #             for inp in self.options.data.inputs.keys():
-        #                 data, type_choice = self._postprocess_initial_data(
-        #                     input_id=f"{inp}",
-        #                     save_id=idx + 1,
-        #                     example_idx=self.example_idx[idx],
-        #                 )
-        #                 random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
-        #                 return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
-        #                     'update': random_key,
-        #                     'type': type_choice,
-        #                     'data': data,
-        #                 }
-        #         for out in self.options.data.outputs.keys():
-        #             data = self._postprocess_result_data(
-        #                 output_id=f"{out}",
-        #                 data_type='val',
-        #                 save_id=idx + 1,
-        #                 example_idx=self.example_idx[idx],
-        #                 show_stat=self.interactive_config.intermediate_result.show_statistic,
-        #             )
-        #             if data.get('y_true'):
-        #                 return_data[f"{idx + 1}"]['true_value'][f"Выходной слой «{out}»"] = data.get('y_true')
-        #             return_data[f"{idx + 1}"]['predict_value'][f"Выходной слой «{out}»"] = data.get('y_pred')
-        #             if self.options.data.outputs.get(out).task == LayerOutputTypeChoice.TextSegmentation:
-        #                 return_data[f"{idx + 1}"]['tags_color'][f"Выходной слой «{out}»"] = \
-        #                     self.dataset_config.get("classes_colors").outputs.get(f"{out}")
-        #             else:
-        #                 return_data[f"{idx + 1}"]['tags_color'] = {}
-        #             if data.get('stat'):
-        #                 return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
-        #             else:
-        #                 return_data[f"{idx + 1}"]['statistic_values'] = {}
-        # return return_data
 
-    def _get_statistic_data_request(self) -> dict:
-        return_data = {}
+    def _get_statistic_data_request(self) -> list:
+        return_data = []
         _id = 1
         for out in self.interactive_config.statistic_data.output_id:
             task = self.options.data.outputs.get(out).task
@@ -1694,18 +1679,19 @@ class InteractiveCallback:
                     np.argmax(self.y_pred.get(f'{out}'), axis=-1),
                     get_percent=True
                 )
-                return_data[f'{out}'] = [
-                    {
-                        'id': _id,
-                        'type': "heatmap",
-                        'graph_name': f"Выходной слой «{out}» - Confusion matrix",
-                        'x_label': "Предсказание",
-                        'y_label': "Истинное значение",
-                        'labels': self.options.data.outputs.get(out).classes_names,
-                        'data_array': cm,
-                        'data_percent_array': cm_percent
-                    }
-                ]
+                return_data.append(
+                    self._fill_heatmap_front_structure(
+                        _id=_id,
+                        _type="heatmap",
+                        graph_name=f"Выходной слой «{out}» - Confusion matrix",
+                        short_name=f"{out} - Confusion matrix",
+                        x_label="Предсказание",
+                        y_label="Истинное значение",
+                        labels=self.options.data.outputs.get(out).classes_names,
+                        data_array=cm,
+                        data_percent_array=cm_percent,
+                    )
+                )
                 _id += 1
 
             elif task == LayerOutputTypeChoice.Segmentation or \
@@ -1717,190 +1703,171 @@ class InteractiveCallback:
                         np.prod(np.argmax(self.y_pred.get(f'{out}'), axis=-1).shape)).astype('int'),
                     get_percent=True
                 )
-                return_data[f"{out}"] = [
-                    {
-                        'id': _id,
-                        'type': "heatmap",
-                        'graph_name': f"Выходной слой «{out}» - Confusion matrix",
-                        'x_label': "Предсказание",
-                        'y_label': "Истинное значение",
-                        'labels': self.options.data.outputs.get(out).classes_names,
-                        'data_array': cm,
-                        'data_percent_array': cm_percent}
-                ]
+                return_data.append(
+                    self._fill_heatmap_front_structure(
+                        _id=_id,
+                        _type="heatmap",
+                        graph_name=f"Выходной слой «{out}» - Confusion matrix",
+                        short_name=f"{out} - Confusion matrix",
+                        x_label="Предсказание",
+                        y_label="Истинное значение",
+                        labels=self.options.data.outputs.get(out).classes_names,
+                        data_array=cm,
+                        data_percent_array=cm_percent,
+                    )
+                )
                 _id += 1
 
             elif (task == LayerOutputTypeChoice.TextSegmentation or task == LayerOutputTypeChoice.Classification) \
                     and encoding == LayerEncodingChoice.multi:
+
                 report = self._get_classification_report(
-                    self.y_true.get("val").get(f"{out}").reshape((np.prod(
-                        self.y_true.get("val").get(f"{out}").shape[:-1]),
-                        self.y_true.get("val").get(f"{out}").shape[-1])
+                    y_true=self.y_true.get("val").get(f"{out}").reshape(
+                        (np.prod(self.y_true.get("val").get(f"{out}").shape[:-1]),
+                         self.y_true.get("val").get(f"{out}").shape[-1])
                     ),
-                    np.where(self.y_pred.get(f"{out}") >= 0.9, 1, 0).reshape(
+                    y_pred=np.where(self.y_pred.get(f"{out}") >= 0.9, 1, 0).reshape(
                         (np.prod(self.y_pred.get(f"{out}").shape[:-1]), self.y_pred.get(f"{out}").shape[-1])
                     ),
-                    self.options.data.outputs.get(out).classes_names
+                    labels=self.options.data.outputs.get(out).classes_names
                 )
-                return_data[f"{out}"] = [
-                    {
-                        'id': _id,
-                        'type': "table",
-                        'graph_name': f"Выходной слой «{out}» - Отчет по классам",
-                        'plot_data': report
-                    }
-                ]
+                return_data.append(
+                    self._fill_table_front_structure(
+                        _id=_id,
+                        graph_name=f"Выходной слой «{out}» - Отчет по классам",
+                        plot_data=report
+                    )
+                )
                 _id += 1
 
             elif task == LayerOutputTypeChoice.Regression:
-                return_data[f"{out}"] = []
                 y_true = self.inverse_y_true.get("val").get(f'{out}').squeeze()
                 y_pred = self.inverse_y_pred.get(f'{out}').squeeze()
                 x_scatter, y_scatter = self._get_scatter(y_true, y_pred)
-                return_data[f"{out}"].append(
-                    {
-                        'id': 1,
-                        "type": "scatter",
-                        'graph_name': f"Выходной слой «{out}» - Скаттер",
-                        'x_label': 'Истинные значения',
-                        'y_label': 'Предсказанные значения',
-                        "plot_data": [
-                            {
-                                'x': x_scatter,
-                                'y': y_scatter
-                            }
-                        ]
-                    }
+                return_data.append(
+                    self._fill_graph_front_structure(
+                        _id=_id,
+                        _type='scatter',
+                        graph_name=f"Выходной слой «{out}» - Скаттер",
+                        short_name=f"{out} - Скаттер",
+                        x_label="Истинные значения",
+                        y_label="Предсказанные значения",
+                        plot_data=[self._fill_graph_plot_data(x=x_scatter, y=y_scatter)],
+                    )
                 )
+                _id += 1
                 deviation = (y_pred - y_true) * 100 / y_true
                 x_mae, y_mae = self._get_distribution_histogram(np.abs(deviation), bins=25, categorical=False)
-                return_data[f"{out}"].append(
-                    {
-                        'id': 2,
-                        "type": "distribution histogram",
-                        'graph_name': f'Выходной слой «{out}» - Распределение абсолютной ошибки',
-                        'x_label': 'Абсолютная ошибка, %',
-                        'y_label': 'Значение',
-                        "plot_data": [
-                            {
-                                'labels': x_mae,
-                                'values': y_mae
-                            }
-                        ]
-                    }
+                return_data.append(
+                    self._fill_graph_front_structure(
+                        _id=_id,
+                        _type='bar',
+                        graph_name=f'Выходной слой «{out}» - Распределение абсолютной ошибки',
+                        short_name=f"{out} - Распределение MAE",
+                        x_label="Абсолютная ошибка",
+                        y_label="Значение",
+                        plot_data=[self._fill_graph_plot_data(x=x_mae, y=y_mae)],
+                    )
                 )
+                _id += 1
                 x_me, y_me = self._get_distribution_histogram(deviation, bins=25, categorical=False)
-                return_data[f"{out}"].append(
-                    {
-                        'id': 3,
-                        "type": "distribution histogram",
-                        'graph_name': f'Выходной слой «{out}» - Распределение ошибки',
-                        'x_label': 'Ошибка, %',
-                        'y_label': 'Значение',
-                        "plot_data": [
-                            {
-                                'labels': x_me,
-                                'values': y_me
-                            }
-                        ]
-                    }
+                return_data.append(
+                    self._fill_graph_front_structure(
+                        _id=_id,
+                        _type='bar',
+                        graph_name=f'Выходной слой «{out}» - Распределение ошибки',
+                        short_name=f"{out} - Распределение ME",
+                        x_label="Ошибка",
+                        y_label="Значение",
+                        plot_data=[self._fill_graph_plot_data(x=x_me, y=y_me)],
+                    )
                 )
+                _id += 1
 
             elif task == LayerOutputTypeChoice.Timeseries:
-                return_data[f"{out}"] = []
-                _id += 1
                 for i, channel_name in enumerate(self.options.data.columns.get(out).keys()):
                     for step in range(self.y_true.get("val").get(f'{out}').shape[-1]):
                         y_true = self.inverse_y_true.get("val").get(f"{out}")[:, i, step].astype('float')
                         y_pred = self.inverse_y_pred.get(f"{out}")[:, i, step].astype('float')
 
-                        return_data[f"{out}"].append(
-                            {
-                                'id': _id,
-                                'type': 'graphic',
-                                'graph_name': f"Выходной слой «{out}» - Предсказание канала "
-                                              f"«{channel_name.split('_', 1)[-1]}» на {step + 1} шаг"
-                                              f"{'ов' if step else ''} вперед",
-                                'x_label': 'Время',
-                                'y_label': 'Значение',
-                                'plot_data': [
-                                    {
-                                        "label": 'Истинное значение',
-                                        'x': np.arange(len(y_true)).astype('int').tolist(),
-                                        'y': y_true.tolist()
-                                    },
-                                    {
-                                        "label": 'Предсказанное значение',
-                                        'x': np.arange(len(y_true)).astype('int').tolist(),
-                                        'y': y_pred.tolist()
-                                    }
-                                ]
-                            }
+                        return_data.append(
+                            self._fill_graph_front_structure(
+                                _id=_id,
+                                _type='graphic',
+                                graph_name=f"Выходной слой «{out}» - Предсказание канала "
+                                           f"«{channel_name.split('_', 1)[-1]}» на {step + 1} "
+                                           f"шаг{'ов' if step else ''} вперед",
+                                short_name=f"{out} - «{channel_name.split('_', 1)[-1]}» на {step + 1} "
+                                           f"шаг{'ов' if step else ''}",
+                                x_label="Время",
+                                y_label="Значение",
+                                plot_data=[
+                                    self._fill_graph_plot_data(
+                                        x=np.arange(len(y_true)).astype('int').tolist(),
+                                        y=y_true.tolist(),
+                                        label="Истинное значение"
+                                    ),
+                                    self._fill_graph_plot_data(
+                                        x=np.arange(len(y_true)).astype('int').tolist(),
+                                        y=y_pred.tolist(),
+                                        label="Предсказанное значение"
+                                    )
+                                ],
+                            )
                         )
+                        _id += 1
                         x_axis, auto_corr_true, auto_corr_pred = self._get_autocorrelation_graphic(
                             y_true, y_pred, depth=10
                         )
-                        return_data[f"{out}"].append(
-                            {
-                                'id': _id + 1,
-                                'type': 'graphic',
-                                'graph_name': f"Выходной слой «{out}» - Автокорреляция канала "
-                                              f"«{channel_name.split('_', 1)[-1]}» на {step + 1} шаг"
-                                              f"{'а' if step else ''} вперед",
-                                'x_label': 'Время',
-                                'y_label': 'Значение',
-                                'plot_data': [
-                                    {
-                                        "label": 'Истинное значение',
-                                        'x': x_axis,
-                                        'y': auto_corr_true
-                                    },
-                                    {
-                                        "label": 'Предсказанное значение',
-                                        'x': x_axis,
-                                        'y': auto_corr_pred
-                                    }
-                                ]
-                            }
+                        return_data.append(
+                            self._fill_graph_front_structure(
+                                _id=_id,
+                                _type='graphic',
+                                graph_name=f"Выходной слой «{out}» - Автокорреляция канала "
+                                           f"«{channel_name.split('_', 1)[-1]}» на {step + 1} шаг"
+                                           f"{'а' if step else ''} вперед",
+                                short_name=f"{out} - Автокорреляция канала «{channel_name.split('_', 1)[-1]}»",
+                                x_label="Время",
+                                y_label="Значение",
+                                plot_data=[
+                                    self._fill_graph_plot_data(x=x_axis, y=auto_corr_true, label="Истинное значение"),
+                                    self._fill_graph_plot_data(x=x_axis, y=auto_corr_pred,
+                                                               label="Предсказанное значение")
+                                ],
+                            )
                         )
+                        _id += 1
                         deviation = (y_pred - y_true) * 100 / y_true
                         x_mae, y_mae = self._get_distribution_histogram(np.abs(deviation), bins=25, categorical=False)
-                        return_data[f"{out}"].append(
-                            {
-                                'id': _id + 2,
-                                'type': 'distribution histogram',
-                                'graph_name': f"Выходной слой «{out}» - Распределение абсолютной ошибки канала "
-                                              f"«{channel_name.split('_', 1)[-1]}» на {step + 1} шаг"
-                                              f"{'ов' if step + 1 == 1 else ''} вперед",
-                                'x_label': 'Время',
-                                'y_label': 'Значение',
-                                'plot_data': [
-                                    {
-                                        'x': x_mae,
-                                        'y': y_mae
-                                    }
-                                ]
-                            }
+                        return_data.append(
+                            self._fill_graph_front_structure(
+                                _id=_id,
+                                _type='bar',
+                                graph_name=f"Выходной слой «{out}» - Распределение абсолютной ошибки канала "
+                                           f"«{channel_name.split('_', 1)[-1]}» на {step + 1} шаг"
+                                           f"{'ов' if step + 1 == 1 else ''} вперед",
+                                short_name=f"{out} - Распределение MAE канала «{channel_name.split('_', 1)[-1]}»",
+                                x_label="Абсолютная ошибка",
+                                y_label="Значение",
+                                plot_data=[self._fill_graph_plot_data(x=x_mae, y=y_mae)],
+                            )
                         )
+                        _id += 1
                         x_me, y_me = self._get_distribution_histogram(deviation, bins=25, categorical=False)
-                        return_data[f"{out}"].append(
-                            {
-                                'id': _id + 3,
-                                'type': 'distribution histogram',
-                                'graph_name': f"Выходной слой «{out}» - Распределение ошибки канала "
-                                              f"«{channel_name.split('_', 1)[-1]}» на {step + 1} шаг"
-                                              f"{'ов' if step else ''} вперед",
-                                'x_label': 'Время',
-                                'y_label': 'Значение',
-                                'plot_data': [
-                                    {
-                                        'x': x_me,
-                                        'y': y_me
-                                    }
-                                ]
-                            }
+                        return_data.append(
+                            self._fill_graph_front_structure(
+                                _id=_id,
+                                _type='bar',
+                                graph_name=f"Выходной слой «{out}» - Распределение ошибки канала "
+                                           f"«{channel_name.split('_', 1)[-1]}» на {step + 1} шаг"
+                                           f"{'ов' if step + 1 == 1 else ''} вперед",
+                                short_name=f"{out} - Распределение ME канала «{channel_name.split('_', 1)[-1]}»",
+                                x_label="Ошибка",
+                                y_label="Значение",
+                                plot_data=[self._fill_graph_plot_data(x=x_me, y=y_me)],
+                            )
                         )
-                        _id += 4
+                        _id += 1
 
             elif task == LayerOutputTypeChoice.Dataframe:
                 pass
@@ -1910,11 +1877,11 @@ class InteractiveCallback:
                 pass
 
             else:
-                return_data[f"{out}"] = {}
+                pass
         return return_data
 
-    def _get_balance_data_request(self) -> dict:
-        return_data = {}
+    def _get_balance_data_request(self) -> list:
+        return_data = []
         _id = 1
         for out in self.options.data.outputs.keys():
             task = self.options.data.outputs.get(out).task
@@ -1927,37 +1894,32 @@ class InteractiveCallback:
                     self.dataset_balance.get(f"{out}").get('val'),
                     mode=self.interactive_config.data_balance.sorted.name
                 )
-                return_data[f"{out}"] = [
-                    {
-                        'id': _id,
-                        'type': 'histogram',
-                        "type_data": "train",
-                        'graph_name': 'Тренировочная выборка',
-                        'x_label': 'Название класса',
-                        'y_label': 'Значение',
-                        'plot_data': [
-                            {
-                                'labels': class_train_names,
-                                'values': class_train_count
-                            },
-                        ]
-                    },
-                    {
-                        'id': _id + 1,
-                        'type': 'histogram',
-                        "type_data": "val",
-                        'graph_name': 'Проверчная выборка',
-                        'x_label': 'Название класса',
-                        'y_label': 'Значение',
-                        'plot_data': [
-                            {
-                                'labels': class_val_names,
-                                'values': class_val_count
-                            },
-                        ]
-                    }
-                ]
-                _id += 2
+                return_data.append(
+                    self._fill_graph_front_structure(
+                        _id=_id,
+                        _type='histogram',
+                        type_data="train",
+                        graph_name=f"Тренировочная выборка",
+                        short_name=f"Тренировочная выборка",
+                        x_label="Название класса",
+                        y_label="Значение",
+                        plot_data=[self._fill_graph_plot_data(x=class_train_names, y=class_train_count)],
+                    )
+                )
+                _id += 1
+                return_data.append(
+                    self._fill_graph_front_structure(
+                        _id=_id,
+                        _type='histogram',
+                        type_data="val",
+                        graph_name=f"Проверчная выборка",
+                        short_name=f"Проверчная выборка",
+                        x_label="Название класса",
+                        y_label="Значение",
+                        plot_data=[self._fill_graph_plot_data(x=class_val_names, y=class_val_count)],
+                    )
+                )
+                _id += 1
 
             elif task == LayerOutputTypeChoice.Segmentation:
                 presence_train_names, presence_train_count = sort_dict(
@@ -1976,64 +1938,54 @@ class InteractiveCallback:
                     self.dataset_balance.get(f"{out}").get('val').get('square_balance'),
                     mode=self.interactive_config.data_balance.sorted.name
                 )
-                return_data[f"{out}"] = [
-                    {
-                        'id': _id,
-                        'type': 'histogram',
-                        "type_data": "train",
-                        'graph_name': 'Тренировочная выборка - баланс присутсвия',
-                        'x_label': 'Название класса',
-                        'y_label': 'Значение',
-                        'plot_data': [
-                            {
-                                'labels': presence_train_names,
-                                'values': presence_train_count
-                            },
-                        ]
-                    },
-                    {
-                        'id': _id + 1,
-                        'type': 'histogram',
-                        "type_data": "val",
-                        'graph_name': 'Проверочная выборка - баланс присутсвия',
-                        'x_label': 'Название класса',
-                        'y_label': 'Значение',
-                        'plot_data': [
-                            {
-                                'labels': presence_val_names,
-                                'values': presence_val_count
-                            },
-                        ]
-                    },
-                    {
-                        'id': _id + 2,
-                        'type': 'histogram',
-                        "type_data": "train",
-                        'graph_name': 'Тренировочная выборка - процент пространства',
-                        'x_label': 'Название класса',
-                        'y_label': 'Значение',
-                        'plot_data': [
-                            {
-                                'labels': square_train_names,
-                                'values': square_train_count
-                            },
-                        ]
-                    },
-                    {
-                        'id': _id + 3,
-                        'type': 'histogram',
-                        "type_data": "val",
-                        'graph_name': 'Проверочная выборка - процент пространства',
-                        'x_label': 'Название класса',
-                        'y_label': 'Значение',
-                        'plot_data': [
-                            {
-                                'labels': square_val_names,
-                                'values': square_val_count
-                            },
-                        ]
-                    }
-                ]
+                return_data.append(
+                    self._fill_graph_front_structure(
+                        _id=_id,
+                        _type='histogram',
+                        type_data="train",
+                        graph_name=f"Тренировочная выборка - баланс присутсвия",
+                        short_name=f"Тренировочная - присутсвие",
+                        x_label="Название класса",
+                        y_label="Значение",
+                        plot_data=[self._fill_graph_plot_data(x=presence_train_names, y=presence_train_count)],
+                    )
+                )
+                return_data.append(
+                    self._fill_graph_front_structure(
+                        _id=_id + 1,
+                        _type='histogram',
+                        type_data="val",
+                        graph_name=f"Проверочная выборка - баланс присутсвия",
+                        short_name=f"Проверочная - присутсвие",
+                        x_label="Название класса",
+                        y_label="Значение",
+                        plot_data=[self._fill_graph_plot_data(x=presence_val_names, y=presence_val_count)],
+                    )
+                )
+                return_data.append(
+                    self._fill_graph_front_structure(
+                        _id=_id + 2,
+                        _type='histogram',
+                        type_data="train",
+                        graph_name=f"Тренировочная выборка - процент пространства",
+                        short_name=f"Тренировочная - пространство",
+                        x_label="Название класса",
+                        y_label="Значение",
+                        plot_data=[self._fill_graph_plot_data(x=square_train_names, y=square_train_count)],
+                    )
+                )
+                return_data.append(
+                    self._fill_graph_front_structure(
+                        _id=_id + 3,
+                        _type='histogram',
+                        type_data="val",
+                        graph_name=f"Проверочная выборка - процент пространства",
+                        short_name=f"Проверочная - пространство",
+                        x_label="Название класса",
+                        y_label="Значение",
+                        plot_data=[self._fill_graph_plot_data(x=square_val_names, y=square_val_count)],
+                    )
+                )
                 _id += 4
 
             elif task == LayerOutputTypeChoice.TextSegmentation:
@@ -2045,81 +1997,66 @@ class InteractiveCallback:
                     self.dataset_balance.get(f"{out}").get('val').get('presence_balance'),
                     mode=self.interactive_config.data_balance.sorted.name
                 )
-                return_data[f"{out}"] = [
-                    {
-                        'id': _id,
-                        'type': 'histogram',
-                        "type_data": "train",
-                        'graph_name': 'Тренировочная выборка - баланс присутсвия',
-                        'x_label': 'Название класса',
-                        'y_label': 'Значение',
-                        'plot_data': [
-                            {
-                                'labels': presence_train_names,
-                                'values': presence_train_count
-                            },
-                        ]
-                    },
-                    {
-                        'id': _id + 1,
-                        'type': 'histogram',
-                        "type_data": "val",
-                        'graph_name': 'Проверочная выборка - баланс присутсвия',
-                        'x_label': 'Название класса',
-                        'y_label': 'Значение',
-                        'plot_data': [
-                            {
-                                'labels': presence_val_names,
-                                'values': presence_val_count
-                            },
-                        ]
-                    },
-                ]
+                return_data.append(
+                    self._fill_graph_front_structure(
+                        _id=_id,
+                        _type='histogram',
+                        type_data="train",
+                        graph_name=f"Тренировочная выборка - баланс присутсвия",
+                        short_name=f"Тренировочная - присутсвие",
+                        x_label="Название класса",
+                        y_label="Значение",
+                        plot_data=[self._fill_graph_plot_data(x=presence_train_names, y=presence_train_count)],
+                    )
+                )
+                return_data.append(
+                    self._fill_graph_front_structure(
+                        _id=_id + 1,
+                        _type='histogram',
+                        type_data="val",
+                        graph_name=f"Проверочная выборка - баланс присутсвия",
+                        short_name=f"Проверочная - присутсвие",
+                        x_label="Название класса",
+                        y_label="Значение",
+                        plot_data=[self._fill_graph_plot_data(x=presence_val_names, y=presence_val_count)],
+                    )
+                )
                 _id += 2
 
             elif task == LayerOutputTypeChoice.Regression:
-                return_data[f"{out}"] = []
-
                 for data_type in ["train", "val"]:
-                    _id = 1
                     data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
                     for histogram in self.dataset_balance[f"{out}"][data_type]['histogram']:
-                        return_data[f"{out}"].append(
-                            {
-                                "id": _id,
-                                'type': histogram["type"],
-                                "type_data": f"{data_type}",
-                                "short_name": histogram['name'],
-                                "graph_name": f"{data_type_name} выборка - "
-                                              f"Гистограмма распределения колонки «{histogram['name']}»",
-                                "x_label": 'Значение',
-                                "y_label": 'Количество',
-                                "plot_data": [
-                                    {
-                                        'labels': histogram["x"],
-                                        'values': histogram["y"]
-                                    }
-                                ],
-                            }
+                        return_data.append(
+                            self._fill_graph_front_structure(
+                                _id=_id,
+                                _type=histogram.get("type"),
+                                type_data=data_type,
+                                graph_name=f"{data_type_name} выборка - "
+                                           f"Гистограмма распределения колонки «{histogram['name']}»",
+                                short_name=histogram['name'],
+                                x_label="Значение",
+                                y_label="Количество",
+                                plot_data=[self._fill_graph_plot_data(x=histogram.get("x"), y=histogram.get("y"))],
+                            )
                         )
                         _id += 1
-                    return_data[f"{out}"].append(
-                        {
-                            "id": _id,
-                            "type": "correlation heatmap",
-                            "type_data": f"{data_type}",
-                            "graph_name": f"{data_type_name} выборка - Матрица корреляций",
-                            "x_label": "Колонка",
-                            "y_label": "Колонка",
-                            "labels": self.dataset_balance[f"{out}"][data_type]['correlation']["labels"],
-                            "data_array": self.dataset_balance[f"{out}"][data_type]['correlation']["matrix"],
-                            'data_percent_array': ""
-                        }
+                    return_data.append(
+                        self._fill_heatmap_front_structure(
+                            _id=_id,
+                            _type="correlation_heatmap",
+                            type_data=data_type,
+                            graph_name=f"{data_type_name} выборка - Матрица корреляций",
+                            short_name=f"Матрица корреляций",
+                            x_label="Колонка",
+                            y_label="Колонка",
+                            labels=self.dataset_balance[f"{out}"][data_type]['correlation']["labels"],
+                            data_array=self.dataset_balance[f"{out}"][data_type]['correlation']["matrix"],
+                        )
                     )
                     _id += 1
 
             elif task == LayerOutputTypeChoice.Timeseries:
-                return_data[f"{out}"] = []
                 _id += 1
                 for channel_name in list(self.options.dataframe.get('train').columns):
                     for data_type in ["train", "val"]:
@@ -2127,38 +2064,31 @@ class InteractiveCallback:
                         y_true = self.options.dataframe.get(data_type)[channel_name].to_list()
                         x_graph_axis = np.arange(len(y_true)).astype('float').tolist()
                         x_hist, y_hist = self._get_distribution_histogram(y_true, bins=25, categorical=False)
-                        return_data[f"{out}"].append(
-                            {
-                                'id': _id,
-                                'type': "graphic",
-                                "type_data": f"{data_type}",
-                                'graph_name': f'{data_type_name} выборка - График канала «{channel_name}»',
-                                'x_label': 'Время',
-                                'y_label': 'Значение',
-                                'plot_data': [
-                                    {
-                                        'x': x_graph_axis,
-                                        'y': y_true
-                                    }
-                                ]
-                            },
+                        return_data.append(
+                            self._fill_graph_front_structure(
+                                _id=_id,
+                                _type="graphic",
+                                type_data=data_type,
+                                graph_name=f'{data_type_name} выборка - График канала «{channel_name}»',
+                                short_name=f'{data_type_name} - «{channel_name}»',
+                                x_label="Время",
+                                y_label="Количество",
+                                plot_data=[self._fill_graph_plot_data(x=x_graph_axis, y=y_true)],
+                            )
                         )
-                        return_data[f"{out}"].append(
-                            {
-                                'id': _id + 1,
-                                'type': "distribution histogram",
-                                "type_data": f"{data_type}",
-                                'graph_name': f'{data_type_name} выборка - Гистограмма плотности канала «{channel_name}»',
-                                'x_label': 'Значение',
-                                'y_label': 'Количество',
-                                'plot_data': [
-                                    {
-                                        'labels': x_hist,
-                                        'values': y_hist
-                                    }
-                                ]
-                            },
+                        return_data.append(
+                            self._fill_graph_front_structure(
+                                _id=_id+1,
+                                _type="bar",
+                                type_data=data_type,
+                                graph_name=f'{data_type_name} выборка - Гистограмма плотности канала «{channel_name}»',
+                                short_name=f'{data_type_name} - Гистограмма «{channel_name}»',
+                                x_label="Значение",
+                                y_label="Количество",
+                                plot_data=[self._fill_graph_plot_data(x=x_hist, y=y_hist)],
+                            )
                         )
+                        _id += 2
 
             elif task == LayerOutputTypeChoice.ObjectDetection:
                 # frequency of classes, like with segmentation
@@ -2184,26 +2114,32 @@ class InteractiveCallback:
     @staticmethod
     def _get_classification_report(y_true, y_pred, labels):
         cr = classification_report(y_true, y_pred, target_names=labels, output_dict=True)
-        return_stat = {}
+        return_stat = []
         for lbl in labels:
-            return_stat[lbl] = {
-                "Точность": round(float(cr.get(lbl).get('precision')) * 100, 2),
-                "Чувствительность": round(float(cr.get(lbl).get('recall')) * 100, 2),
-                "F1-мера": round(float(cr.get(lbl).get('f1-score')) * 100, 2),
-                "Количество": int(cr.get(lbl).get('support'))
-            }
+            return_stat.append(
+                {
+                    'Класс': lbl,
+                    "Точность": round(float(cr.get(lbl).get('precision')) * 100, 2),
+                    "Чувствительность": round(float(cr.get(lbl).get('recall')) * 100, 2),
+                    "F1-мера": round(float(cr.get(lbl).get('f1-score')) * 100, 2),
+                    "Количество": int(cr.get(lbl).get('support'))
+                }
+            )
         for i in ['macro avg', 'micro avg', 'samples avg', 'weighted avg']:
-            return_stat[i] = {
-                "Точность": round(float(cr.get(i).get('precision')) * 100, 2),
-                "Чувствительность": round(float(cr.get(i).get('recall')) * 100, 2),
-                "F1-мера": round(float(cr.get(i).get('f1-score')) * 100, 2),
-                "Количество": int(cr.get(i).get('support'))
-            }
+            return_stat.append(
+                {
+                    'Класс': i,
+                    "Точность": round(float(cr.get(i).get('precision')) * 100, 2),
+                    "Чувствительность": round(float(cr.get(i).get('recall')) * 100, 2),
+                    "F1-мера": round(float(cr.get(i).get('f1-score')) * 100, 2),
+                    "Количество": int(cr.get(i).get('support'))
+                }
+            )
         return return_stat
 
     @staticmethod
     def _get_error_distribution(y_true, y_pred, bins=25, absolute=True):
-        error = (y_true - y_pred) * 100 / y_true
+        error = (y_true - y_pred)  # "* 100 / y_true
         if absolute:
             error = np.abs(error)
         return InteractiveCallback()._get_distribution_histogram(error, bins=bins, categorical=False)
@@ -2254,7 +2190,7 @@ class InteractiveCallback:
             return None
 
     @staticmethod
-    def _get_autocorrelation_graphic(y_true, y_pred, depth=10):
+    def _get_autocorrelation_graphic(y_true, y_pred, depth=10) -> (list, list, list):
 
         def get_auto_corr(y_true, y_pred, k):
             l = len(y_true)
