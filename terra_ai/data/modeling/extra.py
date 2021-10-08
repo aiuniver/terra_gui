@@ -117,6 +117,7 @@ class LayerTypeChoice(str, Enum):
     EfficientNetB0 = "EfficientNetB0"
     CustomUNETBlock = "CustomUNETBlock"
     YOLOResBlock = "YOLOResBlock"
+    YOLOv3ResBlock = "YOLOv3ResBlock"
     YOLOConvBlock = "YOLOConvBlock"
     VAEBlock = "VAEBlock"
     CustomBlock = "CustomBlock"
