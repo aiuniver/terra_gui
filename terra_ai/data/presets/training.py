@@ -67,6 +67,7 @@ class Metric(str, Enum):
     # SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
     DiceCoef = "DiceCoef"
 
+
 TasksGroups = [
     {
         "task": Task.Classification,
@@ -85,7 +86,7 @@ TasksGroups = [
             Loss.MeanSquaredLogarithmicError,
             Loss.Poisson,
             # Loss.SparseCategoricalCrossentropy,
-            Loss.SquaredHinge
+            Loss.SquaredHinge,
         ],
         "metrics": [
             Metric.CategoricalAccuracy,
@@ -181,7 +182,7 @@ TasksGroups = [
             Loss.CosineSimilarity,
             Loss.Hinge,
             Loss.KLDivergence,
-            Loss.SquaredHinge
+            Loss.SquaredHinge,
         ],
         "metrics": [
             # Metric.Accuracy,
@@ -194,7 +195,7 @@ TasksGroups = [
             Metric.Hinge,
             Metric.KLDivergence,
             Metric.RootMeanSquaredError,
-            Metric.SquaredHinge
+            Metric.SquaredHinge,
         ],
     },
     {
@@ -209,7 +210,7 @@ TasksGroups = [
             Loss.Huber,
             Loss.KLDivergence,
             Loss.LogCosh,
-            Loss.SquaredHinge
+            Loss.SquaredHinge,
         ],
         "metrics": [
             Metric.MeanAbsoluteError,
@@ -221,18 +222,13 @@ TasksGroups = [
             Metric.Hinge,
             Metric.KLDivergence,
             Metric.LogCoshError,
-            Metric.SquaredHinge
+            Metric.SquaredHinge,
         ],
     },
     {
         "task": Task.ObjectDetection,
-        "losses": [
-            Loss.YoloLoss
-        ],
-        "metrics": [
-            Metric.AUC,
-            Metric.Accuracy
-        ],
+        "losses": [Loss.YoloLoss],
+        "metrics": [Metric.AUC, Metric.Accuracy],
     },
     {
         "task": Task.Timeseries_trend,
@@ -251,7 +247,7 @@ TasksGroups = [
             Loss.MeanSquaredLogarithmicError,
             Loss.Poisson,
             # Loss.SparseCategoricalCrossentropy,
-            Loss.SquaredHinge
+            Loss.SquaredHinge,
         ],
         "metrics": [
             Metric.CategoricalAccuracy,
@@ -335,5 +331,5 @@ TasksGroups = [
             # Metric.SparseCategoricalCrossentropy,
             # Metric.SparseTopKCategoricalAccuracy,
         ],
-    }
+    },
 ]

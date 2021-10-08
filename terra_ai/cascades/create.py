@@ -34,6 +34,8 @@ def json2model_cascade(path: str):
     for i in os.listdir(path):
         if i[-3:] == '.h5' and 'best' in i:
             weight = i
+        elif weight is None and i[-3:] == '.h5':
+            weight = i
         elif i[-4:] == '.trm':
             model = i
 
