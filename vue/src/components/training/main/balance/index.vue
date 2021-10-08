@@ -16,10 +16,8 @@
       </div>
     </div>
     <div class="t-balance__graphs" v-if="(settings.show_train || settings.show_val) && Object.keys(dataDalance).length > 0">
-      <template v-for="(layer, index) of dataDalance">
-        <template v-for="(data, i) of filter(layer)">
-          <component :is="type[data.type]" v-bind="data" :key="`sdsdsa_${i + index}`" />
-        </template>
+      <template v-for="(layer, index) of filter(dataDalance)">
+        <component :is="layer.type" v-bind="layer" :key="`sdsdsa_${index}`" />
       </template>
     </div>
     <div class="t-balance__overlay">
@@ -36,10 +34,11 @@ export default {
   name: 't-balance',
   components: {
     Heatmap: () => import('../stats/Heatmap'),
-    CorrelationHeatmap: () => import('../stats/CorrelationHeatmap'),
+    Corheatmap: () => import('../stats/Corheatmap'),
     Scatter: () => import('../stats/Scatter'),
     Histogram: () => import('../stats/Histogram'),
-    Table: () => import('../stats/Table'),
+    Bar: () => import('../stats/Histogram'),
+    Table: () => import('../stats/STable'),
     Graphic: () => import('../stats/Graphic'),
     LoadSpiner,
   },
@@ -50,15 +49,6 @@ export default {
       { label: 'по увеличению', value: 'ascending' },
       { label: 'по убыванию', value: 'descending' },
     ],
-    type: {
-      heatmap: 'heatmap',
-      'correlation heatmap': 'CorrelationHeatmap',
-      scatter: 'scatter',
-      'distribution histogram': 'histogram',
-      histogram: 'histogram',
-      table: 'table',
-      graphic: 'graphic',
-    },
   }),
   computed: {
     ...mapGetters({
@@ -81,6 +71,7 @@ export default {
   },
   methods: {
     filter(layer) {
+      console.log(layer)
       const arr = [];
       if (this.settings.show_train) {
         arr.push('train');

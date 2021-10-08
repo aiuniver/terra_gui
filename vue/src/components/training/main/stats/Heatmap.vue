@@ -182,6 +182,7 @@ export default {
       * {
         text-overflow: ellipsis;
         overflow: hidden;
+        white-space: nowrap;
         padding: 0 2px;
         width: 40px;
         text-align: center;

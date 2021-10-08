@@ -1,26 +1,26 @@
 <template>
-  <div class="t-heatmap" :class="['t-heatmap', { 't-heatmap--small': isSmallMap }]">
-    <div class="t-heatmap__scale" ref="scale">
-      <div class="t-heatmap__scale--gradient"></div>
-      <div class="t-heatmap__scale--values">
+  <div class="t-cor-heatmap" :class="['t-cor-heatmap', { 't-cor-heatmap--small': isSmallMap }]">
+    <div class="t-cor-heatmap__scale" ref="scale">
+      <div class="t-cor-heatmap__scale--gradient"></div>
+      <div class="t-cor-heatmap__scale--values">
         <span class="value" v-for="(item, idx) in stepValues" :key="idx">{{ item }}</span>
       </div>
-      <div class="t-heatmap__y-label">{{ y_label }}</div>
+      <div class="t-cor-heatmap__y-label">{{ y_label }}</div>
     </div>
-    <div class="t-heatmap__grid--y-labels" ref="label">
+    <div class="t-cor-heatmap__grid--y-labels" ref="label">
       <span v-for="(item, idx) in labels" :key="idx">{{ item }}</span>
     </div>
-    <div class="t-heatmap__body" :style="{ maxWidth: bodyWidth }">
-      <p class="t-heatmap__title">{{ graph_name }}</p>
-      <div class="t-heatmap__x-label">{{ x_label }}</div>
+    <div class="t-cor-heatmap__body" :style="{ maxWidth: bodyWidth }">
+      <p class="t-cor-heatmap__title">{{ graph_name }}</p>
+      <div class="t-cor-heatmap__x-label">{{ x_label }}</div>
       <scrollbar :ops="ops">
-        <div class="t-heatmap__wrapper">
-          <div class="t-heatmap__grid" :style="gridTemplate">
-            <div class="t-heatmap__grid--x-labels">
+        <div class="t-cor-heatmap__wrapper">
+          <div class="t-cor-heatmap__grid" :style="gridTemplate">
+            <div class="t-cor-heatmap__grid--x-labels">
               <span v-for="(item, idx) in labels" :key="idx" :title="item">{{ item }}</span>
             </div>
             <div
-              class="t-heatmap__grid--item"
+              class="t-cor-heatmap__grid--item"
               v-for="(item, i) in values"
               :key="'col_' + i"
               :style="{ background: getColor(item) }"
@@ -37,7 +37,7 @@
 
 <script>
 export default {
-  name: 't-heatmap',
+  name: 't-cor-heatmap',
   props: {
     id: Number,
     task_type: String,
@@ -111,7 +111,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.t-heatmap {
+.t-cor-heatmap {
   display: flex;
   justify-content: flex-start;
   margin: 35px 0;
@@ -202,21 +202,21 @@ export default {
       line-height: 14px;
     }
   }
-  &.t-heatmap--small {
-    .t-heatmap__grid {
+  &.t-cor-heatmap--small {
+    .t-cor-heatmap__grid {
       font-size: 14px;
     }
-    .t-heatmap__grid--x-labels,
-    .t-heatmap__grid--y-labels {
+    .t-cor-heatmap__grid--x-labels,
+    .t-cor-heatmap__grid--y-labels {
       font-size: 12px;
       line-height: 16px;
     }
-    .t-heatmap__grid--y-labels {
+    .t-cor-heatmap__grid--y-labels {
       * {
         flex-basis: 80px;
       }
     }
-    .t-heatmap__grid--x-labels * {
+    .t-cor-heatmap__grid--x-labels * {
       width: 80px;
     }
   }

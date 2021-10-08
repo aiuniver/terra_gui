@@ -6,7 +6,15 @@
         <ImgCard :imgUrl="source"/>
       </div>
       <div class="card__result">
-        <TextCard  :style="{ width: '224px' }">{{ imageClassificationText }}</TextCard>
+        <TextCard :style="{ width: '224px' }">{{ imageClassificationText }}</TextCard>
+      </div>
+    </div>
+     <div v-if="type == 'TextClassification' || type == 'TextTextSegmentation'">
+      <div class="card__original" >
+        <TextCard :style="{ width: '600px', color: '#A7BED3', height: '324px' }">{{ source }}</TextCard>
+      </div>
+      <div class="card__result">
+        <TextCard  :style="{ width: '600px', height: '80px' }">{{ imageClassificationText }}</TextCard>
       </div>
     </div>
     <div v-if="type == 'ImageSegmentation'">
