@@ -56,26 +56,16 @@
         <button :disabled="send_disabled" @click="SendData" v-if="!DataSent">Загрузить</button>
         <div class="loader" v-if="DataLoading">
           <div class="loader__title">Дождитесь окончания загрузки</div>
-          <!--          <div class="loader__time">-->
-          <!--            Загружено 892 MB из 1.2 GB    Осталось: меньше минуты-->
-          <!--          </div>-->
           <div class="loader__progress">
             <load-spiner></load-spiner>
           </div>
-          <!--          <div class="loader__progress">-->
-          <!--            <div class="progress-bar">-->
-          <!--              <div class="loading">-->
-          <!--                <span>78%</span>-->
-          <!--              </div>-->
-          <!--            </div>-->
-          <!--          </div>-->
         </div>
         <div class="req-ans" v-if="DataSent">
           <div class="answer__success">Загрузка завершена!</div>
           <div class="answer__label">Ссылка на сформированную загрузку</div>
           <div class="answer__url">
             <i :class="['t-icon', 'icon-deploy-copy']" :title="'copy'" @click="Copy(moduleList.url)"></i>
-            <a :href="moduleList.url" target="_blank">{{ moduleList.url }}</a>
+            <a :href="moduleList.url" target="_blank">{{ moduleList.url }}sdfasadfasdfasgdfhasiofhusduifhasiodcfuisfhoadsifisdhfiosdup</a>
           </div>
         </div>
         <ModuleList v-if="DataSent" :moduleList="moduleList.api_text" />
@@ -312,6 +302,7 @@ button {
     padding-top: 15px;
   }
   .answer__url {
+
     font-size: 14px;
     line-height: 24px;
     color: #65b9f4;
@@ -319,6 +310,12 @@ button {
     a {
       padding-left: 10px;
       color: #65b9f4;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      width: 350px;
+      display: inline-block;
+      vertical-align: middle;
+      overflow: hidden;
     }
     i {
       cursor: pointer;

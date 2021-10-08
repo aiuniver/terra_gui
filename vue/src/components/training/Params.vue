@@ -110,7 +110,10 @@
         class="params__btn"
         :class="{ params__save: key === 'clear' }"
       >
-        <t-button v-if="key !== 'save'" :disabled="!visible" @click="btnEvent(key)">{{ title }}</t-button>
+        <t-button v-if="key !== 'save'" :disabled="!visible || stopLearning" @click="btnEvent(key)">
+          <load-spiner class="btn-spiner" v-if="stopLearning" text="" size="25px"/>
+          {{ stopLearning ? '' : title }}
+        </t-button>
       </div>
     </div>
   </div>
@@ -131,6 +134,7 @@ export default {
     optimizerValue: '',
     metricData: '',
     debounce: null,
+    stopLearning: false
   }),
   computed: {
     ...mapGetters({
@@ -244,7 +248,7 @@ export default {
       // console.log(res);
     },
     async stop() {
-      this.debounce(false);
+      // this.debounce(false);
       await this.$store.dispatch('trainings/stop', {});
     },
     async clear() {
@@ -259,10 +263,12 @@ export default {
         const { finished, message, percent } = res.data;
         this.$store.dispatch('messages/setProgressMessage', message);
         this.$store.dispatch('messages/setProgress', percent);
+        this.stopLearning = !this.isLearning
         if (!finished) {
-          this.debounce(this.isLearning);
+          this.debounce(true);
         } else {
           this.$store.dispatch('projects/get');
+          this.stopLearning = false;
         }
       }
     },
@@ -369,6 +375,10 @@ export default {
       padding: 20px;
     }
   }
+}
+
+.btn-spiner{
+  margin-top: 10px;
 }
 
 .fit,
