@@ -10,6 +10,7 @@ from . import (
     Conv1DTranspose,
     Conv2DTranspose,
     Conv3DTranspose,
+    CONVBlock,
     SeparableConv1D,
     SeparableConv2D,
     DepthwiseConv2D,

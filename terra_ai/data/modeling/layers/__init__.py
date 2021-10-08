@@ -553,6 +553,15 @@ class LayerSpaceToDepthData(LayerMixinData):
     )
 
 
+class LayerCONVBlockData(LayerMixinData):
+    main: types.CONVBlock.ParametersMainData = (
+        types.CONVBlock.ParametersMainData()
+    )
+    extra: types.CONVBlock.ParametersExtraData = (
+        types.CONVBlock.ParametersExtraData()
+    )
+
+
 Layer = Enum(
     "Layer",
     dict(map(lambda item: (item.name, f"Layer{item.name}Data"), list(LayerTypeChoice))),

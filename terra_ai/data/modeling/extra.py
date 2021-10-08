@@ -121,6 +121,7 @@ class LayerTypeChoice(str, Enum):
     VAEBlock = "VAEBlock"
     CustomBlock = "CustomBlock"
     SpaceToDepth = "space_to_depth"
+    CONVBlock = "CONVBlock"
 
     @staticmethod
     def values() -> list:

@@ -1,11 +1,14 @@
 import copy
 from typing import Optional, Dict, Any, Union, Tuple
+
+import numpy as np
 import tensorflow as tf
 import tensorflow
 from tensorflow.keras.layers import Layer, InputSpec
 from tensorflow.keras import initializers, regularizers, constraints
 from tensorflow.keras import backend as K
 from tensorflow.keras import layers
+from tensorflow import cast
 
 __version__ = 0.03
 
@@ -701,34 +704,34 @@ class CONVBlock(Layer):
     """Conv block layer """
 
     def __init__(self,
-                 nConvLayers=2,
+                 n_conv_layers=2,
                  filters=16,
                  activation='relu',
                  kernel_size=(3, 3),
                  strides=(1, 1),
                  dilation=(1, 1),
                  padding='same',
-                 batchNormLayer=True,
-                 dropoutLayer=True,
-                 dropoutRate=0.1,
+                 batch_norm_layer=True,
+                 dropout_layer=True,
+                 dropout_rate=0.1,
                  **kwargs):
 
         super(CONVBlock, self).__init__(**kwargs)
-        self.nConvLayers = nConvLayers
+        self.n_conv_layers = n_conv_layers
         self.filters = filters
         self.activation = activation
         self.kernel_size = kernel_size
         self.strides = strides
         self.dilation = dilation
         self.padding = padding
-        self.batchNormLayer = batchNormLayer
-        self.dropoutLayer = dropoutLayer
-        self.dropoutRate = dropoutRate
+        self.batch_norm_layer = batch_norm_layer
+        self.dropout_layer = dropout_layer
+        self.dropout_rate = dropout_rate
 
-        self.batchNormLayer = layers.BatchNormalization()
-        self.dropoutLayer = layers.Dropout(rate=self.dropoutRate)
+        self.batch_norm_layer = layers.BatchNormalization()
+        self.dropout_layer = layers.Dropout(rate=self.dropout_rate)
 
-        for i in range(self.nConvLayers):
+        for i in range(self.n_conv_layers):
             setattr(self, f"conv_{i}",
                     layers.Conv2D(filters=self.filters, kernel_size=self.kernel_size, strides=self.strides,
                                   padding=self.padding, activation=self.activation, data_format='channels_last',
@@ -737,36 +740,36 @@ class CONVBlock(Layer):
                                   bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
                                   activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
 
-    def call(self, input, training=True):
+    def call(self, input_, training=True):
 
-        if not isinstance(a, (np.int32, np.float64, np.float32, np.float16)):
-            input = cast(input, 'float16')
+        if not isinstance(input_, (np.int32, np.float64, np.float32, np.float16)):
+            input_ = cast(input_, 'float16')
 
-        x = getattr(self, f'conv_{0}')(input)
+        x = getattr(self, f'conv_{0}')(input_)
 
-        for i in range(1, self.nConvLayers):
+        for i in range(1, self.n_conv_layers):
             x = getattr(self, f'conv_{i}')(x)
 
-        if self.batchNormLayer:
-            x = self.batchNormLayer(x)
+        if self.batch_norm_layer:
+            x = self.batch_norm_layer(x)
 
-        if self.dropoutLayer:
-            x = self.dropoutLayer(x)
+        if self.dropout_layer:
+            x = self.dropout_layer(x)
 
         return x
 
     def get_config(self):
         config = {
-            'nConvLayers': self.nConvLayers,
+            'nConvLayers': self.n_conv_layers,
             'filters': self.filters,
             'activation': self.activation,
             'kernel_size': self.kernel_size,
             'strides': self.strides,
             'dilation': self.dilation,
             'padding': self.padding,
-            'batchNormLayer': self.batchNormLayer,
-            'dropoutLayer': self.dropoutLayer,
-            'dropoutRate': self.dropoutRate
+            'batchNormLayer': self.batch_norm_layer,
+            'dropoutLayer': self.dropout_layer,
+            'dropoutRate': self.dropout_rate
         }
         base_config = super(CONVBlock, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))

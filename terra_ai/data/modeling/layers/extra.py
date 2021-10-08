@@ -261,3 +261,4 @@ class LayerConfigData(BaseMixinData):
     input_dimension: LayerValueConfig
     module: Optional[ModuleChoice]
     module_type: ModuleTypeChoice
+
