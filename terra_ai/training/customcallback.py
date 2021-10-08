@@ -815,7 +815,7 @@ class InteractiveCallback:
                             hist_type = "histogram"
                         else:
                             x, y = self._get_distribution_histogram(column_data, bins=25, categorical=False)
-                            hist_type = "distribution histogram"
+                            hist_type = "bar"
                         dataset_balance[f"{out}"][data_type]['histogram'].append(
                             {
                                 "name": column.split("_", 1)[-1],
