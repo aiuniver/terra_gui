@@ -287,9 +287,8 @@ class DatasetData(AliasMixinData):
     tags: Optional[TagsList] = TagsList()
     inputs: Dict[PositiveInt, DatasetInputsData] = {}
     outputs: Dict[PositiveInt, DatasetOutputsData] = {}
-    columns: Optional[
-        Dict[PositiveInt, Dict[str, Union[DatasetInputsData, DatasetOutputsData]]]
-    ] = {}
+    service: Optional[Dict[PositiveInt, DatasetOutputsData]] = {}
+    columns: Optional[Dict[PositiveInt, Dict[str, Union[DatasetInputsData, DatasetOutputsData]]]] = {}
 
     @property
     def model(self) -> ModelDetailsData:
