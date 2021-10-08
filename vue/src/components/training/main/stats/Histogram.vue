@@ -19,6 +19,7 @@ export default {
     graph_name: String,
     x_label: String,
     y_label: String,
+    short_name: String,
     plot_data: Array,
   },
 
@@ -36,9 +37,9 @@ export default {
       return this.plot_data.map(el => {
         return {
           type: 'bar',
-          x: el.labels,
-          y: el.values,
-          name: el.label || 'Регрессия',
+          x: el.x,
+          y: el.y,
+          name: el.label || this.short_name || 'Регрессия',
           marker: {
             color: '#2a8cff',
           },

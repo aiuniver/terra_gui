@@ -5,7 +5,14 @@
       <div class="t-model__search">
         <i class="t-icon icon-search"></i>
         <t-field inline label class="t-model__field">
-          <t-input-new v-model="search" placeholder="Найти модель" type="text" small style="width: 109px" />
+          <t-input-new
+            v-model="search"
+            ref="search"
+            placeholder="Найти модель"
+            type="text"
+            small
+            style="width: 109px"
+          />
         </t-field>
       </div>
     </div>
@@ -157,6 +164,9 @@ export default {
     dialog: {
       handler(value) {
         if (value) {
+          this.$nextTick(() => {
+            this.$refs.search.label();
+          });
           this.load();
         }
       },

@@ -13,46 +13,46 @@
 
           <template v-for="({ initial_data, true_value, predict_value, statistic_values }, id) of predict">
             <template v-if="id === '1'">
-              <tr :key="'tr_' + id">
-                <template v-for="(data, key) of initial_data">
-                  <th :key="'th_' + key">{{ key }}</th>
+              <tr :key="'tr1_' + id">
+                <template v-for="(data, key, i) of initial_data">
+                  <th :key="'th1_' + key + i">{{ key }}</th>
                 </template>
 
-                <template v-for="(data, key) of true_value">
-                  <th :key="'th_' + key">{{ key }}</th>
+                <template v-for="(data, key, i) of true_value">
+                  <th :key="'th2_' + key + i">{{ key }}</th>
                 </template>
 
-                <template v-for="(data, key) of predict_value">
-                  <th :key="'th_' + key">{{ key }}</th>
+                <template v-for="(data, key, i) of predict_value">
+                  <th :key="'th3_' + key + i">{{ key }}</th>
                 </template>
 
-                <template v-for="(data, key) of statistic_values">
-                  <th :colspan="colspan" :key="'th_' + key">{{ key }}</th>
+                <template v-for="(data, key, i) of statistic_values">
+                  <th :colspan="colspan" :key="'th4_' + key + i">{{ key }}</th>
                 </template>
               </tr>
 
               <tr :key="'tr_' + id">
                 <template v-for="key of initial_data">
                   <template v-for="(item, i) in key.data">
-                    <th :key="'th' + i">{{ item.title }}</th>
+                    <th :key="'th1' + i + key">{{ item.title }}</th>
                   </template>
                 </template>
 
                 <template v-for="key of true_value">
                   <template v-for="(item, i) in key.data">
-                    <th :key="'th' + i">{{ item.title }}</th>
+                    <th :key="'th2' + i">{{ item.title }}</th>
                   </template>
                 </template>
 
                 <template v-for="key of predict_value">
                   <template v-for="(item, i) in key.data">
-                    <th :key="'th' + i">{{ item.title }}</th>
+                    <th :key="'th3' + i">{{ item.title }}</th>
                   </template>
                 </template>
 
                 <template v-for="key of statistic_values">
                   <template v-for="(item, i) in key.data">
-                    <th class="t-table__header--static" :key="'th' + i">{{ item.title }}</th>
+                    <th class="t-table__header--static" :key="'th4' + i">{{ item.title }}</th>
                   </template>
                 </template>
               </tr>
