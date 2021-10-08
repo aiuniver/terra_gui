@@ -1,7 +1,7 @@
 <template>
   <div class="t-scatter">
     <p class="t-scatter__title">{{ graph_name }}</p>
-    <Plotly class="t-scatter__plotly" :data="plot_data" :layout="layout" :display-mode-bar="false" />
+    <Plotly class="t-scatter__plotly" :data="data" :layout="layout" :display-mode-bar="false" />
   </div>
 </template>
 
@@ -35,8 +35,8 @@ export default {
       return this.plot_data.map(el => {
         return {
           type: 'scatter',
-          x: el.labels,
-          y: el.values,
+          x: el.x,
+          y: el.y,
           name: 'Регрессия',
           mode: 'markers',
           marker: { size: 10 },

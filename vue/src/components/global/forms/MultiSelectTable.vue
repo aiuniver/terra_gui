@@ -90,7 +90,7 @@ export default {
     input() {
       const labels = this.selected.map(item => item.label);
       const name = this.filterList.filter(item => labels.includes(item.label)).map(item => item.label);
-      this.clear(name);
+      // this.clear(name);
       return name.join();
     },
     checkAll() {

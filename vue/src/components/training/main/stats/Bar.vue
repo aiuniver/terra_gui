@@ -1,7 +1,7 @@
 <template>
-  <div class="t-histogram">
-    <p class="t-histogram__title">{{ graph_name }}</p>
-    <Plotly class="t-histogram__plotly" :data="data" :layout="layout" :display-mode-bar="false" />
+  <div class="t-bar">
+    <p class="t-bar__title">{{ graph_name }}</p>
+    <Plotly class="t-bar__plotly" :data="data" :layout="layout" :display-mode-bar="false" />
   </div>
 </template>
 
@@ -9,7 +9,7 @@
 import { Plotly } from 'vue-plotly';
 
 export default {
-  name: 't-histogram',
+  name: 't-bar',
   components: {
     Plotly,
   },
@@ -19,8 +19,9 @@ export default {
     graph_name: String,
     x_label: String,
     y_label: String,
-    short_name: String,
     plot_data: Array,
+    data_array: Array,
+    labels: Array,
   },
 
   computed: {
@@ -34,17 +35,20 @@ export default {
       return layout;
     },
     data() {
-      return this.plot_data.map(el => {
-        return {
-          type: 'bar',
-          x: el.x,
-          y: el.y,
-          name: el.label || this.short_name || 'Регрессия',
-          marker: {
-            color: '#2a8cff',
-          },
-        };
-      });
+      return [
+        {
+          z: this.data_array,
+          x: this.labels,
+          y: ['Morning', 'Afternoon', 'Evening'],
+          type: 'heatmap',
+          hoverongaps: false,
+          showscale: false,
+          colorscale: [
+            [0, '#003B7F'],
+            [1, '#F99F35'],
+          ],
+        },
+      ];
     },
   },
   data: () => ({
@@ -97,7 +101,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.t-histogram {
+.t-bar {
   &__title {
     font-size: 14px;
     line-height: 17px;

@@ -894,10 +894,17 @@ class FitCallback(keras.callbacks.Callback):
         time_end = self.update_progress(self.num_batches * self.epochs + 1,
                                         self.batch, self._start_time, finalize=True)
         self._sum_time += time_end
-
+        total_epochs = self.retrain_epochs if interactive.get_states().get('status') \
+                                              in ['addtrain', 'trained'] else self.epochs
         if self.model.stop_training:
-            msg = f'Модель сохранена.'
-            self._set_result_data({'info': f"'Обучение остановлено пользователем. '{msg}"})
+            self._set_result_data({'info': f"Обучение остановлено. Модель сохранена."})
+            progress.pool(
+                self.progress_name,
+                message=f"Обучение остановлено. Эпоха {self.last_epoch - 1} из "
+                        f"{total_epochs}",
+                data=self._get_result_data(),
+                finished=True,
+            )
         else:
             if self._get_train_status() == "retrain":
                 msg = f'Затрачено времени на обучение: ' \
@@ -911,8 +918,6 @@ class FitCallback(keras.callbacks.Callback):
                                        "addtrain" or interactive.get_states().get("status") == "stopped"
                 else self.epochs
             ) * 100
-            total_epochs = self.retrain_epochs if interactive.get_states().get('status') \
-                                                  in ['addtrain', 'trained'] else self.epochs
 
             if os.path.exists(self.save_model_path) and interactive.deploy_presets_data:
                 with open(os.path.join(self.save_model_path, "config.presets"), "w", encoding="utf-8") as presets:

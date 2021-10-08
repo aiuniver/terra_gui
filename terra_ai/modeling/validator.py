@@ -1352,7 +1352,6 @@ class ModelCreator:
 
     def __init__(self, model_plan, input_shapes, block_plans, layer_config):
         super().__init__()
-        print(model_plan)
         self.model_plan = model_plan
         self.block_plans = block_plans
         self.input_shape = input_shapes
@@ -1457,7 +1456,6 @@ class ModelCreator:
 
     def _pretrained_model_init_(self, terra_layer):
         """Create pretrained model as layer_obj from terra_plan layer"""
-        # print('module', self.layer_config.get(terra_layer[0]).module.value)
         module = importlib.import_module(
             self.layer_config.get(terra_layer[0]).module.value
         )

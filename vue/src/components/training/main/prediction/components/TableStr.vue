@@ -11,7 +11,7 @@ export default {
   name: 'TableStr',
   props: {
     value: {
-      type: String,
+      type: [String, Number],
       default: '',
     },
     color_mark: {

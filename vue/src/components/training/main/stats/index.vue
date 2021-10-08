@@ -14,11 +14,13 @@
     </div>
     <div class="t-scatters__content">
       <template v-for="(layer, index) of statisticData">
-        <template v-for="(data, i) of layer">
-          <component v-if="ids.includes(+index)" :is="data.type" v-bind="data" :key="`${data.type + i + index}`" />
-        </template>
+        <component :is="layer.type" v-bind="layer" :key="`${'layer.type' + index}`" />
       </template>
-      <LoadSpiner v-if="isLearning && ids.length && !Object.keys(statisticData).length" class="overlay" text="Загрузка данных..." />
+      <LoadSpiner
+        v-if="isLearning && ids.length && !Object.keys(statisticData).length"
+        class="overlay"
+        text="Загрузка данных..."
+      />
     </div>
   </div>
 </template>
@@ -29,11 +31,13 @@ import { mapGetters } from 'vuex';
 export default {
   name: 't-scatters',
   components: {
-    Heatmap: () => import('./Heatmap'),
-    Scatter: () => import('./Scatter'),
-    Histogram: () => import('./Histogram'),
-    Table: () => import('./Table'),
-    Graphic: () => import('./Graphic'),
+    Heatmap: () => import('../stats/Heatmap'),
+    Corheatmap: () => import('../stats/Corheatmap'),
+    Scatter: () => import('../stats/Scatter'),
+    Histogram: () => import('../stats/Histogram'),
+    Bar: () => import('../stats/Histogram'),
+    Table: () => import('../stats/Table'),
+    Graphic: () => import('../stats/Graphic'),
     LoadSpiner,
   },
   props: {
@@ -70,6 +74,7 @@ export default {
     },
   },
   methods: {
+    
     change({ id, value }) {
       this.settings.output_id = value ? [...this.ids, id] : [...this.ids.filter(item => item !== id)];
       this.send();
