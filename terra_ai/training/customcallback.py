@@ -32,7 +32,7 @@ from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.utils import camelize, decamelize
 
-__version__ = 0.082
+__version__ = 0.083
 
 
 def sort_dict(dict_to_sort: dict, mode='by_name'):
