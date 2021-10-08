@@ -1,14 +1,15 @@
+from terra_ai.utils import decamelize
+from terra_ai.datasets.data import DataType, InstructionsData, DatasetInstructionsData
+from terra_ai.datasets.utils import PATH_TYPE_LIST
+from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preprocessing import CreatePreprocessing
+from terra_ai.data.datasets.creation import CreationData, CreationInputsList, CreationOutputsList
+from terra_ai.data.datasets.dataset import DatasetData, DatasetInputsData, DatasetOutputsData, DatasetPathsData
+from terra_ai.data.datasets.extra import LayerEncodingChoice
 from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice, \
     LayerPrepareMethodChoice, LayerScalerImageChoice, ColumnProcessingTypeChoice, \
     LayerTypeProcessingClassificationChoice
-from terra_ai.utils import decamelize
-from terra_ai.datasets.data import DataType, InstructionsData, DatasetInstructionsData
-from terra_ai.data.datasets.creation import CreationData, CreationInputsList, CreationOutputsList
-from terra_ai.data.datasets.dataset import DatasetData, DatasetInputsData, DatasetOutputsData, DatasetPathsData
 from terra_ai.settings import DATASET_EXT, DATASET_CONFIG
-from terra_ai.datasets.arrays_create import CreateArray
-from terra_ai.data.datasets.extra import LayerEncodingChoice
 
 import cv2
 import os
@@ -60,10 +61,14 @@ class CreateDataset(object):
         if not creation_data.use_generator:
             x_array = self.create_dataset_arrays(put_data=self.instructions.inputs)
             y_array = self.create_dataset_arrays(put_data=self.instructions.outputs)
-            self.write_arrays(x_array, y_array)
+            if not isinstance(y_array, dict):
+                self.write_arrays(x_array, y_array[0], y_array[1])
+            else:
+                self.write_arrays(x_array, y_array)
 
         self.inputs = self.create_input_parameters(creation_data=creation_data)
         self.outputs = self.create_output_parameters(creation_data=creation_data)
+        self.service = self.create_service_parameters(creation_data=creation_data)
 
         self.write_preprocesses_to_files()
         self.write_instructions_to_files()
@@ -162,6 +167,7 @@ class CreateDataset(object):
 
     def create_instructions(self, creation_data: CreationData) -> DatasetInstructionsData:
 
+        # service = None
         if creation_data.columns_processing:
             inputs = self.create_dataframe_put_instructions(data=creation_data.inputs)
             outputs = self.create_dataframe_put_instructions(data=creation_data.outputs)
@@ -172,7 +178,12 @@ class CreateDataset(object):
                 if out.type == LayerOutputTypeChoice.Classification and self.y_cls:
                     for col_name, data in outputs[out.id].items():
                         data.instructions = self.y_cls
+                # elif out.type == LayerOutputTypeChoice.ObjectDetection:
+                #     service = self.create_put_instructions(data=creation_data.outputs)
 
+        # if service:
+        #     instructions = DatasetInstructionsData(inputs=inputs, outputs=outputs, service=service)
+        # else:
         instructions = DatasetInstructionsData(inputs=inputs, outputs=outputs)
 
         return instructions
@@ -249,11 +260,6 @@ class CreateDataset(object):
 
     def create_put_instructions(self, data: Union[CreationInputsList, CreationOutputsList]) -> dict:
 
-        path_type_list = [decamelize(LayerInputTypeChoice.Image), decamelize(LayerOutputTypeChoice.Image),
-                          decamelize(LayerInputTypeChoice.Audio), decamelize(LayerOutputTypeChoice.Audio),
-                          decamelize(LayerInputTypeChoice.Video), decamelize(LayerOutputTypeChoice.ObjectDetection),
-                          decamelize(LayerOutputTypeChoice.Segmentation)]
-
         put_parameters: dict = {}
         for put in data:
             self.tags[put.id] = {f"{put.id}_{decamelize(put.type)}": decamelize(put.type)}
@@ -287,7 +293,7 @@ class CreateDataset(object):
             instructions_data.parameters = {'put_type': decamelize(put.type),
                                             **instr['parameters']}
 
-            if decamelize(put.type) in path_type_list:
+            if decamelize(put.type) in PATH_TYPE_LIST:
                 new_paths = [os.path.join('sources', f'{put.id}_{decamelize(put.type)}',
                                           path.replace(self.source_directory + os.path.sep, '')) for path in
                              instructions_data.instructions]
@@ -322,15 +328,10 @@ class CreateDataset(object):
 
     def fit_preprocessing(self, put_data):
 
-        path_type_list = [decamelize(LayerInputTypeChoice.Image), decamelize(LayerOutputTypeChoice.Image),
-                          decamelize(LayerInputTypeChoice.Audio), decamelize(LayerOutputTypeChoice.Audio),
-                          decamelize(LayerInputTypeChoice.Video), decamelize(LayerOutputTypeChoice.ObjectDetection),
-                          decamelize(LayerOutputTypeChoice.Segmentation)]
-
         for key in put_data.keys():
             for col_name, data in put_data[key].items():
                 if 'scaler' in data.parameters and data.parameters['scaler'] != LayerScalerImageChoice.no_scaler:
-                    if self.tags[key][col_name] in path_type_list:
+                    if self.tags[key][col_name] in PATH_TYPE_LIST:
                         for i in range(len(data.instructions)):
 
                             arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(
@@ -593,7 +594,7 @@ class CreateDataset(object):
                     array = np.expand_dims(array, 0)
 
                 else:
-                    iters = 6
+                    iters = 3
                 for i in range(iters):
                     current_output = DatasetOutputsData(datatype=DataType.get(len(array[i].shape), 'DIM'),
                                                         dtype=str(array[i].dtype),
@@ -653,14 +654,48 @@ class CreateDataset(object):
 
         return creating_outputs_data
 
-    def create_dataset_arrays(self, put_data: dict) -> dict:
+    def create_service_parameters(self, creation_data: CreationData) -> dict:
 
-        path_type_list = [decamelize(LayerInputTypeChoice.Image), decamelize(LayerOutputTypeChoice.Image),
-                          decamelize(LayerInputTypeChoice.Audio), decamelize(LayerOutputTypeChoice.Audio),
-                          decamelize(LayerInputTypeChoice.Video), decamelize(LayerOutputTypeChoice.ObjectDetection),
-                          decamelize(LayerOutputTypeChoice.Segmentation)]
+        # Пока сделано только для OD
+        creating_service_data = {}
+        for key in self.instructions.outputs.keys():
+            for col_name, data in self.instructions.outputs[key].items():
+                if data.parameters['put_type'] == decamelize(LayerOutputTypeChoice.ObjectDetection):
+                    prep = None
+                    if self.preprocessing.preprocessing.get(key) and self.preprocessing.preprocessing.get(key).get(col_name):
+                        prep = self.preprocessing.preprocessing.get(key).get(col_name)
+
+                    if decamelize(creation_data.outputs.get(key).type) in PATH_TYPE_LIST:
+                        data_to_pass = os.path.join(self.paths.basepath, data.instructions[0])
+                    else:
+                        data_to_pass = data.instructions[0]
+
+                    arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(data_to_pass, **data.parameters,
+                                                                                       **{'preprocess': prep})
+
+                    array = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(arr['instructions'],
+                                                                                             **arr['parameters'])
+                    classes_names = arr['parameters'].get('classes_names')
+                    num_classes = len(classes_names) if classes_names else None
+                    for n in range(3):
+                        service_data = DatasetOutputsData(datatype=DataType.get(len(array[n+3].shape), 'DIM'),
+                                                          dtype=str(array[n+3].dtype),
+                                                          shape=array[n+3].shape,
+                                                          name=creation_data.outputs.get(key).name,
+                                                          task=LayerOutputTypeChoice.ObjectDetection,
+                                                          classes_names=classes_names,
+                                                          num_classes=num_classes,
+                                                          encoding=LayerEncodingChoice.ohe
+                                                          )
+                        creating_service_data[key + n] = service_data.native()
+
+        return creating_service_data
+
+    def create_dataset_arrays(self, put_data: dict):
 
         out_array = {'train': {}, 'val': {}, 'test': {}}
+        service = {'train': {}, 'val': {}, 'test': {}}
+
         for split in list(out_array.keys()):
             for key in put_data.keys():
                 current_arrays: list = []
@@ -679,7 +714,7 @@ class CreateDataset(object):
                     full_array = []
                     for col_name, data in put_data[key].items():
                         prep = None
-                        if self.tags[key][col_name] in path_type_list:
+                        if self.tags[key][col_name] in PATH_TYPE_LIST:
                             data_to_pass = os.path.join(self.paths.basepath, self.dataframe[split].loc[i, col_name])
 
                         elif 'depth' in data.parameters.keys() and data.parameters['depth']:
@@ -716,21 +751,33 @@ class CreateDataset(object):
                         current_arrays.append(array)
 
                 if self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
-                    for n in range(6):
-                        # print(np.array(globals()[f'current_arrays_{n}']).shape)
+                    for n in range(3):
+                        # if n < 3:
                         out_array[split][key + n] = np.array(globals()[f'current_arrays_{n}'])
+                        # else:
+                        service[split][key + n] = np.array(globals()[f'current_arrays_{n + 3}'])
+                        # print(np.array(globals()[f'current_arrays_{n}']).shape)
+                        # print(np.array(globals()[f'current_arrays_{n + 3}']).shape)
                 else:
                     out_array[split][key] = np.array(current_arrays)
+                    # print(out_array[split][key].shape)
 
-        return out_array
+        if service['train']:
+            return out_array, service
+        else:
+            return out_array
 
-    def write_arrays(self, array_x, array_y):
+    def write_arrays(self, array_x, array_y, array_service=None):
 
         for array in [array_x, array_y]:
             for sample in array.keys():
                 for inp in array[sample].keys():
                     os.makedirs(os.path.join(self.paths.arrays, sample), exist_ok=True)
                     joblib.dump(array[sample][inp], os.path.join(self.paths.arrays, sample, f'{inp}.gz'))
+        if array_service:
+            for sample in array_service.keys():
+                for inp in array_service[sample].keys():
+                    joblib.dump(array_service[sample][inp], os.path.join(self.paths.arrays, sample, f'{inp}_service.gz'))
 
     def write_instructions_to_files(self):
 
@@ -793,7 +840,7 @@ class CreateDataset(object):
                 'size': {'value': size_bytes}
                 }
 
-        for attr in ['inputs', 'outputs', 'columns']:
+        for attr in ['inputs', 'outputs', 'columns', 'service']:
             data[attr] = self.__dict__[attr]
 
         with open(os.path.join(self.paths.basepath, DATASET_CONFIG), 'w') as fp:

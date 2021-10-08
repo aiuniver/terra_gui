@@ -6,13 +6,19 @@ from pathlib import Path
 from sklearn.cluster import KMeans
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 
+from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice
 from terra_ai.settings import DATASET_ANNOTATION
 from terra_ai.datasets.data import AnnotationClassesList
-
+from terra_ai.utils import decamelize
 
 ANNOTATION_SEPARATOR = ":"
 ANNOTATION_LABEL_NAME = "# label"
 ANNOTATION_COLOR_RGB = "color_rgb"
+
+PATH_TYPE_LIST = [decamelize(LayerInputTypeChoice.Image), decamelize(LayerOutputTypeChoice.Image),
+                  decamelize(LayerInputTypeChoice.Audio), decamelize(LayerOutputTypeChoice.Audio),
+                  decamelize(LayerInputTypeChoice.Video), decamelize(LayerOutputTypeChoice.ObjectDetection),
+                  decamelize(LayerOutputTypeChoice.Segmentation)]
 
 
 def _get_annotation_class(name: str, color: str):

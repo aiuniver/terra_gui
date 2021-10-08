@@ -1,7 +1,6 @@
 import string
 
 import matplotlib
-import tensorflow
 from PIL import Image
 from pandas import DataFrame
 from tensorflow.python.keras.preprocessing import image
