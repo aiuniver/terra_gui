@@ -17,7 +17,6 @@
     </div>
     <div class="t-balance__graphs" v-if="(settings.show_train || settings.show_val) && Object.keys(dataDalance).length > 0">
       <template v-for="(layer, index) of filter(dataDalance)">
-        {{layer.type}}
         <component :is="layer.type" v-bind="layer" :key="`sdsdsa_${index}`" />
       </template>
     </div>
