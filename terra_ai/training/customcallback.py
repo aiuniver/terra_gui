@@ -556,18 +556,6 @@ class InteractiveCallback:
                 metrics_obj[out][camelize(metric_name)] = metric
         return metrics_obj
 
-    # def _prepare_dataset_config(self, dataset: PrepareDataset, dataset_path: str):
-    #     self.dataset_config = {
-    #         "preprocessing": dataset.preprocessing,
-    #         "dataset_path": dataset_path,
-    #         "data": dataset.data,
-    #         "dataframe": dataset.dataframe,
-    #         "instructions": dataset.instructions,
-    #         'classes_colors': {}
-    #     }
-    #     for out in dataset.data.outputs.keys():
-    #         self.dataset_config['classes_colors'][f"{out}"] = self._get_classes_colors(dataset.data.outputs.get(out))
-
     def _get_classes_colors(self):
         colors = []
         for out in self.options.data.outputs.keys():
@@ -1598,7 +1586,7 @@ class InteractiveCallback:
                             options=self.options.data.outputs.get(out),
                             dataframe=self.options.dataframe.get('val'),
                             example_id=self.example_idx[idx],
-                            dataset_params=self.options.instructions.get(out).get(output_col).get('parameters'),
+                            dataset_params=self.options.instructions.get(out).get(output_col),
                             return_mode='callback',
                             class_colors=self.class_colors,
                             show_stat=self.interactive_config.intermediate_result.show_statistic
