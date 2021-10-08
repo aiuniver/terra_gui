@@ -2030,7 +2030,7 @@ class InteractiveCallback:
                     return_data.append(
                         self._fill_heatmap_front_structure(
                             _id=_id,
-                            _type="correlation_heatmap",
+                            _type="corheatmap",
                             type_data=data_type,
                             graph_name=f"{data_type_name} выборка - Матрица корреляций",
                             short_name=f"Матрица корреляций",
