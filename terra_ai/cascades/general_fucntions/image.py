@@ -1,22 +1,6 @@
 import cv2
-import tensorflow
 import numpy as np
-
-
-def change_size(shape: tuple):
-    if len(shape) == 3:
-        shape = shape[:2]
-
-    fun = lambda frame: tensorflow.image.resize(frame, shape).numpy()
-
-    return fun
-
-
-def change_type(type):
-
-    fun = lambda frame: frame.astype(type)
-
-    return fun
+from .array import change_type, change_size, min_max_scale
 
 
 def gaussian_blur(params: dict):
@@ -29,6 +13,8 @@ def main(**params):
 
     resize = change_size(params['shape']) if 'shape' in params.keys() else None
     retype = change_type(getattr(np, params['dtype'])) if 'dtype' in params.keys() else None
+    min_max = min_max_scale(params['min_scaler'], params['max_scaler']) \
+        if params['scaler'] == 'min_max_scaler' else None
 
     def fun(img):
 
@@ -36,9 +22,8 @@ def main(**params):
             img = img[np.newaxis, ...]
         if resize:
             img = resize(img)
-        if params['scaler'] == 'min_max_scaler':
-            std = (img - img.min()) / (img.max() - img.min())
-            img = std * (params['max_scaler'] - params['min_scaler']) + params['min_scaler']
+        if min_max:
+            img = min_max(img)
         if retype:
             img = retype(img)
 

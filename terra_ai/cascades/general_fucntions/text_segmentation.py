@@ -2,9 +2,9 @@ import numpy as np
 import re
 
 
-def put_tag(**params):
-    tags = {i: j for i, j in zip(params['open_tag'].split(), params['close_tag'].split())}
-    classes = np.array(params['open_tag'].split())
+def put_tag(open_tag, close_tag, classes, alpha=0.6):
+    tags = {i: j for i, j in zip(open_tag.split(), close_tag.split())}
+    classes = np.array(classes.split())
 
     def fun(text, array):
 
@@ -30,7 +30,7 @@ def put_tag(**params):
         past_tag = []
 
         for i, j in zip(array, indexes):
-            i = list(classes[i > params['alpha']])
+            i = list(classes[i > alpha])
             for tag in i:
                 if tag not in past_tag:
                     new_text += tag
@@ -51,22 +51,22 @@ def put_tag(**params):
     return fun
 
 
-def probability2classes(**params):
-    classes = np.array(params['classes_names'])
-    alpha = params['alpha']
-
-    def fun(array):
-        array = np.array(array)
-
-        while len(array.shape) > 2:
-            array = array[0]
-
-        out = []
-        for i in array:
-            out.append(list(classes[i > alpha]))
-        return out
-
-    return fun
+# def probability2classes(**params):  пока не нужно
+#     classes = np.array(params['classes_names'])
+#     alpha = params['alpha']
+#
+#     def fun(array):
+#         array = np.array(array)
+#
+#         while len(array.shape) > 2:
+#             array = array[0]
+#
+#         out = []
+#         for i in array:
+#             out.append(list(classes[i > alpha]))
+#         return out
+#
+#     return fun
 
 
 def main(**params):
