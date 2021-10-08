@@ -117,6 +117,7 @@ export default {
       padding: 4px 2px 2px 6px;
       text-overflow: ellipsis;
       overflow: hidden;
+      white-space: nowrap;
     }
     &--btn {
       padding: 0 6px 0 0;

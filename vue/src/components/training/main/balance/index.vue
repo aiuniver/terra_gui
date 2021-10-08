@@ -15,13 +15,10 @@
         </t-field>
       </div>
     </div>
-    <div
-      class="t-balance__graphs"
-      v-if="(settings.show_train || settings.show_val) && Object.keys(dataDalance).length > 0"
-    >
+    <div class="t-balance__graphs" v-if="(settings.show_train || settings.show_val) && Object.keys(dataDalance).length > 0">
       <template v-for="(layer, index) of dataDalance">
-        <template v-for="(item, i) of filter(layer)">
-          <Graph :key="'graph_' + index + '/' + i" v-bind="item" />
+        <template v-for="(data, i) of filter(layer)">
+          <component :is="type[data.type]" v-bind="data" :key="`sdsdsa_${i + index}`" />
         </template>
       </template>
     </div>
@@ -32,14 +29,18 @@
 </template>
 
 <script>
-import Graph from './Graph';
 import LoadSpiner from '@/components/forms/LoadSpiner';
 import { mapGetters } from 'vuex';
 
 export default {
   name: 't-balance',
   components: {
-    Graph,
+    Heatmap: () => import('../stats/Heatmap'),
+    CorrelationHeatmap: () => import('../stats/CorrelationHeatmap'),
+    Scatter: () => import('../stats/Scatter'),
+    Histogram: () => import('../stats/Histogram'),
+    Table: () => import('../stats/Table'),
+    Graphic: () => import('../stats/Graphic'),
     LoadSpiner,
   },
   data: () => ({
@@ -49,6 +50,15 @@ export default {
       { label: 'по увеличению', value: 'ascending' },
       { label: 'по убыванию', value: 'descending' },
     ],
+    type: {
+      heatmap: 'heatmap',
+      'correlation heatmap': 'CorrelationHeatmap',
+      scatter: 'scatter',
+      'distribution histogram': 'histogram',
+      histogram: 'histogram',
+      table: 'table',
+      graphic: 'graphic',
+    },
   }),
   computed: {
     ...mapGetters({
@@ -87,12 +97,12 @@ export default {
       // await this.$store.dispatch('trainings/interactive', {});
     },
     async select(sorted) {
-      console.log(sorted)
+      console.log(sorted);
       await this.$store.dispatch('trainings/interactive', {
-        data_balance: { 
+        data_balance: {
           sorted,
           show_val: this.settings.show_val,
-          show_train: this.settings.show_train
+          show_train: this.settings.show_train,
         },
       });
     },

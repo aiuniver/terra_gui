@@ -157,6 +157,7 @@ def __choice_from_custom(name: str, destination: Path, source: Path, **kwargs):
         data = CustomDatasetConfigData(
             path=Path(source, f"{name}.{settings.DATASET_EXT}")
         )
+        dataset = DatasetData(**data.config)
         zip_dirpath = Path(tempfile.gettempdir(), str(uuid.uuid4()))
         shutil.copytree(data.path, zip_dirpath)
         os.chmod(zip_dirpath, 0o755)
@@ -171,7 +172,6 @@ def __choice_from_custom(name: str, destination: Path, source: Path, **kwargs):
             shutil.move(str(Path(unpacked, item).absolute()), zip_dirpath)
         shutil.rmtree(destination)
         os.rename(zip_dirpath, destination)
-        dataset = DatasetData(**data.config)
         shutil.rmtree(unpacked)
         if dataset:
             progress.pool(progress_name, percent=100, data=dataset, finished=True)
@@ -184,7 +184,7 @@ def __choice_from_custom(name: str, destination: Path, source: Path, **kwargs):
             )
     except ValidationError as error:
         for item in error.args[0]:
-            if isinstance(item.exc, PathNotExistsError):
+            if isinstance(item[0].exc, PathNotExistsError):
                 progress.pool(
                     progress_name,
                     error=str(
