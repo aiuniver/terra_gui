@@ -1811,7 +1811,7 @@ class CreateArray(object):
             for i, name in enumerate(dataset_tags):
                 colors[name] = options.classes_colors[i].as_rgb_tuple()
                 classes_names[name] = options.classes_names[i]
-        elif not class_colors and return_mode == 'callback':
+        elif class_colors and return_mode == 'callback':
             for i, name in enumerate(dataset_tags):
                 colors[name] = class_colors[i]
                 classes_names[name] = options.classes_names[i]

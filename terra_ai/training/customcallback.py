@@ -562,9 +562,7 @@ class InteractiveCallback:
             task = self.options.data.outputs.get(out).task
             classes_colors = self.options.data.outputs.get(out).classes_colors
             if task == LayerOutputTypeChoice.TextSegmentation and classes_colors:
-                for color in classes_colors:
-                    colors.append(color.as_rgb_tuple())
-                self.class_colors = colors
+                self.class_colors = [color.as_rgb_tuple() for color in classes_colors]
             elif task == LayerOutputTypeChoice.TextSegmentation and not classes_colors:
                 for _ in self.options.data.outputs.get(out).classes_names:
                     colors.append(tuple(np.random.randint(256, size=3).astype('int').tolist()))
