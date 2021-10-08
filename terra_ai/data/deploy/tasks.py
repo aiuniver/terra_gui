@@ -159,16 +159,16 @@ class TextTextSegmentationCollectionList(BaseCollectionList):
 class TextClassificationCollectionList(BaseCollectionList):
     def reload(self, range_indexes: List):
         source_path = Path(self._path, "preset", "in")
-        format_path = Path(self._path, "preset", "out")
+        predict_path = Path(self._path, "preset", "out")
         os.makedirs(source_path, exist_ok=True)
-        os.makedirs(format_path, exist_ok=True)
+        os.makedirs(predict_path, exist_ok=True)
         source = interactive.deploy_presets_data
-        formatfile = Path(self._path, "format.txt")
+        predictfile = Path(predict_path, "predict.txt")
         label = []
         if not source:
             self._reset()
             try:
-                os.remove(formatfile)
+                os.remove(predictfile)
             except Exception:
                 pass
             return
@@ -176,22 +176,18 @@ class TextClassificationCollectionList(BaseCollectionList):
         for index in range_indexes:
             try:
                 os.remove(self[index].get("source"))
-                os.remove(self[index].get("format"))
             except Exception:
                 pass
             value = dict(source[random.randint(0, len(source) - 1)])
             destination_source = Path(source_path, f"{index+1}.txt")
-            destination_format = Path(format_path, f"{index+1}.txt")
             with open(destination_source, "w") as destination_source_ref:
                 destination_source_ref.write(value.get("source", ""))
-            with open(destination_format, "w") as destination_format_ref:
-                destination_format_ref.write(value.get("format", ""))
             self[index] = value
 
         for item in self:
             label.append(json.dumps(item.get("data", []), ensure_ascii=False))
-        with open(formatfile, "w") as formatfile_ref:
-            formatfile_ref.write("\n".join(label))
+        with open(predictfile, "w") as predictfile_ref:
+            predictfile_ref.write("\n".join(label))
 
 
 class BaseCollection(BaseMixinData):
