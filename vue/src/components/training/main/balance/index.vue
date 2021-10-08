@@ -81,6 +81,7 @@ export default {
   },
   methods: {
     filter(layer) {
+      console.log(layer)
       const arr = [];
       if (this.settings.show_train) {
         arr.push('train');
