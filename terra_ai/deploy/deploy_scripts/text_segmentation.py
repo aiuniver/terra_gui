@@ -12,7 +12,7 @@ def predict(input_path):
     return print(main_block[-1].out)
 
 
-if __name__ == "__main__":
+if __name__ in ["__main__", "script"]:
     from cascades.create import json2cascade
 else:
     from .cascades.create import json2cascade
