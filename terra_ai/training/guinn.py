@@ -495,6 +495,7 @@ class FitCallback(keras.callbacks.Callback):
         self._sum_time = 0
         self._sum_epoch_time = 0
         self.retrain_epochs = retrain_epochs
+        self.addtrain_epochs = []
         self.still_epochs = epochs
         self.save_model_path = save_model_path
         self.nn_name = model_name
@@ -620,6 +621,8 @@ class FitCallback(keras.callbacks.Callback):
             json.dump(interactive.log_history, log)
         with open(os.path.join(interactive_path, "table.int"), "w", encoding="utf-8") as table:
             json.dump(interactive.progress_table, table)
+        with open(os.path.join(interactive_path, "addtraining.int"), "w", encoding="utf-8") as addtraining:
+            json.dump({"addtrain_epochs": self.addtrain_epochs}, addtraining)
 
     def _load_logs(self):
         interactive_path = os.path.join(self.save_model_path, "interactive.history")
@@ -630,6 +633,8 @@ class FitCallback(keras.callbacks.Callback):
                 interactive_logs = json.load(int_log)
             with open(os.path.join(interactive_path, "table.int"), "r", encoding="utf-8") as table_int:
                 interactive_table = json.load(table_int)
+            with open(os.path.join(interactive_path, "addtraining.int"), "r", encoding="utf-8") as addtraining_int:
+                self.addtrain_epochs = json.load(addtraining_int)["addtrain_epochs"]
             self.last_epoch = max(logs.get('epoch')) + 1
             self.still_epochs = self.retrain_epochs - self.last_epoch + 1
             self._get_metric_name_checkpoint(logs.get('logs'))
@@ -670,6 +675,7 @@ class FitCallback(keras.callbacks.Callback):
 
     def _get_result_data(self):
         self.result["states"] = interactive.get_states()
+        self.result["train_data"]["addtrain_epochs"] = self.addtrain_epochs
         return self.result
 
     @staticmethod
@@ -880,6 +886,7 @@ class FitCallback(keras.callbacks.Callback):
         self.last_epoch += 1
 
     def on_train_end(self, logs=None):
+        self.addtrain_epochs.append(self.last_epoch - 1)
         self._save_logs()
 
         if (self.last_epoch - 1) > 1:
