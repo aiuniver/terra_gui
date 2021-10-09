@@ -863,7 +863,9 @@ class InteractiveCallback:
     # Методы для update_state()
     @staticmethod
     def _round_loss_metric(x: float) -> float:
-        if x > 1:
+        if not x:
+            return x
+        elif x > 1:
             return np.round(x, 3).item()
         else:
             return np.round(x, -int(math.floor(math.log10(abs(x))) - 2)).item()

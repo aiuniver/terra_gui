@@ -316,9 +316,9 @@ class ModelValidator:
                     # else:
                     #     out_layer_str = f"{block_name}.get_layer('{_layer[2].get('output_layer')}.output'"
                     _layer_str = (
-                        f"\n{block_name} = {_layer[1]}({_params[:-2]})\n" 
-                        f"for layer in {block_name}.layers:\n" 
-                        f"    layer.trainable = {_layer[2].get('trainable', False)}\n" 
+                        f"\n{block_name} = {_layer[1]}({_params[:-2]})\n"
+                        f"for layer in {block_name}.layers:\n"
+                        f"    layer.trainable = {_layer[2].get('trainable', False)}\n"
                         f"{name_dict[_layer[0]]} = {block_name}({uplink})\n\n"
                     )
                     # f"{block_name} = Model({block_name}.input, {out_layer_str}).output, " \
@@ -613,8 +613,6 @@ class ModelValidator:
                     )
 
         return block_output, block_comment
-
-
 
 
 class LayerValidation:
@@ -937,23 +935,15 @@ class LayerValidation:
                 ))
 
         # strides and dilation_rate in 1D layers
-        if isinstance(self.layer_parameters.get("strides", None), int) and isinstance(
-                self.layer_parameters.get("dilation_rate", None), int
-        ):
-            if (
-                    self.layer_parameters.get("dilation_rate") > 1
-                    and self.layer_parameters.get("strides") > 1
-            ):
+        if isinstance(self.layer_parameters.get("strides", None), int) and \
+                isinstance(self.layer_parameters.get("dilation_rate", None), int):
+            if self.layer_parameters.get("dilation_rate") > 1 and self.layer_parameters.get("strides") > 1:
                 return str(exceptions.CannotHaveValueException("'dilation_rate' and 'strides'", "> 1"))
 
         # strides and dilation_rate in 2+D layers
-        if isinstance(
-                self.layer_parameters.get("strides", None), (tuple, list)
-        ) and isinstance(self.layer_parameters.get("strides", None), (tuple, list)):
-            if (
-                    max(self.layer_parameters.get("dilation_rate")) > 1
-                    and max(self.layer_parameters.get("strides")) > 1
-            ):
+        if isinstance(self.layer_parameters.get("dilation_rate", None), (tuple, list)) and \
+                isinstance(self.layer_parameters.get("strides", None), (tuple, list)):
+            if max(self.layer_parameters.get("dilation_rate")) > 1 and max(self.layer_parameters.get("strides")) > 1:
                 return str(exceptions.CannotHaveValueException("'dilation_rate' and 'strides'", "> 1"))
 
         # value range for axis
