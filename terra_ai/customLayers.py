@@ -826,16 +826,16 @@ class CONVBlock(Layer):
 
     def get_config(self):
         config = {
-            'nConvLayers': self.n_conv_layers,
+            'n_conv_layers': self.n_conv_layers,
             'filters': self.filters,
             'activation': self.activation,
             'kernel_size': self.kernel_size,
             'strides': self.strides,
             'dilation': self.dilation,
             'padding': self.padding,
-            'batchNormLayer': self.batch_norm_layer,
-            'dropoutLayer': self.dropout_layer,
-            'dropoutRate': self.dropout_rate
+            'batch_norm_layer': self.batch_norm_layer,
+            'dropout_layer': self.dropout_layer,
+            'dropout_rate': self.dropout_rate
         }
         base_config = super(CONVBlock, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
