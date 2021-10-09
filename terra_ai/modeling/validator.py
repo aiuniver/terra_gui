@@ -217,284 +217,6 @@ class ModelValidator:
                 self.layers_config[layer.id] = layer.parameters.config
         self._build_model_plan()
 
-    def _build_model_plan(self):
-        for layer in self.model.layers:
-            if layer.group == LayerGroupChoice.input:
-                self.input_shape[layer.id] = layer.shape.input
-                self.layer_input_shapes[layer.id].extend(reformat_input_shape(layer.shape.input))
-            self.layers_state[layer.id] = layer.group.value
-            self.model_plan.append(get_layer_info(layer))
-            if layer.reference:
-                for block in self.model.references:
-                    if layer.reference == block.name:
-                        block_plan = []
-                        for block_layer in block.details.layers:
-                            block_plan.append(
-                                get_layer_info(block_layer, block_name=layer.name)
-                            )
-                        self.block_plans[layer.id] = reorder_plan(block_plan)
-                        break
-        self._get_model_links()
-        self._get_reorder_model()
-
-    def _get_cycles_check(self) -> None:
-        """
-        Check if there are cycles in the structure
-
-        Returns:
-            val_dictionary, dict:   with or without comments about cycles
-            valid, bool:            True if no cycles, otherwise False
-        """
-
-        edges = get_edges(self.model_plan)
-
-        di_graph = nx.DiGraph(edges)
-        for cycle in nx.simple_cycles(di_graph):
-            if cycle:
-                self.valid = False
-                comment = f"Layers {cycle} make a cycle! Please correct the structure!"
-                for cycle_layer in cycle:
-                    self.val_dictionary[cycle_layer] = comment
-
-    def _get_full_connection_check(self) -> None:
-        """
-        Check if there separated layers or groups of layers in plan
-
-        Returns:
-            val_dictionary, dict:   with or without comments about separation
-            valid, bool:            True if no separation, otherwise False
-        """
-
-        edges = get_edges(self.model_plan, full_connection=True)
-        di_graph = nx.DiGraph(edges)
-        sub_graphs = sorted(
-            list(nx.weakly_connected_components(di_graph)),
-            key=lambda subgraph: -len(subgraph),
-        )
-
-        if len(sub_graphs) > 1:
-            self.valid = False
-            for group in sub_graphs[1:]:
-                for layer in group:
-                    self.val_dictionary[layer] = str(exceptions.LayerNotConnectedToMainPartException())
-
-    def _get_model_links(self) -> None:
-        (
-            self.start_row,
-            self.up_links,
-            self.down_links,
-            self.all_indexes,
-            self.end_row,
-        ) = get_links(self.model_plan)
-
-    def _get_reorder_model(self):
-        self.model_plan = reorder_plan(self.model_plan)
-
-    def _get_input_shape_check(self) -> None:
-        """Check empty input shapes"""
-        input_layers = {}
-        for layer in self.model_plan:
-            if layer[0] in self.input_shape.keys():
-                input_layers[layer[0]] = layer[2].get("name")
-
-        for idx in self.start_row:
-            if idx not in input_layers.keys():
-                self.valid = False
-                self.layer_input_shapes[idx].append(None)
-                self.val_dictionary[idx] = str(exceptions.LayerDoesNotHaveInputShapeException())
-
-        # check if plan input shapes is not None
-        for _id, shape in self.input_shape.items():
-            if not shape or None in shape:
-                self.valid = False
-                self.val_dictionary[_id] = str(exceptions.LayerDoesNotHaveInputShapeException())
-
-    def _get_output_shape_check(self):
-        """Check compatibility of dataset's and results model output shapes"""
-        if self.output_shape:
-            outputs = []
-            for layer in self.model_plan:
-                if layer[0] in self.output_shape.keys():
-                    outputs.append(layer[0])
-                    if (
-                            self.output_shape[layer[0]] and
-                            self.output_shape[layer[0]][0]
-                            != self.layer_output_shapes[layer[0]][0][1:]
-                    ):
-                        self.valid = False
-                        self.val_dictionary[layer[0]] = str(exceptions.UnexpectedOutputShapeException(
-                            self.output_shape[layer[0]][0],
-                            self.layer_output_shapes[layer[0]][0][1:] if len(self.layer_output_shapes[layer[0]]) == 1 \
-                                else [self.layer_output_shapes[layer[0]][i][1:] for i in
-                                      self.layer_output_shapes[layer[0]]]
-                        ))
-
-            # check unspecified output layers
-            for idx in self.end_row:
-                if idx not in outputs:
-                    self.valid = False
-                    self.val_dictionary[
-                        idx
-                    ] = str(exceptions.UnspecifiedOutputLayerException())
-
-    def _model_validation(self) -> dict:
-        """Full model modeling"""
-        # check for cycles
-        self._get_cycles_check()
-        if not self.valid:
-            return self.val_dictionary
-
-        # check for full connection
-        self._get_full_connection_check()
-        if not self.valid:
-            return self.val_dictionary
-
-        # check for input shapes compatibility
-        self._get_model_links()
-        self._get_input_shape_check()
-        if not self.valid:
-            return self.val_dictionary
-
-        # check layers
-        for layer in self.model_plan:
-            if layer[1] == LayerTypeChoice.CustomBlock:
-                output_shape, comment = self._custom_block_validation(
-                    self.block_plans[layer[0]],
-                    self.layer_input_shapes.get(layer[0]),
-                    self.layers_def[layer[0]],
-                    self.layers_config[layer[0]],
-                )
-                if comment:
-                    comment = f"Errors in block {layer[2].get('name', layer[0])}: {comment[:-2]}"
-            else:
-                output_shape, comment = self._layer_validation(
-                    layer,
-                    self.layer_input_shapes.get(layer[0]),
-                    self.layers_def[layer[0]],
-                    self.layers_config[layer[0]],
-                )
-            self.layer_output_shapes[layer[0]] = output_shape
-            if comment:
-                self.valid = False
-                self.val_dictionary[layer[0]] = comment
-            for down_link in self.down_links[layer[0]]:
-                self.layer_input_shapes[down_link].extend(output_shape)
-        if not self.valid:
-            return self.val_dictionary
-
-        # check output shapes compatibility
-        self._get_output_shape_check()
-        return self.val_dictionary
-
-    def _layer_validation(self, layer: tuple, layer_input_shape: list, defaults: dict, config: LayerConfigData):
-        self.validator.set_state(
-            layer[1], layer_input_shape, layer[2], defaults, config
-        )
-        return self.validator.get_validated()
-
-    def _custom_block_validation(self, block_plan, block_input_shape, defaults, config):
-        """block modeling"""
-        _, _, down_links, _, end_row = get_links(block_plan)
-        block_val_dict = {}
-        block_input_shapes = {}
-        block_output_shapes = {}
-        for layer in block_plan:
-            block_val_dict[layer[0]] = None
-            block_input_shapes[layer[0]] = []
-            if -1 in block_plan[layer[0]][3]:
-                block_input_shapes[layer[0]].extend(block_input_shape)
-            block_output_shapes[layer[0]] = []
-
-        # check layers
-        for layer in block_plan:
-            output_shape, comment = self._layer_validation(
-                layer,
-                block_input_shapes[layer[0]],
-                defaults[layer[0]],
-                config[layer[0]],
-            )
-            block_output_shapes[layer[0]] = output_shape
-            if comment:
-                block_val_dict[layer[0]] = comment
-            for down_link in down_links[layer[0]]:
-                block_input_shapes[down_link].extend(output_shape)
-
-        block_output = []
-        for idx in end_row:
-            block_output.extend(block_output_shapes.get(idx))
-
-        block_comment = ""
-        for idx, value in block_val_dict.items():
-            if value is not None:
-                if value != "Input shape Error: received empty input shape!":
-                    block_comment += (
-                        f"block layer {block_plan[idx][2].get('name', idx)} - {value}, "
-                    )
-
-        return block_output, block_comment
-
-    # def get_layer_str(self, _layer,  name_dict={}, identifier="", _block_uplinks=None):
-    #     _layer_str = ""
-    #     if _block_uplinks:
-    #         _block_uplinks[_layer[0]] = f"{identifier}_{_layer[1]}_{_layer[0]}"
-    #
-    #     if _layer[1] == LayerTypeChoice.Input:
-    #         _layer_str = (
-    #             f"{_block_uplinks[_layer[0]] if _block_uplinks else name_dict[_layer[0]]} = "
-    #             f"{_layer[1]}(shape={self.input_shape[_layer[0]][0]}, "
-    #             f"name='{_layer[2].get('name')}')\n"
-    #         )
-    #     else:
-    #         _params = ""
-    #         for key in _layer[2].keys():
-    #             if key not in ["trainable", "output_layer"]:
-    #                 if isinstance(_layer[2][key], str):
-    #                     _params += f"{key}='{_layer[2][key]}', "
-    #                 else:
-    #                     _params += f"{key}={_layer[2][key]}, "
-    #         if len(_layer[3]) == 1:
-    #             if _block_uplinks:
-    #                 uplink = f"{_block_uplinks[_layer[3][0]]}"
-    #             else:
-    #                 uplink = f"{name_dict[_layer[3][0]]}"
-    #         else:
-    #             uplink = "["
-    #             for up in _layer[3]:
-    #                 if _block_uplinks:
-    #                     uplink += f"{_block_uplinks[up]}, "
-    #                 else:
-    #                     uplink += f"{name_dict[up]}, "
-    #             uplink = f"{uplink[:-2]}]"
-    #
-    #         if self.layers_config.get(_layer[0]).module_type.value == ModuleTypeChoice.tensorflow:
-    #             _layer_str = (
-    #                 f"{_block_uplinks[_layer[0]] if _block_uplinks else name_dict[_layer[0]]} = "
-    #                 f"{_layer[1]}({uplink}, {_params[:-2]})\n"
-    #             )
-    #         elif self.layers_config.get(_layer[0]).module_type.value != ModuleTypeChoice.keras_pretrained_model:
-    #             _layer_str = (
-    #                 f"{_block_uplinks[_layer[0]] if _block_uplinks else name_dict[_layer[0]]} = "
-    #                 f"{_layer[1]}({_params[:-2]})({uplink})\n"
-    #             )
-    #         elif self.layers_config.get(_layer[0]).module_type.value == ModuleTypeChoice.keras_pretrained_model:
-    #             if "trainable" in _layer[2].keys():
-    #                 block_name = f"{_block_uplinks[_layer[0]] if _block_uplinks else name_dict[_layer[0]]}"
-    #                 if _layer[2].get("output_layer") == "last":
-    #                     out_layer_str = f"{block_name}.output"
-    #                 else:
-    #                     out_layer_str = f"{block_name}.get_layer('{_layer[2].get('output_layer')}.output'"
-    #                 _layer_str = (
-    #                     f"\n{block_name} = {_layer[1]}({_params[:-2]})\n"
-    #                     f"for layer in {block_name}.layers:\n"
-    #                     f"    layer.trainable = {_layer[3].get('trainable', False)}\n"
-    #                     f"{block_name} = Model({block_name}.input, {out_layer_str}).output, "
-    #                     f"name='{block_name}')\n"
-    #                     f"{name_dict[_layer[0]]} = {block_name}({uplink})\n\n"
-    #                 )
-    #         else:
-    #             pass
-    #     return _layer_str
-
     def compile_keras_code(self) -> None:
         """Create keras code from model plan"""
 
@@ -629,13 +351,11 @@ class ModelValidator:
 
     def get_validated(self) -> Tuple[ModelDetailsData, dict]:
         """Returns all necessary info about modeling"""
-
         self._model_validation()
         if self.valid:
             self.compile_keras_code()
         else:
             self.keras_code = None
-
         for idx, layer in enumerate(self.filled_model.layers):
             # fill inputs
             if layer.group == LayerGroupChoice.input:
@@ -673,6 +393,228 @@ class ModelValidator:
     def get_keras_model(self):
         mc = ModelCreator(self.model_plan, self.input_shape, self.block_plans, self.layers_config)
         return mc.create_model()
+
+    def _build_model_plan(self):
+        for layer in self.model.layers:
+            if layer.group == LayerGroupChoice.input:
+                self.input_shape[layer.id] = layer.shape.input
+                self.layer_input_shapes[layer.id].extend(reformat_input_shape(layer.shape.input))
+            self.layers_state[layer.id] = layer.group.value
+            self.model_plan.append(get_layer_info(layer))
+            if layer.reference:
+                for block in self.model.references:
+                    if layer.reference == block.name:
+                        block_plan = []
+                        for block_layer in block.details.layers:
+                            block_plan.append(
+                                get_layer_info(block_layer, block_name=layer.name)
+                            )
+                        self.block_plans[layer.id] = reorder_plan(block_plan)
+                        break
+        self._get_model_links()
+        self._get_reorder_model()
+
+    def _get_cycles_check(self) -> None:
+        """
+        Check if there are cycles in the structure
+
+        Returns:
+            val_dictionary, dict:   with or without comments about cycles
+            valid, bool:            True if no cycles, otherwise False
+        """
+
+        edges = get_edges(self.model_plan)
+
+        di_graph = nx.DiGraph(edges)
+        for cycle in nx.simple_cycles(di_graph):
+            if cycle:
+                self.valid = False
+                comment = f"Layers {cycle} make a cycle! Please correct the structure!"
+                for cycle_layer in cycle:
+                    self.val_dictionary[cycle_layer] = comment
+
+    def _get_full_connection_check(self) -> None:
+        """
+        Check if there separated layers or groups of layers in plan
+
+        Returns:
+            val_dictionary, dict:   with or without comments about separation
+            valid, bool:            True if no separation, otherwise False
+        """
+
+        edges = get_edges(self.model_plan, full_connection=True)
+        di_graph = nx.DiGraph(edges)
+        sub_graphs = sorted(
+            list(nx.weakly_connected_components(di_graph)),
+            key=lambda subgraph: -len(subgraph),
+        )
+
+        if len(sub_graphs) > 1:
+            self.valid = False
+            for group in sub_graphs[1:]:
+                for layer in group:
+                    self.val_dictionary[layer] = str(exceptions.LayerNotConnectedToMainPartException())
+
+    def _get_model_links(self) -> None:
+        (
+            self.start_row,
+            self.up_links,
+            self.down_links,
+            self.all_indexes,
+            self.end_row,
+        ) = get_links(self.model_plan)
+
+    def _get_reorder_model(self):
+        self.model_plan = reorder_plan(self.model_plan)
+
+    def _get_input_shape_check(self) -> None:
+        """Check empty input shapes"""
+        input_layers = {}
+        for layer in self.model_plan:
+            if layer[0] in self.input_shape.keys():
+                input_layers[layer[0]] = layer[2].get("name")
+
+        for idx in self.start_row:
+            if idx not in input_layers.keys():
+                self.valid = False
+                self.layer_input_shapes[idx].append(None)
+                self.val_dictionary[idx] = str(exceptions.LayerDoesNotHaveInputShapeException())
+
+        # check if plan input shapes is not None
+        for _id, shape in self.input_shape.items():
+            if not shape or None in shape:
+                self.valid = False
+                self.val_dictionary[_id] = str(exceptions.LayerDoesNotHaveInputShapeException())
+
+    def _get_output_shape_check(self):
+        """Check compatibility of dataset's and results model output shapes"""
+        if self.output_shape:
+            outputs = []
+            for layer in self.model_plan:
+                if layer[0] in self.output_shape.keys():
+                    outputs.append(layer[0])
+                    if (
+                            self.output_shape[layer[0]] and
+                            self.output_shape[layer[0]][0]
+                            != self.layer_output_shapes[layer[0]][0][1:]
+                    ):
+                        self.valid = False
+                        self.val_dictionary[layer[0]] = str(exceptions.UnexpectedOutputShapeException(
+                            self.output_shape[layer[0]][0],
+                            self.layer_output_shapes[layer[0]][0][1:] if len(self.layer_output_shapes[layer[0]]) == 1 \
+                                else [self.layer_output_shapes[layer[0]][i][1:] for i in
+                                      self.layer_output_shapes[layer[0]]]
+                        ))
+            # check unspecified output layers
+            for idx in self.end_row:
+                if idx not in outputs:
+                    self.valid = False
+                    self.val_dictionary[
+                        idx
+                    ] = str(exceptions.UnspecifiedOutputLayerException())
+
+    def _model_validation(self) -> dict:
+        """Full model modeling"""
+        # check for cycles
+        self._get_cycles_check()
+        if not self.valid:
+            return self.val_dictionary
+
+        # check for full connection
+        self._get_full_connection_check()
+        if not self.valid:
+            return self.val_dictionary
+
+        # check for input shapes compatibility
+        self._get_model_links()
+        self._get_input_shape_check()
+        if not self.valid:
+            return self.val_dictionary
+
+        # check layers
+        for layer in self.model_plan:
+            if layer[1] == LayerTypeChoice.CustomBlock:
+                output_shape, comment = self._custom_block_validation(
+                    self.block_plans[layer[0]],
+                    self.layer_input_shapes.get(layer[0]),
+                    self.layers_def[layer[0]],
+                    self.layers_config[layer[0]],
+                )
+                if comment:
+                    comment = f"Errors in block {layer[2].get('name', layer[0])}: {comment[:-2]}"
+            else:
+
+                output_shape, comment = self._layer_validation(
+                    layer=layer,
+                    layer_input_shape=self.layer_input_shapes.get(layer[0]),
+                    defaults=self.layers_def[layer[0]],
+                    config=self.layers_config[layer[0]],
+                )
+            self.layer_output_shapes[layer[0]] = output_shape
+            if comment:
+                self.valid = False
+                self.val_dictionary[layer[0]] = comment
+            for down_link in self.down_links[layer[0]]:
+                self.layer_input_shapes[down_link].extend(output_shape)
+        if not self.valid:
+            return self.val_dictionary
+
+        # check output shapes compatibility
+        self._get_output_shape_check()
+        return self.val_dictionary
+
+    def _layer_validation(self, layer: tuple, layer_input_shape: list, defaults: dict, config: LayerConfigData):
+        self.validator.set_state(
+            layer_type=layer[1],
+            shape=layer_input_shape,
+            parameters=layer[2],
+            defaults=defaults,
+            config=config
+        )
+        return self.validator.get_validated()
+
+    def _custom_block_validation(self, block_plan, block_input_shape, defaults, config):
+        """block modeling"""
+        _, _, down_links, _, end_row = get_links(block_plan)
+        block_val_dict = {}
+        block_input_shapes = {}
+        block_output_shapes = {}
+        for layer in block_plan:
+            block_val_dict[layer[0]] = None
+            block_input_shapes[layer[0]] = []
+            if -1 in block_plan[layer[0]][3]:
+                block_input_shapes[layer[0]].extend(block_input_shape)
+            block_output_shapes[layer[0]] = []
+
+        # check layers
+        for layer in block_plan:
+            output_shape, comment = self._layer_validation(
+                layer,
+                block_input_shapes[layer[0]],
+                defaults[layer[0]],
+                config[layer[0]],
+            )
+            block_output_shapes[layer[0]] = output_shape
+            if comment:
+                block_val_dict[layer[0]] = comment
+            for down_link in down_links[layer[0]]:
+                block_input_shapes[down_link].extend(output_shape)
+
+        block_output = []
+        for idx in end_row:
+            block_output.extend(block_output_shapes.get(idx))
+
+        block_comment = ""
+        for idx, value in block_val_dict.items():
+            if value is not None:
+                if value != "Input shape Error: received empty input shape!":
+                    block_comment += (
+                        f"block layer {block_plan[idx][2].get('name', idx)} - {value}, "
+                    )
+
+        return block_output, block_comment
+
+
 
 
 class LayerValidation:
@@ -731,12 +673,11 @@ class LayerValidation:
                             self.layer_parameters.pop("name")
                     output_shape = [
                         tuple(
-                            getattr(self.module, self.layer_type)(
-                                **self.layer_parameters
-                            ).compute_output_shape(
-                                self.inp_shape[0]
-                                if len(self.inp_shape) == 1
-                                else self.inp_shape
+                            getattr(
+                                self.module,
+                                self.layer_type
+                            )(**self.layer_parameters).compute_output_shape(
+                                self.inp_shape[0] if len(self.inp_shape) == 1 else self.inp_shape
                             )
                         )
                     ]
