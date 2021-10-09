@@ -937,19 +937,15 @@ class LayerValidation:
                 ))
 
         # strides and dilation_rate in 1D layers
-        if isinstance(self.layer_parameters.get("strides", None), int) and isinstance(
-                self.layer_parameters.get("dilation_rate", None), int
-        ):
-            if (
-                    self.layer_parameters.get("dilation_rate") > 1
-                    and self.layer_parameters.get("strides") > 1
-            ):
+        if isinstance(self.layer_parameters.get("strides", None), int) and \
+                isinstance(self.layer_parameters.get("dilation_rate", None), int):
+            if self.layer_parameters.get("dilation_rate") > 1 and self.layer_parameters.get("strides") > 1:
                 return str(exceptions.CannotHaveValueException("'dilation_rate' and 'strides'", "> 1"))
 
         # strides and dilation_rate in 2+D layers
         if isinstance(
                 self.layer_parameters.get("strides", None), (tuple, list)
-        ) and isinstance(self.layer_parameters.get("strides", None), (tuple, list)):
+        ) and isinstance(self.layer_parameters.get("dilation_rate", None), (tuple, list)):
             if (
                     max(self.layer_parameters.get("dilation_rate")) > 1
                     and max(self.layer_parameters.get("strides")) > 1
