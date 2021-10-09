@@ -349,6 +349,7 @@ class InteractiveCallback:
         self.intermediate_result = {}
         self.statistic_result = {}
         self.train_progress = {}
+        self.addtrain_epochs = []
         self.progress_name = "training"
         self.preset_path = ""
 
@@ -446,6 +447,7 @@ class InteractiveCallback:
         self.intermediate_result = {}
         self.statistic_result = {}
         self.train_progress = {}
+        self.addtrain_epochs = []
         self.deploy_presets_data = None
 
     def get_states(self):
@@ -487,6 +489,7 @@ class InteractiveCallback:
                 'progress_table': self.progress_table,
                 'statistic_data': self.statistic_result,
                 'data_balance': self._get_balance_data_request(),
+                'addtrain_epochs': self.addtrain_epochs,
             }
         else:
             return {}
@@ -511,6 +514,7 @@ class InteractiveCallback:
                 'progress_table': self.progress_table,
                 'statistic_data': self.statistic_result,
                 'data_balance': self._get_balance_data_request(),
+                'addtrain_epochs': self.addtrain_epochs,
             }
             progress.pool(
                 self.progress_name,
