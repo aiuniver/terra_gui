@@ -153,12 +153,12 @@ export default {
       return Math.max(...[].concat(...this.plot_data.map(item => item.y)));
     },
     endpointX() {
-      return this.epochs.map(item => {
+      return this.epochsSave().map(item => {
         return [item, item, null];
       });
     },
     endpointY() {
-      return this.epochs.map(() => {
+      return this.epochsSave().map(() => {
         return [this.maxValue, this.minValue, null];
       });
     },
@@ -209,6 +209,13 @@ export default {
     // console.log(this.menus);
   },
   methods: {
+    epochsSave() {
+      if (this.epochs.length) {
+        this.epochSave = this.epochs;
+        return this.epochs;
+      }
+      return this.epochSave;
+    },
     event({ name, data }) {
       if (data === 'hide') {
         this.show();
