@@ -55,8 +55,10 @@ export default {
     margin-bottom: 10px;
   }
   &__more {
+    user-select: none;
     cursor: pointer;
-    color: bisque;
+    color: #65b9f4;
+    font-size: 14px;
   }
 }
 </style>
