@@ -1,4 +1,5 @@
 from terra_ai.utils import decamelize
+from terra_ai.exceptions.tensor_flow import ResourceExhaustedError as Resource
 from terra_ai.datasets.data import DataType, InstructionsData, DatasetInstructionsData
 from terra_ai.datasets.utils import PATH_TYPE_LIST
 from terra_ai.datasets.arrays_create import CreateArray
@@ -11,6 +12,7 @@ from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoic
     LayerTypeProcessingClassificationChoice
 from terra_ai.settings import DATASET_EXT, DATASET_CONFIG
 
+import psutil
 import cv2
 import os
 import random
@@ -84,7 +86,8 @@ class CreateDataset(object):
         shutil.move(str(self.paths.basepath), creation_data.datasets_path)
         shutil.rmtree(self.temp_directory)
 
-    def postprocess_timeseries(self, full_array):
+    @staticmethod
+    def postprocess_timeseries(full_array):
         try:
             new_array = np.array(full_array).transpose()
         except:
@@ -292,11 +295,9 @@ class CreateDataset(object):
 
             instructions_data.parameters = {'put_type': decamelize(put.type),
                                             **instr['parameters']}
-
             if decamelize(put.type) in PATH_TYPE_LIST:
-                new_paths = [os.path.join('sources', f'{put.id}_{decamelize(put.type)}',
-                                          path.replace(self.source_directory + os.path.sep, '')) for path in
-                             instructions_data.instructions]
+                new_paths = [path.replace(str(self.paths.basepath) + os.path.sep, '')
+                             for path in instructions_data.instructions]
                 instructions_data.instructions = new_paths
 
             put_parameters[put.id] = {f'{put.id}_{decamelize(put.type)}': instructions_data}
@@ -711,6 +712,9 @@ class CreateDataset(object):
                 for j in range(6):
                     globals()[f'current_arrays_{j}'] = []
                 for i in range(0, len(self.dataframe[split]) - length - depth, step):
+                    if psutil.virtual_memory()._asdict().get("percent") > 90:
+                        current_arrays = []
+                        raise Resource
                     full_array = []
                     for col_name, data in put_data[key].items():
                         prep = None

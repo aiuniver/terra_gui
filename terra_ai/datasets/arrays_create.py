@@ -55,21 +55,23 @@ class CreateArray(object):
         cur_step = 0
 
         for elem in paths_list:
-            if options['video_mode'] == LayerVideoModeChoice.completely:
-                video.append(';'.join([elem, f'[{cur_step}-{options["max_frames"]}]']))
-            elif options['video_mode'] == LayerVideoModeChoice.length_and_step:
-                cur_step = 0
-                stop_flag = False
-                cap = cv2.VideoCapture(elem)
-                frame_count = int(cap.get(7))
-                while not stop_flag:
-                    video.append(';'.join([elem, f'[{cur_step}-{cur_step + options["length"]}]']))
-                    cur_step += options['step']
-                    if cur_step + options['length'] > frame_count:
-                        stop_flag = True
-                        if options['length'] < frame_count:
-                            video.append(
-                                ';'.join([elem, f'[{frame_count - options["length"]}-{frame_count}]']))
+            cap = cv2.VideoCapture(elem)
+            if cap.isOpened():
+                if options['video_mode'] == LayerVideoModeChoice.completely:
+                    video.append(';'.join([elem, f'[{cur_step}-{options["max_frames"]}]']))
+                elif options['video_mode'] == LayerVideoModeChoice.length_and_step:
+                    cur_step = 0
+                    stop_flag = False
+                    cap = cv2.VideoCapture(elem)
+                    frame_count = int(cap.get(7))
+                    while not stop_flag:
+                        video.append(';'.join([elem, f'[{cur_step}-{cur_step + options["length"]}]']))
+                        cur_step += options['step']
+                        if cur_step + options['length'] > frame_count:
+                            stop_flag = True
+                            if options['length'] < frame_count:
+                                video.append(
+                                    ';'.join([elem, f'[{frame_count - options["length"]}-{frame_count}]']))
 
         instructions = {'instructions': video,
                         'parameters': options
@@ -367,6 +369,9 @@ class CreateArray(object):
             shutil.copyfile(elem, os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
                                                os.path.basename(elem)))
 
+        paths_list = [os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)), os.path.basename(elem))
+                      for elem in paths_list]
+
         instructions = {'instructions': paths_list,
                         'parameters': {'height': options['height'],
                                        'width': options['width'],
@@ -622,18 +627,9 @@ class CreateArray(object):
             os.makedirs(os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem))), exist_ok=True)
             shutil.copyfile(elem, os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
                                                os.path.basename(elem)))
-        # for elem in paths_list:
-        #     os.makedirs(
-        #         os.path.join(tmp_folder, f'{options["put"]}_object_detection', os.path.basename(os.path.dirname(elem))),
-        #         exist_ok=True)
-        #     shutil.copyfile(elem,
-        #                     os.path.join(tmp_folder, f'{options["put"]}_object_detection',
-        #                                  os.path.basename(os.path.dirname(elem)),
-        #                                  os.path.basename(elem)))
-        #
-        # if dataset_folder:
-        #     if not os.path.isdir(os.path.join(dataset_folder, f'{options["put"]}_object_detection')):
-        #         shutil.move(os.path.join(tmp_folder, f'{options["put"]}_object_detection'), dataset_folder)
+
+        paths_list = [os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)), os.path.basename(elem))
+                      for elem in paths_list]
 
         instructions = {'instructions': paths_list,
                         'parameters': {'yolo': options['yolo'],

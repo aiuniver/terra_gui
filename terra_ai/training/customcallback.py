@@ -32,7 +32,7 @@ from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.utils import camelize, decamelize
 
-__version__ = 0.083
+__version__ = 0.084
 
 
 def sort_dict(dict_to_sort: dict, mode='by_name'):
@@ -79,7 +79,7 @@ loss_metric_config = {
         "BinaryCrossentropy": {
             "log_name": "binary_crossentropy",
             "mode": "min",
-            "module": "tensorflow.keras.losses"
+            "module": "tensorflow.keras.losses",
         },
         "CategoricalCrossentropy": {
             "log_name": "categorical_crossentropy",
@@ -861,6 +861,15 @@ class InteractiveCallback:
         return data_lenth
 
     # Методы для update_state()
+    @staticmethod
+    def _round_loss_metric(x: float) -> float:
+        if not x:
+            return x
+        elif x > 1:
+            return np.round(x, 3).item()
+        else:
+            return np.round(x, -int(math.floor(math.log10(abs(x))) - 2)).item()
+
     def _reformat_fit_logs(self, logs) -> dict:
         interactive_log = {}
         update_logs = {}
@@ -880,8 +889,8 @@ class InteractiveCallback:
                 val_loss = update_logs.get(f'val_{out}_loss')
             interactive_log[out]['loss'] = {
                 self.losses.get(out): {
-                    'train': float(train_loss) if not math.isnan(float(train_loss)) else None,
-                    'val': float(val_loss) if not math.isnan(float(val_loss)) else None,
+                    'train': self._round_loss_metric(train_loss) if not math.isnan(float(train_loss)) else None,
+                    'val': self._round_loss_metric(val_loss) if not math.isnan(float(val_loss)) else None,
                 }
             }
 
@@ -898,8 +907,8 @@ class InteractiveCallback:
                     val_metric = update_logs.get(
                         f"val_{out}_{loss_metric_config.get('metric').get(metric_name).get('log_name')}")
                 interactive_log[out]['metrics'][metric_name] = {
-                    'train': float(train_metric) if not math.isnan(float(train_metric)) else None,
-                    'val': float(val_metric) if not math.isnan(float(val_metric)) else None
+                    'train': self._round_loss_metric(train_metric) if not math.isnan(float(train_metric)) else None,
+                    'val': self._round_loss_metric(val_metric) if not math.isnan(float(val_metric)) else None
                 }
         return interactive_log
 
@@ -1023,10 +1032,14 @@ class InteractiveCallback:
                         # fill losses
                         if data_idx or data_idx == 0:
                             self.log_history[f"{out}"]['loss'][loss_name][data_type][data_idx] = \
-                                self.current_logs.get(f"{out}").get('loss').get(loss_name).get(data_type)
+                                self._round_loss_metric(
+                                    self.current_logs.get(f"{out}").get('loss').get(loss_name).get(data_type)
+                                )
                         else:
                             self.log_history[f"{out}"]['loss'][loss_name][data_type].append(
-                                self.current_logs.get(f"{out}").get('loss').get(loss_name).get(data_type)
+                                self._round_loss_metric(
+                                    self.current_logs.get(f"{out}").get('loss').get(loss_name).get(data_type)
+                                )
                             )
                     # fill loss progress state
                     if data_idx or data_idx == 0:
@@ -1100,9 +1113,12 @@ class InteractiveCallback:
                                     y_pred=self.y_pred.get(f"{out}")[:, :, class_idx],
                                 )
                             if data_idx or data_idx == 0:
-                                self.log_history[f"{out}"]['class_loss'][cls][loss_name][data_idx] = class_loss
+                                self.log_history[f"{out}"]['class_loss'][cls][loss_name][data_idx] = \
+                                    self._round_loss_metric(class_loss)
                             else:
-                                self.log_history[f"{out}"]['class_loss'][cls][loss_name].append(class_loss)
+                                self.log_history[f"{out}"]['class_loss'][cls][loss_name].append(
+                                    self._round_loss_metric(class_loss)
+                                )
 
                 for metric_name in self.log_history.get(f"{out}").get('metrics').keys():
                     for data_type in ['train', 'val']:
@@ -1110,11 +1126,15 @@ class InteractiveCallback:
                         if data_idx or data_idx == 0:
                             if self.current_logs:
                                 self.log_history[f"{out}"]['metrics'][metric_name][data_type][data_idx] = \
-                                    self.current_logs.get(f"{out}").get('metrics').get(metric_name).get(data_type)
+                                    self._round_loss_metric(
+                                        self.current_logs.get(f"{out}").get('metrics').get(metric_name).get(data_type)
+                                    )
                         else:
                             if self.current_logs:
                                 self.log_history[f"{out}"]['metrics'][metric_name][data_type].append(
-                                    self.current_logs.get(f"{out}").get('metrics').get(metric_name).get(data_type)
+                                    self._round_loss_metric(
+                                        self.current_logs.get(f"{out}").get('metrics').get(metric_name).get(data_type)
+                                    )
                                 )
 
                     if data_idx or data_idx == 0:
@@ -1191,9 +1211,12 @@ class InteractiveCallback:
                                     y_pred=self.y_pred.get(f"{out}")[:, :, class_idx],
                                 )
                             if data_idx or data_idx == 0:
-                                self.log_history[f"{out}"]['class_metrics'][cls][metric_name][data_idx] = class_metric
+                                self.log_history[f"{out}"]['class_metrics'][cls][metric_name][data_idx] = \
+                                    self._round_loss_metric(class_metric)
                             else:
-                                self.log_history[f"{out}"]['class_metrics'][cls][metric_name].append(class_metric)
+                                self.log_history[f"{out}"]['class_metrics'][cls][metric_name].append(
+                                    self._round_loss_metric(class_metric)
+                                )
 
     def _update_progress_table(self, epoch_time: float):
         self.progress_table[self.current_epoch] = {
@@ -1342,7 +1365,7 @@ class InteractiveCallback:
 
     @staticmethod
     def _fill_graph_front_structure(_id: int, _type: str, graph_name: str, short_name: str,
-                                    x_label: str, y_label: str, plot_data: list,
+                                    x_label: str, y_label: str, plot_data: list, best: list = None,
                                     type_data: str = None, progress_state: str = None):
         return {
             'id': _id,
@@ -1353,6 +1376,7 @@ class InteractiveCallback:
             'x_label': x_label,
             'y_label': y_label,
             'plot_data': plot_data,
+            'best': best,
             'progress_state': progress_state
         }
 
@@ -1396,11 +1420,27 @@ class InteractiveCallback:
                 else:
                     progress_state = "normal"
 
+                train_list = self.log_history.get(f"{loss_graph_config.output_idx}").get('loss').get(
+                        self.losses.get(f"{loss_graph_config.output_idx}")).get('train')
+                best_train_value = min(train_list)
+                best_train = self._fill_graph_plot_data(
+                    x=[self.log_history.get("epochs")[train_list.index(best_train_value)]],
+                    y=[best_train_value],
+                    label="Тренировочная выборка"
+                )
                 train_plot = self._fill_graph_plot_data(
                     x=self.log_history.get("epochs"),
-                    y=self.log_history.get(f"{loss_graph_config.output_idx}").get('loss').get(
-                        self.losses.get(f"{loss_graph_config.output_idx}")).get('train'),
+                    y=train_list,
                     label="Тренировочная выборка"
+                )
+
+                val_list = self.log_history.get(f"{loss_graph_config.output_idx}").get('loss').get(
+                        self.losses.get(f"{loss_graph_config.output_idx}")).get("val")
+                best_val_value = min(val_list)
+                best_val = self._fill_graph_plot_data(
+                    x=[self.log_history.get("epochs")[val_list.index(best_val_value)]],
+                    y=[best_val_value],
+                    label="Проверочная выборка"
                 )
                 val_plot = self._fill_graph_plot_data(
                     x=self.log_history.get("epochs"),
@@ -1408,6 +1448,7 @@ class InteractiveCallback:
                         self.losses.get(f"{loss_graph_config.output_idx}")).get("val"),
                     label="Проверочная выборка"
                 )
+
                 data_return.append(
                     self._fill_graph_front_structure(
                         _id=loss_graph_config.id,
@@ -1418,6 +1459,7 @@ class InteractiveCallback:
                         x_label="Эпоха",
                         y_label="Значение",
                         plot_data=[train_plot, val_plot],
+                        best=[best_train, best_val],
                         progress_state=progress_state
                     )
                 )
@@ -1451,6 +1493,7 @@ class InteractiveCallback:
             return data_return
         for metric_graph_config in self.interactive_config.metric_graphs:
             if metric_graph_config.show == MetricGraphShowChoice.model:
+                min_max_mode = loss_metric_config.get("metric").get(metric_graph_config.show_metric.name).get("mode")
                 if sum(self.log_history.get(f"{metric_graph_config.output_idx}").get("progress_state").get(
                         "metrics").get(metric_graph_config.show_metric.name).get(
                     'overfitting')[-self.log_gap:]) >= self.progress_threashold:
@@ -1462,11 +1505,28 @@ class InteractiveCallback:
                 else:
                     progress_state = 'normal'
 
+                train_list = self.log_history.get(f"{metric_graph_config.output_idx}").get('metrics').get(
+                        metric_graph_config.show_metric.name).get("train")
+                best_train_value = min(train_list) if min_max_mode == 'min' else max(train_list)
+                best_train = self._fill_graph_plot_data(
+                    x=[self.log_history.get("epochs")[train_list.index(best_train_value)]],
+                    y=[best_train_value],
+                    label="Тренировочная выборка"
+                )
                 train_plot = self._fill_graph_plot_data(
                     x=self.log_history.get("epochs"),
                     y=self.log_history.get(f"{metric_graph_config.output_idx}").get('metrics').get(
                         metric_graph_config.show_metric.name).get("train"),
                     label="Тренировочная выборка"
+                )
+
+                val_list = self.log_history.get(f"{metric_graph_config.output_idx}").get('metrics').get(
+                        metric_graph_config.show_metric.name).get("val")
+                best_val_value = min(val_list) if min_max_mode == 'min' else max(val_list)
+                best_val = self._fill_graph_plot_data(
+                    x=[self.log_history.get("epochs")[val_list.index(best_val_value)]],
+                    y=[best_val_value],
+                    label="Проверочная выборка"
                 )
                 val_plot = self._fill_graph_plot_data(
                     x=self.log_history.get("epochs"),
@@ -1484,6 +1544,7 @@ class InteractiveCallback:
                         x_label="Эпоха",
                         y_label="Значение",
                         plot_data=[train_plot, val_plot],
+                        best=[best_train, best_val],
                         progress_state=progress_state
                     )
                 )
@@ -1546,6 +1607,7 @@ class InteractiveCallback:
                             'type': type_choice,
                             'data': data,
                         }
+
                 for out in self.options.data.outputs.keys():
                     task = self.options.data.outputs.get(out).task
 

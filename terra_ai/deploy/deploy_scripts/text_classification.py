@@ -1,6 +1,4 @@
 import os
-import pathlib
-
 from .cascades.create import json2cascade
 
 
