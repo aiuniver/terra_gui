@@ -55,21 +55,23 @@ class CreateArray(object):
         cur_step = 0
 
         for elem in paths_list:
-            if options['video_mode'] == LayerVideoModeChoice.completely:
-                video.append(';'.join([elem, f'[{cur_step}-{options["max_frames"]}]']))
-            elif options['video_mode'] == LayerVideoModeChoice.length_and_step:
-                cur_step = 0
-                stop_flag = False
-                cap = cv2.VideoCapture(elem)
-                frame_count = int(cap.get(7))
-                while not stop_flag:
-                    video.append(';'.join([elem, f'[{cur_step}-{cur_step + options["length"]}]']))
-                    cur_step += options['step']
-                    if cur_step + options['length'] > frame_count:
-                        stop_flag = True
-                        if options['length'] < frame_count:
-                            video.append(
-                                ';'.join([elem, f'[{frame_count - options["length"]}-{frame_count}]']))
+            cap = cv2.VideoCapture(elem)
+            if cap.isOpened():
+                if options['video_mode'] == LayerVideoModeChoice.completely:
+                    video.append(';'.join([elem, f'[{cur_step}-{options["max_frames"]}]']))
+                elif options['video_mode'] == LayerVideoModeChoice.length_and_step:
+                    cur_step = 0
+                    stop_flag = False
+                    cap = cv2.VideoCapture(elem)
+                    frame_count = int(cap.get(7))
+                    while not stop_flag:
+                        video.append(';'.join([elem, f'[{cur_step}-{cur_step + options["length"]}]']))
+                        cur_step += options['step']
+                        if cur_step + options['length'] > frame_count:
+                            stop_flag = True
+                            if options['length'] < frame_count:
+                                video.append(
+                                    ';'.join([elem, f'[{frame_count - options["length"]}-{frame_count}]']))
 
         instructions = {'instructions': video,
                         'parameters': options

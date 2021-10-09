@@ -1,4 +1,5 @@
 from terra_ai.utils import decamelize
+from terra_ai.exceptions.tensor_flow import ResourceExhaustedError as Resource
 from terra_ai.datasets.data import DataType, InstructionsData, DatasetInstructionsData
 from terra_ai.datasets.utils import PATH_TYPE_LIST
 from terra_ai.datasets.arrays_create import CreateArray
@@ -11,6 +12,7 @@ from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoic
     LayerTypeProcessingClassificationChoice
 from terra_ai.settings import DATASET_EXT, DATASET_CONFIG
 
+import psutil
 import cv2
 import os
 import random
@@ -710,6 +712,9 @@ class CreateDataset(object):
                 for j in range(6):
                     globals()[f'current_arrays_{j}'] = []
                 for i in range(0, len(self.dataframe[split]) - length - depth, step):
+                    if psutil.virtual_memory()._asdict().get("percent") > 90:
+                        current_arrays = []
+                        raise Resource
                     full_array = []
                     for col_name, data in put_data[key].items():
                         prep = None
