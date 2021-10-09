@@ -674,6 +674,8 @@ class FitCallback(keras.callbacks.Callback):
 
     def _get_result_data(self):
         self.result["states"] = interactive.get_states()
+        if not self.result.get("train_data", {}):
+            self.result["train_data"] = {"addtrain_epochs": []}
         self.result["train_data"]["addtrain_epochs"] = self.addtrain_epochs
         return self.result
 
@@ -791,6 +793,7 @@ class FitCallback(keras.callbacks.Callback):
         self._time_first_step = time.time()
 
     def on_train_batch_end(self, batch, logs=None):
+
         if self._get_train_status() == "stopped":
             self.model.stop_training = True
             msg = f'ожидайте остановку...'
