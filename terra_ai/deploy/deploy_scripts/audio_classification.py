@@ -1,5 +1,4 @@
 import os
-from .cascades.create import json2cascade
 
 
 def predict(input_path):
@@ -12,3 +11,8 @@ def predict(input_path):
     main_block(input_path=input_path)
     return print(main_block[-1].out)
 
+
+if __name__ == "__main__":
+    from cascades.create import json2cascade
+else:
+    from .cascades.create import json2cascade
