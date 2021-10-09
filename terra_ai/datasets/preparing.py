@@ -129,11 +129,19 @@ class PrepareDataset(object):
 
         x_val, x_test, y_val, y_test = train_test_split(x_val, y_val, test_size=0.5, shuffle=True)
 
-        for split in ['train', 'val', 'test']:
-            for key in self.data.inputs.keys():
-                self.X[split][str(key)] = globals()[f'x_{split}']
-            for key in self.data.outputs.keys():
-                self.Y[split][str(key)] = globals()[f'y_{split}']
+        # for split in ['train', 'val', 'test']:
+        #     for key in self.data.inputs.keys():
+        #         self.X[split][str(key)] = globals()[f'x_{split}']
+        #     for key in self.data.outputs.keys():
+        #         self.Y[split][str(key)] = globals()[f'y_{split}']
+        for key in self.data.inputs.keys():
+            self.X['train'][str(key)] = x_train
+            self.X['val'][str(key)] = x_val
+            self.X['test'][str(key)] = x_test
+        for key in self.data.outputs.keys():
+            self.Y['train'][str(key)] = y_train
+            self.Y['val'][str(key)] = y_val
+            self.Y['test'][str(key)] = y_test
 
     def prepare_dataset(self):
 
