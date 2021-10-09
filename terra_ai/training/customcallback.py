@@ -1426,7 +1426,7 @@ class InteractiveCallback:
                 best_train = self._fill_graph_plot_data(
                     x=[self.log_history.get("epochs")[train_list.index(best_train_value)]],
                     y=[best_train_value],
-                    label="Тренировочная выборка"
+                    label="Лучший результат на тренировочной выборке"
                 )
                 train_plot = self._fill_graph_plot_data(
                     x=self.log_history.get("epochs"),
@@ -1440,7 +1440,7 @@ class InteractiveCallback:
                 best_val = self._fill_graph_plot_data(
                     x=[self.log_history.get("epochs")[val_list.index(best_val_value)]],
                     y=[best_val_value],
-                    label="Проверочная выборка"
+                    label="Лучший результат на проверочной выборке"
                 )
                 val_plot = self._fill_graph_plot_data(
                     x=self.log_history.get("epochs"),
@@ -1511,7 +1511,7 @@ class InteractiveCallback:
                 best_train = self._fill_graph_plot_data(
                     x=[self.log_history.get("epochs")[train_list.index(best_train_value)]],
                     y=[best_train_value],
-                    label="Тренировочная выборка"
+                    label="Лучший результат на тренировочной выборке"
                 )
                 train_plot = self._fill_graph_plot_data(
                     x=self.log_history.get("epochs"),
@@ -1526,7 +1526,7 @@ class InteractiveCallback:
                 best_val = self._fill_graph_plot_data(
                     x=[self.log_history.get("epochs")[val_list.index(best_val_value)]],
                     y=[best_val_value],
-                    label="Проверочная выборка"
+                    label="Лучший результат на проверочной выборке"
                 )
                 val_plot = self._fill_graph_plot_data(
                     x=self.log_history.get("epochs"),
