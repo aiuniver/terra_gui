@@ -36,7 +36,7 @@ from terra_ai.training.customlosses import DiceCoef
 from terra_ai.training.yolo_fit import create_yolo, CustomModelYolo, compute_loss
 from terra_ai.exceptions import training as exceptions
 from terra_ai.exceptions.tensor_flow import ResourceExhaustedError as resource
-# from terra_ai.agent.exceptions import FileNotFoundException as no_file
+from terra_ai.agent.exceptions import FileNotFoundException as no_file
 
 
 __version__ = 0.02
