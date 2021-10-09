@@ -52,7 +52,15 @@ export default {
       type: String,
       default: '',
     },
+    best: {
+      type: Array,
+      default: () => [],
+    },
     plot_data: {
+      type: Array,
+      default: () => [],
+    },
+    epochs: {
       type: Array,
       default: () => [],
     },
@@ -68,14 +76,15 @@ export default {
       type: Object,
       default: () => {},
     },
-    start: Boolean
+    start: Boolean,
   },
   components: {
     Plotly,
     PopUpMenu,
-    LoadSpiner
+    LoadSpiner,
   },
   data: () => ({
+    epochSave: [],
     graphicShow: true,
     popMenuShow: false,
     defLayout: {
@@ -137,10 +146,63 @@ export default {
       }
       return layout;
     },
-    data() {
-      return this.plot_data.map(({ x, y, mode = this.type, label }) => {
-        return { x, y, mode, name:label };
+    minValue() {
+      return Math.min(...[].concat(...this.plot_data.map(item => item.y)));
+    },
+    maxValue() {
+      return Math.max(...[].concat(...this.plot_data.map(item => item.y)));
+    },
+    endpointX() {
+      return this.epochs.map(item => {
+        return [item, item, null];
       });
+    },
+    endpointY() {
+      return this.epochs.map(() => {
+        return [this.maxValue, this.minValue, null];
+      });
+    },
+    changeEpochs() {
+      return [
+        {
+          type: 'scatter',
+          x: [].concat(...this.endpointX),
+          y: [].concat(...this.endpointY),
+          mode: 'line',
+          name: 'Остановка обучения',
+          // showlegend: false,
+          hoverinfo: 'name',
+          line: {
+            color: 'grey',
+            width: 2,
+            dash: 'dash',
+          },
+        },
+      ];
+    },
+    changeBest() {
+      return !this.best
+        ? []
+        : this.best.map(({ x, y, mode = 'markers', label }) => {
+            return {
+              x,
+              y,
+              mode,
+              name: `${label} ${y[0]}`,
+              marker: {
+                symbol: 'circle',
+                size: 10,
+              },
+            };
+          });
+    },
+    changePlotData() {
+      return this.plot_data.map(({ x, y, mode = 'lines', label }) => {
+        return { x, y, mode, name: label };
+      });
+    },
+    data() {
+      return [...this.changePlotData, ...this.changeBest, ...this.changeEpochs];
     },
   },
   mounted() {
