@@ -36,7 +36,6 @@ from terra_ai.training.customlosses import DiceCoef
 from terra_ai.training.yolo_fit import create_yolo, CustomModelYolo, compute_loss
 from terra_ai.exceptions import training as exceptions
 from terra_ai.exceptions.tensor_flow import ResourceExhaustedError as resource
-from terra_ai.agent.exceptions import FileNotFoundException as no_file
 
 
 __version__ = 0.02
@@ -352,7 +351,7 @@ class GUINN:
             progress.pool(self.progress_name, error=resource(error).__str__())
         except FileNotFoundError as error:
             self._check_interactive_status()
-            progress.pool(self.progress_name, error=no_file(error).__str__())
+            progress.pool(self.progress_name, error=exceptions.FileNotFoundException(error).__str__())
 
         if (interactive.get_states().get("status") == "stopped"
             and self.callbacks[0].last_epoch < params.epochs) or \
