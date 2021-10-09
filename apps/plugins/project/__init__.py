@@ -325,16 +325,18 @@ class Project(BaseMixinData):
             if need_loss:
                 loss = need_loss if need_loss in training_losses else training_losses[0]
             else:
-                loss = training_losses[0]
+                loss = training_losses[0] if training_losses else None
             need_metrics = training_layer.metrics if training_layer else []
-            metrics = list(set(need_metrics) & set(training_metrics))
+            metrics = list(set(need_metrics) & set(training_metrics or []))
             outputs.append(
                 {
                     "id": layer.id,
                     "classes_quantity": layer.num_classes,
                     "task": layer.task,
                     "loss": loss,
-                    "metrics": metrics if len(metrics) else [training_metrics[0]],
+                    "metrics": metrics
+                    if len(metrics)
+                    else ([training_metrics[0]] if training_metrics else []),
                 }
             )
         self.training.base.architecture.parameters.outputs = OutputsList(outputs)

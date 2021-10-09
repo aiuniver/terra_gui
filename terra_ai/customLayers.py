@@ -574,6 +574,71 @@ class YOLOResBlock(Layer):
         return cls(**config)
 
 
+class YOLOv3ResBlock(Layer):
+    def __init__(self,
+                 filters=32,
+                 num_resblocks=1,
+                 use_bias=False,
+                 include_head=True,
+                 **kwargs):
+        super(YOLOv3ResBlock, self).__init__(**kwargs)
+        self.filters = filters
+        self.num_resblocks = num_resblocks
+        self.include_head = include_head
+        self.kwargs = {'use_bias': use_bias, 'activation': None,
+                       "kernel_regularizer": tensorflow.keras.regularizers.l2(5e-4)}
+        # self.kwargs.update(kwargs)
+        if self.include_head:
+            self.zero2d = tensorflow.keras.layers.ZeroPadding2D(padding=((1, 0), (1, 0)))
+            self.conv_start = tensorflow.keras.layers.Conv2D(filters=self.filters, kernel_size=(3, 3),
+                                                             strides=(2, 2), padding='valid', **self.kwargs)
+            self.bn_start = tensorflow.keras.layers.BatchNormalization(momentum=0.99)
+            self.activation_start = tensorflow.keras.layers.LeakyReLU(**{'alpha': 0.1})
+
+        for i in range(self.num_resblocks):
+            setattr(self, f"conv_1_{i}",
+                    tensorflow.keras.layers.Conv2D(filters=self.filters // 2, kernel_size=(1, 1),
+                                                   padding='same', **self.kwargs))
+            setattr(self, f"conv_2_{i}",
+                    tensorflow.keras.layers.Conv2D(filters=self.filters,
+                                                   kernel_size=(3, 3), padding='same', **self.kwargs))
+            setattr(self, f"bn_1_{i}", tensorflow.keras.layers.BatchNormalization(momentum=0.99))
+            setattr(self, f"bn_2_{i}", tensorflow.keras.layers.BatchNormalization(momentum=0.99))
+            setattr(self, f"activ_1_{i}", tensorflow.keras.layers.LeakyReLU(**{'alpha': 0.1}))
+            setattr(self, f"activ_2_{i}", tensorflow.keras.layers.LeakyReLU(**{'alpha': 0.1}))
+            setattr(self, f"add_{i}", tensorflow.keras.layers.Add())
+
+    def call(self, x, training=True, **kwargs):
+        if self.include_head:
+            x = self.zero2d(x)
+            x = self.conv_start(x)
+            x = self.bn_start(x)
+            x = self.activation_start(x)
+        for i in range(self.num_resblocks):
+            y = getattr(self, f"conv_1_{i}")(x)
+            y = getattr(self, f"bn_1_{i}")(y)
+            y = getattr(self, f"activ_1_{i}")(y)
+            y = getattr(self, f"conv_2_{i}")(y)
+            y = getattr(self, f"bn_2_{i}")(y)
+            y = getattr(self, f"activ_2_{i}")(y)
+            x = getattr(self, f"add_{i}")([y, x])
+        return x
+
+    def get_config(self):
+        config = {
+            'filters': self.filters,
+            'num_resblocks': self.num_resblocks,
+            'use_bias': self.use_bias,
+            'include_head': self.include_head,
+        }
+        base_config = super(YOLOv3ResBlock, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+
 class YOLOConvBlock(Layer):
     """Unet block layer """
 
@@ -695,8 +760,9 @@ if __name__ == "__main__":
     # x = YOLOResBlock(**{'mode': "YOLOv5", 'filters': 32, "num_resblocks": 5, "activation": 'Swish',
     #                     "use_bias": False, "include_head": True, "include_add": True,
     #                     "all_narrow": True})
-    x = YOLOConvBlock(**{'mode': "YOLOv5", "filters": 64, "num_conv": 5, 'activation': 'Swish'})
-    # print(x.compute_output_shape(input_shape=(None, 32, 32, 64)))
+    # x = YOLOConvBlock(**{'mode': "YOLOv5", "filters": 64, "num_conv": 5, 'activation': 'Swish'})
+    x = YOLOv3ResBlock(filters=32, num_resblocks=1)
+    print(x.compute_output_shape(input_shape=(None, 32, 32, 64)))
     pass
 
 

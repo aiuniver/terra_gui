@@ -45,7 +45,6 @@ class LayerData(IDMixinData):
     """
     Данные слоя
     """
-
     name: str
     "Название"
     type: LayerTypeChoice

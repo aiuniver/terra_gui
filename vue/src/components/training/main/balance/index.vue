@@ -38,7 +38,7 @@ export default {
     Scatter: () => import('../stats/Scatter'),
     Histogram: () => import('../stats/Histogram'),
     Bar: () => import('../stats/Histogram'),
-    Table: () => import('../stats/Table'),
+    Table: () => import('../stats/STable'),
     Graphic: () => import('../stats/Graphic'),
     LoadSpiner,
   },

@@ -1,34 +1,14 @@
 import cv2
-import tensorflow
 import numpy as np
-
-
-def change_size(shape: tuple):
-    if len(shape) == 3:
-        shape = shape[:2]
-
-    fun = lambda frame: tensorflow.image.resize(frame, shape).numpy()
-
-    return fun
-
-
-def change_type(type):
-
-    fun = lambda frame: frame.astype(type)
-
-    return fun
-
-
-def gaussian_blur(params: dict):
-    fun = lambda img: cv2.GaussianBlur(img, **params)
-
-    return fun
+from .array import change_type, change_size, min_max_scale
 
 
 def main(**params):
 
     resize = change_size(params['shape'][-3:]) if 'shape' in params.keys() else None
     retype = change_type(getattr(np, params['dtype'])) if 'dtype' in params.keys() else None
+    min_max = min_max_scale(params['min_scaler'], params['max_scaler']) \
+        if params['scaler'] == 'min_max_scaler' else None
 
     def fun(path):
 
@@ -45,9 +25,8 @@ def main(**params):
 
             frame = frame[:, :, [2, 1, 0]]
 
-            if params['scaler'] == 'min_max_scaler':
-                std = (frame - frame.min()) / (frame.max() - frame.min())
-                frame = std * (params['max_scaler'] - params['min_scaler']) + params['min_scaler']
+            if min_max:
+                frame = min_max(frame)
 
             if params['video_mode'] == 'completely' and params['max_frames'] > len(array) or\
                params['video_mode'] == 'length_and_step' and params['length'] > len(array):

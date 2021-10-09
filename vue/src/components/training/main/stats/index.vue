@@ -1,7 +1,7 @@
 <template>
-  <div class="t-scatters">
-    <div class="t-scatters__header">
-      <div class="t-scatters__checks">
+  <div class="t-statistic">
+    <div class="t-statistic__header">
+      <div class="t-statistic__checks">
         <template v-for="({ id, value }, i) of outputLayers">
           <t-field :key="'check_' + i" inline :label="`Выходной слой «${id}»`">
             <t-checkbox-new small :value="value" @change="change({ id, value: $event.value })" />
@@ -12,9 +12,9 @@
         <t-checkbox-new v-model="settings.autoupdate" small @change="send" />
       </t-field>
     </div>
-    <div class="t-scatters__content">
+    <div class="t-statistic__content">
       <template v-for="(layer, index) of statisticData">
-        <component :is="layer.type" v-bind="layer" :key="`${'layer.type' + index}`" />
+        <component :is="component(layer.type)" v-bind="layer" :key="`${'layer.type' + index}`" />
       </template>
       <LoadSpiner
         v-if="isLearning && ids.length && !Object.keys(statisticData).length"
@@ -29,14 +29,14 @@
 import LoadSpiner from '@/components/forms/LoadSpiner';
 import { mapGetters } from 'vuex';
 export default {
-  name: 't-scatters',
+  name: 't-statistic',
   components: {
     Heatmap: () => import('../stats/Heatmap'),
     Corheatmap: () => import('../stats/Corheatmap'),
     Scatter: () => import('../stats/Scatter'),
     Histogram: () => import('../stats/Histogram'),
     Bar: () => import('../stats/Histogram'),
-    Table: () => import('../stats/Table'),
+    STable: () => import('../stats/STable'),
     Graphic: () => import('../stats/Graphic'),
     LoadSpiner,
   },
@@ -74,7 +74,9 @@ export default {
     },
   },
   methods: {
-    
+    component(comp) {
+      return comp === 'table' ? 's-table' : comp
+    },
     change({ id, value }) {
       this.settings.output_id = value ? [...this.ids, id] : [...this.ids.filter(item => item !== id)];
       this.send();
@@ -87,7 +89,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.t-scatters {
+.t-statistic {
   position: relative;
   margin-bottom: 20px;
   &__header {

@@ -18,7 +18,7 @@
     <li v-if="type !== 'loss_graphs'" class="menu__dropdown">
       <i :class="['t-icon', 'icon-training-dropdown']"></i>
       <span>Показывать метрики</span>
-      <ul class="menu">
+      <ul class="menu" style="max-height: 240px; overflow-y:auto;">
         <template v-for="(item, i) of metrics">
           <li class="menu__item" :key="'metrics' + i" @click="$emit('event', { name: 'metric', data: item })">
             {{ item }}
@@ -29,7 +29,7 @@
     <li class="menu__dropdown">
       <i :class="['t-icon', 'icon-training-dropdown']"></i>
       <span>Показывать выход</span>
-      <ul class="menu">
+      <ul class="menu" style="max-height: 240px; overflow-y:auto;">
         <template v-for="(item, i) of exits">
           <li class="menu__item" :key="'output' + i" @click="$emit('event', { name: 'chart', data: item })">
             Выход {{ item }}
