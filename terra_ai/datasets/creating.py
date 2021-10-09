@@ -84,7 +84,8 @@ class CreateDataset(object):
         shutil.move(str(self.paths.basepath), creation_data.datasets_path)
         shutil.rmtree(self.temp_directory)
 
-    def postprocess_timeseries(self, full_array):
+    @staticmethod
+    def postprocess_timeseries(full_array):
         try:
             new_array = np.array(full_array).transpose()
         except:
@@ -292,11 +293,9 @@ class CreateDataset(object):
 
             instructions_data.parameters = {'put_type': decamelize(put.type),
                                             **instr['parameters']}
-
             if decamelize(put.type) in PATH_TYPE_LIST:
-                new_paths = [os.path.join('sources', f'{put.id}_{decamelize(put.type)}',
-                                          path.replace(self.source_directory + os.path.sep, '')) for path in
-                             instructions_data.instructions]
+                new_paths = [path.replace(str(self.paths.basepath) + os.path.sep, '')
+                             for path in instructions_data.instructions]
                 instructions_data.instructions = new_paths
 
             put_parameters[put.id] = {f'{put.id}_{decamelize(put.type)}': instructions_data}

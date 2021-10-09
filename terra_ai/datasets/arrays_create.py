@@ -367,6 +367,9 @@ class CreateArray(object):
             shutil.copyfile(elem, os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
                                                os.path.basename(elem)))
 
+        paths_list = [os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)), os.path.basename(elem))
+                      for elem in paths_list]
+
         instructions = {'instructions': paths_list,
                         'parameters': {'height': options['height'],
                                        'width': options['width'],
@@ -622,18 +625,9 @@ class CreateArray(object):
             os.makedirs(os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem))), exist_ok=True)
             shutil.copyfile(elem, os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
                                                os.path.basename(elem)))
-        # for elem in paths_list:
-        #     os.makedirs(
-        #         os.path.join(tmp_folder, f'{options["put"]}_object_detection', os.path.basename(os.path.dirname(elem))),
-        #         exist_ok=True)
-        #     shutil.copyfile(elem,
-        #                     os.path.join(tmp_folder, f'{options["put"]}_object_detection',
-        #                                  os.path.basename(os.path.dirname(elem)),
-        #                                  os.path.basename(elem)))
-        #
-        # if dataset_folder:
-        #     if not os.path.isdir(os.path.join(dataset_folder, f'{options["put"]}_object_detection')):
-        #         shutil.move(os.path.join(tmp_folder, f'{options["put"]}_object_detection'), dataset_folder)
+
+        paths_list = [os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)), os.path.basename(elem))
+                      for elem in paths_list]
 
         instructions = {'instructions': paths_list,
                         'parameters': {'yolo': options['yolo'],
