@@ -1,12 +1,12 @@
 import os
 import pathlib
 
-from cascades.create import json2cascade
+from .cascades.create import json2cascade
 
 
 def predict(input_path):
     model = ""
-    for path in os.listdir(str(pathlib.Path.cwd())):
+    for path in os.listdir(os.path.dirname(os.path.abspath(__file__))):
         if path.endswith("cascade"):
             model = path
     main_block = json2cascade(model)
