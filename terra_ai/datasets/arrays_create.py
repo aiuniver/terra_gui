@@ -1271,9 +1271,10 @@ class CreateArray(object):
                 return_data[output_id] = []
                 data = []
                 for j, cls in enumerate(options.data.outputs.get(output_id).classes_names):
-                    data.append((cls, options.data.outputs.get(output_id).classes_colors[j]))
+                    data.append((cls, options.data.outputs.get(output_id).classes_colors[j].as_rgb_tuple()))
                 for idx, img_array in enumerate(postprocess_array):
                     input_id = list(options.data.inputs.keys())[0]
+                    colors = [color.as_rgb_tuple() for color in options.data.outputs.get(output_id).classes_colors]
                     return_data[output_id].append(
                         {
                             "source": CreateArray().postprocess_initial_source(
@@ -1293,6 +1294,7 @@ class CreateArray(object):
                                 options=options.data.outputs.get(output_id),
                                 output_id=output_id,
                                 image_id=idx,
+                                colors=colors,
                                 save_path=save_path,
                                 return_mode='deploy'
                             ),
