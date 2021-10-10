@@ -523,6 +523,15 @@ class LayerYOLOResBlockData(LayerMixinData):
     )
 
 
+class LayerYOLOv3ResBlockData(LayerMixinData):
+    main: types.YOLOv3ResBlock.ParametersMainData = (
+        types.YOLOv3ResBlock.ParametersMainData()
+    )
+    extra: types.YOLOv3ResBlock.ParametersExtraData = (
+        types.YOLOv3ResBlock.ParametersExtraData()
+    )
+
+
 class LayerYOLOConvBlockData(LayerMixinData):
     main: types.YOLOConvBlock.ParametersMainData = (
         types.YOLOConvBlock.ParametersMainData()

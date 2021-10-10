@@ -3,8 +3,8 @@
     <div v-if="statusTrain === 'start'" class="params__overlay">
       <LoadSpiner :text="'Запуск обучения...'" />
     </div>
-    <div class="params__body">
-      <scrollbar>
+    <scrollbar>
+      <div class="params__body">
         <div class="params__items">
           <at-collapse :value="collapse">
             <at-collapse-item class="mt-3" :title="''">
@@ -101,8 +101,8 @@
             </at-collapse-item>
           </at-collapse>
         </div>
-      </scrollbar>
-    </div>
+      </div>
+    </scrollbar>
     <div class="params__footer">
       <div
         v-for="({ title, visible }, key) of button"
@@ -110,7 +110,10 @@
         class="params__btn"
         :class="{ params__save: key === 'clear' }"
       >
-        <t-button v-if="key !== 'save'" :disabled="!visible" @click="btnEvent(key)">{{ title }}</t-button>
+        <t-button v-if="key !== 'save'" :disabled="!visible || stopLearning" @click="btnEvent(key)">
+          <load-spiner class="btn-spiner" v-if="stopLearning" text="" size="25px"/>
+          {{ stopLearning ? '' : title }}
+        </t-button>
       </div>
     </div>
   </div>
@@ -127,10 +130,11 @@ export default {
     LoadSpiner,
   },
   data: () => ({
-    collapse: [0, 1, 2, 3, 4],
+    collapse: [0, 1, 3, 4],
     optimizerValue: '',
     metricData: '',
     debounce: null,
+    stopLearning: false
   }),
   computed: {
     ...mapGetters({
@@ -244,7 +248,7 @@ export default {
       // console.log(res);
     },
     async stop() {
-      this.debounce(false);
+      // this.debounce(false);
       await this.$store.dispatch('trainings/stop', {});
     },
     async clear() {
@@ -259,10 +263,12 @@ export default {
         const { finished, message, percent } = res.data;
         this.$store.dispatch('messages/setProgressMessage', message);
         this.$store.dispatch('messages/setProgress', percent);
+        this.stopLearning = !this.isLearning
         if (!finished) {
-          this.debounce(this.isLearning);
+          this.debounce(true);
         } else {
           this.$store.dispatch('projects/get');
+          this.stopLearning = false;
         }
       }
     },
@@ -369,6 +375,10 @@ export default {
       padding: 20px;
     }
   }
+}
+
+.btn-spiner{
+  margin-top: 10px;
 }
 
 .fit,

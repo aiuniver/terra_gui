@@ -1505,11 +1505,11 @@ Defaults = {
                             "label": "RHO",
                             "name": "optimizer_extra_rho",
                             "parse": "optimizer[parameters][extra][rho]",
-                            "value": 0,
+                            "value": 0.9,
                         },
                         {
                             "type": "number",
-                            "label": "RHO",
+                            "label": "Momentum",
                             "name": "optimizer_extra_momentum",
                             "parse": "optimizer[parameters][extra][momentum]",
                             "value": 0,

@@ -3,7 +3,7 @@ Datasets constants data
 """
 
 from enum import Enum
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from pydantic.color import Color
 from pydantic.types import PositiveInt
@@ -35,6 +35,7 @@ class InstructionsData(BaseMixinData):
 class DatasetInstructionsData(BaseMixinData):
     inputs: Dict[PositiveInt, Dict[Any, InstructionsData]]
     outputs: Dict[PositiveInt, Dict[Any, InstructionsData]]
+    # service: Optional[Dict[PositiveInt, Dict[Any, InstructionsData]]]
 
 
 class ColorHex(Color):

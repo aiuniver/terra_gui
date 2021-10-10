@@ -11,6 +11,7 @@
         :settings="settings"
         :menus="menus"
         :start="isLearning"
+        :epochs="epochs"
         @event="event($event, settings)"
       />
     </div>
@@ -57,6 +58,9 @@ export default {
     },
     classGraphics() {
       return this.$store.getters['trainings/getTrainData']('class_graphics');
+    },
+    epochs() {
+      return this.$store.getters['trainings/getTrainData']('addtrain_epochs');
     },
     charts: {
       set(value) {

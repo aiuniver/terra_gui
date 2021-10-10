@@ -12,7 +12,7 @@ class ParametersData(BaseMixinData):
 
     sources_paths: Optional[list]
     filters: Optional[str]
-    text_mode: LayerTextModeChoice
+    text_mode: Optional[LayerTextModeChoice]
     max_words: Optional[PositiveInt]
     length: Optional[PositiveInt]
     step: Optional[PositiveInt]

@@ -9,6 +9,8 @@ from tensorflow.keras import layers
 
 __version__ = 0.03
 
+from tensorflow.keras.models import Model
+
 
 class InstanceNormalization(Layer):
     """Instance normalization layer.
@@ -154,16 +156,13 @@ class InstanceNormalization(Layer):
         return cls(**config)
 
 
-class CustomUNETBlock(Layer):
+class CustomUNETBlock(Model):
     """Unet block layer """
 
-    def __init__(self,
-                 filters=32,
-                 activation='relu',
-                 **kwargs):
-        super(CustomUNETBlock, self).__init__(**kwargs)
-        self.filters = filters
-        self.activation = activation
+    def __init__(self, filters=32, activation='relu'):
+        super(CustomUNETBlock, self).__init__(name='')
+        # self.filters = filters
+        # self.activation = activation
         self.x_1 = layers.Conv2D(filters=self.filters, kernel_size=(3, 3), strides=(1, 1), padding='same',
                                  activation=self.activation,
                                  data_format='channels_last', dilation_rate=(1, 1), groups=1, use_bias=True,
@@ -275,20 +274,20 @@ class CustomUNETBlock(Layer):
         x_19 = self.x_19(x_18)
         return x_19
 
-    def get_config(self):
-        config = {
-            'filters': self.filters,
-            'activation': self.activation,
-        }
-        base_config = super(CustomUNETBlock, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))
+    # def get_config(self):
+    #     config = {
+    #         'filters': self.filters,
+    #         'activation': self.activation,
+    #     }
+    #     base_config = super(CustomUNETBlock, self).get_config()
+    #     return dict(list(base_config.items()) + list(config.items()))
+    #
+    # @classmethod
+    # def from_config(cls, config):
+    #     return cls(**config)
 
-    @classmethod
-    def from_config(cls, config):
-        return cls(**config)
 
-
-class VAEBlock(Layer):
+class VAEBlock(Model):
     '''
     Custom Layer VAEBlock
     Keras Layer to grab a random sample from a distribution (by multiplication)
@@ -406,24 +405,24 @@ class VAEBlock(Layer):
     # def compute_output_shape(self, input_shape):
     #     return tf.shape(input_shape)[0]
 
-    def get_config(self):
-        config = {
-            'latent_regularizer': self.reg,
-            'beta': self.beta,
-            'capacity': self.capacity,
-            'randomSample': self.random,
-            'latent_size': self.latent_size,
-            'roll_up': self.roll_up,
-        }
-        base_config = super(VAEBlock, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))
+    # def get_config(self):
+    #     config = {
+    #         'latent_regularizer': self.reg,
+    #         'beta': self.beta,
+    #         'capacity': self.capacity,
+    #         'randomSample': self.random,
+    #         'latent_size': self.latent_size,
+    #         'roll_up': self.roll_up,
+    #     }
+    #     base_config = super(VAEBlock, self).get_config()
+    #     return dict(list(base_config.items()) + list(config.items()))
+    #
+    # @classmethod
+    # def from_config(cls, config):
+    #     return cls(**config)
 
-    @classmethod
-    def from_config(cls, config):
-        return cls(**config)
 
-
-class YOLOResBlock(Layer):
+class YOLOResBlock(Model):
     def __init__(self,
                  mode="YOLOv3",
                  filters=32,
@@ -518,7 +517,6 @@ class YOLOResBlock(Layer):
             x = self.conv_start(x)
             x = self.bn_start(x)
             x = self.activation_start(x)
-            # print('head', x.shape)
         if self.mode == "YOLOv4" or self.mode == "YOLOv5":
             x_concat = self.preconv_1(x)
             x_concat = self.prebn_1(x_concat)
@@ -526,7 +524,6 @@ class YOLOResBlock(Layer):
             x = self.preconv_2(x)
             x = self.prebn_2(x)
             x = self.preactivation_2(x)
-            # print('prehead', x.shape, x_concat.shape)
         for i in range(self.num_resblocks):
             y = getattr(self, f"conv_1_{i}")(x)
             y = getattr(self, f"bn_1_{i}")(y)
@@ -538,40 +535,103 @@ class YOLOResBlock(Layer):
                 x = getattr(self, f"add_{i}")([y, x])
             else:
                 x = getattr(self, f"activ_2_{i}")(y)
-            # print(f'res_{i}', x.shape)
         if self.mode == "YOLOv4":
             x = self.postconv_1(x)
             x = self.postbn_1(x)
             x = self.postactivation_1(x)
         if self.mode == "YOLOv4" or self.mode == "YOLOv5":
-            # print('preconv', x.shape)
             x = self.concatenate_1([x, x_concat])
             x = self.postconv_2(x)
             x = self.postbn_2(x)
             x = self.postactivation_2(x)
-            # print('end', x.shape)
         return x
 
-    def get_config(self):
-        config = {
-            'mode': self.mode,
-            'filters': self.filters,
-            'num_resblocks': self.num_resblocks,
-            'activation': self.activation,
-            'use_bias': self.use_bias,
-            'include_head': self.include_head,
-            'include_add': self.include_add,
-            'all_narrow': self.all_narrow
-        }
-        base_config = super(YOLOResBlock, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))
+    # def get_config(self):
+    #     config = {
+    #         'mode': self.mode,
+    #         'filters': self.filters,
+    #         'num_resblocks': self.num_resblocks,
+    #         'activation': self.activation,
+    #         'use_bias': self.use_bias,
+    #         'include_head': self.include_head,
+    #         'include_add': self.include_add,
+    #         'all_narrow': self.all_narrow
+    #     }
+    #     base_config = super(YOLOResBlock, self).get_config()
+    #     return dict(list(base_config.items()) + list(config.items()))
+    #
+    # @classmethod
+    # def from_config(cls, config):
+    #     return cls(**config)
 
-    @classmethod
-    def from_config(cls, config):
-        return cls(**config)
+
+class YOLOv3ResBlock(Model):
+    def __init__(self,
+                 filters=32,
+                 num_resblocks=1,
+                 use_bias=False,
+                 include_head=True,
+                 **kwargs):
+        super(YOLOv3ResBlock, self).__init__(**kwargs)
+        self.filters = filters
+        self.num_resblocks = num_resblocks
+        self.include_head = include_head
+        self.use_bias = use_bias
+        self.kwargs = {'use_bias': use_bias, 'activation': None,
+                       "kernel_regularizer": tensorflow.keras.regularizers.l2(5e-4)}
+        # self.kwargs.update(kwargs)
+        if self.include_head:
+            self.zero2d = tensorflow.keras.layers.ZeroPadding2D(padding=((1, 0), (1, 0)))
+            self.conv_start = tensorflow.keras.layers.Conv2D(filters=self.filters, kernel_size=(3, 3),
+                                                             strides=(2, 2), padding='valid', **self.kwargs)
+            self.bn_start = tensorflow.keras.layers.BatchNormalization(momentum=0.99)
+            self.activation_start = tensorflow.keras.layers.LeakyReLU(**{'alpha': 0.1})
+
+        for i in range(self.num_resblocks):
+            setattr(self, f"conv_1_{i}",
+                    tensorflow.keras.layers.Conv2D(filters=self.filters // 2, kernel_size=(1, 1),
+                                                   padding='same', **self.kwargs))
+            setattr(self, f"conv_2_{i}",
+                    tensorflow.keras.layers.Conv2D(filters=self.filters,
+                                                   kernel_size=(3, 3), padding='same', **self.kwargs))
+            setattr(self, f"bn_1_{i}", tensorflow.keras.layers.BatchNormalization(momentum=0.99))
+            setattr(self, f"bn_2_{i}", tensorflow.keras.layers.BatchNormalization(momentum=0.99))
+            setattr(self, f"activ_1_{i}", tensorflow.keras.layers.LeakyReLU(**{'alpha': 0.1}))
+            setattr(self, f"activ_2_{i}", tensorflow.keras.layers.LeakyReLU(**{'alpha': 0.1}))
+            setattr(self, f"add_{i}", tensorflow.keras.layers.Add())
+
+    def call(self, x, training=True, **kwargs):
+        if self.include_head:
+            x = self.zero2d(x)
+            x = self.conv_start(x)
+            x = self.bn_start(x)
+            x = self.activation_start(x)
+        for i in range(self.num_resblocks):
+            y = getattr(self, f"conv_1_{i}")(x)
+            y = getattr(self, f"bn_1_{i}")(y)
+            y = getattr(self, f"activ_1_{i}")(y)
+            y = getattr(self, f"conv_2_{i}")(y)
+            y = getattr(self, f"bn_2_{i}")(y)
+            y = getattr(self, f"activ_2_{i}")(y)
+            x = getattr(self, f"add_{i}")([y, x])
+        return x
+
+    # def get_config(self):
+    #     config = {
+    #         'filters': self.filters,
+    #         'num_resblocks': self.num_resblocks,
+    #         'use_bias': self.use_bias,
+    #         'include_head': self.include_head,
+    #     }
+    #     base_config = super(YOLOv3ResBlock, self).get_config()
+    #     return dict(list(base_config.items()) + list(config.items()))
+
+    # @classmethod
+    # def from_config(cls, config):
+    #     return cls(**config)
 
 
-class YOLOConvBlock(Layer):
+class YOLOConvBlock(Model):
     """Unet block layer """
 
     def __init__(self,
@@ -583,6 +643,7 @@ class YOLOConvBlock(Layer):
                  first_conv_kernel=(1, 1),
                  first_conv_strides=(1, 1),
                  first_conv_padding='same',
+                 include_bn_activation=True,
                  **kwargs):
         super(YOLOConvBlock, self).__init__(**kwargs)
         self.mode = mode
@@ -590,6 +651,7 @@ class YOLOConvBlock(Layer):
         self.strides = first_conv_strides
         self.kernel = first_conv_kernel
         self.padding = first_conv_padding
+        self.include_bn_activation = include_bn_activation
         self.kwargs = {'activation': 'linear', 'use_bias': self.use_bias}
         if self.mode == "YOLOv3":
             self.kwargs["kernel_regularizer"] = tensorflow.keras.regularizers.l2(5e-4)
@@ -619,39 +681,41 @@ class YOLOConvBlock(Layer):
             else:
                 setattr(self, f"conv_{i}", tensorflow.keras.layers.Conv2D(
                     filters=2 * self.filters, kernel_size=(1, 1), strides=(1, 1), padding='same', **self.kwargs))
-            setattr(self, f"bn_{i}", tensorflow.keras.layers.BatchNormalization(
-                momentum=0.03 if self.mode == "YOLOv5" else 0.99))
-            if activation == 'LeakyReLU':
-                setattr(self, f"act_{i}", tensorflow.keras.layers.LeakyReLU(alpha=0.1))
-            if activation == 'Mish':
-                setattr(self, f"act_{i}", Mish())
-            if activation == 'Swish':
-                setattr(self, f"act_{i}", tensorflow.keras.layers.Activation('swish'))
+            if self.include_bn_activation:
+                setattr(self, f"bn_{i}", tensorflow.keras.layers.BatchNormalization(
+                    momentum=0.03 if self.mode == "YOLOv5" else 0.99))
+                if activation == 'LeakyReLU':
+                    setattr(self, f"act_{i}", tensorflow.keras.layers.LeakyReLU(alpha=0.1))
+                if activation == 'Mish':
+                    setattr(self, f"act_{i}", Mish())
+                if activation == 'Swish':
+                    setattr(self, f"act_{i}", tensorflow.keras.layers.Activation('swish'))
 
     def call(self, x, training=True, **kwargs):
         for i in range(self.num_conv):
             x = getattr(self, f"conv_{i}")(x)
-            x = getattr(self, f"bn_{i}")(x)
-            x = getattr(self, f"act_{i}")(x)
+            if self.include_bn_activation:
+                x = getattr(self, f"bn_{i}")(x)
+                x = getattr(self, f"act_{i}")(x)
         return x
 
-    def get_config(self):
-        config = {
-            'mode': self.mode,
-            'filters': self.filters,
-            'num_conv': self.num_conv,
-            'activation': self.activation,
-            'use_bias': self.use_bias,
-            'first_conv_strides': self.strides,
-            'first_conv_kernel': self.kernel,
-            'first_conv_padding': self.padding
-        }
-        base_config = super(YOLOConvBlock, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))
-
-    @classmethod
-    def from_config(cls, config):
-        return cls(**config)
+    # def get_config(self):
+    #     config = {
+    #         'mode': self.mode,
+    #         'filters': self.filters,
+    #         'num_conv': self.num_conv,
+    #         'activation': self.activation,
+    #         'use_bias': self.use_bias,
+    #         'first_conv_strides': self.strides,
+    #         'first_conv_kernel': self.kernel,
+    #         'first_conv_padding': self.padding
+    #     }
+    #     base_config = super(YOLOConvBlock, self).get_config()
+    #     return dict(list(base_config.items()) + list(config.items()))
+    #
+    # @classmethod
+    # def from_config(cls, config):
+    #     return cls(**config)
 
 
 class Mish(Layer):
@@ -692,6 +756,7 @@ if __name__ == "__main__":
     # x = YOLOResBlock(**{'mode': "YOLOv5", 'filters': 32, "num_resblocks": 5, "activation": 'Swish',
     #                     "use_bias": False, "include_head": True, "include_add": True,
     #                     "all_narrow": True})
-    x = YOLOConvBlock(**{'mode': "YOLOv5", "filters": 64, "num_conv": 5, 'activation': 'Swish'})
-    # print(x.compute_output_shape(input_shape=(None, 32, 32, 64)))
+    # x = YOLOConvBlock(**{'mode': "YOLOv5", "filters": 64, "num_conv": 5, 'activation': 'Swish'})
+    x = YOLOv3ResBlock(filters=32, num_resblocks=1)
+    print(x.compute_output_shape(input_shape=(None, 32, 32, 64)))
     pass

@@ -34,6 +34,8 @@ def json2model_cascade(path: str):
     for i in os.listdir(path):
         if i[-3:] == '.h5' and 'best' in i:
             weight = i
+        elif weight is None and i[-3:] == '.h5':
+            weight = i
         elif i[-4:] == '.trm':
             model = i
 
@@ -101,6 +103,8 @@ def json2cascade(path: str):
         if params['tag'] == 'input':
             input_cascade = getattr(sys.modules.get(__name__), "create_" + params['tag'])(**params)
         else:
+            if params['tag'] == 'model':
+                params['model_path'] = os.path.split(path)[0]
             cascades[i] = getattr(sys.modules.get(__name__), "create_" + params['tag'])(**params)
 
     adjacency_map = OrderedDict()
@@ -128,7 +132,7 @@ def create_output(**params):
 
 
 def create_model(**params):
-    model = json2model_cascade(os.path.join(os.getcwd(), params["model"]))
+    model = json2model_cascade(os.path.join(params["model_path"], params["model"]))
 
     return model
 

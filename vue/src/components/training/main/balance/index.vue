@@ -15,14 +15,9 @@
         </t-field>
       </div>
     </div>
-    <div
-      class="t-balance__graphs"
-      v-if="(settings.show_train || settings.show_val) && Object.keys(dataDalance).length > 0"
-    >
-      <template v-for="(layer, index) of dataDalance">
-        <template v-for="(item, i) of filter(layer)">
-          <Graph :key="'graph_' + index + '/' + i" v-bind="item" />
-        </template>
+    <div class="t-balance__graphs" v-if="(settings.show_train || settings.show_val) && Object.keys(dataDalance).length > 0">
+      <template v-for="(layer, index) of filter(dataDalance)">
+        <component :is="layer.type" v-bind="layer" :key="`sdsdsa_${index}`" />
       </template>
     </div>
     <div class="t-balance__overlay">
@@ -32,14 +27,19 @@
 </template>
 
 <script>
-import Graph from './Graph';
 import LoadSpiner from '@/components/forms/LoadSpiner';
 import { mapGetters } from 'vuex';
 
 export default {
   name: 't-balance',
   components: {
-    Graph,
+    Heatmap: () => import('../stats/Heatmap'),
+    Corheatmap: () => import('../stats/Corheatmap'),
+    Scatter: () => import('../stats/Scatter'),
+    Histogram: () => import('../stats/Histogram'),
+    Bar: () => import('../stats/Histogram'),
+    Table: () => import('../stats/STable'),
+    Graphic: () => import('../stats/Graphic'),
     LoadSpiner,
   },
   data: () => ({
@@ -71,6 +71,7 @@ export default {
   },
   methods: {
     filter(layer) {
+      console.log(layer)
       const arr = [];
       if (this.settings.show_train) {
         arr.push('train');
@@ -87,8 +88,13 @@ export default {
       // await this.$store.dispatch('trainings/interactive', {});
     },
     async select(sorted) {
+      console.log(sorted);
       await this.$store.dispatch('trainings/interactive', {
-        data_balance: { sorted },
+        data_balance: {
+          sorted,
+          show_val: this.settings.show_val,
+          show_train: this.settings.show_train,
+        },
       });
     },
   },

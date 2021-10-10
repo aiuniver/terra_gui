@@ -8,6 +8,8 @@ class EnvVersionChoice(str, Enum):
 class CollectionTypeChoice(str, Enum):
     ImageSegmentation = "ImageSegmentation"
     ImageClassification = "ImageClassification"
+    TextTextSegmentation = "TextTextSegmentation"
+    TextClassification = "TextClassification"
 
 
 class TaskTypeChoice(str, Enum):

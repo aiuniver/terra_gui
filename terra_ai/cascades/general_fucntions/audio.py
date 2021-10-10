@@ -1,10 +1,12 @@
 import numpy as np
 
 import librosa
+from .array import change_type
 
 
 def main(**params):
     parameter = params['parameter']
+    retype = change_type(np.float32)
 
     def fun(audio):
 
@@ -33,8 +35,7 @@ def main(**params):
             array = y
 
         array = np.array(array)
-        if array.dtype == 'float64':
-            array = array.astype('float32')
+        array = retype(array)
 
         if params['scaler'] != 'no_scaler' and params.get('preprocess'):
             orig_shape = array.shape

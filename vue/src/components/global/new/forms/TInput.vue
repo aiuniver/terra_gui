@@ -57,7 +57,7 @@ export default {
   },
   methods: {
     label() {
-      this.$el.focus();
+      this.$el.children[0].focus()
     },
     focus(e) {
       this.$emit('focus', e);

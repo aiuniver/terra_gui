@@ -132,6 +132,7 @@ from . import (
     VGG19,
     CustomUNETBlock,
     YOLOResBlock,
+    YOLOv3ResBlock,
     YOLOConvBlock,
     VAEBlock,
     CustomBlock,
