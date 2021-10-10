@@ -1,11 +1,11 @@
 import os
 import json
 import shutil
+import pynvml
+import tensorflow
 
 from pathlib import Path
 from typing import Any, NoReturn
-
-import tensorflow
 
 from . import exceptions as agent_exceptions
 from . import utils as agent_utils
@@ -87,8 +87,13 @@ class Exchange:
         return "COLAB_GPU" in os.environ.keys()
 
     def _call_hardware_accelerator(self) -> HardwareAcceleratorData:
-        device_name = tensorflow.test.gpu_device_name()
-        if device_name != "/device:GPU:0":
+        try:
+            pynvml.nvmlInit()
+            _is_gpu = True
+        except Exception:
+            _is_gpu = False
+
+        if not _is_gpu:
             if self.is_colab:
                 try:
                     tensorflow.distribute.cluster_resolver.TPUClusterResolver()
@@ -99,6 +104,7 @@ class Exchange:
                 __type = HardwareAcceleratorChoice.CPU
         else:
             __type = HardwareAcceleratorChoice.GPU
+
         return HardwareAcceleratorData(type=__type)
 
     def _call_projects_info(self, path: Path) -> ProjectsInfoData:
