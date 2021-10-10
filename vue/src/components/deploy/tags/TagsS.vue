@@ -4,7 +4,7 @@
 
 <script>
 export default {
-  name: ["s1", "s2", "s3", "s4", "s5", "s6"],
+  name: "TagS",
   props: {
     text: {
       type: String
@@ -21,5 +21,8 @@ export default {
   /*background-color: #0bbc49;*/
   border-radius: 4px;
   color: #FFFFFF;
+}
+p{
+  display: inline-block;
 }
 </style>

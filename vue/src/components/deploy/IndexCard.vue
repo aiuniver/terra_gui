@@ -14,25 +14,20 @@
         <TextCard :style="{ width: '600px', color: '#A7BED3', height: '324px' }">{{ source }}</TextCard>
       </div>
       <div class="card__result">
-        <TextCard  :style="{ width: '600px', height: '80px' }">{{ imageClassificationText }}</TextCard>
+        <TextCard :style="{ width: '600px', height: '80px' }">{{ imageClassificationText }}</TextCard>
       </div>
     </div>
     <div v-if="type == 'TextTextSegmentation'">
       <div class="card__original" >
-        <TextCard :style="{ width: '600px', color: '#A7BED3', height: '324px' }">{{ source }}</TextCard>
+        <TextCard class="textSegmentationDom" :style="{ width: '600px', color: '#A7BED3', height: '324px' }"></TextCard>
       </div>
       <div class="card__result">
         <TextCard  :style="{ width: '600px', height: '80px' }">
            <p v-for="(tag, index) in data" :key="'tag-'+index" class="p-segmentation">
-             <s1  :style="{'background-color': rgbToHex(tag[2])}">{{ tag[0] }}</s1> - Название {{ index+1 }}
+             <TagS :style="{'background-color': rgbToHex(tag[2])}">{{ tag[0] }}</TagS> - Название {{ index+1 }}
            </p>
         </TextCard>
-        <s1></s1>
-        <s2></s2>
-        <s3></s3>
-        <s4></s4>
-        <s5></s5>
-        <s6></s6>
+
       </div>
     </div>
     <div v-if="type == 'ImageSegmentation'">
@@ -58,7 +53,7 @@
 import ImgCard from "./cards/ImgCard";
 import TextCard from "./cards/TextCard";
 import { Plotly } from "vue-plotly";
-import {s1, s2, s3, s4, s5, s6} from './tags/TagsS'
+import TagS from './tags/TagsS'
 import {mapGetters} from "vuex";
 export default {
   name: "IndexCard",
@@ -66,11 +61,15 @@ export default {
     ImgCard,
     TextCard,
     Plotly,
-    s1, s2, s3, s4, s5, s6
+    TagS
   },
   data: () => ({}),
   props: {
     source: {
+      type: String,
+      default: ""
+    },
+    format: {
       type: String,
       default: ""
     },
@@ -92,7 +91,15 @@ export default {
     },
     rgbToHex(rgb) {
       return "#" + ((1 << 24) + (rgb[0] << 16) + (rgb[1] << 8) + rgb[2]).toString(16).slice(1);
-}
+    },
+    tagsConverter(){
+      let tags = {};
+      for(let i = 0; i < this.data.length; i++){
+        tags[this.data[i][0]] = this.rgbToHex(this.data[i][2]);
+      }
+      return tags
+    },
+
   },
   computed: {
     ...mapGetters({
@@ -127,7 +134,24 @@ export default {
       }
       return prepareText;
     },
+    SegmentationFormat(){
+      let text = this.format;
+      for(let item in this.tagsConverter()){
+        let pos = 0
+        let tagLen = item.length;
+        while(tagLen){
+          let foundPos = text.indexOf(item, pos);
+          if (foundPos == -1) break;
+          text = text.substr(0, foundPos+tagLen-1) + ` class=s style=background-color:${this.tagsConverter()[item]};border-radius:4px;color:#FFFFFF` + text.slice(foundPos+tagLen-1);
+          pos = foundPos + 1;
+        }
+      }
+      return text
+    }
   },
+  mounted() {
+    document.querySelector('.textSegmentationDom').innerHTML = this.SegmentationFormat;
+  }
 }
 </script>
 
@@ -164,7 +188,7 @@ export default {
 .card__table{
   width: 100%;
 }
-s1, s2, s3, s4, s5, s6{
+.s{
   border-radius: 4px;
   color: #FFFFFF;
 }
