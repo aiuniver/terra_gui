@@ -1,7 +1,8 @@
 <template>
   <div class="t-predict-text">
     <p class="t-predict-text__text">{{ text }}</p>
-    <button v-if="length" @click="show">{{ textBtn[Number(isShow)] }}</button>
+    <span v-if="length" class="t-predict-text__more" @click="show">{{ textBtn[Number(isShow)] }}</span>
+    <!-- <button v-if="length" @click="show">{{ textBtn[Number(isShow)] }}</button> -->
   </div>
 </template>
 
@@ -52,6 +53,12 @@ export default {
   &__text {
     text-align: center;
     margin-bottom: 10px;
+  }
+  &__more {
+    user-select: none;
+    cursor: pointer;
+    color: #65b9f4;
+    font-size: 14px;
   }
 }
 </style>

@@ -36,7 +36,6 @@ from terra_ai.training.customlosses import DiceCoef
 from terra_ai.training.yolo_fit import create_yolo, CustomModelYolo, compute_loss
 from terra_ai.exceptions import training as exceptions
 from terra_ai.exceptions.tensor_flow import ResourceExhaustedError as resource
-# from terra_ai.agent.exceptions import FileNotFoundException as no_file
 
 
 __version__ = 0.02
@@ -352,7 +351,7 @@ class GUINN:
             progress.pool(self.progress_name, error=resource(error).__str__())
         except FileNotFoundError as error:
             self._check_interactive_status()
-            progress.pool(self.progress_name, error=no_file(error).__str__())
+            progress.pool(self.progress_name, error=exceptions.FileNotFoundException(error).__str__())
 
         if (interactive.get_states().get("status") == "stopped"
             and self.callbacks[0].last_epoch < params.epochs) or \
@@ -620,6 +619,8 @@ class FitCallback(keras.callbacks.Callback):
             json.dump(interactive.log_history, log)
         with open(os.path.join(interactive_path, "table.int"), "w", encoding="utf-8") as table:
             json.dump(interactive.progress_table, table)
+        with open(os.path.join(interactive_path, "addtraining.int"), "w", encoding="utf-8") as addtraining:
+            json.dump({"addtrain_epochs": interactive.addtrain_epochs}, addtraining)
 
     def _load_logs(self):
         interactive_path = os.path.join(self.save_model_path, "interactive.history")
@@ -630,6 +631,8 @@ class FitCallback(keras.callbacks.Callback):
                 interactive_logs = json.load(int_log)
             with open(os.path.join(interactive_path, "table.int"), "r", encoding="utf-8") as table_int:
                 interactive_table = json.load(table_int)
+            with open(os.path.join(interactive_path, "addtraining.int"), "r", encoding="utf-8") as addtraining_int:
+                interactive.addtrain_epochs = json.load(addtraining_int)["addtrain_epochs"]
             self.last_epoch = max(logs.get('epoch')) + 1
             self.still_epochs = self.retrain_epochs - self.last_epoch + 1
             self._get_metric_name_checkpoint(logs.get('logs'))
@@ -786,6 +789,7 @@ class FitCallback(keras.callbacks.Callback):
         self._time_first_step = time.time()
 
     def on_train_batch_end(self, batch, logs=None):
+
         if self._get_train_status() == "stopped":
             self.model.stop_training = True
             msg = f'ожидайте остановку...'
@@ -880,6 +884,7 @@ class FitCallback(keras.callbacks.Callback):
         self.last_epoch += 1
 
     def on_train_end(self, logs=None):
+        interactive.addtrain_epochs.append(self.last_epoch - 1)
         self._save_logs()
 
         if (self.last_epoch - 1) > 1:

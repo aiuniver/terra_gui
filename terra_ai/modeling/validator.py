@@ -316,9 +316,9 @@ class ModelValidator:
                     # else:
                     #     out_layer_str = f"{block_name}.get_layer('{_layer[2].get('output_layer')}.output'"
                     _layer_str = (
-                        f"\n{block_name} = {_layer[1]}({_params[:-2]})\n" 
-                        f"for layer in {block_name}.layers:\n" 
-                        f"    layer.trainable = {_layer[2].get('trainable', False)}\n" 
+                        f"\n{block_name} = {_layer[1]}({_params[:-2]})\n"
+                        f"for layer in {block_name}.layers:\n"
+                        f"    layer.trainable = {_layer[2].get('trainable', False)}\n"
                         f"{name_dict[_layer[0]]} = {block_name}({uplink})\n\n"
                     )
                     # f"{block_name} = Model({block_name}.input, {out_layer_str}).output, " \
@@ -615,8 +615,6 @@ class ModelValidator:
         return block_output, block_comment
 
 
-
-
 class LayerValidation:
     """Validate input shape, number uplinks and parameters compatibility"""
 
@@ -665,18 +663,19 @@ class LayerValidation:
                     or self.module_type == ModuleTypeChoice.keras_pretrained_model
             ):
                 try:
+                    params = copy.deepcopy(self.layer_parameters)
                     if self.layer_type == LayerTypeChoice.Input:
                         return self.inp_shape, None
                     if self.module_type == ModuleTypeChoice.keras_pretrained_model:
-                        self.layer_parameters.pop("trainable")
-                        if self.layer_parameters.get("name"):
-                            self.layer_parameters.pop("name")
+                        params.pop("trainable")
+                        if params.get("name"):
+                            params.pop("name")
                     output_shape = [
                         tuple(
                             getattr(
                                 self.module,
                                 self.layer_type
-                            )(**self.layer_parameters).compute_output_shape(
+                            )(**params).compute_output_shape(
                                 self.inp_shape[0] if len(self.inp_shape) == 1 else self.inp_shape
                             )
                         )
@@ -937,23 +936,15 @@ class LayerValidation:
                 ))
 
         # strides and dilation_rate in 1D layers
-        if isinstance(self.layer_parameters.get("strides", None), int) and isinstance(
-                self.layer_parameters.get("dilation_rate", None), int
-        ):
-            if (
-                    self.layer_parameters.get("dilation_rate") > 1
-                    and self.layer_parameters.get("strides") > 1
-            ):
+        if isinstance(self.layer_parameters.get("strides", None), int) and \
+                isinstance(self.layer_parameters.get("dilation_rate", None), int):
+            if self.layer_parameters.get("dilation_rate") > 1 and self.layer_parameters.get("strides") > 1:
                 return str(exceptions.CannotHaveValueException("'dilation_rate' and 'strides'", "> 1"))
 
         # strides and dilation_rate in 2+D layers
-        if isinstance(
-                self.layer_parameters.get("strides", None), (tuple, list)
-        ) and isinstance(self.layer_parameters.get("strides", None), (tuple, list)):
-            if (
-                    max(self.layer_parameters.get("dilation_rate")) > 1
-                    and max(self.layer_parameters.get("strides")) > 1
-            ):
+        if isinstance(self.layer_parameters.get("dilation_rate", None), (tuple, list)) and \
+                isinstance(self.layer_parameters.get("strides", None), (tuple, list)):
+            if max(self.layer_parameters.get("dilation_rate")) > 1 and max(self.layer_parameters.get("strides")) > 1:
                 return str(exceptions.CannotHaveValueException("'dilation_rate' and 'strides'", "> 1"))
 
         # value range for axis
@@ -1324,35 +1315,24 @@ class ModelCreator:
         """Build keras model from plan"""
         for _id in self.idx_line:
             layer_type = self.model_plan[self.id_idx_dict.get(_id)][1]
-            # if layer_type == 'space_to_depth':  # TODO: костыль для 'space_to_depth'
-            #     layer_type = 'SpaceToDepth'
-            # module_type = getattr(layers.types, layer_type).LayerConfig.module_type.value
-            if (
-                    self.layer_config.get(_id).module_type.value
-                    == ModuleTypeChoice.tensorflow
-            ):
+
+            if self.layer_config.get(_id).module_type.value == ModuleTypeChoice.tensorflow:
                 self._tf_layer_init(self.model_plan[self.id_idx_dict.get(_id)])
-            elif (
-                    self.layer_config.get(_id).module_type.value
-                    == ModuleTypeChoice.keras_pretrained_model
-            ):
-                self._pretrained_model_init_(
-                    self.model_plan[self.id_idx_dict.get(_id)]
-                )
-            elif (
-                    self.layer_config.get(_id).module_type.value
-                    == ModuleTypeChoice.block_plan
-            ):
+
+            elif self.layer_config.get(_id).module_type.value == ModuleTypeChoice.keras_pretrained_model:
+                self._pretrained_model_init_(self.model_plan[self.id_idx_dict.get(_id)])
+
+            elif self.layer_config.get(_id).module_type.value == ModuleTypeChoice.block_plan:
                 self._custom_block_init(self.model_plan[self.id_idx_dict.get(_id)])
-            elif (
-                    self.layer_config.get(_id).module_type.value == ModuleTypeChoice.keras
-                    or self.layer_config.get(_id).module_type.value
-                    == ModuleTypeChoice.terra_layer
-            ):
+
+            elif self.layer_config.get(_id).module_type.value == ModuleTypeChoice.keras \
+                    or self.layer_config.get(_id).module_type.value == ModuleTypeChoice.terra_layer:
                 self._keras_layer_init(self.model_plan[self.id_idx_dict.get(_id)])
+
             else:
                 msg = f'Error: "Layer `{layer_type}` is not found'
                 sys.exit(msg)
+
         inputs = [self.tensors.get(i) for i in self.start_row]
         outputs = [self.tensors.get(i) for i in self.end_row]
         self.nnmodel = tensorflow.keras.Model(inputs, outputs)
@@ -1363,9 +1343,7 @@ class ModelCreator:
             self.layer_config.get(terra_layer[0]).module.value
         )
         if terra_layer[1] == LayerTypeChoice.Input:
-            _input_shape = self.input_shape.get(
-                int(terra_layer[2].get("name"))
-            )[0]
+            _input_shape = self.input_shape.get(int(terra_layer[2].get("name")))[0]
             self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(
                 shape=_input_shape, name=terra_layer[2].get("name")
             )
@@ -1409,22 +1387,16 @@ class ModelCreator:
                 continue
         layer_object = getattr(module, terra_layer[1])(**attr)
 
-        if terra_layer[2].get("trainable") or terra_layer[2].get("output_layer"):
+        if terra_layer[2].get("trainable"):
             for layer in layer_object.layers:
                 try:
                     layer.trainable = terra_layer[2].get("trainable")
                 except KeyError:
                     continue
-            # if terra_layer[2].get("output_layer") == "last":
-            #     block_output = layer_object.output
-            # else:
-            #     block_output = layer_object.get_layer(
-            #         terra_layer[2].get("output_layer")
-            #     ).output
-            # layer_object = Model(
-            #     layer_object.input, block_output, name=terra_layer[2].get("name")
-            # )
-        self.tensors[terra_layer[0]] = layer_object(self.tensors[terra_layer[3][0]])
+
+        pretrained_layer = layer_object(self.tensors[terra_layer[3][0]])
+        self.tensors[terra_layer[0]] = tensorflow.keras.layers.Activation(
+            activation='linear', name=terra_layer[2].get("name"))(pretrained_layer)
 
     def _custom_block_init(self, terra_layer):
         block_object = CustomLayer()

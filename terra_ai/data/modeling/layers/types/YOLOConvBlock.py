@@ -37,4 +37,5 @@ class ParametersExtraData(BaseMixinData):
     first_conv_kernel: Tuple[PositiveInt, PositiveInt] = (3, 3)
     first_conv_strides: Tuple[PositiveInt, PositiveInt] = (1, 1)
     first_conv_padding: PaddingChoice = PaddingChoice.same
+    include_bn_activation: bool = True
     pass
