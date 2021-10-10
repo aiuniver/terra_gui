@@ -9,12 +9,30 @@
         <TextCard :style="{ width: '224px' }">{{ imageClassificationText }}</TextCard>
       </div>
     </div>
-     <div v-if="type == 'TextClassification' || type == 'TextTextSegmentation'">
+     <div v-if="type == 'TextClassification'">
       <div class="card__original" >
         <TextCard :style="{ width: '600px', color: '#A7BED3', height: '324px' }">{{ source }}</TextCard>
       </div>
       <div class="card__result">
         <TextCard  :style="{ width: '600px', height: '80px' }">{{ imageClassificationText }}</TextCard>
+      </div>
+    </div>
+    <div v-if="type == 'TextTextSegmentation'">
+      <div class="card__original" >
+        <TextCard :style="{ width: '600px', color: '#A7BED3', height: '324px' }">{{ source }}</TextCard>
+      </div>
+      <div class="card__result">
+        <TextCard  :style="{ width: '600px', height: '80px' }">
+           <p v-for="(tag, index) in data" :key="'tag-'+index" class="p-segmentation">
+             <s1  :style="{'background-color': rgbToHex(tag[2])}">{{ tag[0] }}</s1> - Название {{ index+1 }}
+           </p>
+        </TextCard>
+        <s1></s1>
+        <s2></s2>
+        <s3></s3>
+        <s4></s4>
+        <s5></s5>
+        <s6></s6>
       </div>
     </div>
     <div v-if="type == 'ImageSegmentation'">
@@ -40,6 +58,7 @@
 import ImgCard from "./cards/ImgCard";
 import TextCard from "./cards/TextCard";
 import { Plotly } from "vue-plotly";
+import {s1, s2, s3, s4, s5, s6} from './tags/TagsS'
 import {mapGetters} from "vuex";
 export default {
   name: "IndexCard",
@@ -47,6 +66,7 @@ export default {
     ImgCard,
     TextCard,
     Plotly,
+    s1, s2, s3, s4, s5, s6
   },
   data: () => ({}),
   props: {
@@ -70,6 +90,9 @@ export default {
     ReloadCard(){
       this.$emit('reload', { id: this.block, indexes: [this.index.toString()]})
     },
+    rgbToHex(rgb) {
+      return "#" + ((1 << 24) + (rgb[0] << 16) + (rgb[1] << 8) + rgb[2]).toString(16).slice(1);
+}
   },
   computed: {
     ...mapGetters({
@@ -93,6 +116,14 @@ export default {
       for(let i=0; i<text.length; i++){
         if(i > 2) break;
         prepareText = prepareText + `${text[i][0]} - ${text[i][1]}% \n`;
+      }
+      return prepareText;
+    },
+    SegmentationText(){
+      let text = this.data;
+      let prepareText = "";
+      for(let i=0; i<text.length; i++){
+        prepareText = prepareText + `${text[i][0]} - название ${i+1} \n`;
       }
       return prepareText;
     },
@@ -133,4 +164,13 @@ export default {
 .card__table{
   width: 100%;
 }
+s1, s2, s3, s4, s5, s6{
+  border-radius: 4px;
+  color: #FFFFFF;
+}
+.p-segmentation{
+  margin-top: 5px;
+  color: #65B9F4;
+}
 </style>
+
