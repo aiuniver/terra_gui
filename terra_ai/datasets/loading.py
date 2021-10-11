@@ -116,7 +116,7 @@ def source(strict_object: SourceData):
 
 
 @progress.threading
-def __choice_from_keras(name: str, destination: Path, **kwargs):
+def __choice_from_keras(name: str, destination: Path, reset_model: bool, **kwargs):
     # Имя прогресс-бара
     progress_name = "dataset_choice"
     progress.pool.reset(
@@ -134,7 +134,12 @@ def __choice_from_keras(name: str, destination: Path, **kwargs):
     if dataset:
         shutil.rmtree(destination, ignore_errors=True)
         os.makedirs(destination, exist_ok=True)
-        progress.pool(progress_name, percent=100, data=dataset, finished=True)
+        progress.pool(
+            progress_name,
+            percent=100,
+            data={"dataset": dataset, "reset_model": reset_model},
+            finished=True,
+        )
     else:
         progress.pool(
             progress_name,
@@ -143,7 +148,9 @@ def __choice_from_keras(name: str, destination: Path, **kwargs):
 
 
 @progress.threading
-def __choice_from_custom(name: str, destination: Path, source: Path, **kwargs):
+def __choice_from_custom(
+    name: str, destination: Path, source: Path, reset_model: bool, **kwargs
+):
     # Имя прогресс-бара
     progress_name = "dataset_choice"
     progress.pool.reset(
@@ -174,7 +181,12 @@ def __choice_from_custom(name: str, destination: Path, source: Path, **kwargs):
         os.rename(zip_dirpath, destination)
         shutil.rmtree(unpacked)
         if dataset:
-            progress.pool(progress_name, percent=100, data=dataset, finished=True)
+            progress.pool(
+                progress_name,
+                percent=100,
+                data={"dataset": dataset, "reset_model": reset_model},
+                finished=True,
+            )
         else:
             progress.pool(
                 progress_name,
@@ -198,7 +210,7 @@ def __choice_from_custom(name: str, destination: Path, source: Path, **kwargs):
 
 
 @progress.threading
-def __choice_from_terra(name: str, destination: Path, **kwargs):
+def __choice_from_terra(name: str, destination: Path, reset_model: bool, **kwargs):
     # Имя прогресс-бара
     progress_name = "dataset_choice"
     progress.pool.reset(
@@ -237,7 +249,12 @@ def __choice_from_terra(name: str, destination: Path, **kwargs):
         dataset = DatasetData(**data.config)
         shutil.rmtree(unpacked)
         if dataset:
-            progress.pool(progress_name, percent=100, data=dataset, finished=True)
+            progress.pool(
+                progress_name,
+                percent=100,
+                data={"dataset": dataset, "reset_model": reset_model},
+                finished=True,
+            )
         else:
             progress.pool(
                 progress_name,
@@ -262,7 +279,9 @@ def __choice_from_terra(name: str, destination: Path, **kwargs):
         progress.pool(progress_name, error=str(error))
 
 
-def choice(dataset_choice: DatasetLoadData, destination: Path):
+def choice(
+    dataset_choice: DatasetLoadData, destination: Path, reset_model: bool = False
+):
     __method_name = f"__choice_from_{dataset_choice.group.lower()}"
     __method = getattr(sys.modules.get(__name__), __method_name, None)
     if __method:
@@ -270,6 +289,7 @@ def choice(dataset_choice: DatasetLoadData, destination: Path):
             name=dataset_choice.alias,
             destination=destination,
             source=dataset_choice.path,
+            reset_model=reset_model,
         )
     else:
         raise DatasetChoiceUndefinedMethodException(dataset_choice.group.value)

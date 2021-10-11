@@ -155,25 +155,32 @@ export default {
     },
     async download() {
       if (!this.loading) {
-        const {success: successValidate, data} = await this.$store.dispatch('datasets/validateDatasetOrModel', { model : this.model})
+        const { success: successValidate, data } = await this.$store.dispatch('datasets/validateDatasetOrModel', {
+          model: this.model,
+        });
 
-        if(successValidate && !data){
+        if (successValidate && data) {
           this.$Modal.confirm({
             title: 'Внимание!',
-            content: 'Несоответствие количества входных и выходных слоев датасета и редактируемой модели. Хотите сбросить датасет?',
+            content: data,
             width: 300,
-            callback: async (action) => {
+            callback: async action => {
               if (action == 'confirm') {
-                await this.$store.dispatch('modeling/load', this.model);
+                await this.onChoice({ reset_dataset: true });
               }
             },
           });
-        }else{
-          await this.$store.dispatch('modeling/load', this.model);
+        } else {
+          await this.onChoice();
         }
-        this.$emit('input', false); 
-       
+        this.$emit('input', false);
       }
+    },
+    async onChoice({ reset_dataset = false } = {}) {
+      await this.$store.dispatch('modeling/load', {
+        model: this.model,
+        reset_dataset,
+      });
     },
   },
   watch: {

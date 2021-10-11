@@ -1,4 +1,3 @@
-import os
 import re
 import base64
 
@@ -7,7 +6,7 @@ from pydantic import ValidationError
 from transliterate import slugify
 from collections.abc import MutableMapping
 
-from apps.plugins.project import data_path
+from apps.plugins.project import data_path, Project
 from apps.plugins.project import exceptions as project_exceptions
 
 from terra_ai.agent import agent_exchange
@@ -51,7 +50,9 @@ class GetAPIView(BaseAPIView):
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         try:
-            model = agent_exchange("model_get", **serializer.validated_data)
+            model = agent_exchange(
+                "model_get", value=serializer.validated_data.get("value")
+            )
             return BaseResponseSuccess(model.native())
         except agent_exceptions.ExchangeBaseException as error:
             return BaseResponseErrorGeneral(str(error))
@@ -61,8 +62,10 @@ class GetAPIView(BaseAPIView):
 
 class LoadAPIView(BaseAPIView):
     def _update_layers(
-        self, model: ModelDetailsData, model_init: ModelDetailsData
+        self, model: ModelDetailsData, project: Project
     ) -> ModelDetailsData:
+        model_init = project.dataset.model
+
         for index, layer in enumerate(model.inputs):
             if index + 1 > len(model_init.inputs):
                 break
@@ -76,7 +79,11 @@ class LoadAPIView(BaseAPIView):
                     "parameters": layer_init.get("parameters"),
                 }
             )
+            if int(layer_data.get("id")) != int(layer_init.get("id")):
+                _layer = project.dataset.inputs.pop(layer_init.get("id"))
+                project.dataset.inputs[layer_data.get("id")] = _layer
             model.layers.append(layer_data)
+
         for index, layer in enumerate(model.outputs):
             if index + 1 > len(model_init.outputs):
                 break
@@ -90,9 +97,11 @@ class LoadAPIView(BaseAPIView):
                     "parameters": layer_init.get("parameters"),
                 }
             )
+            if int(layer_data.get("id")) != int(layer_init.get("id")):
+                _layer = project.dataset.outputs.pop(layer_init.get("id"))
+                project.dataset.outputs[layer_data.get("id")] = _layer
             model.layers.append(layer_data)
-            model.name = model_init.name
-            model.alias = model_init.alias
+
         return model
 
     def post(self, request, **kwargs):
@@ -100,9 +109,15 @@ class LoadAPIView(BaseAPIView):
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         try:
-            model = agent_exchange("model_get", **serializer.validated_data)
-            if request.project.dataset:
-                model = self._update_layers(model, request.project.dataset.model)
+            model = agent_exchange(
+                "model_get", value=serializer.validated_data.get("value")
+            )
+            reset_dataset = serializer.validated_data.get("reset_dataset")
+            if reset_dataset:
+                request.project.set_dataset()
+            else:
+                if request.project.dataset:
+                    model = self._update_layers(model, request.project)
             request.project.set_model(model)
             return BaseResponseSuccess(
                 request.project.model.native(), save_project=True
