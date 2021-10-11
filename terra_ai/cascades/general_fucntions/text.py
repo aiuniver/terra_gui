@@ -23,8 +23,8 @@ def main(**params):
 
     preprocessing = joblib.load(
         os.path.join(
-            params['dataset_path'], 'preprocessing', str(params['key']),
-            f'{params["key"]}_{decamelize(params["task"])}.gz')
+            params['dataset_path'], 'preprocessing', params["key"].split('_')[0], f'{params["key"]}.gz'
+        )
     )
 
     def fun(text):
