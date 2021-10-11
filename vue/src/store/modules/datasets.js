@@ -129,7 +129,14 @@ export default {
     },
     async choice ({ dispatch }, dataset) {
       await dispatch('trainings/resetAllTraining', {}, { root: true });
-      return await dispatch('axios', { url: '/datasets/choice/', data: dataset }, { root: true });
+      const {success} = await dispatch('validateDatasetOrModel', { dataset })
+      if (success) {
+        return await dispatch('axios', { url: '/datasets/choice/', data: dataset }, { root: true });
+      }else{
+        return {
+          success: false
+        }
+      }
     },
     async deleteDataset ({ dispatch }, dataset) {
       const { success } = await dispatch('axios', { url: '/datasets/delete/', data: dataset }, { root: true });
@@ -159,6 +166,9 @@ export default {
     },
     async loadProgress ({ dispatch }, source) {
       return await dispatch('axios', { url: '/datasets/source/load/progress/', data: source }, { root: true });
+    },
+    async validateDatasetOrModel({ dispatch }, data){
+      return await dispatch('axios', { url: '/common/validate-dataset-model/', data  }, { root: true });
     },
     async get ({ dispatch, commit, rootState }) {
       const { data } = await dispatch('axios', { url: '/datasets/info/' }, { root: true });
