@@ -121,12 +121,6 @@ export default {
     },
   },
   methods: {
-    async message(content) {
-      await this.$store.dispatch('messages/setModel', {
-        context: this,
-        content,
-      });
-    },
     async removeModel(name) {
       this.$Modal.confirm({
         title: 'Внимание!',
@@ -161,12 +155,25 @@ export default {
     },
     async download() {
       if (!this.loading) {
-        const {success} = await this.$store.dispatch('modeling/load', this.model);
-        if(success){ 
+        const {success: successValidate} = await this.$store.dispatch('datasets/validateDatasetOrModel', { model : this.model})
+
+        if(successValidate){
+          await this.$store.dispatch('modeling/load', this.model);
           this.$emit('input', false); 
         }else{
-          this.message('Валидация датасета/модели не прошла')
+          this.$Modal.confirm({
+            title: 'Внимание!',
+            content: 'Несоответствие количества входных и выходных слоев датасета и редактируемой модели. Хотите сбросить датасет?',
+            width: 300,
+            callback: async (action) => {
+              if (action == 'confirm') {
+                await this.$store.dispatch('modeling/load', this.model);
+                this.$emit('input', false); 
+              }
+            },
+          });
         }
+       
       }
     },
   },

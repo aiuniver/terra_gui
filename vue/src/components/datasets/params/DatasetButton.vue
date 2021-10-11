@@ -10,7 +10,6 @@
 <script>
 export default {
   name: 'DatasetButton',
-  data: () => ({}),
   computed: {
     isNoTrain() {
       return this.$store.getters['trainings/getStatus'] === 'no_train';
@@ -25,13 +24,13 @@ export default {
       const name = this.$store.getters['projects/getProject']?.dataset?.name;
       if (name) return 'Выбран: ' + name;
       return 'Выберите датасет';
-    }
+    },
   },
   methods: {
-    async message(content) {
+    async message() {
       await this.$store.dispatch('messages/setModel', {
         context: this,
-        content,
+        content: 'Для выбора датасета необходимо сбросить/остановить обучение',
       });
     },
     createInterval() {
@@ -70,24 +69,41 @@ export default {
         } else {
           this.$store.dispatch('settings/setOverlay', false);
         }
-        // console.log(data);
       }, 1000);
     },
     async click() {
       if (this.isNoTrain) {
+        const { alias, group, name} = this.selected;
+        const { success: successChoice } = await this.$store.dispatch('datasets/choice', { alias, group });
+        const { success: successValidate } = await this.$store.dispatch('datasets/validateDatasetOrModel', {
+          dataset: { alias, group },
+        });
+
         this.$store.dispatch('settings/setOverlay', true);
-        const { alias, group, name } = this.selected;
-        const { success } = await this.$store.dispatch('datasets/choice', { alias, group });
-        if (success) {
-          this.$store.dispatch('messages/setMessage', { message: `Загружаю датасет «${name}»` });
-          this.createInterval();
-        }else{
-          this.$store.dispatch('settings/setOverlay', false);
-          this.message('Валидация датасета/модели не прошла');
+        this.$store.dispatch('messages/setMessage', { message: `Загружаю датасет «${name}»` });
+
+        if (successValidate) {
+          if (successChoice) {
+            this.createInterval();
+          }
+        } else {
+          this.$Modal.confirm({
+            title: 'Внимание!',
+            content:
+              'Несоответствие количества входных и выходных слоев датасета и редактируемой модели. Хотите сбросить модель?',
+            width: 300,
+            callback:  (action) => {
+              if (action == 'confirm') {
+                this.createInterval();
+              }
+            },
+          });
         }
       } else {
-        this.message('Для выбора датасета необходимо сбросить/остановить обучение');
+        this.message();
       }
+
+      this.$store.dispatch('settings/setOverlay', false);
     },
   },
 };
