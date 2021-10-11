@@ -39,6 +39,7 @@ class MinMaxScalerSerializer(serializers.Serializer):
 class ChoiceSerializer(serializers.Serializer):
     group = serializers.CharField()
     alias = serializers.CharField()
+    reset_model = serializers.BooleanField(default=False)
 
 
 class SourceLoadSerializer(serializers.Serializer):
