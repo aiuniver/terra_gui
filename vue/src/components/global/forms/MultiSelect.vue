@@ -97,7 +97,7 @@ export default {
       // console.log(type, filter);
       return (
         this.lists
-          .filter(item => (!item.id || item.id === this.id) || item.type === 'table' )
+          // .filter(item => (!item.id || item.id === this.id) || item.type === 'table' )
           // .filter(item => item.type !== 'table')
           .filter(item => filter.includes(item.type))
       );

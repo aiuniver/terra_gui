@@ -12,8 +12,6 @@ from terra_ai.data.datasets.extra import (
 from terra_ai.data.modeling.extra import LayerTypeChoice
 from terra_ai.data.modeling.layers.extra import ActivationChoice
 
-# from terra_ai.data.training.extra import TaskChoice
-
 
 class Tags(dict, Enum):
     image = {"alias": "image", "name": "Image"}
@@ -35,24 +33,54 @@ class Tags(dict, Enum):
 
 OutputLayersDefaults = {
     LayerOutputTypeChoice.Classification: {
-        "DIM": {"type": LayerTypeChoice.Dense, "activation": ActivationChoice.softmax},
-        "1D": {"type": LayerTypeChoice.Conv1D, "activation": ActivationChoice.softmax},
+        "DIM": {
+            "type": LayerTypeChoice.Dense.value,
+            "activation": ActivationChoice.softmax.value,
+        },
+        "1D": {
+            "type": LayerTypeChoice.Conv1D.value,
+            "activation": ActivationChoice.softmax.value,
+        },
     },
     LayerOutputTypeChoice.Segmentation: {
-        "1D": {"type": LayerTypeChoice.Conv1D, "activation": ActivationChoice.softmax},
-        "2D": {"type": LayerTypeChoice.Conv2D, "activation": ActivationChoice.softmax},
-        "3D": {"type": LayerTypeChoice.Conv3D, "activation": ActivationChoice.softmax},
+        "1D": {
+            "type": LayerTypeChoice.Conv1D.value,
+            "activation": ActivationChoice.softmax.value,
+        },
+        "2D": {
+            "type": LayerTypeChoice.Conv2D.value,
+            "activation": ActivationChoice.softmax.value,
+        },
+        "3D": {
+            "type": LayerTypeChoice.Conv3D.value,
+            "activation": ActivationChoice.softmax.value,
+        },
     },
     LayerOutputTypeChoice.TextSegmentation: {
-        "DIM": {"type": LayerTypeChoice.Dense, "activation": ActivationChoice.sigmoid},
-        "1D": {"type": LayerTypeChoice.Conv1D, "activation": ActivationChoice.sigmoid},
+        "DIM": {
+            "type": LayerTypeChoice.Dense.value,
+            "activation": ActivationChoice.sigmoid.value,
+        },
+        "1D": {
+            "type": LayerTypeChoice.Conv1D.value,
+            "activation": ActivationChoice.sigmoid.value,
+        },
     },
     LayerOutputTypeChoice.Regression: {
-        "DIM": {"type": LayerTypeChoice.Dense, "activation": ActivationChoice.linear}
+        "DIM": {
+            "type": LayerTypeChoice.Dense.value,
+            "activation": ActivationChoice.linear.value,
+        }
     },
     LayerOutputTypeChoice.Timeseries: {
-        "1D": {"type": LayerTypeChoice.Conv1D, "activation": ActivationChoice.linear},
-        "DIM": {"type": LayerTypeChoice.Dense, "activation": ActivationChoice.linear},
+        "1D": {
+            "type": LayerTypeChoice.Conv1D.value,
+            "activation": ActivationChoice.linear.value,
+        },
+        "DIM": {
+            "type": LayerTypeChoice.Dense.value,
+            "activation": ActivationChoice.linear.value,
+        },
     },
 }
 
@@ -74,9 +102,9 @@ KerasInstructions = {
         2: {
             "2_classification": {
                 "one_hot_encoding": True,
-                "type_processing": "categorical"
+                "type_processing": "categorical",
             }
-        }
+        },
     },
     "fashion_mnist": {
         1: {
@@ -95,9 +123,9 @@ KerasInstructions = {
         2: {
             "2_classification": {
                 "one_hot_encoding": True,
-                "type_processing": "categorical"
+                "type_processing": "categorical",
             }
-        }
+        },
     },
     "cifar10": {
         1: {
@@ -116,9 +144,9 @@ KerasInstructions = {
         2: {
             "2_classification": {
                 "one_hot_encoding": True,
-                "type_processing": "categorical"
+                "type_processing": "categorical",
             }
-        }
+        },
     },
     "cifar100": {
         1: {
@@ -137,10 +165,10 @@ KerasInstructions = {
         2: {
             "2_classification": {
                 "one_hot_encoding": True,
-                "type_processing": "categorical"
+                "type_processing": "categorical",
             }
-        }
-    }
+        },
+    },
 }
 # Конфиги
 DatasetsGroups = [
@@ -158,10 +186,10 @@ DatasetsGroups = [
                         "dtype": "float32",
                         "name": "Вход 1",
                         "shape": (28, 28, 1),
-                        "task": LayerInputTypeChoice.Image,
+                        "task": LayerInputTypeChoice.Image.value,
                         "num_classes": 1,
                         "classes_names": ["mnist"],
-                        "encoding": LayerEncodingChoice.none,
+                        "encoding": LayerEncodingChoice.none.value,
                     }
                 },
                 "outputs": {
@@ -170,7 +198,7 @@ DatasetsGroups = [
                         "dtype": "uint8",
                         "name": "Выход 1",
                         "shape": (10,),
-                        "task": LayerOutputTypeChoice.Classification,
+                        "task": LayerOutputTypeChoice.Classification.value,
                         "num_classes": 10,
                         "classes_names": [
                             "0",
@@ -184,7 +212,7 @@ DatasetsGroups = [
                             "8",
                             "9",
                         ],
-                        "encoding": LayerEncodingChoice.ohe,
+                        "encoding": LayerEncodingChoice.ohe.value,
                     }
                 },
                 "columns": {
@@ -194,10 +222,10 @@ DatasetsGroups = [
                             "dtype": "float32",
                             "name": "Вход 1",
                             "shape": (28, 28, 1),
-                            "task": LayerInputTypeChoice.Image,
+                            "task": LayerInputTypeChoice.Image.value,
                             "num_classes": 1,
                             "classes_names": ["mnist"],
-                            "encoding": LayerEncodingChoice.none,
+                            "encoding": LayerEncodingChoice.none.value,
                         }
                     },
                     2: {
@@ -206,7 +234,7 @@ DatasetsGroups = [
                             "dtype": "uint8",
                             "name": "Выход 1",
                             "shape": (10,),
-                            "task": LayerOutputTypeChoice.Classification,
+                            "task": LayerOutputTypeChoice.Classification.value,
                             "num_classes": 10,
                             "classes_names": [
                                 "0",
@@ -220,28 +248,28 @@ DatasetsGroups = [
                                 "8",
                                 "9",
                             ],
-                            "encoding": LayerEncodingChoice.ohe,
+                            "encoding": LayerEncodingChoice.ohe.value,
                         }
                     },
                 },
                 "tags": [
-                    Tags.image,
-                    Tags.classification,
-                    Tags.tensorflow_keras,
+                    Tags.image.value,
+                    Tags.classification.value,
+                    Tags.tensorflow_keras.value,
                 ],
                 "use_generator": False,
             },
             {
                 "alias": "fashion_mnist",
                 "name": "Fashion mnist",
-                "group": DatasetGroupChoice.keras,
+                "group": DatasetGroupChoice.keras.value,
                 "inputs": {
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
                         "shape": (28, 28, 1),
                         "name": "Вход 1",
-                        "task": LayerInputTypeChoice.Image,
+                        "task": LayerInputTypeChoice.Image.value,
                         "classes_names": ["fashion_mnist"],
                         "num_classes": 1,
                     }
@@ -252,7 +280,7 @@ DatasetsGroups = [
                         "dtype": "uint8",
                         "shape": (10,),
                         "name": "Выход 1",
-                        "task": LayerOutputTypeChoice.Classification,
+                        "task": LayerOutputTypeChoice.Classification.value,
                         "classes_names": [
                             "T-shirt/top",
                             "Trouser",
@@ -276,7 +304,7 @@ DatasetsGroups = [
                             "dtype": "float32",
                             "shape": (28, 28, 1),
                             "name": "Вход 1",
-                            "task": LayerInputTypeChoice.Image,
+                            "task": LayerInputTypeChoice.Image.value,
                             "classes_names": ["fashion_mnist"],
                             "num_classes": 1,
                         }
@@ -287,7 +315,7 @@ DatasetsGroups = [
                             "dtype": "uint8",
                             "shape": (10,),
                             "name": "Выход 1",
-                            "task": LayerOutputTypeChoice.Classification,
+                            "task": LayerOutputTypeChoice.Classification.value,
                             "classes_names": [
                                 "T-shirt/top",
                                 "Trouser",
@@ -306,23 +334,23 @@ DatasetsGroups = [
                     },
                 },
                 "tags": [
-                    Tags.image,
-                    Tags.classification,
-                    Tags.tensorflow_keras,
+                    Tags.image.value,
+                    Tags.classification.value,
+                    Tags.tensorflow_keras.value,
                 ],
                 "use_generator": False,
             },
             {
                 "alias": "cifar10",
                 "name": "Cifar 10",
-                "group": DatasetGroupChoice.keras,
+                "group": DatasetGroupChoice.keras.value,
                 "inputs": {
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
                         "shape": (32, 32, 3),
                         "name": "Вход 1",
-                        "task": LayerInputTypeChoice.Image,
+                        "task": LayerInputTypeChoice.Image.value,
                         "classes_names": ["cifar10"],
                         "num_classes": 1,
                     }
@@ -333,7 +361,7 @@ DatasetsGroups = [
                         "dtype": "uint8",
                         "shape": (10,),
                         "name": "Выход 1",
-                        "task": LayerOutputTypeChoice.Classification,
+                        "task": LayerOutputTypeChoice.Classification.value,
                         "classes_names": [
                             "airplane",
                             "automobile",
@@ -357,7 +385,7 @@ DatasetsGroups = [
                             "dtype": "float32",
                             "shape": (32, 32, 3),
                             "name": "Вход 1",
-                            "task": LayerInputTypeChoice.Image,
+                            "task": LayerInputTypeChoice.Image.value,
                             "classes_names": ["cifar10"],
                             "num_classes": 1,
                         }
@@ -368,7 +396,7 @@ DatasetsGroups = [
                             "dtype": "uint8",
                             "shape": (10,),
                             "name": "Выход 1",
-                            "task": LayerOutputTypeChoice.Classification,
+                            "task": LayerOutputTypeChoice.Classification.value,
                             "classes_names": [
                                 "airplane",
                                 "automobile",
@@ -387,23 +415,23 @@ DatasetsGroups = [
                     },
                 },
                 "tags": [
-                    Tags.image,
-                    Tags.classification,
-                    Tags.tensorflow_keras,
+                    Tags.image.value,
+                    Tags.classification.value,
+                    Tags.tensorflow_keras.value,
                 ],
                 "use_generator": False,
             },
             {
                 "alias": "cifar100",
                 "name": "Сifar 100",
-                "group": DatasetGroupChoice.keras,
+                "group": DatasetGroupChoice.keras.value,
                 "inputs": {
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
                         "shape": (32, 32, 3),
                         "name": "Вход 1",
-                        "task": LayerInputTypeChoice.Image,
+                        "task": LayerInputTypeChoice.Image.value,
                         "classes_names": ["cifar100"],
                         "num_classes": 1,
                     },
@@ -414,7 +442,7 @@ DatasetsGroups = [
                         "dtype": "uint8",
                         "shape": (100,),
                         "name": "Выход 1",
-                        "task": LayerOutputTypeChoice.Classification,
+                        "task": LayerOutputTypeChoice.Classification.value,
                         "classes_names": [
                             "apple",
                             "aquarium_fish",
@@ -528,7 +556,7 @@ DatasetsGroups = [
                             "dtype": "float32",
                             "shape": (32, 32, 3),
                             "name": "Вход 1",
-                            "task": LayerInputTypeChoice.Image,
+                            "task": LayerInputTypeChoice.Image.value,
                             "classes_names": ["cifar100"],
                             "num_classes": 1,
                         }
@@ -539,7 +567,7 @@ DatasetsGroups = [
                             "dtype": "uint8",
                             "shape": (100,),
                             "name": "Выход 1",
-                            "task": LayerOutputTypeChoice.Classification,
+                            "task": LayerOutputTypeChoice.Classification.value,
                             "classes_names": [
                                 "apple",
                                 "aquarium_fish",
@@ -648,12 +676,12 @@ DatasetsGroups = [
                     },
                 },
                 "tags": [
-                    Tags.image,
-                    Tags.classification,
-                    Tags.tensorflow_keras,
+                    Tags.image.value,
+                    Tags.classification.value,
+                    Tags.tensorflow_keras.value,
                 ],
                 "use_generator": False,
-            }
+            },
         ],
     },
     {
@@ -663,10 +691,10 @@ DatasetsGroups = [
             # {
             #     "alias": "sberbank_timeseries",
             #     "name": "Акции сбербанка",
-            #     "group": DatasetGroupChoice.terra,
+            #     "group": DatasetGroupChoice.terra.value,
             #     "tags": [
-            #         Tags.timeseries,
-            #         Tags.terra_ai,
+            #         Tags.timeseries.value,
+            #         Tags.terra_ai.value,
             #     ],
             #     "inputs": {
             #         1: {
@@ -674,10 +702,10 @@ DatasetsGroups = [
             #             "dtype": "float32",
             #             "shape": (4, 30),
             #             "name": "Вход 1",
-            #             "task": LayerInputTypeChoice.Dataframe,
+            #             "task": LayerInputTypeChoice.Dataframe.value,
             #             "classes_names": [],
             #             "num_classes": 1,
-            #             "encoding": LayerEncodingChoice.none,
+            #             "encoding": LayerEncodingChoice.none.value,
             #         },
             #     },
             #     "outputs": {
@@ -686,7 +714,7 @@ DatasetsGroups = [
             #             "dtype": "float32",
             #             "shape": (2, 2),
             #             "name": "Выход 1",
-            #             "task": LayerOutputTypeChoice.Timeseries,
+            #             "task": LayerOutputTypeChoice.Timeseries.value,
             #             "classes_names": [],
             #             "num_classes": 1,
             #         },
@@ -696,7 +724,7 @@ DatasetsGroups = [
             #             "1_1": {
             #                 "datatype": "DIM",
             #                 "dtype": "float64",
-            #                 "encoding": LayerEncodingChoice.none,
+            #                 "encoding": LayerEncodingChoice.none.value,
             #                 "name": "Input 1",
             #                 "num_classes": 1,
             #                 "shape": (30,),
@@ -705,7 +733,7 @@ DatasetsGroups = [
             #             "1_2": {
             #                 "datatype": "DIM",
             #                 "dtype": "float64",
-            #                 "encoding": LayerEncodingChoice.none,
+            #                 "encoding": LayerEncodingChoice.none.value,
             #                 "name": "Input 1",
             #                 "num_classes": 1,
             #                 "shape": (30,),
@@ -714,7 +742,7 @@ DatasetsGroups = [
             #             "1_3": {
             #                 "datatype": "DIM",
             #                 "dtype": "float64",
-            #                 "encoding": LayerEncodingChoice.none,
+            #                 "encoding": LayerEncodingChoice.none.value,
             #                 "name": "Input 1",
             #                 "num_classes": 1,
             #                 "shape": (30,),
@@ -723,7 +751,7 @@ DatasetsGroups = [
             #             "1_4": {
             #                 "datatype": "DIM",
             #                 "dtype": "float64",
-            #                 "encoding": LayerEncodingChoice.none,
+            #                 "encoding": LayerEncodingChoice.none.value,
             #                 "name": "Input 1",
             #                 "num_classes": 1,
             #                 "shape": (30,),
@@ -734,7 +762,7 @@ DatasetsGroups = [
             #             "2_3": {
             #                 "datatype": "DIM",
             #                 "dtype": "float64",
-            #                 "encoding": LayerEncodingChoice.none,
+            #                 "encoding": LayerEncodingChoice.none.value,
             #                 "name": "Output 1",
             #                 "num_classes": 1,
             #                 "shape": (2,),
@@ -743,7 +771,7 @@ DatasetsGroups = [
             #             "2_4": {
             #                 "datatype": "DIM",
             #                 "dtype": "float64",
-            #                 "encoding": LayerEncodingChoice.none,
+            #                 "encoding": LayerEncodingChoice.none.value,
             #                 "name": "Output 1",
             #                 "num_classes": 1,
             #                 "shape": (2,),
@@ -756,17 +784,17 @@ DatasetsGroups = [
             {
                 "alias": "cars",
                 "name": "Автомобили",
-                "group": DatasetGroupChoice.terra,
+                "group": DatasetGroupChoice.terra.value,
                 "inputs": {
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
                         "shape": (120, 176, 3),
                         "name": "Изображения автомобилей",
-                        "task": LayerInputTypeChoice.Image,
+                        "task": LayerInputTypeChoice.Image.value,
                         "num_classes": 3,
                         "classes_names": ["Мерседес", "Рено", "Феррари"],
-                        "encoding": LayerEncodingChoice.none,
+                        "encoding": LayerEncodingChoice.none.value,
                     },
                 },
                 "outputs": {
@@ -775,10 +803,10 @@ DatasetsGroups = [
                         "dtype": "uint8",
                         "shape": (3,),
                         "name": "Метки классов",
-                        "task": LayerOutputTypeChoice.Classification,
+                        "task": LayerOutputTypeChoice.Classification.value,
                         "num_classes": 3,
                         "classes_names": ["Мерседес", "Рено", "Феррари"],
-                        "encoding": LayerEncodingChoice.ohe,
+                        "encoding": LayerEncodingChoice.ohe.value,
                     },
                 },
                 "columns": {
@@ -788,10 +816,10 @@ DatasetsGroups = [
                             "dtype": "float32",
                             "name": "Изображения автомобилей",
                             "shape": (120, 176, 3),
-                            "task": LayerInputTypeChoice.Image,
+                            "task": LayerInputTypeChoice.Image.value,
                             "num_classes": 3,
                             "classes_names": ["Мерседес", "Рено", "Феррари"],
-                            "encoding": LayerEncodingChoice.ohe,
+                            "encoding": LayerEncodingChoice.ohe.value,
                         }
                     },
                     2: {
@@ -800,31 +828,31 @@ DatasetsGroups = [
                             "dtype": "uint8",
                             "name": "Метки классов",
                             "shape": (3,),
-                            "task": LayerOutputTypeChoice.Classification,
+                            "task": LayerOutputTypeChoice.Classification.value,
                             "num_classes": 3,
                             "classes_names": ["Мерседес", "Рено", "Феррари"],
-                            "encoding": LayerEncodingChoice.ohe,
+                            "encoding": LayerEncodingChoice.ohe.value,
                         }
                     },
                 },
                 "tags": [
-                    Tags.image,
-                    Tags.classification,
-                    Tags.terra_ai,
+                    Tags.image.value,
+                    Tags.classification.value,
+                    Tags.terra_ai.value,
                 ],
                 "use_generator": False,
             },
-{
+            {
                 "alias": "cars_30",
                 "name": "Автомобили (30 классов)",
-                "group": DatasetGroupChoice.terra,
+                "group": DatasetGroupChoice.terra.value,
                 "inputs": {
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
                         "shape": (48, 96, 3),
                         "name": "Изображения автомобилей",
-                        "task": LayerInputTypeChoice.Image,
+                        "task": LayerInputTypeChoice.Image.value,
                         "num_classes": 30,
                         "classes_names": [
                             "Audi",
@@ -858,7 +886,7 @@ DatasetsGroups = [
                             "Volkswagen",
                             "Volvo",
                         ],
-                        "encoding": LayerEncodingChoice.none,
+                        "encoding": LayerEncodingChoice.none.value,
                     },
                 },
                 "outputs": {
@@ -867,7 +895,7 @@ DatasetsGroups = [
                         "dtype": "uint8",
                         "shape": (30,),
                         "name": "Метки классов",
-                        "task": LayerOutputTypeChoice.Classification,
+                        "task": LayerOutputTypeChoice.Classification.value,
                         "num_classes": 30,
                         "classes_names": [
                             "Audi",
@@ -901,7 +929,7 @@ DatasetsGroups = [
                             "Volkswagen",
                             "Volvo",
                         ],
-                        "encoding": LayerEncodingChoice.ohe,
+                        "encoding": LayerEncodingChoice.ohe.value,
                     },
                 },
                 "columns": {
@@ -911,7 +939,7 @@ DatasetsGroups = [
                             "dtype": "float32",
                             "name": "Изображения автомобилей",
                             "shape": (48, 96, 3),
-                            "task": LayerInputTypeChoice.Image,
+                            "task": LayerInputTypeChoice.Image.value,
                             "num_classes": 30,
                             "classes_names": [
                                 "Audi",
@@ -945,7 +973,7 @@ DatasetsGroups = [
                                 "Volkswagen",
                                 "Volvo",
                             ],
-                            "encoding": LayerEncodingChoice.ohe,
+                            "encoding": LayerEncodingChoice.ohe.value,
                         }
                     },
                     2: {
@@ -954,7 +982,7 @@ DatasetsGroups = [
                             "dtype": "uint8",
                             "name": "Метки классов",
                             "shape": (30,),
-                            "task": LayerOutputTypeChoice.Classification,
+                            "task": LayerOutputTypeChoice.Classification.value,
                             "num_classes": 30,
                             "classes_names": [
                                 "Audi",
@@ -988,31 +1016,31 @@ DatasetsGroups = [
                                 "Volkswagen",
                                 "Volvo",
                             ],
-                            "encoding": LayerEncodingChoice.ohe,
+                            "encoding": LayerEncodingChoice.ohe.value,
                         }
                     },
                 },
                 "tags": [
-                    Tags.image,
-                    Tags.classification,
-                    Tags.terra_ai,
+                    Tags.image.value,
+                    Tags.classification.value,
+                    Tags.terra_ai.value,
                 ],
                 "use_generator": False,
             },
             {
                 "alias": "airplane",
                 "name": "Самолеты",
-                "group": DatasetGroupChoice.terra,
+                "group": DatasetGroupChoice.terra.value,
                 "inputs": {
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
                         "shape": (128, 160, 3),
                         "name": "Изображения самолетов",
-                        "task": LayerInputTypeChoice.Image,
+                        "task": LayerInputTypeChoice.Image.value,
                         "num_classes": 1,
                         "classes_names": ["Самолеты"],
-                        "encoding": LayerEncodingChoice.none,
+                        "encoding": LayerEncodingChoice.none.value,
                     },
                 },
                 "outputs": {
@@ -1021,17 +1049,17 @@ DatasetsGroups = [
                         "dtype": "uint8",
                         "shape": (128, 160, 2),
                         "name": "Маски сегментации",
-                        "task": LayerOutputTypeChoice.Segmentation,
+                        "task": LayerOutputTypeChoice.Segmentation.value,
                         "num_classes": 2,
                         "classes_names": ["Небо", "Самолет"],
                         "classes_colors": ["black", "red"],
-                        "encoding": LayerEncodingChoice.ohe,
+                        "encoding": LayerEncodingChoice.ohe.value,
                     },
                 },
                 "tags": [
-                    Tags.image,
-                    Tags.segmentation,
-                    Tags.terra_ai,
+                    Tags.image.value,
+                    Tags.segmentation.value,
+                    Tags.terra_ai.value,
                 ],
                 "columns": {
                     1: {
@@ -1040,10 +1068,10 @@ DatasetsGroups = [
                             "dtype": "float32",
                             "shape": (128, 160, 3),
                             "name": "Изображения самолетов",
-                            "task": LayerInputTypeChoice.Image,
+                            "task": LayerInputTypeChoice.Image.value,
                             "num_classes": 1,
                             "classes_names": ["Самолеты"],
-                            "encoding": LayerEncodingChoice.ohe,
+                            "encoding": LayerEncodingChoice.ohe.value,
                         }
                     },
                     2: {
@@ -1052,10 +1080,10 @@ DatasetsGroups = [
                             "dtype": "uint8",
                             "shape": (128, 160, 2),
                             "name": "Маски сегментации",
-                            "task": LayerOutputTypeChoice.Segmentation,
+                            "task": LayerOutputTypeChoice.Segmentation.value,
                             "num_classes": 2,
                             "classes_names": ["Небо", "Самолет"],
-                            "encoding": LayerEncodingChoice.ohe,
+                            "encoding": LayerEncodingChoice.ohe.value,
                         }
                     },
                 },
@@ -1064,11 +1092,11 @@ DatasetsGroups = [
             {
                 "alias": "lips",
                 "name": "Губы",
-                "group": DatasetGroupChoice.terra,
+                "group": DatasetGroupChoice.terra.value,
                 "tags": [
-                    Tags.image,
-                    Tags.segmentation,
-                    Tags.terra_ai,
+                    Tags.image.value,
+                    Tags.segmentation.value,
+                    Tags.terra_ai.value,
                 ],
                 "inputs": {
                     1: {
@@ -1076,10 +1104,10 @@ DatasetsGroups = [
                         "dtype": "float32",
                         "shape": (120, 176, 3),
                         "name": "Изображения",
-                        "task": LayerInputTypeChoice.Image,
+                        "task": LayerInputTypeChoice.Image.value,
                         "classes_names": ["Оригинальные изображения"],
                         "num_classes": 1,
-                        "encoding": LayerEncodingChoice.none,
+                        "encoding": LayerEncodingChoice.none.value,
                     },
                 },
                 "outputs": {
@@ -1088,11 +1116,11 @@ DatasetsGroups = [
                         "dtype": "uint8",
                         "shape": (120, 176, 2),
                         "name": "Маски сегментации",
-                        "task": LayerOutputTypeChoice.Segmentation,
+                        "task": LayerOutputTypeChoice.Segmentation.value,
                         "classes_names": ["Фон", "Губы"],
                         "classes_colors": ["black", "lime"],
                         "num_classes": 2,
-                        "encoding": LayerEncodingChoice.ohe,
+                        "encoding": LayerEncodingChoice.ohe.value,
                     },
                 },
                 "columns": {
@@ -1105,7 +1133,7 @@ DatasetsGroups = [
                             "name": "Изображения",
                             "num_classes": 1,
                             "shape": (120, 176, 3),
-                            "task": LayerInputTypeChoice.Image,
+                            "task": LayerInputTypeChoice.Image.value,
                         }
                     },
                     2: {
@@ -1114,11 +1142,11 @@ DatasetsGroups = [
                             "classes_names": ["Лицо", "Губы"],
                             "datatype": "2D",
                             "dtype": "uint8",
-                            "encoding": LayerEncodingChoice.ohe,
+                            "encoding": LayerEncodingChoice.ohe.value,
                             "name": "Маски сегментации",
                             "num_classes": 2,
                             "shape": (120, 176, 2),
-                            "task": LayerOutputTypeChoice.Segmentation,
+                            "task": LayerOutputTypeChoice.Segmentation.value,
                         }
                     },
                 },
@@ -1127,11 +1155,11 @@ DatasetsGroups = [
             {
                 "alias": "bus_passengers",
                 "name": "Пассажиры автобусов",
-                "group": DatasetGroupChoice.terra,
+                "group": DatasetGroupChoice.terra.value,
                 "tags": [
-                    Tags.image,
-                    Tags.classification,
-                    Tags.terra_ai,
+                    Tags.image.value,
+                    Tags.classification.value,
+                    Tags.terra_ai.value,
                 ],
                 "inputs": {
                     1: {
@@ -1139,10 +1167,10 @@ DatasetsGroups = [
                         "dtype": "float32",
                         "shape": (200, 100, 3),
                         "name": "Изображения",
-                        "task": LayerInputTypeChoice.Image,
+                        "task": LayerInputTypeChoice.Image.value,
                         "classes_names": ["Входящий", "Выходящий"],
                         "num_classes": 2,
-                        "encoding": LayerEncodingChoice.none,
+                        "encoding": LayerEncodingChoice.none.value,
                     },
                 },
                 "outputs": {
@@ -1151,10 +1179,10 @@ DatasetsGroups = [
                         "dtype": "uint8",
                         "shape": (2,),
                         "name": "Метки классов",
-                        "task": LayerOutputTypeChoice.Classification,
+                        "task": LayerOutputTypeChoice.Classification.value,
                         "num_classes": 2,
                         "classes_names": ["Входящий", "Выходящий"],
-                        "encoding": LayerEncodingChoice.ohe,
+                        "encoding": LayerEncodingChoice.ohe.value,
                     },
                 },
                 "columns": {
@@ -1163,11 +1191,11 @@ DatasetsGroups = [
                             "classes_names": ["Входящий", "Выходящий"],
                             "datatype": "2D",
                             "dtype": "float32",
-                            "encoding": LayerEncodingChoice.none,
+                            "encoding": LayerEncodingChoice.none.value,
                             "name": "Изображения",
                             "num_classes": 2,
                             "shape": (200, 100, 3),
-                            "task": LayerInputTypeChoice.Image,
+                            "task": LayerInputTypeChoice.Image.value,
                         }
                     },
                     2: {
@@ -1175,11 +1203,11 @@ DatasetsGroups = [
                             "classes_names": ["Входящий", "Выходящий"],
                             "datatype": "DIM",
                             "dtype": "uint8",
-                            "encoding": LayerEncodingChoice.ohe,
+                            "encoding": LayerEncodingChoice.ohe.value,
                             "name": "Метки классов",
                             "num_classes": 2,
                             "shape": (2,),
-                            "task": LayerOutputTypeChoice.Classification,
+                            "task": LayerOutputTypeChoice.Classification.value,
                         }
                     },
                 },
@@ -1188,11 +1216,11 @@ DatasetsGroups = [
             {
                 "alias": "heads",
                 "name": "Пассажиры автобусов (попарно)",
-                "group": DatasetGroupChoice.terra,
+                "group": DatasetGroupChoice.terra.value,
                 "tags": [
-                    Tags.image,
-                    Tags.classification,
-                    Tags.terra_ai,
+                    Tags.image.value,
+                    Tags.classification.value,
+                    Tags.terra_ai.value,
                 ],
                 "inputs": {
                     1: {
@@ -1200,20 +1228,20 @@ DatasetsGroups = [
                         "dtype": "float32",
                         "shape": (100, 100, 3),
                         "name": "Пассажир 1",
-                        "task": LayerInputTypeChoice.Image,
+                        "task": LayerInputTypeChoice.Image.value,
                         "classes_names": ["Heads.csv"],
                         "num_classes": 1,
-                        "encoding": LayerEncodingChoice.none,
+                        "encoding": LayerEncodingChoice.none.value,
                     },
                     2: {
                         "datatype": "2D",
                         "dtype": "float32",
                         "shape": (100, 100, 3),
                         "name": "Пассажир 2",
-                        "task": LayerInputTypeChoice.Image,
+                        "task": LayerInputTypeChoice.Image.value,
                         "classes_names": ["Heads.csv"],
                         "num_classes": 1,
-                        "encoding": LayerEncodingChoice.none,
+                        "encoding": LayerEncodingChoice.none.value,
                     },
                 },
                 "outputs": {
@@ -1222,10 +1250,10 @@ DatasetsGroups = [
                         "dtype": "uint8",
                         "shape": (2,),
                         "name": "Метки классов",
-                        "task": LayerOutputTypeChoice.Classification,
+                        "task": LayerOutputTypeChoice.Classification.value,
                         "num_classes": 2,
                         "classes_names": ["Не совпадают", "Совпадают"],
-                        "encoding": LayerEncodingChoice.ohe,
+                        "encoding": LayerEncodingChoice.ohe.value,
                     },
                 },
                 "columns": {
@@ -1234,11 +1262,11 @@ DatasetsGroups = [
                             "classes_names": ["Heads.csv"],
                             "datatype": "2D",
                             "dtype": "float32",
-                            "encoding": LayerEncodingChoice.none,
+                            "encoding": LayerEncodingChoice.none.value,
                             "name": "Пассажир 1",
                             "num_classes": 1,
                             "shape": (100, 100, 3),
-                            "task": LayerInputTypeChoice.Image,
+                            "task": LayerInputTypeChoice.Image.value,
                         }
                     },
                     2: {
@@ -1246,11 +1274,11 @@ DatasetsGroups = [
                             "classes_names": ["Heads.csv"],
                             "datatype": "2D",
                             "dtype": "float32",
-                            "encoding": LayerEncodingChoice.none,
+                            "encoding": LayerEncodingChoice.none.value,
                             "name": "Пассажир 2",
                             "num_classes": 1,
                             "shape": (100, 100, 3),
-                            "task": LayerInputTypeChoice.Image,
+                            "task": LayerInputTypeChoice.Image.value,
                         }
                     },
                     3: {
@@ -1258,11 +1286,11 @@ DatasetsGroups = [
                             "classes_names": ["Не совпадают", "Совпадают"],
                             "datatype": "DIM",
                             "dtype": "uint8",
-                            "encoding": LayerEncodingChoice.ohe,
+                            "encoding": LayerEncodingChoice.ohe.value,
                             "name": "Метка класса",
                             "num_classes": 2,
                             "shape": (2,),
-                            "task": LayerOutputTypeChoice.Classification,
+                            "task": LayerOutputTypeChoice.Classification.value,
                         }
                     },
                 },
@@ -1271,11 +1299,11 @@ DatasetsGroups = [
             {
                 "alias": "marki_moloka",
                 "name": "Марки молока",
-                "group": DatasetGroupChoice.terra,
+                "group": DatasetGroupChoice.terra.value,
                 "tags": [
-                    Tags.image,
-                    Tags.classification,
-                    Tags.terra_ai,
+                    Tags.image.value,
+                    Tags.classification.value,
+                    Tags.terra_ai.value,
                 ],
                 "inputs": {
                     1: {
@@ -1283,14 +1311,14 @@ DatasetsGroups = [
                         "dtype": "float32",
                         "shape": (200, 100, 3),
                         "name": "Изображения",
-                        "task": LayerInputTypeChoice.Image,
+                        "task": LayerInputTypeChoice.Image.value,
                         "classes_names": [
                             "Parmalat",
                             "Кубанская бурёнка",
                             "Семейный формат",
                         ],
                         "num_classes": 3,
-                        "encoding": LayerEncodingChoice.none,
+                        "encoding": LayerEncodingChoice.none.value,
                     },
                 },
                 "outputs": {
@@ -1299,14 +1327,14 @@ DatasetsGroups = [
                         "dtype": "uint8",
                         "shape": (3,),
                         "name": "Метки классов",
-                        "task": LayerOutputTypeChoice.Classification,
+                        "task": LayerOutputTypeChoice.Classification.value,
                         "num_classes": 2,
                         "classes_names": [
                             "Parmalat",
                             "Кубанская бурёнка",
                             "Семейный формат",
                         ],
-                        "encoding": LayerEncodingChoice.ohe,
+                        "encoding": LayerEncodingChoice.ohe.value,
                     },
                 },
                 "columns": {
@@ -1319,11 +1347,11 @@ DatasetsGroups = [
                             ],
                             "datatype": "2D",
                             "dtype": "float32",
-                            "encoding": LayerEncodingChoice.none,
+                            "encoding": LayerEncodingChoice.none.value,
                             "name": "Изображения",
                             "num_classes": 2,
                             "shape": (200, 100, 3),
-                            "task": LayerInputTypeChoice.Image,
+                            "task": LayerInputTypeChoice.Image.value,
                         }
                     },
                     2: {
@@ -1335,11 +1363,11 @@ DatasetsGroups = [
                             ],
                             "datatype": "DIM",
                             "dtype": "uint8",
-                            "encoding": LayerEncodingChoice.ohe,
+                            "encoding": LayerEncodingChoice.ohe.value,
                             "name": "Метки классов",
                             "num_classes": 3,
                             "shape": (3,),
-                            "task": LayerOutputTypeChoice.Classification,
+                            "task": LayerOutputTypeChoice.Classification.value,
                         }
                     },
                 },
@@ -1348,12 +1376,12 @@ DatasetsGroups = [
             {
                 "alias": "symptoms",
                 "name": "Симптомы",
-                "group": DatasetGroupChoice.terra,
+                "group": DatasetGroupChoice.terra.value,
                 "tags": [
-                    Tags.text,
-                    Tags.classification,
-                    Tags.russian,
-                    Tags.terra_ai,
+                    Tags.text.value,
+                    Tags.classification.value,
+                    Tags.russian.value,
+                    Tags.terra_ai.value,
                 ],
                 "inputs": {
                     1: {
@@ -1361,7 +1389,7 @@ DatasetsGroups = [
                         "dtype": "uint32",
                         "shape": (100,),
                         "name": "Симптомы",
-                        "task": LayerInputTypeChoice.Text,
+                        "task": LayerInputTypeChoice.Text.value,
                         "classes_names": [
                             "Аппендицит",
                             "Гастрит",
@@ -1375,7 +1403,7 @@ DatasetsGroups = [
                             "Язва",
                         ],
                         "num_classes": 10,
-                        "encoding": LayerEncodingChoice.none,
+                        "encoding": LayerEncodingChoice.none.value,
                     },
                 },
                 "outputs": {
@@ -1384,7 +1412,7 @@ DatasetsGroups = [
                         "dtype": "uint8",
                         "shape": (10,),
                         "name": "Метки классов",
-                        "task": LayerOutputTypeChoice.Classification,
+                        "task": LayerOutputTypeChoice.Classification.value,
                         "classes_names": [
                             "Аппендицит",
                             "Гастрит",
@@ -1398,7 +1426,7 @@ DatasetsGroups = [
                             "Язва",
                         ],
                         "num_classes": 10,
-                        "encoding": LayerEncodingChoice.ohe,
+                        "encoding": LayerEncodingChoice.ohe.value,
                     },
                 },
                 "columns": {
@@ -1418,11 +1446,11 @@ DatasetsGroups = [
                             ],
                             "datatype": "DIM",
                             "dtype": "int64",
-                            "encoding": LayerEncodingChoice.none,
+                            "encoding": LayerEncodingChoice.none.value,
                             "name": "Симптомы",
                             "num_classes": 10,
                             "shape": (100,),
-                            "task": LayerInputTypeChoice.Text,
+                            "task": LayerInputTypeChoice.Text.value,
                         }
                     },
                     2: {
@@ -1441,11 +1469,11 @@ DatasetsGroups = [
                             ],
                             "datatype": "DIM",
                             "dtype": "uint8",
-                            "encoding": LayerEncodingChoice.ohe,
+                            "encoding": LayerEncodingChoice.ohe.value,
                             "name": "Метки классов",
                             "num_classes": 10,
                             "shape": (10,),
-                            "task": LayerOutputTypeChoice.Classification,
+                            "task": LayerOutputTypeChoice.Classification.value,
                         }
                     },
                 },
@@ -1454,12 +1482,12 @@ DatasetsGroups = [
             {
                 "alias": "writers",
                 "name": "Тексты писателей",
-                "group": DatasetGroupChoice.terra,
+                "group": DatasetGroupChoice.terra.value,
                 "tags": [
-                    Tags.text,
-                    Tags.classification,
-                    Tags.russian,
-                    Tags.terra_ai,
+                    Tags.text.value,
+                    Tags.classification.value,
+                    Tags.russian.value,
+                    Tags.terra_ai.value,
                 ],
                 "inputs": {
                     1: {
@@ -1467,17 +1495,17 @@ DatasetsGroups = [
                         "dtype": "int64",
                         "shape": (1000,),
                         "name": "Тексты писателей",
-                        "task": LayerInputTypeChoice.Text,
+                        "task": LayerInputTypeChoice.Text.value,
                         "classes_names": [
                             "Булгаков",
                             "Клиффорд Саймак",
                             "Макс Фрай",
                             "О. Генри",
                             "Рэй Брэдберри",
-                            "Стругацкие"
+                            "Стругацкие",
                         ],
                         "num_classes": 6,
-                        "encoding": LayerEncodingChoice.none,
+                        "encoding": LayerEncodingChoice.none.value,
                     },
                 },
                 "outputs": {
@@ -1486,17 +1514,17 @@ DatasetsGroups = [
                         "dtype": "uint8",
                         "shape": (6,),
                         "name": "Метки классов",
-                        "task": LayerOutputTypeChoice.Classification,
+                        "task": LayerOutputTypeChoice.Classification.value,
                         "classes_names": [
                             "Булгаков",
                             "Клиффорд Саймак",
                             "Макс Фрай",
                             "О. Генри",
                             "Рэй Брэдберри",
-                            "Стругацкие"
+                            "Стругацкие",
                         ],
                         "num_classes": 6,
-                        "encoding": LayerEncodingChoice.ohe,
+                        "encoding": LayerEncodingChoice.ohe.value,
                     },
                 },
                 "columns": {
@@ -1508,15 +1536,15 @@ DatasetsGroups = [
                                 "Макс Фрай",
                                 "О. Генри",
                                 "Рэй Брэдберри",
-                                "Стругацкие"
+                                "Стругацкие",
                             ],
                             "datatype": "DIM",
                             "dtype": "int64",
-                            "encoding": LayerEncodingChoice.none,
+                            "encoding": LayerEncodingChoice.none.value,
                             "name": "Тексты писателей",
                             "num_classes": 6,
                             "shape": (1000,),
-                            "task": LayerInputTypeChoice.Text,
+                            "task": LayerInputTypeChoice.Text.value,
                         }
                     },
                     2: {
@@ -1527,15 +1555,15 @@ DatasetsGroups = [
                                 "Макс Фрай",
                                 "О. Генри",
                                 "Рэй Брэдберри",
-                                "Стругацкие"
+                                "Стругацкие",
                             ],
                             "datatype": "DIM",
                             "dtype": "uint8",
-                            "encoding": LayerEncodingChoice.ohe,
+                            "encoding": LayerEncodingChoice.ohe.value,
                             "name": "Метки классов",
                             "num_classes": 6,
                             "shape": (6,),
-                            "task": LayerOutputTypeChoice.Classification,
+                            "task": LayerOutputTypeChoice.Classification.value,
                         }
                     },
                 },
@@ -1544,12 +1572,12 @@ DatasetsGroups = [
             {
                 "alias": "tesla",
                 "name": "Отзывы на Теслу",
-                "group": DatasetGroupChoice.terra,
+                "group": DatasetGroupChoice.terra.value,
                 "tags": [
-                    Tags.text,
-                    Tags.classification,
-                    Tags.russian,
-                    Tags.terra_ai,
+                    Tags.text.value,
+                    Tags.classification.value,
+                    Tags.russian.value,
+                    Tags.terra_ai.value,
                 ],
                 "inputs": {
                     1: {
@@ -1557,13 +1585,10 @@ DatasetsGroups = [
                         "dtype": "int64",
                         "shape": (100,),
                         "name": "Отзывы",
-                        "task": LayerInputTypeChoice.Text,
-                        "classes_names": [
-                            "Негативные",
-                            "Позитивные"
-                        ],
+                        "task": LayerInputTypeChoice.Text.value,
+                        "classes_names": ["Негативные", "Позитивные"],
                         "num_classes": 2,
-                        "encoding": LayerEncodingChoice.none,
+                        "encoding": LayerEncodingChoice.none.value,
                     },
                 },
                 "outputs": {
@@ -1572,44 +1597,35 @@ DatasetsGroups = [
                         "dtype": "uint8",
                         "shape": (2,),
                         "name": "Метки классов",
-                        "task": LayerOutputTypeChoice.Classification,
-                        "classes_names": [
-                            "Негативные",
-                            "Позитивные"
-                        ],
+                        "task": LayerOutputTypeChoice.Classification.value,
+                        "classes_names": ["Негативные", "Позитивные"],
                         "num_classes": 2,
-                        "encoding": LayerEncodingChoice.ohe,
+                        "encoding": LayerEncodingChoice.ohe.value,
                     },
                 },
                 "columns": {
                     1: {
                         "1_text": {
-                            "classes_names": [
-                                "Негативные",
-                                "Позитивные"
-                            ],
+                            "classes_names": ["Негативные", "Позитивные"],
                             "datatype": "DIM",
                             "dtype": "int64",
-                            "encoding": LayerEncodingChoice.none,
+                            "encoding": LayerEncodingChoice.none.value,
                             "name": "Отзывы",
                             "num_classes": 2,
                             "shape": (100,),
-                            "task": LayerInputTypeChoice.Text,
+                            "task": LayerInputTypeChoice.Text.value,
                         }
                     },
                     2: {
                         "2_classification": {
-                            "classes_names": [
-                                "Негативные",
-                                "Позитивные"
-                            ],
+                            "classes_names": ["Негативные", "Позитивные"],
                             "datatype": "DIM",
                             "dtype": "uint8",
-                            "encoding": LayerEncodingChoice.ohe,
+                            "encoding": LayerEncodingChoice.ohe.value,
                             "name": "Метки классов",
                             "num_classes": 2,
                             "shape": (2,),
-                            "task": LayerOutputTypeChoice.Classification,
+                            "task": LayerOutputTypeChoice.Classification.value,
                         }
                     },
                 },
@@ -1618,12 +1634,12 @@ DatasetsGroups = [
             {
                 "alias": "symptoms_bow",
                 "name": "Симптомы (bow)",
-                "group": DatasetGroupChoice.terra,
+                "group": DatasetGroupChoice.terra.value,
                 "tags": [
-                    Tags.text,
-                    Tags.classification,
-                    Tags.russian,
-                    Tags.terra_ai,
+                    Tags.text.value,
+                    Tags.classification.value,
+                    Tags.russian.value,
+                    Tags.terra_ai.value,
                 ],
                 "inputs": {
                     1: {
@@ -1631,7 +1647,7 @@ DatasetsGroups = [
                         "dtype": "float64",
                         "shape": (1200,),
                         "name": "Симптомы",
-                        "task": LayerInputTypeChoice.Text,
+                        "task": LayerInputTypeChoice.Text.value,
                         "classes_names": [
                             "Аппендицит",
                             "Гастрит",
@@ -1645,7 +1661,7 @@ DatasetsGroups = [
                             "Язва",
                         ],
                         "num_classes": 10,
-                        "encoding": LayerEncodingChoice.none,
+                        "encoding": LayerEncodingChoice.none.value,
                     },
                 },
                 "outputs": {
@@ -1654,7 +1670,7 @@ DatasetsGroups = [
                         "dtype": "uint8",
                         "shape": (10,),
                         "name": "Метки классов",
-                        "task": LayerOutputTypeChoice.Classification,
+                        "task": LayerOutputTypeChoice.Classification.value,
                         "classes_names": [
                             "Аппендицит",
                             "Гастрит",
@@ -1668,7 +1684,7 @@ DatasetsGroups = [
                             "Язва",
                         ],
                         "num_classes": 10,
-                        "encoding": LayerEncodingChoice.ohe,
+                        "encoding": LayerEncodingChoice.ohe.value,
                     },
                 },
                 "columns": {
@@ -1688,11 +1704,11 @@ DatasetsGroups = [
                             ],
                             "datatype": "DIM",
                             "dtype": "float64",
-                            "encoding": LayerEncodingChoice.none,
+                            "encoding": LayerEncodingChoice.none.value,
                             "name": "Симптомы",
                             "num_classes": 10,
                             "shape": (1200,),
-                            "task": LayerInputTypeChoice.Text,
+                            "task": LayerInputTypeChoice.Text.value,
                         }
                     },
                     2: {
@@ -1711,11 +1727,11 @@ DatasetsGroups = [
                             ],
                             "datatype": "DIM",
                             "dtype": "uint8",
-                            "encoding": LayerEncodingChoice.ohe,
+                            "encoding": LayerEncodingChoice.ohe.value,
                             "name": "Метки классов",
                             "num_classes": 10,
                             "shape": (10,),
-                            "task": LayerOutputTypeChoice.Classification,
+                            "task": LayerOutputTypeChoice.Classification.value,
                         }
                     },
                 },
@@ -1724,12 +1740,12 @@ DatasetsGroups = [
             {
                 "alias": "writers_bow",
                 "name": "Тексты писателей (bow)",
-                "group": DatasetGroupChoice.terra,
+                "group": DatasetGroupChoice.terra.value,
                 "tags": [
-                    Tags.text,
-                    Tags.classification,
-                    Tags.russian,
-                    Tags.terra_ai,
+                    Tags.text.value,
+                    Tags.classification.value,
+                    Tags.russian.value,
+                    Tags.terra_ai.value,
                 ],
                 "inputs": {
                     1: {
@@ -1737,17 +1753,17 @@ DatasetsGroups = [
                         "dtype": "float64",
                         "shape": (50000,),
                         "name": "Тексты писателей",
-                        "task": LayerInputTypeChoice.Text,
+                        "task": LayerInputTypeChoice.Text.value,
                         "classes_names": [
                             "Булгаков",
                             "Клиффорд Саймак",
                             "Макс Фрай",
                             "О. Генри",
                             "Рэй Брэдберри",
-                            "Стругацкие"
+                            "Стругацкие",
                         ],
                         "num_classes": 6,
-                        "encoding": LayerEncodingChoice.none,
+                        "encoding": LayerEncodingChoice.none.value,
                     },
                 },
                 "outputs": {
@@ -1756,17 +1772,17 @@ DatasetsGroups = [
                         "dtype": "uint8",
                         "shape": (6,),
                         "name": "Метки классов",
-                        "task": LayerOutputTypeChoice.Classification,
+                        "task": LayerOutputTypeChoice.Classification.value,
                         "classes_names": [
                             "Булгаков",
                             "Клиффорд Саймак",
                             "Макс Фрай",
                             "О. Генри",
                             "Рэй Брэдберри",
-                            "Стругацкие"
+                            "Стругацкие",
                         ],
                         "num_classes": 6,
-                        "encoding": LayerEncodingChoice.ohe,
+                        "encoding": LayerEncodingChoice.ohe.value,
                     },
                 },
                 "columns": {
@@ -1778,15 +1794,15 @@ DatasetsGroups = [
                                 "Макс Фрай",
                                 "О. Генри",
                                 "Рэй Брэдберри",
-                                "Стругацкие"
+                                "Стругацкие",
                             ],
                             "datatype": "DIM",
                             "dtype": "float64",
-                            "encoding": LayerEncodingChoice.none,
+                            "encoding": LayerEncodingChoice.none.value,
                             "name": "Тексты писателей",
                             "num_classes": 6,
                             "shape": (50000,),
-                            "task": LayerInputTypeChoice.Text,
+                            "task": LayerInputTypeChoice.Text.value,
                         }
                     },
                     2: {
@@ -1797,15 +1813,15 @@ DatasetsGroups = [
                                 "Макс Фрай",
                                 "О. Генри",
                                 "Рэй Брэдберри",
-                                "Стругацкие"
+                                "Стругацкие",
                             ],
                             "datatype": "DIM",
                             "dtype": "uint8",
-                            "encoding": LayerEncodingChoice.ohe,
+                            "encoding": LayerEncodingChoice.ohe.value,
                             "name": "Метки классов",
                             "num_classes": 6,
                             "shape": (6,),
-                            "task": LayerOutputTypeChoice.Classification,
+                            "task": LayerOutputTypeChoice.Classification.value,
                         }
                     },
                 },
@@ -1814,12 +1830,12 @@ DatasetsGroups = [
             {
                 "alias": "tesla_bow",
                 "name": "Отзывы на Теслу (bow)",
-                "group": DatasetGroupChoice.terra,
+                "group": DatasetGroupChoice.terra.value,
                 "tags": [
-                    Tags.text,
-                    Tags.classification,
-                    Tags.russian,
-                    Tags.terra_ai,
+                    Tags.text.value,
+                    Tags.classification.value,
+                    Tags.russian.value,
+                    Tags.terra_ai.value,
                 ],
                 "inputs": {
                     1: {
@@ -1827,13 +1843,10 @@ DatasetsGroups = [
                         "dtype": "float64",
                         "shape": (20000,),
                         "name": "Отзывы",
-                        "task": LayerInputTypeChoice.Text,
-                        "classes_names": [
-                            "Негативные",
-                            "Позитивные"
-                        ],
+                        "task": LayerInputTypeChoice.Text.value,
+                        "classes_names": ["Негативные", "Позитивные"],
                         "num_classes": 2,
-                        "encoding": LayerEncodingChoice.none,
+                        "encoding": LayerEncodingChoice.none.value,
                     },
                 },
                 "outputs": {
@@ -1842,44 +1855,35 @@ DatasetsGroups = [
                         "dtype": "uint8",
                         "shape": (2,),
                         "name": "Метки классов",
-                        "task": LayerOutputTypeChoice.Classification,
-                        "classes_names": [
-                            "Негативные",
-                            "Позитивные"
-                        ],
+                        "task": LayerOutputTypeChoice.Classification.value,
+                        "classes_names": ["Негативные", "Позитивные"],
                         "num_classes": 2,
-                        "encoding": LayerEncodingChoice.ohe,
+                        "encoding": LayerEncodingChoice.ohe.value,
                     },
                 },
                 "columns": {
                     1: {
                         "1_text": {
-                            "classes_names": [
-                                "Негативные",
-                                "Позитивные"
-                            ],
+                            "classes_names": ["Негативные", "Позитивные"],
                             "datatype": "DIM",
                             "dtype": "float64",
-                            "encoding": LayerEncodingChoice.none,
+                            "encoding": LayerEncodingChoice.none.value,
                             "name": "Отзывы",
                             "num_classes": 2,
                             "shape": (20000,),
-                            "task": LayerInputTypeChoice.Text,
+                            "task": LayerInputTypeChoice.Text.value,
                         }
                     },
                     2: {
                         "2_classification": {
-                            "classes_names": [
-                                "Негативные",
-                                "Позитивные"
-                            ],
+                            "classes_names": ["Негативные", "Позитивные"],
                             "datatype": "DIM",
                             "dtype": "uint8",
-                            "encoding": LayerEncodingChoice.ohe,
+                            "encoding": LayerEncodingChoice.ohe.value,
                             "name": "Метки классов",
                             "num_classes": 2,
                             "shape": (2,),
-                            "task": LayerOutputTypeChoice.Classification,
+                            "task": LayerOutputTypeChoice.Classification.value,
                         }
                     },
                 },
@@ -1888,12 +1892,12 @@ DatasetsGroups = [
             {
                 "alias": "symptoms_w2v",
                 "name": "Симптомы (w2v)",
-                "group": DatasetGroupChoice.terra,
+                "group": DatasetGroupChoice.terra.value,
                 "tags": [
-                    Tags.text,
-                    Tags.classification,
-                    Tags.russian,
-                    Tags.terra_ai,
+                    Tags.text.value,
+                    Tags.classification.value,
+                    Tags.russian.value,
+                    Tags.terra_ai.value,
                 ],
                 "inputs": {
                     1: {
@@ -1901,7 +1905,7 @@ DatasetsGroups = [
                         "dtype": "float32",
                         "shape": (100, 200),
                         "name": "Симптомы",
-                        "task": LayerInputTypeChoice.Text,
+                        "task": LayerInputTypeChoice.Text.value,
                         "classes_names": [
                             "Аппендицит",
                             "Гастрит",
@@ -1915,7 +1919,7 @@ DatasetsGroups = [
                             "Язва",
                         ],
                         "num_classes": 10,
-                        "encoding": LayerEncodingChoice.none,
+                        "encoding": LayerEncodingChoice.none.value,
                     },
                 },
                 "outputs": {
@@ -1924,7 +1928,7 @@ DatasetsGroups = [
                         "dtype": "uint8",
                         "shape": (10,),
                         "name": "Метки классов",
-                        "task": LayerOutputTypeChoice.Classification,
+                        "task": LayerOutputTypeChoice.Classification.value,
                         "classes_names": [
                             "Аппендицит",
                             "Гастрит",
@@ -1938,7 +1942,7 @@ DatasetsGroups = [
                             "Язва",
                         ],
                         "num_classes": 10,
-                        "encoding": LayerEncodingChoice.ohe,
+                        "encoding": LayerEncodingChoice.ohe.value,
                     },
                 },
                 "columns": {
@@ -1958,11 +1962,11 @@ DatasetsGroups = [
                             ],
                             "datatype": "1D",
                             "dtype": "float32",
-                            "encoding": LayerEncodingChoice.none,
+                            "encoding": LayerEncodingChoice.none.value,
                             "name": "Симптомы",
                             "num_classes": 10,
                             "shape": (100, 200),
-                            "task": LayerInputTypeChoice.Text,
+                            "task": LayerInputTypeChoice.Text.value,
                         }
                     },
                     2: {
@@ -1981,11 +1985,11 @@ DatasetsGroups = [
                             ],
                             "datatype": "DIM",
                             "dtype": "uint8",
-                            "encoding": LayerEncodingChoice.ohe,
+                            "encoding": LayerEncodingChoice.ohe.value,
                             "name": "Метки классов",
                             "num_classes": 10,
                             "shape": (10,),
-                            "task": LayerOutputTypeChoice.Classification,
+                            "task": LayerOutputTypeChoice.Classification.value,
                         }
                     },
                 },
@@ -1994,12 +1998,12 @@ DatasetsGroups = [
             {
                 "alias": "writers_w2v",
                 "name": "Тексты писателей (w2v)",
-                "group": DatasetGroupChoice.terra,
+                "group": DatasetGroupChoice.terra.value,
                 "tags": [
-                    Tags.text,
-                    Tags.classification,
-                    Tags.russian,
-                    Tags.terra_ai,
+                    Tags.text.value,
+                    Tags.classification.value,
+                    Tags.russian.value,
+                    Tags.terra_ai.value,
                 ],
                 "inputs": {
                     1: {
@@ -2007,17 +2011,17 @@ DatasetsGroups = [
                         "dtype": "float32",
                         "shape": (1000, 200),
                         "name": "Тексты писателей",
-                        "task": LayerInputTypeChoice.Text,
+                        "task": LayerInputTypeChoice.Text.value,
                         "classes_names": [
                             "Булгаков",
                             "Клиффорд Саймак",
                             "Макс Фрай",
                             "О. Генри",
                             "Рэй Брэдберри",
-                            "Стругацкие"
+                            "Стругацкие",
                         ],
                         "num_classes": 6,
-                        "encoding": LayerEncodingChoice.none,
+                        "encoding": LayerEncodingChoice.none.value,
                     },
                 },
                 "outputs": {
@@ -2026,17 +2030,17 @@ DatasetsGroups = [
                         "dtype": "uint8",
                         "shape": (6,),
                         "name": "Метки классов",
-                        "task": LayerOutputTypeChoice.Classification,
+                        "task": LayerOutputTypeChoice.Classification.value,
                         "classes_names": [
                             "Булгаков",
                             "Клиффорд Саймак",
                             "Макс Фрай",
                             "О. Генри",
                             "Рэй Брэдберри",
-                            "Стругацкие"
+                            "Стругацкие",
                         ],
                         "num_classes": 6,
-                        "encoding": LayerEncodingChoice.ohe,
+                        "encoding": LayerEncodingChoice.ohe.value,
                     },
                 },
                 "columns": {
@@ -2048,15 +2052,15 @@ DatasetsGroups = [
                                 "Макс Фрай",
                                 "О. Генри",
                                 "Рэй Брэдберри",
-                                "Стругацкие"
+                                "Стругацкие",
                             ],
                             "datatype": "1D",
                             "dtype": "float32",
-                            "encoding": LayerEncodingChoice.none,
+                            "encoding": LayerEncodingChoice.none.value,
                             "name": "Тексты писателей",
                             "num_classes": 6,
                             "shape": (1000, 200),
-                            "task": LayerInputTypeChoice.Text,
+                            "task": LayerInputTypeChoice.Text.value,
                         }
                     },
                     2: {
@@ -2067,15 +2071,15 @@ DatasetsGroups = [
                                 "Макс Фрай",
                                 "О. Генри",
                                 "Рэй Брэдберри",
-                                "Стругацкие"
+                                "Стругацкие",
                             ],
                             "datatype": "DIM",
                             "dtype": "uint8",
-                            "encoding": LayerEncodingChoice.ohe,
+                            "encoding": LayerEncodingChoice.ohe.value,
                             "name": "Метки классов",
                             "num_classes": 6,
                             "shape": (6,),
-                            "task": LayerOutputTypeChoice.Classification,
+                            "task": LayerOutputTypeChoice.Classification.value,
                         }
                     },
                 },
@@ -2084,12 +2088,12 @@ DatasetsGroups = [
             {
                 "alias": "tesla_w2v",
                 "name": "Отзывы на Теслу (w2v)",
-                "group": DatasetGroupChoice.terra,
+                "group": DatasetGroupChoice.terra.value,
                 "tags": [
-                    Tags.text,
-                    Tags.classification,
-                    Tags.russian,
-                    Tags.terra_ai,
+                    Tags.text.value,
+                    Tags.classification.value,
+                    Tags.russian.value,
+                    Tags.terra_ai.value,
                 ],
                 "inputs": {
                     1: {
@@ -2097,13 +2101,10 @@ DatasetsGroups = [
                         "dtype": "float32",
                         "shape": (100, 200),
                         "name": "Отзывы",
-                        "task": LayerInputTypeChoice.Text,
-                        "classes_names": [
-                            "Негативные",
-                            "Позитивные"
-                        ],
+                        "task": LayerInputTypeChoice.Text.value,
+                        "classes_names": ["Негативные", "Позитивные"],
                         "num_classes": 2,
-                        "encoding": LayerEncodingChoice.none,
+                        "encoding": LayerEncodingChoice.none.value,
                     },
                 },
                 "outputs": {
@@ -2112,44 +2113,35 @@ DatasetsGroups = [
                         "dtype": "uint8",
                         "shape": (2,),
                         "name": "Метки классов",
-                        "task": LayerOutputTypeChoice.Classification,
-                        "classes_names": [
-                            "Негативные",
-                            "Позитивные"
-                        ],
+                        "task": LayerOutputTypeChoice.Classification.value,
+                        "classes_names": ["Негативные", "Позитивные"],
                         "num_classes": 2,
-                        "encoding": LayerEncodingChoice.ohe,
+                        "encoding": LayerEncodingChoice.ohe.value,
                     },
                 },
                 "columns": {
                     1: {
                         "1_text": {
-                            "classes_names": [
-                                "Негативные",
-                                "Позитивные"
-                            ],
+                            "classes_names": ["Негативные", "Позитивные"],
                             "datatype": "1D",
                             "dtype": "float32",
-                            "encoding": LayerEncodingChoice.none,
+                            "encoding": LayerEncodingChoice.none.value,
                             "name": "Отзывы",
                             "num_classes": 2,
                             "shape": (100, 200),
-                            "task": LayerInputTypeChoice.Text,
+                            "task": LayerInputTypeChoice.Text.value,
                         }
                     },
                     2: {
                         "2_classification": {
-                            "classes_names": [
-                                "Негативные",
-                                "Позитивные"
-                            ],
+                            "classes_names": ["Негативные", "Позитивные"],
                             "datatype": "DIM",
                             "dtype": "uint8",
-                            "encoding": LayerEncodingChoice.ohe,
+                            "encoding": LayerEncodingChoice.ohe.value,
                             "name": "Метки классов",
                             "num_classes": 2,
                             "shape": (2,),
-                            "task": LayerOutputTypeChoice.Classification,
+                            "task": LayerOutputTypeChoice.Classification.value,
                         }
                     },
                 },
@@ -2158,12 +2150,12 @@ DatasetsGroups = [
             {
                 "alias": "docs",
                 "name": "Договоры",
-                "group": DatasetGroupChoice.terra,
+                "group": DatasetGroupChoice.terra.value,
                 "tags": [
-                    Tags.text,
-                    Tags.text_segmentation,
-                    Tags.russian,
-                    Tags.terra_ai,
+                    Tags.text.value,
+                    Tags.text_segmentation.value,
+                    Tags.russian.value,
+                    Tags.terra_ai.value,
                 ],
                 "inputs": {
                     1: {
@@ -2171,8 +2163,8 @@ DatasetsGroups = [
                         "dtype": "int64",
                         "shape": (100,),
                         "name": "Договора",
-                        "task": LayerInputTypeChoice.Text,
-                        "encoding": LayerEncodingChoice.none,
+                        "task": LayerInputTypeChoice.Text.value,
+                        "encoding": LayerEncodingChoice.none.value,
                         "classes_names": ["Договора432"],
                         "num_classes": 1,
                     },
@@ -2183,8 +2175,8 @@ DatasetsGroups = [
                         "dtype": "uint8",
                         "shape": (100, 6),
                         "name": "Сегментация договоров",
-                        "task": LayerOutputTypeChoice.TextSegmentation,
-                        "encoding": LayerEncodingChoice.multi,
+                        "task": LayerOutputTypeChoice.TextSegmentation.value,
+                        "encoding": LayerEncodingChoice.multi.value,
                         "classes_names": [
                             "<s1>",
                             "<s2>",
@@ -2202,11 +2194,11 @@ DatasetsGroups = [
                             "classes_names": ["Договора432"],
                             "datatype": "DIM",
                             "dtype": "int64",
-                            "encoding": LayerEncodingChoice.none,
+                            "encoding": LayerEncodingChoice.none.value,
                             "name": "Договора",
                             "num_classes": 1,
                             "shape": [100],
-                            "task": LayerInputTypeChoice.Text,
+                            "task": LayerInputTypeChoice.Text.value,
                         }
                     },
                     "2": {
@@ -2221,11 +2213,11 @@ DatasetsGroups = [
                             ],
                             "datatype": "1D",
                             "dtype": "uint8",
-                            "encoding": LayerEncodingChoice.multi,
+                            "encoding": LayerEncodingChoice.multi.value,
                             "name": "Сегментация договоров",
                             "num_classes": 6,
                             "shape": [100, 6],
-                            "task": LayerOutputTypeChoice.TextSegmentation,
+                            "task": LayerOutputTypeChoice.TextSegmentation.value,
                         }
                     },
                 },
@@ -2234,17 +2226,17 @@ DatasetsGroups = [
             # {
             #     "alias": "smart_home",
             #     "name": "Умный дом",
-            #     "group": DatasetGroupChoice.terra,
+            #     "group": DatasetGroupChoice.terra.value,
             #     "inputs": {
             #         1: {
             #             # "datatype": "2D",
             #             # "dtype": "float32",
             #             # "shape": (),  # TODO
             #             "name": "Вход 1",
-            #             "task": LayerInputTypeChoice.Audio,
+            #             "task": LayerInputTypeChoice.Audio.value,
             #             "num_classes": 4,
             #             "classes_names": ["1_Кондиционер", "2_Свет", "3_Телевизор", "4_Шум"],
-            #             "encoding": LayerEncodingChoice.none
+            #             "encoding": LayerEncodingChoice.none.value
             #         },
             #     },
             #     "outputs": {
@@ -2253,48 +2245,48 @@ DatasetsGroups = [
             #             "dtype": "uint8",
             #             "shape": (4,),
             #             "name": "Метки классов",
-            #             "task": LayerOutputTypeChoice.Classification,
+            #             "task": LayerOutputTypeChoice.Classification.value,
             #             "num_classes": 4,
             #             "classes_names": ["1_Кондиционер", "2_Свет", "3_Телевизор", "4_Шум"],
-            #             "encoding": LayerEncodingChoice.ohe
+            #             "encoding": LayerEncodingChoice.ohe.value
             #         },
             #     },
             #     "columns": {1: {"1_image": {"datatype": "2D",
             #                                 "dtype": "float32",
             #                                 "name": "Изображения автомобилей",
             #                                 "shape": (120, 176, 3),
-            #                                 "task": LayerInputTypeChoice.Image,
+            #                                 "task": LayerInputTypeChoice.Image.value,
             #                                 "num_classes": 3,
             #                                 "classes_names": ["Мерседес", "Рено", "Феррари"],
-            #                                 "encoding": LayerEncodingChoice.ohe
+            #                                 "encoding": LayerEncodingChoice.ohe.value
             #                                 }
             #                     },
             #                 2: {"2_classification": {"datatype": "DIM",
             #                                          "dtype": "uint8",
             #                                          "name": "Метки классов",
             #                                          "shape": (4,),
-            #                                          "task": LayerOutputTypeChoice.Classification,
+            #                                          "task": LayerOutputTypeChoice.Classification.value,
             #                                          "num_classes": 4,
             #                                          "classes_names": ["1_Кондиционер", "2_Свет", "3_Телевизор", "4_Шум"],
-            #                                          "encoding": LayerEncodingChoice.ohe
+            #                                          "encoding": LayerEncodingChoice.ohe.value
             #                                          }
             #                     }
             #                 },
             #     "tags": [
-            #         Tags.audio,
-            #         Tags.classification,
-            #         Tags.terra_ai,
+            #         Tags.audio.value,
+            #         Tags.classification.value,
+            #         Tags.terra_ai.value,
             #     ],
             #     "use_generator": False,
             # },
             # {
             #     "alias": "trading",
             #     "name": "Трейдинг",
-            #     "group": DatasetGroupChoice.terra,
+            #     "group": DatasetGroupChoice.terra.value,
             #     "tags": [
-            #         Tags.trading,
-            #         Tags.timeseries,
-            #         Tags.terra_ai,
+            #         Tags.trading.value,
+            #         Tags.timeseries.value,
+            #         Tags.terra_ai.value,
             #     ],
             #     "inputs": {
             #         1: {
@@ -2302,10 +2294,10 @@ DatasetsGroups = [
             #             "dtype": "float32",
             #             "shape": (4, 30),
             #             "name": "Вход 1",
-            #             "task": LayerInputTypeChoice.Dataframe,
+            #             "task": LayerInputTypeChoice.Dataframe.value,
             #             "classes_names": [],
             #             "num_classes": 1,
-            #             "encoding": LayerEncodingChoice.none,
+            #             "encoding": LayerEncodingChoice.none.value,
             #         },
             #     },
             #     "outputs": {
@@ -2314,7 +2306,7 @@ DatasetsGroups = [
             #             "dtype": "int64",
             #             "shape": (1,),
             #             "name": "Выход 1",
-            #             "task": LayerOutputTypeChoice.Timeseries,
+            #             "task": LayerOutputTypeChoice.Timeseries.value,
             #             "num_classes": 3,
             #             "classes_names": ["Не изменился", "Вверх", "Вниз"],
             #         },
@@ -2324,7 +2316,7 @@ DatasetsGroups = [
             #             "1_<CLOSE>": {
             #                 "datatype": "DIM",
             #                 "dtype": "float64",
-            #                 "encoding": LayerEncodingChoice.none,
+            #                 "encoding": LayerEncodingChoice.none.value,
             #                 "name": "Input 1",
             #                 "num_classes": 1,
             #                 "shape": (30,),
@@ -2333,7 +2325,7 @@ DatasetsGroups = [
             #             "1_<HIGH>": {
             #                 "datatype": "DIM",
             #                 "dtype": "float64",
-            #                 "encoding": LayerEncodingChoice.none,
+            #                 "encoding": LayerEncodingChoice.none.value,
             #                 "name": "Input 1",
             #                 "num_classes": 1,
             #                 "shape": (30,),
@@ -2342,7 +2334,7 @@ DatasetsGroups = [
             #             "1_<LOW>": {
             #                 "datatype": "DIM",
             #                 "dtype": "float64",
-            #                 "encoding": LayerEncodingChoice.none,
+            #                 "encoding": LayerEncodingChoice.none.value,
             #                 "name": "Input 1",
             #                 "num_classes": 1,
             #                 "shape": (30,),
@@ -2351,7 +2343,7 @@ DatasetsGroups = [
             #             "1_<OPEN>": {
             #                 "datatype": "DIM",
             #                 "dtype": "float64",
-            #                 "encoding": LayerEncodingChoice.none,
+            #                 "encoding": LayerEncodingChoice.none.value,
             #                 "name": "Input 1",
             #                 "num_classes": 1,
             #                 "shape": (30,),
@@ -2363,11 +2355,11 @@ DatasetsGroups = [
             #                 "classes_names": ["Не изменился", "Вверх", "Вниз"],
             #                 "datatype": "DIM",
             #                 "dtype": "int64",
-            #                 "encoding": LayerEncodingChoice.none,
+            #                 "encoding": LayerEncodingChoice.none.value,
             #                 "name": "Output 1",
             #                 "num_classes": 3,
             #                 "shape": (1,),
-            #                 "task": LayerOutputTypeChoice.Timeseries,
+            #                 "task": LayerOutputTypeChoice.Timeseries.value,
             #             }
             #         },
             #     },
@@ -2376,12 +2368,12 @@ DatasetsGroups = [
             {
                 "alias": "flats",
                 "name": "Квартиры",
-                "group": DatasetGroupChoice.terra,
+                "group": DatasetGroupChoice.terra.value,
                 "tags": [
-                    Tags.text,
-                    Tags.regression,
-                    Tags.russian,
-                    Tags.terra_ai,
+                    Tags.text.value,
+                    Tags.regression.value,
+                    Tags.russian.value,
+                    Tags.terra_ai.value,
                 ],
                 "inputs": {
                     1: {
@@ -2389,8 +2381,8 @@ DatasetsGroups = [
                         "dtype": "uint8",
                         "shape": (1010,),
                         "name": "Вход 1",
-                        "task": LayerInputTypeChoice.Dataframe,
-                        "encoding": LayerEncodingChoice.none,
+                        "task": LayerInputTypeChoice.Dataframe.value,
+                        "encoding": LayerEncodingChoice.none.value,
                         "num_classes": 1010,
                         "classes_names": [],
                     },
@@ -2399,8 +2391,8 @@ DatasetsGroups = [
                         "dtype": "float64",
                         "shape": (5000,),
                         "name": "Описание квартиры",
-                        "task": LayerInputTypeChoice.Text,
-                        "encoding": LayerEncodingChoice.none,
+                        "task": LayerInputTypeChoice.Text.value,
+                        "encoding": LayerEncodingChoice.none.value,
                         "num_classes": 1,
                         "classes_names": ["flats.csv"],
                     },
@@ -2411,8 +2403,8 @@ DatasetsGroups = [
                         "dtype": "float64",
                         "shape": (1,),
                         "name": "Цена квартиры",
-                        "task": LayerOutputTypeChoice.Regression,
-                        "encoding": LayerEncodingChoice.none,
+                        "task": LayerOutputTypeChoice.Regression.value,
+                        "encoding": LayerEncodingChoice.none.value,
                         "num_classes": 1,
                         "classes_names": ["flats.csv"],
                     },
