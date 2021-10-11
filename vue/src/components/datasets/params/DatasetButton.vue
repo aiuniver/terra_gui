@@ -74,15 +74,16 @@ export default {
     async click() {
       if (this.isNoTrain) {
         const { alias, group, name} = this.selected;
-        const { success: successChoice } = await this.$store.dispatch('datasets/choice', { alias, group });
-        const { success: successValidate } = await this.$store.dispatch('datasets/validateDatasetOrModel', {
+       
+        const { success: successValidate, data } = await this.$store.dispatch('datasets/validateDatasetOrModel', {
           dataset: { alias, group },
         });
 
         this.$store.dispatch('settings/setOverlay', true);
         this.$store.dispatch('messages/setMessage', { message: `Загружаю датасет «${name}»` });
 
-        if (successValidate) {
+        if (successValidate && !data) {
+           const { success: successChoice } = await this.$store.dispatch('datasets/choice', { alias, group });
           if (successChoice) {
             this.createInterval();
           }

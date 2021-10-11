@@ -155,11 +155,10 @@ export default {
     },
     async download() {
       if (!this.loading) {
-        const {success: successValidate} = await this.$store.dispatch('datasets/validateDatasetOrModel', { model : this.model})
+        const {success: successValidate, data} = await this.$store.dispatch('datasets/validateDatasetOrModel', { model : this.model})
 
-        if(successValidate){
+        if(successValidate && !data){
           await this.$store.dispatch('modeling/load', this.model);
-          this.$emit('input', false); 
         }else{
           this.$Modal.confirm({
             title: 'Внимание!',
@@ -168,11 +167,11 @@ export default {
             callback: async (action) => {
               if (action == 'confirm') {
                 await this.$store.dispatch('modeling/load', this.model);
-                this.$emit('input', false); 
               }
             },
           });
         }
+        this.$emit('input', false); 
        
       }
     },
