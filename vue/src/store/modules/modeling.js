@@ -114,6 +114,7 @@ export default {
       if (model) {
         commit('SET_ERRORS_BLOCKS', {});
         await dispatch('projects/get', {}, { root: true });
+        await dispatch('validateModel', {});
       }
       return model;
     },
