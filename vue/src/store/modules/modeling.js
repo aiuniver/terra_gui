@@ -114,8 +114,10 @@ export default {
       if (model) {
         commit('SET_ERRORS_BLOCKS', {});
         await dispatch('projects/get', {}, { root: true });
+        await dispatch('validateModel', {});
       }
-      return model;
+        
+      return model
     },
     async createModel({ dispatch, commit }, data) {
       commit('SET_STATUS', { isUpdate: false });

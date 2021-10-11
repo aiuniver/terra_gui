@@ -160,6 +160,9 @@ export default {
     async loadProgress ({ dispatch }, source) {
       return await dispatch('axios', { url: '/datasets/source/load/progress/', data: source }, { root: true });
     },
+    async validateDatasetOrModel({ dispatch }, data){
+      return await dispatch('axios', { url: '/common/validate-dataset-model/', data  }, { root: true });
+    },
     async get ({ dispatch, commit, rootState }) {
       const { data } = await dispatch('axios', { url: '/datasets/info/' }, { root: true });
       if (!data) {
