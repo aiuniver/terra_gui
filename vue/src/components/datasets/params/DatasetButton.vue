@@ -28,10 +28,10 @@ export default {
     }
   },
   methods: {
-    async message() {
+    async message(content) {
       await this.$store.dispatch('messages/setModel', {
         context: this,
-        content: 'Для выбора датасета необходимо сбросить/остановить обучение',
+        content,
       });
     },
     createInterval() {
@@ -78,12 +78,15 @@ export default {
         this.$store.dispatch('settings/setOverlay', true);
         const { alias, group, name } = this.selected;
         const { success } = await this.$store.dispatch('datasets/choice', { alias, group });
-        this.$store.dispatch('messages/setMessage', { message: `Загружаю датасет «${name}»` });
         if (success) {
+          this.$store.dispatch('messages/setMessage', { message: `Загружаю датасет «${name}»` });
           this.createInterval();
+        }else{
+          this.$store.dispatch('settings/setOverlay', false);
+          this.message('Валидация датасета/модели не прошла');
         }
       } else {
-        this.message();
+        this.message('Для выбора датасета необходимо сбросить/остановить обучение');
       }
     },
   },

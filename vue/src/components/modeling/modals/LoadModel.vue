@@ -121,6 +121,12 @@ export default {
     },
   },
   methods: {
+    async message(content) {
+      await this.$store.dispatch('messages/setModel', {
+        context: this,
+        content,
+      });
+    },
     async removeModel(name) {
       this.$Modal.confirm({
         title: 'Внимание!',
@@ -155,8 +161,12 @@ export default {
     },
     async download() {
       if (!this.loading) {
-        await this.$store.dispatch('modeling/load', this.model);
-        this.$emit('input', false);
+        const {success} = await this.$store.dispatch('modeling/load', this.model);
+        if(success){ 
+          this.$emit('input', false); 
+        }else{
+          this.message('Валидация датасета/модели не прошла')
+        }
       }
     },
   },
