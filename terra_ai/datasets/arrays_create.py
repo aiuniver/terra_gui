@@ -1381,7 +1381,7 @@ class CreateArray(object):
     @staticmethod
     def postprocess_initial_source(
             options,
-            input_id: list,
+            input_id: int,
             example_id: int,
             dataset_path: str,
             preset_path: str,
@@ -1391,9 +1391,9 @@ class CreateArray(object):
             return_mode='deploy'
     ):
         column_idx = []
-        input_task = options.data.inputs.get(input_id[0]).task
+        input_task = options.data.inputs.get(input_id).task
         if options.data.group != DatasetGroupChoice.keras:
-            for inp in input_id:
+            for inp in options.data.inputs.keys():
                 if options.data.inputs.get(inp).task == LayerInputTypeChoice.Dataframe:
                     input_task = LayerInputTypeChoice.Dataframe
                 for column_name in options.dataframe.get('val').columns:
@@ -1416,13 +1416,13 @@ class CreateArray(object):
             if options.data.group != DatasetGroupChoice.keras:
                 img = Image.open(initial_file_path)
                 img = img.resize(
-                    options.data.inputs.get(input_id[0]).shape[0:2][::-1],
+                    options.data.inputs.get(input_id).shape[0:2][::-1],
                     Image.ANTIALIAS
                 )
             else:
                 img = image.array_to_img(x_array[example_id])
             img = img.convert('RGB')
-            source = os.path.join(preset_path, f"initial_data_image_{save_id}_input_{input_id[0]}.webp")
+            source = os.path.join(preset_path, f"initial_data_image_{save_id}_input_{input_id}.webp")
             img.save(source, 'webp')
             if return_mode == 'callback':
                 data_type = LayerInputTypeChoice.Image.name
@@ -1458,7 +1458,7 @@ class CreateArray(object):
 
         elif input_task == LayerInputTypeChoice.Video:
             clip = moviepy_editor.VideoFileClip(initial_file_path)
-            source = os.path.join(preset_path, f"initial_data_video_{save_id}_input_{input_id[0]}.webm")
+            source = os.path.join(preset_path, f"initial_data_video_{save_id}_input_{input_id}.webm")
             clip.write_videofile(source)
             if return_mode == 'callback':
                 data_type = LayerInputTypeChoice.Video.name
@@ -1471,7 +1471,7 @@ class CreateArray(object):
                 ]
 
         elif input_task == LayerInputTypeChoice.Audio:
-            source = os.path.join(preset_path, f"initial_data_audio_{save_id}_input_{input_id[0]}.webp")
+            source = os.path.join(preset_path, f"initial_data_audio_{save_id}_input_{input_id}.webp")
             AudioSegment.from_file(initial_file_path).export(source, format="webm")
             if return_mode == 'callback':
                 data_type = LayerInputTypeChoice.Audio.name
@@ -1497,12 +1497,12 @@ class CreateArray(object):
                 if return_mode == 'deploy':
                     # TODO: для предикта по одному каналу
                     output_channel = list(options.data.columns.get(list(options.data.columns.keys())[0]).keys())[0]
-                    for i, channel in enumerate(options.data.columns.get(input_id[0]).keys()):
+                    for i, channel in enumerate(options.data.columns.get(input_id).keys()):
                         if output_channel == channel:
                             source = inverse_x_array[example_id][i].astype('float').tolist()
                             break
                 if return_mode == 'callback':
-                    for i, channel in enumerate(options.data.columns.get(input_id[0]).keys()):
+                    for i, channel in enumerate(options.data.columns.get(input_id).keys()):
                         multi = True if i > 0 else False
                         names += f"«{channel.split('_', 1)[-1]}», "
                         graphics_data.append(
@@ -1528,8 +1528,8 @@ class CreateArray(object):
             else:
                 data_type = "str"
                 source = []
-                for inp in input_id:
-                    for col_name in options.data.columns.get(int(inp)).keys():
+                for inp in options.data.inputs.keys():
+                    for col_name in options.data.columns.get(inp).keys():
                         value = options.dataframe.get('val')[col_name].to_list()[example_id]
                         # source.append((col_name, value))
                         if return_mode == 'deploy':
