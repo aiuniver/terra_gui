@@ -192,7 +192,7 @@ from .extra import (
 )
 from ..mixins import AliasMixinData, UniqueListMixin, BaseMixinData
 from ..extra import FileSizeData
-from ..exceptions import TrdsDirExtException, TrdsConfigFileNotFoundException
+from ..exceptions import TrdsConfigFileNotFoundException
 from ..modeling.model import ModelDetailsData
 from ..modeling.extra import LayerTypeChoice, LayerGroupChoice
 from ..modeling.layers.extra import ActivationChoice
@@ -288,7 +288,9 @@ class DatasetData(AliasMixinData):
     inputs: Dict[PositiveInt, DatasetInputsData] = {}
     outputs: Dict[PositiveInt, DatasetOutputsData] = {}
     service: Optional[Dict[PositiveInt, DatasetOutputsData]] = {}
-    columns: Optional[Dict[PositiveInt, Dict[str, Union[DatasetInputsData, DatasetOutputsData]]]] = {}
+    columns: Optional[
+        Dict[PositiveInt, Dict[str, Union[DatasetInputsData, DatasetOutputsData]]]
+    ] = {}
 
     @property
     def model(self) -> ModelDetailsData:
