@@ -10,6 +10,7 @@ from tensorflow.keras import layers
 __version__ = 0.03
 
 from tensorflow.keras.models import Model
+from tensorflow.python.keras.layers import BatchNormalization
 
 
 class InstanceNormalization(Layer):
@@ -748,17 +749,16 @@ class Mish(Layer):
         return input_shape
 
 
-class DarkNetBatchNormalization(Layer):
+class DarkNetBatchNormalization(BatchNormalization):
 
-    def __init__(self, training=False, **kwargs):
+    def __init__(self, **kwargs):
         super(DarkNetBatchNormalization, self).__init__(**kwargs)
         self.supports_masking = True
-        self.training = training
 
-    def call(self, inputs, **kwargs):
-        if not self.training:
-            self.training = tf.constant(False)
-        training = tf.logical_and(self.training, self.trainable)
+    def call(self, inputs, training=False, **kwargs):
+        if not training:
+            training = tf.constant(False)
+        training = tf.logical_and(training, self.trainable)
         return super().call(inputs, training)
 
     def get_config(self):
