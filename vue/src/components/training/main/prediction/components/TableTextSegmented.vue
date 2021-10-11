@@ -42,9 +42,10 @@ export default {
 
 <style lang="scss" scoped>
 .t-text-segmented {
-  width: 500px;
+  width: 300px;
   padding: 10px;
   &__text {
+    text-align: left;
   }
 }
 </style>
