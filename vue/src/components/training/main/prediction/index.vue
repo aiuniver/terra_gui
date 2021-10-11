@@ -27,13 +27,18 @@
         </t-field>
       </div>
       <div class="predictions__param">
+        <t-field inline label="Фиксация колонок">
+          <t-checkbox-new v-model="fixation" small />
+        </t-field>
+      </div>
+      <div class="predictions__param">
         <t-button style="width: 150px" @click.native="show" :disabled="!!isError">
           {{ !update ? 'Показать' : 'Обновить' }}
         </t-button>
       </div>
     </div>
     <div class="predictions__body">
-      <PredictTable v-if="isEmpty" :predict="predictData" />
+      <PredictTable v-if="isEmpty" :predict="predictData" :fixation="fixation" />
       <div v-else class="predictions__overlay">
         <LoadSpiner v-if="start && isLearning" text="Загрузка данных..." />
       </div>
@@ -70,6 +75,7 @@ export default {
     num_examples: 10,
     show_results: true,
     show_statistic: true,
+    fixation: false,
     max: 10,
   }),
   computed: {
