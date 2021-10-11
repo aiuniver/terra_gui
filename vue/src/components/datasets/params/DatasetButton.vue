@@ -79,7 +79,6 @@ export default {
           dataset: { alias, group },
         });
 
-        this.$store.dispatch('settings/setOverlay', true);
         this.$store.dispatch('messages/setMessage', { message: `Загружаю датасет «${name}»` });
 
         if (successValidate && !data) {
@@ -91,19 +90,20 @@ export default {
             callback:  (action) => {
               if (action == 'confirm') {
                 this.createInterval();
+                
               }
             },
           });
            
         } else {
+          this.$store.dispatch('settings/setOverlay', true);
           const { success: successChoice } = await this.$store.dispatch('datasets/choice', { alias, group });
           if (successChoice) {
-            await this.createInterval();
+            this.createInterval();
           }
         }
       } else {
         this.message();
-        this.$store.dispatch('settings/setOverlay', false);
       }
 
     },
