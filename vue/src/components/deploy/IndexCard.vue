@@ -19,7 +19,7 @@
     </div>
     <div v-if="type == 'TextTextSegmentation'">
       <div class="card__original" >
-        <TextCard class="textSegmentationDom" :style="{ width: '600px', color: '#A7BED3', height: '324px' }"></TextCard>
+        <TextCard class="textSegmentationDom" :style="{ width: '600px', color: '#A7BED3', height: '324px' }" v-html="SegmentationFormat">{{ SegmentationFormat }}</TextCard>
       </div>
       <div class="card__result">
         <TextCard  :style="{ width: '600px', height: '80px' }">
@@ -149,9 +149,6 @@ export default {
       return text
     }
   },
-  mounted() {
-    document.querySelector('.textSegmentationDom').innerHTML = this.SegmentationFormat;
-  }
 }
 </script>
 
