@@ -122,6 +122,10 @@ class LayerTypeChoice(str, Enum):
     VAEBlock = "VAEBlock"
     CustomBlock = "CustomBlock"
     SpaceToDepth = "space_to_depth"
+    DarkNetConvolutional = "DarkNetConvolutional"
+    DarkNetUpsample = "DarkNetUpsample"
+    DarkNetResBlock = "DarkNetResBlock"
+    DarkNetBatchNormalization = "DarkNetBatchNormalization"
 
     @staticmethod
     def values() -> list:

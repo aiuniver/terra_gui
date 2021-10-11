@@ -673,13 +673,13 @@ class LayerValidation:
                     output_shape = [
                         tuple(
                             getattr(
-                                self.module,
-                                self.layer_type
+                                self.module, self.layer_type
                             )(**params).compute_output_shape(
                                 self.inp_shape[0] if len(self.inp_shape) == 1 else self.inp_shape
                             )
                         )
                     ]
+                    print(output_shape)
                     # LSTM and GRU can returns list of one tuple of tensor shapes
                     # code below reformat it to list of shapes
                     if (
@@ -692,6 +692,8 @@ class LayerValidation:
                         return new, None
 
                     return output_shape, None
+                except ValueError:
+                    return output_shape, self.parameters_validation()
                 except Exception:
                     return output_shape, self.parameters_validation()
 
@@ -1245,6 +1247,12 @@ class LayerValidation:
                     f"input_shape {self.inp_shape[0]}",
                     f"block_size = {self.layer_parameters.get('block_size')}"
                 ))
+
+        # CustomUNETBlock exceptions
+        if self.layer_type == LayerTypeChoice.DarkNetResBlock and \
+                self.layer_parameters.get("filter_num2") != self.inp_shape[0][-1]:
+            return f"Incorrect parameters: Parameter 'filter_num2'={self.layer_parameters.get('filter_num2')} " \
+                   f"must be equal the number of channels={self.inp_shape[0][-1]} in input tensor"
 
 
 class CustomLayer(tensorflow.keras.layers.Layer):
