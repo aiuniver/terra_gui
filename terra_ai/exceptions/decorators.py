@@ -10,8 +10,7 @@ def error_handler(obj):
     """
 
     if isinstance(obj, type):
-        callable_attributes = {k: v for k, v in obj.__dict__.items()
-                               if callable(v)}
+        callable_attributes = {k: v for k, v in obj.__dict__.items() if callable(v)}
         for name, func in callable_attributes.items():
             decorated = error_handler(func)
             setattr(obj, name, decorated)
