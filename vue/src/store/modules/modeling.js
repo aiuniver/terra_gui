@@ -109,15 +109,21 @@ export default {
     async info({ dispatch }, value) {
       return await dispatch('axios', { url: '/modeling/info/', data: value }, { root: true });
     },
-    async load({ commit, dispatch }, value) {
-      const { data: model } = await dispatch('axios', { url: '/modeling/load/', data: value }, { root: true });
-      if (model) {
+    async load({ commit, dispatch }, { model, reset_dataset }) {
+      const { data } = await dispatch('axios', {
+        url: '/modeling/load/', data: {
+          ...model,
+          reset_dataset
+        }
+      }, { root: true });
+
+      if (data) {
         commit('SET_ERRORS_BLOCKS', {});
         await dispatch('projects/get', {}, { root: true });
         await dispatch('validateModel', {});
       }
-        
-      return model
+
+      return data
     },
     async createModel({ dispatch, commit }, data) {
       commit('SET_STATUS', { isUpdate: false });

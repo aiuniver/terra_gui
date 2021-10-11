@@ -1,6 +1,6 @@
 <template>
   <div>
-    <t-button :disabled="!selected" @click.native="click">
+    <t-button :disabled="!selected" @click.native="handleClick">
       <span v-if="selected">Выбрать датасет</span>
       <span v-else>{{ btnText }}</span>
     </t-button>
@@ -27,12 +27,6 @@ export default {
     },
   },
   methods: {
-    async message() {
-      await this.$store.dispatch('messages/setModel', {
-        context: this,
-        content: 'Для выбора датасета необходимо сбросить/остановить обучение',
-      });
-    },
     createInterval() {
       this.interval = setTimeout(async () => {
         const res = await this.$store.dispatch('datasets/choiceProgress', {});
@@ -71,41 +65,44 @@ export default {
         }
       }, 1000);
     },
-    async click() {
-      if (this.isNoTrain) {
-        const { alias, group, name} = this.selected;
-       
-        const { success: successValidate, data } = await this.$store.dispatch('datasets/validateDatasetOrModel', {
-          dataset: { alias, group },
+    async handleClick() {
+      if (!this.isNoTrain) {
+        await this.$store.dispatch('messages/setModel', {
+          context: this,
+          content: 'Для выбора датасета необходимо сбросить/остановить обучение',
         });
-
-        this.$store.dispatch('messages/setMessage', { message: `Загружаю датасет «${name}»` });
-
-        if (successValidate && !data) {
-          this.$Modal.confirm({
-            title: 'Внимание!',
-            content:
-              'Несоответствие количества входных и выходных слоев датасета и редактируемой модели. Хотите сбросить модель?',
-            width: 300,
-            callback:  (action) => {
-              if (action == 'confirm') {
-                this.createInterval();
-                
-              }
-            },
-          });
-           
-        } else {
-          this.$store.dispatch('settings/setOverlay', true);
-          const { success: successChoice } = await this.$store.dispatch('datasets/choice', { alias, group });
-          if (successChoice) {
-            this.createInterval();
-          }
-        }
-      } else {
-        this.message();
+        return;
       }
 
+      const { alias, group, name } = this.selected;
+
+      const { success: successValidate, data } = await this.$store.dispatch('datasets/validateDatasetOrModel', {
+        dataset: { alias, group },
+      });
+
+      if (successValidate && data) {
+        this.$Modal.confirm({
+          title: 'Внимание!',
+          content: data,
+          width: 300,
+          callback: async action => {
+            if (action == 'confirm') {
+              await this.onChoice({ alias, group, name, reset_model: true });
+            }
+          },
+        });
+      } else {
+        await this.onChoice({ alias, group, name, reset_model: false });
+      }
+    },
+    async onChoice({ alias, group, name, reset_model } = {}) {
+      this.$store.dispatch('settings/setOverlay', true);
+      const { success: successChoice } = await this.$store.dispatch('datasets/choice', { alias, group, reset_model });
+
+      if (successChoice) {
+        this.$store.dispatch('messages/setMessage', { message: `Загружаю датасет «${name}»` });
+        this.createInterval();
+      }
     },
   },
 };
