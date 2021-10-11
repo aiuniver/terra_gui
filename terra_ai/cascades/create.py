@@ -45,15 +45,26 @@ def json2model_cascade(path: str):
     preprocess = []
 
     for inp in config['inputs'].keys():
-        if len(config['columns'][inp].keys()):
+        if len(config['columns'][inp].keys()) == 1:
             for inp, param in config['columns'][inp].items():
                 with open(os.path.join(dataset_path, "instructions", "parameters", inp + '.json')) as cfg:
                     param.update(json.load(cfg))
+            type_module = getattr(general_fucntions, decamelize(param['task']))
+            preprocess.append(getattr(type_module, 'main')(
+                **param, dataset_path=dataset_path, key=inp)
+            )
 
-        type_module = getattr(general_fucntions, decamelize(param['task']))
-        preprocess.append(getattr(type_module, 'main')(
-            **param, dataset_path=dataset_path, key=inp)
-        )
+        elif len(config['columns'][inp].keys()) > 1:
+            param = {}
+            for key, cur_param in config['columns'][inp].items():
+                param[key] = cur_param
+                with open(os.path.join(dataset_path, "instructions", "parameters", key + '.json')) as cfg:
+                    param[key].update(json.load(cfg))
+
+            type_module = getattr(general_fucntions, 'dataframe')
+            preprocess.append(getattr(type_module, 'main')(
+                **param, dataset_path=dataset_path, key=inp)
+            )
 
     preprocess = make_processing(preprocess)
 
