@@ -11,9 +11,12 @@ def terra_exception(exception: Exception) -> TerraBaseException:
     if not isinstance(exception, Exception):
         raise TypeError(f"Функция ожидала на вход объект исключения, но получила '{type(exception).__name__}'")
 
-    if isinstance(exception, tensorflow.errors.OpError):
+    if isinstance(exception, tensorflow.errors.OpError):  # нативные исключения от TensorFlow
         return getattr(
             tf_exceptions, exception.__class__.__name__, tf_exceptions.UnknownError
         )(exception.message)
 
-    return TerraBaseException(str(exception))
+    if isinstance(exception, TerraBaseException):  # исключения от TerraAI
+        return exception
+
+    return TerraBaseException(str(exception))  # неопределенные исключения

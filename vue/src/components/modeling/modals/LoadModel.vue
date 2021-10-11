@@ -155,8 +155,24 @@ export default {
     },
     async download() {
       if (!this.loading) {
-        await this.$store.dispatch('modeling/load', this.model);
-        this.$emit('input', false);
+        const {success: successValidate, data} = await this.$store.dispatch('datasets/validateDatasetOrModel', { model : this.model})
+
+        if(successValidate && !data){
+          this.$Modal.confirm({
+            title: 'Внимание!',
+            content: 'Несоответствие количества входных и выходных слоев датасета и редактируемой модели. Хотите сбросить датасет?',
+            width: 300,
+            callback: async (action) => {
+              if (action == 'confirm') {
+                await this.$store.dispatch('modeling/load', this.model);
+              }
+            },
+          });
+        }else{
+          await this.$store.dispatch('modeling/load', this.model);
+        }
+        this.$emit('input', false); 
+       
       }
     },
   },

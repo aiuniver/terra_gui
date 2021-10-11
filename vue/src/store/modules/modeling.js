@@ -116,7 +116,8 @@ export default {
         await dispatch('projects/get', {}, { root: true });
         await dispatch('validateModel', {});
       }
-      return model;
+        
+      return model
     },
     async createModel({ dispatch, commit }, data) {
       commit('SET_STATUS', { isUpdate: false });

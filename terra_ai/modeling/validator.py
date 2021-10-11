@@ -279,7 +279,10 @@ class ModelValidator:
             else:
                 _params = ""
                 for key in _layer[2].keys():
-                    if key not in ["trainable", "output_layer"]:
+                    ignore_list = ["name", "trainable", "output_layer"] if self.layers_config.get(
+                        _layer[0]).module_type.value == ModuleTypeChoice.keras_pretrained_model \
+                        else ["trainable", "output_layer"]
+                    if key not in ignore_list:
                         if isinstance(_layer[2][key], str):
                             _params += f"{key}='{_layer[2][key]}', "
                         else:

@@ -1161,42 +1161,7 @@ Defaults = {
                         "Text": LayerTextDefaults,
                         "Audio": LayerAudioDefaults,
                         "Dataframe": LayerDataframeDefaults,
-                        "Classification": [
-                            SourcesPaths,
-                            {
-                                "type": "checkbox",
-                                "label": "One-Hot encoding",
-                                "name": "one_hot_encoding",
-                                "parse": "one_hot_encoding",
-                                "value": True,
-                            },
-                            {
-                                "type": "select",
-                                "label": "Тип предобработки",
-                                "name": "type_processing",
-                                "parse": "type_processing",
-                                "value": LayerTypeProcessingClassificationChoice.categorical.name,
-                                "list": list(
-                                    map(
-                                        lambda item: {
-                                            "value": item.name,
-                                            "label": item.value,
-                                        },
-                                        list(LayerTypeProcessingClassificationChoice),
-                                    )
-                                ),
-                                "fields": {
-                                    "ranges": [
-                                        {
-                                            "type": "text",
-                                            "label": "Диапазоны/число диапазонов",
-                                            "name": "ranges",
-                                            "parse": "ranges",
-                                        }
-                                    ]
-                                },
-                            },
-                        ],
+                        "Classification": [],
                         "Segmentation": [
                             SourcesPaths,
                             {
