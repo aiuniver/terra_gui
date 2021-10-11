@@ -682,7 +682,6 @@ class LayerValidation:
                             )
                         )
                     ]
-                    print(output_shape)
                     # LSTM and GRU can returns list of one tuple of tensor shapes
                     # code below reformat it to list of shapes
                     if (
