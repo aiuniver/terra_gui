@@ -295,7 +295,6 @@ class DatasetData(AliasMixinData):
     @property
     def model(self) -> ModelDetailsData:
         data = {**EmptyModelDetailsData}
-        data.update({"alias": self.alias, "name": self.name})
         layers = []
         for _id, layer in self.inputs.items():
             _data = {

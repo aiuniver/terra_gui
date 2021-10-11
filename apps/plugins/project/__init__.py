@@ -275,7 +275,11 @@ class Project(BaseMixinData):
                         "parameters": layer_init.get("parameters"),
                     }
                 )
+                if int(layer.id) != int(layer_data.get("id")):
+                    layer = self.dataset.inputs.pop(layer.id)
+                    self.dataset.inputs[layer_data.get("id")] = layer
                 self.model.layers.append(LayerData(**layer_data))
+
             for index, layer in enumerate(model_init.outputs):
                 layer_init = layer.native()
                 layer_data = self.model.outputs[index].native()
@@ -288,9 +292,11 @@ class Project(BaseMixinData):
                         "parameters": layer_init.get("parameters"),
                     }
                 )
+                if int(layer.id) != int(layer_data.get("id")):
+                    layer = self.dataset.outputs.pop(layer.id)
+                    self.dataset.outputs[layer_data.get("id")] = layer
                 self.model.layers.append(LayerData(**layer_data))
-            self.model.name = model_init.name
-            self.model.alias = model_init.alias
+
         self.set_training()
         self.set_deploy()
 
