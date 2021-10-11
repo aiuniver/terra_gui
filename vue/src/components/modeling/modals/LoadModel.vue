@@ -158,8 +158,6 @@ export default {
         const {success: successValidate, data} = await this.$store.dispatch('datasets/validateDatasetOrModel', { model : this.model})
 
         if(successValidate && !data){
-          await this.$store.dispatch('modeling/load', this.model);
-        }else{
           this.$Modal.confirm({
             title: 'Внимание!',
             content: 'Несоответствие количества входных и выходных слоев датасета и редактируемой модели. Хотите сбросить датасет?',
@@ -170,6 +168,8 @@ export default {
               }
             },
           });
+        }else{
+          await this.$store.dispatch('modeling/load', this.model);
         }
         this.$emit('input', false); 
        

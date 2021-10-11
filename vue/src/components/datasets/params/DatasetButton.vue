@@ -83,11 +83,6 @@ export default {
         this.$store.dispatch('messages/setMessage', { message: `Загружаю датасет «${name}»` });
 
         if (successValidate && !data) {
-           const { success: successChoice } = await this.$store.dispatch('datasets/choice', { alias, group });
-          if (successChoice) {
-            this.createInterval();
-          }
-        } else {
           this.$Modal.confirm({
             title: 'Внимание!',
             content:
@@ -99,12 +94,18 @@ export default {
               }
             },
           });
+           
+        } else {
+          const { success: successChoice } = await this.$store.dispatch('datasets/choice', { alias, group });
+          if (successChoice) {
+            await this.createInterval();
+          }
         }
       } else {
         this.message();
+        this.$store.dispatch('settings/setOverlay', false);
       }
 
-      this.$store.dispatch('settings/setOverlay', false);
     },
   },
 };
