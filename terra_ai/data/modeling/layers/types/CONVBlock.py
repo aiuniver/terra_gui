@@ -43,6 +43,7 @@ class ParametersMainData(BaseMixinData):
     layers_seq_config: CONVBlockConfigChoice = CONVBlockConfigChoice.conv_conv_bn_lrelu_drop
 
 
+
 class ParametersExtraData(BaseMixinData):
     strides: Tuple[PositiveInt, PositiveInt] = (1, 1)
     dilation: Tuple[PositiveInt, PositiveInt] = (1, 1)
