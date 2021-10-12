@@ -35,8 +35,7 @@ from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.training.customlosses import DiceCoef
 from terra_ai.training.yolo_utils import create_yolo, CustomModelYolo, compute_loss, get_mAP, detect_image
 from terra_ai.exceptions import training as exceptions, terra_exception
-import matplotlib.pyplot as plt
-from terra_ai.training.yolo_create_test import Create_Yolo
+
 
 __version__ = 0.02
 
@@ -362,9 +361,6 @@ class GUINN:
         print('Save model.....')
         yolo = create_yolo(self.model, input_size=416, channels=3, training=True,
                                 classes=self.dataset.data.outputs.get(2).classes_names)
-        # base_yolo.compile(optimizer=self.optimizer,
-        #                    loss=compute_loss)
-        # yolo = Create_Yolo(input_size=416, training=True, CLASSES=self.dataset.data.outputs.get(2).classes_names)
         print(yolo.summary())
         model_yolo = CustomModelYolo(yolo, self.dataset, self.dataset.data.outputs.get(2).classes_names,
                                      self.epochs, self.batch_size)
