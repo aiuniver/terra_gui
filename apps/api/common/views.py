@@ -33,7 +33,7 @@ class ValidateDatasetModelAPIView(BaseAPIView):
             except FailedGetModelException as error:
                 return BaseResponseErrorFields(error.args)
 
-        if not dataset or not model:
+        if not dataset or not len(model.layers):
             validated = True
         else:
             validated = len(dataset.inputs.keys()) == len(model.inputs) and len(
