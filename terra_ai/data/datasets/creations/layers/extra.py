@@ -73,13 +73,17 @@ class ParametersTextData(SourcesPathsData, ColumnProcessingData):
         return value
 
     @validator("prepare_method")
-    def _validate_prepare_method(cls, value: bool) -> bool:
+    def _validate_prepare_method(
+        cls, value: LayerPrepareMethodChoice
+    ) -> LayerPrepareMethodChoice:
         if value in [
             LayerPrepareMethodChoice.embedding,
             LayerPrepareMethodChoice.bag_of_words,
         ]:
             cls.__fields__["max_words_count"].required = True
+            cls.__fields__["word_to_vec_size"].required = False
         elif value == LayerPrepareMethodChoice.word_to_vec:
+            cls.__fields__["max_words_count"].required = False
             cls.__fields__["word_to_vec_size"].required = True
         return value
 
