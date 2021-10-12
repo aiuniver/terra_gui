@@ -33,9 +33,10 @@ from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.training.customlosses import DiceCoef
-from terra_ai.training.yolo_fit import create_yolo, CustomModelYolo, compute_loss
+from terra_ai.training.yolo_utils import create_yolo, CustomModelYolo, compute_loss, get_mAP, detect_image
 from terra_ai.exceptions import training as exceptions, terra_exception
-
+import matplotlib.pyplot as plt
+from terra_ai.training.yolo_create_test import Create_Yolo
 
 __version__ = 0.02
 
@@ -184,16 +185,6 @@ class GUINN:
         optimizer_object = getattr(keras.optimizers, params.optimizer.type.value)
         self.optimizer = optimizer_object(**params.optimizer.parameters_dict)
 
-    # def set_custom_metrics(self, params=None) -> None:
-    #     for i_key in self.metrics.keys():
-    #         for idx, metric in enumerate(self.metrics[i_key]):
-    #             if metric in custom_losses_dict.keys():
-    #                 if metric == "mean_io_u":  # TODO определить или заменить self.output_params (возможно на params)
-    #                     self.metrics[i_key][idx] = custom_losses_dict[metric](
-    #                         num_classes=self.output_params[i_key]['num_classes'], name=metric)
-    #                 else:
-    #                     self.metrics[i_key][idx] = custom_losses_dict[metric](name=metric)
-
     def show_training_params(self) -> None:
         """
         output the parameters of the neural network: batch_size, epochs, shuffle, callbacks, loss, metrics,
@@ -226,6 +217,7 @@ class GUINN:
         file_path_model: str = os.path.join(
             self.training_path, self.nn_name, f"{model_name}"
         )
+        print(file_path_model)
         self.model.save(file_path_model)
 
     def _kill_last_training(self):
@@ -309,7 +301,6 @@ class GUINN:
                        dataset_data: DatasetData, save_model_path: str, verbose=0) -> None:
         threading.enumerate()[-1].setName("current_train")
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели ...'})
-        # self.set_custom_metrics()
         self.model.compile(loss=self.loss,
                            optimizer=self.optimizer,
                            metrics=self.metrics
@@ -331,7 +322,7 @@ class GUINN:
         if (critical_val_size == self.batch_size) or (critical_val_size > self.batch_size):
             n_repeat = 1
         else:
-            n_repeat = (self.batch_size//critical_val_size) + 1
+            n_repeat = (self.batch_size // critical_val_size) + 1
         try:
             self.history = self.model.fit(
                 self.dataset.dataset.get('train').shuffle(buffer_size).batch(
@@ -356,28 +347,33 @@ class GUINN:
             self.sum_epoch = params.epochs
 
     def yolo_model_fit(self, params: TrainData, dataset: PrepareDataset, verbose=0, retrain=False) -> None:
-        # Массив используемых анкоров (в пикселях). Используется по 3 анкора на каждый из 3 уровней сеток
-        # данные значения коррелируются с размерностью входного изображения input_shape
-        anchors = np.array(
-            [[10, 13], [16, 30], [33, 23], [30, 61], [62, 45], [59, 119], [116, 90], [156, 198], [373, 326]])
-        num_anchors = len(anchors)  # Сохраняем количество анкоров
 
-        # Создаем модель
-        # print(self.dataset.data.outputs.get(2).classes_names)
-        base_yolo = create_yolo(self.model, input_size=416, channels=3, training=True,
-                                 classes=self.dataset.data.outputs.get(2).classes_names)
+        for inp, out, serv in self.dataset.dataset['train'].batch(2).take(10):
+            pass
+            # print(out)
+            # print(serv)
+        #     # print("inp[1].numpy()[0]", inp['1'].numpy()[0])
+        #     print('shape', inp['1'].numpy()[0].shape)
+        #     print(inp['1'].numpy()[0][-10:, -10:, :])
+        # plt.imshow(inp['1'].numpy()[0])
+        # plt.show()
+        print(self.model.summary())
+        self.model.save('C:\PycharmProjects/terra_gui/TerraAI/training/chess_test')
+        print('Save model.....')
+        yolo = create_yolo(self.model, input_size=416, channels=3, training=True,
+                                classes=self.dataset.data.outputs.get(2).classes_names)
         # base_yolo.compile(optimizer=self.optimizer,
         #                    loss=compute_loss)
-        # print(base_yolo.summary())
-
-        model_yolo = CustomModelYolo(base_yolo, self.dataset, self.dataset.data.outputs.get(2).classes_names, self.epochs)
+        # yolo = Create_Yolo(input_size=416, training=True, CLASSES=self.dataset.data.outputs.get(2).classes_names)
+        print(yolo.summary())
+        model_yolo = CustomModelYolo(yolo, self.dataset, self.dataset.data.outputs.get(2).classes_names,
+                                     self.epochs, self.batch_size)
 
         # Компилируем модель
-        # print(('Компиляция модели', '...'))
-        # self.set_custom_metrics()
+        print(('Компиляция модели', '...'))
         model_yolo.compile(optimizer=self.optimizer,
                            loss=compute_loss)
-        # print(('Компиляция модели', 'выполнена'))
+        print(('Компиляция модели', 'выполнена'))
         # print(('Начало обучения', '...'))
 
         # if not retrain:
@@ -385,6 +381,22 @@ class GUINN:
         #                         epochs=params.epochs, checkpoint=params.architecture.parameters.checkpoint.native())
 
         # print(('Начало обучения', '...'))
+
+        yolo_pred = create_yolo(self.model, input_size=416, channels=3, training=False,
+                                classes=self.dataset.data.outputs.get(2).classes_names)
+
+        class MyCallback(tf.keras.callbacks.Callback):
+            def __init__(self, dataset, yolo_pred, inp):
+                self.dataset = dataset
+                self.yolo_pred = yolo_pred
+                self.inp = inp
+            # super().__init__()
+            def on_epoch_end(self, epoch, logs=None):
+                output_path = 'C:\PycharmProjects/terra_gui/test_example/chess_{}.jpg'.format(epoch)
+                detect_image(Yolo=self.yolo_pred, original_image=inp['1'].numpy()[0], output_path=output_path,
+                             CLASSES=self.dataset.data.outputs.get(2).classes_names)
+                # mAP = get_mAP(self.yolo_pred, self.dataset, score_threshold=0.05, iou_threshold=0.50,
+                #               TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names)
 
         if self.dataset.data.use_generator:
             critical_size = len(self.dataset.dataframe.get("val"))
@@ -399,8 +411,11 @@ class GUINN:
                 self.batch_size, drop_remainder=True).take(-1),
             epochs=self.epochs,
             verbose=verbose,
-            # callbacks=self.callbacks
+            callbacks=MyCallback(self.dataset, yolo_pred, inp)
         )
+        print('Save weights.....')
+        self.model.save_weights('C:\PycharmProjects/terra_gui/TerraAI/training/chess_test/last.h5')
+
 
 
 class MemoryUsage:
@@ -679,7 +694,7 @@ class FitCallback(keras.callbacks.Callback):
         current_model = deploy_model if deploy_model else self.model
         if self.dataset.data.use_generator:
             current_predict = current_model.predict(self.dataset.dataset.get('val').batch(1),
-                                                 batch_size=1)
+                                                    batch_size=1)
         else:
             current_predict = current_model.predict(self.dataset.X.get('val'), batch_size=self.batch_size)
         return current_predict
@@ -869,7 +884,7 @@ class FitCallback(keras.callbacks.Callback):
                 }
             else:
                 result_data = {'timings': [estimated_time, elapsed_time, still_time,
-                                elapsed_epoch_time, still_epoch_time, msg_epoch, msg_batch]}
+                                           elapsed_epoch_time, still_epoch_time, msg_epoch, msg_batch]}
             self._set_result_data(result_data)
             # print("PROGRESS", [type(num) for num in self._get_result_data().get("train_data", {}).get("data_balance", {}).get("2", ["0"])[0].get("plot_data", ["0"])[0].get("values")])
             progress.pool(
