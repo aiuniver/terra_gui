@@ -56,7 +56,7 @@ export default {
         })
         .join('');
 
-      return `<div class="t-text-segmented__word" title="${tags.join(' ')}">${str}<div class="t-text-segmented__text">`;
+      return `<div class="t-text-segmented__word" title="${tags.join(' ')}">${str}<div class="t-text-segmented__text">&nbsp;`;
     },
   },
 };
@@ -72,9 +72,10 @@ export default {
     width: 100%;
     display: flex;
     flex-wrap: wrap;
-    // justify-content: center;
+    // justify-content: flex-start;
     position: relative;
-    align-items: center;
+    align-items: flex-start;
+    text-align: start;
   }
   &__word {
     margin: 0 5px 0 0;
@@ -87,7 +88,7 @@ export default {
     display: block;
     height: 2px;
     margin: 0 0 1px 0;
-    width: 100%;
+    width: calc(100% + 5px);
   }
 }
 </style>
