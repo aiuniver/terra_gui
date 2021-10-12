@@ -727,7 +727,7 @@ class FitCallback(keras.callbacks.Callback):
                         }
                     form_data.append(table_column_data)
         with open(os.path.join(deploy_path, "form.json"), "w", encoding="utf-8") as form_file:
-            json.dump(form_data, form_file)
+            json.dump(form_data, form_file, ensure_ascii=False)
 
     def _create_cascade(self, **data):
         deploy_path = os.path.join(os.path.split(self.save_model_path)[0], "deploy")
@@ -772,6 +772,16 @@ class FitCallback(keras.callbacks.Callback):
             tags_map = deploy_presets_data.get("color_map")
             interactive.deploy_presets_data = deploy_presets_data.get("data")
             cascade_data = {"tags_map": tags_map}
+        elif list(self.dataset.data.inputs.values())[0].task == LayerInputTypeChoice.Dataframe:
+            presets = []
+            labels = []
+            for elem in deploy_presets_data:
+                presets.append(elem.get("source"))
+                labels.append(elem.get("data"))
+            interactive.deploy_presets_data = {
+                "preset": presets,
+                "label": labels
+            }
         else:
             interactive.deploy_presets_data = deploy_presets_data
         self._create_cascade(**cascade_data)
