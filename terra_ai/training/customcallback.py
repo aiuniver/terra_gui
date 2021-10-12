@@ -1233,14 +1233,14 @@ class InteractiveCallback:
                 'metrics': {}
             }
             self.progress_table[self.current_epoch]["data"][f"Выходной слой «{out}»"]["loss"] = {
-                'loss': self.log_history.get(out).get('loss').get(self.losses.get(out)).get('train')[-1],
-                'val_loss': self.log_history.get(out).get('loss').get(self.losses.get(out)).get('val')[-1]
+                'loss': f"{self.log_history.get(out).get('loss').get(self.losses.get(out)).get('train')[-1]}",
+                'val_loss': f"{self.log_history.get(out).get('loss').get(self.losses.get(out)).get('val')[-1]}"
             }
             for metric in self.metrics.get(out):
                 self.progress_table[self.current_epoch]["data"][f"Выходной слой «{out}»"]["metrics"][metric] = \
-                    self.log_history.get(out).get('metrics').get(metric).get('train')[-1]
+                    f"{self.log_history.get(out).get('metrics').get(metric).get('train')[-1]}"
                 self.progress_table[self.current_epoch]["data"][f"Выходной слой «{out}»"]["metrics"][f"val_{metric}"] = \
-                    self.log_history.get(out).get('metrics').get(metric).get('val')[-1]
+                    f"{self.log_history.get(out).get('metrics').get(metric).get('val')[-1]}"
 
     def _get_loss_calculation(self, loss_obj, out: str, y_true, y_pred):
         encoding = self.options.data.outputs.get(int(out)).encoding

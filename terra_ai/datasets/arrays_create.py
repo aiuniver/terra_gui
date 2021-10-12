@@ -1,7 +1,7 @@
 import string
 
 import matplotlib
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from pandas import DataFrame
 from tensorflow.python.keras.preprocessing import image
 from tensorflow.python.keras.utils.np_utils import to_categorical
@@ -29,7 +29,7 @@ from librosa import load as librosa_load
 from pydantic.color import Color
 from tensorflow.keras.layers.experimental.preprocessing import Resizing
 from tensorflow.keras.preprocessing.text import text_to_word_sequence
-from tensorflow.keras.preprocessing.image import load_img, img_to_array
+from tensorflow.keras.preprocessing.image import load_img
 from tensorflow.keras import utils
 from tensorflow import concat as tf_concat
 from tensorflow import maximum as tf_maximum
@@ -42,7 +42,15 @@ class CreateArray(object):
     @staticmethod
     def instructions_image(paths_list: list, **options: dict) -> dict:
 
-        instructions = {'instructions': paths_list,
+        p_list = []
+        for elem in paths_list:
+            try:
+                load_img(elem).verify()
+                p_list.append(elem)
+            except (UnidentifiedImageError, IOError):
+                pass
+
+        instructions = {'instructions': p_list,
                         'parameters': options
                         }
 
@@ -85,21 +93,29 @@ class CreateArray(object):
         audio: list = []
 
         for elem in paths_list:
-            if options['audio_mode'] == LayerAudioModeChoice.completely:
-                audio.append(';'.join([elem, f'[0.0-{options["max_seconds"]}]']))
-            elif options['audio_mode'] == LayerAudioModeChoice.length_and_step:
-                cur_step = 0.0
-                stop_flag = False
-                sample_length = AudioSegment.from_file(elem).duration_seconds
-                while not stop_flag:
-                    audio.append(';'.join([elem, f'[{cur_step}-{round(cur_step + options["length"], 1)}]']))
-                    cur_step += options['step']
-                    cur_step = round(cur_step, 1)
-                    if cur_step + options['length'] > sample_length:
-                        stop_flag = True
+            try:
+                librosa_load(elem, duration=0.002, res_type='scipy')  # Проверка файла на аудио-формат.
+                if options['audio_mode'] == LayerAudioModeChoice.completely:
+                    audio.append(';'.join([elem, f'[0.0-{options["max_seconds"]}]']))
+                elif options['audio_mode'] == LayerAudioModeChoice.length_and_step:
+                    cur_step = 0.0
+                    stop_flag = False
+                    sample_length = AudioSegment.from_file(elem).duration_seconds
+                    while not stop_flag:
+                        audio.append(';'.join([elem, f'[{cur_step}-{round(cur_step + options["length"], 1)}]']))
+                        cur_step += options['step']
+                        cur_step = round(cur_step, 1)
+                        if cur_step + options['length'] > sample_length:
+                            stop_flag = True
+            except:
+                pass
 
         instructions = {'instructions': audio,
-                        'parameters': options}
+                        'parameters': {**options,
+                                       'duration': options['max_seconds'] if options['audio_mode'] == 'completely' else
+                                       options['length']
+                                       }
+                        }
 
         return instructions
 
@@ -243,7 +259,15 @@ class CreateArray(object):
     @staticmethod
     def instructions_segmentation(paths_list: list, **options: dict) -> dict:
 
-        instructions = {'instructions': paths_list,
+        p_list = []
+        for elem in paths_list:
+            try:
+                load_img(elem).verify()
+                p_list.append(elem)
+            except (UnidentifiedImageError, IOError):
+                pass
+
+        instructions = {'instructions': p_list,
                         'parameters': {**options,
                                        'classes_colors': [Color(color).as_rgb_tuple() for color in
                                                           options['classes_colors']],
@@ -431,7 +455,6 @@ class CreateArray(object):
             save_path = os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
                                      f'{name}_[{slicing[0]}-{slicing[1]}]{ext}')
             instructions_paths.append(save_path)
-            # print(save_path)
             output_movie = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'XVID'), int(cap.get(5)), orig_shape)
             stop_flag = False
             while not stop_flag:
@@ -492,7 +515,7 @@ class CreateArray(object):
             audio = AudioSegment.from_file(path, start_second=slicing[0], duration=duration)
 
             if round(duration - audio.duration_seconds, 3) != 0:
-                while not audio.duration_seconds == (slicing[1] - slicing[0]):
+                while not round(duration - audio.duration_seconds, 3):
                     if options['fill_mode'] == 'last_millisecond':
                         audio = audio.append(audio[-2], crossfade=0)
                     elif options['fill_mode'] == 'loop':
@@ -508,7 +531,8 @@ class CreateArray(object):
             instructions_paths.append(save_path)
 
         instructions = {'instructions': instructions_paths,
-                        'parameters': {'sample_rate': options['sample_rate'],
+                        'parameters': {'duration': options['duration'],
+                                       'sample_rate': options['sample_rate'],
                                        'resample': options['resample'],
                                        'parameter': options['parameter'],
                                        'scaler': options['scaler'],
@@ -579,6 +603,9 @@ class CreateArray(object):
             shutil.copyfile(elem, os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
                                                os.path.basename(elem)))
 
+        paths_list = [os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)), os.path.basename(elem))
+                      for elem in paths_list]
+
         instructions = {'instructions': paths_list,
                         'parameters': {'mask_range': options['mask_range'],
                                        'num_classes': options['num_classes'],
@@ -643,8 +670,8 @@ class CreateArray(object):
     @staticmethod
     def create_image(image_path: str, **options) -> dict:
 
-        img = load_img(image_path)
-        array = img_to_array(img, dtype=np.uint8)
+        img = Image.open(image_path)
+        array = np.array(img)
 
         instructions = {'instructions': array,
                         'parameters': options}
@@ -682,8 +709,8 @@ class CreateArray(object):
         parameter = options['parameter']
         sample_rate = options['sample_rate']
         y, sr = librosa_load(path=audio_path, sr=options.get('sample_rate'), res_type=options.get('resample'))
-        if sample_rate > len(y):
-            zeros = np.zeros((sample_rate - len(y),))
+        if round(sample_rate * options['duration'], 0) > y.shape[0]:
+            zeros = np.zeros((int(round(sample_rate * options['duration'], 0)) - y.shape[0],))
             y = np.concatenate((y, zeros))
         if parameter in ['chroma_stft', 'mfcc', 'spectral_centroid', 'spectral_bandwidth', 'spectral_rolloff']:
             array = getattr(librosa_feature, parameter)(y=y, sr=sr)
@@ -787,7 +814,7 @@ class CreateArray(object):
             return mask_ohe
 
         img = load_img(path=image_path, target_size=(options['height'], options['width']))
-        array = img_to_array(img, dtype=np.uint8)
+        array = np.array(img)
         array = cluster_to_ohe(array)
 
         instructions = {'instructions': array,
@@ -1295,7 +1322,6 @@ class CreateArray(object):
                                 options=options.data.outputs.get(output_id),
                                 output_id=output_id,
                                 image_id=idx,
-                                colors=colors,
                                 save_path=save_path,
                                 return_mode='deploy'
                             ),
@@ -1402,7 +1428,8 @@ class CreateArray(object):
             if input_task == LayerInputTypeChoice.Text or input_task == LayerInputTypeChoice.Dataframe:
                 initial_file_path = ""
             else:
-                initial_file_path = os.path.join(dataset_path, options.dataframe.get('val').iat[example_id, column_idx[0]])
+                initial_file_path = os.path.join(dataset_path,
+                                                 options.dataframe.get('val').iat[example_id, column_idx[0]])
             if not save_id:
                 return str(os.path.abspath(initial_file_path))
         else:
@@ -1754,7 +1781,7 @@ class CreateArray(object):
                     word = f"<{t[1:-1]}>{word}</{t[1:-1]}>"
                 return word
             else:
-                return word
+                return f"<p1>{word}</p1>"
 
         # def color_mixer(colors: list):
         #     if colors:
@@ -1771,7 +1798,7 @@ class CreateArray(object):
         #         mix_tag += f"+{tag[1:-1]}"
         #     return f"<{mix_tag}>", color_mixer([colors[tag] for tag in tags])
         #
-        def reformat_tags(y_array: np.ndarray, tag_list: list, # classes_names: dict, colors: dict,
+        def reformat_tags(y_array: np.ndarray, tag_list: list,  # classes_names: dict, colors: dict,
                           sensitivity: float = 0.9):
             norm_array = np.where(y_array >= sensitivity, 1, 0).astype('int')
             reformat_tags = []

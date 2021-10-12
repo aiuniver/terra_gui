@@ -132,6 +132,8 @@ dmypy.json
 /datasets/
 /TerraAI/
 
+/package-lock.json
+/.prettierrc
 /rsa.key
 /staticfiles/
 node_modules/
@@ -156,7 +158,4 @@ desktop.ini
 /terra_ai/modeling/test validator.py
 /terra_ai/modeling/test models.py
 /terra_ai/training/yolov3_chess.h5
-/.idea/workspace.xml
-/.idea/shelf/Uncommitted_changes_before_Update_at_01_10_2021_10_33_[Default_Changelist]/shelved.patch
-/.idea/shelf/Uncommitted_changes_before_Update_at_01_10_2021_10_33_[Default_Changelist]/shelved.patch
 /terra_ai/modeling/val test.py
