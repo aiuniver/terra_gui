@@ -4,7 +4,7 @@ import re
 
 def put_tag(open_tag, close_tag, alpha=0.6):
     tags = {i: j for i, j in zip(open_tag.split(), close_tag.split())}
-    open_tag = np.array(open_tag)
+    open_tag = np.array(open_tag.split())
 
     def fun(text, array):
 
