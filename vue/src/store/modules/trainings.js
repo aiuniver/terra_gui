@@ -145,6 +145,7 @@ export default {
         }
         if (error) {
           dispatch('messages/setMessage', { error: error }, { root: true });
+          dispatch('logging/setError', error, { root: true });
         }
       }
       return res
