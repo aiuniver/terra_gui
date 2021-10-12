@@ -10,7 +10,7 @@ from ..extra import (
     LayerValidationMethodChoice,
     ModuleChoice,
     ModuleTypeChoice,
-    PaddingChoice, ActivationChoice,
+    PaddingChoice, ActivationChoice, CONVBlockConfigChoice,
 )
 from ....mixins import BaseMixinData
 from ....types import ConstrainedFloatValueGe0Le1
@@ -39,6 +39,8 @@ class ParametersMainData(BaseMixinData):
     activation: Optional[ActivationChoice] = ActivationChoice.relu
     batch_norm_layer: bool = True
     dropout_layer: bool = True
+    leaky_relu_layer: bool = True
+    layers_seq_config: CONVBlockConfigChoice = CONVBlockConfigChoice.conv_conv_bn_lrelu_drop
 
 
 class ParametersExtraData(BaseMixinData):

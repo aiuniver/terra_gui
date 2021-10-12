@@ -904,6 +904,8 @@ class CONVBlock(Model):
                  batch_norm_layer=True,
                  dropout_layer=True,
                  dropout_rate=0.1,
+                 leaky_relu_layer=True,
+                 layers_seq_config='conv_conv_bn_lrelu_drop',
                  **kwargs):
 
         super(CONVBlock, self).__init__(**kwargs)
@@ -917,9 +919,8 @@ class CONVBlock(Model):
         self.batch_norm_layer = batch_norm_layer
         self.dropout_layer = dropout_layer
         self.dropout_rate = dropout_rate
-
-        self.batch_norm_layer = layers.BatchNormalization()
-        self.dropout_layer = layers.Dropout(rate=self.dropout_rate)
+        self.leaky_relu_layer = leaky_relu_layer
+        self.layers_seq_config = layers_seq_config
 
         for i in range(self.n_conv_layers):
             setattr(self, f"conv_{i}",
@@ -929,6 +930,17 @@ class CONVBlock(Model):
                                   kernel_initializer='glorot_uniform',
                                   bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
                                   activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
+            setattr(self, f'activ_{i}',
+                    layers.Activation(self.activation))
+            if self.leaky_relu_layer:
+                setattr(self, f'leaky_relu{i}',
+                        layers.Activation('relu'))
+            if self.batch_norm_layer:
+                setattr(self, f'bn_{i}',
+                        layers.BatchNormalization())
+            if self.dropout_layer:
+                setattr(self, f'drop_{i}',
+                        layers.Dropout(rate=self.dropout_rate))
 
     def call(self, input_, training=True):
 
@@ -936,15 +948,33 @@ class CONVBlock(Model):
             input_ = cast(input_, 'float16')
 
         x = getattr(self, f'conv_{0}')(input_)
+        if self.layers_seq_config == 'conv_conv_bn_lrelu_drop':
+            for i in range(1, self.n_conv_layers):
+                x = getattr(self, f'conv_{i}')(x)
+                x = getattr(self, f'activ_{i}')(x)
 
-        for i in range(1, self.n_conv_layers):
-            x = getattr(self, f'conv_{i}')(x)
+            if self.batch_norm_layer:
+                x = getattr(self, f'bn_{i}')(x)
 
-        if self.batch_norm_layer:
-            x = self.batch_norm_layer(x)
+            if self.leaky_relu_layer:
+                x = getattr(self, f'leaky_relu{i}')(x)
 
-        if self.dropout_layer:
-            x = self.dropout_layer(x)
+            if self.dropout_layer:
+                x = getattr(self, f'drop_{i}')(x)
+
+        else:
+            for i in range(1, self.n_conv_layers):
+                x = getattr(self, f'conv_{i}')(x)
+                x = getattr(self, f'activ_{i}')(x)
+
+                if self.batch_norm_layer:
+                    x = getattr(self, f'bn_{i}')(x)
+
+                if self.leaky_relu_layer:
+                    x = getattr(self, f'leaky_relu{i}')(x)
+
+                if self.dropout_layer:
+                    x = getattr(self, f'drop_{i}')(x)
 
         return x
 

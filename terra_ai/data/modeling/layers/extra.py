@@ -210,7 +210,6 @@ class ModuleChoice(str, Enum):
     efficientnetb0 = "tensorflow.keras.applications.efficientnet"
 
 
-
 class ModuleTypeChoice(str, Enum):
     keras = "keras"
     tensorflow = "tensorflow"
@@ -262,3 +261,11 @@ class LayerConfigData(BaseMixinData):
     module: Optional[ModuleChoice]
     module_type: ModuleTypeChoice
 
+
+class CONVBlockConfigChoice(str, Enum):
+    conv_conv_bn_lrelu_drop = "conv_conv_bn_lrelu_drop"
+    conv_bn_lrelu_drop_conv_bn_lrelu_drop = "conv_bn_lrelu_drop_conv_bn_lrelu_drop"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, PaddingChoice))
