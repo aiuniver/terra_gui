@@ -433,7 +433,6 @@ class CreateArray(object):
             save_path = os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
                                      f'{name}_[{slicing[0]}-{slicing[1]}]{ext}')
             instructions_paths.append(save_path)
-            # print(save_path)
             output_movie = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'XVID'), int(cap.get(5)), orig_shape)
             stop_flag = False
             while not stop_flag:
@@ -1328,7 +1327,6 @@ class CreateArray(object):
                         }
                     )
                 return_data[output_id]["color_map"] = colors
-                print(return_data[output_id]["color_map"])
 
             elif options.data.outputs[output_id].task == LayerOutputTypeChoice.Timeseries:
                 for idx, _array in enumerate(array):
@@ -1863,14 +1861,14 @@ class CreateArray(object):
         #     return f"<{mix_tag}>", color_mixer([colors[tag] for tag in tags])
         #
         def reformat_tags(y_array: np.ndarray, tag_list: list,  # classes_names: dict, colors: dict,
-                          sensitivity: float = 0.9):
+                          sensitivity: float = 0.8):
             norm_array = np.where(y_array >= sensitivity, 1, 0).astype('int')
             reformat_tags = []
             for word_tag in norm_array:
                 if np.sum(word_tag) == 0:
                     reformat_tags.append(None)
-                elif np.sum(word_tag) == 1:
-                    reformat_tags.append([tag_list[np.argmax(word_tag, axis=-1)]])
+                # elif np.sum(word_tag) == 1:
+                #     reformat_tags.append([tag_list[np.argmax(word_tag, axis=-1)]])
                 else:
                     mix_tag = []
                     # mix_name = ""
@@ -1944,6 +1942,7 @@ class CreateArray(object):
                 class_names=classes_names,
                 colors=colors
             )
+
             data["y_true"] = {
                 "type": "segmented_text",
                 "data": [
