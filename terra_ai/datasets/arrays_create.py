@@ -1,12 +1,11 @@
 import string
-import copy
+
 import matplotlib
 from PIL import Image
 from pandas import DataFrame
 from tensorflow.python.keras.preprocessing import image
 from tensorflow.python.keras.utils.np_utils import to_categorical
 
-from terra_ai.data.training.extra import ExampleChoiceTypeChoice
 from terra_ai.datasets.utils import get_yolo_anchors
 from terra_ai.data.datasets.dataset import DatasetOutputsData, DatasetData
 from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice, \
@@ -1403,7 +1402,8 @@ class CreateArray(object):
             if input_task == LayerInputTypeChoice.Text or input_task == LayerInputTypeChoice.Dataframe:
                 initial_file_path = ""
             else:
-                initial_file_path = os.path.join(dataset_path, options.dataframe.get('val').iat[example_id, column_idx[0]])
+                initial_file_path = os.path.join(dataset_path,
+                                                 options.dataframe.get('val').iat[example_id, column_idx[0]])
             if not save_id:
                 return str(os.path.abspath(initial_file_path))
         else:
@@ -1558,96 +1558,6 @@ class CreateArray(object):
         intersection = np.sum(y_true * y_pred, axis=axis)
         union = np.sum(y_true, axis=axis) + np.sum(y_pred, axis=axis)
         return (2.0 * intersection + smooth) / (union + smooth)
-
-    @staticmethod
-    def sort_dict(dict_to_sort: dict, mode='by_name'):
-        if mode == 'by_name':
-            sorted_keys = sorted(dict_to_sort)
-            sorted_values = []
-            for w in sorted_keys:
-                sorted_values.append(dict_to_sort[w])
-            return tuple(sorted_keys), tuple(sorted_values)
-        elif mode == 'ascending':
-            sorted_keys = sorted(dict_to_sort, key=dict_to_sort.get)
-            sorted_values = []
-            for w in sorted_keys:
-                sorted_values.append(dict_to_sort[w])
-            return tuple(sorted_keys), tuple(sorted_values)
-        elif mode == 'descending':
-            sorted_keys = sorted(dict_to_sort, key=dict_to_sort.get, reverse=True)
-            sorted_values = []
-            for w in sorted_keys:
-                sorted_values.append(dict_to_sort[w])
-            return tuple(sorted_keys), tuple(sorted_values)
-        else:
-            return tuple(dict_to_sort.keys()), tuple(dict_to_sort.values())
-
-    @staticmethod
-    def prepare_example_idx_to_show(array, output: int, options, count: int, choice_type="best", seed_idx: list = None) -> dict:
-        example_idx = {}
-        # out = f"{self.interactive_config.intermediate_result.main_output}"
-        ohe = options.data.outputs.get(output).encoding == LayerEncodingChoice.ohe
-        # count = self.interactive_config.intermediate_result.num_examples
-        # choice_type = self.interactive_config.intermediate_result.example_choice_type
-        task = options.data.outputs.get(output).task
-        y_true = options.Y.get("val").get(f"{output}")
-
-        if choice_type == ExampleChoiceTypeChoice.best or choice_type == ExampleChoiceTypeChoice.worst:
-            if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.Timeseries_trend:
-                # y_true = self.y_true.get("val").get(out)
-                # y_pred = self.y_pred.get(out)
-                if array.shape[-1] == y_true.shape[-1] and ohe and y_true.shape[-1] > 1:
-                    classes = np.argmax(y_true, axis=-1)
-                elif len(y_true.shape) == 1 and not ohe and array.shape[-1] > 1:
-                    classes = copy.deepcopy(y_true)
-                elif len(y_true.shape) == 1 and not ohe and array.shape[-1] == 1:
-                    classes = copy.deepcopy(y_true)
-                else:
-                    classes = copy.deepcopy(y_true)
-                probs = np.array([pred[classes[i]] for i, pred in enumerate(array)])
-                sorted_args = np.argsort(probs)
-                if choice_type == ExampleChoiceTypeChoice.best:
-                    example_idx = sorted_args[::-1][:count]
-                if choice_type == ExampleChoiceTypeChoice.worst:
-                    example_idx = sorted_args[:count]
-
-            elif task == LayerOutputTypeChoice.Segmentation or task == LayerOutputTypeChoice.TextSegmentation:
-                # y_true = self.y_true.get("val").get(out)
-                y_pred = to_categorical(
-                    np.argmax(array, axis=-1),
-                    num_classes=options.data.outputs.get(output).num_classes
-                )
-                dice_val = CreateArray().dice_coef(y_true, y_pred, batch_mode=True)
-                dice_dict = dict(zip(np.arange(0, len(dice_val)), dice_val))
-                if choice_type == ExampleChoiceTypeChoice.best:
-                    example_idx, _ = CreateArray().sort_dict(dice_dict, mode="descending")
-                    example_idx = example_idx[:count]
-                if choice_type == ExampleChoiceTypeChoice.worst:
-                    example_idx, _ = CreateArray().sort_dict(dice_dict, mode="ascending")
-                    example_idx = example_idx[:count]
-
-            elif task == LayerOutputTypeChoice.Timeseries or task == LayerOutputTypeChoice.Regression:
-                delta = np.abs((y_true - array) * 100 / y_true)
-                while len(delta.shape) != 1:
-                    delta = np.mean(delta, axis=-1)
-                delta_dict = dict(zip(np.arange(0, len(delta)), delta))
-                if choice_type == ExampleChoiceTypeChoice.best:
-                    example_idx, _ = CreateArray().sort_dict(delta_dict, mode="ascending")
-                    example_idx = example_idx[:count]
-                if choice_type == ExampleChoiceTypeChoice.worst:
-                    example_idx, _ = CreateArray().sort_dict(delta_dict, mode="descending")
-                    example_idx = example_idx[:count]
-            else:
-                pass
-
-        elif choice_type == ExampleChoiceTypeChoice.seed and seed_idx:
-            example_idx = seed_idx[:count]
-
-        elif choice_type == ExampleChoiceTypeChoice.random:
-            example_idx = np.random.randint(0, len(y_true), count)
-        else:
-            pass
-        return example_idx
 
     @staticmethod
     def postprocess_classification(
@@ -1845,7 +1755,7 @@ class CreateArray(object):
                     word = f"<{t[1:-1]}>{word}</{t[1:-1]}>"
                 return word
             else:
-                return word
+                return f"<p1>{word}</p1>"
 
         # def color_mixer(colors: list):
         #     if colors:
@@ -1862,7 +1772,7 @@ class CreateArray(object):
         #         mix_tag += f"+{tag[1:-1]}"
         #     return f"<{mix_tag}>", color_mixer([colors[tag] for tag in tags])
         #
-        def reformat_tags(y_array: np.ndarray, tag_list: list, # classes_names: dict, colors: dict,
+        def reformat_tags(y_array: np.ndarray, tag_list: list,  # classes_names: dict, colors: dict,
                           sensitivity: float = 0.9):
             norm_array = np.where(y_array >= sensitivity, 1, 0).astype('int')
             reformat_tags = []
