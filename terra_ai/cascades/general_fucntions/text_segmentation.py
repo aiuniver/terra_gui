@@ -2,9 +2,9 @@ import numpy as np
 import re
 
 
-def put_tag(open_tag, close_tag, classes, alpha=0.6):
+def put_tag(open_tag, close_tag, alpha=0.6):
     tags = {i: j for i, j in zip(open_tag.split(), close_tag.split())}
-    classes = np.array(classes)
+    open_tag = np.array(open_tag)
 
     def fun(text, array):
 
@@ -29,7 +29,7 @@ def put_tag(open_tag, close_tag, classes, alpha=0.6):
         new_text = ''
 
         for i, j in zip(array, indexes):
-            i = list(classes[i > alpha])
+            i = list(open_tag[i > alpha])
 
             for tag in i:
                 new_text += tag
