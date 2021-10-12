@@ -1,5 +1,3 @@
-import string
-
 import matplotlib
 from PIL import Image
 from pandas import DataFrame
