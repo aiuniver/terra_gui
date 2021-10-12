@@ -15,6 +15,8 @@ __version__ = 0.03
 from tensorflow.keras.models import Model
 from tensorflow.python.keras.layers import BatchNormalization
 
+from terra_ai.data.modeling.layers.extra import CONVBlockConfigChoice
+
 
 class InstanceNormalization(Layer):
     """Instance normalization layer.
@@ -905,7 +907,8 @@ class CONVBlock(Model):
                  dropout_layer=True,
                  dropout_rate=0.1,
                  leaky_relu_layer=True,
-                 layers_seq_config='conv_conv_bn_lrelu_drop',
+                 #layers_seq_config: CONVBlockConfigChoice = CONVBlockConfigChoice.conv_conv_bn_lrelu_drop,
+                 layers_seq_config: str = 'conv_conv_bn_lrelu_drop',
                  **kwargs):
 
         super(CONVBlock, self).__init__(**kwargs)
@@ -989,7 +992,9 @@ class CONVBlock(Model):
             'padding': self.padding,
             'batch_norm_layer': self.batch_norm_layer,
             'dropout_layer': self.dropout_layer,
-            'dropout_rate': self.dropout_rate
+            'dropout_rate': self.dropout_rate,
+            'leaky_relu_layer': self.leaky_relu_layer,
+            'layers_seq_config': self.layers_seq_config
         }
         base_config = super(CONVBlock, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))

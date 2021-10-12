@@ -268,4 +268,4 @@ class CONVBlockConfigChoice(str, Enum):
 
     @staticmethod
     def values() -> list:
-        return list(map(lambda item: item.value, PaddingChoice))
+        return list(map(lambda item: item.value, CONVBlockConfigChoice))
