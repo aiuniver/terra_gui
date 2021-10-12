@@ -20,15 +20,13 @@
         <t-field inline label="Показать статистику">
           <t-checkbox-new v-model="show_statistic" small />
         </t-field>
+        <t-field inline label="Фиксация колонок">
+          <t-checkbox-new v-model="fixation" small />
+        </t-field>
       </div>
       <div class="predictions__param">
         <t-field inline label="Автообновление">
           <t-checkbox-new v-model="autoupdate" small />
-        </t-field>
-      </div>
-      <div class="predictions__param">
-        <t-field inline label="Фиксация колонок">
-          <t-checkbox-new v-model="fixation" small />
         </t-field>
       </div>
       <div class="predictions__param">
@@ -75,7 +73,7 @@ export default {
     num_examples: 10,
     show_results: true,
     show_statistic: true,
-    fixation: false,
+    fixation: true,
     max: 10,
   }),
   computed: {
