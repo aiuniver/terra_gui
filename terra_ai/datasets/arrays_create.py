@@ -1242,7 +1242,7 @@ class CreateArray(object):
                 y_true = CreateArray().get_y_true(options, output_id)
                 return_data[output_id] = []
                 for idx, img_array in enumerate(array):
-                    input_id = list(options.data.inputs.keys())
+                    input_id = list(options.data.inputs.keys())[0]
                     source = CreateArray().postprocess_initial_source(
                         options=options,
                         input_id=input_id,
