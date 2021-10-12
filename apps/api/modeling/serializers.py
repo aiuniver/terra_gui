@@ -6,6 +6,7 @@ from terra_ai.data.modeling.extra import LayerGroupChoice
 
 class ModelGetSerializer(serializers.Serializer):
     value = serializers.CharField(required=True)
+    reset_dataset = serializers.BooleanField(default=False)
 
 
 class LayerBindSerializer(serializers.Serializer):

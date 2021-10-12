@@ -33,10 +33,20 @@ class ValidateDatasetModelAPIView(BaseAPIView):
             except FailedGetModelException as error:
                 return BaseResponseErrorFields(error.args)
 
-        if not dataset or not model:
-            return BaseResponseSuccess(True)
+        if not dataset or not len(model.layers):
+            validated = True
+        else:
+            validated = len(dataset.inputs.keys()) == len(model.inputs) and len(
+                dataset.outputs.keys()
+            ) == len(model.outputs)
 
-        return BaseResponseSuccess(
-            len(dataset.inputs.keys()) == len(model.inputs)
-            and len(dataset.outputs.keys()) == len(model.outputs)
-        )
+        message = None
+        if not validated:
+            if dataset_load:
+                message = "Несоответствие количества входных/выходных слоев датасета и редактируемой модели. Хотите сбросить модель?"
+            elif model_load:
+                message = "Несоответствие количества входных/выходных слоев датасета и редактируемой модели. Хотите сбросить датасет?"
+            else:
+                message = "Undefined message"
+
+        return BaseResponseSuccess(message)

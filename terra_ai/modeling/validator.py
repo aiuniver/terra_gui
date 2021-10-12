@@ -279,7 +279,10 @@ class ModelValidator:
             else:
                 _params = ""
                 for key in _layer[2].keys():
-                    if key not in ["trainable", "output_layer"]:
+                    ignore_list = ["name", "trainable", "output_layer"] if self.layers_config.get(
+                        _layer[0]).module_type.value == ModuleTypeChoice.keras_pretrained_model \
+                        else ["trainable", "output_layer"]
+                    if key not in ignore_list:
                         if isinstance(_layer[2][key], str):
                             _params += f"{key}='{_layer[2][key]}', "
                         else:
@@ -673,8 +676,7 @@ class LayerValidation:
                     output_shape = [
                         tuple(
                             getattr(
-                                self.module,
-                                self.layer_type
+                                self.module, self.layer_type
                             )(**params).compute_output_shape(
                                 self.inp_shape[0] if len(self.inp_shape) == 1 else self.inp_shape
                             )
@@ -692,6 +694,8 @@ class LayerValidation:
                         return new, None
 
                     return output_shape, None
+                except ValueError:
+                    return output_shape, self.parameters_validation()
                 except Exception:
                     return output_shape, self.parameters_validation()
 
@@ -1245,6 +1249,12 @@ class LayerValidation:
                     f"input_shape {self.inp_shape[0]}",
                     f"block_size = {self.layer_parameters.get('block_size')}"
                 ))
+
+        # CustomUNETBlock exceptions
+        if self.layer_type == LayerTypeChoice.DarkNetResBlock and \
+                self.layer_parameters.get("filter_num2") != self.inp_shape[0][-1]:
+            return f"Incorrect parameters: Parameter 'filter_num2'={self.layer_parameters.get('filter_num2')} " \
+                   f"must be equal the number of channels={self.inp_shape[0][-1]} in input tensor"
 
 
 class CustomLayer(tensorflow.keras.layers.Layer):

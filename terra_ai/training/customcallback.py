@@ -1658,7 +1658,8 @@ class InteractiveCallback:
                             column_names=list(self.options.data.columns.get(out).keys()),
                             inverse_y_true=self.inverse_y_true.get('val').get(f"{out}")[self.example_idx[idx]],
                             inverse_y_pred=self.inverse_y_pred.get(f"{out}")[self.example_idx[idx]],
-                            show_stat=self.interactive_config.intermediate_result.show_statistic
+                            show_stat=self.interactive_config.intermediate_result.show_statistic,
+                            return_mode='callback'
                         )
 
                     elif task == LayerOutputTypeChoice.Timeseries:
@@ -1698,7 +1699,6 @@ class InteractiveCallback:
                             "y_pred": {},
                             "stat": {}
                         }
-
                     if data.get('y_true'):
                         return_data[f"{idx + 1}"]['true_value'][f"Выходной слой «{out}»"] = data.get('y_true')
                     return_data[f"{idx + 1}"]['predict_value'][f"Выходной слой «{out}»"] = data.get('y_pred')
