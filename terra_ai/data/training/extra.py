@@ -3,7 +3,7 @@
 """
 
 from enum import Enum
-from typing import List
+from typing import List, Tuple
 
 from ..mixins import BaseMixinData, UniqueListMixin
 
@@ -69,6 +69,14 @@ class OptimizerChoice(str, Enum):
     Nadam = "Nadam"
     Ftrl = "Ftrl"
 
+    @staticmethod
+    def names() -> list:
+        return list(map(lambda item: item.name, OptimizerChoice))
+
+    @staticmethod
+    def options() -> List[Tuple[str, str]]:
+        return list(map(lambda item: (item.name, item.value), OptimizerChoice))
+
 
 class TaskChoice(str, Enum):
     Classification = "Classification"
@@ -98,6 +106,7 @@ class LossChoice(str, Enum):
     SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
     SquaredHinge = "SquaredHinge"
     YoloLoss = "YoloLoss"
+
 
 class MetricChoice(str, Enum):
     AUC = "AUC"

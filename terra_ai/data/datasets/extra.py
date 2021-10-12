@@ -175,7 +175,6 @@ class LayerInputTypeChoice(str, Enum):
     Audio = "Audio"
     Dataframe = "Dataframe"
     Video = "Video"
-
     Classification = "Classification"
     Scaler = "Scaler"
     Raw = "Raw"

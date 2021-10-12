@@ -34,8 +34,8 @@
               <template v-for="(metric, keyM) of output">
                 <template v-for="(item, keyI) of metric">
                   <td v-show="isShow(keyO, keyM)" class="value" :key="keyO + 't' + keyM + 'r' + keyI">
-                    <span>{{ item | int }}</span>
-                    <i>.</i>{{ item | drob }}</td>
+                    <span>{{ item }}</span>
+                  </td>
                 </template>
               </template>
             </template>

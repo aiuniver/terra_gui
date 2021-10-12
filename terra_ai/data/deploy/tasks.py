@@ -150,10 +150,10 @@ class TextTextSegmentationCollectionList(BaseCollectionList):
                 destination_format_ref.write(value.get("format", ""))
             self[index] = value
 
-        for item in self:
-            label.append(json.dumps(item.get("data", []), ensure_ascii=False))
-        with open(formatfile, "w") as formatfile_ref:
-            formatfile_ref.write("\n".join(label))
+        # for item in self:
+        #     label.append(json.dumps(item.get("data", []), ensure_ascii=False))
+        # with open(formatfile, "w") as formatfile_ref:
+        #     formatfile_ref.write("\n".join(label))
 
 
 class TextClassificationCollectionList(BaseCollectionList):

@@ -13,6 +13,7 @@ from tensorflow import cast
 __version__ = 0.03
 
 from tensorflow.keras.models import Model
+from tensorflow.python.keras.layers import BatchNormalization
 
 
 class InstanceNormalization(Layer):
@@ -741,7 +742,7 @@ class Mish(Layer):
         self.supports_masking = True
 
     def call(self, inputs, **kwargs):
-        return inputs * K.tanh(K.softplus(inputs))
+        return inputs * tensorflow.math.tanh(tensorflow.math.softplus(inputs))
 
     def get_config(self):
         config = super(Mish, self).get_config()
@@ -749,6 +750,130 @@ class Mish(Layer):
 
     def compute_output_shape(self, input_shape):
         return input_shape
+
+
+class DarkNetBatchNormalization(BatchNormalization):
+
+    def __init__(self, **kwargs):
+        super(DarkNetBatchNormalization, self).__init__(**kwargs)
+        self.supports_masking = True
+
+    def call(self, inputs, training=False, **kwargs):
+        if not training:
+            training = tf.constant(False)
+        training = tf.logical_and(training, self.trainable)
+        return super().call(inputs, training)
+
+    def get_config(self):
+        config = super(DarkNetBatchNormalization, self).get_config()
+        return config
+
+
+class DarkNetConvolutional(Layer):
+
+    def __init__(self,
+                 filters=32,
+                 kernel_size=(3, 3),
+                 downsample=False,
+                 activate=True,
+                 bn=True,
+                 activate_type='LeakyReLU',
+                 **kwargs):
+        super(DarkNetConvolutional, self).__init__(**kwargs)
+        self.filters = filters
+        self.kernel_size = kernel_size
+        self.downsample = downsample
+        self.activate = activate
+        self.activate_type = activate_type
+        self.bn = bn
+        if self.downsample:
+            self.zero = tensorflow.keras.layers.ZeroPadding2D(((1, 0), (1, 0)))
+            self.padding = 'valid'
+            self.strides = (2, 2)
+        else:
+            self.strides = (1, 1)
+            self.padding = 'same'
+
+        self.convolutional = tensorflow.keras.layers.Conv2D(
+            filters=self.filters,
+            kernel_size=self.kernel_size,
+            strides=self.strides,
+            padding=self.padding,
+            use_bias=not self.bn,
+            kernel_regularizer=tensorflow.keras.regularizers.l2(0.0005),
+            kernel_initializer=tensorflow.random_normal_initializer(stddev=0.01),
+            bias_initializer=tensorflow.constant_initializer(0.)
+        )
+        if self.bn:
+            self.bn_conv = DarkNetBatchNormalization()
+        if self.activate:
+            if self.activate_type == "LeakyReLU":
+                self.activation = tensorflow.keras.layers.LeakyReLU(alpha=0.1)
+            elif self.activate_type == "Mish":
+                self.activation = Mish()
+
+    def call(self, inputs, **kwargs):
+        if self.downsample:
+            inputs = self.zero(inputs)
+        conv = self.convolutional(inputs)
+        if self.bn:
+            conv = self.bn_conv(conv)
+        if self.activate:
+            conv = self.activation(conv)
+        return conv
+
+    def get_config(self):
+        config = super(DarkNetConvolutional, self).get_config()
+        return config
+
+
+class DarkNetResBlock(Layer):
+
+    def __init__(self,
+                 filter_num1=32,
+                 filter_num2=32,
+                 activate_type='LeakyReLU',
+                 **kwargs):
+        super(DarkNetResBlock, self).__init__(**kwargs)
+        self.filter_num1 = filter_num1
+        self.filter_num2 = filter_num2
+        self.activate_type = activate_type
+
+        self.conv_1 = DarkNetConvolutional(
+            filters=filter_num1,
+            kernel_size=(1, 1),
+            activate_type=self.activate_type
+        )
+        self.conv_2 = DarkNetConvolutional(
+            filters=filter_num2,
+            kernel_size=(3, 3),
+            activate_type=self.activate_type
+        )
+
+    def call(self, inputs, **kwargs):
+        short_cut = inputs
+        conv = self.conv_1(inputs)
+        conv = self.conv_2(conv)
+        residual_output = short_cut + conv
+        return residual_output
+
+    def get_config(self):
+        config = super(DarkNetResBlock, self).get_config()
+        return config
+
+
+class DarkNetUpsample(Layer):
+
+    def __init__(self, **kwargs):
+        super(DarkNetUpsample, self).__init__(**kwargs)
+        self.supports_masking = True
+
+    def call(self, inputs, **kwargs):
+        return tf.image.resize(inputs, (inputs.shape[1] * 2, inputs.shape[2] * 2), method='nearest')
+
+    def get_config(self):
+        config = super(DarkNetUpsample, self).get_config()
+        return config
 
 
 if __name__ == "__main__":

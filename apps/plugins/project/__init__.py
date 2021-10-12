@@ -247,7 +247,7 @@ class Project(BaseMixinData):
             item.data.reload(list(range(terra_settings.DEPLOY_PRESET_COUNT)))
             item.data.try_init()
 
-    def set_dataset(self, dataset: DatasetData = None):
+    def set_dataset(self, dataset: DatasetData = None, reset_model: bool = False):
         if dataset is None:
             self.dataset = None
             self.model = ModelDetailsData(**EmptyModelDetailsData)
@@ -255,14 +255,17 @@ class Project(BaseMixinData):
             self.set_deploy()
             return
         model_init = dataset.model
-        if self.model.inputs and len(self.model.inputs) != len(model_init.inputs):
-            raise exceptions.DatasetModelInputsCountNotMatchException()
-        if self.model.outputs and len(self.model.outputs) != len(model_init.outputs):
-            raise exceptions.DatasetModelOutputsCountNotMatchException()
         self.dataset = dataset
-        if not self.model.inputs or not self.model.outputs:
+        if not self.model.inputs or not self.model.outputs or reset_model:
             self.model = model_init
         else:
+            if self.model.inputs and len(self.model.inputs) != len(model_init.inputs):
+                raise exceptions.DatasetModelInputsCountNotMatchException()
+            if self.model.outputs and len(self.model.outputs) != len(
+                model_init.outputs
+            ):
+                raise exceptions.DatasetModelOutputsCountNotMatchException()
+
             for index, layer in enumerate(model_init.inputs):
                 layer_init = layer.native()
                 layer_data = self.model.inputs[index].native()
@@ -275,7 +278,11 @@ class Project(BaseMixinData):
                         "parameters": layer_init.get("parameters"),
                     }
                 )
+                if int(layer.id) != int(layer_data.get("id")):
+                    _layer = self.dataset.inputs.pop(layer.id)
+                    self.dataset.inputs[layer_data.get("id")] = _layer
                 self.model.layers.append(LayerData(**layer_data))
+
             for index, layer in enumerate(model_init.outputs):
                 layer_init = layer.native()
                 layer_data = self.model.outputs[index].native()
@@ -288,9 +295,11 @@ class Project(BaseMixinData):
                         "parameters": layer_init.get("parameters"),
                     }
                 )
+                if int(layer.id) != int(layer_data.get("id")):
+                    _layer = self.dataset.outputs.pop(layer.id)
+                    self.dataset.outputs[layer_data.get("id")] = _layer
                 self.model.layers.append(LayerData(**layer_data))
-            self.model.name = model_init.name
-            self.model.alias = model_init.alias
+
         self.set_training()
         self.set_deploy()
 

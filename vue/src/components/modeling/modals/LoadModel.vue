@@ -155,9 +155,32 @@ export default {
     },
     async download() {
       if (!this.loading) {
-        await this.$store.dispatch('modeling/load', this.model);
+        const { success: successValidate, data } = await this.$store.dispatch('datasets/validateDatasetOrModel', {
+          model: this.model,
+        });
+
+        if (successValidate && data) {
+          this.$Modal.confirm({
+            title: 'Внимание!',
+            content: data,
+            width: 300,
+            callback: async action => {
+              if (action == 'confirm') {
+                await this.onChoice({ reset_dataset: true });
+              }
+            },
+          });
+        } else {
+          await this.onChoice();
+        }
         this.$emit('input', false);
       }
+    },
+    async onChoice({ reset_dataset = false } = {}) {
+      await this.$store.dispatch('modeling/load', {
+        model: this.model,
+        reset_dataset,
+      });
     },
   },
   watch: {

@@ -34,8 +34,7 @@ from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.training.customlosses import DiceCoef
 from terra_ai.training.yolo_fit import create_yolo, CustomModelYolo, compute_loss
-from terra_ai.exceptions import training as exceptions
-from terra_ai.exceptions.tensor_flow import ResourceExhaustedError as resource
+from terra_ai.exceptions import training as exceptions, terra_exception
 
 
 __version__ = 0.02
@@ -346,12 +345,9 @@ class GUINN:
                 verbose=verbose,
                 callbacks=self.callbacks
             )
-        except ResourceExhaustedError as error:
+        except Exception as error:
             self._check_interactive_status()
-            progress.pool(self.progress_name, error=resource(error).__str__())
-        except FileNotFoundError as error:
-            self._check_interactive_status()
-            progress.pool(self.progress_name, error=exceptions.FileNotFoundException(error).__str__())
+            progress.pool(self.progress_name, error=terra_exception(error).__str__(), finished=True)
 
         if (interactive.get_states().get("status") == "stopped"
             and self.callbacks[0].last_epoch < params.epochs) or \
@@ -679,9 +675,8 @@ class FitCallback(keras.callbacks.Callback):
     def _get_train_status() -> str:
         return interactive.get_states().get("status")
 
-    def _get_predict(self, deploy_model = None):
+    def _get_predict(self, deploy_model=None):
         current_model = deploy_model if deploy_model else self.model
-
         if self.dataset.data.use_generator:
             current_predict = current_model.predict(self.dataset.dataset.get('val').batch(1),
                                                  batch_size=1)
@@ -702,14 +697,45 @@ class FitCallback(keras.callbacks.Callback):
         if result:
             if list(self.dataset.data.outputs.values())[0].task in [LayerOutputTypeChoice.Classification,
                                                                     LayerOutputTypeChoice.Segmentation,
-                                                                    LayerOutputTypeChoice.TextSegmentation]:
+                                                                    LayerOutputTypeChoice.TextSegmentation,
+                                                                    LayerOutputTypeChoice.Regression]:
                 deploy_presets = list(result.values())[0]
         return deploy_presets
 
-    def _create_cascade(self):
+    def _create_form_data_for_dataframe_deploy(self, deploy_path):
+        form_data = []
+        with open(os.path.join(self.dataset_path, "config.json"), "r", encoding="utf-8") as dataset_conf:
+            dataset_info = json.load(dataset_conf).get("columns", {})
+        for inputs, input_data in dataset_info.items():
+            if int(inputs) not in list(self.dataset.data.outputs.keys()):
+                for column, column_data in input_data.items():
+                    label = column
+                    available = column_data.get("classes_names") if column_data.get("classes_names") else None
+                    widget = "select" if available else "input"
+                    input_type = "text"
+                    if widget == "select":
+                        table_column_data = {
+                            "label": label,
+                            "widget": widget,
+                            "available": available
+                        }
+                    else:
+                        table_column_data = {
+                            "label": label,
+                            "widget": widget,
+                            "type": input_type
+                        }
+                    form_data.append(table_column_data)
+        with open(os.path.join(deploy_path, "form.json"), "w", encoding="utf-8") as form_file:
+            json.dump(form_data, form_file, ensure_ascii=False)
+
+    def _create_cascade(self, **data):
+        deploy_path = os.path.join(os.path.split(self.save_model_path)[0], "deploy")
         if self.dataset.data.alias not in ["imdb", "boston_housing", "reuters"]:
             input_key = list(self.dataset.data.inputs.keys())[0]
             output_key = list(self.dataset.data.outputs.keys())[0]
+            if self.dataset.data.inputs[input_key].task == LayerInputTypeChoice.Dataframe:
+                self._create_form_data_for_dataframe_deploy(deploy_path=deploy_path)
             input_tasks = [LayerInputTypeChoice.Image, LayerInputTypeChoice.Text,
                            LayerInputTypeChoice.Audio, LayerInputTypeChoice.Video]
             output_tasks = [LayerOutputTypeChoice.Classification, LayerOutputTypeChoice.Segmentation,
@@ -728,17 +754,37 @@ class FitCallback(keras.callbacks.Callback):
                     training_path=os.path.split(self.save_model_path)[0],
                     function_name=func_name
                 )
+                if self.dataset.data.outputs[output_key].task == LayerOutputTypeChoice.TextSegmentation:
+                    with open(os.path.join(deploy_path, "format.txt"), "w", encoding="utf-8") as format_file:
+                        format_file.write(str(data.get("tags_map", "")))
 
     def _prepare_deploy(self):
         weight = None
+        cascade_data = {}
         for i in os.listdir(self.save_model_path):
             if i[-3:] == '.h5' and 'best' in i:
                 weight = i
         if weight:
             self.model.load_weights(os.path.join(self.save_model_path, weight))
         deploy_predict = self._get_predict()
-        interactive.deploy_presets_data = self._deploy_predict(deploy_predict)
-        self._create_cascade()
+        deploy_presets_data = self._deploy_predict(deploy_predict)
+        if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.TextSegmentation:
+            tags_map = deploy_presets_data.get("color_map")
+            interactive.deploy_presets_data = deploy_presets_data.get("data")
+            cascade_data = {"tags_map": tags_map}
+        elif list(self.dataset.data.inputs.values())[0].task == LayerInputTypeChoice.Dataframe:
+            presets = []
+            labels = []
+            for elem in deploy_presets_data:
+                presets.append(elem.get("source"))
+                labels.append(elem.get("data"))
+            interactive.deploy_presets_data = {
+                "preset": presets,
+                "label": labels
+            }
+        else:
+            interactive.deploy_presets_data = deploy_presets_data
+        self._create_cascade(**cascade_data)
 
     @staticmethod
     def _estimate_step(current, start, now):
