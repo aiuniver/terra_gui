@@ -170,7 +170,6 @@ class CreateDataset(object):
 
     def create_instructions(self, creation_data: CreationData) -> DatasetInstructionsData:
 
-        # service = None
         if creation_data.columns_processing:
             inputs = self.create_dataframe_put_instructions(data=creation_data.inputs)
             outputs = self.create_dataframe_put_instructions(data=creation_data.outputs)
@@ -181,12 +180,7 @@ class CreateDataset(object):
                 if out.type == LayerOutputTypeChoice.Classification and self.y_cls:
                     for col_name, data in outputs[out.id].items():
                         data.instructions = self.y_cls
-                # elif out.type == LayerOutputTypeChoice.ObjectDetection:
-                #     service = self.create_put_instructions(data=creation_data.outputs)
 
-        # if service:
-        #     instructions = DatasetInstructionsData(inputs=inputs, outputs=outputs, service=service)
-        # else:
         instructions = DatasetInstructionsData(inputs=inputs, outputs=outputs)
 
         return instructions
@@ -266,39 +260,50 @@ class CreateDataset(object):
         put_parameters: dict = {}
         for put in data:
             self.tags[put.id] = {f"{put.id}_{decamelize(put.type)}": decamelize(put.type)}
-            paths_list: list = []
-            for paths in put.parameters.sources_paths:
-                if paths.is_dir():
-                    for directory, folder, file_name in sorted(os.walk(os.path.join(self.source_directory, paths))):
-                        if file_name:
-                            file_folder = directory.replace(self.source_directory, '')[1:]
-                            for name in sorted(file_name):
-                                paths_list.append(os.path.join(file_folder, name))
+            if self.tags.get(put.id - 1) is not None and self.tags.get(put.id - 1).get(f"{put.id - 1}_"
+                                                                                       f"{decamelize(put.type)}") ==\
+                    decamelize(LayerInputTypeChoice.Audio):
+                instructions = put_parameters[put.id - 1][f'{put.id - 1}_{decamelize(put.type)}'].instructions.copy()
+                parameters = put_parameters[put.id - 1][f'{put.id - 1}_{decamelize(put.type)}'].parameters.copy()
+                parameters['parameter'] = put.parameters.parameter
+                parameters['cols_names'] = f'{put.id}_{decamelize(put.type)}'
+                parameters['put'] = put.id
+                instructions_data = InstructionsData(instructions=instructions, parameters=parameters)
+            else:
+                paths_list: list = []
+                for paths in put.parameters.sources_paths:
+                    if paths.is_dir():
+                        for directory, folder, file_name in sorted(os.walk(os.path.join(self.source_directory, paths))):
+                            if file_name:
+                                file_folder = directory.replace(self.source_directory, '')[1:]
+                                for name in sorted(file_name):
+                                    paths_list.append(os.path.join(file_folder, name))
 
-            put.parameters.cols_names = f'{put.id}_{decamelize(put.type)}'
-            put.parameters.put = put.id
-            temp_paths_list = [os.path.join(self.source_path, x) for x in paths_list]
-            instr = getattr(CreateArray(), f"instructions_{decamelize(put.type)}")(temp_paths_list,
-                                                                                   **put.parameters.native())
+                put.parameters.cols_names = f'{put.id}_{decamelize(put.type)}'
+                put.parameters.put = put.id
+                temp_paths_list = [os.path.join(self.source_path, x) for x in paths_list]
+                instr = getattr(CreateArray(), f"instructions_{decamelize(put.type)}")(temp_paths_list,
+                                                                                       **put.parameters.native())
 
-            if not put.type == LayerOutputTypeChoice.Classification:
-                y_classes = sorted(list(instr['instructions'].keys())) if isinstance(instr['instructions'], dict) else \
-                    instr['instructions']
-                self.y_cls = [os.path.basename(os.path.dirname(dir_name)) for dir_name in y_classes]
+                if not put.type == LayerOutputTypeChoice.Classification:
+                    y_classes = sorted(list(instr['instructions'].keys())) if isinstance(instr['instructions'], dict)\
+                        else instr['instructions']
+                    self.y_cls = [os.path.basename(os.path.dirname(dir_name)) for dir_name in y_classes]
 
-            instructions_data = InstructionsData(
-                **getattr(CreateArray(), f"cut_{decamelize(put.type)}")(instr['instructions'],
-                                                                        os.path.join(self.paths.sources,
-                                                                                     f"{put.id}_"
-                                                                                     f"{decamelize(put.type)}"),
-                                                                        **instr['parameters']))
+                instructions_data = InstructionsData(
+                    **getattr(CreateArray(), f"cut_{decamelize(put.type)}")(instr['instructions'],
+                                                                            os.path.join(self.paths.sources,
+                                                                                         f"{put.id}_"
+                                                                                         f"{decamelize(put.type)}"),
+                                                                            **instr['parameters']))
 
-            instructions_data.parameters = {'put_type': decamelize(put.type),
-                                            **instr['parameters']}
-            if decamelize(put.type) in PATH_TYPE_LIST:
-                new_paths = [path.replace(str(self.paths.basepath) + os.path.sep, '')
-                             for path in instructions_data.instructions]
-                instructions_data.instructions = new_paths
+                instructions_data.parameters = {'put_type': decamelize(put.type),
+                                                **instr['parameters']}
+
+                if decamelize(put.type) in PATH_TYPE_LIST:
+                    new_paths = [path.replace(str(self.paths.basepath) + os.path.sep, '')
+                                 for path in instructions_data.instructions]
+                    instructions_data.instructions = new_paths
 
             put_parameters[put.id] = {f'{put.id}_{decamelize(put.type)}': instructions_data}
 
@@ -566,7 +571,7 @@ class CreateDataset(object):
                             str(creation_data.outputs.get(key).parameters.cols_names[idx][0])].type == \
                                 LayerOutputTypeChoice.Timeseries and creation_data.columns_processing[
                             str(creation_data.outputs.get(key).parameters.cols_names[idx][0])].parameters.trend is True:
-                            task = LayerOutputTypeChoice.Timeseries_trend
+                            task = LayerOutputTypeChoice.TimeseriesTrend
                         else:
                             task = creation_data.columns_processing[
                                 str(creation_data.outputs.get(key).parameters.cols_names[idx][0])].type

@@ -5,7 +5,7 @@ import tensorflow
 from tensorflow.keras.layers import Layer, InputSpec
 from tensorflow.keras import initializers, regularizers, constraints
 from tensorflow.keras import backend as K
-from tensorflow.keras import layers
+from tensorflow.keras import layers, Model
 
 __version__ = 0.03
 
@@ -456,6 +456,8 @@ class YOLOResBlock(Model):
         self.kwargs = {'use_bias': self.use_bias, 'activation': 'linear'}
         if self.mode == "YOLOv3":
             self.kwargs["kernel_regularizer"] = tensorflow.keras.regularizers.l2(5e-4)
+            self.kwargs["kernel_initializer"] = tensorflow.keras.initializers.RandomNormal(stddev=0.01)
+            self.kwargs["bias_initializer"] = tensorflow.keras.initializers.Constant(value=0)
         if self.mode == "YOLOv4":
             self.kwargs["kernel_initializer"] = tensorflow.keras.initializers.RandomNormal(mean=0.0, stddev=0.01)
         if self.mode == "YOLOv5":
@@ -579,7 +581,9 @@ class YOLOv3ResBlock(Model):
         self.include_head = include_head
         self.use_bias = use_bias
         self.kwargs = {'use_bias': use_bias, 'activation': None,
-                       "kernel_regularizer": tensorflow.keras.regularizers.l2(5e-4)}
+                       "kernel_regularizer": tensorflow.keras.regularizers.l2(5e-4),
+                       "kernel_initializer": tensorflow.keras.initializers.RandomNormal(stddev=0.01),
+                       "bias_initializer": tensorflow.keras.initializers.Constant(value=0)}
         # self.kwargs.update(kwargs)
         if self.include_head:
             self.zero2d = tensorflow.keras.layers.ZeroPadding2D(padding=((1, 0), (1, 0)))
@@ -656,6 +660,8 @@ class YOLOConvBlock(Model):
         self.kwargs = {'activation': 'linear', 'use_bias': self.use_bias}
         if self.mode == "YOLOv3":
             self.kwargs["kernel_regularizer"] = tensorflow.keras.regularizers.l2(5e-4)
+            self.kwargs["kernel_initializer"] = tensorflow.keras.initializers.RandomNormal(stddev=0.01)
+            self.kwargs["bias_initializer"] = tensorflow.keras.initializers.Constant(value=0)
         if self.mode == "YOLOv4":
             self.kwargs["kernel_initializer"] = tensorflow.keras.initializers.RandomNormal(mean=0.0, stddev=0.01)
         if self.mode == "YOLOv5":
@@ -719,7 +725,7 @@ class YOLOConvBlock(Model):
     #     return cls(**config)
 
 
-class Mish(Layer):
+class Mish(Model):
     """
     Mish Activation Function.
     .. math::
@@ -766,7 +772,7 @@ class DarkNetBatchNormalization(BatchNormalization):
         return config
 
 
-class DarkNetConvolutional(Layer):
+class DarkNetConvolutional(Model):
 
     def __init__(self,
                  filters=32,
@@ -802,7 +808,7 @@ class DarkNetConvolutional(Layer):
             bias_initializer=tensorflow.constant_initializer(0.)
         )
         if self.bn:
-            self.bn_conv = DarkNetBatchNormalization()
+            self.bn_conv = BatchNormalization()
         if self.activate:
             if self.activate_type == "LeakyReLU":
                 self.activation = tensorflow.keras.layers.LeakyReLU(alpha=0.1)
@@ -824,7 +830,7 @@ class DarkNetConvolutional(Layer):
         return config
 
 
-class DarkNetResBlock(Layer):
+class DarkNetResBlock(Model):
 
     def __init__(self,
                  filter_num1=32,
@@ -859,7 +865,7 @@ class DarkNetResBlock(Layer):
         return config
 
 
-class DarkNetUpsample(Layer):
+class DarkNetUpsample(Model):
 
     def __init__(self, **kwargs):
         super(DarkNetUpsample, self).__init__(**kwargs)
