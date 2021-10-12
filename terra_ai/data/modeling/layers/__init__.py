@@ -607,6 +607,15 @@ class LayerCONVBlockData(LayerMixinData):
     )
 
 
+class LayerPSPBlockData(LayerMixinData):
+    main: types.PSPBlock.ParametersMainData = (
+        types.PSPBlock.ParametersMainData()
+    )
+    extra: types.PSPBlock.ParametersExtraData = (
+        types.PSPBlock.ParametersExtraData()
+    )
+
+
 Layer = Enum(
     "Layer",
     dict(map(lambda item: (item.name, f"Layer{item.name}Data"), list(LayerTypeChoice))),

@@ -996,7 +996,8 @@ class PSPBlock(Model):
         self.padding = padding
         self.batch_norm_layer = batch_norm_layer
 
-        self.conv_start = layers.Conv2D(filters=self.filters_coef*16, kernel_size=self.kernel_size, strides=self.strides,
+        self.conv_start = layers.Conv2D(filters=self.filters_coef * 16, kernel_size=self.kernel_size,
+                                        strides=self.strides,
                                         padding=self.padding, activation=self.activation, data_format='channels_last',
                                         dilation_rate=self.dilation, groups=1, use_bias=True,
                                         kernel_initializer='glorot_uniform',
@@ -1004,24 +1005,27 @@ class PSPBlock(Model):
                                         activity_regularizer=None, kernel_constraint=None, bias_constraint=None)
 
         for i in range(0, self.n_pooling_branches):
-          setattr(self, f"maxpool_{i}",
-                        layers.MaxPool2D(pool_size=2**i, padding='same'))
-          setattr(self, f"conv_{i}",
-                        layers.Conv2D(filters=self.filters_coef*16*(i+1), kernel_size=self.kernel_size, strides=self.strides,
-                        padding=self.padding, activation=self.activation, data_format='channels_last',
-                        dilation_rate=self.dilation, groups=1, use_bias=True,
-                        kernel_initializer='glorot_uniform',
-                        bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
-                        activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
-          setattr(self, f"convtranspose_{i}", layers.Conv2DTranspose(filters=self.filters_coef*16*(i+1),
-                                                                     kernel_size = (1,1), strides = 2**i, padding = 'same',
-                                                                     activation = self.activation, data_format = 'channels_last'))
-          if self.batch_norm_layer:
-            setattr(self, f"batchnorm_{i}", layers.BatchNormalization())
+            setattr(self, f"maxpool_{i}",
+                    layers.MaxPool2D(pool_size=2 ** i, padding='same'))
+            setattr(self, f"conv_{i}",
+                    layers.Conv2D(filters=self.filters_coef * 16 * (i + 1), kernel_size=self.kernel_size,
+                                  strides=self.strides,
+                                  padding=self.padding, activation=self.activation, data_format='channels_last',
+                                  dilation_rate=self.dilation, groups=1, use_bias=True,
+                                  kernel_initializer='glorot_uniform',
+                                  bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
+                                  activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
+            setattr(self, f"convtranspose_{i}",
+                    layers.Conv2DTranspose(filters=self.filters_coef * 16 * (i + 1),
+                                           kernel_size=(1, 1), strides=2 ** i, padding='same',
+                                           activation=self.activation, data_format='channels_last'))
+            if self.batch_norm_layer:
+                setattr(self, f"batchnorm_{i}", layers.BatchNormalization())
 
         self.concatenate = layers.Concatenate()
 
-        self.conv_end = layers.Conv2D(filters=self.filters_coef*16, kernel_size=self.kernel_size, strides=self.strides,
+        self.conv_end = layers.Conv2D(filters=self.filters_coef * 16, kernel_size=self.kernel_size,
+                                      strides=self.strides,
                                       padding=self.padding, activation=self.activation, data_format='channels_last',
                                       dilation_rate=self.dilation, groups=1, use_bias=True,
                                       kernel_initializer='glorot_uniform',
@@ -1035,18 +1039,18 @@ class PSPBlock(Model):
 
         x = self.conv_start(input_)
 
-        concList = []
+        conc_list = []
 
         for i in range(0, self.n_pooling_branches):
-          setattr(self, f'x_{i}', getattr(self, f'maxpool_{i}')(x))
-          setattr(self, f'x_{i}', getattr(self, f'conv_{i}')(getattr(self, f'x_{i}')))
-          if self.batch_norm_layer:
-            setattr(self, f'x_{i}', getattr(self, f'batchnorm_{i}')(getattr(self, f'x_{i}')))
-          setattr(self, f'x_{i}', getattr(self, f'convtranspose_{i}')(getattr(self, f'x_{i}')))
-          setattr(self, f'x_{i}', layers.CenterCrop(input_.shape[1], input_.shape[2])(getattr(self, f'x_{i}')))
-          concList.append(getattr(self, f'x_{i}'))
+            setattr(self, f'x_{i}', getattr(self, f'maxpool_{i}')(x))
+            setattr(self, f'x_{i}', getattr(self, f'conv_{i}')(getattr(self, f'x_{i}')))
+            if self.batch_norm_layer:
+                setattr(self, f'x_{i}', getattr(self, f'batchnorm_{i}')(getattr(self, f'x_{i}')))
+            setattr(self, f'x_{i}', getattr(self, f'convtranspose_{i}')(getattr(self, f'x_{i}')))
+            setattr(self, f'x_{i}', layers.CenterCrop(input_.shape[1], input_.shape[2])(getattr(self, f'x_{i}')))
+            conc_list.append(getattr(self, f'x_{i}'))
 
-        concat = self.concatenate(concList)
+        concat = self.concatenate(conc_list)
         x = self.conv_end(concat)
 
         return x
@@ -1062,7 +1066,7 @@ class PSPBlock(Model):
             'padding': self.padding,
             'batch_norm_layer': self.batch_norm_layer,
         }
-        base_config = super(CONVBlock, self).get_config()
+        base_config = super(PSPBlock, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
     @classmethod

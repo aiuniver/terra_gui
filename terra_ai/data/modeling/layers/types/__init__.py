@@ -141,5 +141,7 @@ from . import (
     DarkNetConvolutional,
     DarkNetUpsample,
     DarkNetResBlock,
-    DarkNetBatchNormalization
+    DarkNetBatchNormalization,
+    PSPBlock,
+
 )
