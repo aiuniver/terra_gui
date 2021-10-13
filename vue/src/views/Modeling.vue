@@ -49,9 +49,9 @@ export default {
         title: 'Внимание!',
         content: 'Для загрузки модели остановите обучение, перейти на страницу обучения ?',
         width: 300,
-        callback: async action => {
+        callback: action => {
           if (action == 'confirm') {
-            this.$router.push('/trainings');
+            this.$router.push('/training');
           }
         },
       });
