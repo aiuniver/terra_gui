@@ -29,11 +29,9 @@
               <i class="loaded-list__item--icon"></i>
               <span class="loaded-list__item--text">{{ list.label }}</span>
               <!-- <div class="loaded-list__item--empty"></div> -->
-              <div
-                class="loaded-list__item--remove"
-                v-if="list.uid === 'custom'"
-                @click="removeModel(list.value)"
-              ></div>
+              <div class="loaded-list__item--remove" v-if="list.uid === 'custom'" @click="removeModel(list.value)">
+                <i class="t-icon"></i>
+              </div>
             </li>
             <li v-if="!models.length" class="loaded-list__item">
               <span class="loaded-list__item--empty">Модель "{{ search }}" не найдена</span>
@@ -155,25 +153,32 @@ export default {
     },
     async download() {
       if (!this.loading) {
-        const {success: successValidate, data} = await this.$store.dispatch('datasets/validateDatasetOrModel', { model : this.model})
+        const { success: successValidate, data } = await this.$store.dispatch('datasets/validateDatasetOrModel', {
+          model: this.model,
+        });
 
-        if(successValidate && !data){
+        if (successValidate && data) {
           this.$Modal.confirm({
             title: 'Внимание!',
-            content: 'Несоответствие количества входных и выходных слоев датасета и редактируемой модели. Хотите сбросить датасет?',
+            content: data,
             width: 300,
-            callback: async (action) => {
+            callback: async action => {
               if (action == 'confirm') {
-                await this.$store.dispatch('modeling/load', this.model);
+                await this.onChoice({ reset_dataset: true });
               }
             },
           });
-        }else{
-          await this.$store.dispatch('modeling/load', this.model);
+        } else {
+          await this.onChoice();
         }
-        this.$emit('input', false); 
-       
+        this.$emit('input', false);
       }
+    },
+    async onChoice({ reset_dataset = false } = {}) {
+      await this.$store.dispatch('modeling/load', {
+        model: this.model,
+        reset_dataset,
+      });
     },
   },
   watch: {
@@ -274,6 +279,7 @@ export default {
       border-radius: 2px;
       margin-right: 4px;
       padding: 2px;
+      margin-left: auto;
       i {
         display: block;
         width: 18px;

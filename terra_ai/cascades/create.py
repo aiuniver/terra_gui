@@ -61,6 +61,8 @@ def json2model_cascade(path: str):
                 with open(os.path.join(dataset_path, "instructions", "parameters", key + '.json')) as cfg:
                     param[key].update(json.load(cfg))
 
+            return param
+
             type_module = getattr(general_fucntions, 'dataframe')
             preprocess.append(getattr(type_module, 'main')(
                 **param, dataset_path=dataset_path, key=inp)

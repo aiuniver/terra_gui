@@ -28,6 +28,8 @@ def make_text_segmentation(config, dataset_config, model):
     config['cascades']['model']['model'] = model
     config['cascades']['2']['params']['open_tag'] = dataset_config['columns']['1']['1_text']['open_tags']
     config['cascades']['2']['params']['close_tag'] = dataset_config['columns']['1']['1_text']['close_tag']
+    config['cascades']['2']['params']['classes'] = \
+        dataset_config['columns']['2']['2_text_segmentation']['classes_names']
 
     return config
 

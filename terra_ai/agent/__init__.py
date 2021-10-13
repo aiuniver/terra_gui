@@ -141,7 +141,12 @@ class Exchange:
         shutil.move(destination, target)
 
     def _call_dataset_choice(
-        self, custom_path: Path, destination: Path, group: str, alias: str
+        self,
+        custom_path: Path,
+        destination: Path,
+        group: str,
+        alias: str,
+        reset_model: bool = False,
     ) -> NoReturn:
         """
         Выбор датасета
@@ -149,6 +154,7 @@ class Exchange:
         datasets_loading.choice(
             DatasetLoadData(path=custom_path, group=group, alias=alias),
             destination=destination,
+            reset_model=reset_model,
         )
 
     def _call_dataset_choice_progress(self) -> progress.ProgressData:

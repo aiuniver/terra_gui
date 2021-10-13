@@ -112,6 +112,11 @@ class ProjectPathData(BaseMixinData):
             pass
         return value
 
+    def clear_training(self):
+        shutil.rmtree(self.training)
+        os.makedirs(self.training, exist_ok=True)
+        os.makedirs(self.deploy, exist_ok=True)
+
 
 class TrainingDetailsData(BaseMixinData):
     base: TrainData = TrainData()
@@ -247,7 +252,12 @@ class Project(BaseMixinData):
             item.data.reload(list(range(terra_settings.DEPLOY_PRESET_COUNT)))
             item.data.try_init()
 
-    def set_dataset(self, dataset: DatasetData = None):
+    def clear_training(self):
+        project_path.clear_training()
+        self.training = TrainingDetailsData()
+        self.deploy = DeployDetailsData()
+
+    def set_dataset(self, dataset: DatasetData = None, reset_model: bool = False):
         if dataset is None:
             self.dataset = None
             self.model = ModelDetailsData(**EmptyModelDetailsData)
@@ -255,14 +265,17 @@ class Project(BaseMixinData):
             self.set_deploy()
             return
         model_init = dataset.model
-        if self.model.inputs and len(self.model.inputs) != len(model_init.inputs):
-            raise exceptions.DatasetModelInputsCountNotMatchException()
-        if self.model.outputs and len(self.model.outputs) != len(model_init.outputs):
-            raise exceptions.DatasetModelOutputsCountNotMatchException()
         self.dataset = dataset
-        if not self.model.inputs or not self.model.outputs:
+        if not self.model.inputs or not self.model.outputs or reset_model:
             self.model = model_init
         else:
+            if self.model.inputs and len(self.model.inputs) != len(model_init.inputs):
+                raise exceptions.DatasetModelInputsCountNotMatchException()
+            if self.model.outputs and len(self.model.outputs) != len(
+                model_init.outputs
+            ):
+                raise exceptions.DatasetModelOutputsCountNotMatchException()
+
             for index, layer in enumerate(model_init.inputs):
                 layer_init = layer.native()
                 layer_data = self.model.inputs[index].native()
@@ -275,7 +288,11 @@ class Project(BaseMixinData):
                         "parameters": layer_init.get("parameters"),
                     }
                 )
+                if int(layer.id) != int(layer_data.get("id")):
+                    _layer = self.dataset.inputs.pop(layer.id)
+                    self.dataset.inputs[layer_data.get("id")] = _layer
                 self.model.layers.append(LayerData(**layer_data))
+
             for index, layer in enumerate(model_init.outputs):
                 layer_init = layer.native()
                 layer_data = self.model.outputs[index].native()
@@ -288,9 +305,11 @@ class Project(BaseMixinData):
                         "parameters": layer_init.get("parameters"),
                     }
                 )
+                if int(layer.id) != int(layer_data.get("id")):
+                    _layer = self.dataset.outputs.pop(layer.id)
+                    self.dataset.outputs[layer_data.get("id")] = _layer
                 self.model.layers.append(LayerData(**layer_data))
-            self.model.name = model_init.name
-            self.model.alias = model_init.alias
+
         self.set_training()
         self.set_deploy()
 

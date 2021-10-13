@@ -1,15 +1,7 @@
 """
-## Тип слоя `Reshape`
+## Тип слоя `DarkNetBatchNormalization`
 """
-
-from typing import Tuple, Optional
-
-from ..extra import (
-    LayerConfigData,
-    LayerValidationMethodChoice,
-    ModuleChoice,
-    ModuleTypeChoice,
-)
+from ..extra import LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice
 from ....mixins import BaseMixinData
 
 LayerConfig = LayerConfigData(
@@ -22,14 +14,14 @@ LayerConfig = LayerConfigData(
             "value": 2,
             "validation": LayerValidationMethodChoice.minimal,
         },
-        "module": ModuleChoice.tensorflow_keras_layers,
-        "module_type": ModuleTypeChoice.keras,
+        "module": ModuleChoice.terra_custom_layers,
+        "module_type": ModuleTypeChoice.terra_layer,
     }
 )
 
 
 class ParametersMainData(BaseMixinData):
-    target_shape: Optional[Tuple[int, ...]] = None
+    pass
 
 
 class ParametersExtraData(BaseMixinData):

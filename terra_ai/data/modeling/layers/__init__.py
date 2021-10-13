@@ -562,6 +562,69 @@ class LayerSpaceToDepthData(LayerMixinData):
     )
 
 
+class LayerDarkNetConvolutionalData(LayerMixinData):
+    main: types.DarkNetConvolutional.ParametersMainData = (
+        types.DarkNetConvolutional.ParametersMainData()
+    )
+    extra: types.DarkNetConvolutional.ParametersExtraData = (
+        types.DarkNetConvolutional.ParametersExtraData()
+    )
+
+
+class LayerDarkNetUpsampleData(LayerMixinData):
+    main: types.DarkNetUpsample.ParametersMainData = (
+        types.DarkNetUpsample.ParametersMainData()
+    )
+    extra: types.DarkNetUpsample.ParametersExtraData = (
+        types.DarkNetUpsample.ParametersExtraData()
+    )
+
+
+class LayerDarkNetResBlockData(LayerMixinData):
+    main: types.DarkNetResBlock.ParametersMainData = (
+        types.DarkNetResBlock.ParametersMainData()
+    )
+    extra: types.DarkNetResBlock.ParametersExtraData = (
+        types.DarkNetResBlock.ParametersExtraData()
+    )
+
+
+class LayerDarkNetBatchNormalizationData(LayerMixinData):
+    main: types.DarkNetBatchNormalization.ParametersMainData = (
+        types.DarkNetBatchNormalization.ParametersMainData()
+    )
+    extra: types.DarkNetBatchNormalization.ParametersExtraData = (
+        types.DarkNetBatchNormalization.ParametersExtraData()
+    )
+
+
+class LayerCONVBlockData(LayerMixinData):
+    main: types.CONVBlock.ParametersMainData = (
+        types.CONVBlock.ParametersMainData()
+    )
+    extra: types.CONVBlock.ParametersExtraData = (
+        types.CONVBlock.ParametersExtraData()
+    )
+
+
+class LayerPSPBlockData(LayerMixinData):
+    main: types.PSPBlock.ParametersMainData = (
+        types.PSPBlock.ParametersMainData()
+    )
+    extra: types.PSPBlock.ParametersExtraData = (
+        types.PSPBlock.ParametersExtraData()
+    )
+
+
+class LayerUNETBlockData(LayerMixinData):
+    main: types.UNETBlock.ParametersMainData = (
+        types.UNETBlock.ParametersMainData()
+    )
+    extra: types.UNETBlock.ParametersExtraData = (
+        types.UNETBlock.ParametersExtraData()
+    )
+
+
 Layer = Enum(
     "Layer",
     dict(map(lambda item: (item.name, f"Layer{item.name}Data"), list(LayerTypeChoice))),

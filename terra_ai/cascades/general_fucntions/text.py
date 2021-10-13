@@ -6,8 +6,6 @@ import pymorphy2
 import joblib
 from tensorflow.keras.preprocessing.text import text_to_word_sequence
 
-from ..common import decamelize
-
 
 def main(**params):
     open_tags, close_tags = None, None
@@ -23,8 +21,8 @@ def main(**params):
 
     preprocessing = joblib.load(
         os.path.join(
-            params['dataset_path'], 'preprocessing', str(params['key']),
-            f'{params["key"]}_{decamelize(params["task"])}.gz')
+            params['dataset_path'], 'preprocessing', params["key"].split('_')[0], f'{params["key"]}.gz'
+        )
     )
 
     def fun(text):

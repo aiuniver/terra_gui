@@ -16,7 +16,7 @@ from terra_ai.data.modeling.layers.extra import (
     YOLOModeChoice,
     YOLOActivationChoice,
     VAELatentRegularizerChoice,
-    SpaceToDepthDataFormatChoice,
+    SpaceToDepthDataFormatChoice, CONVBlockConfigChoice,
 )
 
 from .base import Field
@@ -47,6 +47,7 @@ SELECT_TYPES = [
     YOLOActivationChoice,
     VAELatentRegularizerChoice,
     SpaceToDepthDataFormatChoice,
+    CONVBlockConfigChoice
 ]
 
 

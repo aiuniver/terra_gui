@@ -1,6 +1,6 @@
 <template>
   <div>
-    <t-button :disabled="!selected" @click.native="click">
+    <t-button :disabled="!selected" @click.native="handleClick">
       <span v-if="selected">Выбрать датасет</span>
       <span v-else>{{ btnText }}</span>
     </t-button>
@@ -27,12 +27,6 @@ export default {
     },
   },
   methods: {
-    async message() {
-      await this.$store.dispatch('messages/setModel', {
-        context: this,
-        content: 'Для выбора датасета необходимо сбросить/остановить обучение',
-      });
-    },
     createInterval() {
       this.interval = setTimeout(async () => {
         const res = await this.$store.dispatch('datasets/choiceProgress', {});
@@ -46,12 +40,7 @@ export default {
               this.$store.dispatch('messages/setProgress', 0);
               this.$store.dispatch('messages/setProgressMessage', '');
               await this.$store.dispatch('projects/get');
-              const { data: dataset } = data;
-              this.$store.dispatch(
-                'messages/setMessage',
-                { message: `Датасет «${dataset.name}» выбран` },
-                { root: true }
-              );
+              this.$store.dispatch('messages/setMessage', { message: `Датасет «${data?.data?.dataset?.name || ''}» выбран` });
               this.$store.dispatch('settings/setOverlay', false);
             } else {
               if (error) {
@@ -71,41 +60,50 @@ export default {
         }
       }, 1000);
     },
-    async click() {
-      if (this.isNoTrain) {
-        const { alias, group, name} = this.selected;
-       
-        const { success: successValidate, data } = await this.$store.dispatch('datasets/validateDatasetOrModel', {
-          dataset: { alias, group },
-        });
-
-        this.$store.dispatch('settings/setOverlay', true);
-        this.$store.dispatch('messages/setMessage', { message: `Загружаю датасет «${name}»` });
-
-        if (successValidate && !data) {
-          this.$Modal.confirm({
-            title: 'Внимание!',
-            content:
-              'Несоответствие количества входных и выходных слоев датасета и редактируемой модели. Хотите сбросить модель?',
-            width: 300,
-            callback:  (action) => {
-              if (action == 'confirm') {
-                this.createInterval();
-              }
-            },
-          });
-           
-        } else {
-          const { success: successChoice } = await this.$store.dispatch('datasets/choice', { alias, group });
-          if (successChoice) {
-            await this.createInterval();
-          }
-        }
-      } else {
-        this.message();
-        this.$store.dispatch('settings/setOverlay', false);
+    async handleClick() {
+      if (!this.isNoTrain) {
+        this.$Modal.confirm({
+          title: 'Внимание!',
+          content: 'Для загрузки датасета остановите обучение, перейти на страницу обучения ?',
+          width: 300,
+          callback: action => {
+            if (action == 'confirm') {
+              this.$router.push('/training');
+            }
+          },
+      });
+        return;
       }
 
+      const { alias, group, name } = this.selected;
+
+      const { success: successValidate, data } = await this.$store.dispatch('datasets/validateDatasetOrModel', {
+        dataset: { alias, group },
+      });
+
+      if (successValidate && data) {
+        this.$Modal.confirm({
+          title: 'Внимание!',
+          content: data,
+          width: 300,
+          callback: async action => {
+            if (action == 'confirm') {
+              await this.onChoice({ alias, group, name, reset_model: true });
+            }
+          },
+        });
+      } else {
+        await this.onChoice({ alias, group, name, reset_model: false });
+      }
+    },
+    async onChoice({ alias, group, name, reset_model } = {}) {
+      this.$store.dispatch('settings/setOverlay', true);
+      const { success: successChoice } = await this.$store.dispatch('datasets/choice', { alias, group, reset_model });
+
+      if (successChoice) {
+        this.$store.dispatch('messages/setMessage', { message: `Загружаю датасет «${name}»` });
+        this.createInterval();
+      }
     },
   },
 };
