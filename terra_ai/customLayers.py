@@ -907,6 +907,7 @@ class CONVBlock(Model):
                  dropout_layer=True,
                  dropout_rate=0.1,
                  leaky_relu_layer=True,
+                 leaky_relu_alpha=0.3,
                  layers_seq_config: str = 'conv_conv_bn_lrelu_drop',
                  **kwargs):
 
@@ -923,6 +924,7 @@ class CONVBlock(Model):
         self.dropout_rate = dropout_rate
         self.leaky_relu_layer = leaky_relu_layer
         self.layers_seq_config = layers_seq_config
+        self.leaky_relu_alpha = leaky_relu_alpha
 
         for i in range(self.n_conv_layers):
             setattr(self, f"conv_{i}",
@@ -936,7 +938,7 @@ class CONVBlock(Model):
                     layers.Activation(self.activation))
             if self.leaky_relu_layer:
                 setattr(self, f'leaky_relu{i}',
-                        layers.Activation('relu'))
+                        layers.LeakyReLU(alpha=self.leaky_relu_alpha))
             if self.batch_norm_layer:
                 setattr(self, f'bn_{i}',
                         layers.BatchNormalization())
@@ -1000,6 +1002,7 @@ class CONVBlock(Model):
             'dropout_layer': self.dropout_layer,
             'dropout_rate': self.dropout_rate,
             'leaky_relu_layer': self.leaky_relu_layer,
+            'leaky_relu_alpha': self.leaky_relu_alpha,
             'layers_seq_config': self.layers_seq_config
         }
         base_config = super(CONVBlock, self).get_config()

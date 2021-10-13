@@ -3,7 +3,7 @@
 """
 from typing import Optional, Tuple
 
-from pydantic import PositiveInt
+from pydantic import PositiveInt, PositiveFloat
 
 from ..extra import (
     LayerConfigData,
@@ -40,11 +40,12 @@ class ParametersMainData(BaseMixinData):
     batch_norm_layer: bool = True
     dropout_layer: bool = True
     leaky_relu_layer: bool = True
-    layers_seq_config: CONVBlockConfigChoice = CONVBlockConfigChoice.conv_conv_bn_lrelu_drop
 
 
 class ParametersExtraData(BaseMixinData):
     strides: Tuple[PositiveInt, PositiveInt] = (1, 1)
     dilation: Tuple[PositiveInt, PositiveInt] = (1, 1)
     dropout_rate: ConstrainedFloatValueGe0Le1 = 0.1
+    layers_seq_config: CONVBlockConfigChoice = CONVBlockConfigChoice.conv_conv_bn_lrelu_drop
+    leaky_relu_alpha: PositiveFloat = 0.3
     pass
