@@ -1276,7 +1276,7 @@ class CreateArray(object):
                 output=output_id,
                 count=int(len(true_array) * DEPLOY_PRESET_PERCENT / 100)
             )
-            print(len(example_idx), len(array), example_idx)
+            # print(len(example_idx), len(array), example_idx)
             if options.data.outputs[output_id].task == LayerOutputTypeChoice.Classification or \
                     options.data.outputs[output_id].task == LayerOutputTypeChoice.TimeseriesTrend:
                 # y_true = CreateArray().get_y_true(options, output_id)
