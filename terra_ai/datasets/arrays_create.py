@@ -1219,7 +1219,7 @@ class CreateArray(object):
         ts = False
         for out in options.data.outputs.keys():
             if options.data.outputs.get(out).task == LayerOutputTypeChoice.Timeseries or \
-                    options.data.outputs.get(out).task == LayerOutputTypeChoice.Timeseries_trend:
+                    options.data.outputs.get(out).task == LayerOutputTypeChoice.TimeseriesTrend:
                 ts = True
                 break
         if dataframe and not options.data.use_generator:
@@ -1265,7 +1265,7 @@ class CreateArray(object):
                 postprocess_array = array
 
             if options.data.outputs[output_id].task == LayerOutputTypeChoice.Classification or \
-                    options.data.outputs[output_id].task == LayerOutputTypeChoice.Timeseries_trend:
+                    options.data.outputs[output_id].task == LayerOutputTypeChoice.TimeseriesTrend:
                 y_true = CreateArray().get_y_true(options, output_id)
                 return_data[output_id] = []
                 for idx, img_array in enumerate(array):
@@ -1514,7 +1514,7 @@ class CreateArray(object):
             time_series_choice = False
             for out in options.data.outputs.keys():
                 if options.data.outputs.get(out).task == LayerOutputTypeChoice.Timeseries or \
-                        options.data.outputs.get(out).task == LayerOutputTypeChoice.Timeseries_trend:
+                        options.data.outputs.get(out).task == LayerOutputTypeChoice.TimeseriesTrend:
                     time_series_choice = True
                     break
             if time_series_choice:
