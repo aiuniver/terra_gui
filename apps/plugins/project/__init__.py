@@ -112,6 +112,11 @@ class ProjectPathData(BaseMixinData):
             pass
         return value
 
+    def clear_training(self):
+        shutil.rmtree(self.training)
+        os.makedirs(self.training, exist_ok=True)
+        os.makedirs(self.deploy, exist_ok=True)
+
 
 class TrainingDetailsData(BaseMixinData):
     base: TrainData = TrainData()
@@ -246,6 +251,11 @@ class Project(BaseMixinData):
         for item in self.deploy.data.values():
             item.data.reload(list(range(terra_settings.DEPLOY_PRESET_COUNT)))
             item.data.try_init()
+
+    def clear_training(self):
+        project_path.clear_training()
+        self.training = TrainingDetailsData()
+        self.deploy = DeployDetailsData()
 
     def set_dataset(self, dataset: DatasetData = None, reset_model: bool = False):
         if dataset is None:
