@@ -13,7 +13,7 @@ class Task(str, Enum):
     ObjectDetection = "ObjectDetection"
     Dataframe = "Dataframe"
     TextSegmentation = "TextSegmentation"
-    Timeseries_trend = "TimeseriesTrend"
+    TimeseriesTrend = "TimeseriesTrend"
 
 
 class Loss(str, Enum):
@@ -231,7 +231,7 @@ TasksGroups = [
         "metrics": [Metric.AUC, Metric.Accuracy],
     },
     {
-        "task": Task.Timeseries_trend,
+        "task": Task.TimeseriesTrend,
         "losses": [
             Loss.CategoricalCrossentropy,
             Loss.BinaryCrossentropy,

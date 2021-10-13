@@ -67,19 +67,26 @@ class ParametersTextData(SourcesPathsData, ColumnProcessingData):
     def _validate_text_mode(cls, value: LayerTextModeChoice) -> LayerTextModeChoice:
         if value == LayerTextModeChoice.completely:
             cls.__fields__["max_words"].required = True
+            cls.__fields__["length"].required = False
+            cls.__fields__["step"].required = False
         elif value == LayerTextModeChoice.length_and_step:
+            cls.__fields__["max_words"].required = False
             cls.__fields__["length"].required = True
             cls.__fields__["step"].required = True
         return value
 
     @validator("prepare_method")
-    def _validate_prepare_method(cls, value: bool) -> bool:
+    def _validate_prepare_method(
+        cls, value: LayerPrepareMethodChoice
+    ) -> LayerPrepareMethodChoice:
         if value in [
             LayerPrepareMethodChoice.embedding,
             LayerPrepareMethodChoice.bag_of_words,
         ]:
             cls.__fields__["max_words_count"].required = True
+            cls.__fields__["word_to_vec_size"].required = False
         elif value == LayerPrepareMethodChoice.word_to_vec:
+            cls.__fields__["max_words_count"].required = False
             cls.__fields__["word_to_vec_size"].required = True
         return value
 
@@ -102,7 +109,10 @@ class ParametersAudioData(MinMaxScalerData, SourcesPathsData, ColumnProcessingDa
     def _validate_audio_mode(cls, value: LayerAudioModeChoice) -> LayerAudioModeChoice:
         if value == LayerAudioModeChoice.completely:
             cls.__fields__["max_seconds"].required = True
+            cls.__fields__["length"].required = False
+            cls.__fields__["step"].required = False
         elif value == LayerAudioModeChoice.length_and_step:
+            cls.__fields__["max_seconds"].required = False
             cls.__fields__["length"].required = True
             cls.__fields__["step"].required = True
         return value

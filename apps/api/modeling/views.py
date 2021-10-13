@@ -112,6 +112,7 @@ class LoadAPIView(BaseAPIView):
             model = agent_exchange(
                 "model_get", value=serializer.validated_data.get("value")
             )
+            request.project.clear_training()
             reset_dataset = serializer.validated_data.get("reset_dataset")
             if reset_dataset:
                 request.project.set_dataset()
@@ -210,13 +211,14 @@ class ValidateAPIView(BaseAPIView):
 
     def post(self, request, **kwargs):
         try:
-            model, errors = agent_exchange(
-                "model_validate",
-                model=self._reset_layers_shape(
-                    request.project.dataset, request.project.model
-                ),
+            source_model = self._reset_layers_shape(
+                request.project.dataset, request.project.model
             )
-            request.project.set_model(model)
+            validated_model, errors = agent_exchange(
+                "model_validate",
+                model=source_model,
+            )
+            request.project.set_model(validated_model)
             return BaseResponseSuccess(errors, save_project=True)
         except agent_exceptions.ExchangeBaseException as error:
             return BaseResponseErrorGeneral(str(error))
@@ -229,7 +231,7 @@ class PreviewAPIView(BaseAPIView):
         serializer = PreviewSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
-        filepath = NamedTemporaryFile(suffix=".png")
+        filepath = NamedTemporaryFile(suffix=".png")  # Add for Win ,delete=False
         filepath.write(base64.b64decode(serializer.validated_data.get("preview")))
         autocrop_image_square(filepath.name, min_size=600)
         with open(filepath.name, "rb") as filepath_ref:

@@ -40,12 +40,7 @@ export default {
               this.$store.dispatch('messages/setProgress', 0);
               this.$store.dispatch('messages/setProgressMessage', '');
               await this.$store.dispatch('projects/get');
-              const { data: dataset } = data;
-              this.$store.dispatch(
-                'messages/setMessage',
-                { message: `Датасет «${dataset.name}» выбран` },
-                { root: true }
-              );
+              this.$store.dispatch('messages/setMessage', { message: `Датасет «${data?.data?.dataset?.name || ''}» выбран` });
               this.$store.dispatch('settings/setOverlay', false);
             } else {
               if (error) {
@@ -67,10 +62,16 @@ export default {
     },
     async handleClick() {
       if (!this.isNoTrain) {
-        await this.$store.dispatch('messages/setModel', {
-          context: this,
-          content: 'Для выбора датасета необходимо сбросить/остановить обучение',
-        });
+        this.$Modal.confirm({
+          title: 'Внимание!',
+          content: 'Для загрузки датасета остановите обучение, перейти на страницу обучения ?',
+          width: 300,
+          callback: action => {
+            if (action == 'confirm') {
+              this.$router.push('/training');
+            }
+          },
+      });
         return;
       }
 

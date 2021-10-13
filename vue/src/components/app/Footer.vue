@@ -4,8 +4,10 @@
       <div class="footer__message--icon" @click="dialogErrors = true">
         <span v-if="errors.length"></span>
       </div>
-      <div :class="['footer__message--text', color]" @click="click(color)">
-        {{ message }}
+      <div :class="['footer__message--text', showMsg.color]" @click="click(showMsg.color)">
+        <transition name="error-slide" mode="out-in">
+          <span :key="key">{{ showMsg.msg }}</span>
+        </transition>
       </div>
     </div>
     <div class="footer__progress">
@@ -44,6 +46,8 @@ export default {
     dialogError: false,
     dialogErrors: false,
     text: '',
+    key: 0,
+    msgList: []
   }),
   computed: {
     ...mapGetters({
@@ -63,11 +67,15 @@ export default {
     version() {
       return this.$config.isDev ? `ver. ${this.$config.version}` : '';
     },
+    showMsg() {
+      if (!this.msgList.length) return ''
+      return this.msgList[0]
+    }
   },
   methods: {
     click(color) {
       if (color === 'error') {
-        this.text = this.message;
+        this.text = this.msgList[0].msg;
         this.dialogError = true;
       }
     },
@@ -75,8 +83,18 @@ export default {
       this.color === 'error';
       this.text = error;
       this.dialogError = true;
-    },
+    }
   },
+  watch: {
+    message(newVal) {
+      if (!newVal) return
+      this.msgList.push({ msg: newVal, color: this.color })
+      setTimeout(() => {
+        this.msgList.shift()
+        this.key++
+      }, this.msgList.length > 1 ? 1000 : 5000)
+    }
+  }
 };
 </script>
 
@@ -138,6 +156,12 @@ export default {
       overflow: hidden;
       text-overflow: ellipsis;
       padding: 0 10px;
+      span {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        transition-duration: 500ms;
+      }
     }
     &--icon {
       cursor: pointer;
@@ -227,5 +251,16 @@ export default {
     text-align: right;
     background-color: #0e1621;
   }
+}
+
+.error-slide-leave-active {
+  transform: translateY(0);
+}
+.error-slide-leave-to {
+  transform: translateY(-100%);
+  opacity: 0;
+}
+.error-slide-enter {
+  transform: translateY(100%);
 }
 </style>
