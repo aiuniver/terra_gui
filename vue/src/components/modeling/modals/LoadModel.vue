@@ -29,11 +29,9 @@
               <i class="loaded-list__item--icon"></i>
               <span class="loaded-list__item--text">{{ list.label }}</span>
               <!-- <div class="loaded-list__item--empty"></div> -->
-              <div
-                class="loaded-list__item--remove"
-                v-if="list.uid === 'custom'"
-                @click="removeModel(list.value)"
-              ></div>
+              <div class="loaded-list__item--remove" v-if="list.uid === 'custom'" @click="removeModel(list.value)">
+                <i class="t-icon"></i>
+              </div>
             </li>
             <li v-if="!models.length" class="loaded-list__item">
               <span class="loaded-list__item--empty">Модель "{{ search }}" не найдена</span>
@@ -281,6 +279,7 @@ export default {
       border-radius: 2px;
       margin-right: 4px;
       padding: 2px;
+      margin-left: auto;
       i {
         display: block;
         width: 18px;

@@ -1268,7 +1268,7 @@ class CreateArray(object):
                 postprocess_array = array[i]
             else:
                 postprocess_array = array
-            print('true_array.shape, postprocess_array.shape', true_array.shape, postprocess_array.shape)
+            # print('true_array.shape, postprocess_array.shape', true_array.shape, postprocess_array.shape)
             example_idx = CreateArray().prepare_example_idx_to_show(
                 array=array,
                 true_array=true_array,
@@ -1904,7 +1904,7 @@ class CreateArray(object):
         #     return f"<{mix_tag}>", color_mixer([colors[tag] for tag in tags])
         #
         def reformat_tags(y_array: np.ndarray, tag_list: list,  # classes_names: dict, colors: dict,
-                          sensitivity: float = 0.8):
+                          sensitivity: float = 0.9):
             norm_array = np.where(y_array >= sensitivity, 1, 0).astype('int')
             reformat_tags = []
             for word_tag in norm_array:

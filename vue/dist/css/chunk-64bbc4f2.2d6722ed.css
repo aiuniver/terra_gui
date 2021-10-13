@@ -1,1 +1,0 @@
-.t-text-segmented{width:400px;padding:10px;position:relative}.t-text-segmented__content{width:100%;display:flex;flex-wrap:wrap;position:relative;align-items:flex-start;text-align:start}.t-text-segmented__word{margin:0 5px 0 0;display:flex;flex-direction:column-reverse}.t-text-segmented__line{display:block;height:2px;margin:0 0 1px 0;width:calc(100% + 5px)}
