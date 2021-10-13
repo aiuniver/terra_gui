@@ -62,10 +62,16 @@ export default {
     },
     async handleClick() {
       if (!this.isNoTrain) {
-        await this.$store.dispatch('messages/setModel', {
-          context: this,
-          content: 'Для выбора датасета необходимо сбросить/остановить обучение',
-        });
+        this.$Modal.confirm({
+          title: 'Внимание!',
+          content: 'Для загрузки датасета остановите обучение, перейти на страницу обучения ?',
+          width: 300,
+          callback: async action => {
+            if (action == 'confirm') {
+              this.$router.push('/trainings');
+            }
+          },
+      });
         return;
       }
 

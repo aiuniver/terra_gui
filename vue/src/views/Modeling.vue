@@ -44,10 +44,16 @@ export default {
     },
   },
   methods: {
-    async message() {
-      await this.$store.dispatch('messages/setModel', {
-        context: this,
-        content: 'Для загрузки другой модели остановите обучение',
+    message() {
+      this.$Modal.confirm({
+        title: 'Внимание!',
+        content: 'Для загрузки модели остановите обучение, перейти на страницу обучения ?',
+        width: 300,
+        callback: async action => {
+          if (action == 'confirm') {
+            this.$router.push('/trainings');
+          }
+        },
       });
     },
     addBlock(type) {
