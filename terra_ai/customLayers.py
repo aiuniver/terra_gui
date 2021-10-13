@@ -907,7 +907,6 @@ class CONVBlock(Model):
                  dropout_layer=True,
                  dropout_rate=0.1,
                  leaky_relu_layer=True,
-                 #layers_seq_config: CONVBlockConfigChoice = CONVBlockConfigChoice.conv_conv_bn_lrelu_drop,
                  layers_seq_config: str = 'conv_conv_bn_lrelu_drop',
                  **kwargs):
 
@@ -950,11 +949,14 @@ class CONVBlock(Model):
         if not isinstance(input_, (np.int32, np.float64, np.float32, np.float16)):
             input_ = cast(input_, 'float16')
 
-        x = getattr(self, f'conv_{0}')(input_)
-        if self.layers_seq_config == 'conv_conv_bn_lrelu_drop':
-            for i in range(1, self.n_conv_layers):
-                x = getattr(self, f'conv_{i}')(x)
-                x = getattr(self, f'activ_{i}')(x)
+        if self.layers_seq_config == 'conv_conv_bn_LRelu_drop':
+            for i in range(0, self.n_conv_layers):
+                if i == 0:
+                    x = getattr(self, f'conv_{i}')(input_)
+                    x = getattr(self, f'activ_{i}')(x)
+                else:
+                    x = getattr(self, f'conv_{i}')(x)
+                    x = getattr(self, f'activ_{i}')(x)
 
             if self.batch_norm_layer:
                 x = getattr(self, f'bn_{i}')(x)
@@ -966,9 +968,13 @@ class CONVBlock(Model):
                 x = getattr(self, f'drop_{i}')(x)
 
         else:
-            for i in range(1, self.n_conv_layers):
-                x = getattr(self, f'conv_{i}')(x)
-                x = getattr(self, f'activ_{i}')(x)
+            for i in range(0, self.n_conv_layers):
+                if i == 0:
+                    x = getattr(self, f'conv_{i}')(input_)
+                    x = getattr(self, f'activ_{i}')(x)
+                else:
+                    x = getattr(self, f'conv_{i}')(x)
+                    x = getattr(self, f'activ_{i}')(x)
 
                 if self.batch_norm_layer:
                     x = getattr(self, f'bn_{i}')(x)
