@@ -40,12 +40,7 @@ export default {
               this.$store.dispatch('messages/setProgress', 0);
               this.$store.dispatch('messages/setProgressMessage', '');
               await this.$store.dispatch('projects/get');
-              const { data: dataset } = data;
-              this.$store.dispatch(
-                'messages/setMessage',
-                { message: `Датасет «${dataset.name}» выбран` },
-                { root: true }
-              );
+              this.$store.dispatch('messages/setMessage', { message: `Датасет «${data?.data?.dataset?.name || ''}» выбран` });
               this.$store.dispatch('settings/setOverlay', false);
             } else {
               if (error) {
