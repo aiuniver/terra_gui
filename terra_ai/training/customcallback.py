@@ -590,7 +590,7 @@ class InteractiveCallback:
         ts = False
         for out in dataset.data.outputs.keys():
             if dataset.data.outputs.get(out).task == LayerOutputTypeChoice.Timeseries or \
-                    dataset.data.outputs.get(out).task == LayerOutputTypeChoice.Timeseries_trend:
+                    dataset.data.outputs.get(out).task == LayerOutputTypeChoice.TimeseriesTrend:
                 ts = True
                 break
         if dataframe and not dataset.data.use_generator:
@@ -678,7 +678,7 @@ class InteractiveCallback:
             if out_task == LayerOutputTypeChoice.Classification or \
                     out_task == LayerOutputTypeChoice.Segmentation or \
                     out_task == LayerOutputTypeChoice.TextSegmentation or \
-                    out_task == LayerOutputTypeChoice.Timeseries_trend:
+                    out_task == LayerOutputTypeChoice.TimeseriesTrend:
                 self.class_graphics[out] = True
             else:
                 self.class_graphics[out] = False
@@ -709,7 +709,7 @@ class InteractiveCallback:
                 }
 
             if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.Segmentation or \
-                    task == LayerOutputTypeChoice.TextSegmentation or task == LayerOutputTypeChoice.Timeseries_trend:
+                    task == LayerOutputTypeChoice.TextSegmentation or task == LayerOutputTypeChoice.TimeseriesTrend:
                 self.log_history[out]["class_loss"] = {}
                 self.log_history[out]["class_metrics"] = {}
                 for class_name in self.options.data.outputs.get(int(out)).classes_names:
@@ -724,7 +724,7 @@ class InteractiveCallback:
             task = self.options.data.outputs.get(out).task
             encoding = self.options.data.outputs.get(out).encoding
             dataset_balance[f"{out}"] = {}
-            if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.Timeseries_trend:
+            if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
                 for data_type in self.y_true.keys():
                     dataset_balance[f"{out}"][data_type] = class_counter(
                         self.y_true.get(data_type).get(f"{out}"),
@@ -844,7 +844,7 @@ class InteractiveCallback:
             for out in self.y_true.get(data_type).keys():
                 class_idx[data_type][out] = {}
                 task = self.options.data.outputs.get(int(out)).task
-                if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.Timeseries_trend:
+                if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
                     ohe = self.options.data.outputs.get(int(out)).encoding == LayerEncodingChoice.ohe
                     for name in self.options.data.outputs.get(int(out)).classes_names:
                         class_idx[data_type][out][name] = []
@@ -951,6 +951,7 @@ class InteractiveCallback:
                 self.inverse_y_pred[out] = inverse_y[:, 1:, :]
 
     def _prepare_example_idx_to_show(self) -> dict:
+
         example_idx = {}
         out = f"{self.interactive_config.intermediate_result.main_output}"
         ohe = self.options.data.outputs.get(int(out)).encoding == LayerEncodingChoice.ohe
@@ -959,7 +960,7 @@ class InteractiveCallback:
         task = self.options.data.outputs.get(int(out)).task
 
         if choice_type == ExampleChoiceTypeChoice.best or choice_type == ExampleChoiceTypeChoice.worst:
-            if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.Timeseries_trend:
+            if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
                 y_true = self.y_true.get("val").get(out)
                 y_pred = self.y_pred.get(out)
                 if y_pred.shape[-1] == y_true.shape[-1] and ohe and y_true.shape[-1] > 1:
@@ -1088,11 +1089,11 @@ class InteractiveCallback:
                     if out_task == LayerOutputTypeChoice.Classification or \
                             out_task == LayerOutputTypeChoice.Segmentation or \
                             out_task == LayerOutputTypeChoice.TextSegmentation or \
-                            out_task == LayerOutputTypeChoice.Timeseries_trend:
+                            out_task == LayerOutputTypeChoice.TimeseriesTrend:
                         for cls in self.log_history.get(f"{out}").get('class_loss').keys():
                             class_loss = 0.
                             if out_task == LayerOutputTypeChoice.Classification or \
-                                    out_task == LayerOutputTypeChoice.Timeseries_trend:
+                                    out_task == LayerOutputTypeChoice.TimeseriesTrend:
                                 class_loss = self._get_loss_calculation(
                                     loss_obj=self.loss_obj.get(f"{out}"),
                                     out=f"{out}",
@@ -1183,11 +1184,11 @@ class InteractiveCallback:
                     if out_task == LayerOutputTypeChoice.Classification or \
                             out_task == LayerOutputTypeChoice.Segmentation or \
                             out_task == LayerOutputTypeChoice.TextSegmentation or \
-                            out_task == LayerOutputTypeChoice.Timeseries_trend:
+                            out_task == LayerOutputTypeChoice.TimeseriesTrend:
                         for cls in self.log_history.get(f"{out}").get('class_metrics').keys():
                             class_metric = 0.
                             if out_task == LayerOutputTypeChoice.Classification or \
-                                    out_task == LayerOutputTypeChoice.Timeseries_trend:
+                                    out_task == LayerOutputTypeChoice.TimeseriesTrend:
                                 class_metric = self._get_metric_calculation(
                                     metric_name=metric_name,
                                     metric_obj=self.metrics_obj.get(f"{out}").get(metric_name),
@@ -1246,7 +1247,7 @@ class InteractiveCallback:
         encoding = self.options.data.outputs.get(int(out)).encoding
         task = self.options.data.outputs.get(int(out)).task
         num_classes = self.options.data.outputs.get(int(out)).num_classes
-        if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.Timeseries_trend:
+        if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
             # if loss_name == Loss.SparseCategoricalCrossentropy:
             #     return float(loss_obj()(np.argmax(y_true, axis=-1) if ohe else np.squeeze(y_true), y_pred).numpy())
             # else:
@@ -1277,7 +1278,7 @@ class InteractiveCallback:
         encoding = self.options.data.outputs.get(int(out)).encoding
         task = self.options.data.outputs.get(int(out)).task
         num_classes = self.options.data.outputs.get(int(out)).num_classes
-        if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.Timeseries_trend:
+        if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
             if metric_name == Metric.Accuracy:
                 metric_obj.update_state(
                     np.argmax(y_true, axis=-1) if encoding == LayerEncodingChoice.ohe else y_true,
@@ -1615,7 +1616,7 @@ class InteractiveCallback:
                 for out in self.options.data.outputs.keys():
                     task = self.options.data.outputs.get(out).task
 
-                    if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.Timeseries_trend:
+                    if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
                         data = CreateArray().postprocess_classification(
                             predict_array=self.y_pred.get(f'{out}')[self.example_idx[idx]],
                             true_array=self.y_true.get('val').get(f'{out}')[self.example_idx[idx]],
@@ -1720,7 +1721,7 @@ class InteractiveCallback:
         for out in self.interactive_config.statistic_data.output_id:
             task = self.options.data.outputs.get(out).task
             encoding = self.options.data.outputs.get(out).encoding
-            if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.Timeseries_trend and \
+            if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend and \
                     encoding != LayerEncodingChoice.multi:
                 cm, cm_percent = self._get_confusion_matrix(
                     np.argmax(self.y_true.get("val").get(f'{out}'), axis=-1) if encoding == LayerEncodingChoice.ohe
@@ -1934,7 +1935,7 @@ class InteractiveCallback:
         _id = 1
         for out in self.options.data.outputs.keys():
             task = self.options.data.outputs.get(out).task
-            if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.Timeseries_trend:
+            if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
                 class_train_names, class_train_count = sort_dict(
                     self.dataset_balance.get(f"{out}").get('train'),
                     mode=self.interactive_config.data_balance.sorted.name

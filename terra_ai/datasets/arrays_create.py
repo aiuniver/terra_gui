@@ -38,6 +38,8 @@ from tensorflow import maximum as tf_maximum
 from tensorflow import minimum as tf_minimum
 import moviepy.editor as moviepy_editor
 
+from terra_ai.settings import DEPLOY_PRESET_PERCENT
+
 
 class CreateArray(object):
 
@@ -1221,7 +1223,7 @@ class CreateArray(object):
         ts = False
         for out in options.data.outputs.keys():
             if options.data.outputs.get(out).task == LayerOutputTypeChoice.Timeseries or \
-                    options.data.outputs.get(out).task == LayerOutputTypeChoice.Timeseries_trend:
+                    options.data.outputs.get(out).task == LayerOutputTypeChoice.TimeseriesTrend:
                 ts = True
                 break
         if dataframe and not options.data.use_generator:
@@ -1261,21 +1263,31 @@ class CreateArray(object):
         x_array, inverse_x_array = CreateArray().get_x_array(options)
         return_data = {}
         for i, output_id in enumerate(options.data.outputs.keys()):
+            true_array = CreateArray().get_y_true(options, output_id)
             if len(options.data.outputs.keys()) > 1:
                 postprocess_array = array[i]
             else:
                 postprocess_array = array
-
+            print('true_array.shape, postprocess_array.shape', true_array.shape, postprocess_array.shape)
+            example_idx = CreateArray().prepare_example_idx_to_show(
+                array=array,
+                true_array=true_array,
+                options=options,
+                output=output_id,
+                count=int(len(true_array) * DEPLOY_PRESET_PERCENT / 100)
+            )
+            print(len(example_idx), len(array), example_idx)
             if options.data.outputs[output_id].task == LayerOutputTypeChoice.Classification or \
-                    options.data.outputs[output_id].task == LayerOutputTypeChoice.Timeseries_trend:
-                y_true = CreateArray().get_y_true(options, output_id)
+                    options.data.outputs[output_id].task == LayerOutputTypeChoice.TimeseriesTrend:
+                # y_true = CreateArray().get_y_true(options, output_id)
                 return_data[output_id] = []
-                for idx, img_array in enumerate(array):
+                _id = 1
+                for idx in example_idx:
                     input_id = list(options.data.inputs.keys())[0]
                     source = CreateArray().postprocess_initial_source(
                         options=options,
                         input_id=input_id,
-                        save_id=idx + 1,
+                        save_id=_id,
                         example_id=idx,
                         dataset_path=dataset_path,
                         preset_path=save_path,
@@ -1285,7 +1297,7 @@ class CreateArray(object):
                     )
                     actual_value, predict_values = CreateArray().postprocess_classification(
                         predict_array=np.expand_dims(postprocess_array[idx], axis=0),
-                        true_array=y_true[idx],
+                        true_array=true_array[idx],
                         options=options.data.outputs[output_id],
                         return_mode='deploy'
                     )
@@ -1296,13 +1308,14 @@ class CreateArray(object):
                             "data": predict_values[0]
                         }
                     )
+                    _id += 1
 
             elif options.data.outputs[output_id].task == LayerOutputTypeChoice.Segmentation:
                 return_data[output_id] = []
                 data = []
                 for j, cls in enumerate(options.data.outputs.get(output_id).classes_names):
                     data.append((cls, options.data.outputs.get(output_id).classes_colors[j].as_rgb_tuple()))
-                for idx, img_array in enumerate(postprocess_array):
+                for idx in example_idx:
                     input_id = list(options.data.inputs.keys())[0]
                     colors = [color.as_rgb_tuple() for color in options.data.outputs.get(output_id).classes_colors]
                     return_data[output_id].append(
@@ -1310,7 +1323,7 @@ class CreateArray(object):
                             "source": CreateArray().postprocess_initial_source(
                                 options=options,
                                 input_id=input_id,
-                                save_id=idx + 1,
+                                save_id=idx,
                                 example_id=idx,
                                 dataset_path=dataset_path,
                                 preset_path=save_path,
@@ -1337,9 +1350,9 @@ class CreateArray(object):
                     "data": []
                 }
                 output_column = list(options.instructions.get(output_id).keys())[0]
-                for idx, _array in enumerate(postprocess_array):
+                for idx in example_idx:
                     source, segment, colors = CreateArray().postprocess_text_segmentation(
-                        pred_array=_array,
+                        pred_array=postprocess_array[idx],
                         options=options.data.outputs[output_id],
                         dataframe=options.dataframe.get("val"),
                         example_id=idx,
@@ -1356,12 +1369,12 @@ class CreateArray(object):
                 return_data[output_id]["color_map"] = colors
 
             elif options.data.outputs[output_id].task == LayerOutputTypeChoice.Timeseries:
-                for idx, _array in enumerate(array):
+                for idx in example_idx:
                     input_id = list(options.data.inputs.keys())[0]
                     source = CreateArray().postprocess_initial_source(
                         options=options,
                         input_id=input_id,
-                        save_id=idx + 1,
+                        save_id=idx,
                         example_id=idx,
                         dataset_path=dataset_path,
                         preset_path=save_path,
@@ -1387,7 +1400,7 @@ class CreateArray(object):
                 for inp in options.data.inputs.keys():
                     source_col.extend(list(options.data.columns.get(inp).keys()))
                 preprocess = options.preprocessing.preprocessing.get(list(options.data.outputs.keys())[0])
-                for idx in range(len(array)):
+                for idx in example_idx:
                     row_list = []
                     for inp_col in source_col:
                         row_list.append(options.dataframe.get('val')[inp_col][idx])
@@ -1515,7 +1528,7 @@ class CreateArray(object):
             time_series_choice = False
             for out in options.data.outputs.keys():
                 if options.data.outputs.get(out).task == LayerOutputTypeChoice.Timeseries or \
-                        options.data.outputs.get(out).task == LayerOutputTypeChoice.Timeseries_trend:
+                        options.data.outputs.get(out).task == LayerOutputTypeChoice.TimeseriesTrend:
                     time_series_choice = True
                     break
             if time_series_choice:
@@ -1610,26 +1623,26 @@ class CreateArray(object):
             return tuple(dict_to_sort.keys()), tuple(dict_to_sort.values())
 
     @staticmethod
-    def prepare_example_idx_to_show(array: np.ndarray, options, output: int, count: int,
+    def prepare_example_idx_to_show(array: np.ndarray, true_array: np.ndarray, options, output: int, count: int,
                                     choice_type: str = "best", seed_idx: list = None) -> dict:
         example_idx = {}
         # out = f"{self.interactive_config.intermediate_result.main_output}"
-        ohe = options.data.outputs.get(output).encoding == LayerEncodingChoice.ohe
+        encoding = options.data.outputs.get(output).encoding
         # count = self.interactive_config.intermediate_result.num_examples
         # choice_type = self.interactive_config.intermediate_result.example_choice_type
         task = options.data.outputs.get(output).task
-        y_true = options.Y.get("val").get(f"{output}")
+        # y_true = options.Y.get("val").get(f"{output}")
         if choice_type == ExampleChoiceTypeChoice.best or choice_type == ExampleChoiceTypeChoice.worst:
-            if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.Timeseries_trend:
+            if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
                 # y_pred = self.y_pred.get(out)
-                if array.shape[-1] == y_true.shape[-1] and ohe and y_true.shape[-1] > 1:
-                    classes = np.argmax(y_true, axis=-1)
-                elif len(y_true.shape) == 1 and not ohe and array.shape[-1] > 1:
-                    classes = copy.deepcopy(y_true)
-                elif len(y_true.shape) == 1 and not ohe and array.shape[-1] == 1:
-                    classes = copy.deepcopy(y_true)
+                if array.shape[-1] == true_array.shape[-1] and encoding == LayerEncodingChoice.ohe and true_array.shape[-1] > 1:
+                    classes = np.argmax(true_array, axis=-1)
+                elif len(true_array.shape) == 1 and not encoding == LayerEncodingChoice.ohe and array.shape[-1] > 1:
+                    classes = copy.deepcopy(true_array)
+                elif len(true_array.shape) == 1 and not encoding == LayerEncodingChoice.ohe and array.shape[-1] == 1:
+                    classes = copy.deepcopy(true_array)
                 else:
-                    classes = copy.deepcopy(y_true)
+                    classes = copy.deepcopy(true_array)
                 probs = np.array([pred[classes[i]] for i, pred in enumerate(array)])
                 sorted_args = np.argsort(probs)
                 if choice_type == ExampleChoiceTypeChoice.best:
@@ -1638,11 +1651,14 @@ class CreateArray(object):
                     example_idx = sorted_args[:count]
 
             elif task == LayerOutputTypeChoice.Segmentation or task == LayerOutputTypeChoice.TextSegmentation:
-                array = to_categorical(
-                    np.argmax(array, axis=-1),
-                    num_classes=options.data.outputs.get(output).num_classes
-                )
-                dice_val = CreateArray().dice_coef(y_true, array, batch_mode=True)
+                if encoding == LayerEncodingChoice.ohe:
+                    array = to_categorical(
+                        np.argmax(array, axis=-1),
+                        num_classes=options.data.outputs.get(output).num_classes
+                    )
+                if encoding == LayerEncodingChoice.multi:
+                    array = np.where(array >= 0.9, 1, 0)
+                dice_val = CreateArray().dice_coef(true_array, array, batch_mode=True)
                 dice_dict = dict(zip(np.arange(0, len(dice_val)), dice_val))
                 if choice_type == ExampleChoiceTypeChoice.best:
                     example_idx, _ = CreateArray().sort_dict(dice_dict, mode="descending")
@@ -1652,7 +1668,7 @@ class CreateArray(object):
                     example_idx = example_idx[:count]
 
             elif task == LayerOutputTypeChoice.Timeseries or task == LayerOutputTypeChoice.Regression:
-                delta = np.abs(y_true - array) * 100 / y_true
+                delta = np.abs(true_array - array) * 100 / true_array
                 while len(delta.shape) != 1:
                     delta = np.mean(delta, axis=-1)
                 delta_dict = dict(zip(np.arange(0, len(delta)), delta))
@@ -1669,7 +1685,7 @@ class CreateArray(object):
             example_idx = seed_idx[:count]
 
         elif choice_type == ExampleChoiceTypeChoice.random:
-            example_idx = np.random.randint(0, len(y_true), count)
+            example_idx = np.random.randint(0, len(true_array), count)
         else:
             pass
         return example_idx

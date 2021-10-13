@@ -159,3 +159,6 @@ desktop.ini
 /terra_ai/modeling/test models.py
 /terra_ai/training/yolov3_chess.h5
 /terra_ai/modeling/val test.py
+/terra_ai/training/test hr.py
+/terra_ai/training/test load json.py
+/terra_ai/training/test save json.py
