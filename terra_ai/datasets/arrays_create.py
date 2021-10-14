@@ -674,7 +674,7 @@ class CreateArray(object):
     @staticmethod
     def create_image(image_path: str, **options) -> dict:
 
-        img = Image.open(image_path)
+        img = load_img(image_path)
         array = np.array(img)
 
         instructions = {'instructions': array,
