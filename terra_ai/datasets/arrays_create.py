@@ -384,7 +384,14 @@ class CreateArray(object):
     @staticmethod
     def instructions_object_detection(paths_list: list, **options: dict) -> dict:
 
-        instructions = {'instructions': paths_list,
+        coordinates_list = []
+        for path in paths_list:
+            with open(path, 'r') as coordinates:
+                coordinate = coordinates.read()
+
+            coordinates_list.append(' '.join([coord for coord in coordinate.split('\n') if coord]))
+
+        instructions = {'instructions': coordinates_list,
                         'parameters': options
                         }
 
@@ -653,17 +660,17 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_object_detection(paths_list: list, dataset_folder=None, **options: dict) -> dict:
+    def cut_object_detection(bounding_boxes: list, dataset_folder=None, **options: dict) -> dict:
 
-        for elem in paths_list:
-            os.makedirs(os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem))), exist_ok=True)
-            shutil.copyfile(elem, os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
-                                               os.path.basename(elem)))
+        # for elem in paths_list:
+        #     os.makedirs(os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem))), exist_ok=True)
+        #     shutil.copyfile(elem, os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
+        #                                        os.path.basename(elem)))
+        #
+        # paths_list = [os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)), os.path.basename(elem))
+        #               for elem in paths_list]
 
-        paths_list = [os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)), os.path.basename(elem))
-                      for elem in paths_list]
-
-        instructions = {'instructions': paths_list,
+        instructions = {'instructions': bounding_boxes,
                         'parameters': {'yolo': options['yolo'],
                                        'num_classes': options['num_classes'],
                                        'classes_names': options['classes_names'],
@@ -857,12 +864,12 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def create_object_detection(annot_path: str, **options):
+    def create_object_detection(coords: str, **options):
 
         """
         Args:
-            annot_path: str
-                Путь к файлу
+            coords: str
+                Координаты bounding box.
             **options:
                 height: int ######!!!!!!
                     Высота изображения.
@@ -897,12 +904,9 @@ class CreateArray(object):
         # height: int = options['height']
         # width: int = options['width']
 
-        with open(annot_path, 'r') as coordinates:
-            coords = coordinates.read()
         real_boxes = []
-        for coord in coords.split('\n'):
-            if coord:
-                real_boxes.append([literal_eval(num) for num in coord.split(',')])
+        for coord in coords.split(' '):
+            real_boxes.append([literal_eval(num) for num in coord.split(',')])
 
         num_classes: int = options['num_classes']
         zero_boxes_flag: bool = False

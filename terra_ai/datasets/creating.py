@@ -518,8 +518,6 @@ class CreateDataset(object):
     def create_output_parameters(self, creation_data: CreationData) -> dict:
 
         creating_outputs_data = {}
-        path_type_outputs_list = [LayerOutputTypeChoice.Image, LayerOutputTypeChoice.Segmentation,
-                                  LayerOutputTypeChoice.Audio, LayerOutputTypeChoice.ObjectDetection]
         for key in self.instructions.outputs.keys():
             output_array = []
             iters = 1
@@ -530,9 +528,9 @@ class CreateDataset(object):
                         self.preprocessing.preprocessing.get(key).get(col_name):
                     prep = self.preprocessing.preprocessing.get(key).get(col_name)
 
-                if creation_data.outputs.get(key).type in path_type_outputs_list or \
+                if creation_data.outputs.get(key).type in PATH_TYPE_LIST or \
                         creation_data.columns_processing.get(str(key)) is not None and \
-                        creation_data.columns_processing.get(str(key)).type in path_type_outputs_list:
+                        creation_data.columns_processing.get(str(key)).type in PATH_TYPE_LIST:
                     data_to_pass = os.path.join(self.paths.basepath, data.instructions[0])
                 elif 'trend' in data.parameters.keys():
                     if data.parameters['trend']:
