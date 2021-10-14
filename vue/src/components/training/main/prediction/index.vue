@@ -73,7 +73,7 @@ export default {
     num_examples: 10,
     show_results: true,
     show_statistic: true,
-    fixation: true,
+    fixation: false,
     max: 10,
   }),
   computed: {
