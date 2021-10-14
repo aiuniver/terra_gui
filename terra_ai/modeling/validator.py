@@ -496,11 +496,8 @@ class ModelValidator:
             for layer in self.model_plan:
                 if layer[0] in self.output_shape.keys():
                     outputs.append(layer[0])
-                    if (
-                            self.output_shape[layer[0]] and
-                            self.output_shape[layer[0]][0]
-                            != self.layer_output_shapes[layer[0]][0][1:]
-                    ):
+                    if self.output_shape[layer[0]] and \
+                            self.output_shape[layer[0]][0] != self.layer_output_shapes[layer[0]][0][1:]:
                         self.valid = False
                         self.val_dictionary[layer[0]] = str(exceptions.UnexpectedOutputShapeException(
                             self.output_shape[layer[0]][0],
@@ -927,27 +924,20 @@ class LayerValidation:
 
         # initializer identity
         for key in self.layer_parameters.keys():
-            if (
-                    self.layer_parameters.get(key) == "identity"
-                    and len(self.inp_shape[0]) != 2
-            ):
+            if self.layer_parameters.get(key) == "identity" and len(self.inp_shape[0]) != 2:
                 return str(exceptions.InitializerCanTakeOnlyNDInputShapeException(
-                    "'Identity'",
-                    key,
-                    2,
-                    len(self.inp_shape[0]),
-                    self.inp_shape[0]
+                    "'Identity'", key, 2, len(self.inp_shape[0]), self.inp_shape[0]
                 ))
 
         # strides and dilation_rate in 1D layers
-        if isinstance(self.layer_parameters.get("strides", None), int) and \
-                isinstance(self.layer_parameters.get("dilation_rate", None), int):
+        if isinstance(self.layer_parameters.get("strides"), int) and \
+                isinstance(self.layer_parameters.get("dilation_rate"), int):
             if self.layer_parameters.get("dilation_rate") > 1 and self.layer_parameters.get("strides") > 1:
                 return str(exceptions.CannotHaveValueException("'dilation_rate' and 'strides'", "> 1"))
 
         # strides and dilation_rate in 2+D layers
-        if isinstance(self.layer_parameters.get("dilation_rate", None), (tuple, list)) and \
-                isinstance(self.layer_parameters.get("strides", None), (tuple, list)):
+        if isinstance(self.layer_parameters.get("dilation_rate"), (tuple, list)) and \
+                isinstance(self.layer_parameters.get("strides"), (tuple, list)):
             if max(self.layer_parameters.get("dilation_rate")) > 1 and max(self.layer_parameters.get("strides")) > 1:
                 return str(exceptions.CannotHaveValueException("'dilation_rate' and 'strides'", "> 1"))
 
@@ -1013,11 +1003,8 @@ class LayerValidation:
                     ))
 
         # maxwordcount
-        if (
-                self.layer_type == LayerTypeChoice.Embedding
-                and self.kwargs.get("maxwordcount", None)
-                and self.layer_parameters.get("input_dim", None)
-        ):
+        if self.layer_type == LayerTypeChoice.Embedding and self.kwargs.get("maxwordcount") \
+                and self.layer_parameters.get("input_dim"):
             if self.layer_parameters.get("input_dim") < self.kwargs.get("maxwordcount"):
                 return str(exceptions.InputDimMustBeThenSizeOfException(
                     self.layer_parameters.get('input_dim'),
@@ -1038,18 +1025,11 @@ class LayerValidation:
                     self.layer_parameters.get('classes')))
 
             elif self.layer_type == "NASNetMobile":
-                if self.layer_parameters.get("weights") == 'imagenet' \
-                        and self.inp_shape[0][1:] != (224, 224, 3):
+                if self.layer_parameters.get("weights") == 'imagenet' and self.inp_shape[0][1:] != (224, 224, 3):
                     return str(exceptions.InputShapeMustBeOnlyException(
-                        "pre-loaded 'imagenet' weights",
-                        (224, 224, 3),
-                        self.inp_shape[0][1:]
+                        "pre-loaded 'imagenet' weights", (224, 224, 3), self.inp_shape[0][1:]
                     ))
-                elif (
-                        self.inp_shape[0][1] < 32
-                        or self.inp_shape[0][2] < 32
-                        or self.inp_shape[0][3] < 3
-                ):
+                elif self.inp_shape[0][1] < 32 or self.inp_shape[0][2] < 32 or self.inp_shape[0][3] < 3:
                     return str(exceptions.InputShapeMustBeInEchDimException(
                         "greater or equal",
                         (32, 32, 3),
@@ -1064,11 +1044,7 @@ class LayerValidation:
                         (331, 331, 3),
                         self.inp_shape[0][1:]
                     ))
-                elif (
-                        self.inp_shape[0][1] < 32
-                        or self.inp_shape[0][2] < 32
-                        or self.inp_shape[0][3] < 3
-                ):
+                elif self.inp_shape[0][1] < 32 or self.inp_shape[0][2] < 32 or self.inp_shape[0][3] < 3:
                     return str(exceptions.InputShapeMustBeInEchDimException(
                         "greater or equal",
                         (32, 32, 3),
@@ -1083,15 +1059,9 @@ class LayerValidation:
                         (299, 299, 3),
                         self.inp_shape[0][1:]
                     ))
-                elif (
-                        self.inp_shape[0][1] < 75
-                        or self.inp_shape[0][2] < 75
-                        or self.inp_shape[0][3] < 3
-                ):
+                elif self.inp_shape[0][1] < 75 or self.inp_shape[0][2] < 75 or self.inp_shape[0][3] < 3:
                     return str(exceptions.InputShapeMustBeInEchDimException(
-                        "greater or equal",
-                        (75, 75, 3),
-                        self.inp_shape[0][1:]
+                        "greater or equal", (75, 75, 3), self.inp_shape[0][1:]
                     ))
                 elif (
                         self.layer_parameters.get("include_top")
@@ -1108,18 +1078,11 @@ class LayerValidation:
                 if self.layer_parameters.get("weights") == 'imagenet' and \
                         self.inp_shape[0][1:] != (299, 299, 3):
                     return str(exceptions.InputShapeMustBeOnlyException(
-                        "pre-loaded 'imagenet' weights",
-                        (299, 299, 3),
-                        self.inp_shape[0][1:]))
-                elif (
-                        self.inp_shape[0][1] < 71
-                        or self.inp_shape[0][2] < 71
-                        or self.inp_shape[0][3] < 3
-                ):
+                        "pre-loaded 'imagenet' weights", (299, 299, 3), self.inp_shape[0][1:]
+                    ))
+                elif self.inp_shape[0][1] < 71 or self.inp_shape[0][2] < 71 or self.inp_shape[0][3] < 3:
                     return str(exceptions.InputShapeMustBeInEchDimException(
-                        "greater or equal",
-                        (71, 71, 3),
-                        self.inp_shape[0][1:]
+                        "greater or equal", (71, 71, 3), self.inp_shape[0][1:]
                     ))
                 elif (
                         self.layer_parameters.get("include_top")
@@ -1142,15 +1105,9 @@ class LayerValidation:
                         (224, 224, 3),
                         self.inp_shape[0][1:]
                     ))
-                elif (
-                        self.inp_shape[0][1] < 32
-                        or self.inp_shape[0][2] < 32
-                        or self.inp_shape[0][3] < 3
-                ):
+                elif  self.inp_shape[0][1] < 32 or self.inp_shape[0][2] < 32 or self.inp_shape[0][3] < 3:
                     return str(exceptions.InputShapeMustBeInEchDimException(
-                        "greater or equal",
-                        (32, 32, 3),
-                        self.inp_shape[0][1:]
+                        "greater or equal", (32, 32, 3), self.inp_shape[0][1:]
                     ))
                 elif (
                         self.layer_parameters.get("include_top")
@@ -1172,15 +1129,9 @@ class LayerValidation:
                         (224, 224, 3),
                         self.inp_shape[0][1:]
                     ))
-                elif (
-                        self.inp_shape[0][1] < 32
-                        or self.inp_shape[0][2] < 32
-                        or self.inp_shape[0][3] < 3
-                ):
+                elif  self.inp_shape[0][1] < 32 or self.inp_shape[0][2] < 32 or self.inp_shape[0][3] < 3:
                     return str(exceptions.InputShapeMustBeInEchDimException(
-                        "greater or equal",
-                        (32, 32, 3),
-                        self.inp_shape[0][1:]
+                        "greater or equal", (32, 32, 3), self.inp_shape[0][1:]
                     ))
 
             elif self.layer_type in ["MobileNetV3Small", "MobileNetV2", "EfficientNetB0"]:
@@ -1198,35 +1149,25 @@ class LayerValidation:
                         (self.layer_parameters.get("dropout_rate") > 1.0 or self.layer_parameters.get(
                             "dropout_rate") < 0):
                     return str(exceptions.CanTakeOneOfTheFollowingValuesException(
-                        "Dropout_rate",
-                        "floats from range [0.0, 1.0]"
+                        "Dropout_rate", "floats from range [0.0, 1.0]"
                     ))
             else:
                 pass
 
         # CustomUNETBlock exceptions
         if self.layer_type == LayerTypeChoice.CustomUNETBlock:
-            if (
-                    self.inp_shape[0][1] < 32
-                    or self.inp_shape[0][2] < 32
-                    or self.inp_shape[0][3] < 3
-            ):
+            if self.inp_shape[0][1] < 32 or self.inp_shape[0][2] < 32 or self.inp_shape[0][3] < 3:
                 return str(exceptions.InputShapeMustBeInEchDimException(
-                    "greater or equal",
-                    (32, 32, 3),
-                    self.inp_shape[0][1:]
+                    "greater or equal", (32, 32, 3), self.inp_shape[0][1:]
                 ))
             if self.inp_shape[0][1] % 4 != 0 or self.inp_shape[0][2] % 4 != 0:
                 return str(exceptions.InputShapeMustBeWholeDividedByException(self.inp_shape[0], 4))
 
         # space_to_depth dimensions
         if self.layer_type == LayerTypeChoice.SpaceToDepth:
-            if (
-                    self.layer_parameters.get("data_format")
-                    == SpaceToDepthDataFormatChoice.NCHW
-                    or self.layer_parameters.get("data_format")
-                    == SpaceToDepthDataFormatChoice.NHWC
-            ) and len(self.inp_shape[0]) != 4:
+            if self.layer_parameters.get("data_format") == SpaceToDepthDataFormatChoice.NCHW \
+                    or self.layer_parameters.get("data_format") == SpaceToDepthDataFormatChoice.NHWC\
+                    and len(self.inp_shape[0]) != 4:
                 return str(exceptions.ExpectedOtherInputShapeDimException(
                     4, "`data_format`=`NHWC` or `NCHW`", len(self.inp_shape[0]), self.inp_shape[0]
                 ))

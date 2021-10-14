@@ -46,7 +46,7 @@ class DiceCoef(tf.keras.metrics.Metric):
         # pass
 
 
-def yolo_loss(
+def YoloLoss(
         inputs,
         num_anchors,
 ):
