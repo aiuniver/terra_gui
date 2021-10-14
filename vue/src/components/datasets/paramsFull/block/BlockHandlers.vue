@@ -132,7 +132,7 @@ export default {
       this.deselect();
       let maxID = Math.max(0, ...this.handlers.map(o => o.id));
       this.handlers.push({
-        id: (maxID + 1),
+        id: maxID + 1,
         name: 'Name_' + (maxID + 1),
         active: true,
         color: this.colors[this.handlers.length],
@@ -147,6 +147,15 @@ export default {
       if (event === 'remove') {
         this.deselect();
         this.handlers = this.handlers.filter(item => item.id !== id);
+      }
+      console.log(event);
+      if (event === 'copy') {
+        this.deselect();
+        const copy = JSON.parse(JSON.stringify(this.handlers.filter(item => item.id == id)));
+        let maxID = Math.max(0, ...this.handlers.map(o => o.id));
+        copy[0].id = maxID + 1
+        copy[0].name = copy[0].name + (maxID + 1),
+        this.handlers = [...this.handlers, ...copy];
       }
     },
   },

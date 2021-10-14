@@ -783,16 +783,6 @@ class FitCallback(keras.callbacks.Callback):
             tags_map = deploy_presets_data.get("color_map")
             interactive.deploy_presets_data = deploy_presets_data.get("data")
             cascade_data = {"tags_map": tags_map}
-        elif list(self.dataset.data.inputs.values())[0].task == LayerInputTypeChoice.Dataframe:
-            presets = []
-            labels = []
-            for elem in deploy_presets_data:
-                presets.append(elem.get("source"))
-                labels.append(elem.get("data"))
-            interactive.deploy_presets_data = {
-                "preset": presets,
-                "label": labels
-            }
         else:
             interactive.deploy_presets_data = deploy_presets_data
         self._create_cascade(**cascade_data)

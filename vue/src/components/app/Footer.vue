@@ -92,7 +92,7 @@ export default {
       setTimeout(() => {
         this.msgList.shift()
         this.key++
-      }, this.msgList.length * 5000)
+      }, this.msgList.length > 1 ? 1000 : 5000)
     }
   }
 };

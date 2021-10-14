@@ -598,6 +598,33 @@ class LayerDarkNetBatchNormalizationData(LayerMixinData):
     )
 
 
+class LayerCONVBlockData(LayerMixinData):
+    main: types.CONVBlock.ParametersMainData = (
+        types.CONVBlock.ParametersMainData()
+    )
+    extra: types.CONVBlock.ParametersExtraData = (
+        types.CONVBlock.ParametersExtraData()
+    )
+
+
+class LayerPSPBlockData(LayerMixinData):
+    main: types.PSPBlock.ParametersMainData = (
+        types.PSPBlock.ParametersMainData()
+    )
+    extra: types.PSPBlock.ParametersExtraData = (
+        types.PSPBlock.ParametersExtraData()
+    )
+
+
+class LayerUNETBlockData(LayerMixinData):
+    main: types.UNETBlock.ParametersMainData = (
+        types.UNETBlock.ParametersMainData()
+    )
+    extra: types.UNETBlock.ParametersExtraData = (
+        types.UNETBlock.ParametersExtraData()
+    )
+
+
 Layer = Enum(
     "Layer",
     dict(map(lambda item: (item.name, f"Layer{item.name}Data"), list(LayerTypeChoice))),

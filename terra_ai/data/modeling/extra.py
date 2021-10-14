@@ -126,6 +126,9 @@ class LayerTypeChoice(str, Enum):
     DarkNetUpsample = "DarkNetUpsample"
     DarkNetResBlock = "DarkNetResBlock"
     DarkNetBatchNormalization = "DarkNetBatchNormalization"
+    CONVBlock = "CONVBlock"
+    PSPBlock = "PSPBlock"
+    UNETBlock = "UNETBlock"
 
     @staticmethod
     def values() -> list:

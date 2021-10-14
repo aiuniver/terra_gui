@@ -675,7 +675,7 @@ class CreateArray(object):
     @staticmethod
     def create_image(image_path: str, **options) -> dict:
 
-        img = Image.open(image_path)
+        img = load_img(image_path)
         array = np.array(img)
 
         instructions = {'instructions': array,
@@ -1265,7 +1265,6 @@ class CreateArray(object):
         return_data = {}
         for i, output_id in enumerate(options.data.outputs.keys()):
             true_array = CreateArray().get_y_true(options, output_id)
-            print(options.data.outputs)
             if len(options.data.outputs.keys()) > 1:
                 postprocess_array = array[i]
             else:
@@ -1754,7 +1753,6 @@ class CreateArray(object):
             return_mode='deploy'
     ):
         labels = options.classes_names
-        print('labels', labels)
         ohe = True if options.encoding == LayerEncodingChoice.ohe else False
         actual_value = np.argmax(true_array, axis=-1) if ohe else true_array
         data = {
