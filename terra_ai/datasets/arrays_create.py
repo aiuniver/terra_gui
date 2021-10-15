@@ -1337,12 +1337,13 @@ class CreateArray(object):
                             inverse_true = options.X.get('val').get(f"{input_id}")[
                                            idx, channel[0]:channel[0] + 1].squeeze().astype('float').tolist()
                         actual_value, predict_values = CreateArray().postprocess_classification(
-                                predict_array=np.expand_dims(postprocess_array[idx], axis=0),
-                                true_array=true_array[idx],
-                                options=options.data.outputs[output_id],
-                                return_mode='deploy'
+                            predict_array=np.expand_dims(postprocess_array[idx], axis=0),
+                            true_array=true_array[idx],
+                            options=options.data.outputs[output_id],
+                            return_mode='deploy'
                         )
-                        button_save_path = os.path.join(save_path, f"ts_trend_button_channel_{channel[2]}_image_{idx}.jpg")
+                        button_save_path = os.path.join(save_path,
+                                                        f"ts_trend_button_channel_{channel[2]}_image_{idx}.jpg")
                         plt.plot(inverse_true)
                         plt.savefig(button_save_path)
                         plt.close()
@@ -1694,7 +1695,8 @@ class CreateArray(object):
         if choice_type == ExampleChoiceTypeChoice.best or choice_type == ExampleChoiceTypeChoice.worst:
             if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
                 # y_pred = self.y_pred.get(out)
-                if array.shape[-1] == true_array.shape[-1] and encoding == LayerEncodingChoice.ohe and true_array.shape[-1] > 1:
+                if array.shape[-1] == true_array.shape[-1] and encoding == LayerEncodingChoice.ohe and true_array.shape[
+                    -1] > 1:
                     classes = np.argmax(true_array, axis=-1)
                 elif len(true_array.shape) == 1 and not encoding == LayerEncodingChoice.ohe and array.shape[-1] > 1:
                     classes = copy.deepcopy(true_array)
@@ -2022,7 +2024,7 @@ class CreateArray(object):
                 class_names=classes_names,
                 colors=colors
             )
-            data = []
+            data = [('<p1>', '<p1>', (200, 200, 200))]
             for tag in colors.keys():
                 data.append(
                     (tag, classes_names[tag], colors[tag])
