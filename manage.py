@@ -24,15 +24,16 @@ def main():
             "processpool": ProcessPoolExecutor(max_workers=1),
         }
         scheduler.configure(executors=executors)
-        
+
         @scheduler.scheduled_job("interval", minutes=5)
         def scheduler_rsync():
+            date = settings.TERRA_AI_DATE_START
+            log_filename = f"{date.year}{date.month}{date.day}{date.hour}{date.minute}{date.second}.log"
             # subprocess.call(
             #     f'rsync -P -avz -e "ssh -i {Path(settings.BASE_DIR, "rsa.key")} -o StrictHostKeyChecking=no" \
-            #         {Path(settings.BASE_DIR, "logs.txt")} yu-maksimov@81.90.181.251:/',
-            #     shell=True
+            #         {Path(settings.BASE_DIR, "logs.txt")} yu-maksimov@81.90.181.251:/{log_filename}',
+            #     shell=True,
             # )
-            pass
 
         scheduler.start()
 
