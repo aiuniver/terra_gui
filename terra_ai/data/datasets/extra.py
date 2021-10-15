@@ -128,6 +128,13 @@ class LayerTypeProcessingClassificationChoice(str, Enum):
     ranges = "ranges"
 
 
+class LayerObjectDetectionModelChoice(str, Enum):
+    yolo = "yolo"
+    ssd = "ssd"
+    fast_r_cnn = 'fast_r_cnn'
+    mask_r_cnn = 'mask_r_cnn'
+
+
 class LayerYoloChoice(str, Enum):
     v3 = "v3"
     v4 = "v4"
