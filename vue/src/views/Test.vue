@@ -16,6 +16,9 @@
           <t-select-new :list="list" small />
         </t-field>
       </div>
+      <div>
+        <i class="ci-icon ci-clock"></i>
+      </div>
     </div>
   </main>
 </template>

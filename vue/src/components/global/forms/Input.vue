@@ -18,7 +18,7 @@
       @mouseover="hover = true"
       @mouseleave="hover = false"
     />
-    <div v-if="error && hover" class="t-field__hint">
+    <div v-show="error && hover" :class="['t-field__hint', { 't-inline__hint': inline }]">
       <span>{{ error }}</span>
     </div>
   </div>
@@ -149,7 +149,7 @@ export default {
     display: flex;
     align-items: center;
     padding: 0 5px 0 5px;
-    top: 25px;
+    top: 65px;
     background-color: #ca5035;
     color: #fff;
     border-radius: 4px;
@@ -197,6 +197,9 @@ export default {
       line-height: 24px;
       padding: 0 3px;
     }
+  }
+  &__hint {
+    top: 25px;
   }
 }
 </style>

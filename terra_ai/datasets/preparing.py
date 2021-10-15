@@ -105,8 +105,8 @@ class PrepareDataset(object):
 
             for out_id in self.data.outputs.keys():
                 for col_name, data in self.instructions[out_id].items():
-                    sample = os.path.join(self.paths.basepath, self.dataframe[split_name].loc[idx, col_name])
-                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
+                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(self.dataframe[split_name]
+                                                                                 .loc[idx, col_name], **{
                         'preprocess': self.preprocessing.preprocessing[out_id][col_name]}, **data)
                     array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
                                                                                      **array['parameters'])
