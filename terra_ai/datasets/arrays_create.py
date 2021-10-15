@@ -1269,7 +1269,6 @@ class CreateArray(object):
                 postprocess_array = array[i]
             else:
                 postprocess_array = array
-            # print('true_array.shape, postprocess_array.shape', true_array.shape, postprocess_array.shape)
             example_idx = CreateArray().prepare_example_idx_to_show(
                 array=postprocess_array,
                 true_array=true_array,
@@ -1277,9 +1276,7 @@ class CreateArray(object):
                 output=output_id,
                 count=int(len(true_array) * DEPLOY_PRESET_PERCENT / 100)
             )
-            print(len(example_idx), len(postprocess_array), example_idx)
             if options.data.outputs[output_id].task == LayerOutputTypeChoice.Classification:
-                # y_true = CreateArray().get_y_true(options, output_id)
                 return_data[output_id] = []
                 _id = 1
                 for idx in example_idx:
@@ -1340,7 +1337,6 @@ class CreateArray(object):
                                 options=options.data.outputs[output_id],
                                 return_mode='deploy'
                         )
-                        print("actual_value, predict_values", actual_value, predict_values)
                         button_save_path = os.path.join(save_path, f"ts_trend_button_channel_{channel[2]}_image_{idx}.jpg")
                         plt.plot(inverse_true)
                         plt.savefig(button_save_path)
