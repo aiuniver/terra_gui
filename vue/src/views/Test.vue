@@ -1,7 +1,7 @@
 <template>
   <main class="page-not-found">
     <div class="cont">
-      <div>
+      <!-- <div>
         <t-field inline>
           <t-input-new :list="list" small />
         </t-field>
@@ -11,16 +11,16 @@
         <t-field inline>
           <t-select-new :list="list" small />
         </t-field>
-      </div>
+      </div> -->
       <div>
         <t-field>
-          <DInput @change="change" />
+          <DInput label="Error" @change="change" />
         </t-field>
         <t-field>
-          <DInput v-model="input" disabled @change="change"/>
+          <DInput v-model="input" label="Disabled" disabled @change="change"/>
         </t-field>
-        <t-field>
-          <DInput v-model="error" small :error="error"  @change="change"/>
+        <t-field label="Number, small">
+          <DInput v-model="error" small :error="error" type="number" @change="change"/>
         </t-field>
         <t-field>
           <DInput v-model="input" :error="error" @focus="error = ''" @change="change"/>

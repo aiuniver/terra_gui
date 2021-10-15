@@ -1,5 +1,11 @@
 <template>
-  <div :class="['d-input', { 'd-input--error': error }, { 'd-input--small': small }]">
+  <div
+    class="d-input"
+    :class="[{ 'd-input--error': error }, { 'd-input--small': small }, { 'd-input--disabled': isDisabled }]"
+  >
+    <div class="d-input__icon">
+      <i class="ci-icon ci-search"/>
+    </div>
     <input
       v-model="input"
       v-bind="$attrs"
@@ -12,8 +18,14 @@
       @input="debounce"
       @focus="focus"
     />
-    <div class="d-input__btn" v-show="input && !isDisabled">
-      <i class="ci-icon ci-close_big" @click="clear" />
+    <div class="d-input__btn">
+      <div v-show="input && !isDisabled" class="d-input__btn--cleener">
+        <i class="ci-icon ci-close_big" @click="clear" />
+      </div>
+      <div v-if="type === 'number'" :class="['d-input__btn--number', { 'd-input__btn--disabled': isDisabled }]">
+        <i class="ci-icon ci-caret_up" @click="+input++" />
+        <i class="ci-icon ci-caret_down" @click="+input--" />
+      </div>
     </div>
   </div>
 </template>
@@ -85,56 +97,91 @@ export default {
 <style lang="scss" scoped>
 .d-input {
   position: relative;
+  border-color: #242f3d;
+  border: 1px solid #242f3d;
+  background: #242f3d50;
+  border-radius: 4px;
+  display: flex;
+  width: 100%;
+  height: 40px;
+  color: #fff;
+  transition: all 0.2s ease-in-out;
+  overflow: hidden;
+  &:not(.d-input--error):focus-within,
+  &:not(.d-input--disabled):not(.d-input--error):hover {
+    border-color: #65b9f4;
+    box-shadow: 0px 0px 4px rgba(101, 185, 244, 0.2);
+  }
+  &--disabled {
+    opacity: 0.5;
+  }
+  &--error {
+    border-color: #ca5035;
+    color: #ca5035;
+  }
+  &__icon{
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 0 0 5px;
+  }
   &__input {
-    width: 100%;
-    height: 40px;
-    color: #fff;
-    background: #242f3d50;
+    height: 100%;
     padding: 8px 10px;
     font-size: 14px;
     line-height: 24px;
     font-weight: 400;
-    border-radius: 4px;
-    border: 1px solid #242f3d;
-    transition: all 0.2s ease-in-out;
-    &:not([disabled]):hover,
-    &:not([disabled]):focus {
-      border-color: #65b9f4;
-      box-shadow: 0px 0px 4px rgba(101, 185, 244, 0.2);
-    }
+    border: none;
+    background: none;
+    color: inherit;
     &::placeholder {
       color: #6c7883;
     }
-    &:disabled {
-      opacity: 0.5;
+    :disabled {
+      opacity: 1;
     }
   }
   &--small {
+    height: 30px;
     .d-input__input {
-      width: 100%;
-      height: 30px;
       padding: 3px 10px;
     }
   }
-  &--error {
-    .d-input__input,
-    .d-input__input:hover,
-    .ci-icon {
-      border-color: #ca5035;
-      color: #ca5035;
-    }
-  }
   &__btn {
-    position: absolute;
-    top: 0;
-    right: 0;
     height: 100%;
-    width: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
+    border-color: inherit;
     .ci-icon {
       cursor: pointer;
+    }
+    &--cleener {
+      margin: 0 5px 0 0;
+    }
+    &--number {
+      height: 100%;
+      width: 35px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      border-left: 1px solid;
+      border-color: inherit;
+      .ci-icon {
+        height: 100%;
+        text-align: center;
+        &:hover {
+          background-color: #222e3b;
+        }
+      }
+    }
+    &--disabled {
+      .ci-icon {
+        &:hover {
+          background: none;
+          cursor: default;
+        }
+      }
     }
   }
 }
