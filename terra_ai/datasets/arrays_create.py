@@ -1,3 +1,4 @@
+import colorsys
 import copy
 import string
 
@@ -2011,8 +2012,11 @@ class CreateArray(object):
                 colors[name] = class_colors[i]
                 classes_names[name] = options.classes_names[i]
         else:
+            hsv_tuples = [(x / len(dataset_tags), 1., 1.) for x in range(len(dataset_tags))]
+            gen_colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
+            gen_colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), gen_colors))
             for i, name in enumerate(dataset_tags):
-                colors[name] = tuple(np.random.randint(256, size=3).tolist())
+                colors[name] = gen_colors[i]
                 classes_names[name] = options.classes_names[i]
 
         if return_mode == 'deploy':
