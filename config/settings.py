@@ -138,7 +138,8 @@ REST_FRAMEWORK = {
 # Terra AI
 
 TERRA_AI_DATE_START = timezone.now()
-
+TERRA_AI_SYNC_LOGS = env.bool("TERRA_AI_SYNC_LOGS", default=False)
+TERRA_AI_BASE_DIR = env.str("TERRA_AI_BASE_DIR", default="/")
 TERRA_AI_EXCHANGE_API_URL = env.str("TERRA_AI_EXCHANGE_API_URL")
 TERRA_AI_DATA_PATH = env.str("TERRA_AI_DATA_PATH")
 TERRA_AI_PROJECT_PATH = f"{tempfile.gettempdir()}/tai-project"
@@ -146,6 +147,7 @@ TERRA_AI_PROJECT_PATH = f"{tempfile.gettempdir()}/tai-project"
 
 # User data
 
+USER_PORT = env.int("USER_PORT", default=9120)
 USER_LOGIN = env.str("USER_LOGIN")
 USER_NAME = env.str("USER_NAME")
 USER_LASTNAME = env.str("USER_LASTNAME")
