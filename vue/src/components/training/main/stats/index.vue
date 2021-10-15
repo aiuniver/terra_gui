@@ -31,6 +31,7 @@ import { mapGetters } from 'vuex';
 export default {
   name: 't-statistic',
   components: {
+    Colormap: () => import('../stats/Colormap'),
     Heatmap: () => import('../stats/Heatmap'),
     Corheatmap: () => import('../stats/Corheatmap'),
     Scatter: () => import('../stats/Scatter'),
