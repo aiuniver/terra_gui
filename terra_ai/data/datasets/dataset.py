@@ -189,6 +189,7 @@ from .extra import (
     LayerInputTypeChoice,
     LayerOutputTypeChoice,
     LayerEncodingChoice,
+    DatasetModelChoice,
 )
 from ..mixins import AliasMixinData, UniqueListMixin, BaseMixinData
 from ..extra import FileSizeData
@@ -284,6 +285,7 @@ class DatasetData(AliasMixinData):
     size: Optional[FileSizeData]
     group: Optional[DatasetGroupChoice]
     use_generator: bool = False
+    architecture: str = DatasetModelChoice.basic
     tags: Optional[TagsList] = TagsList()
     inputs: Dict[PositiveInt, DatasetInputsData] = {}
     outputs: Dict[PositiveInt, DatasetOutputsData] = {}

@@ -6,10 +6,9 @@ from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preprocessing import CreatePreprocessing
 from terra_ai.data.datasets.creation import CreationData, CreationInputsList, CreationOutputsList
 from terra_ai.data.datasets.dataset import DatasetData, DatasetInputsData, DatasetOutputsData, DatasetPathsData
-from terra_ai.data.datasets.extra import LayerEncodingChoice
 from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice, \
     LayerPrepareMethodChoice, LayerScalerImageChoice, ColumnProcessingTypeChoice, \
-    LayerTypeProcessingClassificationChoice
+    LayerTypeProcessingClassificationChoice, DatasetModelChoice, LayerEncodingChoice
 from terra_ai.settings import DATASET_EXT, DATASET_CONFIG
 
 import psutil
@@ -404,13 +403,13 @@ class CreateDataset(object):
     def create_input_parameters(self, creation_data: CreationData) -> dict:
 
         creating_inputs_data = {}
-        path_type_input_list = [LayerInputTypeChoice.Image, LayerInputTypeChoice.Video, LayerInputTypeChoice.Audio]
         for key in self.instructions.inputs.keys():
             input_array = []
             self.columns[key] = {}
             creating_inputs_data[key] = {}
             for col_name, data in self.instructions.inputs[key].items():
                 column_names = []
+                encoding = LayerEncodingChoice.none
                 if creation_data.inputs.get(key).type == LayerInputTypeChoice.Dataframe:
                     column_names = pd.read_csv(creation_data.inputs.get(key).parameters.sources_paths[0], nrows=0,
                                                sep=None, engine='python').columns.to_list()
@@ -421,11 +420,19 @@ class CreateDataset(object):
                             str(creation_data.inputs.get(key).parameters.cols_names[idx][0])].type
                     except IndexError:
                         task = LayerInputTypeChoice.Raw
+
+                    if creation_data.inputs.get(key).type == LayerInputTypeChoice.Dataframe and\
+                            task == LayerInputTypeChoice.Classification:
+                        if creation_data.columns_processing[
+                            str(creation_data.inputs.get(key).parameters.cols_names[
+                                    idx][0])].parameters.one_hot_encoding:
+                            encoding = LayerEncodingChoice.ohe
                 else:
                     task = creation_data.inputs.get(key).type
 
                 prep = None
-                if self.preprocessing.preprocessing.get(key) and self.preprocessing.preprocessing.get(key).get(col_name):
+                if self.preprocessing.preprocessing.get(key) and \
+                        self.preprocessing.preprocessing.get(key).get(col_name):
                     prep = self.preprocessing.preprocessing.get(key).get(col_name)
 
                 if creation_data.inputs.get(key).type == LayerInputTypeChoice.Dataframe:
@@ -434,11 +441,11 @@ class CreateDataset(object):
                     c_idx = column_names.index(c_name)
                     if creation_data.inputs.get(key).parameters.cols_names[c_idx]:
                         c_data_idx = creation_data.inputs.get(key).parameters.cols_names[c_idx][0]
-                        if creation_data.columns_processing.get(str(c_data_idx)).type in path_type_input_list:
+                        if decamelize(creation_data.columns_processing.get(str(c_data_idx)).type) in PATH_TYPE_LIST:
                             data_to_pass = os.path.join(self.paths.basepath, data.instructions[0])
                 elif 'depth' in data.parameters.keys() and data.parameters['depth']:
                     data_to_pass = data.instructions[0:data.parameters['length']]
-                elif creation_data.inputs.get(key).type in path_type_input_list:
+                elif decamelize(creation_data.inputs.get(key).type) in PATH_TYPE_LIST:
                     data_to_pass = os.path.join(self.paths.basepath, data.instructions[0])
                 else:
                     data_to_pass = data.instructions[0]
@@ -467,7 +474,7 @@ class CreateDataset(object):
                                                    task=task,
                                                    classes_names=classes_names,
                                                    num_classes=num_classes,
-                                                   encoding=LayerEncodingChoice.none
+                                                   encoding=encoding
                                                    )
                 self.columns[key].update([(col_name, current_column.native())])
 
@@ -759,9 +766,7 @@ class CreateDataset(object):
 
                 if self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
                     for n in range(3):
-                        # if n < 3:
                         out_array[split][key + n] = np.array(globals()[f'current_arrays_{n}'])
-                        # else:
                         service[split][key + n] = np.array(globals()[f'current_arrays_{n + 3}'])
                         # print(np.array(globals()[f'current_arrays_{n}']).shape)
                         # print(np.array(globals()[f'current_arrays_{n + 3}']).shape)
@@ -842,8 +847,10 @@ class CreateDataset(object):
                 'use_generator': creation_data.use_generator,
                 'tags': tags_list,
                 'user_tags': creation_data.tags,
-                'language': '',  # зачем?...
+                # 'language': '',  # зачем?...
                 'date': datetime.now().astimezone(timezone("Europe/Moscow")).isoformat(),
+                'architecture': DatasetModelChoice.basic if
+                creation_data.outputs[0].type != LayerOutputTypeChoice.ObjectDetection else DatasetModelChoice.yolo,
                 'size': {'value': size_bytes}
                 }
 

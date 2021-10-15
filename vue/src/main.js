@@ -124,6 +124,7 @@ Vue.use(VueAxios, axios);
 export const bus = new Vue();
 
 import '@/assets/scss/main.scss'
+import '@/assets/css/coolicons.css'
 
 new Vue({
   router,
