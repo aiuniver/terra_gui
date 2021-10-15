@@ -43,11 +43,12 @@ class DeployDataset(object):
                 instr = getattr(CreateArray(), f'instructions_{data["put_type"]}')(paths_dict[put_id][col_name], **data)
                 cut = getattr(CreateArray(), f'cut_{data["put_type"]}')(instr['instructions'],
                                                                         dataset_folder=temp_directory,
-                                                                        **instr['parameters'])
+                                                                        **self.instructions[put_id][col_name])
                 temp_array[put_id][col_name] = []
                 for elem in cut['instructions']:
                     arr = getattr(CreateArray(), f'create_{data["put_type"]}')(elem, **{
-                        'preprocess': self.preprocessing.preprocessing[put_id][col_name]}, **cut['parameters'])
+                        'preprocess': self.preprocessing.preprocessing[put_id][col_name]},
+                                                                               **self.instructions[put_id][col_name])
                     arr = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(arr['instructions'],
                                                                                    **arr['parameters'])
                     temp_array[put_id][col_name].append(arr)
