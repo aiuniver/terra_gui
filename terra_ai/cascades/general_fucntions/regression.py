@@ -14,7 +14,7 @@ def main(**params):
     def fun(arr):
         arr = preprocessing.inverse_transform(arr)
         arr = np.round(arr, 2)
-
+        arr = arr.reshape(-1)
         return arr
 
     return fun

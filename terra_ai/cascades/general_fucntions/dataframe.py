@@ -1,10 +1,7 @@
 import numpy as np
 from tensorflow.keras.utils import to_categorical
-import pandas as pd
 import joblib
 import os
-
-from .array import min_max_scale
 
 
 from ..common import decamelize
@@ -20,8 +17,14 @@ def _classification(**params):
     def fun(x):
         index = []
 
+        if not isinstance(x, np.ndarray):
+            x = np.array([x])
+
         if params['type_processing'] == 'categorical':
-            index = [classes_names.index(i) for i in x]
+            if x.shape:
+                index = [classes_names.index(i) for i in x]
+            else:
+                index = [classes_names.index(x)]
             index = to_categorical(index, num_classes=params['num_classes'], dtype='uint8')
 
         index = np.array(index)
@@ -41,8 +44,10 @@ def _scaler(**params):
 
     def fun(x):
         x = np.array(x)
-        if len(x.shape) == 1:
-            x = x.reshape(1, -1)
+        if x.shape and len(x.shape) == 1:
+            x = x.reshape(-1, 1)
+        else:
+            x = np.array([[x]])
         x = preprocessing.transform(x)
         return x
 
@@ -75,11 +80,7 @@ def main(**params):
         j = 0
         for column, proc in zip(columns, process):
 
-            i = data[column[2:]]
-            if isinstance(i, pd.DataFrame):
-                i = i.to_numpy()
-            else:
-                i = np.array([i])
+            i = np.array(data[column[2:]])
 
             if proc:
                 x = proc(i)
