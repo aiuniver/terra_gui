@@ -1,5 +1,8 @@
 import numpy as np
 from tensorflow.keras.utils import to_categorical
+import pandas as pd
+import joblib
+import os
 
 from .array import min_max_scale
 
@@ -29,14 +32,18 @@ def _classification(**params):
 
 
 def _scaler(**params):
-    min_max = min_max_scale(params['min_scaler'], params['max_scaler']) \
-        if params['scaler'] == 'min_max_scaler' else None
+
+    preprocessing = joblib.load(
+        os.path.join(
+            params['dataset_path'], 'preprocessing', params["key"].split('_')[0], f'{params["key"]}.gz'
+        )
+    )
 
     def fun(x):
         x = np.array(x)
-        if min_max:
-            x = min_max(x)
-
+        if len(x.shape) == 1:
+            x = x.reshape(1, -1)
+        x = preprocessing.transform(x)
         return x
 
     return fun
@@ -49,7 +56,9 @@ def main(**params):
 
     for key, i in params['columns'].items():
         try:
-            process.append(getattr(sys.modules.get(__name__), '_' + decamelize(i['task']))(**i))
+            process.append(getattr(sys.modules.get(__name__), '_' + decamelize(i['task']))(
+                **i, dataset_path=dataset_path, key=key
+            ))
         except:
             type_module = getattr(general_fucntions, decamelize(i['task']))
             process.append(
@@ -58,10 +67,19 @@ def main(**params):
     columns = list(params['columns'].keys())
 
     def fun(data):
-        out = np.zeros((data.shape[0], params['shape'][0]))
+        if len(data.shape) == 1:
+            out = np.zeros((1, params['shape'][0]))
+        else:
+            out = np.zeros((data.shape[0], params['shape'][0]))
+
         j = 0
         for column, proc in zip(columns, process):
-            i = data[column[2:]].to_numpy()
+
+            i = data[column[2:]]
+            if isinstance(i, pd.DataFrame):
+                i = i.to_numpy()
+            else:
+                i = np.array([i])
 
             if proc:
                 x = proc(i)
