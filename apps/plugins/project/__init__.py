@@ -39,6 +39,7 @@ from terra_ai.data.training.train import (
 from terra_ai.data.types import confilepath
 from terra_ai.training.guinn import interactive as training_interactive
 
+
 UNKNOWN_NAME = "NoName"
 DATA_PATH = {
     "base": Path(settings.TERRA_AI_DATA_PATH).absolute(),

@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import os
 from tensorflow.keras.utils import load_img
+import pandas as pd
 
 
 def video(paths):
@@ -14,9 +15,6 @@ def video(paths):
 
 
 def image(path):
-    # img = cv2.imread(path)
-    # img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-
     img = load_img(path)
     out_img = np.array(img)
     out_img = out_img[np.newaxis, ...]
@@ -46,3 +44,11 @@ def audio(paths):
 
     for path in paths:
         yield path
+
+
+def dataframe(paths):
+    if isinstance(paths, str):
+        paths = [paths]
+
+    for path in paths:
+        yield pd.read_csv(path)
