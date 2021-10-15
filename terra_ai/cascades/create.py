@@ -45,7 +45,7 @@ def json2model_cascade(path: str):
     preprocess = []
 
     for inp in config['inputs'].keys():
-        if len(config['columns'][inp].keys()) == 1:
+        if config['inputs'][inp]['task'] != 'Dataframe':
             for inp, param in config['columns'][inp].items():
                 with open(os.path.join(dataset_path, "instructions", "parameters", inp + '.json')) as cfg:
                     param.update(json.load(cfg))
@@ -53,44 +53,35 @@ def json2model_cascade(path: str):
             preprocess.append(getattr(type_module, 'main')(
                 **param, dataset_path=dataset_path, key=inp)
             )
-
-        elif len(config['columns'][inp].keys()) > 1:
+        else:
             param = {}
             for key, cur_param in config['columns'][inp].items():
                 param[key] = cur_param
                 with open(os.path.join(dataset_path, "instructions", "parameters", key + '.json')) as cfg:
                     param[key].update(json.load(cfg))
-
-            return param
-
+            param = {'columns': param, 'dataset_path': dataset_path, 'shape': config['inputs'][inp]['shape']}
             type_module = getattr(general_fucntions, 'dataframe')
-            preprocess.append(getattr(type_module, 'main')(
-                **param, dataset_path=dataset_path, key=inp)
-            )
+            preprocess.append(getattr(type_module, 'main')(**param))
 
     preprocess = make_processing(preprocess)
 
-    if config['outputs']:
-        postprocessing = []
+    postprocessing = []
 
-        for inp, param in config['outputs'].items():
-            with open(os.path.join(
-                    dataset_path, "instructions", "parameters",
-                    f"{inp}_{decamelize(param['task'])}.json")) as cfg:
+    for inp in config['outputs'].keys():
+        for inp, param in config['columns'][inp].items():
+            with open(os.path.join(dataset_path, "instructions", "parameters", inp + '.json')) as cfg:
                 spec_config = json.load(cfg)
 
             param.update(spec_config)
 
             try:
                 type_module = getattr(general_fucntions, decamelize(param['task']))
-                postprocessing.append(getattr(type_module, 'main')(**param))
+                postprocessing.append(getattr(type_module, 'main')(**param, dataset_path=dataset_path, key=inp))
             except:
                 postprocessing.append(None)
 
-        if any(postprocessing):
-            postprocessing = make_processing(postprocessing)
-        else:
-            postprocessing = None
+    if any(postprocessing):
+        postprocessing = make_processing(postprocessing)
     else:
         postprocessing = None
 

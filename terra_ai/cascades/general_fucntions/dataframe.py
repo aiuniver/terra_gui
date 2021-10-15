@@ -1,87 +1,80 @@
-import re
-import os
-
 import numpy as np
-import pymorphy2
-import joblib
-from tensorflow.keras.preprocessing.text import text_to_word_sequence
+from tensorflow.keras.utils import to_categorical
+
+from .array import min_max_scale
+
 
 from ..common import decamelize
+from .. import general_fucntions
+
+import sys
+
+
+def _classification(**params):
+
+    classes_names = params['classes_names']
+
+    def fun(x):
+        index = []
+
+        if params['type_processing'] == 'categorical':
+            index = [classes_names.index(i) for i in x]
+            index = to_categorical(index, num_classes=params['num_classes'], dtype='uint8')
+
+        index = np.array(index)
+
+        return index
+
+    return fun
+
+
+def _scaler(**params):
+    min_max = min_max_scale(params['min_scaler'], params['max_scaler']) \
+        if params['scaler'] == 'min_max_scaler' else None
+
+    def fun(x):
+        x = np.array(x)
+        if min_max:
+            x = min_max(x)
+
+        return x
+
+    return fun
 
 
 def main(**params):
-    open_tags, close_tags = None, None
-    open_symbol, close_symbol = None, None
+    process = []
 
-    if params.get('open_tags'):
-        open_tags, close_tags = params['open_tags'].split(' '), params['close_tags'].split(' ')
-    if open_tags:
-        open_symbol = open_tags[0][0]
-        close_symbol = close_tags[0][-1]
+    dataset_path = params['dataset_path']
 
-    length = params['length'] if params['text_mode'] == "length_and_step" else params['max_words']
+    for key, i in params['columns'].items():
+        try:
+            process.append(getattr(sys.modules.get(__name__), '_' + decamelize(i['task']))(**i))
+        except:
+            type_module = getattr(general_fucntions, decamelize(i['task']))
+            process.append(
+                getattr(type_module, 'main')(**i, dataset_path=dataset_path, key=key)
+            )
+    columns = list(params['columns'].keys())
 
-    preprocessing = joblib.load(
-        os.path.join(
-            params['dataset_path'], 'preprocessing', str(params['key']),
-            f'{params["key"]}_{decamelize(params["task"])}.gz')
-    )
+    def fun(data):
+        out = np.zeros((data.shape[0], params['shape'][0]))
+        j = 0
+        for column, proc in zip(columns, process):
+            i = data[column[2:]].to_numpy()
 
-    def fun(text):
-        if open_symbol:
-            text = re.sub(open_symbol, f" {open_symbol}", text)
-            text = re.sub(close_symbol, f"{close_symbol} ", text)
+            if proc:
+                x = proc(i)
+                if len(x.shape) == 1:
+                    out[:, j] = x
+                    j += 1
+                else:
+                    out[:, j:j + x.shape[1]] = x
+                    j += x.shape[1]
+            else:
+                out[:, j] = i
+                j += 1
 
-        text = ' '.join(text_to_word_sequence(text, lower=True, filters=params['filters']))
-
-        if open_symbol:
-            text = ' '.join([word for word in text.split() if word not in open_tags + close_tags])
-
-        if params['pymorphy']:
-            morphy = pymorphy2.MorphAnalyzer()
-            text = ' '.join([morphy.parse(w)[0].normal_form for w in text.split(' ')])
-
-        text = text.split()
-        arr = []
-
-        if params['text_mode'] == "completely":
-            arr = [text[:params['max_words']]]
-        elif params['text_mode'] == "length_and_step":
-            for i in range(0, len(text) - length + params['step'], params['step']):
-                arr.append(text[i: i + length])
-            if len(text) < length:
-                arr.append(text)
-        array = []
-
-        if params['prepare_method'] == "embedding":
-            array = preprocessing.texts_to_sequences(arr)
-            for arr in array:
-                for _ in range(length - len(arr)):
-                    arr.append(0)
-        elif params['prepare_method'] == "bag_of_words":
-            array = preprocessing.texts_to_matrix(arr)
-        elif params['prepare_method'] == "word_to_vec":
-            for word in arr:
-                try:
-                    array.append(preprocessing[word])
-                except KeyError:
-                    array.append(np.zeros((length, params['word_to_vec_size'])))
-            array = np.array(array)
-
-            if array.shape[1] < length:
-                new_array = np.zeros((1, length, params['word_to_vec_size']))
-                new_array[:, :array.shape[1]] += array
-                array = new_array
-            elif array.shape[1] > length:
-                n = (array.shape[0] % length) + 1
-                new_array = np.zeros((n, length, params['word_to_vec_size']))
-                for i in range(n):
-                    new_array[i][:len(array[i])] += array[i]
-
-                array = new_array
-
-        array = np.array(array)
-
-        return array
+        return out
 
     return fun
