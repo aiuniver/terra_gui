@@ -17,7 +17,7 @@ ANNOTATION_COLOR_RGB = "color_rgb"
 
 PATH_TYPE_LIST = [decamelize(LayerInputTypeChoice.Image), decamelize(LayerOutputTypeChoice.Image),
                   decamelize(LayerInputTypeChoice.Audio), decamelize(LayerOutputTypeChoice.Audio),
-                  decamelize(LayerInputTypeChoice.Video), decamelize(LayerOutputTypeChoice.Segmentation)]  # decamelize(LayerOutputTypeChoice.ObjectDetection),
+                  decamelize(LayerInputTypeChoice.Video), decamelize(LayerOutputTypeChoice.Segmentation)]
 
 
 def _get_annotation_class(name: str, color: str):
