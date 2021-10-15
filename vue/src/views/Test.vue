@@ -14,16 +14,16 @@
       </div> -->
       <div>
         <t-field>
-          <DInput label="Error" @change="change" />
+          <DInput label="Error" @change="change" type="number" />
         </t-field>
         <t-field>
           <DInput v-model="input" label="Disabled" disabled @change="change"/>
         </t-field>
         <t-field label="Number, small">
-          <DInput v-model="error" small :error="error" type="number" @change="change"/>
+          <DInput v-model="error" small :error="error" @change="change"/>
         </t-field>
         <t-field>
-          <DInput v-model="input" :error="error" @focus="error = ''" @change="change"/>
+          <DInput v-model="input" icon="search" :error="error" @focus="error = ''" @change="change"/>
         </t-field>
       </div>
     </div>
