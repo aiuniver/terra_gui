@@ -207,32 +207,23 @@ class CreateDataset(object):
                 if put.parameters.cols_names[name_index]:
                     for worker in put.parameters.cols_names[name_index]:  # На будущее после 1 октября - очень аккуратно!
                         self.tags[put.id][f'{put.id}_{name}'] = decamelize(self.columns_processing[str(worker)].type)
+                        if decamelize(self.columns_processing[str(worker)].type) in PATH_TYPE_LIST:
+                            list_of_data = [os.path.join(self.source_path, x) for x in list_of_data]
                         instr = getattr(CreateArray(),
                                         f'instructions_{decamelize(self.columns_processing[str(worker)].type)}')(
                             list_of_data, **{'cols_names': f'{put.id}_{name}', 'put': put.id},
                             **self.columns_processing[str(worker)].parameters.native())
-                        path_flag = False
-                        if self.columns_processing[str(worker)].type in [LayerInputTypeChoice.Image,
-                                                                         LayerOutputTypeChoice.Image,
-                                                                         LayerInputTypeChoice.Video,
-                                                                         LayerOutputTypeChoice.Segmentation,
-                                                                         LayerInputTypeChoice.Audio,
-                                                                         LayerOutputTypeChoice.Audio,
-                                                                         LayerOutputTypeChoice.ObjectDetection]:
-                            paths_list = [os.path.join(self.source_path, elem) for elem in instr['instructions']]
-                            path_flag = True
+                        if decamelize(self.columns_processing[str(worker)].type) in PATH_TYPE_LIST:
+                            data_to_cut = [os.path.join(self.source_path, elem) for elem in instr['instructions']]
                         else:
-                            paths_list = instr['instructions']
+                            data_to_cut = instr['instructions']
                         instructions_data = InstructionsData(
                             **getattr(CreateArray(),
                                       f"cut_{decamelize(self.columns_processing[str(worker)].type)}")(
-                                paths_list, os.path.join(self.paths.sources, f'{put.id}_{name}'),
+                                data_to_cut, os.path.join(self.paths.sources, f'{put.id}_{name}'),
                                 **instr['parameters']))
-                        if path_flag:
-                            instructions_data.instructions = [os.path.join('sources',
-                                                                           instructions_data.parameters['cols_names'],
-                                                                           path.replace(str(self.source_path) +
-                                                                                        os.path.sep, ''))
+                        if decamelize(self.columns_processing[str(worker)].type) in PATH_TYPE_LIST:
+                            instructions_data.instructions = [path.replace(str(self.paths.basepath) + os.path.sep, '')
                                                               for path in instructions_data.instructions]
 
                         instructions_data.parameters = {'put_type': decamelize(self.columns_processing[
