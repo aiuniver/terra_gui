@@ -163,7 +163,7 @@
                 {{ id }}
               </td>
 
-              <template v-for="({ type, data, update }, key) in initial_data">
+              <template v-for="({ type, data }, key) in initial_data">
                 <template v-for="(item, i) of data">
                   <td :key="'initial_layer_' + i + JSON.stringify(key)">
                     <Forms :data="item" :tags_color="tags_color" :layer="key" :update="update" :type="type" />
@@ -174,7 +174,7 @@
               <template v-for="({ type, data }, key) in true_value">
                 <template v-for="(item, i) of data">
                   <td :key="'true_layer_' + i + JSON.stringify(key)">
-                    <Forms :data="item" :tags_color="tags_color" :layer="key" :type="type"/>
+                    <Forms :data="item" :tags_color="tags_color" :layer="key" :update="update" :type="type"/>
                   </td>
                 </template>
               </template>
@@ -182,7 +182,7 @@
               <template v-for="({ type, data }, key) in predict_value">
                 <template v-for="(item, i) of data">
                   <td :key="'predict_layer_' + i + JSON.stringify(key)">
-                    <Forms :data="item" :tags_color="tags_color" :layer="key" :type="type" />
+                    <Forms :data="item" :tags_color="tags_color" :layer="key" :update="update" :type="type" />
                   </td>
                 </template>
               </template>
@@ -218,7 +218,8 @@ export default {
     },
     fixation: {
       type: Boolean
-    }
+    },
+    update: String
   },
   data: () => ({
     ops: {

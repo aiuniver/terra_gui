@@ -19,8 +19,9 @@
       class="t-balance__graphs"
       v-if="(settings.show_train || settings.show_val) && Object.keys(dataDalance).length > 0"
     >
-      <template v-for="(layer, index) of filter(dataDalance)">
-        <component :is="layer.type" v-bind="layer" :key="`sdsdsa_${index}`" />
+      <template v-for="({ train, val }, index) of filter(dataDalance)">
+        <component v-if="train" :is="train.type" v-bind="train" :key="`train_${index}`" />
+        <component v-if="val" :is="val.type" v-bind="val" :key="`val_${index}`" />
       </template>
     </div>
     <div class="t-balance__overlay">
@@ -75,15 +76,16 @@ export default {
   },
   methods: {
     filter(layer) {
-      console.log(layer);
-      const arr = [];
-      if (this.settings.show_train) {
-        arr.push('train');
-      }
-      if (this.settings.show_val) {
-        arr.push('val');
-      }
-      return layer.filter(item => arr.includes(item.type_data));
+      return layer.map(({ val, train }) => {
+        const obj = {};
+        if (this.settings.show_train) {
+          obj.train = train;
+        }
+        if (this.settings.show_val) {
+          obj.val = val;
+        }
+        return obj;
+      });
     },
     change() {
       this.handleClick();

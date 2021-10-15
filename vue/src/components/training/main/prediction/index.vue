@@ -36,7 +36,7 @@
       </div>
     </div>
     <div class="predictions__body">
-      <PredictTable v-if="isEmpty" :predict="predictData" :fixation="fixation" />
+      <PredictTable v-if="isEmpty" :predict="predictData" :fixation="fixation" :update="predictUpdate"/>
       <div v-else class="predictions__overlay">
         <LoadSpiner v-if="start && isLearning" text="Загрузка данных..." />
       </div>
@@ -120,6 +120,9 @@ export default {
     },
     predictData() {
       return this.$store.getters['trainings/getTrainData']('intermediate_result') || {};
+    },
+    predictUpdate() {
+      return this.$store.getters['trainings/getTrainData']('update') || '';
     },
     statusTrain() {
       return this.$store.getters['trainings/getStatusTrain'];
