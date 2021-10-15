@@ -393,7 +393,7 @@ class InteractiveCallback:
         self.dataset_balance = self._prepare_dataset_balance()
         self.class_idx = self._prepare_class_idx()
         self.seed_idx = self._prepare_seed()
-        # self.example_idx = self._prepare_example_idx_to_show()
+        self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
 
     def set_status(self, status):
         self.train_states["status"] = status
@@ -463,8 +463,10 @@ class InteractiveCallback:
                     if self.interactive_config.statistic_data.output_id:
                         self.statistic_result = self._get_statistic_data_request()
                 self.urgent_predict = False
+                self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
 
             return {
+                'update': self.random_key,
                 "class_graphics": self.class_graphics,
                 'loss_graphs': self._get_loss_graph_data_request(),
                 'metric_graphs': self._get_metric_graph_data_request(),
@@ -489,7 +491,9 @@ class InteractiveCallback:
                 if self.interactive_config.statistic_data.output_id:
                     self.statistic_result = self._get_statistic_data_request()
 
+            self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
             self.train_progress['train_data'] = {
+                'update': self.random_key,
                 "class_graphics": self.class_graphics,
                 'loss_graphs': self._get_loss_graph_data_request(),
                 'metric_graphs': self._get_metric_graph_data_request(),
@@ -706,54 +710,246 @@ class InteractiveCallback:
                         self.log_history[out]["class_metrics"][f"{class_name}"][f"{metric}"] = []
 
     def _prepare_dataset_balance(self) -> dict:
-        dataset_balance = {}
+        dataset_balance = []
         for out in self.options.data.outputs.keys():
             task = self.options.data.outputs.get(out).task
             encoding = self.options.data.outputs.get(out).encoding
-            dataset_balance[f"{out}"] = {}
+            # dataset_balance[f"{out}"] = []
+            _id = 1
             if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
-                for data_type in self.y_true.keys():
-                    dataset_balance[f"{out}"][data_type] = class_counter(
-                        self.y_true.get(data_type).get(f"{out}"),
-                        self.options.data.outputs.get(out).classes_names,
-                        encoding == 'ohe'
+                pair_unit = {}
+                for data_type in ["train", "val"]:
+                    class_names, class_count = CreateArray().sort_dict(
+                        dict_to_sort=class_counter(
+                            y_array=self.y_true.get(data_type).get(f"{out}"),
+                            classes_names=self.options.data.outputs.get(out).classes_names,
+                            ohe=encoding == LayerEncodingChoice.ohe
+                        ),
+                        mode=self.interactive_config.data_balance.sorted.name
                     )
+                    pair_unit[data_type] = self._fill_graph_front_structure(
+                        _id=_id,
+                        _type='histogram',
+                        type_data="train",
+                        graph_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка - "
+                                   f"Выход '{out}'",
+                        short_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка - "
+                                   f"Выход '{out}'",
+                        x_label="Название класса",
+                        y_label="Значение",
+                        plot_data=[self._fill_graph_plot_data(x=class_names, y=class_count)],
+                    )
+                    _id += 1
+                dataset_balance.append(pair_unit)
+                    # {'Тренировочная' if data_type == 'train' else 'Проверочная'}
+                    # dataset_balance[f"{out}"][data_type] = class_counter(
+                    #     y_array=self.y_true.get(data_type).get(f"{out}"),
+                    #     classes_names=self.options.data.outputs.get(out).classes_names,
+                    #     ohe=encoding == LayerEncodingChoice.ohe
+                    # )
+                # dataset_balance[f"{out}"] = []
+                #
+                # class_train_names, class_train_count = CreateArray().sort_dict(
+                #     self.dataset_balance.get(f"{out}").get('train'),
+                #     mode=self.interactive_config.data_balance.sorted.name
+                # )
+                # class_val_names, class_val_count = CreateArray().sort_dict(
+                #     self.dataset_balance.get(f"{out}").get('val'),
+                #     mode=self.interactive_config.data_balance.sorted.name
+                # )
+                # return_data.append(
+                #     self._fill_graph_front_structure(
+                #         _id=_id,
+                #         _type='histogram',
+                #         type_data="train",
+                #         graph_name=f"Тренировочная выборка",
+                #         short_name=f"Тренировочная выборка",
+                #         x_label="Название класса",
+                #         y_label="Значение",
+                #         plot_data=[self._fill_graph_plot_data(x=class_train_names, y=class_train_count)],
+                #     )
+                # )
+                # _id += 1
+                # return_data.append(
+                #     self._fill_graph_front_structure(
+                #         _id=_id,
+                #         _type='histogram',
+                #         type_data="val",
+                #         graph_name=f"Проверчная выборка",
+                #         short_name=f"Проверчная выборка",
+                #         x_label="Название класса",
+                #         y_label="Значение",
+                #         plot_data=[self._fill_graph_plot_data(x=class_val_names, y=class_val_count)],
+                #     )
+                # )
+                # _id += 1
 
             if task == LayerOutputTypeChoice.Segmentation and encoding == LayerEncodingChoice.ohe:
-                for data_type in self.y_true.keys():
-                    dataset_balance[f"{out}"][data_type] = {
-                        "presence_balance": {},
-                        "percent_balance": {},
-                        "colormap": {}
-                    }
-                    classes_names = self.options.data.outputs.get(out).classes_names
-                    classes = np.arange(self.options.data.outputs.get(out).num_classes)
-                    class_percent = {}
+                classes_names = self.options.data.outputs.get(out).classes_names
+                classes = np.arange(self.options.data.outputs.get(out).num_classes)
+
+                preset = {}
+                for data_type in ["train", "val"]:
+                    preset[data_type] = []
                     class_count = {}
                     for cl in classes:
-                        class_percent[classes_names[cl]] = np.round(
-                            np.sum(
-                                self.y_true.get(data_type).get(f"{out}")[:, :, :, cl]) * 100
-                            / np.prod(self.y_true.get(data_type).get(f"{out}")[:, :, :, 0].shape)
-                        ).astype("float").tolist()
                         class_count[classes_names[cl]] = 0
-                        colormap_path = os.path.join(
-                            self.preset_path, f"balance_segmentation_colormap_{data_type}_class_{classes_names[cl]}.webp"
-                        )
-                        self._get_image_class_colormap(
-                            array=self.y_true.get(data_type).get(f"{out}"),
-                            colors=self.class_colors,
-                            class_id=cl,
-                            save_path=colormap_path
-                        )
-                        dataset_balance[f"{out}"][data_type]["colormap"][classes_names[cl]] = colormap_path
-
                     for img_array in np.argmax(self.y_true.get(data_type).get(f"{out}"), axis=-1):
                         for cl in classes:
                             if cl in img_array:
                                 class_count[classes_names[cl]] += 1
-                    dataset_balance[f"{out}"][data_type]["presence_balance"] = class_count
-                    dataset_balance[f"{out}"][data_type]["square_balance"] = class_percent
+                    presence_names, presence_count = CreateArray().sort_dict(
+                        dict_to_sort=class_count,
+                        mode=self.interactive_config.data_balance.sorted.name
+                    )
+                    preset[data_type].append(
+                        self._fill_graph_front_structure(
+                            _id=_id,
+                            _type='histogram',
+                            type_data=data_type,
+                            graph_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка - "
+                                       f"баланс присутсвия",
+                            short_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} - присутсвие",
+                            x_label="Название класса",
+                            y_label="Значение",
+                            plot_data=[self._fill_graph_plot_data(x=presence_names, y=presence_count)],
+                        )
+                    )
+                    preset[data_type]["presence_balance"] = class_count
+
+                    #             presence_names, presence_count = CreateArray().sort_dict(
+                    #                 self.dataset_balance.get(f"{out}").get(data_type).get('presence_balance'),
+                    #                 mode=self.interactive_config.data_balance.sorted.name
+                    #             )
+                    #             # presence_val_names, presence_val_count = CreateArray().sort_dict(
+                    #             #     self.dataset_balance.get(f"{out}").get('val').get('presence_balance'),
+                    #             #     mode=self.interactive_config.data_balance.sorted.name
+                    #             # )
+                    #             square_names, square_count = CreateArray().sort_dict(
+                    #                 self.dataset_balance.get(f"{out}").get(data_type).get('square_balance'),
+                    #                 mode=self.interactive_config.data_balance.sorted.name
+                    #             )
+                    #             # square_val_names, square_val_count = CreateArray().sort_dict(
+                    #             #     self.dataset_balance.get(f"{out}").get('val').get('square_balance'),
+                    #             #     mode=self.interactive_config.data_balance.sorted.name
+                    #             # )
+                    #             return_data.append(
+                    #                 self._fill_graph_front_structure(
+                    #                     _id=_id,
+                    #                     _type='histogram',
+                    #                     type_data=data_type,
+                    #                     graph_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка - "
+                    #                                f"баланс присутсвия",
+                    #                     short_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} - присутсвие",
+                    #                     x_label="Название класса",
+                    #                     y_label="Значение",
+                    #                     plot_data=[self._fill_graph_plot_data(x=presence_names, y=presence_count)],
+                    #                 )
+                    #             )
+                    #             _id += 1
+                    for data_type in ["train", "val"]:
+                        preset[data_type] = {}
+                        # dataset_balance[f"{out}"][data_type] = {
+                        #     "presence_balance": {},
+                        #     "percent_balance": {},
+                        #     "colormap": {}
+                        # }
+                        class_percent = {}
+                        class_count = {}
+                        for cl in classes:
+                            class_percent[classes_names[cl]] = np.round(
+                                np.sum(
+                                    self.y_true.get(data_type).get(f"{out}")[:, :, :, cl]) * 100
+                                / np.prod(self.y_true.get(data_type).get(f"{out}")[:, :, :, 0].shape)
+                            ).astype("float").tolist()
+                            class_count[classes_names[cl]] = 0
+                            colormap_path = os.path.join(
+                                self.preset_path,
+                                f"balance_segmentation_colormap_{data_type}_class_{classes_names[cl]}.webp"
+                            )
+                            self._get_image_class_colormap(
+                                array=self.y_true.get(data_type).get(f"{out}"),
+                                colors=self.class_colors,
+                                class_id=cl,
+                                save_path=colormap_path
+                            )
+                            preset[data_type]["colormap"][classes_names[cl]] = colormap_path
+
+                        for img_array in np.argmax(self.y_true.get(data_type).get(f"{out}"), axis=-1):
+                            for cl in classes:
+                                if cl in img_array:
+                                    class_count[classes_names[cl]] += 1
+
+                        preset[data_type]["presence_balance"] = class_count
+                        preset[data_type]["square_balance"] = class_percent
+                        preset[data_type]["colormap"]
+                    #             return_data.append(
+                    #                 self._fill_graph_front_structure(
+                    #                     _id=_id,
+                    #                     _type='histogram',
+                    #                     type_data="val",
+                    #                     graph_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка "
+                    #                                f"- процент пространства",
+                    #                     short_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} - пространство",
+                    #                     x_label="Название класса",
+                    #                     y_label="Значение",
+                    #                     plot_data=[self._fill_graph_plot_data(x=square_names, y=square_count)],
+                    #                 )
+                    #             )
+                    #             _id += 1
+
+                    for data_type in ["train", "val"]:
+                        preset[data_type] = {}
+                        # dataset_balance[f"{out}"][data_type] = {
+                        #     "presence_balance": {},
+                        #     "percent_balance": {},
+                        #     "colormap": {}
+                        # }
+                        class_percent = {}
+                        class_count = {}
+                        for cl in classes:
+                            class_percent[classes_names[cl]] = np.round(
+                                np.sum(
+                                    self.y_true.get(data_type).get(f"{out}")[:, :, :, cl]) * 100
+                                / np.prod(self.y_true.get(data_type).get(f"{out}")[:, :, :, 0].shape)
+                            ).astype("float").tolist()
+                            class_count[classes_names[cl]] = 0
+                            colormap_path = os.path.join(
+                                self.preset_path,
+                                f"balance_segmentation_colormap_{data_type}_class_{classes_names[cl]}.webp"
+                            )
+                            self._get_image_class_colormap(
+                                array=self.y_true.get(data_type).get(f"{out}"),
+                                colors=self.class_colors,
+                                class_id=cl,
+                                save_path=colormap_path
+                            )
+                            preset[data_type]["colormap"][classes_names[cl]] = colormap_path
+
+                        for img_array in np.argmax(self.y_true.get(data_type).get(f"{out}"), axis=-1):
+                            for cl in classes:
+                                if cl in img_array:
+                                    class_count[classes_names[cl]] += 1
+
+                        preset[data_type]["presence_balance"] = class_count
+                        preset[data_type]["square_balance"] = class_percent
+                        preset[data_type]["colormap"]
+                    #
+                    #             for class_name, map_link in self.dataset_balance.get(f"{out}").get('train').get('colormap').items():
+                    #                 return_data.append(
+                    #                     self._fill_graph_front_structure(
+                    #                         _id=_id,
+                    #                         _type='colormap',
+                    #                         type_data=data_type,
+                    #                         graph_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка "
+                    #                                    f"- Цветовая карта класса {class_name}",
+                    #                         short_name="",
+                    #                         x_label="",
+                    #                         y_label="",
+                    #                         plot_data=map_link,
+                    #                     )
+                    #                 )
+                    #                 _id += 1
 
             if task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.ohe or \
                     encoding == LayerEncodingChoice.multi:
@@ -1929,219 +2125,220 @@ class InteractiveCallback:
         return return_data
 
     def _get_balance_data_request(self) -> list:
-        return_data = []
-        _id = 1
-        for out in self.options.data.outputs.keys():
-            task = self.options.data.outputs.get(out).task
-            if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
-                class_train_names, class_train_count = CreateArray().sort_dict(
-                    self.dataset_balance.get(f"{out}").get('train'),
-                    mode=self.interactive_config.data_balance.sorted.name
-                )
-                class_val_names, class_val_count = CreateArray().sort_dict(
-                    self.dataset_balance.get(f"{out}").get('val'),
-                    mode=self.interactive_config.data_balance.sorted.name
-                )
-                return_data.append(
-                    self._fill_graph_front_structure(
-                        _id=_id,
-                        _type='histogram',
-                        type_data="train",
-                        graph_name=f"Тренировочная выборка",
-                        short_name=f"Тренировочная выборка",
-                        x_label="Название класса",
-                        y_label="Значение",
-                        plot_data=[self._fill_graph_plot_data(x=class_train_names, y=class_train_count)],
-                    )
-                )
-                _id += 1
-                return_data.append(
-                    self._fill_graph_front_structure(
-                        _id=_id,
-                        _type='histogram',
-                        type_data="val",
-                        graph_name=f"Проверчная выборка",
-                        short_name=f"Проверчная выборка",
-                        x_label="Название класса",
-                        y_label="Значение",
-                        plot_data=[self._fill_graph_plot_data(x=class_val_names, y=class_val_count)],
-                    )
-                )
-                _id += 1
-
-            elif task == LayerOutputTypeChoice.Segmentation:
-                for data_type in ['train', 'val']:
-                    presence_names, presence_count = CreateArray().sort_dict(
-                        self.dataset_balance.get(f"{out}").get(data_type).get('presence_balance'),
-                        mode=self.interactive_config.data_balance.sorted.name
-                    )
-                    # presence_val_names, presence_val_count = CreateArray().sort_dict(
-                    #     self.dataset_balance.get(f"{out}").get('val').get('presence_balance'),
-                    #     mode=self.interactive_config.data_balance.sorted.name
-                    # )
-                    square_names, square_count = CreateArray().sort_dict(
-                        self.dataset_balance.get(f"{out}").get(data_type).get('square_balance'),
-                        mode=self.interactive_config.data_balance.sorted.name
-                    )
-                    # square_val_names, square_val_count = CreateArray().sort_dict(
-                    #     self.dataset_balance.get(f"{out}").get('val').get('square_balance'),
-                    #     mode=self.interactive_config.data_balance.sorted.name
-                    # )
-                    return_data.append(
-                        self._fill_graph_front_structure(
-                            _id=_id,
-                            _type='histogram',
-                            type_data=data_type,
-                            graph_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка - "
-                                       f"баланс присутсвия",
-                            short_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} - присутсвие",
-                            x_label="Название класса",
-                            y_label="Значение",
-                            plot_data=[self._fill_graph_plot_data(x=presence_names, y=presence_count)],
-                        )
-                    )
-                    _id += 1
-                    return_data.append(
-                        self._fill_graph_front_structure(
-                            _id=_id,
-                            _type='histogram',
-                            type_data="val",
-                            graph_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка "
-                                       f"- процент пространства",
-                            short_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} - пространство",
-                            x_label="Название класса",
-                            y_label="Значение",
-                            plot_data=[self._fill_graph_plot_data(x=square_names, y=square_count)],
-                        )
-                    )
-                    _id += 1
-
-                    for class_name, map_link in self.dataset_balance.get(f"{out}").get('train').get('colormap').items():
-                        return_data.append(
-                            self._fill_graph_front_structure(
-                                _id=_id,
-                                _type='colormap',
-                                type_data=data_type,
-                                graph_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка "
-                                           f"- Цветовая карта класса {class_name}",
-                                short_name="",
-                                x_label="",
-                                y_label="",
-                                plot_data=map_link,
-                            )
-                        )
-                        _id += 1
-
-            elif task == LayerOutputTypeChoice.TextSegmentation:
-                presence_train_names, presence_train_count = CreateArray().sort_dict(
-                    self.dataset_balance.get(f"{out}").get('train').get('presence_balance'),
-                    mode=self.interactive_config.data_balance.sorted.name
-                )
-                presence_val_names, presence_val_count = CreateArray().sort_dict(
-                    self.dataset_balance.get(f"{out}").get('val').get('presence_balance'),
-                    mode=self.interactive_config.data_balance.sorted.name
-                )
-                return_data.append(
-                    self._fill_graph_front_structure(
-                        _id=_id,
-                        _type='histogram',
-                        type_data="train",
-                        graph_name=f"Тренировочная выборка - баланс присутсвия",
-                        short_name=f"Тренировочная - присутсвие",
-                        x_label="Название класса",
-                        y_label="Значение",
-                        plot_data=[self._fill_graph_plot_data(x=presence_train_names, y=presence_train_count)],
-                    )
-                )
-                return_data.append(
-                    self._fill_graph_front_structure(
-                        _id=_id + 1,
-                        _type='histogram',
-                        type_data="val",
-                        graph_name=f"Проверочная выборка - баланс присутсвия",
-                        short_name=f"Проверочная - присутсвие",
-                        x_label="Название класса",
-                        y_label="Значение",
-                        plot_data=[self._fill_graph_plot_data(x=presence_val_names, y=presence_val_count)],
-                    )
-                )
-                _id += 2
-
-            elif task == LayerOutputTypeChoice.Regression:
-                for data_type in ["train", "val"]:
-                    data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
-                    for histogram in self.dataset_balance[f"{out}"][data_type]['histogram']:
-                        return_data.append(
-                            self._fill_graph_front_structure(
-                                _id=_id,
-                                _type=histogram.get("type"),
-                                type_data=data_type,
-                                graph_name=f"{data_type_name} выборка - "
-                                           f"Гистограмма распределения колонки «{histogram['name']}»",
-                                short_name=histogram['name'],
-                                x_label="Значение",
-                                y_label="Количество",
-                                plot_data=[self._fill_graph_plot_data(x=histogram.get("x"), y=histogram.get("y"))],
-                            )
-                        )
-                        _id += 1
-                    return_data.append(
-                        self._fill_heatmap_front_structure(
-                            _id=_id,
-                            _type="corheatmap",
-                            type_data=data_type,
-                            graph_name=f"{data_type_name} выборка - Матрица корреляций",
-                            short_name=f"Матрица корреляций",
-                            x_label="Колонка",
-                            y_label="Колонка",
-                            labels=self.dataset_balance[f"{out}"][data_type]['correlation']["labels"],
-                            data_array=self.dataset_balance[f"{out}"][data_type]['correlation']["matrix"],
-                        )
-                    )
-                    _id += 1
-
-            elif task == LayerOutputTypeChoice.Timeseries:
-                _id += 1
-                for channel_name in list(self.options.dataframe.get('train').columns):
-                    for data_type in ["train", "val"]:
-                        data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
-                        y_true = self.options.dataframe.get(data_type)[channel_name].to_list()
-                        x_graph_axis = np.arange(len(y_true)).astype('float').tolist()
-                        x_hist, y_hist = self._get_distribution_histogram(y_true, bins=25, categorical=False)
-                        return_data.append(
-                            self._fill_graph_front_structure(
-                                _id=_id,
-                                _type="graphic",
-                                type_data=data_type,
-                                graph_name=f'{data_type_name} выборка - График канала «{channel_name}»',
-                                short_name=f'{data_type_name} - «{channel_name}»',
-                                x_label="Время",
-                                y_label="Количество",
-                                plot_data=[self._fill_graph_plot_data(x=x_graph_axis, y=y_true)],
-                            )
-                        )
-                        return_data.append(
-                            self._fill_graph_front_structure(
-                                _id=_id + 1,
-                                _type="bar",
-                                type_data=data_type,
-                                graph_name=f'{data_type_name} выборка - Гистограмма плотности канала «{channel_name}»',
-                                short_name=f'{data_type_name} - Гистограмма «{channel_name}»',
-                                x_label="Значение",
-                                y_label="Количество",
-                                plot_data=[self._fill_graph_plot_data(x=x_hist, y=y_hist)],
-                            )
-                        )
-                        _id += 2
-
-            elif task == LayerOutputTypeChoice.ObjectDetection:
-                # frequency of classes, like with segmentation
-                pass
-
-            else:
-                pass
-
-        return return_data
+        return self.dataset_balance
+        # return_data = []
+        # _id = 1
+        # for out in self.options.data.outputs.keys():
+        #     task = self.options.data.outputs.get(out).task
+        #     if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
+        #         class_train_names, class_train_count = CreateArray().sort_dict(
+        #             self.dataset_balance.get(f"{out}").get('train'),
+        #             mode=self.interactive_config.data_balance.sorted.name
+        #         )
+        #         class_val_names, class_val_count = CreateArray().sort_dict(
+        #             self.dataset_balance.get(f"{out}").get('val'),
+        #             mode=self.interactive_config.data_balance.sorted.name
+        #         )
+        #         return_data.append(
+        #             self._fill_graph_front_structure(
+        #                 _id=_id,
+        #                 _type='histogram',
+        #                 type_data="train",
+        #                 graph_name=f"Тренировочная выборка",
+        #                 short_name=f"Тренировочная выборка",
+        #                 x_label="Название класса",
+        #                 y_label="Значение",
+        #                 plot_data=[self._fill_graph_plot_data(x=class_train_names, y=class_train_count)],
+        #             )
+        #         )
+        #         _id += 1
+        #         return_data.append(
+        #             self._fill_graph_front_structure(
+        #                 _id=_id,
+        #                 _type='histogram',
+        #                 type_data="val",
+        #                 graph_name=f"Проверчная выборка",
+        #                 short_name=f"Проверчная выборка",
+        #                 x_label="Название класса",
+        #                 y_label="Значение",
+        #                 plot_data=[self._fill_graph_plot_data(x=class_val_names, y=class_val_count)],
+        #             )
+        #         )
+        #         _id += 1
+        #
+        #     elif task == LayerOutputTypeChoice.Segmentation:
+        #         for data_type in ['train', 'val']:
+        #             presence_names, presence_count = CreateArray().sort_dict(
+        #                 self.dataset_balance.get(f"{out}").get(data_type).get('presence_balance'),
+        #                 mode=self.interactive_config.data_balance.sorted.name
+        #             )
+        #             # presence_val_names, presence_val_count = CreateArray().sort_dict(
+        #             #     self.dataset_balance.get(f"{out}").get('val').get('presence_balance'),
+        #             #     mode=self.interactive_config.data_balance.sorted.name
+        #             # )
+        #             square_names, square_count = CreateArray().sort_dict(
+        #                 self.dataset_balance.get(f"{out}").get(data_type).get('square_balance'),
+        #                 mode=self.interactive_config.data_balance.sorted.name
+        #             )
+        #             # square_val_names, square_val_count = CreateArray().sort_dict(
+        #             #     self.dataset_balance.get(f"{out}").get('val').get('square_balance'),
+        #             #     mode=self.interactive_config.data_balance.sorted.name
+        #             # )
+        #             return_data.append(
+        #                 self._fill_graph_front_structure(
+        #                     _id=_id,
+        #                     _type='histogram',
+        #                     type_data=data_type,
+        #                     graph_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка - "
+        #                                f"баланс присутсвия",
+        #                     short_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} - присутсвие",
+        #                     x_label="Название класса",
+        #                     y_label="Значение",
+        #                     plot_data=[self._fill_graph_plot_data(x=presence_names, y=presence_count)],
+        #                 )
+        #             )
+        #             _id += 1
+        #             return_data.append(
+        #                 self._fill_graph_front_structure(
+        #                     _id=_id,
+        #                     _type='histogram',
+        #                     type_data="val",
+        #                     graph_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка "
+        #                                f"- процент пространства",
+        #                     short_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} - пространство",
+        #                     x_label="Название класса",
+        #                     y_label="Значение",
+        #                     plot_data=[self._fill_graph_plot_data(x=square_names, y=square_count)],
+        #                 )
+        #             )
+        #             _id += 1
+        #
+        #             for class_name, map_link in self.dataset_balance.get(f"{out}").get('train').get('colormap').items():
+        #                 return_data.append(
+        #                     self._fill_graph_front_structure(
+        #                         _id=_id,
+        #                         _type='colormap',
+        #                         type_data=data_type,
+        #                         graph_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка "
+        #                                    f"- Цветовая карта класса {class_name}",
+        #                         short_name="",
+        #                         x_label="",
+        #                         y_label="",
+        #                         plot_data=map_link,
+        #                     )
+        #                 )
+        #                 _id += 1
+        #
+        #     elif task == LayerOutputTypeChoice.TextSegmentation:
+        #         presence_train_names, presence_train_count = CreateArray().sort_dict(
+        #             self.dataset_balance.get(f"{out}").get('train').get('presence_balance'),
+        #             mode=self.interactive_config.data_balance.sorted.name
+        #         )
+        #         presence_val_names, presence_val_count = CreateArray().sort_dict(
+        #             self.dataset_balance.get(f"{out}").get('val').get('presence_balance'),
+        #             mode=self.interactive_config.data_balance.sorted.name
+        #         )
+        #         return_data.append(
+        #             self._fill_graph_front_structure(
+        #                 _id=_id,
+        #                 _type='histogram',
+        #                 type_data="train",
+        #                 graph_name=f"Тренировочная выборка - баланс присутсвия",
+        #                 short_name=f"Тренировочная - присутсвие",
+        #                 x_label="Название класса",
+        #                 y_label="Значение",
+        #                 plot_data=[self._fill_graph_plot_data(x=presence_train_names, y=presence_train_count)],
+        #             )
+        #         )
+        #         return_data.append(
+        #             self._fill_graph_front_structure(
+        #                 _id=_id + 1,
+        #                 _type='histogram',
+        #                 type_data="val",
+        #                 graph_name=f"Проверочная выборка - баланс присутсвия",
+        #                 short_name=f"Проверочная - присутсвие",
+        #                 x_label="Название класса",
+        #                 y_label="Значение",
+        #                 plot_data=[self._fill_graph_plot_data(x=presence_val_names, y=presence_val_count)],
+        #             )
+        #         )
+        #         _id += 2
+        #
+        #     elif task == LayerOutputTypeChoice.Regression:
+        #         for data_type in ["train", "val"]:
+        #             data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
+        #             for histogram in self.dataset_balance[f"{out}"][data_type]['histogram']:
+        #                 return_data.append(
+        #                     self._fill_graph_front_structure(
+        #                         _id=_id,
+        #                         _type=histogram.get("type"),
+        #                         type_data=data_type,
+        #                         graph_name=f"{data_type_name} выборка - "
+        #                                    f"Гистограмма распределения колонки «{histogram['name']}»",
+        #                         short_name=histogram['name'],
+        #                         x_label="Значение",
+        #                         y_label="Количество",
+        #                         plot_data=[self._fill_graph_plot_data(x=histogram.get("x"), y=histogram.get("y"))],
+        #                     )
+        #                 )
+        #                 _id += 1
+        #             return_data.append(
+        #                 self._fill_heatmap_front_structure(
+        #                     _id=_id,
+        #                     _type="corheatmap",
+        #                     type_data=data_type,
+        #                     graph_name=f"{data_type_name} выборка - Матрица корреляций",
+        #                     short_name=f"Матрица корреляций",
+        #                     x_label="Колонка",
+        #                     y_label="Колонка",
+        #                     labels=self.dataset_balance[f"{out}"][data_type]['correlation']["labels"],
+        #                     data_array=self.dataset_balance[f"{out}"][data_type]['correlation']["matrix"],
+        #                 )
+        #             )
+        #             _id += 1
+        #
+        #     elif task == LayerOutputTypeChoice.Timeseries:
+        #         _id += 1
+        #         for channel_name in list(self.options.dataframe.get('train').columns):
+        #             for data_type in ["train", "val"]:
+        #                 data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
+        #                 y_true = self.options.dataframe.get(data_type)[channel_name].to_list()
+        #                 x_graph_axis = np.arange(len(y_true)).astype('float').tolist()
+        #                 x_hist, y_hist = self._get_distribution_histogram(y_true, bins=25, categorical=False)
+        #                 return_data.append(
+        #                     self._fill_graph_front_structure(
+        #                         _id=_id,
+        #                         _type="graphic",
+        #                         type_data=data_type,
+        #                         graph_name=f'{data_type_name} выборка - График канала «{channel_name}»',
+        #                         short_name=f'{data_type_name} - «{channel_name}»',
+        #                         x_label="Время",
+        #                         y_label="Количество",
+        #                         plot_data=[self._fill_graph_plot_data(x=x_graph_axis, y=y_true)],
+        #                     )
+        #                 )
+        #                 return_data.append(
+        #                     self._fill_graph_front_structure(
+        #                         _id=_id + 1,
+        #                         _type="bar",
+        #                         type_data=data_type,
+        #                         graph_name=f'{data_type_name} выборка - Гистограмма плотности канала «{channel_name}»',
+        #                         short_name=f'{data_type_name} - Гистограмма «{channel_name}»',
+        #                         x_label="Значение",
+        #                         y_label="Количество",
+        #                         plot_data=[self._fill_graph_plot_data(x=x_hist, y=y_hist)],
+        #                     )
+        #                 )
+        #                 _id += 2
+        #
+        #     elif task == LayerOutputTypeChoice.ObjectDetection:
+        #         # frequency of classes, like with segmentation
+        #         pass
+        #
+        #     else:
+        #         pass
+        #
+        # return return_data
 
     @staticmethod
     def _get_confusion_matrix(y_true, y_pred, get_percent=True) -> tuple:
