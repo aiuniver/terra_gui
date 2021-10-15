@@ -1,29 +1,33 @@
+import json
 import os
 import re
-import json
 import shutil
-
-from typing import Optional, Dict
 from pathlib import Path
+from typing import Optional
+
+from django.conf import settings
 from pydantic import validator, DirectoryPath, FilePath
 from transliterate import slugify
 
-from django.conf import settings
-
-from apps.plugins.project import exceptions
 from apps.plugins.frontend import defaults_data
 from apps.plugins.frontend.presets.defaults import TrainingTasksRelations
-
+from apps.plugins.project import exceptions
 from terra_ai import settings as terra_settings
 from terra_ai.agent import agent_exchange
-from terra_ai.training.guinn import interactive as training_interactive
-from terra_ai.data.mixins import BaseMixinData
-from terra_ai.data.types import confilepath
-from terra_ai.data.extra import HardwareAcceleratorData
 from terra_ai.data.datasets.dataset import DatasetData
-from terra_ai.data.modeling.model import ModelDetailsData
+from terra_ai.data.deploy import tasks as deploy_tasks
+from terra_ai.data.deploy.extra import (
+    CollectionClasses,
+    TaskTypeChoice as DeployTaskTypeChoice,
+)
+from terra_ai.data.extra import HardwareAcceleratorData
+from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.modeling.layer import LayerData
+from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.presets.models import EmptyModelDetailsData
+from terra_ai.data.training.checkpoint import CheckpointData
+from terra_ai.data.training.extra import LossGraphShowChoice, MetricGraphShowChoice
+from terra_ai.data.training.outputs import OutputsList
 from terra_ai.data.training.train import (
     TrainData,
     InteractiveData,
@@ -32,12 +36,8 @@ from terra_ai.data.training.train import (
     MetricGraphsList,
     ProgressTableList,
 )
-from terra_ai.data.training.outputs import OutputsList
-from terra_ai.data.training.checkpoint import CheckpointData
-from terra_ai.data.training.extra import LossGraphShowChoice, MetricGraphShowChoice
-from terra_ai.data.deploy import tasks as deploy_tasks
-from terra_ai.data.deploy.extra import TaskTypeChoice as DeployTaskTypeChoice
-
+from terra_ai.data.types import confilepath
+from terra_ai.training.guinn import interactive as training_interactive
 
 UNKNOWN_NAME = "NoName"
 DATA_PATH = {
@@ -58,10 +58,38 @@ PROJECT_PATH = {
 }
 
 TASKS_RELATIONS = {
-    DeployTaskTypeChoice.image_classification: {"ImageClassification"},
-    DeployTaskTypeChoice.image_segmentation: {"ImageSegmentation"},
-    DeployTaskTypeChoice.text_classification: {"TextClassification"},
-    DeployTaskTypeChoice.text_segmentation: {"TextTextSegmentation"},
+    DeployTaskTypeChoice.image_classification: {
+        "inputs": {"Image"},
+        "outputs": {"Classification"},
+    },
+    DeployTaskTypeChoice.image_segmentation: {
+        "inputs": {"Image"},
+        "outputs": {"Segmentation"},
+    },
+    DeployTaskTypeChoice.text_classification: {
+        "inputs": {"Text"},
+        "outputs": {"Classification"},
+    },
+    DeployTaskTypeChoice.text_segmentation: {
+        "inputs": {"Text"},
+        "outputs": {"TextSegmentation"},
+    },
+    DeployTaskTypeChoice.video_classification: {
+        "inputs": {"Video"},
+        "outputs": {"Classification"},
+    },
+    DeployTaskTypeChoice.audio_classification: {
+        "inputs": {"Audio"},
+        "outputs": {"Classification"},
+    },
+    DeployTaskTypeChoice.table_data_classification: {
+        "inputs": {"Dataframe", "Text"},
+        "outputs": {"Classification"},
+    },
+    DeployTaskTypeChoice.table_data_regression: {
+        "inputs": {"Dataframe", "Text"},
+        "outputs": {"Regression"},
+    },
 }
 
 
@@ -130,7 +158,12 @@ class TrainingDetailsData(BaseMixinData):
 
 class DeployDetailsData(BaseMixinData):
     type: Optional[DeployTaskTypeChoice]
-    data: Dict[str, deploy_tasks.BaseCollection] = {}
+    data: Optional[deploy_tasks.BaseCollectionList]
+
+    def dict(self, **kwargs):
+        data = super().dict(**kwargs)
+        data.update({"data": self.data})
+        return data
 
 
 class Project(BaseMixinData):
@@ -198,7 +231,7 @@ class Project(BaseMixinData):
                     dataset=DatasetData(**_dataset) if _dataset else None,
                     model=ModelDetailsData(**(_model or EmptyModelDetailsData)),
                     training=TrainingDetailsData(**(_training or {})),
-                    deploy=DeployDetailsData(**(_deploy or {})),
+                    deploy=DeployDetailsData(**(_deploy or [])),
                 )
         except Exception:
             self.reset()
@@ -208,54 +241,33 @@ class Project(BaseMixinData):
             json.dump(json.loads(self.json()), _config_ref)
 
     def set_deploy(self):
-        model = self.dataset.model if self.dataset else None
-        tasks = {}
-        if model:
-            for _input in model.inputs:
-                for _output in model.outputs:
-                    tasks.update(
-                        {
-                            f"{_input.group}{_input.id}_{_output.group}{_output.id}": f"{_input.task.name}{_output.task.name}"
-                        }
-                    )
-        try:
-            _type = list(TASKS_RELATIONS.keys())[
-                list(TASKS_RELATIONS.values()).index(set(tasks.values()))
-            ]
-        except Exception:
+        deploy_type = self.predict_deploy_type()
+        if not deploy_type:
             self.deploy = DeployDetailsData()
             return
 
-        data = {}
-        for _id, _task in tasks.items():
-            _task_class = getattr(deploy_tasks, f"{_task}CollectionList", None)
-            if not _task_class:
-                continue
-            data.update(
-                {
-                    _id: {
-                        "type": _task,
-                        "data": _task_class(
-                            list(
-                                map(
-                                    lambda _: None,
-                                    list(range(terra_settings.DEPLOY_PRESET_COUNT)),
-                                )
-                            ),
-                            path=Path(project_path.deploy),
-                        ),
-                    }
-                }
-            )
-        self.deploy = DeployDetailsData(**{"type": _type, "data": data})
-        for item in self.deploy.data.values():
-            item.data.reload(list(range(terra_settings.DEPLOY_PRESET_COUNT)))
-            item.data.try_init()
+        _task_class = getattr(
+            deploy_tasks, getattr(CollectionClasses, deploy_type).value
+        )
+        data = _task_class(
+            list(
+                map(
+                    lambda _: None,
+                    list(range(terra_settings.DEPLOY_PRESET_COUNT)),
+                )
+            ),
+            path=Path(project_path.deploy),
+        )
+
+        self.deploy = DeployDetailsData(**{"type": deploy_type, "data": data})
+        self.deploy.data.reload(list(range(terra_settings.DEPLOY_PRESET_COUNT)))
+        self.deploy.data.try_init()
 
     def clear_training(self):
         project_path.clear_training()
         self.training = TrainingDetailsData()
         self.deploy = DeployDetailsData()
+        self.set_deploy()
 
     def set_dataset(self, dataset: DatasetData = None, reset_model: bool = False):
         if dataset is None:
@@ -439,6 +451,19 @@ class Project(BaseMixinData):
             self.model = self.dataset.model
         else:
             self.model = ModelDetailsData(**EmptyModelDetailsData)
+
+    def predict_deploy_type(self) -> Optional[str]:
+        """Определяет тип деплоя"""
+        model = self.dataset.model if self.dataset else None
+        if not model:
+            return
+        inputs = set(input.task.name for input in model.inputs)
+        outputs = set(output.task.name for output in model.outputs)
+        index = list(TASKS_RELATIONS.values()).index(
+            {"inputs": inputs, "outputs": outputs}
+        )
+        deploy_type = list(TASKS_RELATIONS.keys())[index].name
+        return deploy_type
 
 
 data_path = DataPathData(**DATA_PATH)
