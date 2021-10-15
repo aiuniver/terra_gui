@@ -1331,10 +1331,10 @@ class CreateArray(object):
                             }
                             inverse_true = options.preprocessing.inverse_data(inp_options).get(output_id).get(
                                 channel[3])
-                            inverse_true = inverse_true.squeeze().tolist()
+                            inverse_true = inverse_true.squeeze().astype('float').tolist()
                         else:
                             inverse_true = options.X.get('val').get(f"{input_id}")[
-                                           idx, channel[0]:channel[0] + 1].squeeze().tolist()
+                                           idx, channel[0]:channel[0] + 1].squeeze().astype('float').tolist()
                         actual_value, predict_values = CreateArray().postprocess_classification(
                                 predict_array=np.expand_dims(postprocess_array[idx], axis=0),
                                 true_array=true_array[idx],
@@ -1430,17 +1430,17 @@ class CreateArray(object):
                             }
                             inverse_true = options.preprocessing.inverse_data(inp_options).get(output_id).get(
                                 channel[3])
-                            inverse_true = inverse_true.squeeze().tolist()
+                            inverse_true = inverse_true.squeeze().astype('float').tolist()
                             out_options = {int(output_id): {
                                 channel[3]: array[idx, channel[2]:channel[2] + 1].reshape(-1, 1)}
                             }
                             inverse_pred = options.preprocessing.inverse_data(out_options).get(output_id).get(
                                 channel[3])
-                            inverse_pred = inverse_pred.squeeze().tolist()
+                            inverse_pred = inverse_pred.squeeze().astype('float').tolist()
                         else:
                             inverse_true = options.X.get('val').get(f"{input_id}")[
-                                           idx, channel[0]:channel[0] + 1].squeeze().tolist()
-                            inverse_pred = array[idx, channel[2]:channel[2] + 1].squeeze().tolist()
+                                           idx, channel[0]:channel[0] + 1].squeeze().astype('float').tolist()
+                            inverse_pred = array[idx, channel[2]:channel[2] + 1].squeeze().astype('float').tolist()
                         button_save_path = os.path.join(save_path, f"ts_button_channel_{channel[2]}_image_{idx}.jpg")
                         plt.plot(inverse_true)
                         plt.savefig(button_save_path)
@@ -1464,15 +1464,19 @@ class CreateArray(object):
                 for idx in example_idx:
                     row_list = []
                     for inp_col in source_col:
-                        row_list.append(options.dataframe.get('val')[inp_col][idx])
+                        row_list.append(f"{options.dataframe.get('val')[inp_col][idx]}")
+                        # if isinstance(options.dataframe.get('val')[inp_col][idx], str):
+                        #     row_list.append(options.dataframe.get('val')[inp_col][idx])
+                        # if isinstance(options.dataframe.get('val')[inp_col][idx], (int, float)):
+                        #     row_list.append(float(options.dataframe.get('val')[inp_col][idx]))
                     return_data[output_id]['preset'].append(row_list)
                     for i, col in enumerate(list(options.data.columns.get(output_id).keys())):
                         if type(preprocess.get(col)).__name__ in ['StandardScaler', 'MinMaxScaler']:
                             _options = {int(output_id): {col: array[idx, i:i + 1].reshape(-1, 1)}}
                             inverse_col = options.preprocessing.inverse_data(_options).get(output_id).get(col)
-                            inverse_col = inverse_col.squeeze().tolist()
+                            inverse_col = inverse_col.squeeze().astype('float').tolist()
                         else:
-                            inverse_col = array[idx, i:i + 1].tolist()
+                            inverse_col = array[idx, i:i + 1].astype('float').tolist()
                     return_data[output_id]['label'].append(inverse_col)
 
             else:
