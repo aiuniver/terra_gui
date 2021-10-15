@@ -1302,6 +1302,7 @@ class CreateArray(object):
                         options=options.data.outputs[output_id],
                         return_mode='deploy'
                     )
+
                     return_data[output_id].append(
                         {
                             "source": source,
@@ -1311,7 +1312,7 @@ class CreateArray(object):
                     )
                     _id += 1
 
-            if options.data.outputs[output_id].task == LayerOutputTypeChoice.TimeseriesTrend:
+            elif options.data.outputs[output_id].task == LayerOutputTypeChoice.TimeseriesTrend:
                 return_data[output_id] = {}
                 # TODO: считаетм что инпут один
                 input_id = list(options.data.inputs.keys())[0]
