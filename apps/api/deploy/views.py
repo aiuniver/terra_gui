@@ -23,8 +23,7 @@ class ReloadAPIView(BaseAPIView):
         serializer = ReloadSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
-        _id = serializer.validated_data.get("id")
-        request.project.deploy.data.reload(serializer.validated_data.get("indexes"))
+        request.project.deploy.data.reload(serializer.validated_data)
         request.project.save()
         return BaseResponseSuccess(list(request.project.deploy.data))
 

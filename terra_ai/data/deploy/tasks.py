@@ -243,17 +243,19 @@ class TableDataClassification(BaseCollectionList):
         predict_path = Path(self._path, "preset", "out")
         os.makedirs(source_path, exist_ok=True)
         os.makedirs(predict_path, exist_ok=True)
-        source = interactive.deploy_presets_data
+        presets_data = interactive.deploy_presets_data
 
         preset_file = Path(self._path, "preset.txt")
         label_file = Path(self._path, "label.txt")
 
-        if not source:
+        if not presets_data:
             self._reset()
             return
 
+        presets = presets_data['presets']
+
         for index in range_indexes:
-            value = dict(source[random.randint(0, len(source) - 1)])
+            value = dict(presets[random.randint(0, len(presets) - 1)])
             with open(preset_file, "a") as preset_file_ref:
                 preset_file_ref.write(json.dumps(value.get("source", ""), ensure_ascii=False))
                 preset_file_ref.write('\n')
@@ -264,6 +266,8 @@ class TableDataClassification(BaseCollectionList):
             label.append(json.dumps(item.get("data", []), ensure_ascii=False))
         with open(label_file, "a") as label_file_ref:
             label_file_ref.write("\n".join(label))
+
+
 
 
 class TableDataRegression(TableDataClassification):
