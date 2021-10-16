@@ -14,16 +14,16 @@
       </div> -->
       <div>
         <t-field>
-          <DInput label="Error" @change="change" type="number" />
+          <DInputNumber label="Error" @change="change" />
         </t-field>
         <t-field>
-          <DInput v-model="input" label="Disabled" disabled @change="change"/>
+          <DInputText v-model="input" label="Disabled" disabled @change="change" />
         </t-field>
         <t-field label="Number, small">
-          <DInput v-model="error" small :error="error" @change="change"/>
+          <DInputText v-model="error" small :error="error" @change="change" />
         </t-field>
         <t-field>
-          <DInput v-model="input" icon="search" :error="error" @focus="error = ''" @change="change"/>
+          <DInputText v-model="input" icon="search" :error="error" @focus="error = ''" @change="change" />
         </t-field>
       </div>
     </div>
@@ -34,7 +34,8 @@
 export default {
   name: 'page-not-found',
   components: {
-    DInput: () => import('../components/global/design/forms/DInput.vue'),
+    DInputText: () => import('@/components/global/design/forms/components/DInputText'),
+    DInputNumber: () => import('@/components/global/design/forms/components/DInputNumber'),
   },
   data: () => ({
     input: 'Екатерина',
@@ -56,9 +57,9 @@ export default {
   },
   methods: {
     change(e) {
-      console.log(e)
-    }
-  }
+      console.log(e);
+    },
+  },
 };
 </script>
 

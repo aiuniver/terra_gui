@@ -2028,6 +2028,7 @@ class CreateArray(object):
                 class_names=classes_names,
                 colors=colors
             )
+
             data = [('<p1>', '<p1>', (200, 200, 200))]
             for tag in colors.keys():
                 data.append(

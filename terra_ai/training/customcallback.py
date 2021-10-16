@@ -251,6 +251,11 @@ loss_metric_config = {
             "mode": "max",
             "module": "tensorflow.keras.metrics"
         },
+        "RecallPercent": {
+            "log_name": "recall_percent",
+            "mode": "max",
+            "module": "terra_ai.training.customlosses"
+        },
         "RootMeanSquaredError": {
             "log_name": "root_mean_squared_error",
             "mode": "min",
@@ -879,8 +884,10 @@ class InteractiveCallback:
     def _round_loss_metric(x: float) -> float:
         if not x:
             return x
+        elif x > 1000:
+            return np.round(x, 0).item()
         elif x > 1:
-            return np.round(x, 3).item()
+            return np.round(x, -int(math.floor(math.log10(abs(x))) - 3)).item()
         else:
             return np.round(x, -int(math.floor(math.log10(abs(x))) - 2)).item()
 
@@ -1345,7 +1352,7 @@ class InteractiveCallback:
     @staticmethod
     def _evaluate_overfitting(metric_name: str, mean_log: list, metric_type: str):
         mode = loss_metric_config.get(metric_type).get(metric_name).get("mode")
-        if min(mean_log) or max(mean_log):
+        if min(mean_log) != 0 or max(mean_log) != 0:
             if mode == 'min' and mean_log[-1] > min(mean_log) and \
                     (mean_log[-1] - min(mean_log)) * 100 / min(mean_log) > 2:
                 return True
