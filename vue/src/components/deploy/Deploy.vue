@@ -5,13 +5,16 @@
         <div class="content">
           <div class="board__data-field">
             <div>
-              <button class="board__reload-all" @click="ReloadAll(0)">
+              <button v-if="type !== 'table_data_regression'" class="board__reload-all" @click="ReloadAll(0)">
                 <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
                 <span>Перезагрузить все</span>
               </button>
               <div class="board__title">Исходные данные / Предсказанные данные</div>
-              <div class="board__data">
+              <div v-if="type !== 'table_data_regression'" class="board__data">
                 <IndexCard v-for="(card, i) in Cards" :key="'card-' + i" v-bind="card" :card="card" :index="i" @reload="ReloadCard"/>
+              </div>
+              <div v-else class="board__data">
+                <Table v-bind="deploy" />
               </div>
             </div>
           </div>
@@ -26,11 +29,11 @@
 
 <script>
 import { mapGetters } from 'vuex';
-import IndexCard from './IndexCard';
-// import Table from './Table';
+
 export default {
   components: {
-    IndexCard,
+    IndexCard: () => import('./IndexCard'),
+    Table: () => import('./Table.vue')
     // Table,
   },
   data: () => ({}),
@@ -39,6 +42,8 @@ export default {
       dataLoaded: 'deploy/getDataLoaded',
       Cards: 'deploy/getCards',
       height: 'settings/autoHeight',
+      type: 'deploy/getDeployType',
+      deploy: 'deploy/getDeploy'
     }),
   },
   methods: {
