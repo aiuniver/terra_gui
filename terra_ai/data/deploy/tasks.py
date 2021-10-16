@@ -265,13 +265,15 @@ class TableDataClassification(BaseCollectionList):
             self._reset()
             return
 
-        presets = presets_data['presets']
+        presets = presets_data["presets"]
 
         for index in range_indexes:
             value = dict(presets[random.randint(0, len(presets) - 1)])
             with open(preset_file, "a") as preset_file_ref:
-                preset_file_ref.write(json.dumps(value.get("source", ""), ensure_ascii=False))
-                preset_file_ref.write('\n')
+                preset_file_ref.write(
+                    json.dumps(value.get("source", ""), ensure_ascii=False)
+                )
+                preset_file_ref.write("\n")
             self[index] = value
 
         label = []
@@ -279,8 +281,6 @@ class TableDataClassification(BaseCollectionList):
             label.append(json.dumps(item.get("data", []), ensure_ascii=False))
         with open(label_file, "a") as label_file_ref:
             label_file_ref.write("\n".join(label))
-
-
 
 
 class TableDataRegression(TableDataClassification):
