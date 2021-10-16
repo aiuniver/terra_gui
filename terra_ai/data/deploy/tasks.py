@@ -212,7 +212,7 @@ class VideoClassification(BaseCollectionList):
             label_file_ref.write("\n".join(label))
 
 
-class AudioClassification(VideoClassification):
+class AudioClassification(BaseCollectionList):
     def reload(self, range_indexes: List):
         source = interactive.deploy_presets_data
         label = []

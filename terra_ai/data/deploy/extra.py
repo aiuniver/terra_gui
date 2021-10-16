@@ -5,17 +5,6 @@ class EnvVersionChoice(str, Enum):
     v1 = "v1"
 
 
-class CollectionClasses(str, Enum):
-    image_segmentation = "ImageSegmentation"
-    image_classification = "ImageClassification"
-    text_segmentation = "TextTextSegmentation"
-    text_classification = "TextClassification"
-    video_classification = "VideoClassification"
-    audio_classification = "AudioClassification"
-    table_data_classification = "TableDataClassification"
-    table_data_regression = "TableDataRegression"
-
-
 class TaskTypeChoice(str, Enum):
     image_segmentation = "image_segmentation"
     image_classification = "image_classification"
