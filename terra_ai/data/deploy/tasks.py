@@ -20,11 +20,11 @@ class BaseCollectionDict(Dict):
 
     def reload(self):
         source = interactive.deploy_presets_data
-        if not source:
+        if not source or not isinstance(source, dict):
             return
 
-        self["columns"] = source["columns"]
-        self["predict_column"] = source["predict_column"]
+        self["columns"] = source.get("columns")
+        self["predict_column"] = source.get("predict_column")
 
 
 class BaseCollectionList(List):
