@@ -2,23 +2,10 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from apps.api.validators import validate_slug
-from apps.plugins.project import project
 
 
 class ReloadSerializer(serializers.ListSerializer):
-     child=serializers.IntegerField(min_value=0)
-
-    # def validate(self, indexes):
-    #     if len(indexes) and project.deploy.data:
-    #         _max = max(indexes)
-    #         _len = len(project.deploy.data)
-    #         if _max >= _len:
-    #             raise ValidationError(
-    #                 {
-    #                     "indexes": f"Максимальный индекс списка `{_len-1}`, получено `{_max}`"
-    #                 }
-    #             )
-    #     return super().validate(indexes)
+    child = serializers.IntegerField(min_value=0)
 
 
 class UploadSerializer(serializers.Serializer):

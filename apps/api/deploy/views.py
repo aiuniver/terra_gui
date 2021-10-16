@@ -25,7 +25,7 @@ class ReloadAPIView(BaseAPIView):
             return BaseResponseErrorFields(serializer.errors)
         request.project.deploy.data.reload(serializer.validated_data)
         request.project.save()
-        return BaseResponseSuccess(list(request.project.deploy.data))
+        return BaseResponseSuccess(request.project.deploy.native())
 
 
 class UploadAPIView(BaseAPIView):
