@@ -85,6 +85,16 @@ const router = new Router({
       component: () => import('@/views/Profile'),
     },
     {
+      path: '/projects',
+      name: 'Projects',
+      meta: { 
+        title: process.env.NODE_ENV === 'development' ? 'Проекты' : null,
+        access: true,
+        text: ``, 
+      },
+      component: () => import('@/views/Projects'),
+    },
+    {
       path: '/test',
       name: 'Test',
       meta: { 

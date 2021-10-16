@@ -3,15 +3,15 @@
     <scrollbar>
       <div class="wrapper">
         <div class="content">
-          <div class="board__data-field" v-for="(block, index) in Cards" :key="'block-'+index">
-            <div v-if="block.data != null">
-              <button class="board__reload-all" @click="ReloadAll(index)">
+          <div class="board__data-field">
+            <div>
+              <button class="board__reload-all" @click="ReloadAll(0)">
                 <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
                 <span>Перезагрузить все</span>
               </button>
               <div class="board__title">Исходные данные / Предсказанные данные</div>
               <div class="board__data">
-                <IndexCard v-for="(card, i) in block.data" :key="'card-' + i" v-bind="card" :type="block.type" :block="index" :index="i" @reload="ReloadCard"/>
+                <IndexCard v-for="(card, i) in Cards" :key="'card-' + i" v-bind="card" :card="card" :index="i" @reload="ReloadCard"/>
               </div>
             </div>
           </div>
@@ -41,9 +41,6 @@ export default {
       height: 'settings/autoHeight',
     }),
   },
-  // created() {
-  //   this.$store.dispatch('projects/get');
-  // },
   methods: {
     async ReloadCard(data){
       await this.$store.dispatch('deploy/ReloadCard', data);
@@ -56,6 +53,9 @@ export default {
       await this.$store.dispatch('deploy/ReloadCard', {id, indexes});
     },
   },
+  beforeMount() {
+    console.log(this.Cards)
+  }
 };
 </script>
 

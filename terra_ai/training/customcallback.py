@@ -1,3 +1,4 @@
+import colorsys
 import copy
 import importlib
 import math
@@ -33,29 +34,6 @@ from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.utils import camelize, decamelize
 
 __version__ = 0.084
-
-
-def sort_dict(dict_to_sort: dict, mode='by_name'):
-    if mode == 'by_name':
-        sorted_keys = sorted(dict_to_sort)
-        sorted_values = []
-        for w in sorted_keys:
-            sorted_values.append(dict_to_sort[w])
-        return tuple(sorted_keys), tuple(sorted_values)
-    elif mode == 'ascending':
-        sorted_keys = sorted(dict_to_sort, key=dict_to_sort.get)
-        sorted_values = []
-        for w in sorted_keys:
-            sorted_values.append(dict_to_sort[w])
-        return tuple(sorted_keys), tuple(sorted_values)
-    elif mode == 'descending':
-        sorted_keys = sorted(dict_to_sort, key=dict_to_sort.get, reverse=True)
-        sorted_values = []
-        for w in sorted_keys:
-            sorted_values.append(dict_to_sort[w])
-        return tuple(sorted_keys), tuple(sorted_values)
-    else:
-        return tuple(dict_to_sort.keys()), tuple(dict_to_sort.values())
 
 
 def class_counter(y_array, classes_names: list, ohe=True):
@@ -156,6 +134,11 @@ loss_metric_config = {
             "mode": "min",
             "module": "tensorflow.keras.losses"
         },
+        "YoloLoss": {
+            "log_name": "yolo_loss",
+            "mode": "min",
+            "module": "terra_ai.training.customlosses"
+        }
     },
     "metric": {
         "AUC": {
@@ -410,7 +393,7 @@ class InteractiveCallback:
         self.dataset_balance = self._prepare_dataset_balance()
         self.class_idx = self._prepare_class_idx()
         self.seed_idx = self._prepare_seed()
-        # self.example_idx = self._prepare_example_idx_to_show()
+        self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
 
     def set_status(self, status):
         self.train_states["status"] = status
@@ -480,8 +463,10 @@ class InteractiveCallback:
                     if self.interactive_config.statistic_data.output_id:
                         self.statistic_result = self._get_statistic_data_request()
                 self.urgent_predict = False
+                self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
 
             return {
+                'update': self.random_key,
                 "class_graphics": self.class_graphics,
                 'loss_graphs': self._get_loss_graph_data_request(),
                 'metric_graphs': self._get_metric_graph_data_request(),
@@ -506,7 +491,9 @@ class InteractiveCallback:
                 if self.interactive_config.statistic_data.output_id:
                     self.statistic_result = self._get_statistic_data_request()
 
+            self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
             self.train_progress['train_data'] = {
+                'update': self.random_key,
                 "class_graphics": self.class_graphics,
                 'loss_graphs': self._get_loss_graph_data_request(),
                 'metric_graphs': self._get_metric_graph_data_request(),
@@ -568,13 +555,17 @@ class InteractiveCallback:
             if task == LayerOutputTypeChoice.TextSegmentation and classes_colors:
                 self.class_colors = [color.as_rgb_tuple() for color in classes_colors]
             elif task == LayerOutputTypeChoice.TextSegmentation and not classes_colors:
-                for _ in self.options.data.outputs.get(out).classes_names:
-                    colors.append(tuple(np.random.randint(256, size=3).astype('int').tolist()))
+                name_classes = self.options.data.outputs.get(out).classes_names
+                hsv_tuples = [(x / len(name_classes), 1., 1.) for x in range(len(name_classes))]
+                colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
+                colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
+                # for _ in self.options.data.outputs.get(out).classes_names:
+                #     colors.append(tuple(np.random.randint(256, size=3).astype('int').tolist()))
                 self.class_colors = colors
             elif task == LayerOutputTypeChoice.Segmentation:
                 self.class_colors = [color.as_rgb_tuple() for color in classes_colors]
             else:
-                pass
+                self.class_colors = colors
 
     @staticmethod
     def _prepare_x_val(dataset: PrepareDataset):
@@ -723,21 +714,24 @@ class InteractiveCallback:
         for out in self.options.data.outputs.keys():
             task = self.options.data.outputs.get(out).task
             encoding = self.options.data.outputs.get(out).encoding
-            dataset_balance[f"{out}"] = {}
+
             if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
-                for data_type in self.y_true.keys():
-                    dataset_balance[f"{out}"][data_type] = class_counter(
-                        self.y_true.get(data_type).get(f"{out}"),
-                        self.options.data.outputs.get(out).classes_names,
-                        encoding == 'ohe'
+                dataset_balance[f"{out}"] = {'class_histogramm': {}}
+                for data_type in ['train', 'val']:
+                    dataset_balance[f"{out}"]['class_histogramm'][data_type] = class_counter(
+                        y_array=self.y_true.get(data_type).get(f"{out}"),
+                        classes_names=self.options.data.outputs.get(out).classes_names,
+                        ohe=encoding == LayerEncodingChoice.ohe
                     )
 
             if task == LayerOutputTypeChoice.Segmentation and encoding == LayerEncodingChoice.ohe:
-                for data_type in self.y_true.keys():
-                    dataset_balance[f"{out}"][data_type] = {
-                        "presence_balance": {},
-                        "percent_balance": {}
-                    }
+                dataset_balance[f"{out}"] = {
+                    "presence_balance": {},
+                    "square_balance": {},
+                    "colormap": {}
+                }
+                for data_type in ['train', 'val']:
+                    dataset_balance[f"{out}"]["colormap"][data_type] = {}
                     classes_names = self.options.data.outputs.get(out).classes_names
                     classes = np.arange(self.options.data.outputs.get(out).num_classes)
                     class_percent = {}
@@ -749,21 +743,32 @@ class InteractiveCallback:
                             / np.prod(self.y_true.get(data_type).get(f"{out}")[:, :, :, 0].shape)
                         ).astype("float").tolist()
                         class_count[classes_names[cl]] = 0
+                        colormap_path = os.path.join(
+                            self.preset_path,
+                            f"balance_segmentation_colormap_{data_type}_class_{classes_names[cl]}.webp"
+                        )
+                        self._get_image_class_colormap(
+                            array=self.y_true.get(data_type).get(f"{out}"),
+                            colors=self.class_colors,
+                            class_id=cl,
+                            save_path=colormap_path
+                        )
+                        dataset_balance[f"{out}"]["colormap"][data_type][classes_names[cl]] = colormap_path
 
                     for img_array in np.argmax(self.y_true.get(data_type).get(f"{out}"), axis=-1):
                         for cl in classes:
                             if cl in img_array:
                                 class_count[classes_names[cl]] += 1
-                    dataset_balance[f"{out}"][data_type]["presence_balance"] = class_count
-                    dataset_balance[f"{out}"][data_type]["square_balance"] = class_percent
+                    dataset_balance[f"{out}"]["presence_balance"][data_type] = class_count
+                    dataset_balance[f"{out}"]["square_balance"][data_type] = class_percent
 
             if task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.ohe or \
                     encoding == LayerEncodingChoice.multi:
-                for data_type in self.y_true.keys():
-                    dataset_balance[f"{out}"][data_type] = {
-                        "presence_balance": {},
-                        "percent_balance": {}
-                    }
+                dataset_balance[f"{out}"] = {
+                    "presence_balance": {},
+                    "percent_balance": {}
+                }
+                for data_type in ['train', 'val']:
                     classes_names = self.options.data.outputs.get(out).classes_names
                     classes = np.arange(self.options.data.outputs.get(out).num_classes)
                     class_count = {}
@@ -774,18 +779,19 @@ class InteractiveCallback:
                         class_percent[self.options.data.outputs.get(out).classes_names[cl]] = np.round(
                             np.sum(self.y_true.get(data_type).get(f"{out}")[:, :, cl]) * 100
                             / np.prod(self.y_true.get(data_type).get(f"{out}")[:, :, cl].shape)).item()
-                    dataset_balance[f"{out}"][data_type]["presence_balance"] = class_count
-                    dataset_balance[f"{out}"][data_type]["percent_balance"] = class_percent
+                    dataset_balance[f"{out}"]["presence_balance"][data_type] = class_count
+                    dataset_balance[f"{out}"]["percent_balance"][data_type] = class_percent
 
             if task == LayerOutputTypeChoice.Timeseries:
-                for data_type in self.y_true.keys():
-                    dataset_balance[f"{out}"][data_type] = {}
-                    for output_channel in self.options.data.columns.get(out).keys():
-                        dataset_balance[f"{out}"][data_type][output_channel] = {
-                            'graphic': {},
-                            'dense_histogram': {}
-                        }
-                        dataset_balance[f"{out}"][data_type][output_channel]['graphic'] = {
+                dataset_balance[f"{out}"] = {
+                    'graphic': {},
+                    'dense_histogram': {}
+                }
+                for output_channel in self.options.data.columns.get(out).keys():
+                    dataset_balance[f"{out}"]['graphic'][output_channel] = {}
+                    dataset_balance[f"{out}"]['dense_histogram'][output_channel] = {}
+                    for data_type in ['train', 'val']:
+                        dataset_balance[f"{out}"]['graphic'][output_channel][data_type] = {
                             "type": "graphic",
                             "x": np.array(self.options.dataframe.get(data_type).index).astype('float').tolist(),
                             "y": np.array(self.options.dataframe.get(data_type)[output_channel]).astype(
@@ -796,22 +802,23 @@ class InteractiveCallback:
                             bins=25,
                             categorical=False
                         )
-                        dataset_balance[f"{out}"][data_type][output_channel]['dense_histogram'] = {
-                            "type": "histogram",
+                        dataset_balance[f"{out}"]['dense_histogram'][output_channel][data_type] = {
+                            "type": "bar",
                             "x": x,
                             "y": y
                         }
 
             if task == LayerOutputTypeChoice.Regression:
-                for data_type in self.y_true.keys():
-                    dataset_balance[f"{out}"][data_type] = {
-                        'histogram': [],
-                        'correlation': {}
-                    }
-                    for column in list(self.options.dataframe.get(data_type).columns):
+                dataset_balance[f"{out}"] = {
+                    'histogram': {},
+                    'correlation': {}
+                }
+                for data_type in ['train', 'val']:
+                    dataset_balance[f"{out}"]['histogram'][data_type] = {}
+                    for column in list(self.options.dataframe.get('train').columns):
                         column_id = int(column.split("_")[0])
-                        column_data = list(self.options.dataframe.get(data_type)[column])
                         column_task = self.options.data.columns.get(column_id).get(column).task
+                        column_data = list(self.options.dataframe.get(data_type)[column])
                         if column_task == LayerInputTypeChoice.Text:
                             continue
                         elif column_task == LayerInputTypeChoice.Classification:
@@ -820,21 +827,24 @@ class InteractiveCallback:
                         else:
                             x, y = self._get_distribution_histogram(column_data, bins=25, categorical=False)
                             hist_type = "bar"
-                        dataset_balance[f"{out}"][data_type]['histogram'].append(
-                            {
-                                "name": column.split("_", 1)[-1],
-                                "type": hist_type,
-                                "x": x,
-                                "y": y
-                            }
-                        )
+                        dataset_balance[f"{out}"]['histogram'][data_type][column] = {
+                            "name": column.split("_", 1)[-1],
+                            "type": hist_type,
+                            "x": x,
+                            "y": y
+                        }
+                for data_type in ['train', 'val']:
                     labels, matrix = self._get_correlation_matrix(
                         pd.DataFrame(self.options.dataframe.get(data_type))
                     )
-                    dataset_balance[f"{out}"][data_type]['correlation'] = {
+                    dataset_balance[f"{out}"]['correlation'][data_type] = {
                         "labels": labels,
                         "matrix": matrix
                     }
+
+            if task == LayerOutputTypeChoice.ObjectDetection:
+                pass
+
         return dataset_balance
 
     def _prepare_class_idx(self) -> dict:
@@ -987,10 +997,10 @@ class InteractiveCallback:
                 dice_val = self._dice_coef(y_true, y_pred, batch_mode=True)
                 dice_dict = dict(zip(np.arange(0, len(dice_val)), dice_val))
                 if choice_type == ExampleChoiceTypeChoice.best:
-                    example_idx, _ = sort_dict(dice_dict, mode="descending")
+                    example_idx, _ = CreateArray().sort_dict(dice_dict, mode="descending")
                     example_idx = example_idx[:count]
                 if choice_type == ExampleChoiceTypeChoice.worst:
-                    example_idx, _ = sort_dict(dice_dict, mode="ascending")
+                    example_idx, _ = CreateArray().sort_dict(dice_dict, mode="ascending")
                     example_idx = example_idx[:count]
 
             elif task == LayerOutputTypeChoice.Timeseries or task == LayerOutputTypeChoice.Regression:
@@ -1002,10 +1012,10 @@ class InteractiveCallback:
                     delta = np.mean(delta, axis=-1)
                 delta_dict = dict(zip(np.arange(0, len(delta)), delta))
                 if choice_type == ExampleChoiceTypeChoice.best:
-                    example_idx, _ = sort_dict(delta_dict, mode="ascending")
+                    example_idx, _ = CreateArray().sort_dict(delta_dict, mode="ascending")
                     example_idx = example_idx[:count]
                 if choice_type == ExampleChoiceTypeChoice.worst:
-                    example_idx, _ = sort_dict(delta_dict, mode="descending")
+                    example_idx, _ = CreateArray().sort_dict(delta_dict, mode="descending")
                     example_idx = example_idx[:count]
             else:
                 pass
@@ -1426,7 +1436,7 @@ class InteractiveCallback:
                     progress_state = "normal"
 
                 train_list = self.log_history.get(f"{loss_graph_config.output_idx}").get('loss').get(
-                        self.losses.get(f"{loss_graph_config.output_idx}")).get('train')
+                    self.losses.get(f"{loss_graph_config.output_idx}")).get('train')
                 best_train_value = min(train_list)
                 best_train = self._fill_graph_plot_data(
                     x=[self.log_history.get("epochs")[train_list.index(best_train_value)]],
@@ -1440,7 +1450,7 @@ class InteractiveCallback:
                 )
 
                 val_list = self.log_history.get(f"{loss_graph_config.output_idx}").get('loss').get(
-                        self.losses.get(f"{loss_graph_config.output_idx}")).get("val")
+                    self.losses.get(f"{loss_graph_config.output_idx}")).get("val")
                 best_val_value = min(val_list)
                 best_val = self._fill_graph_plot_data(
                     x=[self.log_history.get("epochs")[val_list.index(best_val_value)]],
@@ -1511,7 +1521,7 @@ class InteractiveCallback:
                     progress_state = 'normal'
 
                 train_list = self.log_history.get(f"{metric_graph_config.output_idx}").get('metrics').get(
-                        metric_graph_config.show_metric.name).get("train")
+                    metric_graph_config.show_metric.name).get("train")
                 best_train_value = min(train_list) if min_max_mode == 'min' else max(train_list)
                 best_train = self._fill_graph_plot_data(
                     x=[self.log_history.get("epochs")[train_list.index(best_train_value)]],
@@ -1526,7 +1536,7 @@ class InteractiveCallback:
                 )
 
                 val_list = self.log_history.get(f"{metric_graph_config.output_idx}").get('metrics').get(
-                        metric_graph_config.show_metric.name).get("val")
+                    metric_graph_config.show_metric.name).get("val")
                 best_val_value = min(val_list) if min_max_mode == 'min' else max(val_list)
                 best_val = self._fill_graph_plot_data(
                     x=[self.log_history.get("epochs")[val_list.index(best_val_value)]],
@@ -1606,9 +1616,9 @@ class InteractiveCallback:
                             inverse_x_array=self.inverse_x_val.get(f"{inp}") if self.inverse_x_val else None,
                             return_mode='callback'
                         )
-                        random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
+                        # random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
                         return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
-                            'update': random_key,
+                            # 'update': random_key,
                             'type': type_choice,
                             'data': data,
                         }
@@ -1932,213 +1942,174 @@ class InteractiveCallback:
 
     def _get_balance_data_request(self) -> list:
         return_data = []
-        _id = 1
+        _id = 0
         for out in self.options.data.outputs.keys():
             task = self.options.data.outputs.get(out).task
+
             if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
-                class_train_names, class_train_count = sort_dict(
-                    self.dataset_balance.get(f"{out}").get('train'),
-                    mode=self.interactive_config.data_balance.sorted.name
-                )
-                class_val_names, class_val_count = sort_dict(
-                    self.dataset_balance.get(f"{out}").get('val'),
-                    mode=self.interactive_config.data_balance.sorted.name
-                )
-                return_data.append(
-                    self._fill_graph_front_structure(
-                        _id=_id,
-                        _type='histogram',
-                        type_data="train",
-                        graph_name=f"Тренировочная выборка",
-                        short_name=f"Тренировочная выборка",
-                        x_label="Название класса",
-                        y_label="Значение",
-                        plot_data=[self._fill_graph_plot_data(x=class_train_names, y=class_train_count)],
-                    )
-                )
-                _id += 1
-                return_data.append(
-                    self._fill_graph_front_structure(
-                        _id=_id,
-                        _type='histogram',
-                        type_data="val",
-                        graph_name=f"Проверчная выборка",
-                        short_name=f"Проверчная выборка",
-                        x_label="Название класса",
-                        y_label="Значение",
-                        plot_data=[self._fill_graph_plot_data(x=class_val_names, y=class_val_count)],
-                    )
-                )
-                _id += 1
-
-            elif task == LayerOutputTypeChoice.Segmentation:
-                presence_train_names, presence_train_count = sort_dict(
-                    self.dataset_balance.get(f"{out}").get('train').get('presence_balance'),
-                    mode=self.interactive_config.data_balance.sorted.name
-                )
-                presence_val_names, presence_val_count = sort_dict(
-                    self.dataset_balance.get(f"{out}").get('val').get('presence_balance'),
-                    mode=self.interactive_config.data_balance.sorted.name
-                )
-                square_train_names, square_train_count = sort_dict(
-                    self.dataset_balance.get(f"{out}").get('train').get('square_balance'),
-                    mode=self.interactive_config.data_balance.sorted.name
-                )
-                square_val_names, square_val_count = sort_dict(
-                    self.dataset_balance.get(f"{out}").get('val').get('square_balance'),
-                    mode=self.interactive_config.data_balance.sorted.name
-                )
-                return_data.append(
-                    self._fill_graph_front_structure(
-                        _id=_id,
-                        _type='histogram',
-                        type_data="train",
-                        graph_name=f"Тренировочная выборка - баланс присутсвия",
-                        short_name=f"Тренировочная - присутсвие",
-                        x_label="Название класса",
-                        y_label="Значение",
-                        plot_data=[self._fill_graph_plot_data(x=presence_train_names, y=presence_train_count)],
-                    )
-                )
-                return_data.append(
-                    self._fill_graph_front_structure(
-                        _id=_id + 1,
-                        _type='histogram',
-                        type_data="val",
-                        graph_name=f"Проверочная выборка - баланс присутсвия",
-                        short_name=f"Проверочная - присутсвие",
-                        x_label="Название класса",
-                        y_label="Значение",
-                        plot_data=[self._fill_graph_plot_data(x=presence_val_names, y=presence_val_count)],
-                    )
-                )
-                return_data.append(
-                    self._fill_graph_front_structure(
-                        _id=_id + 2,
-                        _type='histogram',
-                        type_data="train",
-                        graph_name=f"Тренировочная выборка - процент пространства",
-                        short_name=f"Тренировочная - пространство",
-                        x_label="Название класса",
-                        y_label="Значение",
-                        plot_data=[self._fill_graph_plot_data(x=square_train_names, y=square_train_count)],
-                    )
-                )
-                return_data.append(
-                    self._fill_graph_front_structure(
-                        _id=_id + 3,
-                        _type='histogram',
-                        type_data="val",
-                        graph_name=f"Проверочная выборка - процент пространства",
-                        short_name=f"Проверочная - пространство",
-                        x_label="Название класса",
-                        y_label="Значение",
-                        plot_data=[self._fill_graph_plot_data(x=square_val_names, y=square_val_count)],
-                    )
-                )
-                _id += 4
-
-            elif task == LayerOutputTypeChoice.TextSegmentation:
-                presence_train_names, presence_train_count = sort_dict(
-                    self.dataset_balance.get(f"{out}").get('train').get('presence_balance'),
-                    mode=self.interactive_config.data_balance.sorted.name
-                )
-                presence_val_names, presence_val_count = sort_dict(
-                    self.dataset_balance.get(f"{out}").get('val').get('presence_balance'),
-                    mode=self.interactive_config.data_balance.sorted.name
-                )
-                return_data.append(
-                    self._fill_graph_front_structure(
-                        _id=_id,
-                        _type='histogram',
-                        type_data="train",
-                        graph_name=f"Тренировочная выборка - баланс присутсвия",
-                        short_name=f"Тренировочная - присутсвие",
-                        x_label="Название класса",
-                        y_label="Значение",
-                        plot_data=[self._fill_graph_plot_data(x=presence_train_names, y=presence_train_count)],
-                    )
-                )
-                return_data.append(
-                    self._fill_graph_front_structure(
-                        _id=_id + 1,
-                        _type='histogram',
-                        type_data="val",
-                        graph_name=f"Проверочная выборка - баланс присутсвия",
-                        short_name=f"Проверочная - присутсвие",
-                        x_label="Название класса",
-                        y_label="Значение",
-                        plot_data=[self._fill_graph_plot_data(x=presence_val_names, y=presence_val_count)],
-                    )
-                )
-                _id += 2
-
-            elif task == LayerOutputTypeChoice.Regression:
-                for data_type in ["train", "val"]:
-                    data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
-                    for histogram in self.dataset_balance[f"{out}"][data_type]['histogram']:
-                        return_data.append(
-                            self._fill_graph_front_structure(
-                                _id=_id,
-                                _type=histogram.get("type"),
-                                type_data=data_type,
-                                graph_name=f"{data_type_name} выборка - "
-                                           f"Гистограмма распределения колонки «{histogram['name']}»",
-                                short_name=histogram['name'],
-                                x_label="Значение",
-                                y_label="Количество",
-                                plot_data=[self._fill_graph_plot_data(x=histogram.get("x"), y=histogram.get("y"))],
-                            )
+                for class_type in self.dataset_balance.get(f"{out}").keys():
+                    preset = {}
+                    for data_type in ['train', 'val']:
+                        class_names, class_count = CreateArray().sort_dict(
+                            dict_to_sort=self.dataset_balance.get(f"{out}").get(class_type).get(data_type),
+                            mode=self.interactive_config.data_balance.sorted.name
+                        )
+                        preset[data_type] = self._fill_graph_front_structure(
+                            _id=_id,
+                            _type='histogram',
+                            type_data=data_type,
+                            graph_name=f"Выход {out} - "
+                                       f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка",
+                            short_name=f"{out} - {'Тренировочная' if data_type == 'train' else 'Проверочная'}",
+                            x_label="Название класса",
+                            y_label="Значение",
+                            plot_data=[self._fill_graph_plot_data(x=class_names, y=class_count)],
                         )
                         _id += 1
-                    return_data.append(
-                        self._fill_heatmap_front_structure(
-                            _id=_id,
-                            _type="corheatmap",
-                            type_data=data_type,
-                            graph_name=f"{data_type_name} выборка - Матрица корреляций",
-                            short_name=f"Матрица корреляций",
-                            x_label="Колонка",
-                            y_label="Колонка",
-                            labels=self.dataset_balance[f"{out}"][data_type]['correlation']["labels"],
-                            data_array=self.dataset_balance[f"{out}"][data_type]['correlation']["matrix"],
-                        )
-                    )
-                    _id += 1
+                    return_data.append(preset)
+
+            elif task == LayerOutputTypeChoice.Segmentation:
+                for class_type in self.dataset_balance.get(f"{out}").keys():
+                    preset = {}
+                    if class_type in ["presence_balance", "square_balance"]:
+                        for data_type in ['train', 'val']:
+                            names, count = CreateArray().sort_dict(
+                                dict_to_sort=self.dataset_balance.get(f"{out}").get(class_type).get(data_type),
+                                mode=self.interactive_config.data_balance.sorted.name
+                            )
+                            preset[data_type] = self._fill_graph_front_structure(
+                                _id=_id,
+                                _type='histogram',
+                                type_data=data_type,
+                                graph_name=f"Выход {out} - {'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка - "
+                                           f"{'баланс присутсвия' if class_type == 'presence_balance' else 'процент пространства'}",
+                                short_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} - "
+                                           f"{'присутсвие' if class_type == 'presence_balance' else 'пространство'}",
+                                x_label="Название класса",
+                                y_label="Значение",
+                                plot_data=[self._fill_graph_plot_data(x=names, y=count)],
+                            )
+                            _id += 1
+                        return_data.append(preset)
+
+                    if class_type == "colormap":
+                        for class_name, map_link in self.dataset_balance.get(f"{out}").get('colormap').get('train').items():
+                            preset = {}
+                            for data_type in ['train', 'val']:
+                                preset[data_type] = self._fill_graph_front_structure(
+                                    _id=_id,
+                                    _type='colormap',
+                                    type_data=data_type,
+                                    graph_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка "
+                                               f"- Цветовая карта класса {class_name}",
+                                    short_name="",
+                                    x_label="",
+                                    y_label="",
+                                    plot_data=map_link,
+                                )
+                                _id += 1
+                            return_data.append(preset)
+
+            elif task == LayerOutputTypeChoice.TextSegmentation:
+                for class_type in self.dataset_balance.get(f"{out}").keys():
+                    preset = {}
+                    if class_type in ["presence_balance", "percent_balance"]:
+                        for data_type in ['train', 'val']:
+                            names, count = CreateArray().sort_dict(
+                                dict_to_sort=self.dataset_balance.get(f"{out}").get(class_type).get(data_type),
+                                mode=self.interactive_config.data_balance.sorted.name
+                            )
+                            preset[data_type] = self._fill_graph_front_structure(
+                                _id=_id,
+                                _type='histogram',
+                                type_data=data_type,
+                                graph_name=f"Выход {out} - {'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка - "
+                                           f"{'баланс присутсвия' if class_type == 'presence_balance' else 'процент пространства'}",
+                                short_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} - "
+                                           f"{'присутсвие' if class_type == 'presence_balance' else 'процент'}",
+                                x_label="Название класса",
+                                y_label="Значение",
+                                plot_data=[self._fill_graph_plot_data(x=names, y=count)],
+                            )
+                            _id += 1
+                    return_data.append(preset)
+
+            elif task == LayerOutputTypeChoice.Regression:
+                for class_type in self.dataset_balance[f"{out}"].keys():
+                    if class_type == 'histogram':
+                        for column in self.dataset_balance[f"{out}"][class_type]["train"].keys():
+                            preset = {}
+                            for data_type in ["train", "val"]:
+                                histogram = self.dataset_balance[f"{out}"][class_type][data_type][column]
+                                data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
+                                preset[data_type] = self._fill_graph_front_structure(
+                                    _id=_id,
+                                    _type=histogram.get("type"),
+                                    type_data=data_type,
+                                    graph_name=f"Выход {out} - {data_type_name} выборка - "
+                                               f"Гистограмма распределения колонки «{histogram['name']}»",
+                                    short_name=f"{data_type_name} - {histogram['name']}",
+                                    x_label="Значение",
+                                    y_label="Количество",
+                                    plot_data=[self._fill_graph_plot_data(x=histogram.get("x"), y=histogram.get("y"))],
+                                )
+                                _id += 1
+                            return_data.append(preset)
+
+                    if class_type == 'correlation':
+                        preset = {}
+                        for data_type in ["train", "val"]:
+                            data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
+                            preset[data_type] = self._fill_heatmap_front_structure(
+                                _id=_id,
+                                _type="corheatmap",
+                                type_data=data_type,
+                                graph_name=f"Выход {out} - {data_type_name} выборка - Матрица корреляций",
+                                short_name=f"Матрица корреляций",
+                                x_label="Колонка",
+                                y_label="Колонка",
+                                labels=self.dataset_balance[f"{out}"]['correlation'][data_type]["labels"],
+                                data_array=self.dataset_balance[f"{out}"]['correlation'][data_type]["matrix"],
+                            )
+                            _id += 1
+                        return_data.append(preset)
 
             elif task == LayerOutputTypeChoice.Timeseries:
-                _id += 1
-                for channel_name in list(self.options.dataframe.get('train').columns):
-                    for data_type in ["train", "val"]:
-                        data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
-                        y_true = self.options.dataframe.get(data_type)[channel_name].to_list()
-                        x_graph_axis = np.arange(len(y_true)).astype('float').tolist()
-                        x_hist, y_hist = self._get_distribution_histogram(y_true, bins=25, categorical=False)
-                        return_data.append(
-                            self._fill_graph_front_structure(
+                for class_type in self.dataset_balance[f"{out}"].keys():
+                    for channel_name in self.dataset_balance[f"{out}"][class_type].keys():
+                        preset = {}
+                        for data_type in ["train", "val"]:
+                            graph_type = self.dataset_balance[f"{out}"][class_type][channel_name][data_type]['type']
+                            data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
+                            y_true = self.options.dataframe.get(data_type)[channel_name].to_list()
+                            if class_type == 'graphic':
+                                x_graph_axis = np.arange(len(y_true)).astype('float').tolist()
+                                plot_data = [self._fill_graph_plot_data(x=x_graph_axis, y=y_true)]
+                                graph_name = f'Выход {out} - {data_type_name} выборка - ' \
+                                             f'График канала «{channel_name.split("_", 1)[-1]}»'
+                                short_name = f'{data_type_name} - «{channel_name.split("_", 1)[-1]}»'
+                                x_label = "Время"
+                                y_label = "Величина"
+                            if class_type == 'dense_histogram':
+                                x_hist, y_hist = self._get_distribution_histogram(y_true, bins=25, categorical=False)
+                                plot_data = [self._fill_graph_plot_data(x=x_hist, y=y_hist)]
+                                graph_name = f'Выход {out} - {data_type_name} выборка - ' \
+                                             f'Гистограмма плотности канала «{channel_name.split("_", 1)[-1]}»'
+                                short_name = f'{data_type_name} - Гистограмма «{channel_name.split("_", 1)[-1]}»'
+                                x_label = "Значение"
+                                y_label = "Количество"
+                            preset[data_type] = self._fill_graph_front_structure(
                                 _id=_id,
-                                _type="graphic",
+                                _type=graph_type,
                                 type_data=data_type,
-                                graph_name=f'{data_type_name} выборка - График канала «{channel_name}»',
-                                short_name=f'{data_type_name} - «{channel_name}»',
-                                x_label="Время",
-                                y_label="Количество",
-                                plot_data=[self._fill_graph_plot_data(x=x_graph_axis, y=y_true)],
+                                graph_name=graph_name,
+                                short_name=short_name,
+                                x_label=x_label,
+                                y_label=y_label,
+                                plot_data=plot_data,
                             )
-                        )
-                        return_data.append(
-                            self._fill_graph_front_structure(
-                                _id=_id+1,
-                                _type="bar",
-                                type_data=data_type,
-                                graph_name=f'{data_type_name} выборка - Гистограмма плотности канала «{channel_name}»',
-                                short_name=f'{data_type_name} - Гистограмма «{channel_name}»',
-                                x_label="Значение",
-                                y_label="Количество",
-                                plot_data=[self._fill_graph_plot_data(x=x_hist, y=y_hist)],
-                            )
-                        )
-                        _id += 2
+                            _id += 1
+                        return_data.append(preset)
 
             elif task == LayerOutputTypeChoice.ObjectDetection:
                 # frequency of classes, like with segmentation
@@ -2267,3 +2238,11 @@ class InteractiveCallback:
     @staticmethod
     def _dice_coef(y_true, y_pred, batch_mode=True, smooth=1.0):
         return CreateArray().dice_coef(y_true, y_pred, batch_mode=batch_mode, smooth=smooth)
+
+    @staticmethod
+    def _get_image_class_colormap(array: np.ndarray, colors: list, class_id: int, save_path: str):
+        array = np.expand_dims(np.argmax(array, axis=-1), axis=-1) * 512
+        array = np.where(array == class_id * 512, np.array(colors[class_id]) if np.sum(np.array(colors[class_id])) > 50
+        else np.array((255, 255, 255)), np.array((0, 0, 0)))
+        array = (np.sum(array, axis=0) / len(array)).astype("uint8")
+        matplotlib.image.imsave(save_path, array)

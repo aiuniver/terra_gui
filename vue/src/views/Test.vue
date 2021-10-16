@@ -1,19 +1,29 @@
 <template>
   <main class="page-not-found">
     <div class="cont">
-      <div>
+      <!-- <div>
         <t-field inline>
           <t-input-new :list="list" small />
         </t-field>
-      </div>
-      <div>
         <t-field inline>
           <t-checkbox-new :list="list" small />
         </t-field>
-      </div>
-      <div>
         <t-field inline>
           <t-select-new :list="list" small />
+        </t-field>
+      </div> -->
+      <div>
+        <t-field>
+          <DInput label="Error" @change="change" type="number" />
+        </t-field>
+        <t-field>
+          <DInput v-model="input" label="Disabled" disabled @change="change"/>
+        </t-field>
+        <t-field label="Number, small">
+          <DInput v-model="error" small :error="error" @change="change"/>
+        </t-field>
+        <t-field>
+          <DInput v-model="input" icon="search" :error="error" @focus="error = ''" @change="change"/>
         </t-field>
       </div>
     </div>
@@ -23,7 +33,12 @@
 <script>
 export default {
   name: 'page-not-found',
+  components: {
+    DInput: () => import('../components/global/design/forms/DInput.vue'),
+  },
   data: () => ({
+    input: 'Екатерина',
+    error: 'fgfgfg',
     list: [
       { value: 'test', label: 'test' },
       { value: 'dfdfdfdfdfd', label: 'tedfdfdfddddddddfdfst' },
@@ -39,6 +54,11 @@ export default {
     console.log('sdsdsds');
     // window.location.href = "/";
   },
+  methods: {
+    change(e) {
+      console.log(e)
+    }
+  }
 };
 </script>
 

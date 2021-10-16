@@ -1,8 +1,10 @@
+import colorsys
 import copy
 import string
 
 import matplotlib
 from PIL import Image, UnidentifiedImageError
+from matplotlib import pyplot as plt
 from pandas import DataFrame
 from tensorflow.python.keras.preprocessing import image
 from tensorflow.python.keras.utils.np_utils import to_categorical
@@ -383,7 +385,14 @@ class CreateArray(object):
     @staticmethod
     def instructions_object_detection(paths_list: list, **options: dict) -> dict:
 
-        instructions = {'instructions': paths_list,
+        coordinates_list = []
+        for path in paths_list:
+            with open(path, 'r') as coordinates:
+                coordinate = coordinates.read()
+
+            coordinates_list.append(' '.join([coord for coord in coordinate.split('\n') if coord]))
+
+        instructions = {'instructions': coordinates_list,
                         'parameters': options
                         }
 
@@ -652,17 +661,17 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_object_detection(paths_list: list, dataset_folder=None, **options: dict) -> dict:
+    def cut_object_detection(bounding_boxes: list, dataset_folder=None, **options: dict) -> dict:
 
-        for elem in paths_list:
-            os.makedirs(os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem))), exist_ok=True)
-            shutil.copyfile(elem, os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
-                                               os.path.basename(elem)))
+        # for elem in paths_list:
+        #     os.makedirs(os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem))), exist_ok=True)
+        #     shutil.copyfile(elem, os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
+        #                                        os.path.basename(elem)))
+        #
+        # paths_list = [os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)), os.path.basename(elem))
+        #               for elem in paths_list]
 
-        paths_list = [os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)), os.path.basename(elem))
-                      for elem in paths_list]
-
-        instructions = {'instructions': paths_list,
+        instructions = {'instructions': bounding_boxes,
                         'parameters': {'yolo': options['yolo'],
                                        'num_classes': options['num_classes'],
                                        'classes_names': options['classes_names'],
@@ -674,7 +683,7 @@ class CreateArray(object):
     @staticmethod
     def create_image(image_path: str, **options) -> dict:
 
-        img = Image.open(image_path)
+        img = load_img(image_path)
         array = np.array(img)
 
         instructions = {'instructions': array,
@@ -856,12 +865,12 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def create_object_detection(annot_path: str, **options):
+    def create_object_detection(coords: str, **options):
 
         """
         Args:
-            annot_path: str
-                Путь к файлу
+            coords: str
+                Координаты bounding box.
             **options:
                 height: int ######!!!!!!
                     Высота изображения.
@@ -896,12 +905,9 @@ class CreateArray(object):
         # height: int = options['height']
         # width: int = options['width']
 
-        with open(annot_path, 'r') as coordinates:
-            coords = coordinates.read()
         real_boxes = []
-        for coord in coords.split('\n'):
-            if coord:
-                real_boxes.append([literal_eval(num) for num in coord.split(',')])
+        for coord in coords.split(' '):
+            real_boxes.append([literal_eval(num) for num in coord.split(',')])
 
         num_classes: int = options['num_classes']
         zero_boxes_flag: bool = False
@@ -1268,18 +1274,14 @@ class CreateArray(object):
                 postprocess_array = array[i]
             else:
                 postprocess_array = array
-            # print('true_array.shape, postprocess_array.shape', true_array.shape, postprocess_array.shape)
             example_idx = CreateArray().prepare_example_idx_to_show(
-                array=array,
+                array=postprocess_array,
                 true_array=true_array,
                 options=options,
                 output=output_id,
                 count=int(len(true_array) * DEPLOY_PRESET_PERCENT / 100)
             )
-            # print(len(example_idx), len(array), example_idx)
-            if options.data.outputs[output_id].task == LayerOutputTypeChoice.Classification or \
-                    options.data.outputs[output_id].task == LayerOutputTypeChoice.TimeseriesTrend:
-                # y_true = CreateArray().get_y_true(options, output_id)
+            if options.data.outputs[output_id].task == LayerOutputTypeChoice.Classification:
                 return_data[output_id] = []
                 _id = 1
                 for idx in example_idx:
@@ -1301,6 +1303,7 @@ class CreateArray(object):
                         options=options.data.outputs[output_id],
                         return_mode='deploy'
                     )
+
                     return_data[output_id].append(
                         {
                             "source": source,
@@ -1309,6 +1312,48 @@ class CreateArray(object):
                         }
                     )
                     _id += 1
+
+            elif options.data.outputs[output_id].task == LayerOutputTypeChoice.TimeseriesTrend:
+                return_data[output_id] = {}
+                # TODO: считаетм что инпут один
+                input_id = list(options.data.inputs.keys())[0]
+                inp_col_id = []
+                for j, out_col in enumerate(options.data.columns.get(output_id).keys()):
+                    for k, inp_col in enumerate(options.data.columns.get(input_id).keys()):
+                        if out_col.split('_', 1)[-1] == inp_col.split('_', 1)[-1]:
+                            inp_col_id.append((k, inp_col, j, out_col))
+                            break
+                preprocess = options.preprocessing.preprocessing.get(output_id)
+                for channel in inp_col_id:
+                    return_data[output_id][channel[3]] = []
+                    for idx in example_idx:
+                        if type(preprocess.get(channel[3])).__name__ in ['StandardScaler', 'MinMaxScaler']:
+                            inp_options = {int(output_id): {
+                                channel[3]: options.X.get('val').get(f"{input_id}")[idx, channel[0]:channel[0] + 1]}
+                            }
+                            inverse_true = options.preprocessing.inverse_data(inp_options).get(output_id).get(
+                                channel[3])
+                            inverse_true = inverse_true.squeeze().astype('float').tolist()
+                        else:
+                            inverse_true = options.X.get('val').get(f"{input_id}")[
+                                           idx, channel[0]:channel[0] + 1].squeeze().astype('float').tolist()
+                        actual_value, predict_values = CreateArray().postprocess_classification(
+                            predict_array=np.expand_dims(postprocess_array[idx], axis=0),
+                            true_array=true_array[idx],
+                            options=options.data.outputs[output_id],
+                            return_mode='deploy'
+                        )
+                        button_save_path = os.path.join(save_path,
+                                                        f"ts_trend_button_channel_{channel[2]}_image_{idx}.jpg")
+                        plt.plot(inverse_true)
+                        plt.savefig(button_save_path)
+                        plt.close()
+                        return_data[output_id][channel[3]].append(
+                            {
+                                "button_link": button_save_path,
+                                "data": [inverse_true, predict_values]
+                            }
+                        )
 
             elif options.data.outputs[output_id].task == LayerOutputTypeChoice.Segmentation:
                 return_data[output_id] = []
@@ -1369,27 +1414,46 @@ class CreateArray(object):
                 return_data[output_id]["color_map"] = colors
 
             elif options.data.outputs[output_id].task == LayerOutputTypeChoice.Timeseries:
-                for idx in example_idx:
-                    input_id = list(options.data.inputs.keys())[0]
-                    source = CreateArray().postprocess_initial_source(
-                        options=options,
-                        input_id=input_id,
-                        save_id=idx,
-                        example_id=idx,
-                        dataset_path=dataset_path,
-                        preset_path=save_path,
-                        x_array=None if not x_array else x_array.get(f"{input_id}"),
-                        inverse_x_array=None if not inverse_x_array else inverse_x_array.get(f"{input_id}"),
-                        return_mode='deploy'
-                    )
-                    actual_value, predict_values = CreateArray().postprocess_time_series()
-                    return_data[output_id].append(
-                        {
-                            "source": source,
-                            "actual": actual_value,
-                            "data": predict_values
-                        }
-                    )
+                return_data[output_id] = {}
+                # TODO: считаетм что инпут один
+                input_id = list(options.data.inputs.keys())[0]
+                inp_col_id = []
+                for j, out_col in enumerate(options.data.columns.get(output_id).keys()):
+                    for k, inp_col in enumerate(options.data.columns.get(input_id).keys()):
+                        if out_col.split('_', 1)[-1] == inp_col.split('_', 1)[-1]:
+                            inp_col_id.append((k, inp_col, j, out_col))
+                            break
+                preprocess = options.preprocessing.preprocessing.get(output_id)
+                for channel in inp_col_id:
+                    return_data[output_id][channel[3]] = []
+                    for idx in example_idx:
+                        if type(preprocess.get(channel[3])).__name__ in ['StandardScaler', 'MinMaxScaler']:
+                            inp_options = {int(output_id): {
+                                channel[3]: options.X.get('val').get(f"{input_id}")[idx, channel[0]:channel[0] + 1]}
+                            }
+                            inverse_true = options.preprocessing.inverse_data(inp_options).get(output_id).get(
+                                channel[3])
+                            inverse_true = inverse_true.squeeze().astype('float').tolist()
+                            out_options = {int(output_id): {
+                                channel[3]: array[idx, channel[2]:channel[2] + 1].reshape(-1, 1)}
+                            }
+                            inverse_pred = options.preprocessing.inverse_data(out_options).get(output_id).get(
+                                channel[3])
+                            inverse_pred = inverse_pred.squeeze().astype('float').tolist()
+                        else:
+                            inverse_true = options.X.get('val').get(f"{input_id}")[
+                                           idx, channel[0]:channel[0] + 1].squeeze().astype('float').tolist()
+                            inverse_pred = array[idx, channel[2]:channel[2] + 1].squeeze().astype('float').tolist()
+                        button_save_path = os.path.join(save_path, f"ts_button_channel_{channel[2]}_image_{idx}.jpg")
+                        plt.plot(inverse_true)
+                        plt.savefig(button_save_path)
+                        plt.close()
+                        return_data[output_id][channel[3]].append(
+                            {
+                                "button_link": button_save_path,
+                                "data": [inverse_true, inverse_pred]
+                            }
+                        )
 
             elif options.data.outputs[output_id].task == LayerOutputTypeChoice.Regression:
                 return_data[output_id] = {
@@ -1399,19 +1463,23 @@ class CreateArray(object):
                 source_col = []
                 for inp in options.data.inputs.keys():
                     source_col.extend(list(options.data.columns.get(inp).keys()))
-                preprocess = options.preprocessing.preprocessing.get(list(options.data.outputs.keys())[0])
+                preprocess = options.preprocessing.preprocessing.get(output_id)
                 for idx in example_idx:
                     row_list = []
                     for inp_col in source_col:
-                        row_list.append(options.dataframe.get('val')[inp_col][idx])
+                        row_list.append(f"{options.dataframe.get('val')[inp_col][idx]}")
+                        # if isinstance(options.dataframe.get('val')[inp_col][idx], str):
+                        #     row_list.append(options.dataframe.get('val')[inp_col][idx])
+                        # if isinstance(options.dataframe.get('val')[inp_col][idx], (int, float)):
+                        #     row_list.append(float(options.dataframe.get('val')[inp_col][idx]))
                     return_data[output_id]['preset'].append(row_list)
                     for i, col in enumerate(list(options.data.columns.get(output_id).keys())):
                         if type(preprocess.get(col)).__name__ in ['StandardScaler', 'MinMaxScaler']:
                             _options = {int(output_id): {col: array[idx, i:i + 1].reshape(-1, 1)}}
                             inverse_col = options.preprocessing.inverse_data(_options).get(output_id).get(col)
-                            inverse_col = inverse_col.squeeze().tolist()
+                            inverse_col = inverse_col.squeeze().astype('float').tolist()
                         else:
-                            inverse_col = array[idx, i:i + 1].tolist()
+                            inverse_col = array[idx, i:i + 1].astype('float').tolist()
                     return_data[output_id]['label'].append(inverse_col)
 
             else:
@@ -1535,13 +1603,6 @@ class CreateArray(object):
                 graphics_data = []
                 names = ""
                 multi = False
-                if return_mode == 'deploy':
-                    # TODO: для предикта по одному каналу
-                    output_channel = list(options.data.columns.get(list(options.data.columns.keys())[0]).keys())[0]
-                    for i, channel in enumerate(options.data.columns.get(input_id).keys()):
-                        if output_channel == channel:
-                            source = inverse_x_array[example_id][i].astype('float').tolist()
-                            break
                 if return_mode == 'callback':
                     for i, channel in enumerate(options.data.columns.get(input_id).keys()):
                         multi = True if i > 0 else False
@@ -1635,7 +1696,8 @@ class CreateArray(object):
         if choice_type == ExampleChoiceTypeChoice.best or choice_type == ExampleChoiceTypeChoice.worst:
             if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
                 # y_pred = self.y_pred.get(out)
-                if array.shape[-1] == true_array.shape[-1] and encoding == LayerEncodingChoice.ohe and true_array.shape[-1] > 1:
+                if array.shape[-1] == true_array.shape[-1] and encoding == LayerEncodingChoice.ohe and true_array.shape[
+                    -1] > 1:
                     classes = np.argmax(true_array, axis=-1)
                 elif len(true_array.shape) == 1 and not encoding == LayerEncodingChoice.ohe and array.shape[-1] > 1:
                     classes = copy.deepcopy(true_array)
@@ -1950,8 +2012,11 @@ class CreateArray(object):
                 colors[name] = class_colors[i]
                 classes_names[name] = options.classes_names[i]
         else:
+            hsv_tuples = [(x / len(dataset_tags), 1., 1.) for x in range(len(dataset_tags))]
+            gen_colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
+            gen_colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), gen_colors))
             for i, name in enumerate(dataset_tags):
-                colors[name] = tuple(np.random.randint(256, size=3).tolist())
+                colors[name] = gen_colors[i]
                 classes_names[name] = options.classes_names[i]
 
         if return_mode == 'deploy':
@@ -1963,7 +2028,7 @@ class CreateArray(object):
                 class_names=classes_names,
                 colors=colors
             )
-            data = []
+            data = [('<p1>', '<p1>', (200, 200, 200))]
             for tag in colors.keys():
                 data.append(
                     (tag, classes_names[tag], colors[tag])
