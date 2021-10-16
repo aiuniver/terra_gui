@@ -743,7 +743,7 @@ class FitCallback(keras.callbacks.Callback):
                            LayerInputTypeChoice.Audio, LayerInputTypeChoice.Video,
                            LayerInputTypeChoice.Dataframe]
             output_tasks = [LayerOutputTypeChoice.Classification, LayerOutputTypeChoice.Segmentation,
-                            LayerOutputTypeChoice.TextSegmentation]
+                            LayerOutputTypeChoice.TextSegmentation, LayerOutputTypeChoice.Regression]
             if self.dataset.data.inputs[input_key].task in input_tasks and (
                     self.dataset.data.outputs[output_key].task in output_tasks):
                 if self.dataset.data.outputs[output_key].task == LayerOutputTypeChoice.TextSegmentation:
