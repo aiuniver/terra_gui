@@ -57,6 +57,7 @@ class Metric(str, Enum):
     Poisson = "Poisson"
     Precision = "Precision"
     Recall = "Recall"
+    RecallPercent = "RecallPercent"
     RootMeanSquaredError = "RootMeanSquaredError"
     SquaredHinge = "SquaredHinge"
     TopKCategoricalAccuracy = "TopKCategoricalAccuracy"
@@ -89,6 +90,7 @@ TasksGroups = [
             Loss.SquaredHinge,
         ],
         "metrics": [
+            Metric.RecallPercent,
             Metric.CategoricalAccuracy,
             Metric.BinaryAccuracy,
             Metric.CategoricalCrossentropy,
