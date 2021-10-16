@@ -50,7 +50,7 @@ export default {
       for(let i = 0; i < this.Cards[id].data.length; i++){
         indexes.push(i.toString())
       }
-      await this.$store.dispatch('deploy/ReloadCard', {id, indexes});
+      await this.$store.dispatch('deploy/ReloadCard', indexes);
     },
   },
   beforeMount() {
