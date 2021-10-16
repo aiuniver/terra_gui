@@ -69,7 +69,7 @@ export default {
 };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .t-text-segmented {
   width: 400px;
   padding: 10px;

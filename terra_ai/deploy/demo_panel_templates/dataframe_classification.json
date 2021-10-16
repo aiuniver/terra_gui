@@ -6,11 +6,10 @@
     },
     "model": {
       "tag": "model",
-      "task": "Regression",
-      "model": "/home/evgeniy/terra_gui/TerraProjects/models/car_price_1inp_new"
+      "task": "Dataframe",
+      "model": "test_example/ConvCars"
     }
   },
-
   "adjacency_map": {
     "model": [
       "INPUT"
