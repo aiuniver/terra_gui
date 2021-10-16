@@ -80,7 +80,7 @@ export default {
 
   methods: {
     ReloadCard(){
-      this.$emit('reload', { id: 0, indexes: [this.index.toString()]})
+      this.$emit('reload', [this.index.toString()])
     },
   },
   mounted() {
