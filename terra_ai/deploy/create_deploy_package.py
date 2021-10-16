@@ -47,6 +47,11 @@ class CascadeCreator:
         return config
 
     @staticmethod
+    def make_dataframe_classification(config, dataset_config, model):
+        config['cascades']['model']['model'] = model
+        return config
+
+    @staticmethod
     def make_audio_classification(config, dataset_config, model):
         config['cascades']['model']['model'] = model
         return config

@@ -740,7 +740,8 @@ class FitCallback(keras.callbacks.Callback):
             if self.dataset.data.inputs[input_key].task == LayerInputTypeChoice.Dataframe:
                 self._create_form_data_for_dataframe_deploy(deploy_path=deploy_path)
             input_tasks = [LayerInputTypeChoice.Image, LayerInputTypeChoice.Text,
-                           LayerInputTypeChoice.Audio, LayerInputTypeChoice.Video]
+                           LayerInputTypeChoice.Audio, LayerInputTypeChoice.Video,
+                           LayerInputTypeChoice.Dataframe]
             output_tasks = [LayerOutputTypeChoice.Classification, LayerOutputTypeChoice.Segmentation,
                             LayerOutputTypeChoice.TextSegmentation]
             if self.dataset.data.inputs[input_key].task in input_tasks and (
