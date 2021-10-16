@@ -40,7 +40,9 @@ export default {
               this.$store.dispatch('messages/setProgress', 0);
               this.$store.dispatch('messages/setProgressMessage', '');
               await this.$store.dispatch('projects/get');
-              this.$store.dispatch('messages/setMessage', { message: `Датасет «${data?.data?.dataset?.name || ''}» выбран` });
+              this.$store.dispatch('messages/setMessage', {
+                message: `Датасет «${data?.data?.dataset?.name || ''}» выбран`,
+              });
               this.$store.dispatch('settings/setOverlay', false);
             } else {
               if (error) {
@@ -60,40 +62,22 @@ export default {
         }
       }, 1000);
     },
+    async isTraining() {
+      return await this.$store.dispatch('dialogs/trining', { ctx: this, page: 'датасета' });
+    },
     async handleClick() {
-      if (!this.isNoTrain) {
-        this.$Modal.confirm({
-          title: 'Внимание!',
-          content: 'Для загрузки датасета остановите обучение, перейти на страницу обучения ?',
-          width: 300,
-          callback: action => {
-            if (action == 'confirm') {
-              this.$router.push('/training');
-            }
-          },
-      });
-        return;
-      }
-
-      const { alias, group, name } = this.selected;
-
-      const { success: successValidate, data } = await this.$store.dispatch('datasets/validateDatasetOrModel', {
-        dataset: { alias, group },
-      });
-
-      if (successValidate && data) {
-        this.$Modal.confirm({
-          title: 'Внимание!',
-          content: data,
-          width: 300,
-          callback: async action => {
-            if (action == 'confirm') {
-              await this.onChoice({ alias, group, name, reset_model: true });
-            }
-          },
+      const dataset = this.selected;
+      const isTrain = await this.isTraining();
+      if (isTrain) {
+        const { success, data } = await this.$store.dispatch('datasets/validateDatasetOrModel', {
+          dataset,
         });
-      } else {
-        await this.onChoice({ alias, group, name, reset_model: false });
+        if (success && data) {
+          const answer = await this.$store.dispatch('dialogs/confirm', { ctx: this, content: data });
+          if (answer == 'confirm') await this.onChoice({ ...dataset, reset_model: true });
+        } else {
+          await this.onChoice({ ...dataset, reset_model: false });
+        }
       }
     },
     async onChoice({ alias, group, name, reset_model } = {}) {
