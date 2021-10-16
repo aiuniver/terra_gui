@@ -269,12 +269,8 @@ class TableDataClassification(BaseCollectionList):
 class TableDataRegression(TableDataClassification):
     def reload(self, range_indexes: List):
 
-        source_path = Path(self._path, "preset", "in")
-        predict_path = Path(self._path, "preset", "out")
-        os.makedirs(source_path, exist_ok=True)
-        os.makedirs(predict_path, exist_ok=True)
-        preset_file = Path(source_path, "preset.txt")
-        label_file = Path(predict_path, "label.txt")
+        preset_file = Path(self._path, "preset.txt")
+        label_file = Path(self._path, "label.txt")
         source = interactive.deploy_presets_data
 
         if not source:
