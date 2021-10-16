@@ -2897,7 +2897,7 @@ DatasetsGroups = [
                                               'classes_names': None,
                                               'classes_colors': None,
                                               'encoding': 'none',
-                                              'task': LayerInputTypeChoice.Sca.value
+                                              'task': LayerInputTypeChoice.Scaler.value
                                               },
                                 '1_Город': {'name': 'Параметры',
                                             'datatype': 'DIM',
