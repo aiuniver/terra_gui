@@ -29,7 +29,7 @@ def _sync_logs():
             "gui",
             f"{settings.USER_PORT}-{date.year}{date.month}{date.day}{date.hour}{date.minute}{date.second}.log",
         )
-        cmd = f'rsync -avzP -e "ssh -i {Path(settings.BASE_DIR, "rsa.key")} -o StrictHostKeyChecking=no" {Path(settings.BASE_DIR, "logs.txt")} terra_log@81.90.181.251:{destination}'
+        cmd = f'rsync -avzqP -e "ssh -i {Path(settings.BASE_DIR, "rsa.key")} -o StrictHostKeyChecking=no" {Path(settings.BASE_DIR, "logs.txt")} terra_log@81.90.181.251:{destination}'
         subprocess.call(cmd, shell=True)
 
     scheduler.start()
