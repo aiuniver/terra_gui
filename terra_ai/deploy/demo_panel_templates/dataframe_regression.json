@@ -1,0 +1,19 @@
+{
+  "cascades": {
+    "input": {
+      "tag": "input",
+      "type": "dataframe"
+    },
+    "model": {
+      "tag": "model",
+      "task": "Regression",
+      "model": "/home/evgeniy/terra_gui/TerraProjects/models/car_price_1inp_new"
+    }
+  },
+
+  "adjacency_map": {
+    "model": [
+      "INPUT"
+    ]
+  }
+}
