@@ -38,6 +38,7 @@ export default {
       if(training?.result) {
         commit("trainings/SET_TRAIN", training.result, { root: true });
       }
+      return data
     },
     async saveNameProject({ dispatch }, name) {
       const res = { url: "/project/name/", data: name };

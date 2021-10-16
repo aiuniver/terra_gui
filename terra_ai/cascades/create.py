@@ -34,7 +34,6 @@ def json2model_cascade(path: str):
             weight = i
         elif i[-4:] == '.trm':
             model = i
-
     model = load_model(os.path.join(path, model), compile=False, custom_objects=None)
     model.load_weights(os.path.join(path, weight))
 

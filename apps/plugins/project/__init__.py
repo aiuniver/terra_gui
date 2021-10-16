@@ -16,10 +16,7 @@ from terra_ai import settings as terra_settings
 from terra_ai.agent import agent_exchange
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.deploy import tasks as deploy_tasks
-from terra_ai.data.deploy.extra import (
-    CollectionClasses,
-    TaskTypeChoice as DeployTaskTypeChoice,
-)
+from terra_ai.data.deploy.extra import TaskTypeChoice as DeployTaskTypeChoice
 from terra_ai.data.extra import HardwareAcceleratorData
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.modeling.layer import LayerData
@@ -59,38 +56,14 @@ PROJECT_PATH = {
 }
 
 TASKS_RELATIONS = {
-    DeployTaskTypeChoice.image_classification: {
-        "inputs": {"Image"},
-        "outputs": {"Classification"},
-    },
-    DeployTaskTypeChoice.image_segmentation: {
-        "inputs": {"Image"},
-        "outputs": {"Segmentation"},
-    },
-    DeployTaskTypeChoice.text_classification: {
-        "inputs": {"Text"},
-        "outputs": {"Classification"},
-    },
-    DeployTaskTypeChoice.text_segmentation: {
-        "inputs": {"Text"},
-        "outputs": {"TextSegmentation"},
-    },
-    DeployTaskTypeChoice.video_classification: {
-        "inputs": {"Video"},
-        "outputs": {"Classification"},
-    },
-    DeployTaskTypeChoice.audio_classification: {
-        "inputs": {"Audio"},
-        "outputs": {"Classification"},
-    },
-    DeployTaskTypeChoice.table_data_classification: {
-        "inputs": {"Dataframe", "Text"},
-        "outputs": {"Classification"},
-    },
-    DeployTaskTypeChoice.table_data_regression: {
-        "inputs": {"Dataframe", "Text"},
-        "outputs": {"Regression"},
-    },
+    DeployTaskTypeChoice.image_classification: "ImageClassification",
+    DeployTaskTypeChoice.image_segmentation: "ImageSegmentation",
+    DeployTaskTypeChoice.text_classification: "TextClassification",
+    DeployTaskTypeChoice.text_segmentation: "TextTextSegmentation",
+    DeployTaskTypeChoice.video_classification: "VideoClassification",
+    DeployTaskTypeChoice.audio_classification: "AudioClassification",
+    DeployTaskTypeChoice.table_data_classification: "TableDataClassification",
+    DeployTaskTypeChoice.table_data_regression: "TableDataRegression",
 }
 
 
@@ -248,7 +221,7 @@ class Project(BaseMixinData):
             return
 
         _task_class = getattr(
-            deploy_tasks, getattr(CollectionClasses, deploy_type).value
+            deploy_tasks, TASKS_RELATIONS[deploy_type]
         )
         data = _task_class(
             list(
@@ -458,13 +431,11 @@ class Project(BaseMixinData):
         model = self.dataset.model if self.dataset else None
         if not model:
             return
-        inputs = set(input.task.name for input in model.inputs)
-        outputs = set(output.task.name for output in model.outputs)
-        index = list(TASKS_RELATIONS.values()).index(
-            {"inputs": inputs, "outputs": outputs}
-        )
-        deploy_type = list(TASKS_RELATIONS.keys())[index].name
-        return deploy_type
+        inputs = [input.task.name for input in model.inputs]
+        outputs = [output.task.name for output in model.outputs]
+        if "Dataframe" in inputs:
+            return f"table_data_{outputs[0].lower()}"
+        return f'{inputs[0].lower()}_{outputs[0].lower()}'
 
 
 data_path = DataPathData(**DATA_PATH)

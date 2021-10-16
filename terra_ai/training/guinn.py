@@ -21,7 +21,7 @@ from tensorflow.keras.models import load_model
 from tensorflow.python.framework.errors_impl import ResourceExhaustedError
 
 from terra_ai import progress
-from terra_ai.data.datasets.dataset import DatasetData
+from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice, DatasetGroupChoice
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
 from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, \
@@ -740,9 +740,10 @@ class FitCallback(keras.callbacks.Callback):
             if self.dataset.data.inputs[input_key].task == LayerInputTypeChoice.Dataframe:
                 self._create_form_data_for_dataframe_deploy(deploy_path=deploy_path)
             input_tasks = [LayerInputTypeChoice.Image, LayerInputTypeChoice.Text,
-                           LayerInputTypeChoice.Audio, LayerInputTypeChoice.Video]
+                           LayerInputTypeChoice.Audio, LayerInputTypeChoice.Video,
+                           LayerInputTypeChoice.Dataframe]
             output_tasks = [LayerOutputTypeChoice.Classification, LayerOutputTypeChoice.Segmentation,
-                            LayerOutputTypeChoice.TextSegmentation]
+                            LayerOutputTypeChoice.TextSegmentation, LayerOutputTypeChoice.Regression]
             if self.dataset.data.inputs[input_key].task in input_tasks and (
                     self.dataset.data.outputs[output_key].task in output_tasks):
                 if self.dataset.data.outputs[output_key].task == LayerOutputTypeChoice.TextSegmentation:
@@ -775,6 +776,17 @@ class FitCallback(keras.callbacks.Callback):
             tags_map = deploy_presets_data.get("color_map")
             interactive.deploy_presets_data = deploy_presets_data.get("data")
             cascade_data = {"tags_map": tags_map}
+        elif list(self.dataset.data.inputs.values())[0].task == LayerInputTypeChoice.Dataframe:
+            columns = []
+            predict_column = ""
+            for input, input_columns in self.dataset.data.columns.items():
+                for column_name in input_columns.keys():
+                    columns.append(column_name[len(str(input)) + 1:])
+                    if input_columns[column_name].__class__ == DatasetOutputsData:
+                        predict_column = column_name[len(str(input)) + 1:]
+            deploy_presets_data["columns"] = columns
+            deploy_presets_data["predict_column"] = predict_column
+            interactive.deploy_presets_data = deploy_presets_data
         else:
             interactive.deploy_presets_data = deploy_presets_data
         self._create_cascade(**cascade_data)
