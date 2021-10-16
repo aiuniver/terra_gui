@@ -337,7 +337,7 @@ def compute_loss(pred, conv, label, bboxes, i=0, CLASSES=None, STRIDES=None, YOL
     for cls in range(NUM_CLASS):
         conv_raw_prob_cls = conv[:, :, :, :, 5+cls:5+cls+1]
         label_prob_cls = label[:, :, :, :, 5+cls:5+cls+1]
-        prob_loss_cls[i] = tf.reduce_mean(tf.reduce_sum(respond_bbox * tf.nn.sigmoid_cross_entropy_with_logits(
+        prob_loss_cls[str(CLASSES[cls])] = tf.reduce_mean(tf.reduce_sum(respond_bbox * tf.nn.sigmoid_cross_entropy_with_logits(
             labels=label_prob_cls, logits=conv_raw_prob_cls), axis=[1, 2, 3, 4]))
 
     return giou_loss, conf_loss, prob_loss, prob_loss_cls
@@ -528,11 +528,11 @@ class CustomModelYolo(keras.Model):
                 conf_loss += loss_items[1]
                 prob_loss += loss_items[2]
 
-                for cls_key in loss_items[3]:  # пробегаем по ключам словаря
+                for cls_key in loss_items[3].keys():  # пробегаем по ключам словаря
                     try:
-                        prob_loss_cls[cls_key] += loss_items[3].get(cls_key)  # складываем значения
+                        prob_loss_cls['prob_loss_' + str(cls_key)] += loss_items[3].get(cls_key)  # складываем значения
                     except KeyError:  # если ключа еще нет - создаем
-                        prob_loss_cls[cls_key] = loss_items[3].get(cls_key)
+                        prob_loss_cls['prob_loss_' + str(cls_key)] = loss_items[3].get(cls_key)
 
             total_loss = giou_loss + conf_loss + prob_loss
 
@@ -550,7 +550,7 @@ class CustomModelYolo(keras.Model):
 
         lr = self.change_lr()
         self.optimizer.lr.assign(tf.cast(lr, tf.float32))
-        tf.print([prob_loss_cls.get(x) for x in prob_loss_cls.keys()])
+        # tf.print([prob_loss_cls.get(x) for x in prob_loss_cls.keys()])
             # # writing summary data
             # with writer.as_default():
             #     tf.summary.scalar("lr", optimizer.lr, step=global_steps)
@@ -560,8 +560,10 @@ class CustomModelYolo(keras.Model):
             #     tf.summary.scalar("loss/prob_loss", prob_loss, step=global_steps)
             # writer.flush()
         # validate_writer = tf.summary.create_file_writer(TRAIN_LOGDIR)
-        return {'global_steps': self.global_steps.value(), "optimizer.lr": self.optimizer.lr.value(),
+        out_info = {'global_steps': self.global_steps.value(), "optimizer.lr": self.optimizer.lr.value(),
                 "giou_loss": giou_loss, "conf_loss": conf_loss, "prob_loss": prob_loss, "total_loss": total_loss}
+        out_info.update(prob_loss_cls)
+        return out_info
 
     @tf.function
     def test_step(self, data):
@@ -569,6 +571,7 @@ class CustomModelYolo(keras.Model):
         with tf.GradientTape() as tape:
             pred_result = self.yolo(image_data['1'], training=False)
             giou_loss = conf_loss = prob_loss = 0
+            prob_loss_cls = {}
 
             # optimizing process
             grid = 3  # if not TRAIN_YOLO_TINY else 2
@@ -580,10 +583,18 @@ class CustomModelYolo(keras.Model):
                 conf_loss += loss_items[1]
                 prob_loss += loss_items[2]
 
+                for cls_key in loss_items[3].keys():  # пробегаем по ключам словаря
+                    try:
+                        prob_loss_cls['prob_loss_' + cls_key] += loss_items[3].get(cls_key)  # складываем значения
+                    except KeyError:  # если ключа еще нет - создаем
+                        prob_loss_cls['prob_loss_' + cls_key] = loss_items[3].get(cls_key)
+
             total_loss = giou_loss + conf_loss + prob_loss
 
-        return {"giou_loss": giou_loss, "conf_loss": conf_loss, "prob_loss": prob_loss, "total_loss": total_loss}
+        out_info = {"giou_loss": giou_loss, "conf_loss": conf_loss, "prob_loss": prob_loss, "total_loss": total_loss}
+        out_info.update(prob_loss_cls)
 
+        return out_info
     # mAP_model = Create_Yolo(input_size=YOLO_INPUT_SIZE, CLASSES=TRAIN_CLASSES)  # create second model to measure mAP
     # test_set = 70
     # best_val_loss = 1000  # should be large at start
@@ -853,15 +864,17 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=0.50, TEST_INPUT_
             results_file.write(
                 text + "\n Precision: " + str(rounded_prec) + "\n Recall   :" + str(rounded_rec) + "\n\n")
 
-            print(text)
-            ap_dictionary[class_name] = ap
+            # print(text)
+            ap_dictionary["val_AP_" + str(class_name)] = ap
 
         results_file.write("\n# mAP of all classes\n")
         mAP = sum_AP / n_classes
 
         text = "mAP = {:.3f}%, {:.2f} FPS".format(mAP * 100, fps)
         results_file.write(text + "\n")
-        print(text)
+        ap_dictionary["val_mAP" + str(int(iou_threshold * 100))] = mAP * 100
+        ap_dictionary["val_fps"] = fps
+        print(ap_dictionary)
 
-        return mAP * 100
+        return ap_dictionary
 
