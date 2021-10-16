@@ -333,8 +333,14 @@ def compute_loss(pred, conv, label, bboxes, i=0, CLASSES=None, STRIDES=None, YOL
     giou_loss = tf.reduce_mean(tf.reduce_sum(giou_loss, axis=[1, 2, 3, 4]))
     conf_loss = tf.reduce_mean(tf.reduce_sum(conf_loss, axis=[1, 2, 3, 4]))
     prob_loss = tf.reduce_mean(tf.reduce_sum(prob_loss, axis=[1, 2, 3, 4]))
+    prob_loss_cls = {}
+    for cls in range(NUM_CLASS):
+        conv_raw_prob_cls = conv[:, :, :, :, 5+cls:5+cls+1]
+        label_prob_cls = label[:, :, :, :, 5+cls:5+cls+1]
+        prob_loss_cls[i] = tf.reduce_mean(tf.reduce_sum(respond_bbox * tf.nn.sigmoid_cross_entropy_with_logits(
+            labels=label_prob_cls, logits=conv_raw_prob_cls), axis=[1, 2, 3, 4]))
 
-    return giou_loss, conf_loss, prob_loss
+    return giou_loss, conf_loss, prob_loss, prob_loss_cls
 
 
 ### CREATE AND FIT MODEL ###
@@ -507,6 +513,7 @@ class CustomModelYolo(keras.Model):
         with tf.GradientTape() as tape:
             pred_result = self.yolo(image_data.get(input_key[0], '1'), training=True)
             giou_loss = conf_loss = prob_loss = 0
+            prob_loss_cls = {}
             # print("pred_result", pred_result)
             # optimizing process
             grid = 3  # if not TRAIN_YOLO_TINY else 2
@@ -520,6 +527,12 @@ class CustomModelYolo(keras.Model):
                 giou_loss += loss_items[0]
                 conf_loss += loss_items[1]
                 prob_loss += loss_items[2]
+
+                for cls_key in loss_items[3]:  # пробегаем по ключам словаря
+                    try:
+                        prob_loss_cls[cls_key] += loss_items[3].get(cls_key)  # складываем значения
+                    except KeyError:  # если ключа еще нет - создаем
+                        prob_loss_cls[cls_key] = loss_items[3].get(cls_key)
 
             total_loss = giou_loss + conf_loss + prob_loss
 
@@ -537,7 +550,7 @@ class CustomModelYolo(keras.Model):
 
         lr = self.change_lr()
         self.optimizer.lr.assign(tf.cast(lr, tf.float32))
-
+        tf.print([prob_loss_cls.get(x) for x in prob_loss_cls.keys()])
             # # writing summary data
             # with writer.as_default():
             #     tf.summary.scalar("lr", optimizer.lr, step=global_steps)
