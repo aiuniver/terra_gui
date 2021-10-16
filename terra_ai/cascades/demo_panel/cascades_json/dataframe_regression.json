@@ -6,7 +6,7 @@
     },
     "model": {
       "tag": "model",
-      "task": "Audio",
+      "task": "Regression",
       "model": "/home/evgeniy/terra_gui/TerraProjects/models/car_price_1inp_new"
     }
   },
