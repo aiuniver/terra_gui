@@ -4,7 +4,7 @@ import random
 import shutil
 
 from PIL import Image
-from typing import List, Optional
+from typing import List, Optional, Dict
 from pathlib import Path
 
 from terra_ai import settings
@@ -12,6 +12,19 @@ from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.deploy.extra import TaskTypeChoice
 from terra_ai.exceptions.deploy import MethodNotImplementedException
 from terra_ai.training.guinn import interactive
+
+
+class BaseCollectionDict(Dict):
+    def try_init(self):
+        self.reload()
+
+    def reload(self):
+        source = interactive.deploy_presets_data
+        if not source:
+            return
+
+        self["columns"] = source["columns"]
+        self["predict_column"] = source["predict_column"]
 
 
 class BaseCollectionList(List):
