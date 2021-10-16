@@ -11,6 +11,11 @@ def make_classification(config, dataset_config, model):
     return config
 
 
+def make_dataframe_regression(config, dataset_config, model):
+    config['cascades']['model']['model'] = model
+    return config
+
+
 def make_text_classification(config, dataset_config, model):
     return make_classification(config, dataset_config, model)
 
