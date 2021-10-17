@@ -32,7 +32,7 @@ from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.customcallback import InteractiveCallback
-from terra_ai.training.customlosses import DiceCoef, RecallPercent
+from terra_ai.training.customlosses import DiceCoef, RecallPercent, UnscaledMAE
 from terra_ai.training.yolo_utils import create_yolo, CustomModelYolo, compute_loss, get_mAP, detect_image
 from terra_ai.exceptions import training as exceptions, terra_exception
 
@@ -89,6 +89,8 @@ class GUINN:
                 output.append(DiceCoef())
             elif metric == MetricChoice.RecallPercent:
                 output.append(RecallPercent())
+            elif metric == MetricChoice.UnscaledMAE:
+                output.append(UnscaledMAE())
             else:
                 output.append(getattr(importlib.import_module("tensorflow.keras.metrics"), metric)())
         return output

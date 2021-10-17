@@ -67,6 +67,7 @@ class Metric(str, Enum):
     # SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
     # SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
     DiceCoef = "DiceCoef"
+    UnscaledMAE = "UnscaledMAE"
 
 
 TasksGroups = [
@@ -187,7 +188,7 @@ TasksGroups = [
             Loss.SquaredHinge,
         ],
         "metrics": [
-            # Metric.Accuracy,
+            Metric.UnscaledMAE,
             Metric.MeanAbsoluteError,
             Metric.MeanSquaredError,
             Metric.MeanAbsolutePercentageError,

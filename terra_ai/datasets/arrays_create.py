@@ -1630,20 +1630,20 @@ class CreateArray(object):
             else:
                 data_type = "str"
                 source = []
-                for inp in options.data.inputs.keys():
-                    for col_name in options.data.columns.get(inp).keys():
-                        value = options.dataframe.get('val')[col_name].to_list()[example_id]
-                        # source.append((col_name, value))
-                        if return_mode == 'deploy':
-                            source.append(value)
-                        if return_mode == 'callback':
-                            data.append(
-                                {
-                                    "title": col_name.split("_", 1)[-1],
-                                    "value": value,
-                                    "color_mark": None
-                                }
-                            )
+                # for inp in options.data.inputs.keys():
+                for col_name in options.data.columns.get(input_id).keys():
+                    value = options.dataframe.get('val')[col_name].to_list()[example_id]
+                    # source.append((col_name, value))
+                    if return_mode == 'deploy':
+                        source.append(value)
+                    if return_mode == 'callback':
+                        data.append(
+                            {
+                                "title": col_name.split("_", 1)[-1],
+                                "value": value,
+                                "color_mark": None
+                            }
+                        )
 
         else:
             pass

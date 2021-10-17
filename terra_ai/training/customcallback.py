@@ -27,10 +27,12 @@ from terra_ai.data.datasets.dataset import DatasetOutputsData, DatasetData
 from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice, DatasetGroupChoice, \
     LayerEncodingChoice
 from terra_ai.data.presets.training import Metric
-from terra_ai.data.training.extra import ExampleChoiceTypeChoice, LossGraphShowChoice, MetricGraphShowChoice
+from terra_ai.data.training.extra import ExampleChoiceTypeChoice, LossGraphShowChoice, MetricGraphShowChoice, \
+    MetricChoice
 from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
+from terra_ai.training.customlosses import UnscaledMAE
 from terra_ai.utils import camelize, decamelize
 
 __version__ = 0.084
@@ -296,6 +298,11 @@ loss_metric_config = {
             "mode": "max",
             "module": "tensorflow.keras.metrics"
         },
+        "UnscaledMAE": {
+            "log_name": "unscaled_mae",
+            "mode": "min",
+            "module": "terra_ai.training.customlosses"
+        },
     }
 }
 
@@ -317,6 +324,7 @@ class InteractiveCallback:
         self.inverse_y_true = {}
         self.y_pred = {}
         self.inverse_y_pred = {}
+        self.preprocessing = None
         self.current_epoch = None
 
         # overfitting params
@@ -392,6 +400,7 @@ class InteractiveCallback:
         self.x_val, self.inverse_x_val = self._prepare_x_val(dataset)
         self.y_true, self.inverse_y_true = self._prepare_y_true(dataset)
         self._class_metric_list()
+        self.preprocessing = dataset.preprocessing
 
         if not self.log_history:
             self._prepare_null_log_history_template()
@@ -927,6 +936,10 @@ class InteractiveCallback:
                         f"{out}_{loss_metric_config.get('metric').get(metric_name).get('log_name')}")
                     val_metric = update_logs.get(
                         f"val_{out}_{loss_metric_config.get('metric').get(metric_name).get('log_name')}")
+                if metric_name == MetricChoice.UnscaledMAE:
+                    train_metric, val_metric = UnscaledMAE().unscale_result(
+                        [train_metric, val_metric], int(out), self.preprocessing
+                    )
                 interactive_log[out]['metrics'][metric_name] = {
                     'train': self._round_loss_metric(train_metric) if not math.isnan(float(train_metric)) else None,
                     'val': self._round_loss_metric(val_metric) if not math.isnan(float(val_metric)) else None
@@ -1730,6 +1743,7 @@ class InteractiveCallback:
                         return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
                     else:
                         return_data[f"{idx + 1}"]['statistic_values'] = {}
+        # print('\n_get_intermediate_result_request', return_data)
         return return_data
 
     def _get_statistic_data_request(self) -> list:
@@ -1810,6 +1824,8 @@ class InteractiveCallback:
             elif task == LayerOutputTypeChoice.Regression:
                 y_true = self.inverse_y_true.get("val").get(f'{out}').squeeze()
                 y_pred = self.inverse_y_pred.get(f'{out}').squeeze()
+                print('y_true', y_true[:10])
+                print('y_pred', y_pred[:10])
                 x_scatter, y_scatter = self._get_scatter(y_true, y_pred)
                 return_data.append(
                     self._fill_graph_front_structure(
