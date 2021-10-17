@@ -1,35 +1,33 @@
 <template>
   <div class="content">
-    <scrollbar :ops="ops" >
-      <table class="table">
-        <tr class="table__title-row">
-          <td>
-            <button class="table__reload-all" @click="ReloadAll">
-              <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
-              <span>Перезагрузить все</span>
-            </button>
-          </td>
-          <td>Предсказанные данные</td>
-          <td v-for="(name, i) of columns" :key="'col_' + i">{{ name }}</td>
-        </tr>
-        <tr v-for="({ source, data }, index) of data" :key="'row_' + index">
-          <td class="table__td-reload">
-            <button class="td-reload__btn-reload" @click="ReloadRow">
-              <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
-            </button>
-          </td>
-          <td class="table__result-data table__result-data--left">
-            <div v-for="(item, i) of data" :key="'esul_' + i">
-              <span>{{ item[0] }}</span>
-              -
-              <span>{{ item[1] }}</span>
-            </div>
-          </td>
-          <td v-for="(data, i) of source" :key="'data_' + index + i">{{ data }}</td>
-          <!-- <td class="table__result-data">{{ label }}</td> -->
-        </tr>
-      </table>
-    </scrollbar>
+    <table class="table">
+      <tr class="table__title-row stick">
+        <td>
+          <button class="table__reload-all" @click="ReloadAll">
+            <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
+            <span>Перезагрузить все</span>
+          </button>
+        </td>
+        <td>Предсказанные данные</td>
+        <td v-for="(name, i) of columns" :key="'col_' + i">{{ name }}</td>
+      </tr>
+      <tr v-for="({ source, data }, index) of data" :key="'row_' + index" class="fixed">
+        <td class="table__td-reload">
+          <button class="td-reload__btn-reload" @click="ReloadRow">
+            <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
+          </button>
+        </td>
+        <td class="table__result-data table__result-data--left">
+          <div v-for="(item, i) of data" :key="'esul_' + i">
+            <span>{{ item[0] }}</span>
+            -
+            <span>{{ item[1] }}</span>
+          </div>
+        </td>
+        <td v-for="(data, i) of source" :key="'data_' + index + i">{{ data }}</td>
+        <td class="table__result-data">{{}}</td>
+      </tr>
+    </table>
   </div>
 </template>
 
@@ -41,14 +39,7 @@ export default {
     source: Object,
     extra: Object,
   },
-  data: () => ({
-    ops: {
-      scrollPanel: {
-        scrollingX: true,
-        scrollingY: true,
-      },
-    },
-  }),
+  data: () => ({}),
   computed: {
     columns() {
       return this.extra?.columns ?? [];
@@ -80,11 +71,20 @@ export default {
   border: 1px solid #6c7883;
   box-sizing: border-box;
   border-radius: 4px;
-
+  position: sticky;
+  .stick {
+    position: sticky;
+    top: 5px;
+    background: #242f3d;
+  }
+  .fixed {
+    overflow: hidden;
+  }
   tr:nth-child(even) {
     background: #17212b;
   }
   td {
+        height: 50px;
     padding: 5px;
     text-align: center;
     &:nth-child(1) {

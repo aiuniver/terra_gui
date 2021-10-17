@@ -11,17 +11,24 @@
               </button>
               <div class="board__title">Исходные данные / Предсказанные данные</div>
               <div v-if="!isTable" class="board__data">
-                <IndexCard v-for="(card, i) in Cards" :key="'card-' + i" v-bind="card" :card="card" :index="i" @reload="ReloadCard"/>
+                <IndexCard
+                  v-for="(card, i) in Cards"
+                  :key="'card-' + i"
+                  v-bind="card"
+                  :card="card"
+                  :index="i"
+                  @reload="ReloadCard"
+                />
               </div>
               <div v-else class="board__data">
-                <Table v-if="type === 'table_data_regression'" v-bind="deploy" @reload="ReloadCard"/>
+                <Table v-if="type === 'table_data_regression'" v-bind="deploy" @reload="ReloadCard" />
                 <TableClass v-if="type === 'table_data_classification'" v-bind="deploy" @reload="ReloadCard"/>
               </div>
             </div>
           </div>
-<!--          <div class="board__table">-->
-<!--            <Table @ReloadAll="ReloadAll" />-->
-<!--          </div>-->
+          <!--          <div class="board__table">-->
+          <!--            <Table @ReloadAll="ReloadAll" />-->
+          <!--          </div>-->
         </div>
       </div>
     </scrollbar>
@@ -45,34 +52,34 @@ export default {
       Cards: 'deploy/getCards',
       height: 'settings/autoHeight',
       type: 'deploy/getDeployType',
-      deploy: 'deploy/getDeploy'
+      deploy: 'deploy/getDeploy',
     }),
     isTable() {
-      return ['table_data_classification', 'table_data_regression'].includes(this.type)
-    }
+      return ['table_data_classification', 'table_data_regression'].includes(this.type);
+    },
   },
   methods: {
-    async ReloadCard(data){
+    async ReloadCard(data) {
       await this.$store.dispatch('deploy/ReloadCard', data);
     },
     async ReloadAll(id) {
-      let indexes = []
-      for(let i = 0; i < this.Cards[id].data.length; i++){
-        indexes.push(i.toString())
+      let indexes = [];
+      for (let i = 0; i < this.Cards[id].data.length; i++) {
+        indexes.push(i.toString());
       }
       await this.$store.dispatch('deploy/ReloadCard', indexes);
     },
   },
   beforeMount() {
-    console.log(this.Cards)
-  }
+    console.log(this.Cards);
+  },
 };
 </script>
 
 <style lang="scss" scoped>
 .board {
   flex: 1 1 auto;
-  width: 100%;
+  overflow: hidden;
   &__data {
     display: flex;
     flex-wrap: wrap;

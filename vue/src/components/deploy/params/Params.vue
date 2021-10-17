@@ -204,7 +204,6 @@ export default {
 <style lang="scss" scoped>
 .params {
   flex: 0 0 400px;
-  // width: 400px;
   border-left: #0e1621 solid 1px;
 }
 .params-container__name {
