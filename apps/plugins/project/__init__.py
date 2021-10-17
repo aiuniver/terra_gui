@@ -59,7 +59,7 @@ TASKS_RELATIONS = {
     DeployTaskTypeChoice.image_classification: "ImageClassification",
     DeployTaskTypeChoice.image_segmentation: "ImageSegmentation",
     DeployTaskTypeChoice.text_classification: "TextClassification",
-    DeployTaskTypeChoice.text_segmentation: "TextTextSegmentation",
+    DeployTaskTypeChoice.text_textsegmentation: "TextTextSegmentation",
     DeployTaskTypeChoice.video_classification: "VideoClassification",
     DeployTaskTypeChoice.audio_classification: "AudioClassification",
     DeployTaskTypeChoice.table_data_classification: "TableDataClassification",

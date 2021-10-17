@@ -8,7 +8,7 @@ class EnvVersionChoice(str, Enum):
 class TaskTypeChoice(str, Enum):
     image_segmentation = "image_segmentation"
     image_classification = "image_classification"
-    text_segmentation = "text_segmentation"
+    text_textsegmentation = "text_textsegmentation"
     text_classification = "text_classification"
     video_segmentation = "video_segmentation"
     video_classification = "video_classification"
