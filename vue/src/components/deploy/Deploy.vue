@@ -5,7 +5,7 @@
         <div class="content">
           <div class="board__data-field">
             <div>
-              <button v-if="!isTable" class="board__reload-all" @click="ReloadAll(0)">
+              <button v-if="!isTable" class="board__reload-all" @click="ReloadAll">
                 <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
                 <span>Перезагрузить все</span>
               </button>
@@ -22,7 +22,7 @@
               </div>
               <div v-else class="board__data">
                 <Table v-if="type === 'table_data_regression'" v-bind="deploy" @reload="ReloadCard" />
-                <TableClass v-if="type === 'table_data_classification'" v-bind="deploy" @reload="ReloadCard"/>
+                <TableClass v-if="type === 'table_data_classification'" v-bind="deploy" @reload="ReloadCard" @reloadAll="ReloadAll"/>
               </div>
             </div>
           </div>
@@ -62,9 +62,9 @@ export default {
     async ReloadCard(data) {
       await this.$store.dispatch('deploy/ReloadCard', data);
     },
-    async ReloadAll(id) {
+    async ReloadAll() {
       let indexes = [];
-      for (let i = 0; i < this.Cards[id].data.length; i++) {
+      for (let i = 0; i < this.Cards.length; i++) {
         indexes.push(i.toString());
       }
       await this.$store.dispatch('deploy/ReloadCard', indexes);
