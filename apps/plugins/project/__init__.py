@@ -133,10 +133,11 @@ class TrainingDetailsData(BaseMixinData):
 class DeployDetailsData(BaseMixinData):
     type: Optional[DeployTaskTypeChoice]
     data: Optional[deploy_tasks.BaseCollectionList]
+    extra: Optional[deploy_tasks.BaseCollectionDict]
 
     def dict(self, **kwargs):
         data = super().dict(**kwargs)
-        data.update({"data": self.data})
+        data.update({"data": self.data, "extra": self.extra})
         return data
 
 
@@ -232,8 +233,9 @@ class Project(BaseMixinData):
             ),
             path=Path(project_path.deploy),
         )
+        extra = deploy_tasks.BaseCollectionDict()
 
-        self.deploy = DeployDetailsData(**{"type": deploy_type, "data": data})
+        self.deploy = DeployDetailsData(**{"type": deploy_type, "data": data, "extra": extra})
         self.deploy.data.reload(list(range(terra_settings.DEPLOY_PRESET_COUNT)))
         self.deploy.data.try_init()
 

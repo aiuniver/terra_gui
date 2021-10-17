@@ -694,7 +694,6 @@ class FitCallback(keras.callbacks.Callback):
     def _deploy_predict(self, presets_predict):
         # with open(os.path.join(self.save_model_path, "predict.txt"), "w", encoding="utf-8") as f:
         #     f.write(str(presets_predict[0].tolist()))
-
         result = CreateArray().postprocess_results(array=presets_predict,
                                                    options=self.dataset,
                                                    save_path=os.path.join(self.save_model_path,
@@ -788,8 +787,10 @@ class FitCallback(keras.callbacks.Callback):
                     columns.append(column_name[len(str(input)) + 1:])
                     if input_columns[column_name].__class__ == DatasetOutputsData:
                         predict_column = column_name[len(str(input)) + 1:]
+            if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Classification:
+                deploy_presets_data = {"presets": deploy_presets_data}
             deploy_presets_data["columns"] = columns
-            deploy_presets_data["predict_column"] = predict_column
+            deploy_presets_data["predict_column"] = predict_column if predict_column else "Предсказанные значения"
             interactive.deploy_presets_data = deploy_presets_data
         else:
             interactive.deploy_presets_data = deploy_presets_data

@@ -315,10 +315,9 @@ export default {
     background-color: #17212b;
     position: absolute;
     left: 0;
-    z-index: 4;
+    z-index: 5;
     thead {
       box-shadow: 1px 0 0 #000;
-      z-index: 2;
     }
   }
 }

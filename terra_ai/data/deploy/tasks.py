@@ -4,7 +4,7 @@ import random
 import shutil
 
 from PIL import Image
-from typing import List, Optional
+from typing import List, Optional, Dict
 from pathlib import Path
 
 from terra_ai import settings
@@ -12,6 +12,19 @@ from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.deploy.extra import TaskTypeChoice
 from terra_ai.exceptions.deploy import MethodNotImplementedException
 from terra_ai.training.guinn import interactive
+
+
+class BaseCollectionDict(Dict):
+    def try_init(self):
+        self.reload()
+
+    def reload(self):
+        source = interactive.deploy_presets_data
+        if not source or not isinstance(source, dict):
+            return
+
+        self["columns"] = source.get("columns")
+        self["predict_column"] = source.get("predict_column")
 
 
 class BaseCollectionList(List):
@@ -243,20 +256,24 @@ class TableDataClassification(BaseCollectionList):
         predict_path = Path(self._path, "preset", "out")
         os.makedirs(source_path, exist_ok=True)
         os.makedirs(predict_path, exist_ok=True)
-        source = interactive.deploy_presets_data
+        presets_data = interactive.deploy_presets_data
 
         preset_file = Path(self._path, "preset.txt")
         label_file = Path(self._path, "label.txt")
 
-        if not source:
+        if not presets_data:
             self._reset()
             return
 
+        presets = presets_data["presets"]
+
         for index in range_indexes:
-            value = dict(source[random.randint(0, len(source) - 1)])
+            value = dict(presets[random.randint(0, len(presets) - 1)])
             with open(preset_file, "a") as preset_file_ref:
-                preset_file_ref.write(json.dumps(value.get("source", ""), ensure_ascii=False))
-                preset_file_ref.write('\n')
+                preset_file_ref.write(
+                    json.dumps(value.get("source", ""), ensure_ascii=False)
+                )
+                preset_file_ref.write("\n")
             self[index] = value
 
         label = []

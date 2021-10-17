@@ -3,6 +3,7 @@ import {defLayout, originaltextStyle} from "../const/deploy"
 export default {
     namespaced: true,
     state: () => ({
+      deploy: {},
       graphicData: temp.data,
       defaultLayout: defLayout,
       origTextStyle: originaltextStyle,
@@ -14,6 +15,9 @@ export default {
       }
     }),
     mutations: {
+      SET_DEPLOY(state, value) {
+        state.deploy = { ...value};
+      },
       SET_MODULE_LIST(state, value) {
         state.moduleList = { ...state.moduleList, ...value};
       },
@@ -46,6 +50,7 @@ export default {
     },
     getters: {
       getModuleList: ({ moduleList }) => moduleList,
+      getDeploy: ({ deploy }) => deploy,
       getGraphicData: ({ graphicData }) => graphicData,
       getDefaultLayout: ({ defaultLayout }) => defaultLayout,
       getOrigTextStyle: ({ origTextStyle }) => origTextStyle,

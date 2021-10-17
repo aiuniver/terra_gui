@@ -1,7 +1,7 @@
 <template>
   <div class="content">
     <table class="table">
-      <tr class="table__title-row">
+      <tr class="table__title-row stick">
         <td>
           <button class="table__reload-all" @click="ReloadAll">
             <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
@@ -11,15 +11,21 @@
         <td>Предсказанные данные</td>
         <td v-for="(name, i) of columns" :key="'col_' + i">{{ name }}</td>
       </tr>
-      <tr v-for="({ preset, label }, index) of data" :key="'row_' + index">
+      <tr v-for="({ source, data }, index) of data" :key="'row_' + index" class="fixed">
         <td class="table__td-reload">
           <button class="td-reload__btn-reload" @click="ReloadRow">
             <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
           </button>
         </td>
-        <td class="table__result-data">{{ label }}</td>
-        <td v-for="(data, i) of preset" :key="'data_' + index + i">{{ data }}</td>
-        <td class="table__result-data">{{ label }}</td>
+        <td class="table__result-data table__result-data--left">
+          <div v-for="(item, i) of data" :key="'esul_' + i">
+            <span>{{ item[0] }}</span>
+            -
+            <span>{{ item[1] }}</span>
+          </div>
+        </td>
+        <td v-for="(data, i) of source" :key="'data_' + index + i">{{ data }}</td>
+        <td class="table__result-data">{{}}</td>
       </tr>
     </table>
   </div>
@@ -30,8 +36,10 @@ export default {
   name: 'Table',
   props: {
     data: Array,
+    source: Object,
     extra: Object,
   },
+  data: () => ({}),
   computed: {
     columns() {
       return this.extra?.columns ?? [];
@@ -53,16 +61,30 @@ export default {
 </script>
 
 <style scoped lang="scss">
+.content {
+  height: 770px;
+  // width: 1200px;
+}
 .table {
   width: 100%;
   background: #242f3d;
   border: 1px solid #6c7883;
   box-sizing: border-box;
   border-radius: 4px;
+  position: sticky;
+  .stick {
+    position: sticky;
+    top: 5px;
+    background: #242f3d;
+  }
+  .fixed {
+    overflow: hidden;
+  }
   tr:nth-child(even) {
     background: #17212b;
   }
   td {
+        height: 50px;
     padding: 5px;
     text-align: center;
     &:nth-child(1) {
@@ -86,6 +108,9 @@ export default {
 .table__result-data {
   width: 200px;
   color: #65b9f4;
+  &--left {
+    text-align: left !important;
+  }
 }
 .table__reload-all {
   display: flex;

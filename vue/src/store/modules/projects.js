@@ -33,6 +33,7 @@ export default {
       commit("datasets/SET_CREATION", creation, { root: true });
       commit("trainings/SET_PARAMS", base, { root: true });
       commit("trainings/SET_CONFIG", training, { root: true });
+      commit("deploy/SET_DEPLOY", deploy, { root: true });
       commit("deploy/SET_CARDS", deploy.data, { root: true });
       commit("deploy/SET_DEPLOY_TYPE", deploy.type, { root: true });
       if(training?.result) {
