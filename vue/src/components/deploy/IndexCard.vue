@@ -48,16 +48,11 @@
         <div class="card__result">
           <ImgCard :imgUrl="card.segment" />
         </div>
-        <!-- <div class="card__table" v-if="type === 'table_data_regression'"> -->
-        <!-- <Table v-bind="card" /> -->
-        <!-- </div> -->
       </div>
       <div class="card__graphic" v-if="type == 'graphic'">
         <Plotly :data="card.data" :layout="layout" :display-mode-bar="false"></Plotly>
       </div>
-      <div class="card__table" v-if="type == 'table'">
-        <Table />
-      </div>
+
     </div>
   </div>
 </template>

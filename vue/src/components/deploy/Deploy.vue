@@ -26,9 +26,6 @@
               </div>
             </div>
           </div>
-          <!--          <div class="board__table">-->
-          <!--            <Table @ReloadAll="ReloadAll" />-->
-          <!--          </div>-->
         </div>
       </div>
     </scrollbar>
