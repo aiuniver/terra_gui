@@ -6,20 +6,22 @@
           <ImgCard :imgUrl="card.source" />
         </div>
         <div class="card__result">
-          <TextCard :style="{ width: '224px', height: '80px' }">{{ imageClassificationText }}</TextCard>
+          <TextCard :style="{ width: '224px', height: '80px' }">{{ ClassificationResult }}</TextCard>
         </div>
       </div>
       <div v-if="type == 'text_classification'">
         <div class="card__original">
           <TextCard :style="{ width: '600px', color: '#A7BED3', height: '324px' }">{{ card.source }}</TextCard>
         </div>
+        <div class="card__result">
+          <TextCard :style="{ width: '600px', height: '80px' }">{{ ClassificationResult}}</TextCard>
+        </div>
         <div v-if="type == 'audio_classification'">
           <div class="card__original">
-            <!--        <TextCard :style="{ width: '600px', color: '#A7BED3', height: '324px' }">{{ card.source }}</TextCard>-->
             <AudioCard :value="card.source" :update="RandId" />
           </div>
           <div class="card__result">
-            <TextCard :style="{ width: '600px', height: '80px' }">{{ imageClassificationText }}</TextCard>
+            <TextCard :style="{ width: '600px', height: '80px' }">{{ ClassificationResult }}</TextCard>
           </div>
         </div>
       </div>
@@ -33,11 +35,10 @@
       </div>
       <div v-if="type == 'audio_classification'">
         <div class="card__original">
-          <!--        <TextCard :style="{ width: '600px', color: '#A7BED3', height: '324px' }">{{ card.source }}</TextCard>-->
           <AudioCard :value="card.source" :update="RandId" />
         </div>
         <div class="card__result">
-          <TextCard :style="{ width: '600px', height: '80px' }">{{ imageClassificationText }}</TextCard>
+          <TextCard :style="{ width: '600px', height: '80px' }">{{ ClassificationResult }}</TextCard>
         </div>
       </div>
 
@@ -106,7 +107,7 @@ export default {
       }
       return layout;
     },
-    imageClassificationText() {
+    ClassificationResult() {
       let text = this.card.data;
       let prepareText = '';
       text.sort((a, b) => (a[1] < b[1] ? 1 : -1));
