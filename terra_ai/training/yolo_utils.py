@@ -865,14 +865,14 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=0.50, TEST_INPUT_
                 text + "\n Precision: " + str(rounded_prec) + "\n Recall   :" + str(rounded_rec) + "\n\n")
 
             # print(text)
-            ap_dictionary["val_AP_" + str(class_name)] = ap
+            ap_dictionary[f"val_mAP{int(iou_threshold * 100)}_class_{class_name}"] = ap
 
         results_file.write("\n# mAP of all classes\n")
         mAP = sum_AP / n_classes
 
         text = "mAP = {:.3f}%, {:.2f} FPS".format(mAP * 100, fps)
         results_file.write(text + "\n")
-        ap_dictionary["val_mAP" + str(int(iou_threshold * 100))] = mAP * 100
+        ap_dictionary[f"val_mAP{int(iou_threshold * 100)}"] = mAP * 100
         ap_dictionary["val_fps"] = fps
         print(ap_dictionary)
 

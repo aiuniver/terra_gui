@@ -91,6 +91,8 @@ class GUINN:
                 output.append(RecallPercent())
             elif metric == MetricChoice.UnscaledMAE:
                 output.append(UnscaledMAE())
+            elif metric == MetricChoice.mAP50 or metric == MetricChoice.mAP95:
+                pass
             else:
                 output.append(getattr(importlib.import_module("tensorflow.keras.metrics"), metric)())
         return output

@@ -3,7 +3,7 @@ import copy
 import string
 
 import matplotlib
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, UnidentifiedImageError, ImageFont, ImageDraw
 from matplotlib import pyplot as plt
 from pandas import DataFrame
 from tensorflow.python.keras.preprocessing import image
@@ -2277,3 +2277,200 @@ class CreateArray(object):
     @staticmethod
     def postprocess_object_detection():
         pass
+
+    @staticmethod
+    def non_max_suppression_fast(boxes: np.ndarray, scores: np.ndarray, sensitivity: float = 0.15):
+        """
+        :param boxes: list of unscaled bb coordinates
+        :param scores: class probability in ohe
+        :param sensitivity: float from 0 to 1
+        """
+        if len(boxes) == 0:
+            return [], []
+
+        pick = []
+
+        x1 = boxes[:, 0]
+        y1 = boxes[:, 1]
+        x2 = boxes[:, 2]
+        y2 = boxes[:, 3]
+
+        area = (x2 - x1 + 1) * (y2 - y1 + 1)
+        classes = np.argmax(scores, axis=-1)
+        idxs = np.argsort(classes)[..., ::-1]
+
+        mean_iou = []
+        while len(idxs) > 0:
+            last = len(idxs) - 1
+            i = idxs[last]
+            pick.append(i)
+
+            xx1 = np.maximum(x1[i], x1[idxs[:last]])
+            yy1 = np.maximum(y1[i], y1[idxs[:last]])
+            xx2 = np.minimum(x2[i], x2[idxs[:last]])
+            yy2 = np.minimum(y2[i], y2[idxs[:last]])
+
+            w = np.maximum(0, xx2 - xx1 + 1)
+            h = np.maximum(0, yy2 - yy1 + 1)
+
+            overlap = (w * h) / area[idxs[:last]]
+            mean_iou.append(overlap)
+            idxs = np.delete(idxs, np.concatenate(([last], np.where(overlap > sensitivity)[0])))
+
+        return pick, mean_iou
+
+    @staticmethod
+    def get_predict_boxes(array, name_classes: list, bb_size: int = 1, sensitivity: float = 0.15,
+                          threashold: float = 0.1):
+        """
+        Boxes for 1 example
+        """
+        num_classes = len(name_classes)
+        anchors = np.array([[10, 13], [16, 30], [33, 23],
+                            [30, 61], [62, 45], [59, 119],
+                            [116, 90], [156, 198], [373, 326]])
+
+        anchor_mask = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
+
+        level_anchor = bb_size
+        num_anchors = len(anchors[anchor_mask[level_anchor]])
+
+        grid_shape = array[level_anchor].shape[1:3]
+
+        feats = np.reshape(array[level_anchor], (-1, grid_shape[0], grid_shape[1], num_anchors, num_classes + 5))
+
+        xy_param = feats[..., :2]
+        wh_param = feats[..., 2:4]
+        conf_param = feats[..., 4:5]
+        class_param = feats[..., 5:]
+
+        box_yx = xy_param[..., ::-1].copy()
+        box_hw = wh_param[..., ::-1].copy()
+
+        box_mins = box_yx - (box_hw / 2.)
+        box_maxes = box_yx + (box_hw / 2.)
+        _boxes = np.concatenate([
+            box_mins[..., 0:1],
+            box_mins[..., 1:2],
+            box_maxes[..., 0:1],
+            box_maxes[..., 1:2]
+        ], axis=-1)
+
+        _boxes_reshape = np.reshape(_boxes, (-1, 4))
+        _box_scores = conf_param * class_param
+        _box_scores_reshape = np.reshape(_box_scores, (-1, num_classes))
+        _class_param_reshape = np.reshape(class_param, (-1, num_classes))
+        mask = _box_scores_reshape >= threashold
+        _boxes_out = np.zeros_like(_boxes_reshape[0:1])
+        _scores_out = np.zeros_like(_box_scores_reshape[0:1])
+        _class_param_out = np.zeros_like(_class_param_reshape[0:1])
+        for cl in range(num_classes):
+            if np.sum(mask[:, cl]):
+                _boxes_out = np.concatenate((_boxes_out, _boxes_reshape[mask[:, cl]]), axis=0)
+                _scores_out = np.concatenate((_scores_out, _box_scores_reshape[mask[:, cl]]), axis=0)
+                _class_param_out = np.concatenate((_class_param_out, _class_param_reshape[mask[:, cl]]), axis=0)
+        _boxes_out = _boxes_out[1:].astype('int')
+        _scores_out = _scores_out[1:]
+        _class_param_out = _class_param_out[1:]
+        _conf_param = (_scores_out / _class_param_out)[:, :1]
+        pick, _ = CreateArray().non_max_suppression_fast(_boxes_out, _scores_out, sensitivity)
+        return np.concatenate([_boxes_out[pick], _conf_param[pick], _scores_out[pick]], axis=-1)
+
+    @staticmethod
+    def plot_boxes(true_bb, pred_bb, img_path, name_classes, colors, image_id, add_only_true=False, plot_true=True,
+                   image_size=(416, 416), save_path='', ):
+        image = Image.open(img_path)
+        image = image.resize(image_size, Image.BICUBIC)
+
+        def draw_box(draw, box, color, thickness, label=None, label_size=None,
+                     dash_mode=False, show_label=False):
+            top, left, bottom, right = box
+            top = max(0, np.floor(top + 0.5).astype('int'))
+            left = max(0, np.floor(left + 0.5).astype('int'))
+            bottom = min(image.size[1], np.floor(bottom + 0.5).astype('int'))
+            right = min(image.size[0], np.floor(right + 0.5).astype('int'))
+            if top - label_size[1] >= 0:
+                text_origin = np.array([left, top - label_size[1]])
+            else:
+                text_origin = np.array([left, top + 1])
+
+            if dash_mode:
+                for cur_y in [top, bottom]:
+                    for x in range(left, right, 4):
+                        draw.line([(x, cur_y), (x + thickness, cur_y)], fill=color, width=2)
+                for cur_y in [left, right]:
+                    for x in range(top, bottom, 4):
+                        draw.line([(cur_y, x), (cur_y + thickness, x)], fill=color, width=2)
+            else:
+                for i in range(thickness):
+                    draw.rectangle(
+                        [left + i, top + i, right - i, bottom - i],
+                        outline=color,
+                    )
+
+            if show_label:
+                draw.rectangle(
+                    [tuple(text_origin), tuple(text_origin + label_size)],
+                    fill=color
+                )
+                draw.text(tuple(text_origin), label, fill=(255, 255, 255), font=font)
+            return draw
+
+        font = ImageFont.load_default()
+        thickness = (image.size[0] + image.size[1]) // 300
+        image_pred = image.copy()
+        if plot_true:
+            classes = np.argmax(true_bb[:, 5:], axis=-1)
+            for i, box in enumerate(true_bb[:, :4]):
+                draw = ImageDraw.Draw(image_pred)
+                true_class = name_classes[classes[i]]
+                label = '{}'.format(true_class)
+                label_size = draw.textsize(label, font)
+                draw = draw_box(draw, box, colors[classes[i]], thickness,
+                                label=label, label_size=label_size,
+                                dash_mode=False, show_label=True)
+                del draw
+
+        classes = np.argmax(pred_bb[:, 5:], axis=-1)
+        for i, box in enumerate(pred_bb[:, :4]):
+            draw = ImageDraw.Draw(image_pred)
+            predicted_class = name_classes[classes[i]]
+            score = pred_bb[:, 5:][i][classes[i]]  # * pred_bb[:, 4][i]
+            label = '{} {:.2f}'.format(predicted_class, score)
+            label_size = draw.textsize(label, font)
+            draw = draw_box(draw, box, colors[classes[i]], thickness,
+                            label=label, label_size=label_size,
+                            dash_mode=True, show_label=True)
+            del draw
+
+        save_predict_path = os.path.join(save_path, f"od_predict_image_{image_id}.webp")
+        image_pred.save(save_predict_path)
+        # plt.figure(figsize=(20, 10))
+        # plt.imshow(image_pred)
+        # plt.title('Размеченное изображение')
+        # plt.axis('off')
+        # plt.show()
+
+        save_true_path = ''
+        if add_only_true:
+            image_true = image.copy()
+            classes = np.argmax(true_bb[:, 5:], axis=-1)
+            for i, box in enumerate(true_bb[:, :4]):
+                draw = ImageDraw.Draw(image_true)
+                true_class = name_classes[classes[i]]
+                label = '{}'.format(true_class)
+                label_size = draw.textsize(label, font)
+                draw = draw_box(draw, box, colors[classes[i]], thickness,
+                                label=label, label_size=label_size,
+                                dash_mode=False, show_label=True)
+                del draw
+
+            save_true_path = os.path.join(save_path, f"od_true_image_{image_id}.webp")
+            image_true.save(save_true_path)
+            # plt.figure(figsize=(20, 10))
+            # plt.imshow(image_true)
+            # plt.title('Размеченное изображение')
+            # plt.axis('off')
+            # plt.show()
+
+        return save_predict_path, save_true_path

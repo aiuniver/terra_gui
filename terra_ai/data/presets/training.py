@@ -68,6 +68,8 @@ class Metric(str, Enum):
     # SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
     DiceCoef = "DiceCoef"
     UnscaledMAE = "UnscaledMAE"
+    mAP50 = "mAP50"
+    mAP95 = "mAP95"
 
 
 TasksGroups = [
@@ -230,8 +232,13 @@ TasksGroups = [
     },
     {
         "task": Task.ObjectDetection,
-        "losses": [Loss.YoloLoss],
-        "metrics": [Metric.AUC, Metric.Accuracy],
+        "losses": [
+            Loss.YoloLoss
+        ],
+        "metrics": [
+            Metric.mAP50,
+            Metric.mAP95
+        ],
     },
     {
         "task": Task.TimeseriesTrend,

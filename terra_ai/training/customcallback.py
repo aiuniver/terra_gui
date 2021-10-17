@@ -25,11 +25,11 @@ from tensorflow.python.keras.api.keras.preprocessing import image
 from terra_ai import progress
 from terra_ai.data.datasets.dataset import DatasetOutputsData, DatasetData
 from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice, DatasetGroupChoice, \
-    LayerEncodingChoice
+    LayerEncodingChoice, DatasetModelChoice
 from terra_ai.data.presets.training import Metric
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, LossGraphShowChoice, MetricGraphShowChoice, \
     MetricChoice
-from terra_ai.data.training.train import InteractiveData
+from terra_ai.data.training.train import InteractiveData, YoloInteractiveData
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.training.customlosses import UnscaledMAE
@@ -324,7 +324,6 @@ class InteractiveCallback:
         self.inverse_y_true = {}
         self.y_pred = {}
         self.inverse_y_pred = {}
-        self.preprocessing = None
         self.current_epoch = None
 
         # overfitting params
@@ -351,7 +350,6 @@ class InteractiveCallback:
 
         self.urgent_predict = False
         self.deploy_presets_data = None
-
         self.train_states = {
             "status": "no_train",  # training, trained, stopped, addtrain
             "buttons": {
@@ -375,6 +373,7 @@ class InteractiveCallback:
         }
 
         self.interactive_config: InteractiveData = InteractiveData(**{})
+        self.yolo_interactive_config: YoloInteractiveData = YoloInteractiveData(**{})
         pass
 
     def set_attributes(self, dataset: PrepareDataset,
@@ -382,25 +381,27 @@ class InteractiveCallback:
                        losses: dict,
                        dataset_path: str,
                        training_path: str,
-                       initial_config: InteractiveData):
+                       initial_config: InteractiveData,
+                       yolo_initial_config: YoloInteractiveData = None):
 
         self.preset_path = os.path.join(training_path, "presets")
         if not os.path.exists(self.preset_path):
             os.mkdir(self.preset_path)
-        self.losses = losses
-        self.metrics = self._reformat_metrics(metrics)
-        self.loss_obj = self._prepare_loss_obj(losses)
-        self.metrics_obj = self._prepare_metric_obj(metrics)
-        self.interactive_config = initial_config
+        if dataset.data.architecture == DatasetModelChoice.basic:
+            self.losses = losses
+            self.metrics = self._reformat_metrics(metrics)
+            self.loss_obj = self._prepare_loss_obj(losses)
+            self.metrics_obj = self._prepare_metric_obj(metrics)
+            self.interactive_config = initial_config
+        if dataset.data.architecture == DatasetModelChoice.yolo:
+            self.yolo_interactive_config = yolo_initial_config
 
-        # self._prepare_dataset_config(dataset, dataset_path)
         self.options = dataset
+        self._class_metric_list()
         self.dataset_path = dataset_path
         self._get_classes_colors()
         self.x_val, self.inverse_x_val = self._prepare_x_val(dataset)
         self.y_true, self.inverse_y_true = self._prepare_y_true(dataset)
-        self._class_metric_list()
-        self.preprocessing = dataset.preprocessing
 
         if not self.log_history:
             self._prepare_null_log_history_template()
@@ -568,7 +569,8 @@ class InteractiveCallback:
             classes_colors = self.options.data.outputs.get(out).classes_colors
             if task == LayerOutputTypeChoice.TextSegmentation and classes_colors:
                 self.class_colors = [color.as_rgb_tuple() for color in classes_colors]
-            elif task == LayerOutputTypeChoice.TextSegmentation and not classes_colors:
+            elif task == LayerOutputTypeChoice.TextSegmentation or task == LayerOutputTypeChoice.ObjectDetection \
+                    and not classes_colors:
                 name_classes = self.options.data.outputs.get(out).classes_names
                 hsv_tuples = [(x / len(name_classes), 1., 1.) for x in range(len(name_classes))]
                 colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
@@ -578,6 +580,8 @@ class InteractiveCallback:
                 self.class_colors = colors
             elif task == LayerOutputTypeChoice.Segmentation:
                 self.class_colors = [color.as_rgb_tuple() for color in classes_colors]
+            # elif task == LayerOutputTypeChoice.ObjectDetection:
+            #     self.class_colors = [color.as_rgb_tuple() for color in classes_colors]
             else:
                 self.class_colors = colors
 
@@ -641,87 +645,159 @@ class InteractiveCallback:
             "val": {}
         }
         for data_type in y_true.keys():
-            for out in dataset.data.outputs.keys():
-                task = dataset.data.outputs.get(out).task
-                if not dataset.data.use_generator:
-                    y_true[data_type][f"{out}"] = dataset.Y.get(data_type).get(f"{out}")
-                else:
-                    y_true[data_type][f"{out}"] = []
-                    for _, y_val in dataset.dataset[data_type].batch(1):
-                        y_true[data_type][f"{out}"].extend(y_val.get(f'{out}').numpy())
-                    y_true[data_type][f"{out}"] = np.array(y_true[data_type][f"{out}"])
+            if dataset.data.architecture == DatasetModelChoice.basic:
+                for out in dataset.data.outputs.keys():
+                    task = dataset.data.outputs.get(out).task
+                    if not dataset.data.use_generator:
+                        y_true[data_type][f"{out}"] = dataset.Y.get(data_type).get(f"{out}")
+                    else:
+                        y_true[data_type][f"{out}"] = []
+                        for _, y_val in dataset.dataset[data_type].batch(1):
+                            y_true[data_type][f"{out}"].extend(y_val.get(f'{out}').numpy())
+                        y_true[data_type][f"{out}"] = np.array(y_true[data_type][f"{out}"])
 
-                if task == LayerOutputTypeChoice.Regression or task == LayerOutputTypeChoice.Dataframe:
-                    preprocess_dict = dataset.preprocessing.preprocessing.get(out)
-                    inverse_y = np.zeros_like(y_true.get(data_type).get(f"{out}")[:, 0:1])
-                    for i, column in enumerate(preprocess_dict.keys()):
-                        if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
-                            _options = {int(out): {column: y_true.get(data_type).get(f"{out}")[:, i:i + 1]}}
-                            inverse_col = dataset.preprocessing.inverse_data(_options).get(out).get(column)
-                        else:
-                            inverse_col = y_true.get(data_type).get(f"{out}")[:, i:i + 1]
-                        inverse_y = np.concatenate([inverse_y, inverse_col], axis=1)
-                    inverse_y_true[data_type][f"{out}"] = inverse_y[:, 1:]
+                    if task == LayerOutputTypeChoice.Regression or task == LayerOutputTypeChoice.Dataframe:
+                        preprocess_dict = dataset.preprocessing.preprocessing.get(out)
+                        inverse_y = np.zeros_like(y_true.get(data_type).get(f"{out}")[:, 0:1])
+                        for i, column in enumerate(preprocess_dict.keys()):
+                            if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
+                                _options = {int(out): {column: y_true.get(data_type).get(f"{out}")[:, i:i + 1]}}
+                                inverse_col = dataset.preprocessing.inverse_data(_options).get(out).get(column)
+                            else:
+                                inverse_col = y_true.get(data_type).get(f"{out}")[:, i:i + 1]
+                            inverse_y = np.concatenate([inverse_y, inverse_col], axis=1)
+                        inverse_y_true[data_type][f"{out}"] = inverse_y[:, 1:]
 
-                if task == LayerOutputTypeChoice.Timeseries:
-                    preprocess_dict = dataset.preprocessing.preprocessing.get(int(out))
-                    inverse_y = np.zeros_like(y_true.get(data_type).get(f"{out}")[:, 0:1, :])
-                    for i, column in enumerate(preprocess_dict.keys()):
-                        if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
-                            _options = {int(out): {column: y_true.get(data_type).get(f"{out}")[:, i:i + 1, :]}}
-                            inverse_col = dataset.preprocessing.inverse_data(_options).get(int(out)).get(column)
-                        else:
-                            inverse_col = y_true.get(data_type).get(f"{out}")[:, i:i + 1, :]
-                        inverse_y = np.concatenate([inverse_y, inverse_col], axis=1)
-                    inverse_y_true[data_type][f"{out}"] = inverse_y[:, 1:, :]
+                    if task == LayerOutputTypeChoice.Timeseries:
+                        preprocess_dict = dataset.preprocessing.preprocessing.get(int(out))
+                        inverse_y = np.zeros_like(y_true.get(data_type).get(f"{out}")[:, 0:1, :])
+                        for i, column in enumerate(preprocess_dict.keys()):
+                            if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
+                                _options = {int(out): {column: y_true.get(data_type).get(f"{out}")[:, i:i + 1, :]}}
+                                inverse_col = dataset.preprocessing.inverse_data(_options).get(int(out)).get(column)
+                            else:
+                                inverse_col = y_true.get(data_type).get(f"{out}")[:, i:i + 1, :]
+                            inverse_y = np.concatenate([inverse_y, inverse_col], axis=1)
+                        inverse_y_true[data_type][f"{out}"] = inverse_y[:, 1:, :]
+
+            if dataset.data.architecture == DatasetModelChoice.yolo:
+                bb = []
+                for index in range(len(dataset.dataset[data_type])):
+                    coord = dataset.dataframe.get(data_type).iloc[index, 1].split(' ')
+                    bbox_data_gt = np.array([list(map(int, box.split(','))) for box in coord])
+                    bboxes_gt, classes_gt = bbox_data_gt[:, :4], bbox_data_gt[:, 4]
+                    classes_gt = to_categorical(
+                        classes_gt, num_classes=len(dataset.data.outputs.get(2).classes_names)
+                    )
+                    bboxes_gt = np.concatenate(
+                        [bboxes_gt[:, 1:2], bboxes_gt[:, 0:1], bboxes_gt[:, 3:4], bboxes_gt[:, 2:3]], axis=-1)
+                    conf_gt = np.expand_dims(np.ones(len(bboxes_gt)), axis=-1)
+                    _bb = np.concatenate([bboxes_gt, conf_gt, classes_gt], axis=-1)
+                    bb.append(_bb)
+                for channel in range(len(dataset.Y.get(data_type).keys())):
+                    y_true[data_type][channel] = bb
+
         return y_true, inverse_y_true
 
     def _class_metric_list(self):
         self.class_graphics = {}
-        for out in self.losses.keys():
-            out_task = self.options.data.outputs.get(int(out)).task
+        for out in self.options.data.outputs.keys():
+            out_task = self.options.data.outputs.get(out).task
             if out_task == LayerOutputTypeChoice.Classification or \
                     out_task == LayerOutputTypeChoice.Segmentation or \
                     out_task == LayerOutputTypeChoice.TextSegmentation or \
-                    out_task == LayerOutputTypeChoice.TimeseriesTrend:
+                    out_task == LayerOutputTypeChoice.TimeseriesTrend or \
+                    out_task == LayerOutputTypeChoice.ObjectDetection:
                 self.class_graphics[out] = True
             else:
                 self.class_graphics[out] = False
 
     def _prepare_null_log_history_template(self):
         self.log_history["epochs"] = []
-        for out in self.losses.keys():
-            task = self.options.data.outputs.get(int(out)).task
-            self.log_history[out] = {
-                "loss": {},
-                "metrics": {},
-                "progress_state": {
+        if self.options.data.architecture == DatasetModelChoice.basic:
+            for out in self.losses.keys():
+                task = self.options.data.outputs.get(int(out)).task
+                self.log_history[out] = {
                     "loss": {},
-                    "metrics": {}
+                    "metrics": {},
+                    "progress_state": {
+                        "loss": {},
+                        "metrics": {}
+                    }
                 }
-            }
-            if self.metrics.get(out) and isinstance(self.metrics.get(out), str):
-                self.metrics[out] = [self.metrics.get(out)]
+                if self.metrics.get(out) and isinstance(self.metrics.get(out), str):
+                    self.metrics[out] = [self.metrics.get(out)]
 
-            self.log_history[out]["loss"][self.losses.get(out)] = {"train": [], "val": []}
-            self.log_history[out]["progress_state"]["loss"][self.losses.get(out)] = {
-                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
-            }
-            for metric in self.metrics.get(out):
-                self.log_history[out]["metrics"][f"{metric}"] = {"train": [], "val": []}
-                self.log_history[out]["progress_state"]["metrics"][f"{metric}"] = {
+                self.log_history[out]["loss"][self.losses.get(out)] = {"train": [], "val": []}
+                self.log_history[out]["progress_state"]["loss"][self.losses.get(out)] = {
                     "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
                 }
+                for metric in self.metrics.get(out):
+                    self.log_history[out]["metrics"][f"{metric}"] = {"train": [], "val": []}
+                    self.log_history[out]["progress_state"]["metrics"][f"{metric}"] = {
+                        "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
+                    }
 
-            if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.Segmentation or \
-                    task == LayerOutputTypeChoice.TextSegmentation or task == LayerOutputTypeChoice.TimeseriesTrend:
-                self.log_history[out]["class_loss"] = {}
-                self.log_history[out]["class_metrics"] = {}
-                for class_name in self.options.data.outputs.get(int(out)).classes_names:
-                    self.log_history[out]["class_metrics"][f"{class_name}"] = {}
-                    self.log_history[out]["class_loss"][f"{class_name}"] = {self.losses.get(out): []}
-                    for metric in self.metrics.get(out):
-                        self.log_history[out]["class_metrics"][f"{class_name}"][f"{metric}"] = []
+                if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.Segmentation or \
+                        task == LayerOutputTypeChoice.TextSegmentation or task == LayerOutputTypeChoice.TimeseriesTrend:
+                    self.log_history[out]["class_loss"] = {}
+                    self.log_history[out]["class_metrics"] = {}
+                    for class_name in self.options.data.outputs.get(int(out)).classes_names:
+                        self.log_history[out]["class_metrics"][f"{class_name}"] = {}
+                        self.log_history[out]["class_loss"][f"{class_name}"] = {self.losses.get(out): []}
+                        for metric in self.metrics.get(out):
+                            self.log_history[out]["class_metrics"][f"{class_name}"][f"{metric}"] = []
+        if self.options.data.architecture == DatasetModelChoice.yolo:
+            self.log_history['learning_rate'] = []
+            self.log_history['output'] = {
+                "loss": {
+                    'giou_loss': [],
+                    'conf_loss': [],
+                    'prob_loss': [],
+                    'total_loss': []
+                },
+                "class_loss": {
+                    'prob_loss': {},
+                },
+                "metrics": {
+                    'mAP50': [],
+                    'mAP95': [],
+                },
+                "class_metrics": {
+                    'mAP50': {},
+                    'mAP95': {},
+                },
+                "progress_state": {
+                    "loss": {
+                        'giou_loss': {
+                            "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
+                        },
+                        'conf_loss': {
+                            "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
+                        },
+                        'prob_loss': {
+                            "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
+                        },
+                        'total_loss': {
+                            "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
+                        }
+                    },
+                    "metrics": {
+                        'mAP50': {
+                            "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
+                        },
+                        'mAP95': {
+                            "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
+                        },
+                    }
+                }
+            }
+            out = list(self.options.data.outputs.keys())[0]
+            for class_name in self.options.data.outputs.get(out).classes_names:
+                self.log_history['output']["class_loss"]['prob_loss'][class_name] = []
+                self.log_history['output']["class_metrics"]['mAP50'][class_name] = []
+                self.log_history['output']["class_metrics"]['mAP95'][class_name] = []
+            pass
 
     def _prepare_dataset_balance(self) -> dict:
         dataset_balance = {}
@@ -857,27 +933,101 @@ class InteractiveCallback:
                     }
 
             if task == LayerOutputTypeChoice.ObjectDetection:
-                pass
+                name_classes = self.options.data.outputs.get(list(self.options.data.outputs.keys())[0]).classes_names
+                imsize = self.options.data.inputs.get(list(self.options.data.inputs.keys())[0]).shape
+                class_bb = {}
+                dataset_balance["output"] = {
+                    'class_count': {},
+                    'class_square': {},
+                    'colormap': {}
+                }
+                for data_type in ["train", "val"]:
+                    class_bb[data_type] = {}
+                    for cl in range(len(name_classes)):
+                        class_bb[data_type][cl] = []
+                    for index in range(len(self.options.dataset[data_type])):
+                        y_true = self.options.dataframe.get(data_type).iloc[index, 1].split(' ')
+                        bbox_data_gt = np.array([list(map(int, box.split(','))) for box in y_true])
+                        bboxes_gt, classes_gt = bbox_data_gt[:, :4], bbox_data_gt[:, 4]
+                        bboxes_gt = np.concatenate(
+                            [bboxes_gt[:, 1:2], bboxes_gt[:, 0:1], bboxes_gt[:, 3:4], bboxes_gt[:, 2:3]], axis=-1)
+                        for i, cl in enumerate(classes_gt):
+                            class_bb[data_type][cl].append(bboxes_gt[i].tolist())
+
+                    dataset_balance["output"]['class_count'][data_type] = {}
+                    dataset_balance["output"]['class_square'][data_type] = {}
+                    for key, item in class_bb[data_type].items():
+                        dataset_balance["output"]['class_count'][data_type][name_classes[key]] = len(item)
+                        dataset_balance["output"]['class_square'][data_type][name_classes[key]] = \
+                            self._round_loss_metric(self._get_box_square(item, imsize=(imsize[0], imsize[1])))
+
+                    dataset_balance["output"]['colormap'][data_type] = self._plot_bb_colormap(
+                        class_bb=class_bb,
+                        colors=self.class_colors,
+                        name_classes=name_classes,
+                        data_type=data_type,
+                        save_path=self.preset_path,
+                        imgsize=(imsize[0], imsize[1])
+                    )
+                break
 
         return dataset_balance
 
+    @staticmethod
+    def _get_box_square(bbs, imsize=(416, 416)):
+        if len(bbs):
+            square = 0
+            for bb in bbs:
+                square += (bb[2] - bb[0]) * (bb[3] - bb[1])
+            return square / len(bbs) / np.prod(imsize) * 100
+        else:
+            return 0.
+
+    @staticmethod
+    def _plot_bb_colormap(class_bb: dict, colors: list, name_classes: list, data_type: str,
+                          save_path: str, imgsize=(416, 416)):
+        template = np.zeros((imgsize[0], imgsize[1], 3))
+        link_dict = {}
+        total_len = 0
+        for class_idx in class_bb[data_type].keys():
+            total_len += len(class_bb[data_type][class_idx])
+            class_template = np.zeros((imgsize[0], imgsize[1], 3))
+            for box in class_bb[data_type][class_idx]:
+                template[box[0]:box[2], box[1]:box[3], :] += np.array(colors[class_idx])
+                class_template[box[0]:box[2], box[1]:box[3], :] += np.array(colors[class_idx])
+            class_template = class_template / len(class_bb[data_type][class_idx])
+            class_template = (class_template * 255 / class_template.max()).astype("uint8")
+            img_save_path = os.path.join(
+                save_path, f"image_{data_type}_od_balance_colormap_class_{name_classes[class_idx]}.webp"
+            )
+            link_dict[name_classes[class_idx]] = img_save_path
+            matplotlib.image.imsave(img_save_path, class_template)
+
+        template = template / total_len
+        template = (template * 255 / template.max()).astype('uint8')
+        img_save_path = os.path.join(save_path, f"image_{data_type}_od_balance_colormap_all_classes.webp")
+        link_dict['all_classes'] = img_save_path
+        matplotlib.image.imsave(img_save_path, template)
+        return link_dict
+
     def _prepare_class_idx(self) -> dict:
         class_idx = {}
-        for data_type in self.y_true.keys():
-            class_idx[data_type] = {}
-            for out in self.y_true.get(data_type).keys():
-                class_idx[data_type][out] = {}
-                task = self.options.data.outputs.get(int(out)).task
-                if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
-                    ohe = self.options.data.outputs.get(int(out)).encoding == LayerEncodingChoice.ohe
-                    for name in self.options.data.outputs.get(int(out)).classes_names:
-                        class_idx[data_type][out][name] = []
-                    y_true = np.argmax(self.y_true.get(data_type).get(out), axis=-1) if ohe \
-                        else np.squeeze(self.y_true.get(data_type).get(out))
-                    for idx in range(len(y_true)):
-                        class_idx[data_type][out][
-                            self.options.data.outputs.get(int(out)).classes_names[y_true[idx]]
-                        ].append(idx)
+        if self.options.data.architecture == DatasetModelChoice.basic:
+            for data_type in self.y_true.keys():
+                class_idx[data_type] = {}
+                for out in self.y_true.get(data_type).keys():
+                    class_idx[data_type][out] = {}
+                    task = self.options.data.outputs.get(int(out)).task
+                    if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
+                        ohe = self.options.data.outputs.get(int(out)).encoding == LayerEncodingChoice.ohe
+                        for name in self.options.data.outputs.get(int(out)).classes_names:
+                            class_idx[data_type][out][name] = []
+                        y_true = np.argmax(self.y_true.get(data_type).get(out), axis=-1) if ohe \
+                            else np.squeeze(self.y_true.get(data_type).get(out))
+                        for idx in range(len(y_true)):
+                            class_idx[data_type][out][
+                                self.options.data.outputs.get(int(out)).classes_names[y_true[idx]]
+                            ].append(idx)
         return class_idx
 
     def _prepare_seed(self):
@@ -938,7 +1088,7 @@ class InteractiveCallback:
                         f"val_{out}_{loss_metric_config.get('metric').get(metric_name).get('log_name')}")
                 if metric_name == MetricChoice.UnscaledMAE:
                     train_metric, val_metric = UnscaledMAE().unscale_result(
-                        [train_metric, val_metric], int(out), self.preprocessing
+                        [train_metric, val_metric], int(out), self.options.preprocessing
                     )
                 interactive_log[out]['metrics'][metric_name] = {
                     'train': self._round_loss_metric(train_metric) if not math.isnan(float(train_metric)) else None,
@@ -949,40 +1099,70 @@ class InteractiveCallback:
     def _reformat_y_pred(self, y_pred):
         self.y_pred = {}
         self.inverse_y_pred = {}
-        for idx, out in enumerate(self.y_true.get('val').keys()):
-            task = self.options.data.outputs.get(int(out)).task
-            if len(self.y_true.get('val').keys()) == 1:
-                self.y_pred[out] = y_pred
-            else:
-                self.y_pred[out] = y_pred[idx]
+        if self.options.data.architecture == DatasetModelChoice.basic:
+            for idx, out in enumerate(self.y_true.get('val').keys()):
+                task = self.options.data.outputs.get(int(out)).task
+                if len(self.y_true.get('val').keys()) == 1:
+                    self.y_pred[out] = y_pred
+                else:
+                    self.y_pred[out] = y_pred[idx]
 
-            if task == LayerOutputTypeChoice.Regression or task == LayerOutputTypeChoice.Dataframe:
-                preprocess_dict = self.options.preprocessing.preprocessing.get(int(out))
-                inverse_y = np.zeros_like(self.y_pred.get(out)[:, 0:1])
-                for i, column in enumerate(preprocess_dict.keys()):
-                    if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
-                        _options = {int(out): {column: self.y_pred.get(out)[:, i:i + 1]}}
-                        inverse_col = self.options.preprocessing.inverse_data(_options).get(int(out)).get(column)
-                    else:
-                        inverse_col = self.y_pred.get(out)[:, i:i + 1]
-                    inverse_y = np.concatenate([inverse_y, inverse_col], axis=1)
-                self.inverse_y_pred[out] = inverse_y[:, 1:]
+                if task == LayerOutputTypeChoice.Regression or task == LayerOutputTypeChoice.Dataframe:
+                    preprocess_dict = self.options.preprocessing.preprocessing.get(int(out))
+                    inverse_y = np.zeros_like(self.y_pred.get(out)[:, 0:1])
+                    for i, column in enumerate(preprocess_dict.keys()):
+                        if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
+                            _options = {int(out): {column: self.y_pred.get(out)[:, i:i + 1]}}
+                            inverse_col = self.options.preprocessing.inverse_data(_options).get(int(out)).get(column)
+                        else:
+                            inverse_col = self.y_pred.get(out)[:, i:i + 1]
+                        inverse_y = np.concatenate([inverse_y, inverse_col], axis=1)
+                    self.inverse_y_pred[out] = inverse_y[:, 1:]
 
-            if task == LayerOutputTypeChoice.Regression.Timeseries:
-                preprocess_dict = self.options.preprocessing.preprocessing.get(int(out))
-                inverse_y = np.zeros_like(self.y_pred.get(out)[:, 0:1, :])
-                for i, column in enumerate(preprocess_dict.keys()):
-                    if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
-                        _options = {int(out): {column: self.y_pred.get(out)[:, i:i + 1, :]}}
-                        inverse_col = self.options.preprocessing.inverse_data(_options).get(int(out)).get(column)
-                    else:
-                        inverse_col = self.y_pred.get(out)[:, i:i + 1, :]
-                    inverse_y = np.concatenate([inverse_y, inverse_col], axis=1)
-                self.inverse_y_pred[out] = inverse_y[:, 1:, :]
+                if task == LayerOutputTypeChoice.Regression.Timeseries:
+                    preprocess_dict = self.options.preprocessing.preprocessing.get(int(out))
+                    inverse_y = np.zeros_like(self.y_pred.get(out)[:, 0:1, :])
+                    for i, column in enumerate(preprocess_dict.keys()):
+                        if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
+                            _options = {int(out): {column: self.y_pred.get(out)[:, i:i + 1, :]}}
+                            inverse_col = self.options.preprocessing.inverse_data(_options).get(int(out)).get(column)
+                        else:
+                            inverse_col = self.y_pred.get(out)[:, i:i + 1, :]
+                        inverse_y = np.concatenate([inverse_y, inverse_col], axis=1)
+                    self.inverse_y_pred[out] = inverse_y[:, 1:, :]
+
+        if self.options.data.architecture == DatasetModelChoice.yolo:
+            # self.y_pred -> channel -> channel_boxes -> example
+            if len(y_pred) != len(self.options.data.outputs.keys()):
+                reformat_pred = []
+                for i, out in enumerate(self.options.data.outputs.keys()):
+                    for j in len(y_pred):
+                        if self.options.data.outputs.get(out).shape[:2] == y_pred[j].shape[1:3]:
+                            reformat_pred.append(y_pred[j])
+                            break
+                y_pred = reformat_pred
+            name_classes = self.options.data.outputs.get(list(self.options.data.outputs.keys())[0]).classes_names
+
+            for channel in range(len(y_pred)):
+                channel_boxes = []
+                for example in range(len(self.options.dataframe.get('val'))):
+                    pred = []
+                    for ch in range(len(y_pred)):
+                        pred.append(y_pred[ch][example:example + 1])
+                    channel_boxes.append(
+                        CreateArray().get_predict_boxes(
+                            array=pred,
+                            name_classes=name_classes,
+                            bb_size=channel,
+                            sensitivity=0.15,
+                            threashold=0.1
+                        )
+                    )
+                self.y_pred[channel] = np.array(channel_boxes)
 
     def _prepare_example_idx_to_show(self) -> dict:
-
         example_idx = {}
+        # if self.options.data.architecture == DatasetModelChoice.basic:
         out = f"{self.interactive_config.intermediate_result.main_output}"
         ohe = self.options.data.outputs.get(int(out)).encoding == LayerEncodingChoice.ohe
         count = self.interactive_config.intermediate_result.num_examples
@@ -1747,398 +1927,529 @@ class InteractiveCallback:
 
     def _get_statistic_data_request(self) -> list:
         return_data = []
-        _id = 1
-        for out in self.interactive_config.statistic_data.output_id:
-            task = self.options.data.outputs.get(out).task
-            encoding = self.options.data.outputs.get(out).encoding
-            if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend and \
-                    encoding != LayerEncodingChoice.multi:
-                cm, cm_percent = self._get_confusion_matrix(
-                    np.argmax(self.y_true.get("val").get(f'{out}'), axis=-1) if encoding == LayerEncodingChoice.ohe
-                    else self.y_true.get("val").get(f'{out}'),
-                    np.argmax(self.y_pred.get(f'{out}'), axis=-1),
-                    get_percent=True
-                )
-                return_data.append(
-                    self._fill_heatmap_front_structure(
-                        _id=_id,
-                        _type="heatmap",
-                        graph_name=f"Выходной слой «{out}» - Confusion matrix",
-                        short_name=f"{out} - Confusion matrix",
-                        x_label="Предсказание",
-                        y_label="Истинное значение",
-                        labels=self.options.data.outputs.get(out).classes_names,
-                        data_array=cm,
-                        data_percent_array=cm_percent,
+        _id = 0
+        if self.options.data.architecture == DatasetModelChoice.basic:
+            for out in self.interactive_config.statistic_data.output_id:
+                task = self.options.data.outputs.get(out).task
+                encoding = self.options.data.outputs.get(out).encoding
+                if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend and \
+                        encoding != LayerEncodingChoice.multi:
+                    cm, cm_percent = self._get_confusion_matrix(
+                        np.argmax(self.y_true.get("val").get(f'{out}'), axis=-1) if encoding == LayerEncodingChoice.ohe
+                        else self.y_true.get("val").get(f'{out}'),
+                        np.argmax(self.y_pred.get(f'{out}'), axis=-1),
+                        get_percent=True
                     )
-                )
-                _id += 1
-
-            elif task == LayerOutputTypeChoice.Segmentation or \
-                    (task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.ohe):
-                cm, cm_percent = self._get_confusion_matrix(
-                    np.argmax(self.y_true.get("val").get(f"{out}"), axis=-1).reshape(
-                        np.prod(np.argmax(self.y_true.get("val").get(f"{out}"), axis=-1).shape)).astype('int'),
-                    np.argmax(self.y_pred.get(f'{out}'), axis=-1).reshape(
-                        np.prod(np.argmax(self.y_pred.get(f'{out}'), axis=-1).shape)).astype('int'),
-                    get_percent=True
-                )
-                return_data.append(
-                    self._fill_heatmap_front_structure(
-                        _id=_id,
-                        _type="heatmap",
-                        graph_name=f"Выходной слой «{out}» - Confusion matrix",
-                        short_name=f"{out} - Confusion matrix",
-                        x_label="Предсказание",
-                        y_label="Истинное значение",
-                        labels=self.options.data.outputs.get(out).classes_names,
-                        data_array=cm,
-                        data_percent_array=cm_percent,
+                    return_data.append(
+                        self._fill_heatmap_front_structure(
+                            _id=_id,
+                            _type="heatmap",
+                            graph_name=f"Выходной слой «{out}» - Confusion matrix",
+                            short_name=f"{out} - Confusion matrix",
+                            x_label="Предсказание",
+                            y_label="Истинное значение",
+                            labels=self.options.data.outputs.get(out).classes_names,
+                            data_array=cm,
+                            data_percent_array=cm_percent,
+                        )
                     )
-                )
-                _id += 1
+                    _id += 1
 
-            elif (task == LayerOutputTypeChoice.TextSegmentation or task == LayerOutputTypeChoice.Classification) \
-                    and encoding == LayerEncodingChoice.multi:
-
-                report = self._get_classification_report(
-                    y_true=self.y_true.get("val").get(f"{out}").reshape(
-                        (np.prod(self.y_true.get("val").get(f"{out}").shape[:-1]),
-                         self.y_true.get("val").get(f"{out}").shape[-1])
-                    ),
-                    y_pred=np.where(self.y_pred.get(f"{out}") >= 0.9, 1, 0).reshape(
-                        (np.prod(self.y_pred.get(f"{out}").shape[:-1]), self.y_pred.get(f"{out}").shape[-1])
-                    ),
-                    labels=self.options.data.outputs.get(out).classes_names
-                )
-                return_data.append(
-                    self._fill_table_front_structure(
-                        _id=_id,
-                        graph_name=f"Выходной слой «{out}» - Отчет по классам",
-                        plot_data=report
+                elif task == LayerOutputTypeChoice.Segmentation or \
+                        (task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.ohe):
+                    cm, cm_percent = self._get_confusion_matrix(
+                        np.argmax(self.y_true.get("val").get(f"{out}"), axis=-1).reshape(
+                            np.prod(np.argmax(self.y_true.get("val").get(f"{out}"), axis=-1).shape)).astype('int'),
+                        np.argmax(self.y_pred.get(f'{out}'), axis=-1).reshape(
+                            np.prod(np.argmax(self.y_pred.get(f'{out}'), axis=-1).shape)).astype('int'),
+                        get_percent=True
                     )
-                )
-                _id += 1
-
-            elif task == LayerOutputTypeChoice.Regression:
-                y_true = self.inverse_y_true.get("val").get(f'{out}').squeeze()
-                y_pred = self.inverse_y_pred.get(f'{out}').squeeze()
-                x_scatter, y_scatter = self._get_scatter(y_true, y_pred)
-                return_data.append(
-                    self._fill_graph_front_structure(
-                        _id=_id,
-                        _type='scatter',
-                        graph_name=f"Выходной слой «{out}» - Скаттер",
-                        short_name=f"{out} - Скаттер",
-                        x_label="Истинные значения",
-                        y_label="Предсказанные значения",
-                        plot_data=[self._fill_graph_plot_data(x=x_scatter, y=y_scatter)],
+                    return_data.append(
+                        self._fill_heatmap_front_structure(
+                            _id=_id,
+                            _type="heatmap",
+                            graph_name=f"Выходной слой «{out}» - Confusion matrix",
+                            short_name=f"{out} - Confusion matrix",
+                            x_label="Предсказание",
+                            y_label="Истинное значение",
+                            labels=self.options.data.outputs.get(out).classes_names,
+                            data_array=cm,
+                            data_percent_array=cm_percent,
+                        )
                     )
-                )
-                _id += 1
-                deviation = (y_pred - y_true) * 100 / y_true
-                x_mae, y_mae = self._get_distribution_histogram(np.abs(deviation), bins=25, categorical=False)
-                return_data.append(
-                    self._fill_graph_front_structure(
-                        _id=_id,
-                        _type='bar',
-                        graph_name=f'Выходной слой «{out}» - Распределение абсолютной ошибки',
-                        short_name=f"{out} - Распределение MAE",
-                        x_label="Абсолютная ошибка",
-                        y_label="Значение",
-                        plot_data=[self._fill_graph_plot_data(x=x_mae, y=y_mae)],
-                    )
-                )
-                _id += 1
-                x_me, y_me = self._get_distribution_histogram(deviation, bins=25, categorical=False)
-                return_data.append(
-                    self._fill_graph_front_structure(
-                        _id=_id,
-                        _type='bar',
-                        graph_name=f'Выходной слой «{out}» - Распределение ошибки',
-                        short_name=f"{out} - Распределение ME",
-                        x_label="Ошибка",
-                        y_label="Значение",
-                        plot_data=[self._fill_graph_plot_data(x=x_me, y=y_me)],
-                    )
-                )
-                _id += 1
+                    _id += 1
 
-            elif task == LayerOutputTypeChoice.Timeseries:
-                for i, channel_name in enumerate(self.options.data.columns.get(out).keys()):
-                    for step in range(self.y_true.get("val").get(f'{out}').shape[-1]):
-                        y_true = self.inverse_y_true.get("val").get(f"{out}")[:, i, step].astype('float')
-                        y_pred = self.inverse_y_pred.get(f"{out}")[:, i, step].astype('float')
+                elif (task == LayerOutputTypeChoice.TextSegmentation or task == LayerOutputTypeChoice.Classification) \
+                        and encoding == LayerEncodingChoice.multi:
 
-                        return_data.append(
-                            self._fill_graph_front_structure(
-                                _id=_id,
-                                _type='graphic',
-                                graph_name=f"Выходной слой «{out}» - Предсказание канала "
-                                           f"«{channel_name.split('_', 1)[-1]}» на {step + 1} "
-                                           f"шаг{'ов' if step else ''} вперед",
-                                short_name=f"{out} - «{channel_name.split('_', 1)[-1]}» на {step + 1} "
-                                           f"шаг{'ов' if step else ''}",
-                                x_label="Время",
-                                y_label="Значение",
-                                plot_data=[
-                                    self._fill_graph_plot_data(
-                                        x=np.arange(len(y_true)).astype('int').tolist(),
-                                        y=y_true.tolist(),
-                                        label="Истинное значение"
-                                    ),
-                                    self._fill_graph_plot_data(
-                                        x=np.arange(len(y_true)).astype('int').tolist(),
-                                        y=y_pred.tolist(),
-                                        label="Предсказанное значение"
-                                    )
-                                ],
+                    report = self._get_classification_report(
+                        y_true=self.y_true.get("val").get(f"{out}").reshape(
+                            (np.prod(self.y_true.get("val").get(f"{out}").shape[:-1]),
+                             self.y_true.get("val").get(f"{out}").shape[-1])
+                        ),
+                        y_pred=np.where(self.y_pred.get(f"{out}") >= 0.9, 1, 0).reshape(
+                            (np.prod(self.y_pred.get(f"{out}").shape[:-1]), self.y_pred.get(f"{out}").shape[-1])
+                        ),
+                        labels=self.options.data.outputs.get(out).classes_names
+                    )
+                    return_data.append(
+                        self._fill_table_front_structure(
+                            _id=_id,
+                            graph_name=f"Выходной слой «{out}» - Отчет по классам",
+                            plot_data=report
+                        )
+                    )
+                    _id += 1
+
+                elif task == LayerOutputTypeChoice.Regression:
+                    y_true = self.inverse_y_true.get("val").get(f'{out}').squeeze()
+                    y_pred = self.inverse_y_pred.get(f'{out}').squeeze()
+                    x_scatter, y_scatter = self._get_scatter(y_true, y_pred)
+                    return_data.append(
+                        self._fill_graph_front_structure(
+                            _id=_id,
+                            _type='scatter',
+                            graph_name=f"Выходной слой «{out}» - Скаттер",
+                            short_name=f"{out} - Скаттер",
+                            x_label="Истинные значения",
+                            y_label="Предсказанные значения",
+                            plot_data=[self._fill_graph_plot_data(x=x_scatter, y=y_scatter)],
+                        )
+                    )
+                    _id += 1
+                    deviation = (y_pred - y_true) * 100 / y_true
+                    x_mae, y_mae = self._get_distribution_histogram(np.abs(deviation), bins=25, categorical=False)
+                    return_data.append(
+                        self._fill_graph_front_structure(
+                            _id=_id,
+                            _type='bar',
+                            graph_name=f'Выходной слой «{out}» - Распределение абсолютной ошибки',
+                            short_name=f"{out} - Распределение MAE",
+                            x_label="Абсолютная ошибка",
+                            y_label="Значение",
+                            plot_data=[self._fill_graph_plot_data(x=x_mae, y=y_mae)],
+                        )
+                    )
+                    _id += 1
+                    x_me, y_me = self._get_distribution_histogram(deviation, bins=25, categorical=False)
+                    return_data.append(
+                        self._fill_graph_front_structure(
+                            _id=_id,
+                            _type='bar',
+                            graph_name=f'Выходной слой «{out}» - Распределение ошибки',
+                            short_name=f"{out} - Распределение ME",
+                            x_label="Ошибка",
+                            y_label="Значение",
+                            plot_data=[self._fill_graph_plot_data(x=x_me, y=y_me)],
+                        )
+                    )
+                    _id += 1
+
+                elif task == LayerOutputTypeChoice.Timeseries:
+                    for i, channel_name in enumerate(self.options.data.columns.get(out).keys()):
+                        for step in range(self.y_true.get("val").get(f'{out}').shape[-1]):
+                            y_true = self.inverse_y_true.get("val").get(f"{out}")[:, i, step].astype('float')
+                            y_pred = self.inverse_y_pred.get(f"{out}")[:, i, step].astype('float')
+
+                            return_data.append(
+                                self._fill_graph_front_structure(
+                                    _id=_id,
+                                    _type='graphic',
+                                    graph_name=f"Выходной слой «{out}» - Предсказание канала "
+                                               f"«{channel_name.split('_', 1)[-1]}» на {step + 1} "
+                                               f"шаг{'ов' if step else ''} вперед",
+                                    short_name=f"{out} - «{channel_name.split('_', 1)[-1]}» на {step + 1} "
+                                               f"шаг{'ов' if step else ''}",
+                                    x_label="Время",
+                                    y_label="Значение",
+                                    plot_data=[
+                                        self._fill_graph_plot_data(
+                                            x=np.arange(len(y_true)).astype('int').tolist(),
+                                            y=y_true.tolist(),
+                                            label="Истинное значение"
+                                        ),
+                                        self._fill_graph_plot_data(
+                                            x=np.arange(len(y_true)).astype('int').tolist(),
+                                            y=y_pred.tolist(),
+                                            label="Предсказанное значение"
+                                        )
+                                    ],
+                                )
                             )
-                        )
-                        _id += 1
-                        x_axis, auto_corr_true, auto_corr_pred = self._get_autocorrelation_graphic(
-                            y_true, y_pred, depth=10
-                        )
-                        return_data.append(
-                            self._fill_graph_front_structure(
-                                _id=_id,
-                                _type='graphic',
-                                graph_name=f"Выходной слой «{out}» - Автокорреляция канала "
-                                           f"«{channel_name.split('_', 1)[-1]}» на {step + 1} шаг"
-                                           f"{'а' if step else ''} вперед",
-                                short_name=f"{out} - Автокорреляция канала «{channel_name.split('_', 1)[-1]}»",
-                                x_label="Время",
-                                y_label="Значение",
-                                plot_data=[
-                                    self._fill_graph_plot_data(x=x_axis, y=auto_corr_true, label="Истинное значение"),
-                                    self._fill_graph_plot_data(x=x_axis, y=auto_corr_pred,
-                                                               label="Предсказанное значение")
-                                ],
+                            _id += 1
+                            x_axis, auto_corr_true, auto_corr_pred = self._get_autocorrelation_graphic(
+                                y_true, y_pred, depth=10
                             )
-                        )
-                        _id += 1
-                        deviation = (y_pred - y_true) * 100 / y_true
-                        x_mae, y_mae = self._get_distribution_histogram(np.abs(deviation), bins=25, categorical=False)
-                        return_data.append(
-                            self._fill_graph_front_structure(
-                                _id=_id,
-                                _type='bar',
-                                graph_name=f"Выходной слой «{out}» - Распределение абсолютной ошибки канала "
-                                           f"«{channel_name.split('_', 1)[-1]}» на {step + 1} шаг"
-                                           f"{'ов' if step + 1 == 1 else ''} вперед",
-                                short_name=f"{out} - Распределение MAE канала «{channel_name.split('_', 1)[-1]}»",
-                                x_label="Абсолютная ошибка",
-                                y_label="Значение",
-                                plot_data=[self._fill_graph_plot_data(x=x_mae, y=y_mae)],
+                            return_data.append(
+                                self._fill_graph_front_structure(
+                                    _id=_id,
+                                    _type='graphic',
+                                    graph_name=f"Выходной слой «{out}» - Автокорреляция канала "
+                                               f"«{channel_name.split('_', 1)[-1]}» на {step + 1} шаг"
+                                               f"{'а' if step else ''} вперед",
+                                    short_name=f"{out} - Автокорреляция канала «{channel_name.split('_', 1)[-1]}»",
+                                    x_label="Время",
+                                    y_label="Значение",
+                                    plot_data=[
+                                        self._fill_graph_plot_data(x=x_axis, y=auto_corr_true,
+                                                                   label="Истинное значение"),
+                                        self._fill_graph_plot_data(x=x_axis, y=auto_corr_pred,
+                                                                   label="Предсказанное значение")
+                                    ],
+                                )
                             )
-                        )
-                        _id += 1
-                        x_me, y_me = self._get_distribution_histogram(deviation, bins=25, categorical=False)
-                        return_data.append(
-                            self._fill_graph_front_structure(
-                                _id=_id,
-                                _type='bar',
-                                graph_name=f"Выходной слой «{out}» - Распределение ошибки канала "
-                                           f"«{channel_name.split('_', 1)[-1]}» на {step + 1} шаг"
-                                           f"{'ов' if step + 1 == 1 else ''} вперед",
-                                short_name=f"{out} - Распределение ME канала «{channel_name.split('_', 1)[-1]}»",
-                                x_label="Ошибка",
-                                y_label="Значение",
-                                plot_data=[self._fill_graph_plot_data(x=x_me, y=y_me)],
+                            _id += 1
+                            deviation = (y_pred - y_true) * 100 / y_true
+                            x_mae, y_mae = self._get_distribution_histogram(np.abs(deviation), bins=25,
+                                                                            categorical=False)
+                            return_data.append(
+                                self._fill_graph_front_structure(
+                                    _id=_id,
+                                    _type='bar',
+                                    graph_name=f"Выходной слой «{out}» - Распределение абсолютной ошибки канала "
+                                               f"«{channel_name.split('_', 1)[-1]}» на {step + 1} шаг"
+                                               f"{'ов' if step + 1 == 1 else ''} вперед",
+                                    short_name=f"{out} - Распределение MAE канала «{channel_name.split('_', 1)[-1]}»",
+                                    x_label="Абсолютная ошибка",
+                                    y_label="Значение",
+                                    plot_data=[self._fill_graph_plot_data(x=x_mae, y=y_mae)],
+                                )
                             )
-                        )
-                        _id += 1
+                            _id += 1
+                            x_me, y_me = self._get_distribution_histogram(deviation, bins=25, categorical=False)
+                            return_data.append(
+                                self._fill_graph_front_structure(
+                                    _id=_id,
+                                    _type='bar',
+                                    graph_name=f"Выходной слой «{out}» - Распределение ошибки канала "
+                                               f"«{channel_name.split('_', 1)[-1]}» на {step + 1} шаг"
+                                               f"{'ов' if step + 1 == 1 else ''} вперед",
+                                    short_name=f"{out} - Распределение ME канала «{channel_name.split('_', 1)[-1]}»",
+                                    x_label="Ошибка",
+                                    y_label="Значение",
+                                    plot_data=[self._fill_graph_plot_data(x=x_me, y=y_me)],
+                                )
+                            )
+                            _id += 1
 
-            elif task == LayerOutputTypeChoice.Dataframe:
-                pass
+                elif task == LayerOutputTypeChoice.Dataframe:
+                    pass
 
-            elif task == LayerOutputTypeChoice.ObjectDetection:
-                # accuracy for classes? smth else?
-                pass
+                else:
+                    pass
 
-            else:
-                pass
+        elif self.options.data.architecture == DatasetModelChoice.yolo:
+            box_channel = self.yolo_interactive_config.statistic_data.box_channel
+            sensitivity = self.yolo_interactive_config.statistic_data.sensitivity
+            threashold = self.yolo_interactive_config.statistic_data.threashold
+
+
+
+            cm, cm_percent = self._get_confusion_matrix(
+                np.argmax(self.y_true.get("val").get(f'{out}'), axis=-1) if encoding == LayerEncodingChoice.ohe
+                else self.y_true.get("val").get(f'{out}'),
+                np.argmax(self.y_pred.get(f'{out}'), axis=-1),
+                get_percent=True
+            )
+            return_data.append(
+                self._fill_heatmap_front_structure(
+                    _id=_id,
+                    _type="heatmap",
+                    graph_name=f"Выходной слой «{out}» - Confusion matrix",
+                    short_name=f"{out} - Confusion matrix",
+                    x_label="Предсказание",
+                    y_label="Истинное значение",
+                    labels=self.options.data.outputs.get(out).classes_names,
+                    data_array=cm,
+                    data_percent_array=cm_percent,
+                )
+            )
+            _id += 1
+            # elif task == LayerOutputTypeChoice.ObjectDetection:
+            #     # accuracy for classes? smth else?
+            x_mae, y_mae = self._get_distribution_histogram(np.abs(deviation), bins=25, categorical=False)
+            return_data.append(
+                self._fill_graph_front_structure(
+                    _id=_id,
+                    _type='bar',
+                    graph_name=f'Выходной слой «{out}» - Распределение абсолютной ошибки',
+                    short_name=f"{out} - Распределение MAE",
+                    x_label="Абсолютная ошибка",
+                    y_label="Значение",
+                    plot_data=[self._fill_graph_plot_data(x=x_mae, y=y_mae)],
+                )
+            )
+            pass
+
+
+        else:
+            pass
+
         return return_data
 
     def _get_balance_data_request(self) -> list:
         return_data = []
         _id = 0
-        for out in self.options.data.outputs.keys():
-            task = self.options.data.outputs.get(out).task
+        if self.options.data.architecture == DatasetModelChoice.basic:
+            for out in self.options.data.outputs.keys():
+                task = self.options.data.outputs.get(out).task
 
-            if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
-                for class_type in self.dataset_balance.get(f"{out}").keys():
-                    preset = {}
+                if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
+                    for class_type in self.dataset_balance.get(f"{out}").keys():
+                        preset = {}
+                        for data_type in ['train', 'val']:
+                            class_names, class_count = CreateArray().sort_dict(
+                                dict_to_sort=self.dataset_balance.get(f"{out}").get(class_type).get(data_type),
+                                mode=self.interactive_config.data_balance.sorted.name
+                            )
+                            preset[data_type] = self._fill_graph_front_structure(
+                                _id=_id,
+                                _type='histogram',
+                                type_data=data_type,
+                                graph_name=f"Выход {out} - "
+                                           f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка",
+                                short_name=f"{out} - {'Тренировочная' if data_type == 'train' else 'Проверочная'}",
+                                x_label="Название класса",
+                                y_label="Значение",
+                                plot_data=[self._fill_graph_plot_data(x=class_names, y=class_count)],
+                            )
+                            _id += 1
+                        return_data.append(preset)
+
+                elif task == LayerOutputTypeChoice.Segmentation:
+                    for class_type in self.dataset_balance.get(f"{out}").keys():
+                        preset = {}
+                        if class_type in ["presence_balance", "square_balance"]:
+                            for data_type in ['train', 'val']:
+                                names, count = CreateArray().sort_dict(
+                                    dict_to_sort=self.dataset_balance.get(f"{out}").get(class_type).get(data_type),
+                                    mode=self.interactive_config.data_balance.sorted.name
+                                )
+                                preset[data_type] = self._fill_graph_front_structure(
+                                    _id=_id,
+                                    _type='histogram',
+                                    type_data=data_type,
+                                    graph_name=f"Выход {out} - {'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка - "
+                                               f"{'баланс присутсвия' if class_type == 'presence_balance' else 'процент пространства'}",
+                                    short_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} - "
+                                               f"{'присутсвие' if class_type == 'presence_balance' else 'пространство'}",
+                                    x_label="Название класса",
+                                    y_label="Значение",
+                                    plot_data=[self._fill_graph_plot_data(x=names, y=count)],
+                                )
+                                _id += 1
+                            return_data.append(preset)
+
+                        if class_type == "colormap":
+                            for class_name, map_link in self.dataset_balance.get(f"{out}").get('colormap').get(
+                                    'train').items():
+                                preset = {}
+                                for data_type in ['train', 'val']:
+                                    preset[data_type] = self._fill_graph_front_structure(
+                                        _id=_id,
+                                        _type='colormap',
+                                        type_data=data_type,
+                                        graph_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка "
+                                                   f"- Цветовая карта класса {class_name}",
+                                        short_name="",
+                                        x_label="",
+                                        y_label="",
+                                        plot_data=map_link,
+                                    )
+                                    _id += 1
+                                return_data.append(preset)
+
+                elif task == LayerOutputTypeChoice.TextSegmentation:
+                    for class_type in self.dataset_balance.get(f"{out}").keys():
+                        preset = {}
+                        if class_type in ["presence_balance", "percent_balance"]:
+                            for data_type in ['train', 'val']:
+                                names, count = CreateArray().sort_dict(
+                                    dict_to_sort=self.dataset_balance.get(f"{out}").get(class_type).get(data_type),
+                                    mode=self.interactive_config.data_balance.sorted.name
+                                )
+                                preset[data_type] = self._fill_graph_front_structure(
+                                    _id=_id,
+                                    _type='histogram',
+                                    type_data=data_type,
+                                    graph_name=f"Выход {out} - {'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка - "
+                                               f"{'баланс присутсвия' if class_type == 'presence_balance' else 'процент пространства'}",
+                                    short_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} - "
+                                               f"{'присутсвие' if class_type == 'presence_balance' else 'процент'}",
+                                    x_label="Название класса",
+                                    y_label="Значение",
+                                    plot_data=[self._fill_graph_plot_data(x=names, y=count)],
+                                )
+                                _id += 1
+                        return_data.append(preset)
+
+                elif task == LayerOutputTypeChoice.Regression:
+                    for class_type in self.dataset_balance[f"{out}"].keys():
+                        if class_type == 'histogram':
+                            for column in self.dataset_balance[f"{out}"][class_type]["train"].keys():
+                                preset = {}
+                                for data_type in ["train", "val"]:
+                                    histogram = self.dataset_balance[f"{out}"][class_type][data_type][column]
+                                    data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
+                                    preset[data_type] = self._fill_graph_front_structure(
+                                        _id=_id,
+                                        _type=histogram.get("type"),
+                                        type_data=data_type,
+                                        graph_name=f"Выход {out} - {data_type_name} выборка - "
+                                                   f"Гистограмма распределения колонки «{histogram['name']}»",
+                                        short_name=f"{data_type_name} - {histogram['name']}",
+                                        x_label="Значение",
+                                        y_label="Количество",
+                                        plot_data=[
+                                            self._fill_graph_plot_data(x=histogram.get("x"), y=histogram.get("y"))],
+                                    )
+                                    _id += 1
+                                return_data.append(preset)
+
+                        if class_type == 'correlation':
+                            preset = {}
+                            for data_type in ["train", "val"]:
+                                data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
+                                preset[data_type] = self._fill_heatmap_front_structure(
+                                    _id=_id,
+                                    _type="corheatmap",
+                                    type_data=data_type,
+                                    graph_name=f"Выход {out} - {data_type_name} выборка - Матрица корреляций",
+                                    short_name=f"Матрица корреляций",
+                                    x_label="Колонка",
+                                    y_label="Колонка",
+                                    labels=self.dataset_balance[f"{out}"]['correlation'][data_type]["labels"],
+                                    data_array=self.dataset_balance[f"{out}"]['correlation'][data_type]["matrix"],
+                                )
+                                _id += 1
+                            return_data.append(preset)
+
+                elif task == LayerOutputTypeChoice.Timeseries:
+                    for class_type in self.dataset_balance[f"{out}"].keys():
+                        for channel_name in self.dataset_balance[f"{out}"][class_type].keys():
+                            preset = {}
+                            for data_type in ["train", "val"]:
+                                graph_type = self.dataset_balance[f"{out}"][class_type][channel_name][data_type]['type']
+                                data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
+                                y_true = self.options.dataframe.get(data_type)[channel_name].to_list()
+                                if class_type == 'graphic':
+                                    x_graph_axis = np.arange(len(y_true)).astype('float').tolist()
+                                    plot_data = [self._fill_graph_plot_data(x=x_graph_axis, y=y_true)]
+                                    graph_name = f'Выход {out} - {data_type_name} выборка - ' \
+                                                 f'График канала «{channel_name.split("_", 1)[-1]}»'
+                                    short_name = f'{data_type_name} - «{channel_name.split("_", 1)[-1]}»'
+                                    x_label = "Время"
+                                    y_label = "Величина"
+                                if class_type == 'dense_histogram':
+                                    x_hist, y_hist = self._get_distribution_histogram(y_true, bins=25,
+                                                                                      categorical=False)
+                                    plot_data = [self._fill_graph_plot_data(x=x_hist, y=y_hist)]
+                                    graph_name = f'Выход {out} - {data_type_name} выборка - ' \
+                                                 f'Гистограмма плотности канала «{channel_name.split("_", 1)[-1]}»'
+                                    short_name = f'{data_type_name} - Гистограмма «{channel_name.split("_", 1)[-1]}»'
+                                    x_label = "Значение"
+                                    y_label = "Количество"
+                                preset[data_type] = self._fill_graph_front_structure(
+                                    _id=_id,
+                                    _type=graph_type,
+                                    type_data=data_type,
+                                    graph_name=graph_name,
+                                    short_name=short_name,
+                                    x_label=x_label,
+                                    y_label=y_label,
+                                    plot_data=plot_data,
+                                )
+                                _id += 1
+                            return_data.append(preset)
+
+                else:
+                    pass
+
+        elif self.options.data.architecture == DatasetModelChoice.yolo:
+            for class_type in self.dataset_balance.get("output").keys():
+                preset = {}
+                if class_type in ["class_count", "class_square"]:
                     for data_type in ['train', 'val']:
-                        class_names, class_count = CreateArray().sort_dict(
-                            dict_to_sort=self.dataset_balance.get(f"{out}").get(class_type).get(data_type),
+                        names, count = CreateArray().sort_dict(
+                            dict_to_sort=self.dataset_balance.get("output").get(class_type).get(data_type),
                             mode=self.interactive_config.data_balance.sorted.name
                         )
                         preset[data_type] = self._fill_graph_front_structure(
                             _id=_id,
                             _type='histogram',
                             type_data=data_type,
-                            graph_name=f"Выход {out} - "
-                                       f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка",
-                            short_name=f"{out} - {'Тренировочная' if data_type == 'train' else 'Проверочная'}",
+                            graph_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка - "
+                                       f"{'баланс присутсвия' if class_type == 'class_count' else 'процент пространства'}",
+                            short_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} - "
+                                       f"{'присутсвие' if class_type == 'class_count' else 'пространство'}",
                             x_label="Название класса",
                             y_label="Значение",
-                            plot_data=[self._fill_graph_plot_data(x=class_names, y=class_count)],
+                            plot_data=[self._fill_graph_plot_data(x=names, y=count)],
                         )
                         _id += 1
                     return_data.append(preset)
 
-            elif task == LayerOutputTypeChoice.Segmentation:
-                for class_type in self.dataset_balance.get(f"{out}").keys():
-                    preset = {}
-                    if class_type in ["presence_balance", "square_balance"]:
-                        for data_type in ['train', 'val']:
-                            names, count = CreateArray().sort_dict(
-                                dict_to_sort=self.dataset_balance.get(f"{out}").get(class_type).get(data_type),
-                                mode=self.interactive_config.data_balance.sorted.name
-                            )
-                            preset[data_type] = self._fill_graph_front_structure(
-                                _id=_id,
-                                _type='histogram',
-                                type_data=data_type,
-                                graph_name=f"Выход {out} - {'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка - "
-                                           f"{'баланс присутсвия' if class_type == 'presence_balance' else 'процент пространства'}",
-                                short_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} - "
-                                           f"{'присутсвие' if class_type == 'presence_balance' else 'пространство'}",
-                                x_label="Название класса",
-                                y_label="Значение",
-                                plot_data=[self._fill_graph_plot_data(x=names, y=count)],
-                            )
-                            _id += 1
-                        return_data.append(preset)
-
-                    if class_type == "colormap":
-                        for class_name, map_link in self.dataset_balance.get(f"{out}").get('colormap').get('train').items():
-                            preset = {}
-                            for data_type in ['train', 'val']:
-                                preset[data_type] = self._fill_graph_front_structure(
-                                    _id=_id,
-                                    _type='colormap',
-                                    type_data=data_type,
-                                    graph_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка "
-                                               f"- Цветовая карта класса {class_name}",
-                                    short_name="",
-                                    x_label="",
-                                    y_label="",
-                                    plot_data=map_link,
-                                )
-                                _id += 1
-                            return_data.append(preset)
-
-            elif task == LayerOutputTypeChoice.TextSegmentation:
-                for class_type in self.dataset_balance.get(f"{out}").keys():
-                    preset = {}
-                    if class_type in ["presence_balance", "percent_balance"]:
-                        for data_type in ['train', 'val']:
-                            names, count = CreateArray().sort_dict(
-                                dict_to_sort=self.dataset_balance.get(f"{out}").get(class_type).get(data_type),
-                                mode=self.interactive_config.data_balance.sorted.name
-                            )
-                            preset[data_type] = self._fill_graph_front_structure(
-                                _id=_id,
-                                _type='histogram',
-                                type_data=data_type,
-                                graph_name=f"Выход {out} - {'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка - "
-                                           f"{'баланс присутсвия' if class_type == 'presence_balance' else 'процент пространства'}",
-                                short_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} - "
-                                           f"{'присутсвие' if class_type == 'presence_balance' else 'процент'}",
-                                x_label="Название класса",
-                                y_label="Значение",
-                                plot_data=[self._fill_graph_plot_data(x=names, y=count)],
-                            )
-                            _id += 1
-                    return_data.append(preset)
-
-            elif task == LayerOutputTypeChoice.Regression:
-                for class_type in self.dataset_balance[f"{out}"].keys():
-                    if class_type == 'histogram':
-                        for column in self.dataset_balance[f"{out}"][class_type]["train"].keys():
-                            preset = {}
-                            for data_type in ["train", "val"]:
-                                histogram = self.dataset_balance[f"{out}"][class_type][data_type][column]
-                                data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
-                                preset[data_type] = self._fill_graph_front_structure(
-                                    _id=_id,
-                                    _type=histogram.get("type"),
-                                    type_data=data_type,
-                                    graph_name=f"Выход {out} - {data_type_name} выборка - "
-                                               f"Гистограмма распределения колонки «{histogram['name']}»",
-                                    short_name=f"{data_type_name} - {histogram['name']}",
-                                    x_label="Значение",
-                                    y_label="Количество",
-                                    plot_data=[self._fill_graph_plot_data(x=histogram.get("x"), y=histogram.get("y"))],
-                                )
-                                _id += 1
-                            return_data.append(preset)
-
-                    if class_type == 'correlation':
+                if class_type == "colormap":
+                    classes_name = sorted(list(self.dataset_balance.get("output").get('colormap').get('train').keys()))
+                    for class_name in classes_name:
                         preset = {}
-                        for data_type in ["train", "val"]:
-                            data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
-                            preset[data_type] = self._fill_heatmap_front_structure(
-                                _id=_id,
-                                _type="corheatmap",
-                                type_data=data_type,
-                                graph_name=f"Выход {out} - {data_type_name} выборка - Матрица корреляций",
-                                short_name=f"Матрица корреляций",
-                                x_label="Колонка",
-                                y_label="Колонка",
-                                labels=self.dataset_balance[f"{out}"]['correlation'][data_type]["labels"],
-                                data_array=self.dataset_balance[f"{out}"]['correlation'][data_type]["matrix"],
-                            )
-                            _id += 1
-                        return_data.append(preset)
-
-            elif task == LayerOutputTypeChoice.Timeseries:
-                for class_type in self.dataset_balance[f"{out}"].keys():
-                    for channel_name in self.dataset_balance[f"{out}"][class_type].keys():
-                        preset = {}
-                        for data_type in ["train", "val"]:
-                            graph_type = self.dataset_balance[f"{out}"][class_type][channel_name][data_type]['type']
-                            data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
-                            y_true = self.options.dataframe.get(data_type)[channel_name].to_list()
-                            if class_type == 'graphic':
-                                x_graph_axis = np.arange(len(y_true)).astype('float').tolist()
-                                plot_data = [self._fill_graph_plot_data(x=x_graph_axis, y=y_true)]
-                                graph_name = f'Выход {out} - {data_type_name} выборка - ' \
-                                             f'График канала «{channel_name.split("_", 1)[-1]}»'
-                                short_name = f'{data_type_name} - «{channel_name.split("_", 1)[-1]}»'
-                                x_label = "Время"
-                                y_label = "Величина"
-                            if class_type == 'dense_histogram':
-                                x_hist, y_hist = self._get_distribution_histogram(y_true, bins=25, categorical=False)
-                                plot_data = [self._fill_graph_plot_data(x=x_hist, y=y_hist)]
-                                graph_name = f'Выход {out} - {data_type_name} выборка - ' \
-                                             f'Гистограмма плотности канала «{channel_name.split("_", 1)[-1]}»'
-                                short_name = f'{data_type_name} - Гистограмма «{channel_name.split("_", 1)[-1]}»'
-                                x_label = "Значение"
-                                y_label = "Количество"
+                        for data_type in ['train', 'val']:
+                            _dict = self.dataset_balance.get("output").get('colormap').get(data_type)
                             preset[data_type] = self._fill_graph_front_structure(
                                 _id=_id,
-                                _type=graph_type,
+                                _type='colormap',
                                 type_data=data_type,
-                                graph_name=graph_name,
-                                short_name=short_name,
-                                x_label=x_label,
-                                y_label=y_label,
-                                plot_data=plot_data,
+                                graph_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка "
+                                           f"- Цветовая карта "
+                                           f"{'всех классов' if class_name == 'all_classes' else 'класса'} "
+                                           f"{'' if class_name == 'all_classes' else class_name}",
+                                short_name="",
+                                x_label="",
+                                y_label="",
+                                plot_data=_dict.get(class_name),
                             )
                             _id += 1
                         return_data.append(preset)
 
-            elif task == LayerOutputTypeChoice.ObjectDetection:
-                # frequency of classes, like with segmentation
-                pass
-
-            else:
-                pass
+        else:
+            pass
 
         return return_data
+
+    @staticmethod
+    def _get_yolo_statistic(true_bb, pred_bb, sensitivity=0.25):
+        compat = {}
+        incompat = {}
+        for i, k in enumerate(pred_bb[:, :4]):
+            incompat[i] = {
+                'pred class': np.argmax(pred_bb[:, 5:][i]),
+                'conf': pred_bb[:, 4][i].item(),
+                'class_conf': pred_bb[:, 5:][i][np.argmax(pred_bb[:, 5:][i])],
+            }
+        for i, tr in enumerate(true_bb[:, :4]):
+            compat[i] = []
+            for j, pr in enumerate(pred_bb[:, :4]):
+                boxes = np.array([true_bb[:, :4][i], pred_bb[:, :4][j]])
+                scores = np.array([true_bb[:, 5:][i], pred_bb[:, 5:][j]])
+                pick, overlap = CreateArray().non_max_suppression_fast(boxes, scores, sensitivity=sensitivity)
+                if len(pick) == 1:
+                    compat[i].append(
+                        {
+                            'true class': np.argmax(true_bb[:, 5:][i]),
+                            'pred class': np.argmax(pred_bb[:, 5:][j]),
+                            "pred_id": j,
+                            'conf': pred_bb[:, 4][j].item(),
+                            'class_conf': pred_bb[:, 5:][j][np.argmax(pred_bb[:, 5:][j])],
+                            'class_result': True if np.argmax(true_bb[:, 5:][i]) == np.argmax(
+                                pred_bb[:, 5:][j]) else False,
+                            'overlap': overlap[0].item()
+                        }
+                    )
+                    try:
+                        incompat.pop(j)
+                    except:
+                        continue
+        return compat, incompat
 
     @staticmethod
     def _get_confusion_matrix(y_true, y_pred, get_percent=True) -> tuple:
@@ -2207,6 +2518,7 @@ class InteractiveCallback:
             hist_data = pd.Series(data_series).value_counts()
             return hist_data.index.to_list(), hist_data.to_list()
         else:
+            bins = int(len(data_series) / 10)
             data_series = InteractiveCallback().clean_data_series([data_series], mode="mono")
             bar_values, x_labels = np.histogram(data_series, bins=bins)
             new_x = []

@@ -642,7 +642,7 @@ class YOLOv3ResBlock(Model):
     #     return cls(**config)
 
 
-class YOLOConvBlock(Model):
+class YOLOConvBlock(Layer):
     """Unet block layer """
 
     def __init__(self,

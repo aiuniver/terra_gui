@@ -21,6 +21,7 @@ from .extra import (
     MetricChoice,
     StateStatusChoice,
 )
+from ..types import ConstrainedFloatValueGe0Le1
 
 
 class LossGraphData(IDMixinData):
@@ -55,6 +56,17 @@ class IntermediateResultData(BaseMixinData):
     autoupdate: bool = False
 
 
+class YoloIntermediateResultData(BaseMixinData):
+    show_results: bool = False
+    example_choice_type: ExampleChoiceTypeChoice = ExampleChoiceTypeChoice.seed
+    box_channel: conint(ge=0, le=2) = 1
+    num_examples: conint(ge=1, le=10) = 10
+    sensitivity: ConstrainedFloatValueGe0Le1 = 0.15
+    threashold: ConstrainedFloatValueGe0Le1 = 0.1
+    show_statistic: bool = False
+    autoupdate: bool = False
+
+
 class ProgressTableData(BaseMixinData):
     output_idx: PositiveInt
     show_loss: bool = True
@@ -72,6 +84,13 @@ class StatisticData(BaseMixinData):
     autoupdate: bool = False
 
 
+class YoloStatisticData(BaseMixinData):
+    box_channel: conint(ge=0, le=2) = 1
+    autoupdate: bool = False
+    sensitivity: ConstrainedFloatValueGe0Le1 = 0.15
+    threashold: ConstrainedFloatValueGe0Le1 = 0.1
+
+
 class BalanceData(BaseMixinData):
     show_train: bool = True
     show_val: bool = True
@@ -81,9 +100,18 @@ class BalanceData(BaseMixinData):
 class InteractiveData(BaseMixinData):
     loss_graphs: LossGraphsList = LossGraphsList()
     metric_graphs: MetricGraphsList = MetricGraphsList()
-    intermediate_result: IntermediateResultData = IntermediateResultData()
+    intermediate_result: YoloIntermediateResultData = YoloIntermediateResultData()
     progress_table: ProgressTableList = ProgressTableList()
     statistic_data: StatisticData = StatisticData()
+    data_balance: BalanceData = BalanceData()
+
+
+class YoloInteractiveData(BaseMixinData):
+    loss_graphs: LossGraphsList = LossGraphsList()
+    metric_graphs: MetricGraphsList = MetricGraphsList()
+    intermediate_result: IntermediateResultData = IntermediateResultData()
+    progress_table: ProgressTableList = ProgressTableList()
+    statistic_data: YoloStatisticData = YoloStatisticData()
     data_balance: BalanceData = BalanceData()
 
 
