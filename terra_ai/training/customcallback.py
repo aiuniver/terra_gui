@@ -1743,7 +1743,6 @@ class InteractiveCallback:
                         return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
                     else:
                         return_data[f"{idx + 1}"]['statistic_values'] = {}
-        # print('\n_get_intermediate_result_request', return_data)
         return return_data
 
     def _get_statistic_data_request(self) -> list:
@@ -1824,8 +1823,6 @@ class InteractiveCallback:
             elif task == LayerOutputTypeChoice.Regression:
                 y_true = self.inverse_y_true.get("val").get(f'{out}').squeeze()
                 y_pred = self.inverse_y_pred.get(f'{out}').squeeze()
-                print('y_true', y_true[:10])
-                print('y_pred', y_pred[:10])
                 x_scatter, y_scatter = self._get_scatter(y_true, y_pred)
                 return_data.append(
                     self._fill_graph_front_structure(
@@ -2212,7 +2209,11 @@ class InteractiveCallback:
         else:
             data_series = InteractiveCallback().clean_data_series([data_series], mode="mono")
             bar_values, x_labels = np.histogram(data_series, bins=bins)
-            return x_labels[:-1].astype('float').tolist(), bar_values.astype('int').tolist()
+            new_x = []
+            for i in range(len(x_labels[:-1])):
+                new_x.append(np.mean([x_labels[i], x_labels[i + 1]]))
+            new_x = np.array(new_x)
+            return new_x.astype('float').tolist(), bar_values.astype('int').tolist()
 
     @staticmethod
     def clean_data_series(data_series: list, mode="mono"):
