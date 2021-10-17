@@ -52,8 +52,8 @@
       <div class="card__graphic" v-if="type == 'graphic'">
         <Plotly :data="card.data" :layout="layout" :display-mode-bar="false"></Plotly>
       </div>
-
     </div>
+    <div class="card__reload"><button class="btn-reload" @click="ReloadCard"><i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i></button></div>
   </div>
 </template>
 

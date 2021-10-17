@@ -45,7 +45,7 @@ export default {
       },
       async ReloadCard({ commit, dispatch }, values) {
         const { data } = await dispatch('axios', { url: '/deploy/reload/', data: values }, { root: true });
-        commit("SET_BLOCK_CARDS", { value: data, id: values.id });
+        commit("SET_CARDS",  data.data);
       },
     },
     getters: {
