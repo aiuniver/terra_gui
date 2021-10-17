@@ -3,7 +3,7 @@
 """
 
 from enum import Enum
-from typing import List
+from typing import List, Tuple
 
 from ..mixins import BaseMixinData, UniqueListMixin
 
@@ -41,7 +41,18 @@ class BalanceSortedChoice(str, Enum):
 
 class ArchitectureChoice(str, Enum):
     Basic = "Basic"
-    Yolo = "Yolo"
+    ImageClassification = "ImageClassification"
+    ImageSegmentation = "ImageSegmentation"
+    TextClassification = "TextClassification"
+    TextSegmentation = "TextSegmentation"
+    DataframeClassification = "DataframeClassification"
+    DataframeRegression = "DataframeRegression"
+    TimeSeries = "TimeSeries"
+    TimeSeriesTrend = "TimeSeriesTrend"
+    AudioClassification = "AudioClassification"
+    VideoClassification = "VideoClassification"
+    YoloV3 = "YoloV3"
+    YoloV4 = "YoloV4"
 
 
 class CheckpointIndicatorChoice(str, Enum):
@@ -69,6 +80,14 @@ class OptimizerChoice(str, Enum):
     Nadam = "Nadam"
     Ftrl = "Ftrl"
 
+    @staticmethod
+    def names() -> list:
+        return list(map(lambda item: item.name, OptimizerChoice))
+
+    @staticmethod
+    def options() -> List[Tuple[str, str]]:
+        return list(map(lambda item: (item.name, item.value), OptimizerChoice))
+
 
 class TaskChoice(str, Enum):
     Classification = "Classification"
@@ -78,7 +97,7 @@ class TaskChoice(str, Enum):
     ObjectDetection = "ObjectDetection"
     Dataframe = "Dataframe"
     TextSegmentation = "TextSegmentation"
-    Timeseries_trend = "TimeseriesTrend"
+    TimeseriesTrend = "TimeseriesTrend"
 
 
 class LossChoice(str, Enum):
@@ -98,6 +117,7 @@ class LossChoice(str, Enum):
     SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
     SquaredHinge = "SquaredHinge"
     YoloLoss = "YoloLoss"
+
 
 class MetricChoice(str, Enum):
     AUC = "AUC"
@@ -121,6 +141,7 @@ class MetricChoice(str, Enum):
     Poisson = "Poisson"
     Precision = "Precision"
     Recall = "Recall"
+    RecallPercent = "RecallPercent"
     RootMeanSquaredError = "RootMeanSquaredError"
     SquaredHinge = "SquaredHinge"
     TopKCategoricalAccuracy = "TopKCategoricalAccuracy"

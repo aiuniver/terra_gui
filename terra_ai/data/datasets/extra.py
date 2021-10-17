@@ -128,6 +128,13 @@ class LayerTypeProcessingClassificationChoice(str, Enum):
     ranges = "ranges"
 
 
+class LayerObjectDetectionModelChoice(str, Enum):
+    yolo = "yolo"
+    ssd = "ssd"
+    fast_r_cnn = 'fast_r_cnn'
+    mask_r_cnn = 'mask_r_cnn'
+
+
 class LayerYoloChoice(str, Enum):
     v3 = "v3"
     v4 = "v4"
@@ -137,6 +144,11 @@ class LayerEncodingChoice(str, Enum):
     none = "none"
     ohe = "ohe"
     multi = "multi"
+
+
+class DatasetModelChoice(str, Enum):
+    basic = "Basic"
+    yolo = "Yolo"
 
 
 class DatasetGroupChoice(str, Enum):
@@ -175,7 +187,6 @@ class LayerInputTypeChoice(str, Enum):
     Audio = "Audio"
     Dataframe = "Dataframe"
     Video = "Video"
-
     Classification = "Classification"
     Scaler = "Scaler"
     Raw = "Raw"
@@ -195,6 +206,6 @@ class LayerOutputTypeChoice(str, Enum):
     TextSegmentation = "TextSegmentation"
     Regression = "Regression"
     Timeseries = "Timeseries"
-    Timeseries_trend = "TimeseriesTrend"
+    TimeseriesTrend = "TimeseriesTrend"
     ObjectDetection = "ObjectDetection"
     Raw = "Raw"

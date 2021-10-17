@@ -6,10 +6,9 @@ from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preprocessing import CreatePreprocessing
 from terra_ai.data.datasets.creation import CreationData, CreationInputsList, CreationOutputsList
 from terra_ai.data.datasets.dataset import DatasetData, DatasetInputsData, DatasetOutputsData, DatasetPathsData
-from terra_ai.data.datasets.extra import LayerEncodingChoice
 from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice, \
     LayerPrepareMethodChoice, LayerScalerImageChoice, ColumnProcessingTypeChoice, \
-    LayerTypeProcessingClassificationChoice
+    LayerTypeProcessingClassificationChoice, DatasetModelChoice, LayerEncodingChoice
 from terra_ai.settings import DATASET_EXT, DATASET_CONFIG
 
 import psutil
@@ -170,7 +169,6 @@ class CreateDataset(object):
 
     def create_instructions(self, creation_data: CreationData) -> DatasetInstructionsData:
 
-        # service = None
         if creation_data.columns_processing:
             inputs = self.create_dataframe_put_instructions(data=creation_data.inputs)
             outputs = self.create_dataframe_put_instructions(data=creation_data.outputs)
@@ -181,12 +179,7 @@ class CreateDataset(object):
                 if out.type == LayerOutputTypeChoice.Classification and self.y_cls:
                     for col_name, data in outputs[out.id].items():
                         data.instructions = self.y_cls
-                # elif out.type == LayerOutputTypeChoice.ObjectDetection:
-                #     service = self.create_put_instructions(data=creation_data.outputs)
 
-        # if service:
-        #     instructions = DatasetInstructionsData(inputs=inputs, outputs=outputs, service=service)
-        # else:
         instructions = DatasetInstructionsData(inputs=inputs, outputs=outputs)
 
         return instructions
@@ -214,32 +207,23 @@ class CreateDataset(object):
                 if put.parameters.cols_names[name_index]:
                     for worker in put.parameters.cols_names[name_index]:  # На будущее после 1 октября - очень аккуратно!
                         self.tags[put.id][f'{put.id}_{name}'] = decamelize(self.columns_processing[str(worker)].type)
+                        if decamelize(self.columns_processing[str(worker)].type) in PATH_TYPE_LIST:
+                            list_of_data = [os.path.join(self.source_path, x) for x in list_of_data]
                         instr = getattr(CreateArray(),
                                         f'instructions_{decamelize(self.columns_processing[str(worker)].type)}')(
                             list_of_data, **{'cols_names': f'{put.id}_{name}', 'put': put.id},
                             **self.columns_processing[str(worker)].parameters.native())
-                        path_flag = False
-                        if self.columns_processing[str(worker)].type in [LayerInputTypeChoice.Image,
-                                                                         LayerOutputTypeChoice.Image,
-                                                                         LayerInputTypeChoice.Video,
-                                                                         LayerOutputTypeChoice.Segmentation,
-                                                                         LayerInputTypeChoice.Audio,
-                                                                         LayerOutputTypeChoice.Audio,
-                                                                         LayerOutputTypeChoice.ObjectDetection]:
-                            paths_list = [os.path.join(self.source_path, elem) for elem in instr['instructions']]
-                            path_flag = True
+                        if decamelize(self.columns_processing[str(worker)].type) in PATH_TYPE_LIST:
+                            data_to_cut = [os.path.join(self.source_path, elem) for elem in instr['instructions']]
                         else:
-                            paths_list = instr['instructions']
+                            data_to_cut = instr['instructions']
                         instructions_data = InstructionsData(
                             **getattr(CreateArray(),
                                       f"cut_{decamelize(self.columns_processing[str(worker)].type)}")(
-                                paths_list, os.path.join(self.paths.sources, f'{put.id}_{name}'),
+                                data_to_cut, os.path.join(self.paths.sources, f'{put.id}_{name}'),
                                 **instr['parameters']))
-                        if path_flag:
-                            instructions_data.instructions = [os.path.join('sources',
-                                                                           instructions_data.parameters['cols_names'],
-                                                                           path.replace(str(self.source_path) +
-                                                                                        os.path.sep, ''))
+                        if decamelize(self.columns_processing[str(worker)].type) in PATH_TYPE_LIST:
+                            instructions_data.instructions = [path.replace(str(self.paths.basepath) + os.path.sep, '')
                                                               for path in instructions_data.instructions]
 
                         instructions_data.parameters = {'put_type': decamelize(self.columns_processing[
@@ -266,39 +250,50 @@ class CreateDataset(object):
         put_parameters: dict = {}
         for put in data:
             self.tags[put.id] = {f"{put.id}_{decamelize(put.type)}": decamelize(put.type)}
-            paths_list: list = []
-            for paths in put.parameters.sources_paths:
-                if paths.is_dir():
-                    for directory, folder, file_name in sorted(os.walk(os.path.join(self.source_directory, paths))):
-                        if file_name:
-                            file_folder = directory.replace(self.source_directory, '')[1:]
-                            for name in sorted(file_name):
-                                paths_list.append(os.path.join(file_folder, name))
+            if self.tags.get(put.id - 1) is not None and self.tags.get(put.id - 1).get(f"{put.id - 1}_"
+                                                                                       f"{decamelize(put.type)}") ==\
+                    decamelize(LayerInputTypeChoice.Audio):
+                instructions = put_parameters[put.id - 1][f'{put.id - 1}_{decamelize(put.type)}'].instructions.copy()
+                parameters = put_parameters[put.id - 1][f'{put.id - 1}_{decamelize(put.type)}'].parameters.copy()
+                parameters['parameter'] = put.parameters.parameter
+                parameters['cols_names'] = f'{put.id}_{decamelize(put.type)}'
+                parameters['put'] = put.id
+                instructions_data = InstructionsData(instructions=instructions, parameters=parameters)
+            else:
+                paths_list: list = []
+                for paths in put.parameters.sources_paths:
+                    if paths.is_dir():
+                        for directory, folder, file_name in sorted(os.walk(os.path.join(self.source_directory, paths))):
+                            if file_name:
+                                file_folder = directory.replace(self.source_directory, '')[1:]
+                                for name in sorted(file_name):
+                                    paths_list.append(os.path.join(file_folder, name))
 
-            put.parameters.cols_names = f'{put.id}_{decamelize(put.type)}'
-            put.parameters.put = put.id
-            temp_paths_list = [os.path.join(self.source_path, x) for x in paths_list]
-            instr = getattr(CreateArray(), f"instructions_{decamelize(put.type)}")(temp_paths_list,
-                                                                                   **put.parameters.native())
+                put.parameters.cols_names = f'{put.id}_{decamelize(put.type)}'
+                put.parameters.put = put.id
+                temp_paths_list = [os.path.join(self.source_path, x) for x in paths_list]
+                instr = getattr(CreateArray(), f"instructions_{decamelize(put.type)}")(temp_paths_list,
+                                                                                       **put.parameters.native())
 
-            if not put.type == LayerOutputTypeChoice.Classification:
-                y_classes = sorted(list(instr['instructions'].keys())) if isinstance(instr['instructions'], dict) else \
-                    instr['instructions']
-                self.y_cls = [os.path.basename(os.path.dirname(dir_name)) for dir_name in y_classes]
+                if not put.type == LayerOutputTypeChoice.Classification:
+                    y_classes = sorted(list(instr['instructions'].keys())) if isinstance(instr['instructions'], dict)\
+                        else instr['instructions']
+                    self.y_cls = [os.path.basename(os.path.dirname(dir_name)) for dir_name in y_classes]
 
-            instructions_data = InstructionsData(
-                **getattr(CreateArray(), f"cut_{decamelize(put.type)}")(instr['instructions'],
-                                                                        os.path.join(self.paths.sources,
-                                                                                     f"{put.id}_"
-                                                                                     f"{decamelize(put.type)}"),
-                                                                        **instr['parameters']))
+                instructions_data = InstructionsData(
+                    **getattr(CreateArray(), f"cut_{decamelize(put.type)}")(instr['instructions'],
+                                                                            os.path.join(self.paths.sources,
+                                                                                         f"{put.id}_"
+                                                                                         f"{decamelize(put.type)}"),
+                                                                            **instr['parameters']))
 
-            instructions_data.parameters = {'put_type': decamelize(put.type),
-                                            **instr['parameters']}
-            if decamelize(put.type) in PATH_TYPE_LIST:
-                new_paths = [path.replace(str(self.paths.basepath) + os.path.sep, '')
-                             for path in instructions_data.instructions]
-                instructions_data.instructions = new_paths
+                instructions_data.parameters = {'put_type': decamelize(put.type),
+                                                **instr['parameters']}
+
+                if decamelize(put.type) in PATH_TYPE_LIST:
+                    new_paths = [path.replace(str(self.paths.basepath) + os.path.sep, '')
+                                 for path in instructions_data.instructions]
+                    instructions_data.instructions = new_paths
 
             put_parameters[put.id] = {f'{put.id}_{decamelize(put.type)}': instructions_data}
 
@@ -399,13 +394,13 @@ class CreateDataset(object):
     def create_input_parameters(self, creation_data: CreationData) -> dict:
 
         creating_inputs_data = {}
-        path_type_input_list = [LayerInputTypeChoice.Image, LayerInputTypeChoice.Video, LayerInputTypeChoice.Audio]
         for key in self.instructions.inputs.keys():
             input_array = []
             self.columns[key] = {}
             creating_inputs_data[key] = {}
             for col_name, data in self.instructions.inputs[key].items():
                 column_names = []
+                encoding = LayerEncodingChoice.none
                 if creation_data.inputs.get(key).type == LayerInputTypeChoice.Dataframe:
                     column_names = pd.read_csv(creation_data.inputs.get(key).parameters.sources_paths[0], nrows=0,
                                                sep=None, engine='python').columns.to_list()
@@ -416,11 +411,19 @@ class CreateDataset(object):
                             str(creation_data.inputs.get(key).parameters.cols_names[idx][0])].type
                     except IndexError:
                         task = LayerInputTypeChoice.Raw
+
+                    if creation_data.inputs.get(key).type == LayerInputTypeChoice.Dataframe and\
+                            task == LayerInputTypeChoice.Classification:
+                        if creation_data.columns_processing[
+                            str(creation_data.inputs.get(key).parameters.cols_names[
+                                    idx][0])].parameters.one_hot_encoding:
+                            encoding = LayerEncodingChoice.ohe
                 else:
                     task = creation_data.inputs.get(key).type
 
                 prep = None
-                if self.preprocessing.preprocessing.get(key) and self.preprocessing.preprocessing.get(key).get(col_name):
+                if self.preprocessing.preprocessing.get(key) and \
+                        self.preprocessing.preprocessing.get(key).get(col_name):
                     prep = self.preprocessing.preprocessing.get(key).get(col_name)
 
                 if creation_data.inputs.get(key).type == LayerInputTypeChoice.Dataframe:
@@ -429,11 +432,11 @@ class CreateDataset(object):
                     c_idx = column_names.index(c_name)
                     if creation_data.inputs.get(key).parameters.cols_names[c_idx]:
                         c_data_idx = creation_data.inputs.get(key).parameters.cols_names[c_idx][0]
-                        if creation_data.columns_processing.get(str(c_data_idx)).type in path_type_input_list:
+                        if decamelize(creation_data.columns_processing.get(str(c_data_idx)).type) in PATH_TYPE_LIST:
                             data_to_pass = os.path.join(self.paths.basepath, data.instructions[0])
                 elif 'depth' in data.parameters.keys() and data.parameters['depth']:
                     data_to_pass = data.instructions[0:data.parameters['length']]
-                elif creation_data.inputs.get(key).type in path_type_input_list:
+                elif decamelize(creation_data.inputs.get(key).type) in PATH_TYPE_LIST:
                     data_to_pass = os.path.join(self.paths.basepath, data.instructions[0])
                 else:
                     data_to_pass = data.instructions[0]
@@ -462,7 +465,7 @@ class CreateDataset(object):
                                                    task=task,
                                                    classes_names=classes_names,
                                                    num_classes=num_classes,
-                                                   encoding=LayerEncodingChoice.none
+                                                   encoding=encoding
                                                    )
                 self.columns[key].update([(col_name, current_column.native())])
 
@@ -513,8 +516,6 @@ class CreateDataset(object):
     def create_output_parameters(self, creation_data: CreationData) -> dict:
 
         creating_outputs_data = {}
-        path_type_outputs_list = [LayerOutputTypeChoice.Image, LayerOutputTypeChoice.Segmentation,
-                                  LayerOutputTypeChoice.Audio, LayerOutputTypeChoice.ObjectDetection]
         for key in self.instructions.outputs.keys():
             output_array = []
             iters = 1
@@ -525,9 +526,9 @@ class CreateDataset(object):
                         self.preprocessing.preprocessing.get(key).get(col_name):
                     prep = self.preprocessing.preprocessing.get(key).get(col_name)
 
-                if creation_data.outputs.get(key).type in path_type_outputs_list or \
+                if creation_data.outputs.get(key).type in PATH_TYPE_LIST or \
                         creation_data.columns_processing.get(str(key)) is not None and \
-                        creation_data.columns_processing.get(str(key)).type in path_type_outputs_list:
+                        creation_data.columns_processing.get(str(key)).type in PATH_TYPE_LIST:
                     data_to_pass = os.path.join(self.paths.basepath, data.instructions[0])
                 elif 'trend' in data.parameters.keys():
                     if data.parameters['trend']:
@@ -566,7 +567,7 @@ class CreateDataset(object):
                             str(creation_data.outputs.get(key).parameters.cols_names[idx][0])].type == \
                                 LayerOutputTypeChoice.Timeseries and creation_data.columns_processing[
                             str(creation_data.outputs.get(key).parameters.cols_names[idx][0])].parameters.trend is True:
-                            task = LayerOutputTypeChoice.Timeseries_trend
+                            task = LayerOutputTypeChoice.TimeseriesTrend
                         else:
                             task = creation_data.columns_processing[
                                 str(creation_data.outputs.get(key).parameters.cols_names[idx][0])].type
@@ -756,9 +757,7 @@ class CreateDataset(object):
 
                 if self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
                     for n in range(3):
-                        # if n < 3:
                         out_array[split][key + n] = np.array(globals()[f'current_arrays_{n}'])
-                        # else:
                         service[split][key + n] = np.array(globals()[f'current_arrays_{n + 3}'])
                         # print(np.array(globals()[f'current_arrays_{n}']).shape)
                         # print(np.array(globals()[f'current_arrays_{n + 3}']).shape)
@@ -839,8 +838,10 @@ class CreateDataset(object):
                 'use_generator': creation_data.use_generator,
                 'tags': tags_list,
                 'user_tags': creation_data.tags,
-                'language': '',  # зачем?...
+                # 'language': '',  # зачем?...
                 'date': datetime.now().astimezone(timezone("Europe/Moscow")).isoformat(),
+                'architecture': DatasetModelChoice.basic if
+                creation_data.outputs[0].type != LayerOutputTypeChoice.ObjectDetection else DatasetModelChoice.yolo,
                 'size': {'value': size_bytes}
                 }
 

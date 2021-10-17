@@ -7,7 +7,7 @@
     "model": {
       "tag": "model",
       "task": "Text",
-      "model": "TerraProjects/models/psp_docs_emb_new"
+      "model": "/home/evgeniy/terra_gui/TerraProjects/models/psp_docs_emb_new"
     },
     "2": {
       "tag": "function",

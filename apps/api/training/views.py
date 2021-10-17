@@ -39,8 +39,6 @@ class StartAPIView(BaseAPIView):
             training_base = recursive_update(training_base, request.data)
             training_base["architecture"]["parameters"]["outputs"] = outputs
             request.project.training.base = TrainData(**training_base)
-            if request.project.training.state.status == StateStatusChoice.no_train:
-                request.project.set_training()
             data = {
                 "dataset": request.project.dataset,
                 "model": request.project.model,
@@ -111,8 +109,8 @@ class ProgressAPIView(BaseAPIView):
             data.update({"state": request.project.training.state.native()})
             _finished = data.get("finished")
             if _finished:
-                for item in request.project.deploy.data.values():
-                    item.data.try_init()
+                request.project.deploy.data.try_init()
+                request.project.deploy.extra.try_init()
             request.project.training.result = data.get("data", {}).get("train_data", {})
             if _finished:
                 request.project.save()

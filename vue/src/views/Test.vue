@@ -1,19 +1,29 @@
 <template>
   <main class="page-not-found">
     <div class="cont">
-      <div>
+      <!-- <div>
         <t-field inline>
           <t-input-new :list="list" small />
         </t-field>
-      </div>
-      <div>
         <t-field inline>
           <t-checkbox-new :list="list" small />
         </t-field>
-      </div>
-      <div>
         <t-field inline>
           <t-select-new :list="list" small />
+        </t-field>
+      </div> -->
+      <div>
+        <t-field>
+          <DInputNumber label="Error" @change="change" />
+        </t-field>
+        <t-field>
+          <DInputText v-model="input" label="Disabled" disabled @change="change" />
+        </t-field>
+        <t-field label="Number, small">
+          <DInputText v-model="error" small :error="error" @change="change" />
+        </t-field>
+        <t-field>
+          <DInputText v-model="input" icon="search" :error="error" @focus="error = ''" @change="change" />
         </t-field>
       </div>
     </div>
@@ -23,7 +33,13 @@
 <script>
 export default {
   name: 'page-not-found',
+  components: {
+    DInputText: () => import('@/components/global/design/forms/components/DInputText'),
+    DInputNumber: () => import('@/components/global/design/forms/components/DInputNumber'),
+  },
   data: () => ({
+    input: 'Екатерина',
+    error: 'fgfgfg',
     list: [
       { value: 'test', label: 'test' },
       { value: 'dfdfdfdfdfd', label: 'tedfdfdfddddddddfdfst' },
@@ -38,6 +54,11 @@ export default {
   created() {
     console.log('sdsdsds');
     // window.location.href = "/";
+  },
+  methods: {
+    change(e) {
+      console.log(e);
+    },
   },
 };
 </script>

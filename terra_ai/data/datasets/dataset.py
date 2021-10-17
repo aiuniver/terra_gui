@@ -189,10 +189,11 @@ from .extra import (
     LayerInputTypeChoice,
     LayerOutputTypeChoice,
     LayerEncodingChoice,
+    DatasetModelChoice,
 )
 from ..mixins import AliasMixinData, UniqueListMixin, BaseMixinData
 from ..extra import FileSizeData
-from ..exceptions import TrdsDirExtException, TrdsConfigFileNotFoundException
+from ..exceptions import TrdsConfigFileNotFoundException
 from ..modeling.model import ModelDetailsData
 from ..modeling.extra import LayerTypeChoice, LayerGroupChoice
 from ..modeling.layers.extra import ActivationChoice
@@ -284,16 +285,18 @@ class DatasetData(AliasMixinData):
     size: Optional[FileSizeData]
     group: Optional[DatasetGroupChoice]
     use_generator: bool = False
+    architecture: str = DatasetModelChoice.basic
     tags: Optional[TagsList] = TagsList()
     inputs: Dict[PositiveInt, DatasetInputsData] = {}
     outputs: Dict[PositiveInt, DatasetOutputsData] = {}
     service: Optional[Dict[PositiveInt, DatasetOutputsData]] = {}
-    columns: Optional[Dict[PositiveInt, Dict[str, Union[DatasetInputsData, DatasetOutputsData]]]] = {}
+    columns: Optional[
+        Dict[PositiveInt, Dict[str, Union[DatasetInputsData, DatasetOutputsData]]]
+    ] = {}
 
     @property
     def model(self) -> ModelDetailsData:
         data = {**EmptyModelDetailsData}
-        data.update({"alias": self.alias, "name": self.name})
         layers = []
         for _id, layer in self.inputs.items():
             _data = {

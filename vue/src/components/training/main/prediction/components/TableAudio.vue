@@ -31,20 +31,19 @@ export default {
       type: String,
       default: '',
     },
-
   },
   computed: {
     src() {
       return `/_media/blank/?path=${this.value}&r=${this.update}`;
-    },
+    }
   },
   mounted() {
-    this.$el.querySelector('audio').setAttribute('controlsList', 'nodownload');
+    this.$el.querySelector('audio').setAttribute('controlsList', 'nodownload noplaybackrate');
   },
 };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .item {
   padding: 10px;
 }
@@ -54,12 +53,15 @@ export default {
   border: 1px solid #6c7883;
   border-radius: 4px;
   width: 165px;
+  position: relative;
+  overflow: hidden;
   &__card {
     .custom-player {
-      margin-left: 50px;
-      margin-top: 10px;
+      left: 60px;
+      top: 50%;
+      transform: translateY(-50%);
       position: absolute;
-      z-index: 3;
+      z-index: 2;
     }
     audio {
       width: 200px;
@@ -139,4 +141,5 @@ export default {
     }
   }
 }
+
 </style>

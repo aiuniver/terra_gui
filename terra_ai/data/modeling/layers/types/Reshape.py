@@ -2,9 +2,14 @@
 ## Тип слоя `Reshape`
 """
 
-from typing import Tuple
+from typing import Tuple, Optional
 
-from ..extra import LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice
+from ..extra import (
+    LayerConfigData,
+    LayerValidationMethodChoice,
+    ModuleChoice,
+    ModuleTypeChoice,
+)
 from ....mixins import BaseMixinData
 
 LayerConfig = LayerConfigData(
@@ -24,8 +29,8 @@ LayerConfig = LayerConfigData(
 
 
 class ParametersMainData(BaseMixinData):
-    pass
+    target_shape: Optional[Tuple[int, ...]] = None
 
 
 class ParametersExtraData(BaseMixinData):
-    target_shape: Tuple[int, ...] = ()
+    pass

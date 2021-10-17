@@ -39,6 +39,7 @@ class MinMaxScalerSerializer(serializers.Serializer):
 class ChoiceSerializer(serializers.Serializer):
     group = serializers.CharField()
     alias = serializers.CharField()
+    reset_model = serializers.BooleanField(default=False)
 
 
 class SourceLoadSerializer(serializers.Serializer):
@@ -163,18 +164,7 @@ class LayerParametersDataframeSerializer(LayerParametersSerializer):
 
 
 class LayerParametersClassificationSerializer(LayerParametersSerializer):
-    one_hot_encoding = serializers.BooleanField(default=True)
-    type_processing = serializers.ChoiceField(
-        choices=LayerTypeProcessingClassificationChoice.items_tuple()
-    )
-    ranges = serializers.CharField(required=False, allow_blank=True)
-
-    def __init__(self, instance=None, data=None, **kwargs):
-        _type_processing = data.get("type_processing")
-        if _type_processing == LayerTypeProcessingClassificationChoice.ranges:
-            self.fields.get("ranges").required = True
-
-        super().__init__(instance=instance, data=data, **kwargs)
+    pass
 
 
 class LayerParametersSegmentationSerializer(LayerParametersSerializer):

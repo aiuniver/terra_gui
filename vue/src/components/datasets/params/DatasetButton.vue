@@ -1,6 +1,6 @@
 <template>
   <div>
-    <t-button :disabled="!selected" @click.native="click">
+    <t-button :disabled="!selected" @click.native="handleClick">
       <span v-if="selected">Выбрать датасет</span>
       <span v-else>{{ btnText }}</span>
     </t-button>
@@ -10,7 +10,6 @@
 <script>
 export default {
   name: 'DatasetButton',
-  data: () => ({}),
   computed: {
     isNoTrain() {
       return this.$store.getters['trainings/getStatus'] === 'no_train';
@@ -25,15 +24,9 @@ export default {
       const name = this.$store.getters['projects/getProject']?.dataset?.name;
       if (name) return 'Выбран: ' + name;
       return 'Выберите датасет';
-    }
+    },
   },
   methods: {
-    async message() {
-      await this.$store.dispatch('messages/setModel', {
-        context: this,
-        content: 'Для выбора датасета необходимо сбросить/остановить обучение',
-      });
-    },
     createInterval() {
       this.interval = setTimeout(async () => {
         const res = await this.$store.dispatch('datasets/choiceProgress', {});
@@ -47,12 +40,9 @@ export default {
               this.$store.dispatch('messages/setProgress', 0);
               this.$store.dispatch('messages/setProgressMessage', '');
               await this.$store.dispatch('projects/get');
-              const { data: dataset } = data;
-              this.$store.dispatch(
-                'messages/setMessage',
-                { message: `Датасет «${dataset.name}» выбран` },
-                { root: true }
-              );
+              this.$store.dispatch('messages/setMessage', {
+                message: `Датасет «${data?.data?.dataset?.name || ''}» выбран`,
+              });
               this.$store.dispatch('settings/setOverlay', false);
             } else {
               if (error) {
@@ -70,20 +60,33 @@ export default {
         } else {
           this.$store.dispatch('settings/setOverlay', false);
         }
-        // console.log(data);
       }, 1000);
     },
-    async click() {
-      if (this.isNoTrain) {
-        this.$store.dispatch('settings/setOverlay', true);
-        const { alias, group, name } = this.selected;
-        const { success } = await this.$store.dispatch('datasets/choice', { alias, group });
-        this.$store.dispatch('messages/setMessage', { message: `Загружаю датасет «${name}»` });
-        if (success) {
-          this.createInterval();
+    async isTraining() {
+      return await this.$store.dispatch('dialogs/trining', { ctx: this, page: 'датасета' });
+    },
+    async handleClick() {
+      const dataset = this.selected;
+      const isTrain = await this.isTraining();
+      if (isTrain) {
+        const { success, data } = await this.$store.dispatch('datasets/validateDatasetOrModel', {
+          dataset,
+        });
+        if (success && data) {
+          const answer = await this.$store.dispatch('dialogs/confirm', { ctx: this, content: data });
+          if (answer == 'confirm') await this.onChoice({ ...dataset, reset_model: true });
+        } else {
+          await this.onChoice({ ...dataset, reset_model: false });
         }
-      } else {
-        this.message();
+      }
+    },
+    async onChoice({ alias, group, name, reset_model } = {}) {
+      this.$store.dispatch('settings/setOverlay', true);
+      const { success: successChoice } = await this.$store.dispatch('datasets/choice', { alias, group, reset_model });
+
+      if (successChoice) {
+        this.$store.dispatch('messages/setMessage', { message: `Загружаю датасет «${name}»` });
+        this.createInterval();
       }
     },
   },

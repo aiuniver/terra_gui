@@ -5,12 +5,8 @@ from .common import decamelize
 import json
 import os
 from tensorflow.keras.models import load_model
-from pathlib import Path
 from collections import OrderedDict
 import sys
-
-
-# ROOT_PATH = str(Path(__file__).parent.parent.parent)
 
 
 def make_processing(preprocess_list):
@@ -38,53 +34,53 @@ def json2model_cascade(path: str):
             weight = i
         elif i[-4:] == '.trm':
             model = i
-
     model = load_model(os.path.join(path, model), compile=False, custom_objects=None)
     model.load_weights(os.path.join(path, weight))
 
-    dataset_path = os.path.join(path, "dataset", "config.json")
-    with open(dataset_path) as cfg:
+    dataset_path = os.path.join(path, "dataset")
+    with open(os.path.join(dataset_path, "config.json")) as cfg:
         config = json.load(cfg)
 
-    if config['inputs']:
-        preprocess = []
+    preprocess = []
 
-        for inp, param in config['inputs'].items():
-            with open(os.path.join(
-                    path, "dataset", "instructions", "parameters",
-                    f"{inp}_{decamelize(param['task'])}.json")) as cfg:
-                spec_config = json.load(cfg)
-            param.update(spec_config)
-
+    for inp in config['inputs'].keys():
+        if config['inputs'][inp]['task'] != 'Dataframe':
+            for inp, param in config['columns'][inp].items():
+                with open(os.path.join(dataset_path, "instructions", "parameters", inp + '.json')) as cfg:
+                    param.update(json.load(cfg))
             type_module = getattr(general_fucntions, decamelize(param['task']))
             preprocess.append(getattr(type_module, 'main')(
-                **param, dataset_path=os.path.join(path, "dataset"), key=inp)
+                **param, dataset_path=dataset_path, key=inp)
             )
-        preprocess = make_processing(preprocess)
-    else:
-        preprocess = None
+        else:
+            param = {}
+            for key, cur_param in config['columns'][inp].items():
+                param[key] = cur_param
+                with open(os.path.join(dataset_path, "instructions", "parameters", key + '.json')) as cfg:
+                    param[key].update(json.load(cfg))
+            param = {'columns': param, 'dataset_path': dataset_path, 'shape': config['inputs'][inp]['shape']}
+            type_module = getattr(general_fucntions, 'dataframe')
+            preprocess.append(getattr(type_module, 'main')(**param))
 
-    if config['outputs']:
-        postprocessing = []
+    preprocess = make_processing(preprocess)
 
-        for inp, param in config['outputs'].items():
-            with open(os.path.join(
-                    path, "dataset", "instructions", "parameters",
-                    f"{inp}_{decamelize(param['task'])}.json")) as cfg:
+    postprocessing = []
+
+    for inp in config['outputs'].keys():
+        for inp, param in config['columns'][inp].items():
+            with open(os.path.join(dataset_path, "instructions", "parameters", inp + '.json')) as cfg:
                 spec_config = json.load(cfg)
 
             param.update(spec_config)
 
             try:
                 type_module = getattr(general_fucntions, decamelize(param['task']))
-                postprocessing.append(getattr(type_module, 'main')(**param))
+                postprocessing.append(getattr(type_module, 'main')(**param, dataset_path=dataset_path, key=inp))
             except:
                 postprocessing.append(None)
 
-        if any(postprocessing):
-            postprocessing = make_processing(postprocessing)
-        else:
-            postprocessing = None
+    if any(postprocessing):
+        postprocessing = make_processing(postprocessing)
     else:
         postprocessing = None
 

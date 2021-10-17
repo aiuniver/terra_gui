@@ -132,6 +132,8 @@ dmypy.json
 /datasets/
 /TerraAI/
 
+/package-lock.json
+/.prettierrc
 /rsa.key
 /staticfiles/
 node_modules/
@@ -156,7 +158,22 @@ desktop.ini
 /terra_ai/modeling/test validator.py
 /terra_ai/modeling/test models.py
 /terra_ai/training/yolov3_chess.h5
-/.idea/workspace.xml
-/.idea/shelf/Uncommitted_changes_before_Update_at_01_10_2021_10_33_[Default_Changelist]/shelved.patch
-/.idea/shelf/Uncommitted_changes_before_Update_at_01_10_2021_10_33_[Default_Changelist]/shelved.patch
 /terra_ai/modeling/val test.py
+/terra_ai/training/test hr.py
+/terra_ai/training/test load json.py
+/terra_ai/training/test save json.py
+/terra_ai/training/testing_files/test air.py
+/terra_ai/training/testing_files/test cars.py
+/terra_ai/training/testing_files/test chess.py
+/terra_ai/training/testing_files/test docs.py
+/terra_ai/training/testing_files/test flats.py
+/terra_ai/training/testing_files/test hr.py
+/terra_ai/training/testing_files/test load json.py
+/terra_ai/training/testing_files/test mnist.py
+/terra_ai/training/testing_files/test save json.py
+/terra_ai/training/testing_files/test ts.py
+/terra_ai/training/testing_files/test ts-class.py
+/terra_ai/training/testing_files/test4.py
+/terra_ai/training/testing_files/yolo_predict_test.py
+/terra_ai/training/testing_files/yolo_test_data.py
+/terra_ai/training/testing_files/yolo_testing_fit.py

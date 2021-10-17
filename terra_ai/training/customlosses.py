@@ -46,7 +46,45 @@ class DiceCoef(tf.keras.metrics.Metric):
         # pass
 
 
-def yolo_loss(
+class RecallPercent(tf.keras.metrics.Metric):
+
+    def __init__(self, name='recall_percent', **kwargs):
+        super(RecallPercent, self).__init__(name=name, **kwargs)
+        self.recall: float = 0
+        # pass
+
+    def update_state(self, y_true, y_pred, show_class=None, sample_weight=None):
+        y_true = tf.cast(y_true, tf.float32)
+        y_pred = tf.cast(y_pred, tf.float32)
+        y_pred = K.one_hot(K.argmax(y_pred, axis=-1), num_classes=y_true.shape[-1])
+        if show_class or show_class == 0:
+            y_true = y_true[..., show_class:show_class+1]
+            y_pred = y_pred[..., show_class:show_class+1]
+
+        recall = K.sum(y_true * y_pred)
+        total = K.sum(y_true)
+        self.recall = tf.convert_to_tensor(recall * 100 / total)
+
+    def get_config(self):
+        """
+        Returns the serializable config of the metric.
+        """
+        config = super(RecallPercent, self).get_config()
+        return config
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+    def result(self):
+        return self.recall
+
+    def reset_state(self):
+        self.recall: float = 0
+        # pass
+
+
+def YoloLoss(
         inputs,
         num_anchors,
 ):

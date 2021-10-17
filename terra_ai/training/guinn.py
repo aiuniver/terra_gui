@@ -21,7 +21,7 @@ from tensorflow.keras.models import load_model
 from tensorflow.python.framework.errors_impl import ResourceExhaustedError
 
 from terra_ai import progress
-from terra_ai.data.datasets.dataset import DatasetData
+from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice, DatasetGroupChoice
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
 from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, \
@@ -32,11 +32,9 @@ from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.customcallback import InteractiveCallback
-from terra_ai.training.customlosses import DiceCoef
-from terra_ai.training.yolo_fit import create_yolo, CustomModelYolo, compute_loss
-from terra_ai.exceptions import training as exceptions
-from terra_ai.exceptions.tensor_flow import ResourceExhaustedError as resource
-
+from terra_ai.training.customlosses import DiceCoef, RecallPercent
+from terra_ai.training.yolo_utils import create_yolo, CustomModelYolo, compute_loss, get_mAP, detect_image
+from terra_ai.exceptions import training as exceptions, terra_exception
 
 __version__ = 0.02
 
@@ -89,6 +87,8 @@ class GUINN:
                 output.append(getattr(importlib.import_module("tensorflow.keras.metrics"), metric)(num_classes))
             elif metric == MetricChoice.DiceCoef:
                 output.append(DiceCoef())
+            elif metric == MetricChoice.RecallPercent:
+                output.append(RecallPercent())
             else:
                 output.append(getattr(importlib.import_module("tensorflow.keras.metrics"), metric)())
         return output
@@ -184,16 +184,6 @@ class GUINN:
 
         optimizer_object = getattr(keras.optimizers, params.optimizer.type.value)
         self.optimizer = optimizer_object(**params.optimizer.parameters_dict)
-
-    # def set_custom_metrics(self, params=None) -> None:
-    #     for i_key in self.metrics.keys():
-    #         for idx, metric in enumerate(self.metrics[i_key]):
-    #             if metric in custom_losses_dict.keys():
-    #                 if metric == "mean_io_u":  # TODO определить или заменить self.output_params (возможно на params)
-    #                     self.metrics[i_key][idx] = custom_losses_dict[metric](
-    #                         num_classes=self.output_params[i_key]['num_classes'], name=metric)
-    #                 else:
-    #                     self.metrics[i_key][idx] = custom_losses_dict[metric](name=metric)
 
     def show_training_params(self) -> None:
         """
@@ -310,7 +300,6 @@ class GUINN:
                        dataset_data: DatasetData, save_model_path: str, verbose=0) -> None:
         threading.enumerate()[-1].setName("current_train")
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели ...'})
-        # self.set_custom_metrics()
         self.model.compile(loss=self.loss,
                            optimizer=self.optimizer,
                            metrics=self.metrics
@@ -332,7 +321,7 @@ class GUINN:
         if (critical_val_size == self.batch_size) or (critical_val_size > self.batch_size):
             n_repeat = 1
         else:
-            n_repeat = (self.batch_size//critical_val_size) + 1
+            n_repeat = (self.batch_size // critical_val_size) + 1
         try:
             self.history = self.model.fit(
                 self.dataset.dataset.get('train').shuffle(buffer_size).batch(
@@ -346,12 +335,9 @@ class GUINN:
                 verbose=verbose,
                 callbacks=self.callbacks
             )
-        except ResourceExhaustedError as error:
+        except Exception as error:
             self._check_interactive_status()
-            progress.pool(self.progress_name, error=resource(error).__str__())
-        except FileNotFoundError as error:
-            self._check_interactive_status()
-            progress.pool(self.progress_name, error=exceptions.FileNotFoundException(error).__str__())
+            progress.pool(self.progress_name, error=terra_exception(error).__str__(), finished=True)
 
         if (interactive.get_states().get("status") == "stopped"
             and self.callbacks[0].last_epoch < params.epochs) or \
@@ -360,35 +346,48 @@ class GUINN:
             self.sum_epoch = params.epochs
 
     def yolo_model_fit(self, params: TrainData, dataset: PrepareDataset, verbose=0, retrain=False) -> None:
-        # Массив используемых анкоров (в пикселях). Используется по 3 анкора на каждый из 3 уровней сеток
-        # данные значения коррелируются с размерностью входного изображения input_shape
-        anchors = np.array(
-            [[10, 13], [16, 30], [33, 23], [30, 61], [62, 45], [59, 119], [116, 90], [156, 198], [373, 326]])
-        num_anchors = len(anchors)  # Сохраняем количество анкоров
 
-        # Создаем модель
-        # print(self.dataset.data.outputs.get(2).classes_names)
-        base_yolo = create_yolo(self.model, input_size=416, channels=3, training=True,
-                                 classes=self.dataset.data.outputs.get(2).classes_names)
-        # base_yolo.compile(optimizer=self.optimizer,
-        #                    loss=compute_loss)
-        # print(base_yolo.summary())
+        for inp, out, serv in self.dataset.dataset['train'].batch(2).take(30):
+            pass
 
-        model_yolo = CustomModelYolo(base_yolo, self.dataset, self.dataset.data.outputs.get(2).classes_names, self.epochs)
+        print(self.model.summary())
+        # self.model.save('C:\PycharmProjects/terra_gui/TerraAI/training/chess_test')
+        print('Save model.....')
+
+        yolo = create_yolo(self.model, input_size=416, channels=3, training=True,
+                           classes=self.dataset.data.outputs.get(2).classes_names)
+        print(yolo.summary())
+        model_yolo = CustomModelYolo(yolo, self.dataset, self.dataset.data.outputs.get(2).classes_names,
+                                     self.epochs, self.batch_size)
 
         # Компилируем модель
-        # print(('Компиляция модели', '...'))
-        # self.set_custom_metrics()
+        print(('Компиляция модели', '...'))
         model_yolo.compile(optimizer=self.optimizer,
                            loss=compute_loss)
-        # print(('Компиляция модели', 'выполнена'))
+        print(('Компиляция модели', 'выполнена'))
         # print(('Начало обучения', '...'))
 
         # if not retrain:
         #     self._set_callbacks(dataset=dataset, batch_size=params.batch,
         #                         epochs=params.epochs, checkpoint=params.architecture.parameters.checkpoint.native())
 
-        # print(('Начало обучения', '...'))
+        print(('Начало обучения', '...'))
+
+        yolo_pred = create_yolo(self.model, input_size=416, channels=3, training=False,
+                                classes=self.dataset.data.outputs.get(2).classes_names)
+
+        class MyCallback(tf.keras.callbacks.Callback):
+            def __init__(self, dataset, yolo_pred, inp):
+                self.dataset = dataset
+                self.yolo_pred = yolo_pred
+                self.inp = inp
+
+            def on_epoch_end(self, epoch, logs=None):
+                output_path = 'C:\PycharmProjects/terra_gui/test_example/chess_{}.jpg'.format(epoch)
+                detect_image(Yolo=self.yolo_pred, original_image=inp['1'].numpy()[0], output_path=output_path,
+                             CLASSES=self.dataset.data.outputs.get(2).classes_names)
+                mAP = get_mAP(self.yolo_pred, self.dataset, score_threshold=0.05, iou_threshold=0.50,
+                              TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names)
 
         if self.dataset.data.use_generator:
             critical_size = len(self.dataset.dataframe.get("val"))
@@ -403,8 +402,10 @@ class GUINN:
                 self.batch_size, drop_remainder=True).take(-1),
             epochs=self.epochs,
             verbose=verbose,
-            # callbacks=self.callbacks
+            callbacks=MyCallback(self.dataset, yolo_pred, inp)
         )
+        print('Save weights.....')
+        # self.model.save_weights('C:\PycharmProjects/terra_gui/TerraAI/training/chess_test/last.h5')
 
 
 class MemoryUsage:
@@ -679,12 +680,11 @@ class FitCallback(keras.callbacks.Callback):
     def _get_train_status() -> str:
         return interactive.get_states().get("status")
 
-    def _get_predict(self, deploy_model = None):
+    def _get_predict(self, deploy_model=None):
         current_model = deploy_model if deploy_model else self.model
-
         if self.dataset.data.use_generator:
             current_predict = current_model.predict(self.dataset.dataset.get('val').batch(1),
-                                                 batch_size=1)
+                                                    batch_size=1)
         else:
             current_predict = current_model.predict(self.dataset.X.get('val'), batch_size=self.batch_size)
         return current_predict
@@ -692,7 +692,6 @@ class FitCallback(keras.callbacks.Callback):
     def _deploy_predict(self, presets_predict):
         # with open(os.path.join(self.save_model_path, "predict.txt"), "w", encoding="utf-8") as f:
         #     f.write(str(presets_predict[0].tolist()))
-
         result = CreateArray().postprocess_results(array=presets_predict,
                                                    options=self.dataset,
                                                    save_path=os.path.join(self.save_model_path,
@@ -702,18 +701,50 @@ class FitCallback(keras.callbacks.Callback):
         if result:
             if list(self.dataset.data.outputs.values())[0].task in [LayerOutputTypeChoice.Classification,
                                                                     LayerOutputTypeChoice.Segmentation,
-                                                                    LayerOutputTypeChoice.TextSegmentation]:
+                                                                    LayerOutputTypeChoice.TextSegmentation,
+                                                                    LayerOutputTypeChoice.Regression]:
                 deploy_presets = list(result.values())[0]
         return deploy_presets
 
-    def _create_cascade(self):
+    def _create_form_data_for_dataframe_deploy(self, deploy_path):
+        form_data = []
+        with open(os.path.join(self.dataset_path, "config.json"), "r", encoding="utf-8") as dataset_conf:
+            dataset_info = json.load(dataset_conf).get("columns", {})
+        for inputs, input_data in dataset_info.items():
+            if int(inputs) not in list(self.dataset.data.outputs.keys()):
+                for column, column_data in input_data.items():
+                    label = column
+                    available = column_data.get("classes_names") if column_data.get("classes_names") else None
+                    widget = "select" if available else "input"
+                    input_type = "text"
+                    if widget == "select":
+                        table_column_data = {
+                            "label": label,
+                            "widget": widget,
+                            "available": available
+                        }
+                    else:
+                        table_column_data = {
+                            "label": label,
+                            "widget": widget,
+                            "type": input_type
+                        }
+                    form_data.append(table_column_data)
+        with open(os.path.join(deploy_path, "form.json"), "w", encoding="utf-8") as form_file:
+            json.dump(form_data, form_file, ensure_ascii=False)
+
+    def _create_cascade(self, **data):
+        deploy_path = os.path.join(os.path.split(self.save_model_path)[0], "deploy")
         if self.dataset.data.alias not in ["imdb", "boston_housing", "reuters"]:
             input_key = list(self.dataset.data.inputs.keys())[0]
             output_key = list(self.dataset.data.outputs.keys())[0]
+            if self.dataset.data.inputs[input_key].task == LayerInputTypeChoice.Dataframe:
+                self._create_form_data_for_dataframe_deploy(deploy_path=deploy_path)
             input_tasks = [LayerInputTypeChoice.Image, LayerInputTypeChoice.Text,
-                           LayerInputTypeChoice.Audio, LayerInputTypeChoice.Video]
+                           LayerInputTypeChoice.Audio, LayerInputTypeChoice.Video,
+                           LayerInputTypeChoice.Dataframe]
             output_tasks = [LayerOutputTypeChoice.Classification, LayerOutputTypeChoice.Segmentation,
-                            LayerOutputTypeChoice.TextSegmentation]
+                            LayerOutputTypeChoice.TextSegmentation, LayerOutputTypeChoice.Regression]
             if self.dataset.data.inputs[input_key].task in input_tasks and (
                     self.dataset.data.outputs[output_key].task in output_tasks):
                 if self.dataset.data.outputs[output_key].task == LayerOutputTypeChoice.TextSegmentation:
@@ -728,17 +759,40 @@ class FitCallback(keras.callbacks.Callback):
                     training_path=os.path.split(self.save_model_path)[0],
                     function_name=func_name
                 )
+                if self.dataset.data.outputs[output_key].task == LayerOutputTypeChoice.TextSegmentation:
+                    with open(os.path.join(deploy_path, "format.txt"), "w", encoding="utf-8") as format_file:
+                        format_file.write(str(data.get("tags_map", "")))
 
     def _prepare_deploy(self):
         weight = None
+        cascade_data = {}
         for i in os.listdir(self.save_model_path):
             if i[-3:] == '.h5' and 'best' in i:
                 weight = i
         if weight:
             self.model.load_weights(os.path.join(self.save_model_path, weight))
         deploy_predict = self._get_predict()
-        interactive.deploy_presets_data = self._deploy_predict(deploy_predict)
-        self._create_cascade()
+        deploy_presets_data = self._deploy_predict(deploy_predict)
+        if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.TextSegmentation:
+            tags_map = deploy_presets_data.get("color_map")
+            interactive.deploy_presets_data = deploy_presets_data.get("data")
+            cascade_data = {"tags_map": tags_map}
+        elif list(self.dataset.data.inputs.values())[0].task == LayerInputTypeChoice.Dataframe:
+            columns = []
+            predict_column = ""
+            for input, input_columns in self.dataset.data.columns.items():
+                for column_name in input_columns.keys():
+                    columns.append(column_name[len(str(input)) + 1:])
+                    if input_columns[column_name].__class__ == DatasetOutputsData:
+                        predict_column = column_name[len(str(input)) + 1:]
+            if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Classification:
+                deploy_presets_data = {"presets": deploy_presets_data}
+            deploy_presets_data["columns"] = columns
+            deploy_presets_data["predict_column"] = predict_column if predict_column else "Предсказанные значения"
+            interactive.deploy_presets_data = deploy_presets_data
+        else:
+            interactive.deploy_presets_data = deploy_presets_data
+        self._create_cascade(**cascade_data)
 
     @staticmethod
     def _estimate_step(current, start, now):
@@ -823,7 +877,7 @@ class FitCallback(keras.callbacks.Callback):
                 }
             else:
                 result_data = {'timings': [estimated_time, elapsed_time, still_time,
-                                elapsed_epoch_time, still_epoch_time, msg_epoch, msg_batch]}
+                                           elapsed_epoch_time, still_epoch_time, msg_epoch, msg_batch]}
             self._set_result_data(result_data)
             # print("PROGRESS", [type(num) for num in self._get_result_data().get("train_data", {}).get("data_balance", {}).get("2", ["0"])[0].get("plot_data", ["0"])[0].get("values")])
             progress.pool(

@@ -70,13 +70,15 @@ export default {
     },
     async nav({ path, access, text }) {
       // console.log(path, access, text);
-      let deploy_keys = Object.keys(this.deploy)
+      // let deploy_keys = Object.keys(this.deploy)
       // this.deploy[deploy_keys[0]].data
       if (!this.project.dataset && access === false) {
         this.message({ text }, true);
-      } else if(path == "/deploy" && access === false && this.deploy[deploy_keys[0]].data == null){
-        this.messageDeploy(true);
-      } else {
+      }
+        // else if(path == "/deploy" && access === false && this.deploy[deploy_keys[0]].data == null){
+      //   this.messageDeploy(true);
+      // }
+      else {
         if (this.$route.path !== path) {
           this.$router.push(path);
         }

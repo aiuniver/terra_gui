@@ -39,20 +39,12 @@ export default {
     keras() {
       return this.$store.getters['modeling/getModel']?.keras || '';
     },
-    isNoTrain() {
-      return this.$store.getters['trainings/getStatus'] === 'no_train';
-    },
   },
   methods: {
-    async message() {
-      await this.$store.dispatch('messages/setModel', {
-        context: this,
-        content: 'Для загрузки другой модели остановите обучение',
-      });
+    async isTraining() {
+      this.dialogLoadModel = await this.$store.dispatch('dialogs/trining', { ctx: this, page: 'модели' });
     },
     addBlock(type) {
-      // console.log(type);
-      // console.log(this.$refs.container.centerX);
       const position = this.$refs.container.getCenter();
       this.create = false;
       this.$store.dispatch('modeling/addBlock', { type, position });
@@ -68,27 +60,14 @@ export default {
       await this.$store.dispatch('modeling/validateModel', {});
     },
     async clearModel() {
-      try {
-        const action = await this.$Modal.confirm({
-          title: 'Внимание!',
-          content: 'Очистить модель?',
-          width: 300,
-        });
-        if (action == 'confirm') {
-          console.log('DELETE MODEL');
-          this.$store.dispatch('modeling/clearModel');
-        }
-      } catch (error) {
-        console.log(error);
+      const action = await this.$store.dispatch('dialogs/confirm', { ctx: this, content: 'Очистить модель?' });
+      if (action == 'confirm') {
+        await this.$store.dispatch('modeling/clearModel');
       }
     },
     actions(btn) {
       if (btn === 'load') {
-        if (this.isNoTrain) {
-          this.dialogLoadModel = true;
-        } else {
-          this.message()
-        }
+        this.isTraining();
       }
       if (btn === 'input' || btn === 'middle' || btn === 'output') {
         this.addBlock(btn);

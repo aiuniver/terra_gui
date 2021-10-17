@@ -7,13 +7,15 @@ def main(**params):
 
     def fun(acc):
         acc *= 100
-        acc = np.round(np.array(acc), 2)
+        acc = np.array(acc)
         acc = acc.astype(np.int)
 
-        if len(acc.shape) == 2:
-            acc = acc[0]
-        acc = list(zip(classes_names, acc))
+        out = []
 
-        return sorted(acc, key=lambda x: x[1], reverse=True)
+        if len(acc.shape) == 2:
+            for i in acc:
+                out.append(list(zip(classes_names, i)))
+
+        return sorted(out, key=lambda x: x[-1], reverse=True)
 
     return fun
