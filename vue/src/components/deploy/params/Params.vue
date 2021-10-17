@@ -203,8 +203,8 @@ export default {
 
 <style lang="scss" scoped>
 .params {
-  flex-shrink: 0;
-  width: 400px;
+  flex: 0 0 400px;
+  // width: 400px;
   border-left: #0e1621 solid 1px;
 }
 .params-container__name {

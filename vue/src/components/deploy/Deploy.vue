@@ -5,16 +5,17 @@
         <div class="content">
           <div class="board__data-field">
             <div>
-              <button v-if="type !== 'table_data_regression'" class="board__reload-all" @click="ReloadAll(0)">
+              <button v-if="!isTable" class="board__reload-all" @click="ReloadAll(0)">
                 <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
                 <span>Перезагрузить все</span>
               </button>
               <div class="board__title">Исходные данные / Предсказанные данные</div>
-              <div v-if="type !== 'table_data_regression'" class="board__data">
+              <div v-if="!isTable" class="board__data">
                 <IndexCard v-for="(card, i) in Cards" :key="'card-' + i" v-bind="card" :card="card" :index="i" @reload="ReloadCard"/>
               </div>
               <div v-else class="board__data">
-                <Table v-bind="deploy" />
+                <Table v-if="type === 'table_data_regression'" v-bind="deploy" @reload="ReloadCard"/>
+                <TableClass v-if="type === 'table_data_classification'" v-bind="deploy" @reload="ReloadCard"/>
               </div>
             </div>
           </div>
@@ -33,7 +34,8 @@ import { mapGetters } from 'vuex';
 export default {
   components: {
     IndexCard: () => import('./IndexCard'),
-    Table: () => import('./Table.vue')
+    Table: () => import('./Table.vue'),
+    TableClass: () => import('./TableClass.vue')
     // Table,
   },
   data: () => ({}),
@@ -45,6 +47,9 @@ export default {
       type: 'deploy/getDeployType',
       deploy: 'deploy/getDeploy'
     }),
+    isTable() {
+      return ['table_data_classification', 'table_data_regression'].includes(this.type)
+    }
   },
   methods: {
     async ReloadCard(data){
@@ -66,7 +71,7 @@ export default {
 
 <style lang="scss" scoped>
 .board {
-  flex-shrink: 1;
+  flex: 1 1 auto;
   width: 100%;
   &__data {
     display: flex;
