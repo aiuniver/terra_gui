@@ -371,6 +371,7 @@ class InteractiveCallback:
                 }
             }
         }
+        self.random_key = ''
 
         self.interactive_config: InteractiveData = InteractiveData(**{})
         self.yolo_interactive_config: YoloInteractiveData = YoloInteractiveData(**{})
@@ -462,7 +463,16 @@ class InteractiveCallback:
             if y_pred is not None:
                 self._reformat_y_pred(y_pred)
                 if self.interactive_config.intermediate_result.show_results:
-                    self.example_idx = self._prepare_example_idx_to_show()
+                    out = f"{self.interactive_config.intermediate_result.main_output}"
+                    self.example_idx = CreateArray().prepare_example_idx_to_show(
+                        array=self.y_true.get("val").get(out),
+                        true_array=self.y_true.get("val").get(out),
+                        options=self.options,
+                        output=int(out),
+                        count=self.interactive_config.intermediate_result.num_examples,
+                        choice_type=self.interactive_config.intermediate_result.example_choice_type,
+                        seed_idx=self.seed_idx[:self.interactive_config.intermediate_result.num_examples]
+                    )
                 if on_epoch_end_flag:
                     self.current_epoch = fit_logs.get('epoch')
                     self.current_logs = self._reformat_fit_logs(fit_logs)
@@ -499,7 +509,16 @@ class InteractiveCallback:
         self.interactive_config = config if config else self.interactive_config
         if self.log_history and self.log_history.get("epochs", {}):
             if self.interactive_config.intermediate_result.show_results:
-                self.example_idx = self._prepare_example_idx_to_show()
+                out = f"{self.interactive_config.intermediate_result.main_output}"
+                self.example_idx = CreateArray().prepare_example_idx_to_show(
+                    array=self.y_true.get("val").get(out),
+                    true_array=self.y_true.get("val").get(out),
+                    options=self.options,
+                    output=int(out),
+                    count=self.interactive_config.intermediate_result.num_examples,
+                    choice_type=self.interactive_config.intermediate_result.example_choice_type,
+                    seed_idx=self.seed_idx[:self.interactive_config.intermediate_result.num_examples]
+                )
             if config.intermediate_result.show_results or config.statistic_data.output_id:
                 self.urgent_predict = True
                 self.intermediate_result = self._get_intermediate_result_request()
@@ -681,22 +700,7 @@ class InteractiveCallback:
                         inverse_y_true[data_type][f"{out}"] = inverse_y[:, 1:, :]
 
         if dataset.data.architecture == DatasetModelChoice.yolo:
-            y_true = {}
-            bb = []
-            for index in range(len(dataset.dataset['val'])):
-                coord = dataset.dataframe.get('val').iloc[index, 1].split(' ')
-                bbox_data_gt = np.array([list(map(int, box.split(','))) for box in coord])
-                bboxes_gt, classes_gt = bbox_data_gt[:, :4], bbox_data_gt[:, 4]
-                classes_gt = to_categorical(
-                    classes_gt, num_classes=len(dataset.data.outputs.get(2).classes_names)
-                )
-                bboxes_gt = np.concatenate(
-                    [bboxes_gt[:, 1:2], bboxes_gt[:, 0:1], bboxes_gt[:, 3:4], bboxes_gt[:, 2:3]], axis=-1)
-                conf_gt = np.expand_dims(np.ones(len(bboxes_gt)), axis=-1)
-                _bb = np.concatenate([bboxes_gt, conf_gt, classes_gt], axis=-1)
-                bb.append(_bb)
-            for channel in range(len(dataset.Y.get('val').keys())):
-                y_true[channel] = bb
+            y_true = CreateArray().get_yolo_y_true(options=dataset)
 
         return y_true, inverse_y_true
 
@@ -1161,77 +1165,77 @@ class InteractiveCallback:
                     )
                 self.y_pred[channel] = np.array(channel_boxes)
 
-    def _prepare_example_idx_to_show(self) -> dict:
-        example_idx = {}
-        # if self.options.data.architecture == DatasetModelChoice.basic:
-        out = f"{self.interactive_config.intermediate_result.main_output}"
-        ohe = self.options.data.outputs.get(int(out)).encoding == LayerEncodingChoice.ohe
-        count = self.interactive_config.intermediate_result.num_examples
-        choice_type = self.interactive_config.intermediate_result.example_choice_type
-        task = self.options.data.outputs.get(int(out)).task
-
-        if choice_type == ExampleChoiceTypeChoice.best or choice_type == ExampleChoiceTypeChoice.worst:
-            if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
-                y_true = self.y_true.get("val").get(out)
-                y_pred = self.y_pred.get(out)
-                if y_pred.shape[-1] == y_true.shape[-1] and ohe and y_true.shape[-1] > 1:
-                    classes = np.argmax(y_true, axis=-1)
-                elif len(y_true.shape) == 1 and not ohe and y_pred.shape[-1] > 1:
-                    classes = copy.deepcopy(y_true)
-                elif len(y_true.shape) == 1 and not ohe and y_pred.shape[-1] == 1:
-                    classes = copy.deepcopy(y_true)
-                else:
-                    classes = copy.deepcopy(y_true)
-                probs = np.array([pred[classes[i]] for i, pred in enumerate(y_pred)])
-                sorted_args = np.argsort(probs)
-                if choice_type == ExampleChoiceTypeChoice.best:
-                    example_idx = sorted_args[::-1][:count]
-                if choice_type == ExampleChoiceTypeChoice.worst:
-                    example_idx = sorted_args[:count]
-
-            elif task == LayerOutputTypeChoice.Segmentation or task == LayerOutputTypeChoice.TextSegmentation:
-                y_true = self.y_true.get("val").get(out)
-                y_pred = to_categorical(
-                    np.argmax(self.y_pred.get(out), axis=-1),
-                    num_classes=self.options.data.outputs.get(int(out)).num_classes
-                )
-                dice_val = self._dice_coef(y_true, y_pred, batch_mode=True)
-                dice_dict = dict(zip(np.arange(0, len(dice_val)), dice_val))
-                if choice_type == ExampleChoiceTypeChoice.best:
-                    example_idx, _ = CreateArray().sort_dict(dice_dict, mode="descending")
-                    example_idx = example_idx[:count]
-                if choice_type == ExampleChoiceTypeChoice.worst:
-                    example_idx, _ = CreateArray().sort_dict(dice_dict, mode="ascending")
-                    example_idx = example_idx[:count]
-
-            elif task == LayerOutputTypeChoice.Timeseries or task == LayerOutputTypeChoice.Regression:
-                delta = np.abs(
-                    (self.inverse_y_true.get('val').get(out) - self.inverse_y_pred.get(out)) * 100 /
-                    self.inverse_y_true.get('val').get(out)
-                )
-                while len(delta.shape) != 1:
-                    delta = np.mean(delta, axis=-1)
-                delta_dict = dict(zip(np.arange(0, len(delta)), delta))
-                if choice_type == ExampleChoiceTypeChoice.best:
-                    example_idx, _ = CreateArray().sort_dict(delta_dict, mode="ascending")
-                    example_idx = example_idx[:count]
-                if choice_type == ExampleChoiceTypeChoice.worst:
-                    example_idx, _ = CreateArray().sort_dict(delta_dict, mode="descending")
-                    example_idx = example_idx[:count]
-            else:
-                pass
-
-        elif choice_type == ExampleChoiceTypeChoice.seed:
-            example_idx = self.seed_idx[:self.interactive_config.intermediate_result.num_examples]
-
-        elif choice_type == ExampleChoiceTypeChoice.random:
-            example_idx = np.random.randint(
-                0, len(self.y_true.get("val").get(list(self.y_true.get('val').keys())[0])),
-                self.interactive_config.intermediate_result.num_examples
-            )
-        else:
-            pass
-        return example_idx
+    # def _prepare_example_idx_to_show(self) -> dict:
+    #     example_idx = {}
+    #     # if self.options.data.architecture == DatasetModelChoice.basic:
+    #     out = f"{self.interactive_config.intermediate_result.main_output}"
+    #     ohe = self.options.data.outputs.get(int(out)).encoding == LayerEncodingChoice.ohe
+    #     count = self.interactive_config.intermediate_result.num_examples
+    #     choice_type = self.interactive_config.intermediate_result.example_choice_type
+    #     task = self.options.data.outputs.get(int(out)).task
+    #
+    #     if choice_type == ExampleChoiceTypeChoice.best or choice_type == ExampleChoiceTypeChoice.worst:
+    #         if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
+    #             y_true = self.y_true.get("val").get(out)
+    #             y_pred = self.y_pred.get(out)
+    #             if y_pred.shape[-1] == y_true.shape[-1] and ohe and y_true.shape[-1] > 1:
+    #                 classes = np.argmax(y_true, axis=-1)
+    #             elif len(y_true.shape) == 1 and not ohe and y_pred.shape[-1] > 1:
+    #                 classes = copy.deepcopy(y_true)
+    #             elif len(y_true.shape) == 1 and not ohe and y_pred.shape[-1] == 1:
+    #                 classes = copy.deepcopy(y_true)
+    #             else:
+    #                 classes = copy.deepcopy(y_true)
+    #             probs = np.array([pred[classes[i]] for i, pred in enumerate(y_pred)])
+    #             sorted_args = np.argsort(probs)
+    #             if choice_type == ExampleChoiceTypeChoice.best:
+    #                 example_idx = sorted_args[::-1][:count]
+    #             if choice_type == ExampleChoiceTypeChoice.worst:
+    #                 example_idx = sorted_args[:count]
+    #
+    #         elif task == LayerOutputTypeChoice.Segmentation or task == LayerOutputTypeChoice.TextSegmentation:
+    #             y_true = self.y_true.get("val").get(out)
+    #             y_pred = to_categorical(
+    #                 np.argmax(self.y_pred.get(out), axis=-1),
+    #                 num_classes=self.options.data.outputs.get(int(out)).num_classes
+    #             )
+    #             dice_val = self._dice_coef(y_true, y_pred, batch_mode=True)
+    #             dice_dict = dict(zip(np.arange(0, len(dice_val)), dice_val))
+    #             if choice_type == ExampleChoiceTypeChoice.best:
+    #                 example_idx, _ = CreateArray().sort_dict(dice_dict, mode="descending")
+    #                 example_idx = example_idx[:count]
+    #             if choice_type == ExampleChoiceTypeChoice.worst:
+    #                 example_idx, _ = CreateArray().sort_dict(dice_dict, mode="ascending")
+    #                 example_idx = example_idx[:count]
+    #
+    #         elif task == LayerOutputTypeChoice.Timeseries or task == LayerOutputTypeChoice.Regression:
+    #             delta = np.abs(
+    #                 (self.inverse_y_true.get('val').get(out) - self.inverse_y_pred.get(out)) * 100 /
+    #                 self.inverse_y_true.get('val').get(out)
+    #             )
+    #             while len(delta.shape) != 1:
+    #                 delta = np.mean(delta, axis=-1)
+    #             delta_dict = dict(zip(np.arange(0, len(delta)), delta))
+    #             if choice_type == ExampleChoiceTypeChoice.best:
+    #                 example_idx, _ = CreateArray().sort_dict(delta_dict, mode="ascending")
+    #                 example_idx = example_idx[:count]
+    #             if choice_type == ExampleChoiceTypeChoice.worst:
+    #                 example_idx, _ = CreateArray().sort_dict(delta_dict, mode="descending")
+    #                 example_idx = example_idx[:count]
+    #         else:
+    #             pass
+    #
+    #     elif choice_type == ExampleChoiceTypeChoice.seed:
+    #         example_idx = self.seed_idx[:self.interactive_config.intermediate_result.num_examples]
+    #
+    #     elif choice_type == ExampleChoiceTypeChoice.random:
+    #         example_idx = np.random.randint(
+    #             0, len(self.y_true.get("val").get(list(self.y_true.get('val').keys())[0])),
+    #             self.interactive_config.intermediate_result.num_examples
+    #         )
+    #     else:
+    #         pass
+    #     return example_idx
 
     def _update_log_history(self):
         data_idx = None
@@ -2144,8 +2148,6 @@ class InteractiveCallback:
             sensitivity = self.yolo_interactive_config.statistic_data.sensitivity
             threashold = self.yolo_interactive_config.statistic_data.threashold
 
-
-
             cm, cm_percent = self._get_confusion_matrix(
                 np.argmax(self.y_true.get("val").get(f'{out}'), axis=-1) if encoding == LayerEncodingChoice.ohe
                 else self.y_true.get("val").get(f'{out}'),
@@ -2416,99 +2418,6 @@ class InteractiveCallback:
             pass
 
         return return_data
-
-    @staticmethod
-    def _get_yolo_statistic(true_bb, pred_bb, name_classes, sensitivity=0.25):
-        compat = {
-            'recognize': {
-                "empty": [],
-                'unrecognize': []
-            },
-            'empty_pred': {},
-            'class_stat': {},
-            'total_stat': {}
-        }
-        for name in name_classes:
-            compat['recognize'][name] = []
-
-        predict = {}
-        for i, k in enumerate(pred_bb[:, :4]):
-            predict[i] = {
-                'pred_class': np.argmax(pred_bb[:, 5:][i]),
-                'conf': pred_bb[:, 4][i].item(),
-                'class_conf': pred_bb[:, 5:][i][np.argmax(pred_bb[:, 5:][i])],
-            }
-
-        count = 0
-        total_conf = 0
-        total_class = 0
-        total_overlap = 0
-        all_true = list(np.arange(len(true_bb)))
-        for i, tr in enumerate(true_bb[:, :4]):
-            # compat['recognize'][i] = []
-            for j, pr in enumerate(pred_bb[:, :4]):
-                boxes = np.array([true_bb[:, :4][i], pred_bb[:, :4][j]])
-                scores = np.array([true_bb[:, 5:][i], pred_bb[:, 5:][j]])
-                pick, overlap = CreateArray().non_max_suppression_fast(boxes, scores, sensitivity=sensitivity)
-                if len(pick) == 1:
-                    print()
-                    compat['recognize'][name_classes[np.argmax(true_bb[:, 5:][i], axis=-1)]].append(
-                        {
-                            # 'true_class': np.argmax(true_bb[:, 5:][i]),
-                            'pred_class': name_classes[np.argmax(pred_bb[:, 5:][j], axis=-1)],
-                            # "pred_id": j,
-                            'conf': pred_bb[:, 4][j].item(),
-                            'class_conf': pred_bb[:, 5:][j][np.argmax(pred_bb[:, 5:][j], axis=-1)],
-                            'class_result': True if np.argmax(true_bb[:, 5:][i], axis=-1) == np.argmax(
-                                pred_bb[:, 5:][j], axis=-1) else False,
-                            'overlap': overlap[0].item()
-                        }
-                    )
-                    if np.argmax(true_bb[:, 5:][i], axis=-1) == np.argmax(pred_bb[:, 5:][j], axis=-1):
-                        count += 1
-                        total_conf += pred_bb[:, 4][j].item()
-                        total_class += pred_bb[:, 5:][j][np.argmax(pred_bb[:, 5:][j], axis=-1)]
-                        total_overlap += overlap[0].item()
-
-                    try:
-                        predict.pop(j)
-                        all_true.pop(all_true.index(i))
-                    except:
-                        continue
-
-        for item in predict.items():
-            compat['recognize']['empty'].append(item)
-
-        if all_true:
-            for idx in all_true:
-                compat['recognize']['unrecognize'].append(
-                    {
-                        "class_name": name_classes[np.argmax(true_bb[idx, 5:], axis=-1)]
-                    }
-                )
-        for cl in compat['recognize'].keys():
-            if cl != 'empty':
-                mean_conf = 0
-                mean_class = 0
-                mean_overlap = 0
-                for pr in compat['recognize'][cl]:
-                    if pr['class_result']:
-                        mean_conf += pr['conf']
-                        mean_class += pr['class_conf']
-                        mean_overlap += pr['overlap']
-                compat['class_stat'][cl] = {
-                    'mean_conf': mean_conf / len(compat['recognize'][cl]) if len(compat['recognize'][cl]) else None,
-                    'mean_class': mean_class / len(compat['recognize'][cl]) if len(compat['recognize'][cl]) else None,
-                    'mean_overlap': mean_overlap / len(compat['recognize'][cl]) if len(
-                        compat['recognize'][cl]) else None,
-                }
-        compat['total_stat'] = {
-            'total_conf': total_conf / count,
-            'total_class': total_class / count,
-            'total_overlap': total_overlap / count,
-            'total_metric': (total_conf + total_class + total_overlap) / 3 / count
-        }
-        return compat
 
     @staticmethod
     def _get_confusion_matrix(y_true, y_pred, get_percent=True) -> tuple:

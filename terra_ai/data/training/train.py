@@ -100,7 +100,7 @@ class BalanceData(BaseMixinData):
 class InteractiveData(BaseMixinData):
     loss_graphs: LossGraphsList = LossGraphsList()
     metric_graphs: MetricGraphsList = MetricGraphsList()
-    intermediate_result: YoloIntermediateResultData = YoloIntermediateResultData()
+    intermediate_result: IntermediateResultData = IntermediateResultData()
     progress_table: ProgressTableList = ProgressTableList()
     statistic_data: StatisticData = StatisticData()
     data_balance: BalanceData = BalanceData()
@@ -109,7 +109,7 @@ class InteractiveData(BaseMixinData):
 class YoloInteractiveData(BaseMixinData):
     loss_graphs: LossGraphsList = LossGraphsList()
     metric_graphs: MetricGraphsList = MetricGraphsList()
-    intermediate_result: IntermediateResultData = IntermediateResultData()
+    intermediate_result: YoloIntermediateResultData = YoloIntermediateResultData()
     progress_table: ProgressTableList = ProgressTableList()
     statistic_data: YoloStatisticData = YoloStatisticData()
     data_balance: BalanceData = BalanceData()
