@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <Media :kind="'video'" :controls="true" :src="src"       :style="{width: '200px'}"></Media>
+    <Media :kind="'video'" :controls="true" :src="src" :style="{ width: '200px' }" :key="src"></Media>
   </div>
 </template>
 
@@ -13,10 +13,14 @@ export default {
   },
   props: {
     value: { type: String, default: '' },
+    update: {
+      type: String,
+      default: '',
+    },
   },
   computed: {
     src() {
-      return `/_media/blank/?path=${this.value}`;
+       return `/_media/blank/?path=${this.value}&r=${this.update}`;
     },
   },
   data: () => ({
