@@ -1833,8 +1833,6 @@ class CreateArray(object):
     def prepare_yolo_example_idx_to_show(array: dict, true_array: dict, name_classes: list, box_channel: int,
                                          count: int, choice_type: str = "best", seed_idx: list = None,
                                          sensitivity: float = 0.25, get_optimal_channel=False):
-
-        print(seed_idx, choice_type)
         if get_optimal_channel:
             channel_stat = []
             for channel in range(3):
@@ -1848,27 +1846,27 @@ class CreateArray(object):
                     )['total_stat']['total_metric']
                 channel_stat.append(total_metric/len(array.get(channel)))
             box_channel = int(np.argmax(channel_stat, axis=-1))
-            print('\nget_optimal_channel', box_channel, channel_stat)
 
-        stat = []
-        for example in range(len(array.get(box_channel))):
-            stat.append(
-                CreateArray().get_yolo_example_statistic(
-                    true_bb=true_array.get(box_channel)[example],
-                    pred_bb=array.get(box_channel)[example],
-                    name_classes=name_classes,
-                    sensitivity=sensitivity
-                )['total_stat']['total_metric']
-            )
-        stat_dict = dict(zip(np.arange(0, len(stat)), stat))
-        if choice_type == ExampleChoiceTypeChoice.best:
-            example_idx, _ = CreateArray().sort_dict(stat_dict, mode=BalanceSortedChoice.descending)
-            example_idx = example_idx[:count]
-        elif choice_type == ExampleChoiceTypeChoice.worst:
-            example_idx, _ = CreateArray().sort_dict(stat_dict, mode=BalanceSortedChoice.ascending)
-            example_idx = example_idx[:count]
+        if choice_type == ExampleChoiceTypeChoice.best or choice_type == ExampleChoiceTypeChoice.worst:
+            stat = []
+            for example in range(len(array.get(box_channel))):
+                stat.append(
+                    CreateArray().get_yolo_example_statistic(
+                        true_bb=true_array.get(box_channel)[example],
+                        pred_bb=array.get(box_channel)[example],
+                        name_classes=name_classes,
+                        sensitivity=sensitivity
+                    )['total_stat']['total_metric']
+                )
+            stat_dict = dict(zip(np.arange(0, len(stat)), stat))
+            if choice_type == ExampleChoiceTypeChoice.best:
+                example_idx, _ = CreateArray().sort_dict(stat_dict, mode=BalanceSortedChoice.descending)
+                example_idx = example_idx[:count]
+            else:
+                example_idx, _ = CreateArray().sort_dict(stat_dict, mode=BalanceSortedChoice.ascending)
+                example_idx = example_idx[:count]
 
-        elif choice_type == ExampleChoiceTypeChoice.seed and seed_idx:
+        elif choice_type == ExampleChoiceTypeChoice.seed:
             example_idx = seed_idx[:count]
 
         elif choice_type == ExampleChoiceTypeChoice.random:
@@ -2399,7 +2397,7 @@ class CreateArray(object):
                 plot_true=True,
                 image_size=image_size,
                 save_path=save_path,
-                return_mode='deploy'
+                return_mode=return_mode
             )
 
             data["y_true"] = {
@@ -2424,7 +2422,7 @@ class CreateArray(object):
                 plot_true=False,
                 image_size=image_size,
                 save_path=save_path,
-                return_mode='deploy'
+                return_mode=return_mode
             )
 
             data["y_pred"] = {
@@ -2444,48 +2442,50 @@ class CreateArray(object):
                     name_classes=name_classes,
                     sensitivity=sensitivity
                 )
-
                 data["stat"]["Общая точность"] = [
                     {
                         "title": "Среднее",
-                        "value": f"{round(box_stat['total_stat']['total_metric'] * 100), 2}%",
-                        "color_mark": 'success' if box_stat['total_metric']['total_conf'] >= 0.9 else 'wrong'
+                        "value": f"{np.round(box_stat['total_stat']['total_metric'] * 100, 2)}%",
+                        "color_mark": 'success' if box_stat['total_stat']['total_conf'] >= 0.7 else 'wrong'
                     },
                 ]
-                data["stat"]["Средняя точность"] = [
+                data["stat"]['Средняя точность'] = [
                     {
                         "title": "Перекрытие",
-                        "value": f"{round(box_stat['total_stat']['total_overlap']*100), 2} %",
-                        "color_mark": 'success' if box_stat['total_stat']['total_overlap'] >= 0.9 else 'wrong'
+                        "value": f"{np.round(box_stat['total_stat']['total_overlap']*100, 2)}%",
+                        "color_mark": 'success' if box_stat['total_stat']['total_overlap'] >= 0.7 else 'wrong'
                     },
                     {
                         "title": "Объект",
-                        "value": f"{round(box_stat['total_stat']['total_conf'] * 100), 2} %",
-                        "color_mark": 'success' if box_stat['total_stat']['total_conf'] >= 0.9 else 'wrong'
+                        "value": f"{np.round(box_stat['total_stat']['total_conf'] * 100, 2)}%",
+                        "color_mark": 'success' if box_stat['total_stat']['total_conf'] >= 0.7 else 'wrong'
                     },
                     {
                         "title": "Класс",
-                        "value": f"{round(box_stat['total_stat']['total_overlap'] * 100), 2} %",
-                        "color_mark": 'success' if box_stat['total_stat']['total_overlap'] >= 0.9 else 'wrong'
+                        "value": f"{np.round(box_stat['total_stat']['total_overlap'] * 100, 2)}%",
+                        "color_mark": 'success' if box_stat['total_stat']['total_overlap'] >= 0.7 else 'wrong'
                     },
                 ]
 
                 for class_name in name_classes:
+                    mean_overlap = box_stat['class_stat'][class_name]['mean_overlap']
+                    mean_conf = box_stat['class_stat'][class_name]['mean_conf']
+                    mean_class = box_stat['class_stat'][class_name]['mean_class']
                     data["stat"][class_name] = [
                         {
                             "title": "Перекрытие",
-                            "value": f"{round(box_stat['class_stat'][class_name]['mean_overlap'] * 100), 2} %",
-                            "color_mark": 'success' if box_stat['class_stat'][class_name]['mean_overlap'] >= 0.9 else 'wrong'
+                            "value": "-" if mean_overlap is None else f"{np.round(mean_overlap * 100, 2)}%",
+                            "color_mark": 'success' if mean_overlap and mean_overlap >= 0.7 else 'wrong'
                         },
                         {
                             "title": "Объект",
-                            "value": f"{round(box_stat['class_stat'][class_name]['mean_conf'] * 100), 2} %",
-                            "color_mark": 'success' if box_stat['class_stat'][class_name]['mean_conf'] >= 0.9 else 'wrong'
+                            "value": "-" if mean_conf is None else f"{np.round(mean_conf * 100, 2)}%",
+                            "color_mark": 'success' if mean_conf and mean_conf >= 0.7 else 'wrong'
                         },
                         {
                             "title": "Класс",
-                            "value": f"{round(box_stat['class_stat'][class_name]['mean_class'] * 100), 2} %",
-                            "color_mark": 'success' if box_stat['class_stat'][class_name]['mean_class'] >= 0.9 else 'wrong'
+                            "value": "-" if mean_class is None else f"{np.round(mean_class * 100, 2)}%",
+                            "color_mark": 'success' if mean_class and mean_class >= 0.7 else 'wrong'
                         },
                     ]
             return data
@@ -2655,7 +2655,8 @@ class CreateArray(object):
                             dash_mode=True, show_label=True)
             del draw
 
-        save_predict_path = os.path.join(save_path, f"{return_mode}_od_predict_image_{image_id}.webp")
+        save_predict_path = os.path.join(
+            save_path, f"{return_mode}_od_{'predict_true' if plot_true else 'predict'}_image_{image_id}.webp")
         image_pred.save(save_predict_path)
 
         save_true_path = ''
@@ -2757,13 +2758,13 @@ class CreateArray(object):
                     'mean_conf': mean_conf / len(compat['recognize'][cl]) if len(compat['recognize'][cl]) else None,
                     'mean_class': mean_class / len(compat['recognize'][cl]) if len(compat['recognize'][cl]) else None,
                     'mean_overlap': mean_overlap / len(compat['recognize'][cl]) if len(
-                        compat['recognize'][cl]) else None,
+                        compat['recognize'][cl]) else None
                 }
-
         compat['total_stat'] = {
             'total_conf': total_conf / count if count else 0.,
             'total_class': total_class / count if count else 0.,
             'total_overlap': total_overlap / count if count else 0.,
             'total_metric': (total_conf + total_class + total_overlap) / 3 / count if count else 0.
         }
+        print('\ncompat', compat)
         return compat

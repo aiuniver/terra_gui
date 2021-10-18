@@ -474,9 +474,9 @@ class InteractiveCallback:
                     )
                 if self.options.data.architecture == DatasetModelChoice.yolo and \
                         self.yolo_interactive_config.intermediate_result.show_results:
-                    self.example_idx = CreateArray().prepare_yolo_example_idx_to_show(
-                        array=self.y_pred,
-                        true_array=self.y_true,
+                    self.example_idx, _ = CreateArray().prepare_yolo_example_idx_to_show(
+                        array=copy.deepcopy(self.y_pred),
+                        true_array=copy.deepcopy(self.y_true),
                         name_classes=self.options.data.outputs.get(
                             list(self.options.data.outputs.keys())[0]).classes_names,
                         box_channel=self.yolo_interactive_config.intermediate_result.box_channel,
@@ -540,9 +540,9 @@ class InteractiveCallback:
 
             if self.options.data.architecture == DatasetModelChoice.yolo:
                 if self.yolo_interactive_config.intermediate_result.show_results:
-                    self.example_idx = CreateArray().prepare_yolo_example_idx_to_show(
-                        array=self.y_pred,
-                        true_array=self.y_true,
+                    self.example_idx, _ = CreateArray().prepare_yolo_example_idx_to_show(
+                        array=copy.deepcopy(self.y_pred),
+                        true_array=copy.deepcopy(self.y_true),
                         name_classes=self.options.data.outputs.get(
                             list(self.options.data.outputs.keys())[0]).classes_names,
                         box_channel=self.yolo_interactive_config.intermediate_result.box_channel,
@@ -1069,7 +1069,6 @@ class InteractiveCallback:
         else:
             data_lenth = np.arange(len(self.options.dataframe.get("val")))
         np.random.shuffle(data_lenth)
-        print('_prepare_seed', data_lenth)
         return data_lenth
 
     # Методы для update_state()
@@ -1166,105 +1165,39 @@ class InteractiveCallback:
                     self.inverse_y_pred[out] = inverse_y[:, 1:, :]
 
         if self.options.data.architecture == DatasetModelChoice.yolo:
+            self.y_pred = CreateArray().get_yolo_y_pred(
+                array=y_pred,
+                options=self.options,
+                sensitivity = self.yolo_interactive_config.intermediate_result.sensitivity,
+                threashold = self.yolo_interactive_config.intermediate_result.threashold
+            )
             # self.y_pred -> channel -> channel_boxes -> example
-            if len(y_pred) != len(self.options.data.outputs.keys()):
-                reformat_pred = []
-                for i, out in enumerate(self.options.data.outputs.keys()):
-                    for j in len(y_pred):
-                        if self.options.data.outputs.get(out).shape[:2] == y_pred[j].shape[1:3]:
-                            reformat_pred.append(y_pred[j])
-                            break
-                y_pred = reformat_pred
-            name_classes = self.options.data.outputs.get(list(self.options.data.outputs.keys())[0]).classes_names
-
-            for channel in range(len(y_pred)):
-                channel_boxes = []
-                for example in range(len(self.options.dataframe.get('val'))):
-                    pred = []
-                    for ch in range(len(y_pred)):
-                        pred.append(y_pred[ch][example:example + 1])
-                    channel_boxes.append(
-                        CreateArray().get_predict_boxes(
-                            array=pred[channel],
-                            name_classes=name_classes,
-                            bb_size=channel,
-                            sensitivity=0.15,
-                            threashold=0.1
-                        )
-                    )
-                self.y_pred[channel] = np.array(channel_boxes)
-
-    # def _prepare_example_idx_to_show(self) -> dict:
-    #     example_idx = {}
-    #     # if self.options.data.architecture == DatasetModelChoice.basic:
-    #     out = f"{self.interactive_config.intermediate_result.main_output}"
-    #     ohe = self.options.data.outputs.get(int(out)).encoding == LayerEncodingChoice.ohe
-    #     count = self.interactive_config.intermediate_result.num_examples
-    #     choice_type = self.interactive_config.intermediate_result.example_choice_type
-    #     task = self.options.data.outputs.get(int(out)).task
-    #
-    #     if choice_type == ExampleChoiceTypeChoice.best or choice_type == ExampleChoiceTypeChoice.worst:
-    #         if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
-    #             y_true = self.y_true.get("val").get(out)
-    #             y_pred = self.y_pred.get(out)
-    #             if y_pred.shape[-1] == y_true.shape[-1] and ohe and y_true.shape[-1] > 1:
-    #                 classes = np.argmax(y_true, axis=-1)
-    #             elif len(y_true.shape) == 1 and not ohe and y_pred.shape[-1] > 1:
-    #                 classes = copy.deepcopy(y_true)
-    #             elif len(y_true.shape) == 1 and not ohe and y_pred.shape[-1] == 1:
-    #                 classes = copy.deepcopy(y_true)
-    #             else:
-    #                 classes = copy.deepcopy(y_true)
-    #             probs = np.array([pred[classes[i]] for i, pred in enumerate(y_pred)])
-    #             sorted_args = np.argsort(probs)
-    #             if choice_type == ExampleChoiceTypeChoice.best:
-    #                 example_idx = sorted_args[::-1][:count]
-    #             if choice_type == ExampleChoiceTypeChoice.worst:
-    #                 example_idx = sorted_args[:count]
-    #
-    #         elif task == LayerOutputTypeChoice.Segmentation or task == LayerOutputTypeChoice.TextSegmentation:
-    #             y_true = self.y_true.get("val").get(out)
-    #             y_pred = to_categorical(
-    #                 np.argmax(self.y_pred.get(out), axis=-1),
-    #                 num_classes=self.options.data.outputs.get(int(out)).num_classes
-    #             )
-    #             dice_val = self._dice_coef(y_true, y_pred, batch_mode=True)
-    #             dice_dict = dict(zip(np.arange(0, len(dice_val)), dice_val))
-    #             if choice_type == ExampleChoiceTypeChoice.best:
-    #                 example_idx, _ = CreateArray().sort_dict(dice_dict, mode="descending")
-    #                 example_idx = example_idx[:count]
-    #             if choice_type == ExampleChoiceTypeChoice.worst:
-    #                 example_idx, _ = CreateArray().sort_dict(dice_dict, mode="ascending")
-    #                 example_idx = example_idx[:count]
-    #
-    #         elif task == LayerOutputTypeChoice.Timeseries or task == LayerOutputTypeChoice.Regression:
-    #             delta = np.abs(
-    #                 (self.inverse_y_true.get('val').get(out) - self.inverse_y_pred.get(out)) * 100 /
-    #                 self.inverse_y_true.get('val').get(out)
-    #             )
-    #             while len(delta.shape) != 1:
-    #                 delta = np.mean(delta, axis=-1)
-    #             delta_dict = dict(zip(np.arange(0, len(delta)), delta))
-    #             if choice_type == ExampleChoiceTypeChoice.best:
-    #                 example_idx, _ = CreateArray().sort_dict(delta_dict, mode="ascending")
-    #                 example_idx = example_idx[:count]
-    #             if choice_type == ExampleChoiceTypeChoice.worst:
-    #                 example_idx, _ = CreateArray().sort_dict(delta_dict, mode="descending")
-    #                 example_idx = example_idx[:count]
-    #         else:
-    #             pass
-    #
-    #     elif choice_type == ExampleChoiceTypeChoice.seed:
-    #         example_idx = self.seed_idx[:self.interactive_config.intermediate_result.num_examples]
-    #
-    #     elif choice_type == ExampleChoiceTypeChoice.random:
-    #         example_idx = np.random.randint(
-    #             0, len(self.y_true.get("val").get(list(self.y_true.get('val').keys())[0])),
-    #             self.interactive_config.intermediate_result.num_examples
-    #         )
-    #     else:
-    #         pass
-    #     return example_idx
+            # if len(y_pred) != len(self.options.data.outputs.keys()):
+            #     reformat_pred = []
+            #     for i, out in enumerate(self.options.data.outputs.keys()):
+            #         for j in len(y_pred):
+            #             if self.options.data.outputs.get(out).shape[:2] == y_pred[j].shape[1:3]:
+            #                 reformat_pred.append(y_pred[j])
+            #                 break
+            #     y_pred = reformat_pred
+            # name_classes = self.options.data.outputs.get(list(self.options.data.outputs.keys())[0]).classes_names
+            #
+            # for channel in range(len(y_pred)):
+            #     channel_boxes = []
+            #     for example in range(len(self.options.dataframe.get('val'))):
+            #         pred = []
+            #         for ch in range(len(y_pred)):
+            #             pred.append(y_pred[ch][example:example + 1])
+            #         channel_boxes.append(
+            #             CreateArray().get_predict_boxes(
+            #                 array=pred[channel],
+            #                 name_classes=name_classes,
+            #                 bb_size=channel,
+            #                 sensitivity=0.15,
+            #                 threashold=0.1
+            #             )
+            #         )
+            #     self.y_pred[channel] = np.array(channel_boxes)
 
     def _update_log_history(self):
         data_idx = None
@@ -1969,12 +1902,13 @@ class InteractiveCallback:
                     'tags_color': {},
                     'statistic_values': {}
                 }
-                print(idx, self.example_idx)
+                image_path = os.path.join(
+                    self.dataset_path, self.options.dataframe.get('val').iat[self.example_idx[idx], 0])
                 out = self.yolo_interactive_config.intermediate_result.box_channel
                 data = CreateArray().postprocess_object_detection(
-                    predict_array=self.y_pred.get(out)[self.example_idx[idx]],
+                    predict_array=copy.deepcopy(self.y_pred.get(out)[self.example_idx[idx]]),
                     true_array=self.y_true.get(out)[self.example_idx[idx]],
-                    image_path=self.options.dataframe.get('val').iat[self.example_idx[idx], 0],
+                    image_path=image_path,
                     colors=self.class_colors,
                     sensitivity=self.yolo_interactive_config.intermediate_result.sensitivity,
                     image_id=idx,
@@ -1982,7 +1916,7 @@ class InteractiveCallback:
                     name_classes=self.options.data.outputs.get(list(self.options.data.outputs.keys())[0]).classes_names,
                     save_path=self.preset_path,
                     return_mode='callback',
-                    show_stat=self.interactive_config.intermediate_result.show_statistic
+                    show_stat=self.yolo_interactive_config.intermediate_result.show_statistic
                 )
                 if data.get('y_true'):
                     return_data[f"{idx + 1}"]['true_value'][f"Выходной слой"] = data.get('y_true')
