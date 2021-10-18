@@ -1580,7 +1580,7 @@ class CreateArray(object):
                 ]
 
         elif input_task == LayerInputTypeChoice.Audio:
-            source = os.path.join(preset_path, f"initial_data_audio_{save_id}_input_{input_id}.webp")
+            source = os.path.join(preset_path, f"initial_data_audio_{save_id}_input_{input_id}.webm")
             AudioSegment.from_file(initial_file_path).export(source, format="webm")
             if return_mode == 'callback':
                 data_type = LayerInputTypeChoice.Audio.name
