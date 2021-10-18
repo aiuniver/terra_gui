@@ -337,8 +337,6 @@ class InteractiveCallback:
         self.class_idx = None
         self.class_graphics = {}
 
-        self.show_examples = 10
-        self.ex_type_choice = 'seed'
         self.seed_idx = None
         self.example_idx = []
         self.intermediate_result = {}
@@ -462,16 +460,30 @@ class InteractiveCallback:
         if self.log_history:
             if y_pred is not None:
                 self._reformat_y_pred(y_pred)
-                if self.interactive_config.intermediate_result.show_results:
+                if self.options.data.architecture == DatasetModelChoice.basic and \
+                        self.interactive_config.intermediate_result.show_results:
                     out = f"{self.interactive_config.intermediate_result.main_output}"
                     self.example_idx = CreateArray().prepare_example_idx_to_show(
-                        array=self.y_true.get("val").get(out),
+                        array=self.y_pred.get(out),
                         true_array=self.y_true.get("val").get(out),
                         options=self.options,
                         output=int(out),
                         count=self.interactive_config.intermediate_result.num_examples,
                         choice_type=self.interactive_config.intermediate_result.example_choice_type,
                         seed_idx=self.seed_idx[:self.interactive_config.intermediate_result.num_examples]
+                    )
+                if self.options.data.architecture == DatasetModelChoice.yolo and \
+                        self.yolo_interactive_config.intermediate_result.show_results:
+                    self.example_idx = CreateArray().prepare_yolo_example_idx_to_show(
+                        array=self.y_pred,
+                        true_array=self.y_true,
+                        name_classes=self.options.data.outputs.get(
+                            list(self.options.data.outputs.keys())[0]).classes_names,
+                        box_channel=self.yolo_interactive_config.intermediate_result.box_channel,
+                        count=self.yolo_interactive_config.intermediate_result.num_examples,
+                        choice_type=self.yolo_interactive_config.intermediate_result.example_choice_type,
+                        seed_idx=self.seed_idx,
+                        sensitivity=self.yolo_interactive_config.intermediate_result.sensitivity,
                     )
                 if on_epoch_end_flag:
                     self.current_epoch = fit_logs.get('epoch')
@@ -504,26 +516,46 @@ class InteractiveCallback:
         else:
             return {}
 
-    def get_train_results(self, config: InteractiveData) -> Union[dict, None]:
+    def get_train_results(self, config) -> Union[dict, None]:
         """Return dict with data for current interactive request"""
         self.interactive_config = config if config else self.interactive_config
         if self.log_history and self.log_history.get("epochs", {}):
-            if self.interactive_config.intermediate_result.show_results:
-                out = f"{self.interactive_config.intermediate_result.main_output}"
-                self.example_idx = CreateArray().prepare_example_idx_to_show(
-                    array=self.y_true.get("val").get(out),
-                    true_array=self.y_true.get("val").get(out),
-                    options=self.options,
-                    output=int(out),
-                    count=self.interactive_config.intermediate_result.num_examples,
-                    choice_type=self.interactive_config.intermediate_result.example_choice_type,
-                    seed_idx=self.seed_idx[:self.interactive_config.intermediate_result.num_examples]
-                )
-            if config.intermediate_result.show_results or config.statistic_data.output_id:
-                self.urgent_predict = True
-                self.intermediate_result = self._get_intermediate_result_request()
-                if self.interactive_config.statistic_data.output_id:
-                    self.statistic_result = self._get_statistic_data_request()
+            if self.options.data.architecture == DatasetModelChoice.basic:
+                if self.interactive_config.intermediate_result.show_results:
+                    out = f"{self.interactive_config.intermediate_result.main_output}"
+                    self.example_idx = CreateArray().prepare_example_idx_to_show(
+                        array=self.y_true.get("val").get(out),
+                        true_array=self.y_true.get("val").get(out),
+                        options=self.options,
+                        output=int(out),
+                        count=self.interactive_config.intermediate_result.num_examples,
+                        choice_type=self.interactive_config.intermediate_result.example_choice_type,
+                        seed_idx=self.seed_idx[:self.interactive_config.intermediate_result.num_examples]
+                    )
+                if config.intermediate_result.show_results or config.statistic_data.output_id:
+                    self.urgent_predict = True
+                    self.intermediate_result = self._get_intermediate_result_request()
+                    if self.interactive_config.statistic_data.output_id:
+                        self.statistic_result = self._get_statistic_data_request()
+
+            if self.options.data.architecture == DatasetModelChoice.yolo:
+                if self.yolo_interactive_config.intermediate_result.show_results:
+                    self.example_idx = CreateArray().prepare_yolo_example_idx_to_show(
+                        array=self.y_pred,
+                        true_array=self.y_true,
+                        name_classes=self.options.data.outputs.get(
+                            list(self.options.data.outputs.keys())[0]).classes_names,
+                        box_channel=self.yolo_interactive_config.intermediate_result.box_channel,
+                        count=self.yolo_interactive_config.intermediate_result.num_examples,
+                        choice_type=self.yolo_interactive_config.intermediate_result.example_choice_type,
+                        seed_idx=self.seed_idx[:self.yolo_interactive_config.intermediate_result.num_examples],
+                        sensitivity=self.yolo_interactive_config.intermediate_result.sensitivity,
+                    )
+                if config.intermediate_result.show_results or config.statistic_data.box_channel:
+                    self.urgent_predict = True
+                    self.intermediate_result = self._get_intermediate_result_request()
+                    if self.yolo_interactive_config.statistic_data.box_channel:
+                        self.statistic_result = self._get_statistic_data_request()
 
             self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
             self.train_progress['train_data'] = {
@@ -594,13 +626,9 @@ class InteractiveCallback:
                 hsv_tuples = [(x / len(name_classes), 1., 1.) for x in range(len(name_classes))]
                 colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
                 colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
-                # for _ in self.options.data.outputs.get(out).classes_names:
-                #     colors.append(tuple(np.random.randint(256, size=3).astype('int').tolist()))
                 self.class_colors = colors
             elif task == LayerOutputTypeChoice.Segmentation:
                 self.class_colors = [color.as_rgb_tuple() for color in classes_colors]
-            # elif task == LayerOutputTypeChoice.ObjectDetection:
-            #     self.class_colors = [color.as_rgb_tuple() for color in classes_colors]
             else:
                 self.class_colors = colors
 
@@ -1041,6 +1069,7 @@ class InteractiveCallback:
         else:
             data_lenth = np.arange(len(self.options.dataframe.get("val")))
         np.random.shuffle(data_lenth)
+        print('_prepare_seed', data_lenth)
         return data_lenth
 
     # Методы для update_state()
@@ -1156,7 +1185,7 @@ class InteractiveCallback:
                         pred.append(y_pred[ch][example:example + 1])
                     channel_boxes.append(
                         CreateArray().get_predict_boxes(
-                            array=pred,
+                            array=pred[channel],
                             name_classes=name_classes,
                             bb_size=channel,
                             sensitivity=0.15,
@@ -1795,7 +1824,8 @@ class InteractiveCallback:
 
     def _get_intermediate_result_request(self) -> dict:
         return_data = {}
-        if self.interactive_config.intermediate_result.show_results:
+        if self.options.data.architecture == DatasetModelChoice.basic and \
+                self.interactive_config.intermediate_result.show_results:
             for idx in range(self.interactive_config.intermediate_result.num_examples):
                 return_data[f"{idx + 1}"] = {
                     'initial_data': {},
@@ -1928,6 +1958,40 @@ class InteractiveCallback:
                         return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
                     else:
                         return_data[f"{idx + 1}"]['statistic_values'] = {}
+
+        if self.options.data.architecture == DatasetModelChoice.yolo and \
+                self.yolo_interactive_config.intermediate_result.show_results:
+            for idx in range(self.yolo_interactive_config.intermediate_result.num_examples):
+                return_data[f"{idx + 1}"] = {
+                    'initial_data': {},
+                    'true_value': {},
+                    'predict_value': {},
+                    'tags_color': {},
+                    'statistic_values': {}
+                }
+                print(idx, self.example_idx)
+                out = self.yolo_interactive_config.intermediate_result.box_channel
+                data = CreateArray().postprocess_object_detection(
+                    predict_array=self.y_pred.get(out)[self.example_idx[idx]],
+                    true_array=self.y_true.get(out)[self.example_idx[idx]],
+                    image_path=self.options.dataframe.get('val').iat[self.example_idx[idx], 0],
+                    colors=self.class_colors,
+                    sensitivity=self.yolo_interactive_config.intermediate_result.sensitivity,
+                    image_id=idx,
+                    image_size=self.options.data.inputs.get(list(self.options.data.inputs.keys())[0]).shape[:2],
+                    name_classes=self.options.data.outputs.get(list(self.options.data.outputs.keys())[0]).classes_names,
+                    save_path=self.preset_path,
+                    return_mode='callback',
+                    show_stat=self.interactive_config.intermediate_result.show_statistic
+                )
+                if data.get('y_true'):
+                    return_data[f"{idx + 1}"]['true_value'][f"Выходной слой"] = data.get('y_true')
+                return_data[f"{idx + 1}"]['predict_value'][f"Выходной слой"] = data.get('y_pred')
+
+                if data.get('stat'):
+                    return_data[f"{idx + 1}"]['statistic_values'] = data.get('stat')
+                else:
+                    return_data[f"{idx + 1}"]['statistic_values'] = {}
         return return_data
 
     def _get_statistic_data_request(self) -> list:

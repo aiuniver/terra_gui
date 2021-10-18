@@ -1834,6 +1834,7 @@ class CreateArray(object):
                                          count: int, choice_type: str = "best", seed_idx: list = None,
                                          sensitivity: float = 0.25, get_optimal_channel=False):
 
+        print(seed_idx, choice_type)
         if get_optimal_channel:
             channel_stat = []
             for channel in range(3):
@@ -1847,7 +1848,7 @@ class CreateArray(object):
                     )['total_stat']['total_metric']
                 channel_stat.append(total_metric/len(array.get(channel)))
             box_channel = int(np.argmax(channel_stat, axis=-1))
-        print('\nget_optimal_channel', box_channel, channel_stat)
+            print('\nget_optimal_channel', box_channel, channel_stat)
 
         stat = []
         for example in range(len(array.get(box_channel))):
@@ -2375,8 +2376,119 @@ class CreateArray(object):
         return data
 
     @staticmethod
-    def postprocess_object_detection():
-        pass
+    def postprocess_object_detection(predict_array, true_array, image_path: str, colors: list,
+                                     sensitivity: float, image_id: int, save_path: str, show_stat: bool,
+                                     name_classes: list, return_mode='deploy', image_size=(416,416)):
+        data = {
+            "y_true": {},
+            "y_pred": {},
+            "stat": {}
+        }
+        if return_mode == 'deploy':
+            pass
+
+        if return_mode == 'callback':
+            save_true_predict_path, _ = CreateArray().plot_boxes(
+                true_bb=true_array,
+                pred_bb=predict_array,
+                img_path=image_path,
+                name_classes=name_classes,
+                colors=colors,
+                image_id=image_id,
+                add_only_true=False,
+                plot_true=True,
+                image_size=image_size,
+                save_path=save_path,
+                return_mode='deploy'
+            )
+
+            data["y_true"] = {
+                "type": "image",
+                "data": [
+                    {
+                        "title": "Изображение",
+                        "value": save_true_predict_path,
+                        "color_mark": None
+                    }
+                ]
+            }
+
+            save_predict_path, _ = CreateArray().plot_boxes(
+                true_bb=true_array,
+                pred_bb=predict_array,
+                img_path=image_path,
+                name_classes=name_classes,
+                colors=colors,
+                image_id=image_id,
+                add_only_true=False,
+                plot_true=False,
+                image_size=image_size,
+                save_path=save_path,
+                return_mode='deploy'
+            )
+
+            data["y_pred"] = {
+                "type": "image",
+                "data": [
+                    {
+                        "title": "Изображение",
+                        "value": save_predict_path,
+                        "color_mark": None
+                    }
+                ]
+            }
+            if show_stat:
+                box_stat = CreateArray().get_yolo_example_statistic(
+                    true_bb=true_array,
+                    pred_bb=predict_array,
+                    name_classes=name_classes,
+                    sensitivity=sensitivity
+                )
+
+                data["stat"]["Общая точность"] = [
+                    {
+                        "title": "Среднее",
+                        "value": f"{round(box_stat['total_stat']['total_metric'] * 100), 2}%",
+                        "color_mark": 'success' if box_stat['total_metric']['total_conf'] >= 0.9 else 'wrong'
+                    },
+                ]
+                data["stat"]["Средняя точность"] = [
+                    {
+                        "title": "Перекрытие",
+                        "value": f"{round(box_stat['total_stat']['total_overlap']*100), 2} %",
+                        "color_mark": 'success' if box_stat['total_stat']['total_overlap'] >= 0.9 else 'wrong'
+                    },
+                    {
+                        "title": "Объект",
+                        "value": f"{round(box_stat['total_stat']['total_conf'] * 100), 2} %",
+                        "color_mark": 'success' if box_stat['total_stat']['total_conf'] >= 0.9 else 'wrong'
+                    },
+                    {
+                        "title": "Класс",
+                        "value": f"{round(box_stat['total_stat']['total_overlap'] * 100), 2} %",
+                        "color_mark": 'success' if box_stat['total_stat']['total_overlap'] >= 0.9 else 'wrong'
+                    },
+                ]
+
+                for class_name in name_classes:
+                    data["stat"][class_name] = [
+                        {
+                            "title": "Перекрытие",
+                            "value": f"{round(box_stat['class_stat'][class_name]['mean_overlap'] * 100), 2} %",
+                            "color_mark": 'success' if box_stat['class_stat'][class_name]['mean_overlap'] >= 0.9 else 'wrong'
+                        },
+                        {
+                            "title": "Объект",
+                            "value": f"{round(box_stat['class_stat'][class_name]['mean_conf'] * 100), 2} %",
+                            "color_mark": 'success' if box_stat['class_stat'][class_name]['mean_conf'] >= 0.9 else 'wrong'
+                        },
+                        {
+                            "title": "Класс",
+                            "value": f"{round(box_stat['class_stat'][class_name]['mean_class'] * 100), 2} %",
+                            "color_mark": 'success' if box_stat['class_stat'][class_name]['mean_class'] >= 0.9 else 'wrong'
+                        },
+                    ]
+            return data
 
     @staticmethod
     def non_max_suppression_fast(boxes: np.ndarray, scores: np.ndarray, sensitivity: float = 0.15):
