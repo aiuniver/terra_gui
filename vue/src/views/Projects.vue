@@ -2,9 +2,27 @@
   <main class="page-projects">
     <div class="wrapper">
       <h2>Мои проекты</h2>
+      <NewModalCreateProject 
+        :dialog="dialogCreate" 
+        :loading="loading" 
+        @create="createProject" 
+        @close="dialogCreate = false" 
+      />
+      <NewModalDeleteProject 
+        :dialog="dialogDelete" 
+        :loading="loading" 
+        @delete="deleteProject" 
+        @close="dialogDelete = false" 
+      />
       <div class="projects">
-        <CardCreateProject/>
-        <CardProject v-for="(project, i) in projects" :key="project.headline + i" v-bind="project" @click.native="handleClick(project.id)" />
+        <CardCreateProject @click.native="dialogCreate = true"/>
+        <CardProject 
+          v-bind="project" 
+          v-for="(project, i) in projects" 
+          :key="project.headline + i" 
+          @deleteProject="dialogDelete = true" 
+          @click.native="handleClick(project)" 
+        />
       </div>
     </div>
   </main>
@@ -12,14 +30,22 @@
 
 <script>
 import CardProject from '@/components/projects/CardProject'
+import NewModalCreateProject from '@/components/projects/modals/NewModalCreateProject'
+import NewModalDeleteProject from '@/components/projects/modals/NewModalDeleteProject'
 import CardCreateProject from '@/components/projects/CardCreateProject'
 export default {
   name: 'Projects',
   components:{
     CardProject,
-    CardCreateProject
+    CardCreateProject,
+    NewModalCreateProject,
+    NewModalDeleteProject
   },
   data: () => ({
+    dialogCreate: false,
+    dialogDelete:false,
+    loading: false,
+    selectProject: {},
     projects: [
       {
         id: 1,
@@ -48,11 +74,18 @@ export default {
     ]
   }),
   methods:{
-    handleClick(id){
+    createProject(project){
+      console.log('Create project', project)
+    },
+    deleteProject(){
+      console.log('Delete project',this.selectProject)
+    },
+    handleClick(project){
+      this.selectProject = project
       this.projects = this.projects.map(el => {
         return {
           ...el,
-          active: el.id === id ? true : false
+          active: el.id === project.id ? true : false
         }
       })
     }
