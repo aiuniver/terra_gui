@@ -1021,31 +1021,39 @@ class CONVBlock(Model):
 
 
 class PSPBlock(Model):
-    """PSP Block layer
+    """
+    PSP Block layer
     n_pooling_branches - defines amt of pooling/upsampling operations
     filters_coef - defines the multiplication factor for amt of filters in pooling branches
+    n_conv_layers - number of conv layers in one downsampling/upsampling segment
     """
 
     def __init__(self,
                  n_pooling_branches=2,
                  filters_coef=2,
+                 n_conv_layers=2,
                  activation='relu',
                  kernel_size=(3, 3),
                  strides=(1, 1),
                  dilation=(1, 1),
                  padding='same',
                  batch_norm_layer=True,
+                 dropout_layer=True,
+                 dropout_rate=0.1,
                  **kwargs):
 
         super(PSPBlock, self).__init__(**kwargs)
         self.n_pooling_branches = n_pooling_branches
         self.filters_coef = filters_coef
+        self.n_conv_layers = n_conv_layers
         self.activation = activation
         self.kernel_size = kernel_size
         self.strides = strides
         self.dilation = dilation
         self.padding = padding
         self.batch_norm_layer = batch_norm_layer
+        self.dropout_layer = dropout_layer
+        self.dropout_rate = dropout_rate
 
         self.conv_start = layers.Conv2D(filters=self.filters_coef * 16, kernel_size=self.kernel_size,
                                         strides=self.strides,
@@ -1058,20 +1066,23 @@ class PSPBlock(Model):
         for i in range(0, self.n_pooling_branches):
             setattr(self, f"maxpool_{i}",
                     layers.MaxPool2D(pool_size=2 ** i, padding='same'))
-            setattr(self, f"conv_{i}",
-                    layers.Conv2D(filters=self.filters_coef * 16 * (i + 1), kernel_size=self.kernel_size,
-                                  strides=self.strides,
-                                  padding=self.padding, activation=self.activation, data_format='channels_last',
-                                  dilation_rate=self.dilation, groups=1, use_bias=True,
-                                  kernel_initializer='glorot_uniform',
-                                  bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
-                                  activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
+            for j in range(self.n_conv_layers):
+                setattr(self, f"conv_{i,j}",
+                        layers.Conv2D(filters=self.filters_coef * 16 * (i + 1), kernel_size=self.kernel_size,
+                                      strides=self.strides,
+                                      padding=self.padding, activation=self.activation, data_format='channels_last',
+                                      dilation_rate=self.dilation, groups=1, use_bias=True,
+                                      kernel_initializer='glorot_uniform',
+                                      bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
+                                      activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
             setattr(self, f"convtranspose_{i}",
                     layers.Conv2DTranspose(filters=self.filters_coef * 16 * (i + 1),
                                            kernel_size=(1, 1), strides=2 ** i, padding='same',
                                            activation=self.activation, data_format='channels_last'))
             if self.batch_norm_layer:
                 setattr(self, f"batchnorm_{i}", layers.BatchNormalization())
+            if self.dropout_layer:
+                setattr(self, f"dropout_{i}", layers.Dropout(rate = self.dropout_rate))
 
         self.concatenate = layers.Concatenate()
 
@@ -1094,9 +1105,12 @@ class PSPBlock(Model):
 
         for i in range(0, self.n_pooling_branches):
             setattr(self, f'x_{i}', getattr(self, f'maxpool_{i}')(x))
-            setattr(self, f'x_{i}', getattr(self, f'conv_{i}')(getattr(self, f'x_{i}')))
+            for j in range(self.n_conv_layers):
+                setattr(self, f'x_{i}', getattr(self, f'conv_{i,j}')(getattr(self, f'x_{i}')))
             if self.batch_norm_layer:
                 setattr(self, f'x_{i}', getattr(self, f'batchnorm_{i}')(getattr(self, f'x_{i}')))
+            if self.dropout_layer:
+                setattr(self, f'x_{i}', getattr(self, f'dropout_{i}')(getattr(self, f'x_{i}')))
             setattr(self, f'x_{i}', getattr(self, f'convtranspose_{i}')(getattr(self, f'x_{i}')))
             setattr(self, f'x_{i}', layers.CenterCrop(input_.shape[1], input_.shape[2])(getattr(self, f'x_{i}')))
             conc_list.append(getattr(self, f'x_{i}'))
@@ -1110,12 +1124,15 @@ class PSPBlock(Model):
         config = {
             'n_pooling_branches': self.n_pooling_branches,
             'filters_coef': self.filters_coef,
+            'n_conv_layers': self.n_conv_layers,
             'activation': self.activation,
             'kernel_size': self.kernel_size,
             'strides': self.strides,
             'dilation': self.dilation,
             'padding': self.padding,
             'batch_norm_layer': self.batch_norm_layer,
+            'dropout_layer': self.dropout_layer,
+            'dropout_rate': self.dropout_rate
         }
         base_config = super(PSPBlock, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
