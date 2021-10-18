@@ -38,6 +38,7 @@ class Loss(str, Enum):
 class Metric(str, Enum):
     AUC = "AUC"
     Accuracy = "Accuracy"
+    BalancedRecall = "BalancedRecall"
     BinaryAccuracy = "BinaryAccuracy"
     BinaryCrossentropy = "BinaryCrossentropy"
     CategoricalAccuracy = "CategoricalAccuracy"
@@ -91,6 +92,7 @@ TasksGroups = [
             Loss.SquaredHinge,
         ],
         "metrics": [
+            Metric.BalancedRecall,
             Metric.RecallPercent,
             Metric.CategoricalAccuracy,
             Metric.BinaryAccuracy,
