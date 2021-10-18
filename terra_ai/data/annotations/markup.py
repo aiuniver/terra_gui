@@ -4,8 +4,13 @@ from enum import Enum
 from terra_ai.data.mixins import AliasMixinData
 from terra_ai.data.extra import FileSizeData
 
+ANNOT_EXT = 'annot'
+SOURCE = '/content/drive/MyDrive/TerraAI/annotations/sources'
+DESTINATION_PATH = '/content/drive/MyDrive/TerraAI/datasets/sources'
+ANNOT_DIRECTORY = '/content/drive/MyDrive/TerraAI/annotations'
 
-class MarkupChoice(str, Enum):
+
+class MarkupTypeChoice(str, Enum):
     classification = "classification"
     tracker = "tracker"
 
@@ -20,7 +25,7 @@ class AnnotationData(AliasMixinData):
     until: str
     classes_names: List
     classes_colors: List
-    task_type: MarkupChoice
+    task_type: MarkupTypeChoice
     progress: List[int]
     size: Optional[FileSizeData]
     cover: str
@@ -44,7 +49,7 @@ class MarkupData(AliasMixinData):
     "Имена классов"
     classes_colors: List
     "Цвета"
-    task_type: MarkupChoice
+    task_type: MarkupTypeChoice
     "Тип задачи"
     to_do: List[str]
     "Ответственные"
