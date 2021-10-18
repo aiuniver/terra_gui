@@ -680,22 +680,23 @@ class InteractiveCallback:
                             inverse_y = np.concatenate([inverse_y, inverse_col], axis=1)
                         inverse_y_true[data_type][f"{out}"] = inverse_y[:, 1:, :]
 
-            if dataset.data.architecture == DatasetModelChoice.yolo:
-                bb = []
-                for index in range(len(dataset.dataset[data_type])):
-                    coord = dataset.dataframe.get(data_type).iloc[index, 1].split(' ')
-                    bbox_data_gt = np.array([list(map(int, box.split(','))) for box in coord])
-                    bboxes_gt, classes_gt = bbox_data_gt[:, :4], bbox_data_gt[:, 4]
-                    classes_gt = to_categorical(
-                        classes_gt, num_classes=len(dataset.data.outputs.get(2).classes_names)
-                    )
-                    bboxes_gt = np.concatenate(
-                        [bboxes_gt[:, 1:2], bboxes_gt[:, 0:1], bboxes_gt[:, 3:4], bboxes_gt[:, 2:3]], axis=-1)
-                    conf_gt = np.expand_dims(np.ones(len(bboxes_gt)), axis=-1)
-                    _bb = np.concatenate([bboxes_gt, conf_gt, classes_gt], axis=-1)
-                    bb.append(_bb)
-                for channel in range(len(dataset.Y.get(data_type).keys())):
-                    y_true[data_type][channel] = bb
+        if dataset.data.architecture == DatasetModelChoice.yolo:
+            y_true = {}
+            bb = []
+            for index in range(len(dataset.dataset['val'])):
+                coord = dataset.dataframe.get('val').iloc[index, 1].split(' ')
+                bbox_data_gt = np.array([list(map(int, box.split(','))) for box in coord])
+                bboxes_gt, classes_gt = bbox_data_gt[:, :4], bbox_data_gt[:, 4]
+                classes_gt = to_categorical(
+                    classes_gt, num_classes=len(dataset.data.outputs.get(2).classes_names)
+                )
+                bboxes_gt = np.concatenate(
+                    [bboxes_gt[:, 1:2], bboxes_gt[:, 0:1], bboxes_gt[:, 3:4], bboxes_gt[:, 2:3]], axis=-1)
+                conf_gt = np.expand_dims(np.ones(len(bboxes_gt)), axis=-1)
+                _bb = np.concatenate([bboxes_gt, conf_gt, classes_gt], axis=-1)
+                bb.append(_bb)
+            for channel in range(len(dataset.Y.get('val').keys())):
+                y_true[channel] = bb
 
         return y_true, inverse_y_true
 
@@ -2417,39 +2418,97 @@ class InteractiveCallback:
         return return_data
 
     @staticmethod
-    def _get_yolo_statistic(true_bb, pred_bb, sensitivity=0.25):
-        compat = {}
-        incompat = {}
+    def _get_yolo_statistic(true_bb, pred_bb, name_classes, sensitivity=0.25):
+        compat = {
+            'recognize': {
+                "empty": [],
+                'unrecognize': []
+            },
+            'empty_pred': {},
+            'class_stat': {},
+            'total_stat': {}
+        }
+        for name in name_classes:
+            compat['recognize'][name] = []
+
+        predict = {}
         for i, k in enumerate(pred_bb[:, :4]):
-            incompat[i] = {
-                'pred class': np.argmax(pred_bb[:, 5:][i]),
+            predict[i] = {
+                'pred_class': np.argmax(pred_bb[:, 5:][i]),
                 'conf': pred_bb[:, 4][i].item(),
                 'class_conf': pred_bb[:, 5:][i][np.argmax(pred_bb[:, 5:][i])],
             }
+
+        count = 0
+        total_conf = 0
+        total_class = 0
+        total_overlap = 0
+        all_true = list(np.arange(len(true_bb)))
         for i, tr in enumerate(true_bb[:, :4]):
-            compat[i] = []
+            # compat['recognize'][i] = []
             for j, pr in enumerate(pred_bb[:, :4]):
                 boxes = np.array([true_bb[:, :4][i], pred_bb[:, :4][j]])
                 scores = np.array([true_bb[:, 5:][i], pred_bb[:, 5:][j]])
                 pick, overlap = CreateArray().non_max_suppression_fast(boxes, scores, sensitivity=sensitivity)
                 if len(pick) == 1:
-                    compat[i].append(
+                    print()
+                    compat['recognize'][name_classes[np.argmax(true_bb[:, 5:][i], axis=-1)]].append(
                         {
-                            'true class': np.argmax(true_bb[:, 5:][i]),
-                            'pred class': np.argmax(pred_bb[:, 5:][j]),
-                            "pred_id": j,
+                            # 'true_class': np.argmax(true_bb[:, 5:][i]),
+                            'pred_class': name_classes[np.argmax(pred_bb[:, 5:][j], axis=-1)],
+                            # "pred_id": j,
                             'conf': pred_bb[:, 4][j].item(),
-                            'class_conf': pred_bb[:, 5:][j][np.argmax(pred_bb[:, 5:][j])],
-                            'class_result': True if np.argmax(true_bb[:, 5:][i]) == np.argmax(
-                                pred_bb[:, 5:][j]) else False,
+                            'class_conf': pred_bb[:, 5:][j][np.argmax(pred_bb[:, 5:][j], axis=-1)],
+                            'class_result': True if np.argmax(true_bb[:, 5:][i], axis=-1) == np.argmax(
+                                pred_bb[:, 5:][j], axis=-1) else False,
                             'overlap': overlap[0].item()
                         }
                     )
+                    if np.argmax(true_bb[:, 5:][i], axis=-1) == np.argmax(pred_bb[:, 5:][j], axis=-1):
+                        count += 1
+                        total_conf += pred_bb[:, 4][j].item()
+                        total_class += pred_bb[:, 5:][j][np.argmax(pred_bb[:, 5:][j], axis=-1)]
+                        total_overlap += overlap[0].item()
+
                     try:
-                        incompat.pop(j)
+                        predict.pop(j)
+                        all_true.pop(all_true.index(i))
                     except:
                         continue
-        return compat, incompat
+
+        for item in predict.items():
+            compat['recognize']['empty'].append(item)
+
+        if all_true:
+            for idx in all_true:
+                compat['recognize']['unrecognize'].append(
+                    {
+                        "class_name": name_classes[np.argmax(true_bb[idx, 5:], axis=-1)]
+                    }
+                )
+        for cl in compat['recognize'].keys():
+            if cl != 'empty':
+                mean_conf = 0
+                mean_class = 0
+                mean_overlap = 0
+                for pr in compat['recognize'][cl]:
+                    if pr['class_result']:
+                        mean_conf += pr['conf']
+                        mean_class += pr['class_conf']
+                        mean_overlap += pr['overlap']
+                compat['class_stat'][cl] = {
+                    'mean_conf': mean_conf / len(compat['recognize'][cl]) if len(compat['recognize'][cl]) else None,
+                    'mean_class': mean_class / len(compat['recognize'][cl]) if len(compat['recognize'][cl]) else None,
+                    'mean_overlap': mean_overlap / len(compat['recognize'][cl]) if len(
+                        compat['recognize'][cl]) else None,
+                }
+        compat['total_stat'] = {
+            'total_conf': total_conf / count,
+            'total_class': total_class / count,
+            'total_overlap': total_overlap / count,
+            'total_metric': (total_conf + total_class + total_overlap) / 3 / count
+        }
+        return compat
 
     @staticmethod
     def _get_confusion_matrix(y_true, y_pred, get_percent=True) -> tuple:

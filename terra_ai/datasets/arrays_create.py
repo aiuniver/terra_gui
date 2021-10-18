@@ -2335,9 +2335,9 @@ class CreateArray(object):
         level_anchor = bb_size
         num_anchors = len(anchors[anchor_mask[level_anchor]])
 
-        grid_shape = array[level_anchor].shape[1:3]
+        grid_shape = array.shape[1:3]
 
-        feats = np.reshape(array[level_anchor], (-1, grid_shape[0], grid_shape[1], num_anchors, num_classes + 5))
+        feats = np.reshape(array, (-1, grid_shape[0], grid_shape[1], num_anchors, num_classes + 5))
 
         xy_param = feats[..., :2]
         wh_param = feats[..., 2:4]
