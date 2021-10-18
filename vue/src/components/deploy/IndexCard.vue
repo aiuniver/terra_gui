@@ -25,7 +25,7 @@
           </div>
         </div>
       </div>
-      <div v-if="type == 'text_segmentation'">
+      <div v-if="type == 'text_textsegmentation'">
         <div class="card__original">
           <TextCard :style="{ width: '600px', color: '#A7BED3', height: '324px' }">{{ card.format }}</TextCard>
         </div>
