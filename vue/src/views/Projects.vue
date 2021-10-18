@@ -3,25 +3,34 @@
     <div class="wrapper">
       <h2>Мои проекты</h2>
       <NewModalCreateProject 
-        :dialog="dialogCreate" 
         :loading="loading" 
         @create="createProject" 
+        :dialog="dialogCreate" 
         @close="dialogCreate = false" 
       />
+      <NewModalEditProject 
+        :loading="loading" 
+        @edit="editProject" 
+        :dialog="dialogEdit" 
+        @close="dialogEdit = false"
+        :project="selectProject" 
+      />
       <NewModalDeleteProject 
-        :dialog="dialogDelete" 
         :loading="loading" 
         @delete="deleteProject" 
+        :dialog="dialogDelete" 
         @close="dialogDelete = false" 
+        :project="selectProject" 
       />
       <div class="projects">
-        <CardCreateProject @click.native="dialogCreate = true"/>
+        <CardCreateProject @click.native="closeDialogs(), dialogCreate = true"/>
         <CardProject 
           v-bind="project" 
           v-for="(project, i) in projects" 
           :key="project.headline + i" 
-          @deleteProject="dialogDelete = true" 
-          @click.native="handleClick(project)" 
+          @deleteProject="closeDialogs(), dialogDelete = true" 
+          @editProject="closeDialogs(), dialogEdit = true" 
+          @click.native="activeProject(project)" 
         />
       </div>
     </div>
@@ -32,6 +41,7 @@
 import CardProject from '@/components/projects/CardProject'
 import NewModalCreateProject from '@/components/projects/modals/NewModalCreateProject'
 import NewModalDeleteProject from '@/components/projects/modals/NewModalDeleteProject'
+import NewModalEditProject from '@/components/projects/modals/NewModalEditProject'
 import CardCreateProject from '@/components/projects/CardCreateProject'
 export default {
   name: 'Projects',
@@ -39,11 +49,13 @@ export default {
     CardProject,
     CardCreateProject,
     NewModalCreateProject,
-    NewModalDeleteProject
+    NewModalDeleteProject,
+    NewModalEditProject
   },
   data: () => ({
     dialogCreate: false,
     dialogDelete:false,
+    dialogEdit: false,
     loading: false,
     selectProject: {},
     projects: [
@@ -74,20 +86,32 @@ export default {
     ]
   }),
   methods:{
+    closeDialogs(){
+      this.dialogCreate = false
+      this.dialogDelete = false
+      this.dialogEdit= false
+    },
     createProject(project){
       console.log('Create project', project)
     },
-    deleteProject(){
-      console.log('Delete project',this.selectProject)
+    editProject(project){
+      this.projects = this.projects.map(el => {
+        if(el.id === project.id) return project
+        return el
+      })
+      console.log('Edited project', project)
     },
-    handleClick(project){
-      this.selectProject = project
+    deleteProject(project){
+      console.log('Delete project',project)
+    },
+    activeProject(project){
       this.projects = this.projects.map(el => {
         return {
           ...el,
           active: el.id === project.id ? true : false
         }
       })
+      this.selectProject = this.projects.find(el => el.id === project.id)
     }
   }
 };

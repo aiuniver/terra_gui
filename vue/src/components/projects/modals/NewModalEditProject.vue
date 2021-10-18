@@ -14,21 +14,21 @@
     </div>
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Новый проект</h3>
+        <h3>Редактирование проекта</h3>
       </div>
       <div class="modal-body">
         <div class="modal-body__box">
           <t-field :label="'Название проекта'">
             <t-input-new
               placeholder="Введите название проекта"
-              v-model="project.nameProject"
+              v-model="newProject.headline"
               :style="{ width: '100%'}"
             />
           </t-field>
         </div>  
         <div class="modal-body__box flex">
           <t-button class="mr-4" @click.native="$emit('close')" cancel :disabled="loading">Отмена</t-button>
-          <t-button @click.native="$emit('create', project), $emit('close')" :loading="loading">Создать</t-button>
+          <t-button @click.native="$emit('edit', newProject), $emit('close')" :loading="loading">Редактировать</t-button>
         </div>  
       </div>
     </div>
@@ -37,13 +37,19 @@
 
 <script>
 export default {
-  name: 'NewModalCreateProject',
-  props: ['dialog', 'loading'],
+  name: 'NewModalEditProject',
+  props: ['dialog', 'loading', 'project'],
   data: () => ({
-    project:{
-      nameProject: '',
+    newProject: {}
+  }),
+  watch:{
+    project(val){
+      this.newProject = JSON.parse(JSON.stringify(val))
     }
-  })
+  },
+  created(){
+    this.newProject = JSON.parse(JSON.stringify(this.project))
+  }
 };
 </script>
 

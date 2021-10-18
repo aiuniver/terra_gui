@@ -21,8 +21,8 @@
           <p>Проект будет удален безвозвратно и вы не сможете его восстановить.</p>
         </div>  
         <div class="modal-body__box flex">
-          <t-button class="mr-4" @click="$emit('close')" cancel :disabled="loading">Отмена</t-button>
-          <t-button @click="$emit('delete'), $emit('close')" :loading="loading">Удалить</t-button>
+          <t-button class="mr-4" @click.native="$emit('close')" cancel :disabled="loading">Отмена</t-button>
+          <t-button @click.native="$emit('delete', project), $emit('close')" :loading="loading">Удалить</t-button>
         </div>  
       </div>
     </div>
@@ -32,7 +32,7 @@
 <script>
 export default {
   name: 'NewModalDeleteProject',
-  props: ['dialog', 'loading'],
+  props: ['dialog', 'loading', 'project'],
 };
 </script>
 
