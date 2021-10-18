@@ -81,7 +81,7 @@ class CascadeBlock(Cascade):
     def __getitem__(self, index):
         return self.cascades[index]
 
-    def __call__(self, item):
+    def __call__(self, *item):
         self.out_map = {}
 
         global cascade
@@ -93,7 +93,11 @@ class CascadeBlock(Cascade):
                 if j is None:
                     return j
 
-                cascade_input.append(j)
+                if isinstance(j, (list, tuple)):
+                    cascade_input += j
+                else:
+                    cascade_input.append(j)
+
             cascade(*cascade_input)
 
         self.out = cascade.out
