@@ -163,7 +163,7 @@
                 {{ id }}
               </td>
 
-              <template v-for="({ type, data, update }, key) in initial_data">
+              <template v-for="({ type, data }, key) in initial_data">
                 <template v-for="(item, i) of data">
                   <td :key="'initial_layer_' + i + JSON.stringify(key)">
                     <Forms :data="item" :tags_color="tags_color" :layer="key" :update="update" :type="type" />
@@ -174,7 +174,7 @@
               <template v-for="({ type, data }, key) in true_value">
                 <template v-for="(item, i) of data">
                   <td :key="'true_layer_' + i + JSON.stringify(key)">
-                    <Forms :data="item" :tags_color="tags_color" :layer="key" :type="type"/>
+                    <Forms :data="item" :tags_color="tags_color" :layer="key" :update="update" :type="type"/>
                   </td>
                 </template>
               </template>
@@ -182,7 +182,7 @@
               <template v-for="({ type, data }, key) in predict_value">
                 <template v-for="(item, i) of data">
                   <td :key="'predict_layer_' + i + JSON.stringify(key)">
-                    <Forms :data="item" :tags_color="tags_color" :layer="key" :type="type" />
+                    <Forms :data="item" :tags_color="tags_color" :layer="key" :update="update" :type="type" />
                   </td>
                 </template>
               </template>
@@ -218,7 +218,8 @@ export default {
     },
     fixation: {
       type: Boolean
-    }
+    },
+    update: String
   },
   data: () => ({
     ops: {
@@ -269,7 +270,7 @@ export default {
       this.statsWidth = this.$refs.stats.offsetWidth
       this.fixedWidth = this.$refs.original?.offsetWidth - this.statsWidth
       this.keysHeight = this.$refs.stat_headers[0].offsetHeight || 0
-      this.headHeight = this.$refs.orig_head.offsetHeight + 1
+      this.headHeight = this.$refs.orig_head.offsetHeight
     }
   },
   mounted() {
@@ -294,6 +295,7 @@ export default {
     position: sticky;
     top: 0;
     box-shadow: 1px 0 0 #000;
+    z-index: 4;
     th {
       box-shadow: inset 1px 1px #000, 0 1px #000;
       padding: 0 5px;
@@ -313,10 +315,9 @@ export default {
     background-color: #17212b;
     position: absolute;
     left: 0;
-    z-index: 1;
+    z-index: 5;
     thead {
       box-shadow: 1px 0 0 #000;
-      z-index: 2;
     }
   }
 }

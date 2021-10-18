@@ -288,21 +288,21 @@ def compute_loss(pred, conv, label, bboxes, i=0, CLASSES=None, STRIDES=None, YOL
     if CLASSES is None:
         CLASSES = []
     NUM_CLASS = len(CLASSES)
-    conv_shape  = tf.shape(conv)
-    batch_size  = conv_shape[0]
+    conv_shape = tf.shape(conv)
+    batch_size = conv_shape[0]
     output_size = conv_shape[1]
-    input_size  = STRIDES[i] * output_size
+    input_size = STRIDES[i] * output_size
     conv = tf.reshape(conv, (batch_size, output_size, output_size, 3, 5 + NUM_CLASS))
 
     conv_raw_conf = conv[:, :, :, :, 4:5]
     conv_raw_prob = conv[:, :, :, :, 5:]
 
-    pred_xywh     = pred[:, :, :, :, 0:4]
-    pred_conf     = pred[:, :, :, :, 4:5]
+    pred_xywh = pred[:, :, :, :, 0:4]
+    pred_conf = pred[:, :, :, :, 4:5]
 
-    label_xywh    = label[:, :, :, :, 0:4]
-    respond_bbox  = label[:, :, :, :, 4:5]
-    label_prob    = label[:, :, :, :, 5:]
+    label_xywh = label[:, :, :, :, 0:4]
+    respond_bbox = label[:, :, :, :, 4:5]
+    label_prob = label[:, :, :, :, 5:]
 
     giou = tf.expand_dims(bbox_giou(pred_xywh, label_xywh), axis=-1)
     input_size = tf.cast(input_size, tf.float32)
@@ -314,13 +314,14 @@ def compute_loss(pred, conv, label, bboxes, i=0, CLASSES=None, STRIDES=None, YOL
     # Find the value of IoU with the real box The largest prediction box
     max_iou = tf.expand_dims(tf.reduce_max(iou, axis=-1), axis=-1)
 
-    # If the largest iou is less than the threshold, it is considered that the prediction box contains no objects, then the background box
+    # If the largest iou is less than the threshold, it is considered that the prediction box contains no objects,
+    # then the background box
     respond_bgd = (1.0 - respond_bbox) * tf.cast(max_iou < YOLO_IOU_LOSS_THRESH, tf.float32)
 
     conf_focal = tf.pow(respond_bbox - pred_conf, 2)
 
-    # Calculate the loss of confidence
-    # we hope that if the grid contains objects, then the network output prediction box has a confidence of 1 and 0 when there is no object.
+    # Calculate the loss of confidence we hope that if the grid contains objects, then the network output prediction
+    # box has a confidence of 1 and 0 when there is no object.
     conf_loss = conf_focal * (
             respond_bbox * tf.nn.sigmoid_cross_entropy_with_logits(labels=respond_bbox, logits=conv_raw_conf)
             +
@@ -332,8 +333,14 @@ def compute_loss(pred, conv, label, bboxes, i=0, CLASSES=None, STRIDES=None, YOL
     giou_loss = tf.reduce_mean(tf.reduce_sum(giou_loss, axis=[1, 2, 3, 4]))
     conf_loss = tf.reduce_mean(tf.reduce_sum(conf_loss, axis=[1, 2, 3, 4]))
     prob_loss = tf.reduce_mean(tf.reduce_sum(prob_loss, axis=[1, 2, 3, 4]))
+    prob_loss_cls = {}
+    for cls in range(NUM_CLASS):
+        conv_raw_prob_cls = conv[:, :, :, :, 5+cls:5+cls+1]
+        label_prob_cls = label[:, :, :, :, 5+cls:5+cls+1]
+        prob_loss_cls[str(CLASSES[cls])] = tf.reduce_mean(tf.reduce_sum(respond_bbox * tf.nn.sigmoid_cross_entropy_with_logits(
+            labels=label_prob_cls, logits=conv_raw_prob_cls), axis=[1, 2, 3, 4]))
 
-    return giou_loss, conf_loss, prob_loss
+    return giou_loss, conf_loss, prob_loss, prob_loss_cls
 
 
 ### CREATE AND FIT MODEL ###
@@ -495,41 +502,55 @@ class CustomModelYolo(keras.Model):
     #                 print("skipping", yolo.layers[i].name)
 
     # optimizer = tf.keras.optimizers.Adam()
-
+    @tf.function
     def train_step(self, data):
         # print("data", data)
         image_data, target, serv = data[0], data[1], data[2]
         # print(image_data['1'])
-        # print(target)
+        print('target', target)
         # print(serv)
+        input_key = [x for x in image_data.keys()]
         with tf.GradientTape() as tape:
-            pred_result = self.yolo(image_data['1'], training=True)
+            pred_result = self.yolo(image_data.get(input_key[0], '1'), training=True)
             giou_loss = conf_loss = prob_loss = 0
+            prob_loss_cls = {}
             # print("pred_result", pred_result)
             # optimizing process
             grid = 3  # if not TRAIN_YOLO_TINY else 2
             for i, key in enumerate(target.keys()):
                 conv, pred = pred_result[i * 2], pred_result[i * 2 + 1]
+                print('conv', conv)
+                print()
+                print('pred', pred)
                 loss_items = self.loss_fn(pred, conv, *(target.get(key), serv.get(key)), i,
                                           CLASSES=self.CLASSES)
                 giou_loss += loss_items[0]
                 conf_loss += loss_items[1]
                 prob_loss += loss_items[2]
 
+                for cls_key in loss_items[3].keys():  # пробегаем по ключам словаря
+                    try:
+                        prob_loss_cls['prob_loss_' + str(cls_key)] += loss_items[3].get(cls_key)  # складываем значения
+                    except KeyError:  # если ключа еще нет - создаем
+                        prob_loss_cls['prob_loss_' + str(cls_key)] = loss_items[3].get(cls_key)
+
             total_loss = giou_loss + conf_loss + prob_loss
 
-            gradients = tape.gradient(total_loss, self.yolo.trainable_weights)
-            self.optimizer.apply_gradients(zip(gradients, self.yolo.trainable_weights))
+            # gradients = tape.gradient(total_loss, self.yolo.trainable_weights)
+            # self.optimizer.apply_gradients(zip(gradients, self.yolo.trainable_weights))
 
-            # update learning rate
-            # about warmup: https://arxiv.org/pdf/1812.01187.pdf&usg=ALkJrhglKOPDjNt6SHGbphTHyMcT0cuMJg
+        gradients = tape.gradient(total_loss, self.yolo.trainable_variables)
+        self.optimizer.apply_gradients(zip(gradients, self.yolo.trainable_variables))
 
-            self.global_steps.assign_add(1)
-            # print(self.global_steps.value())
+        # update learning rate
+        # about warmup: https://arxiv.org/pdf/1812.01187.pdf&usg=ALkJrhglKOPDjNt6SHGbphTHyMcT0cuMJg
 
-            lr = self.change_lr()
-            self.optimizer.lr.assign(tf.cast(lr, tf.float32))
+        self.global_steps.assign_add(1)
+        # print(self.global_steps.value())
 
+        lr = self.change_lr()
+        self.optimizer.lr.assign(tf.cast(lr, tf.float32))
+        # tf.print([prob_loss_cls.get(x) for x in prob_loss_cls.keys()])
             # # writing summary data
             # with writer.as_default():
             #     tf.summary.scalar("lr", optimizer.lr, step=global_steps)
@@ -539,14 +560,18 @@ class CustomModelYolo(keras.Model):
             #     tf.summary.scalar("loss/prob_loss", prob_loss, step=global_steps)
             # writer.flush()
         # validate_writer = tf.summary.create_file_writer(TRAIN_LOGDIR)
-        return {'global_steps': self.global_steps.value(), "optimizer.lr": self.optimizer.lr.value(),
+        out_info = {'global_steps': self.global_steps.value(), "optimizer.lr": self.optimizer.lr.value(),
                 "giou_loss": giou_loss, "conf_loss": conf_loss, "prob_loss": prob_loss, "total_loss": total_loss}
+        out_info.update(prob_loss_cls)
+        return out_info
 
+    @tf.function
     def test_step(self, data):
         image_data, target, serv = data[0], data[1], data[2]
         with tf.GradientTape() as tape:
             pred_result = self.yolo(image_data['1'], training=False)
             giou_loss = conf_loss = prob_loss = 0
+            prob_loss_cls = {}
 
             # optimizing process
             grid = 3  # if not TRAIN_YOLO_TINY else 2
@@ -558,10 +583,18 @@ class CustomModelYolo(keras.Model):
                 conf_loss += loss_items[1]
                 prob_loss += loss_items[2]
 
+                for cls_key in loss_items[3].keys():  # пробегаем по ключам словаря
+                    try:
+                        prob_loss_cls['prob_loss_' + cls_key] += loss_items[3].get(cls_key)  # складываем значения
+                    except KeyError:  # если ключа еще нет - создаем
+                        prob_loss_cls['prob_loss_' + cls_key] = loss_items[3].get(cls_key)
+
             total_loss = giou_loss + conf_loss + prob_loss
 
-        return {"giou_loss": giou_loss, "conf_loss": conf_loss, "prob_loss": prob_loss, "total_loss": total_loss}
+        out_info = {"giou_loss": giou_loss, "conf_loss": conf_loss, "prob_loss": prob_loss, "total_loss": total_loss}
+        out_info.update(prob_loss_cls)
 
+        return out_info
     # mAP_model = Create_Yolo(input_size=YOLO_INPUT_SIZE, CLASSES=TRAIN_CLASSES)  # create second model to measure mAP
     # test_set = 70
     # best_val_loss = 1000  # should be large at start
@@ -609,42 +642,72 @@ class CustomModelYolo(keras.Model):
     #         save_directory = os.path.join(TRAIN_CHECKPOINTS_FOLDER, TRAIN_MODEL_NAME)
     #         yolo.save_weights(save_directory)
 
+def voc_ap(rec, prec):
+    """
+    --- Official matlab code VOC2012---
+    mrec=[0 ; rec ; 1];
+    mpre=[0 ; prec ; 0];
+    for i=numel(mpre)-1:-1:1
+            mpre(i)=max(mpre(i),mpre(i+1));
+    end
+    i=find(mrec(2:end)~=mrec(1:end-1))+1;
+    ap=sum((mrec(i)-mrec(i-1)).*mpre(i));
+    """
+    rec.insert(0, 0.0) # insert 0.0 at begining of list
+    rec.append(1.0) # insert 1.0 at end of list
+    mrec = rec[:]
+    prec.insert(0, 0.0) # insert 0.0 at begining of list
+    prec.append(0.0) # insert 0.0 at end of list
+    mpre = prec[:]
+    """
+     This part makes the precision monotonically decreasing
+        (goes from the end to the beginning)
+        matlab:  for i=numel(mpre)-1:-1:1
+                                mpre(i)=max(mpre(i),mpre(i+1));
+    """
+    # matlab indexes start in 1 but python in 0, so I have to do:
+    #   range(start=(len(mpre) - 2), end=0, step=-1)
+    # also the python function range excludes the end, resulting in:
+    #   range(start=(len(mpre) - 2), end=-1, step=-1)
+    for i in range(len(mpre)-2, -1, -1):
+        mpre[i] = max(mpre[i], mpre[i+1])
+    """
+     This part creates a list of indexes where the recall changes
+        matlab:  i=find(mrec(2:end)~=mrec(1:end-1))+1;
+    """
+    i_list = []
+    for i in range(1, len(mrec)):
+        if mrec[i] != mrec[i-1]:
+            i_list.append(i) # if it was matlab would be i + 1
+    """
+     The Average Precision (AP) is the area under the curve
+        (numerical integration)
+        matlab: ap=sum((mrec(i)-mrec(i-1)).*mpre(i));
+    """
+    ap = 0.0
+    for i in i_list:
+        ap += ((mrec[i]-mrec[i-1])*mpre[i])
+    return ap, mrec, mpre
 
 def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=0.50, TEST_INPUT_SIZE=416, TRAIN_CLASSES=[]):
     MINOVERLAP = 0.5  # default value (defined in the PASCAL VOC2012 challenge)
-    NUM_CLASS =TRAIN_CLASSES
-
-    # ground_truth_dir_path = 'mAP/ground-truth'
-    # if os.path.exists(ground_truth_dir_path): shutil.rmtree(ground_truth_dir_path)
-    #
-    # if not os.path.exists('mAP'): os.mkdir('mAP')
-    # os.mkdir(ground_truth_dir_path)
+    NUM_CLASS = TRAIN_CLASSES
 
     print(f'\ncalculating mAP{int(iou_threshold * 100)}...\n')
 
     gt_counter_per_class = {}
-    for inp, out in dataset.dataset['val'].batch(1).take(10):
+    id_ground_truth = {}
+    for index in range(len(dataset.dataset['val'])):
 
-        # ann_dataset = dataset.annotations[index]
-        # print('inp', inp)
-        # print('out', out)
-        # print("out['2'].numpy().shape", out['2'].numpy().shape)
-        # original_image, bbox_data_gt = dataset.parse_annotation(ann_dataset, True)
-        # for i in ['2','4','6']:
-        y_true = out['2'].numpy()
-        y_true = y_true.reshape(-1, out['2'].numpy().shape[-1])
-        bbox_data_gt = np.array([x for x in y_true])
+        y_true = dataset.dataframe.get("val").iloc[index, 1].split(' ')
+        bbox_data_gt = np.array([list(map(int, box.split(','))) for box in y_true])
 
-        # y_true = [tf.reshape(x, (-1, tf.shape(x)[-1])) for x in y_true if x[4] > 0]
-        # bbox_data_gt = tf.concat(y_true, axis=0)
-        # original_image = inp['1'].numpy()
         if len(bbox_data_gt) == 0:
             bboxes_gt = []
             classes_gt = []
         else:
-            bboxes_gt, classes_gt = bbox_data_gt[:, :4].astype('int'), np.argmax(bbox_data_gt[:, 5:], axis=-1).astype('int')
-        # ground_truth_path = os.path.join(ground_truth_dir_path, str(index) + '.txt')
-            # print(i)
+            bboxes_gt, classes_gt = bbox_data_gt[:, :4], bbox_data_gt[:, 4]
+
         num_bbox_gt = len(bboxes_gt)
 
         bounding_boxes = []
@@ -661,27 +724,26 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=0.50, TEST_INPUT_
                 # if class didn't exist yet
                 gt_counter_per_class[class_name] = 1
             bbox_mess = ' '.join([class_name, xmin, ymin, xmax, ymax]) + '\n'
-        # with open(f'{ground_truth_dir_path}/{str(index)}_ground_truth.json', 'w') as outfile:
-        #     json.dump(bounding_boxes, outfile)
-    print('gt_counter_per_class', gt_counter_per_class)
+
+        id_ground_truth[str(index)] = bounding_boxes
+
+    # for cls in NUM_CLASS:
+    #     if gt_counter_per_class.get(cls) is None:
+    #         gt_counter_per_class[cls] = 1
+
     gt_classes = list(gt_counter_per_class.keys())
     # sort the classes alphabetically
     gt_classes = sorted(gt_classes)
     n_classes = len(gt_classes)
-    print('gt_classes', gt_classes)
-    print('n_classes', n_classes)
 
     times = []
     json_pred = [[] for i in range(n_classes)]
     count = 0
-    for inp, out in dataset.dataset['val'].batch(1).take(-1):
-        # ann_dataset = dataset.annotations[index]
-        # image_name = ann_dataset[0].split('/')[-1]
-        # original_image, bbox_data_gt = dataset.parse_annotation(ann_dataset, True)
-        # bbox_data_gt = out['2'].numpy()[:, :, :, :, 0:4]
+    class_predictions = {}
+    for inp, out, serv in dataset.dataset['val'].batch(1).take(-1):
+
         original_image = inp['1'].numpy()[0]
         image_data = inp['1'].numpy()
-        # image_data = image[np.newaxis, ...].astype(np.float32)
 
         t1 = time.time()
         pred_bbox = Yolo.predict(image_data)
@@ -703,115 +765,116 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=0.50, TEST_INPUT_
             score = '%.4f' % score
             xmin, ymin, xmax, ymax = list(map(str, coor))
             bbox = xmin + " " + ymin + " " + xmax + " " + ymax
-            json_pred[gt_classes.index(class_name)].append(
-                {"confidence": str(score), "file_id": str(count), "bbox": str(bbox)})
+            try:
+                json_pred[gt_classes.index(class_name)].append(
+                    {"confidence": str(score), "file_id": str(count), "bbox": str(bbox)})
+            except Exception:
+                continue
+
         count += 1
     ms = sum(times) / len(times) * 1000
     fps = 1000 / ms
 
     for class_name in gt_classes:
         json_pred[gt_classes.index(class_name)].sort(key=lambda x: float(x['confidence']), reverse=True)
-    #     with open(f'{ground_truth_dir_path}/{class_name}_predictions.json', 'w') as outfile:
-    #         json.dump(json_pred[gt_classes.index(class_name)], outfile)
+        class_predictions[class_name] = json_pred[gt_classes.index(class_name)]
 
     # Calculate the AP for each class
     sum_AP = 0.0
     ap_dictionary = {}
     # open file to store the results
-    # with open("mAP/results.txt", 'w') as results_file:
-    #     results_file.write("# AP and precision/recall per class\n")
-    #     count_true_positives = {}
-    #     for class_index, class_name in enumerate(gt_classes):
-    #         count_true_positives[class_name] = 0
-    #         # Load predictions of that class
-    #         predictions_file = f'{ground_truth_dir_path}/{class_name}_predictions.json'
-    #         predictions_data = json.load(open(predictions_file))
-    #
-    #         # Assign predictions to ground truth objects
-    #         nd = len(predictions_data)
-    #         tp = [0] * nd  # creates an array of zeros of size nd
-    #         fp = [0] * nd
-    #         for idx, prediction in enumerate(predictions_data):
-    #             file_id = prediction["file_id"]
-    #             # assign prediction to ground truth object if any
-    #             #   open ground-truth with that file_id
-    #             gt_file = f'{ground_truth_dir_path}/{str(file_id)}_ground_truth.json'
-    #             ground_truth_data = json.load(open(gt_file))
-    #             ovmax = -1
-    #             gt_match = -1
-    #             # load prediction bounding-box
-    #             bb = [float(x) for x in prediction["bbox"].split()]  # bounding box of prediction
-    #             for obj in ground_truth_data:
-    #                 # look for a class_name match
-    #                 if obj["class_name"] == class_name:
-    #                     bbgt = [float(x) for x in obj["bbox"].split()]  # bounding box of ground truth
-    #                     bi = [max(bb[0], bbgt[0]), max(bb[1], bbgt[1]), min(bb[2], bbgt[2]), min(bb[3], bbgt[3])]
-    #                     iw = bi[2] - bi[0] + 1
-    #                     ih = bi[3] - bi[1] + 1
-    #                     if iw > 0 and ih > 0:
-    #                         # compute overlap (IoU) = area of intersection / area of union
-    #                         ua = (bb[2] - bb[0] + 1) * (bb[3] - bb[1] + 1) + (bbgt[2] - bbgt[0]
-    #                                                                           + 1) * (bbgt[3] - bbgt[1] + 1) - iw * ih
-    #                         ov = iw * ih / ua
-    #                         if ov > ovmax:
-    #                             ovmax = ov
-    #                             gt_match = obj
-    #
-    #             # assign prediction as true positive/don't care/false positive
-    #             if ovmax >= MINOVERLAP:  # if ovmax > minimum overlap
-    #                 if not bool(gt_match["used"]):
-    #                     # true positive
-    #                     tp[idx] = 1
-    #                     gt_match["used"] = True
-    #                     count_true_positives[class_name] += 1
-    #                     # update the ".json" file
-    #                     with open(gt_file, 'w') as f:
-    #                         f.write(json.dumps(ground_truth_data))
-    #                 else:
-    #                     # false positive (multiple detection)
-    #                     fp[idx] = 1
-    #             else:
-    #                 # false positive
-    #                 fp[idx] = 1
-    #
-    #         # compute precision/recall
-    #         cumsum = 0
-    #         for idx, val in enumerate(fp):
-    #             fp[idx] += cumsum
-    #             cumsum += val
-    #         cumsum = 0
-    #         for idx, val in enumerate(tp):
-    #             tp[idx] += cumsum
-    #             cumsum += val
-    #         # print(tp)
-    #         rec = tp[:]
-    #         for idx, val in enumerate(tp):
-    #             rec[idx] = float(tp[idx]) / gt_counter_per_class[class_name]
-    #         # print(rec)
-    #         prec = tp[:]
-    #         for idx, val in enumerate(tp):
-    #             prec[idx] = float(tp[idx]) / (fp[idx] + tp[idx])
-    #         # print(prec)
-    #
-    #         ap, mrec, mprec = voc_ap(rec, prec)
-    #         sum_AP += ap
-    #         text = "{0:.3f}%".format(
-    #             ap * 100) + " = " + class_name + " AP  "  # class_name + " AP = {0:.2f}%".format(ap*100)
-    #
-    #         rounded_prec = ['%.3f' % elem for elem in prec]
-    #         rounded_rec = ['%.3f' % elem for elem in rec]
-    #         # Write to results.txt
-    #         results_file.write(
-    #             text + "\n Precision: " + str(rounded_prec) + "\n Recall   :" + str(rounded_rec) + "\n\n")
-    #
-    #         print(text)
-    #         ap_dictionary[class_name] = ap
-    #
-    #     results_file.write("\n# mAP of all classes\n")
-    mAP = sum_AP / n_classes
+    with open("C:\PycharmProjects/terra_gui/test_example/results.txt", 'w') as results_file:
+        results_file.write("# AP and precision/recall per class\n")
+        count_true_positives = {}
+        for class_index, class_name in enumerate(gt_classes):
+            count_true_positives[class_name] = 0
+            # Load predictions of that class
+            predictions_data = class_predictions.get(class_name)
 
-    text = "mAP = {:.3f}%, {:.2f} FPS".format(mAP * 100, fps)
-    # results_file.write(text + "\n")
-    print(text)
+            # Assign predictions to ground truth objects
+            nd = len(predictions_data)
+            tp = [0] * nd  # creates an array of zeros of size nd
+            fp = [0] * nd
+            for idx, prediction in enumerate(predictions_data):
+                file_id = prediction["file_id"]
+                # assign prediction to ground truth object if any
+                #   open ground-truth with that file_id
+                ground_truth_data = id_ground_truth.get(file_id)
+                ovmax = -1
+                gt_match = -1
+                # load prediction bounding-box
+                bb = [float(x) for x in prediction["bbox"].split()]  # bounding box of prediction
+                for obj in ground_truth_data:
+                    # look for a class_name match
+                    if obj["class_name"] == class_name:
+                        bbgt = [float(x) for x in obj["bbox"].split()]  # bounding box of ground truth
+                        bi = [max(bb[0], bbgt[0]), max(bb[1], bbgt[1]), min(bb[2], bbgt[2]), min(bb[3], bbgt[3])]
+                        iw = bi[2] - bi[0] + 1
+                        ih = bi[3] - bi[1] + 1
+                        if iw > 0 and ih > 0:
+                            # compute overlap (IoU) = area of intersection / area of union
+                            ua = (bb[2] - bb[0] + 1) * (bb[3] - bb[1] + 1) + (bbgt[2] - bbgt[0]
+                                                                              + 1) * (bbgt[3] - bbgt[1] + 1) - iw * ih
+                            ov = iw * ih / ua
+                            if ov > ovmax:
+                                ovmax = ov
+                                gt_match = obj
 
-    return mAP * 100
+                # assign prediction as true positive/don't care/false positive
+                if ovmax >= MINOVERLAP:  # if ovmax > minimum overlap
+                    if not bool(gt_match["used"]):
+                        # true positive
+                        tp[idx] = 1
+                        gt_match["used"] = True
+                        count_true_positives[class_name] += 1
+                    else:
+                        # false positive (multiple detection)
+                        fp[idx] = 1
+                else:
+                    # false positive
+                    fp[idx] = 1
+
+            # compute precision/recall
+            cumsum = 0
+            for idx, val in enumerate(fp):
+                fp[idx] += cumsum
+                cumsum += val
+            cumsum = 0
+            for idx, val in enumerate(tp):
+                tp[idx] += cumsum
+                cumsum += val
+            # print(tp)
+            rec = tp[:]
+            for idx, val in enumerate(tp):
+                rec[idx] = float(tp[idx]) / gt_counter_per_class[class_name]
+            # print(rec)
+            prec = tp[:]
+            for idx, val in enumerate(tp):
+                prec[idx] = float(tp[idx]) / (fp[idx] + tp[idx])
+            # print(prec)
+
+            ap, mrec, mprec = voc_ap(rec, prec)
+            sum_AP += ap
+            text = "{0:.3f}%".format(
+                ap * 100) + " = " + class_name + " AP  "  # class_name + " AP = {0:.2f}%".format(ap*100)
+
+            rounded_prec = ['%.3f' % elem for elem in prec]
+            rounded_rec = ['%.3f' % elem for elem in rec]
+            # Write to results.txt
+            results_file.write(
+                text + "\n Precision: " + str(rounded_prec) + "\n Recall   :" + str(rounded_rec) + "\n\n")
+
+            # print(text)
+            ap_dictionary["val_AP_" + str(class_name)] = ap
+
+        results_file.write("\n# mAP of all classes\n")
+        mAP = sum_AP / n_classes
+
+        text = "mAP = {:.3f}%, {:.2f} FPS".format(mAP * 100, fps)
+        results_file.write(text + "\n")
+        ap_dictionary["val_mAP" + str(int(iou_threshold * 100))] = mAP * 100
+        ap_dictionary["val_fps"] = fps
+        print(ap_dictionary)
+
+        return ap_dictionary
+

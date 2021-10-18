@@ -41,7 +41,18 @@ class BalanceSortedChoice(str, Enum):
 
 class ArchitectureChoice(str, Enum):
     Basic = "Basic"
-    Yolo = "Yolo"
+    ImageClassification = "ImageClassification"
+    ImageSegmentation = "ImageSegmentation"
+    TextClassification = "TextClassification"
+    TextSegmentation = "TextSegmentation"
+    DataframeClassification = "DataframeClassification"
+    DataframeRegression = "DataframeRegression"
+    TimeSeries = "TimeSeries"
+    TimeSeriesTrend = "TimeSeriesTrend"
+    AudioClassification = "AudioClassification"
+    VideoClassification = "VideoClassification"
+    YoloV3 = "YoloV3"
+    YoloV4 = "YoloV4"
 
 
 class CheckpointIndicatorChoice(str, Enum):
@@ -130,6 +141,7 @@ class MetricChoice(str, Enum):
     Poisson = "Poisson"
     Precision = "Precision"
     Recall = "Recall"
+    RecallPercent = "RecallPercent"
     RootMeanSquaredError = "RootMeanSquaredError"
     SquaredHinge = "SquaredHinge"
     TopKCategoricalAccuracy = "TopKCategoricalAccuracy"
@@ -138,6 +150,7 @@ class MetricChoice(str, Enum):
     SparseCategoricalAccuracy = "SparseCategoricalAccuracy"
     SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
     SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
+    UnscaledMAE = "UnscaledMAE"
     DiceCoef = "DiceCoef"
 
 

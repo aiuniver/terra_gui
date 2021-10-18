@@ -57,6 +57,7 @@ class Metric(str, Enum):
     Poisson = "Poisson"
     Precision = "Precision"
     Recall = "Recall"
+    RecallPercent = "RecallPercent"
     RootMeanSquaredError = "RootMeanSquaredError"
     SquaredHinge = "SquaredHinge"
     TopKCategoricalAccuracy = "TopKCategoricalAccuracy"
@@ -66,6 +67,7 @@ class Metric(str, Enum):
     # SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
     # SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
     DiceCoef = "DiceCoef"
+    UnscaledMAE = "UnscaledMAE"
 
 
 TasksGroups = [
@@ -89,6 +91,7 @@ TasksGroups = [
             Loss.SquaredHinge,
         ],
         "metrics": [
+            Metric.RecallPercent,
             Metric.CategoricalAccuracy,
             Metric.BinaryAccuracy,
             Metric.CategoricalCrossentropy,
@@ -185,7 +188,7 @@ TasksGroups = [
             Loss.SquaredHinge,
         ],
         "metrics": [
-            # Metric.Accuracy,
+            Metric.UnscaledMAE,
             Metric.MeanAbsoluteError,
             Metric.MeanSquaredError,
             Metric.MeanAbsolutePercentageError,
