@@ -21,8 +21,8 @@
                 />
               </div>
               <div v-else class="board__data">
-                <Table v-if="type === 'table_data_regression'" v-bind="deploy" @reload="ReloadCard" />
-                <TableClass v-if="type === 'table_data_classification'" v-bind="deploy" @reload="ReloadCard" @reloadAll="ReloadAll"/>
+                <Table v-if="type === 'table_data_regression'" v-bind="deploy" :key='RandId' @reload="ReloadCard" @reloadAll="ReloadAll" />
+                <TableClass v-if="type === 'table_data_classification'" v-bind="deploy" :key='RandId' @reload="ReloadCard" @reloadAll="ReloadAll"/>
               </div>
             </div>
           </div>
@@ -50,6 +50,7 @@ export default {
       height: 'settings/autoHeight',
       type: 'deploy/getDeployType',
       deploy: 'deploy/getDeploy',
+      RandId: 'deploy/getRandId',
     }),
     isTable() {
       return ['table_data_classification', 'table_data_regression'].includes(this.type);
