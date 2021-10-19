@@ -4,7 +4,7 @@ from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.modeling.layer import LayersList
 from terra_ai.data.modeling.model import ModelDetailsData
 
-from apps.plugins.frontend.presets.defaults import (
+from .presets.defaults.training import (
     TrainingTasksRelations,
     TrainingLossSelect,
     TrainingMetricSelect,

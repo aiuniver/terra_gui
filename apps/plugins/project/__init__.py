@@ -10,7 +10,7 @@ from pydantic import validator, DirectoryPath, FilePath
 from transliterate import slugify
 
 from apps.plugins.frontend import defaults_data
-from apps.plugins.frontend.presets.defaults import TrainingTasksRelations
+from apps.plugins.frontend.presets.defaults.training import TrainingTasksRelations
 from apps.plugins.project import exceptions
 from terra_ai import settings as terra_settings
 from terra_ai.agent import agent_exchange
@@ -221,9 +221,7 @@ class Project(BaseMixinData):
             self.deploy = DeployDetailsData()
             return
 
-        _task_class = getattr(
-            deploy_tasks, TASKS_RELATIONS[deploy_type]
-        )
+        _task_class = getattr(deploy_tasks, TASKS_RELATIONS[deploy_type])
         data = _task_class(
             list(
                 map(
@@ -235,7 +233,9 @@ class Project(BaseMixinData):
         )
         extra = deploy_tasks.BaseCollectionDict()
 
-        self.deploy = DeployDetailsData(**{"type": deploy_type, "data": data, "extra": extra})
+        self.deploy = DeployDetailsData(
+            **{"type": deploy_type, "data": data, "extra": extra}
+        )
         self.deploy.data.reload(list(range(terra_settings.DEPLOY_PRESET_COUNT)))
         self.deploy.data.try_init()
 
@@ -437,7 +437,7 @@ class Project(BaseMixinData):
         outputs = [output.task.name for output in model.outputs]
         if "Dataframe" in inputs:
             return f"table_data_{outputs[0].lower()}"
-        return f'{inputs[0].lower()}_{outputs[0].lower()}'
+        return f"{inputs[0].lower()}_{outputs[0].lower()}"
 
 
 data_path = DataPathData(**DATA_PATH)
