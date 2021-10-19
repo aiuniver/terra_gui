@@ -26,11 +26,19 @@
         </div>
       </div>
       <div v-if="type == 'text_textsegmentation'">
-        <div class="card__original">
-          <TextCard :style="{ width: '600px', color: '#A7BED3', height: '324px' }">{{ card.format }}</TextCard>
+        <div class="card__original segmentation__original" :style="{ height: '324px' }">
+          <scrollbar :ops="ops">
+            <TableTextSegmented
+              v-bind="{value: card.format, tags_color: {segmentationLayer}, layer: 'segmentationLayer', block_width: '598px'}"
+              :key="RandId"
+            />
+          </scrollbar>
         </div>
         <div class="card__result">
-          <TextCard :style="{ width: '600px', height: '80px' }">{{ card.format }}</TextCard>
+          <SegmentationTags
+            :style="{ width: '600px', height: '80px' }"
+            :tags="segmentationLayer"
+          />
         </div>
       </div>
       <div v-if="type == 'audio_classification'">
@@ -62,6 +70,8 @@
 import ImgCard from './cards/ImgCard';
 import TextCard from './cards/TextCard';
 import AudioCard from './cards/AudioCard';
+import TableTextSegmented from "../training/main/prediction/components/TableTextSegmented";
+import SegmentationTags from "./cards/SegmentationTags";
 import { Plotly } from 'vue-plotly';
 import { mapGetters } from 'vuex';
 export default {
@@ -71,24 +81,33 @@ export default {
     TextCard,
     Plotly,
     AudioCard,
+    TableTextSegmented,
+    SegmentationTags
   },
-  data: () => ({}),
+  data: () => ({
+    ops: {
+      scrollPanel: {
+        scrollingX: false,
+        scrollingY: true,
+      },
+    },
+  }),
   props: {
     card: {
       type: Object,
       default: () => ({}),
     },
     index: [String, Number],
+    extra: {
+      type: Array,
+      default: () => ([]),
+    }
   },
 
   methods: {
     ReloadCard() {
       this.$emit('reload', [this.index.toString()]);
     },
-  },
-  mounted() {
-    console.log(this.card);
-    console.log(this.type);
   },
   computed: {
     ...mapGetters({
@@ -106,6 +125,16 @@ export default {
         layout.yaxis.title = this.char.yaxis.title || '';
       }
       return layout;
+    },
+    segmentationLayer(){
+      let layer = {}
+      for(let i in this.extra){
+        if(this.extra[i][0].includes("p")) continue;
+        let tag = this.extra[i][0].slice(1, this.extra[i][0].length-1);
+        layer[tag] = this.extra[i][2];
+      }
+      // console.log(layer);
+      return layer
     },
     ClassificationResult() {
       let text = this.card.data;
@@ -152,5 +181,11 @@ export default {
 }
 .card__table {
   width: 100%;
+}
+.segmentation{
+  &__original{
+    border: 1px solid #6c7883;
+    border-radius: 4px;
+  }
 }
 </style>
