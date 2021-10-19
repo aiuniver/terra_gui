@@ -1,7 +1,7 @@
 <template>
   <div class="project project-create" @click="$emit('addCard')">
     <div class="project-edging">
-      <svg width="300" height="196" viewBox="0 0 281 184" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg width="300" height="196" viewBox="0 0 300 196" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M168.663 16.369L168.806 16.5H169H260.304L280.5 35.2183V166.784L262.801 183.5H121.651L96.2774 166.584L96.1514 166.5H96H26.149L0.5 149.73V16.216L17.1983 0.5H151.306L168.663 16.369Z" stroke="#65B9F4"/>
       </svg>
     </div>

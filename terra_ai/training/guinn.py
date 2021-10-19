@@ -351,11 +351,11 @@ class GUINN:
 
     def yolo_model_fit(self, params: TrainData, dataset: PrepareDataset, verbose=0, retrain=False) -> None:
 
-        for inp, out, serv in self.dataset.dataset['train'].batch(2).take(30):
+        for inp, out, serv in self.dataset.dataset['train'].batch(2).take(22):
             pass
 
         print(self.model.summary())
-        # self.model.save('C:\PycharmProjects/terra_gui/TerraAI/training/chess_test')
+        self.model.save('C:\PycharmProjects/terra_gui/TerraAI/training/chess_test')
         print('Save model.....')
 
         yolo = create_yolo(self.model, input_size=416, channels=3, training=True,
@@ -409,7 +409,7 @@ class GUINN:
             callbacks=MyCallback(self.dataset, yolo_pred, inp)
         )
         print('Save weights.....')
-        # self.model.save_weights('C:\PycharmProjects/terra_gui/TerraAI/training/chess_test/last.h5')
+        self.model.save_weights('C:\PycharmProjects/terra_gui/TerraAI/training/chess_test/last.h5')
 
 
 class MemoryUsage:
