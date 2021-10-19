@@ -519,6 +519,7 @@ class CreateDataset(object):
 
         creating_outputs_data = {}
         for key in self.instructions.outputs.keys():
+            self.columns[key] = {}
             output_array = []
             iters = 1
             data = None
@@ -608,7 +609,10 @@ class CreateDataset(object):
                                                         num_classes=num_classes,
                                                         encoding=encoding
                                                         )
-                    self.columns[key + i] = {col_name: current_output.native()}
+                    if not creation_data.outputs.get(key).type == LayerOutputTypeChoice.ObjectDetection:
+                        self.columns[key].update([(col_name, current_output.native())])
+                    else:
+                        self.columns[key + i] = {col_name: current_output.native()}
 
             depth_flag = False
             if not creation_data.outputs.get(key).type == LayerOutputTypeChoice.ObjectDetection:
