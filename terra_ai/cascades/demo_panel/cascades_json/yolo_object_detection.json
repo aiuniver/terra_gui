@@ -1,0 +1,18 @@
+{
+  "cascades": {
+    "input": {
+      "tag": "input",
+      "type": "image"
+    },
+    "model": {
+      "tag": "model",
+      "task": "ObjectDetection",
+      "model": "/home/evgeniy/terra_gui/TerraProjects/models/chess_test"
+    }
+  },
+  "adjacency_map": {
+    "model": [
+      "INPUT"
+    ]
+  }
+}
