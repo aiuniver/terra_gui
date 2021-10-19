@@ -13,7 +13,7 @@
 
   "adjacency_map": {
     "model": [
-      "INPUT"
+      "INPUT", "INPUT", "INPUT"
     ]
   }
 }
