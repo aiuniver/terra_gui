@@ -1090,7 +1090,7 @@ DatasetsGroups = [
                 "use_generator": False,
             },
             {
-                "alias": "lips",
+                "alias": "guby",
                 "name": "Губы",
                 "group": DatasetGroupChoice.terra.value,
                 "tags": [
@@ -1102,7 +1102,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
-                        "shape": (120, 176, 3),
+                        "shape": (128, 160, 3),
                         "name": "Изображения",
                         "task": LayerInputTypeChoice.Image.value,
                         "classes_names": ["Оригинальные изображения"],
@@ -1114,7 +1114,7 @@ DatasetsGroups = [
                     2: {
                         "datatype": "2D",
                         "dtype": "uint8",
-                        "shape": (120, 176, 2),
+                        "shape": (128, 160, 2),
                         "name": "Маски сегментации",
                         "task": LayerOutputTypeChoice.Segmentation.value,
                         "classes_names": ["Фон", "Губы"],
@@ -1132,7 +1132,7 @@ DatasetsGroups = [
                             "encoding": "none",
                             "name": "Изображения",
                             "num_classes": 1,
-                            "shape": (120, 176, 3),
+                            "shape": (128, 160, 3),
                             "task": LayerInputTypeChoice.Image.value,
                         }
                     },
@@ -1145,7 +1145,133 @@ DatasetsGroups = [
                             "encoding": LayerEncodingChoice.ohe.value,
                             "name": "Маски сегментации",
                             "num_classes": 2,
-                            "shape": (120, 176, 2),
+                            "shape": (128, 160, 2),
+                            "task": LayerOutputTypeChoice.Segmentation.value,
+                        }
+                    },
+                },
+                "use_generator": False,
+            },
+            {
+                "alias": "ljudi",
+                "name": "Люди",
+                "group": DatasetGroupChoice.terra.value,
+                "tags": [
+                    Tags.image.value,
+                    Tags.segmentation.value,
+                    Tags.terra_ai.value,
+                ],
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "shape": (160, 128, 3),
+                        "name": "Вход 1",
+                        "task": LayerInputTypeChoice.Image.value,
+                        "classes_names": ["Оригинальные"],
+                        "num_classes": 1,
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "2D",
+                        "dtype": "uint8",
+                        "shape": (160, 128, 2),
+                        "name": "Выход 2",
+                        "task": LayerOutputTypeChoice.Segmentation.value,
+                        "classes_names": ["Окружение", "Человек"],
+                        "classes_colors": ["black", "white"],
+                        "num_classes": 2,
+                        "encoding": LayerEncodingChoice.ohe.value,
+                    },
+                },
+                "columns": {
+                    1: {
+                        "1_image": {
+                            "classes_names": ["Оригинальные"],
+                            "datatype": "2D",
+                            "dtype": "float32",
+                            "encoding": "none",
+                            "name": "Вход 1",
+                            "num_classes": 1,
+                            "shape": (160, 128, 3),
+                            "task": LayerInputTypeChoice.Image.value,
+                        }
+                    },
+                    2: {
+                        "2_segmentation": {
+                            "classes_colors": ["black", "white"],
+                            "classes_names": ["Окружение", "Человек"],
+                            "datatype": "2D",
+                            "dtype": "uint8",
+                            "encoding": LayerEncodingChoice.ohe.value,
+                            "name": "Выход 2",
+                            "num_classes": 2,
+                            "shape": (160, 128, 2),
+                            "task": LayerOutputTypeChoice.Segmentation.value,
+                        }
+                    },
+                },
+                "use_generator": False,
+            },
+            {
+                "alias": "monety",
+                "name": "Монеты",
+                "group": DatasetGroupChoice.terra.value,
+                "tags": [
+                    Tags.image.value,
+                    Tags.segmentation.value,
+                    Tags.terra_ai.value,
+                ],
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "shape": (160, 160, 3),
+                        "name": "Вход 1",
+                        "task": LayerInputTypeChoice.Image.value,
+                        "classes_names": ["Оригинальные"],
+                        "num_classes": 1,
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "2D",
+                        "dtype": "uint8",
+                        "shape": (160, 160, 2),
+                        "name": "Выход 2",
+                        "task": LayerOutputTypeChoice.Segmentation.value,
+                        "classes_names": ["Окружение", "Человек"],
+                        "classes_colors": ["#3e371a", "#47d535"],
+                        "num_classes": 2,
+                        "encoding": LayerEncodingChoice.ohe.value,
+                    },
+                },
+                "columns": {
+                    1: {
+                        "1_image": {
+                            "classes_names": ["Оригинальные"],
+                            "datatype": "2D",
+                            "dtype": "float32",
+                            "encoding": "none",
+                            "name": "Вход 1",
+                            "num_classes": 1,
+                            "shape": (160, 160, 3),
+                            "task": LayerInputTypeChoice.Image.value,
+                        }
+                    },
+                    2: {
+                        "2_segmentation": {
+                            "classes_colors": ["#3e371a", "#47d535"],
+                            "classes_names": ["Окружение", "Человек"],
+                            "datatype": "2D",
+                            "dtype": "uint8",
+                            "encoding": LayerEncodingChoice.ohe.value,
+                            "name": "Выход 2",
+                            "num_classes": 2,
+                            "shape": (160, 160, 2),
                             "task": LayerOutputTypeChoice.Segmentation.value,
                         }
                     },
@@ -2231,7 +2357,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "1D",
                         "dtype": "float32",
-                        "shape": (20, 44),
+                        "shape": (44, 20),
                         "name": "MFCC",
                         "task": LayerInputTypeChoice.Audio.value,
                         "num_classes": 4,
@@ -2241,7 +2367,7 @@ DatasetsGroups = [
                     2: {
                         "datatype": "1D",
                         "dtype": "float32",
-                        "shape": (12, 44),
+                        "shape": (44, 12),
                         "name": "Chroma STFT",
                         "task": LayerInputTypeChoice.Audio.value,
                         "num_classes": 4,
@@ -2279,7 +2405,7 @@ DatasetsGroups = [
                                     'encoding': 'none',
                                     'name': 'MFCC',
                                     'num_classes': 4,
-                                    'shape': [20, 44],
+                                    'shape': [44, 20],
                                     'task': 'Audio'}
                         },
                     2: {'2_audio': {'classes_colors': None,
@@ -2289,7 +2415,7 @@ DatasetsGroups = [
                                     'encoding': 'none',
                                     'name': 'Chroma STFT',
                                     'num_classes': 4,
-                                    'shape': [12, 44],
+                                    'shape': [44, 12],
                                     'task': 'Audio'}
                         },
                     3: {'3_audio': {'classes_colors': None,
@@ -2328,7 +2454,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "1D",
                         "dtype": "float32",
-                        "shape": (20, 1292),
+                        "shape": (1292, 20),
                         "name": "MFCC",
                         "task": LayerInputTypeChoice.Audio.value,
                         "num_classes": 10,
@@ -2339,7 +2465,7 @@ DatasetsGroups = [
                     2: {
                         "datatype": "1D",
                         "dtype": "float32",
-                        "shape": (12, 1292),
+                        "shape": (1292, 12),
                         "name": "Chroma STFT",
                         "task": LayerInputTypeChoice.Audio.value,
                         "num_classes": 10,
@@ -2381,7 +2507,7 @@ DatasetsGroups = [
                                     'encoding': 'none',
                                     'name': 'MFCC',
                                     'num_classes': 10,
-                                    'shape': [20, 1292],
+                                    'shape': [1292, 20],
                                     'task': 'Audio'}
                         },
                     2: {'2_audio': {'classes_colors': None,
@@ -2392,7 +2518,7 @@ DatasetsGroups = [
                                     'encoding': 'none',
                                     'name': 'Chroma STFT',
                                     'num_classes': 10,
-                                    'shape': [12, 1292],
+                                    'shape': [1292, 12],
                                     'task': 'Audio'}
                         },
                     3: {'3_audio': {'classes_colors': None,
@@ -2432,7 +2558,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "1D",
                         "dtype": "float32",
-                        "shape": (20, 130),
+                        "shape": (130, 20),
                         "name": "MFCC",
                         "task": LayerInputTypeChoice.Audio.value,
                         "num_classes": 50,
@@ -2451,7 +2577,7 @@ DatasetsGroups = [
                     2: {
                         "datatype": "1D",
                         "dtype": "float32",
-                        "shape": (12, 130),
+                        "shape": (130, 12),
                         "name": "Chroma STFT",
                         "task": LayerInputTypeChoice.Audio.value,
                         "num_classes": 50,
@@ -2526,7 +2652,7 @@ DatasetsGroups = [
                                     'encoding': 'none',
                                     'name': 'MFCC',
                                     'num_classes': 50,
-                                    'shape': [20, 130],
+                                    'shape': [130, 20],
                                     'task': 'Audio'}
                         },
                     2: {'2_audio': {'classes_colors': None,
@@ -2546,7 +2672,7 @@ DatasetsGroups = [
                                     'encoding': 'none',
                                     'name': 'Chroma STFT',
                                     'num_classes': 50,
-                                    'shape': [12, 130],
+                                    'shape': [130, 12],
                                     'task': 'Audio'}
                         },
                     3: {'3_audio': {'classes_colors': None,
