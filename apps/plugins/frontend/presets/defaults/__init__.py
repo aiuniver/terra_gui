@@ -1,10 +1,11 @@
 from terra_ai.data.modeling.layers import Layer, types
 from terra_ai.data.modeling.extra import LayerTypeChoice
 from terra_ai.data.training.extra import ArchitectureChoice
-from defaults.training import Architectures
-from defaults.datasets import DataSetsColumnProcessing, DataSetsInput, DataSetsOutput
-from defaults.modeling import ModelingLayerForm, ModelingLayersTypes
-from ..utils import prepare_pydantic_field
+
+from ...utils import prepare_pydantic_field
+from .training import Architectures
+from .datasets import DataSetsColumnProcessing, DataSetsInput, DataSetsOutput
+from .modeling import ModelingLayerForm, ModelingLayersTypes
 
 
 Defaults = {

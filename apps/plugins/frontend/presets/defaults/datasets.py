@@ -1,4 +1,4 @@
-from plugins.frontend.choices import (
+from ...choices import (
     LayerInputTypeChoice,
     LayerOutputTypeChoice,
     LayerNetChoice,
@@ -20,12 +20,12 @@ from plugins.frontend.choices import (
     LayerTypeProcessingClassificationChoice,
     ColumnProcessingTypeChoice,
 )
-from defaults.layers import (
+from .layers import (
     SourcesPaths,
     LayerImageDefaults,
     LayerTextDefaults,
     LayerAudioDefaults,
-    LayerDataframeDefaults
+    LayerDataframeDefaults,
 )
 
 

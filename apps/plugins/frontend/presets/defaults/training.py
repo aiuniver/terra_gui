@@ -1,12 +1,13 @@
-from plugins.frontend.extra import FieldTypeChoice
 from terra_ai.data.training.extra import (
     OptimizerChoice,
     CheckpointIndicatorChoice,
     CheckpointTypeChoice,
-    CheckpointModeChoice
+    CheckpointModeChoice,
 )
 from terra_ai.data.training.extra import TasksGroupsList
 from terra_ai.data.presets.training import TasksGroups
+
+from ...extra import FieldTypeChoice
 
 
 TrainingTasksRelations = TasksGroupsList(TasksGroups)

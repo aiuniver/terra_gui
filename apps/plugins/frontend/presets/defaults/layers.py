@@ -1,4 +1,4 @@
-from plugins.frontend.choices import (
+from ...choices import (
     LayerNetChoice,
     LayerScalerImageChoice,
     LayerScalerAudioChoice,
