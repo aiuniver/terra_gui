@@ -3618,7 +3618,7 @@ DatasetsGroups = [
                                   }
                             },
                 "tags": [
-                    Tags.Timeseries.value,
+                    Tags.timeseries.value,
                     Tags.terra_ai.value,
                 ],
                 "use_generator": False,
