@@ -16,7 +16,7 @@ from terra_ai import settings as terra_settings
 from terra_ai.agent import agent_exchange
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.deploy import tasks as deploy_tasks
-from terra_ai.data.deploy.extra import TaskTypeChoice as DeployTaskTypeChoice
+from terra_ai.data.deploy.extra import DeployTypeChoice as DeployTaskTypeChoice
 from terra_ai.data.extra import HardwareAcceleratorData
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.modeling.layer import LayerData
@@ -137,7 +137,9 @@ class DeployDetailsData(BaseMixinData):
 
     def dict(self, **kwargs):
         data = super().dict(**kwargs)
-        data.update({"data": self.data, "exists": self.exists, "extra": self.extra_data})
+        data.update(
+            {"data": self.data, "exists": self.exists, "extra": self.extra_data}
+        )
         return data
 
     @property
@@ -232,9 +234,7 @@ class Project(BaseMixinData):
             self.deploy = DeployDetailsData()
             return
 
-        _task_class = getattr(
-            deploy_tasks, TASKS_RELATIONS[deploy_type]
-        )
+        _task_class = getattr(deploy_tasks, TASKS_RELATIONS[deploy_type])
         data = _task_class(
             list(
                 map(
@@ -446,7 +446,7 @@ class Project(BaseMixinData):
         outputs = [output.task.name for output in model.outputs]
         if "Dataframe" in inputs:
             return f"table_data_{outputs[0].lower()}"
-        return f'{inputs[0].lower()}_{outputs[0].lower()}'
+        return f"{inputs[0].lower()}_{outputs[0].lower()}"
 
 
 data_path = DataPathData(**DATA_PATH)
