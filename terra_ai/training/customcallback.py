@@ -258,6 +258,11 @@ loss_metric_config = {
             "mode": "max",
             "module": "terra_ai.training.customlosses"
         },
+        "BalancedRecall": {
+            "log_name": "balanced_recall",
+            "mode": "max",
+            "module": "terra_ai.training.customlosses"
+        },
         "RootMeanSquaredError": {
             "log_name": "root_mean_squared_error",
             "mode": "min",
@@ -383,7 +388,6 @@ class InteractiveCallback:
                        dataset_path: str,
                        training_path: str,
                        initial_config: InteractiveData):
-
         self.preset_path = os.path.join(training_path, "presets")
         if not os.path.exists(self.preset_path):
             os.mkdir(self.preset_path)
@@ -1226,6 +1230,7 @@ class InteractiveCallback:
                                     y_true=self.y_true.get('val').get(f"{out}")[
                                         self.class_idx.get('val').get(f"{out}").get(cls)],
                                     y_pred=self.y_pred.get(f"{out}")[self.class_idx.get('val').get(f"{out}").get(cls)],
+                                    show_class=True
                                 )
                             if out_task == LayerOutputTypeChoice.Segmentation:
                                 class_idx = classes_names.index(cls)
@@ -1304,7 +1309,7 @@ class InteractiveCallback:
             loss_value = 0.
         return round(loss_value, 6) if not math.isnan(loss_value) else None
 
-    def _get_metric_calculation(self, metric_name, metric_obj, out: str, y_true, y_pred):
+    def _get_metric_calculation(self, metric_name, metric_obj, out: str, y_true, y_pred, show_class=False):
         encoding = self.options.data.outputs.get(int(out)).encoding
         task = self.options.data.outputs.get(int(out)).task
         num_classes = self.options.data.outputs.get(int(out)).num_classes
@@ -1313,6 +1318,12 @@ class InteractiveCallback:
                 metric_obj.update_state(
                     np.argmax(y_true, axis=-1) if encoding == LayerEncodingChoice.ohe else y_true,
                     np.argmax(y_pred, axis=-1)
+                )
+            if metric_name == Metric.BalancedRecall:
+                metric_obj.update_state(
+                    y_true if encoding == LayerEncodingChoice.ohe else to_categorical(y_true, num_classes),
+                    y_pred,
+                    show_class=show_class
                 )
             # elif metric_name == Metric.SparseCategoricalAccuracy or \
             #         metric_name == Metric.SparseTopKCategoricalAccuracy or \

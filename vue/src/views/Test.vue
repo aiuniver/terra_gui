@@ -13,7 +13,7 @@
         </t-field>
       </div> -->
       <div>
-        <t-field>
+        <!-- <t-field>
           <DInputNumber label="Error" @change="change" />
         </t-field>
         <t-field>
@@ -24,7 +24,20 @@
         </t-field>
         <t-field>
           <DInputText v-model="input" icon="search" :error="error" @focus="error = ''" @change="change" />
-        </t-field>
+        </t-field> -->
+
+          <DButton disabled />
+          <DButton />
+          <DButton color="primary" disabled> Кнопка еще</DButton>
+          <DButton color="primary" direction="left" />
+          <DButton color="primary" size="small" />
+          <DButton color="primary" size="small" direction="left" />
+
+          <DButton color="secondary" disabled/>
+          <DButton color="secondary" direction="left" />
+          <DButton color="secondary" size="small" />
+          <DButton color="secondary" size="small" direction="left" />
+
       </div>
     </div>
   </main>
@@ -34,8 +47,9 @@
 export default {
   name: 'page-not-found',
   components: {
-    DInputText: () => import('@/components/global/design/forms/components/DInputText'),
-    DInputNumber: () => import('@/components/global/design/forms/components/DInputNumber'),
+    // DInputText: () => import('@/components/global/design/forms/components/DInputText'),
+    // DInputNumber: () => import('@/components/global/design/forms/components/DInputNumber'),
+    DButton: () => import('@/components/global/design/forms/components/DButton'),
   },
   data: () => ({
     input: 'Екатерина',

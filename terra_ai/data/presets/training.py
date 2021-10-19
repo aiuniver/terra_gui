@@ -38,6 +38,7 @@ class Loss(str, Enum):
 class Metric(str, Enum):
     AUC = "AUC"
     Accuracy = "Accuracy"
+    BalancedRecall = "BalancedRecall"
     BinaryAccuracy = "BinaryAccuracy"
     BinaryCrossentropy = "BinaryCrossentropy"
     CategoricalAccuracy = "CategoricalAccuracy"
@@ -91,6 +92,7 @@ TasksGroups = [
             Loss.SquaredHinge,
         ],
         "metrics": [
+            Metric.BalancedRecall,
             Metric.RecallPercent,
             Metric.CategoricalAccuracy,
             Metric.BinaryAccuracy,
@@ -128,8 +130,8 @@ TasksGroups = [
         "losses": [
             Loss.CategoricalCrossentropy,
             Loss.BinaryCrossentropy,
-            Loss.CategoricalHinge,
             Loss.MeanAbsoluteError,
+            Loss.CategoricalHinge,
             Loss.MeanSquaredError,
             Loss.CosineSimilarity,
             Loss.Hinge,
@@ -287,10 +289,10 @@ TasksGroups = [
     {
         "task": Task.TextSegmentation,
         "losses": [
-            Loss.CategoricalCrossentropy,
             Loss.BinaryCrossentropy,
-            Loss.CategoricalHinge,
             Loss.MeanAbsoluteError,
+            Loss.CategoricalCrossentropy,
+            Loss.CategoricalHinge,
             Loss.MeanSquaredError,
             Loss.CosineSimilarity,
             Loss.Hinge,
