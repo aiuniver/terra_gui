@@ -1821,7 +1821,7 @@ class CreateArray(object):
             else:
                 pass
 
-        elif choice_type == ExampleChoiceTypeChoice.seed and seed_idx:
+        elif choice_type == ExampleChoiceTypeChoice.seed and len(seed_idx):
             example_idx = seed_idx[:count]
 
         elif choice_type == ExampleChoiceTypeChoice.random:

@@ -36,7 +36,6 @@ def class_counter(y_array, classes_names: list, ohe=True):
         "class_name": int
     }
     """
-
     class_dict = {}
     for cl in classes_names:
         class_dict[cl] = 0
@@ -343,6 +342,13 @@ class InteractiveCallback:
         self.addtrain_epochs = []
         self.progress_name = "training"
         self.preset_path = ""
+        self.basic_architecture = [ArchitectureChoice.Basic, ArchitectureChoice.ImageClassification,
+                                   ArchitectureChoice.ImageSegmentation, ArchitectureChoice.TextSegmentation,
+                                   ArchitectureChoice.TextClassification, ArchitectureChoice.AudioClassification,
+                                   ArchitectureChoice.VideoClassification, ArchitectureChoice.DataframeClassification,
+                                   ArchitectureChoice.DataframeRegression, ArchitectureChoice.Timeseries,
+                                   ArchitectureChoice.TimeseriesTrend]
+        self.yolo_architecture = [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]
 
         self.urgent_predict = False
         self.deploy_presets_data = None
@@ -384,13 +390,13 @@ class InteractiveCallback:
         self.preset_path = os.path.join(training_path, "presets")
         if not os.path.exists(self.preset_path):
             os.mkdir(self.preset_path)
-        if dataset.data.architecture == ArchitectureChoice.Basic:
+        if dataset.data.architecture in self.basic_architecture:
             self.losses = losses
             self.metrics = self._reformat_metrics(metrics)
             self.loss_obj = self._prepare_loss_obj(losses)
             self.metrics_obj = self._prepare_metric_obj(metrics)
             self.interactive_config = initial_config
-        if dataset.data.architecture == ArchitectureChoice.YoloV3:
+        if dataset.data.architecture in self.yolo_architecture:
             self.yolo_interactive_config = yolo_initial_config
 
         self.options = dataset
@@ -457,33 +463,33 @@ class InteractiveCallback:
     def update_state(self, y_pred, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
         if self.log_history:
             if y_pred is not None:
-                if self.options.data.architecture == ArchitectureChoice.Basic and \
-                        self.interactive_config.intermediate_result.show_results:
+                if self.options.data.architecture in self.basic_architecture:
                     self._reformat_y_pred(y_pred)
-                    out = f"{self.interactive_config.intermediate_result.main_output}"
-                    self.example_idx = CreateArray().prepare_example_idx_to_show(
-                        array=self.y_pred.get(out),
-                        true_array=self.y_true.get("val").get(out),
-                        options=self.options,
-                        output=int(out),
-                        count=self.interactive_config.intermediate_result.num_examples,
-                        choice_type=self.interactive_config.intermediate_result.example_choice_type,
-                        seed_idx=self.seed_idx[:self.interactive_config.intermediate_result.num_examples]
-                    )
-                if self.options.data.architecture == ArchitectureChoice.YoloV3 and \
-                        self.yolo_interactive_config.intermediate_result.show_results:
+                    if self.interactive_config.intermediate_result.show_results:
+                        out = f"{self.interactive_config.intermediate_result.main_output}"
+                        self.example_idx = CreateArray().prepare_example_idx_to_show(
+                            array=self.y_pred.get(out),
+                            true_array=self.y_true.get("val").get(out),
+                            options=self.options,
+                            output=int(out),
+                            count=self.interactive_config.intermediate_result.num_examples,
+                            choice_type=self.interactive_config.intermediate_result.example_choice_type,
+                            seed_idx=self.seed_idx[:self.interactive_config.intermediate_result.num_examples]
+                        )
+                if self.options.data.architecture in self.yolo_architecture:
                     self.raw_y_pred = y_pred
-                    self.example_idx, _ = CreateArray().prepare_yolo_example_idx_to_show(
-                        array=copy.deepcopy(self.y_pred),
-                        true_array=copy.deepcopy(self.y_true),
-                        name_classes=self.options.data.outputs.get(
-                            list(self.options.data.outputs.keys())[0]).classes_names,
-                        box_channel=self.yolo_interactive_config.intermediate_result.box_channel,
-                        count=self.yolo_interactive_config.intermediate_result.num_examples,
-                        choice_type=self.yolo_interactive_config.intermediate_result.example_choice_type,
-                        seed_idx=self.seed_idx,
-                        sensitivity=self.yolo_interactive_config.intermediate_result.sensitivity,
-                    )
+                    if self.yolo_interactive_config.intermediate_result.show_results:
+                        self.example_idx, _ = CreateArray().prepare_yolo_example_idx_to_show(
+                            array=copy.deepcopy(self.y_pred),
+                            true_array=copy.deepcopy(self.y_true),
+                            name_classes=self.options.data.outputs.get(
+                                list(self.options.data.outputs.keys())[0]).classes_names,
+                            box_channel=self.yolo_interactive_config.intermediate_result.box_channel,
+                            count=self.yolo_interactive_config.intermediate_result.num_examples,
+                            choice_type=self.yolo_interactive_config.intermediate_result.example_choice_type,
+                            seed_idx=self.seed_idx,
+                            sensitivity=self.yolo_interactive_config.intermediate_result.sensitivity,
+                        )
                 if on_epoch_end_flag:
                     self.current_epoch = fit_logs.get('epoch')
                     self.current_logs = self._reformat_fit_logs(fit_logs)
@@ -500,7 +506,6 @@ class InteractiveCallback:
                         self.statistic_result = self._get_statistic_data_request()
                 self.urgent_predict = False
                 self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
-
             return {
                 'update': self.random_key,
                 "class_graphics": self.class_graphics,
@@ -519,7 +524,7 @@ class InteractiveCallback:
         """Return dict with data for current interactive request"""
         self.interactive_config = config if config else self.interactive_config
         if self.log_history and self.log_history.get("epochs", {}):
-            if self.options.data.architecture == ArchitectureChoice.Basic:
+            if self.options.data.architecture in self.basic_architecture:
                 if self.interactive_config.intermediate_result.show_results:
                     out = f"{self.interactive_config.intermediate_result.main_output}"
                     self.example_idx = CreateArray().prepare_example_idx_to_show(
@@ -537,7 +542,7 @@ class InteractiveCallback:
                     if self.interactive_config.statistic_data.output_id:
                         self.statistic_result = self._get_statistic_data_request()
 
-            if self.options.data.architecture == ArchitectureChoice.YoloV3:
+            if self.options.data.architecture in self.yolo_architecture:
                 if self.yolo_interactive_config.intermediate_result.show_results:
                     self.example_idx, _ = CreateArray().prepare_yolo_example_idx_to_show(
                         array=copy.deepcopy(self.y_pred),
@@ -680,8 +685,7 @@ class InteractiveCallback:
                 inverse_x_val[input] = inverse_x[:, 1:, :]
         return x_val, inverse_x_val
 
-    @staticmethod
-    def _prepare_y_true(dataset: PrepareDataset):
+    def _prepare_y_true(self, dataset: PrepareDataset):
         y_true = {
             "train": {},
             "val": {}
@@ -691,7 +695,7 @@ class InteractiveCallback:
             "val": {}
         }
         for data_type in y_true.keys():
-            if dataset.data.architecture == ArchitectureChoice.Basic:
+            if dataset.data.architecture in self.basic_architecture:
                 for out in dataset.data.outputs.keys():
                     task = dataset.data.outputs.get(out).task
                     if not dataset.data.use_generator:
@@ -726,7 +730,7 @@ class InteractiveCallback:
                             inverse_y = np.concatenate([inverse_y, inverse_col], axis=1)
                         inverse_y_true[data_type][f"{out}"] = inverse_y[:, 1:, :]
 
-        if dataset.data.architecture == ArchitectureChoice.YoloV3:
+        if dataset.data.architecture in self.yolo_architecture:
             y_true = CreateArray().get_yolo_y_true(options=dataset)
 
         return y_true, inverse_y_true
@@ -746,7 +750,7 @@ class InteractiveCallback:
 
     def _prepare_null_log_history_template(self):
         self.log_history["epochs"] = []
-        if self.options.data.architecture == ArchitectureChoice.Basic:
+        if self.options.data.architecture in self.basic_architecture:
             for out in self.losses.keys():
                 task = self.options.data.outputs.get(int(out)).task
                 self.log_history[out] = {
@@ -780,7 +784,7 @@ class InteractiveCallback:
                         for metric in self.metrics.get(out):
                             self.log_history[out]["class_metrics"][f"{class_name}"][f"{metric}"] = []
 
-        if self.options.data.architecture == ArchitectureChoice.YoloV3:
+        if self.options.data.architecture in self.yolo_architecture:
             self.log_history['learning_rate'] = []
             self.log_history['output'] = {
                 "loss": {
@@ -1045,7 +1049,7 @@ class InteractiveCallback:
 
     def _prepare_class_idx(self) -> dict:
         class_idx = {}
-        if self.options.data.architecture == ArchitectureChoice.Basic:
+        if self.options.data.architecture in self.basic_architecture:
             for data_type in self.y_true.keys():
                 class_idx[data_type] = {}
                 for out in self.y_true.get(data_type).keys():
@@ -1132,7 +1136,7 @@ class InteractiveCallback:
     def _reformat_y_pred(self, y_pred, sensitivity: float = 0.15, threashold: float = 0.1):
         self.y_pred = {}
         self.inverse_y_pred = {}
-        if self.options.data.architecture == ArchitectureChoice.Basic:
+        if self.options.data.architecture in self.basic_architecture:
             for idx, out in enumerate(self.y_true.get('val').keys()):
                 task = self.options.data.outputs.get(int(out)).task
                 if len(self.y_true.get('val').keys()) == 1:
@@ -1164,7 +1168,7 @@ class InteractiveCallback:
                         inverse_y = np.concatenate([inverse_y, inverse_col], axis=1)
                     self.inverse_y_pred[out] = inverse_y[:, 1:, :]
 
-        if self.options.data.architecture == ArchitectureChoice.YoloV3:
+        if self.options.data.architecture in self.yolo_architecture:
             self.y_pred = CreateArray().get_yolo_y_pred(
                 array=y_pred,
                 options=self.options,
@@ -1399,8 +1403,10 @@ class InteractiveCallback:
         task = self.options.data.outputs.get(int(out)).task
         num_classes = self.options.data.outputs.get(int(out)).num_classes
         if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
-            loss_value = float(loss_obj()(y_true if encoding == LayerEncodingChoice.ohe
-                                          else to_categorical(y_true, num_classes), y_pred).numpy())
+
+            loss_value = float(loss_obj()(
+                y_true if encoding == LayerEncodingChoice.ohe else to_categorical(y_true, num_classes), y_pred
+            ).numpy())
         elif task == LayerOutputTypeChoice.Segmentation or \
                 (task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.ohe):
             loss_value = float(loss_obj()(
@@ -1412,7 +1418,7 @@ class InteractiveCallback:
             loss_value = float(loss_obj()(y_true, y_pred).numpy())
         else:
             loss_value = 0.
-        return round(loss_value, 6) if not math.isnan(loss_value) else None
+        return loss_value if not math.isnan(loss_value) else None
 
     def _get_metric_calculation(self, metric_name, metric_obj, out: str, y_true, y_pred, show_class=False):
         encoding = self.options.data.outputs.get(int(out)).encoding
@@ -1709,7 +1715,7 @@ class InteractiveCallback:
 
     def _get_intermediate_result_request(self) -> dict:
         return_data = {}
-        if self.options.data.architecture == ArchitectureChoice.Basic and \
+        if self.options.data.architecture in self.basic_architecture and \
                 self.interactive_config.intermediate_result.show_results:
             for idx in range(self.interactive_config.intermediate_result.num_examples):
                 return_data[f"{idx + 1}"] = {
@@ -1844,7 +1850,7 @@ class InteractiveCallback:
                     else:
                         return_data[f"{idx + 1}"]['statistic_values'] = {}
 
-        if self.options.data.architecture == ArchitectureChoice.YoloV3 and \
+        elif self.options.data.architecture in self.yolo_architecture and \
                 self.yolo_interactive_config.intermediate_result.show_results:
             self._reformat_y_pred(
                 y_pred=self.raw_y_pred,
@@ -1883,12 +1889,15 @@ class InteractiveCallback:
                     return_data[f"{idx + 1}"]['statistic_values'] = data.get('stat')
                 else:
                     return_data[f"{idx + 1}"]['statistic_values'] = {}
+        else:
+            pass
+
         return return_data
 
     def _get_statistic_data_request(self) -> list:
         return_data = []
         _id = 1
-        if self.options.data.architecture == ArchitectureChoice.Basic:
+        if self.options.data.architecture in self.basic_architecture:
             for out in self.interactive_config.statistic_data.output_id:
                 task = self.options.data.outputs.get(out).task
                 encoding = self.options.data.outputs.get(out).encoding
@@ -2098,7 +2107,7 @@ class InteractiveCallback:
                 else:
                     pass
 
-        elif self.options.data.architecture == ArchitectureChoice.YoloV3:
+        elif self.options.data.architecture in self.yolo_architecture:
             box_channel = self.yolo_interactive_config.statistic_data.box_channel
             name_classes = self.options.data.outputs.get(list(self.options.data.outputs.keys())[0]).classes_names
             self._reformat_y_pred(
@@ -2235,7 +2244,7 @@ class InteractiveCallback:
     def _get_balance_data_request(self) -> list:
         return_data = []
         _id = 0
-        if self.options.data.architecture == ArchitectureChoice.Basic:
+        if self.options.data.architecture in self.basic_architecture:
             for out in self.options.data.outputs.keys():
                 task = self.options.data.outputs.get(out).task
 
@@ -2410,7 +2419,7 @@ class InteractiveCallback:
                 else:
                     pass
 
-        elif self.options.data.architecture == ArchitectureChoice.YoloV3:
+        elif self.options.data.architecture in self.yolo_architecture:
             for class_type in self.dataset_balance.get("output").keys():
                 preset = {}
                 if class_type in ["class_count", "class_square"]:
