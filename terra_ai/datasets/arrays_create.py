@@ -9,11 +9,11 @@ from pandas import DataFrame
 from tensorflow.python.keras.preprocessing import image
 from tensorflow.python.keras.utils.np_utils import to_categorical
 
-from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
+from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice, ArchitectureChoice
 from terra_ai.datasets.utils import get_yolo_anchors
 from terra_ai.data.datasets.dataset import DatasetOutputsData, DatasetData
 from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice, \
-    LayerOutputTypeChoice, DatasetGroupChoice, LayerInputTypeChoice, LayerEncodingChoice, DatasetModelChoice
+    LayerOutputTypeChoice, DatasetGroupChoice, LayerInputTypeChoice, LayerEncodingChoice
 from terra_ai.data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice, \
     LayerTextModeChoice, LayerAudioModeChoice, LayerVideoModeChoice, LayerScalerAudioChoice
 
@@ -1258,7 +1258,7 @@ class CreateArray(object):
     def get_x_array(options):
         x_val = None
         inverse_x_val = None
-        if options.data.architecture == DatasetModelChoice.basic:
+        if options.data.architecture == ArchitectureChoice.Basic:
             if options.data.group == DatasetGroupChoice.keras:
                 x_val = options.X.get("val")
             dataframe = False
@@ -1309,7 +1309,7 @@ class CreateArray(object):
         x_array, inverse_x_array = CreateArray().get_x_array(options)
         return_data = {}
 
-        if options.data.architecture == DatasetModelChoice.basic:
+        if options.data.architecture == ArchitectureChoice.Basic:
             for i, output_id in enumerate(options.data.outputs.keys()):
                 true_array = CreateArray().get_y_true(options, output_id)
                 if len(options.data.outputs.keys()) > 1:
@@ -1527,7 +1527,7 @@ class CreateArray(object):
                 else:
                     return_data[output_id] = []
 
-        if options.data.architecture == DatasetModelChoice.yolo:
+        if options.data.architecture == ArchitectureChoice.YoloV3:
             y_true = CreateArray().get_yolo_y_true(options)
             y_pred = CreateArray().get_yolo_y_pred(array, options, sensitivity=sensitivity, threashold=threashold)
             name_classes = options.data.outputs.get(list(options.data.outputs.keys())[0]).classes_names

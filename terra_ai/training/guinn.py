@@ -313,8 +313,6 @@ class GUINN:
                            )
         # self.model.load_weight(os.path.join(self.training_path, self.nn_name))
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели выполнена'})
-        print('\nself._set_callbacks(dataset=dataset, ', dataset.data.inputs, '\n', dataset.data.outputs,'\n',
-              dataset.dataset.get('val'))
         self._set_callbacks(dataset=dataset, dataset_data=dataset_data, batch_size=params.batch,
                             epochs=params.epochs, save_model_path=save_model_path, dataset_path=dataset_path,
                             checkpoint=params.architecture.parameters.checkpoint.native())
@@ -330,7 +328,7 @@ class GUINN:
             n_repeat = 1
         else:
             n_repeat = (self.batch_size // critical_val_size) + 1
-        # print('\nself.history = self.model.fit(', self.dataset.data.__dict__)
+
         try:
             self.history = self.model.fit(
                 self.dataset.dataset.get('train').shuffle(buffer_size).batch(

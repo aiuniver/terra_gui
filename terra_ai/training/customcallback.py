@@ -18,9 +18,9 @@ import numpy as np
 
 from terra_ai import progress
 from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice, DatasetGroupChoice, \
-    LayerEncodingChoice, DatasetModelChoice
+    LayerEncodingChoice
 from terra_ai.data.presets.training import Metric
-from terra_ai.data.training.extra import LossGraphShowChoice, MetricGraphShowChoice, MetricChoice
+from terra_ai.data.training.extra import LossGraphShowChoice, MetricGraphShowChoice, MetricChoice, ArchitectureChoice
 from terra_ai.data.training.train import InteractiveData, YoloInteractiveData
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
@@ -384,13 +384,13 @@ class InteractiveCallback:
         self.preset_path = os.path.join(training_path, "presets")
         if not os.path.exists(self.preset_path):
             os.mkdir(self.preset_path)
-        if dataset.data.architecture == DatasetModelChoice.basic:
+        if dataset.data.architecture == ArchitectureChoice.Basic:
             self.losses = losses
             self.metrics = self._reformat_metrics(metrics)
             self.loss_obj = self._prepare_loss_obj(losses)
             self.metrics_obj = self._prepare_metric_obj(metrics)
             self.interactive_config = initial_config
-        if dataset.data.architecture == DatasetModelChoice.yolo:
+        if dataset.data.architecture == ArchitectureChoice.YoloV3:
             self.yolo_interactive_config = yolo_initial_config
 
         self.options = dataset
@@ -457,7 +457,7 @@ class InteractiveCallback:
     def update_state(self, y_pred, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
         if self.log_history:
             if y_pred is not None:
-                if self.options.data.architecture == DatasetModelChoice.basic and \
+                if self.options.data.architecture == ArchitectureChoice.Basic and \
                         self.interactive_config.intermediate_result.show_results:
                     self._reformat_y_pred(y_pred)
                     out = f"{self.interactive_config.intermediate_result.main_output}"
@@ -470,7 +470,7 @@ class InteractiveCallback:
                         choice_type=self.interactive_config.intermediate_result.example_choice_type,
                         seed_idx=self.seed_idx[:self.interactive_config.intermediate_result.num_examples]
                     )
-                if self.options.data.architecture == DatasetModelChoice.yolo and \
+                if self.options.data.architecture == ArchitectureChoice.YoloV3 and \
                         self.yolo_interactive_config.intermediate_result.show_results:
                     self.raw_y_pred = y_pred
                     self.example_idx, _ = CreateArray().prepare_yolo_example_idx_to_show(
@@ -519,7 +519,7 @@ class InteractiveCallback:
         """Return dict with data for current interactive request"""
         self.interactive_config = config if config else self.interactive_config
         if self.log_history and self.log_history.get("epochs", {}):
-            if self.options.data.architecture == DatasetModelChoice.basic:
+            if self.options.data.architecture == ArchitectureChoice.Basic:
                 if self.interactive_config.intermediate_result.show_results:
                     out = f"{self.interactive_config.intermediate_result.main_output}"
                     self.example_idx = CreateArray().prepare_example_idx_to_show(
@@ -537,7 +537,7 @@ class InteractiveCallback:
                     if self.interactive_config.statistic_data.output_id:
                         self.statistic_result = self._get_statistic_data_request()
 
-            if self.options.data.architecture == DatasetModelChoice.yolo:
+            if self.options.data.architecture == ArchitectureChoice.YoloV3:
                 if self.yolo_interactive_config.intermediate_result.show_results:
                     self.example_idx, _ = CreateArray().prepare_yolo_example_idx_to_show(
                         array=copy.deepcopy(self.y_pred),
@@ -691,7 +691,7 @@ class InteractiveCallback:
             "val": {}
         }
         for data_type in y_true.keys():
-            if dataset.data.architecture == DatasetModelChoice.basic:
+            if dataset.data.architecture == ArchitectureChoice.Basic:
                 for out in dataset.data.outputs.keys():
                     task = dataset.data.outputs.get(out).task
                     if not dataset.data.use_generator:
@@ -726,7 +726,7 @@ class InteractiveCallback:
                             inverse_y = np.concatenate([inverse_y, inverse_col], axis=1)
                         inverse_y_true[data_type][f"{out}"] = inverse_y[:, 1:, :]
 
-        if dataset.data.architecture == DatasetModelChoice.yolo:
+        if dataset.data.architecture == ArchitectureChoice.YoloV3:
             y_true = CreateArray().get_yolo_y_true(options=dataset)
 
         return y_true, inverse_y_true
@@ -746,7 +746,7 @@ class InteractiveCallback:
 
     def _prepare_null_log_history_template(self):
         self.log_history["epochs"] = []
-        if self.options.data.architecture == DatasetModelChoice.basic:
+        if self.options.data.architecture == ArchitectureChoice.Basic:
             for out in self.losses.keys():
                 task = self.options.data.outputs.get(int(out)).task
                 self.log_history[out] = {
@@ -779,7 +779,8 @@ class InteractiveCallback:
                         self.log_history[out]["class_loss"][f"{class_name}"] = {self.losses.get(out): []}
                         for metric in self.metrics.get(out):
                             self.log_history[out]["class_metrics"][f"{class_name}"][f"{metric}"] = []
-        if self.options.data.architecture == DatasetModelChoice.yolo:
+
+        if self.options.data.architecture == ArchitectureChoice.YoloV3:
             self.log_history['learning_rate'] = []
             self.log_history['output'] = {
                 "loss": {
@@ -1044,7 +1045,7 @@ class InteractiveCallback:
 
     def _prepare_class_idx(self) -> dict:
         class_idx = {}
-        if self.options.data.architecture == DatasetModelChoice.basic:
+        if self.options.data.architecture == ArchitectureChoice.Basic:
             for data_type in self.y_true.keys():
                 class_idx[data_type] = {}
                 for out in self.y_true.get(data_type).keys():
@@ -1131,7 +1132,7 @@ class InteractiveCallback:
     def _reformat_y_pred(self, y_pred, sensitivity: float = 0.15, threashold: float = 0.1):
         self.y_pred = {}
         self.inverse_y_pred = {}
-        if self.options.data.architecture == DatasetModelChoice.basic:
+        if self.options.data.architecture == ArchitectureChoice.Basic:
             for idx, out in enumerate(self.y_true.get('val').keys()):
                 task = self.options.data.outputs.get(int(out)).task
                 if len(self.y_true.get('val').keys()) == 1:
@@ -1163,7 +1164,7 @@ class InteractiveCallback:
                         inverse_y = np.concatenate([inverse_y, inverse_col], axis=1)
                     self.inverse_y_pred[out] = inverse_y[:, 1:, :]
 
-        if self.options.data.architecture == DatasetModelChoice.yolo:
+        if self.options.data.architecture == ArchitectureChoice.YoloV3:
             self.y_pred = CreateArray().get_yolo_y_pred(
                 array=y_pred,
                 options=self.options,
@@ -1708,7 +1709,7 @@ class InteractiveCallback:
 
     def _get_intermediate_result_request(self) -> dict:
         return_data = {}
-        if self.options.data.architecture == DatasetModelChoice.basic and \
+        if self.options.data.architecture == ArchitectureChoice.Basic and \
                 self.interactive_config.intermediate_result.show_results:
             for idx in range(self.interactive_config.intermediate_result.num_examples):
                 return_data[f"{idx + 1}"] = {
@@ -1843,7 +1844,7 @@ class InteractiveCallback:
                     else:
                         return_data[f"{idx + 1}"]['statistic_values'] = {}
 
-        if self.options.data.architecture == DatasetModelChoice.yolo and \
+        if self.options.data.architecture == ArchitectureChoice.YoloV3 and \
                 self.yolo_interactive_config.intermediate_result.show_results:
             self._reformat_y_pred(
                 y_pred=self.raw_y_pred,
@@ -1887,7 +1888,7 @@ class InteractiveCallback:
     def _get_statistic_data_request(self) -> list:
         return_data = []
         _id = 1
-        if self.options.data.architecture == DatasetModelChoice.basic:
+        if self.options.data.architecture == ArchitectureChoice.Basic:
             for out in self.interactive_config.statistic_data.output_id:
                 task = self.options.data.outputs.get(out).task
                 encoding = self.options.data.outputs.get(out).encoding
@@ -2097,7 +2098,7 @@ class InteractiveCallback:
                 else:
                     pass
 
-        elif self.options.data.architecture == DatasetModelChoice.yolo:
+        elif self.options.data.architecture == ArchitectureChoice.YoloV3:
             box_channel = self.yolo_interactive_config.statistic_data.box_channel
             name_classes = self.options.data.outputs.get(list(self.options.data.outputs.keys())[0]).classes_names
             self._reformat_y_pred(
@@ -2234,7 +2235,7 @@ class InteractiveCallback:
     def _get_balance_data_request(self) -> list:
         return_data = []
         _id = 0
-        if self.options.data.architecture == DatasetModelChoice.basic:
+        if self.options.data.architecture == ArchitectureChoice.Basic:
             for out in self.options.data.outputs.keys():
                 task = self.options.data.outputs.get(out).task
 
@@ -2409,7 +2410,7 @@ class InteractiveCallback:
                 else:
                     pass
 
-        elif self.options.data.architecture == DatasetModelChoice.yolo:
+        elif self.options.data.architecture == ArchitectureChoice.YoloV3:
             for class_type in self.dataset_balance.get("output").keys():
                 preset = {}
                 if class_type in ["class_count", "class_square"]:
