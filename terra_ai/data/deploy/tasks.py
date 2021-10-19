@@ -173,7 +173,7 @@ class TextTextSegmentation(BaseCollectionList):
         format_path = Path(self._path, "preset", "out")
         os.makedirs(source_path, exist_ok=True)
         os.makedirs(format_path, exist_ok=True)
-        source = interactive.deploy_presets_data
+        source = interactive.deploy_presets_data.get("data", {})
         if not source:
             self._reset()
             return
