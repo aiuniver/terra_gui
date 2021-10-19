@@ -97,18 +97,12 @@ class CreatePreprocessing(object):
         if options['scaler'] != 'no_scaler':
             if options['scaler'] == 'min_max_scaler':
                 scaler = MinMaxScaler(feature_range=(options['min_scaler'], options['max_scaler']))
-                # array = np.array(array).reshape(-1, 1) if isinstance(array, np.ndarray) or isinstance(array,
-                #                                                                                       list) \
-                #     else np.array([[0], [255]])
-                # scaler.fit(array)
             elif options['scaler'] == 'standard_scaler':
                 scaler = StandardScaler()
-                # array = np.array(array).reshape(-1, 1)
-                # scaler.fit(array)
             elif options['scaler'] == 'terra_image_scaler':
                 scaler = TerraImageScaler(shape=(options['height'], options['width']),
                                           min_max=(options['min_scaler'], options['max_scaler']))
-
+            print(options['cols_names'], scaler)
         if not options['put'] in self.preprocessing.keys():
             self.preprocessing[options['put']] = {}
         self.preprocessing[options['put']].update([(options['cols_names'], scaler)])
