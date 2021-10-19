@@ -428,15 +428,16 @@ class CreateDataset(object):
                     prep = self.preprocessing.preprocessing.get(key).get(col_name)
 
                 if creation_data.inputs.get(key).type == LayerInputTypeChoice.Dataframe:
-                    data_to_pass = data.instructions[0]
+                    if 'depth' in data.parameters.keys() and data.parameters['depth']:
+                        data_to_pass = data.instructions[0:data.parameters['length']]
+                    else:
+                        data_to_pass = data.instructions[0]
                     c_name = '_'.join(col_name.split('_')[1:])
                     c_idx = column_names.index(c_name)
                     if creation_data.inputs.get(key).parameters.cols_names[c_idx]:
                         c_data_idx = creation_data.inputs.get(key).parameters.cols_names[c_idx][0]
                         if decamelize(creation_data.columns_processing.get(str(c_data_idx)).type) in PATH_TYPE_LIST:
                             data_to_pass = os.path.join(self.paths.basepath, data.instructions[0])
-                elif 'depth' in data.parameters.keys() and data.parameters['depth']:
-                    data_to_pass = data.instructions[0:data.parameters['length']]
                 elif decamelize(creation_data.inputs.get(key).type) in PATH_TYPE_LIST:
                     data_to_pass = os.path.join(self.paths.basepath, data.instructions[0])
                 else:
@@ -518,6 +519,7 @@ class CreateDataset(object):
 
         creating_outputs_data = {}
         for key in self.instructions.outputs.keys():
+            self.columns[key] = {}
             output_array = []
             iters = 1
             data = None
@@ -607,7 +609,10 @@ class CreateDataset(object):
                                                         num_classes=num_classes,
                                                         encoding=encoding
                                                         )
-                    self.columns[key + i] = {col_name: current_output.native()}
+                    if not creation_data.outputs.get(key).type == LayerOutputTypeChoice.ObjectDetection:
+                        self.columns[key].update([(col_name, current_output.native())])
+                    else:
+                        self.columns[key + i] = {col_name: current_output.native()}
 
             depth_flag = False
             if not creation_data.outputs.get(key).type == LayerOutputTypeChoice.ObjectDetection:
