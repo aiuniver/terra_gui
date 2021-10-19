@@ -5,8 +5,8 @@ import json
 from itertools import product
 from datetime import datetime, date
 from pytz import timezone
-# from pathlib import Path
-from terra_ai.data.annotations.markup import MarkupData, AnnotationData
+from pathlib import Path
+from terra_ai.data.annotations.markup import MarkupData, AnnotationData, AnnotationPathsData
 from terra_ai.data.annotations.markup import ANNOT_EXT
 from terra_ai.datasets.creating import CreateDataset
 from terra_ai.settings import DATASET_CONFIG
@@ -16,9 +16,10 @@ class MarkUp:
     def __init__(self, markup_data: MarkupData):
         self.source = os.path.join(markup_data.annotations_path, 'annotations', 'sources', markup_data.source)
         self.dst_path = os.path.join(markup_data.annotations_path, 'datasets', 'sources')
-        # self.path = AnnotationPathsData(
-        #     basepath=Path(markup_data.annotations_path, 'annotations', f'{markup_data.alias}.{ANNOT_EXT}'))
-        self.annot_path = os.path.join(markup_data.annotations_path, 'annotations', f'{markup_data.alias}.{ANNOT_EXT}')
+        os.makedirs(os.path.join(markup_data.annotations_path, 'annotations', f'{markup_data.alias}.{ANNOT_EXT}'), exist_ok=True)
+        self.path = AnnotationPathsData(
+            basepath=Path(markup_data.annotations_path, 'annotations', f'{markup_data.alias}.{ANNOT_EXT}'))
+        self.annot_path = self.path.basepath
         self.raw_path = os.path.join(self.annot_path, 'Raw')
 
         self.task_type = markup_data.task_type

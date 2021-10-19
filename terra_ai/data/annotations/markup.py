@@ -1,29 +1,17 @@
 from datetime import datetime, date
 from typing import List, Optional
-from pydantic import validator, DirectoryPath
-# from pathlib import Path
+from pydantic import DirectoryPath
 from enum import Enum
-# import os
 from terra_ai.data.mixins import AliasMixinData
 from terra_ai.data.extra import FileSizeData
-# from terra_ai.data.mixins import BaseMixinData
+from terra_ai.data.mixins import BaseMixinData
 
 
 ANNOT_EXT = 'annot'
 
 
-# class AnnotationPathsData(BaseMixinData):
-#     basepath: DirectoryPath
-    # sources: Optional[DirectoryPath]
-    #
-    # @validator(
-    #     "sources",
-    #     always=True,
-    # )
-    # def _validate_internal_path(cls, value, values, field) -> Path:
-    #     path = Path(values.get("basepath"), field.name)
-    #     os.makedirs(path, exist_ok=True)
-    #     return path
+class AnnotationPathsData(BaseMixinData):
+    basepath: DirectoryPath
 
 
 class MarkupTypeChoice(str, Enum):
