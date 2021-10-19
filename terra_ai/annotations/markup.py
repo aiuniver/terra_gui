@@ -14,12 +14,13 @@ from terra_ai.settings import DATASET_CONFIG
 
 class MarkUp:
     def __init__(self, markup_data: MarkupData):
-        self.source = os.path.join(markup_data.annotations_path, 'annotations', 'sources', markup_data.source)
-        self.dst_path = os.path.join(markup_data.annotations_path, 'datasets', 'sources')
-        os.makedirs(os.path.join(markup_data.annotations_path, 'annotations', f'{markup_data.alias}.{ANNOT_EXT}'),
+        common_path = os.path.join(os.sep, *markup_data.native()['annotations_path'].split(os.sep)[:-1])
+        self.source = os.path.join(common_path, 'annotations', 'sources', markup_data.source)
+        self.dst_path = os.path.join(common_path, 'datasets', 'sources')
+        os.makedirs(os.path.join(markup_data.annotations_path, f'{markup_data.alias}.{ANNOT_EXT}'),
                     exist_ok=True)
         self.path = AnnotationPathsData(
-            basepath=Path(markup_data.annotations_path, 'annotations', f'{markup_data.alias}.{ANNOT_EXT}'))
+            basepath=Path(markup_data.annotations_path, f'{markup_data.alias}.{ANNOT_EXT}'))
         self.annot_path = self.path.basepath
         self.raw_path = os.path.join(self.annot_path, 'Raw')
 
