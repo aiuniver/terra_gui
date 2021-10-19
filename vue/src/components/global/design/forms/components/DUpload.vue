@@ -5,7 +5,9 @@
       <p>{{ label }}</p>
     </div>
 
-    <div v-show="Object.keys(file).length === 0 && !behindFile.length"  class="d-upload-container" ref="d-upload-container">
+    <div v-show="Object.keys(file).length === 0 && !behindFile.length"  class="d-upload-container" ref="d-upload-container" :style="{border: `1px solid ${error ? '#CA5035' : '#65B9F4'}`}">
+      
+        <div v-for="line in 4" :key="'line-' + line" class="d-upload-container-line" ></div>
         <div class="d-upload-error" v-if="error.length">
           <p>{{ error }}</p>
         </div>
@@ -171,6 +173,29 @@ export default {
     max-width: 341px;
     height: 230px;
     background: rgba(36, 47, 61, 0.5);
+    &-line{
+      width: 34%;
+      z-index: 10;
+      position: absolute;
+      height: 1px;
+      background: #1d232b;
+    }
+    &-line:nth-child(1){
+      top: -1px;
+    }
+    &-line:nth-child(2){
+      top: 50%;
+      left: -57px;
+      transform: translateY(-50%) rotate(90deg);
+    }
+    &-line:nth-child(3){
+      top: 50%;
+      right: -57px;
+      transform: translateY(-50%) rotate(90deg);
+    }
+    &-line:nth-child(4){
+      bottom: -1px;
+    }
     &-image{
       position: relative;
       max-width: 341px;
