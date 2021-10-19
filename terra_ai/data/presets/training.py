@@ -130,8 +130,8 @@ TasksGroups = [
         "losses": [
             Loss.CategoricalCrossentropy,
             Loss.BinaryCrossentropy,
-            Loss.CategoricalHinge,
             Loss.MeanAbsoluteError,
+            Loss.CategoricalHinge,
             Loss.MeanSquaredError,
             Loss.CosineSimilarity,
             Loss.Hinge,
@@ -289,10 +289,10 @@ TasksGroups = [
     {
         "task": Task.TextSegmentation,
         "losses": [
-            Loss.CategoricalCrossentropy,
             Loss.BinaryCrossentropy,
-            Loss.CategoricalHinge,
             Loss.MeanAbsoluteError,
+            Loss.CategoricalCrossentropy,
+            Loss.CategoricalHinge,
             Loss.MeanSquaredError,
             Loss.CosineSimilarity,
             Loss.Hinge,
