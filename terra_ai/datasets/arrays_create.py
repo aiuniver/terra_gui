@@ -42,7 +42,6 @@ import moviepy.editor as moviepy_editor
 
 from terra_ai.settings import DEPLOY_PRESET_PERCENT
 
-
 class CreateArray(object):
 
     @staticmethod
@@ -2491,6 +2490,24 @@ class CreateArray(object):
             return data
 
     @staticmethod
+    def bboxes_iou(boxes1, boxes2):
+        boxes1 = np.array(boxes1)
+        boxes2 = np.array(boxes2)
+
+        boxes1_area = (boxes1[..., 2] - boxes1[..., 0]) * (boxes1[..., 3] - boxes1[..., 1])
+        boxes2_area = (boxes2[..., 2] - boxes2[..., 0]) * (boxes2[..., 3] - boxes2[..., 1])
+
+        left_up = np.maximum(boxes1[..., :2], boxes2[..., :2])
+        right_down = np.minimum(boxes1[..., 2:], boxes2[..., 2:])
+
+        inter_section = np.maximum(right_down - left_up, 0.0)
+        inter_area = inter_section[..., 0] * inter_section[..., 1]
+        union_area = boxes1_area + boxes2_area - inter_area
+        ious = np.maximum(1.0 * inter_area / union_area, np.finfo(np.float32).eps)
+
+        return ious
+
+    @staticmethod
     def non_max_suppression_fast(boxes: np.ndarray, scores: np.ndarray, sensitivity: float = 0.15):
         """
         :param boxes: list of unscaled bb coordinates
@@ -2685,7 +2702,6 @@ class CreateArray(object):
                 "empty": [],
                 'unrecognize': []
             },
-            'empty_pred': {},
             'class_stat': {},
             'total_stat': {}
         }
@@ -2695,7 +2711,7 @@ class CreateArray(object):
         predict = {}
         for i, k in enumerate(pred_bb[:, :4]):
             predict[i] = {
-                'pred_class': np.argmax(pred_bb[:, 5:][i]),
+                'pred_class': name_classes[np.argmax(pred_bb[:, 5:][i])],
                 'conf': pred_bb[:, 4][i].item(),
                 'class_conf': pred_bb[:, 5:][i][np.argmax(pred_bb[:, 5:][i])],
             }
@@ -2709,8 +2725,9 @@ class CreateArray(object):
             for j, pr in enumerate(pred_bb[:, :4]):
                 boxes = np.array([true_bb[:, :4][i], pred_bb[:, :4][j]])
                 scores = np.array([true_bb[:, 5:][i], pred_bb[:, 5:][j]])
-                pick, overlap = CreateArray().non_max_suppression_fast(boxes, scores, sensitivity=sensitivity)
+                pick, _ = CreateArray().non_max_suppression_fast(boxes, scores, sensitivity=sensitivity)
                 if len(pick) == 1:
+                    mean_iou = CreateArray().bboxes_iou(boxes[0], boxes[1])
                     compat['recognize'][name_classes[np.argmax(true_bb[:, 5:][i], axis=-1)]].append(
                         {
                             'pred_class': name_classes[np.argmax(pred_bb[:, 5:][j], axis=-1)],
@@ -2718,14 +2735,14 @@ class CreateArray(object):
                             'class_conf': pred_bb[:, 5:][j][np.argmax(pred_bb[:, 5:][j], axis=-1)],
                             'class_result': True if np.argmax(true_bb[:, 5:][i], axis=-1) == np.argmax(
                                 pred_bb[:, 5:][j], axis=-1) else False,
-                            'overlap': overlap[0].item()
+                            'overlap': mean_iou.item()
                         }
                     )
                     if np.argmax(true_bb[:, 5:][i], axis=-1) == np.argmax(pred_bb[:, 5:][j], axis=-1):
                         count += 1
                         total_conf += pred_bb[:, 4][j].item()
                         total_class += pred_bb[:, 5:][j][np.argmax(pred_bb[:, 5:][j], axis=-1)]
-                        total_overlap += overlap[0].item()
+                        total_overlap += mean_iou.item()
 
                     try:
                         predict.pop(j)
@@ -2766,5 +2783,4 @@ class CreateArray(object):
             'total_overlap': total_overlap / count if count else 0.,
             'total_metric': (total_conf + total_class + total_overlap) / 3 / count if count else 0.
         }
-        print('\ncompat', compat)
         return compat

@@ -9,33 +9,25 @@ import string
 from typing import Union
 
 import matplotlib
-import matplotlib.pyplot as plt
 import pandas as pd
-import tensorflow
-from PIL import Image, ImageDraw, ImageFont  # Модули работы с изображениями
 from pandas import DataFrame
 
 from tensorflow.keras.utils import to_categorical
-from pydub import AudioSegment
 from sklearn.metrics import confusion_matrix, classification_report
 import numpy as np
-import moviepy.editor as moviepy_editor
-from tensorflow.python.keras.api.keras.preprocessing import image
 
 from terra_ai import progress
-from terra_ai.data.datasets.dataset import DatasetOutputsData, DatasetData
 from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice, DatasetGroupChoice, \
     LayerEncodingChoice, DatasetModelChoice
 from terra_ai.data.presets.training import Metric
-from terra_ai.data.training.extra import ExampleChoiceTypeChoice, LossGraphShowChoice, MetricGraphShowChoice, \
-    MetricChoice
+from terra_ai.data.training.extra import LossGraphShowChoice, MetricGraphShowChoice, MetricChoice
 from terra_ai.data.training.train import InteractiveData, YoloInteractiveData
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.training.customlosses import UnscaledMAE
 from terra_ai.utils import camelize, decamelize
 
-__version__ = 0.084
+__version__ = 0.085
 
 
 def class_counter(y_array, classes_names: list, ohe=True):
@@ -323,6 +315,7 @@ class InteractiveCallback:
         self.y_true = {}
         self.inverse_y_true = {}
         self.y_pred = {}
+        self.raw_y_pred = None
         self.inverse_y_pred = {}
         self.current_epoch = None
 
@@ -459,9 +452,9 @@ class InteractiveCallback:
     def update_state(self, y_pred, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
         if self.log_history:
             if y_pred is not None:
-                self._reformat_y_pred(y_pred)
                 if self.options.data.architecture == DatasetModelChoice.basic and \
                         self.interactive_config.intermediate_result.show_results:
+                    self._reformat_y_pred(y_pred)
                     out = f"{self.interactive_config.intermediate_result.main_output}"
                     self.example_idx = CreateArray().prepare_example_idx_to_show(
                         array=self.y_pred.get(out),
@@ -474,6 +467,7 @@ class InteractiveCallback:
                     )
                 if self.options.data.architecture == DatasetModelChoice.yolo and \
                         self.yolo_interactive_config.intermediate_result.show_results:
+                    self.raw_y_pred = y_pred
                     self.example_idx, _ = CreateArray().prepare_yolo_example_idx_to_show(
                         array=copy.deepcopy(self.y_pred),
                         true_array=copy.deepcopy(self.y_true),
@@ -1129,7 +1123,7 @@ class InteractiveCallback:
                 }
         return interactive_log
 
-    def _reformat_y_pred(self, y_pred):
+    def _reformat_y_pred(self, y_pred, sensitivity: float = 0.15, threashold: float = 0.1):
         self.y_pred = {}
         self.inverse_y_pred = {}
         if self.options.data.architecture == DatasetModelChoice.basic:
@@ -1168,36 +1162,9 @@ class InteractiveCallback:
             self.y_pred = CreateArray().get_yolo_y_pred(
                 array=y_pred,
                 options=self.options,
-                sensitivity = self.yolo_interactive_config.intermediate_result.sensitivity,
-                threashold = self.yolo_interactive_config.intermediate_result.threashold
+                sensitivity=sensitivity,
+                threashold=threashold
             )
-            # self.y_pred -> channel -> channel_boxes -> example
-            # if len(y_pred) != len(self.options.data.outputs.keys()):
-            #     reformat_pred = []
-            #     for i, out in enumerate(self.options.data.outputs.keys()):
-            #         for j in len(y_pred):
-            #             if self.options.data.outputs.get(out).shape[:2] == y_pred[j].shape[1:3]:
-            #                 reformat_pred.append(y_pred[j])
-            #                 break
-            #     y_pred = reformat_pred
-            # name_classes = self.options.data.outputs.get(list(self.options.data.outputs.keys())[0]).classes_names
-            #
-            # for channel in range(len(y_pred)):
-            #     channel_boxes = []
-            #     for example in range(len(self.options.dataframe.get('val'))):
-            #         pred = []
-            #         for ch in range(len(y_pred)):
-            #             pred.append(y_pred[ch][example:example + 1])
-            #         channel_boxes.append(
-            #             CreateArray().get_predict_boxes(
-            #                 array=pred[channel],
-            #                 name_classes=name_classes,
-            #                 bb_size=channel,
-            #                 sensitivity=0.15,
-            #                 threashold=0.1
-            #             )
-            #         )
-            #     self.y_pred[channel] = np.array(channel_boxes)
 
     def _update_log_history(self):
         data_idx = None
@@ -1425,25 +1392,14 @@ class InteractiveCallback:
         task = self.options.data.outputs.get(int(out)).task
         num_classes = self.options.data.outputs.get(int(out)).num_classes
         if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
-            # if loss_name == Loss.SparseCategoricalCrossentropy:
-            #     return float(loss_obj()(np.argmax(y_true, axis=-1) if ohe else np.squeeze(y_true), y_pred).numpy())
-            # else:
             loss_value = float(loss_obj()(y_true if encoding == LayerEncodingChoice.ohe
                                           else to_categorical(y_true, num_classes), y_pred).numpy())
         elif task == LayerOutputTypeChoice.Segmentation or \
                 (task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.ohe):
-            # if loss_name == Loss.SparseCategoricalCrossentropy:
-            #     return float(loss_obj()(
-            #         np.expand_dims(np.argmax(y_true, axis=-1), axis=-1) if ohe else np.squeeze(y_true), y_pred
-            #     ).numpy())
-            # else:
             loss_value = float(loss_obj()(
                 y_true if encoding == LayerEncodingChoice.ohe else to_categorical(y_true, num_classes), y_pred
             ).numpy())
         elif task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.multi:
-            # if loss_name == Loss.SparseCategoricalCrossentropy:
-            #     return 0.
-            # else:
             loss_value = float(loss_obj()(y_true, y_pred).numpy())
         elif task == LayerOutputTypeChoice.Regression or task == LayerOutputTypeChoice.Timeseries:
             loss_value = float(loss_obj()(y_true, y_pred).numpy())
@@ -1461,10 +1417,6 @@ class InteractiveCallback:
                     np.argmax(y_true, axis=-1) if encoding == LayerEncodingChoice.ohe else y_true,
                     np.argmax(y_pred, axis=-1)
                 )
-            # elif metric_name == Metric.SparseCategoricalAccuracy or \
-            #         metric_name == Metric.SparseTopKCategoricalAccuracy or \
-            #         metric_name == Metric.SparseCategoricalCrossentropy:
-            #     metric_obj.update_state(np.argmax(y_true, axis=-1) if ohe else np.squeeze(y_true), y_pred)
             else:
                 metric_obj.update_state(
                     y_true if encoding == LayerEncodingChoice.ohe else to_categorical(y_true, num_classes),
@@ -1473,24 +1425,12 @@ class InteractiveCallback:
             metric_value = float(metric_obj.result().numpy())
         elif task == LayerOutputTypeChoice.Segmentation or \
                 (task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.ohe):
-            # if metric_name == Metric.SparseCategoricalAccuracy or \
-            #         metric_name == Metric.SparseTopKCategoricalAccuracy or \
-            #         metric_name == Metric.SparseCategoricalCrossentropy:
-            #     metric_obj.update_state(
-            #         np.expand_dims(np.argmax(y_true, axis=-1), axis=-1) if ohe else np.squeeze(y_true), y_pred
-            #     )
-            # else:
             metric_obj.update_state(
                 y_true if encoding == LayerEncodingChoice.ohe else to_categorical(y_true, num_classes),
                 y_pred
             )
             metric_value = float(metric_obj.result().numpy())
         elif task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.multi:
-            # if metric_name == Metric.SparseCategoricalAccuracy or \
-            #         metric_name == Metric.SparseTopKCategoricalAccuracy or \
-            #         metric_name == Metric.SparseCategoricalCrossentropy:
-            #     return 0.
-            # else:
             metric_obj.update_state(y_true, y_pred)
             metric_value = float(metric_obj.result().numpy())
         elif task == LayerOutputTypeChoice.Regression or task == LayerOutputTypeChoice.Timeseries:
@@ -1893,6 +1833,11 @@ class InteractiveCallback:
 
         if self.options.data.architecture == DatasetModelChoice.yolo and \
                 self.yolo_interactive_config.intermediate_result.show_results:
+            self._reformat_y_pred(
+                y_pred=self.raw_y_pred,
+                sensitivity=self.yolo_interactive_config.intermediate_result.sensitivity,
+                threashold=self.yolo_interactive_config.intermediate_result.threashold
+            )
             for idx in range(self.yolo_interactive_config.intermediate_result.num_examples):
                 return_data[f"{idx + 1}"] = {
                     'initial_data': {},
@@ -2142,45 +2087,132 @@ class InteractiveCallback:
 
         elif self.options.data.architecture == DatasetModelChoice.yolo:
             box_channel = self.yolo_interactive_config.statistic_data.box_channel
-            sensitivity = self.yolo_interactive_config.statistic_data.sensitivity
-            threashold = self.yolo_interactive_config.statistic_data.threashold
+            name_classes = self.options.data.outputs.get(list(self.options.data.outputs.keys())[0]).classes_names
+            self._reformat_y_pred(
+                y_pred=self.raw_y_pred,
+                sensitivity=self.yolo_interactive_config.statistic_data.sensitivity,
+                threashold=self.yolo_interactive_config.statistic_data.threashold
+            )
+            object_TT = 0
+            object_TF = 0
+            object_FT = 0
 
-            cm, cm_percent = self._get_confusion_matrix(
-                np.argmax(self.y_true.get("val").get(f'{out}'), axis=-1) if encoding == LayerEncodingChoice.ohe
-                else self.y_true.get("val").get(f'{out}'),
-                np.argmax(self.y_pred.get(f'{out}'), axis=-1),
-                get_percent=True
+            line_names = []
+            class_accuracy_hist = {}
+            class_loss_hist = {}
+            class_coord_accuracy = {}
+            for class_name in name_classes:
+                line_names.append(class_name)
+                class_accuracy_hist[class_name] = []
+                class_loss_hist[class_name] = []
+                class_coord_accuracy[class_name] = []
+            line_names.append('empty')
+
+            class_matrix = np.zeros((len(line_names), len(line_names)))
+            for i in range(len(self.y_pred[box_channel])):
+                example_stat = CreateArray().get_yolo_example_statistic(
+                    true_bb=self.y_true.get(box_channel)[i],
+                    pred_bb=self.y_pred.get(box_channel)[i],
+                    name_classes=name_classes,
+                    sensitivity=self.yolo_interactive_config.statistic_data.sensitivity
+                )
+                object_FT += len(example_stat['recognize']['empty'])
+                object_TF += len(example_stat['recognize']['unrecognize'])
+                for class_name in line_names:
+                    if class_name != 'empty':
+                        object_TT += len(example_stat['recognize'][class_name])
+                    for item in example_stat['recognize'][class_name]:
+                        class_matrix[line_names.index(class_name)][line_names.index(item['pred_class'])] += 1
+                        if class_name != 'empty':
+                            if item['class_result']:
+                                class_accuracy_hist[class_name].append(item['class_conf'])
+                                class_coord_accuracy[class_name].append(item['overlap'])
+                            else:
+                                class_loss_hist[class_name].append(item['class_conf'])
+                for item in example_stat['recognize']['unrecognize']:
+                    class_matrix[line_names.index(item['class_name'])][-1] += 1
+
+            for class_name in name_classes:
+                class_accuracy_hist[class_name] = np.round(np.mean(class_accuracy_hist[class_name])*100, 2).item() if \
+                    class_accuracy_hist[class_name] else 0.
+                class_coord_accuracy[class_name] = np.round(np.mean(class_coord_accuracy[class_name])*100, 2).item() if \
+                    class_coord_accuracy[class_name] else 0.
+                class_loss_hist[class_name] = np.round(np.mean(class_loss_hist[class_name])*100, 2).item() if class_loss_hist[
+                    class_name] else 0.
+
+            object_matrix = [[object_TT, object_TF], [object_FT, 0]]
+            class_matrix_percent = []
+            for i in class_matrix:
+                class_matrix_percent.append(i * 100 / np.sum(i) if np.sum(i) else np.zeros_like(i))
+            class_matrix_percent = np.round(class_matrix_percent, 2).tolist()
+            class_matrix = class_matrix.astype('int').tolist()
+
+            return_data.append(
+                self._fill_heatmap_front_structure(
+                    _id=1,
+                    _type="heatmap",
+                    graph_name=f"Бокс-канал «{box_channel}» - Матрица неточностей определения классов",
+                    short_name=f"{box_channel} - Матрица классов",
+                    x_label="Предсказание",
+                    y_label="Истинное значение",
+                    labels=name_classes,
+                    data_array=class_matrix,
+                    data_percent_array=class_matrix_percent,
+                )
             )
             return_data.append(
                 self._fill_heatmap_front_structure(
-                    _id=_id,
+                    _id=2,
                     _type="heatmap",
-                    graph_name=f"Выходной слой «{out}» - Confusion matrix",
-                    short_name=f"{out} - Confusion matrix",
+                    graph_name=f"Бокс-канал «{box_channel}» - Матрица неточностей определения объектов",
+                    short_name=f"{box_channel} - Матрица объектов",
                     x_label="Предсказание",
                     y_label="Истинное значение",
-                    labels=self.options.data.outputs.get(out).classes_names,
-                    data_array=cm,
-                    data_percent_array=cm_percent,
+                    labels=['Объект', 'Отсутствие'],
+                    data_array=object_matrix,
+                    data_percent_array=None,
                 )
             )
-            _id += 1
-            # elif task == LayerOutputTypeChoice.ObjectDetection:
-            #     # accuracy for classes? smth else?
-            x_mae, y_mae = self._get_distribution_histogram(np.abs(deviation), bins=25, categorical=False)
             return_data.append(
                 self._fill_graph_front_structure(
-                    _id=_id,
-                    _type='bar',
-                    graph_name=f'Выходной слой «{out}» - Распределение абсолютной ошибки',
-                    short_name=f"{out} - Распределение MAE",
-                    x_label="Абсолютная ошибка",
-                    y_label="Значение",
-                    plot_data=[self._fill_graph_plot_data(x=x_mae, y=y_mae)],
+                    _id=3,
+                    _type='histogram',
+                    graph_name=f'Бокс-канал «{box_channel}» - Средняя точность определеня  классов',
+                    short_name=f"{box_channel} - точность классов",
+                    x_label="Имя класса",
+                    y_label="Средняя точность, %",
+                    plot_data=[
+                        self._fill_graph_plot_data(x=name_classes, y=[class_accuracy_hist[i] for i in name_classes])
+                    ],
                 )
             )
-            pass
-
+            return_data.append(
+                self._fill_graph_front_structure(
+                    _id=4,
+                    _type='histogram',
+                    graph_name=f'Бокс-канал «{box_channel}» - Средняя ошибка определеня  классов',
+                    short_name=f"{box_channel} - ошибка классов",
+                    x_label="Имя класса",
+                    y_label="Средняя ошибка, %",
+                    plot_data=[
+                        self._fill_graph_plot_data(x=name_classes, y=[class_loss_hist[i] for i in name_classes])
+                    ],
+                )
+            )
+            return_data.append(
+                self._fill_graph_front_structure(
+                    _id=5,
+                    _type='histogram',
+                    graph_name=f'Бокс-канал «{box_channel}» - '
+                               f'Средняя точность определения  координат объекта класса (MeanIoU)',
+                    short_name=f"{box_channel} - координаты классов",
+                    x_label="Имя класса",
+                    y_label="Средняя точность, %",
+                    plot_data=[
+                        self._fill_graph_plot_data(x=name_classes, y=[class_coord_accuracy[i] for i in name_classes])
+                    ],
+                )
+            )
 
         else:
             pass
