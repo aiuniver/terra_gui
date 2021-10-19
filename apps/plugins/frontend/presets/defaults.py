@@ -400,7 +400,7 @@ LayerDataframeDefaults = [
     SourcesPaths,
 ]
 
-ArchitectureMain = {
+ArchitectureGroupMain = {
     "fields": [
         {
             "type": "auto_complete",
@@ -418,7 +418,7 @@ ArchitectureMain = {
     ],
 }
 
-ArchitectureFit = {
+ArchitectureGroupFit = {
     "fields": [
         {
             "type": "number",
@@ -444,7 +444,7 @@ ArchitectureFit = {
     ],
 }
 
-ArchitectureOptimizer = {
+ArchitectureGroupOptimizer = {
     "name": "Параметры оптимизатора",
     "collapsable": True,
     "collapsed": True,
@@ -650,11 +650,11 @@ ArchitectureOptimizer = {
     },
 }
 
-Architecture = {
+Architectures = {
     "Basic": {
-        "main": ArchitectureMain,
-        "fit": ArchitectureFit,
-        "optimizer": ArchitectureOptimizer,
+        "main": ArchitectureGroupMain,
+        "fit": ArchitectureGroupFit,
+        "optimizer": ArchitectureGroupOptimizer,
         "outputs": {
             "name": "Параметры выходных слоев",
             "collapsable": True,
@@ -726,13 +726,12 @@ Architecture = {
                 #     "value": False,
                 # },
             ],
-            
         },
     },
     "Yolo": {
-        "main": ArchitectureMain,
-        "fit": ArchitectureFit,
-        "optimizer": ArchitectureOptimizer,
+        "main": ArchitectureGroupMain,
+        "fit": ArchitectureGroupFit,
+        "optimizer": ArchitectureGroupOptimizer,
     },
 }
 
@@ -1736,9 +1735,7 @@ Defaults = {
         ],
         "layers_types": {},
     },
-    "training": {
-        "base": Architecture.get() # !!!
-    }
+    "training": {"base": Architectures.get(ArchitectureChoice.Basic)},
 }
 
 
