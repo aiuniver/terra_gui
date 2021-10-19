@@ -2,7 +2,7 @@
   <nav class="nav">
     <ul class="nav__menu">
       <template v-for="(route, i) in items">
-        <li v-if="route.path !== '/profile'" :class="['nav__menu--item', { active: $route.path === route.path }]" :key="i" @click="nav(route)">
+        <li :class="['nav__menu--item', { active: $route.path === route.path }]" :key="i" @click="nav(route)">
           {{ route.title }}
         </li>
       </template>
@@ -69,16 +69,9 @@ export default {
       }
     },
     async nav({ path, access, text }) {
-      // console.log(path, access, text);
-      // let deploy_keys = Object.keys(this.deploy)
-      // this.deploy[deploy_keys[0]].data
       if (!this.project.dataset && access === false) {
         this.message({ text }, true);
-      }
-        // else if(path == "/deploy" && access === false && this.deploy[deploy_keys[0]].data == null){
-      //   this.messageDeploy(true);
-      // }
-      else {
+      } else {
         if (this.$route.path !== path) {
           this.$router.push(path);
         }
