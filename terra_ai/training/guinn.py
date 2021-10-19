@@ -32,7 +32,7 @@ from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.customcallback import InteractiveCallback
-from terra_ai.training.customlosses import DiceCoef, RecallPercent, UnscaledMAE
+from terra_ai.training.customlosses import DiceCoef, RecallPercent, UnscaledMAE, BalancedRecall
 from terra_ai.training.yolo_utils import create_yolo, CustomModelYolo, compute_loss, get_mAP, detect_image
 from terra_ai.exceptions import training as exceptions, terra_exception
 
@@ -89,6 +89,8 @@ class GUINN:
                 output.append(DiceCoef())
             elif metric == MetricChoice.RecallPercent:
                 output.append(RecallPercent())
+            elif metric == MetricChoice.BalancedRecall:
+                output.append(BalancedRecall())
             elif metric == MetricChoice.UnscaledMAE:
                 output.append(UnscaledMAE())
             else:
@@ -776,9 +778,8 @@ class FitCallback(keras.callbacks.Callback):
         deploy_predict = self._get_predict()
         deploy_presets_data = self._deploy_predict(deploy_predict)
         if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.TextSegmentation:
-            tags_map = deploy_presets_data.get("color_map")
-            interactive.deploy_presets_data = deploy_presets_data.get("data")
-            cascade_data = {"tags_map": tags_map}
+            interactive.deploy_presets_data = deploy_presets_data
+            cascade_data = {"tags_map": deploy_presets_data.get("color_map")}
         elif list(self.dataset.data.inputs.values())[0].task == LayerInputTypeChoice.Dataframe:
             columns = []
             predict_column = ""

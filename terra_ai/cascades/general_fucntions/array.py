@@ -1,4 +1,6 @@
 import tensorflow
+import joblib
+import os
 
 
 def change_type(type):
@@ -16,9 +18,17 @@ def change_size(shape: tuple):
     return fun
 
 
-def min_max_scale(max_scale, min_scale):
-    diff = max_scale - min_scale
+def min_max_scale(dataset_path, key):
+    preprocessing = joblib.load(
+        os.path.join(
+            dataset_path, 'preprocessing', key.split('_')[0], f'{key}.gz'
+        )
+    )
 
-    fun = lambda img: (img - img.min()) / (img.max() - img.min()) * diff + min_scale
+    def fun(x):
+        orig_shape = x.shape
+        x = preprocessing.transform(x.reshape(-1, 1))
+        x = x.reshape(orig_shape).astype('float32')
+        return x
 
     return fun

@@ -146,11 +146,6 @@ class LayerEncodingChoice(str, Enum):
     multi = "multi"
 
 
-class DatasetModelChoice(str, Enum):
-    basic = "Basic"
-    yolo = "Yolo"
-
-
 class DatasetGroupChoice(str, Enum):
     keras = "keras"
     terra = "terra"

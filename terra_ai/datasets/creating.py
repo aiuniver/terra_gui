@@ -4,11 +4,12 @@ from terra_ai.datasets.data import DataType, InstructionsData, DatasetInstructio
 from terra_ai.datasets.utils import PATH_TYPE_LIST
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preprocessing import CreatePreprocessing
+from terra_ai.data.training.extra import ArchitectureChoice
 from terra_ai.data.datasets.creation import CreationData, CreationInputsList, CreationOutputsList
 from terra_ai.data.datasets.dataset import DatasetData, DatasetInputsData, DatasetOutputsData, DatasetPathsData
 from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice, \
     LayerPrepareMethodChoice, LayerScalerImageChoice, ColumnProcessingTypeChoice, \
-    LayerTypeProcessingClassificationChoice, DatasetModelChoice, LayerEncodingChoice
+    LayerTypeProcessingClassificationChoice, LayerEncodingChoice
 from terra_ai.settings import DATASET_EXT, DATASET_CONFIG
 
 import psutil
@@ -525,10 +526,9 @@ class CreateDataset(object):
                 if self.preprocessing.preprocessing.get(key) and \
                         self.preprocessing.preprocessing.get(key).get(col_name):
                     prep = self.preprocessing.preprocessing.get(key).get(col_name)
-
-                if creation_data.outputs.get(key).type in PATH_TYPE_LIST or \
+                if decamelize(creation_data.outputs.get(key).type) in PATH_TYPE_LIST or \
                         creation_data.columns_processing.get(str(key)) is not None and \
-                        creation_data.columns_processing.get(str(key)).type in PATH_TYPE_LIST:
+                        decamelize(creation_data.columns_processing.get(str(key)).type) in PATH_TYPE_LIST:
                     data_to_pass = os.path.join(self.paths.basepath, data.instructions[0])
                 elif 'trend' in data.parameters.keys():
                     if data.parameters['trend']:
@@ -538,7 +538,6 @@ class CreateDataset(object):
                                                                                    data.parameters['depth']]
                 else:
                     data_to_pass = data.instructions[0]
-
                 arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(data_to_pass, **data.parameters,
                                                                                    **{'preprocess': prep})
 
@@ -832,6 +831,49 @@ class CreateDataset(object):
         for tag in creation_data.tags:
             tags_list.append(tag.native())
 
+        # Выбор архитектуры
+        inp_tasks = []
+        out_tasks = []
+        for key, val in self.inputs.items():
+            if val['task'] == LayerInputTypeChoice.Dataframe:
+                tmp = []
+                for value in self.columns[key].values():
+                    tmp.append(value['task'])
+                unique_vals = list(set(tmp))
+                if len(unique_vals) == 1 and unique_vals[0] in LayerInputTypeChoice.__dict__.keys() and unique_vals[0]\
+                        in [LayerInputTypeChoice.Image, LayerInputTypeChoice.Text,
+                            LayerInputTypeChoice.Audio, LayerInputTypeChoice.Video]:
+                    inp_tasks.append(unique_vals[0])
+                else:
+                    inp_tasks.append(val['task'])
+            else:
+                inp_tasks.append(val['task'])
+        for key, val in self.outputs.items():
+            if val['task'] == LayerOutputTypeChoice.Dataframe:
+                tmp = []
+                for value in self.columns[key].values():
+                    tmp.append(value['task'])
+                unique_vals = list(set(tmp))
+                if len(unique_vals) == 1 and unique_vals[0] in LayerOutputTypeChoice.__dict__.keys():
+                    out_tasks.append(unique_vals[0])
+                else:
+                    out_tasks.append(val['task'])
+            else:
+                out_tasks.append(val['task'])
+
+        inp_task_name = list(set(inp_tasks))[0] if len(set(inp_tasks)) == 1 else LayerInputTypeChoice.Dataframe
+        out_task_name = list(set(out_tasks))[0] if len(set(out_tasks)) == 1 else LayerOutputTypeChoice.Dataframe
+
+        if inp_task_name + out_task_name in ArchitectureChoice.__dict__.keys():
+            architecture = ArchitectureChoice.__dict__[inp_task_name + out_task_name]
+        elif out_task_name in ArchitectureChoice.__dict__.keys():
+            architecture = ArchitectureChoice.__dict__[out_task_name]
+        elif out_task_name == LayerOutputTypeChoice.ObjectDetection:
+            architecture = ArchitectureChoice.__dict__[creation_data.outputs.get(2).parameters.model.title() +
+                                                       creation_data.outputs.get(2).parameters.yolo.title()]
+        else:
+            architecture = ArchitectureChoice.Basic
+
         data = {'name': creation_data.name,
                 'alias': creation_data.alias,
                 'group': DatasetGroupChoice.custom,
@@ -840,8 +882,7 @@ class CreateDataset(object):
                 'user_tags': creation_data.tags,
                 # 'language': '',  # зачем?...
                 'date': datetime.now().astimezone(timezone("Europe/Moscow")).isoformat(),
-                'architecture': DatasetModelChoice.basic if
-                creation_data.outputs[0].type != LayerOutputTypeChoice.ObjectDetection else DatasetModelChoice.yolo,
+                'architecture': architecture,
                 'size': {'value': size_bytes}
                 }
 

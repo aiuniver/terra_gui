@@ -13,12 +13,15 @@
       </tr>
       <tr v-for="({ preset, label }, index) of data" :key="'row_' + index">
         <td class="table__td-reload">
-          <button class="td-reload__btn-reload" @click="ReloadRow">
+          <button class="td-reload__btn-reload" @click="ReloadRow(index)">
             <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
           </button>
         </td>
         <td class="table__result-data">{{ label }}</td>
-        <td v-for="(data, i) of preset" :key="'data_' + index + i">{{ data }}</td>
+        <td v-for="(data, i) of preset" :key="'data_' + index + i">
+          <TableText v-bind="{value: data}" :style="{width: '100%'}"/>
+<!--          {{ data }}-->
+        </td>
         <td class="table__result-data">{{ label }}</td>
       </tr>
     </table>
@@ -28,6 +31,9 @@
 <script>
 export default {
   name: 'Table',
+  components: {
+    TableText: () => import('../training/main/prediction/components/TableText')
+  },
   props: {
     data: Array,
     extra: Object,
@@ -38,14 +44,14 @@ export default {
     },
   },
   methods: {
-    ReloadRow() {
-      console.log('RELOAD_ROW');
+    ReloadRow(index) {
+      this.$emit('reload', [index.toString()]);
     },
     ReloadAll() {
-      this.$emit('ReloadAll');
+      this.$emit('reloadAll');
     },
   },
-  mounred() {
+  mounted() {
     console.log(this.data);
     console.log(this.extra);
   },
