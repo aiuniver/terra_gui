@@ -14,19 +14,6 @@ from terra_ai.exceptions.deploy import MethodNotImplementedException
 from terra_ai.training.guinn import interactive
 
 
-class BaseCollectionDict(Dict):
-    def try_init(self):
-        self.reload()
-
-    def reload(self):
-        source = interactive.deploy_presets_data
-        if not source or not isinstance(source, dict):
-            return
-
-        self["columns"] = source.get("columns")
-        self["predict_column"] = source.get("predict_column")
-
-
 class BaseCollectionList(List):
     _path: Optional[Path]
 
