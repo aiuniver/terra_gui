@@ -18,17 +18,15 @@
       </div>
       <div class="modal-body">
         <div class="modal-body__box">
-          <t-field :label="'Название проекта'">
-            <t-input-new
-              placeholder="Введите название проекта"
-              v-model="newProject.headline"
-              :style="{ width: '100%'}"
-            />
-          </t-field>
+          <p style="display:flex; justify-content:space-between; color:#A7BED3; margin-bottom:10px; font-size:12px;"><span>Название проекта*</span><span>{{ newProject.headline.length }}/50</span></p>
+          <DInputText placeholder="Введите название проекта" v-model="newProject.headline" />
         </div>  
-        <div class="modal-body__box flex">
-          <t-button class="mr-4" @click.native="$emit('close')" cancel :disabled="loading">Отмена</t-button>
-          <t-button @click.native="$emit('edit', newProject), $emit('close')" :loading="loading">Редактировать</t-button>
+        <div class="modal-body__box">
+         <DUpload @uploadFile="uploadFile" @removeFile="newProject.image = ''" :behindFile="newProject.image" />
+        </div> 
+        <div class="modal-body__box modal-body__box--flex modal-body__box--flex-center">
+          <DButton style="width:30%" @click="$emit('close')">Отмена</DButton>
+          <DButton style="width:70%" @click="$emit('edit', newProject), $emit('close')" :disabled="loading" color="primary">Редактировать</DButton>
         </div>  
       </div>
     </div>
@@ -36,9 +34,17 @@
 </template>
 
 <script>
+import DButton from "@/components/global/design/forms/components/DButton"
+import DUpload from "@/components/global/design/forms/components/DUpload"
+import DInputText from "@/components/global/design/forms/components/DInputText"
 export default {
   name: 'NewModalEditProject',
   props: ['dialog', 'loading', 'project'],
+  components:{
+    DButton,
+    DInputText,
+    DUpload
+  },
   data: () => ({
     newProject: {}
   }),
@@ -49,6 +55,11 @@ export default {
   },
   created(){
     this.newProject = JSON.parse(JSON.stringify(this.project))
+  },
+  methods:{
+    uploadFile({ file }){
+      this.newProject.image = file
+    }
   }
 };
 </script>
@@ -80,16 +91,33 @@ export default {
   }
 
   &-content{
-    width: 320px;
+    width: 335px;
     position: absolute;
-    top: 50%;
+    top: 40px;
     left: 50%;
-    transform: translate(-50%, -50%);
-    cursor: pointer;
+    transform: translateX(-50%);
   }
+
+  &-header{
+    font-family: "Open Sans";
+    font-style: normal;
+    font-weight: 600;
+    font-size: 16px;
+    color: #F2F5FA;
+  }
+
   &-body{
+    margin-top: 40px;
     &__box{
       margin-top: 20px;
+
+      &--flex{
+        display: flex;
+      }
+      &--flex-center{
+        justify-content: center;
+        align-items: center;
+      }
     }
   }
 }
