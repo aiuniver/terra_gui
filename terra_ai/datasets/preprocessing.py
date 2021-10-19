@@ -102,7 +102,6 @@ class CreatePreprocessing(object):
             elif options['scaler'] == 'terra_image_scaler':
                 scaler = TerraImageScaler(shape=(options['height'], options['width']),
                                           min_max=(options['min_scaler'], options['max_scaler']))
-            print(options['cols_names'], scaler)
         if not options['put'] in self.preprocessing.keys():
             self.preprocessing[options['put']] = {}
         self.preprocessing[options['put']].update([(options['cols_names'], scaler)])
