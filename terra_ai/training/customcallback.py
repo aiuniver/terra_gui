@@ -1646,7 +1646,7 @@ class InteractiveCallback:
                     )
                 )
             if loss_graph_config.show == LossGraphShowChoice.classes and \
-                    self.class_graphics.get(str(loss_graph_config.output_idx)):
+                    self.class_graphics.get(loss_graph_config.output_idx):
                 data_return.append(
                     self._fill_graph_front_structure(
                         _id=loss_graph_config.id,
@@ -1731,7 +1731,7 @@ class InteractiveCallback:
                     )
                 )
             if metric_graph_config.show == MetricGraphShowChoice.classes and \
-                    self.class_graphics.get(str(metric_graph_config.output_idx)):
+                    self.class_graphics.get(metric_graph_config.output_idx):
                 data_return.append(
                     self._fill_graph_front_structure(
                         _id=metric_graph_config.id,
@@ -1752,7 +1752,6 @@ class InteractiveCallback:
                         ],
                     )
                 )
-
         return data_return
 
     def _get_intermediate_result_request(self) -> dict:
