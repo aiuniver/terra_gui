@@ -1,20 +1,17 @@
 <template>
   <div class="d-upload">
-
     <div class="d-upload-label mb-3">
       <p>{{ label }}</p>
     </div>
-
     <div v-show="Object.keys(file).length === 0 && !behindFile.length"  class="d-upload-container" ref="d-upload-container" :style="{border: `1px solid ${error ? '#CA5035' : '#65B9F4'}`}">
-      
         <div v-for="line in 4" :key="'line-' + line" class="d-upload-container-line" ></div>
         <div class="d-upload-error" v-if="error.length">
           <p>{{ error }}</p>
         </div>
-        <input @change="onInputFileChange" id="d-file-input" ref="d-file-input" type="file">
+        <input v-show="false" ref="file" type="file" @change="onInputFileChange">
         <label for="d-file-input">asd</label>
         <p class="d-upload-text mb-5">Загрузите файл простым переносом или по кнопке ниже</p>
-        <DButton style="width:100%" color="secondary" direction="left">Загрузить файл</DButton>
+        <DButton style="width:100%" color="secondary" direction="left" @click="$refs.file.click()">Загрузить файл</DButton>
     </div>
 
     <div class="d-upload-container-image" v-show="Object.keys(file).length || behindFile.length">
@@ -70,12 +67,10 @@ export default {
       if (file.length  === 0) return true
       const types = ['jpeg', 'png', 'jpg']
       const type = file[0].type.split('/')[1]
-      
       if(!types.includes(type)){
         this.error = "Неверный формат файла"
         return true
       } 
-      
       return false
     },
     initUpload (file) {
@@ -89,10 +84,8 @@ export default {
     readerImage(file){
       const reader = new FileReader();
       const image = document.querySelector('.d-upload-image')
-
       reader.onload = function(e) { image.src =  e.target.result }
       reader.readAsDataURL(file[0]);
-
       this.uploading = true
       this.$emit('uploadFile', { file: file[0].name })
     }
@@ -109,13 +102,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-#d-file-input{
-  width: 0.1px;
-  height: 0.1px;
-  opacity: 0;
-  position: absolute;
-  z-index: -10;
-}
 .d-upload{
   &-error{
     position: absolute;
