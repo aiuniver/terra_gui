@@ -104,6 +104,9 @@
       </div>
     </scrollbar>
     <div class="params__footer">
+      <div v-if="stopLearning" class="params__overlay">
+        <LoadSpiner :text="'Остановка...'" />
+      </div>
       <div
         v-for="({ title, visible }, key) of button"
         :key="key"
@@ -111,8 +114,8 @@
         :class="{ params__save: key === 'clear' }"
       >
         <t-button v-if="key !== 'save'" :disabled="!visible || stopLearning" @click="btnEvent(key)">
-          <load-spiner class="btn-spiner" v-if="stopLearning" text="" size="25px"/>
-          {{ stopLearning ? '' : title }}
+          <!-- <load-spiner class="btn-spiner" v-if="stopLearning" text="" size="25px" /> -->
+          {{ title }}
         </t-button>
       </div>
     </div>
@@ -134,7 +137,7 @@ export default {
     optimizerValue: '',
     metricData: '',
     debounce: null,
-    stopLearning: false
+    stopLearning: false,
   }),
   computed: {
     ...mapGetters({
@@ -263,7 +266,7 @@ export default {
         const { finished, message, percent } = res.data;
         this.$store.dispatch('messages/setProgressMessage', message);
         this.$store.dispatch('messages/setProgress', percent);
-        this.stopLearning = !this.isLearning
+        this.stopLearning = !this.isLearning;
         if (!finished) {
           this.debounce(true);
         } else {
@@ -354,19 +357,21 @@ export default {
     z-index: 5;
   }
   &__footer {
+    position: relative;
     // width: 100%;
-    padding: 10px 20px;
+    margin: 0 20px;
+    padding: 10px 0;
     display: flex;
     flex-wrap: wrap;
     // flex-direction: column;
-    gap: 5%;
+    gap: 2%;
   }
   &__btn {
-    width: 45%;
+    width: 49%;
     margin: 0 0 10px 0;
   }
   &__save {
-    width: 95%;
+    width: 100%;
     margin: 0 0 10px 0;
   }
   &__items {
@@ -377,7 +382,7 @@ export default {
   }
 }
 
-.btn-spiner{
+.btn-spiner {
   margin-top: 10px;
 }
 
