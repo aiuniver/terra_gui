@@ -14,19 +14,6 @@ from terra_ai.exceptions.deploy import MethodNotImplementedException
 from terra_ai.training.guinn import interactive
 
 
-class BaseCollectionDict(Dict):
-    def try_init(self):
-        self.reload()
-
-    def reload(self):
-        source = interactive.deploy_presets_data
-        if not source or not isinstance(source, dict):
-            return
-
-        self["columns"] = source.get("columns")
-        self["predict_column"] = source.get("predict_column")
-
-
 class BaseCollectionList(List):
     _path: Optional[Path]
 
@@ -173,7 +160,7 @@ class TextTextSegmentation(BaseCollectionList):
         format_path = Path(self._path, "preset", "out")
         os.makedirs(source_path, exist_ok=True)
         os.makedirs(format_path, exist_ok=True)
-        source = interactive.deploy_presets_data
+        source = interactive.deploy_presets_data.get("data", {}) if interactive.deploy_presets_data else {}
         if not source:
             self._reset()
             return

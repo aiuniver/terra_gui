@@ -32,7 +32,7 @@ from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.customcallback import InteractiveCallback
-from terra_ai.training.customlosses import DiceCoef, RecallPercent, UnscaledMAE
+from terra_ai.training.customlosses import DiceCoef, RecallPercent, UnscaledMAE, BalancedRecall
 from terra_ai.training.yolo_utils import create_yolo, CustomModelYolo, compute_loss, get_mAP, detect_image
 from terra_ai.exceptions import training as exceptions, terra_exception
 
@@ -89,6 +89,8 @@ class GUINN:
                 output.append(DiceCoef())
             elif metric == MetricChoice.RecallPercent:
                 output.append(RecallPercent())
+            elif metric == MetricChoice.BalancedRecall:
+                output.append(BalancedRecall())
             elif metric == MetricChoice.UnscaledMAE:
                 output.append(UnscaledMAE())
             elif metric == MetricChoice.mAP50 or metric == MetricChoice.mAP95:
@@ -354,11 +356,11 @@ class GUINN:
 
     def yolo_model_fit(self, params: TrainData, dataset: PrepareDataset, verbose=0, retrain=False) -> None:
 
-        for inp, out, serv in self.dataset.dataset['train'].batch(2).take(30):
+        for inp, out, serv in self.dataset.dataset['train'].batch(2).take(22):
             pass
 
         print(self.model.summary())
-        # self.model.save('C:\PycharmProjects/terra_gui/TerraAI/training/chess_test')
+        self.model.save('C:\PycharmProjects/terra_gui/TerraAI/training/chess_test')
         print('Save model.....')
 
         yolo = create_yolo(self.model, input_size=416, channels=3, training=True,
@@ -412,7 +414,7 @@ class GUINN:
             callbacks=MyCallback(self.dataset, yolo_pred, inp)
         )
         print('Save weights.....')
-        # self.model.save_weights('C:\PycharmProjects/terra_gui/TerraAI/training/chess_test/last.h5')
+        self.model.save_weights('C:\PycharmProjects/terra_gui/TerraAI/training/chess_test/last.h5')
 
 
 class MemoryUsage:
@@ -781,9 +783,12 @@ class FitCallback(keras.callbacks.Callback):
         deploy_predict = self._get_predict()
         deploy_presets_data = self._deploy_predict(deploy_predict)
         if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.TextSegmentation:
-            tags_map = deploy_presets_data.get("color_map")
-            interactive.deploy_presets_data = deploy_presets_data.get("data")
-            cascade_data = {"tags_map": tags_map}
+            cascade_data = {"tags_map": deploy_presets_data.get("color_map")}
+            out_deploy_presets_data = {
+                "data": deploy_presets_data.get("data", {}),
+                "extra": deploy_presets_data.get("color_map")
+            }
+            interactive.deploy_presets_data = out_deploy_presets_data
         elif list(self.dataset.data.inputs.values())[0].task == LayerInputTypeChoice.Dataframe:
             columns = []
             predict_column = ""

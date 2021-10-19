@@ -734,6 +734,8 @@ class CreateArray(object):
             array = y
 
         array = np.array(array)
+        if len(array.shape) == 2:
+            array = array.transpose()
         if array.dtype == 'float64':
             array = array.astype('float32')
 

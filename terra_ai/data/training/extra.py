@@ -47,8 +47,8 @@ class ArchitectureChoice(str, Enum):
     TextSegmentation = "TextSegmentation"
     DataframeClassification = "DataframeClassification"
     DataframeRegression = "DataframeRegression"
-    TimeSeries = "TimeSeries"
-    TimeSeriesTrend = "TimeSeriesTrend"
+    Timeseries = "Timeseries"
+    TimeseriesTrend = "TimeseriesTrend"
     AudioClassification = "AudioClassification"
     VideoClassification = "VideoClassification"
     YoloV3 = "YoloV3"
@@ -122,6 +122,7 @@ class LossChoice(str, Enum):
 class MetricChoice(str, Enum):
     AUC = "AUC"
     Accuracy = "Accuracy"
+    BalancedRecall = "BalancedRecall"
     BinaryAccuracy = "BinaryAccuracy"
     BinaryCrossentropy = "BinaryCrossentropy"
     CategoricalAccuracy = "CategoricalAccuracy"

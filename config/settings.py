@@ -53,6 +53,7 @@ EXTERNAL_APPS = [
 INTERNAL_APPS = [
     "apps.api.apps.APIConfig",
     "apps.media.apps.MediaConfig",
+    "apps.periodic_task.apps.PeriodicTaskConfig",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + EXTERNAL_APPS + INTERNAL_APPS

@@ -18,39 +18,39 @@ export default {
     },
   }),
   mutations: {
-    SET_MODELING(state, value) {
+    SET_MODELING (state, value) {
       state.modeling = { ...value };
     },
-    SET_ERRORS_BLOCKS(state, value) {
+    SET_ERRORS_BLOCKS (state, value) {
       state.errorsBlocks = { ...value }
     },
-    SET_ERRORS_FIELDS(state, value) {
+    SET_ERRORS_FIELDS (state, value) {
       state.errorsFields = { ...value }
     },
-    SET_MODEL(state, value) {
+    SET_MODEL (state, value) {
       state.model = value;
       const { layers } = value;
       state.blocks = prepareBlocks(layers, state.modeling.list);
       state.links = prepareLinks(layers);
     },
-    SET_BLOCKS(state, value) {
+    SET_BLOCKS (state, value) {
       state.blocks = [...value];
     },
-    SET_LINKS(state, value) {
+    SET_LINKS (state, value) {
       state.links = [...value];
     },
-    SET_LIST(state, value) {
+    SET_LIST (state, value) {
       state.list = [...value];
     },
-    SET_SELECT(state, value) {
+    SET_SELECT (state, value) {
       state.select = value;
     },
-    SET_STATUS(state, value) {
+    SET_STATUS (state, value) {
       state.status = { ...state.status, ...value };
     },
   },
   actions: {
-    addBlock({ dispatch, commit, state: { blocks, modeling: { layers_types, list } } }, { type, position }) {
+    addBlock ({ dispatch, commit, state: { blocks, modeling: { layers_types, list } } }, { type, position }) {
       let maxID = Math.max(0, ...blocks.map(o => o.id));
       let block = createBlock(type, maxID + 1, layers_types, list, position);
       if (!block) return;
@@ -59,14 +59,14 @@ export default {
       commit('SET_BLOCKS', blocks);
       dispatch('selectBlock', block)
     },
-    typeBlock({ dispatch, commit, state: { blocks, modeling: { layers_types, list } } }, { type, block }) {
+    typeBlock ({ dispatch, commit, state: { blocks, modeling: { layers_types, list } } }, { type, block }) {
       let newBlock = changeTypeBlock(type, block, layers_types, list);
       if (!newBlock) return;
       // blocks.push(block);
       commit('SET_BLOCKS', blocks);
       dispatch('updateModel');
     },
-    cloneBlock({ dispatch, commit, state: { blocks } }, oldBlock) {
+    cloneBlock ({ dispatch, commit, state: { blocks } }, oldBlock) {
       let maxID = Math.max(0, ...blocks.map(o => o.id));
       const block = cloneBlock(oldBlock, maxID + 1);
       if (!block) return;
@@ -74,21 +74,21 @@ export default {
       commit('SET_BLOCKS', blocks);
       dispatch('updateModel');
     },
-    selectBlock({ commit, state: { blocks } }, block) {
+    selectBlock ({ commit, state: { blocks } }, block) {
       blocks.forEach(item => {
         item.selected = item.id === block.id
       })
       commit('SET_BLOCKS', blocks);
       commit('SET_SELECT', block.id);
     },
-    deselectBlocks({ commit, state: { blocks } }) {
+    deselectBlocks ({ commit, state: { blocks } }) {
       blocks.forEach(item => {
         item.selected = false
       })
       commit('SET_BLOCKS', blocks);
       commit('SET_SELECT', null);
     },
-    removeBlock({ dispatch, commit, state: { blocks } }, block) {
+    removeBlock ({ dispatch, commit, state: { blocks } }, block) {
       if (block.selected) {
         block.selected = false;
       }
@@ -96,20 +96,20 @@ export default {
       commit('SET_BLOCKS', blocks.filter(b => b.id !== block.id));
       dispatch('updateModel');
     },
-    removeLink({ commit, state: { links } }, id) {
+    removeLink ({ commit, state: { links } }, id) {
       console.log(id)
       commit('SET_LINKS', links.filter(value => value.id !== id));
     },
-    removeLinkToBlock({ dispatch, commit, state: { links } }, block) {
+    removeLinkToBlock ({ dispatch, commit, state: { links } }, block) {
       console.log(block)
       commit('SET_LINKS', links.filter(link => (link.originID !== block.id && link.targetID !== block.id)));
       dispatch('updateModel');
     },
 
-    async info({ dispatch }, value) {
+    async info ({ dispatch }, value) {
       return await dispatch('axios', { url: '/modeling/info/', data: value }, { root: true });
     },
-    async load({ commit, dispatch }, { model, reset_dataset }) {
+    async load ({ commit, dispatch }, { model, reset_dataset }) {
       const { data } = await dispatch('axios', {
         url: '/modeling/load/', data: {
           ...model,
@@ -125,21 +125,21 @@ export default {
 
       return data
     },
-    async createModel({ dispatch, commit }, data) {
+    async createModel ({ dispatch, commit }, data) {
       commit('SET_STATUS', { isUpdate: false });
       return await dispatch('axios', { url: '/modeling/create/', data }, { root: true });
     },
-    async getImageModel({ dispatch }, preview) {
+    async getImageModel ({ dispatch }, preview) {
       return await dispatch('axios', {
         url: '/modeling/preview/', data: {
           preview
         }
       }, { root: true });
     },
-    async removeModel({ dispatch }, data) {
+    async removeModel ({ dispatch }, data) {
       return await dispatch('axios', { url: '/modeling/delete/', data }, { root: true });
     },
-    async updateModel({ commit, state: { blocks, links }, dispatch }, block) {
+    async updateModel ({ commit, state: { blocks, links }, dispatch }, block) {
       const semdBlocks = JSON.parse(JSON.stringify(blocks))
       semdBlocks.forEach(block => {
         // if (block.group !== 'input') block.shape.input = null;
@@ -174,10 +174,14 @@ export default {
       }
       return res
     },
-    async getModel({ dispatch }, value) {
+    async getModel ({ dispatch }, value) {
       return await dispatch('axios', { url: '/modeling/get/', data: value }, { root: true });
     },
-    async clearModel({ commit, dispatch }) {
+    resetAll ({ commit },) {
+      commit('SET_ERRORS_BLOCKS', {})
+      return
+    },
+    async clearModel ({ commit, dispatch }) {
       const res = await dispatch('axios', { url: '/modeling/clear/' }, { root: true });
       if (res.success) {
         console.log(res)
@@ -186,7 +190,7 @@ export default {
       }
       return res
     },
-    async validateModel({ commit, dispatch }) {
+    async validateModel ({ commit, dispatch }) {
       const { data } = await dispatch('axios', { url: '/modeling/validate/' }, { root: true });
       if (data) {
         const isValid = !Object.values(data).filter(item => item).length
@@ -198,13 +202,13 @@ export default {
       }
       return data;
     },
-    setBlocks({ commit }, value) {
+    setBlocks ({ commit }, value) {
       commit('SET_BLOCKS', value);
     },
-    setLinks({ commit }, value) {
+    setLinks ({ commit }, value) {
       commit('SET_LINKS', value);
     },
-    setBlock({ commit, state: { blocks } }, value) {
+    setBlock ({ commit, state: { blocks } }, value) {
       const index = blocks.findIndex(item => item.id == value.id);
       blocks[index] = value;
       console.log(blocks);

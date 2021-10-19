@@ -3,7 +3,7 @@ import os
 import re
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Any, Iterable
 
 from django.conf import settings
 from pydantic import validator, DirectoryPath, FilePath
@@ -34,8 +34,7 @@ from terra_ai.data.training.train import (
     ProgressTableList,
 )
 from terra_ai.data.types import confilepath
-from terra_ai.training.guinn import interactive as training_interactive
-
+from terra_ai.training.guinn import interactive as training_interactive, interactive
 
 UNKNOWN_NAME = "NoName"
 DATA_PATH = {
@@ -133,12 +132,24 @@ class TrainingDetailsData(BaseMixinData):
 class DeployDetailsData(BaseMixinData):
     type: Optional[DeployTaskTypeChoice]
     data: Optional[deploy_tasks.BaseCollectionList]
-    extra: Optional[deploy_tasks.BaseCollectionDict]
+    exists: bool
+    extra: Any
 
     def dict(self, **kwargs):
         data = super().dict(**kwargs)
-        data.update({"data": self.data, "extra": self.extra})
+        data.update({"data": self.data, "exists": self.exists, "extra": self.extra_data})
         return data
+
+    @property
+    def exists(self) -> bool:
+        """Проверяет, есть ли данные в data"""
+        return any(self.data) if isinstance(self.data, Iterable) else False
+
+    @property
+    def extra_data(self) -> Optional[Any]:
+        _data = interactive.deploy_presets_data
+        if isinstance(_data, dict):
+            return _data.get("extra")
 
 
 class Project(BaseMixinData):
@@ -233,9 +244,7 @@ class Project(BaseMixinData):
             ),
             path=Path(project_path.deploy),
         )
-        extra = deploy_tasks.BaseCollectionDict()
-
-        self.deploy = DeployDetailsData(**{"type": deploy_type, "data": data, "extra": extra})
+        self.deploy = DeployDetailsData(**{"type": deploy_type, "data": data})
         self.deploy.data.reload(list(range(terra_settings.DEPLOY_PRESET_COUNT)))
         self.deploy.data.try_init()
 
