@@ -17,7 +17,7 @@ scheduler.configure(executors=executors)
 
 if settings.TERRA_AI_SYNC_LOGS:
 
-    @scheduler.scheduled_job("interval", minutes=5)
+    @scheduler.scheduled_job("interval", minutes=1)
     def scheduler_rsync():
         date = settings.TERRA_AI_DATE_START
         source = Path(settings.BASE_DIR, "logs.txt")
