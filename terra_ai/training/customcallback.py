@@ -1454,7 +1454,6 @@ class InteractiveCallback:
         if not self.interactive_config.loss_graphs or not self.log_history.get("epochs"):
             return data_return
         for loss_graph_config in self.interactive_config.loss_graphs:
-            print('loss_graph_config', loss_graph_config)
             if loss_graph_config.show == LossGraphShowChoice.model:
                 if sum(self.log_history.get(f"{loss_graph_config.output_idx}").get("progress_state").get(
                         "loss").get(self.losses.get(f"{loss_graph_config.output_idx}")).get(
@@ -1532,7 +1531,6 @@ class InteractiveCallback:
                         ],
                     )
                 )
-            print('loss_graph_config', data_return)
         return data_return
 
     def _get_metric_graph_data_request(self) -> list:
