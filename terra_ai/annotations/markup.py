@@ -16,7 +16,8 @@ class MarkUp:
     def __init__(self, markup_data: MarkupData):
         self.source = os.path.join(markup_data.annotations_path, 'annotations', 'sources', markup_data.source)
         self.dst_path = os.path.join(markup_data.annotations_path, 'datasets', 'sources')
-        os.makedirs(os.path.join(markup_data.annotations_path, 'annotations', f'{markup_data.alias}.{ANNOT_EXT}'), exist_ok=True)
+        os.makedirs(os.path.join(markup_data.annotations_path, 'annotations', f'{markup_data.alias}.{ANNOT_EXT}'),
+                    exist_ok=True)
         self.path = AnnotationPathsData(
             basepath=Path(markup_data.annotations_path, 'annotations', f'{markup_data.alias}.{ANNOT_EXT}'))
         self.annot_path = self.path.basepath
@@ -29,13 +30,8 @@ class MarkUp:
         self.to_do = markup_data.to_do
         self.until = markup_data.until
 
-        self.make_folders()
-        self.make_none_dataframe()
-        self.make_json(self.make_none_dataframe())
-
-    def make_folders(self):
-        os.makedirs(self.annot_path, exist_ok=True)
         shutil.unpack_archive(self.source, self.raw_path)
+        self.make_json(self.make_none_dataframe())
 
     def make_none_dataframe(self):
         if self.task_type == 'tracker':
@@ -78,9 +74,9 @@ class MarkUp:
             dst_src = os.path.join(self.annot_path, 'Done')
 
             df = pd.read_csv(os.path.join(self.annot_path, 'dataframe.csv'))
-            os.makedirs(os.path.join(self.annot_path, 'Done'))
+            os.makedirs(os.path.join(self.annot_path, 'Done'), exist_ok=True)
             for cl in self.classes_names:
-                os.makedirs(os.path.join(self.annot_path, 'Done', cl))
+                os.makedirs(os.path.join(self.annot_path, 'Done', cl), exist_ok=True)
 
             if os.path.isdir(os.path.join(self.raw_path, sorted(os.listdir(self.raw_path))[0])):
                 for folder in sorted(os.listdir(self.raw_path)):
