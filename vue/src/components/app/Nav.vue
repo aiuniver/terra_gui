@@ -16,8 +16,12 @@ export default {
   computed: {
     ...mapGetters({
       project: 'projects/getProject',
-      deploy: 'deploy/getCards'
+      deploy: 'deploy/getCards',
     }),
+    isTrain() {
+      const state = this.$store.getters['trainings/getStatus'];
+      return ['addtrain', 'training'].includes(state);
+    },
     items() {
       return this.$router.options.routes
         .filter(item => item?.meta?.title)
@@ -55,7 +59,7 @@ export default {
         const data = await this.$Modal.alert({
           title: 'Предупреждение!',
           width: 300,
-          content: "Для перехода на страницу деплоя необходимо обучить модель",
+          content: 'Для перехода на страницу деплоя необходимо обучить модель',
           showClose,
           okText: 'Обучить модель',
         });
@@ -76,6 +80,8 @@ export default {
           this.$router.push(path);
         }
       }
+      this.$store.dispatch('messages/resetProgress');
+      // if (!this.isTrain) this.$store.dispatch('messages/resetProgress');
     },
   },
 };
