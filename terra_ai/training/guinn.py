@@ -776,9 +776,8 @@ class FitCallback(keras.callbacks.Callback):
         deploy_predict = self._get_predict()
         deploy_presets_data = self._deploy_predict(deploy_predict)
         if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.TextSegmentation:
-            tags_map = deploy_presets_data.get("color_map")
-            interactive.deploy_presets_data = deploy_presets_data.get("data")
-            cascade_data = {"tags_map": tags_map}
+            interactive.deploy_presets_data = deploy_presets_data
+            cascade_data = {"tags_map": deploy_presets_data.get("color_map")}
         elif list(self.dataset.data.inputs.values())[0].task == LayerInputTypeChoice.Dataframe:
             columns = []
             predict_column = ""
