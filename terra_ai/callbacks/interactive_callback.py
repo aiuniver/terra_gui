@@ -17,6 +17,7 @@ from sklearn.metrics import confusion_matrix, classification_report
 import numpy as np
 
 from terra_ai import progress
+from terra_ai.callbacks.utils import loss_metric_config, class_counter
 from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice, DatasetGroupChoice, \
     LayerEncodingChoice
 from terra_ai.data.presets.training import Metric
@@ -28,283 +29,6 @@ from terra_ai.training.customlosses import UnscaledMAE
 from terra_ai.utils import camelize, decamelize
 
 __version__ = 0.085
-
-MAX_TS_GRAPH_COUNT = 200
-MAX_HISTOGRAM_BINS = 50
-MAX_INTERMEDIATE_GRAGH_LENTH = 50
-
-
-def class_counter(y_array, classes_names: list, ohe=True):
-    """
-    class_dict = {
-        "class_name": int
-    }
-    """
-    class_dict = {}
-    for cl in classes_names:
-        class_dict[cl] = 0
-    y_array = np.argmax(y_array, axis=-1) if ohe else np.squeeze(y_array)
-    for y in y_array:
-        class_dict[classes_names[y]] += 1
-    return class_dict
-
-
-loss_metric_config = {
-    "loss": {
-        "BinaryCrossentropy": {
-            "log_name": "binary_crossentropy",
-            "mode": "min",
-            "module": "tensorflow.keras.losses",
-        },
-        "CategoricalCrossentropy": {
-            "log_name": "categorical_crossentropy",
-            "mode": "min",
-            "module": "tensorflow.keras.losses"
-        },
-        "CategoricalHinge": {
-            "log_name": "categorical_hinge",
-            "mode": "min",
-            "module": "tensorflow.keras.losses"
-        },
-        'ContrastiveLoss': {
-            "log_name": "contrastive_loss",
-            "mode": "min",
-            "module": "tensorflow_addons.losses"
-        },
-        "CosineSimilarity": {
-            "log_name": "cosine_similarity",
-            "mode": "min",
-            "module": "tensorflow.keras.losses"
-        },  # min if loss, max if metric
-        "Hinge": {
-            "log_name": "hinge",
-            "mode": "min",
-            "module": "tensorflow.keras.losses"
-        },
-        "Huber": {
-            "log_name": "huber",
-            "mode": "min",
-            "module": "tensorflow.keras.losses"
-        },
-        "KLDivergence": {
-            "log_name": "kullback_leibler_divergence",
-            "mode": "min",
-            "module": "tensorflow.keras.losses"
-        },
-        "LogCosh": {
-            "log_name": "logcosh",
-            "mode": "min",
-            "module": "tensorflow.keras.losses"
-        },
-        "MeanAbsoluteError": {
-            "log_name": "mean_absolute_error",
-            "mode": "min",
-            "module": "tensorflow.keras.losses"
-        },
-        "MeanAbsolutePercentageError": {
-            "log_name": "mean_absolute_percentage_error",
-            "mode": "min",
-            "module": "tensorflow.keras.losses"
-        },
-        "MeanSquaredError": {
-            "log_name": "mean_squared_error",
-            "mode": "min",
-            "module": "tensorflow.keras.losses"
-        },
-        "MeanSquaredLogarithmicError": {
-            "log_name": "mean_squared_logarithmic_error",
-            "mode": "min",
-            "module": "tensorflow.keras.losses"
-        },
-        "Poisson": {
-            "log_name": "poisson",
-            "mode": "min",
-            "module": "tensorflow.keras.losses"
-        },
-        "SparseCategoricalCrossentropy": {
-            "log_name": "sparse_categorical_crossentropy",
-            "mode": "min",
-            "module": "tensorflow.keras.losses"
-        },
-        "SquaredHinge": {
-            "log_name": "squared_hinge",
-            "mode": "min",
-            "module": "tensorflow.keras.losses"
-        },
-        "YoloLoss": {
-            "log_name": "yolo_loss",
-            "mode": "min",
-            "module": "terra_ai.training.customlosses"
-        }
-    },
-    "metric": {
-        "AUC": {
-            "log_name": "auc",
-            "mode": "max",
-            "module": "tensorflow.keras.metrics"
-        },
-        "Accuracy": {
-            "log_name": "accuracy",
-            "mode": "max",
-            "module": "tensorflow.keras.metrics"
-        },
-        "BinaryAccuracy": {
-            "log_name": "binary_accuracy",
-            "mode": "max",
-            "module": "tensorflow.keras.metrics"
-        },
-        "BinaryCrossentropy": {
-            "log_name": "binary_crossentropy",
-            "mode": "min",
-            "module": "tensorflow.keras.metrics"
-        },
-        "CategoricalAccuracy": {
-            "log_name": "categorical_accuracy",
-            "mode": "max",
-            "module": "tensorflow.keras.metrics"
-        },
-        "CategoricalCrossentropy": {
-            "log_name": "categorical_crossentropy",
-            "mode": "min",
-            "module": "tensorflow.keras.metrics"
-        },
-        "CategoricalHinge": {
-            "log_name": "categorical_hinge",
-            "mode": "min",
-            "module": "tensorflow.keras.metrics"
-        },
-        "CosineSimilarity": {
-            "log_name": "cosine_similarity",
-            "mode": "max",
-            "module": "tensorflow.keras.metrics"
-        },  # min if loss, max if metric
-        "DiceCoef": {
-            "log_name": "dice_coef",
-            "mode": "max",
-            "module": "terra_ai.training.customlosses"
-        },
-        "FalseNegatives": {
-            "log_name": "false_negatives",
-            "mode": "min",
-            "module": "tensorflow.keras.metrics"
-        },
-        "FalsePositives": {
-            "log_name": "false_positives",
-            "mode": "min",
-            "module": "tensorflow.keras.metrics"
-        },
-        "Hinge": {
-            "log_name": "hinge",
-            "mode": "min",
-            "module": "tensorflow.keras.metrics"
-        },
-        "KLDivergence": {
-            "log_name": "kullback_leibler_divergence",
-            "mode": "min",
-            "module": "tensorflow.keras.metrics"
-        },
-        "LogCoshError": {
-            "log_name": "logcosh",
-            "mode": "min",
-            "module": "tensorflow.keras.metrics"
-        },
-        "MeanAbsoluteError": {
-            "log_name": "mean_absolute_error",
-            "mode": "min",
-            "module": "tensorflow.keras.metrics"
-        },
-        "MeanAbsolutePercentageError": {
-            "log_name": "mean_absolute_percentage_error",
-            "mode": "min",
-            "module": "tensorflow.keras.metrics"
-        },
-        "MeanIoU": {
-            "log_name": "mean_io_u",
-            "mode": "max",
-            "module": "tensorflow.keras.metrics"
-        },
-        "MeanSquaredError": {
-            "log_name": "mean_squared_error",
-            "mode": "min",
-            "module": "tensorflow.keras.metrics"
-        },
-        "MeanSquaredLogarithmicError": {
-            "log_name": "mean_squared_logarithmic_error",
-            "mode": "min",
-            "module": "tensorflow.keras.metrics"
-        },
-        "Poisson": {
-            "log_name": "poisson",
-            "mode": "min",
-            "module": "tensorflow.keras.metrics"
-        },
-        "Precision": {
-            "log_name": "precision",
-            "mode": "max",
-            "module": "tensorflow.keras.metrics"
-        },
-        "Recall": {
-            "log_name": "recall",
-            "mode": "max",
-            "module": "tensorflow.keras.metrics"
-        },
-        "RecallPercent": {
-            "log_name": "recall_percent",
-            "mode": "max",
-            "module": "terra_ai.training.customlosses"
-        },
-        "BalancedRecall": {
-            "log_name": "balanced_recall",
-            "mode": "max",
-            "module": "terra_ai.training.customlosses"
-        },
-        "RootMeanSquaredError": {
-            "log_name": "root_mean_squared_error",
-            "mode": "min",
-            "module": "tensorflow.keras.metrics"
-        },
-        "SparseCategoricalAccuracy": {
-            "log_name": "sparse_categorical_accuracy",
-            "mode": "max",
-            "module": "tensorflow.keras.metrics"
-        },
-        "SparseCategoricalCrossentropy": {
-            "log_name": "sparse_categorical_crossentropy",
-            "mode": "min",
-            "module": "tensorflow.keras.metrics"
-        },
-        "SparseTopKCategoricalAccuracy": {
-            "log_name": "sparse_top_k_categorical_accuracy",
-            "mode": "max",
-            "module": "tensorflow.keras.metrics"
-        },
-        "SquaredHinge": {
-            "log_name": "squared_hinge",
-            "mode": "min",
-            "module": "tensorflow.keras.metrics"
-        },
-        "TopKCategoricalAccuracy": {
-            "log_name": "top_k_categorical_accuracy",
-            "mode": "max",
-            "module": "tensorflow.keras.metrics"
-        },
-        "TrueNegatives": {
-            "log_name": "true_negatives",
-            "mode": "max",
-            "module": "tensorflow.keras.metrics"
-        },
-        "TruePositives": {
-            "log_name": "true_positives",
-            "mode": "max",
-            "module": "tensorflow.keras.metrics"
-        },
-        "UnscaledMAE": {
-            "log_name": "unscaled_mae",
-            "mode": "min",
-            "module": "terra_ai.training.customlosses"
-        },
-    }
-}
 
 
 class InteractiveCallback:
@@ -931,6 +655,7 @@ class InteractiveCallback:
                         }
                         x, y = self._get_distribution_histogram(
                             list(self.options.dataframe.get(data_type)[output_channel]),
+                            bins=25,
                             categorical=False
                         )
                         dataset_balance[f"{out}"]['dense_histogram'][output_channel][data_type] = {
@@ -953,10 +678,10 @@ class InteractiveCallback:
                         if column_task == LayerInputTypeChoice.Text:
                             continue
                         elif column_task == LayerInputTypeChoice.Classification:
-                            x, y = self._get_distribution_histogram(column_data, categorical=True)
+                            x, y = self._get_distribution_histogram(column_data, bins=25, categorical=True)
                             hist_type = "histogram"
                         else:
-                            x, y = self._get_distribution_histogram(column_data, categorical=False)
+                            x, y = self._get_distribution_histogram(column_data, bins=25, categorical=False)
                             hist_type = "bar"
                         dataset_balance[f"{out}"]['histogram'][data_type][column] = {
                             "name": column.split("_", 1)[-1],
@@ -1922,9 +1647,7 @@ class InteractiveCallback:
                             preset_path=self.preset_path,
                             x_array=self.x_val.get(f"{inp}") if self.x_val else None,
                             inverse_x_array=self.inverse_x_val.get(f"{inp}") if self.inverse_x_val else None,
-                            return_mode='callback',
-                            max_lenth=MAX_INTERMEDIATE_GRAGH_LENTH,
-                            templates = [self._fill_graph_plot_data, self._fill_graph_front_structure]
+                            return_mode='callback'
                         )
                         # random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
                         return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
@@ -1993,8 +1716,7 @@ class InteractiveCallback:
                             output_id=out,
                             depth=self.inverse_y_true.get("val").get(f"{out}")[self.example_idx[idx]].shape[-1],
                             show_stat=self.interactive_config.intermediate_result.show_statistic,
-                            templates=[self._fill_graph_plot_data, self._fill_graph_front_structure],
-                            max_lenth=MAX_INTERMEDIATE_GRAGH_LENTH
+                            templates=[self._fill_graph_plot_data, self._fill_graph_front_structure]
                         )
 
                     elif task == LayerOutputTypeChoice.Dataframe:
@@ -2172,7 +1894,7 @@ class InteractiveCallback:
                     )
                     _id += 1
                     deviation = (y_pred - y_true) * 100 / y_true
-                    x_mae, y_mae = self._get_distribution_histogram(np.abs(deviation), categorical=False)
+                    x_mae, y_mae = self._get_distribution_histogram(np.abs(deviation), bins=25, categorical=False)
                     return_data.append(
                         self._fill_graph_front_structure(
                             _id=_id,
@@ -2185,7 +1907,7 @@ class InteractiveCallback:
                         )
                     )
                     _id += 1
-                    x_me, y_me = self._get_distribution_histogram(deviation, categorical=False)
+                    x_me, y_me = self._get_distribution_histogram(deviation, bins=25, categorical=False)
                     return_data.append(
                         self._fill_graph_front_structure(
                             _id=_id,
@@ -2204,8 +1926,7 @@ class InteractiveCallback:
                         for step in range(self.y_true.get("val").get(f'{out}').shape[-1]):
                             y_true = self.inverse_y_true.get("val").get(f"{out}")[:, step, i].astype('float')
                             y_pred = self.inverse_y_pred.get(f"{out}")[:, step, i].astype('float')
-                            x_tr, y_tr = self._get_time_series_graphic(y_true, make_short=True)
-                            x_pr, y_pr = self._get_time_series_graphic(y_pred, make_short=True)
+
                             return_data.append(
                                 self._fill_graph_front_structure(
                                     _id=_id,
@@ -2218,13 +1939,20 @@ class InteractiveCallback:
                                     x_label="Время",
                                     y_label="Значение",
                                     plot_data=[
-                                        self._fill_graph_plot_data(x=x_tr, y=y_tr, label="Истинное значение"),
-                                        self._fill_graph_plot_data(x=x_pr, y=y_pr, label="Предсказанное значение")
+                                        self._fill_graph_plot_data(
+                                            x=np.arange(len(y_true)).astype('int').tolist(),
+                                            y=y_true.tolist(),
+                                            label="Истинное значение"
+                                        ),
+                                        self._fill_graph_plot_data(
+                                            x=np.arange(len(y_true)).astype('int').tolist(),
+                                            y=y_pred.tolist(),
+                                            label="Предсказанное значение"
+                                        )
                                     ],
                                 )
                             )
                             _id += 1
-
                             x_axis, auto_corr_true, auto_corr_pred = self._get_autocorrelation_graphic(
                                 y_true, y_pred, depth=10
                             )
@@ -2248,7 +1976,8 @@ class InteractiveCallback:
                             )
                             _id += 1
                             deviation = (y_pred - y_true) * 100 / y_true
-                            x_mae, y_mae = self._get_distribution_histogram(np.abs(deviation), categorical=False)
+                            x_mae, y_mae = self._get_distribution_histogram(np.abs(deviation), bins=25,
+                                                                            categorical=False)
                             return_data.append(
                                 self._fill_graph_front_structure(
                                     _id=_id,
@@ -2263,7 +1992,7 @@ class InteractiveCallback:
                                 )
                             )
                             _id += 1
-                            x_me, y_me = self._get_distribution_histogram(deviation, categorical=False)
+                            x_me, y_me = self._get_distribution_histogram(deviation, bins=25, categorical=False)
                             return_data.append(
                                 self._fill_graph_front_structure(
                                     _id=_id,
@@ -2567,17 +2296,16 @@ class InteractiveCallback:
                                 data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
                                 y_true = self.options.dataframe.get(data_type)[channel_name].to_list()
                                 if class_type == 'graphic':
-                                    # x_graph_axis = np.arange(len(y_true)).astype('float').tolist()
-                                    x, y = self._get_time_series_graphic(y_true, make_short=True)
-                                    plot_data = [self._fill_graph_plot_data(x=x, y=y)]
+                                    x_graph_axis = np.arange(len(y_true)).astype('float').tolist()
+                                    plot_data = [self._fill_graph_plot_data(x=x_graph_axis, y=y_true)]
                                     graph_name = f'Выход {out} - {data_type_name} выборка - ' \
                                                  f'График канала «{channel_name.split("_", 1)[-1]}»'
                                     short_name = f'{data_type_name} - «{channel_name.split("_", 1)[-1]}»'
                                     x_label = "Время"
                                     y_label = "Величина"
-                                else:
-                                    # if class_type == 'dense_histogram':
-                                    x_hist, y_hist = self._get_distribution_histogram(y_true, categorical=False)
+                                if class_type == 'dense_histogram':
+                                    x_hist, y_hist = self._get_distribution_histogram(y_true, bins=25,
+                                                                                      categorical=False)
                                     plot_data = [self._fill_graph_plot_data(x=x_hist, y=y_hist)]
                                     graph_name = f'Выход {out} - {data_type_name} выборка - ' \
                                                  f'Гистограмма плотности канала «{channel_name.split("_", 1)[-1]}»'
@@ -2697,17 +2425,8 @@ class InteractiveCallback:
         return InteractiveCallback()._get_distribution_histogram(error, bins=bins, categorical=False)
 
     @staticmethod
-    def _get_time_series_graphic(data, make_short=False):
-        if make_short and len(data) > MAX_TS_GRAPH_COUNT:
-            union = int(len(data) // MAX_TS_GRAPH_COUNT)
-            short_data = []
-            for i in range(int(len(data) / union)):
-                short_data.append(
-                    InteractiveCallback()._round_loss_metric(np.mean(data[union*i:union*i+union]).item())
-                )
-            return np.arange(len(short_data)).astype('int').tolist(), np.array(short_data).astype('float').tolist()
-        else:
-            return np.arange(len(data)).astype('int').tolist(), np.array(data).astype('float').tolist()
+    def _get_time_series_graphic(data):
+        return np.arange(len(data)).astype('int').tolist(), np.array(data).astype('float').tolist()
 
     @staticmethod
     def _get_correlation_matrix(data_frame: DataFrame):
@@ -2722,12 +2441,12 @@ class InteractiveCallback:
         return InteractiveCallback().clean_data_series([y_true, y_pred], mode="duo")
 
     @staticmethod
-    def _get_distribution_histogram(data_series, categorical=True):
+    def _get_distribution_histogram(data_series, bins=25, categorical=True):
         if categorical:
             hist_data = pd.Series(data_series).value_counts()
             return hist_data.index.to_list(), hist_data.to_list()
         else:
-            bins = int(len(data_series) / 10) if int(len(data_series) / 10) < MAX_HISTOGRAM_BINS else MAX_HISTOGRAM_BINS
+            bins = int(len(data_series) / 10)
             data_series = InteractiveCallback().clean_data_series([data_series], mode="mono")
             bar_values, x_labels = np.histogram(data_series, bins=bins)
             new_x = []
