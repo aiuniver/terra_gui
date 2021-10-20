@@ -1,6 +1,7 @@
 import re
 import random
 
+from pathlib import Path
 from typing import Any, List
 
 from terra_ai.settings import DEPLOY_PRESET_COUNT
@@ -10,10 +11,12 @@ from . import types
 
 
 class DeployBase:
+    _path: Path = None
     _available: List[Any] = []
     _data: List[Any] = []
 
-    def __init__(self, available: List[Any] = None):
+    def __init__(self, path: Path, available: List[Any] = None):
+        self._path = Path(path)
         self.available = available
 
     @property
@@ -61,7 +64,7 @@ class DeployBase:
         return {
             "type": self.type,
             "exists": self.exists,
-            "data": list(map(lambda item: item.dict() if item else None, self._data)),
+            "data": list(map(lambda item: item.native() if item else None, self._data)),
         }
 
 
@@ -70,7 +73,13 @@ class DeployImageSegmentation(DeployBase):
 
 
 class DeployImageClassification(DeployBase):
-    pass
+    def update(self, index: int):
+        value = random.choice(self.available)
+        self._data[index] = value
+        for item in self._data:
+            if not item:
+                continue
+            print(item.data)
 
 
 class DeployTextSegmentation(DeployBase):
