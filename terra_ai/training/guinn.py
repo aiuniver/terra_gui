@@ -21,7 +21,7 @@ from tensorflow.keras.models import load_model
 from tensorflow.python.framework.errors_impl import ResourceExhaustedError
 
 from terra_ai import progress
-from terra_ai.data.datasets.dataset import DatasetData
+from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice, DatasetGroupChoice
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
 from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, \
@@ -32,10 +32,9 @@ from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.customcallback import InteractiveCallback
-from terra_ai.training.customlosses import DiceCoef
+from terra_ai.training.customlosses import DiceCoef, RecallPercent, UnscaledMAE, BalancedRecall
 from terra_ai.training.yolo_utils import create_yolo, CustomModelYolo, compute_loss, get_mAP, detect_image
 from terra_ai.exceptions import training as exceptions, terra_exception
-
 
 __version__ = 0.02
 
@@ -88,6 +87,14 @@ class GUINN:
                 output.append(getattr(importlib.import_module("tensorflow.keras.metrics"), metric)(num_classes))
             elif metric == MetricChoice.DiceCoef:
                 output.append(DiceCoef())
+            elif metric == MetricChoice.RecallPercent:
+                output.append(RecallPercent())
+            elif metric == MetricChoice.BalancedRecall:
+                output.append(BalancedRecall())
+            elif metric == MetricChoice.UnscaledMAE:
+                output.append(UnscaledMAE())
+            elif metric == MetricChoice.mAP50 or metric == MetricChoice.mAP95:
+                pass
             else:
                 output.append(getattr(importlib.import_module("tensorflow.keras.metrics"), metric)())
         return output
@@ -216,7 +223,6 @@ class GUINN:
         file_path_model: str = os.path.join(
             self.training_path, self.nn_name, f"{model_name}"
         )
-        print(file_path_model)
         self.model.save(file_path_model)
 
     def _kill_last_training(self):
@@ -257,6 +263,7 @@ class GUINN:
         if interactive.get_states().get("status") != "addtrain":
             self._save_params_for_deploy(training_path=model_path, params=training_params)
         self.nn_cleaner(retrain=True if interactive.get_states().get("status") == "training" else False)
+
         self._set_training_params(dataset=dataset, dataset_path=dataset_path, model_path=model_path,
                                   params=training_params, training_path=training_path, initial_config=initial_config)
         self.model = self._set_model(model=gui_model)
@@ -306,7 +313,6 @@ class GUINN:
                            )
         # self.model.load_weight(os.path.join(self.training_path, self.nn_name))
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели выполнена'})
-
         self._set_callbacks(dataset=dataset, dataset_data=dataset_data, batch_size=params.batch,
                             epochs=params.epochs, save_model_path=save_model_path, dataset_path=dataset_path,
                             checkpoint=params.architecture.parameters.checkpoint.native())
@@ -322,6 +328,7 @@ class GUINN:
             n_repeat = 1
         else:
             n_repeat = (self.batch_size // critical_val_size) + 1
+
         try:
             self.history = self.model.fit(
                 self.dataset.dataset.get('train').shuffle(buffer_size).batch(
@@ -347,20 +354,15 @@ class GUINN:
 
     def yolo_model_fit(self, params: TrainData, dataset: PrepareDataset, verbose=0, retrain=False) -> None:
 
-        for inp, out, serv in self.dataset.dataset['train'].batch(2).take(10):
+        for inp, out, serv in self.dataset.dataset['train'].batch(2).take(22):
             pass
-            # print(out)
-            # print(serv)
-        #     # print("inp[1].numpy()[0]", inp['1'].numpy()[0])
-        #     print('shape', inp['1'].numpy()[0].shape)
-        #     print(inp['1'].numpy()[0][-10:, -10:, :])
-        # plt.imshow(inp['1'].numpy()[0])
-        # plt.show()
+
         print(self.model.summary())
         self.model.save('C:\PycharmProjects/terra_gui/TerraAI/training/chess_test')
         print('Save model.....')
+
         yolo = create_yolo(self.model, input_size=416, channels=3, training=True,
-                                classes=self.dataset.data.outputs.get(2).classes_names)
+                           classes=self.dataset.data.outputs.get(2).classes_names)
         print(yolo.summary())
         model_yolo = CustomModelYolo(yolo, self.dataset, self.dataset.data.outputs.get(2).classes_names,
                                      self.epochs, self.batch_size)
@@ -376,7 +378,7 @@ class GUINN:
         #     self._set_callbacks(dataset=dataset, batch_size=params.batch,
         #                         epochs=params.epochs, checkpoint=params.architecture.parameters.checkpoint.native())
 
-        # print(('Начало обучения', '...'))
+        print(('Начало обучения', '...'))
 
         yolo_pred = create_yolo(self.model, input_size=416, channels=3, training=False,
                                 classes=self.dataset.data.outputs.get(2).classes_names)
@@ -386,13 +388,13 @@ class GUINN:
                 self.dataset = dataset
                 self.yolo_pred = yolo_pred
                 self.inp = inp
-            # super().__init__()
+
             def on_epoch_end(self, epoch, logs=None):
                 output_path = 'C:\PycharmProjects/terra_gui/test_example/chess_{}.jpg'.format(epoch)
                 detect_image(Yolo=self.yolo_pred, original_image=inp['1'].numpy()[0], output_path=output_path,
                              CLASSES=self.dataset.data.outputs.get(2).classes_names)
-                # mAP = get_mAP(self.yolo_pred, self.dataset, score_threshold=0.05, iou_threshold=0.50,
-                #               TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names)
+                mAP = get_mAP(self.yolo_pred, self.dataset, score_threshold=0.05, iou_threshold=0.50,
+                              TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names)
 
         if self.dataset.data.use_generator:
             critical_size = len(self.dataset.dataframe.get("val"))
@@ -411,7 +413,6 @@ class GUINN:
         )
         print('Save weights.....')
         self.model.save_weights('C:\PycharmProjects/terra_gui/TerraAI/training/chess_test/last.h5')
-
 
 
 class MemoryUsage:
@@ -698,7 +699,6 @@ class FitCallback(keras.callbacks.Callback):
     def _deploy_predict(self, presets_predict):
         # with open(os.path.join(self.save_model_path, "predict.txt"), "w", encoding="utf-8") as f:
         #     f.write(str(presets_predict[0].tolist()))
-
         result = CreateArray().postprocess_results(array=presets_predict,
                                                    options=self.dataset,
                                                    save_path=os.path.join(self.save_model_path,
@@ -748,9 +748,10 @@ class FitCallback(keras.callbacks.Callback):
             if self.dataset.data.inputs[input_key].task == LayerInputTypeChoice.Dataframe:
                 self._create_form_data_for_dataframe_deploy(deploy_path=deploy_path)
             input_tasks = [LayerInputTypeChoice.Image, LayerInputTypeChoice.Text,
-                           LayerInputTypeChoice.Audio, LayerInputTypeChoice.Video]
+                           LayerInputTypeChoice.Audio, LayerInputTypeChoice.Video,
+                           LayerInputTypeChoice.Dataframe]
             output_tasks = [LayerOutputTypeChoice.Classification, LayerOutputTypeChoice.Segmentation,
-                            LayerOutputTypeChoice.TextSegmentation]
+                            LayerOutputTypeChoice.TextSegmentation, LayerOutputTypeChoice.Regression]
             if self.dataset.data.inputs[input_key].task in input_tasks and (
                     self.dataset.data.outputs[output_key].task in output_tasks):
                 if self.dataset.data.outputs[output_key].task == LayerOutputTypeChoice.TextSegmentation:
@@ -780,19 +781,25 @@ class FitCallback(keras.callbacks.Callback):
         deploy_predict = self._get_predict()
         deploy_presets_data = self._deploy_predict(deploy_predict)
         if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.TextSegmentation:
-            tags_map = deploy_presets_data.get("color_map")
-            interactive.deploy_presets_data = deploy_presets_data.get("data")
-            cascade_data = {"tags_map": tags_map}
-        elif list(self.dataset.data.inputs.values())[0].task == LayerInputTypeChoice.Dataframe:
-            presets = []
-            labels = []
-            for elem in deploy_presets_data:
-                presets.append(elem.get("source"))
-                labels.append(elem.get("data"))
-            interactive.deploy_presets_data = {
-                "preset": presets,
-                "label": labels
+            cascade_data = {"tags_map": deploy_presets_data.get("color_map")}
+            out_deploy_presets_data = {
+                "data": deploy_presets_data.get("data", {}),
+                "extra": deploy_presets_data.get("color_map")
             }
+            interactive.deploy_presets_data = out_deploy_presets_data
+        elif list(self.dataset.data.inputs.values())[0].task == LayerInputTypeChoice.Dataframe:
+            columns = []
+            predict_column = ""
+            for input, input_columns in self.dataset.data.columns.items():
+                for column_name in input_columns.keys():
+                    columns.append(column_name[len(str(input)) + 1:])
+                    if input_columns[column_name].__class__ == DatasetOutputsData:
+                        predict_column = column_name[len(str(input)) + 1:]
+            if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Classification:
+                deploy_presets_data = {"presets": deploy_presets_data}
+            deploy_presets_data["columns"] = columns
+            deploy_presets_data["predict_column"] = predict_column if predict_column else "Предсказанные значения"
+            interactive.deploy_presets_data = deploy_presets_data
         else:
             interactive.deploy_presets_data = deploy_presets_data
         self._create_cascade(**cascade_data)

@@ -1,74 +1,112 @@
 <template>
-<div class="card">
-  <div class="card__content">
-    <div v-if="type == 'ImageClassification'">
-      <div class="card__original" >
-        <ImgCard :imgUrl="source"/>
+  <div class="card">
+    <div class="card__content">
+      <div v-if="type == 'image_classification'">
+        <div class="card__original">
+          <ImgCard :imgUrl="card.source" />
+        </div>
+        <div class="card__result">
+          <TextCard :style="{ width: '224px', height: '80px' }">{{ ClassificationResult }}</TextCard>
+        </div>
       </div>
-      <div class="card__result">
-        <TextCard :style="{ width: '224px' }">{{ imageClassificationText }}</TextCard>
+      <div v-if="type == 'text_classification'">
+        <div class="card__original">
+          <TextCard :style="{ width: '600px', color: '#A7BED3', height: '324px' }">{{ card.source }}</TextCard>
+        </div>
+        <div class="card__result">
+          <TextCard :style="{ width: '600px', height: '80px' }">{{ ClassificationResult}}</TextCard>
+        </div>
+        <div v-if="type == 'audio_classification'">
+          <div class="card__original">
+            <AudioCard :value="card.source" :update="RandId" />
+          </div>
+          <div class="card__result">
+            <TextCard :style="{ width: '600px', height: '80px' }">{{ ClassificationResult }}</TextCard>
+          </div>
+        </div>
+      </div>
+      <div v-if="type == 'text_textsegmentation'">
+        <div class="card__original segmentation__original" :style="{ height: '324px' }">
+          <scrollbar :ops="ops">
+            <TableTextSegmented
+              v-bind="{value: card.format, tags_color: {segmentationLayer}, layer: 'segmentationLayer', block_width: '598px'}"
+              :key="RandId"
+            />
+          </scrollbar>
+        </div>
+        <div class="card__result">
+          <SegmentationTags
+            :style="{ width: '600px', height: '80px' }"
+            :tags="segmentationLayer"
+          />
+        </div>
+      </div>
+      <div v-if="type == 'audio_classification'">
+        <div class="card__original">
+          <AudioCard :value="card.source" :update="RandId" />
+        </div>
+        <div class="card__result">
+          <TextCard :style="{ width: '600px', height: '80px' }">{{ ClassificationResult }}</TextCard>
+        </div>
+      </div>
+
+      <div v-if="type == 'image_segmentation'">
+        <div class="card__original">
+          <ImgCard :imgUrl="card.source" />
+        </div>
+        <div class="card__result">
+          <ImgCard :imgUrl="card.segment" />
+        </div>
+      </div>
+      <div class="card__graphic" v-if="type == 'graphic'">
+        <Plotly :data="card.data" :layout="layout" :display-mode-bar="false"></Plotly>
       </div>
     </div>
-     <div v-if="type == 'TextClassification' || type == 'TextTextSegmentation'">
-      <div class="card__original" >
-        <TextCard :style="{ width: '600px', color: '#A7BED3', height: '324px' }">{{ source }}</TextCard>
-      </div>
-      <div class="card__result">
-        <TextCard  :style="{ width: '600px', height: '80px' }">{{ imageClassificationText }}</TextCard>
-      </div>
-    </div>
-    <div v-if="type == 'ImageSegmentation'">
-      <div class="card__original" >
-        <ImgCard :imgUrl="source"/>
-      </div>
-      <div class="card__result">
-        <ImgCard :imgUrl="segment"/>
-      </div>
-    </div>
-    <div class="card__graphic" v-if="type == 'graphic'">
-       <Plotly :data="data" :layout="layout" :display-mode-bar="false"></Plotly>
-    </div>
-<!--    <div class="card__table" v-if="type == 'table'">-->
-<!--      <Table/>-->
-<!--    </div>-->
+    <div class="card__reload"><button class="btn-reload" @click="ReloadCard"><i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i></button></div>
   </div>
-  <div class="card__reload" v-if="type != 'table'"><button class="btn-reload" @click="ReloadCard"><i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i></button></div>
-</div>
 </template>
 
 <script>
-import ImgCard from "./cards/ImgCard";
-import TextCard from "./cards/TextCard";
-import { Plotly } from "vue-plotly";
-import {mapGetters} from "vuex";
+import ImgCard from './cards/ImgCard';
+import TextCard from './cards/TextCard';
+import AudioCard from './cards/AudioCard';
+import TableTextSegmented from "../training/main/prediction/components/TableTextSegmented";
+import SegmentationTags from "./cards/SegmentationTags";
+import { Plotly } from 'vue-plotly';
+import { mapGetters } from 'vuex';
 export default {
-  name: "IndexCard",
+  name: 'IndexCard',
   components: {
     ImgCard,
     TextCard,
     Plotly,
+    AudioCard,
+    TableTextSegmented,
+    SegmentationTags
   },
-  data: () => ({}),
+  data: () => ({
+    ops: {
+      scrollPanel: {
+        scrollingX: false,
+        scrollingY: true,
+      },
+    },
+  }),
   props: {
-    source: {
-      type: String,
-      default: ""
+    card: {
+      type: Object,
+      default: () => ({}),
     },
-    segment: {
-      type: String,
-      default: ""
-    },
-    data: {
-      type: [Array, Object, String],
-      default: () => ({})
-    },
-    block: String,
     index: [String, Number],
-    type: String,
+    extra: {
+      type: Array,
+      default: () => ([]),
+    }
   },
+
   methods: {
-    ReloadCard(){
-      this.$emit('reload', { id: this.block, indexes: [this.index.toString()]})
+    ReloadCard() {
+      this.$emit('reload', [this.index.toString()]);
     },
   },
   computed: {
@@ -76,61 +114,78 @@ export default {
       graphicData: 'deploy/getGraphicData',
       defaultLayout: 'deploy/getDefaultLayout',
       origTextStyle: 'deploy/getOrigTextStyle',
+      type: 'deploy/getDeployType',
+      RandId: 'deploy/getRandId',
     }),
     layout() {
       const layout = this.defaultLayout;
       if (this.char) {
-        layout.title.text = this.char.title || "";
-        layout.xaxis.title = this.char.xaxis.title || "";
-        layout.yaxis.title = this.char.yaxis.title || "";
+        layout.title.text = this.char.title || '';
+        layout.xaxis.title = this.char.xaxis.title || '';
+        layout.yaxis.title = this.char.yaxis.title || '';
       }
       return layout;
     },
-    imageClassificationText(){
-      let text = this.data;
-      let prepareText = "";
-      text.sort((a, b) => a[1] < b[1] ? 1 : -1);
-      for(let i=0; i<text.length; i++){
-        if(i > 2) break;
+    segmentationLayer(){
+      let layer = {}
+      for(let i in this.extra){
+        if(this.extra[i][0].includes("p")) continue;
+        let tag = this.extra[i][0].slice(1, this.extra[i][0].length-1);
+        layer[tag] = this.extra[i][2];
+      }
+      // console.log(layer);
+      return layer
+    },
+    ClassificationResult() {
+      let text = this.card.data;
+      let prepareText = '';
+      text.sort((a, b) => (a[1] < b[1] ? 1 : -1));
+      for (let i = 0; i < text.length; i++) {
         prepareText = prepareText + `${text[i][0]} - ${text[i][1]}% \n`;
       }
       return prepareText;
     },
   },
-}
+};
 </script>
 
 <style lang="scss" scoped>
-.card__reload{
+.card__reload {
   padding-left: 5px;
 }
-.card{
+.card {
   padding: 15px 15px 15px 0;
   display: flex;
 }
-.card__graphic{
-  background: #242F3D;
-  border: 1px solid #6C7883;
+.card__graphic {
+  background: #242f3d;
+  border: 1px solid #6c7883;
   box-sizing: border-box;
   border-radius: 4px;
 }
-.card__original{
-  background: #242F3D;
+.card__original {
+  background: #242f3d;
 }
-.card__result{
+.card__result {
   padding-top: 6px;
 }
-.btn-reload{
-    width: 32px;
-    height: 32px;
-    i{
-      position: absolute;
-      margin-left: 7px;
-      margin-top: -13px;
-      width: 16px;
-    }
+.btn-reload {
+  width: 32px;
+  height: 32px;
+  i {
+    position: absolute;
+    margin-left: 7px;
+    margin-top: -13px;
+    width: 16px;
   }
-.card__table{
+}
+.card__table {
   width: 100%;
+}
+.segmentation{
+  &__original{
+    border: 1px solid #6c7883;
+    border-radius: 4px;
+  }
 }
 </style>

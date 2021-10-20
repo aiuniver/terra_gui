@@ -17,6 +17,7 @@
           :name="'name'"
           :key="'name-key'"
           :error="err"
+          @focus="err = ''"
           @change="name = $event.value"
         />
         <t-checkbox
@@ -71,36 +72,25 @@ export default {
     },
     async save() {
       if (this.image) {
-        this.err = null;
-
         const res = await this.$store.dispatch('modeling/createModel', {
           name: this.name,
           preview: this.image,
           overwrite: this.overwrite,
         });
-
-        console.log(res);
-
         if (res?.error && res?.error?.general) {
-          await this.$store.dispatch(
-            'messages/setMessage',
-            { error: `Moдель '${this.name}' уже создана` },
-            { root: true }
-          );
+          await this.$store.dispatch('messages/setMessage', { error: `Moдель '${this.name}' уже создана` });
           this.err = `Moдель '${this.name}' уже создана`;
-        } else if (res?.error) {
-          await this.$store.dispatch('messages/setMessage', { error: 'Поле не может быть пустым' }, { root: true });
-          this.err = 'Поле не может быть пустым';
+        } else if (res?.error?.fields) {
+          this.err = res?.error?.fields?.alias;
+          await this.$store.dispatch('messages/setMessage', { error: res?.error?.fields });
+        } else {
+          await this.$store.dispatch('messages/setMessage', { error: res?.error });
         }
         console.log(`this.err ${this.err}`);
 
         if (!this.err) {
           this.dialog = false;
-          await this.$store.dispatch(
-            'messages/setMessage',
-            { message: `Moдель '${this.name}' сохранена` },
-            { root: true }
-          );
+          await this.$store.dispatch('messages/setMessage', { message: `Moдель '${this.name}' сохранена` });
         }
       }
     },

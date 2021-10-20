@@ -3,21 +3,30 @@
     <scrollbar>
       <div class="wrapper">
         <div class="content">
-          <div class="board__data-field" v-for="(block, index) in Cards" :key="'block-'+index">
-            <div v-if="block.data != null">
-              <button class="board__reload-all" @click="ReloadAll(index)">
+          <div class="board__data-field">
+            <div>
+              <button v-if="!isTable" class="board__reload-all" @click="ReloadAll">
                 <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
                 <span>Перезагрузить все</span>
               </button>
               <div class="board__title">Исходные данные / Предсказанные данные</div>
-              <div class="board__data">
-                <IndexCard v-for="(card, i) in block.data" :key="'card-' + i" v-bind="card" :type="block.type" :block="index" :index="i" @reload="ReloadCard"/>
+              <div v-if="!isTable" class="board__data">
+                <IndexCard
+                  v-for="(card, i) in Cards"
+                  :key="'card-' + i"
+                  v-bind="card"
+                  :card="card"
+                  :extra="deploy.extra"
+                  :index="i"
+                  @reload="ReloadCard"
+                />
+              </div>
+              <div v-else class="board__data">
+                <Table v-if="type === 'table_data_regression'" v-bind="deploy" :key='RandId' @reload="ReloadCard" @reloadAll="ReloadAll" />
+                <TableClass v-if="type === 'table_data_classification'" v-bind="deploy" :key='RandId' @reload="ReloadCard" @reloadAll="ReloadAll"/>
               </div>
             </div>
           </div>
-<!--          <div class="board__table">-->
-<!--            <Table @ReloadAll="ReloadAll" />-->
-<!--          </div>-->
         </div>
       </div>
     </scrollbar>
@@ -26,11 +35,12 @@
 
 <script>
 import { mapGetters } from 'vuex';
-import IndexCard from './IndexCard';
-// import Table from './Table';
+
 export default {
   components: {
-    IndexCard,
+    IndexCard: () => import('./IndexCard'),
+    Table: () => import('./Table.vue'),
+    TableClass: () => import('./TableClass.vue')
     // Table,
   },
   data: () => ({}),
@@ -39,30 +49,36 @@ export default {
       dataLoaded: 'deploy/getDataLoaded',
       Cards: 'deploy/getCards',
       height: 'settings/autoHeight',
+      type: 'deploy/getDeployType',
+      deploy: 'deploy/getDeploy',
+      RandId: 'deploy/getRandId',
     }),
+    isTable() {
+      return ['table_data_classification', 'table_data_regression'].includes(this.type);
+    },
   },
-  // created() {
-  //   this.$store.dispatch('projects/get');
-  // },
   methods: {
-    async ReloadCard(data){
+    async ReloadCard(data) {
       await this.$store.dispatch('deploy/ReloadCard', data);
     },
-    async ReloadAll(id) {
-      let indexes = []
-      for(let i = 0; i < this.Cards[id].data.length; i++){
-        indexes.push(i.toString())
+    async ReloadAll() {
+      let indexes = [];
+      for (let i = 0; i < this.Cards.length; i++) {
+        indexes.push(i.toString());
       }
-      await this.$store.dispatch('deploy/ReloadCard', {id, indexes});
+      await this.$store.dispatch('deploy/ReloadCard', indexes);
     },
+  },
+  beforeMount() {
+    console.log(this.Cards);
   },
 };
 </script>
 
 <style lang="scss" scoped>
 .board {
-  flex-shrink: 1;
-  width: 100%;
+  flex: 1 1 auto;
+  overflow: hidden;
   &__data {
     display: flex;
     flex-wrap: wrap;

@@ -8,6 +8,15 @@ from pydantic.color import Color
 
 def make_classification(config, dataset_config, model):
     config['cascades']['model']['model'] = model
+    for _ in list(dataset_config['inputs'].keys())[1:]:
+        config['adjacency_map']['model'].append('INPUT')
+    return config
+
+
+def make_regression(config, dataset_config, model):
+    config['cascades']['model']['model'] = model
+    for _ in list(dataset_config['inputs'].keys())[1:]:
+        config['adjacency_map']['model'].append('INPUT')
     return config
 
 

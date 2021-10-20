@@ -1,13 +1,15 @@
+import colorsys
 import copy
 import string
 
 import matplotlib
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, UnidentifiedImageError, ImageFont, ImageDraw
+from matplotlib import pyplot as plt
 from pandas import DataFrame
 from tensorflow.python.keras.preprocessing import image
 from tensorflow.python.keras.utils.np_utils import to_categorical
 
-from terra_ai.data.training.extra import ExampleChoiceTypeChoice
+from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice, ArchitectureChoice
 from terra_ai.datasets.utils import get_yolo_anchors
 from terra_ai.data.datasets.dataset import DatasetOutputsData, DatasetData
 from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice, \
@@ -383,7 +385,14 @@ class CreateArray(object):
     @staticmethod
     def instructions_object_detection(paths_list: list, **options: dict) -> dict:
 
-        instructions = {'instructions': paths_list,
+        coordinates_list = []
+        for path in paths_list:
+            with open(path, 'r') as coordinates:
+                coordinate = coordinates.read()
+
+            coordinates_list.append(' '.join([coord for coord in coordinate.split('\n') if coord]))
+
+        instructions = {'instructions': coordinates_list,
                         'parameters': options
                         }
 
@@ -454,7 +463,6 @@ class CreateArray(object):
             cap = cv2.VideoCapture(path)
             cap.set(1, slicing[0])
             orig_shape = (int(cap.get(3)), int(cap.get(4)))
-            frames_count = int(cap.get(7))
             frames_number = 0
             save_path = os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
                                      f'{name}_[{slicing[0]}-{slicing[1]}]{ext}')
@@ -463,21 +471,20 @@ class CreateArray(object):
             stop_flag = False
             while not stop_flag:
                 ret, frame = cap.read()
-                frames_number += 1
-                output_movie.write(frame)
-                if options['video_mode'] == 'completely' and options['max_frames'] > frames_count and ret or \
-                        options['video_mode'] == 'length_and_step' and options['length'] > frames_count and ret:
-                    tmp_array.append(frame)
-                if not ret or frames_number > frames_count:
+                if not ret or frames_number == slicing[1] - slicing[0]:  # frames_number > frames_count or
                     stop_flag = True
-            if options['video_mode'] == 'completely' and options['max_frames'] > frames_count or \
-                    options['video_mode'] == 'length_and_step' and options['length'] > frames_count:
+                else:
+                    output_movie.write(frame)
+                    tmp_array.append(frame)
+                    frames_number += 1
+            if options['video_mode'] == 'completely' and options['max_frames'] > frames_number or \
+                    options['video_mode'] == 'length_and_step' and options['length'] > frames_number:
                 fr_to_add, tot_frames = 0, 0
                 if options['video_mode'] == 'completely':
-                    fr_to_add = options['max_frames'] - frames_count
+                    fr_to_add = options['max_frames'] - frames_number
                     tot_frames = options['max_frames']
                 elif options['video_mode'] == 'length_and_step':
-                    fr_to_add = options['length'] - frames_count
+                    fr_to_add = options['length'] - frames_number
                     tot_frames = options['length']
                 frames_to_add = add_frames(video_array=np.array(tmp_array),
                                            fill_mode=options['fill_mode'],
@@ -652,17 +659,17 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_object_detection(paths_list: list, dataset_folder=None, **options: dict) -> dict:
+    def cut_object_detection(bounding_boxes: list, dataset_folder=None, **options: dict) -> dict:
 
-        for elem in paths_list:
-            os.makedirs(os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem))), exist_ok=True)
-            shutil.copyfile(elem, os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
-                                               os.path.basename(elem)))
+        # for elem in paths_list:
+        #     os.makedirs(os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem))), exist_ok=True)
+        #     shutil.copyfile(elem, os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
+        #                                        os.path.basename(elem)))
+        #
+        # paths_list = [os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)), os.path.basename(elem))
+        #               for elem in paths_list]
 
-        paths_list = [os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)), os.path.basename(elem))
-                      for elem in paths_list]
-
-        instructions = {'instructions': paths_list,
+        instructions = {'instructions': bounding_boxes,
                         'parameters': {'yolo': options['yolo'],
                                        'num_classes': options['num_classes'],
                                        'classes_names': options['classes_names'],
@@ -674,7 +681,7 @@ class CreateArray(object):
     @staticmethod
     def create_image(image_path: str, **options) -> dict:
 
-        img = Image.open(image_path)
+        img = load_img(image_path)
         array = np.array(img)
 
         instructions = {'instructions': array,
@@ -726,6 +733,8 @@ class CreateArray(object):
             array = y
 
         array = np.array(array)
+        if len(array.shape) == 2:
+            array = array.transpose()
         if array.dtype == 'float64':
             array = array.astype('float32')
 
@@ -856,12 +865,12 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def create_object_detection(annot_path: str, **options):
+    def create_object_detection(coords: str, **options):
 
         """
         Args:
-            annot_path: str
-                Путь к файлу
+            coords: str
+                Координаты bounding box.
             **options:
                 height: int ######!!!!!!
                     Высота изображения.
@@ -896,12 +905,9 @@ class CreateArray(object):
         # height: int = options['height']
         # width: int = options['width']
 
-        with open(annot_path, 'r') as coordinates:
-            coords = coordinates.read()
         real_boxes = []
-        for coord in coords.split('\n'):
-            if coord:
-                real_boxes.append([literal_eval(num) for num in coord.split(',')])
+        for coord in coords.split(' '):
+            real_boxes.append([literal_eval(num) for num in coord.split(',')])
 
         num_classes: int = options['num_classes']
         zero_boxes_flag: bool = False
@@ -1210,212 +1216,371 @@ class CreateArray(object):
         return y_true
 
     @staticmethod
+    def get_yolo_y_true(options):
+        y_true = {}
+        bb = []
+        for index in range(len(options.dataset['val'])):
+            coord = options.dataframe.get('val').iloc[index, 1].split(' ')
+            bbox_data_gt = np.array([list(map(int, box.split(','))) for box in coord])
+            bboxes_gt, classes_gt = bbox_data_gt[:, :4], bbox_data_gt[:, 4]
+            classes_gt = to_categorical(
+                classes_gt, num_classes=len(options.data.outputs.get(2).classes_names)
+            )
+            bboxes_gt = np.concatenate(
+                [bboxes_gt[:, 1:2], bboxes_gt[:, 0:1], bboxes_gt[:, 3:4], bboxes_gt[:, 2:3]], axis=-1)
+            conf_gt = np.expand_dims(np.ones(len(bboxes_gt)), axis=-1)
+            _bb = np.concatenate([bboxes_gt, conf_gt, classes_gt], axis=-1)
+            bb.append(_bb)
+        for channel in range(len(options.Y.get('val').keys())):
+            y_true[channel] = bb
+        return y_true
+
+    @staticmethod
+    def get_yolo_y_pred(array, options, sensitivity: float = 0.15, threashold: float = 0.1):
+        y_pred = {}
+        name_classes = options.data.outputs.get(list(options.data.outputs.keys())[0]).classes_names
+        for i, box_array in enumerate(array):
+            channel_boxes = []
+            for ex in box_array:
+                boxes = CreateArray().get_predict_boxes(
+                    array=np.expand_dims(ex, axis=0),
+                    name_classes=name_classes,
+                    bb_size=i,
+                    sensitivity=sensitivity,
+                    threashold=threashold
+                )
+                channel_boxes.append(boxes)
+            y_pred[i] = channel_boxes
+        return y_pred
+
+    @staticmethod
     def get_x_array(options):
         x_val = None
         inverse_x_val = None
-        if options.data.group == DatasetGroupChoice.keras:
-            x_val = options.X.get("val")
-        dataframe = False
-        for inp in options.data.inputs.keys():
-            if options.data.inputs.get(inp).task == LayerInputTypeChoice.Dataframe:
-                dataframe = True
-                break
-        ts = False
-        for out in options.data.outputs.keys():
-            if options.data.outputs.get(out).task == LayerOutputTypeChoice.Timeseries or \
-                    options.data.outputs.get(out).task == LayerOutputTypeChoice.TimeseriesTrend:
-                ts = True
-                break
-        if dataframe and not options.data.use_generator:
-            x_val = options.X.get("val")
+        if options.data.architecture in [ArchitectureChoice.Basic, ArchitectureChoice.ImageClassification,
+                                         ArchitectureChoice.ImageSegmentation, ArchitectureChoice.TextSegmentation,
+                                         ArchitectureChoice.TextClassification, ArchitectureChoice.AudioClassification,
+                                         ArchitectureChoice.VideoClassification,
+                                         ArchitectureChoice.DataframeClassification,
+                                         ArchitectureChoice.DataframeRegression, ArchitectureChoice.Timeseries,
+                                         ArchitectureChoice.TimeseriesTrend]:
+            if options.data.group == DatasetGroupChoice.keras:
+                x_val = options.X.get("val")
+            dataframe = False
+            for inp in options.data.inputs.keys():
+                if options.data.inputs.get(inp).task == LayerInputTypeChoice.Dataframe:
+                    dataframe = True
+                    break
+            ts = False
+            for out in options.data.outputs.keys():
+                if options.data.outputs.get(out).task == LayerOutputTypeChoice.Timeseries or \
+                        options.data.outputs.get(out).task == LayerOutputTypeChoice.TimeseriesTrend:
+                    ts = True
+                    break
+            if dataframe and not options.data.use_generator:
+                x_val = options.X.get("val")
 
-        elif dataframe and options.data.use_generator:
-            x_val = {}
-            for inp in options.dataset['val'].keys():
-                x_val[inp] = []
-                for x_val_, _ in options.dataset['val'].batch(1):
-                    x_val[inp].extend(x_val_.get(f'{inp}').numpy())
-                x_val[inp] = np.array(x_val[inp])
-        else:
-            pass
+            elif dataframe and options.data.use_generator:
+                x_val = {}
+                for inp in options.dataset['val'].keys():
+                    x_val[inp] = []
+                    for x_val_, _ in options.dataset['val'].batch(1):
+                        x_val[inp].extend(x_val_.get(f'{inp}').numpy())
+                    x_val[inp] = np.array(x_val[inp])
+            else:
+                pass
 
-        if ts:
-            inverse_x_val = {}
-            for input in x_val.keys():
-                preprocess_dict = options.preprocessing.preprocessing.get(int(input))
-                inverse_x = np.zeros_like(x_val.get(input)[:, 0:1, :])
-                for i, column in enumerate(preprocess_dict.keys()):
-                    if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
-                        _options = {
-                            int(input): {
-                                column: x_val.get(input)[:, i:i + 1, :]
+            if ts:
+                inverse_x_val = {}
+                for input in x_val.keys():
+                    preprocess_dict = options.preprocessing.preprocessing.get(int(input))
+                    inverse_x = np.zeros_like(x_val.get(input)[:, :, 0:1])
+                    for i, column in enumerate(preprocess_dict.keys()):
+                        if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
+                            _options = {
+                                int(input): {
+                                    column: x_val.get(input)[:, :, i]
+                                }
                             }
-                        }
-                        inverse_col = options.preprocessing.inverse_data(_options).get(int(input)).get(column)
-                    else:
-                        inverse_col = x_val.get(input)[:, i:i + 1, :]
-                    inverse_x = np.concatenate([inverse_x, inverse_col], axis=1)
-                inverse_x_val[input] = inverse_x[:, 1:, :]
+                            inverse_col = np.expand_dims(
+                                options.preprocessing.inverse_data(_options).get(int(input)).get(column), axis=-1)
+                        else:
+                            inverse_col = x_val.get(input)[:, :, i:i + 1]
+                        inverse_x = np.concatenate([inverse_x, inverse_col], axis=-1)
+                    inverse_x_val[input] = inverse_x[:, :, 1:]
         return x_val, inverse_x_val
 
     @staticmethod
-    def postprocess_results(array, options, save_path: str = "", dataset_path: str = "") -> dict:
+    def postprocess_results(array, options, save_path: str = "", dataset_path: str = "", sensitivity=0.15,
+                            threashold=0.1) -> dict:
         x_array, inverse_x_array = CreateArray().get_x_array(options)
         return_data = {}
-        for i, output_id in enumerate(options.data.outputs.keys()):
-            true_array = CreateArray().get_y_true(options, output_id)
-            if len(options.data.outputs.keys()) > 1:
-                postprocess_array = array[i]
-            else:
-                postprocess_array = array
-            # print('true_array.shape, postprocess_array.shape', true_array.shape, postprocess_array.shape)
-            example_idx = CreateArray().prepare_example_idx_to_show(
-                array=array,
-                true_array=true_array,
-                options=options,
-                output=output_id,
-                count=int(len(true_array) * DEPLOY_PRESET_PERCENT / 100)
+
+        if options.data.architecture in [ArchitectureChoice.Basic, ArchitectureChoice.ImageClassification,
+                                         ArchitectureChoice.ImageSegmentation, ArchitectureChoice.TextSegmentation,
+                                         ArchitectureChoice.TextClassification, ArchitectureChoice.AudioClassification,
+                                         ArchitectureChoice.VideoClassification,
+                                         ArchitectureChoice.DataframeClassification,
+                                         ArchitectureChoice.DataframeRegression, ArchitectureChoice.Timeseries,
+                                         ArchitectureChoice.TimeseriesTrend]:
+            for i, output_id in enumerate(options.data.outputs.keys()):
+                true_array = CreateArray().get_y_true(options, output_id)
+                if len(options.data.outputs.keys()) > 1:
+                    postprocess_array = array[i]
+                else:
+                    postprocess_array = array
+                example_idx = CreateArray().prepare_example_idx_to_show(
+                    array=postprocess_array,
+                    true_array=true_array,
+                    options=options,
+                    output=output_id,
+                    count=int(len(true_array) * DEPLOY_PRESET_PERCENT / 100)
+                )
+                if options.data.outputs[output_id].task == LayerOutputTypeChoice.Classification:
+                    return_data[output_id] = []
+                    _id = 1
+                    for idx in example_idx:
+                        input_id = list(options.data.inputs.keys())[0]
+                        source = CreateArray().postprocess_initial_source(
+                            options=options,
+                            input_id=input_id,
+                            save_id=_id,
+                            example_id=idx,
+                            dataset_path=dataset_path,
+                            preset_path=save_path,
+                            x_array=None if not x_array else x_array.get(f"{input_id}"),
+                            inverse_x_array=None if not inverse_x_array else inverse_x_array.get(f"{input_id}"),
+                            return_mode='deploy'
+                        )
+                        actual_value, predict_values = CreateArray().postprocess_classification(
+                            predict_array=np.expand_dims(postprocess_array[idx], axis=0),
+                            true_array=true_array[idx],
+                            options=options.data.outputs[output_id],
+                            return_mode='deploy'
+                        )
+
+                        return_data[output_id].append(
+                            {
+                                "source": source,
+                                "actual": actual_value,
+                                "data": predict_values[0]
+                            }
+                        )
+                        _id += 1
+
+                elif options.data.outputs[output_id].task == LayerOutputTypeChoice.TimeseriesTrend:
+                    return_data[output_id] = {}
+                    # TODO: считаетм что инпут один
+                    input_id = list(options.data.inputs.keys())[0]
+                    inp_col_id = []
+                    for j, out_col in enumerate(options.data.columns.get(output_id).keys()):
+                        for k, inp_col in enumerate(options.data.columns.get(input_id).keys()):
+                            if out_col.split('_', 1)[-1] == inp_col.split('_', 1)[-1]:
+                                inp_col_id.append((k, inp_col, j, out_col))
+                                break
+                    preprocess = options.preprocessing.preprocessing.get(output_id)
+                    for channel in inp_col_id:
+                        return_data[output_id][channel[3]] = []
+                        for idx in example_idx:
+                            if type(preprocess.get(channel[3])).__name__ in ['StandardScaler', 'MinMaxScaler']:
+                                inp_options = {int(output_id): {
+                                    channel[3]: options.X.get('val').get(f"{input_id}")[idx, channel[0]:channel[0] + 1]}
+                                }
+                                inverse_true = options.preprocessing.inverse_data(inp_options).get(output_id).get(
+                                    channel[3])
+                                inverse_true = inverse_true.squeeze().astype('float').tolist()
+                            else:
+                                inverse_true = options.X.get('val').get(f"{input_id}")[
+                                               idx, channel[0]:channel[0] + 1].squeeze().astype('float').tolist()
+                            actual_value, predict_values = CreateArray().postprocess_classification(
+                                predict_array=np.expand_dims(postprocess_array[idx], axis=0),
+                                true_array=true_array[idx],
+                                options=options.data.outputs[output_id],
+                                return_mode='deploy'
+                            )
+                            button_save_path = os.path.join(save_path,
+                                                            f"ts_trend_button_channel_{channel[2]}_image_{idx}.jpg")
+                            plt.plot(inverse_true)
+                            plt.savefig(button_save_path)
+                            plt.close()
+                            return_data[output_id][channel[3]].append(
+                                {
+                                    "button_link": button_save_path,
+                                    "data": [inverse_true, predict_values]
+                                }
+                            )
+
+                elif options.data.outputs[output_id].task == LayerOutputTypeChoice.Segmentation:
+                    return_data[output_id] = []
+                    data = []
+                    for j, cls in enumerate(options.data.outputs.get(output_id).classes_names):
+                        data.append((cls, options.data.outputs.get(output_id).classes_colors[j].as_rgb_tuple()))
+                    for idx in example_idx:
+                        input_id = list(options.data.inputs.keys())[0]
+                        colors = [color.as_rgb_tuple() for color in options.data.outputs.get(output_id).classes_colors]
+                        return_data[output_id].append(
+                            {
+                                "source": CreateArray().postprocess_initial_source(
+                                    options=options,
+                                    input_id=input_id,
+                                    save_id=idx,
+                                    example_id=idx,
+                                    dataset_path=dataset_path,
+                                    preset_path=save_path,
+                                    x_array=None if not x_array else x_array.get(f"{input_id}"),
+                                    inverse_x_array=None if not inverse_x_array else inverse_x_array.get(f"{input_id}"),
+                                    return_mode='deploy'
+                                ),
+                                "segment": CreateArray().postprocess_segmentation(
+                                    predict_array=array[idx],
+                                    true_array=None,
+                                    options=options.data.outputs.get(output_id),
+                                    output_id=output_id,
+                                    image_id=idx,
+                                    save_path=save_path,
+                                    return_mode='deploy'
+                                ),
+                                "data": data
+                            }
+                        )
+
+                elif options.data.outputs[output_id].task == LayerOutputTypeChoice.TextSegmentation:
+                    return_data[output_id] = {
+                        "color_map": None,
+                        "data": []
+                    }
+                    output_column = list(options.instructions.get(output_id).keys())[0]
+                    for idx in example_idx:
+                        source, segment, colors = CreateArray().postprocess_text_segmentation(
+                            pred_array=postprocess_array[idx],
+                            options=options.data.outputs[output_id],
+                            dataframe=options.dataframe.get("val"),
+                            example_id=idx,
+                            dataset_params=options.instructions.get(output_id).get(output_column),
+                            return_mode='deploy'
+                        )
+                        return_data[output_id]["data"].append(
+                            {
+                                "source": source,
+                                "format": segment,
+                                # "data": colors
+                            }
+                        )
+                    return_data[output_id]["color_map"] = colors
+
+                elif options.data.outputs[output_id].task == LayerOutputTypeChoice.Timeseries:
+                    return_data[output_id] = {}
+                    # TODO: считаетм что инпут один
+                    input_id = list(options.data.inputs.keys())[0]
+                    inp_col_id = []
+                    for j, out_col in enumerate(options.data.columns.get(output_id).keys()):
+                        for k, inp_col in enumerate(options.data.columns.get(input_id).keys()):
+                            if out_col.split('_', 1)[-1] == inp_col.split('_', 1)[-1]:
+                                inp_col_id.append((k, inp_col, j, out_col))
+                                break
+                    preprocess = options.preprocessing.preprocessing.get(output_id)
+                    for channel in inp_col_id:
+                        return_data[output_id][channel[3]] = []
+                        for idx in example_idx:
+                            if type(preprocess.get(channel[3])).__name__ in ['StandardScaler', 'MinMaxScaler']:
+                                inp_options = {int(output_id): {
+                                    channel[3]: options.X.get('val').get(f"{input_id}")[idx, channel[0]:channel[0] + 1]}
+                                }
+                                inverse_true = options.preprocessing.inverse_data(inp_options).get(output_id).get(
+                                    channel[3])
+                                inverse_true = inverse_true.squeeze().astype('float').tolist()
+                                out_options = {int(output_id): {
+                                    channel[3]: array[idx, channel[2]:channel[2] + 1].reshape(-1, 1)}
+                                }
+                                inverse_pred = options.preprocessing.inverse_data(out_options).get(output_id).get(
+                                    channel[3])
+                                inverse_pred = inverse_pred.squeeze().astype('float').tolist()
+                            else:
+                                inverse_true = options.X.get('val').get(f"{input_id}")[
+                                               idx, channel[0]:channel[0] + 1].squeeze().astype('float').tolist()
+                                inverse_pred = array[idx, channel[2]:channel[2] + 1].squeeze().astype('float').tolist()
+                            button_save_path = os.path.join(save_path,
+                                                            f"ts_button_channel_{channel[2]}_image_{idx}.jpg")
+                            plt.plot(inverse_true)
+                            plt.savefig(button_save_path)
+                            plt.close()
+                            return_data[output_id][channel[3]].append(
+                                {
+                                    "button_link": button_save_path,
+                                    "data": [inverse_true, inverse_pred]
+                                }
+                            )
+
+                elif options.data.outputs[output_id].task == LayerOutputTypeChoice.Regression:
+                    return_data[output_id] = {
+                        'preset': [],
+                        'label': []
+                    }
+                    source_col = []
+                    for inp in options.data.inputs.keys():
+                        source_col.extend(list(options.data.columns.get(inp).keys()))
+                    preprocess = options.preprocessing.preprocessing.get(output_id)
+                    for idx in example_idx:
+                        row_list = []
+                        for inp_col in source_col:
+                            row_list.append(f"{options.dataframe.get('val')[inp_col][idx]}")
+                            # if isinstance(options.dataframe.get('val')[inp_col][idx], str):
+                            #     row_list.append(options.dataframe.get('val')[inp_col][idx])
+                            # if isinstance(options.dataframe.get('val')[inp_col][idx], (int, float)):
+                            #     row_list.append(float(options.dataframe.get('val')[inp_col][idx]))
+                        return_data[output_id]['preset'].append(row_list)
+                        for i, col in enumerate(list(options.data.columns.get(output_id).keys())):
+                            if type(preprocess.get(col)).__name__ in ['StandardScaler', 'MinMaxScaler']:
+                                _options = {int(output_id): {col: array[idx, i:i + 1].reshape(-1, 1)}}
+                                inverse_col = options.preprocessing.inverse_data(_options).get(output_id).get(col)
+                                inverse_col = inverse_col.squeeze().astype('float').tolist()
+                            else:
+                                inverse_col = array[idx, i:i + 1].astype('float').tolist()
+                        return_data[output_id]['label'].append(inverse_col)
+
+                else:
+                    return_data[output_id] = []
+
+        if options.data.architecture in [ArchitectureChoice.YoloV3,  ArchitectureChoice.YoloV4]:
+            y_true = CreateArray().get_yolo_y_true(options)
+            y_pred = CreateArray().get_yolo_y_pred(array, options, sensitivity=sensitivity, threashold=threashold)
+            name_classes = options.data.outputs.get(list(options.data.outputs.keys())[0]).classes_names
+            hsv_tuples = [(x / len(name_classes), 1., 1.) for x in range(len(name_classes))]
+            colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
+            colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
+            image_size = options.data.inputs.get(list(options.data.inputs.keys())[0]).shape[:2]
+
+            example_idx, bb = CreateArray().prepare_yolo_example_idx_to_show(
+                array=y_pred,
+                true_array=y_true,
+                name_classes=options.data.outputs.get(list(options.data.outputs.keys())[0]).classes_names,
+                box_channel=None,
+                count=int(len(y_pred[0]) * DEPLOY_PRESET_PERCENT / 100),
+                choice_type='best',
+                sensitivity=sensitivity,
+                get_optimal_channel=True
             )
-            print(len(example_idx), len(array), example_idx)
-            if options.data.outputs[output_id].task == LayerOutputTypeChoice.Classification or \
-                    options.data.outputs[output_id].task == LayerOutputTypeChoice.TimeseriesTrend:
-                # y_true = CreateArray().get_y_true(options, output_id)
-                return_data[output_id] = []
-                _id = 1
-                for idx in example_idx:
-                    input_id = list(options.data.inputs.keys())[0]
-                    source = CreateArray().postprocess_initial_source(
-                        options=options,
-                        input_id=input_id,
-                        save_id=_id,
-                        example_id=idx,
-                        dataset_path=dataset_path,
-                        preset_path=save_path,
-                        x_array=None if not x_array else x_array.get(f"{input_id}"),
-                        inverse_x_array=None if not inverse_x_array else inverse_x_array.get(f"{input_id}"),
-                        return_mode='deploy'
-                    )
-                    actual_value, predict_values = CreateArray().postprocess_classification(
-                        predict_array=np.expand_dims(postprocess_array[idx], axis=0),
-                        true_array=true_array[idx],
-                        options=options.data.outputs[output_id],
-                        return_mode='deploy'
-                    )
-                    return_data[output_id].append(
-                        {
-                            "source": source,
-                            "actual": actual_value,
-                            "data": predict_values[0]
-                        }
-                    )
-                    _id += 1
+            return_data[bb] = []
+            for ex in example_idx:
+                save_predict_path, _ = CreateArray().plot_boxes(
+                    true_bb=y_true[bb][ex],
+                    pred_bb=y_pred[bb][ex],
+                    img_path=os.path.join(dataset_path, options.dataframe['val'].iat[ex, 0]),
+                    name_classes=name_classes,
+                    colors=colors,
+                    image_id=ex,
+                    add_only_true=False,
+                    plot_true=True,
+                    image_size=image_size,
+                    save_path=save_path,
+                    return_mode='deploy'
+                )
+                return_data[bb].append(
+                    {
+                        'predict_img': save_predict_path
+                    }
+                )
 
-            elif options.data.outputs[output_id].task == LayerOutputTypeChoice.Segmentation:
-                return_data[output_id] = []
-                data = []
-                for j, cls in enumerate(options.data.outputs.get(output_id).classes_names):
-                    data.append((cls, options.data.outputs.get(output_id).classes_colors[j].as_rgb_tuple()))
-                for idx in example_idx:
-                    input_id = list(options.data.inputs.keys())[0]
-                    colors = [color.as_rgb_tuple() for color in options.data.outputs.get(output_id).classes_colors]
-                    return_data[output_id].append(
-                        {
-                            "source": CreateArray().postprocess_initial_source(
-                                options=options,
-                                input_id=input_id,
-                                save_id=idx,
-                                example_id=idx,
-                                dataset_path=dataset_path,
-                                preset_path=save_path,
-                                x_array=None if not x_array else x_array.get(f"{input_id}"),
-                                inverse_x_array=None if not inverse_x_array else inverse_x_array.get(f"{input_id}"),
-                                return_mode='deploy'
-                            ),
-                            "segment": CreateArray().postprocess_segmentation(
-                                predict_array=array[idx],
-                                true_array=None,
-                                options=options.data.outputs.get(output_id),
-                                output_id=output_id,
-                                image_id=idx,
-                                save_path=save_path,
-                                return_mode='deploy'
-                            ),
-                            "data": data
-                        }
-                    )
-
-            elif options.data.outputs[output_id].task == LayerOutputTypeChoice.TextSegmentation:
-                return_data[output_id] = {
-                    "color_map": None,
-                    "data": []
-                }
-                output_column = list(options.instructions.get(output_id).keys())[0]
-                for idx in example_idx:
-                    source, segment, colors = CreateArray().postprocess_text_segmentation(
-                        pred_array=postprocess_array[idx],
-                        options=options.data.outputs[output_id],
-                        dataframe=options.dataframe.get("val"),
-                        example_id=idx,
-                        dataset_params=options.instructions.get(output_id).get(output_column),
-                        return_mode='deploy'
-                    )
-                    return_data[output_id]["data"].append(
-                        {
-                            "source": source,
-                            "format": segment,
-                            # "data": colors
-                        }
-                    )
-                return_data[output_id]["color_map"] = colors
-
-            elif options.data.outputs[output_id].task == LayerOutputTypeChoice.Timeseries:
-                for idx in example_idx:
-                    input_id = list(options.data.inputs.keys())[0]
-                    source = CreateArray().postprocess_initial_source(
-                        options=options,
-                        input_id=input_id,
-                        save_id=idx,
-                        example_id=idx,
-                        dataset_path=dataset_path,
-                        preset_path=save_path,
-                        x_array=None if not x_array else x_array.get(f"{input_id}"),
-                        inverse_x_array=None if not inverse_x_array else inverse_x_array.get(f"{input_id}"),
-                        return_mode='deploy'
-                    )
-                    actual_value, predict_values = CreateArray().postprocess_time_series()
-                    return_data[output_id].append(
-                        {
-                            "source": source,
-                            "actual": actual_value,
-                            "data": predict_values
-                        }
-                    )
-
-            elif options.data.outputs[output_id].task == LayerOutputTypeChoice.Regression:
-                return_data[output_id] = {
-                    'preset': [],
-                    'label': []
-                }
-                source_col = []
-                for inp in options.data.inputs.keys():
-                    source_col.extend(list(options.data.columns.get(inp).keys()))
-                preprocess = options.preprocessing.preprocessing.get(list(options.data.outputs.keys())[0])
-                for idx in example_idx:
-                    row_list = []
-                    for inp_col in source_col:
-                        row_list.append(options.dataframe.get('val')[inp_col][idx])
-                    return_data[output_id]['preset'].append(row_list)
-                    for i, col in enumerate(list(options.data.columns.get(output_id).keys())):
-                        if type(preprocess.get(col)).__name__ in ['StandardScaler', 'MinMaxScaler']:
-                            _options = {int(output_id): {col: array[idx, i:i + 1].reshape(-1, 1)}}
-                            inverse_col = options.preprocessing.inverse_data(_options).get(output_id).get(col)
-                            inverse_col = inverse_col.squeeze().tolist()
-                        else:
-                            inverse_col = array[idx, i:i + 1].tolist()
-                    return_data[output_id]['label'].append(inverse_col)
-
-            else:
-                return_data[output_id] = []
         return return_data
 
     @staticmethod
@@ -1512,7 +1677,7 @@ class CreateArray(object):
                 ]
 
         elif input_task == LayerInputTypeChoice.Audio:
-            source = os.path.join(preset_path, f"initial_data_audio_{save_id}_input_{input_id}.webp")
+            source = os.path.join(preset_path, f"initial_data_audio_{save_id}_input_{input_id}.webm")
             AudioSegment.from_file(initial_file_path).export(source, format="webm")
             if return_mode == 'callback':
                 data_type = LayerInputTypeChoice.Audio.name
@@ -1535,13 +1700,6 @@ class CreateArray(object):
                 graphics_data = []
                 names = ""
                 multi = False
-                if return_mode == 'deploy':
-                    # TODO: для предикта по одному каналу
-                    output_channel = list(options.data.columns.get(list(options.data.columns.keys())[0]).keys())[0]
-                    for i, channel in enumerate(options.data.columns.get(input_id).keys()):
-                        if output_channel == channel:
-                            source = inverse_x_array[example_id][i].astype('float').tolist()
-                            break
                 if return_mode == 'callback':
                     for i, channel in enumerate(options.data.columns.get(input_id).keys()):
                         multi = True if i > 0 else False
@@ -1569,20 +1727,20 @@ class CreateArray(object):
             else:
                 data_type = "str"
                 source = []
-                for inp in options.data.inputs.keys():
-                    for col_name in options.data.columns.get(inp).keys():
-                        value = options.dataframe.get('val')[col_name].to_list()[example_id]
-                        # source.append((col_name, value))
-                        if return_mode == 'deploy':
-                            source.append(value)
-                        if return_mode == 'callback':
-                            data.append(
-                                {
-                                    "title": col_name.split("_", 1)[-1],
-                                    "value": value,
-                                    "color_mark": None
-                                }
-                            )
+                # for inp in options.data.inputs.keys():
+                for col_name in options.data.columns.get(input_id).keys():
+                    value = options.dataframe.get('val')[col_name].to_list()[example_id]
+                    # source.append((col_name, value))
+                    if return_mode == 'deploy':
+                        source.append(value)
+                    if return_mode == 'callback':
+                        data.append(
+                            {
+                                "title": col_name.split("_", 1)[-1],
+                                "value": value,
+                                "color_mark": None
+                            }
+                        )
 
         else:
             pass
@@ -1600,20 +1758,20 @@ class CreateArray(object):
         return (2.0 * intersection + smooth) / (union + smooth)
 
     @staticmethod
-    def sort_dict(dict_to_sort: dict, mode='by_name'):
-        if mode == 'by_name':
+    def sort_dict(dict_to_sort: dict, mode: BalanceSortedChoice = BalanceSortedChoice.alphabetic):
+        if mode == BalanceSortedChoice.alphabetic:
             sorted_keys = sorted(dict_to_sort)
             sorted_values = []
             for w in sorted_keys:
                 sorted_values.append(dict_to_sort[w])
             return tuple(sorted_keys), tuple(sorted_values)
-        elif mode == 'ascending':
+        elif mode == BalanceSortedChoice.ascending:
             sorted_keys = sorted(dict_to_sort, key=dict_to_sort.get)
             sorted_values = []
             for w in sorted_keys:
                 sorted_values.append(dict_to_sort[w])
             return tuple(sorted_keys), tuple(sorted_values)
-        elif mode == 'descending':
+        elif mode == BalanceSortedChoice.descending:
             sorted_keys = sorted(dict_to_sort, key=dict_to_sort.get, reverse=True)
             sorted_values = []
             for w in sorted_keys:
@@ -1626,16 +1784,12 @@ class CreateArray(object):
     def prepare_example_idx_to_show(array: np.ndarray, true_array: np.ndarray, options, output: int, count: int,
                                     choice_type: str = "best", seed_idx: list = None) -> dict:
         example_idx = {}
-        # out = f"{self.interactive_config.intermediate_result.main_output}"
         encoding = options.data.outputs.get(output).encoding
-        # count = self.interactive_config.intermediate_result.num_examples
-        # choice_type = self.interactive_config.intermediate_result.example_choice_type
         task = options.data.outputs.get(output).task
-        # y_true = options.Y.get("val").get(f"{output}")
         if choice_type == ExampleChoiceTypeChoice.best or choice_type == ExampleChoiceTypeChoice.worst:
             if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
-                # y_pred = self.y_pred.get(out)
-                if array.shape[-1] == true_array.shape[-1] and encoding == LayerEncodingChoice.ohe and true_array.shape[-1] > 1:
+                if array.shape[-1] == true_array.shape[-1] and encoding == LayerEncodingChoice.ohe and true_array.shape[
+                    -1] > 1:
                     classes = np.argmax(true_array, axis=-1)
                 elif len(true_array.shape) == 1 and not encoding == LayerEncodingChoice.ohe and array.shape[-1] > 1:
                     classes = copy.deepcopy(true_array)
@@ -1661,10 +1815,10 @@ class CreateArray(object):
                 dice_val = CreateArray().dice_coef(true_array, array, batch_mode=True)
                 dice_dict = dict(zip(np.arange(0, len(dice_val)), dice_val))
                 if choice_type == ExampleChoiceTypeChoice.best:
-                    example_idx, _ = CreateArray().sort_dict(dice_dict, mode="descending")
+                    example_idx, _ = CreateArray().sort_dict(dice_dict, mode=BalanceSortedChoice.descending)
                     example_idx = example_idx[:count]
                 if choice_type == ExampleChoiceTypeChoice.worst:
-                    example_idx, _ = CreateArray().sort_dict(dice_dict, mode="ascending")
+                    example_idx, _ = CreateArray().sort_dict(dice_dict, mode=BalanceSortedChoice.ascending)
                     example_idx = example_idx[:count]
 
             elif task == LayerOutputTypeChoice.Timeseries or task == LayerOutputTypeChoice.Regression:
@@ -1673,15 +1827,15 @@ class CreateArray(object):
                     delta = np.mean(delta, axis=-1)
                 delta_dict = dict(zip(np.arange(0, len(delta)), delta))
                 if choice_type == ExampleChoiceTypeChoice.best:
-                    example_idx, _ = CreateArray().sort_dict(delta_dict, mode="ascending")
+                    example_idx, _ = CreateArray().sort_dict(delta_dict, mode=BalanceSortedChoice.ascending)
                     example_idx = example_idx[:count]
                 if choice_type == ExampleChoiceTypeChoice.worst:
-                    example_idx, _ = CreateArray().sort_dict(delta_dict, mode="descending")
+                    example_idx, _ = CreateArray().sort_dict(delta_dict, mode=BalanceSortedChoice.descending)
                     example_idx = example_idx[:count]
             else:
                 pass
 
-        elif choice_type == ExampleChoiceTypeChoice.seed and seed_idx:
+        elif choice_type == ExampleChoiceTypeChoice.seed and len(seed_idx):
             example_idx = seed_idx[:count]
 
         elif choice_type == ExampleChoiceTypeChoice.random:
@@ -1689,6 +1843,52 @@ class CreateArray(object):
         else:
             pass
         return example_idx
+
+    @staticmethod
+    def prepare_yolo_example_idx_to_show(array: dict, true_array: dict, name_classes: list, box_channel: int,
+                                         count: int, choice_type: str = "best", seed_idx: list = None,
+                                         sensitivity: float = 0.25, get_optimal_channel=False):
+        if get_optimal_channel:
+            channel_stat = []
+            for channel in range(3):
+                total_metric = 0
+                for example in range(len(array.get(channel))):
+                    total_metric += CreateArray().get_yolo_example_statistic(
+                        true_bb=true_array.get(channel)[example],
+                        pred_bb=array.get(channel)[example],
+                        name_classes=name_classes,
+                        sensitivity=sensitivity
+                    )['total_stat']['total_metric']
+                channel_stat.append(total_metric / len(array.get(channel)))
+            box_channel = int(np.argmax(channel_stat, axis=-1))
+
+        if choice_type == ExampleChoiceTypeChoice.best or choice_type == ExampleChoiceTypeChoice.worst:
+            stat = []
+            for example in range(len(array.get(box_channel))):
+                stat.append(
+                    CreateArray().get_yolo_example_statistic(
+                        true_bb=true_array.get(box_channel)[example],
+                        pred_bb=array.get(box_channel)[example],
+                        name_classes=name_classes,
+                        sensitivity=sensitivity
+                    )['total_stat']['total_metric']
+                )
+            stat_dict = dict(zip(np.arange(0, len(stat)), stat))
+            if choice_type == ExampleChoiceTypeChoice.best:
+                example_idx, _ = CreateArray().sort_dict(stat_dict, mode=BalanceSortedChoice.descending)
+                example_idx = example_idx[:count]
+            else:
+                example_idx, _ = CreateArray().sort_dict(stat_dict, mode=BalanceSortedChoice.ascending)
+                example_idx = example_idx[:count]
+
+        elif choice_type == ExampleChoiceTypeChoice.seed:
+            example_idx = seed_idx[:count]
+
+        elif choice_type == ExampleChoiceTypeChoice.random:
+            example_idx = np.random.randint(0, len(true_array.get(box_channel)), count)
+        else:
+            example_idx = np.arange(count)
+        return example_idx, box_channel
 
     @staticmethod
     def postprocess_classification(
@@ -1888,21 +2088,6 @@ class CreateArray(object):
             else:
                 return f"<p1>{word}</p1>"
 
-        # def color_mixer(colors: list):
-        #     if colors:
-        #         result = np.zeros((3,))
-        #         for color in colors:
-        #             result += np.array(color)
-        #         result = result / len(colors)
-        #         return tuple(result.astype('int').tolist())
-        #
-        # def tag_mixer(tags: list, colors: dict):
-        #     tags = sorted(tags, reverse=False)
-        #     mix_tag = f"{tags[0][1:-1]}"
-        #     for tag in tags[1:]:
-        #         mix_tag += f"+{tag[1:-1]}"
-        #     return f"<{mix_tag}>", color_mixer([colors[tag] for tag in tags])
-        #
         def reformat_tags(y_array: np.ndarray, tag_list: list,  # classes_names: dict, colors: dict,
                           sensitivity: float = 0.9):
             norm_array = np.where(y_array >= sensitivity, 1, 0).astype('int')
@@ -1910,25 +2095,16 @@ class CreateArray(object):
             for word_tag in norm_array:
                 if np.sum(word_tag) == 0:
                     reformat_tags.append(None)
-                # elif np.sum(word_tag) == 1:
-                #     reformat_tags.append([tag_list[np.argmax(word_tag, axis=-1)]])
                 else:
                     mix_tag = []
-                    # mix_name = ""
                     for i, tag in enumerate(word_tag):
                         if tag == 1:
                             mix_tag.append(tag_list[i])
-                            # mix_name += f"{classes_names[tag_list[i]]} + "
-                    # mix_tag, mix_color = tag_mixer(mix_tag, colors)
-                    # if mix_tag not in classes_names.keys():
-                    #     classes_names[mix_tag] = mix_name[:-3]
-                    #     colors[mix_tag] = mix_color
                     reformat_tags.append(mix_tag)
             return reformat_tags
 
         def text_colorization(text: str, label_array: np.ndarray, tag_list: list, class_names: dict, colors: dict):
             text = text.split(" ")
-            # norm_array = np.where(label_array >= sensitivity, 1, 0).astype('int')
             labels = reformat_tags(label_array, tag_list)
             colored_text = []
             for i, word in enumerate(text):
@@ -1950,8 +2126,11 @@ class CreateArray(object):
                 colors[name] = class_colors[i]
                 classes_names[name] = options.classes_names[i]
         else:
+            hsv_tuples = [(x / len(dataset_tags), 1., 1.) for x in range(len(dataset_tags))]
+            gen_colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
+            gen_colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), gen_colors))
             for i, name in enumerate(dataset_tags):
-                colors[name] = tuple(np.random.randint(256, size=3).tolist())
+                colors[name] = gen_colors[i]
                 classes_names[name] = options.classes_names[i]
 
         if return_mode == 'deploy':
@@ -1963,7 +2142,8 @@ class CreateArray(object):
                 class_names=classes_names,
                 colors=colors
             )
-            data = []
+
+            data = [('<p1>', '<p1>', (200, 200, 200))]
             for tag in colors.keys():
                 data.append(
                     (tag, classes_names[tag], colors[tag])
@@ -2209,5 +2389,414 @@ class CreateArray(object):
         return data
 
     @staticmethod
-    def postprocess_object_detection():
-        pass
+    def postprocess_object_detection(predict_array, true_array, image_path: str, colors: list,
+                                     sensitivity: float, image_id: int, save_path: str, show_stat: bool,
+                                     name_classes: list, return_mode='deploy', image_size=(416, 416)):
+        data = {
+            "y_true": {},
+            "y_pred": {},
+            "stat": {}
+        }
+        if return_mode == 'deploy':
+            pass
+
+        if return_mode == 'callback':
+            save_true_predict_path, _ = CreateArray().plot_boxes(
+                true_bb=true_array,
+                pred_bb=predict_array,
+                img_path=image_path,
+                name_classes=name_classes,
+                colors=colors,
+                image_id=image_id,
+                add_only_true=False,
+                plot_true=True,
+                image_size=image_size,
+                save_path=save_path,
+                return_mode=return_mode
+            )
+
+            data["y_true"] = {
+                "type": "image",
+                "data": [
+                    {
+                        "title": "Изображение",
+                        "value": save_true_predict_path,
+                        "color_mark": None
+                    }
+                ]
+            }
+
+            save_predict_path, _ = CreateArray().plot_boxes(
+                true_bb=true_array,
+                pred_bb=predict_array,
+                img_path=image_path,
+                name_classes=name_classes,
+                colors=colors,
+                image_id=image_id,
+                add_only_true=False,
+                plot_true=False,
+                image_size=image_size,
+                save_path=save_path,
+                return_mode=return_mode
+            )
+
+            data["y_pred"] = {
+                "type": "image",
+                "data": [
+                    {
+                        "title": "Изображение",
+                        "value": save_predict_path,
+                        "color_mark": None
+                    }
+                ]
+            }
+            if show_stat:
+                box_stat = CreateArray().get_yolo_example_statistic(
+                    true_bb=true_array,
+                    pred_bb=predict_array,
+                    name_classes=name_classes,
+                    sensitivity=sensitivity
+                )
+                data["stat"]["Общая точность"] = [
+                    {
+                        "title": "Среднее",
+                        "value": f"{np.round(box_stat['total_stat']['total_metric'] * 100, 2)}%",
+                        "color_mark": 'success' if box_stat['total_stat']['total_conf'] >= 0.7 else 'wrong'
+                    },
+                ]
+                data["stat"]['Средняя точность'] = [
+                    {
+                        "title": "Перекрытие",
+                        "value": f"{np.round(box_stat['total_stat']['total_overlap'] * 100, 2)}%",
+                        "color_mark": 'success' if box_stat['total_stat']['total_overlap'] >= 0.7 else 'wrong'
+                    },
+                    {
+                        "title": "Объект",
+                        "value": f"{np.round(box_stat['total_stat']['total_conf'] * 100, 2)}%",
+                        "color_mark": 'success' if box_stat['total_stat']['total_conf'] >= 0.7 else 'wrong'
+                    },
+                    {
+                        "title": "Класс",
+                        "value": f"{np.round(box_stat['total_stat']['total_overlap'] * 100, 2)}%",
+                        "color_mark": 'success' if box_stat['total_stat']['total_overlap'] >= 0.7 else 'wrong'
+                    },
+                ]
+
+                for class_name in name_classes:
+                    mean_overlap = box_stat['class_stat'][class_name]['mean_overlap']
+                    mean_conf = box_stat['class_stat'][class_name]['mean_conf']
+                    mean_class = box_stat['class_stat'][class_name]['mean_class']
+                    data["stat"][class_name] = [
+                        {
+                            "title": "Перекрытие",
+                            "value": "-" if mean_overlap is None else f"{np.round(mean_overlap * 100, 2)}%",
+                            "color_mark": 'success' if mean_overlap and mean_overlap >= 0.7 else 'wrong'
+                        },
+                        {
+                            "title": "Объект",
+                            "value": "-" if mean_conf is None else f"{np.round(mean_conf * 100, 2)}%",
+                            "color_mark": 'success' if mean_conf and mean_conf >= 0.7 else 'wrong'
+                        },
+                        {
+                            "title": "Класс",
+                            "value": "-" if mean_class is None else f"{np.round(mean_class * 100, 2)}%",
+                            "color_mark": 'success' if mean_class and mean_class >= 0.7 else 'wrong'
+                        },
+                    ]
+            return data
+
+    @staticmethod
+    def bboxes_iou(boxes1, boxes2):
+        boxes1 = np.array(boxes1)
+        boxes2 = np.array(boxes2)
+
+        boxes1_area = (boxes1[..., 2] - boxes1[..., 0]) * (boxes1[..., 3] - boxes1[..., 1])
+        boxes2_area = (boxes2[..., 2] - boxes2[..., 0]) * (boxes2[..., 3] - boxes2[..., 1])
+
+        left_up = np.maximum(boxes1[..., :2], boxes2[..., :2])
+        right_down = np.minimum(boxes1[..., 2:], boxes2[..., 2:])
+
+        inter_section = np.maximum(right_down - left_up, 0.0)
+        inter_area = inter_section[..., 0] * inter_section[..., 1]
+        union_area = boxes1_area + boxes2_area - inter_area
+        ious = np.maximum(1.0 * inter_area / union_area, np.finfo(np.float32).eps)
+
+        return ious
+
+    @staticmethod
+    def non_max_suppression_fast(boxes: np.ndarray, scores: np.ndarray, sensitivity: float = 0.15):
+        """
+        :param boxes: list of unscaled bb coordinates
+        :param scores: class probability in ohe
+        :param sensitivity: float from 0 to 1
+        """
+        if len(boxes) == 0:
+            return [], []
+
+        pick = []
+
+        x1 = boxes[:, 0]
+        y1 = boxes[:, 1]
+        x2 = boxes[:, 2]
+        y2 = boxes[:, 3]
+
+        area = (x2 - x1 + 1) * (y2 - y1 + 1)
+        classes = np.argmax(scores, axis=-1)
+        idxs = np.argsort(classes)[..., ::-1]
+
+        mean_iou = []
+        while len(idxs) > 0:
+            last = len(idxs) - 1
+            i = idxs[last]
+            pick.append(i)
+
+            xx1 = np.maximum(x1[i], x1[idxs[:last]])
+            yy1 = np.maximum(y1[i], y1[idxs[:last]])
+            xx2 = np.minimum(x2[i], x2[idxs[:last]])
+            yy2 = np.minimum(y2[i], y2[idxs[:last]])
+
+            w = np.maximum(0, xx2 - xx1 + 1)
+            h = np.maximum(0, yy2 - yy1 + 1)
+
+            overlap = (w * h) / area[idxs[:last]]
+            mean_iou.append(overlap)
+            idxs = np.delete(idxs, np.concatenate(([last], np.where(overlap > sensitivity)[0])))
+
+        return pick, mean_iou
+
+    @staticmethod
+    def get_predict_boxes(array, name_classes: list, bb_size: int = 1, sensitivity: float = 0.15,
+                          threashold: float = 0.1):
+        """
+        Boxes for 1 example
+        """
+        num_classes = len(name_classes)
+        anchors = np.array([[10, 13], [16, 30], [33, 23],
+                            [30, 61], [62, 45], [59, 119],
+                            [116, 90], [156, 198], [373, 326]])
+
+        anchor_mask = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
+
+        level_anchor = bb_size
+        num_anchors = len(anchors[anchor_mask[level_anchor]])
+
+        grid_shape = array.shape[1:3]
+
+        feats = np.reshape(array, (-1, grid_shape[0], grid_shape[1], num_anchors, num_classes + 5))
+
+        xy_param = feats[..., :2]
+        wh_param = feats[..., 2:4]
+        conf_param = feats[..., 4:5]
+        class_param = feats[..., 5:]
+
+        box_yx = xy_param[..., ::-1].copy()
+        box_hw = wh_param[..., ::-1].copy()
+
+        box_mins = box_yx - (box_hw / 2.)
+        box_maxes = box_yx + (box_hw / 2.)
+        _boxes = np.concatenate([
+            box_mins[..., 0:1],
+            box_mins[..., 1:2],
+            box_maxes[..., 0:1],
+            box_maxes[..., 1:2]
+        ], axis=-1)
+
+        _boxes_reshape = np.reshape(_boxes, (-1, 4))
+        _box_scores = conf_param * class_param
+        _box_scores_reshape = np.reshape(_box_scores, (-1, num_classes))
+        _class_param_reshape = np.reshape(class_param, (-1, num_classes))
+        mask = _box_scores_reshape >= threashold
+        _boxes_out = np.zeros_like(_boxes_reshape[0:1])
+        _scores_out = np.zeros_like(_box_scores_reshape[0:1])
+        _class_param_out = np.zeros_like(_class_param_reshape[0:1])
+        for cl in range(num_classes):
+            if np.sum(mask[:, cl]):
+                _boxes_out = np.concatenate((_boxes_out, _boxes_reshape[mask[:, cl]]), axis=0)
+                _scores_out = np.concatenate((_scores_out, _box_scores_reshape[mask[:, cl]]), axis=0)
+                _class_param_out = np.concatenate((_class_param_out, _class_param_reshape[mask[:, cl]]), axis=0)
+        _boxes_out = _boxes_out[1:].astype('int')
+        _scores_out = _scores_out[1:]
+        _class_param_out = _class_param_out[1:]
+        _conf_param = (_scores_out / _class_param_out)[:, :1]
+        pick, _ = CreateArray().non_max_suppression_fast(_boxes_out, _scores_out, sensitivity)
+        return np.concatenate([_boxes_out[pick], _conf_param[pick], _scores_out[pick]], axis=-1)
+
+    @staticmethod
+    def plot_boxes(true_bb, pred_bb, img_path, name_classes, colors, image_id, add_only_true=False, plot_true=True,
+                   image_size=(416, 416), save_path='', return_mode='deploy'):
+        image = Image.open(img_path)
+        image = image.resize(image_size, Image.BICUBIC)
+
+        def draw_box(draw, box, color, thickness, label=None, label_size=None,
+                     dash_mode=False, show_label=False):
+            top, left, bottom, right = box
+            top = max(0, np.floor(top + 0.5).astype('int'))
+            left = max(0, np.floor(left + 0.5).astype('int'))
+            bottom = min(image.size[1], np.floor(bottom + 0.5).astype('int'))
+            right = min(image.size[0], np.floor(right + 0.5).astype('int'))
+            if top - label_size[1] >= 0:
+                text_origin = np.array([left, top - label_size[1]])
+            else:
+                text_origin = np.array([left, top + 1])
+
+            if dash_mode:
+                for cur_y in [top, bottom]:
+                    for x in range(left, right, 4):
+                        draw.line([(x, cur_y), (x + thickness, cur_y)], fill=color, width=2)
+                for cur_y in [left, right]:
+                    for x in range(top, bottom, 4):
+                        draw.line([(cur_y, x), (cur_y + thickness, x)], fill=color, width=2)
+            else:
+                for i in range(thickness):
+                    draw.rectangle(
+                        [left + i, top + i, right - i, bottom - i],
+                        outline=color,
+                    )
+
+            if show_label:
+                draw.rectangle(
+                    [tuple(text_origin), tuple(text_origin + label_size)],
+                    fill=color
+                )
+                draw.text(tuple(text_origin), label, fill=(255, 255, 255), font=font)
+            return draw
+
+        font = ImageFont.load_default()
+        thickness = (image.size[0] + image.size[1]) // 300
+        image_pred = image.copy()
+        if plot_true:
+            classes = np.argmax(true_bb[:, 5:], axis=-1)
+            for i, box in enumerate(true_bb[:, :4]):
+                draw = ImageDraw.Draw(image_pred)
+                true_class = name_classes[classes[i]]
+                label = '{}'.format(true_class)
+                label_size = draw.textsize(label, font)
+                draw = draw_box(draw, box, colors[classes[i]], thickness,
+                                label=label, label_size=label_size,
+                                dash_mode=False, show_label=True)
+                del draw
+
+        classes = np.argmax(pred_bb[:, 5:], axis=-1)
+        for i, box in enumerate(pred_bb[:, :4]):
+            draw = ImageDraw.Draw(image_pred)
+            predicted_class = name_classes[classes[i]]
+            score = pred_bb[:, 5:][i][classes[i]]  # * pred_bb[:, 4][i]
+            label = '{} {:.2f}'.format(predicted_class, score)
+            label_size = draw.textsize(label, font)
+            draw = draw_box(draw, box, colors[classes[i]], thickness,
+                            label=label, label_size=label_size,
+                            dash_mode=True, show_label=True)
+            del draw
+
+        save_predict_path = os.path.join(
+            save_path, f"{return_mode}_od_{'predict_true' if plot_true else 'predict'}_image_{image_id}.webp")
+        image_pred.save(save_predict_path)
+
+        save_true_path = ''
+        if add_only_true:
+            image_true = image.copy()
+            classes = np.argmax(true_bb[:, 5:], axis=-1)
+            for i, box in enumerate(true_bb[:, :4]):
+                draw = ImageDraw.Draw(image_true)
+                true_class = name_classes[classes[i]]
+                label = '{}'.format(true_class)
+                label_size = draw.textsize(label, font)
+                draw = draw_box(draw, box, colors[classes[i]], thickness,
+                                label=label, label_size=label_size,
+                                dash_mode=False, show_label=True)
+                del draw
+
+            save_true_path = os.path.join(save_path, f"{return_mode}_od_true_image_{image_id}.webp")
+            image_true.save(save_true_path)
+
+        return save_predict_path, save_true_path
+
+    @staticmethod
+    def get_yolo_example_statistic(true_bb, pred_bb, name_classes, sensitivity=0.25):
+        compat = {
+            'recognize': {
+                "empty": [],
+                'unrecognize': []
+            },
+            'class_stat': {},
+            'total_stat': {}
+        }
+        for name in name_classes:
+            compat['recognize'][name] = []
+
+        predict = {}
+        for i, k in enumerate(pred_bb[:, :4]):
+            predict[i] = {
+                'pred_class': name_classes[np.argmax(pred_bb[:, 5:][i])],
+                'conf': pred_bb[:, 4][i].item(),
+                'class_conf': pred_bb[:, 5:][i][np.argmax(pred_bb[:, 5:][i])],
+            }
+
+        count = 0
+        total_conf = 0
+        total_class = 0
+        total_overlap = 0
+        all_true = list(np.arange(len(true_bb)))
+        for i, tr in enumerate(true_bb[:, :4]):
+            for j, pr in enumerate(pred_bb[:, :4]):
+                boxes = np.array([true_bb[:, :4][i], pred_bb[:, :4][j]])
+                scores = np.array([true_bb[:, 5:][i], pred_bb[:, 5:][j]])
+                pick, _ = CreateArray().non_max_suppression_fast(boxes, scores, sensitivity=sensitivity)
+                if len(pick) == 1:
+                    mean_iou = CreateArray().bboxes_iou(boxes[0], boxes[1])
+                    compat['recognize'][name_classes[np.argmax(true_bb[:, 5:][i], axis=-1)]].append(
+                        {
+                            'pred_class': name_classes[np.argmax(pred_bb[:, 5:][j], axis=-1)],
+                            'conf': pred_bb[:, 4][j].item(),
+                            'class_conf': pred_bb[:, 5:][j][np.argmax(pred_bb[:, 5:][j], axis=-1)],
+                            'class_result': True if np.argmax(true_bb[:, 5:][i], axis=-1) == np.argmax(
+                                pred_bb[:, 5:][j], axis=-1) else False,
+                            'overlap': mean_iou.item()
+                        }
+                    )
+                    if np.argmax(true_bb[:, 5:][i], axis=-1) == np.argmax(pred_bb[:, 5:][j], axis=-1):
+                        count += 1
+                        total_conf += pred_bb[:, 4][j].item()
+                        total_class += pred_bb[:, 5:][j][np.argmax(pred_bb[:, 5:][j], axis=-1)]
+                        total_overlap += mean_iou.item()
+
+                    try:
+                        predict.pop(j)
+                        all_true.pop(all_true.index(i))
+                    except:
+                        continue
+
+        for val in predict.values():
+            compat['recognize']['empty'].append(val)
+
+        if all_true:
+            for idx in all_true:
+                compat['recognize']['unrecognize'].append(
+                    {
+                        "class_name": name_classes[np.argmax(true_bb[idx, 5:], axis=-1)]
+                    }
+                )
+
+        for cl in compat['recognize'].keys():
+            if cl != 'empty' and cl != 'unrecognize':
+                mean_conf = 0
+                mean_class = 0
+                mean_overlap = 0
+                for pr in compat['recognize'][cl]:
+                    if pr['class_result']:
+                        mean_conf += pr['conf']
+                        mean_class += pr['class_conf']
+                        mean_overlap += pr['overlap']
+                compat['class_stat'][cl] = {
+                    'mean_conf': mean_conf / len(compat['recognize'][cl]) if len(compat['recognize'][cl]) else None,
+                    'mean_class': mean_class / len(compat['recognize'][cl]) if len(compat['recognize'][cl]) else None,
+                    'mean_overlap': mean_overlap / len(compat['recognize'][cl]) if len(
+                        compat['recognize'][cl]) else None
+                }
+        compat['total_stat'] = {
+            'total_conf': total_conf / count if count else 0.,
+            'total_class': total_class / count if count else 0.,
+            'total_overlap': total_overlap / count if count else 0.,
+            'total_metric': (total_conf + total_class + total_overlap) / 3 / count if count else 0.
+        }
+        return compat

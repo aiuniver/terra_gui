@@ -199,6 +199,7 @@ from ..modeling.layers.extra import ActivationChoice
 from ..presets.models import EmptyModelDetailsData
 from ..presets.datasets import OutputLayersDefaults
 from ... import settings
+from terra_ai.data.training.extra import ArchitectureChoice
 
 
 class DatasetLoadData(BaseMixinData):
@@ -284,6 +285,7 @@ class DatasetData(AliasMixinData):
     size: Optional[FileSizeData]
     group: Optional[DatasetGroupChoice]
     use_generator: bool = False
+    architecture: ArchitectureChoice = ArchitectureChoice.Basic
     tags: Optional[TagsList] = TagsList()
     inputs: Dict[PositiveInt, DatasetInputsData] = {}
     outputs: Dict[PositiveInt, DatasetOutputsData] = {}

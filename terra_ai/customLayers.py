@@ -168,8 +168,8 @@ class CustomUNETBlock(Model):
 
     def __init__(self, filters=32, activation='relu'):
         super(CustomUNETBlock, self).__init__(name='')
-        # self.filters = filters
-        # self.activation = activation
+        self.filters = filters
+        self.activation = activation
         self.x_1 = layers.Conv2D(filters=self.filters, kernel_size=(3, 3), strides=(1, 1), padding='same',
                                  activation=self.activation,
                                  data_format='channels_last', dilation_rate=(1, 1), groups=1, use_bias=True,
@@ -642,7 +642,7 @@ class YOLOv3ResBlock(Model):
     #     return cls(**config)
 
 
-class YOLOConvBlock(Model):
+class YOLOConvBlock(Layer):
     """Unet block layer """
 
     def __init__(self,
@@ -731,7 +731,7 @@ class YOLOConvBlock(Model):
     #     return cls(**config)
 
 
-class Mish(Model):
+class Mish(Layer):
     """
     Mish Activation Function.
     .. math::
@@ -883,21 +883,6 @@ class DarkNetUpsample(Model):
     def get_config(self):
         config = super(DarkNetUpsample, self).get_config()
         return config
-
-
-if __name__ == "__main__":
-    # input = tensorflow.keras.layers.Input(shape=(32, 32, 3))
-    # x = YOLOResBlock(32, 2)(input)
-    # print(x)
-    # block_type = 'YOLOResBlock'
-    # x = YOLOResBlock(**{'mode': "YOLOv5", 'filters': 32, "num_resblocks": 5, "activation": 'Swish',
-    #                     "use_bias": False, "include_head": True, "include_add": True,
-    #                     "all_narrow": True})
-    # x = YOLOConvBlock(**{'mode': "YOLOv5", "filters": 64, "num_conv": 5, 'activation': 'Swish'})
-    x = YOLOv3ResBlock(filters=32, num_resblocks=1)
-    print(x.compute_output_shape(input_shape=(None, 32, 32, 64)))
-    pass
-
 
 class CONVBlock(Model):
     """Conv block layer """
@@ -1291,6 +1276,22 @@ class UNETBlock(Model):
         base_config = super(UNETBlock, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
+
     @classmethod
     def from_config(cls, config):
         return cls(**config)
+
+
+if __name__ == "__main__":
+    # input = tensorflow.keras.layers.Input(shape=(32, 32, 3))
+    # x = YOLOResBlock(32, 2)(input)
+    # print(x)
+    # block_type = 'YOLOResBlock'
+    # x = YOLOResBlock(**{'mode': "YOLOv5", 'filters': 32, "num_resblocks": 5, "activation": 'Swish',
+    #                     "use_bias": False, "include_head": True, "include_add": True,
+    #                     "all_narrow": True})
+    # x = YOLOConvBlock(**{'mode': "YOLOv5", "filters": 64, "num_conv": 5, 'activation': 'Swish'})
+    x = YOLOv3ResBlock(filters=32, num_resblocks=1)
+    print(x.compute_output_shape(input_shape=(None, 32, 32, 64)))
+    pass
+

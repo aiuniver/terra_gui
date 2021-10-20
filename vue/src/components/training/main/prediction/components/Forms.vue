@@ -1,11 +1,11 @@
 <template>
   <div>
-    <TableImage v-if="type === 'image'" v-bind="obj" />
-    <TableStr v-if="type === 'str' || type === 'number'" v-bind="obj" />
-    <TableText v-if="type === 'text'" v-bind="obj" />
-    <TableTextSegmented v-if="type === 'segmented_text'" v-bind="obj" />
-    <TableVideo v-if="type === 'video'" v-bind="obj" />
-    <TableAudio v-if="type === 'audio'" v-bind="obj" />
+    <TableImage v-if="type === 'image'" v-bind="obj" :key="update" />
+    <TableStr v-if="type === 'str' || type === 'number'" v-bind="obj" :key="update" />
+    <TableText v-if="type === 'text'" v-bind="obj" :key="update" />
+    <TableTextSegmented v-if="type === 'segmented_text'" v-bind="obj" :key="update" />
+    <TableVideo v-if="type === 'video'" v-bind="obj" :key="update" />
+    <TableAudio v-if="type === 'audio'" v-bind="obj" :key="update" />
   </div>
 </template>
 

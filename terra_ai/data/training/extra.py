@@ -41,7 +41,18 @@ class BalanceSortedChoice(str, Enum):
 
 class ArchitectureChoice(str, Enum):
     Basic = "Basic"
-    Yolo = "Yolo"
+    ImageClassification = "ImageClassification"
+    ImageSegmentation = "ImageSegmentation"
+    TextClassification = "TextClassification"
+    TextSegmentation = "TextSegmentation"
+    DataframeClassification = "DataframeClassification"
+    DataframeRegression = "DataframeRegression"
+    Timeseries = "Timeseries"
+    TimeseriesTrend = "TimeseriesTrend"
+    AudioClassification = "AudioClassification"
+    VideoClassification = "VideoClassification"
+    YoloV3 = "YoloV3"
+    YoloV4 = "YoloV4"
 
 
 class CheckpointIndicatorChoice(str, Enum):
@@ -111,6 +122,7 @@ class LossChoice(str, Enum):
 class MetricChoice(str, Enum):
     AUC = "AUC"
     Accuracy = "Accuracy"
+    BalancedRecall = "BalancedRecall"
     BinaryAccuracy = "BinaryAccuracy"
     BinaryCrossentropy = "BinaryCrossentropy"
     CategoricalAccuracy = "CategoricalAccuracy"
@@ -130,6 +142,7 @@ class MetricChoice(str, Enum):
     Poisson = "Poisson"
     Precision = "Precision"
     Recall = "Recall"
+    RecallPercent = "RecallPercent"
     RootMeanSquaredError = "RootMeanSquaredError"
     SquaredHinge = "SquaredHinge"
     TopKCategoricalAccuracy = "TopKCategoricalAccuracy"
@@ -138,7 +151,10 @@ class MetricChoice(str, Enum):
     SparseCategoricalAccuracy = "SparseCategoricalAccuracy"
     SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
     SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
+    UnscaledMAE = "UnscaledMAE"
     DiceCoef = "DiceCoef"
+    mAP50 = "mAP50"
+    mAP95 = "mAP95"
 
 
 class TaskGroupData(BaseMixinData):

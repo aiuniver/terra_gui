@@ -4,12 +4,12 @@ from terra_ai.datasets.data import DataType, InstructionsData, DatasetInstructio
 from terra_ai.datasets.utils import PATH_TYPE_LIST
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preprocessing import CreatePreprocessing
+from terra_ai.data.training.extra import ArchitectureChoice
 from terra_ai.data.datasets.creation import CreationData, CreationInputsList, CreationOutputsList
 from terra_ai.data.datasets.dataset import DatasetData, DatasetInputsData, DatasetOutputsData, DatasetPathsData
-from terra_ai.data.datasets.extra import LayerEncodingChoice
 from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice, \
     LayerPrepareMethodChoice, LayerScalerImageChoice, ColumnProcessingTypeChoice, \
-    LayerTypeProcessingClassificationChoice
+    LayerTypeProcessingClassificationChoice, LayerEncodingChoice
 from terra_ai.settings import DATASET_EXT, DATASET_CONFIG
 
 import psutil
@@ -208,32 +208,23 @@ class CreateDataset(object):
                 if put.parameters.cols_names[name_index]:
                     for worker in put.parameters.cols_names[name_index]:  # На будущее после 1 октября - очень аккуратно!
                         self.tags[put.id][f'{put.id}_{name}'] = decamelize(self.columns_processing[str(worker)].type)
+                        if decamelize(self.columns_processing[str(worker)].type) in PATH_TYPE_LIST:
+                            list_of_data = [os.path.join(self.source_path, x) for x in list_of_data]
                         instr = getattr(CreateArray(),
                                         f'instructions_{decamelize(self.columns_processing[str(worker)].type)}')(
                             list_of_data, **{'cols_names': f'{put.id}_{name}', 'put': put.id},
                             **self.columns_processing[str(worker)].parameters.native())
-                        path_flag = False
-                        if self.columns_processing[str(worker)].type in [LayerInputTypeChoice.Image,
-                                                                         LayerOutputTypeChoice.Image,
-                                                                         LayerInputTypeChoice.Video,
-                                                                         LayerOutputTypeChoice.Segmentation,
-                                                                         LayerInputTypeChoice.Audio,
-                                                                         LayerOutputTypeChoice.Audio,
-                                                                         LayerOutputTypeChoice.ObjectDetection]:
-                            paths_list = [os.path.join(self.source_path, elem) for elem in instr['instructions']]
-                            path_flag = True
+                        if decamelize(self.columns_processing[str(worker)].type) in PATH_TYPE_LIST:
+                            data_to_cut = [os.path.join(self.source_path, elem) for elem in instr['instructions']]
                         else:
-                            paths_list = instr['instructions']
+                            data_to_cut = instr['instructions']
                         instructions_data = InstructionsData(
                             **getattr(CreateArray(),
                                       f"cut_{decamelize(self.columns_processing[str(worker)].type)}")(
-                                paths_list, os.path.join(self.paths.sources, f'{put.id}_{name}'),
+                                data_to_cut, os.path.join(self.paths.sources, f'{put.id}_{name}'),
                                 **instr['parameters']))
-                        if path_flag:
-                            instructions_data.instructions = [os.path.join('sources',
-                                                                           instructions_data.parameters['cols_names'],
-                                                                           path.replace(str(self.source_path) +
-                                                                                        os.path.sep, ''))
+                        if decamelize(self.columns_processing[str(worker)].type) in PATH_TYPE_LIST:
+                            instructions_data.instructions = [path.replace(str(self.paths.basepath) + os.path.sep, '')
                                                               for path in instructions_data.instructions]
 
                         instructions_data.parameters = {'put_type': decamelize(self.columns_processing[
@@ -374,6 +365,10 @@ class CreateDataset(object):
                 for col_name, data in self.instructions.outputs[out].items():
                     classes_dict = {'one_class': [idx for idx in range(len(data.instructions))]}
 
+        if creation_data.info.shuffle:
+            for key in classes_dict.keys():
+                random.shuffle(classes_dict[key])
+
         split_sequence = {"train": [], "val": [], "test": []}
         for key, value in classes_dict.items():
             train_len = int(creation_data.info.part.train * len(classes_dict[key]))
@@ -404,13 +399,13 @@ class CreateDataset(object):
     def create_input_parameters(self, creation_data: CreationData) -> dict:
 
         creating_inputs_data = {}
-        path_type_input_list = [LayerInputTypeChoice.Image, LayerInputTypeChoice.Video, LayerInputTypeChoice.Audio]
         for key in self.instructions.inputs.keys():
             input_array = []
             self.columns[key] = {}
             creating_inputs_data[key] = {}
             for col_name, data in self.instructions.inputs[key].items():
                 column_names = []
+                encoding = LayerEncodingChoice.none
                 if creation_data.inputs.get(key).type == LayerInputTypeChoice.Dataframe:
                     column_names = pd.read_csv(creation_data.inputs.get(key).parameters.sources_paths[0], nrows=0,
                                                sep=None, engine='python').columns.to_list()
@@ -421,24 +416,33 @@ class CreateDataset(object):
                             str(creation_data.inputs.get(key).parameters.cols_names[idx][0])].type
                     except IndexError:
                         task = LayerInputTypeChoice.Raw
+
+                    if creation_data.inputs.get(key).type == LayerInputTypeChoice.Dataframe and\
+                            task == LayerInputTypeChoice.Classification:
+                        if creation_data.columns_processing[
+                            str(creation_data.inputs.get(key).parameters.cols_names[
+                                    idx][0])].parameters.one_hot_encoding:
+                            encoding = LayerEncodingChoice.ohe
                 else:
                     task = creation_data.inputs.get(key).type
 
                 prep = None
-                if self.preprocessing.preprocessing.get(key) and self.preprocessing.preprocessing.get(key).get(col_name):
+                if self.preprocessing.preprocessing.get(key) and \
+                        self.preprocessing.preprocessing.get(key).get(col_name):
                     prep = self.preprocessing.preprocessing.get(key).get(col_name)
 
                 if creation_data.inputs.get(key).type == LayerInputTypeChoice.Dataframe:
-                    data_to_pass = data.instructions[0]
+                    if 'depth' in data.parameters.keys() and data.parameters['depth']:
+                        data_to_pass = data.instructions[0:data.parameters['length']]
+                    else:
+                        data_to_pass = data.instructions[0]
                     c_name = '_'.join(col_name.split('_')[1:])
                     c_idx = column_names.index(c_name)
                     if creation_data.inputs.get(key).parameters.cols_names[c_idx]:
                         c_data_idx = creation_data.inputs.get(key).parameters.cols_names[c_idx][0]
-                        if creation_data.columns_processing.get(str(c_data_idx)).type in path_type_input_list:
+                        if decamelize(creation_data.columns_processing.get(str(c_data_idx)).type) in PATH_TYPE_LIST:
                             data_to_pass = os.path.join(self.paths.basepath, data.instructions[0])
-                elif 'depth' in data.parameters.keys() and data.parameters['depth']:
-                    data_to_pass = data.instructions[0:data.parameters['length']]
-                elif creation_data.inputs.get(key).type in path_type_input_list:
+                elif decamelize(creation_data.inputs.get(key).type) in PATH_TYPE_LIST:
                     data_to_pass = os.path.join(self.paths.basepath, data.instructions[0])
                 else:
                     data_to_pass = data.instructions[0]
@@ -467,7 +471,7 @@ class CreateDataset(object):
                                                    task=task,
                                                    classes_names=classes_names,
                                                    num_classes=num_classes,
-                                                   encoding=LayerEncodingChoice.none
+                                                   encoding=encoding
                                                    )
                 self.columns[key].update([(col_name, current_column.native())])
 
@@ -518,9 +522,8 @@ class CreateDataset(object):
     def create_output_parameters(self, creation_data: CreationData) -> dict:
 
         creating_outputs_data = {}
-        path_type_outputs_list = [LayerOutputTypeChoice.Image, LayerOutputTypeChoice.Segmentation,
-                                  LayerOutputTypeChoice.Audio, LayerOutputTypeChoice.ObjectDetection]
         for key in self.instructions.outputs.keys():
+            self.columns[key] = {}
             output_array = []
             iters = 1
             data = None
@@ -529,10 +532,9 @@ class CreateDataset(object):
                 if self.preprocessing.preprocessing.get(key) and \
                         self.preprocessing.preprocessing.get(key).get(col_name):
                     prep = self.preprocessing.preprocessing.get(key).get(col_name)
-
-                if creation_data.outputs.get(key).type in path_type_outputs_list or \
+                if decamelize(creation_data.outputs.get(key).type) in PATH_TYPE_LIST or \
                         creation_data.columns_processing.get(str(key)) is not None and \
-                        creation_data.columns_processing.get(str(key)).type in path_type_outputs_list:
+                        decamelize(creation_data.columns_processing.get(str(key)).type) in PATH_TYPE_LIST:
                     data_to_pass = os.path.join(self.paths.basepath, data.instructions[0])
                 elif 'trend' in data.parameters.keys():
                     if data.parameters['trend']:
@@ -542,7 +544,6 @@ class CreateDataset(object):
                                                                                    data.parameters['depth']]
                 else:
                     data_to_pass = data.instructions[0]
-
                 arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(data_to_pass, **data.parameters,
                                                                                    **{'preprocess': prep})
 
@@ -612,7 +613,10 @@ class CreateDataset(object):
                                                         num_classes=num_classes,
                                                         encoding=encoding
                                                         )
-                    self.columns[key + i] = {col_name: current_output.native()}
+                    if not creation_data.outputs.get(key).type == LayerOutputTypeChoice.ObjectDetection:
+                        self.columns[key].update([(col_name, current_output.native())])
+                    else:
+                        self.columns[key + i] = {col_name: current_output.native()}
 
             depth_flag = False
             if not creation_data.outputs.get(key).type == LayerOutputTypeChoice.ObjectDetection:
@@ -632,14 +636,18 @@ class CreateDataset(object):
                     encoding = data['encoding']
                     break
             else:
+                tmp_tasks = []
                 task = LayerInputTypeChoice.Dataframe
                 encoding = LayerEncodingChoice.none
                 classes_colors, classes_names, = [], []
                 for c_name, data in self.columns[key].items():
+                    tmp_tasks.append(data['task'])
                     if data['classes_colors']:
                         classes_colors += data['classes_colors']
                     if data['classes_names']:
                         classes_names += data['classes_names']
+                if len(set(tmp_tasks)) == 1:
+                    task = tmp_tasks[0]
                 num_classes = len(classes_names) if classes_names else None
             for i in range(iters):
                 if depth_flag:
@@ -761,9 +769,7 @@ class CreateDataset(object):
 
                 if self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
                     for n in range(3):
-                        # if n < 3:
                         out_array[split][key + n] = np.array(globals()[f'current_arrays_{n}'])
-                        # else:
                         service[split][key + n] = np.array(globals()[f'current_arrays_{n + 3}'])
                         # print(np.array(globals()[f'current_arrays_{n}']).shape)
                         # print(np.array(globals()[f'current_arrays_{n + 3}']).shape)
@@ -838,14 +844,58 @@ class CreateDataset(object):
         for tag in creation_data.tags:
             tags_list.append(tag.native())
 
+        # Выбор архитектуры
+        inp_tasks = []
+        out_tasks = []
+        for key, val in self.inputs.items():
+            if val['task'] == LayerInputTypeChoice.Dataframe:
+                tmp = []
+                for value in self.columns[key].values():
+                    tmp.append(value['task'])
+                unique_vals = list(set(tmp))
+                if len(unique_vals) == 1 and unique_vals[0] in LayerInputTypeChoice.__dict__.keys() and unique_vals[0]\
+                        in [LayerInputTypeChoice.Image, LayerInputTypeChoice.Text,
+                            LayerInputTypeChoice.Audio, LayerInputTypeChoice.Video]:
+                    inp_tasks.append(unique_vals[0])
+                else:
+                    inp_tasks.append(val['task'])
+            else:
+                inp_tasks.append(val['task'])
+        for key, val in self.outputs.items():
+            if val['task'] == LayerOutputTypeChoice.Dataframe:
+                tmp = []
+                for value in self.columns[key].values():
+                    tmp.append(value['task'])
+                unique_vals = list(set(tmp))
+                if len(unique_vals) == 1 and unique_vals[0] in LayerOutputTypeChoice.__dict__.keys():
+                    out_tasks.append(unique_vals[0])
+                else:
+                    out_tasks.append(val['task'])
+            else:
+                out_tasks.append(val['task'])
+
+        inp_task_name = list(set(inp_tasks))[0] if len(set(inp_tasks)) == 1 else LayerInputTypeChoice.Dataframe
+        out_task_name = list(set(out_tasks))[0] if len(set(out_tasks)) == 1 else LayerOutputTypeChoice.Dataframe
+
+        if inp_task_name + out_task_name in ArchitectureChoice.__dict__.keys():
+            architecture = ArchitectureChoice.__dict__[inp_task_name + out_task_name]
+        elif out_task_name in ArchitectureChoice.__dict__.keys():
+            architecture = ArchitectureChoice.__dict__[out_task_name]
+        elif out_task_name == LayerOutputTypeChoice.ObjectDetection:
+            architecture = ArchitectureChoice.__dict__[creation_data.outputs.get(2).parameters.model.title() +
+                                                       creation_data.outputs.get(2).parameters.yolo.title()]
+        else:
+            architecture = ArchitectureChoice.Basic
+
         data = {'name': creation_data.name,
                 'alias': creation_data.alias,
                 'group': DatasetGroupChoice.custom,
                 'use_generator': creation_data.use_generator,
                 'tags': tags_list,
                 'user_tags': creation_data.tags,
-                'language': '',  # зачем?...
+                # 'language': '',  # зачем?...
                 'date': datetime.now().astimezone(timezone("Europe/Moscow")).isoformat(),
+                'architecture': architecture,
                 'size': {'value': size_bytes}
                 }
 

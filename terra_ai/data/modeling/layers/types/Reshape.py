@@ -30,7 +30,6 @@ LayerConfig = LayerConfigData(
 
 class ParametersMainData(BaseMixinData):
     target_shape: Optional[Tuple[int, ...]] = None
-    pass
 
 
 class ParametersExtraData(BaseMixinData):

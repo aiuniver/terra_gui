@@ -4,21 +4,21 @@
     <div class="predictions__params">
       <div class="predictions__param">
         <t-field inline label="Данные для расчета">
-          <t-select-new :list="sortData" v-model="example_choice_type" small />
+          <t-select-new :list="sortData" v-model="example_choice_type" small @change="show"/>
         </t-field>
         <t-field inline label="Тип выбора данных">
-          <t-select-new :list="sortOutput" v-model="main_output" small />
+          <t-select-new :list="sortOutput" v-model="main_output" small @change="show"/>
         </t-field>
         <t-field inline label="Показать примеров">
-          <t-input-new v-model.number="num_examples" type="number" small style="width: 109px" :error="isError" />
+          <t-input-new v-model.number="num_examples" type="number" small style="width: 109px" :error="isError" @change="show"/>
         </t-field>
       </div>
       <div class="predictions__param">
         <t-field inline label="Выводить промежуточные результаты">
-          <t-checkbox-new v-model="show_results" small />
+          <t-checkbox-new v-model="show_results" small @change="show"/>
         </t-field>
         <t-field inline label="Показать статистику">
-          <t-checkbox-new v-model="show_statistic" small />
+          <t-checkbox-new v-model="show_statistic" small @change="show"/>
         </t-field>
         <t-field inline label="Фиксация колонок">
           <t-checkbox-new v-model="fixation" small />
@@ -26,17 +26,17 @@
       </div>
       <div class="predictions__param">
         <t-field inline label="Автообновление">
-          <t-checkbox-new v-model="autoupdate" small />
+          <t-checkbox-new v-model="autoupdate" small @change="show"/>
         </t-field>
       </div>
       <div class="predictions__param">
         <t-button style="width: 150px" @click.native="show" :disabled="!!isError">
-          {{ !update ? 'Показать' : 'Обновить' }}
+          {{ 'Обновить' }}
         </t-button>
       </div>
     </div>
     <div class="predictions__body">
-      <PredictTable v-if="isEmpty" :predict="predictData" :fixation="fixation" />
+      <PredictTable v-if="isEmpty" :predict="predictData" :fixation="fixation" :update="predictUpdate"/>
       <div v-else class="predictions__overlay">
         <LoadSpiner v-if="start && isLearning" text="Загрузка данных..." />
       </div>
@@ -73,7 +73,7 @@ export default {
     num_examples: 10,
     show_results: true,
     show_statistic: true,
-    fixation: true,
+    fixation: false,
     max: 10,
   }),
   computed: {
@@ -121,12 +121,16 @@ export default {
     predictData() {
       return this.$store.getters['trainings/getTrainData']('intermediate_result') || {};
     },
+    predictUpdate() {
+      return this.$store.getters['trainings/getTrainData']('update') || '';
+    },
     statusTrain() {
       return this.$store.getters['trainings/getStatusTrain'];
     },
   },
   methods: {
     async show() {
+      if (this.isError) return;
       this.start = this.settings.show_results;
       const data = {
         autoupdate: this.autoupdate,

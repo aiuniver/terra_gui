@@ -17,6 +17,54 @@ class ArchitectureYoloData(ArchitectureBaseData, types.Yolo.ParametersData):
     pass
 
 
+class ArchitectureImageClassificationData(ArchitectureBasicData):
+    pass
+
+
+class ArchitectureImageSegmentationData(ArchitectureBasicData):
+    pass
+
+
+class ArchitectureTextClassificationData(ArchitectureBasicData):
+    pass
+
+
+class ArchitectureTextSegmentationData(ArchitectureBasicData):
+    pass
+
+
+class ArchitectureDataframeClassificationData(ArchitectureBasicData):
+    pass
+
+
+class ArchitectureDataframeRegressionData(ArchitectureBasicData):
+    pass
+
+
+class ArchitectureTimeSeriesData(ArchitectureBasicData):
+    pass
+
+
+class ArchitectureTimeSeriesTrendData(ArchitectureBasicData):
+    pass
+
+
+class ArchitectureAudioClassificationData(ArchitectureBasicData):
+    pass
+
+
+class ArchitectureVideoClassificationData(ArchitectureBasicData):
+    pass
+
+
+class ArchitectureYoloV3Data(ArchitectureYoloData):
+    pass
+
+
+class ArchitectureYoloV4Data(ArchitectureYoloData):
+    pass
+
+
 Architecture = Enum(
     "Architecture",
     dict(

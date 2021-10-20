@@ -7,7 +7,7 @@
     "model": {
       "tag": "model",
       "task": "Image",
-      "model": "test_example/airplanes"
+      "model": "/home/evgeniy/terra_gui/TerraProjects/models/samolet"
     },
     "2": {
       "tag": "function",

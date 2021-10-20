@@ -9,11 +9,13 @@ import deploy from './modules/deploy';
 import tables from './modules/tables';
 import profile from './modules/profile';
 import logging from './modules/logging';
+import dialogs from './modules/dialogs';
 
 import axios from 'axios';
 // import Vue from 'vue';
 export default {
   modules: {
+    dialogs,
     messages,
     modeling,
     cascades,

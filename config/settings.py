@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 import environ
 import tempfile
 
+from django.utils import timezone
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = environ.Path(__file__) - 2
@@ -51,6 +53,7 @@ EXTERNAL_APPS = [
 INTERNAL_APPS = [
     "apps.api.apps.APIConfig",
     "apps.media.apps.MediaConfig",
+    "apps.periodic_task.apps.PeriodicTaskConfig",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + EXTERNAL_APPS + INTERNAL_APPS
@@ -135,12 +138,17 @@ REST_FRAMEWORK = {
 
 # Terra AI
 
+TERRA_AI_DATE_START = timezone.now()
+TERRA_AI_SYNC_LOGS = env.bool("TERRA_AI_SYNC_LOGS", default=False)
+TERRA_AI_BASE_DIR = env.str("TERRA_AI_BASE_DIR", default="/")
 TERRA_AI_EXCHANGE_API_URL = env.str("TERRA_AI_EXCHANGE_API_URL")
 TERRA_AI_DATA_PATH = env.str("TERRA_AI_DATA_PATH")
 TERRA_AI_PROJECT_PATH = f"{tempfile.gettempdir()}/tai-project"
 
 
 # User data
+
+USER_PORT = env.int("USER_PORT", default=9120)
 USER_LOGIN = env.str("USER_LOGIN")
 USER_NAME = env.str("USER_NAME")
 USER_LASTNAME = env.str("USER_LASTNAME")

@@ -1,5 +1,6 @@
 from typing import Callable
 from collections import OrderedDict
+import tensorflow
 
 
 class Cascade:
@@ -34,7 +35,10 @@ class CascadeElement(Cascade):
         self.fun = fun
 
     def __call__(self, *agr):
-        self.out = self.fun(*agr)
+        if isinstance(self.fun, tensorflow.keras.models.Model):
+            self.out = self.fun(agr)
+        else:
+            self.out = self.fun(*agr)
         return self.out
 
 
@@ -81,7 +85,7 @@ class CascadeBlock(Cascade):
     def __getitem__(self, index):
         return self.cascades[index]
 
-    def __call__(self, item):
+    def __call__(self, *item):
         self.out_map = {}
 
         global cascade
@@ -93,7 +97,11 @@ class CascadeBlock(Cascade):
                 if j is None:
                     return j
 
-                cascade_input.append(j)
+                if isinstance(j, (list, tuple)):
+                    cascade_input += j
+                else:
+                    cascade_input.append(j)
+
             cascade(*cascade_input)
 
         self.out = cascade.out
