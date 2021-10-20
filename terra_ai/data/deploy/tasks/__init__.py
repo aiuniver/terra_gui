@@ -30,6 +30,12 @@ class DeployData(BaseMixinData):
         value.update({"path": values.get("path")})
         return field.type_(**value)
 
+    @property
+    def presets(self) -> dict:
+        data = self.native()
+        data.update({"data": self.data.presets})
+        return data
+
     def dict(self, **kwargs):
         kwargs.update({"exclude": {"path"}})
         return super().dict(**kwargs)
