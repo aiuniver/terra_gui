@@ -1536,7 +1536,7 @@ class CreateArray(object):
                                 inverse_col = inverse_col.squeeze().astype('float').tolist()
                             else:
                                 inverse_col = array[idx, i:i + 1].astype('float').tolist()
-                        return_data[output_id]['label'].append(inverse_col)
+                        return_data[output_id]['label'].append([str(inverse_col)])
 
                 else:
                     return_data[output_id] = []
