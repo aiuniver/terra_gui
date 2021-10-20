@@ -632,14 +632,18 @@ class CreateDataset(object):
                     encoding = data['encoding']
                     break
             else:
+                tmp_tasks = []
                 task = LayerInputTypeChoice.Dataframe
                 encoding = LayerEncodingChoice.none
                 classes_colors, classes_names, = [], []
                 for c_name, data in self.columns[key].items():
+                    tmp_tasks.append(data['task'])
                     if data['classes_colors']:
                         classes_colors += data['classes_colors']
                     if data['classes_names']:
                         classes_names += data['classes_names']
+                if len(set(tmp_tasks)) == 1:
+                    task = tmp_tasks[0]
                 num_classes = len(classes_names) if classes_names else None
             for i in range(iters):
                 if depth_flag:
