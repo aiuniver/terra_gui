@@ -18,8 +18,9 @@
       </div>
       <div class="modal-body">
         <div class="modal-body__box">
-          <p style="display:flex; justify-content:space-between; color:#A7BED3; margin-bottom:10px; font-size:12px;"><span>Название проекта*</span><span>{{ newProject.headline.length }}/50</span></p>
-          <DInputText placeholder="Введите название проекта" v-model="newProject.headline" />
+          <t-field label="Название проекта *">
+            <DInputText placeholder="Введите название проекта" v-model="newProject.headline" />
+          </t-field>
         </div>  
         <div class="modal-body__box">
          <DUpload @uploadFile="uploadFile" @removeFile="newProject.image = ''" :behindFile="newProject.image" />

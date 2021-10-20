@@ -168,6 +168,21 @@ export default {
         );
       }
       &.d-button__sloy--left {
+        -webkit-clip-path: polygon(
+          0% 100%,
+          9px calc(100% - 8px),
+          9px 14px,
+          22px 0%,
+          calc(100% - 4px) 0%,
+          calc(100% - 4px) 2px,
+          100% 2px,
+          100% calc(100% - 15px),
+          calc(100% - 14px) calc(100% - 3px),
+          calc(100% - 75px) calc(100% - 3px),
+          calc(100% - 75px) calc(100% - 7px),
+          calc(100% - 102px) calc(100% - 7px),
+          calc(100% - 108px) 100%
+        );
         clip-path: polygon(
           0% 100%,
           9px calc(100% - 8px),
@@ -185,6 +200,17 @@ export default {
         );
       }
       &.d-button__btn--left {
+        -webkit-clip-path: polygon(
+          2px 100%,
+          9px calc(100% - 6px),
+          9px 14px,
+          22px 0%,
+          calc(100% - 4px) 0%,
+          calc(100% - 4px) calc(100% - 15px),
+          calc(100% - 14px) calc(100% - 7px),
+          calc(100% - 102px) calc(100% - 7px),
+          calc(100% - 108px) 100%
+        );
         clip-path: polygon(
           2px 100%,
           9px calc(100% - 6px),
@@ -238,7 +264,7 @@ export default {
       cursor: default;
       border-color: #00000000;
     }
-    .d-button__btn--primary, 
+    .d-button__btn--primary,
     .d-button__sloy--primary {
       color: #242f3d;
       cursor: default;
@@ -247,7 +273,7 @@ export default {
     .d-button__btn--secondary {
       cursor: default;
       background-color: #19222d;
-    } 
+    }
     .d-button__sloy--secondary {
       color: #242f3d;
       cursor: default;

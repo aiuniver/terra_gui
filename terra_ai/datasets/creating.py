@@ -365,6 +365,10 @@ class CreateDataset(object):
                 for col_name, data in self.instructions.outputs[out].items():
                     classes_dict = {'one_class': [idx for idx in range(len(data.instructions))]}
 
+        if creation_data.info.shuffle:
+            for key in classes_dict.keys():
+                random.shuffle(classes_dict[key])
+
         split_sequence = {"train": [], "val": [], "test": []}
         for key, value in classes_dict.items():
             train_len = int(creation_data.info.part.train * len(classes_dict[key]))
@@ -632,14 +636,18 @@ class CreateDataset(object):
                     encoding = data['encoding']
                     break
             else:
+                tmp_tasks = []
                 task = LayerInputTypeChoice.Dataframe
                 encoding = LayerEncodingChoice.none
                 classes_colors, classes_names, = [], []
                 for c_name, data in self.columns[key].items():
+                    tmp_tasks.append(data['task'])
                     if data['classes_colors']:
                         classes_colors += data['classes_colors']
                     if data['classes_names']:
                         classes_names += data['classes_names']
+                if len(set(tmp_tasks)) == 1:
+                    task = tmp_tasks[0]
                 num_classes = len(classes_names) if classes_names else None
             for i in range(iters):
                 if depth_flag:
