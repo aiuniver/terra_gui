@@ -42,6 +42,7 @@ import moviepy.editor as moviepy_editor
 
 from terra_ai.settings import DEPLOY_PRESET_PERCENT
 
+
 class CreateArray(object):
 
     @staticmethod
@@ -1258,7 +1259,13 @@ class CreateArray(object):
     def get_x_array(options):
         x_val = None
         inverse_x_val = None
-        if options.data.architecture == ArchitectureChoice.Basic:
+        if options.data.architecture in [ArchitectureChoice.Basic, ArchitectureChoice.ImageClassification,
+                                         ArchitectureChoice.ImageSegmentation, ArchitectureChoice.TextSegmentation,
+                                         ArchitectureChoice.TextClassification, ArchitectureChoice.AudioClassification,
+                                         ArchitectureChoice.VideoClassification,
+                                         ArchitectureChoice.DataframeClassification,
+                                         ArchitectureChoice.DataframeRegression, ArchitectureChoice.Timeseries,
+                                         ArchitectureChoice.TimeseriesTrend]:
             if options.data.group == DatasetGroupChoice.keras:
                 x_val = options.X.get("val")
             dataframe = False
@@ -1305,11 +1312,18 @@ class CreateArray(object):
         return x_val, inverse_x_val
 
     @staticmethod
-    def postprocess_results(array, options, save_path: str = "", dataset_path: str = "", sensitivity=0.15, threashold=0.1) -> dict:
+    def postprocess_results(array, options, save_path: str = "", dataset_path: str = "", sensitivity=0.15,
+                            threashold=0.1) -> dict:
         x_array, inverse_x_array = CreateArray().get_x_array(options)
         return_data = {}
 
-        if options.data.architecture == ArchitectureChoice.Basic:
+        if options.data.architecture in [ArchitectureChoice.Basic, ArchitectureChoice.ImageClassification,
+                                         ArchitectureChoice.ImageSegmentation, ArchitectureChoice.TextSegmentation,
+                                         ArchitectureChoice.TextClassification, ArchitectureChoice.AudioClassification,
+                                         ArchitectureChoice.VideoClassification,
+                                         ArchitectureChoice.DataframeClassification,
+                                         ArchitectureChoice.DataframeRegression, ArchitectureChoice.Timeseries,
+                                         ArchitectureChoice.TimeseriesTrend]:
             for i, output_id in enumerate(options.data.outputs.keys()):
                 true_array = CreateArray().get_y_true(options, output_id)
                 if len(options.data.outputs.keys()) > 1:
@@ -1486,7 +1500,8 @@ class CreateArray(object):
                                 inverse_true = options.X.get('val').get(f"{input_id}")[
                                                idx, channel[0]:channel[0] + 1].squeeze().astype('float').tolist()
                                 inverse_pred = array[idx, channel[2]:channel[2] + 1].squeeze().astype('float').tolist()
-                            button_save_path = os.path.join(save_path, f"ts_button_channel_{channel[2]}_image_{idx}.jpg")
+                            button_save_path = os.path.join(save_path,
+                                                            f"ts_button_channel_{channel[2]}_image_{idx}.jpg")
                             plt.plot(inverse_true)
                             plt.savefig(button_save_path)
                             plt.close()
@@ -1527,7 +1542,7 @@ class CreateArray(object):
                 else:
                     return_data[output_id] = []
 
-        if options.data.architecture == ArchitectureChoice.YoloV3:
+        if options.data.architecture in [ArchitectureChoice.YoloV3,  ArchitectureChoice.YoloV4]:
             y_true = CreateArray().get_yolo_y_true(options)
             y_pred = CreateArray().get_yolo_y_pred(array, options, sensitivity=sensitivity, threashold=threashold)
             name_classes = options.data.outputs.get(list(options.data.outputs.keys())[0]).classes_names
@@ -1845,7 +1860,7 @@ class CreateArray(object):
                         name_classes=name_classes,
                         sensitivity=sensitivity
                     )['total_stat']['total_metric']
-                channel_stat.append(total_metric/len(array.get(channel)))
+                channel_stat.append(total_metric / len(array.get(channel)))
             box_channel = int(np.argmax(channel_stat, axis=-1))
 
         if choice_type == ExampleChoiceTypeChoice.best or choice_type == ExampleChoiceTypeChoice.worst:
@@ -2377,7 +2392,7 @@ class CreateArray(object):
     @staticmethod
     def postprocess_object_detection(predict_array, true_array, image_path: str, colors: list,
                                      sensitivity: float, image_id: int, save_path: str, show_stat: bool,
-                                     name_classes: list, return_mode='deploy', image_size=(416,416)):
+                                     name_classes: list, return_mode='deploy', image_size=(416, 416)):
         data = {
             "y_true": {},
             "y_pred": {},
@@ -2453,7 +2468,7 @@ class CreateArray(object):
                 data["stat"]['Средняя точность'] = [
                     {
                         "title": "Перекрытие",
-                        "value": f"{np.round(box_stat['total_stat']['total_overlap']*100, 2)}%",
+                        "value": f"{np.round(box_stat['total_stat']['total_overlap'] * 100, 2)}%",
                         "color_mark": 'success' if box_stat['total_stat']['total_overlap'] >= 0.7 else 'wrong'
                     },
                     {
