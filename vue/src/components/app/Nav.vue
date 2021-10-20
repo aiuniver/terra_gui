@@ -73,13 +73,15 @@ export default {
       }
     },
     async nav({ path, access, text }) {
+      console.log(path)
       if (!this.project.dataset && access === false) {
         this.message({ text }, true);
-      } else if(!this.project.deploy.exists && access === false){
+      } else if(!this.project.deploy.exists && access === false && path == '/deploy'){
         this.messageDeploy(true);
       }
       else {
         if (this.$route.path !== path) {
+
           this.$router.push(path);
         }
       }
