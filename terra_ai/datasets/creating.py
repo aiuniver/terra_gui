@@ -365,6 +365,10 @@ class CreateDataset(object):
                 for col_name, data in self.instructions.outputs[out].items():
                     classes_dict = {'one_class': [idx for idx in range(len(data.instructions))]}
 
+        if creation_data.info.shuffle:
+            for key in classes_dict.keys():
+                random.shuffle(classes_dict[key])
+
         split_sequence = {"train": [], "val": [], "test": []}
         for key, value in classes_dict.items():
             train_len = int(creation_data.info.part.train * len(classes_dict[key]))
