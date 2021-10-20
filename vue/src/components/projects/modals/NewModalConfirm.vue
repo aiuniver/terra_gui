@@ -14,15 +14,15 @@
     </div>
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Вы собираетесь удалить проект</h3>
+        <h3><slot name="headline"></slot></h3>
       </div>
       <div class="modal-body">
         <div class="modal-body__box">
-          <p>Проект будет удален безвозвратно и вы не сможете его восстановить.</p>
+          <p><slot name="text"></slot></p>
         </div>  
         <div class="modal-body__box modal-body__box--flex modal-body__box--flex-center">
           <DButton style="width:30%" @click="$emit('close')">Отмена</DButton>
-          <DButton style="width:70%" @click="$emit('delete', project), $emit('close')" :disabled="loading" color="primary">Удалить</DButton>
+          <DButton style="width:70%" @click="$emit(actions.confirm.action, data), $emit('close')" :disabled="loading" color="primary">{{ actions.confirm.value }}</DButton>
         </div>  
       </div>
     </div>
@@ -33,8 +33,26 @@
 import DButton from "@/components/global/design/forms/components/DButton"
 
 export default {
-  name: 'NewModalDeleteProject',
-  props: ['dialog', 'loading', 'project'],
+  name: 'NewModalConfirm',
+  props: {
+    dialog: Boolean,
+    loading: Boolean,
+    data: {
+      type: Object,
+      default: () => {}
+    },
+    actions:{
+      type: Object,
+      default: () => {
+        return {
+          confirm: {
+            action: "confirm",
+            value: "Подтвердить"
+          },
+        }
+      }
+    }
+  },
   components:{
     DButton
   }
