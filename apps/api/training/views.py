@@ -109,8 +109,7 @@ class ProgressAPIView(BaseAPIView):
             data.update({"state": request.project.training.state.native()})
             _finished = data.get("finished")
             if _finished:
-                request.project.deploy.data.try_init()
-
+                request.project.deploy = data.get("data", {}).get("deploy")
             request.project.training.result = data.get("data", {}).get("train_data", {})
             if _finished:
                 request.project.save()
