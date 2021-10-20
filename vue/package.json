@@ -1,6 +1,10 @@
 {
   "name": "vue_neural",
+<<<<<<< HEAD
   "version": "0.9.141",
+=======
+  "version": "0.9.138",
+>>>>>>> features/deploy-types
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
