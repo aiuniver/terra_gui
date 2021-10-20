@@ -39,9 +39,11 @@ class ParametersMainData(BaseMixinData):
     padding: PaddingChoice = PaddingChoice.same
     activation: Optional[ActivationChoice] = ActivationChoice.relu
     batch_norm_layer: bool = True
+    dropout_layer: bool = True
 
 
 class ParametersExtraData(BaseMixinData):
     strides: Tuple[PositiveInt, PositiveInt] = (1, 1)
     dilation: Tuple[PositiveInt, PositiveInt] = (1, 1)
+    dropout_rate: ConstrainedFloatValueGe0Le1 = 0.1
     pass

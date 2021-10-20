@@ -1127,6 +1127,8 @@ class PSPBlock(Model):
         return cls(**config)
 
 
+# НАШ БЛОК!
+
 class UNETBlock(Model):
     """
     UNET Block layer
@@ -1145,6 +1147,8 @@ class UNETBlock(Model):
                  dilation=(1, 1),
                  padding='same',
                  batch_norm_layer=True,
+                 dropout_layer=True,
+                 dropout_rate=0.1,
                  **kwargs):
 
         super(UNETBlock, self).__init__(**kwargs)
@@ -1158,8 +1162,10 @@ class UNETBlock(Model):
         self.padding = padding
         self.batch_norm_layer = batch_norm_layer
         self.concatenate = layers.Concatenate()
+        self.dropout_layer = dropout_layer
+        self.dropout_rate = dropout_rate
 
-        self.start_conv = layers.Conv2D(filters=32 * (2 ** self.filters_coef), kernel_size=self.kernel_size,
+        self.start_conv = layers.Conv2D(filters=16 * (2 ** self.filters_coef), kernel_size=self.kernel_size,
                                         strides=self.strides,
                                         padding=self.padding, activation=self.activation, data_format='channels_last',
                                         dilation_rate=self.dilation, groups=1, use_bias=True,
@@ -1179,6 +1185,8 @@ class UNETBlock(Model):
                                       activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
             if self.batch_norm_layer:
                 setattr(self, f"batchnorm_d{i}", layers.BatchNormalization())
+            if self.dropout_layer:
+                setattr(self, f'dropout_{i}', layers.Dropout(rate=self.dropout_rate))
 
             setattr(self, f"maxpool_{i}",
                     layers.MaxPool2D(pool_size=2, padding='same'))
@@ -1218,8 +1226,10 @@ class UNETBlock(Model):
         for i in range(0, self.n_pooling_branches):  # Подумать над конкатенайт и кроп
             if i == 0:
                 setattr(self, f'x_{i}', getattr(self, f'start_conv')(input_))
+
                 for j in range(1, self.n_conv_layers):
                     setattr(self, f'x_{i}', getattr(self, f'conv_d{i}.{j}')(getattr(self, f'x_{i}')))
+
             else:
                 for j in range(0, self.n_conv_layers):
                     setattr(self, f'x_{i}', getattr(self, f'conv_d{i}.{j}')(getattr(self, f'x_{i}')))
@@ -1227,28 +1237,27 @@ class UNETBlock(Model):
             if self.batch_norm_layer:
                 setattr(self, f'x_{i}', getattr(self, f'batchnorm_d{i}')(getattr(self, f'x_{i}')))
 
+            if self.dropout_layer:
+                setattr(self, f'x_{i}', getattr(self, f'dropout_{i}')(getattr(self, f'x_{i}')))
+
             concList[i].append(getattr(self, f'x_{i}'))
 
             setattr(self, f'x_{i + 1}', getattr(self, f'maxpool_{i}')(getattr(self, f'x_{i}')))
 
-        for i in range(self.n_conv_layers):
+        for i in range(0, self.n_conv_layers):
             setattr(self, f'x_{self.n_pooling_branches}',
                     getattr(self, f'conv_bottom{i}')(getattr(self, f'x_{self.n_pooling_branches}')))
 
         for i in range(self.n_pooling_branches, self.n_pooling_branches * 2):
-            if i == self.n_pooling_branches:
-                setattr(self, f'x_{i}', getattr(self, f"upsample_{i}")(getattr(self, f'x_{self.n_pooling_branches}')))
-            else:
-                setattr(self, f'x_{i}', getattr(self, f"upsample_{i}")(getattr(self, f'x_{i}')))
 
-            setattr(self, f'x_{i}', layers.CenterCrop(int(np.ceil(input_.shape[1] / (2 * self.n_pooling_branches - i))),
-                                                      int(np.ceil(
-                                                          input_.shape[2] / (2 * self.n_pooling_branches - i))))(
-                getattr(self, f'x_{i}')))
+            setattr(self, f'x_{i}', getattr(self, f"upsample_{i}")(getattr(self, f'x_{i}')))
 
-            concList[self.n_pooling_branches - (i - self.n_pooling_branches + 1)].append(getattr(self, f'x_{i}'))
             setattr(self, f'x_{i}',
-                    self.concatenate(concList[self.n_pooling_branches - (i - self.n_pooling_branches + 1)]))
+                    layers.CenterCrop(int(np.ceil(input_.shape[1] / 2 ** (2 * self.n_pooling_branches - i - 1))),
+                                      int(np.ceil(input_.shape[2] / 2 ** (2 * self.n_pooling_branches - i - 1))))(
+                        getattr(self, f'x_{i}')))
+            concList[2 * self.n_pooling_branches - i - 1].append(getattr(self, f'x_{i}'))
+            setattr(self, f'x_{i}', self.concatenate(concList[2 * self.n_pooling_branches - i - 1]))
 
             if self.batch_norm_layer:
                 for j in range(0, self.n_conv_layers):
@@ -1256,7 +1265,10 @@ class UNETBlock(Model):
                 setattr(self, f'x_{i + 1}', getattr(self, f'batchnorm_u{i}')(getattr(self, f'x_{i}')))
             else:
                 for j in range(0, self.n_conv_layers):
-                    setattr(self, f'x_{i + 1}', getattr(self, f'conv_u{i}.{j}')(getattr(self, f'x_{i}')))
+                    if j != self.n_conv_layers - 1:
+                        setattr(self, f'x_{i}', getattr(self, f'conv_u{i}.{j}')(getattr(self, f'x_{i}')))
+                    else:
+                        setattr(self, f'x_{i + 1}', getattr(self, f'conv_u{i}.{j}')(getattr(self, f'x_{i}')))
 
         x = getattr(self, f'x_{i + 1}')
 
@@ -1272,6 +1284,8 @@ class UNETBlock(Model):
             'dilation': self.dilation,
             'padding': self.padding,
             'batch_norm_layer': self.batch_norm_layer,
+            'dropout_layer': self.dropout_layer,
+            'dropout_rate': self.dropout_rate
         }
         base_config = super(UNETBlock, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
