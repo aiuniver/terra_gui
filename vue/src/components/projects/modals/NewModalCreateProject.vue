@@ -1,15 +1,26 @@
 <template>
   <div class="modal" v-if="dialog">
     <div class="modal-close" @click="$emit('close')">
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M8.59 0L5 3.59L1.41 0L0 1.41L3.59 5L0 8.59L1.41 10L5 6.41L8.59 10L10 8.59L6.41 5L10 1.41L8.59 0Z" fill="white"/>
-        </svg>
-      </div>
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M8.59 0L5 3.59L1.41 0L0 1.41L3.59 5L0 8.59L1.41 10L5 6.41L8.59 10L10 8.59L6.41 5L10 1.41L8.59 0Z"
+          fill="white"
+        />
+      </svg>
+    </div>
     <div class="modal-enging">
       <svg width="441" height="600" viewBox="0 0 441 600" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M226.183 23.387L226.322 23.5H226.5H373.311L440.5 82.7258V585.793L426.793 599.5H63.1469L0.5 559.227V38.2071L37.7071 1H198.822L226.183 23.387Z" fill="#17212B" stroke="#2B5278"/>
-        <path d="M0.5 596V563.921L55.3114 599.5H4C2.067 599.5 0.5 597.933 0.5 596Z" stroke="#65B9F4"/>
-        <path d="M440.5 35.5598V75.8896L381.319 23.5L428.269 23.5002C435.031 23.5002 440.5 28.9058 440.5 35.5598Z" fill="#65B9F4" stroke="#2B5278"/>
+        <path
+          d="M226.183 23.387L226.322 23.5H226.5H373.311L440.5 82.7258V585.793L426.793 599.5H63.1469L0.5 559.227V38.2071L37.7071 1H198.822L226.183 23.387Z"
+          fill="#17212B"
+          stroke="#2B5278"
+        />
+        <path d="M0.5 596V563.921L55.3114 599.5H4C2.067 599.5 0.5 597.933 0.5 596Z" stroke="#65B9F4" />
+        <path
+          d="M440.5 35.5598V75.8896L381.319 23.5L428.269 23.5002C435.031 23.5002 440.5 28.9058 440.5 35.5598Z"
+          fill="#65B9F4"
+          stroke="#2B5278"
+        />
       </svg>
     </div>
     <div class="modal-content">
@@ -18,62 +29,70 @@
       </div>
       <div class="modal-body">
         <div class="modal-body__box">
-          <p style="display:flex; justify-content:space-between; color:#A7BED3; margin-bottom:10px; font-size:12px;"><span>Название проекта*</span><span>{{ project.nameProject.length }}/50</span></p>
-          <DInputText  placeholder="Введите название проекта" v-model="project.nameProject" />
-        </div>  
+          <t-field label="Название проекта *">
+            <DInputText placeholder="Введите название проекта" v-model="project.nameProject" />
+          </t-field>
+        </div>
         <div class="modal-body__box">
-         <DUpload @uploadFile="uploadFile" @removeFile="project.image = ''" />
-        </div> 
+          <DUpload @uploadFile="uploadFile" @removeFile="project.image = ''" />
+        </div>
         <div class="modal-body__box modal-body__box--flex modal-body__box--flex-center">
-          <DButton style="width:30%" @click="$emit('close')">Отмена</DButton>
-          <DButton style="width:70%" @click="$emit('create', project), $emit('close')" :disabled="loading" color="primary">Создать проект</DButton>
-        </div>  
+          <DButton style="width: 30%" @click="$emit('close')">Отмена</DButton>
+          <DButton
+            style="width: 70%"
+            @click="$emit('create', project), $emit('close')"
+            :disabled="loading"
+            color="primary"
+          >
+            Создать проект
+          </DButton>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import DButton from "@/components/global/design/forms/components/DButton"
-import DUpload from "@/components/global/design/forms/components/DUpload"
-import DInputText from "@/components/global/design/forms/components/DInputText"
+import DButton from '@/components/global/design/forms/components/DButton';
+import DUpload from '@/components/global/design/forms/components/DUpload';
+import DInputText from '@/components/global/design/forms/components/DInputText';
 export default {
   name: 'NewModalCreateProject',
-  components:{
+  components: {
     DButton,
     DInputText,
-    DUpload
+    DUpload,
   },
   props: ['dialog', 'loading'],
   data: () => ({
-    project:{
+    project: {
       id: Date.now(),
       nameProject: '',
-      image: ''
-    }
+      image: '',
+    },
   }),
-  methods:{
-    uploadFile({ file }){
-      this.project.image = file
-    }
-  }
+  methods: {
+    uploadFile({ file }) {
+      this.project.image = file;
+    },
+  },
 };
 </script>
 
 <style lang="scss" scoped>
-.modal{
+.modal {
   z-index: 5;
   width: 441px;
   height: 600px;
   position: absolute;
-  top:50%;
-  left:50%;
+  top: 50%;
+  left: 50%;
   transform: translate(-50%, -50%);
-  &-enging{
+  &-enging {
     position: relative;
   }
 
-  &-close{
+  &-close {
     position: absolute;
     top: 23px;
     right: 0px;
@@ -86,7 +105,7 @@ export default {
     cursor: pointer;
   }
 
-  &-content{
+  &-content {
     width: 335px;
     position: absolute;
     top: 40px;
@@ -94,23 +113,23 @@ export default {
     transform: translateX(-50%);
   }
 
-  &-header{
-    font-family: "Open Sans";
+  &-header {
+    font-family: 'Open Sans';
     font-style: normal;
     font-weight: 600;
     font-size: 16px;
-    color: #F2F5FA;
+    color: #f2f5fa;
   }
 
-  &-body{
+  &-body {
     margin-top: 40px;
-    &__box{
+    &__box {
       margin-top: 20px;
 
-      &--flex{
+      &--flex {
         display: flex;
       }
-      &--flex-center{
+      &--flex-center {
         justify-content: center;
         align-items: center;
       }

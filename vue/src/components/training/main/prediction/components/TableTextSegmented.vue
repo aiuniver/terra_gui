@@ -1,5 +1,5 @@
 <template>
-  <div class="t-text-segmented">
+  <div class="t-text-segmented" :style="{width: block_width}">
     <div class="t-text-segmented__content">
       <div v-for="({ tags, word }, index) of arrText" :key="'word_' + index" class="t-text-segmented__word">
         <at-tooltip v-if="!tags.includes('p1')">
@@ -40,6 +40,10 @@ export default {
       type: String,
       default: '',
     },
+    block_width: {
+      type: String,
+      default: '400px'
+    }
   },
   computed: {
     tags() {

@@ -93,6 +93,8 @@ class GUINN:
                 output.append(BalancedRecall())
             elif metric == MetricChoice.UnscaledMAE:
                 output.append(UnscaledMAE())
+            elif metric == MetricChoice.mAP50 or metric == MetricChoice.mAP95:
+                pass
             else:
                 output.append(getattr(importlib.import_module("tensorflow.keras.metrics"), metric)())
         return output
@@ -261,6 +263,7 @@ class GUINN:
         if interactive.get_states().get("status") != "addtrain":
             self._save_params_for_deploy(training_path=model_path, params=training_params)
         self.nn_cleaner(retrain=True if interactive.get_states().get("status") == "training" else False)
+
         self._set_training_params(dataset=dataset, dataset_path=dataset_path, model_path=model_path,
                                   params=training_params, training_path=training_path, initial_config=initial_config)
         self.model = self._set_model(model=gui_model)
@@ -310,7 +313,6 @@ class GUINN:
                            )
         # self.model.load_weight(os.path.join(self.training_path, self.nn_name))
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели выполнена'})
-
         self._set_callbacks(dataset=dataset, dataset_data=dataset_data, batch_size=params.batch,
                             epochs=params.epochs, save_model_path=save_model_path, dataset_path=dataset_path,
                             checkpoint=params.architecture.parameters.checkpoint.native())
@@ -326,6 +328,7 @@ class GUINN:
             n_repeat = 1
         else:
             n_repeat = (self.batch_size // critical_val_size) + 1
+
         try:
             self.history = self.model.fit(
                 self.dataset.dataset.get('train').shuffle(buffer_size).batch(

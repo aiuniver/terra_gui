@@ -75,7 +75,10 @@ export default {
     async nav({ path, access, text }) {
       if (!this.project.dataset && access === false) {
         this.message({ text }, true);
-      } else {
+      } else if(!this.project.deploy.exists && access === false){
+        this.messageDeploy(true);
+      }
+      else {
         if (this.$route.path !== path) {
           this.$router.push(path);
         }

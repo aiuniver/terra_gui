@@ -153,6 +153,8 @@ class MetricChoice(str, Enum):
     SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
     UnscaledMAE = "UnscaledMAE"
     DiceCoef = "DiceCoef"
+    mAP50 = "mAP50"
+    mAP95 = "mAP95"
 
 
 class TaskGroupData(BaseMixinData):
