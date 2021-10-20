@@ -1296,19 +1296,20 @@ class CreateArray(object):
                 inverse_x_val = {}
                 for input in x_val.keys():
                     preprocess_dict = options.preprocessing.preprocessing.get(int(input))
-                    inverse_x = np.zeros_like(x_val.get(input)[:, 0:1, :])
+                    inverse_x = np.zeros_like(x_val.get(input)[:, :, 0:1])
                     for i, column in enumerate(preprocess_dict.keys()):
                         if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
                             _options = {
                                 int(input): {
-                                    column: x_val.get(input)[:, i:i + 1, :]
+                                    column: x_val.get(input)[:, :, i]
                                 }
                             }
-                            inverse_col = options.preprocessing.inverse_data(_options).get(int(input)).get(column)
+                            inverse_col = np.expand_dims(
+                                options.preprocessing.inverse_data(_options).get(int(input)).get(column), axis=-1)
                         else:
-                            inverse_col = x_val.get(input)[:, i:i + 1, :]
-                        inverse_x = np.concatenate([inverse_x, inverse_col], axis=1)
-                    inverse_x_val[input] = inverse_x[:, 1:, :]
+                            inverse_col = x_val.get(input)[:, :, i:i + 1]
+                        inverse_x = np.concatenate([inverse_x, inverse_col], axis=-1)
+                    inverse_x_val[input] = inverse_x[:, :, 1:]
         return x_val, inverse_x_val
 
     @staticmethod
