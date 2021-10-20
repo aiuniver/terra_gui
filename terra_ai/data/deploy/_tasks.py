@@ -9,7 +9,7 @@ from pathlib import Path
 
 from terra_ai import settings
 from terra_ai.data.mixins import BaseMixinData
-from terra_ai.data.deploy.extra import TaskTypeChoice
+from terra_ai.data.deploy.extra import DeployTypeChoice
 from terra_ai.exceptions.deploy import MethodNotImplementedException
 from terra_ai.training.guinn import interactive
 
@@ -160,7 +160,11 @@ class TextTextSegmentation(BaseCollectionList):
         format_path = Path(self._path, "preset", "out")
         os.makedirs(source_path, exist_ok=True)
         os.makedirs(format_path, exist_ok=True)
-        source = interactive.deploy_presets_data.get("data", {}) if interactive.deploy_presets_data else {}
+        source = (
+            interactive.deploy_presets_data.get("data", {})
+            if interactive.deploy_presets_data
+            else {}
+        )
         if not source:
             self._reset()
             return
@@ -297,7 +301,7 @@ class TableDataRegression(TableDataClassification):
 
 
 class BaseCollection(BaseMixinData):
-    type: TaskTypeChoice
+    type: DeployTypeChoice
     data: Optional[BaseCollectionList]
 
     def dict(self, **kwargs):
