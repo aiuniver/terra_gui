@@ -41,11 +41,11 @@ class ArchitectureDataframeRegressionData(ArchitectureBasicData):
     pass
 
 
-class ArchitectureTimeSeriesData(ArchitectureBasicData):
+class ArchitectureTimeseriesData(ArchitectureBasicData):
     pass
 
 
-class ArchitectureTimeSeriesTrendData(ArchitectureBasicData):
+class ArchitectureTimeseriesTrendData(ArchitectureBasicData):
     pass
 
 

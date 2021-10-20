@@ -16,7 +16,6 @@ export default {
   computed: {
     ...mapGetters({
       project: 'projects/getProject',
-      deploy: 'deploy/getCards',
     }),
     isTrain() {
       const state = this.$store.getters['trainings/getStatus'];
@@ -76,12 +75,11 @@ export default {
       console.log(path)
       if (!this.project.dataset && access === false) {
         this.message({ text }, true);
-      } else if(!this.project.deploy.exists && access === false && path == '/deploy'){
+      } else if(!this.project?.deploy?.exists && access === false && path == '/deploy'){
         this.messageDeploy(true);
       }
       else {
         if (this.$route.path !== path) {
-
           this.$router.push(path);
         }
       }
