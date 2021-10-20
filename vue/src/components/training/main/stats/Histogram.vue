@@ -53,11 +53,11 @@ export default {
       height: 352,
       plot_bgcolor: '#fff0',
       paper_bgcolor: '#242F3D',
-      showlegend: true,
+      showlegend: false,
       bargap: 0.1,
       legend: {
         orientation: 'h',
-        yanchor: 'top',
+        yanchor: 'right',
       },
       font: {
         color: '#A7BED3',

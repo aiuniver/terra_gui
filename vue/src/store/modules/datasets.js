@@ -130,6 +130,7 @@ export default {
     async choice({ dispatch }, dataset) {
       console.log(dataset)
       await dispatch('trainings/resetAllTraining', {}, { root: true });
+      dispatch('modeling/resetAll', {}, { root: true });
       return await dispatch('axios', { url: '/datasets/choice/', data: dataset }, { root: true });
     },
     async deleteDataset({ dispatch }, dataset) {

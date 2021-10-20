@@ -47,8 +47,8 @@ class ArchitectureChoice(str, Enum):
     TextSegmentation = "TextSegmentation"
     DataframeClassification = "DataframeClassification"
     DataframeRegression = "DataframeRegression"
-    TimeSeries = "TimeSeries"
-    TimeSeriesTrend = "TimeSeriesTrend"
+    Timeseries = "Timeseries"
+    TimeseriesTrend = "TimeseriesTrend"
     AudioClassification = "AudioClassification"
     VideoClassification = "VideoClassification"
     YoloV3 = "YoloV3"
@@ -153,6 +153,8 @@ class MetricChoice(str, Enum):
     SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
     UnscaledMAE = "UnscaledMAE"
     DiceCoef = "DiceCoef"
+    mAP50 = "mAP50"
+    mAP95 = "mAP95"
 
 
 class TaskGroupData(BaseMixinData):

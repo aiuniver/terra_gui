@@ -61,7 +61,7 @@ export default {
     projects: [
       {
         id: 1,
-        image: '', 
+        image: 'https://www.zastavki.com/pictures/1920x1080/2013/Fantasy__038385_23.jpg', 
         active: false,
         created:'17 апреля 2021', 
         edited: '3 дня назад', 
@@ -69,7 +69,7 @@ export default {
       },
       {
         id: 2,
-        image: '', 
+        image: 'https://www.zastavki.com/pictures/1920x1080/2013/Fantasy__038385_23.jpg', 
         active: false,
         created:'17 апреля 2021', 
         edited: '3 дня назад', 
@@ -77,7 +77,7 @@ export default {
       },
       {
         id: 3,
-        image: '', 
+        image: 'https://www.zastavki.com/pictures/1920x1080/2013/Fantasy__038385_23.jpg', 
         active: false,
         created:'17 апреля 2021', 
         edited: '3 дня назад', 

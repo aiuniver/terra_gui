@@ -406,18 +406,10 @@ def create_yolo(model, input_size=416, channels=3, training=False, classes=None)
     num_class = len(classes)
     input_layer = keras.layers.Input([input_size, input_size, channels])
 
-    # if TRAIN_YOLO_TINY:
-    #     if YOLO_TYPE == "yolov4":
-    #         conv_tensors = YOLOv4_tiny(input_layer, NUM_CLASS)
-    #     if YOLO_TYPE == "yolov3":
-    #         conv_tensors = YOLOv3_tiny(input_layer, NUM_CLASS)
-    # else:
-    #     if YOLO_TYPE == "yolov4":
-    #         conv_tensors = YOLOv4(input_layer, NUM_CLASS)
-    #     if YOLO_TYPE == "yolov3":
-    #         conv_tensors = YOLOv3(input_layer, NUM_CLASS)
     conv_tensors = model(input_layer)
-    print('conv_tensors', conv_tensors.reverse())
+    if conv_tensors[0].shape[1] == 13:
+        conv_tensors.reverse()
+    # print('conv_tensors', conv_tensors.reverse())
     output_tensors = []
     for i, conv_tensor in enumerate(conv_tensors):
         pred_tensor = decode(conv_tensor, num_class, i)
@@ -865,14 +857,14 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=0.50, TEST_INPUT_
                 text + "\n Precision: " + str(rounded_prec) + "\n Recall   :" + str(rounded_rec) + "\n\n")
 
             # print(text)
-            ap_dictionary["val_AP_" + str(class_name)] = ap
+            ap_dictionary[f"val_mAP{int(iou_threshold * 100)}_class_{class_name}"] = ap
 
         results_file.write("\n# mAP of all classes\n")
         mAP = sum_AP / n_classes
 
         text = "mAP = {:.3f}%, {:.2f} FPS".format(mAP * 100, fps)
         results_file.write(text + "\n")
-        ap_dictionary["val_mAP" + str(int(iou_threshold * 100))] = mAP * 100
+        ap_dictionary[f"val_mAP{int(iou_threshold * 100)}"] = mAP * 100
         ap_dictionary["val_fps"] = fps
         print(ap_dictionary)
 

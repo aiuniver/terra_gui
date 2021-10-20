@@ -2,7 +2,7 @@
   <nav class="nav">
     <ul class="nav__menu">
       <template v-for="(route, i) in items">
-        <li v-if="route.path !== '/profile'" :class="['nav__menu--item', { active: $route.path === route.path }]" :key="i" @click="nav(route)">
+        <li :class="['nav__menu--item', { active: $route.path === route.path }]" :key="i" @click="nav(route)">
           {{ route.title }}
         </li>
       </template>
@@ -16,8 +16,12 @@ export default {
   computed: {
     ...mapGetters({
       project: 'projects/getProject',
-      deploy: 'deploy/getCards'
+      deploy: 'deploy/getCards',
     }),
+    isTrain() {
+      const state = this.$store.getters['trainings/getStatus'];
+      return ['addtrain', 'training'].includes(state);
+    },
     items() {
       return this.$router.options.routes
         .filter(item => item?.meta?.title)
@@ -55,7 +59,7 @@ export default {
         const data = await this.$Modal.alert({
           title: 'Предупреждение!',
           width: 300,
-          content: "Для перехода на страницу деплоя необходимо обучить модель",
+          content: 'Для перехода на страницу деплоя необходимо обучить модель',
           showClose,
           okText: 'Обучить модель',
         });
@@ -69,20 +73,20 @@ export default {
       }
     },
     async nav({ path, access, text }) {
-      // console.log(path, access, text);
-      // let deploy_keys = Object.keys(this.deploy)
-      // this.deploy[deploy_keys[0]].data
+      console.log(path)
       if (!this.project.dataset && access === false) {
         this.message({ text }, true);
+      } else if(!this.project.deploy.exists && access === false && path == '/deploy'){
+        this.messageDeploy(true);
       }
-        // else if(path == "/deploy" && access === false && this.deploy[deploy_keys[0]].data == null){
-      //   this.messageDeploy(true);
-      // }
       else {
         if (this.$route.path !== path) {
+
           this.$router.push(path);
         }
       }
+      this.$store.dispatch('messages/resetProgress');
+      // if (!this.isTrain) this.$store.dispatch('messages/resetProgress');
     },
   },
 };

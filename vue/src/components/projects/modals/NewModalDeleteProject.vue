@@ -20,9 +20,9 @@
         <div class="modal-body__box">
           <p>Проект будет удален безвозвратно и вы не сможете его восстановить.</p>
         </div>  
-        <div class="modal-body__box flex">
-          <t-button class="mr-4" @click.native="$emit('close')" cancel :disabled="loading">Отмена</t-button>
-          <t-button @click.native="$emit('delete', project), $emit('close')" :loading="loading">Удалить</t-button>
+        <div class="modal-body__box modal-body__box--flex modal-body__box--flex-center">
+          <DButton style="width:30%" @click="$emit('close')">Отмена</DButton>
+          <DButton style="width:70%" @click="$emit('delete', project), $emit('close')" :disabled="loading" color="primary">Удалить</DButton>
         </div>  
       </div>
     </div>
@@ -30,9 +30,14 @@
 </template>
 
 <script>
+import DButton from "@/components/global/design/forms/components/DButton"
+
 export default {
   name: 'NewModalDeleteProject',
   props: ['dialog', 'loading', 'project'],
+  components:{
+    DButton
+  }
 };
 </script>
 
@@ -71,13 +76,21 @@ export default {
     cursor: pointer;
   }
   &-body{
+    margin-top: 40px;
     &__box{
+      margin-top: 20px;
       p{
         font-family: "Open Sans";
         font-size: 12px;
         color: #A7BED3;
+      } 
+      &--flex{
+        display: flex;
       }
-      margin-top: 20px;
+      &--flex-center{
+        justify-content: center;
+        align-items: center;
+      }
     }
   }
 }

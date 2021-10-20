@@ -16,6 +16,7 @@
                   :key="'card-' + i"
                   v-bind="card"
                   :card="card"
+                  :extra="deploy.extra"
                   :index="i"
                   @reload="ReloadCard"
                 />
