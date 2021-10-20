@@ -8,7 +8,7 @@ from transliterate import slugify
 
 from ..mixins import BaseMixinData
 from ..types import confilepath
-from .extra import TaskTypeChoice, EnvVersionChoice
+from .extra import DeployTypeChoice, EnvVersionChoice
 
 
 class StageUploadUserData(BaseMixinData):
@@ -60,7 +60,7 @@ class StageUploadData(BaseMixinData):
     env: EnvVersionChoice = EnvVersionChoice.v1
     user: StageUploadUserData
     project: StageUploadProjectData
-    task: TaskTypeChoice
+    task: DeployTypeChoice
     replace: bool = False
     file: StageUploadFileData
 
