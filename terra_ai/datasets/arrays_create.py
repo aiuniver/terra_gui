@@ -463,7 +463,6 @@ class CreateArray(object):
             cap = cv2.VideoCapture(path)
             cap.set(1, slicing[0])
             orig_shape = (int(cap.get(3)), int(cap.get(4)))
-            frames_count = int(cap.get(7))
             frames_number = 0
             save_path = os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
                                      f'{name}_[{slicing[0]}-{slicing[1]}]{ext}')
@@ -472,21 +471,20 @@ class CreateArray(object):
             stop_flag = False
             while not stop_flag:
                 ret, frame = cap.read()
-                frames_number += 1
-                output_movie.write(frame)
-                if options['video_mode'] == 'completely' and options['max_frames'] > frames_count and ret or \
-                        options['video_mode'] == 'length_and_step' and options['length'] > frames_count and ret:
-                    tmp_array.append(frame)
-                if not ret or frames_number > frames_count:
+                if not ret or frames_number == slicing[1] - slicing[0]:  # frames_number > frames_count or
                     stop_flag = True
-            if options['video_mode'] == 'completely' and options['max_frames'] > frames_count or \
-                    options['video_mode'] == 'length_and_step' and options['length'] > frames_count:
+                else:
+                    output_movie.write(frame)
+                    tmp_array.append(frame)
+                    frames_number += 1
+            if options['video_mode'] == 'completely' and options['max_frames'] > frames_number or \
+                    options['video_mode'] == 'length_and_step' and options['length'] > frames_number:
                 fr_to_add, tot_frames = 0, 0
                 if options['video_mode'] == 'completely':
-                    fr_to_add = options['max_frames'] - frames_count
+                    fr_to_add = options['max_frames'] - frames_number
                     tot_frames = options['max_frames']
                 elif options['video_mode'] == 'length_and_step':
-                    fr_to_add = options['length'] - frames_count
+                    fr_to_add = options['length'] - frames_number
                     tot_frames = options['length']
                 frames_to_add = add_frames(video_array=np.array(tmp_array),
                                            fill_mode=options['fill_mode'],
