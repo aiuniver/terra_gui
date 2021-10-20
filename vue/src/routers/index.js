@@ -78,7 +78,7 @@ const router = new Router({
       path: '/profile',
       name: 'Profile',
       meta: { 
-        title: 'Профиль',
+        title: null,
         access: true,
         text: ``, 
       },
