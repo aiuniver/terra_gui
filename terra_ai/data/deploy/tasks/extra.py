@@ -22,6 +22,10 @@ class DataBaseList(List):
             list(map(lambda item: self.Meta.source(**item), args[0])) if args else []
         )
 
+    @property
+    def presets(self) -> dict:
+        return list(map(lambda item: item.native() if item else None, self.preset))
+
     def _positive_int_filter(self, value) -> int:
         try:
             value = int(value)
@@ -57,6 +61,12 @@ class DataBase(BaseMixinData):
     def _validate_data(cls, value: DataBaseList, values) -> DataBaseList:
         data = cls.Meta.source(value, values.get("path"))
         data.reload()
+        return data
+
+    @property
+    def presets(self) -> dict:
+        data = self.native()
+        data.update({"data": self.data.presets})
         return data
 
     def dict(self, **kwargs):

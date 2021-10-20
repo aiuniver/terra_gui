@@ -192,39 +192,16 @@ class Project(BaseMixinData):
         with open(project_path.config, "w") as _config_ref:
             json.dump(json.loads(self.json()), _config_ref)
 
-    def set_deploy(self):
-        # deploy_type = self.predict_deploy_type()
-        # if not deploy_type:
-        #     self.deploy = DeployDetailsData()
-        #     return
-        #
-        # _task_class = getattr(deploy_tasks, TASKS_RELATIONS[deploy_type])
-        # data = _task_class(
-        #     list(
-        #         map(
-        #             lambda _: None,
-        #             list(range(terra_settings.DEPLOY_PRESET_COUNT)),
-        #         )
-        #     ),
-        #     path=Path(project_path.deploy),
-        # )
-        # self.deploy = DeployDetailsData(**{"type": deploy_type, "data": data})
-        # self.deploy.data.reload(list(range(terra_settings.DEPLOY_PRESET_COUNT)))
-        # self.deploy.data.try_init()
-        pass
-
     def clear_training(self):
         project_path.clear_training()
         self.training = TrainingDetailsData()
         self.deploy = None
-        self.set_deploy()
 
     def set_dataset(self, dataset: DatasetData = None, reset_model: bool = False):
         if dataset is None:
             self.dataset = None
             self.model = ModelDetailsData(**EmptyModelDetailsData)
             self.set_training()
-            self.set_deploy()
             return
         model_init = dataset.model
         self.dataset = dataset
@@ -273,7 +250,6 @@ class Project(BaseMixinData):
                 self.model.layers.append(LayerData(**layer_data))
 
         self.set_training()
-        self.set_deploy()
 
     def set_model(self, model: ModelDetailsData):
         if self.dataset:
@@ -415,4 +391,3 @@ except Exception:
 _config.update({"hardware": agent_exchange("hardware_accelerator")})
 project = Project(**_config)
 project.set_training()
-project.set_deploy()
