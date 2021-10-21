@@ -62,7 +62,7 @@ export default {
     },
     click(dataset, key) {
       if (!this.isLoaded(dataset)) {
-        console.log(dataset, key);
+        // console.log(dataset, key);
         this.$store.dispatch('datasets/setSelect', dataset);
         this.$store.dispatch('datasets/setSelectedIndex', key);
         return;

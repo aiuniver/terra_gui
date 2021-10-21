@@ -1,11 +1,11 @@
-import { data } from "../temp/training";
+// import { data } from "../temp/training";
 import { toolbar } from "../const/trainings";
 // import { predict } from "../temp/predict-training";
 // import { predict_video } from "../temp/predict-training-video-audio";
 // import { predict_text } from "../temp/predict-training-text";
 // import { predict_audio } from "../temp/predict-training-audio";
 
-console.warn(data)
+// console.warn(data)
 export default {
   namespaced: true,
   state: () => ({
@@ -40,7 +40,7 @@ export default {
     },
     SET_CONFIG(state, value) {
       state.training = { ...value };
-      console.log(value)
+      // console.log(value)
       // if (!Object.keys(state.interactive).length) {
       state.interactive = JSON.parse(JSON.stringify(value.interactive))
       // }
@@ -92,7 +92,7 @@ export default {
       if (isValid) {
         dispatch('setStatusTrain', 'start');
         let data = JSON.parse(JSON.stringify(parse))
-        console.log(data)
+        // console.log(data)
         const arht = data.architecture.parameters.outputs || []
         data.architecture.parameters.outputs = arht.map((item, index) => {
           return item ? { id: index, ...item } : null
