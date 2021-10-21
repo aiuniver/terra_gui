@@ -28,7 +28,7 @@ export default {
     textBtn: ["Показать больше", "Скрыть"]
   }),
   mounted(){
-    this.text = this.length ? this.value.substring(0, 99) + "..." : this.value
+    this.text = this.length ? this.value.substring(0, 49) + "..." : this.value
   },
   computed: {
     color() {

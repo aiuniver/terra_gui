@@ -25,17 +25,17 @@ export default {
     textBtn: ["Показать больше", "Скрыть"]
   }),
   mounted(){
-    this.text = this.length ? this.value.substring(0, 99) + "..." : this.value
+    this.text = this.length ? this.value.substring(0, 49) + "..." : this.value
   },
   computed:{
     length(){
-      return this.value.length >= 100 
+      return this.value.length >= 50 
     }
   },
   methods:{
     show(){
       this.isShow = !this.isShow
-      this.text = this.isShow? this.value : this.value.substring(0, 99) + "..."
+      this.text = this.isShow? this.value : this.value.substring(0, 49) + "..."
     }
   }
 };
