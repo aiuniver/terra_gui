@@ -103,7 +103,11 @@ class ArchitectureBasicForm(ArchitectureBaseForm):
             self.update(item, "architecture_parameters_outputs_", id=item.id)
 
 
-class ArchitectureYoloForm(ArchitectureBaseForm):
+class ArchitectureYoloV3Form(ArchitectureBaseForm):
+    yolo: DefaultsTrainingBaseGroupData
+
+
+class ArchitectureYoloV4Form(ArchitectureBaseForm):
     yolo: DefaultsTrainingBaseGroupData
 
 
