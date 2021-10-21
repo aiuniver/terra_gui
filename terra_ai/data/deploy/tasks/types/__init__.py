@@ -3,4 +3,7 @@ from . import (
     ImageClassification,
     TextSegmentation,
     TextClassification,
+    AudioClassification,
+    # DataframeRegression,
+    # DataframeClassification
 )

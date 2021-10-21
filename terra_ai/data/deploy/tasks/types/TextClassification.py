@@ -48,6 +48,7 @@ class DataList(DataBaseList):
     def update(self, index: int):
         item = random.choice(self)
         self.preset[index] = item
+
         destination_source = Path(self.source_path, f"{index + 1}.txt")
         with open(destination_source, "w") as destination_source_ref:
             destination_source_ref.write(
@@ -60,3 +61,4 @@ class DataList(DataBaseList):
 class Data(DataBase):
     class Meta:
         source = DataList
+
