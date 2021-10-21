@@ -17,8 +17,8 @@ export default {
     info: '',
     states: {},
     trainSettings: {},
-    // trainData: {},
-    trainData: process.env.NODE_ENV === 'development' ? data : {},
+    trainData: {},
+    // trainData: process.env.NODE_ENV === 'development' ? data : {},
     trainUsage: {},
     statusTrain: 'no_train',
     training: {
