@@ -302,6 +302,7 @@ export default {
       text-align: center;
       background-color: #242f3d;
       font-weight: normal;
+      white-space: nowrap;
     }
   }
   &__body {

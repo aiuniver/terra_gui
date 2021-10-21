@@ -6,6 +6,7 @@
     <TableTextSegmented v-if="type === 'segmented_text'" v-bind="obj" :key="update" />
     <TableVideo v-if="type === 'video'" v-bind="obj" :key="update" />
     <TableAudio v-if="type === 'audio'" v-bind="obj" :key="update" />
+    <Graphics v-if="type === 'graphic'" v-bind="obj" :key="update" />
   </div>
 </template>
 
@@ -19,6 +20,7 @@ export default {
     TableStr: () => import('./TableStr'),
     TableTextSegmented: () => import('./TableTextSegmented'),
     TableVideo: () => import('./TableVideo.vue'),
+    Graphics: () => import('./TableGraphics'),
   },
   props: {
     type: {

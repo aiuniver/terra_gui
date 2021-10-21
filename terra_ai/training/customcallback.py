@@ -6,7 +6,7 @@ import os
 import random
 import re
 import string
-from typing import Union
+from typing import Union, Optional
 
 import matplotlib
 import pandas as pd
@@ -28,6 +28,10 @@ from terra_ai.training.customlosses import UnscaledMAE
 from terra_ai.utils import camelize, decamelize
 
 __version__ = 0.085
+
+MAX_TS_GRAPH_COUNT = 200
+MAX_HISTOGRAM_BINS = 50
+MAX_INTERMEDIATE_GRAGH_LENTH = 50
 
 
 def class_counter(y_array, classes_names: list, ohe=True):
@@ -311,7 +315,7 @@ class InteractiveCallback:
         self.metrics = None
         self.loss_obj = None
         self.metrics_obj = None
-        self.options: PrepareDataset = None
+        self.options: Optional[PrepareDataset] = None
         self.class_colors = []
         self.dataset_path = None
         self.x_val = None
@@ -670,19 +674,20 @@ class InteractiveCallback:
             inverse_x_val = {}
             for input in x_val.keys():
                 preprocess_dict = dataset.preprocessing.preprocessing.get(int(input))
-                inverse_x = np.zeros_like(x_val.get(input)[:, 0:1, :])
+                inverse_x = np.zeros_like(x_val.get(input)[:, :, 0:1])
                 for i, column in enumerate(preprocess_dict.keys()):
                     if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
                         _options = {
                             int(input): {
-                                column: x_val.get(input)[:, i:i + 1, :]
+                                column: x_val.get(input)[:, :, i]
                             }
                         }
-                        inverse_col = dataset.preprocessing.inverse_data(_options).get(int(input)).get(column)
+                        inverse_col = np.expand_dims(
+                            dataset.preprocessing.inverse_data(_options).get(int(input)).get(column), axis=-1)
                     else:
-                        inverse_col = x_val.get(input)[:, i:i + 1, :]
-                    inverse_x = np.concatenate([inverse_x, inverse_col], axis=1)
-                inverse_x_val[input] = inverse_x[:, 1:, :]
+                        inverse_col = x_val.get(input)[:, :, i:i + 1]
+                    inverse_x = np.concatenate([inverse_x, inverse_col], axis=-1)
+                inverse_x_val[input] = inverse_x[:, :, 1:]
         return x_val, inverse_x_val
 
     def _prepare_y_true(self, dataset: PrepareDataset):
@@ -715,20 +720,21 @@ class InteractiveCallback:
                                 inverse_col = dataset.preprocessing.inverse_data(_options).get(out).get(column)
                             else:
                                 inverse_col = y_true.get(data_type).get(f"{out}")[:, i:i + 1]
-                            inverse_y = np.concatenate([inverse_y, inverse_col], axis=1)
+                            inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
                         inverse_y_true[data_type][f"{out}"] = inverse_y[:, 1:]
 
                     if task == LayerOutputTypeChoice.Timeseries:
                         preprocess_dict = dataset.preprocessing.preprocessing.get(int(out))
-                        inverse_y = np.zeros_like(y_true.get(data_type).get(f"{out}")[:, 0:1, :])
+                        inverse_y = np.zeros_like(y_true.get(data_type).get(f"{out}")[:, :, 0:1])
                         for i, column in enumerate(preprocess_dict.keys()):
                             if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
-                                _options = {int(out): {column: y_true.get(data_type).get(f"{out}")[:, i:i + 1, :]}}
-                                inverse_col = dataset.preprocessing.inverse_data(_options).get(int(out)).get(column)
+                                _options = {int(out): {column: y_true.get(data_type).get(f"{out}")[:, :, i]}}
+                                inverse_col = np.expand_dims(
+                                    dataset.preprocessing.inverse_data(_options).get(int(out)).get(column), axis=-1)
                             else:
-                                inverse_col = y_true.get(data_type).get(f"{out}")[:, i:i + 1, :]
-                            inverse_y = np.concatenate([inverse_y, inverse_col], axis=1)
-                        inverse_y_true[data_type][f"{out}"] = inverse_y[:, 1:, :]
+                                inverse_col = y_true.get(data_type).get(f"{out}")[:, :, i:i + 1]
+                            inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
+                        inverse_y_true[data_type][f"{out}"] = inverse_y[:, :, 1:]
 
         if dataset.data.architecture in self.yolo_architecture:
             y_true = CreateArray().get_yolo_y_true(options=dataset)
@@ -788,10 +794,10 @@ class InteractiveCallback:
             self.log_history['learning_rate'] = []
             self.log_history['output'] = {
                 "loss": {
-                    'giou_loss': [],
-                    'conf_loss': [],
-                    'prob_loss': [],
-                    'total_loss': []
+                    'giou_loss': {"train": [], "val": []},
+                    'conf_loss': {"train": [], "val": []},
+                    'prob_loss': {"train": [], "val": []},
+                    'total_loss': {"train": [], "val": []}
                 },
                 "class_loss": {
                     'prob_loss': {},
@@ -821,10 +827,10 @@ class InteractiveCallback:
                     },
                     "metrics": {
                         'mAP50': {
-                            "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
+                            "mean_log_history": [], "normal_state": [], "overfitting": []
                         },
                         'mAP95': {
-                            "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
+                            "mean_log_history": [], "normal_state": [], "overfitting": []
                         },
                     }
                 }
@@ -834,7 +840,6 @@ class InteractiveCallback:
                 self.log_history['output']["class_loss"]['prob_loss'][class_name] = []
                 self.log_history['output']["class_metrics"]['mAP50'][class_name] = []
                 self.log_history['output']["class_metrics"]['mAP95'][class_name] = []
-            pass
 
     def _prepare_dataset_balance(self) -> dict:
         dataset_balance = {}
@@ -926,7 +931,6 @@ class InteractiveCallback:
                         }
                         x, y = self._get_distribution_histogram(
                             list(self.options.dataframe.get(data_type)[output_channel]),
-                            bins=25,
                             categorical=False
                         )
                         dataset_balance[f"{out}"]['dense_histogram'][output_channel][data_type] = {
@@ -949,10 +953,10 @@ class InteractiveCallback:
                         if column_task == LayerInputTypeChoice.Text:
                             continue
                         elif column_task == LayerInputTypeChoice.Classification:
-                            x, y = self._get_distribution_histogram(column_data, bins=25, categorical=True)
+                            x, y = self._get_distribution_histogram(column_data, categorical=True)
                             hist_type = "histogram"
                         else:
-                            x, y = self._get_distribution_histogram(column_data, bins=25, categorical=False)
+                            x, y = self._get_distribution_histogram(column_data, categorical=False)
                             hist_type = "bar"
                         dataset_balance[f"{out}"]['histogram'][data_type][column] = {
                             "name": column.split("_", 1)[-1],
@@ -1089,48 +1093,91 @@ class InteractiveCallback:
 
     def _reformat_fit_logs(self, logs) -> dict:
         interactive_log = {}
-        update_logs = {}
-        for log, val in logs.items():
-            if re.search(r"_\d+$", log):
-                end = len(f"_{log.split('_')[-1]}")
-                log = log[:-end]
-            update_logs[re.sub("__", "_", decamelize(log))] = val
+        if self.options.data.architecture in self.basic_architecture:
+            update_logs = {}
+            for log, val in logs.items():
+                if re.search(r"_\d+$", log):
+                    end = len(f"_{log.split('_')[-1]}")
+                    log = log[:-end]
+                update_logs[re.sub("__", "_", decamelize(log))] = val
 
-        for out in self.metrics.keys():
-            interactive_log[out] = {}
-            if len(self.metrics.keys()) == 1:
-                train_loss = update_logs.get('loss')
-                val_loss = update_logs.get('val_loss')
-            else:
-                train_loss = update_logs.get(f'{out}_loss')
-                val_loss = update_logs.get(f'val_{out}_loss')
-            interactive_log[out]['loss'] = {
-                self.losses.get(out): {
-                    'train': self._round_loss_metric(train_loss) if not math.isnan(float(train_loss)) else None,
-                    'val': self._round_loss_metric(val_loss) if not math.isnan(float(val_loss)) else None,
+            for out in self.metrics.keys():
+                interactive_log[out] = {}
+                if len(self.metrics.keys()) == 1:
+                    train_loss = update_logs.get('loss')
+                    val_loss = update_logs.get('val_loss')
+                else:
+                    train_loss = update_logs.get(f'{out}_loss')
+                    val_loss = update_logs.get(f'val_{out}_loss')
+                interactive_log[out]['loss'] = {
+                    self.losses.get(out): {
+                        'train': self._round_loss_metric(train_loss) if not math.isnan(float(train_loss)) else None,
+                        'val': self._round_loss_metric(val_loss) if not math.isnan(float(val_loss)) else None,
+                    }
+                }
+
+                interactive_log[out]['metrics'] = {}
+                for metric_name in self.metrics.get(out):
+                    interactive_log[out]['metrics'][metric_name] = {}
+                    if len(self.metrics.keys()) == 1:
+                        train_metric = update_logs.get(
+                            loss_metric_config.get('metric').get(metric_name).get('log_name'))
+                        val_metric = update_logs.get(
+                            f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}")
+                    else:
+                        train_metric = update_logs.get(
+                            f"{out}_{loss_metric_config.get('metric').get(metric_name).get('log_name')}")
+                        val_metric = update_logs.get(
+                            f"val_{out}_{loss_metric_config.get('metric').get(metric_name).get('log_name')}")
+                    if metric_name == MetricChoice.UnscaledMAE:
+                        train_metric, val_metric = UnscaledMAE().unscale_result(
+                            [train_metric, val_metric], int(out), self.options.preprocessing
+                        )
+                    interactive_log[out]['metrics'][metric_name] = {
+                        'train': self._round_loss_metric(train_metric) if not math.isnan(float(train_metric)) else None,
+                        'val': self._round_loss_metric(val_metric) if not math.isnan(float(val_metric)) else None
+                    }
+
+        if self.options.data.architecture in self.yolo_architecture:
+            interactive_log['learning_rate'] = logs.get('optimizer.lr')
+            interactive_log['output'] = {
+                "train": {
+                    "loss": {
+                        'giou_loss': logs.get('giou_loss'),
+                        'conf_loss': logs.get('conf_loss'),
+                        'prob_loss': logs.get('prob_loss'),
+                        'total_loss': logs.get('total_loss')
+                    },
+                    "metrics": {
+                        'mAP50': logs.get('mAP50'),
+                        'mAP95': logs.get('mAP95'),
+                    }
+                },
+                "val": {
+                    "loss": {
+                        'giou_loss': logs.get('val_giou_loss'),
+                        'conf_loss': logs.get('val_conf_loss'),
+                        'prob_loss': logs.get('val_prob_loss'),
+                        'total_loss': logs.get('val_total_loss')
+                    },
+                    "class_loss": {
+                        'prob_loss': {},
+                    },
+                    "metrics": {
+                        'mAP50': logs.get('val_mAP50'),
+                        'mAP95': logs.get('val_mAP95'),
+                    },
+                    "class_metrics": {
+                        'mAP50': {},
+                        'mAP95': {},
+                    }
                 }
             }
+            for name in self.options.data.outputs.get(list(self.options.data.outputs.keys())[0]).classes_names:
+                interactive_log['output']['val']["class_loss"]['prob_loss'][name] = logs.get(f'val_prob_loss_{name}')
+                interactive_log['output']['val']["class_metrics"]['mAP50'][name] = logs.get(f'val_mAP50_class_{name}')
+                interactive_log['output']['val']["class_metrics"]['mAP95'][name] = logs.get(f'val_mAP95_class_{name}')
 
-            interactive_log[out]['metrics'] = {}
-            for metric_name in self.metrics.get(out):
-                interactive_log[out]['metrics'][metric_name] = {}
-                if len(self.metrics.keys()) == 1:
-                    train_metric = update_logs.get(loss_metric_config.get('metric').get(metric_name).get('log_name'))
-                    val_metric = update_logs.get(
-                        f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}")
-                else:
-                    train_metric = update_logs.get(
-                        f"{out}_{loss_metric_config.get('metric').get(metric_name).get('log_name')}")
-                    val_metric = update_logs.get(
-                        f"val_{out}_{loss_metric_config.get('metric').get(metric_name).get('log_name')}")
-                if metric_name == MetricChoice.UnscaledMAE:
-                    train_metric, val_metric = UnscaledMAE().unscale_result(
-                        [train_metric, val_metric], int(out), self.options.preprocessing
-                    )
-                interactive_log[out]['metrics'][metric_name] = {
-                    'train': self._round_loss_metric(train_metric) if not math.isnan(float(train_metric)) else None,
-                    'val': self._round_loss_metric(val_metric) if not math.isnan(float(val_metric)) else None
-                }
         return interactive_log
 
     def _reformat_y_pred(self, y_pred, sensitivity: float = 0.15, threashold: float = 0.1):
@@ -1153,20 +1200,21 @@ class InteractiveCallback:
                             inverse_col = self.options.preprocessing.inverse_data(_options).get(int(out)).get(column)
                         else:
                             inverse_col = self.y_pred.get(out)[:, i:i + 1]
-                        inverse_y = np.concatenate([inverse_y, inverse_col], axis=1)
+                        inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
                     self.inverse_y_pred[out] = inverse_y[:, 1:]
 
                 if task == LayerOutputTypeChoice.Regression.Timeseries:
                     preprocess_dict = self.options.preprocessing.preprocessing.get(int(out))
-                    inverse_y = np.zeros_like(self.y_pred.get(out)[:, 0:1, :])
+                    inverse_y = np.zeros_like(self.y_pred.get(out)[:, :, 0:1])
                     for i, column in enumerate(preprocess_dict.keys()):
                         if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
-                            _options = {int(out): {column: self.y_pred.get(out)[:, i:i + 1, :]}}
-                            inverse_col = self.options.preprocessing.inverse_data(_options).get(int(out)).get(column)
+                            _options = {int(out): {column: self.y_pred.get(out)[:, :, i]}}
+                            inverse_col = np.expand_dims(
+                                self.options.preprocessing.inverse_data(_options).get(int(out)).get(column), axis=-1)
                         else:
-                            inverse_col = self.y_pred.get(out)[:, i:i + 1, :]
-                        inverse_y = np.concatenate([inverse_y, inverse_col], axis=1)
-                    self.inverse_y_pred[out] = inverse_y[:, 1:, :]
+                            inverse_col = self.y_pred.get(out)[:, :, i:i + 1]
+                        inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
+                    self.inverse_y_pred[out] = inverse_y[:, :, 1:]
 
         if self.options.data.architecture in self.yolo_architecture:
             self.y_pred = CreateArray().get_yolo_y_pred(
@@ -1183,41 +1231,260 @@ class InteractiveCallback:
                 data_idx = self.log_history['epochs'].index(self.current_epoch)
             else:
                 self.log_history['epochs'].append(self.current_epoch)
-            for out in self.options.data.outputs.keys():
-                out_task = self.options.data.outputs.get(out).task
-                classes_names = self.options.data.outputs.get(out).classes_names
-                for loss_name in self.log_history.get(f"{out}").get('loss').keys():
-                    for data_type in ['train', 'val']:
-                        # fill losses
+
+            if self.options.data.architecture in self.basic_architecture:
+                for out in self.options.data.outputs.keys():
+                    out_task = self.options.data.outputs.get(out).task
+                    classes_names = self.options.data.outputs.get(out).classes_names
+                    for loss_name in self.log_history.get(f"{out}").get('loss').keys():
+                        for data_type in ['train', 'val']:
+                            # fill losses
+                            if data_idx or data_idx == 0:
+                                self.log_history[f"{out}"]['loss'][loss_name][data_type][data_idx] = \
+                                    self._round_loss_metric(
+                                        self.current_logs.get(f"{out}").get('loss').get(loss_name).get(data_type)
+                                    )
+                            else:
+                                self.log_history[f"{out}"]['loss'][loss_name][data_type].append(
+                                    self._round_loss_metric(
+                                        self.current_logs.get(f"{out}").get('loss').get(loss_name).get(data_type)
+                                    )
+                                )
+                        # fill loss progress state
                         if data_idx or data_idx == 0:
-                            self.log_history[f"{out}"]['loss'][loss_name][data_type][data_idx] = \
-                                self._round_loss_metric(
-                                    self.current_logs.get(f"{out}").get('loss').get(loss_name).get(data_type)
-                                )
+                            self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['mean_log_history'][
+                                data_idx] = \
+                                self._get_mean_log(self.log_history.get(f"{out}").get('loss').get(loss_name).get('val'))
                         else:
-                            self.log_history[f"{out}"]['loss'][loss_name][data_type].append(
-                                self._round_loss_metric(
-                                    self.current_logs.get(f"{out}").get('loss').get(loss_name).get(data_type)
-                                )
+                            self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['mean_log_history'].append(
+                                self._get_mean_log(self.log_history.get(f"{out}").get('loss').get(loss_name).get('val'))
                             )
+                        # get progress state data
+                        loss_underfitting = self._evaluate_underfitting(
+                            loss_name,
+                            self.log_history[f"{out}"]['loss'][loss_name]['train'][-1],
+                            self.log_history[f"{out}"]['loss'][loss_name]['val'][-1],
+                            metric_type='loss'
+                        )
+                        loss_overfitting = self._evaluate_overfitting(
+                            loss_name,
+                            self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['mean_log_history'],
+                            metric_type='loss'
+                        )
+                        if loss_underfitting or loss_overfitting:
+                            normal_state = False
+                        else:
+                            normal_state = True
+
+                        if data_idx or data_idx == 0:
+                            self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['underfitting'][data_idx] = \
+                                loss_underfitting
+                            self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['overfitting'][data_idx] = \
+                                loss_overfitting
+                            self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['normal_state'][data_idx] = \
+                                normal_state
+                        else:
+                            self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['underfitting'].append(
+                                loss_underfitting)
+                            self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['overfitting'].append(
+                                loss_overfitting)
+                            self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['normal_state'].append(
+                                normal_state)
+
+                        if out_task == LayerOutputTypeChoice.Classification or \
+                                out_task == LayerOutputTypeChoice.Segmentation or \
+                                out_task == LayerOutputTypeChoice.TextSegmentation or \
+                                out_task == LayerOutputTypeChoice.TimeseriesTrend:
+                            for cls in self.log_history.get(f"{out}").get('class_loss').keys():
+                                class_loss = 0.
+                                if out_task == LayerOutputTypeChoice.Classification or \
+                                        out_task == LayerOutputTypeChoice.TimeseriesTrend:
+                                    class_loss = self._get_loss_calculation(
+                                        loss_obj=self.loss_obj.get(f"{out}"),
+                                        out=f"{out}",
+                                        y_true=self.y_true.get('val').get(f"{out}")[
+                                            self.class_idx.get('val').get(f"{out}").get(cls)],
+                                        y_pred=self.y_pred.get(f"{out}")[
+                                            self.class_idx.get('val').get(f"{out}").get(cls)],
+                                    )
+                                if out_task == LayerOutputTypeChoice.Segmentation:
+                                    class_idx = classes_names.index(cls)
+                                    class_loss = self._get_loss_calculation(
+                                        loss_obj=self.loss_obj.get(f"{out}"),
+                                        out=f"{out}",
+                                        y_true=self.y_true.get('val').get(f"{out}")[:, :, :, class_idx],
+                                        y_pred=self.y_pred.get(f"{out}")[:, :, :, class_idx],
+                                    )
+                                if out_task == LayerOutputTypeChoice.TextSegmentation:
+                                    class_idx = classes_names.index(cls)
+                                    class_loss = self._get_loss_calculation(
+                                        loss_obj=self.loss_obj.get(f"{out}"),
+                                        out=f"{out}",
+                                        y_true=self.y_true.get('val').get(f"{out}")[:, :, class_idx],
+                                        y_pred=self.y_pred.get(f"{out}")[:, :, class_idx],
+                                    )
+                                if data_idx or data_idx == 0:
+                                    self.log_history[f"{out}"]['class_loss'][cls][loss_name][data_idx] = \
+                                        self._round_loss_metric(class_loss)
+                                else:
+                                    self.log_history[f"{out}"]['class_loss'][cls][loss_name].append(
+                                        self._round_loss_metric(class_loss)
+                                    )
+
+                    for metric_name in self.log_history.get(f"{out}").get('metrics').keys():
+                        for data_type in ['train', 'val']:
+                            # fill metrics
+                            if data_idx or data_idx == 0:
+                                if self.current_logs:
+                                    self.log_history[f"{out}"]['metrics'][metric_name][data_type][data_idx] = \
+                                        self._round_loss_metric(
+                                            self.current_logs.get(f"{out}").get('metrics').get(metric_name).get(
+                                                data_type)
+                                        )
+                            else:
+                                if self.current_logs:
+                                    self.log_history[f"{out}"]['metrics'][metric_name][data_type].append(
+                                        self._round_loss_metric(
+                                            self.current_logs.get(f"{out}").get('metrics').get(metric_name).get(
+                                                data_type)
+                                        )
+                                    )
+
+                        if data_idx or data_idx == 0:
+                            self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['mean_log_history'][
+                                data_idx] = \
+                                self._get_mean_log(self.log_history[f"{out}"]['metrics'][metric_name]['val'])
+                        else:
+                            self.log_history[f"{out}"]['progress_state']['metrics'][metric_name][
+                                'mean_log_history'].append(
+                                self._get_mean_log(self.log_history[f"{out}"]['metrics'][metric_name]['val'])
+                            )
+                        metric_underfittng = self._evaluate_underfitting(
+                            metric_name,
+                            self.log_history[f"{out}"]['metrics'][metric_name]['train'][-1],
+                            self.log_history[f"{out}"]['metrics'][metric_name]['val'][-1],
+                            metric_type='metric'
+                        )
+                        metric_overfittng = self._evaluate_overfitting(
+                            metric_name,
+                            self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['mean_log_history'],
+                            metric_type='metric'
+                        )
+                        if metric_underfittng or metric_overfittng:
+                            normal_state = False
+                        else:
+                            normal_state = True
+
+                        if data_idx or data_idx == 0:
+                            self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['underfitting'][
+                                data_idx] = \
+                                metric_underfittng
+                            self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['overfitting'][
+                                data_idx] = \
+                                metric_overfittng
+                            self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['normal_state'][
+                                data_idx] = \
+                                normal_state
+                        else:
+                            self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['underfitting'].append(
+                                metric_underfittng)
+                            self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['overfitting'].append(
+                                metric_overfittng)
+                            self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['normal_state'].append(
+                                normal_state)
+
+                        if out_task == LayerOutputTypeChoice.Classification or \
+                                out_task == LayerOutputTypeChoice.Segmentation or \
+                                out_task == LayerOutputTypeChoice.TextSegmentation or \
+                                out_task == LayerOutputTypeChoice.TimeseriesTrend:
+                            for cls in self.log_history.get(f"{out}").get('class_metrics').keys():
+                                class_metric = 0.
+                                if out_task == LayerOutputTypeChoice.Classification or \
+                                        out_task == LayerOutputTypeChoice.TimeseriesTrend:
+                                    class_metric = self._get_metric_calculation(
+                                        metric_name=metric_name,
+                                        metric_obj=self.metrics_obj.get(f"{out}").get(metric_name),
+                                        out=f"{out}",
+                                        y_true=self.y_true.get('val').get(f"{out}")[
+                                            self.class_idx.get('val').get(f"{out}").get(cls)],
+                                        y_pred=self.y_pred.get(f"{out}")[
+                                            self.class_idx.get('val').get(f"{out}").get(cls)],
+                                        show_class=True
+                                    )
+                                if out_task == LayerOutputTypeChoice.Segmentation:
+                                    class_idx = classes_names.index(cls)
+                                    class_metric = self._get_metric_calculation(
+                                        metric_name=metric_name,
+                                        metric_obj=self.metrics_obj.get(f"{out}").get(metric_name),
+                                        out=f"{out}",
+                                        y_true=self.y_true.get('val').get(f"{out}")[:, :, :, class_idx],
+                                        y_pred=self.y_pred.get(f"{out}")[:, :, :, class_idx],
+                                    )
+                                if out_task == LayerOutputTypeChoice.TextSegmentation:
+                                    class_idx = classes_names.index(cls)
+                                    class_metric = self._get_metric_calculation(
+                                        metric_name=metric_name,
+                                        metric_obj=self.metrics_obj.get(f"{out}").get(metric_name),
+                                        out=f"{out}",
+                                        y_true=self.y_true.get('val').get(f"{out}")[:, :, class_idx],
+                                        y_pred=self.y_pred.get(f"{out}")[:, :, class_idx],
+                                    )
+                                if data_idx or data_idx == 0:
+                                    self.log_history[f"{out}"]['class_metrics'][cls][metric_name][data_idx] = \
+                                        self._round_loss_metric(class_metric)
+                                else:
+                                    self.log_history[f"{out}"]['class_metrics'][cls][metric_name].append(
+                                        self._round_loss_metric(class_metric)
+                                    )
+
+            if self.options.data.architecture in self.yolo_architecture:
+                out = list(self.options.data.outputs.keys())[0]
+                classes_names = self.options.data.outputs.get(out).classes_names
+                for key in self.log_history['output']["loss"].keys():
+                    for data_type in ['train', 'val']:
+                        self.log_history['output']["loss"][key][data_type].append(
+                            self._round_loss_metric(self.current_logs.get('output').get(
+                                data_type).get('loss').get(key))
+                        )
+                for key in self.log_history['output']["metrics"].keys():
+                    for data_type in ['train', 'val']:
+                        self.log_history['output']["metrics"][key][data_type].append(
+                            self._round_loss_metric(self.current_logs.get('output').get(
+                                data_type).get('metrics').get(key))
+                        )
+                for name in classes_names:
+                    self.log_history['output']["class_loss"]['prob_loss'][name].append(
+                        self._round_loss_metric(self.current_logs.get('output').get("val").get(
+                            'class_loss').get("prob_loss").get(name))
+                    )
+                    self.log_history['output']["class_metrics"]['mAP50'][name].append(
+                        self._round_loss_metric(self.current_logs.get('output').get("val").get(
+                            'class_metrics').get("mAP50").get(name))
+                    )
+                    self.log_history['output']["class_metrics"]['mAP95'][name].append(
+                        self._round_loss_metric(self.current_logs.get('output').get("val").get(
+                            'class_metrics').get("mAP95").get(name))
+                    )
+
+                for loss_name in self.log_history['output']["loss"].keys():
                     # fill loss progress state
                     if data_idx or data_idx == 0:
-                        self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['mean_log_history'][data_idx] = \
-                            self._get_mean_log(self.log_history.get(f"{out}").get('loss').get(loss_name).get('val'))
+                        self.log_history['output']['progress_state']['loss'][loss_name]['mean_log_history'][data_idx] = \
+                            self._get_mean_log(self.log_history.get('output').get('loss').get(loss_name).get('val'))
                     else:
-                        self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['mean_log_history'].append(
-                            self._get_mean_log(self.log_history.get(f"{out}").get('loss').get(loss_name).get('val'))
+                        self.log_history['output']['progress_state']['loss'][loss_name]['mean_log_history'].append(
+                            self._get_mean_log(self.log_history.get('output').get('loss').get(loss_name).get('val'))
                         )
                     # get progress state data
                     loss_underfitting = self._evaluate_underfitting(
                         loss_name,
-                        self.log_history[f"{out}"]['loss'][loss_name]['train'][-1],
-                        self.log_history[f"{out}"]['loss'][loss_name]['val'][-1],
+                        self.log_history['output']['loss'][loss_name]['train'][-1],
+                        self.log_history['output']['loss'][loss_name]['val'][-1],
                         metric_type='loss'
                     )
                     loss_overfitting = self._evaluate_overfitting(
                         loss_name,
-                        self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['mean_log_history'],
+                        self.log_history['output']['progress_state']['loss'][loss_name]['mean_log_history'],
                         metric_type='loss'
                     )
                     if loss_underfitting or loss_overfitting:
@@ -1226,177 +1493,92 @@ class InteractiveCallback:
                         normal_state = True
 
                     if data_idx or data_idx == 0:
-                        self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['underfitting'][data_idx] = \
+                        self.log_history['output']['progress_state']['loss'][loss_name]['underfitting'][data_idx] = \
                             loss_underfitting
-                        self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['overfitting'][data_idx] = \
+                        self.log_history['output']['progress_state']['loss'][loss_name]['overfitting'][data_idx] = \
                             loss_overfitting
-                        self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['normal_state'][data_idx] = \
+                        self.log_history['output']['progress_state']['loss'][loss_name]['normal_state'][data_idx] = \
                             normal_state
                     else:
-                        self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['underfitting'].append(
+                        self.log_history['output']['progress_state']['loss'][loss_name]['underfitting'].append(
                             loss_underfitting)
-                        self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['overfitting'].append(
+                        self.log_history['output']['progress_state']['loss'][loss_name]['overfitting'].append(
                             loss_overfitting)
-                        self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['normal_state'].append(
+                        self.log_history['output']['progress_state']['loss'][loss_name]['normal_state'].append(
                             normal_state)
 
-                    if out_task == LayerOutputTypeChoice.Classification or \
-                            out_task == LayerOutputTypeChoice.Segmentation or \
-                            out_task == LayerOutputTypeChoice.TextSegmentation or \
-                            out_task == LayerOutputTypeChoice.TimeseriesTrend:
-                        for cls in self.log_history.get(f"{out}").get('class_loss').keys():
-                            class_loss = 0.
-                            if out_task == LayerOutputTypeChoice.Classification or \
-                                    out_task == LayerOutputTypeChoice.TimeseriesTrend:
-                                class_loss = self._get_loss_calculation(
-                                    loss_obj=self.loss_obj.get(f"{out}"),
-                                    out=f"{out}",
-                                    y_true=self.y_true.get('val').get(f"{out}")[
-                                        self.class_idx.get('val').get(f"{out}").get(cls)],
-                                    y_pred=self.y_pred.get(f"{out}")[self.class_idx.get('val').get(f"{out}").get(cls)],
-                                )
-                            if out_task == LayerOutputTypeChoice.Segmentation:
-                                class_idx = classes_names.index(cls)
-                                class_loss = self._get_loss_calculation(
-                                    loss_obj=self.loss_obj.get(f"{out}"),
-                                    out=f"{out}",
-                                    y_true=self.y_true.get('val').get(f"{out}")[:, :, :, class_idx],
-                                    y_pred=self.y_pred.get(f"{out}")[:, :, :, class_idx],
-                                )
-                            if out_task == LayerOutputTypeChoice.TextSegmentation:
-                                class_idx = classes_names.index(cls)
-                                class_loss = self._get_loss_calculation(
-                                    loss_obj=self.loss_obj.get(f"{out}"),
-                                    out=f"{out}",
-                                    y_true=self.y_true.get('val').get(f"{out}")[:, :, class_idx],
-                                    y_pred=self.y_pred.get(f"{out}")[:, :, class_idx],
-                                )
-                            if data_idx or data_idx == 0:
-                                self.log_history[f"{out}"]['class_loss'][cls][loss_name][data_idx] = \
-                                    self._round_loss_metric(class_loss)
-                            else:
-                                self.log_history[f"{out}"]['class_loss'][cls][loss_name].append(
-                                    self._round_loss_metric(class_loss)
-                                )
-
-                for metric_name in self.log_history.get(f"{out}").get('metrics').keys():
-                    for data_type in ['train', 'val']:
-                        # fill metrics
-                        if data_idx or data_idx == 0:
-                            if self.current_logs:
-                                self.log_history[f"{out}"]['metrics'][metric_name][data_type][data_idx] = \
-                                    self._round_loss_metric(
-                                        self.current_logs.get(f"{out}").get('metrics').get(metric_name).get(data_type)
-                                    )
-                        else:
-                            if self.current_logs:
-                                self.log_history[f"{out}"]['metrics'][metric_name][data_type].append(
-                                    self._round_loss_metric(
-                                        self.current_logs.get(f"{out}").get('metrics').get(metric_name).get(data_type)
-                                    )
-                                )
-
+                for metric_name in self.log_history.get('output').get('metrics').keys():
                     if data_idx or data_idx == 0:
-                        self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['mean_log_history'][
-                            data_idx] = \
-                            self._get_mean_log(self.log_history[f"{out}"]['metrics'][metric_name]['val'])
+                        self.log_history['output']['progress_state']['metrics'][metric_name]['mean_log_history'][
+                            data_idx] = self._get_mean_log(self.log_history['output']['metrics'][metric_name]['val'])
                     else:
-                        self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['mean_log_history'].append(
-                            self._get_mean_log(self.log_history[f"{out}"]['metrics'][metric_name]['val'])
+                        self.log_history['output']['progress_state']['metrics'][metric_name][
+                            'mean_log_history'].append(
+                            self._get_mean_log(self.log_history['output']['metrics'][metric_name]['val'])
                         )
-                    metric_underfittng = self._evaluate_underfitting(
-                        metric_name,
-                        self.log_history[f"{out}"]['metrics'][metric_name]['train'][-1],
-                        self.log_history[f"{out}"]['metrics'][metric_name]['val'][-1],
-                        metric_type='metric'
-                    )
                     metric_overfittng = self._evaluate_overfitting(
                         metric_name,
-                        self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['mean_log_history'],
+                        self.log_history['output']['progress_state']['metrics'][metric_name]['mean_log_history'],
                         metric_type='metric'
                     )
-                    if metric_underfittng or metric_overfittng:
+                    if metric_overfittng:
                         normal_state = False
                     else:
                         normal_state = True
 
                     if data_idx or data_idx == 0:
-                        self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['underfitting'][data_idx] = \
-                            metric_underfittng
-                        self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['overfitting'][data_idx] = \
-                            metric_overfittng
-                        self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['normal_state'][data_idx] = \
-                            normal_state
+                        self.log_history['output']['progress_state']['metrics'][metric_name]['overfitting'][
+                            data_idx] = metric_overfittng
+                        self.log_history['output']['progress_state']['metrics'][metric_name]['normal_state'][
+                            data_idx] = normal_state
                     else:
-                        self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['underfitting'].append(
-                            metric_underfittng)
-                        self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['overfitting'].append(
+                        self.log_history['output']['progress_state']['metrics'][metric_name]['overfitting'].append(
                             metric_overfittng)
-                        self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['normal_state'].append(
+                        self.log_history['output']['progress_state']['metrics'][metric_name]['normal_state'].append(
                             normal_state)
 
-                    if out_task == LayerOutputTypeChoice.Classification or \
-                            out_task == LayerOutputTypeChoice.Segmentation or \
-                            out_task == LayerOutputTypeChoice.TextSegmentation or \
-                            out_task == LayerOutputTypeChoice.TimeseriesTrend:
-                        for cls in self.log_history.get(f"{out}").get('class_metrics').keys():
-                            class_metric = 0.
-                            if out_task == LayerOutputTypeChoice.Classification or \
-                                    out_task == LayerOutputTypeChoice.TimeseriesTrend:
-                                class_metric = self._get_metric_calculation(
-                                    metric_name=metric_name,
-                                    metric_obj=self.metrics_obj.get(f"{out}").get(metric_name),
-                                    out=f"{out}",
-                                    y_true=self.y_true.get('val').get(f"{out}")[
-                                        self.class_idx.get('val').get(f"{out}").get(cls)],
-                                    y_pred=self.y_pred.get(f"{out}")[self.class_idx.get('val').get(f"{out}").get(cls)],
-                                    show_class=True
-                                )
-                            if out_task == LayerOutputTypeChoice.Segmentation:
-                                class_idx = classes_names.index(cls)
-                                class_metric = self._get_metric_calculation(
-                                    metric_name=metric_name,
-                                    metric_obj=self.metrics_obj.get(f"{out}").get(metric_name),
-                                    out=f"{out}",
-                                    y_true=self.y_true.get('val').get(f"{out}")[:, :, :, class_idx],
-                                    y_pred=self.y_pred.get(f"{out}")[:, :, :, class_idx],
-                                )
-                            if out_task == LayerOutputTypeChoice.TextSegmentation:
-                                class_idx = classes_names.index(cls)
-                                class_metric = self._get_metric_calculation(
-                                    metric_name=metric_name,
-                                    metric_obj=self.metrics_obj.get(f"{out}").get(metric_name),
-                                    out=f"{out}",
-                                    y_true=self.y_true.get('val').get(f"{out}")[:, :, class_idx],
-                                    y_pred=self.y_pred.get(f"{out}")[:, :, class_idx],
-                                )
-                            if data_idx or data_idx == 0:
-                                self.log_history[f"{out}"]['class_metrics'][cls][metric_name][data_idx] = \
-                                    self._round_loss_metric(class_metric)
-                            else:
-                                self.log_history[f"{out}"]['class_metrics'][cls][metric_name].append(
-                                    self._round_loss_metric(class_metric)
-                                )
-
     def _update_progress_table(self, epoch_time: float):
-        self.progress_table[self.current_epoch] = {
-            "time": epoch_time,
-            "data": {}
-        }
-        for out in list(self.log_history.keys())[1:]:
-            self.progress_table[self.current_epoch]["data"][f"Выходной слой «{out}»"] = {
+        if self.options.data.architecture in self.basic_architecture:
+            self.progress_table[self.current_epoch] = {
+                "time": epoch_time,
+                "data": {}
+            }
+            for out in list(self.log_history.keys())[1:]:
+                self.progress_table[self.current_epoch]["data"][f"Выходной слой «{out}»"] = {
+                    'loss': {},
+                    'metrics': {}
+                }
+                self.progress_table[self.current_epoch]["data"][f"Выходной слой «{out}»"]["loss"] = {
+                    'loss': f"{self.log_history.get(out).get('loss').get(self.losses.get(out)).get('train')[-1]}",
+                    'val_loss': f"{self.log_history.get(out).get('loss').get(self.losses.get(out)).get('val')[-1]}"
+                }
+                for metric in self.metrics.get(out):
+                    self.progress_table[self.current_epoch]["data"][f"Выходной слой «{out}»"]["metrics"][metric] = \
+                        f"{self.log_history.get(out).get('metrics').get(metric).get('train')[-1]}"
+                    self.progress_table[self.current_epoch]["data"][f"Выходной слой «{out}»"]["metrics"][
+                        f"val_{metric}"] = \
+                        f"{self.log_history.get(out).get('metrics').get(metric).get('val')[-1]}"
+
+        if self.options.data.architecture in self.yolo_architecture:
+            self.progress_table[self.current_epoch] = {
+                "time": epoch_time,
+                "learning_rate": self.current_logs.get("learning_rate"),
+                "data": {}
+            }
+            self.progress_table[self.current_epoch]["data"][f"Прогресс обучения"] = {
                 'loss': {},
                 'metrics': {}
             }
-            self.progress_table[self.current_epoch]["data"][f"Выходной слой «{out}»"]["loss"] = {
-                'loss': f"{self.log_history.get(out).get('loss').get(self.losses.get(out)).get('train')[-1]}",
-                'val_loss': f"{self.log_history.get(out).get('loss').get(self.losses.get(out)).get('val')[-1]}"
-            }
-            for metric in self.metrics.get(out):
-                self.progress_table[self.current_epoch]["data"][f"Выходной слой «{out}»"]["metrics"][metric] = \
-                    f"{self.log_history.get(out).get('metrics').get(metric).get('train')[-1]}"
-                self.progress_table[self.current_epoch]["data"][f"Выходной слой «{out}»"]["metrics"][f"val_{metric}"] = \
-                    f"{self.log_history.get(out).get('metrics').get(metric).get('val')[-1]}"
+            for loss in self.log_history['output']["loss"].keys():
+                self.progress_table[self.current_epoch]["data"][f"Прогресс обучения"]["loss"] = {
+                    'loss': f"{self.log_history.get('output').get('loss').get(loss).get('train')[-1]}",
+                    'val_loss': f"{self.log_history.get('output').get('loss').get(loss).get('val')[-1]}"
+                }
+            for metric in self.log_history['output']["metrics"].keys():
+                self.progress_table[self.current_epoch]["data"][f"Прогресс обучения»"]["metrics"][metric] = \
+                    f"{self.log_history.get('output').get('metrics').get(metric).get('train')[-1]}"
+                self.progress_table[self.current_epoch]["data"][f"Прогресс обучения»"]["metrics"][f"val_{metric}"] = \
+                    f"{self.log_history.get('output').get('metrics').get(metric).get('val')[-1]}"
 
     def _get_loss_calculation(self, loss_obj, out: str, y_true, y_pred):
         encoding = self.options.data.outputs.get(int(out)).encoding
@@ -1740,7 +1922,9 @@ class InteractiveCallback:
                             preset_path=self.preset_path,
                             x_array=self.x_val.get(f"{inp}") if self.x_val else None,
                             inverse_x_array=self.inverse_x_val.get(f"{inp}") if self.inverse_x_val else None,
-                            return_mode='callback'
+                            return_mode='callback',
+                            max_lenth=MAX_INTERMEDIATE_GRAGH_LENTH,
+                            templates = [self._fill_graph_plot_data, self._fill_graph_front_structure]
                         )
                         # random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
                         return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
@@ -1807,10 +1991,12 @@ class InteractiveCallback:
                             inverse_y_true=self.inverse_y_true.get("val").get(f"{out}")[self.example_idx[idx]],
                             inverse_y_pred=self.inverse_y_pred.get(f"{out}")[self.example_idx[idx]],
                             output_id=out,
-                            depth=self.inverse_y_true.get("val").get(f"{out}")[self.example_idx[idx]].shape[-1],
+                            depth=self.inverse_y_true.get("val").get(f"{out}")[self.example_idx[idx]].shape[-2],
                             show_stat=self.interactive_config.intermediate_result.show_statistic,
-                            templates=[self._fill_graph_plot_data, self._fill_graph_front_structure]
+                            templates=[self._fill_graph_plot_data, self._fill_graph_front_structure],
+                            max_lenth=MAX_INTERMEDIATE_GRAGH_LENTH
                         )
+                        print('\n\n_get_intermediate_result_request_Timeseries', data)
 
                     elif task == LayerOutputTypeChoice.Dataframe:
                         data = {
@@ -1987,7 +2173,7 @@ class InteractiveCallback:
                     )
                     _id += 1
                     deviation = (y_pred - y_true) * 100 / y_true
-                    x_mae, y_mae = self._get_distribution_histogram(np.abs(deviation), bins=25, categorical=False)
+                    x_mae, y_mae = self._get_distribution_histogram(np.abs(deviation), categorical=False)
                     return_data.append(
                         self._fill_graph_front_structure(
                             _id=_id,
@@ -2000,7 +2186,7 @@ class InteractiveCallback:
                         )
                     )
                     _id += 1
-                    x_me, y_me = self._get_distribution_histogram(deviation, bins=25, categorical=False)
+                    x_me, y_me = self._get_distribution_histogram(deviation, categorical=False)
                     return_data.append(
                         self._fill_graph_front_structure(
                             _id=_id,
@@ -2016,36 +2202,30 @@ class InteractiveCallback:
 
                 elif task == LayerOutputTypeChoice.Timeseries:
                     for i, channel_name in enumerate(self.options.data.columns.get(out).keys()):
-                        for step in range(self.y_true.get("val").get(f'{out}').shape[-1]):
-                            y_true = self.inverse_y_true.get("val").get(f"{out}")[:, i, step].astype('float')
-                            y_pred = self.inverse_y_pred.get(f"{out}")[:, i, step].astype('float')
-
+                        for step in range(self.y_true.get("val").get(f'{out}').shape[-2]):
+                            y_true = self.inverse_y_true.get("val").get(f"{out}")[:, step, i].astype('float')
+                            y_pred = self.inverse_y_pred.get(f"{out}")[:, step, i].astype('float')
+                            x_tr, y_tr = self._get_time_series_graphic(y_true, make_short=True)
+                            x_pr, y_pr = self._get_time_series_graphic(y_pred, make_short=True)
                             return_data.append(
                                 self._fill_graph_front_structure(
                                     _id=_id,
                                     _type='graphic',
                                     graph_name=f"Выходной слой «{out}» - Предсказание канала "
                                                f"«{channel_name.split('_', 1)[-1]}» на {step + 1} "
-                                               f"шаг{'ов' if step else ''} вперед",
+                                               f"шаг{'ов' if step + 1 > 1 else ''} вперед",
                                     short_name=f"{out} - «{channel_name.split('_', 1)[-1]}» на {step + 1} "
-                                               f"шаг{'ов' if step else ''}",
+                                               f"шаг{'ов' if step + 1 > 1 else ''}",
                                     x_label="Время",
                                     y_label="Значение",
                                     plot_data=[
-                                        self._fill_graph_plot_data(
-                                            x=np.arange(len(y_true)).astype('int').tolist(),
-                                            y=y_true.tolist(),
-                                            label="Истинное значение"
-                                        ),
-                                        self._fill_graph_plot_data(
-                                            x=np.arange(len(y_true)).astype('int').tolist(),
-                                            y=y_pred.tolist(),
-                                            label="Предсказанное значение"
-                                        )
+                                        self._fill_graph_plot_data(x=x_tr, y=y_tr, label="Истинное значение"),
+                                        self._fill_graph_plot_data(x=x_pr, y=y_pr, label="Предсказанное значение")
                                     ],
                                 )
                             )
                             _id += 1
+
                             x_axis, auto_corr_true, auto_corr_pred = self._get_autocorrelation_graphic(
                                 y_true, y_pred, depth=10
                             )
@@ -2069,8 +2249,7 @@ class InteractiveCallback:
                             )
                             _id += 1
                             deviation = (y_pred - y_true) * 100 / y_true
-                            x_mae, y_mae = self._get_distribution_histogram(np.abs(deviation), bins=25,
-                                                                            categorical=False)
+                            x_mae, y_mae = self._get_distribution_histogram(np.abs(deviation), categorical=False)
                             return_data.append(
                                 self._fill_graph_front_structure(
                                     _id=_id,
@@ -2085,7 +2264,7 @@ class InteractiveCallback:
                                 )
                             )
                             _id += 1
-                            x_me, y_me = self._get_distribution_histogram(deviation, bins=25, categorical=False)
+                            x_me, y_me = self._get_distribution_histogram(deviation, categorical=False)
                             return_data.append(
                                 self._fill_graph_front_structure(
                                     _id=_id,
@@ -2100,6 +2279,7 @@ class InteractiveCallback:
                                 )
                             )
                             _id += 1
+                    # print('\n\n_get_statistic_data_request_Timeseries', return_data)
 
                 elif task == LayerOutputTypeChoice.Dataframe:
                     pass
@@ -2155,11 +2335,13 @@ class InteractiveCallback:
                     class_matrix[line_names.index(item['class_name'])][-1] += 1
 
             for class_name in name_classes:
-                class_accuracy_hist[class_name] = np.round(np.mean(class_accuracy_hist[class_name])*100, 2).item() if \
+                class_accuracy_hist[class_name] = np.round(np.mean(class_accuracy_hist[class_name]) * 100, 2).item() if \
                     class_accuracy_hist[class_name] else 0.
-                class_coord_accuracy[class_name] = np.round(np.mean(class_coord_accuracy[class_name])*100, 2).item() if \
+                class_coord_accuracy[class_name] = np.round(np.mean(class_coord_accuracy[class_name]) * 100,
+                                                            2).item() if \
                     class_coord_accuracy[class_name] else 0.
-                class_loss_hist[class_name] = np.round(np.mean(class_loss_hist[class_name])*100, 2).item() if class_loss_hist[
+                class_loss_hist[class_name] = np.round(np.mean(class_loss_hist[class_name]) * 100, 2).item() if \
+                class_loss_hist[
                     class_name] else 0.
 
             object_matrix = [[object_TT, object_TF], [object_FT, 0]]
@@ -2387,16 +2569,17 @@ class InteractiveCallback:
                                 data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
                                 y_true = self.options.dataframe.get(data_type)[channel_name].to_list()
                                 if class_type == 'graphic':
-                                    x_graph_axis = np.arange(len(y_true)).astype('float').tolist()
-                                    plot_data = [self._fill_graph_plot_data(x=x_graph_axis, y=y_true)]
+                                    # x_graph_axis = np.arange(len(y_true)).astype('float').tolist()
+                                    x, y = self._get_time_series_graphic(y_true, make_short=True)
+                                    plot_data = [self._fill_graph_plot_data(x=x, y=y)]
                                     graph_name = f'Выход {out} - {data_type_name} выборка - ' \
                                                  f'График канала «{channel_name.split("_", 1)[-1]}»'
                                     short_name = f'{data_type_name} - «{channel_name.split("_", 1)[-1]}»'
                                     x_label = "Время"
                                     y_label = "Величина"
-                                if class_type == 'dense_histogram':
-                                    x_hist, y_hist = self._get_distribution_histogram(y_true, bins=25,
-                                                                                      categorical=False)
+                                else:
+                                    # if class_type == 'dense_histogram':
+                                    x_hist, y_hist = self._get_distribution_histogram(y_true, categorical=False)
                                     plot_data = [self._fill_graph_plot_data(x=x_hist, y=y_hist)]
                                     graph_name = f'Выход {out} - {data_type_name} выборка - ' \
                                                  f'Гистограмма плотности канала «{channel_name.split("_", 1)[-1]}»'
@@ -2516,8 +2699,17 @@ class InteractiveCallback:
         return InteractiveCallback()._get_distribution_histogram(error, bins=bins, categorical=False)
 
     @staticmethod
-    def _get_time_series_graphic(data):
-        return np.arange(len(data)).astype('int').tolist(), np.array(data).astype('float').tolist()
+    def _get_time_series_graphic(data, make_short=False):
+        if make_short and len(data) > MAX_TS_GRAPH_COUNT:
+            union = int(len(data) // MAX_TS_GRAPH_COUNT)
+            short_data = []
+            for i in range(int(len(data) / union)):
+                short_data.append(
+                    InteractiveCallback()._round_loss_metric(np.mean(data[union*i:union*i+union]).item())
+                )
+            return np.arange(len(short_data)).astype('int').tolist(), np.array(short_data).astype('float').tolist()
+        else:
+            return np.arange(len(data)).astype('int').tolist(), np.array(data).astype('float').tolist()
 
     @staticmethod
     def _get_correlation_matrix(data_frame: DataFrame):
@@ -2532,12 +2724,12 @@ class InteractiveCallback:
         return InteractiveCallback().clean_data_series([y_true, y_pred], mode="duo")
 
     @staticmethod
-    def _get_distribution_histogram(data_series, bins=25, categorical=True):
+    def _get_distribution_histogram(data_series, categorical=True):
         if categorical:
             hist_data = pd.Series(data_series).value_counts()
             return hist_data.index.to_list(), hist_data.to_list()
         else:
-            bins = int(len(data_series) / 10)
+            bins = int(len(data_series) / 10) if int(len(data_series) / 10) < MAX_HISTOGRAM_BINS else MAX_HISTOGRAM_BINS
             data_series = InteractiveCallback().clean_data_series([data_series], mode="mono")
             bar_values, x_labels = np.histogram(data_series, bins=bins)
             new_x = []

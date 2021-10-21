@@ -19,6 +19,7 @@ from .exceptions import (
 
 
 ConstrainedIntValueGe0 = conint(ge=0)
+ConstrainedIntValueGe1 = conint(ge=1)
 ConstrainedIntValueGe2 = conint(ge=2)
 ConstrainedIntValueGe0Le2 = conint(ge=0, le=2)
 StrictIntValueGe0 = conint(strict=True, ge=0)
