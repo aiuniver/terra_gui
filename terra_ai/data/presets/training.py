@@ -69,6 +69,8 @@ class Metric(str, Enum):
     # SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
     DiceCoef = "DiceCoef"
     UnscaledMAE = "UnscaledMAE"
+    mAP50 = "mAP50"
+    mAP95 = "mAP95"
 
 
 TasksGroups = [
@@ -232,8 +234,13 @@ TasksGroups = [
     },
     {
         "task": Task.ObjectDetection,
-        "losses": [Loss.YoloLoss],
-        "metrics": [Metric.AUC, Metric.Accuracy],
+        "losses": [
+            Loss.YoloLoss
+        ],
+        "metrics": [
+            Metric.mAP50,
+            Metric.mAP95
+        ],
     },
     {
         "task": Task.TimeseriesTrend,
@@ -337,4 +344,31 @@ TasksGroups = [
             # Metric.SparseTopKCategoricalAccuracy,
         ],
     },
+    {
+        "task": Task.Dataframe,
+        "losses": [
+            Loss.MeanSquaredError,
+            Loss.MeanAbsoluteError,
+            Loss.MeanAbsolutePercentageError,
+            Loss.MeanSquaredLogarithmicError,
+            Loss.CosineSimilarity,
+            Loss.Hinge,
+            Loss.Huber,
+            Loss.KLDivergence,
+            Loss.LogCosh,
+            Loss.SquaredHinge,
+        ],
+        "metrics": [
+            Metric.MeanAbsoluteError,
+            Metric.MeanAbsolutePercentageError,
+            Metric.MeanSquaredError,
+            Metric.MeanSquaredLogarithmicError,
+            Metric.RootMeanSquaredError,
+            Metric.CosineSimilarity,
+            Metric.Hinge,
+            Metric.KLDivergence,
+            Metric.LogCoshError,
+            Metric.SquaredHinge,
+        ],
+    }
 ]

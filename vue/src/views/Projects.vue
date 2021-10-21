@@ -8,20 +8,28 @@
         :dialog="dialogCreate" 
         @close="dialogCreate = false" 
       />
-      <NewModalEditProject 
+      <NewModalEditProject
         :loading="loading" 
         @edit="editProject" 
         :dialog="dialogEdit" 
         @close="dialogEdit = false"
         :project="selectProject" 
       />
-      <NewModalDeleteProject 
+      <NewModalConfirm 
         :loading="loading" 
-        @delete="deleteProject" 
+        @confirm="deleteProject" 
         :dialog="dialogDelete" 
         @close="dialogDelete = false" 
-        :project="selectProject" 
-      />
+        :data="selectProject" 
+        :actions="{ confirm: { action: 'confirm', value: 'Удалить' } }"
+      >
+        <template slot="headline">
+          Вы собираетесь удалить проект
+        </template>
+        <template slot="text">
+          Проект будет удален безвозвратно и вы не сможете его восстановить.
+        </template>
+      </NewModalConfirm>
       <div class="projects">
         <CardCreateProject @click.native="closeDialogs(), dialogCreate = true"/>
         <CardProject 
@@ -40,7 +48,7 @@
 <script>
 import CardProject from '@/components/projects/CardProject'
 import NewModalCreateProject from '@/components/projects/modals/NewModalCreateProject'
-import NewModalDeleteProject from '@/components/projects/modals/NewModalDeleteProject'
+import NewModalConfirm from '@/components/projects/modals/NewModalConfirm'
 import NewModalEditProject from '@/components/projects/modals/NewModalEditProject'
 import CardCreateProject from '@/components/projects/CardCreateProject'
 export default {
@@ -49,7 +57,7 @@ export default {
     CardProject,
     CardCreateProject,
     NewModalCreateProject,
-    NewModalDeleteProject,
+    NewModalConfirm,
     NewModalEditProject
   },
   data: () => ({
@@ -61,7 +69,7 @@ export default {
     projects: [
       {
         id: 1,
-        image: '', 
+        image: 'https://www.zastavki.com/pictures/1920x1080/2013/Fantasy__038385_23.jpg', 
         active: false,
         created:'17 апреля 2021', 
         edited: '3 дня назад', 
@@ -69,7 +77,7 @@ export default {
       },
       {
         id: 2,
-        image: '', 
+        image: 'https://www.zastavki.com/pictures/1920x1080/2013/Fantasy__038385_23.jpg', 
         active: false,
         created:'17 апреля 2021', 
         edited: '3 дня назад', 
@@ -77,7 +85,7 @@ export default {
       },
       {
         id: 3,
-        image: '', 
+        image: 'https://www.zastavki.com/pictures/1920x1080/2013/Fantasy__038385_23.jpg', 
         active: false,
         created:'17 апреля 2021', 
         edited: '3 дня назад', 
@@ -96,6 +104,7 @@ export default {
     },
     editProject(project){
       this.projects = this.projects.map(el => {
+        console.log(el.id === project.id)
         if(el.id === project.id) return project
         return el
       })

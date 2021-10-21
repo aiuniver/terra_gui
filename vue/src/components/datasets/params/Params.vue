@@ -128,8 +128,10 @@ export default {
     },
     async download() {
       if (this.loading) return;
-      const { mode, value, label } = this.dataset;
+      const { mode, value } = this.dataset;
       if (mode && value) {
+        const index = ~value.lastIndexOf('\\') ? '\\' : '/'
+        const label = value.slice(value.lastIndexOf(index) + 1, value.length - 4)
         this.loading = true;
         this.$store.dispatch('settings/setOverlay', true);
         this.$store.dispatch('messages/setMessage', { message: `Загружаю датасет ${label}` });
