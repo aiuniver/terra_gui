@@ -67,7 +67,7 @@ export default {
       for (let key in saveCols) {
         colsNames[key] = {}
         saveCols[key].forEach(el => {
-          console.log(el)
+          // console.log(el)
           const index = getIdToName(filesSource, el)
           if (!colsNames[key][index]) {
             colsNames[key][index] = []
@@ -79,8 +79,8 @@ export default {
           // colsNames[key][el.label].push(el.value)
         })
       }
-      console.log(filesSource)
-      console.log(colsNames)
+      // console.log(filesSource)
+      // console.log(colsNames)
       let inputs = inputData.filter(item => item.layer === 'input').map(item => {
         item.parameters.cols_names = colsNames[item.id]
         return item
@@ -102,14 +102,14 @@ export default {
       })
       newDataset.columns_processing = {}
       handlers.forEach(el => {
-        console.log(el)
+        // console.log(el)
         newDataset.columns_processing[el.id] = el
       })
       newDataset.source_path = sourcePath
       newDataset.inputs = inputs
       newDataset.outputs = outputs
       const res = await dispatch('axios', { url: '/datasets/create/', data: newDataset }, { root: true });
-      console.log(res)
+      // console.log(res)
       if (res) {
         const { error } = res
         if (error) {
@@ -128,7 +128,7 @@ export default {
       return res
     },
     async choice({ dispatch }, dataset) {
-      console.log(dataset)
+      // console.log(dataset)
       await dispatch('trainings/resetAllTraining', {}, { root: true });
       dispatch('modeling/resetAll', {}, { root: true });
       return await dispatch('axios', { url: '/datasets/choice/', data: dataset }, { root: true });

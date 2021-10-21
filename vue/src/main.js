@@ -111,9 +111,6 @@ directives.forEach(directive=>Vue.directive(directive.name, directive))
 import components from '@/components/global'
 components.forEach(component=>Vue.component(component.name, component))
 
-import VuePapaParse from "vue-papa-parse";
-Vue.use(VuePapaParse)
-
 import AudioVisual from 'vue-audio-visual'
 Vue.use(AudioVisual)
 
