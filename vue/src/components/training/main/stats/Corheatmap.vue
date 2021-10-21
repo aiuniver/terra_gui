@@ -158,7 +158,7 @@ export default {
     gap: 5px;
     position: relative;
     width: fit-content;
-    padding-bottom: 20px;
+    padding-bottom: 30px;
   }
   &__grid {
     display: grid;
@@ -183,7 +183,7 @@ export default {
     }
     &--x-labels {
       position: absolute;
-      bottom: -1.5em;
+      top: 100%;
       justify-content: flex-end;
       width: 100%;
       * {
@@ -224,7 +224,7 @@ export default {
     display: flex;
     gap: 5px;
     padding-right: 35px;
-    padding-bottom: 20px;
+    padding-bottom: 30px;
     &--values {
       display: flex;
       flex-direction: column;

@@ -66,7 +66,7 @@ export default {
       return { borderColor: handler?.color || '' };
     },
     origTable() {
-      console.log(this.table);
+      // console.log(this.table);
       return this.table.map(item => {
         item.active = this.selected.includes(item[0]);
         return item;
@@ -82,7 +82,7 @@ export default {
     },
     selected: {
       set(value) {
-        console.log(value);
+        // console.log(value);
         this.handlers = this.handlers.map(item => {
           if (item.active && item.table[this.label]) {
             item.table[this.label] = value;
@@ -92,7 +92,7 @@ export default {
       },
       get() {
         const select = this.handlers.find(item => item.active);
-        console.log(select);
+        // console.log(select);
         return select ? select.table[this.label] : [];
       },
     },

@@ -136,7 +136,7 @@ export default {
   mounted() {
     this.width = this.$el?.clientWidth;
     this.height = this.$el?.clientHeight;
-    console.log(this.width, this.height);
+    // console.log(this.width, this.height);
     this.debounce = debounce(() => {
       this.width = this.$el?.clientWidth;
       this.height = this.$el?.clientHeight;

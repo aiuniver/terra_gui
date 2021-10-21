@@ -19,7 +19,7 @@ export default {
         return;
       }
       const { data } = res;
-      console.log(data);
+      // console.log(data);
       if (!data) {
         return;
       }
