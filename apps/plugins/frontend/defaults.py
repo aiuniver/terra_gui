@@ -117,7 +117,7 @@ class ArchitectureYoloForm(ArchitectureBaseForm):
 
 
 class DefaultsTrainingData(BaseMixinData):
-    base: ArchitectureBaseForm # DefaultsTrainingBaseData
+    base: DefaultsTrainingBaseData # ArchitectureBaseForm
 
     def update(self, dataset: DatasetData, training_base: TrainData):
         _class = getattr(
