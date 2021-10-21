@@ -6,7 +6,7 @@
         </svg>
       </div>
     <div class="modal-enging">
-      <svg width="441" height="277" viewBox="0 0 441 277" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg width="441" height="500" viewBox="0 0 441 500" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M226.183 23.387L226.322 23.5H226.5H373.311L440.5 82.7258V262.793L426.793 276.5H63.1469L0.5 236.227V38.2071L37.7071 1H198.822L226.183 23.387Z" fill="#17212B" stroke="#2B5278"/>
         <path d="M0.5 273V240.921L55.3114 276.5H4C2.067 276.5 0.5 274.933 0.5 273Z" stroke="#65B9F4"/>
         <path d="M440.5 35.5598V75.8896L381.319 23.5L428.269 23.5002C435.031 23.5002 440.5 28.9058 440.5 35.5598Z" fill="#65B9F4" stroke="#2B5278"/>
@@ -17,12 +17,14 @@
         <h3><slot name="headline"></slot></h3>
       </div>
       <div class="modal-body">
-        <div class="modal-body__box">
+        <div class="modal-box">
           <p><slot name="text"></slot></p>
         </div>  
-        <div class="modal-body__box modal-body__box--flex modal-body__box--flex-center">
-          <DButton style="width:30%" @click="$emit('close')">Отмена</DButton>
-          <DButton style="width:70%" @click="$emit(actions.confirm.action, data), $emit('close')" :disabled="loading" color="primary">{{ actions.confirm.value }}</DButton>
+      </div>
+      <div class="modal-footer">
+        <div :class="['modal-box', 'modal-box--flex',{ 'modal-box--flex-center': btnConfirm.isShow}]">
+          <DButton style="width:30%" @click="$emit(actions.cancel.action)">{{ actions.confirm.value }}</DButton>
+          <DButton style="width:70%" @click="$emit(actions.confirm.action, data), $emit('close')" :disabled="loading" v-bind="btnConfirm" v-if="btnConfirm.isShow">{{ actions.confirm.value }}</DButton>
         </div>  
       </div>
     </div>
@@ -37,6 +39,19 @@ export default {
   props: {
     dialog: Boolean,
     loading: Boolean,
+    btnConfirm:{
+      type: Object,
+      default:() => {
+        return {
+          color: "primary",
+          isShow: true
+        }
+      }
+    },
+    btnCancel:{
+      type: Object,
+      default:() => {}
+    },
     data: {
       type: Object,
       default: () => {}
@@ -48,6 +63,10 @@ export default {
           confirm: {
             action: "confirm",
             value: "Подтвердить"
+          },
+          cancel: {
+            action: "close",
+            value: "Отмена"
           },
         }
       }
@@ -93,22 +112,25 @@ export default {
     transform: translate(-50%, -50%);
     cursor: pointer;
   }
-  &-body{
+  &-body, &-footer{
     margin-top: 40px;
-    &__box{
-      margin-top: 20px;
-      p{
-        font-family: "Open Sans";
-        font-size: 12px;
-        color: #A7BED3;
-      } 
-      &--flex{
-        display: flex;
-      }
-      &--flex-center{
-        justify-content: center;
-        align-items: center;
-      }
+  }
+  &-box{
+    margin-top: 20px;
+    &:last-child{
+      margin-top: 0;
+    }
+    p{
+      font-family: "Open Sans";
+      font-size: 12px;
+      color: #A7BED3;
+    } 
+    &--flex{
+      display: flex;
+    }
+    &--flex-center{
+      justify-content: center;
+      align-items: center;
     }
   }
 }
