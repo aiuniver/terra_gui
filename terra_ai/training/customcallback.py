@@ -1991,11 +1991,12 @@ class InteractiveCallback:
                             inverse_y_true=self.inverse_y_true.get("val").get(f"{out}")[self.example_idx[idx]],
                             inverse_y_pred=self.inverse_y_pred.get(f"{out}")[self.example_idx[idx]],
                             output_id=out,
-                            depth=self.inverse_y_true.get("val").get(f"{out}")[self.example_idx[idx]].shape[-1],
+                            depth=self.inverse_y_true.get("val").get(f"{out}")[self.example_idx[idx]].shape[-2],
                             show_stat=self.interactive_config.intermediate_result.show_statistic,
                             templates=[self._fill_graph_plot_data, self._fill_graph_front_structure],
                             max_lenth=MAX_INTERMEDIATE_GRAGH_LENTH
                         )
+                        print('\n\n_get_intermediate_result_request_Timeseries', data)
 
                     elif task == LayerOutputTypeChoice.Dataframe:
                         data = {
@@ -2201,7 +2202,7 @@ class InteractiveCallback:
 
                 elif task == LayerOutputTypeChoice.Timeseries:
                     for i, channel_name in enumerate(self.options.data.columns.get(out).keys()):
-                        for step in range(self.y_true.get("val").get(f'{out}').shape[-1]):
+                        for step in range(self.y_true.get("val").get(f'{out}').shape[-2]):
                             y_true = self.inverse_y_true.get("val").get(f"{out}")[:, step, i].astype('float')
                             y_pred = self.inverse_y_pred.get(f"{out}")[:, step, i].astype('float')
                             x_tr, y_tr = self._get_time_series_graphic(y_true, make_short=True)
@@ -2212,9 +2213,9 @@ class InteractiveCallback:
                                     _type='graphic',
                                     graph_name=f"Выходной слой «{out}» - Предсказание канала "
                                                f"«{channel_name.split('_', 1)[-1]}» на {step + 1} "
-                                               f"шаг{'ов' if step else ''} вперед",
+                                               f"шаг{'ов' if step + 1 > 1 else ''} вперед",
                                     short_name=f"{out} - «{channel_name.split('_', 1)[-1]}» на {step + 1} "
-                                               f"шаг{'ов' if step else ''}",
+                                               f"шаг{'ов' if step + 1 > 1 else ''}",
                                     x_label="Время",
                                     y_label="Значение",
                                     plot_data=[
@@ -2278,6 +2279,7 @@ class InteractiveCallback:
                                 )
                             )
                             _id += 1
+                    # print('\n\n_get_statistic_data_request_Timeseries', return_data)
 
                 elif task == LayerOutputTypeChoice.Dataframe:
                     pass

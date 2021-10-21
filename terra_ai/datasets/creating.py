@@ -157,6 +157,8 @@ class CreateDataset(object):
                             creation_data.columns_processing[worker_name].parameters.width = \
                                 creation_data.columns_processing[w_name].parameters.width
                 elif creation_data.columns_processing[worker_name].type == 'Timeseries':
+                    if creation_data.columns_processing[worker_name].parameters.trend:
+                        creation_data.columns_processing[worker_name].parameters.depth = 1
                     for w_name, w_params in creation_data.columns_processing.items():
                         if creation_data.columns_processing[w_name].type in ['Classification', 'Scaler']:
                             creation_data.columns_processing[w_name].parameters.length = \
@@ -235,9 +237,9 @@ class CreateDataset(object):
                     instructions_data = InstructionsData(**{'instructions': list_of_data,
                                                             'parameters': {'put_type': decamelize(
                                                                 LayerInputTypeChoice.Raw),
-                                                                           'put': put.id,
-                                                                           'cols_names': f'{put.id}_{name}'
-                                                                           }
+                                                                'put': put.id,
+                                                                'cols_names': f'{put.id}_{name}'
+                                                            }
                                                             }
                                                          )
 
@@ -252,7 +254,7 @@ class CreateDataset(object):
         for put in data:
             self.tags[put.id] = {f"{put.id}_{decamelize(put.type)}": decamelize(put.type)}
             if self.tags.get(put.id - 1) is not None and self.tags.get(put.id - 1).get(f"{put.id - 1}_"
-                                                                                       f"{decamelize(put.type)}") ==\
+                                                                                       f"{decamelize(put.type)}") == \
                     decamelize(LayerInputTypeChoice.Audio):
                 instructions = put_parameters[put.id - 1][f'{put.id - 1}_{decamelize(put.type)}'].instructions.copy()
                 parameters = put_parameters[put.id - 1][f'{put.id - 1}_{decamelize(put.type)}'].parameters.copy()
@@ -277,7 +279,7 @@ class CreateDataset(object):
                                                                                        **put.parameters.native())
 
                 if not put.type == LayerOutputTypeChoice.Classification:
-                    y_classes = sorted(list(instr['instructions'].keys())) if isinstance(instr['instructions'], dict)\
+                    y_classes = sorted(list(instr['instructions'].keys())) if isinstance(instr['instructions'], dict) \
                         else instr['instructions']
                     self.y_cls = [os.path.basename(os.path.dirname(dir_name)) for dir_name in y_classes]
 
@@ -327,7 +329,8 @@ class CreateDataset(object):
 
         for key in put_data.keys():
             for col_name, data in put_data[key].items():
-                if 'scaler' in data.parameters and data.parameters['scaler'] != LayerScalerImageChoice.no_scaler:
+                if 'scaler' in data.parameters and data.parameters['scaler'] not in [LayerScalerImageChoice.no_scaler,
+                                                                                     None]:
                     if self.tags[key][col_name] in PATH_TYPE_LIST:
                         for i in range(len(data.instructions)):
 
@@ -417,7 +420,7 @@ class CreateDataset(object):
                     except IndexError:
                         task = LayerInputTypeChoice.Raw
 
-                    if creation_data.inputs.get(key).type == LayerInputTypeChoice.Dataframe and\
+                    if creation_data.inputs.get(key).type == LayerInputTypeChoice.Dataframe and \
                             task == LayerInputTypeChoice.Classification:
                         if creation_data.columns_processing[
                             str(creation_data.inputs.get(key).parameters.cols_names[
@@ -676,7 +679,8 @@ class CreateDataset(object):
             for col_name, data in self.instructions.outputs[key].items():
                 if data.parameters['put_type'] == decamelize(LayerOutputTypeChoice.ObjectDetection):
                     prep = None
-                    if self.preprocessing.preprocessing.get(key) and self.preprocessing.preprocessing.get(key).get(col_name):
+                    if self.preprocessing.preprocessing.get(key) and self.preprocessing.preprocessing.get(key).get(
+                            col_name):
                         prep = self.preprocessing.preprocessing.get(key).get(col_name)
 
                     if decamelize(creation_data.outputs.get(key).type) in PATH_TYPE_LIST:
@@ -692,9 +696,9 @@ class CreateDataset(object):
                     classes_names = arr['parameters'].get('classes_names')
                     num_classes = len(classes_names) if classes_names else None
                     for n in range(3):
-                        service_data = DatasetOutputsData(datatype=DataType.get(len(array[n+3].shape), 'DIM'),
-                                                          dtype=str(array[n+3].dtype),
-                                                          shape=array[n+3].shape,
+                        service_data = DatasetOutputsData(datatype=DataType.get(len(array[n + 3].shape), 'DIM'),
+                                                          dtype=str(array[n + 3].dtype),
+                                                          shape=array[n + 3].shape,
                                                           name=creation_data.outputs.get(key).name,
                                                           task=LayerOutputTypeChoice.ObjectDetection,
                                                           classes_names=classes_names,
@@ -739,7 +743,9 @@ class CreateDataset(object):
                                 data_to_pass = [self.dataframe[split].loc[i, col_name],
                                                 self.dataframe[split].loc[i + data.parameters['length'] - 1, col_name]]
                             elif 'trend' in data.parameters.keys():
-                                data_to_pass = self.dataframe[split].loc[i + data.parameters['length']:i + data.parameters['length'] + data.parameters['depth'] - 1, col_name]
+                                data_to_pass = self.dataframe[split].loc[
+                                               i + data.parameters['length']:i + data.parameters['length'] +
+                                                                             data.parameters['depth'] - 1, col_name]
                             else:
                                 data_to_pass = self.dataframe[split].loc[i:i + data.parameters['length'] - 1, col_name]
                         else:
@@ -762,7 +768,10 @@ class CreateDataset(object):
                             full_array.append(arr)
                     if not self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
                         if depth:
-                            array = self.postprocess_timeseries(full_array)
+                            if 'trend' in data.parameters.keys() and data.parameters['trend']:
+                                array = np.array(full_array[0])
+                            else:
+                                array = self.postprocess_timeseries(full_array)
                         else:
                             array = np.concatenate(full_array, axis=0)
                         current_arrays.append(array)
@@ -792,7 +801,8 @@ class CreateDataset(object):
         if array_service:
             for sample in array_service.keys():
                 for inp in array_service[sample].keys():
-                    joblib.dump(array_service[sample][inp], os.path.join(self.paths.arrays, sample, f'{inp}_service.gz'))
+                    joblib.dump(array_service[sample][inp],
+                                os.path.join(self.paths.arrays, sample, f'{inp}_service.gz'))
 
     def write_instructions_to_files(self):
 
@@ -853,7 +863,7 @@ class CreateDataset(object):
                 for value in self.columns[key].values():
                     tmp.append(value['task'])
                 unique_vals = list(set(tmp))
-                if len(unique_vals) == 1 and unique_vals[0] in LayerInputTypeChoice.__dict__.keys() and unique_vals[0]\
+                if len(unique_vals) == 1 and unique_vals[0] in LayerInputTypeChoice.__dict__.keys() and unique_vals[0] \
                         in [LayerInputTypeChoice.Image, LayerInputTypeChoice.Text,
                             LayerInputTypeChoice.Audio, LayerInputTypeChoice.Video]:
                     inp_tasks.append(unique_vals[0])

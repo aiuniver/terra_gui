@@ -8,6 +8,7 @@ from terra_ai.data.training.train import TrainData, InteractiveData
 from terra_ai.data.training.extra import StateStatusChoice
 
 from apps.plugins.project import project_path
+from terra_ai.training.guinn import interactive
 
 from ..base import (
     BaseAPIView,
@@ -109,7 +110,7 @@ class ProgressAPIView(BaseAPIView):
             data.update({"state": request.project.training.state.native()})
             _finished = data.get("finished")
             if _finished:
-                request.project.deploy = data.get("data", {}).get("deploy")
+                request.project.deploy = agent_exchange("deploy_presets")
             request.project.training.result = data.get("data", {}).get("train_data", {})
             if _finished:
                 request.project.save()

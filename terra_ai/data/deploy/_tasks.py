@@ -243,10 +243,6 @@ class AudioClassification(BaseCollectionList):
 
 class TableDataClassification(BaseCollectionList):
     def reload(self, range_indexes: List):
-        source_path = Path(self._path)
-        predict_path = Path(self._path, "preset", "out")
-        os.makedirs(source_path, exist_ok=True)
-        os.makedirs(predict_path, exist_ok=True)
         presets_data = interactive.deploy_presets_data
 
         preset_file = Path(self._path, "preset.txt")
