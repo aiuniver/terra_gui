@@ -22,15 +22,6 @@ class DataList(DataBaseList):
     class Meta:
         source = Item
 
-    def update(self, index: int):
-        item = random.choice(self)
-        self.preset[index] = item
-        destination_source = Path(self.source_path, f"{index + 1}.txt")
-        with open(destination_source, "w") as destination_source_ref:
-            destination_source_ref.write(
-                json.dumps(item.source, ensure_ascii=False)
-            )
-
     def reload(self, indexes: List[int] = None):
         if indexes is None:
             indexes = list(range(DEPLOY_PRESET_COUNT))
@@ -53,6 +44,15 @@ class DataList(DataBaseList):
             label.append(json.dumps(item.data, ensure_ascii=False))
         with open(predict_file, "w") as predict_file_ref:
             predict_file_ref.write("\n".join(label))
+
+    def update(self, index: int):
+        item = random.choice(self)
+        self.preset[index] = item
+        destination_source = Path(self.source_path, f"{index + 1}.txt")
+        with open(destination_source, "w") as destination_source_ref:
+            destination_source_ref.write(
+                json.dumps(item.source, ensure_ascii=False)
+            )
 
 
 
