@@ -42,9 +42,8 @@ DataSetsColumnProcessing = [
         "label": "Тип слоя",
         "name": "layer_type",
         "parse": "layer_type",
-        "value": "",
+        "value": "input",
         "list": [
-            {"value": "", "label": ""},
             {"value": "input", "label": "Входной"},
             {"value": "output", "label": "Выходной"},
         ],
@@ -56,8 +55,7 @@ DataSetsColumnProcessing = [
                     "name": "type",
                     "parse": "type",
                     "value": ColumnProcessingInputTypeChoice.Image.name,
-                    "list": [{"value": "", "label": ""}]
-                    + list(
+                    "list": list(
                         map(
                             lambda item: {
                                 "value": item.name,
@@ -477,9 +475,8 @@ DataSetsColumnProcessing = [
                     "label": "Тип обработчика",
                     "name": "type",
                     "parse": "type",
-                    "value": "",
-                    "list": [{"value": "", "label": ""}]
-                    + list(
+                    "value": ColumnProcessingOutputTypeChoice.Classification.name,
+                    "list": list(
                         map(
                             lambda item: {
                                 "value": item.name,
