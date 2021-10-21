@@ -75,7 +75,7 @@ export default {
       console.log(path)
       if (!this.project.dataset && access === false) {
         this.message({ text }, true);
-      } else if(!this.project?.deploy?.exists && access === false && path == '/deploy'){
+      } else if(!this.project?.deploy == null && access === false && path == '/deploy'){
         this.messageDeploy(true);
       }
       else {
