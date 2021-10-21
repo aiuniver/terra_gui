@@ -5,8 +5,8 @@ from pydantic.errors import EnumMemberError
 
 from terra_ai.data.mixins import BaseMixinData
 
-from ..extra import DeployTypeChoice
-from . import types
+from terra_ai.data.deploy.extra import DeployTypeChoice
+from terra_ai.data.deploy.tasks import types
 
 
 class DeployData(BaseMixinData):
