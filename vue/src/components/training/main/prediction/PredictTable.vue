@@ -240,10 +240,10 @@ export default {
       this.tableResize()
     },
     tableResize() {
-      this.statsWidth = this.$refs.stats.offsetWidth
-      this.fixedWidth = this.$refs.original?.offsetWidth - this.statsWidth
-      this.keysHeight = this.$refs.stat_headers[0].offsetHeight || 0
-      this.headHeight = this.$refs.orig_head.offsetHeight
+      this.statsWidth = this.$refs?.stats?.offsetWidth || 0
+      this.fixedWidth = (this.$refs?.original?.offsetWidth || 0) - this.statsWidth
+      this.keysHeight = this.$refs?.stat_headers?.[0]?.offsetHeight || 0
+      this.headHeight = this.$refs?.orig_head?.offsetHeight || 0
     },
     getLayerColSpan(data, key) {
       return data[key].data.length
