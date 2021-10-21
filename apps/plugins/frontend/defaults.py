@@ -1,14 +1,21 @@
+import sys
+
 from typing import List, Dict, Optional, Union
 
 from terra_ai.data.mixins import BaseMixinData
+from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.modeling.layer import LayersList
 from terra_ai.data.modeling.model import ModelDetailsData
+from terra_ai.data.training.train import TrainData
+from terra_ai.data.training.extra import ArchitectureChoice
+from terra_ai.exceptions.training import MethodNotImplementedException
 
 from .presets.defaults.training import (
     TrainingTasksRelations,
     TrainingLossSelect,
     TrainingMetricSelect,
     TrainingClassesQuantitySelect,
+    Architectures,
 )
 
 from .base import Field
@@ -44,8 +51,39 @@ class DefaultsTrainingBaseData(BaseMixinData):
     checkpoint: DefaultsTrainingBaseGroupData
 
 
+class ArchitectureBaseForm(BaseMixinData):
+    main: DefaultsTrainingBaseGroupData
+    fit: DefaultsTrainingBaseGroupData
+    optimizer: DefaultsTrainingBaseGroupData
+
+    def update(self, data: TrainData):
+        raise MethodNotImplementedException("update", self.__class__.__name__)
+
+
+class ArchitectureBasicForm(ArchitectureBaseForm):
+    outputs: DefaultsTrainingBaseGroupData
+    checkpoint: DefaultsTrainingBaseGroupData
+
+    def update(self, data: TrainData):
+        pass
+
+
+class ArchitectureYoloForm(ArchitectureBaseForm):
+    def update(self, data: TrainData):
+        pass
+
+
 class DefaultsTrainingData(BaseMixinData):
     base: DefaultsTrainingBaseData
+
+    def update(self, dataset: DatasetData, training_base: TrainData):
+        _class = getattr(
+            sys.modules.get(__name__), f"Architecture{dataset.architecture}Form"
+        )
+        self.base = _class(
+            **Architectures.get(dataset.architecture, ArchitectureChoice.Basic)
+        )
+        self.base.update(training_base)
 
 
 class DefaultsData(BaseMixinData):
