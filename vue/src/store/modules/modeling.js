@@ -184,7 +184,7 @@ export default {
     async clearModel ({ commit, dispatch }) {
       const res = await dispatch('axios', { url: '/modeling/clear/' }, { root: true });
       if (res.success) {
-        console.log(res)
+        // console.log(res)
         commit('SET_ERRORS_BLOCKS', {})
         await dispatch('projects/get', {}, { root: true });
       }
@@ -211,7 +211,7 @@ export default {
     setBlock ({ commit, state: { blocks } }, value) {
       const index = blocks.findIndex(item => item.id == value.id);
       blocks[index] = value;
-      console.log(blocks);
+      // console.log(blocks);
       commit('SET_BLOCKS', blocks);
     },
   },
