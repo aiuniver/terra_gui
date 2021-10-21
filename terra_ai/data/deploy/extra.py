@@ -10,3 +10,6 @@ class DeployTypeChoice(str, Enum):
     ImageClassification = "ImageClassification"
     TextSegmentation = "TextSegmentation"
     TextClassification = "TextClassification"
+    AudioClassification = "AudioClassification"
+    DataframeRegression = "DataframeRegression"
+    DataframeClassification = "DataframeRegression"
