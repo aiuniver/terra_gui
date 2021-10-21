@@ -1,5 +1,6 @@
 import colorsys
 import copy
+import math
 import string
 
 import matplotlib
@@ -1398,11 +1399,11 @@ class CreateArray(object):
                                 options=options.data.outputs[output_id],
                                 return_mode='deploy'
                             )
-                            button_save_path = os.path.join(save_path,
-                                                            f"ts_trend_button_channel_{channel[2]}_image_{idx}.jpg")
-                            plt.plot(inverse_true)
-                            plt.savefig(button_save_path)
-                            plt.close()
+                            button_save_path = os.path.join(
+                                save_path, f"ts_trend_button_channel_{channel[2]}_image_{idx}.jpg")
+                            # plt.plot(inverse_true)
+                            # plt.savefig(button_save_path)
+                            # plt.close()
                             return_data[output_id][channel[3]].append(
                                 {
                                     "button_link": button_save_path,
@@ -2337,6 +2338,14 @@ class CreateArray(object):
                     if channel.split("_", 1)[-1] == input_column.split("_", 1)[-1]:
                         init_column = list(options.columns.get(inp).keys()).index(input_column)
                         lenth = len(real_x) if len(real_x) < max_lenth else max_lenth
+                        x_tr = CreateArray()._round_list(real_x[:, init_column])#.astype('float'))
+                        # print('\nx_tr', x_tr, x_tr[-1])
+                        y_tr = CreateArray()._round_list(inverse_y_true[:, i])
+                        y_tr.insert(0, x_tr[-1])
+                        # print('\ny_tr', y_tr)
+                        y_pr = CreateArray()._round_list(inverse_y_pred[:, i])
+                        y_pr.insert(0, x_tr[-1])
+                        # print('\ny_pr', y_pr)
                         graphics.append(
                             templates[1](
                                 _id=_id,
@@ -2349,17 +2358,17 @@ class CreateArray(object):
                                     templates[0](
                                         label="Исходное значение",
                                         x=np.arange(real_x.shape[-2]).astype('int').tolist()[-lenth:],
-                                        y=np.array(real_x[:, init_column]).astype('float').tolist()[-lenth:]
+                                        y=x_tr[-lenth:]
                                     ),
                                     templates[0](
                                         label="Истинное значение",
-                                        x=np.arange(real_x.shape[-2], real_x.shape[-2] + depth).astype('int').tolist(),
-                                        y=inverse_y_true[:, i].astype('float').tolist()
+                                        x=np.arange(real_x.shape[-2]-1, real_x.shape[-2] + depth).astype('int').tolist(),
+                                        y=y_tr
                                     ),
                                     templates[0](
                                         label="Предсказанное значение",
-                                        x=np.arange(real_x.shape[-2], real_x.shape[-2] + depth).astype('int').tolist(),
-                                        y=inverse_y_pred[:, i].astype('float').tolist()
+                                        x=np.arange(real_x.shape[-2]-1, real_x.shape[-2] + depth).astype('int').tolist(),
+                                        y=y_pr
                                     ),
                                 ],
                             )
@@ -2383,7 +2392,7 @@ class CreateArray(object):
             }
             for i, channel in enumerate(options.columns.get(output_id).keys()):
                 data["stat"]["data"].append({'title': channel.split("_", 1)[-1], 'value': [], 'color_mark': None})
-                for step in range(inverse_y_true.shape[-1]):
+                for step in range(inverse_y_true.shape[-2]):
                     deviation = (inverse_y_pred[step, i] - inverse_y_true[step, i]) * 100 / inverse_y_true[step, i]
                     data["stat"]["data"][-1]["value"].append(
                         {
@@ -2810,3 +2819,13 @@ class CreateArray(object):
             'total_metric': (total_conf + total_class + total_overlap) / 3 / count if count else 0.
         }
         return compat
+
+    @staticmethod
+    def _round_list(x: list) -> list:
+        update_x = []
+        for data in x:
+            if data > 1:
+                update_x.append(np.round(data, -int(math.floor(math.log10(abs(data))) - 3)).item())
+            else:
+                update_x.append(np.round(data, -int(math.floor(math.log10(abs(data))) - 2)).item())
+        return update_x
