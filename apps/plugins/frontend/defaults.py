@@ -93,7 +93,6 @@ class ArchitectureBasicForm(ArchitectureBaseForm):
     outputs: DefaultsTrainingBaseGroupData
     checkpoint: DefaultsTrainingBaseGroupData
 
-<<<<<<< HEAD
     def update(self, data: TrainData):
         print(data.native())
 
@@ -107,13 +106,6 @@ class ArchitectureBasicForm(ArchitectureBaseForm):
                     self.main.fields[0].value = data.optimizer.type.value
 
         
-=======
-    def _set_architecture_parameters_outputs_classes_quantity(self, value, id):
-        # print(self.outputs.fields)
-        # print(id)
-        # print(value)
-        pass
->>>>>>> 8028d428a0c0ca5b0626593cd812e6f973a1811e
 
     def _set_architecture_parameters_outputs(self, value: List):
         for item in value:
