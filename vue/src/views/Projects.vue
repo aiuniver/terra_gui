@@ -21,7 +21,7 @@
         :dialog="dialogDelete" 
         @close="dialogDelete = false" 
         :data="selectProject" 
-        :actions="{ confirm: { action: 'confirm', value: 'Удалить' } }"
+        :actions="{ confirm: { action: 'confirm', value: 'Удалить' }, cancel: { action: 'close', value: 'Отмена' } }"
       >
         <template slot="headline">
           Вы собираетесь удалить проект
