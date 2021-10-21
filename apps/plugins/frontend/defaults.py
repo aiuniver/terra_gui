@@ -43,13 +43,6 @@ class DefaultsTrainingBaseGroupData(BaseMixinData):
     fields: Union[List[Field], Dict[str, List[Field]]]
 
 
-class YoloParametersGroup(BaseMixinData):
-    train_lr_init: Field
-    train_lr_end: Field
-    yolo_iou_loss_thresh: Field
-    train_warmup_epochs: Field
-
-
 class DefaultsTrainingBaseData(BaseMixinData):
     main: DefaultsTrainingBaseGroupData
     fit: DefaultsTrainingBaseGroupData
@@ -93,19 +86,11 @@ class ArchitectureBasicForm(ArchitectureBaseForm):
     outputs: DefaultsTrainingBaseGroupData
     checkpoint: DefaultsTrainingBaseGroupData
 
-    def update(self, data: TrainData):
-        print(data.native())
-
-        for param in data.dict():
-                if param == "batch":
-                    self.fit.fields[0].value = data.batch
-                elif param == "epochs":
-                    self.fit.fields[1].value = data.epochs
-                elif param == "optimizer":
-                    self.fit.fields[2].value = data.optimizer.parameters.main.learning_rate
-                    self.main.fields[0].value = data.optimizer.type.value
-
-        
+    def _set_architecture_parameters_outputs_classes_quantity(self, value, id):
+        # print(self.outputs.fields)
+        # print(id)
+        # print(value)
+        pass
 
     def _set_architecture_parameters_outputs(self, value: List):
         for item in value:
@@ -117,7 +102,7 @@ class ArchitectureYoloForm(ArchitectureBaseForm):
 
 
 class DefaultsTrainingData(BaseMixinData):
-    base: DefaultsTrainingBaseData # ArchitectureBaseForm
+    base: DefaultsTrainingBaseData
 
     def update(self, dataset: DatasetData, training_base: TrainData):
         _class = getattr(
