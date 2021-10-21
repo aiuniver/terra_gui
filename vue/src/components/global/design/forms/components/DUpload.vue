@@ -176,7 +176,7 @@ export default {
     }
     &-line:nth-child(3){
       top: 50%;
-      right: -57px;
+      right: -58px;
       transform: translateY(-50%) rotate(90deg);
     }
     &-line:nth-child(4){
