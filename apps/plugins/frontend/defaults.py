@@ -86,17 +86,11 @@ class ArchitectureBasicForm(ArchitectureBaseForm):
     outputs: DefaultsTrainingBaseGroupData
     checkpoint: DefaultsTrainingBaseGroupData
 
-    def update(self, data: TrainData):
-        print(data.native())
-
-        for param in data.dict():
-            if param == "batch":
-                self.fit.fields[0].value = data.batch
-            elif param == "epochs":
-                self.fit.fields[1].value = data.epochs
-            elif param == "optimizer":
-                self.fit.fields[2].value = data.optimizer.parameters.main.learning_rate
-                self.main.fields[0].value = data.optimizer.type.value
+    def _set_architecture_parameters_outputs_classes_quantity(self, value, id):
+        # print(self.outputs.fields)
+        # print(id)
+        # print(value)
+        pass
 
     def _set_architecture_parameters_outputs(self, value: List):
         for item in value:
