@@ -1,9 +1,13 @@
+import json
+import os
 import random
+from pathlib import Path
 
 from typing import List, Tuple
-from pydantic import FilePath, PositiveFloat
+from pydantic import PositiveFloat
 
 from terra_ai.data.mixins import BaseMixinData
+from terra_ai.settings import DEPLOY_PRESET_COUNT
 from ..extra import DataBaseList, DataBase
 
 
@@ -14,12 +18,43 @@ class Item(BaseMixinData):
 
 
 class DataList(DataBaseList):
+
     class Meta:
         source = Item
 
     def update(self, index: int):
         value = random.choice(self)
         self.preset[index] = value
+        destination_source = Path(self.source_path, f"{index + 1}.txt")
+        with open(destination_source, "w") as destination_source_ref:
+            destination_source_ref.write(
+                json.dumps(value.get("source", ""), ensure_ascii=False)
+            )
+
+    def reload(self, indexes: List[int] = None):
+        if indexes is None:
+            indexes = list(range(DEPLOY_PRESET_COUNT))
+        indexes = list(filter(self._positive_int_filter, indexes))
+        indexes = list(map(int, indexes))
+        if not len(self):
+            return
+
+        self.source_path = Path(self.path, "preset", "in")
+        predict_path = Path(self.path, "preset", "out")
+        os.makedirs(self.source_path, exist_ok=True)
+        os.makedirs(predict_path, exist_ok=True)
+        predict_file = Path(predict_path, "predict.txt")
+
+        for _index in indexes:
+            self.update(_index)
+
+        label = []
+        for item in self.preset:
+            label.append(json.dumps(item.get("data", []), ensure_ascii=False))
+        with open(predict_file, "w") as predict_file_ref:
+            predict_file_ref.write("\n".join(label))
+
+
 
 
 class Data(DataBase):
