@@ -1,13 +1,27 @@
-from pydantic import FilePath
+import random
 
-from terra_ai.data.mixins import BaseMixinData, UniqueListMixin
+from typing import List, Tuple
+from pydantic import FilePath, PositiveFloat
+
+from terra_ai.data.mixins import BaseMixinData
+from ..extra import DataBaseList, DataBase
 
 
-class Data(BaseMixinData):
-    source: FilePath
+class Item(BaseMixinData):
+    source: str
+    actual: str
+    data: List[Tuple[str, PositiveFloat]]
 
 
-class DataList(UniqueListMixin):
+class DataList(DataBaseList):
     class Meta:
-        source = Data
-        identifier = "source"
+        source = Item
+
+    def update(self, index: int):
+        value = random.choice(self)
+        self.preset[index] = value
+
+
+class Data(DataBase):
+    class Meta:
+        source = DataList

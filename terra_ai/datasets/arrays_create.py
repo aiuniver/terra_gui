@@ -1,5 +1,6 @@
 import colorsys
 import copy
+import math
 import string
 
 import matplotlib
@@ -1398,11 +1399,11 @@ class CreateArray(object):
                                 options=options.data.outputs[output_id],
                                 return_mode='deploy'
                             )
-                            button_save_path = os.path.join(save_path,
-                                                            f"ts_trend_button_channel_{channel[2]}_image_{idx}.jpg")
-                            plt.plot(inverse_true)
-                            plt.savefig(button_save_path)
-                            plt.close()
+                            button_save_path = os.path.join(
+                                save_path, f"ts_trend_button_channel_{channel[2]}_image_{idx}.jpg")
+                            # plt.plot(inverse_true)
+                            # plt.savefig(button_save_path)
+                            # plt.close()
                             return_data[output_id][channel[3]].append(
                                 {
                                     "button_link": button_save_path,
@@ -1536,7 +1537,7 @@ class CreateArray(object):
                                 inverse_col = inverse_col.squeeze().astype('float').tolist()
                             else:
                                 inverse_col = array[idx, i:i + 1].astype('float').tolist()
-                        return_data[output_id]['label'].append(inverse_col)
+                        return_data[output_id]['label'].append([str(inverse_col)])
 
                 else:
                     return_data[output_id] = []
@@ -1593,7 +1594,9 @@ class CreateArray(object):
             save_id: int = None,
             x_array=None,
             inverse_x_array=None,
-            return_mode='deploy'
+            return_mode='deploy',
+            max_lenth: int = 50,
+            templates: list = None
     ):
         column_idx = []
         input_task = options.data.inputs.get(input_id).task
@@ -1704,17 +1707,23 @@ class CreateArray(object):
                     for i, channel in enumerate(options.data.columns.get(input_id).keys()):
                         multi = True if i > 0 else False
                         names += f"«{channel.split('_', 1)[-1]}», "
+                        lenth = len(inverse_x_array) if len(inverse_x_array) < max_lenth else max_lenth
                         graphics_data.append(
-                            {
-                                'id': i + 1,
-                                'graph_name': f"График канала «{channel.split('_', 1)[-1]}»",
-                                'x_label': 'Время',
-                                'y_label': 'Значение',
-                                'plot_data': {
-                                    'x': np.arange(inverse_x_array[example_id].shape[-1]).astype('int').tolist(),
-                                    'y': inverse_x_array[example_id][i].astype('float').tolist()
-                                },
-                            }
+                            templates[1](
+                                _id=i + 1,
+                                _type='graphic',
+                                graph_name=f"График канала «{channel.split('_', 1)[-1]}»",
+                                short_name=f"«{channel.split('_', 1)[-1]}»",
+                                x_label="Время",
+                                y_label="Значение",
+                                plot_data=[
+                                    templates[0](
+                                        label="Исходное значение",
+                                        x=np.arange(inverse_x_array[example_id].shape[-2]).astype('int').tolist()[-lenth:],
+                                        y=inverse_x_array[example_id][:, i].astype('float').tolist()[-lenth:]
+                                    )
+                                ],
+                            )
                         )
                     data_type = "graphic"
                     data = [
@@ -2306,7 +2315,8 @@ class CreateArray(object):
             output_id: int,
             depth: int,
             show_stat: bool = False,
-            templates: list = None
+            templates: list = None,
+            max_lenth: int = 50
     ):
         """
         real_x = self.inverse_x_val.get(f"{input}")[example_idx]
@@ -2327,6 +2337,15 @@ class CreateArray(object):
                 for input_column in options.columns.get(inp).keys():
                     if channel.split("_", 1)[-1] == input_column.split("_", 1)[-1]:
                         init_column = list(options.columns.get(inp).keys()).index(input_column)
+                        lenth = len(real_x) if len(real_x) < max_lenth else max_lenth
+                        x_tr = CreateArray()._round_list(real_x[:, init_column])#.astype('float'))
+                        # print('\nx_tr', x_tr, x_tr[-1])
+                        y_tr = CreateArray()._round_list(inverse_y_true[:, i])
+                        y_tr.insert(0, x_tr[-1])
+                        # print('\ny_tr', y_tr)
+                        y_pr = CreateArray()._round_list(inverse_y_pred[:, i])
+                        y_pr.insert(0, x_tr[-1])
+                        # print('\ny_pr', y_pr)
                         graphics.append(
                             templates[1](
                                 _id=_id,
@@ -2338,18 +2357,18 @@ class CreateArray(object):
                                 plot_data=[
                                     templates[0](
                                         label="Исходное значение",
-                                        x=np.arange(real_x.shape[-1]).astype('int').tolist(),
-                                        y=np.array(real_x[init_column]).astype('float').tolist()
+                                        x=np.arange(real_x.shape[-2]).astype('int').tolist()[-lenth:],
+                                        y=x_tr[-lenth:]
                                     ),
                                     templates[0](
                                         label="Истинное значение",
-                                        x=np.arange(real_x.shape[-1], real_x.shape[-1] + depth).astype('int').tolist(),
-                                        y=inverse_y_true[i].astype('float').tolist()
+                                        x=np.arange(real_x.shape[-2]-1, real_x.shape[-2] + depth).astype('int').tolist(),
+                                        y=y_tr
                                     ),
                                     templates[0](
                                         label="Предсказанное значение",
-                                        x=np.arange(real_x.shape[-1], real_x.shape[-1] + depth).astype('int').tolist(),
-                                        y=inverse_y_pred[i].astype('float').tolist()
+                                        x=np.arange(real_x.shape[-2]-1, real_x.shape[-2] + depth).astype('int').tolist(),
+                                        y=y_pr
                                     ),
                                 ],
                             )
@@ -2373,13 +2392,13 @@ class CreateArray(object):
             }
             for i, channel in enumerate(options.columns.get(output_id).keys()):
                 data["stat"]["data"].append({'title': channel.split("_", 1)[-1], 'value': [], 'color_mark': None})
-                for step in range(inverse_y_true.shape[-1]):
-                    deviation = (inverse_y_pred[i, step] - inverse_y_true[i, step]) * 100 / inverse_y_true[i, step]
+                for step in range(inverse_y_true.shape[-2]):
+                    deviation = (inverse_y_pred[step, i] - inverse_y_true[step, i]) * 100 / inverse_y_true[step, i]
                     data["stat"]["data"][-1]["value"].append(
                         {
                             "Шаг": f"{step + 1}",
-                            "Истина": f"{inverse_y_true[i, step].astype('float'): .2f}",
-                            "Предсказание": f"{inverse_y_pred[i, step].astype('float'): .2f}",
+                            "Истина": f"{inverse_y_true[step, i].astype('float'): .2f}",
+                            "Предсказание": f"{inverse_y_pred[step, i].astype('float'): .2f}",
                             "Отклонение": {
                                 "value": f"{deviation: .2f} %",
                                 "color_mark": "success" if abs(deviation) < 2 else "wrong"
@@ -2800,3 +2819,13 @@ class CreateArray(object):
             'total_metric': (total_conf + total_class + total_overlap) / 3 / count if count else 0.
         }
         return compat
+
+    @staticmethod
+    def _round_list(x: list) -> list:
+        update_x = []
+        for data in x:
+            if data > 1:
+                update_x.append(np.round(data, -int(math.floor(math.log10(abs(data))) - 3)).item())
+            else:
+                update_x.append(np.round(data, -int(math.floor(math.log10(abs(data))) - 2)).item())
+        return update_x
