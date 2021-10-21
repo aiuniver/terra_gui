@@ -1502,47 +1502,42 @@ class CreateArray(object):
                     return_data[output_id]["color_map"] = colors
 
                 elif options.data.outputs[output_id].task == LayerOutputTypeChoice.Timeseries:
-                    return_data[output_id] = {}
-                    # TODO: считаетм что инпут один
-                    input_id = list(options.data.inputs.keys())[0]
-                    inp_col_id = []
-                    for j, out_col in enumerate(options.data.columns.get(output_id).keys()):
-                        for k, inp_col in enumerate(options.data.columns.get(input_id).keys()):
-                            if out_col.split('_', 1)[-1] == inp_col.split('_', 1)[-1]:
-                                inp_col_id.append((k, inp_col, j, out_col))
-                                break
+                    return_data[output_id] = {
+                        'in': [],
+                        'out': []
+                    }
                     preprocess = options.preprocessing.preprocessing.get(output_id)
-                    for channel in inp_col_id:
-                        return_data[output_id][channel[3]] = []
-                        for idx in example_idx:
-                            if type(preprocess.get(channel[3])).__name__ in ['StandardScaler', 'MinMaxScaler']:
-                                inp_options = {int(output_id): {
-                                    channel[3]: options.X.get('val').get(f"{input_id}")[idx, channel[0]:channel[0] + 1]}
+                    for idx in example_idx:
+                        inp_data = {}
+                        for inp in options.data.inputs.keys():
+                            for k, inp_col in enumerate(options.data.columns.get(inp).keys()):
+                                inp_data[inp_col.split('_', 1)[-1]] = \
+                                    CreateArray._round_list(list(inverse_x_array[f"{inp}"][idx][:, k]))
+                        return_data[output_id]['in'].append(inp_data)
+
+                        out_array = {}
+                        for ch, channel in enumerate(options.data.columns.get(output_id).keys()):
+                            if type(preprocess.get(channel)).__name__ in ['StandardScaler', 'MinMaxScaler']:
+                                inp_options = {output_id: {
+                                    channel: options.Y.get('val').get(f"{output_id}")[idx, :, ch:ch+1]}
                                 }
                                 inverse_true = options.preprocessing.inverse_data(inp_options).get(output_id).get(
-                                    channel[3])
-                                inverse_true = inverse_true.squeeze().astype('float').tolist()
+                                    channel)
+                                inverse_true = CreateArray()._round_list(
+                                    inverse_true.squeeze().astype('float').tolist())
                                 out_options = {int(output_id): {
-                                    channel[3]: array[idx, channel[2]:channel[2] + 1].reshape(-1, 1)}
+                                    channel: array[idx, :, ch:ch + 1].reshape(-1, 1)}
                                 }
                                 inverse_pred = options.preprocessing.inverse_data(out_options).get(output_id).get(
-                                    channel[3])
-                                inverse_pred = inverse_pred.squeeze().astype('float').tolist()
+                                    channel)
+                                inverse_pred = CreateArray()._round_list(
+                                    inverse_pred.squeeze().astype('float').tolist())
                             else:
-                                inverse_true = options.X.get('val').get(f"{input_id}")[
-                                               idx, channel[0]:channel[0] + 1].squeeze().astype('float').tolist()
-                                inverse_pred = array[idx, channel[2]:channel[2] + 1].squeeze().astype('float').tolist()
-                            button_save_path = os.path.join(save_path,
-                                                            f"ts_button_channel_{channel[2]}_image_{idx}.jpg")
-                            plt.plot(inverse_true)
-                            plt.savefig(button_save_path)
-                            plt.close()
-                            return_data[output_id][channel[3]].append(
-                                {
-                                    "button_link": button_save_path,
-                                    "data": [inverse_true, inverse_pred]
-                                }
-                            )
+                                inverse_true = options.Y.get('val').get(f"{output_id}")[
+                                               idx, :, ch:ch + 1].squeeze().astype('float').tolist()
+                                inverse_pred = array[idx, :, ch:ch + 1].squeeze().astype('float').tolist()
+                            out_array[channel.split('_', 1)[-1]] = [inverse_true, inverse_pred]
+                        return_data[output_id]['out'].append(out_array)
 
                 elif options.data.outputs[output_id].task == LayerOutputTypeChoice.Regression:
                     return_data[output_id] = {
@@ -1557,10 +1552,6 @@ class CreateArray(object):
                         row_list = []
                         for inp_col in source_col:
                             row_list.append(f"{options.dataframe.get('val')[inp_col][idx]}")
-                            # if isinstance(options.dataframe.get('val')[inp_col][idx], str):
-                            #     row_list.append(options.dataframe.get('val')[inp_col][idx])
-                            # if isinstance(options.dataframe.get('val')[inp_col][idx], (int, float)):
-                            #     row_list.append(float(options.dataframe.get('val')[inp_col][idx]))
                         return_data[output_id]['preset'].append(row_list)
                         for i, col in enumerate(list(options.data.columns.get(output_id).keys())):
                             if type(preprocess.get(col)).__name__ in ['StandardScaler', 'MinMaxScaler']:
@@ -2371,14 +2362,11 @@ class CreateArray(object):
                     if channel.split("_", 1)[-1] == input_column.split("_", 1)[-1]:
                         init_column = list(options.columns.get(inp).keys()).index(input_column)
                         lenth = len(real_x) if len(real_x) < max_lenth else max_lenth
-                        x_tr = CreateArray()._round_list(real_x[:, init_column])  # .astype('float'))
-                        # print('\nx_tr', x_tr, x_tr[-1])
+                        x_tr = CreateArray()._round_list(real_x[:, init_column])#.astype('float'))
                         y_tr = CreateArray()._round_list(inverse_y_true[:, i])
                         y_tr.insert(0, x_tr[-1])
-                        # print('\ny_tr', y_tr)
                         y_pr = CreateArray()._round_list(inverse_y_pred[:, i])
                         y_pr.insert(0, x_tr[-1])
-                        # print('\ny_pr', y_pr)
                         graphics.append(
                             templates[1](
                                 _id=_id,
