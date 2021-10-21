@@ -14,7 +14,7 @@ from ..extra import DataBaseList, DataBase
 class Item(BaseMixinData):
     source: str
     actual: str
-    data: List[Tuple[str, PositiveFloat]]
+    data: List[Tuple[str, int]]
 
 
 class DataList(DataBaseList):
@@ -23,12 +23,12 @@ class DataList(DataBaseList):
         source = Item
 
     def update(self, index: int):
-        value = random.choice(self)
-        self.preset[index] = value
+        item = random.choice(self)
+        self.preset[index] = item
         destination_source = Path(self.source_path, f"{index + 1}.txt")
         with open(destination_source, "w") as destination_source_ref:
             destination_source_ref.write(
-                json.dumps(value.get("source", ""), ensure_ascii=False)
+                json.dumps(item.source, ensure_ascii=False)
             )
 
     def reload(self, indexes: List[int] = None):
@@ -50,7 +50,7 @@ class DataList(DataBaseList):
 
         label = []
         for item in self.preset:
-            label.append(json.dumps(item.get("data", []), ensure_ascii=False))
+            label.append(json.dumps(item.data, ensure_ascii=False))
         with open(predict_file, "w") as predict_file_ref:
             predict_file_ref.write("\n".join(label))
 
