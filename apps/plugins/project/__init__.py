@@ -309,6 +309,7 @@ class Project(BaseMixinData):
                 **checkpoint_data
             )
         defaults_data.update_by_model(self.model, self.training)
+        # defaults_data.training.update(self.dataset, self.training.base)
 
     def update_training_interactive(self):
         loss_graphs = []

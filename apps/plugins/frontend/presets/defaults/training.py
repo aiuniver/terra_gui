@@ -3,6 +3,7 @@ from terra_ai.data.training.extra import (
     CheckpointIndicatorChoice,
     CheckpointTypeChoice,
     CheckpointModeChoice,
+    ArchitectureChoice,
 )
 from terra_ai.data.training.extra import TasksGroupsList
 from terra_ai.data.presets.training import TasksGroups
@@ -292,7 +293,7 @@ ArchitectureGroupOptimizer = {
 
 
 Architectures = {
-    "Basic": {
+    ArchitectureChoice.Basic: {
         "main": ArchitectureGroupMain,
         "fit": ArchitectureGroupFit,
         "optimizer": ArchitectureGroupOptimizer,
@@ -369,7 +370,7 @@ Architectures = {
             ],
         },
     },
-    "Yolo": {
+    ArchitectureChoice.YoloV3: {
         "main": ArchitectureGroupMain,
         "fit": ArchitectureGroupFit,
         "optimizer": ArchitectureGroupOptimizer,
