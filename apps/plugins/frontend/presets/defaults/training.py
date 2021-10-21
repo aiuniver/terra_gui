@@ -292,34 +292,37 @@ ArchitectureGroupOptimizer = {
 }
 
 
-ArchitectureYoloGroup = {
+ArchitectureGroupYolo = {
+    "name": "Параметры Yolo3",
+    "collapsable": True,
+    "collapsed": False,
     "fields": [
         {
             "type": "number",
             "label": "Learning rate init",
             "name": "train_lr_init",
-            "parse": "[train_lr_init]",
+            "parse": "train_lr_init",
             "value": 1e-4,
         },
         {
             "type": "number",
             "label": "Learning rate end",
             "name": "train_lr_end",
-            "parse": "[train_lr_end]",
+            "parse": "train_lr_end",
             "value": 1e-6,
         },
         {
             "type": "number",
             "label": "Yolo IoU loss threshold",
             "name": "yolo_iou_loss_thresh",
-            "parse": "[yolo_iou_loss_thresh]",
+            "parse": "yolo_iou_loss_thresh",
             "value": 0.5,
         },
         {
             "type": "number",
             "label": "Warmup epochs",
             "name": "train_warmup_epochs",
-            "parse": "[train_warmup_epochs]",
+            "parse": "train_warmup_epochs",
             "value": 2,
         },
     ],
@@ -407,7 +410,6 @@ Architectures = {
         "main": ArchitectureGroupMain,
         "fit": ArchitectureGroupFit,
         "optimizer": ArchitectureGroupOptimizer,
-        
-        "yolo_parameters": ArchitectureYoloGroup
+        "yolo": ArchitectureGroupYolo,
     },
 }
