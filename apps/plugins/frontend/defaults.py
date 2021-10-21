@@ -1,6 +1,7 @@
 import sys
 
 from typing import List, Dict, Optional, Union
+from pprint import pprint
 
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.datasets.dataset import DatasetData
@@ -43,6 +44,13 @@ class DefaultsTrainingBaseGroupData(BaseMixinData):
     fields: Union[List[Field], Dict[str, List[Field]]]
 
 
+class YoloParametersGroup(BaseMixinData):
+    train_lr_init: Field
+    train_lr_end: Field
+    yolo_iou_loss_thresh: Field
+    train_warmup_epochs: Field
+
+
 class DefaultsTrainingBaseData(BaseMixinData):
     main: DefaultsTrainingBaseGroupData
     fit: DefaultsTrainingBaseGroupData
@@ -65,7 +73,18 @@ class ArchitectureBasicForm(ArchitectureBaseForm):
     checkpoint: DefaultsTrainingBaseGroupData
 
     def update(self, data: TrainData):
-        pass
+        print(data.native())
+
+        for param in data.dict():
+                if param == "batch":
+                    self.fit.fields[0].value = data.batch
+                elif param == "epochs":
+                    self.fit.fields[1].value = data.epochs
+                elif param == "optimizer":
+                    self.fit.fields[2].value = data.optimizer.parameters.main.learning_rate
+                    self.main.fields[0].value = data.optimizer.type.value
+
+        
 
 
 class ArchitectureYoloForm(ArchitectureBaseForm):
@@ -74,7 +93,7 @@ class ArchitectureYoloForm(ArchitectureBaseForm):
 
 
 class DefaultsTrainingData(BaseMixinData):
-    base: DefaultsTrainingBaseData
+    base: ArchitectureBaseForm # DefaultsTrainingBaseData
 
     def update(self, dataset: DatasetData, training_base: TrainData):
         _class = getattr(
