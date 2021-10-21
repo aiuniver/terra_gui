@@ -240,7 +240,7 @@ export default {
   &__sloy {
     display: none;
     position: absolute;
-    height: calc(100% +2px);
+    height: calc(100% + 2px);
     background-color: #65b9f4;
     // width: calc(100% + 2px);
     top: -1px;
