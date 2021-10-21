@@ -854,7 +854,10 @@ class FitCallback(keras.callbacks.Callback):
                     columns.append(column_name[len(str(input)) + 1:])
                     if input_columns[column_name].__class__ == DatasetOutputsData:
                         predict_column = column_name[len(str(input)) + 1:]
-            # if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Classification:
+            if self.deploy_type == ArchitectureChoice.DataframeRegression:
+                tmp_data = list(zip(deploy_presets_data.get("preset"), deploy_presets_data.get("label")))
+                tmp_deploy = [{"preset": elem[0], "label": elem[1]} for elem in tmp_data]
+                out_deploy_presets_data = {"data": tmp_deploy}
             out_deploy_presets_data["columns"] = columns
             out_deploy_presets_data["predict_column"] = predict_column if predict_column else "Предсказанные значения"
 
