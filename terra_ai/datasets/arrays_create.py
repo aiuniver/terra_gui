@@ -156,7 +156,7 @@ class CreateArray(object):
         open_symbol, close_symbol = None, None
         if options.get('open_tags'):
             open_tags, close_tags = options['open_tags'].split(' '), options['close_tags'].split(' ')
-        if open_tags:
+        # if open_tags:
             open_symbol = open_tags[0][0]
             close_symbol = close_tags[0][-1]
         length = options['length'] if options['text_mode'] == LayerTextModeChoice.length_and_step else \
