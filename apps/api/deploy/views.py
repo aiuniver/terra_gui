@@ -54,7 +54,7 @@ class UploadAPIView(BaseAPIView):
                     "project": {
                         "name": request.project.name,
                     },
-                    "task": request.project.deploy.type,
+                    "task": request.project.deploy.type.demo,
                     "replace": serializer.validated_data.get("replace"),
                 }
             )

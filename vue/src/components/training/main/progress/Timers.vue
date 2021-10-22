@@ -116,6 +116,9 @@ export default {
   &__timer-wrapper {
     display: flex;
     gap: 20px;
+    span {
+      white-space: nowrap;
+    }
   }
   &__progress-bar {
     background: #2b5278;

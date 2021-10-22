@@ -26,7 +26,16 @@ if settings.TERRA_AI_SYNC_LOGS:
             settings.TERRA_AI_BASE_DIR,
             "logs",
             "gui",
-            f"{settings.USER_PORT}-{date.year}{date.month}{date.day}{date.hour}{date.minute}{date.second}.log",
+            "%d-%04d%02d%02d%02d%02d%02d.log"
+            % (
+                int(settings.USER_PORT),
+                date.year,
+                date.month,
+                date.day,
+                date.hour,
+                date.minute,
+                date.second,
+            ),
         )
         cmd = f'rsync -avzqP -e "ssh -i {Path(settings.BASE_DIR, "rsa.key")} -o StrictHostKeyChecking=no" {source} terra_log@81.90.181.251:{destination}'
         subprocess.call(cmd, shell=True)

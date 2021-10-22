@@ -1996,7 +1996,7 @@ class InteractiveCallback:
                             templates=[self._fill_graph_plot_data, self._fill_graph_front_structure],
                             max_lenth=MAX_INTERMEDIATE_GRAGH_LENTH
                         )
-                        print('\n\n_get_intermediate_result_request_Timeseries', data)
+                        # print('\n\n_get_intermediate_result_request_Timeseries', data)
 
                     elif task == LayerOutputTypeChoice.Dataframe:
                         data = {

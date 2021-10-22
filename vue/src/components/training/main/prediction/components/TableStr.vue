@@ -1,6 +1,6 @@
 <template>
   <div class="t-predict-text">
-    <p :class="['t-predict-text__text', color]" :style="{marginTop: length ? '10px' : '' }">{{ value }}</p>
+    <p :class="['t-predict-text__text', color]" :style="{marginTop: length ? '10px' : '' }">{{ text }}</p>
     <span v-if="length" class="t-predict-text__more" @click="show">{{ textBtn[Number(isShow)] }}</span>
   </div>
 </template>

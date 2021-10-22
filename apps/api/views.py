@@ -16,13 +16,13 @@ class ConfigAPIView(BaseAPIView):
         return BaseResponseSuccess(
             {
                 "defaults": json.loads(defaults_data.json()),
-                "project": json.loads(request.project.json()),
+                "project": json.loads(request.project.front()),
                 "user": {
                     "login": settings.USER_LOGIN,
                     "first_name": settings.USER_NAME,
                     "last_name": settings.USER_LASTNAME,
                     "email": settings.USER_EMAIL,
-                    "token": settings.USER_TOKEN
+                    "token": settings.USER_TOKEN,
                 },
             }
         )

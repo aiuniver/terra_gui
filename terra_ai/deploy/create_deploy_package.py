@@ -84,6 +84,13 @@ class CascadeCreator:
         return config
 
     @staticmethod
+    def make_timeseries(config, dataset_config, model):
+        config['cascades']['model']['model'] = model
+        for _ in list(dataset_config['inputs'].keys())[1:]:
+            config['adjacency_map']['model'].append('INPUT')
+        return config
+
+    @staticmethod
     def copy_package(training_path):
         deploy_path = os.path.join(training_path, "deploy")
         if os.path.exists(os.path.join(deploy_path, "cascades")):
