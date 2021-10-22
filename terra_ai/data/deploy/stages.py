@@ -60,7 +60,7 @@ class StageUploadData(BaseMixinData):
     env: EnvVersionChoice = EnvVersionChoice.v1
     user: StageUploadUserData
     project: StageUploadProjectData
-    task: DeployTypeChoice
+    task: str
     replace: bool = False
     file: StageUploadFileData
 
