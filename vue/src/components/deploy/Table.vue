@@ -36,13 +36,13 @@ export default {
   },
   props: {
     data: Array,
-    extra: Object,
+    columns: Array,
   },
-  computed: {
-    columns() {
-      return this.extra?.columns ?? [];
-    },
-  },
+  // computed: {
+  //   columns() {
+  //     return this.extra?.columns ?? [];
+  //   },
+  // },
   methods: {
     ReloadRow(index) {
       this.$emit('reload', [index.toString()]);
@@ -52,8 +52,9 @@ export default {
     },
   },
   mounted() {
+    console.log(12312312);
     console.log(this.data);
-    console.log(this.extra);
+    console.log(this.columns);
   },
 };
 </script>
