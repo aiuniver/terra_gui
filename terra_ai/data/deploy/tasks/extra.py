@@ -23,10 +23,11 @@ class DataBaseList(List):
         )
 
     @property
-    def presets(self) -> dict:
+    def presets(self) -> list:
         return list(map(lambda item: item.native() if item else None, self.preset))
 
-    def _positive_int_filter(self, value) -> int:
+    @staticmethod
+    def _positive_int_filter(value) -> int:
         try:
             value = int(value)
         except ValueError:
