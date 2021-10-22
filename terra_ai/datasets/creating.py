@@ -745,7 +745,7 @@ class CreateDataset(object):
                         elif 'depth' in data.parameters.keys() and data.parameters['depth']:
                             if 'trend' in data.parameters.keys() and data.parameters['trend']:
                                 data_to_pass = [self.dataframe[split].loc[i, col_name],
-                                                self.dataframe[split].loc[i + data.parameters['length'] - 1, col_name]]
+                                                self.dataframe[split].loc[i + data.parameters['length'], col_name]]
                             elif 'trend' in data.parameters.keys():
                                 data_to_pass = self.dataframe[split].loc[
                                                i + data.parameters['length']:i + data.parameters['length'] +
