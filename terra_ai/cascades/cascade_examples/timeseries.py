@@ -31,6 +31,6 @@ while True:
         out['in'][col] = data[col].tolist()
 
     for i, col in enumerate(out_columns):
-        out[col] = main_block[-1].out[0][:, :, i].tolist()[0]
+        out['out'][col] = main_block[-1].out[0][:, :, i].tolist()[0]
 
     print(out)
