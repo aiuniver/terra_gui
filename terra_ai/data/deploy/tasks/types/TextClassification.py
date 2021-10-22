@@ -1,7 +1,7 @@
 import json
 import os
 import random
-from pathlib import Path
+from pathlib import Path, PurePath
 
 from typing import List, Tuple
 from pydantic import PositiveFloat
@@ -18,6 +18,7 @@ class Item(BaseMixinData):
 
 
 class DataList(DataBaseList):
+    source_path: Path = PurePath()
 
     class Meta:
         source = Item

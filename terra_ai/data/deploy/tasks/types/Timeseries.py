@@ -1,6 +1,6 @@
 import json
 import random
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import List, Any
 
 from terra_ai.data.mixins import BaseMixinData
@@ -14,6 +14,8 @@ class Item(BaseMixinData):
 
 
 class DataList(DataBaseList):
+    preset_file: Path = PurePath()
+
     class Meta:
         source = Item
 

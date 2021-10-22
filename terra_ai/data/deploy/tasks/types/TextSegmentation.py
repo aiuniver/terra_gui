@@ -1,6 +1,6 @@
 import os
 import random
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import List, Tuple
 
 from terra_ai.data.mixins import BaseMixinData
@@ -14,20 +14,11 @@ class Item(BaseMixinData):
 
 
 class DataList(DataBaseList):
+    source_path: Path = PurePath()
+    format_path: Path = PurePath()
+
     class Meta:
         source = Item
-
-    def update(self, index: int):
-        item = random.choice(self)
-        self.preset[index] = item
-
-        destination_source = Path(self.source_path, f"{index + 1}.txt")
-        destination_format = Path(self.format_path, f"{index + 1}.txt")
-
-        with open(destination_source, "w") as destination_source_ref:
-            destination_source_ref.write(item.source)
-        with open(destination_format, "w") as destination_format_ref:
-            destination_format_ref.write(item.format)
 
     def reload(self, indexes: List[int] = None):
         if indexes is None:
@@ -44,6 +35,18 @@ class DataList(DataBaseList):
 
         for _index in indexes:
             self.update(_index)
+
+    def update(self, index: int):
+        item = random.choice(self)
+        self.preset[index] = item
+
+        destination_source = Path(self.source_path, f"{index + 1}.txt")
+        destination_format = Path(self.format_path, f"{index + 1}.txt")
+
+        with open(destination_source, "w") as destination_source_ref:
+            destination_source_ref.write(item.source)
+        with open(destination_format, "w") as destination_format_ref:
+            destination_format_ref.write(item.format)
 
 
 class Data(DataBase):
