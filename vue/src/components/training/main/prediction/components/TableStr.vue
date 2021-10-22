@@ -1,8 +1,7 @@
 <template>
-  <div class="t-predict-test">
-    <p :class="['t-predict-test__text', color]">
-      {{ value }}
-    </p>
+  <div class="t-predict-text">
+    <p :class="['t-predict-text__text', color]" :style="{marginTop: length ? '10px' : '' }">{{ value }}</p>
+    <span v-if="length" class="t-predict-text__more" @click="show">{{ textBtn[Number(isShow)] }}</span>
   </div>
 </template>
 
@@ -23,21 +22,42 @@ export default {
       default: '',
     },
   },
+  data: () => ({
+    text: '',
+    isShow: false,
+    textBtn: ["Показать больше", "Скрыть"]
+  }),
+  mounted(){
+    this.text = this.length ? this.value.substring(0, 49) + "..." : this.value
+  },
   computed: {
     color() {
-      return `t-predict-test__text--${this.color_mark}`
+      return `t-predict-text__text--${this.color_mark}`
+    },
+    length(){
+      return this.value.length >= 50 
+    }
+  },
+  methods:{
+    show(){
+      this.isShow = !this.isShow
+      this.text = this.isShow? this.value : this.value.substring(0, 49) + "..."
     }
   }
 };
 </script>
 
 <style lang="scss" scoped>
-.t-predict-test {
+.t-predict-text {
   display: flex;
   height: 100%;
   justify-content: center;
   align-items: center;
+  flex-direction: column;
+  padding: 5px;
+
   &__text {
+    text-align: center;
     &--success {
       color: green;
     }
@@ -45,5 +65,12 @@ export default {
       color: orange;
     }
   }
+  &__more {
+    user-select: none;
+    cursor: pointer;
+    color: #65b9f4;
+    font-size: 14px;
+  }
 }
+
 </style>

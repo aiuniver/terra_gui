@@ -1,5 +1,6 @@
 import FilesMenu from './blocks/FilesMenu';
 import TAutoField from './blocks/TAutoField';
+import TAutoFieldHeandler from './blocks/TAutoFieldHeandler';
 import TAutoFieldTrainings from './blocks/TAutoFieldTrainings';
 
 import Button from './forms/Button';
@@ -24,6 +25,7 @@ import TAutoComplete from './new/forms/TAutoComplete';
 export default [
   FilesMenu,
   TAutoField,
+  TAutoFieldHeandler,
   TAutoFieldTrainings,
   Button,
   Checkbox,

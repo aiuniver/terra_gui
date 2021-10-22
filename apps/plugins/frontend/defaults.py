@@ -1,14 +1,21 @@
-from typing import List, Dict, Optional, Union
+import sys
+
+from typing import List, Dict, Optional, Union, Any
+from pydantic.main import ModelMetaclass
 
 from terra_ai.data.mixins import BaseMixinData
+from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.modeling.layer import LayersList
 from terra_ai.data.modeling.model import ModelDetailsData
+from terra_ai.data.training.train import TrainData
+from terra_ai.data.training.extra import ArchitectureChoice
 
-from apps.plugins.frontend.presets.defaults import (
+from .presets.defaults.training import (
     TrainingTasksRelations,
     TrainingLossSelect,
     TrainingMetricSelect,
     TrainingClassesQuantitySelect,
+    Architectures,
 )
 
 from .base import Field
@@ -44,8 +51,67 @@ class DefaultsTrainingBaseData(BaseMixinData):
     checkpoint: DefaultsTrainingBaseGroupData
 
 
+class ArchitectureMixinForm(BaseMixinData):
+    def update(self, data: Any, prefix: str = "", **kwargs):
+        for _key, _value in data.__fields__.items():
+            name_ = f"{prefix}{_key}"
+            if isinstance(_value.type_, ModelMetaclass):
+                self.update(getattr(data, _key), f"{name_}_")
+                continue
+            _method_name = f"_set_{name_}"
+            _method = getattr(self, _method_name, None)
+            if _method:
+                _method(getattr(data, _key), **kwargs)
+
+
+class ArchitectureBaseForm(ArchitectureMixinForm):
+    main: DefaultsTrainingBaseGroupData
+    fit: DefaultsTrainingBaseGroupData
+    optimizer: DefaultsTrainingBaseGroupData
+
+    def _set_batch(self, value: int):
+        fields = list(filter(lambda item: item.name == "batch", self.fit.fields))
+        if not fields:
+            return
+        fields[0].value = value
+
+    def _set_optimizer_type(self, value):
+        fields = list(filter(lambda item: item.name == "optimizer", self.main.fields))
+        if not fields:
+            return
+        fields[0].value = value
+
+
+class ArchitectureBasicForm(ArchitectureBaseForm):
+    outputs: DefaultsTrainingBaseGroupData
+    checkpoint: DefaultsTrainingBaseGroupData
+
+    def _set_architecture_parameters_outputs_classes_quantity(self, value, id):
+        # print(self.outputs.fields)
+        # print(id)
+        # print(value)
+        pass
+
+    def _set_architecture_parameters_outputs(self, value: List):
+        for item in value:
+            self.update(item, "architecture_parameters_outputs_", id=item.id)
+
+
+class ArchitectureYoloForm(ArchitectureBaseForm):
+    pass
+
+
 class DefaultsTrainingData(BaseMixinData):
     base: DefaultsTrainingBaseData
+
+    def update(self, dataset: DatasetData, training_base: TrainData):
+        _class = getattr(
+            sys.modules.get(__name__), f"Architecture{dataset.architecture}Form"
+        )
+        self.base = _class(
+            **Architectures.get(dataset.architecture, ArchitectureChoice.Basic)
+        )
+        self.base.update(training_base)
 
 
 class DefaultsData(BaseMixinData):

@@ -1,11 +1,13 @@
 <template>
   <div>
     <TableImage v-if="type === 'image'" v-bind="obj" :key="update" />
-    <TableStr v-if="type === 'str' || type === 'number'" v-bind="obj" :key="update" />
+    <TableStr v-if="type === 'str' || type === 'number' " v-bind="obj" :key="update" />
+    <TableStatisticTable v-if="type === 'table'" v-bind="obj" :key="update" />
     <TableText v-if="type === 'text'" v-bind="obj" :key="update" />
     <TableTextSegmented v-if="type === 'segmented_text'" v-bind="obj" :key="update" />
     <TableVideo v-if="type === 'video'" v-bind="obj" :key="update" />
     <TableAudio v-if="type === 'audio'" v-bind="obj" :key="update" />
+    <Graphics v-if="type === 'graphic'" v-bind="obj" :key="update" />
   </div>
 </template>
 
@@ -18,7 +20,9 @@ export default {
     TableText: () => import('./TableText'),
     TableStr: () => import('./TableStr'),
     TableTextSegmented: () => import('./TableTextSegmented'),
+    TableStatisticTable: () => import('./TableStatisticTable'),
     TableVideo: () => import('./TableVideo.vue'),
+    Graphics: () => import('./TableGraphics'),
   },
   props: {
     type: {
