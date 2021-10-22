@@ -1,6 +1,5 @@
-from pathlib import Path
 from typing import Any
-from pydantic import validator
+from pydantic import validator, DirectoryPath
 from pydantic.errors import EnumMemberError
 
 from terra_ai.data.mixins import BaseMixinData
@@ -10,7 +9,7 @@ from terra_ai.data.deploy.tasks import types
 
 
 class DeployData(BaseMixinData):
-    path: Path
+    path: DirectoryPath
     type: DeployTypeChoice
     data: Any = {}
 
