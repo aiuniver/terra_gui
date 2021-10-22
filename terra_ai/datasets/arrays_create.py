@@ -1503,8 +1503,8 @@ class CreateArray(object):
 
                 elif options.data.outputs[output_id].task == LayerOutputTypeChoice.Timeseries:
                     return_data[output_id] = {
-                        'in': [],
-                        'out': []
+                        'source': [],
+                        'predict': []
                     }
                     preprocess = options.preprocessing.preprocessing.get(output_id)
                     for idx in example_idx:
@@ -1513,7 +1513,7 @@ class CreateArray(object):
                             for k, inp_col in enumerate(options.data.columns.get(inp).keys()):
                                 inp_data[inp_col.split('_', 1)[-1]] = \
                                     CreateArray._round_list(list(inverse_x_array[f"{inp}"][idx][:, k]))
-                        return_data[output_id]['in'].append(inp_data)
+                        return_data[output_id]['source'].append(inp_data)
 
                         out_array = {}
                         for ch, channel in enumerate(options.data.columns.get(output_id).keys()):
@@ -1537,7 +1537,7 @@ class CreateArray(object):
                                                idx, :, ch:ch + 1].squeeze().astype('float').tolist()
                                 inverse_pred = array[idx, :, ch:ch + 1].squeeze().astype('float').tolist()
                             out_array[channel.split('_', 1)[-1]] = [inverse_true, inverse_pred]
-                        return_data[output_id]['out'].append(out_array)
+                        return_data[output_id]['predict'].append(out_array)
 
                 elif options.data.outputs[output_id].task == LayerOutputTypeChoice.Regression:
                     return_data[output_id] = {
