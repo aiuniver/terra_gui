@@ -764,11 +764,7 @@ class FitCallback(keras.callbacks.Callback):
                                                    dataset_path=self.dataset_path)
         deploy_presets = []
         if result:
-            if list(self.dataset.data.outputs.values())[0].task in [LayerOutputTypeChoice.Classification,
-                                                                    LayerOutputTypeChoice.Segmentation,
-                                                                    LayerOutputTypeChoice.TextSegmentation,
-                                                                    LayerOutputTypeChoice.Regression]:
-                deploy_presets = list(result.values())[0]
+            deploy_presets = list(result.values())[0]
         return deploy_presets
 
     def _create_form_data_for_dataframe_deploy(self, deploy_path):
@@ -801,32 +797,19 @@ class FitCallback(keras.callbacks.Callback):
     def _create_cascade(self, **data):
         deploy_path = data.get("deploy_path")
         if self.dataset.data.alias not in ["imdb", "boston_housing", "reuters"]:
-            input_key = list(self.dataset.data.inputs.keys())[0]
-            output_key = list(self.dataset.data.outputs.keys())[0]
-            if self.dataset.data.inputs[input_key].task == LayerInputTypeChoice.Dataframe:
+            if "Dataframe" in self.deploy_type:
                 self._create_form_data_for_dataframe_deploy(deploy_path=deploy_path)
-            input_tasks = [LayerInputTypeChoice.Image, LayerInputTypeChoice.Text,
-                           LayerInputTypeChoice.Audio, LayerInputTypeChoice.Video,
-                           LayerInputTypeChoice.Dataframe]
-            output_tasks = [LayerOutputTypeChoice.Classification, LayerOutputTypeChoice.Segmentation,
-                            LayerOutputTypeChoice.TextSegmentation, LayerOutputTypeChoice.Regression]
-            if self.dataset.data.inputs[input_key].task in input_tasks and (
-                    self.dataset.data.outputs[output_key].task in output_tasks):
-                if self.dataset.data.outputs[output_key].task == LayerOutputTypeChoice.TextSegmentation:
-                    func_name = decamelize(LayerOutputTypeChoice.TextSegmentation)
-                else:
-                    func_name = f"{self.dataset.data.inputs[input_key].task.lower()}_" \
-                                f"{self.dataset.data.outputs[output_key].task.lower()}"
-                config = CascadeCreator()
-                config.create_config(self.save_model_path, os.path.split(self.save_model_path)[0], func_name=func_name)
-                config.copy_package(os.path.split(self.save_model_path)[0])
-                config.copy_script(
-                    training_path=os.path.split(self.save_model_path)[0],
-                    function_name=func_name
-                )
-                if self.dataset.data.outputs[output_key].task == LayerOutputTypeChoice.TextSegmentation:
-                    with open(os.path.join(deploy_path, "format.txt"), "w", encoding="utf-8") as format_file:
-                        format_file.write(str(data.get("tags_map", "")))
+            func_name = decamelize(self.deploy_type)
+            config = CascadeCreator()
+            config.create_config(self.save_model_path, os.path.split(self.save_model_path)[0], func_name=func_name)
+            config.copy_package(os.path.split(self.save_model_path)[0])
+            config.copy_script(
+                training_path=os.path.split(self.save_model_path)[0],
+                function_name=func_name
+            )
+            if self.deploy_type == ArchitectureChoice.TextSegmentation:
+                with open(os.path.join(deploy_path, "format.txt"), "w", encoding="utf-8") as format_file:
+                    format_file.write(str(data.get("tags_map", "")))
 
     def _prepare_deploy(self):
         deploy_path = os.path.join(os.path.split(self.save_model_path)[0], "deploy")
@@ -846,7 +829,7 @@ class FitCallback(keras.callbacks.Callback):
                 "data": deploy_presets_data.get("data", {}),
                 "color_map": deploy_presets_data.get("color_map")
             }
-        elif list(self.dataset.data.inputs.values())[0].task == LayerInputTypeChoice.Dataframe:
+        elif "Dataframe" in self.deploy_type:
             columns = []
             predict_column = ""
             for input, input_columns in self.dataset.data.columns.items():
