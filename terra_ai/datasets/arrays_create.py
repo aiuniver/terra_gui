@@ -1502,20 +1502,18 @@ class CreateArray(object):
                     return_data[output_id]["color_map"] = colors
 
                 elif options.data.outputs[output_id].task == LayerOutputTypeChoice.Timeseries:
-                    return_data[output_id] = {
-                        'in': [],
-                        'out': []
-                    }
+                    return_data[output_id] = []
                     preprocess = options.preprocessing.preprocessing.get(output_id)
                     for idx in example_idx:
-                        inp_data = {}
+                        data = {
+                            'source': {},
+                            'predict': {}
+                        }
                         for inp in options.data.inputs.keys():
                             for k, inp_col in enumerate(options.data.columns.get(inp).keys()):
-                                inp_data[inp_col.split('_', 1)[-1]] = \
+                                data['source'][inp_col.split('_', 1)[-1]] = \
                                     CreateArray._round_list(list(inverse_x_array[f"{inp}"][idx][:, k]))
-                        return_data[output_id]['in'].append(inp_data)
 
-                        out_array = {}
                         for ch, channel in enumerate(options.data.columns.get(output_id).keys()):
                             if type(preprocess.get(channel)).__name__ in ['StandardScaler', 'MinMaxScaler']:
                                 inp_options = {output_id: {
@@ -1536,8 +1534,8 @@ class CreateArray(object):
                                 inverse_true = options.Y.get('val').get(f"{output_id}")[
                                                idx, :, ch:ch + 1].squeeze().astype('float').tolist()
                                 inverse_pred = array[idx, :, ch:ch + 1].squeeze().astype('float').tolist()
-                            out_array[channel.split('_', 1)[-1]] = [inverse_true, inverse_pred]
-                        return_data[output_id]['out'].append(out_array)
+                            data['predict'][channel.split('_', 1)[-1]] = [inverse_true, inverse_pred]
+                        return_data[output_id].append(data)
 
                 elif options.data.outputs[output_id].task == LayerOutputTypeChoice.Regression:
                     return_data[output_id] = {
@@ -1565,7 +1563,7 @@ class CreateArray(object):
                 else:
                     return_data[output_id] = []
 
-        if options.data.architecture in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]:
+        elif options.data.architecture in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]:
             y_true = CreateArray().get_yolo_y_true(options)
             y_pred = CreateArray().get_yolo_y_pred(array, options, sensitivity=sensitivity, threashold=threashold)
             name_classes = options.data.outputs.get(list(options.data.outputs.keys())[0]).classes_names
@@ -1604,6 +1602,9 @@ class CreateArray(object):
                         'predict_img': save_predict_path
                     }
                 )
+
+        else:
+            return_data = {}
 
         return return_data
 

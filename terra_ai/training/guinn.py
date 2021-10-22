@@ -843,7 +843,7 @@ class FitCallback(keras.callbacks.Callback):
                 out_deploy_presets_data = {"data": tmp_deploy}
             out_deploy_presets_data["columns"] = columns
             out_deploy_presets_data["predict_column"] = predict_column if predict_column else "Предсказанные значения"
-
+        # print(deploy_presets_data["predict"])
         interactive.deploy_presets_data = DeployData(
             path=deploy_path,
             type=self.deploy_type,
