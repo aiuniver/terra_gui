@@ -13,3 +13,4 @@ class DeployTypeChoice(str, Enum):
     AudioClassification = "AudioClassification"
     DataframeRegression = "DataframeRegression"
     DataframeClassification = "DataframeClassification"
+    Timeseries = "Timeseries"

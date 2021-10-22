@@ -5,5 +5,6 @@ from . import (
     TextClassification,
     AudioClassification,
     DataframeRegression,
-    DataframeClassification
+    DataframeClassification,
+    Timeseries
 )
