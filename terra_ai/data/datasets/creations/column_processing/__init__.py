@@ -21,7 +21,7 @@ class ColumnProcessingVideoData(types.ParametersVideoData):
     pass
 
 
-class ColumnProcessingUniqueData(types.ParametersVideoData):
+class ColumnProcessingUniqueData(types.ParametersUniqueData):
     pass
 
 
