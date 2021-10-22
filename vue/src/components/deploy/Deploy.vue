@@ -22,8 +22,8 @@
                 />
               </div>
               <div v-else class="board__data">
-                <Table v-if="type === 'table_data_regression'" v-bind="deploy" :key='RandId' @reload="ReloadCard" @reloadAll="ReloadAll" />
-                <TableClass v-if="type === 'table_data_classification'" v-bind="deploy" :key='RandId' @reload="ReloadCard" @reloadAll="ReloadAll"/>
+                <Table v-if="type === 'DataframeRegression'" v-bind="deploy" :key='RandId' @reload="ReloadCard" @reloadAll="ReloadAll" />
+                <TableClass v-if="type === 'DataframeClassification'" v-bind="deploy" :key='RandId' @reload="ReloadCard" @reloadAll="ReloadAll"/>
               </div>
             </div>
           </div>
@@ -54,7 +54,7 @@ export default {
       RandId: 'deploy/getRandId',
     }),
     isTable() {
-      return ['table_data_classification', 'table_data_regression'].includes(this.type);
+      return ['DataframeClassification', 'DataframeRegression'].includes(this.type);
     },
   },
   methods: {
@@ -69,9 +69,9 @@ export default {
       await this.$store.dispatch('deploy/ReloadCard', indexes);
     },
   },
-  beforeMount() {
-    console.log(this.Cards);
-  },
+  mounted() {
+    console.log(this.deploy)
+  }
 };
 </script>
 

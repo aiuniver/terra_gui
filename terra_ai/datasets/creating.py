@@ -137,7 +137,11 @@ class CreateDataset(object):
                         out.parameters.length = inp.parameters.length
                         out.parameters.step = inp.parameters.step
                         out.parameters.max_words = inp.parameters.max_words
-                        out.parameters.filters = inp.parameters.filters
+                        filters = inp.parameters.filters
+                        for x in out.parameters.open_tags + out.parameters.close_tags:
+                            filters = filters.replace(x, '')
+                        inp.parameters.filters = filters
+                        out.parameters.filters = filters
                         inp.parameters.open_tags = out.parameters.open_tags
                         inp.parameters.close_tags = out.parameters.close_tags
             elif out.type == LayerOutputTypeChoice.ObjectDetection:

@@ -1,6 +1,6 @@
-import json
 import os
 import re
+import json
 import shutil
 from pathlib import Path
 from typing import Optional
@@ -154,6 +154,12 @@ class Project(BaseMixinData):
             }
         )
         return _data
+
+    def front(self):
+        _data = self.native()
+        if _data.get("deploy"):
+            _data.update({"deploy": self.deploy.presets})
+        return json.dumps(_data)
 
     def reset(self):
         agent_exchange("training_clear")
@@ -390,5 +396,7 @@ except Exception:
     _config = {}
 
 _config.update({"hardware": agent_exchange("hardware_accelerator")})
+if _config.get("deploy"):
+    _config["deploy"].update({"path": project_path.deploy})
 project = Project(**_config)
 project.set_training()

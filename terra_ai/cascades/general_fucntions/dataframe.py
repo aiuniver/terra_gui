@@ -72,10 +72,15 @@ def main(**params):
     columns = list(params['columns'].keys())
 
     def fun(data):
-        if len(data.shape) == 1:
-            out = np.zeros((1, params['shape'][0]))
-        else:
-            out = np.zeros((data.shape[0], params['shape'][0]))
+        out = []
+        if len(params['shape']) == 1:
+            if len(data.shape) == 1:
+                out = np.zeros((1, params['shape'][0]))
+            else:
+                out = np.zeros((data.shape[0], params['shape'][0]))
+        elif len(params['shape']) == 2:
+            out = np.zeros((params['shape']))
+        lenght = out.shape[0]
 
         j = 0
         for column, proc in zip(columns, process):
@@ -83,7 +88,7 @@ def main(**params):
             i = np.array(data[column[2:]])
 
             if proc:
-                x = proc(i)
+                x = proc(i[:lenght])
                 if len(x.shape) == 1:
                     out[:, j] = x
                     j += 1
@@ -93,6 +98,9 @@ def main(**params):
             else:
                 out[:, j] = i
                 j += 1
+
+        if len(params['shape']) == 2:
+            out = out[np.newaxis, ...]
 
         return out
 

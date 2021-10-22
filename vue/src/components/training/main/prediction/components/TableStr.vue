@@ -1,6 +1,6 @@
 <template>
   <div class="t-predict-text">
-    <p :class="['t-predict-text__text', color]">{{ value }}</p>
+    <p :class="['t-predict-text__text', color]" :style="{marginTop: length ? '10px' : '' }">{{ text }}</p>
     <span v-if="length" class="t-predict-text__more" @click="show">{{ textBtn[Number(isShow)] }}</span>
   </div>
 </template>
@@ -28,11 +28,11 @@ export default {
     textBtn: ["Показать больше", "Скрыть"]
   }),
   mounted(){
-    this.text = this.length ? this.value.substring(0, 99) + "..." : this.value
+    this.text = this.length ? this.value.substring(0, 49) + "..." : this.value
   },
   computed: {
     color() {
-      return `t-predict-test__text--${this.color_mark}`
+      return `t-predict-text__text--${this.color_mark}`
     },
     length(){
       return this.value.length >= 50 
@@ -58,7 +58,6 @@ export default {
 
   &__text {
     text-align: center;
-    margin-bottom: 10px;
     &--success {
       color: green;
     }

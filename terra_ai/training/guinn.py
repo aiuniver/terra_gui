@@ -23,13 +23,15 @@ from tensorflow.python.framework.errors_impl import ResourceExhaustedError
 from terra_ai import progress
 from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice, DatasetGroupChoice
+from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
 from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, \
-    CheckpointModeChoice
+    CheckpointModeChoice, ArchitectureChoice
 from terra_ai.data.training.train import TrainData, InteractiveData
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.deploy.create_deploy_package import CascadeCreator
+from terra_ai.exceptions.deploy import MethodNotImplementedException
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.training.customlosses import DiceCoef, RecallPercent, UnscaledMAE, BalancedRecall
@@ -60,6 +62,8 @@ class GUINN:
         """
         self.nn_name: str = ''
         self.DTS = None
+        self.dataset = None
+        self.deploy_type = None
         self.model: Optional[Model] = None
         self.training_path: str = ""
         self.optimizer = None
@@ -102,6 +106,10 @@ class GUINN:
     def _set_training_params(self, dataset: DatasetData, params: TrainData, model_path: str,
                              training_path: str, dataset_path: str, initial_config: InteractiveData) -> None:
         self.dataset = self._prepare_dataset(dataset, dataset_path, model_path)
+        if not self.dataset.data.architecture or self.dataset.data.architecture == ArchitectureChoice.Basic:
+            self.deploy_type = self._set_deploy_type(self.dataset)
+        else:
+            self.deploy_type = self.dataset.data.architecture
         self.training_path = training_path
         self.nn_name = "model"
 
@@ -147,11 +155,58 @@ class GUINN:
         retrain_epochs = self.sum_epoch if interactive.get_states().get("status") == "addtrain" else self.epochs
         callback = FitCallback(dataset=dataset, dataset_data=dataset_data, checkpoint_config=checkpoint,
                                batch_size=batch_size, epochs=epochs, retrain_epochs=retrain_epochs,
-                               save_model_path=save_model_path, model_name=self.nn_name, dataset_path=dataset_path)
+                               save_model_path=save_model_path, model_name=self.nn_name,
+                               dataset_path=dataset_path, deploy_type=self.deploy_type)
         self.callbacks = [callback]
         # checkpoint.update([('filepath', 'test_model.h5')])
         # self.callbacks.append(keras.callbacks.ModelCheckpoint(**checkpoint))
         progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков выполнено'})
+
+    @staticmethod
+    def _set_deploy_type(dataset: PrepareDataset) -> str:
+        data = dataset.data
+        inp_tasks = []
+        out_tasks = []
+        for key, val in data.inputs.items():
+            if val.task == LayerInputTypeChoice.Dataframe:
+                tmp = []
+                for value in data.columns[key].values():
+                    tmp.append(value.task)
+                unique_vals = list(set(tmp))
+                if len(unique_vals) == 1 and unique_vals[0] in LayerInputTypeChoice.__dict__.keys() and unique_vals[0] \
+                        in [LayerInputTypeChoice.Image, LayerInputTypeChoice.Text,
+                            LayerInputTypeChoice.Audio, LayerInputTypeChoice.Video]:
+                    inp_tasks.append(unique_vals[0])
+                else:
+                    inp_tasks.append(val.task)
+            else:
+                inp_tasks.append(val.task)
+        for key, val in data.outputs.items():
+            if val.task == LayerOutputTypeChoice.Dataframe:
+                tmp = []
+                for value in data.columns[key].values():
+                    tmp.append(value.task)
+                unique_vals = list(set(tmp))
+                if len(unique_vals) == 1 and unique_vals[0] in LayerOutputTypeChoice.__dict__.keys():
+                    out_tasks.append(unique_vals[0])
+                else:
+                    out_tasks.append(val.task)
+            else:
+                out_tasks.append(val.task)
+
+        inp_task_name = list(set(inp_tasks))[0] if len(set(inp_tasks)) == 1 else LayerInputTypeChoice.Dataframe
+        out_task_name = list(set(out_tasks))[0] if len(set(out_tasks)) == 1 else LayerOutputTypeChoice.Dataframe
+
+        if inp_task_name + out_task_name in ArchitectureChoice.__dict__.keys():
+            deploy_type = ArchitectureChoice.__dict__[inp_task_name + out_task_name]
+        elif out_task_name in ArchitectureChoice.__dict__.keys():
+            deploy_type = ArchitectureChoice.__dict__[out_task_name]
+        elif out_task_name == LayerOutputTypeChoice.ObjectDetection:
+            deploy_type = ArchitectureChoice.__dict__[dataset.instructions.get(2).parameters.model.title() +
+                                                       dataset.instructions.get(2).parameters.yolo.title()]
+        else:
+            raise MethodNotImplementedException(__method=inp_task_name + out_task_name, __class="ArchitectureChoice")
+        return deploy_type
 
     @staticmethod
     def _prepare_dataset(dataset: DatasetData, dataset_path: str, model_path: str) -> PrepareDataset:
@@ -279,6 +334,8 @@ class GUINN:
     def nn_cleaner(self, retrain: bool = False) -> None:
         keras.backend.clear_session()
         self.DTS = None
+        self.dataset = None
+        self.deploy_type = None
         self.model = None
         if retrain:
             self.sum_epoch = 0
@@ -393,7 +450,7 @@ class GUINN:
                 output_path = 'C:\PycharmProjects/terra_gui/test_example/chess_{}.jpg'.format(epoch)
                 detect_image(Yolo=self.yolo_pred, original_image=inp['1'].numpy()[0], output_path=output_path,
                              CLASSES=self.dataset.data.outputs.get(2).classes_names)
-                mAP = get_mAP(self.yolo_pred, self.dataset, score_threshold=0.05, iou_threshold=0.50,
+                pred, mAP = get_mAP(self.yolo_pred, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
                               TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names)
 
         if self.dataset.data.use_generator:
@@ -472,7 +529,8 @@ class FitCallback(keras.callbacks.Callback):
 
     def __init__(self, dataset: PrepareDataset, dataset_data: DatasetData, checkpoint_config: dict,
                  batch_size: int = None, epochs: int = None, dataset_path: str = "",
-                 retrain_epochs: int = None, save_model_path: str = "./", model_name: str = "noname"):
+                 retrain_epochs: int = None, save_model_path: str = "./", model_name: str = "noname",
+                 deploy_type: str = ""):
         """
         Для примера
         "checkpoint": {
@@ -491,6 +549,7 @@ class FitCallback(keras.callbacks.Callback):
         self.dataset = dataset
         self.dataset_data = dataset_data
         self.dataset_path = dataset_path
+        self.deploy_type = deploy_type
         self.batch_size = batch_size
         self.epochs = epochs
         self.batch = 0
@@ -706,11 +765,7 @@ class FitCallback(keras.callbacks.Callback):
                                                    dataset_path=self.dataset_path)
         deploy_presets = []
         if result:
-            if list(self.dataset.data.outputs.values())[0].task in [LayerOutputTypeChoice.Classification,
-                                                                    LayerOutputTypeChoice.Segmentation,
-                                                                    LayerOutputTypeChoice.TextSegmentation,
-                                                                    LayerOutputTypeChoice.Regression]:
-                deploy_presets = list(result.values())[0]
+            deploy_presets = list(result.values())[0]
         return deploy_presets
 
     def _create_form_data_for_dataframe_deploy(self, deploy_path):
@@ -741,38 +796,26 @@ class FitCallback(keras.callbacks.Callback):
             json.dump(form_data, form_file, ensure_ascii=False)
 
     def _create_cascade(self, **data):
-        deploy_path = os.path.join(os.path.split(self.save_model_path)[0], "deploy")
+        deploy_path = data.get("deploy_path")
         if self.dataset.data.alias not in ["imdb", "boston_housing", "reuters"]:
-            input_key = list(self.dataset.data.inputs.keys())[0]
-            output_key = list(self.dataset.data.outputs.keys())[0]
-            if self.dataset.data.inputs[input_key].task == LayerInputTypeChoice.Dataframe:
+            if "Dataframe" in self.deploy_type:
                 self._create_form_data_for_dataframe_deploy(deploy_path=deploy_path)
-            input_tasks = [LayerInputTypeChoice.Image, LayerInputTypeChoice.Text,
-                           LayerInputTypeChoice.Audio, LayerInputTypeChoice.Video,
-                           LayerInputTypeChoice.Dataframe]
-            output_tasks = [LayerOutputTypeChoice.Classification, LayerOutputTypeChoice.Segmentation,
-                            LayerOutputTypeChoice.TextSegmentation, LayerOutputTypeChoice.Regression]
-            if self.dataset.data.inputs[input_key].task in input_tasks and (
-                    self.dataset.data.outputs[output_key].task in output_tasks):
-                if self.dataset.data.outputs[output_key].task == LayerOutputTypeChoice.TextSegmentation:
-                    func_name = decamelize(LayerOutputTypeChoice.TextSegmentation)
-                else:
-                    func_name = f"{self.dataset.data.inputs[input_key].task.lower()}_" \
-                                f"{self.dataset.data.outputs[output_key].task.lower()}"
-                config = CascadeCreator()
-                config.create_config(self.save_model_path, os.path.split(self.save_model_path)[0], func_name=func_name)
-                config.copy_package(os.path.split(self.save_model_path)[0])
-                config.copy_script(
-                    training_path=os.path.split(self.save_model_path)[0],
-                    function_name=func_name
-                )
-                if self.dataset.data.outputs[output_key].task == LayerOutputTypeChoice.TextSegmentation:
-                    with open(os.path.join(deploy_path, "format.txt"), "w", encoding="utf-8") as format_file:
-                        format_file.write(str(data.get("tags_map", "")))
+            func_name = decamelize(self.deploy_type)
+            config = CascadeCreator()
+            config.create_config(self.save_model_path, os.path.split(self.save_model_path)[0], func_name=func_name)
+            config.copy_package(os.path.split(self.save_model_path)[0])
+            config.copy_script(
+                training_path=os.path.split(self.save_model_path)[0],
+                function_name=func_name
+            )
+            if self.deploy_type == ArchitectureChoice.TextSegmentation:
+                with open(os.path.join(deploy_path, "format.txt"), "w", encoding="utf-8") as format_file:
+                    format_file.write(str(data.get("tags_map", "")))
 
     def _prepare_deploy(self):
+        deploy_path = os.path.join(os.path.split(self.save_model_path)[0], "deploy")
         weight = None
-        cascade_data = {}
+        cascade_data = {"deploy_path": deploy_path}
         for i in os.listdir(self.save_model_path):
             if i[-3:] == '.h5' and 'best' in i:
                 weight = i
@@ -780,14 +823,14 @@ class FitCallback(keras.callbacks.Callback):
             self.model.load_weights(os.path.join(self.save_model_path, weight))
         deploy_predict = self._get_predict()
         deploy_presets_data = self._deploy_predict(deploy_predict)
-        if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.TextSegmentation:
-            cascade_data = {"tags_map": deploy_presets_data.get("color_map")}
+        out_deploy_presets_data = {"data": deploy_presets_data}
+        if self.deploy_type == ArchitectureChoice.TextSegmentation:
+            cascade_data.update({"tags_map": deploy_presets_data.get("color_map")})
             out_deploy_presets_data = {
                 "data": deploy_presets_data.get("data", {}),
-                "extra": deploy_presets_data.get("color_map")
+                "color_map": deploy_presets_data.get("color_map")
             }
-            interactive.deploy_presets_data = out_deploy_presets_data
-        elif list(self.dataset.data.inputs.values())[0].task == LayerInputTypeChoice.Dataframe:
+        elif "Dataframe" in self.deploy_type:
             columns = []
             predict_column = ""
             for input, input_columns in self.dataset.data.columns.items():
@@ -795,13 +838,19 @@ class FitCallback(keras.callbacks.Callback):
                     columns.append(column_name[len(str(input)) + 1:])
                     if input_columns[column_name].__class__ == DatasetOutputsData:
                         predict_column = column_name[len(str(input)) + 1:]
-            if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.Classification:
-                deploy_presets_data = {"presets": deploy_presets_data}
-            deploy_presets_data["columns"] = columns
-            deploy_presets_data["predict_column"] = predict_column if predict_column else "Предсказанные значения"
-            interactive.deploy_presets_data = deploy_presets_data
-        else:
-            interactive.deploy_presets_data = deploy_presets_data
+            if self.deploy_type == ArchitectureChoice.DataframeRegression:
+                tmp_data = list(zip(deploy_presets_data.get("preset"), deploy_presets_data.get("label")))
+                tmp_deploy = [{"preset": elem[0], "label": elem[1]} for elem in tmp_data]
+                out_deploy_presets_data = {"data": tmp_deploy}
+            out_deploy_presets_data["columns"] = columns
+            out_deploy_presets_data["predict_column"] = predict_column if predict_column else "Предсказанные значения"
+        # print(deploy_presets_data["predict"])
+        interactive.deploy_presets_data = DeployData(
+            path=deploy_path,
+            type=self.deploy_type,
+            data=out_deploy_presets_data
+        )
+        # print(interactive.deploy_presets_data)
         self._create_cascade(**cascade_data)
 
     @staticmethod
@@ -988,9 +1037,9 @@ class FitCallback(keras.callbacks.Callback):
                 else self.epochs
             ) * 100
 
-            if os.path.exists(self.save_model_path) and interactive.deploy_presets_data:
-                with open(os.path.join(self.save_model_path, "config.presets"), "w", encoding="utf-8") as presets:
-                    presets.write(str(interactive.deploy_presets_data))
+            # if os.path.exists(self.save_model_path) and interactive.deploy_presets_data:
+            #     with open(os.path.join(self.save_model_path, "config.presets"), "w", encoding="utf-8") as presets:
+            #         presets.write(str(interactive.deploy_presets_data))
             interactive.set_status("trained")
             progress.pool(
                 self.progress_name,
