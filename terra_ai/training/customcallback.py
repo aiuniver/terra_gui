@@ -1072,12 +1072,37 @@ class InteractiveCallback:
         return class_idx
 
     def _prepare_seed(self):
-        if self.options.data.group == DatasetGroupChoice.keras or self.x_val:
-            data_lenth = np.arange(len(self.y_true.get("val").get(list(self.y_true.get("val").keys())[0])))
+        output = self.interactive_config.intermediate_result.main_output
+        task = self.options.data.outputs.get(output).task
+        example_idx = []
+
+        if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
+            y_true = np.argmax(self.y_true.get('val').get(f"{output}"), axis=-1)
+            class_idx = {}
+            for _id in range(self.options.data.outputs.get(output).num_classes):
+                class_idx[_id] = []
+            for i, _id in enumerate(y_true):
+                class_idx[_id].append(i)
+            for key in class_idx.keys():
+                np.random.shuffle(class_idx[key])
+
+            num_ex = 25
+            while num_ex:
+                key = np.random.choice(list(class_idx.keys()))
+                if not class_idx.get(key):
+                    class_idx.pop(key)
+                    key = np.random.choice(list(class_idx.keys()))
+
+                example_idx.append(class_idx[key][0])
+                class_idx[key].pop(0)
+                num_ex -= 1
         else:
-            data_lenth = np.arange(len(self.options.dataframe.get("val")))
-        np.random.shuffle(data_lenth)
-        return data_lenth
+            if self.options.data.group == DatasetGroupChoice.keras or self.x_val:
+                example_idx = np.arange(len(self.y_true.get("val").get(list(self.y_true.get("val").keys())[0])))
+            else:
+                example_idx = np.arange(len(self.options.dataframe.get("val")))
+            np.random.shuffle(example_idx)
+        return example_idx
 
     # Методы для update_state()
     @staticmethod
@@ -2012,9 +2037,6 @@ class InteractiveCallback:
                             "y_pred": {},
                             "stat": {}
                         }
-                        # image with bb
-                        # accuracy, correlation bb for classes
-                        pass
 
                     else:
                         data = {
@@ -2279,7 +2301,6 @@ class InteractiveCallback:
                                 )
                             )
                             _id += 1
-                    # print('\n\n_get_statistic_data_request_Timeseries', return_data)
 
                 elif task == LayerOutputTypeChoice.Dataframe:
                     pass
