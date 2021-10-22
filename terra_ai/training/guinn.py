@@ -31,6 +31,7 @@ from terra_ai.data.training.train import TrainData, InteractiveData
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.deploy.create_deploy_package import CascadeCreator
+from terra_ai.exceptions.deploy import MethodNotImplementedException
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.training.customlosses import DiceCoef, RecallPercent, UnscaledMAE, BalancedRecall
@@ -204,7 +205,7 @@ class GUINN:
             deploy_type = ArchitectureChoice.__dict__[dataset.instructions.get(2).parameters.model.title() +
                                                        dataset.instructions.get(2).parameters.yolo.title()]
         else:
-            deploy_type = ArchitectureChoice.Basic
+            raise MethodNotImplementedException(__method=inp_task_name + out_task_name, __class="ArchitectureChoice")
         return deploy_type
 
     @staticmethod
