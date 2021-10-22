@@ -90,7 +90,7 @@ export default {
       default: () => ({}),
     },
     index: [String, Number],
-    extra: {
+    color_map: {
       type: Array,
       default: () => ([]),
     }
@@ -120,10 +120,10 @@ export default {
     },
     segmentationLayer(){
       let layer = {}
-      for(let i in this.extra){
-        if(this.extra[i][0].includes("p")) continue;
-        let tag = this.extra[i][0].slice(1, this.extra[i][0].length-1);
-        layer[tag] = this.extra[i][2];
+      for(let i in this.color_map){
+        if(this.color_map[i][0].includes("p")) continue;
+        let tag = this.color_map[i][0].slice(1, this.color_map[i][0].length-1);
+        layer[tag] = this.color_map[i][2];
       }
       // console.log(layer);
       return layer
@@ -138,9 +138,9 @@ export default {
       return prepareText;
     },
   },
-  // mounted() {
-  //   console.log(this.card)
-  // }
+  mounted() {
+    console.log(this.color_map)
+  }
 };
 </script>
 
