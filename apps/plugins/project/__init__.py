@@ -157,7 +157,8 @@ class Project(BaseMixinData):
 
     def front(self):
         _data = self.native()
-        _data.update({"deploy": self.deploy.presets})
+        if _data.get("deploy"):
+            _data.update({"deploy": self.deploy.presets})
         return json.dumps(_data)
 
     def reset(self):
@@ -395,6 +396,7 @@ except Exception:
     _config = {}
 
 _config.update({"hardware": agent_exchange("hardware_accelerator")})
-_config["deploy"].update({"path": project_path.deploy})
+if _config.get("deploy"):
+    _config["deploy"].update({"path": project_path.deploy})
 project = Project(**_config)
 project.set_training()
