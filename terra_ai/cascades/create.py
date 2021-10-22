@@ -67,17 +67,27 @@ def json2model_cascade(path: str):
     postprocessing = []
 
     for inp in config['outputs'].keys():
-        for inp, param in config['columns'][inp].items():
-            with open(os.path.join(dataset_path, "instructions", "parameters", inp + '.json')) as cfg:
-                spec_config = json.load(cfg)
+        if config['outputs'][inp]['task'] != 'Timeseries':
+            for inp, param in config['columns'][inp].items():
+                with open(os.path.join(dataset_path, "instructions", "parameters", inp + '.json')) as cfg:
+                    spec_config = json.load(cfg)
 
-            param.update(spec_config)
+                param.update(spec_config)
 
-            try:
-                type_module = getattr(general_fucntions, decamelize(param['task']))
-                postprocessing.append(getattr(type_module, 'main')(**param, dataset_path=dataset_path, key=inp))
-            except:
-                postprocessing.append(None)
+                try:
+                    type_module = getattr(general_fucntions, decamelize(param['task']))
+                    postprocessing.append(getattr(type_module, 'main')(**param, dataset_path=dataset_path, key=inp))
+                except:
+                    postprocessing.append(None)
+        else:
+            param = {}
+            for key, cur_param in config['columns'][inp].items():
+                param[key] = cur_param
+                with open(os.path.join(dataset_path, "instructions", "parameters", key + '.json')) as cfg:
+                    param[key].update(json.load(cfg))
+            param = {'columns': param, 'dataset_path': dataset_path, 'shape': config['outputs'][inp]['shape']}
+            type_module = getattr(general_fucntions, 'timeseries')
+            postprocessing.append(getattr(type_module, 'main')(**param))
 
     if any(postprocessing):
         postprocessing = make_processing(postprocessing)
