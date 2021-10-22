@@ -1,10 +1,7 @@
-import os
+import json
 import random
 from pathlib import Path, PurePath
-from typing import List, Tuple
-
-from PIL import Image
-from pydantic import FilePath
+from typing import List, Any
 
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.settings import DEPLOY_PRESET_COUNT
@@ -12,14 +9,12 @@ from ..extra import DataBaseList, DataBase
 
 
 class Item(BaseMixinData):
-    source: FilePath
-    segment: FilePath
-    data: List[Tuple[str, Tuple[int, int, int]]]
+    source: dict
+    predict: Any
 
 
 class DataList(DataBaseList):
-    source_path: Path = PurePath()
-    segment_path: Path = PurePath()
+    preset_file: Path = PurePath()
 
     class Meta:
         source = Item
@@ -32,10 +27,10 @@ class DataList(DataBaseList):
         if not len(self):
             return
 
-        self.source_path = Path(self.path, "preset", "in")
-        self.segment_path = Path(self.path, "preset", "out")
-        os.makedirs(self.source_path, exist_ok=True)
-        os.makedirs(self.segment_path, exist_ok=True)
+        self.preset_file = Path(self.path, "preset.txt")
+
+        if self.preset_file.exists():
+            self.preset_file.unlink()
 
         for _index in indexes:
             self.update(_index)
@@ -44,11 +39,11 @@ class DataList(DataBaseList):
         item = random.choice(self)
         self.preset[index] = item
 
-        destination_source = Path(self.source_path, f"{index + 1}.jpg")
-        destination_segment = Path(self.segment_path, f"{index + 1}.jpg")
-
-        Image.open(item.source).save(destination_source)
-        Image.open(item.segment).save(destination_segment)
+        with open(self.preset_file, "a") as preset_file_ref:
+            preset_file_ref.write(
+                json.dumps(item.dict(), ensure_ascii=False)
+            )
+            preset_file_ref.write("\n")
 
 
 class Data(DataBase):

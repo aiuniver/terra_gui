@@ -39,7 +39,7 @@ export default {
           x: el.x,
           y: el.y,
           mode: 'lines',
-          name: 'Правильные данные',
+          name: el.label,
           line: {
             width: 3,
             color: '#89D764',
