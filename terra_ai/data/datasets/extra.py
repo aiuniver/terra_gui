@@ -165,7 +165,6 @@ class ColumnProcessingTypeChoice(str, Enum):
     Text = "Text"
     Audio = "Audio"
     Video = "Video"
-    Unique = "Unique"
     Scaler = "Scaler"
     Classification = "Classification"
     Regression = "Regression"

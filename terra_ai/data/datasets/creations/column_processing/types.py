@@ -111,23 +111,6 @@ class ParametersVideoData(ParametersBaseData, MinMaxScalerData):
         return value
 
 
-class ParametersUniqueData(ParametersBaseData):
-    one_hot_encoding: bool = True
-    type_processing: LayerTypeProcessingClassificationChoice
-    ranges: Optional[str]
-    length: int = 0
-    depth: int = 0
-    step: int = 1
-
-    @validator("type_processing")
-    def _validate_type_processing(
-        cls, value: LayerTypeProcessingClassificationChoice
-    ) -> LayerTypeProcessingClassificationChoice:
-        if value == LayerTypeProcessingClassificationChoice.ranges:
-            cls.__fields__["ranges"].required = True
-        return value
-
-
 class ParametersScalerData(ParametersBaseData, MinMaxScalerData):
     scaler: LayerScalerDefaultChoice
     length: int = 0

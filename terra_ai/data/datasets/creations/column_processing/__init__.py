@@ -21,10 +21,6 @@ class ColumnProcessingVideoData(types.ParametersVideoData):
     pass
 
 
-class ColumnProcessingUniqueData(types.ParametersUniqueData):
-    pass
-
-
 class ColumnProcessingScalerData(types.ParametersScalerData):
     pass
 
