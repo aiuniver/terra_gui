@@ -6,6 +6,7 @@ __version__ = 0.08
 
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.datasets.preprocessing import CreatePreprocessing
+from terra_ai.settings import CALLBACK_CLASSIFICATION_TREASHOLD_VALUE
 
 
 class DiceCoef(tf.keras.metrics.Metric):
@@ -35,6 +36,50 @@ class DiceCoef(tf.keras.metrics.Metric):
         Returns the serializable config of the metric.
         """
         config = super(DiceCoef, self).get_config()
+        return config
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+    def result(self):
+        return self.dice
+
+    def reset_state(self):
+        self.dice: float = 0
+        # pass
+
+
+class BalancedDiceCoef(tf.keras.metrics.Metric):
+
+    def __init__(self, name='balanced_dice_coef', encoding='ohe', **kwargs):
+        super(BalancedDiceCoef, self).__init__(name=name, **kwargs)
+        self.dice: float = 0
+        self.encoding = encoding
+        # pass
+
+    def update_state(self, y_true, y_pred, smooth=1, sample_weight=None):
+        y_true = tf.cast(y_true, tf.float32)
+        y_pred = tf.cast(y_pred, tf.float32)
+        if self.encoding == 'ohe':
+            y_pred = K.one_hot(K.argmax(y_pred, axis=-1), num_classes=y_true.shape[-1])
+        elif self.encoding == 'multi':
+            y_pred = tf.where(y_pred > CALLBACK_CLASSIFICATION_TREASHOLD_VALUE / 100, 1., 0.)
+        else:
+            pass
+
+        balanced_dice = tf.convert_to_tensor(0., dtype=tf.float32)
+        for i in range(y_true.shape[-1]):
+            intersection = K.sum(y_true[..., i:i+1] * y_pred[..., i:i+1])
+            union = K.sum(y_true[..., i:i+1]) + K.sum(y_pred[..., i:i+1])
+            balanced_dice = tf.add(balanced_dice, tf.convert_to_tensor((2. * intersection + smooth) / (union + smooth)))
+        self.dice = tf.convert_to_tensor(balanced_dice / y_true.shape[-1])
+
+    def get_config(self):
+        """
+        Returns the serializable config of the metric.
+        """
+        config = super(BalancedDiceCoef, self).get_config()
         return config
 
     @classmethod
@@ -94,31 +139,20 @@ class BalancedRecall(tf.keras.metrics.Metric):
         y_true = tf.cast(y_true, tf.float32)
         y_pred = tf.cast(y_pred, tf.float32)
         y_pred = K.one_hot(K.argmax(y_pred, axis=-1), num_classes=y_true.shape[-1])
-        # recall = K.sum(y_true * y_pred)
-        # total = K.sum(y_true)
-        # self.recall = tf.convert_to_tensor(recall * 100 / total)
 
         if show_class:
             recall = K.sum(y_true * y_pred)
             total = K.sum(y_true)
             self.recall = tf.convert_to_tensor(recall * 100 / total)
-            # self.recall = self.recall if self.recall else tf.convert_to_tensor(0., dtype=tf.float32)
         else:
-            # for i in range(y_true.shape[-1]):
-
             balanced_recall = tf.convert_to_tensor(0., dtype=tf.float32)
             for i in range(y_true.shape[-1]):
-                recall = K.sum(y_true[..., i:i+1] * y_pred[..., i:i+1])
-                total = K.sum(y_true[..., i:i+1])
+                recall = K.sum(y_true[..., i:i + 1] * y_pred[..., i:i + 1])
+                total = K.sum(y_true[..., i:i + 1])
                 if total == tf.convert_to_tensor(0.):
                     balanced_recall = tf.add(balanced_recall, tf.convert_to_tensor(0.))
                 else:
                     balanced_recall = tf.add(balanced_recall, tf.convert_to_tensor(recall * 100 / total))
-                # balanced_recall = tf.add(balanced_recall, tf.convert_to_tensor(recall * 100 / total))
-            # print('\n', balanced_recall, tf.cast(y_true.shape[-1], tf.float32))
-            # if not balanced_recall:
-            #     balanced_recall = tf.convert_to_tensor(0., dtype=tf.float32)
-                # print('self.recall', i, total)
             self.recall = tf.convert_to_tensor(balanced_recall / y_true.shape[-1])
 
     def get_config(self):
@@ -156,4 +190,3 @@ class UnscaledMAE(tf.keras.metrics.MeanAbsoluteError):
             return unscale.item()
         except ValueError:
             return unscale.squeeze().tolist()
-

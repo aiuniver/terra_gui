@@ -34,7 +34,7 @@ from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.exceptions.deploy import MethodNotImplementedException
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.customcallback import InteractiveCallback
-from terra_ai.training.customlosses import DiceCoef, RecallPercent, UnscaledMAE, BalancedRecall
+from terra_ai.training.customlosses import DiceCoef, RecallPercent, UnscaledMAE, BalancedRecall, BalancedDiceCoef
 from terra_ai.training.yolo_utils import create_yolo, CustomModelYolo, compute_loss, get_mAP, detect_image
 from terra_ai.exceptions import training as exceptions, terra_exception
 
@@ -84,7 +84,7 @@ class GUINN:
         self.progress_name = "training"
 
     @staticmethod
-    def _check_metrics(metrics: list, num_classes: int = 2) -> list:
+    def _check_metrics(metrics: list, options: DatasetOutputsData, num_classes: int = 2, ) -> list:
         output = []
         for metric in metrics:
             if metric == MetricChoice.MeanIoU.value:
@@ -95,6 +95,8 @@ class GUINN:
                 output.append(RecallPercent())
             elif metric == MetricChoice.BalancedRecall:
                 output.append(BalancedRecall())
+            elif metric == MetricChoice.BalancedDiceCoef:
+                output.append(BalancedDiceCoef(encoding=options.encoding.value))
             elif metric == MetricChoice.UnscaledMAE:
                 output.append(UnscaledMAE())
             elif metric == MetricChoice.mAP50 or metric == MetricChoice.mAP95:
@@ -139,8 +141,11 @@ class GUINN:
         for output_layer in params.architecture.outputs_dict:
             self.metrics.update({
                 str(output_layer["id"]):
-                    self._check_metrics(metrics=output_layer.get("metrics", []),
-                                        num_classes=output_layer.get("classes_quantity"))
+                    self._check_metrics(
+                        metrics=output_layer.get("metrics", []),
+                        num_classes=output_layer.get("classes_quantity"),
+                        options=self.dataset.data.outputs.get(output_layer["id"])
+                    )
             })
             self.loss.update({str(output_layer["id"]): output_layer["loss"]})
 

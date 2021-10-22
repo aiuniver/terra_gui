@@ -183,6 +183,11 @@ loss_metric_config = {
             "mode": "max",
             "module": "terra_ai.training.customlosses"
         },
+        "BalancedDiceCoef": {
+            "log_name": "balanced_dice_coef",
+            "mode": "max",
+            "module": "terra_ai.training.customlosses"
+        },
         "FalseNegatives": {
             "log_name": "false_negatives",
             "mode": "min",
@@ -1436,24 +1441,25 @@ class InteractiveCallback:
                                             self.class_idx.get('val').get(f"{out}").get(cls)],
                                         show_class=True
                                     )
-                                if out_task == LayerOutputTypeChoice.Segmentation:
+                                if out_task == LayerOutputTypeChoice.Segmentation or \
+                                    out_task == LayerOutputTypeChoice.TextSegmentation:
                                     class_idx = classes_names.index(cls)
                                     class_metric = self._get_metric_calculation(
                                         metric_name=metric_name,
                                         metric_obj=self.metrics_obj.get(f"{out}").get(metric_name),
                                         out=f"{out}",
-                                        y_true=self.y_true.get('val').get(f"{out}")[:, :, :, class_idx],
-                                        y_pred=self.y_pred.get(f"{out}")[:, :, :, class_idx],
+                                        y_true=self.y_true.get('val').get(f"{out}")[..., class_idx:class_idx+1],
+                                        y_pred=self.y_pred.get(f"{out}")[..., class_idx:class_idx+1],
                                     )
-                                if out_task == LayerOutputTypeChoice.TextSegmentation:
-                                    class_idx = classes_names.index(cls)
-                                    class_metric = self._get_metric_calculation(
-                                        metric_name=metric_name,
-                                        metric_obj=self.metrics_obj.get(f"{out}").get(metric_name),
-                                        out=f"{out}",
-                                        y_true=self.y_true.get('val').get(f"{out}")[:, :, class_idx],
-                                        y_pred=self.y_pred.get(f"{out}")[:, :, class_idx],
-                                    )
+                                # if out_task == LayerOutputTypeChoice.TextSegmentation:
+                                #     class_idx = classes_names.index(cls)
+                                #     class_metric = self._get_metric_calculation(
+                                #         metric_name=metric_name,
+                                #         metric_obj=self.metrics_obj.get(f"{out}").get(metric_name),
+                                #         out=f"{out}",
+                                #         y_true=self.y_true.get('val').get(f"{out}")[:, :, class_idx],
+                                #         y_pred=self.y_pred.get(f"{out}")[:, :, class_idx],
+                                #     )
                                 if data_idx or data_idx == 0:
                                     self.log_history[f"{out}"]['class_metrics'][cls][metric_name][data_idx] = \
                                         self._round_loss_metric(class_metric)
@@ -1637,7 +1643,7 @@ class InteractiveCallback:
                     np.argmax(y_true, axis=-1) if encoding == LayerEncodingChoice.ohe else y_true,
                     np.argmax(y_pred, axis=-1)
                 )
-            if metric_name == Metric.BalancedRecall:
+            elif metric_name == Metric.BalancedRecall:
                 metric_obj.update_state(
                     y_true if encoding == LayerEncodingChoice.ohe else to_categorical(y_true, num_classes),
                     y_pred,
@@ -1649,16 +1655,24 @@ class InteractiveCallback:
                     y_pred
                 )
             metric_value = float(metric_obj.result().numpy())
-        elif task == LayerOutputTypeChoice.Segmentation or \
-                (task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.ohe):
-            metric_obj.update_state(
-                y_true if encoding == LayerEncodingChoice.ohe else to_categorical(y_true, num_classes),
-                y_pred
-            )
+        elif task == LayerOutputTypeChoice.Segmentation or task == LayerOutputTypeChoice.TextSegmentation:
+            if metric_name == Metric.BalancedDiceCoef:
+                metric_obj.encoding = None
+                metric_obj.update_state(
+                    y_true if (encoding == LayerEncodingChoice.ohe or encoding == LayerEncodingChoice.multi)
+                    else to_categorical(y_true, num_classes),
+                    y_pred
+                )
+            else:
+                metric_obj.update_state(
+                    y_true if (encoding == LayerEncodingChoice.ohe or encoding == LayerEncodingChoice.multi)
+                    else to_categorical(y_true, num_classes),
+                    y_pred
+                )
             metric_value = float(metric_obj.result().numpy())
-        elif task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.multi:
-            metric_obj.update_state(y_true, y_pred)
-            metric_value = float(metric_obj.result().numpy())
+        # elif task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.multi:
+        #     metric_obj.update_state(y_true, y_pred)
+        #     metric_value = float(metric_obj.result().numpy())
         elif task == LayerOutputTypeChoice.Regression or task == LayerOutputTypeChoice.Timeseries:
             metric_obj.update_state(y_true, y_pred)
             metric_value = float(metric_obj.result().numpy())
@@ -2100,6 +2114,7 @@ class InteractiveCallback:
         else:
             pass
 
+        # print('\nreturn_data', return_data)
         return return_data
 
     def _get_statistic_data_request(self) -> list:
