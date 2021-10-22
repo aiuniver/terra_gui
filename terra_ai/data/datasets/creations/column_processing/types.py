@@ -111,18 +111,37 @@ class ParametersVideoData(ParametersBaseData, MinMaxScalerData):
         return value
 
 
-class ParametersSegmentationData(ParametersBaseData):
-    mask_range: PositiveInt
-    classes_names: List[str]
-    classes_colors: List[Color]
-    height: Optional[PositiveInt]
-    width: Optional[PositiveInt]
+class ParametersUniqueData(ParametersBaseData):
+    one_hot_encoding: bool = True
+    type_processing: LayerTypeProcessingClassificationChoice
+    ranges: Optional[str]
+    length: int = 0
+    depth: int = 0
+    step: int = 1
 
-    @validator("width", "height", pre=True)
-    def _validate_size(cls, value: PositiveInt) -> PositiveInt:
-        if not value:
-            value = None
+    @validator("type_processing")
+    def _validate_type_processing(
+        cls, value: LayerTypeProcessingClassificationChoice
+    ) -> LayerTypeProcessingClassificationChoice:
+        if value == LayerTypeProcessingClassificationChoice.ranges:
+            cls.__fields__["ranges"].required = True
         return value
+
+
+class ParametersScalerData(ParametersBaseData, MinMaxScalerData):
+    scaler: LayerScalerDefaultChoice
+    length: int = 0
+    depth: int = 0
+    step: int = 1
+
+    def __init__(self, **data):
+        try:
+            data.pop("length")
+            data.pop("depth")
+            data.pop("step")
+        except KeyError:
+            pass
+        super().__init__(**data)
 
 
 class ParametersClassificationData(ParametersBaseData):
@@ -144,6 +163,20 @@ class ParametersClassificationData(ParametersBaseData):
 
 class ParametersRegressionData(ParametersBaseData, MinMaxScalerData):
     scaler: LayerScalerRegressionChoice
+
+
+class ParametersSegmentationData(ParametersBaseData):
+    mask_range: PositiveInt
+    classes_names: List[str]
+    classes_colors: List[Color]
+    height: Optional[PositiveInt]
+    width: Optional[PositiveInt]
+
+    @validator("width", "height", pre=True)
+    def _validate_size(cls, value: PositiveInt) -> PositiveInt:
+        if not value:
+            value = None
+        return value
 
 
 class ParametersTimeseriesData(ParametersBaseData, MinMaxScalerData):
@@ -173,19 +206,3 @@ class ParametersTimeseriesData(ParametersBaseData, MinMaxScalerData):
             cls.__fields__["depth"].required = True
             cls.__fields__["scaler"].required = True
         return value
-
-
-class ParametersScalerData(ParametersBaseData, MinMaxScalerData):
-    scaler: LayerScalerDefaultChoice
-    length: int = 0
-    depth: int = 0
-    step: int = 1
-
-    def __init__(self, **data):
-        try:
-            data.pop("length")
-            data.pop("depth")
-            data.pop("step")
-        except KeyError:
-            pass
-        super().__init__(**data)

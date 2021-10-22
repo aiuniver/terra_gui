@@ -21,7 +21,11 @@ class ColumnProcessingVideoData(types.ParametersVideoData):
     pass
 
 
-class ColumnProcessingSegmentationData(types.ParametersSegmentationData):
+class ColumnProcessingUniqueData(types.ParametersVideoData):
+    pass
+
+
+class ColumnProcessingScalerData(types.ParametersScalerData):
     pass
 
 
@@ -33,11 +37,11 @@ class ColumnProcessingRegressionData(types.ParametersRegressionData):
     pass
 
 
-class ColumnProcessingTimeseriesData(types.ParametersTimeseriesData):
+class ColumnProcessingSegmentationData(types.ParametersSegmentationData):
     pass
 
 
-class ColumnProcessingScalerData(types.ParametersScalerData):
+class ColumnProcessingTimeseriesData(types.ParametersTimeseriesData):
     pass
 
 
