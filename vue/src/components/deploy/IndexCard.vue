@@ -1,64 +1,60 @@
 <template>
   <div class="card">
     <div class="card__content">
-      <div v-if="type == 'image_classification'">
+      <div v-if="type == 'ImageClassification'">
         <div class="card__original">
           <ImgCard :imgUrl="card.source" />
         </div>
         <div class="card__result">
-          <TextCard :style="{ width: '224px', height: '80px' }">{{ imageClassificationText }}</TextCard>
+          <TextCard :style="{ width: '224px', height: '80px' }">{{ ClassificationResult }}</TextCard>
         </div>
       </div>
-      <div v-if="type == 'text_classification'">
+      <div v-if="type == 'TextClassification'">
         <div class="card__original">
           <TextCard :style="{ width: '600px', color: '#A7BED3', height: '324px' }">{{ card.source }}</TextCard>
         </div>
-        <div v-if="type == 'audio_classification'">
-          <div class="card__original">
-            <!--        <TextCard :style="{ width: '600px', color: '#A7BED3', height: '324px' }">{{ card.source }}</TextCard>-->
-            <AudioCard :value="card.source" :update="RandId" />
-          </div>
-          <div class="card__result">
-            <TextCard :style="{ width: '600px', height: '80px' }">{{ imageClassificationText }}</TextCard>
-          </div>
+        <div class="card__result">
+          <TextCard :style="{ width: '600px', height: '80px' }">{{ ClassificationResult}}</TextCard>
         </div>
       </div>
-      <div v-if="type == 'text_segmentation'">
-        <div class="card__original">
-          <TextCard :style="{ width: '600px', color: '#A7BED3', height: '324px' }">{{ card.format }}</TextCard>
+      <div v-if="type == 'TextSegmentation'">
+        <div class="card__original segmentation__original" :style="{ height: '324px' }">
+          <scrollbar :ops="ops">
+            <TableTextSegmented
+              v-bind="{value: card.format, tags_color: {segmentationLayer}, layer: 'segmentationLayer', block_width: '598px'}"
+              :key="RandId"
+            />
+          </scrollbar>
         </div>
         <div class="card__result">
-          <TextCard :style="{ width: '600px', height: '80px' }">{{ card.format }}</TextCard>
+          <SegmentationTags
+            :style="{ width: '600px', height: '80px' }"
+            :tags="segmentationLayer"
+          />
         </div>
       </div>
-      <div v-if="type == 'audio_classification'">
+      <div v-if="type == 'AudioClassification'">
         <div class="card__original">
-          <!--        <TextCard :style="{ width: '600px', color: '#A7BED3', height: '324px' }">{{ card.source }}</TextCard>-->
           <AudioCard :value="card.source" :update="RandId" />
         </div>
         <div class="card__result">
-          <TextCard :style="{ width: '600px', height: '80px' }">{{ imageClassificationText }}</TextCard>
+          <TextCard :style="{ width: '600px', height: '80px' }">{{ ClassificationResult }}</TextCard>
         </div>
       </div>
 
-      <div v-if="type == 'image_segmentation'">
+      <div v-if="type == 'ImageSegmentation'">
         <div class="card__original">
           <ImgCard :imgUrl="card.source" />
         </div>
         <div class="card__result">
           <ImgCard :imgUrl="card.segment" />
         </div>
-        <!-- <div class="card__table" v-if="type === 'table_data_regression'"> -->
-        <!-- <Table v-bind="card" /> -->
-        <!-- </div> -->
       </div>
       <div class="card__graphic" v-if="type == 'graphic'">
         <Plotly :data="card.data" :layout="layout" :display-mode-bar="false"></Plotly>
       </div>
-      <div class="card__table" v-if="type == 'table'">
-        <Table />
-      </div>
     </div>
+    <div class="card__reload"><button class="btn-reload" @click="ReloadCard"><i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i></button></div>
   </div>
 </template>
 
@@ -66,6 +62,8 @@
 import ImgCard from './cards/ImgCard';
 import TextCard from './cards/TextCard';
 import AudioCard from './cards/AudioCard';
+import TableTextSegmented from "../training/main/prediction/components/TableTextSegmented";
+import SegmentationTags from "./cards/SegmentationTags";
 import { Plotly } from 'vue-plotly';
 import { mapGetters } from 'vuex';
 export default {
@@ -75,24 +73,33 @@ export default {
     TextCard,
     Plotly,
     AudioCard,
+    TableTextSegmented,
+    SegmentationTags
   },
-  data: () => ({}),
+  data: () => ({
+    ops: {
+      scrollPanel: {
+        scrollingX: false,
+        scrollingY: true,
+      },
+    },
+  }),
   props: {
     card: {
       type: Object,
       default: () => ({}),
     },
     index: [String, Number],
+    extra: {
+      type: Array,
+      default: () => ([]),
+    }
   },
 
   methods: {
     ReloadCard() {
       this.$emit('reload', [this.index.toString()]);
     },
-  },
-  mounted() {
-    console.log(this.card);
-    console.log(this.type);
   },
   computed: {
     ...mapGetters({
@@ -111,7 +118,17 @@ export default {
       }
       return layout;
     },
-    imageClassificationText() {
+    segmentationLayer(){
+      let layer = {}
+      for(let i in this.extra){
+        if(this.extra[i][0].includes("p")) continue;
+        let tag = this.extra[i][0].slice(1, this.extra[i][0].length-1);
+        layer[tag] = this.extra[i][2];
+      }
+      // console.log(layer);
+      return layer
+    },
+    ClassificationResult() {
       let text = this.card.data;
       let prepareText = '';
       text.sort((a, b) => (a[1] < b[1] ? 1 : -1));
@@ -121,6 +138,9 @@ export default {
       return prepareText;
     },
   },
+  // mounted() {
+  //   console.log(this.card)
+  // }
 };
 </script>
 
@@ -156,5 +176,11 @@ export default {
 }
 .card__table {
   width: 100%;
+}
+.segmentation{
+  &__original{
+    border: 1px solid #6c7883;
+    border-radius: 4px;
+  }
 }
 </style>

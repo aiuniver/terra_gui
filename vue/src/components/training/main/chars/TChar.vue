@@ -182,13 +182,14 @@ export default {
     changeBest() {
       return !this.best
         ? []
-        : this.best.map(({ x, y, mode = 'markers', label }) => {
+        : this.best.map(({ x, y, mode = 'markers', label }, i) => {
             return {
               x,
               y,
               mode,
               name: `${label} ${y[0]}`,
               marker: {
+                color: ['#1f77b4', '#ff7f0e'][i],
                 symbol: 'circle',
                 size: 10,
               },
@@ -197,7 +198,7 @@ export default {
     },
     changePlotData() {
       return this.plot_data.map(({ x, y, mode = 'lines', label }) => {
-        return { x, y, mode, name: label };
+        return { x, y, mode, name: label.replace(/[<>]/g, '') };
       });
     },
     data() {

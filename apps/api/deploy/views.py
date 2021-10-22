@@ -23,9 +23,10 @@ class ReloadAPIView(BaseAPIView):
         serializer = ReloadSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
-        request.project.deploy.data.reload(serializer.validated_data)
+        if request.project.deploy:
+            request.project.deploy.data.reload(serializer.validated_data)
         request.project.save()
-        return BaseResponseSuccess(request.project.deploy.native())
+        return BaseResponseSuccess(request.project.deploy.presets)
 
 
 class UploadAPIView(BaseAPIView):
@@ -53,7 +54,7 @@ class UploadAPIView(BaseAPIView):
                     "project": {
                         "name": request.project.name,
                     },
-                    "task": request.project.deploy.type,
+                    "task": request.project.deploy.type.demo,
                     "replace": serializer.validated_data.get("replace"),
                 }
             )

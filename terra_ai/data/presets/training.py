@@ -38,6 +38,7 @@ class Loss(str, Enum):
 class Metric(str, Enum):
     AUC = "AUC"
     Accuracy = "Accuracy"
+    BalancedRecall = "BalancedRecall"
     BinaryAccuracy = "BinaryAccuracy"
     BinaryCrossentropy = "BinaryCrossentropy"
     CategoricalAccuracy = "CategoricalAccuracy"
@@ -67,6 +68,9 @@ class Metric(str, Enum):
     # SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
     # SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
     DiceCoef = "DiceCoef"
+    UnscaledMAE = "UnscaledMAE"
+    mAP50 = "mAP50"
+    mAP95 = "mAP95"
 
 
 TasksGroups = [
@@ -90,6 +94,7 @@ TasksGroups = [
             Loss.SquaredHinge,
         ],
         "metrics": [
+            Metric.BalancedRecall,
             Metric.RecallPercent,
             Metric.CategoricalAccuracy,
             Metric.BinaryAccuracy,
@@ -127,8 +132,8 @@ TasksGroups = [
         "losses": [
             Loss.CategoricalCrossentropy,
             Loss.BinaryCrossentropy,
-            Loss.CategoricalHinge,
             Loss.MeanAbsoluteError,
+            Loss.CategoricalHinge,
             Loss.MeanSquaredError,
             Loss.CosineSimilarity,
             Loss.Hinge,
@@ -187,7 +192,7 @@ TasksGroups = [
             Loss.SquaredHinge,
         ],
         "metrics": [
-            # Metric.Accuracy,
+            Metric.UnscaledMAE,
             Metric.MeanAbsoluteError,
             Metric.MeanSquaredError,
             Metric.MeanAbsolutePercentageError,
@@ -229,8 +234,13 @@ TasksGroups = [
     },
     {
         "task": Task.ObjectDetection,
-        "losses": [Loss.YoloLoss],
-        "metrics": [Metric.AUC, Metric.Accuracy],
+        "losses": [
+            Loss.YoloLoss
+        ],
+        "metrics": [
+            Metric.mAP50,
+            Metric.mAP95
+        ],
     },
     {
         "task": Task.TimeseriesTrend,
@@ -286,10 +296,10 @@ TasksGroups = [
     {
         "task": Task.TextSegmentation,
         "losses": [
-            Loss.CategoricalCrossentropy,
             Loss.BinaryCrossentropy,
-            Loss.CategoricalHinge,
             Loss.MeanAbsoluteError,
+            Loss.CategoricalCrossentropy,
+            Loss.CategoricalHinge,
             Loss.MeanSquaredError,
             Loss.CosineSimilarity,
             Loss.Hinge,
@@ -334,4 +344,31 @@ TasksGroups = [
             # Metric.SparseTopKCategoricalAccuracy,
         ],
     },
+    {
+        "task": Task.Dataframe,
+        "losses": [
+            Loss.MeanSquaredError,
+            Loss.MeanAbsoluteError,
+            Loss.MeanAbsolutePercentageError,
+            Loss.MeanSquaredLogarithmicError,
+            Loss.CosineSimilarity,
+            Loss.Hinge,
+            Loss.Huber,
+            Loss.KLDivergence,
+            Loss.LogCosh,
+            Loss.SquaredHinge,
+        ],
+        "metrics": [
+            Metric.MeanAbsoluteError,
+            Metric.MeanAbsolutePercentageError,
+            Metric.MeanSquaredError,
+            Metric.MeanSquaredLogarithmicError,
+            Metric.RootMeanSquaredError,
+            Metric.CosineSimilarity,
+            Metric.Hinge,
+            Metric.KLDivergence,
+            Metric.LogCoshError,
+            Metric.SquaredHinge,
+        ],
+    }
 ]

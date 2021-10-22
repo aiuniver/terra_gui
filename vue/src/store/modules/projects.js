@@ -5,21 +5,21 @@ export default {
     user: {},
   }),
   mutations: {
-    SET_PROJECT(state, value) {
+    SET_PROJECT (state, value) {
       state.project = { ...state.project, ...value };
     },
-    SET_USER(state, value) {
+    SET_USER (state, value) {
       state.user = { ...state.user, ...value }
     },
   },
   actions: {
-    async get({ dispatch, commit }) {
+    async get ({ dispatch, commit }) {
       const res = await dispatch("axios", { url: "/config/" }, { root: true });
       if (!res) {
         return;
       }
       const { data } = res;
-      console.log(data);
+      // console.log(data);
       if (!data) {
         return;
       }
@@ -33,54 +33,56 @@ export default {
       commit("datasets/SET_CREATION", creation, { root: true });
       commit("trainings/SET_PARAMS", base, { root: true });
       commit("trainings/SET_CONFIG", training, { root: true });
-      commit("deploy/SET_DEPLOY", deploy, { root: true });
-      commit("deploy/SET_CARDS", deploy.data, { root: true });
-      commit("deploy/SET_DEPLOY_TYPE", deploy.type, { root: true });
-      if(training?.result) {
+      if (deploy) {
+        commit("deploy/SET_DEPLOY", deploy.data, { root: true });
+        commit("deploy/SET_CARDS", deploy.data.data, { root: true });
+        commit("deploy/SET_DEPLOY_TYPE", deploy.type, { root: true });
+      }
+      if (training?.result) {
         commit("trainings/SET_TRAIN", training.result, { root: true });
       }
       return data
     },
-    async saveNameProject({ dispatch }, name) {
+    async saveNameProject ({ dispatch }, name) {
       const res = { url: "/project/name/", data: name };
       const { data } = await dispatch("axios", res, { root: true });
       if (!data) {
         return;
       }
     },
-    setProject({ commit }, data) {
+    setProject ({ commit }, data) {
       commit("SET_PROJECT", data);
     },
-    async createProject({ dispatch }, data) {
+    async createProject ({ dispatch }, data) {
       localStorage.clear();
       await dispatch('trainings/resetAllTraining', {}, { root: true });
       const res = await dispatch("axios", { url: "/project/create/", data }, { root: true });
       document.location.href = "/"; // "Миша, все хня, давай по новой" 
       return res
     },
-    async loadProject({ dispatch }, data) {
+    async loadProject ({ dispatch }, data) {
       const res = await dispatch("axios", { url: "/project/load/", data }, { root: true });
       document.location.href = "/"; // "Миша, все хня, давай по новой, снова" 
       return res
     },
-    async removeProject({ dispatch }, data) {
+    async removeProject ({ dispatch }, data) {
       return await dispatch("axios", { url: "/project/delete/", data }, { root: true });
     },
-    async infoProject({ dispatch }, data) {
+    async infoProject ({ dispatch }, data) {
       return await dispatch("axios", { url: "/project/info/", data }, { root: true });
     },
-    async saveProject({ dispatch }, data) {
+    async saveProject ({ dispatch }, data) {
       return await dispatch("axios", { url: "/project/save/", data }, { root: true });
     },
   },
   getters: {
-    getProject({ project }) {
+    getProject ({ project }) {
       return project;
     },
     getProjectData: ({ project }) => key => {
       return project[key];
     },
-    getUser({ user }) {
+    getUser ({ user }) {
       return user;
     },
   },

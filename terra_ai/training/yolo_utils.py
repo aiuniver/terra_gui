@@ -169,7 +169,10 @@ def postprocess_boxes(pred_bbox, original_image, input_size, score_threshold):
     pred_coor = np.concatenate([pred_xywh[:, :2] - pred_xywh[:, 2:] * 0.5,
                                 pred_xywh[:, :2] + pred_xywh[:, 2:] * 0.5], axis=-1)
     # 2. (xmin, ymin, xmax, ymax) -> (xmin_org, ymin_org, xmax_org, ymax_org)
-    org_h, org_w = original_image.shape[:2]
+    if isinstance(original_image, tuple):
+        org_h, org_w = input_size, input_size
+    else:
+        org_h, org_w = original_image.shape[:2]
     resize_ratio = min(input_size / org_w, input_size / org_h)
 
     dw = (input_size - resize_ratio * org_w) / 2
@@ -406,18 +409,10 @@ def create_yolo(model, input_size=416, channels=3, training=False, classes=None)
     num_class = len(classes)
     input_layer = keras.layers.Input([input_size, input_size, channels])
 
-    # if TRAIN_YOLO_TINY:
-    #     if YOLO_TYPE == "yolov4":
-    #         conv_tensors = YOLOv4_tiny(input_layer, NUM_CLASS)
-    #     if YOLO_TYPE == "yolov3":
-    #         conv_tensors = YOLOv3_tiny(input_layer, NUM_CLASS)
-    # else:
-    #     if YOLO_TYPE == "yolov4":
-    #         conv_tensors = YOLOv4(input_layer, NUM_CLASS)
-    #     if YOLO_TYPE == "yolov3":
-    #         conv_tensors = YOLOv3(input_layer, NUM_CLASS)
     conv_tensors = model(input_layer)
-    print('conv_tensors', conv_tensors.reverse())
+    if conv_tensors[0].shape[1] == 13:
+        conv_tensors.reverse()
+    # print('conv_tensors', conv_tensors.reverse())
     output_tensors = []
     for i, conv_tensor in enumerate(conv_tensors):
         pred_tensor = decode(conv_tensor, num_class, i)
@@ -689,11 +684,13 @@ def voc_ap(rec, prec):
         ap += ((mrec[i]-mrec[i-1])*mpre[i])
     return ap, mrec, mpre
 
-def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=0.50, TEST_INPUT_SIZE=416, TRAIN_CLASSES=[]):
+def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_SIZE=416, TRAIN_CLASSES=None):
+    if TRAIN_CLASSES is None:
+        TRAIN_CLASSES = []
+    if iou_threshold is None:
+        iou_threshold = [0.50, 0.95]
     MINOVERLAP = 0.5  # default value (defined in the PASCAL VOC2012 challenge)
     NUM_CLASS = TRAIN_CLASSES
-
-    print(f'\ncalculating mAP{int(iou_threshold * 100)}...\n')
 
     gt_counter_per_class = {}
     id_ground_truth = {}
@@ -730,61 +727,64 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=0.50, TEST_INPUT_
     # for cls in NUM_CLASS:
     #     if gt_counter_per_class.get(cls) is None:
     #         gt_counter_per_class[cls] = 1
-
     gt_classes = list(gt_counter_per_class.keys())
+
     # sort the classes alphabetically
     gt_classes = sorted(gt_classes)
     n_classes = len(gt_classes)
 
     times = []
-    json_pred = [[] for i in range(n_classes)]
-    count = 0
-    class_predictions = {}
+    predict = []
+    original_image_shape = []
     for inp, out, serv in dataset.dataset['val'].batch(1).take(-1):
 
         original_image = inp['1'].numpy()[0]
         image_data = inp['1'].numpy()
-
+        original_image_shape.append(original_image.shape)
         t1 = time.time()
         pred_bbox = Yolo.predict(image_data)
         t2 = time.time()
-
         times.append(t2 - t1)
 
         pred_bbox = [tf.reshape(x, (-1, tf.shape(x)[-1])) for x in pred_bbox]
         pred_bbox = tf.concat(pred_bbox, axis=0)
+        predict.append(pred_bbox)
 
-        bboxes = postprocess_boxes(pred_bbox, original_image, TEST_INPUT_SIZE, score_threshold)
-        bboxes = nms(bboxes, iou_threshold, method='nms')
-
-        for bbox in bboxes:
-            coor = np.array(bbox[:4], dtype=np.int32)
-            score = bbox[4]
-            class_ind = int(bbox[5])
-            class_name = NUM_CLASS[class_ind]
-            score = '%.4f' % score
-            xmin, ymin, xmax, ymax = list(map(str, coor))
-            bbox = xmin + " " + ymin + " " + xmax + " " + ymax
-            try:
-                json_pred[gt_classes.index(class_name)].append(
-                    {"confidence": str(score), "file_id": str(count), "bbox": str(bbox)})
-            except Exception:
-                continue
-
-        count += 1
     ms = sum(times) / len(times) * 1000
     fps = 1000 / ms
 
-    for class_name in gt_classes:
-        json_pred[gt_classes.index(class_name)].sort(key=lambda x: float(x['confidence']), reverse=True)
-        class_predictions[class_name] = json_pred[gt_classes.index(class_name)]
-
-    # Calculate the AP for each class
-    sum_AP = 0.0
     ap_dictionary = {}
-    # open file to store the results
-    with open("C:\PycharmProjects/terra_gui/test_example/results.txt", 'w') as results_file:
-        results_file.write("# AP and precision/recall per class\n")
+    for i_iou in iou_threshold:
+
+        print(f'\ncalculating mAP{int(i_iou * 100)}...\n')
+        json_pred = [[] for i in range(n_classes)]
+        class_predictions = {}
+        len_bbox = 0
+        for i_image, pred_bbox in enumerate(predict):
+
+            bboxes = postprocess_boxes(pred_bbox, original_image_shape[i_image], TEST_INPUT_SIZE, score_threshold)
+            bboxes = nms(bboxes, i_iou, method='nms')
+            len_bbox += len(bboxes)
+            for bbox in bboxes:
+                coor = np.array(bbox[:4], dtype=np.int32)
+                score = bbox[4]
+                class_ind = int(bbox[5])
+                class_name = NUM_CLASS[class_ind]
+                score = '%.4f' % score
+                xmin, ymin, xmax, ymax = list(map(str, coor))
+                bbox = xmin + " " + ymin + " " + xmax + " " + ymax
+                try:
+                    json_pred[gt_classes.index(class_name)].append(
+                        {"confidence": str(score), "file_id": str(i_image), "bbox": str(bbox)})
+                except Exception:
+                    continue
+        for class_name in gt_classes:
+            json_pred[gt_classes.index(class_name)].sort(key=lambda x: float(x['confidence']), reverse=True)
+            class_predictions[class_name] = json_pred[gt_classes.index(class_name)]
+
+        # Calculate the AP for each class
+        sum_AP = 0.0
+
         count_true_positives = {}
         for class_index, class_name in enumerate(gt_classes):
             count_true_positives[class_name] = 0
@@ -843,38 +843,20 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=0.50, TEST_INPUT_
             for idx, val in enumerate(tp):
                 tp[idx] += cumsum
                 cumsum += val
-            # print(tp)
             rec = tp[:]
             for idx, val in enumerate(tp):
                 rec[idx] = float(tp[idx]) / gt_counter_per_class[class_name]
-            # print(rec)
             prec = tp[:]
             for idx, val in enumerate(tp):
                 prec[idx] = float(tp[idx]) / (fp[idx] + tp[idx])
-            # print(prec)
 
             ap, mrec, mprec = voc_ap(rec, prec)
             sum_AP += ap
-            text = "{0:.3f}%".format(
-                ap * 100) + " = " + class_name + " AP  "  # class_name + " AP = {0:.2f}%".format(ap*100)
+            ap_dictionary[f"val_mAP{int(i_iou * 100)}_class_{class_name}"] = ap
+            mAP = sum_AP / n_classes
 
-            rounded_prec = ['%.3f' % elem for elem in prec]
-            rounded_rec = ['%.3f' % elem for elem in rec]
-            # Write to results.txt
-            results_file.write(
-                text + "\n Precision: " + str(rounded_prec) + "\n Recall   :" + str(rounded_rec) + "\n\n")
+        ap_dictionary[f"val_mAP{int(i_iou * 100)}"] = mAP * 100
+    ap_dictionary["val_fps"] = fps
 
-            # print(text)
-            ap_dictionary["val_AP_" + str(class_name)] = ap
-
-        results_file.write("\n# mAP of all classes\n")
-        mAP = sum_AP / n_classes
-
-        text = "mAP = {:.3f}%, {:.2f} FPS".format(mAP * 100, fps)
-        results_file.write(text + "\n")
-        ap_dictionary["val_mAP" + str(int(iou_threshold * 100))] = mAP * 100
-        ap_dictionary["val_fps"] = fps
-        print(ap_dictionary)
-
-        return ap_dictionary
+    return predict, ap_dictionary
 

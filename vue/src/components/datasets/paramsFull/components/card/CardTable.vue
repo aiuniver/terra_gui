@@ -13,9 +13,11 @@
           :style="getColor"
           @click="select(row, $event)"
         >
-          <div v-for="(item, i) in row" class="t-table__row" :key="'item_' + i">
-            {{ item }}
-          </div>
+          <template v-for="(item, i) in row">
+            <div v-if="i <= 5" class="t-table__row" :key="'item_' + i">
+              {{ item }}
+            </div>
+          </template>
           <div class="t-table__select">
             <div class="t-table__circle" v-for="(color, i) of all(row)" :key="'all' + i" :style="color"></div>
           </div>
@@ -64,6 +66,7 @@ export default {
       return { borderColor: handler?.color || '' };
     },
     origTable() {
+      // console.log(this.table);
       return this.table.map(item => {
         item.active = this.selected.includes(item[0]);
         return item;
@@ -79,7 +82,7 @@ export default {
     },
     selected: {
       set(value) {
-        console.log(value);
+        // console.log(value);
         this.handlers = this.handlers.map(item => {
           if (item.active && item.table[this.label]) {
             item.table[this.label] = value;
@@ -89,7 +92,7 @@ export default {
       },
       get() {
         const select = this.handlers.find(item => item.active);
-        console.log(select);
+        // console.log(select);
         return select ? select.table[this.label] : [];
       },
     },

@@ -131,8 +131,8 @@ class LayerTypeProcessingClassificationChoice(str, Enum):
 class LayerObjectDetectionModelChoice(str, Enum):
     yolo = "yolo"
     ssd = "ssd"
-    fast_r_cnn = 'fast_r_cnn'
-    mask_r_cnn = 'mask_r_cnn'
+    fast_r_cnn = "fast_r_cnn"
+    mask_r_cnn = "mask_r_cnn"
 
 
 class LayerYoloChoice(str, Enum):
@@ -144,11 +144,6 @@ class LayerEncodingChoice(str, Enum):
     none = "none"
     ohe = "ohe"
     multi = "multi"
-
-
-class DatasetModelChoice(str, Enum):
-    basic = "Basic"
-    yolo = "Yolo"
 
 
 class DatasetGroupChoice(str, Enum):
@@ -170,11 +165,11 @@ class ColumnProcessingTypeChoice(str, Enum):
     Text = "Text"
     Audio = "Audio"
     Video = "Video"
-    Segmentation = "Segmentation"
+    Scaler = "Scaler"
     Classification = "Classification"
     Regression = "Regression"
+    Segmentation = "Segmentation"
     Timeseries = "Timeseries"
-    Scaler = "Scaler"
 
 
 class LayerInputTypeChoice(str, Enum):

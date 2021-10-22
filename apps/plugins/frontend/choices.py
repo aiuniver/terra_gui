@@ -250,19 +250,29 @@ class LayerTypeProcessingClassificationChoice(str, Enum):
         )
 
 
-class ColumnProcessingTypeChoice(str, Enum):
+class ColumnProcessingInputTypeChoice(str, Enum):
     Image = "Изображения"
     Text = "Текст"
     Audio = "Аудио"
     Video = "Видео"
-    Segmentation = "Сегментация"
-    Classification = "Классификация"
-    Regression = "Регрессия"
-    Timeseries = "Временные ряды"
+    Classification = "Уникальные"
     Scaler = "Скейлер"
 
     @staticmethod
     def items_tuple() -> list:
         return list(
-            map(lambda item: (item.name, item.value), ColumnProcessingTypeChoice)
+            map(lambda item: (item.name, item.value), ColumnProcessingInputTypeChoice)
+        )
+
+
+class ColumnProcessingOutputTypeChoice(str, Enum):
+    Classification = "Классификация"
+    Regression = "Регрессия"
+    Segmentation = "Сегментация"
+    Timeseries = "Временные ряды"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(
+            map(lambda item: (item.name, item.value), ColumnProcessingOutputTypeChoice)
         )

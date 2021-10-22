@@ -1,6 +1,6 @@
-import json
 import os
 import re
+import json
 import shutil
 from pathlib import Path
 from typing import Optional
@@ -10,13 +10,11 @@ from pydantic import validator, DirectoryPath, FilePath
 from transliterate import slugify
 
 from apps.plugins.frontend import defaults_data
-from apps.plugins.frontend.presets.defaults import TrainingTasksRelations
+from apps.plugins.frontend.presets.defaults.training import TrainingTasksRelations
 from apps.plugins.project import exceptions
-from terra_ai import settings as terra_settings
 from terra_ai.agent import agent_exchange
 from terra_ai.data.datasets.dataset import DatasetData
-from terra_ai.data.deploy import tasks as deploy_tasks
-from terra_ai.data.deploy.extra import TaskTypeChoice as DeployTaskTypeChoice
+from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.extra import HardwareAcceleratorData
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.modeling.layer import LayerData
@@ -36,7 +34,6 @@ from terra_ai.data.training.train import (
 from terra_ai.data.types import confilepath
 from terra_ai.training.guinn import interactive as training_interactive
 
-
 UNKNOWN_NAME = "NoName"
 DATA_PATH = {
     "base": Path(settings.TERRA_AI_DATA_PATH).absolute(),
@@ -53,17 +50,6 @@ PROJECT_PATH = {
     "modeling": Path(settings.TERRA_AI_PROJECT_PATH, "modeling").absolute(),
     "training": Path(settings.TERRA_AI_PROJECT_PATH, "training").absolute(),
     "deploy": Path(settings.TERRA_AI_PROJECT_PATH, "training", "deploy").absolute(),
-}
-
-TASKS_RELATIONS = {
-    DeployTaskTypeChoice.image_classification: "ImageClassification",
-    DeployTaskTypeChoice.image_segmentation: "ImageSegmentation",
-    DeployTaskTypeChoice.text_classification: "TextClassification",
-    DeployTaskTypeChoice.text_segmentation: "TextTextSegmentation",
-    DeployTaskTypeChoice.video_classification: "VideoClassification",
-    DeployTaskTypeChoice.audio_classification: "AudioClassification",
-    DeployTaskTypeChoice.table_data_classification: "TableDataClassification",
-    DeployTaskTypeChoice.table_data_regression: "TableDataRegression",
 }
 
 
@@ -130,23 +116,12 @@ class TrainingDetailsData(BaseMixinData):
         self.state = StateData(**training_interactive.train_states)
 
 
-class DeployDetailsData(BaseMixinData):
-    type: Optional[DeployTaskTypeChoice]
-    data: Optional[deploy_tasks.BaseCollectionList]
-    extra: Optional[deploy_tasks.BaseCollectionDict]
-
-    def dict(self, **kwargs):
-        data = super().dict(**kwargs)
-        data.update({"data": self.data, "extra": self.extra})
-        return data
-
-
 class Project(BaseMixinData):
     name: str = UNKNOWN_NAME
     dataset: Optional[DatasetData]
     model: ModelDetailsData = ModelDetailsData(**EmptyModelDetailsData)
     training: TrainingDetailsData = TrainingDetailsData()
-    deploy: DeployDetailsData = DeployDetailsData()
+    deploy: Optional[DeployData]
 
     @property
     def name_alias(self) -> str:
@@ -162,7 +137,7 @@ class Project(BaseMixinData):
         dataset: DatasetData,
         model: ModelDetailsData,
         training: TrainingDetailsData,
-        deploy: DeployDetailsData,
+        deploy: DeployData,
     ):
         self.name = name
         self.dataset = dataset
@@ -180,6 +155,12 @@ class Project(BaseMixinData):
         )
         return _data
 
+    def front(self):
+        _data = self.native()
+        if _data.get("deploy"):
+            _data.update({"deploy": self.deploy.presets})
+        return json.dumps(_data)
+
     def reset(self):
         agent_exchange("training_clear")
         shutil.rmtree(project_path.base, ignore_errors=True)
@@ -189,7 +170,7 @@ class Project(BaseMixinData):
             dataset=None,
             model=ModelDetailsData(**EmptyModelDetailsData),
             training=TrainingDetailsData(),
-            deploy=DeployDetailsData(),
+            deploy=None,
         )
         self.save()
 
@@ -206,7 +187,9 @@ class Project(BaseMixinData):
                     dataset=DatasetData(**_dataset) if _dataset else None,
                     model=ModelDetailsData(**(_model or EmptyModelDetailsData)),
                     training=TrainingDetailsData(**(_training or {})),
-                    deploy=DeployDetailsData(**(_deploy or [])),
+                    deploy=DeployData(**{"path": project_path.deploy, **_deploy})
+                    if _deploy
+                    else None,
                 )
         except Exception:
             self.reset()
@@ -215,42 +198,16 @@ class Project(BaseMixinData):
         with open(project_path.config, "w") as _config_ref:
             json.dump(json.loads(self.json()), _config_ref)
 
-    def set_deploy(self):
-        deploy_type = self.predict_deploy_type()
-        if not deploy_type:
-            self.deploy = DeployDetailsData()
-            return
-
-        _task_class = getattr(
-            deploy_tasks, TASKS_RELATIONS[deploy_type]
-        )
-        data = _task_class(
-            list(
-                map(
-                    lambda _: None,
-                    list(range(terra_settings.DEPLOY_PRESET_COUNT)),
-                )
-            ),
-            path=Path(project_path.deploy),
-        )
-        extra = deploy_tasks.BaseCollectionDict()
-
-        self.deploy = DeployDetailsData(**{"type": deploy_type, "data": data, "extra": extra})
-        self.deploy.data.reload(list(range(terra_settings.DEPLOY_PRESET_COUNT)))
-        self.deploy.data.try_init()
-
     def clear_training(self):
         project_path.clear_training()
         self.training = TrainingDetailsData()
-        self.deploy = DeployDetailsData()
-        self.set_deploy()
+        self.deploy = None
 
     def set_dataset(self, dataset: DatasetData = None, reset_model: bool = False):
         if dataset is None:
             self.dataset = None
             self.model = ModelDetailsData(**EmptyModelDetailsData)
             self.set_training()
-            self.set_deploy()
             return
         model_init = dataset.model
         self.dataset = dataset
@@ -299,7 +256,6 @@ class Project(BaseMixinData):
                 self.model.layers.append(LayerData(**layer_data))
 
         self.set_training()
-        self.set_deploy()
 
     def set_model(self, model: ModelDetailsData):
         if self.dataset:
@@ -359,6 +315,7 @@ class Project(BaseMixinData):
                 **checkpoint_data
             )
         defaults_data.update_by_model(self.model, self.training)
+        # defaults_data.training.update(self.dataset, self.training.base)
 
     def update_training_interactive(self):
         loss_graphs = []
@@ -428,17 +385,6 @@ class Project(BaseMixinData):
         else:
             self.model = ModelDetailsData(**EmptyModelDetailsData)
 
-    def predict_deploy_type(self) -> Optional[str]:
-        """Определяет тип деплоя"""
-        model = self.dataset.model if self.dataset else None
-        if not model:
-            return
-        inputs = [input.task.name for input in model.inputs]
-        outputs = [output.task.name for output in model.outputs]
-        if "Dataframe" in inputs:
-            return f"table_data_{outputs[0].lower()}"
-        return f'{inputs[0].lower()}_{outputs[0].lower()}'
-
 
 data_path = DataPathData(**DATA_PATH)
 project_path = ProjectPathData(**PROJECT_PATH)
@@ -450,6 +396,7 @@ except Exception:
     _config = {}
 
 _config.update({"hardware": agent_exchange("hardware_accelerator")})
+if _config.get("deploy"):
+    _config["deploy"].update({"path": project_path.deploy})
 project = Project(**_config)
 project.set_training()
-project.set_deploy()

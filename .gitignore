@@ -143,37 +143,8 @@ node_modules/
 desktop.ini
 /terra_ai/test short.py
 /terra_ai/test_modules/
-/terra_ai/training/test docs.py
 /terra_ai/test.py
-/terra_ai/training/test air.py
 /terra_ai/test2.py
 /test-model.py
-/terra_ai/training/test cars.py
-/terra_ai/training/test4.py
-/terra_ai/training/test mnist.py
-/terra_ai/training/test chess.py
-/terra_ai/training/test flats.py
-/terra_ai/training/test ts.py
-/terra_ai/training/test ts-class.py
-/terra_ai/modeling/test validator.py
-/terra_ai/modeling/test models.py
-/terra_ai/training/yolov3_chess.h5
-/terra_ai/modeling/val test.py
-/terra_ai/training/test hr.py
-/terra_ai/training/test load json.py
-/terra_ai/training/test save json.py
-/terra_ai/training/testing_files/test air.py
-/terra_ai/training/testing_files/test cars.py
-/terra_ai/training/testing_files/test chess.py
-/terra_ai/training/testing_files/test docs.py
-/terra_ai/training/testing_files/test flats.py
-/terra_ai/training/testing_files/test hr.py
-/terra_ai/training/testing_files/test load json.py
-/terra_ai/training/testing_files/test mnist.py
-/terra_ai/training/testing_files/test save json.py
-/terra_ai/training/testing_files/test ts.py
-/terra_ai/training/testing_files/test ts-class.py
-/terra_ai/training/testing_files/test4.py
-/terra_ai/training/testing_files/yolo_predict_test.py
-/terra_ai/training/testing_files/yolo_test_data.py
-/terra_ai/training/testing_files/yolo_testing_fit.py
+/terra_ai/training/testing_files/
+

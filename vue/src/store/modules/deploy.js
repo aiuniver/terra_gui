@@ -45,7 +45,8 @@ export default {
       },
       async ReloadCard({ commit, dispatch }, values) {
         const { data } = await dispatch('axios', { url: '/deploy/reload/', data: values }, { root: true });
-        commit("SET_BLOCK_CARDS", { value: data, id: values.id });
+        commit("SET_CARDS",  data.data.data);
+        commit("SET_DEPLOY",  data.data);
       },
     },
     getters: {
@@ -60,6 +61,7 @@ export default {
         let id = Cards;
         let crypto = require("crypto");
         id = crypto.randomBytes(20).toString('hex');
+        console.log(id)
         return id;
       }
     }

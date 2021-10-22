@@ -14,7 +14,6 @@ from apps.plugins.frontend.choices import (
     LayerScalerVideoChoice,
     LayerScalerRegressionChoice,
     LayerScalerTimeseriesChoice,
-    LayerTypeProcessingClassificationChoice,
     LayerTextModeChoice,
     LayerPrepareMethodChoice,
     LayerAudioModeChoice,
@@ -25,7 +24,8 @@ from apps.plugins.frontend.choices import (
     LayerVideoFrameModeChoice,
     LayerVideoModeChoice,
     LayerYoloVersionChoice,
-    ColumnProcessingTypeChoice,
+    ColumnProcessingInputTypeChoice,
+    ColumnProcessingOutputTypeChoice,
 )
 
 from ..fields import DirectoryPathField, DirectoryOrFilePathField
@@ -256,7 +256,10 @@ class CreateInfoSerializer(serializers.Serializer):
 
 
 class CreateColumnProcessingSerializer(serializers.Serializer):
-    type = serializers.ChoiceField(choices=ColumnProcessingTypeChoice.items_tuple())
+    type = serializers.ChoiceField(
+        choices=ColumnProcessingInputTypeChoice.items_tuple()
+        + ColumnProcessingOutputTypeChoice.items_tuple()
+    )
     parameters = serializers.DictField()
 
 

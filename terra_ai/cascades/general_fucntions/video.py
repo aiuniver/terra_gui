@@ -7,7 +7,7 @@ def main(**params):
 
     resize = change_size(params['shape'][-3:]) if 'shape' in params.keys() else None
     retype = change_type(getattr(np, params['dtype'])) if 'dtype' in params.keys() else None
-    min_max = min_max_scale(params['min_scaler'], params['max_scaler']) \
+    min_max = min_max_scale(params['dataset_path'], params['key']) \
         if params['scaler'] == 'min_max_scaler' else None
 
     def fun(path):

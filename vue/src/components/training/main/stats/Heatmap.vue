@@ -26,7 +26,7 @@
               class="t-heatmap__grid--item"
               v-for="(item, i) in values"
               :key="'col_' + i"
-              :style="{ background: getColor(item) }"
+              :style="{ background: getColor(percent[i]) }"
               :title="`${item} / ${percent[i]}%`"
             >
               {{ `${item}` }}
@@ -94,7 +94,7 @@ export default {
   },
   methods: {
     getColor(val) {
-      const light = 66 - (val / this.max) * 41;
+      const light = 66 - (val / 100) * 41;
       return `hsl(212, 100%, ${light}%)`;
     },
   },

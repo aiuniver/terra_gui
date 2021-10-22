@@ -74,7 +74,7 @@ export default {
     height() {
       let height = this.$store.getters['settings/height']({ style: false, clean: true });
       height = height - 172 - 96;
-      console.log(height);
+      // console.log(height);
       return { flex: '0 0 ' + height + 'px', height: height + 'px' };
     },
     isTable() {

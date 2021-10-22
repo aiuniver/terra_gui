@@ -17,14 +17,25 @@ scheduler.configure(executors=executors)
 
 if settings.TERRA_AI_SYNC_LOGS:
 
-    @scheduler.scheduled_job("interval", minutes=0.1)
+    @scheduler.scheduled_job("interval", minutes=1)
     def scheduler_rsync():
         date = settings.TERRA_AI_DATE_START
+        source = Path(settings.BASE_DIR, "logs.txt")
+        source.chmod(0o777)
         destination = Path(
             settings.TERRA_AI_BASE_DIR,
             "logs",
             "gui",
-            f"{settings.USER_PORT}-{date.year}{date.month}{date.day}{date.hour}{date.minute}{date.second}.log",
+            "%d-%04d%02d%02d%02d%02d%02d.log"
+            % (
+                int(settings.USER_PORT),
+                date.year,
+                date.month,
+                date.day,
+                date.hour,
+                date.minute,
+                date.second,
+            ),
         )
-        cmd = f'rsync -avzqP -e "ssh -i {Path(settings.BASE_DIR, "rsa.key")} -o StrictHostKeyChecking=no" {Path(settings.BASE_DIR, "logs.txt")} terra_log@81.90.181.251:{destination}'
+        cmd = f'rsync -avzqP -e "ssh -i {Path(settings.BASE_DIR, "rsa.key")} -o StrictHostKeyChecking=no" {source} terra_log@81.90.181.251:{destination}'
         subprocess.call(cmd, shell=True)

@@ -9,11 +9,12 @@
           </button>
         </td>
         <td>Предсказанные данные</td>
-        <td v-for="(name, i) of columns" :key="'col_' + i">{{ name }}</td>
+        <td>{{ columns[columns.length-1] }}</td>
+        <td v-for="(name, i) of columns.slice(0, columns.length-1)" :key="'col_' + i">{{ name }}</td>
       </tr>
-      <tr v-for="({ source, data }, index) of data" :key="'row_' + index" class="fixed">
+      <tr v-for="({ source, data, actual }, index) of data" :key="'row_' + index" class="fixed">
         <td class="table__td-reload">
-          <button class="td-reload__btn-reload" @click="ReloadRow">
+          <button class="td-reload__btn-reload" @click="ReloadRow(index)">
             <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
           </button>
         </td>
@@ -24,8 +25,8 @@
             <span>{{ item[1] }}</span>
           </div>
         </td>
+        <td><span class="table__result-data--actual">{{ actual }}</span></td>
         <td v-for="(data, i) of source" :key="'data_' + index + i">{{ data }}</td>
-        <td class="table__result-data">{{}}</td>
       </tr>
     </table>
   </div>
@@ -37,25 +38,26 @@ export default {
   props: {
     data: Array,
     source: Object,
-    extra: Object,
+    columns: Object,
   },
   data: () => ({}),
-  computed: {
-    columns() {
-      return this.extra?.columns ?? [];
-    },
-  },
+  // computed: {
+  //   columns() {
+  //     return this.extra?.columns ?? [];
+  //   },
+  // },
   methods: {
-    ReloadRow() {
+    ReloadRow(index) {
       console.log('RELOAD_ROW');
+      this.$emit('reload', [index.toString()]);
     },
     ReloadAll() {
-      this.$emit('ReloadAll');
+      this.$emit('reloadAll');
     },
   },
-  mounred() {
-    console.log(this.data);
-    console.log(this.extra);
+  mounted() {
+    console.log(this.data)
+    console.log(this.columns)
   },
 };
 </script>
@@ -110,6 +112,9 @@ export default {
   color: #65b9f4;
   &--left {
     text-align: left !important;
+  }
+  &--actual{
+    color: #0bbc49;
   }
 }
 .table__reload-all {
