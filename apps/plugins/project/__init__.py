@@ -232,6 +232,7 @@ class Project(BaseMixinData):
             self._redefine_model_ids()
 
         self.set_training()
+        self.save()
 
     def set_model(self, model: ModelDetailsData):
         if self.dataset:
@@ -243,6 +244,7 @@ class Project(BaseMixinData):
         self.model = model
         self._redefine_model_ids()
         self.set_training()
+        self.save()
 
     def update_training_base(self):
         outputs = []
@@ -377,3 +379,4 @@ if _config.get("deploy"):
     _config["deploy"].update({"path": project_path.deploy})
 project = Project(**_config)
 project.set_training()
+defaults_data.modeling.set_layer_datatype(project.dataset)

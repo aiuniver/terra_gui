@@ -125,12 +125,15 @@ class ModelBaseDetailsData(AliasMixinData):
             shapes += layer.shape.input
         return str(shapes)
 
-    def switch_index(self, source_id: PositiveInt, target_id: PositiveInt):
+    def switch_index(
+        self, source_id: PositiveInt, target_id: PositiveInt
+    ) -> PositiveInt:
         if source_id == target_id or not len(self.layers):
             return
         layer_target = self.layers.get(target_id)
+        _id_intermediate = None
         if layer_target:
-            self.switch_index(target_id, max(self.layers.ids) + 1)
+            _id_intermediate = self.switch_index(target_id, max(self.layers.ids) + 1)
         layer_source = self.layers.get(source_id)
         for _id in layer_source.bind.up:
             if _id is None:
@@ -149,6 +152,9 @@ class ModelBaseDetailsData(AliasMixinData):
             _binds[_binds.index(layer_source.id)] = target_id
             self.layers.get(_id).bind.up = _binds
         layer_source.id = target_id
+        if _id_intermediate:
+            self.switch_index(_id_intermediate, source_id)
+        return target_id
 
     def dict(self, **kwargs):
         data = super().dict(**kwargs)
