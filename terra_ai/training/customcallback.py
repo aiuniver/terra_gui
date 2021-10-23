@@ -1707,7 +1707,7 @@ class InteractiveCallback:
     @staticmethod
     def _evaluate_overfitting(metric_name: str, mean_log: list, metric_type: str):
         mode = loss_metric_config.get(metric_type).get(metric_name).get("mode")
-        if min(mean_log) != 0 or max(mean_log) != 0:
+        if min(mean_log) or max(mean_log) and mean_log[-1]:
             if mode == 'min' and mean_log[-1] > min(mean_log) and \
                     (mean_log[-1] - min(mean_log)) * 100 / min(mean_log) > 2:
                 return True
@@ -1722,7 +1722,7 @@ class InteractiveCallback:
     @staticmethod
     def _evaluate_underfitting(metric_name: str, train_log: float, val_log: float, metric_type: str):
         mode = loss_metric_config.get(metric_type).get(metric_name).get("mode")
-        if train_log:
+        if train_log and val_log:
             if mode == 'min' and val_log < 1 and train_log < 1 and (val_log - train_log) > 0.05:
                 return True
             elif mode == 'min' and (val_log >= 1 or train_log >= 1) \
