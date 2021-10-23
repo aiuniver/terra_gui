@@ -47,3 +47,8 @@ class CreateSerializer(serializers.Serializer):
     name = serializers.CharField()
     overwrite = serializers.BooleanField(default=False)
     preview = serializers.CharField()
+
+
+class DatatypeSerializer(serializers.Serializer):
+    source = serializers.IntegerField(min_value=1)
+    target = serializers.IntegerField(min_value=1)

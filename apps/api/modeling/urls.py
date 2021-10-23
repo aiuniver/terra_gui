@@ -15,4 +15,5 @@ urlpatterns = [
     path("create/", views.CreateAPIView.as_view(), name="create"),
     path("preview/", views.PreviewAPIView.as_view(), name="preview"),
     path("delete/", views.DeleteAPIView.as_view(), name="delete"),
+    path("datatype/", views.DatatypeAPIView.as_view(), name="datatype"),
 ]

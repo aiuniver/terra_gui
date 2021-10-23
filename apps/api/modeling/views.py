@@ -27,6 +27,7 @@ from .serializers import (
     UpdateSerializer,
     PreviewSerializer,
     CreateSerializer,
+    DatatypeSerializer,
 )
 from .utils import autocrop_image_square
 
@@ -235,3 +236,11 @@ class DeleteAPIView(BaseAPIView):
             return BaseResponseSuccess()
         except agent_exceptions.ExchangeBaseException as error:
             return BaseResponseErrorGeneral(str(error))
+
+
+class DatatypeAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        serializer = DatatypeSerializer(data=request.data)
+        if not serializer.is_valid():
+            return BaseResponseErrorFields(serializer.errors)
+        return BaseResponseSuccess(request.project.model.native())
