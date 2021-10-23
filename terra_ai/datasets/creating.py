@@ -629,7 +629,10 @@ class CreateDataset(object):
             if not creation_data.outputs.get(key).type == LayerOutputTypeChoice.ObjectDetection:
                 if 'depth' in data.parameters.keys() and data.parameters['depth']:
                     depth_flag = True
-                    output_array = self.postprocess_timeseries(output_array)
+                    if 'trend' in data.parameters.keys() and data.parameters['trend']:
+                        output_array = np.array(output_array[0])
+                    else:
+                        output_array = self.postprocess_timeseries(output_array)
                 else:
                     output_array = np.concatenate(output_array, axis=0)
                     output_array = np.expand_dims(output_array, 0)
