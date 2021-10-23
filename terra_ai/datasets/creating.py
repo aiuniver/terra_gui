@@ -496,7 +496,7 @@ class CreateDataset(object):
             else:
                 input_array = self.postprocess_timeseries(input_array)
             task, classes_colors, classes_names, encoding, num_classes = None, None, None, None, None
-            if len(self.columns[key]) == 1:
+            if len(self.columns[key]) == 1 and not self.columns_processing:
                 for c_name, data in self.columns[key].items():
                     task = data['task']
                     classes_colors = data['classes_colors']
