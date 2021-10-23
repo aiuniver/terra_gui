@@ -263,6 +263,21 @@ loss_metric_config = {
             "mode": "max",
             "module": "terra_ai.training.customlosses"
         },
+        "BalancedPrecision": {
+            "log_name": "balanced_precision",
+            "mode": "max",
+            "module": "terra_ai.training.customlosses"
+        },
+        "BalancedFScore": {
+            "log_name": "balanced_f_score",
+            "mode": "max",
+            "module": "terra_ai.training.customlosses"
+        },
+        "FScore": {
+            "log_name": "f_score",
+            "mode": "max",
+            "module": "terra_ai.training.customlosses"
+        },
         "RootMeanSquaredError": {
             "log_name": "root_mean_squared_error",
             "mode": "min",
@@ -1122,6 +1137,7 @@ class InteractiveCallback:
             return np.round(x, -int(math.floor(math.log10(abs(x))) - 2)).item()
 
     def _reformat_fit_logs(self, logs) -> dict:
+        print('\n_reformat_fit_logs', logs)
         interactive_log = {}
         if self.options.data.architecture in self.basic_architecture:
             update_logs = {}
@@ -1130,7 +1146,7 @@ class InteractiveCallback:
                     end = len(f"_{log.split('_')[-1]}")
                     log = log[:-end]
                 update_logs[re.sub("__", "_", decamelize(log))] = val
-
+            print('\n_reformat_fit_logs_update_logs', update_logs)
             for out in self.metrics.keys():
                 interactive_log[out] = {}
                 if len(self.metrics.keys()) == 1:
@@ -1159,6 +1175,7 @@ class InteractiveCallback:
                             f"{out}_{loss_metric_config.get('metric').get(metric_name).get('log_name')}")
                         val_metric = update_logs.get(
                             f"val_{out}_{loss_metric_config.get('metric').get(metric_name).get('log_name')}")
+
                     if metric_name == MetricChoice.UnscaledMAE:
                         train_metric, val_metric = UnscaledMAE().unscale_result(
                             [train_metric, val_metric], int(out), self.options.preprocessing
@@ -1362,6 +1379,7 @@ class InteractiveCallback:
                                     )
 
                     for metric_name in self.log_history.get(f"{out}").get('metrics').keys():
+                        print('\n_update_log_history', metric_name, self.current_logs.get(f"{out}").get('metrics').get(metric_name))
                         for data_type in ['train', 'val']:
                             # fill metrics
                             if data_idx or data_idx == 0:
@@ -1427,6 +1445,7 @@ class InteractiveCallback:
                                 out_task == LayerOutputTypeChoice.Segmentation or \
                                 out_task == LayerOutputTypeChoice.TextSegmentation or \
                                 out_task == LayerOutputTypeChoice.TimeseriesTrend:
+                            print('\n_update_log_history', out_task)
                             for cls in self.log_history.get(f"{out}").get('class_metrics').keys():
                                 class_metric = 0.
                                 if out_task == LayerOutputTypeChoice.Classification or \
@@ -1643,7 +1662,7 @@ class InteractiveCallback:
                     np.argmax(y_true, axis=-1) if encoding == LayerEncodingChoice.ohe else y_true,
                     np.argmax(y_pred, axis=-1)
                 )
-            elif metric_name == Metric.BalancedRecall:
+            elif metric_name in [Metric.BalancedRecall, Metric.BalancedPrecision, Metric.BalancedFScore]:
                 metric_obj.update_state(
                     y_true if encoding == LayerEncodingChoice.ohe else to_categorical(y_true, num_classes),
                     y_pred,
@@ -1654,6 +1673,7 @@ class InteractiveCallback:
                     y_true if encoding == LayerEncodingChoice.ohe else to_categorical(y_true, num_classes),
                     y_pred
                 )
+            print('\nmetric_value', metric_name, metric_obj.result().numpy())
             metric_value = float(metric_obj.result().numpy())
         elif task == LayerOutputTypeChoice.Segmentation or task == LayerOutputTypeChoice.TextSegmentation:
             if metric_name == Metric.BalancedDiceCoef:

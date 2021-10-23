@@ -2523,10 +2523,12 @@ class CreateArray(object):
                             "Предсказание": f"{inverse_y_pred[step, i].astype('float'): .2f}",
                             "Отклонение": {
                                 "value": f"{deviation: .2f} %",
-                                "color_mark": "success" if abs(deviation) < 2 else "wrong"
+                                "color_mark": "success" if abs(deviation) < CALLBACK_REGRESSION_TREASHOLD_VALUE
+                                else "wrong"
                             }
                         }
                     )
+        print('\ndata', data)
         return data
 
     @staticmethod
