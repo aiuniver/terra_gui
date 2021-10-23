@@ -2809,26 +2809,27 @@ class InteractiveCallback:
     @staticmethod
     def _get_autocorrelation_graphic(y_true, y_pred, depth=10) -> (list, list, list):
 
-        def get_auto_corr(y_true, y_pred, k):
-            l = len(y_true)
-            time_series_1 = y_pred[:-k]
-            time_series_2 = y_true[k:]
-            time_series_mean = np.mean(y_true)
-            time_series_var = np.array([i ** 2 for i in y_true - time_series_mean]).sum()
-            auto_corr = 0
-            for i in range(l - k):
-                temp = (time_series_1[i] - time_series_mean) * (time_series_2[i] - time_series_mean) / time_series_var
-                auto_corr = auto_corr + temp
-            return auto_corr
+        def get_auto_corr(a, b):
+            ma = a.mean()
+            mb = b.mean()
+            mab = (a * b).mean()
+            sa = a.std()
+            sb = b.std()
 
-        x_axis = np.arange(depth).astype('int').tolist()
+            val = 1
+            if sa > 0 and sb > 0:
+                val = (mab - ma * mb) / (sa * sb)
+            return val
 
         auto_corr_true = []
         for i in range(depth):
-            auto_corr_true.append(get_auto_corr(y_true, y_true, i + 1))
+            auto_corr_true.append(get_auto_corr(y_true[:-(i+1)], y_true[(i+1):]))
+
         auto_corr_pred = []
         for i in range(depth):
-            auto_corr_pred.append(get_auto_corr(y_true, y_pred, i + 1))
+            auto_corr_pred.append(get_auto_corr(y_true[:-(i+1)], y_pred[(i+1):]))
+
+        x_axis = np.arange(depth).astype('int').tolist()
         return x_axis, auto_corr_true, auto_corr_pred
 
     @staticmethod
