@@ -318,7 +318,6 @@ class GUINN:
         if interactive.get_states().get("status") != "addtrain":
             self._save_params_for_deploy(training_path=model_path, params=training_params)
         self.nn_cleaner(retrain=True if interactive.get_states().get("status") == "training" else False)
-
         self._set_training_params(dataset=dataset, dataset_path=dataset_path, model_path=model_path,
                                   params=training_params, training_path=training_path, initial_config=initial_config)
         self.model = self._set_model(model=gui_model)
@@ -385,7 +384,6 @@ class GUINN:
             n_repeat = 1
         else:
             n_repeat = (self.batch_size // critical_val_size) + 1
-
         try:
             self.history = self.model.fit(
                 self.dataset.dataset.get('train').shuffle(buffer_size).batch(
@@ -902,7 +900,6 @@ class FitCallback(keras.callbacks.Callback):
         self._time_first_step = time.time()
 
     def on_train_batch_end(self, batch, logs=None):
-
         if self._get_train_status() == "stopped":
             self.model.stop_training = True
             msg = f'ожидайте остановку...'
@@ -922,7 +919,6 @@ class FitCallback(keras.callbacks.Callback):
             still_time = self.update_progress(self.num_batches * self.still_epochs,
                                               self.batch, self._start_time)
             self.batch += 1
-
             if interactive.urgent_predict:
                 upred = self._get_predict()
                 train_batch_data = interactive.update_state(y_pred=upred)
