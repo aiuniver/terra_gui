@@ -46,6 +46,21 @@ from terra_ai.utils import camelize, decamelize
 interactive = InteractiveCallback()
 
 
+class MyCallback(tf.keras.callbacks.Callback):
+    def __init__(self, dataset, yolo_pred, inp, image_path):
+        self.dataset = dataset
+        self.yolo_pred = yolo_pred
+        self.inp = inp
+        self.image_path = os.path.join(image_path, 'chess_{}.jpg')
+
+    def on_epoch_end(self, epoch, logs=None):
+        output_path = self.image_path.format(epoch)
+        detect_image(Yolo=self.yolo_pred, original_image=self.inp['1'].numpy()[0], output_path=output_path,
+                     CLASSES=self.dataset.data.outputs.get(2).classes_names)
+        pred, mAP = get_mAP(self.yolo_pred, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
+                            TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names)
+
+
 class GUINN:
     """
     GUINN: class, for train model
@@ -70,6 +85,7 @@ class GUINN:
         self.optimizer = None
         self.loss: dict = {}
         self.metrics: dict = {}
+        self.yolo_pred = None
 
         self.batch_size = 128
         self.epochs = 5
@@ -165,10 +181,16 @@ class GUINN:
                        checkpoint: dict, save_model_path: str) -> None:
         progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков...'})
         retrain_epochs = self.sum_epoch if interactive.get_states().get("status") == "addtrain" else self.epochs
-        callback = FitCallback(dataset=dataset, dataset_data=dataset_data, checkpoint_config=checkpoint,
-                               batch_size=batch_size, epochs=epochs, retrain_epochs=retrain_epochs,
-                               save_model_path=save_model_path, model_name=self.nn_name,
-                               dataset_path=dataset_path, deploy_type=self.deploy_type)
+        if dataset_data.architecture in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]:
+            inp, out, serv = self.dataset.dataset['train'].batch(2).take(22)
+            print(inp)
+            callback = MyCallback(dataset=dataset, yolo_pred=self.yolo_pred,
+                                  inp=inp, image_path=os.path.join(self.training_path, "deploy"))
+        else:
+            callback = FitCallback(dataset=dataset, dataset_data=dataset_data, checkpoint_config=checkpoint,
+                                   batch_size=batch_size, epochs=epochs, retrain_epochs=retrain_epochs,
+                                   save_model_path=save_model_path, model_name=self.nn_name,
+                                   dataset_path=dataset_path, deploy_type=self.deploy_type)
         self.callbacks = [callback]
         # checkpoint.update([('filepath', 'test_model.h5')])
         # self.callbacks.append(keras.callbacks.ModelCheckpoint(**checkpoint))
@@ -335,11 +357,11 @@ class GUINN:
         self.model = self._set_model(model=gui_model)
         if interactive.get_states().get("status") == "training":
             self.save_model()
-        if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.ObjectDetection:
-            self.yolo_model_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
-        else:
-            self.base_model_fit(params=training_params, dataset=self.dataset, dataset_data=dataset,
-                                verbose=0, save_model_path=model_path, dataset_path=dataset_path)
+        # if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.ObjectDetection:
+        #     self.yolo_model_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
+        # else:
+        self.base_model_fit(params=training_params, dataset=self.dataset, dataset_data=dataset,
+                            verbose=0, save_model_path=model_path, dataset_path=dataset_path)
         return {"dataset": self.dataset, "metrics": self.metrics, "losses": self.loss}
 
     def nn_cleaner(self, retrain: bool = False) -> None:
@@ -373,12 +395,24 @@ class GUINN:
     @progress.threading
     def base_model_fit(self, params: TrainData, dataset: PrepareDataset, dataset_path: str,
                        dataset_data: DatasetData, save_model_path: str, verbose=0) -> None:
+        yolo_arch = True if dataset_data.architecture in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4] else False
+
         threading.enumerate()[-1].setName("current_train")
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели ...'})
-        self.model.compile(loss=self.loss,
-                           optimizer=self.optimizer,
-                           metrics=self.metrics
-                           )
+        if yolo_arch:
+            yolo = create_yolo(self.model, input_size=416, channels=3, training=True,
+                               classes=self.dataset.data.outputs.get(2).classes_names)
+            model_yolo = CustomModelYolo(yolo, self.dataset, self.dataset.data.outputs.get(2).classes_names,
+                                         self.epochs, self.batch_size)
+            model_yolo.compile(optimizer=self.optimizer,
+                               loss=compute_loss)
+            self.yolo_pred = create_yolo(self.model, input_size=416, channels=3, training=False,
+                                    classes=self.dataset.data.outputs.get(2).classes_names)
+        else:
+            self.model.compile(loss=self.loss,
+                               optimizer=self.optimizer,
+                               metrics=self.metrics
+                               )
         # self.model.load_weight(os.path.join(self.training_path, self.nn_name))
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели выполнена'})
         self._set_callbacks(dataset=dataset, dataset_data=dataset_data, batch_size=params.batch,
@@ -409,6 +443,8 @@ class GUINN:
                 verbose=verbose,
                 callbacks=self.callbacks
             )
+            if yolo_arch:
+                self.model.save_weights(os.path.join(self.training_path, 'yolo_last.h5'))
         except Exception as error:
             self._check_interactive_status()
             progress.pool(self.progress_name, error=terra_exception(error).__str__(), finished=True)
@@ -451,13 +487,14 @@ class GUINN:
                                 classes=self.dataset.data.outputs.get(2).classes_names)
 
         class MyCallback(tf.keras.callbacks.Callback):
-            def __init__(self, dataset, yolo_pred, inp):
+            def __init__(self, dataset, yolo_pred, inp, image_path):
                 self.dataset = dataset
                 self.yolo_pred = yolo_pred
                 self.inp = inp
+                self.image_path = os.path.join(image_path, 'chess_{}.jpg')
 
             def on_epoch_end(self, epoch, logs=None):
-                output_path = 'C:\PycharmProjects/terra_gui/test_example/chess_{}.jpg'.format(epoch)
+                output_path = self.image_path.format(epoch)
                 detect_image(Yolo=self.yolo_pred, original_image=inp['1'].numpy()[0], output_path=output_path,
                              CLASSES=self.dataset.data.outputs.get(2).classes_names)
                 pred, mAP = get_mAP(self.yolo_pred, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
