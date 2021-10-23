@@ -273,3 +273,28 @@ def class_counter(y_array, classes_names: list, ohe=True):
         class_dict[classes_names[y]] += 1
     return class_dict
 
+
+def get_autocorrelation_graphic(y_true, y_pred, depth=10) -> (list, list, list):
+
+    def get_auto_corr(a, b):
+        ma = a.mean()
+        mb = b.mean()
+        mab = (a * b).mean()
+        sa = a.std()
+        sb = b.std()
+
+        val = 1
+        if sa > 0 and sb > 0:
+            val = (mab - ma * mb) / (sa * sb)
+        return val
+
+    auto_corr_true = []
+    for i in range(depth):
+        auto_corr_true.append(get_auto_corr(y_true[:-(i+1)], y_true[(i+1):]))
+
+    auto_corr_pred = []
+    for i in range(depth):
+        auto_corr_pred.append(get_auto_corr(y_true[:-(i+1)], y_pred[(i+1):]))
+
+    x_axis = np.arange(depth).astype('int').tolist()
+    return x_axis, auto_corr_true, auto_corr_pred

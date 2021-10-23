@@ -1707,7 +1707,7 @@ class InteractiveCallback:
     @staticmethod
     def _evaluate_overfitting(metric_name: str, mean_log: list, metric_type: str):
         mode = loss_metric_config.get(metric_type).get(metric_name).get("mode")
-        if min(mean_log) != 0 or max(mean_log) != 0:
+        if min(mean_log) or max(mean_log) and mean_log[-1]:
             if mode == 'min' and mean_log[-1] > min(mean_log) and \
                     (mean_log[-1] - min(mean_log)) * 100 / min(mean_log) > 2:
                 return True
@@ -1722,7 +1722,7 @@ class InteractiveCallback:
     @staticmethod
     def _evaluate_underfitting(metric_name: str, train_log: float, val_log: float, metric_type: str):
         mode = loss_metric_config.get(metric_type).get(metric_name).get("mode")
-        if train_log:
+        if train_log and val_log:
             if mode == 'min' and val_log < 1 and train_log < 1 and (val_log - train_log) > 0.05:
                 return True
             elif mode == 'min' and (val_log >= 1 or train_log >= 1) \
@@ -2809,26 +2809,27 @@ class InteractiveCallback:
     @staticmethod
     def _get_autocorrelation_graphic(y_true, y_pred, depth=10) -> (list, list, list):
 
-        def get_auto_corr(y_true, y_pred, k):
-            l = len(y_true)
-            time_series_1 = y_pred[:-k]
-            time_series_2 = y_true[k:]
-            time_series_mean = np.mean(y_true)
-            time_series_var = np.array([i ** 2 for i in y_true - time_series_mean]).sum()
-            auto_corr = 0
-            for i in range(l - k):
-                temp = (time_series_1[i] - time_series_mean) * (time_series_2[i] - time_series_mean) / time_series_var
-                auto_corr = auto_corr + temp
-            return auto_corr
+        def get_auto_corr(a, b):
+            ma = a.mean()
+            mb = b.mean()
+            mab = (a * b).mean()
+            sa = a.std()
+            sb = b.std()
 
-        x_axis = np.arange(depth).astype('int').tolist()
+            val = 1
+            if sa > 0 and sb > 0:
+                val = (mab - ma * mb) / (sa * sb)
+            return val
 
         auto_corr_true = []
         for i in range(depth):
-            auto_corr_true.append(get_auto_corr(y_true, y_true, i + 1))
+            auto_corr_true.append(get_auto_corr(y_true[:-(i+1)], y_true[(i+1):]))
+
         auto_corr_pred = []
         for i in range(depth):
-            auto_corr_pred.append(get_auto_corr(y_true, y_pred, i + 1))
+            auto_corr_pred.append(get_auto_corr(y_true[:-(i+1)], y_pred[(i+1):]))
+
+        x_axis = np.arange(depth).astype('int').tolist()
         return x_axis, auto_corr_true, auto_corr_pred
 
     @staticmethod

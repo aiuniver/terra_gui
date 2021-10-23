@@ -350,11 +350,12 @@ class UnscaledMAE(tf.keras.metrics.MeanAbsoluteError):
 
     @staticmethod
     def unscale_result(mae_result, output: int, dataset: CreatePreprocessing):
-        result = np.array(mae_result).reshape(-1, 1)
+        result = np.expand_dims(mae_result, axis=-1)
         preset = {output: {}}
         preprocess_dict = dataset.preprocessing.get(output)
         for i, col in enumerate(preprocess_dict.keys()):
             preset[output][col] = result[:, i:i + 1]
+            break
         unscale = np.array(list(dataset.inverse_data(preset)[output].values()))
         try:
             return unscale.item()

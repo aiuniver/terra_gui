@@ -40,10 +40,6 @@ export default {
           y: el.y,
           mode: 'lines',
           name: el.label,
-          line: {
-            width: 3,
-            color: '#89D764',
-          },
         };
       });
     },
