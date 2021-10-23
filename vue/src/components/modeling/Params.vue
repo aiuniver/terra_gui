@@ -21,9 +21,9 @@
             :disabled="isBlock || isInput"
             @change="changeType"
           />
-          <template v-for="({ name, label, parse, list, value }, i) of datatypes">
+          <template v-for="({ name, label, parse, list }, i) of datatypes">
             <t-field :label="label" :key="'datatype' + i">
-              <t-select-new :value="value"  :list="list" :parse="parse" :name="name" @change="changeId({ ...$event, id: block.id })"/>
+              <t-select-new :value="block.id"  :list="list" :parse="parse" :name="name" @change="changeId({ ...$event, id: block.id })"/>
             </t-field>
           </template>
         </div>
