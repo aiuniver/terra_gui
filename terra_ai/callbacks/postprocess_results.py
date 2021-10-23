@@ -1018,9 +1018,9 @@ class PostprocessResults:
                 classes_names[name] = options.classes_names[i]
 
         if return_mode == 'deploy':
-            initial_text = dataframe.iat[example_id, 0]
+            initinal_text = dataframe.iat[example_id, 0]
             text_segmentation = text_colorization(
-                text=initial_text,
+                text=initinal_text,
                 label_array=pred_array,
                 tag_list=dataset_tags,
                 class_names=classes_names,
@@ -1032,15 +1032,10 @@ class PostprocessResults:
                 data.append(
                     (tag, classes_names[tag], colors[tag])
                 )
-            return initial_text, text_segmentation, data
+            return initinal_text, text_segmentation, data
 
         if return_mode == 'callback':
-            data = {
-                "y_true": {},
-                "y_pred": {},
-                "tags_color": {},
-                "stat": {}
-            }
+            data = {"y_true": {}, "y_pred": {}, "tags_color": {}, "stat": {}}
             text_for_preparation = dataframe.iat[example_id, 0]
             true_text_segmentation = text_colorization(
                 text=text_for_preparation,
@@ -1052,13 +1047,7 @@ class PostprocessResults:
 
             data["y_true"] = {
                 "type": "segmented_text",
-                "data": [
-                    {
-                        "title": "Текст",
-                        "value": true_text_segmentation,
-                        "color_mark": None
-                    }
-                ]
+                "data": [{"title": "Текст", "value": true_text_segmentation, "color_mark": None}]
             }
             pred_text_segmentation = text_colorization(
                 text=text_for_preparation,
@@ -1069,18 +1058,13 @@ class PostprocessResults:
             )
             data["y_pred"] = {
                 "type": "segmented_text",
-                "data": [
-                    {
-                        "title": "Текст",
-                        "value": pred_text_segmentation,
-                        "color_mark": None
-                    }
-                ]
+                "data": [{"title": "Текст", "value": pred_text_segmentation, "color_mark": None}]
             }
             colors_ = {}
             for key, val in colors.items():
                 colors_[key[1:-1]] = val
             data["tags_color"] = colors_
+
             if show_stat:
                 data["stat"] = {
                     "type": "str",
@@ -1092,41 +1076,78 @@ class PostprocessResults:
                 mean_val = 0
                 for idx, cls in enumerate(options.classes_names):
                     if np.sum(y_true[:, idx]) == 0 and np.sum(y_pred[:, idx]) == 0:
-                        data["stat"]["data"].append(
-                            {
-                                'title': cls,
-                                'value': "-",
-                                'color_mark': None
-                            }
-                        )
+                        data["stat"]["data"].append({'title': cls, 'value': "-", 'color_mark': None})
+                    elif np.sum(y_true[:, idx]) == 0:
+                        data["stat"]["data"].append({'title': cls, 'value': "0.0%", 'color_mark': 'wrong'})
+                        count += 1
                     else:
-                        dice_val = np.round(
-                            dice_coef(y_true[:, idx], y_pred[:, idx], batch_mode=False) * 100, 1)
+                        class_recall = np.sum(y_true[:, idx] * y_pred[:, idx]) * 100 / np.sum(y_true[:, idx])
                         data["stat"]["data"].append(
                             {
                                 'title': cls,
-                                'value': f"{dice_val} %",
-                                'color_mark': 'success' if dice_val >= 90 else 'wrong'
+                                'value': f"{np.round(class_recall, 1)} %",
+                                'color_mark': 'success' if class_recall >= 90 else 'wrong'
                             }
                         )
                         count += 1
-                        mean_val += dice_val
+                        mean_val += class_recall
                 if count and mean_val / count >= 90:
                     mean_color_mark = "success"
+                    mean_stat = f"{round(mean_val / count, 1)}%"
                 elif count and mean_val / count < 90:
                     mean_color_mark = "wrong"
+                    mean_stat = f"{round(mean_val / count, 2)}%"
                 else:
                     mean_color_mark = None
+                    mean_stat = '-'
                 data["stat"]["data"].insert(
-                    0,
-                    {
-                        'title': "Средняя точность",
-                        'value': f"{round(mean_val / count, 2)}%" if count else "-",
-                        'color_mark': mean_color_mark
-                    }
+                    0, {'title': "Средняя точность", 'value': mean_stat, 'color_mark': mean_color_mark}
                 )
             return data
 
+    @staticmethod
+    def postprocess_regression(
+            column_names: list,
+            inverse_y_true: np.ndarray,
+            inverse_y_pred: np.ndarray,
+            show_stat: bool = False,
+            return_mode='deploy',
+    ):
+        data = {"y_true": {"type": "str", "data": []}}
+        if return_mode == 'deploy':
+            source = []
+            return source
+        else:
+            for i, name in enumerate(column_names):
+                data["y_true"]["data"].append(
+                    {"title": name.split('_', 1)[-1], "value": f"{inverse_y_true[i]: .2f}", "color_mark": None}
+                )
+            deviation = np.abs((inverse_y_pred - inverse_y_true) * 100 / inverse_y_true)
+            data["y_pred"] = {
+                "type": "str",
+                "data": []
+            }
+            for i, name in enumerate(column_names):
+                color_mark = 'success' if deviation[i] < 2 else "wrong"
+                data["y_pred"]["data"].append(
+                    {
+                        "title": name.split('_', 1)[-1],
+                        "value": f"{inverse_y_pred[i]: .2f}",
+                        "color_mark": color_mark
+                    }
+                )
+            if show_stat:
+                data["stat"] = {"type": "str", "data": []}
+                for i, name in enumerate(column_names):
+                    color_mark = 'success' if deviation[i] < 2 else "wrong"
+                    data["stat"]["data"].append(
+                        {
+                            'title': f"Отклонение - «{name.split('_', 1)[-1]}»",
+                            'value': f"{np.round(deviation[i], 2)} %",
+                            'color_mark': color_mark
+                        }
+                    )
+            return data
     @staticmethod
     def postprocess_regression(
             column_names: list,
