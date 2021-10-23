@@ -2441,6 +2441,7 @@ class CreateArray(object):
             templates: list = None,
             max_lenth: int = 50
     ):
+
         """
         real_x = self.inverse_x_val.get(f"{input}")[example_idx]
         inverse_y_true = self.inverse_y_true.get("val").get(output_id)[example_idx]
@@ -2448,6 +2449,7 @@ class CreateArray(object):
         depth = self.inverse_y_true.get("val").get(output_id)[example_idx].shape[-1]
         templates = [self._fill_graph_plot_data, self._fill_graph_front_structure]
         """
+        # try:
         data = {
             "y_true": {},
             "y_pred": {},
@@ -2528,7 +2530,6 @@ class CreateArray(object):
                             }
                         }
                     )
-        print('\ndata', data)
         return data
 
     @staticmethod

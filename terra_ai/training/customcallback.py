@@ -1137,7 +1137,6 @@ class InteractiveCallback:
             return np.round(x, -int(math.floor(math.log10(abs(x))) - 2)).item()
 
     def _reformat_fit_logs(self, logs) -> dict:
-        print('\n_reformat_fit_logs', logs)
         interactive_log = {}
         if self.options.data.architecture in self.basic_architecture:
             update_logs = {}
@@ -1146,7 +1145,6 @@ class InteractiveCallback:
                     end = len(f"_{log.split('_')[-1]}")
                     log = log[:-end]
                 update_logs[re.sub("__", "_", decamelize(log))] = val
-            print('\n_reformat_fit_logs_update_logs', update_logs)
             for out in self.metrics.keys():
                 interactive_log[out] = {}
                 if len(self.metrics.keys()) == 1:
@@ -1379,7 +1377,6 @@ class InteractiveCallback:
                                     )
 
                     for metric_name in self.log_history.get(f"{out}").get('metrics').keys():
-                        print('\n_update_log_history', metric_name, self.current_logs.get(f"{out}").get('metrics').get(metric_name))
                         for data_type in ['train', 'val']:
                             # fill metrics
                             if data_idx or data_idx == 0:
@@ -1445,7 +1442,6 @@ class InteractiveCallback:
                                 out_task == LayerOutputTypeChoice.Segmentation or \
                                 out_task == LayerOutputTypeChoice.TextSegmentation or \
                                 out_task == LayerOutputTypeChoice.TimeseriesTrend:
-                            print('\n_update_log_history', out_task)
                             for cls in self.log_history.get(f"{out}").get('class_metrics').keys():
                                 class_metric = 0.
                                 if out_task == LayerOutputTypeChoice.Classification or \
@@ -1673,7 +1669,6 @@ class InteractiveCallback:
                     y_true if encoding == LayerEncodingChoice.ohe else to_categorical(y_true, num_classes),
                     y_pred
                 )
-            print('\nmetric_value', metric_name, metric_obj.result().numpy())
             metric_value = float(metric_obj.result().numpy())
         elif task == LayerOutputTypeChoice.Segmentation or task == LayerOutputTypeChoice.TextSegmentation:
             if metric_name == Metric.BalancedDiceCoef:
@@ -2055,7 +2050,6 @@ class InteractiveCallback:
                             templates=[self._fill_graph_plot_data, self._fill_graph_front_structure],
                             max_lenth=MAX_INTERMEDIATE_GRAGH_LENTH
                         )
-                        # print('\n\n_get_intermediate_result_request_Timeseries', data)
 
                     elif task == LayerOutputTypeChoice.Dataframe:
                         data = {
@@ -2134,7 +2128,6 @@ class InteractiveCallback:
         else:
             pass
 
-        # print('\nreturn_data', return_data)
         return return_data
 
     def _get_statistic_data_request(self) -> list:
