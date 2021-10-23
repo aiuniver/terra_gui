@@ -15,6 +15,7 @@ from tensorflow.keras.utils import to_categorical
 import numpy as np
 
 from terra_ai import progress
+from terra_ai.callbacks.postprocess_results import PostprocessResults
 from terra_ai.callbacks.utils import loss_metric_config, class_counter, get_image_class_colormap, \
     get_distribution_histogram, get_correlation_matrix, round_loss_metric, fill_graph_plot_data, \
     fill_graph_front_structure, get_confusion_matrix, fill_heatmap_front_structure, fill_table_front_structure, \
@@ -196,7 +197,7 @@ class InteractiveCallback:
                     self._reformat_y_pred(y_pred)
                     if self.interactive_config.intermediate_result.show_results:
                         out = f"{self.interactive_config.intermediate_result.main_output}"
-                        self.example_idx = CreateArray().prepare_example_idx_to_show(
+                        self.example_idx = PostprocessResults().prepare_example_idx_to_show(
                             array=self.y_pred.get(out),
                             true_array=self.y_true.get("val").get(out),
                             options=self.options,

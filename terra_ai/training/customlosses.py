@@ -344,20 +344,28 @@ class BalancedFScore(tf.keras.metrics.Metric):
         self.score: float = 0
         # pass
 
+
 class UnscaledMAE(tf.keras.metrics.MeanAbsoluteError):
     def __init__(self, name='unscaled_mae', **kwargs):
         super(UnscaledMAE, self).__init__(name=name, **kwargs)
 
     @staticmethod
     def unscale_result(mae_result, output: int, dataset: CreatePreprocessing):
-        result = np.expand_dims(mae_result, axis=-1)
-        preset = {output: {}}
         preprocess_dict = dataset.preprocessing.get(output)
-        for i, col in enumerate(preprocess_dict.keys()):
-            preset[output][col] = result[:, i:i + 1]
-            break
-        unscale = np.array(list(dataset.inverse_data(preset)[output].values()))
-        try:
-            return unscale.item()
-        except ValueError:
-            return unscale.squeeze().tolist()
+        target_key = None
+        for i, column in enumerate(preprocess_dict.keys()):
+            if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
+                target_key = column
+            else:
+                target_key = None
+                break
+        if target_key:
+            result = np.expand_dims(mae_result, axis=-1)
+            preset = {output: {target_key: result}}
+            unscale = np.array(list(dataset.inverse_data(preset)[output].values()))
+            try:
+                return unscale.item()
+            except ValueError:
+                return unscale.squeeze().tolist()
+        else:
+            return mae_result

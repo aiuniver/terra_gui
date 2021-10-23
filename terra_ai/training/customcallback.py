@@ -410,7 +410,8 @@ class InteractiveCallback:
                        training_path: str,
                        initial_config: InteractiveData,
                        yolo_initial_config: YoloInteractiveData = None):
-
+        # print('\ndataset.preprocessing', dataset.preprocessing.preprocessing)
+        # print('\ndataset.data.outputs', dataset.data.outputs)
         self.preset_path = os.path.join(training_path, "presets")
         if not os.path.exists(self.preset_path):
             os.mkdir(self.preset_path)
