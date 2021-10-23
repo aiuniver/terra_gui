@@ -227,14 +227,14 @@ class Project(BaseMixinData):
             layer.shape = layer_init.shape
             layer.task = layer_init.task
             layer.num_classes = layer_init.num_classes
-            layer.parameters = layer_init.parameters
+            # layer.parameters = layer_init.parameters
 
         for index, layer in enumerate(self.model.outputs):
             layer_init = model_init.outputs.get(layer.id)
             layer.shape = layer_init.shape
             layer.task = layer_init.task
             layer.num_classes = layer_init.num_classes
-            layer.parameters = layer_init.parameters
+            # layer.parameters = layer_init.parameters
 
     def set_dataset(self, dataset: DatasetData = None, reset_model: bool = False):
         if dataset is None:
