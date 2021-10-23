@@ -137,7 +137,11 @@ class CreateDataset(object):
                         out.parameters.length = inp.parameters.length
                         out.parameters.step = inp.parameters.step
                         out.parameters.max_words = inp.parameters.max_words
-                        out.parameters.filters = inp.parameters.filters
+                        filters = inp.parameters.filters
+                        for x in out.parameters.open_tags + out.parameters.close_tags:
+                            filters = filters.replace(x, '')
+                        inp.parameters.filters = filters
+                        out.parameters.filters = filters
                         inp.parameters.open_tags = out.parameters.open_tags
                         inp.parameters.close_tags = out.parameters.close_tags
             elif out.type == LayerOutputTypeChoice.ObjectDetection:
@@ -625,7 +629,10 @@ class CreateDataset(object):
             if not creation_data.outputs.get(key).type == LayerOutputTypeChoice.ObjectDetection:
                 if 'depth' in data.parameters.keys() and data.parameters['depth']:
                     depth_flag = True
-                    output_array = self.postprocess_timeseries(output_array)
+                    if 'trend' in data.parameters.keys() and data.parameters['trend']:
+                        output_array = np.array(output_array[0])
+                    else:
+                        output_array = self.postprocess_timeseries(output_array)
                 else:
                     output_array = np.concatenate(output_array, axis=0)
                     output_array = np.expand_dims(output_array, 0)
@@ -741,7 +748,7 @@ class CreateDataset(object):
                         elif 'depth' in data.parameters.keys() and data.parameters['depth']:
                             if 'trend' in data.parameters.keys() and data.parameters['trend']:
                                 data_to_pass = [self.dataframe[split].loc[i, col_name],
-                                                self.dataframe[split].loc[i + data.parameters['length'] - 1, col_name]]
+                                                self.dataframe[split].loc[i + data.parameters['length'], col_name]]
                             elif 'trend' in data.parameters.keys():
                                 data_to_pass = self.dataframe[split].loc[
                                                i + data.parameters['length']:i + data.parameters['length'] +

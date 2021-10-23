@@ -31,7 +31,6 @@ export default {
       type: String,
       default: '',
     },
-
   },
   computed: {
     src() {
@@ -39,6 +38,7 @@ export default {
     },
   },
   mounted() {
+    console.log(this.update)
     this.$el.querySelector('audio').setAttribute('controlsList', 'nodownload');
   },
 };

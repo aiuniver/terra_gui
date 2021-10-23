@@ -25,17 +25,16 @@ export default {
       }
       const { project, user, defaults: { modeling: { layers_types, layer_form }, datasets: { creation }, training: { base } } } = data;
       const { model, training, deploy } = project;
-      const list = layer_form[1]['list'] || []
       commit("SET_PROJECT", project);
       commit("SET_USER", user);
-      commit("modeling/SET_MODELING", { layers_types, list }, { root: true });
+      commit("modeling/SET_MODELING", { layers_types, layer_form }, { root: true });
       commit("modeling/SET_MODEL", model, { root: true });
       commit("datasets/SET_CREATION", creation, { root: true });
       commit("trainings/SET_PARAMS", base, { root: true });
       commit("trainings/SET_CONFIG", training, { root: true });
       if (deploy) {
-        commit("deploy/SET_DEPLOY", deploy, { root: true });
-        commit("deploy/SET_CARDS", deploy.data, { root: true });
+        commit("deploy/SET_DEPLOY", deploy.data, { root: true });
+        commit("deploy/SET_CARDS", deploy.data.data, { root: true });
         commit("deploy/SET_DEPLOY_TYPE", deploy.type, { root: true });
       }
       if (training?.result) {
