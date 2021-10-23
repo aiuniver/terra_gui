@@ -22,6 +22,7 @@ class Tags(dict, Enum):
     russian = {"alias": "russian", "name": "Russian"}
     regression = {"alias": "regression", "name": "Regression"}
     timeseries = {"alias": "timeseries", "name": "Timeseries"}
+    timeseriestrend = {"alias": "timeseriestrend", "name": "TimeseriesTrend"}
     terra_ai = {"alias": "terra_ai", "name": "Terra AI"}
     object_detection = {"alias": "object_detection", "name": "Object detection"}
     segmentation = {"alias": "segmentation", "name": "Segmentation"}
@@ -3683,6 +3684,88 @@ DatasetsGroups = [
                             },
                 "tags": [
                     Tags.timeseries.value,
+                    Tags.terra_ai.value,
+                ],
+                "use_generator": False,
+            },
+            {
+                "alias": "lukoil_trend",
+                "name": "Лукойл (тренд)",
+                "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "1D",
+                        "dtype": "float64",
+                        "shape": (300, 4),
+                        "name": "Input 1",
+                        "task": LayerInputTypeChoice.Dataframe.value,
+                        "num_classes": None,
+                        "classes_names": [],
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "float64",
+                        "shape": (3, 1),
+                        "name": "Output 2",
+                        "task": LayerOutputTypeChoice.TimeseriesTrend.value,
+                        "num_classes": 3,
+                        "classes_names": ["Не изменился", "Вверх", "Вниз"],
+                        "encoding": LayerEncodingChoice.ohe.value,
+                    },
+                },
+                "columns": {'1': {'1_CLOSE': {'classes_colors': None,
+                                              'classes_names': None,
+                                              'datatype': 'DIM',
+                                              'dtype': 'float64',
+                                              'encoding': 'none',
+                                              'name': 'Input 1',
+                                              'num_classes': None,
+                                              'shape': [300],
+                                              'task': 'Scaler'},
+                                  '1_MAX': {'classes_colors': None,
+                                            'classes_names': None,
+                                            'datatype': 'DIM',
+                                            'dtype': 'float64',
+                                            'encoding': 'none',
+                                            'name': 'Input 1',
+                                            'num_classes': None,
+                                            'shape': [300],
+                                            'task': 'Scaler'},
+                                  '1_MIN': {'classes_colors': None,
+                                            'classes_names': None,
+                                            'datatype': 'DIM',
+                                            'dtype': 'float64',
+                                            'encoding': 'none',
+                                            'name': 'Input 1',
+                                            'num_classes': None,
+                                            'shape': [300],
+                                            'task': 'Scaler'},
+                                  '1_OPEN': {'classes_colors': None,
+                                             'classes_names': None,
+                                             'datatype': 'DIM',
+                                             'dtype': 'float64',
+                                             'encoding': 'none',
+                                             'name': 'Input 1',
+                                             'num_classes': None,
+                                             'shape': [300],
+                                             'task': 'Scaler'}
+                                  },
+                            '2': {'2_CLOSE': {'classes_colors': None,
+                                              'classes_names': ['Не изменился', 'Вверх', 'Вниз'],
+                                              'datatype': 'DIM',
+                                              'dtype': 'uint8',
+                                              'encoding': 'ohe',
+                                              'name': 'Output 1',
+                                              'num_classes': 3,
+                                              'shape': [3],
+                                              'task': 'TimeseriesTrend'}
+                                  }
+                            },
+                "tags": [
+                    Tags.timeseriestrend.value,
                     Tags.terra_ai.value,
                 ],
                 "use_generator": False,
