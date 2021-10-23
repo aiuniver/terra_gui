@@ -1,7 +1,7 @@
 <template>
   <div class="card">
     <div class="card__content">
-      <div v-if="type == 'image_classification'">
+      <div v-if="type == 'ImageClassification'">
         <div class="card__original">
           <ImgCard :imgUrl="card.source" />
         </div>
@@ -9,23 +9,15 @@
           <TextCard :style="{ width: '224px', height: '80px' }">{{ ClassificationResult }}</TextCard>
         </div>
       </div>
-      <div v-if="type == 'text_classification'">
+      <div v-if="type == 'TextClassification'">
         <div class="card__original">
           <TextCard :style="{ width: '600px', color: '#A7BED3', height: '324px' }">{{ card.source }}</TextCard>
         </div>
         <div class="card__result">
           <TextCard :style="{ width: '600px', height: '80px' }">{{ ClassificationResult}}</TextCard>
         </div>
-        <div v-if="type == 'audio_classification'">
-          <div class="card__original">
-            <AudioCard :value="card.source" :update="RandId" />
-          </div>
-          <div class="card__result">
-            <TextCard :style="{ width: '600px', height: '80px' }">{{ ClassificationResult }}</TextCard>
-          </div>
-        </div>
       </div>
-      <div v-if="type == 'text_textsegmentation'">
+      <div v-if="type == 'TextSegmentation'">
         <div class="card__original segmentation__original" :style="{ height: '324px' }">
           <scrollbar :ops="ops">
             <TableTextSegmented
@@ -41,7 +33,7 @@
           />
         </div>
       </div>
-      <div v-if="type == 'audio_classification'">
+      <div v-if="type == 'AudioClassification'">
         <div class="card__original">
           <AudioCard :value="card.source" :update="RandId" />
         </div>
@@ -50,7 +42,7 @@
         </div>
       </div>
 
-      <div v-if="type == 'image_segmentation'">
+      <div v-if="type == 'ImageSegmentation'">
         <div class="card__original">
           <ImgCard :imgUrl="card.source" />
         </div>
@@ -98,7 +90,7 @@ export default {
       default: () => ({}),
     },
     index: [String, Number],
-    extra: {
+    color_map: {
       type: Array,
       default: () => ([]),
     }
@@ -128,10 +120,10 @@ export default {
     },
     segmentationLayer(){
       let layer = {}
-      for(let i in this.extra){
-        if(this.extra[i][0].includes("p")) continue;
-        let tag = this.extra[i][0].slice(1, this.extra[i][0].length-1);
-        layer[tag] = this.extra[i][2];
+      for(let i in this.color_map){
+        if(this.color_map[i][0].includes("p")) continue;
+        let tag = this.color_map[i][0].slice(1, this.color_map[i][0].length-1);
+        layer[tag] = this.color_map[i][2];
       }
       // console.log(layer);
       return layer
@@ -146,6 +138,9 @@ export default {
       return prepareText;
     },
   },
+  mounted() {
+    console.log(this.color_map)
+  }
 };
 </script>
 

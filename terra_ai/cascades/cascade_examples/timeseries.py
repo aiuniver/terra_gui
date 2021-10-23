@@ -18,19 +18,18 @@ with open(dataset_path) as cfg:
 columns = [i[2:] for i in config['columns']['1'].keys()]
 
 out_columns = [i[2:] for i in config['columns']['2'].keys()]
-print(columns)
 
 while True:
     input_path = input()
     data = next(main_block.input(input_path))[columns]
 
     main_block(input_path)
-    out = {'in': {}, 'out': {}}
+    out = {'source': {}, 'predict': {}}
 
     for col in columns:
-        out['in'][col] = data[col].tolist()
+        out['source'][col] = data[col].tolist()
 
     for i, col in enumerate(out_columns):
-        out['out'][col] = main_block[-1].out[0][:, :, i].tolist()[0]
-
+        out['predict'][col] = [out['source'][col] if col in out['source'].keys() else [],
+                               main_block[-1].out[0][:, :, i].tolist()[0]]
     print(out)

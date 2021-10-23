@@ -1,9 +1,7 @@
 import json
 import random
-from pathlib import Path
-
-from typing import List, Tuple, Dict
-from pydantic import PositiveFloat, PositiveInt
+from pathlib import Path, PurePath
+from typing import List
 
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.settings import DEPLOY_PRESET_COUNT
@@ -16,6 +14,9 @@ class Item(BaseMixinData):
 
 
 class DataList(DataBaseList):
+    preset_file: Path = PurePath()
+    label_file: Path = PurePath()
+
     class Meta:
         source = Item
 
@@ -29,6 +30,10 @@ class DataList(DataBaseList):
 
         self.preset_file = Path(self.path, "preset.txt")
         self.label_file = Path(self.path, "label.txt")
+
+        for _path in (self.preset_file, self.label_file):
+            if _path.exists():
+                _path.unlink()
 
         for _index in indexes:
             self.update(_index)

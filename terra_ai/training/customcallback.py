@@ -183,6 +183,11 @@ loss_metric_config = {
             "mode": "max",
             "module": "terra_ai.training.customlosses"
         },
+        "BalancedDiceCoef": {
+            "log_name": "balanced_dice_coef",
+            "mode": "max",
+            "module": "terra_ai.training.customlosses"
+        },
         "FalseNegatives": {
             "log_name": "false_negatives",
             "mode": "min",
@@ -255,6 +260,21 @@ loss_metric_config = {
         },
         "BalancedRecall": {
             "log_name": "balanced_recall",
+            "mode": "max",
+            "module": "terra_ai.training.customlosses"
+        },
+        "BalancedPrecision": {
+            "log_name": "balanced_precision",
+            "mode": "max",
+            "module": "terra_ai.training.customlosses"
+        },
+        "BalancedFScore": {
+            "log_name": "balanced_f_score",
+            "mode": "max",
+            "module": "terra_ai.training.customlosses"
+        },
+        "FScore": {
+            "log_name": "f_score",
             "mode": "max",
             "module": "terra_ai.training.customlosses"
         },
@@ -1072,12 +1092,37 @@ class InteractiveCallback:
         return class_idx
 
     def _prepare_seed(self):
-        if self.options.data.group == DatasetGroupChoice.keras or self.x_val:
-            data_lenth = np.arange(len(self.y_true.get("val").get(list(self.y_true.get("val").keys())[0])))
+        output = self.interactive_config.intermediate_result.main_output
+        task = self.options.data.outputs.get(output).task
+        example_idx = []
+
+        if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
+            y_true = np.argmax(self.y_true.get('val').get(f"{output}"), axis=-1)
+            class_idx = {}
+            for _id in range(self.options.data.outputs.get(output).num_classes):
+                class_idx[_id] = []
+            for i, _id in enumerate(y_true):
+                class_idx[_id].append(i)
+            for key in class_idx.keys():
+                np.random.shuffle(class_idx[key])
+
+            num_ex = 25
+            while num_ex:
+                key = np.random.choice(list(class_idx.keys()))
+                if not class_idx.get(key):
+                    class_idx.pop(key)
+                    key = np.random.choice(list(class_idx.keys()))
+
+                example_idx.append(class_idx[key][0])
+                class_idx[key].pop(0)
+                num_ex -= 1
         else:
-            data_lenth = np.arange(len(self.options.dataframe.get("val")))
-        np.random.shuffle(data_lenth)
-        return data_lenth
+            if self.options.data.group == DatasetGroupChoice.keras or self.x_val:
+                example_idx = np.arange(len(self.y_true.get("val").get(list(self.y_true.get("val").keys())[0])))
+            else:
+                example_idx = np.arange(len(self.options.dataframe.get("val")))
+            np.random.shuffle(example_idx)
+        return example_idx
 
     # Методы для update_state()
     @staticmethod
@@ -1100,7 +1145,6 @@ class InteractiveCallback:
                     end = len(f"_{log.split('_')[-1]}")
                     log = log[:-end]
                 update_logs[re.sub("__", "_", decamelize(log))] = val
-
             for out in self.metrics.keys():
                 interactive_log[out] = {}
                 if len(self.metrics.keys()) == 1:
@@ -1129,6 +1173,7 @@ class InteractiveCallback:
                             f"{out}_{loss_metric_config.get('metric').get(metric_name).get('log_name')}")
                         val_metric = update_logs.get(
                             f"val_{out}_{loss_metric_config.get('metric').get(metric_name).get('log_name')}")
+
                     if metric_name == MetricChoice.UnscaledMAE:
                         train_metric, val_metric = UnscaledMAE().unscale_result(
                             [train_metric, val_metric], int(out), self.options.preprocessing
@@ -1411,24 +1456,25 @@ class InteractiveCallback:
                                             self.class_idx.get('val').get(f"{out}").get(cls)],
                                         show_class=True
                                     )
-                                if out_task == LayerOutputTypeChoice.Segmentation:
+                                if out_task == LayerOutputTypeChoice.Segmentation or \
+                                    out_task == LayerOutputTypeChoice.TextSegmentation:
                                     class_idx = classes_names.index(cls)
                                     class_metric = self._get_metric_calculation(
                                         metric_name=metric_name,
                                         metric_obj=self.metrics_obj.get(f"{out}").get(metric_name),
                                         out=f"{out}",
-                                        y_true=self.y_true.get('val').get(f"{out}")[:, :, :, class_idx],
-                                        y_pred=self.y_pred.get(f"{out}")[:, :, :, class_idx],
+                                        y_true=self.y_true.get('val').get(f"{out}")[..., class_idx:class_idx+1],
+                                        y_pred=self.y_pred.get(f"{out}")[..., class_idx:class_idx+1],
                                     )
-                                if out_task == LayerOutputTypeChoice.TextSegmentation:
-                                    class_idx = classes_names.index(cls)
-                                    class_metric = self._get_metric_calculation(
-                                        metric_name=metric_name,
-                                        metric_obj=self.metrics_obj.get(f"{out}").get(metric_name),
-                                        out=f"{out}",
-                                        y_true=self.y_true.get('val').get(f"{out}")[:, :, class_idx],
-                                        y_pred=self.y_pred.get(f"{out}")[:, :, class_idx],
-                                    )
+                                # if out_task == LayerOutputTypeChoice.TextSegmentation:
+                                #     class_idx = classes_names.index(cls)
+                                #     class_metric = self._get_metric_calculation(
+                                #         metric_name=metric_name,
+                                #         metric_obj=self.metrics_obj.get(f"{out}").get(metric_name),
+                                #         out=f"{out}",
+                                #         y_true=self.y_true.get('val').get(f"{out}")[:, :, class_idx],
+                                #         y_pred=self.y_pred.get(f"{out}")[:, :, class_idx],
+                                #     )
                                 if data_idx or data_idx == 0:
                                     self.log_history[f"{out}"]['class_metrics'][cls][metric_name][data_idx] = \
                                         self._round_loss_metric(class_metric)
@@ -1612,7 +1658,7 @@ class InteractiveCallback:
                     np.argmax(y_true, axis=-1) if encoding == LayerEncodingChoice.ohe else y_true,
                     np.argmax(y_pred, axis=-1)
                 )
-            if metric_name == Metric.BalancedRecall:
+            elif metric_name in [Metric.BalancedRecall, Metric.BalancedPrecision, Metric.BalancedFScore]:
                 metric_obj.update_state(
                     y_true if encoding == LayerEncodingChoice.ohe else to_categorical(y_true, num_classes),
                     y_pred,
@@ -1624,16 +1670,24 @@ class InteractiveCallback:
                     y_pred
                 )
             metric_value = float(metric_obj.result().numpy())
-        elif task == LayerOutputTypeChoice.Segmentation or \
-                (task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.ohe):
-            metric_obj.update_state(
-                y_true if encoding == LayerEncodingChoice.ohe else to_categorical(y_true, num_classes),
-                y_pred
-            )
+        elif task == LayerOutputTypeChoice.Segmentation or task == LayerOutputTypeChoice.TextSegmentation:
+            if metric_name == Metric.BalancedDiceCoef:
+                metric_obj.encoding = None
+                metric_obj.update_state(
+                    y_true if (encoding == LayerEncodingChoice.ohe or encoding == LayerEncodingChoice.multi)
+                    else to_categorical(y_true, num_classes),
+                    y_pred
+                )
+            else:
+                metric_obj.update_state(
+                    y_true if (encoding == LayerEncodingChoice.ohe or encoding == LayerEncodingChoice.multi)
+                    else to_categorical(y_true, num_classes),
+                    y_pred
+                )
             metric_value = float(metric_obj.result().numpy())
-        elif task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.multi:
-            metric_obj.update_state(y_true, y_pred)
-            metric_value = float(metric_obj.result().numpy())
+        # elif task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.multi:
+        #     metric_obj.update_state(y_true, y_pred)
+        #     metric_value = float(metric_obj.result().numpy())
         elif task == LayerOutputTypeChoice.Regression or task == LayerOutputTypeChoice.Timeseries:
             metric_obj.update_state(y_true, y_pred)
             metric_value = float(metric_obj.result().numpy())
@@ -1996,7 +2050,6 @@ class InteractiveCallback:
                             templates=[self._fill_graph_plot_data, self._fill_graph_front_structure],
                             max_lenth=MAX_INTERMEDIATE_GRAGH_LENTH
                         )
-                        # print('\n\n_get_intermediate_result_request_Timeseries', data)
 
                     elif task == LayerOutputTypeChoice.Dataframe:
                         data = {
@@ -2012,9 +2065,6 @@ class InteractiveCallback:
                             "y_pred": {},
                             "stat": {}
                         }
-                        # image with bb
-                        # accuracy, correlation bb for classes
-                        pass
 
                     else:
                         data = {
@@ -2279,7 +2329,6 @@ class InteractiveCallback:
                                 )
                             )
                             _id += 1
-                    # print('\n\n_get_statistic_data_request_Timeseries', return_data)
 
                 elif task == LayerOutputTypeChoice.Dataframe:
                     pass

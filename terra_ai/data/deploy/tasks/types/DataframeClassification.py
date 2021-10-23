@@ -1,6 +1,6 @@
 import json
 import random
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import List, Tuple, Union
 
 from pydantic import PositiveInt
@@ -17,6 +17,8 @@ class Item(BaseMixinData):
 
 
 class DataList(DataBaseList):
+    preset_file: Path = PurePath()
+
     class Meta:
         source = Item
 
@@ -30,6 +32,10 @@ class DataList(DataBaseList):
 
         self.preset_file = Path(self.path, "preset.txt")
         label_file = Path(self.path, "label.txt")
+
+        for _path in (self.preset_file, label_file):
+            if _path.exists():
+                _path.unlink()
 
         for _index in indexes:
             self.update(_index)
