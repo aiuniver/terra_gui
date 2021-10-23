@@ -1040,7 +1040,7 @@ class FitCallback(keras.callbacks.Callback):
         if status != "addtrain":
             self.batch = 0
         if not self.dataset.data.use_generator:
-            self.num_batches = self.dataset.X['train']['1'].shape[0] // self.batch_size
+            self.num_batches = len(list(self.dataset.X.get('train').values())[0]) // self.batch_size
         else:
             self.num_batches = len(self.dataset.dataframe['train']) // self.batch_size
 

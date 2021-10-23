@@ -170,7 +170,9 @@ class ModelValidator:
     """Make validation of model plan"""
 
     def __init__(self, model: ModelDetailsData):
-        # print(model.native())
+        # print()
+        # for layer in model.layers:
+        #     print(layer)
         self.validator: LayerValidation = LayerValidation()
         self.model: ModelDetailsData = model
         self.filled_model: ModelDetailsData = model
