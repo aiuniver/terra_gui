@@ -216,6 +216,26 @@ class Project(BaseMixinData):
         for _index, _dataset_layer in enumerate(dataset_model.outputs):
             self.model.switch_index(self.model.outputs[_index].id, _dataset_layer.id)
 
+    def update_model_layers(self):
+        if not self.dataset:
+            return
+
+        model_init = self.dataset.model
+
+        for index, layer in enumerate(self.model.inputs):
+            layer_init = model_init.inputs.get(layer.id)
+            layer.shape = layer_init.shape
+            layer.task = layer_init.task
+            layer.num_classes = layer_init.num_classes
+            layer.parameters = layer_init.parameters
+
+        for index, layer in enumerate(self.model.outputs):
+            layer_init = model_init.outputs.get(layer.id)
+            layer.shape = layer_init.shape
+            layer.task = layer_init.task
+            layer.num_classes = layer_init.num_classes
+            layer.parameters = layer_init.parameters
+
     def set_dataset(self, dataset: DatasetData = None, reset_model: bool = False):
         if dataset is None:
             self.dataset = None
@@ -225,12 +245,13 @@ class Project(BaseMixinData):
             return
 
         self.dataset = dataset
-        defaults_data.modeling.set_layer_datatype(self.dataset)
         if not self.model.inputs or not self.model.outputs or reset_model:
             self.model = self.dataset.model
         else:
             self._redefine_model_ids()
+            self.update_model_layers()
 
+        defaults_data.modeling.set_layer_datatype(self.dataset)
         self.set_training()
         self.save()
 
@@ -243,6 +264,7 @@ class Project(BaseMixinData):
                 raise exceptions.DatasetModelOutputsCountNotMatchException()
         self.model = model
         self._redefine_model_ids()
+        self.update_model_layers()
         self.set_training()
         self.save()
 
