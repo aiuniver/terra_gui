@@ -15,6 +15,7 @@ from terra_ai.data.modeling.layers.extra import ActivationChoice
 
 class Tags(dict, Enum):
     image = {"alias": "image", "name": "Image"}
+    video = {"alias": "video", "name": "Video"}
     classification = {"alias": "classification", "name": "Classification"}
     tensorflow_keras = {"alias": "tensorflow_keras", "name": "Tensorflow.keras"}
     text = {"alias": "text", "name": "Text"}
@@ -22,6 +23,7 @@ class Tags(dict, Enum):
     russian = {"alias": "russian", "name": "Russian"}
     regression = {"alias": "regression", "name": "Regression"}
     timeseries = {"alias": "timeseries", "name": "Timeseries"}
+    timeseriestrend = {"alias": "timeseriestrend", "name": "TimeseriesTrend"}
     terra_ai = {"alias": "terra_ai", "name": "Terra AI"}
     object_detection = {"alias": "object_detection", "name": "Object detection"}
     segmentation = {"alias": "segmentation", "name": "Segmentation"}
@@ -1333,6 +1335,66 @@ DatasetsGroups = [
                                   }
                             },
                 "use_generator": False,
+            },
+            {
+                "alias": "video",
+                "name": "Видео",
+                "group": DatasetGroupChoice.terra.value,
+                "tags": [
+                    Tags.video.value,
+                    Tags.classification.value,
+                    Tags.terra_ai.value,
+                ],
+                "inputs": {
+                    1: {
+                        "datatype": "3D",
+                        "dtype": "float32",
+                        "shape": (64, 100, 120, 3),
+                        "name": "Вход 1",
+                        "task": LayerInputTypeChoice.Video.value,
+                        "classes_names": ['Cricket Shot', 'Playing Cello', 'Punch',
+                                          'Shaving Beard', 'Tennis Swing'],
+                        "num_classes": 5,
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "uint8",
+                        "shape": (5,),
+                        "name": "Выход 2",
+                        "task": LayerOutputTypeChoice.Segmentation.value,
+                        "classes_names": ['Cricket Shot', 'Playing Cello', 'Punch',
+                                          'Shaving Beard', 'Tennis Swing'],
+                        "classes_colors": None,
+                        "num_classes": 5,
+                        "encoding": LayerEncodingChoice.ohe.value,
+                    },
+                },
+                "columns": {'1': {'1_video': {'classes_colors': None,
+                                              'classes_names': ['Cricket Shot', 'Playing Cello', 'Punch',
+                                                                'Shaving Beard', 'Tennis Swing'],
+                                              'datatype': '3D',
+                                              'dtype': 'float64',
+                                              'encoding': 'none',
+                                              'name': 'Input 1',
+                                              'num_classes': 5,
+                                              'shape': [64, 100, 120, 3],
+                                              'task': 'Video'}},
+                            '2': {'2_classification': {'classes_colors': None,
+                                                       'classes_names': ['Cricket Shot', 'Playing Cello', 'Punch',
+                                                                         'Shaving Beard', 'Tennis Swing'],
+                                                       'datatype': 'DIM',
+                                                       'dtype': 'uint8',
+                                                       'encoding': 'ohe',
+                                                       'name': 'Метки классов',
+                                                       'num_classes': 5,
+                                                       'shape': [5],
+                                                       'task': 'Classification'}
+                                  }
+                            },
+                "use_generator": True,
             },
             {
                 "alias": "bus_passengers",
@@ -2781,93 +2843,6 @@ DatasetsGroups = [
                 ],
                 "use_generator": False,
             },
-
-            # {
-            #     "alias": "trading",
-            #     "name": "Трейдинг",
-            #     "group": DatasetGroupChoice.terra.value,
-            #     "tags": [
-            #         Tags.trading.value,
-            #         Tags.timeseries.value,
-            #         Tags.terra_ai.value,
-            #     ],
-            #     "inputs": {
-            #         1: {
-            #             "datatype": "1D",
-            #             "dtype": "float32",
-            #             "shape": (4, 30),
-            #             "name": "Вход 1",
-            #             "task": LayerInputTypeChoice.Dataframe.value,
-            #             "classes_names": [],
-            #             "num_classes": 1,
-            #             "encoding": LayerEncodingChoice.none.value,
-            #         },
-            #     },
-            #     "outputs": {
-            #         2: {
-            #             "datatype": "DIM",
-            #             "dtype": "int64",
-            #             "shape": (1,),
-            #             "name": "Выход 1",
-            #             "task": LayerOutputTypeChoice.Timeseries.value,
-            #             "num_classes": 3,
-            #             "classes_names": ["Не изменился", "Вверх", "Вниз"],
-            #         },
-            #     },
-            #     "columns": {
-            #         1: {
-            #             "1_<CLOSE>": {
-            #                 "datatype": "DIM",
-            #                 "dtype": "float64",
-            #                 "encoding": LayerEncodingChoice.none.value,
-            #                 "name": "Input 1",
-            #                 "num_classes": 1,
-            #                 "shape": (30,),
-            #                 "task": "Scaler",
-            #             },
-            #             "1_<HIGH>": {
-            #                 "datatype": "DIM",
-            #                 "dtype": "float64",
-            #                 "encoding": LayerEncodingChoice.none.value,
-            #                 "name": "Input 1",
-            #                 "num_classes": 1,
-            #                 "shape": (30,),
-            #                 "task": "Scaler",
-            #             },
-            #             "1_<LOW>": {
-            #                 "datatype": "DIM",
-            #                 "dtype": "float64",
-            #                 "encoding": LayerEncodingChoice.none.value,
-            #                 "name": "Input 1",
-            #                 "num_classes": 1,
-            #                 "shape": (30,),
-            #                 "task": "Scaler",
-            #             },
-            #             "1_<OPEN>": {
-            #                 "datatype": "DIM",
-            #                 "dtype": "float64",
-            #                 "encoding": LayerEncodingChoice.none.value,
-            #                 "name": "Input 1",
-            #                 "num_classes": 1,
-            #                 "shape": (30,),
-            #                 "task": "Scaler",
-            #             },
-            #         },
-            #         2: {
-            #             "2_<CLOSE>": {
-            #                 "classes_names": ["Не изменился", "Вверх", "Вниз"],
-            #                 "datatype": "DIM",
-            #                 "dtype": "int64",
-            #                 "encoding": LayerEncodingChoice.none.value,
-            #                 "name": "Output 1",
-            #                 "num_classes": 3,
-            #                 "shape": (1,),
-            #                 "task": LayerOutputTypeChoice.Timeseries.value,
-            #             }
-            #         },
-            #     },
-            #     "use_generator": False,
-            # },
             {
                 "alias": "kvartiry",
                 "name": "Квартиры",
@@ -3683,6 +3658,88 @@ DatasetsGroups = [
                             },
                 "tags": [
                     Tags.timeseries.value,
+                    Tags.terra_ai.value,
+                ],
+                "use_generator": False,
+            },
+            {
+                "alias": "lukoil_trend",
+                "name": "Лукойл (тренд)",
+                "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "1D",
+                        "dtype": "float64",
+                        "shape": (300, 4),
+                        "name": "Input 1",
+                        "task": LayerInputTypeChoice.Dataframe.value,
+                        "num_classes": None,
+                        "classes_names": [],
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "float64",
+                        "shape": (3,),
+                        "name": "Output 2",
+                        "task": LayerOutputTypeChoice.TimeseriesTrend.value,
+                        "num_classes": 3,
+                        "classes_names": ["Не изменился", "Вверх", "Вниз"],
+                        "encoding": LayerEncodingChoice.ohe.value,
+                    },
+                },
+                "columns": {'1': {'1_CLOSE': {'classes_colors': None,
+                                              'classes_names': None,
+                                              'datatype': 'DIM',
+                                              'dtype': 'float64',
+                                              'encoding': 'none',
+                                              'name': 'Input 1',
+                                              'num_classes': None,
+                                              'shape': [300],
+                                              'task': 'Scaler'},
+                                  '1_MAX': {'classes_colors': None,
+                                            'classes_names': None,
+                                            'datatype': 'DIM',
+                                            'dtype': 'float64',
+                                            'encoding': 'none',
+                                            'name': 'Input 1',
+                                            'num_classes': None,
+                                            'shape': [300],
+                                            'task': 'Scaler'},
+                                  '1_MIN': {'classes_colors': None,
+                                            'classes_names': None,
+                                            'datatype': 'DIM',
+                                            'dtype': 'float64',
+                                            'encoding': 'none',
+                                            'name': 'Input 1',
+                                            'num_classes': None,
+                                            'shape': [300],
+                                            'task': 'Scaler'},
+                                  '1_OPEN': {'classes_colors': None,
+                                             'classes_names': None,
+                                             'datatype': 'DIM',
+                                             'dtype': 'float64',
+                                             'encoding': 'none',
+                                             'name': 'Input 1',
+                                             'num_classes': None,
+                                             'shape': [300],
+                                             'task': 'Scaler'}
+                                  },
+                            '2': {'2_CLOSE': {'classes_colors': None,
+                                              'classes_names': ['Не изменился', 'Вверх', 'Вниз'],
+                                              'datatype': 'DIM',
+                                              'dtype': 'uint8',
+                                              'encoding': 'ohe',
+                                              'name': 'Output 1',
+                                              'num_classes': 3,
+                                              'shape': [3],
+                                              'task': 'TimeseriesTrend'}
+                                  }
+                            },
+                "tags": [
+                    Tags.timeseriestrend.value,
                     Tags.terra_ai.value,
                 ],
                 "use_generator": False,

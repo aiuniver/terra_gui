@@ -23,6 +23,9 @@ import joblib
 import tempfile
 import shutil
 import zipfile
+import concurrent.futures
+from itertools import repeat
+from tqdm import tqdm
 from pathlib import Path
 from typing import Union
 from datetime import datetime
@@ -493,7 +496,7 @@ class CreateDataset(object):
             else:
                 input_array = self.postprocess_timeseries(input_array)
             task, classes_colors, classes_names, encoding, num_classes = None, None, None, None, None
-            if len(self.columns[key]) == 1:
+            if len(self.columns[key]) == 1 and not self.columns_processing:
                 for c_name, data in self.columns[key].items():
                     task = data['task']
                     classes_colors = data['classes_colors']
@@ -597,7 +600,12 @@ class CreateDataset(object):
                         encoding = LayerEncodingChoice.ohe
                     else:
                         encoding = LayerEncodingChoice.none
-                elif creation_data.outputs.get(key).type == LayerOutputTypeChoice.Segmentation:
+                elif creation_data.outputs.get(key).type == LayerOutputTypeChoice.Segmentation or\
+                        creation_data.outputs.get(key).type == LayerOutputTypeChoice.Dataframe and\
+                        creation_data.columns_processing[
+                            str(creation_data.outputs.get(key).parameters.cols_names[idx][0])].type\
+                        == LayerOutputTypeChoice.Segmentation or\
+                        task == LayerOutputTypeChoice.TimeseriesTrend:
                     encoding = LayerEncodingChoice.ohe
                 elif creation_data.outputs.get(key).type == LayerOutputTypeChoice.TextSegmentation:
                     encoding = LayerEncodingChoice.multi
@@ -629,7 +637,10 @@ class CreateDataset(object):
             if not creation_data.outputs.get(key).type == LayerOutputTypeChoice.ObjectDetection:
                 if 'depth' in data.parameters.keys() and data.parameters['depth']:
                     depth_flag = True
-                    output_array = self.postprocess_timeseries(output_array)
+                    if 'trend' in data.parameters.keys() and data.parameters['trend']:
+                        output_array = np.array(output_array[0])
+                    else:
+                        output_array = self.postprocess_timeseries(output_array)
                 else:
                     output_array = np.concatenate(output_array, axis=0)
                     output_array = np.expand_dims(output_array, 0)
@@ -745,7 +756,7 @@ class CreateDataset(object):
                         elif 'depth' in data.parameters.keys() and data.parameters['depth']:
                             if 'trend' in data.parameters.keys() and data.parameters['trend']:
                                 data_to_pass = [self.dataframe[split].loc[i, col_name],
-                                                self.dataframe[split].loc[i + data.parameters['length'] - 1, col_name]]
+                                                self.dataframe[split].loc[i + data.parameters['length'], col_name]]
                             elif 'trend' in data.parameters.keys():
                                 data_to_pass = self.dataframe[split].loc[
                                                i + data.parameters['length']:i + data.parameters['length'] +

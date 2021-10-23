@@ -50,8 +50,8 @@
           <ImgCard :imgUrl="card.segment" />
         </div>
       </div>
-      <div class="card__graphic" v-if="type == 'graphic'">
-        <Plotly :data="card.data" :layout="layout" :display-mode-bar="false"></Plotly>
+      <div class="card__graphic" v-if="type == 'Timeseries'">
+        <GraphicCard v-bind="card" :key="'graphic_' + index"/>
       </div>
     </div>
     <div class="card__reload"><button class="btn-reload" @click="ReloadCard"><i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i></button></div>
@@ -64,17 +64,18 @@ import TextCard from './cards/TextCard';
 import AudioCard from './cards/AudioCard';
 import TableTextSegmented from "../training/main/prediction/components/TableTextSegmented";
 import SegmentationTags from "./cards/SegmentationTags";
-import { Plotly } from 'vue-plotly';
+import GraphicCard from "./cards/GraphicCard";
 import { mapGetters } from 'vuex';
 export default {
   name: 'IndexCard',
   components: {
     ImgCard,
     TextCard,
-    Plotly,
+    GraphicCard,
     AudioCard,
     TableTextSegmented,
-    SegmentationTags
+    SegmentationTags,
+
   },
   data: () => ({
     ops: {
@@ -90,7 +91,7 @@ export default {
       default: () => ({}),
     },
     index: [String, Number],
-    extra: {
+    color_map: {
       type: Array,
       default: () => ([]),
     }
@@ -100,6 +101,9 @@ export default {
     ReloadCard() {
       this.$emit('reload', [this.index.toString()]);
     },
+    GraphicData(){
+
+    }
   },
   computed: {
     ...mapGetters({
@@ -120,10 +124,10 @@ export default {
     },
     segmentationLayer(){
       let layer = {}
-      for(let i in this.extra){
-        if(this.extra[i][0].includes("p")) continue;
-        let tag = this.extra[i][0].slice(1, this.extra[i][0].length-1);
-        layer[tag] = this.extra[i][2];
+      for(let i in this.color_map){
+        if(this.color_map[i][0].includes("p")) continue;
+        let tag = this.color_map[i][0].slice(1, this.color_map[i][0].length-1);
+        layer[tag] = this.color_map[i][2];
       }
       // console.log(layer);
       return layer
@@ -138,9 +142,9 @@ export default {
       return prepareText;
     },
   },
-  // mounted() {
-  //   console.log(this.card)
-  // }
+  mounted() {
+    console.log(this.card)
+  }
 };
 </script>
 
