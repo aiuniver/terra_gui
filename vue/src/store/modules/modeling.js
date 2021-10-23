@@ -19,7 +19,8 @@ export default {
   }),
   mutations: {
     SET_MODELING (state, value) {
-      state.modeling = { ...value };
+      const list = value.layer_form[1]['list'] || []
+      state.modeling = { ...value, list };
     },
     SET_ERRORS_BLOCKS (state, value) {
       state.errorsBlocks = { ...value }
@@ -177,6 +178,19 @@ export default {
     async getModel ({ dispatch }, value) {
       return await dispatch('axios', { url: '/modeling/get/', data: value }, { root: true });
     },
+    async changeId ({ commit, dispatch }, { value, id }) {
+      const data = await dispatch('axios', {
+        url: '/modeling/datatype/', data: {
+          "source": id,
+          "target": value
+        }
+      }, { root: true });
+      console.log(data)
+      if (data) {
+        commit("modeling/SET_MODEL", data, { root: true });
+      }
+      return data
+    },
     resetAll ({ commit },) {
       commit('SET_ERRORS_BLOCKS', {})
       return
@@ -218,6 +232,7 @@ export default {
   getters: {
     getList: ({ modeling: { list } }) => list,
     getLayersType: ({ modeling: { layers_types } }) => layers_types,
+    getLayersForm: ({ modeling: { layer_form } }) => layer_form,
     getModel: ({ model }) => model,
     getBlocks: ({ blocks }) => blocks,
     getErrorsBlocks: ({ errorsBlocks }) => errorsBlocks,
