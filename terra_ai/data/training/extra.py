@@ -153,6 +153,7 @@ class MetricChoice(str, Enum):
     SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
     UnscaledMAE = "UnscaledMAE"
     DiceCoef = "DiceCoef"
+    BalancedDiceCoef = "BalancedDiceCoef"
     mAP50 = "mAP50"
     mAP95 = "mAP95"
 

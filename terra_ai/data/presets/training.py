@@ -68,6 +68,7 @@ class Metric(str, Enum):
     # SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
     # SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
     DiceCoef = "DiceCoef"
+    BalancedDiceCoef = "BalancedDiceCoef"
     UnscaledMAE = "UnscaledMAE"
     mAP50 = "mAP50"
     mAP95 = "mAP95"
@@ -147,6 +148,7 @@ TasksGroups = [
             # Loss.SparseCategoricalCrossentropy,
         ],
         "metrics": [
+            Metric.BalancedDiceCoef,
             Metric.DiceCoef,
             Metric.MeanIoU,
             Metric.AUC,
@@ -262,6 +264,8 @@ TasksGroups = [
             Loss.SquaredHinge,
         ],
         "metrics": [
+            Metric.BalancedRecall,
+            Metric.RecallPercent,
             Metric.CategoricalAccuracy,
             Metric.BinaryAccuracy,
             Metric.CategoricalCrossentropy,
@@ -313,6 +317,7 @@ TasksGroups = [
             # Loss.SparseCategoricalCrossentropy,
         ],
         "metrics": [
+            Metric.BalancedDiceCoef,
             Metric.DiceCoef,
             Metric.MeanIoU,
             Metric.BinaryAccuracy,
