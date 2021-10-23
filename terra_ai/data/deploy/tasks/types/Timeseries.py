@@ -27,7 +27,7 @@ class DataList(DataBaseList):
         if not len(self):
             return
 
-        self.preset_file = Path(self.path, "preset.txt")
+        self.preset_file = Path(self.path, "presets.json")
 
         if self.preset_file.exists():
             self.preset_file.unlink()
@@ -40,9 +40,7 @@ class DataList(DataBaseList):
         self.preset[index] = item
 
         with open(self.preset_file, "a") as preset_file_ref:
-            preset_file_ref.write(
-                json.dumps(item.dict(), ensure_ascii=False)
-            )
+            preset_file_ref.write(json.dumps(item.dict(), ensure_ascii=False))
             preset_file_ref.write("\n")
 
 
