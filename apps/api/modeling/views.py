@@ -243,4 +243,8 @@ class DatatypeAPIView(BaseAPIView):
         serializer = DatatypeSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
+        source_id = serializer.validated_data.get("source")
+        target_id = serializer.validated_data.get("target")
+        if source_id != target_id:
+            request.project.model.switch_index(source_id=source_id, target_id=target_id)
         return BaseResponseSuccess(request.project.model.native())
