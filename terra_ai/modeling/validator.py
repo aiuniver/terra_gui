@@ -176,7 +176,7 @@ class ModelValidator:
         self.validator: LayerValidation = LayerValidation()
         self.model: ModelDetailsData = model
         self.filled_model = model.native()
-        print('\nfilled_model', self.filled_model)
+        # print('\nfilled_model', self.filled_model)
         self.output_shape = {}
         self.all_indexes: List[int] = []
         self.start_row: List[int] = []
@@ -427,9 +427,9 @@ class ModelValidator:
                     else self.layer_output_shapes.get(layer.get('id'))
                 ]
         self.filled_model = ModelDetailsData(**self.filled_model)
-        print('\nfilled_model_end')
-        for layer in self.filled_model.layers:
-            print(layer.id, layer.name, layer.type.value, layer.shape)
+        # print('\nfilled_model_end')
+        # for layer in self.filled_model.layers:
+        #     print(layer.id, layer.name, layer.type.value, layer.shape)
         self.filled_model.keras = self.keras_code
         return self.filled_model, self.val_dictionary
 
