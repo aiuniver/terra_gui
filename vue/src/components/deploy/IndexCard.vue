@@ -50,8 +50,8 @@
           <ImgCard :imgUrl="card.segment" />
         </div>
       </div>
-      <div class="card__graphic" v-if="type == 'graphic'">
-        <Plotly :data="card.data" :layout="layout" :display-mode-bar="false"></Plotly>
+      <div class="card__graphic" v-if="type == 'Timeseries'">
+        <GraphicCard v-bind="card" :key="'graphic_' + index"/>
       </div>
     </div>
     <div class="card__reload"><button class="btn-reload" @click="ReloadCard"><i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i></button></div>
@@ -64,17 +64,18 @@ import TextCard from './cards/TextCard';
 import AudioCard from './cards/AudioCard';
 import TableTextSegmented from "../training/main/prediction/components/TableTextSegmented";
 import SegmentationTags from "./cards/SegmentationTags";
-import { Plotly } from 'vue-plotly';
+import GraphicCard from "./cards/GraphicCard";
 import { mapGetters } from 'vuex';
 export default {
   name: 'IndexCard',
   components: {
     ImgCard,
     TextCard,
-    Plotly,
+    GraphicCard,
     AudioCard,
     TableTextSegmented,
-    SegmentationTags
+    SegmentationTags,
+
   },
   data: () => ({
     ops: {
@@ -100,6 +101,9 @@ export default {
     ReloadCard() {
       this.$emit('reload', [this.index.toString()]);
     },
+    GraphicData(){
+
+    }
   },
   computed: {
     ...mapGetters({
@@ -139,7 +143,7 @@ export default {
     },
   },
   mounted() {
-    console.log(this.color_map)
+    console.log(this.card)
   }
 };
 </script>
