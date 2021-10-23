@@ -616,7 +616,7 @@ class CreateArray(object):
 
         instructions = {'instructions': paths_list,
                         'parameters': {"classes_names": options['classes_names'],
-                                       "num_classes": options['classes_names'],
+                                       "num_classes": options['num_classes'],
                                        'cols_names': options['cols_names'],
                                        'put': options['put'],
                                        'type_processing': options['type_processing'],
