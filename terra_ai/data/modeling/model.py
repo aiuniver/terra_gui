@@ -125,6 +125,13 @@ class ModelBaseDetailsData(AliasMixinData):
             shapes += layer.shape.input
         return str(shapes)
 
+    def reindex(self, source_id: PositiveInt, target_id: PositiveInt):
+        layer_source = self.layers.get(source_id)
+        layer_target = self.layers.get(target_id)
+        layer_target.id = max(self.layers.ids) + 1
+        layer_source.id = target_id
+        layer_target.id = source_id
+
     def switch_index(
         self, source_id: PositiveInt, target_id: PositiveInt
     ) -> PositiveInt:

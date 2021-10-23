@@ -147,32 +147,22 @@ class UpdateAPIView(BaseAPIView):
 
 
 class ValidateAPIView(BaseAPIView):
-    def _reset_layers_shape(
-        self, dataset: DatasetData, model: ModelDetailsData
-    ) -> ModelDetailsData:
+    def _reset_layers_shape(self, model: ModelDetailsData) -> ModelDetailsData:
         for layer in model.middles:
             layer.shape.input = []
             layer.shape.output = []
         for index, layer in enumerate(model.inputs):
             layer.shape.output = []
-            if dataset:
-                layer.shape = dataset.model.inputs[index].shape
         for index, layer in enumerate(model.outputs):
             layer.shape.input = []
-            if dataset:
-                layer.shape = dataset.model.outputs[index].shape
-            else:
-                layer.shape.output = []
         return model
 
     def post(self, request, **kwargs):
         try:
-            source_model = self._reset_layers_shape(
-                request.project.dataset, request.project.model
-            )
+            self._reset_layers_shape(request.project.model)
             validated_model, errors = agent_exchange(
                 "model_validate",
-                model=source_model,
+                model=request.project.model,
             )
             request.project.set_model(validated_model)
             return BaseResponseSuccess(errors, save_project=True)
@@ -247,5 +237,6 @@ class DatatypeAPIView(BaseAPIView):
         source_id = serializer.validated_data.get("source")
         target_id = serializer.validated_data.get("target")
         if source_id != target_id:
-            request.project.model.switch_index(source_id=source_id, target_id=target_id)
+            request.project.model.reindex(source_id=source_id, target_id=target_id)
+            request.project.update_model_layers()
         return BaseResponseSuccess(request.project.model.native())
