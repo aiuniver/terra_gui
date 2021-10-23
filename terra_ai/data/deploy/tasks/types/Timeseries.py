@@ -1,6 +1,6 @@
 import json
 import random
-from pathlib import Path, PurePath
+from pathlib import Path
 from typing import List, Any
 
 from terra_ai.data.mixins import BaseMixinData
@@ -14,8 +14,6 @@ class Item(BaseMixinData):
 
 
 class DataList(DataBaseList):
-    preset_file: Path = PurePath()
-
     class Meta:
         source = Item
 
@@ -27,21 +25,16 @@ class DataList(DataBaseList):
         if not len(self):
             return
 
-        self.preset_file = Path(self.path, "presets.json")
-
-        if self.preset_file.exists():
-            self.preset_file.unlink()
-
         for _index in indexes:
-            self.update(_index)
+            item = random.choice(self)
+            self.preset[_index] = item
 
-    def update(self, index: int):
-        item = random.choice(self)
-        self.preset[index] = item
+        _presets = []
+        for preset in self.preset:
+            _presets.append(preset.native())
 
-        with open(self.preset_file, "a") as preset_file_ref:
-            preset_file_ref.write(json.dumps(item.dict(), ensure_ascii=False))
-            preset_file_ref.write("\n")
+        with open(Path(self.path, "presets.json"), "w") as preset_file_ref:
+            preset_file_ref.write(json.dumps(_presets, ensure_ascii=False))
 
 
 class Data(DataBase):
