@@ -62,6 +62,49 @@ class GetAPIView(BaseAPIView):
 
 
 class LoadAPIView(BaseAPIView):
+    def _update_layers(
+        self, model: ModelDetailsData, project: Project
+    ) -> ModelDetailsData:
+        model_init = project.dataset.model
+
+        for index, layer in enumerate(model.inputs):
+            if index + 1 > len(model_init.inputs):
+                break
+            layer_init = model_init.inputs[index].native()
+            layer_data = layer.native()
+            layer_data.update(
+                {
+                    "shape": layer_init.get("shape"),
+                    "task": layer_init.get("task"),
+                    "num_classes": layer_init.get("num_classes"),
+                    "parameters": layer_init.get("parameters"),
+                }
+            )
+            if int(layer_data.get("id")) != int(layer_init.get("id")):
+                _layer = project.dataset.inputs.pop(layer_init.get("id"))
+                project.dataset.inputs[layer_data.get("id")] = _layer
+            model.layers.append(layer_data)
+
+        for index, layer in enumerate(model.outputs):
+            if index + 1 > len(model_init.outputs):
+                break
+            layer_init = model_init.outputs[index].native()
+            layer_data = layer.native()
+            layer_data.update(
+                {
+                    "shape": layer_init.get("shape"),
+                    "task": layer_init.get("task"),
+                    "num_classes": layer_init.get("num_classes"),
+                    "parameters": layer_init.get("parameters"),
+                }
+            )
+            if int(layer_data.get("id")) != int(layer_init.get("id")):
+                _layer = project.dataset.outputs.pop(layer_init.get("id"))
+                project.dataset.outputs[layer_data.get("id")] = _layer
+            model.layers.append(layer_data)
+
+        return model
+
     def post(self, request, **kwargs):
         serializer = ModelGetSerializer(data=request.data)
         if not serializer.is_valid():
@@ -74,7 +117,11 @@ class LoadAPIView(BaseAPIView):
             reset_dataset = serializer.validated_data.get("reset_dataset")
             if reset_dataset:
                 request.project.set_dataset()
-            request.project.set_model(model)
+            else:
+                request.project.set_model(model)
+                if request.project.dataset:
+                    model = self._update_layers(model, request.project)
+                    request.project.set_model(model)
             return BaseResponseSuccess(
                 request.project.model.native(), save_project=True
             )

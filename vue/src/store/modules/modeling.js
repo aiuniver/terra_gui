@@ -29,10 +29,10 @@ export default {
       state.errorsFields = { ...value }
     },
     SET_MODEL (state, value) {
-      state.model = value;
+      state.model = { ...value };
       const { layers } = value;
-      state.blocks = prepareBlocks(layers, state.modeling.list);
-      state.links = prepareLinks(layers);
+      state.blocks = [...prepareBlocks(layers, state.modeling.list)];
+      state.links = [...prepareLinks(layers)];
     },
     SET_BLOCKS (state, value) {
       state.blocks = [...value];
@@ -179,14 +179,14 @@ export default {
       return await dispatch('axios', { url: '/modeling/get/', data: value }, { root: true });
     },
     async changeId ({ commit, dispatch }, { value, id }) {
-      const data = await dispatch('axios', {
+      const { data } = await dispatch('axios', {
         url: '/modeling/datatype/', data: {
           "source": id,
           "target": value
         }
       }, { root: true });
-      console.log(data)
       if (data) {
+        dispatch('deselectBlocks')
         commit("modeling/SET_MODEL", data, { root: true });
       }
       return data
@@ -231,8 +231,8 @@ export default {
   },
   getters: {
     getList: ({ modeling: { list } }) => list,
-    getLayersType: ({ modeling: { layers_types } }) => layers_types,
-    getLayersForm: ({ modeling: { layer_form } }) => layer_form,
+    getLayersType: ({ modeling: { layers_types } }) => layers_types || {},
+    getLayersForm: ({ modeling: { layer_form } }) => layer_form || [],
     getModel: ({ model }) => model,
     getBlocks: ({ blocks }) => blocks,
     getErrorsBlocks: ({ errorsBlocks }) => errorsBlocks,
