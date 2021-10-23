@@ -220,10 +220,12 @@ class Project(BaseMixinData):
         if dataset is None:
             self.dataset = None
             project_path.clear_dataset()
+            defaults_data.modeling.set_layer_datatype(self.dataset)
             self.set_training()
             return
 
         self.dataset = dataset
+        defaults_data.modeling.set_layer_datatype(self.dataset)
         if not self.model.inputs or not self.model.outputs or reset_model:
             self.model = self.dataset.model
         else:
