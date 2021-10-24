@@ -23,6 +23,9 @@ import joblib
 import tempfile
 import shutil
 import zipfile
+import concurrent.futures
+from itertools import repeat
+from tqdm import tqdm
 from pathlib import Path
 from typing import Union
 from datetime import datetime
@@ -493,7 +496,7 @@ class CreateDataset(object):
             else:
                 input_array = self.postprocess_timeseries(input_array)
             task, classes_colors, classes_names, encoding, num_classes = None, None, None, None, None
-            if len(self.columns[key]) == 1:
+            if len(self.columns[key]) == 1 and not self.columns_processing:
                 for c_name, data in self.columns[key].items():
                     task = data['task']
                     classes_colors = data['classes_colors']
@@ -597,7 +600,12 @@ class CreateDataset(object):
                         encoding = LayerEncodingChoice.ohe
                     else:
                         encoding = LayerEncodingChoice.none
-                elif creation_data.outputs.get(key).type == LayerOutputTypeChoice.Segmentation:
+                elif creation_data.outputs.get(key).type == LayerOutputTypeChoice.Segmentation or\
+                        creation_data.outputs.get(key).type == LayerOutputTypeChoice.Dataframe and\
+                        creation_data.columns_processing[
+                            str(creation_data.outputs.get(key).parameters.cols_names[idx][0])].type\
+                        == LayerOutputTypeChoice.Segmentation or\
+                        task == LayerOutputTypeChoice.TimeseriesTrend:
                     encoding = LayerEncodingChoice.ohe
                 elif creation_data.outputs.get(key).type == LayerOutputTypeChoice.TextSegmentation:
                     encoding = LayerEncodingChoice.multi

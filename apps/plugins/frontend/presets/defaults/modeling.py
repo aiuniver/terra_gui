@@ -23,8 +23,15 @@ ModelingLayerForm = [
     {
         "type": "select",
         "label": "Тип данных",
-        "name": "datatype",
-        "parse": "datatype",
+        "name": "datatype_input",
+        "parse": "datatype_input",
+        "list": [],
+    },
+    {
+        "type": "select",
+        "label": "Тип данных",
+        "name": "datatype_output",
+        "parse": "datatype_output",
         "list": [],
     },
     {

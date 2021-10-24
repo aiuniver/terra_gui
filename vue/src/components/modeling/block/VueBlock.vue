@@ -1,7 +1,7 @@
 <template>
   <div class="t-block-modeling" :style="style" @mouseover="hover = true" @mouseleave="hover = false">
     <div :class="['t-block-modeling__header', group, { selected: selected }, { error: !!error }]">
-      <div class="t-block-modeling__header--title" :title="name">{{ typeLabel }}: {{ name }}</div>
+      <div class="t-block-modeling__header--title" :title="name">{{ `${id}) ${typeLabel}: ${name}` }}</div>
       <div class="t-block-modeling__header--parametr" :title="parametr">{{ parametr }}</div>
     </div>
     <div class="t-block-modeling__base"></div>

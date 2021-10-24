@@ -35,6 +35,21 @@ class DefaultsModelingData(BaseMixinData):
     layer_form: List[Field]
     layers_types: dict
 
+    def set_layer_datatype(self, dataset: DatasetData = None):
+        _inputs = []
+        _outputs = []
+        if dataset:
+            for _index, _item in dataset.inputs.items():
+                _inputs.append(
+                    {"value": _index, "label": f"{_item.name} [shape={_item.shape}]"}
+                )
+            for _index, _item in dataset.outputs.items():
+                _outputs.append(
+                    {"value": _index, "label": f"{_item.name} [shape={_item.shape}]"}
+                )
+        self.layer_form[2].list = _inputs
+        self.layer_form[3].list = _outputs
+
 
 class DefaultsTrainingBaseGroupData(BaseMixinData):
     name: Optional[str]
