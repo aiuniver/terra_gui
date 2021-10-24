@@ -423,11 +423,23 @@ Architectures = {
         "fit": ArchitectureGroupFit,
         "optimizer": ArchitectureGroupOptimizer,
         "yolo": ArchitectureGroupYoloV3,
+        "outputs": {
+            "name": "Параметры выходных слоев",
+            "collapsable": True,
+            "collapsed": False,
+            "fields": [],
+        }
     },
     ArchitectureChoice.YoloV4: {
         "main": ArchitectureGroupMain,
         "fit": ArchitectureGroupFit,
         "optimizer": ArchitectureGroupOptimizer,
         "yolo": ArchitectureGroupYoloV4,
+        "outputs": {
+            "name": "Параметры выходных слоев",
+            "collapsable": True,
+            "collapsed": False,
+            "fields": [],
+        }
     },
 }

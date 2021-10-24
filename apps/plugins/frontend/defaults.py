@@ -306,19 +306,27 @@ class ArchitectureBasicForm(ArchitectureBaseForm):
         fields[0].value = value
 
 
-class ArchitectureYoloForm(ArchitectureBaseForm):
-    pass
+class ArchitectureYoloV3Form(ArchitectureBaseForm):
+    outputs: DefaultsTrainingBaseGroupData
+
+class ArchitectureYoloV4Form(ArchitectureBaseForm):
+    outputs: DefaultsTrainingBaseGroupData
 
 
 class DefaultsTrainingData(BaseMixinData):
-    base: DefaultsTrainingBaseData # ArchitectureBaseForm
+    base: ArchitectureBaseForm # DefaultsTrainingBaseData
 
     def update(self, dataset: DatasetData, model: ModelDetailsData, training_base: TrainData):
-        _class = getattr(
-            sys.modules.get(__name__), f"Architecture{dataset.architecture}Form"
-        )
+        print(training_base)
+        try:
+            _class = getattr(
+                sys.modules.get(__name__), f"Architecture{dataset.architecture}Form"
+            )
+        except Exception:
+            _class = ArchitectureBasicForm
+
         self.base = _class(
-            **Architectures.get(dataset.architecture, ArchitectureChoice.Basic)
+            **Architectures.get(dataset.architecture if dataset else "Basic", ArchitectureChoice.Basic)
         )
         self.base.update(training_base, model=model)
 

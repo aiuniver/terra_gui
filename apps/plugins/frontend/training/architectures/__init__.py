@@ -1,1 +1,1 @@
-from . import Basic, Yolo
+from . import Basic, YoloV3, YoloV4
