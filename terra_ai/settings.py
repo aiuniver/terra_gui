@@ -32,6 +32,9 @@ DEPLOY_PRESET_PERCENT = 20
 CALLBACK_CLASSIFICATION_TREASHOLD_VALUE = 90
 CALLBACK_REGRESSION_TREASHOLD_VALUE = 2
 
+# Exceptions
+TRANSLATIONS_DIR = Path(Path(__file__).parent, "exceptions", "translations")
+
 # User settings
 
 LANGUAGE = "ru"
