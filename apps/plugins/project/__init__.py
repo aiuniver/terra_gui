@@ -161,7 +161,7 @@ class Project(BaseMixinData):
 
     def front(self):
         _data = self.native()
-        if _data.get("deploy"):
+        if _data.get("deploy") and self.deploy:
             _data.update({"deploy": self.deploy.presets})
         return json.dumps(_data)
 
