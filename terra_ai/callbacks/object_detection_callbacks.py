@@ -2,11 +2,12 @@ import colorsys
 import os
 from typing import Optional
 
+import matplotlib
 import numpy as np
 from PIL import Image, ImageFont, ImageDraw
 from tensorflow.python.keras.utils.np_utils import to_categorical
 
-from terra_ai.callbacks.utils import sort_dict
+from terra_ai.callbacks.utils import sort_dict, round_loss_metric
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
 from terra_ai.settings import DEPLOY_PRESET_PERCENT
 
@@ -22,6 +23,10 @@ class YoloV3Callback:
         return x_val, inverse_x_val
 
     @staticmethod
+    def prepare_y_true(options):
+        return get_yolo_y_true(options=options)
+
+    @staticmethod
     def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "", sensitivity=0.15,
                            threashold=0.1):
         return postprocess_od_deploy(
@@ -32,6 +37,10 @@ class YoloV3Callback:
             sensitivity=sensitivity,
             threashold=threashold
         )
+
+    @staticmethod
+    def dataset_balance(options, y_true) -> dict:
+        return prepare_dataset_balance(options, y_true)
 
 
 class YoloV4Callback:
@@ -45,6 +54,10 @@ class YoloV4Callback:
         return x_val, inverse_x_val
 
     @staticmethod
+    def prepare_y_true(options):
+        return get_yolo_y_true(options=options)
+
+    @staticmethod
     def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "", sensitivity=0.15,
                            threashold=0.1):
         return postprocess_od_deploy(
@@ -55,6 +68,10 @@ class YoloV4Callback:
             sensitivity=sensitivity,
             threashold=threashold
         )
+
+    @staticmethod
+    def dataset_balance(options, y_true) -> dict:
+        return prepare_dataset_balance(options, y_true)
 
 
 def get_yolo_y_true(options):
@@ -596,3 +613,75 @@ def postprocess_od_deploy(array, options, save_path: str = "", dataset_path: str
             }
         )
     return return_data
+
+
+def get_box_square(bbs, imsize=(416, 416)):
+    if len(bbs):
+        square = 0
+        for bb in bbs:
+            square += (bb[2] - bb[0]) * (bb[3] - bb[1])
+        return square / len(bbs) / np.prod(imsize) * 100
+    else:
+        return 0.
+
+
+def plot_bb_colormap(class_bb: dict, colors: list, name_classes: list, data_type: str,
+                     save_path: str, imgsize=(416, 416)):
+    template = np.zeros((imgsize[0], imgsize[1], 3))
+    link_dict = {}
+    total_len = 0
+    for class_idx in class_bb[data_type].keys():
+        total_len += len(class_bb[data_type][class_idx])
+        class_template = np.zeros((imgsize[0], imgsize[1], 3))
+        for box in class_bb[data_type][class_idx]:
+            template[box[0]:box[2], box[1]:box[3], :] += np.array(colors[class_idx])
+            class_template[box[0]:box[2], box[1]:box[3], :] += np.array(colors[class_idx])
+        class_template = class_template / len(class_bb[data_type][class_idx])
+        class_template = (class_template * 255 / class_template.max()).astype("uint8")
+        img_save_path = os.path.join(
+            save_path, f"image_{data_type}_od_balance_colormap_class_{name_classes[class_idx]}.webp"
+        )
+        link_dict[name_classes[class_idx]] = img_save_path
+        matplotlib.image.imsave(img_save_path, class_template)
+
+    template = template / total_len
+    template = (template * 255 / template.max()).astype('uint8')
+    img_save_path = os.path.join(save_path, f"image_{data_type}_od_balance_colormap_all_classes.webp")
+    link_dict['all_classes'] = img_save_path
+    matplotlib.image.imsave(img_save_path, template)
+    return link_dict
+
+
+def prepare_dataset_balance(options, class_colors, preset_path) -> dict:
+    dataset_balance = {}
+    name_classes = options.data.outputs.get(list(options.data.outputs.keys())[0]).classes_names
+    imsize = options.data.inputs.get(list(options.data.inputs.keys())[0]).shape
+    class_bb = {}
+    dataset_balance["output"] = {'class_count': {}, 'class_square': {}, 'colormap': {}}
+    for data_type in ["train", "val"]:
+        class_bb[data_type] = {}
+        for cl in range(len(name_classes)):
+            class_bb[data_type][cl] = []
+        for index in range(len(options.dataset[data_type])):
+            y_true = options.dataframe.get(data_type).iloc[index, 1].split(' ')
+            bbox_data_gt = np.array([list(map(int, box.split(','))) for box in y_true])
+            bboxes_gt, classes_gt = bbox_data_gt[:, :4], bbox_data_gt[:, 4]
+            bboxes_gt = np.concatenate(
+                [bboxes_gt[:, 1:2], bboxes_gt[:, 0:1], bboxes_gt[:, 3:4], bboxes_gt[:, 2:3]], axis=-1)
+            for i, cl in enumerate(classes_gt):
+                class_bb[data_type][cl].append(bboxes_gt[i].tolist())
+        dataset_balance["output"]['class_count'][data_type] = {}
+        dataset_balance["output"]['class_square'][data_type] = {}
+        for key, item in class_bb[data_type].items():
+            dataset_balance["output"]['class_count'][data_type][name_classes[key]] = len(item)
+            dataset_balance["output"]['class_square'][data_type][name_classes[key]] = \
+                round_loss_metric(get_box_square(item, imsize=(imsize[0], imsize[1])))
+        dataset_balance["output"]['colormap'][data_type] = plot_bb_colormap(
+            class_bb=class_bb,
+            colors=class_colors,
+            name_classes=name_classes,
+            data_type=data_type,
+            save_path=preset_path,
+            imgsize=(imsize[0], imsize[1])
+        )
+    return dataset_balance

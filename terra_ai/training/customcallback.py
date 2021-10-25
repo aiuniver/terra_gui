@@ -413,9 +413,9 @@ class InteractiveCallback:
     def set_attributes(self, dataset: PrepareDataset, metrics: dict, losses: dict, dataset_path: str,
                        training_path: str, initial_config: InteractiveData,
                        yolo_initial_config: YoloInteractiveData = None):
-        print('\ndataset.architecture', dataset.data.architecture)
-        print('\ndataset.data.outputs', dataset.data.outputs)
-        print('\ndataset.data.inputs', dataset.data.inputs)
+        # print('\ndataset.architecture', dataset.data.architecture)
+        # print('\ndataset.data.outputs', dataset.data.outputs)
+        # print('\ndataset.data.inputs', dataset.data.inputs)
         self.preset_path = os.path.join(training_path, "presets")
         if not os.path.exists(self.preset_path):
             os.mkdir(self.preset_path)
@@ -907,9 +907,9 @@ class InteractiveCallback:
                 encoding = self.options.data.outputs.get(out).encoding
 
                 if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
-                    dataset_balance[f"{out}"] = {'class_histogramm': {}}
+                    dataset_balance[f"{out}"] = {'class_histogram': {}}
                     for data_type in ['train', 'val']:
-                        dataset_balance[f"{out}"]['class_histogramm'][data_type] = class_counter(
+                        dataset_balance[f"{out}"]['class_histogram'][data_type] = class_counter(
                             y_array=self.y_true.get(data_type).get(f"{out}"),
                             classes_names=self.options.data.outputs.get(out).classes_names,
                             ohe=encoding == LayerEncodingChoice.ohe
@@ -2685,6 +2685,15 @@ class InteractiveCallback:
                                     preset = {}
                                     for data_type in ["train", "val"]:
                                         histogram = self.dataset_balance[f"{out}"][class_type][data_type][column]
+                                        if histogram.get("type") == 'histogram':
+                                            dict_to_sort = dict(zip(histogram.get("x"), histogram.get("y")))
+                                            x, y = CreateArray().sort_dict(
+                                                dict_to_sort=dict_to_sort,
+                                                mode=self.interactive_config.data_balance.sorted.name
+                                            )
+                                        else:
+                                            x = histogram.get("x")
+                                            y = histogram.get("y")
                                         data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
                                         preset[data_type] = self._fill_graph_front_structure(
                                             _id=_id,
@@ -2696,7 +2705,7 @@ class InteractiveCallback:
                                             x_label="Значение",
                                             y_label="Количество",
                                             plot_data=[
-                                                self._fill_graph_plot_data(x=histogram.get("x"), y=histogram.get("y"))],
+                                                self._fill_graph_plot_data(x=x, y=y)],
                                         )
                                         _id += 1
                                     return_data.append(preset)

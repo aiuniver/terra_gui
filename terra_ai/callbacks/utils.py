@@ -1,13 +1,16 @@
+import colorsys
+import importlib
 import math
+import re
 
 import matplotlib
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
 from sklearn.metrics import classification_report, confusion_matrix
-from tensorflow.python.keras.utils.np_utils import to_categorical
 
 from terra_ai.data.training.extra import BalanceSortedChoice
+from terra_ai.utils import camelize
 
 loss_metric_config = {
     "loss": {
@@ -469,8 +472,8 @@ def fill_graph_plot_data(x: list, y: list, label=None):
 
 
 def fill_graph_front_structure(_id: int, _type: str, graph_name: str, short_name: str,
-                                x_label: str, y_label: str, plot_data: list, best: list = None,
-                                type_data: str = None, progress_state: str = None):
+                               x_label: str, y_label: str, plot_data: list, best: list = None,
+                               type_data: str = None, progress_state: str = None):
     return {
         'id': _id,
         'type': _type,
@@ -486,9 +489,9 @@ def fill_graph_front_structure(_id: int, _type: str, graph_name: str, short_name
 
 
 def fill_heatmap_front_structure(_id: int, _type: str, graph_name: str, short_name: str,
-                                  x_label: str, y_label: str, labels: list, data_array: list,
-                                  type_data: str = None, data_percent_array: list = None,
-                                  progress_state: str = None):
+                                 x_label: str, y_label: str, labels: list, data_array: list,
+                                 type_data: str = None, data_percent_array: list = None,
+                                 progress_state: str = None):
     return {
         'id': _id,
         'type': _type,
@@ -518,3 +521,52 @@ def get_y_true(options, output_id):
         y_true = np.array(y_true)
     return y_true
 
+
+def reformat_metrics(metrics: dict) -> dict:
+    output = {}
+    for out, out_metrics in metrics.items():
+        output[out] = []
+        for metric in out_metrics:
+            metric_name = metric.name
+            if re.search(r'_\d+$', metric_name):
+                end = len(f"_{metric_name.split('_')[-1]}")
+                metric_name = metric_name[:-end]
+            output[out].append(camelize(metric_name))
+    return output
+
+
+def prepare_metric_obj(metrics: dict) -> dict:
+    metrics_obj = {}
+    for out in metrics.keys():
+        metrics_obj[out] = {}
+        for metric in metrics.get(out):
+            metric_name = metric.name
+            if re.search(r'_\d+$', metric_name):
+                end = len(f"_{metric_name.split('_')[-1]}")
+                metric_name = metric_name[:-end]
+            metrics_obj[out][camelize(metric_name)] = metric
+    return metrics_obj
+
+
+def prepare_loss_obj(losses: dict) -> dict:
+    loss_obj = {}
+    for out in losses.keys():
+        loss_obj[out] = getattr(
+            importlib.import_module(loss_metric_config.get("loss").get(losses.get(out)).get("module")),
+            losses.get(out)
+        )
+    return loss_obj
+
+
+def get_classes_colors(options):
+    colors = []
+    for out in options.data.outputs.keys():
+        classes_colors = options.data.outputs.get(out).classes_colors
+        if classes_colors:
+            colors = [color.as_rgb_tuple() for color in classes_colors]
+        else:
+            name_classes = options.data.outputs.get(out).classes_names
+            hsv_tuples = [(x / len(name_classes), 1., 1.) for x in range(len(name_classes))]
+            colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
+            colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
+    return colors

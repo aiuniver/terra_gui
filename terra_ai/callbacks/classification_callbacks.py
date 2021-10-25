@@ -6,7 +6,8 @@ from PIL import Image
 from pydub import AudioSegment
 from tensorflow.keras.preprocessing import image
 
-from terra_ai.callbacks.utils import sort_dict, fill_graph_front_structure, fill_graph_plot_data, get_y_true
+from terra_ai.callbacks.utils import sort_dict, fill_graph_front_structure, fill_graph_plot_data, get_y_true, \
+    class_counter
 from terra_ai.data.datasets.dataset import DatasetOutputsData
 from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, LayerEncodingChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
@@ -27,6 +28,10 @@ class ImageClassificationCallback:
         if options.data.group == DatasetGroupChoice.keras:
             x_val = options.X.get("val")
         return x_val, inverse_x_val
+
+    @staticmethod
+    def get_y_true(options):
+        return prepare_y_true(options)
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str,
@@ -119,6 +124,10 @@ class ImageClassificationCallback:
 
         return return_data
 
+    @staticmethod
+    def dataset_balance(options, y_true) -> dict:
+        return prepare_dataset_balance(options, y_true)
+
 
 class TextClassificationCallback:
     def __init__(self):
@@ -129,6 +138,10 @@ class TextClassificationCallback:
         x_val = None
         inverse_x_val = None
         return x_val, inverse_x_val
+
+    @staticmethod
+    def get_y_true(options):
+        return prepare_y_true(options)
 
     @staticmethod
     def postprocess_initial_source(options, example_id: int, return_mode='deploy'):
@@ -200,6 +213,10 @@ class TextClassificationCallback:
                 )
         return return_data
 
+    @staticmethod
+    def dataset_balance(options, y_true) -> dict:
+        return prepare_dataset_balance(options, y_true)
+
 
 class DataframeClassificationCallback:
     def __init__(self):
@@ -218,6 +235,10 @@ class DataframeClassificationCallback:
                     x_val[inp].extend(x_val_.get(f'{inp}').numpy())
                 x_val[inp] = np.array(x_val[inp])
         return x_val, inverse_x_val
+
+    @staticmethod
+    def get_y_true(options):
+        return prepare_y_true(options)
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, return_mode='deploy'):
@@ -282,6 +303,10 @@ class DataframeClassificationCallback:
                 )
         return return_data
 
+    @staticmethod
+    def dataset_balance(options, y_true) -> dict:
+        return prepare_dataset_balance(options, y_true)
+
 
 class AudioClassificationCallback:
     def __init__(self):
@@ -292,6 +317,10 @@ class AudioClassificationCallback:
         x_val = None
         inverse_x_val = None
         return x_val, inverse_x_val
+
+    @staticmethod
+    def get_y_true(options):
+        return prepare_y_true(options)
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str,
@@ -375,6 +404,10 @@ class AudioClassificationCallback:
 
         return return_data
 
+    @staticmethod
+    def dataset_balance(options, y_true) -> dict:
+        return prepare_dataset_balance(options, y_true)
+
 
 class VideoClassificationCallback:
     def __init__(self):
@@ -385,6 +418,10 @@ class VideoClassificationCallback:
         x_val = None
         inverse_x_val = None
         return x_val, inverse_x_val
+
+    @staticmethod
+    def get_y_true(options):
+        return prepare_y_true(options)
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str, preset_path: str,
@@ -467,6 +504,10 @@ class VideoClassificationCallback:
 
         return return_data
 
+    @staticmethod
+    def dataset_balance(options, y_true) -> dict:
+        return prepare_dataset_balance(options, y_true)
+
 
 class TimeseriesTrendCallback:
     def __init__(self):
@@ -498,6 +539,10 @@ class TimeseriesTrendCallback:
                 inverse_x = np.concatenate([inverse_x, inverse_col], axis=-1)
             inverse_x_val[inp] = inverse_x[:, :, 1:]
         return x_val, inverse_x_val
+
+    @staticmethod
+    def get_y_true(options):
+        return prepare_y_true(options)
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, inverse_x_array=None,
@@ -600,6 +645,25 @@ class TimeseriesTrendCallback:
                     )
 
         return return_data
+
+    @staticmethod
+    def dataset_balance(options, y_true) -> dict:
+        return prepare_dataset_balance(options, y_true)
+
+
+def prepare_y_true(options):
+    y_true = {"train": {}, "val": {}}
+    inverse_y_true = {"train": {}, "val": {}}
+    for data_type in y_true.keys():
+        for out in options.data.outputs.keys():
+            if not options.data.use_generator:
+                y_true[data_type][f"{out}"] = options.Y.get(data_type).get(f"{out}")
+            else:
+                y_true[data_type][f"{out}"] = []
+                for _, y_val in options.dataset[data_type].batch(1):
+                    y_true[data_type][f"{out}"].extend(y_val.get(f'{out}').numpy())
+                y_true[data_type][f"{out}"] = np.array(y_true[data_type][f"{out}"])
+    return y_true, inverse_y_true
 
 
 def prepare_example_idx_to_show(array: np.ndarray, true_array: np.ndarray, options, output: int, count: int,
@@ -736,3 +800,32 @@ def postprocess_classification(predict_array: np.ndarray, true_array: np.ndarray
         return data
 
 
+def prepare_class_idx(y_true, options) -> dict:
+    class_idx = {}
+    for data_type in y_true.keys():
+        class_idx[data_type] = {}
+        for out in y_true.get(data_type).keys():
+            class_idx[data_type][out] = {}
+            ohe = options.data.outputs.get(int(out)).encoding == LayerEncodingChoice.ohe
+            for name in options.data.outputs.get(int(out)).classes_names:
+                class_idx[data_type][out][name] = []
+            y_true = np.argmax(y_true.get(data_type).get(out), axis=-1) if ohe \
+                else np.squeeze(y_true.get(data_type).get(out))
+            for idx in range(len(y_true)):
+                class_idx[data_type][out][
+                    options.data.outputs.get(int(out)).classes_names[y_true[idx]]].append(idx)
+    return class_idx
+
+
+def prepare_dataset_balance(options, y_true) -> dict:
+    dataset_balance = {}
+    for out in options.data.outputs.keys():
+        encoding = options.data.outputs.get(out).encoding
+        dataset_balance[f"{out}"] = {'class_histogramm': {}}
+        for data_type in ['train', 'val']:
+            dataset_balance[f"{out}"]['class_histogramm'][data_type] = class_counter(
+                y_array=y_true.get(data_type).get(f"{out}"),
+                classes_names=options.data.outputs.get(out).classes_names,
+                ohe=encoding == LayerEncodingChoice.ohe
+            )
+    return dataset_balance

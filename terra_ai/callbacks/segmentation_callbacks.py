@@ -8,7 +8,7 @@ from PIL import Image
 from pandas import DataFrame
 from tensorflow.python.keras.utils.np_utils import to_categorical
 
-from terra_ai.callbacks.utils import dice_coef, sort_dict, get_y_true
+from terra_ai.callbacks.utils import dice_coef, sort_dict, get_y_true, get_image_class_colormap
 from terra_ai.data.datasets.dataset import DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerEncodingChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
@@ -24,6 +24,10 @@ class ImageSegmentationCallback:
         x_val = None
         inverse_x_val = None
         return x_val, inverse_x_val
+
+    @staticmethod
+    def get_y_true(options):
+        return prepare_y_true(options)
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str, preset_path: str,
@@ -106,6 +110,45 @@ class ImageSegmentationCallback:
                 _id += 1
         return return_data
 
+    @staticmethod
+    def dataset_balance(options, y_true, preset_path: str, class_colors) -> dict:
+        dataset_balance = {}
+        for out in options.data.outputs.keys():
+            dataset_balance[f"{out}"] = {
+                "presence_balance": {}, "square_balance": {}, "colormap": {}
+            }
+            for data_type in ['train', 'val']:
+                dataset_balance[f"{out}"]["colormap"][data_type] = {}
+                classes_names = options.data.outputs.get(out).classes_names
+                classes = np.arange(options.data.outputs.get(out).num_classes)
+                class_percent = {}
+                class_count = {}
+                for cl in classes:
+                    class_percent[classes_names[cl]] = np.round(
+                        np.sum(
+                            y_true.get(data_type).get(f"{out}")[:, :, :, cl]) * 100
+                        / np.prod(y_true.get(data_type).get(f"{out}")[:, :, :, 0].shape)
+                    ).astype("float").tolist()
+                    class_count[classes_names[cl]] = 0
+                    colormap_path = os.path.join(
+                        preset_path, f"balance_segmentation_colormap_{data_type}_class_{classes_names[cl]}.webp"
+                    )
+                    get_image_class_colormap(
+                        array=y_true.get(data_type).get(f"{out}"),
+                        colors=class_colors,
+                        class_id=cl,
+                        save_path=colormap_path
+                    )
+                    dataset_balance[f"{out}"]["colormap"][data_type][classes_names[cl]] = colormap_path
+
+                for img_array in np.argmax(y_true.get(data_type).get(f"{out}"), axis=-1):
+                    for cl in classes:
+                        if cl in img_array:
+                            class_count[classes_names[cl]] += 1
+                dataset_balance[f"{out}"]["presence_balance"][data_type] = class_count
+                dataset_balance[f"{out}"]["square_balance"][data_type] = class_percent
+        return dataset_balance
+
 
 class TextSegmentationCallback:
     def __init__(self):
@@ -116,6 +159,10 @@ class TextSegmentationCallback:
         x_val = None
         inverse_x_val = None
         return x_val, inverse_x_val
+
+    @staticmethod
+    def get_y_true(options):
+        return prepare_y_true(options)
 
     @staticmethod
     def postprocess_initial_source(options, example_id: int, return_mode='deploy'):
@@ -178,6 +225,44 @@ class TextSegmentationCallback:
                 )
             return_data[output_id]["color_map"] = colors
         return return_data
+
+    @staticmethod
+    def dataset_balance(self) -> dict:
+        dataset_balance = {}
+        for out in self.options.data.outputs.keys():
+            dataset_balance[f"{out}"] = {
+                "presence_balance": {},
+                "percent_balance": {}
+            }
+            for data_type in ['train', 'val']:
+                classes_names = self.options.data.outputs.get(out).classes_names
+                classes = np.arange(self.options.data.outputs.get(out).num_classes)
+                class_count = {}
+                class_percent = {}
+                for cl in classes:
+                    class_count[classes_names[cl]] = \
+                        np.sum(self.y_true.get(data_type).get(f"{out}")[:, :, cl]).item()
+                    class_percent[self.options.data.outputs.get(out).classes_names[cl]] = np.round(
+                        np.sum(self.y_true.get(data_type).get(f"{out}")[:, :, cl]) * 100
+                        / np.prod(self.y_true.get(data_type).get(f"{out}")[:, :, cl].shape)).item()
+                dataset_balance[f"{out}"]["presence_balance"][data_type] = class_count
+                dataset_balance[f"{out}"]["percent_balance"][data_type] = class_percent
+        return dataset_balance
+
+
+def prepare_y_true(options):
+    y_true = {"train": {}, "val": {}}
+    inverse_y_true = {"train": {}, "val": {}}
+    for data_type in y_true.keys():
+        for out in options.data.outputs.keys():
+            if not options.data.use_generator:
+                y_true[data_type][f"{out}"] = options.Y.get(data_type).get(f"{out}")
+            else:
+                y_true[data_type][f"{out}"] = []
+                for _, y_val in options.dataset[data_type].batch(1):
+                    y_true[data_type][f"{out}"].extend(y_val.get(f'{out}').numpy())
+                y_true[data_type][f"{out}"] = np.array(y_true[data_type][f"{out}"])
+    return y_true, inverse_y_true
 
 
 def prepare_example_idx_to_show(array: np.ndarray, true_array: np.ndarray, options, output: int, count: int,

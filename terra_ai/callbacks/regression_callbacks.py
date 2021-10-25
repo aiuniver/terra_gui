@@ -1,6 +1,8 @@
 import numpy as np
+import pandas as pd
 
-from terra_ai.callbacks.utils import sort_dict, get_y_true
+from terra_ai.callbacks.utils import sort_dict, get_y_true, get_distribution_histogram, get_correlation_matrix
+from terra_ai.data.datasets.extra import LayerInputTypeChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
 from terra_ai.settings import CALLBACK_REGRESSION_TREASHOLD_VALUE, DEPLOY_PRESET_PERCENT
 
@@ -22,6 +24,32 @@ class DataframeRegressionCallback:
                     x_val[inp].extend(x_val_.get(f'{inp}').numpy())
                 x_val[inp] = np.array(x_val[inp])
         return x_val, inverse_x_val
+
+    @staticmethod
+    def get_y_true(options):
+        y_true = {"train": {}, "val": {}}
+        inverse_y_true = {"train": {}, "val": {}}
+        for data_type in y_true.keys():
+            for out in options.data.outputs.keys():
+                if not options.data.use_generator:
+                    y_true[data_type][f"{out}"] = options.Y.get(data_type).get(f"{out}")
+                else:
+                    y_true[data_type][f"{out}"] = []
+                    for _, y_val in options.dataset[data_type].batch(1):
+                        y_true[data_type][f"{out}"].extend(y_val.get(f'{out}').numpy())
+                    y_true[data_type][f"{out}"] = np.array(y_true[data_type][f"{out}"])
+
+                preprocess_dict = options.preprocessing.preprocessing.get(out)
+                inverse_y = np.zeros_like(y_true.get(data_type).get(f"{out}")[:, 0:1])
+                for i, column in enumerate(preprocess_dict.keys()):
+                    if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
+                        _options = {int(out): {column: y_true.get(data_type).get(f"{out}")[:, i:i + 1]}}
+                        inverse_col = options.preprocessing.inverse_data(_options).get(out).get(column)
+                    else:
+                        inverse_col = y_true.get(data_type).get(f"{out}")[:, i:i + 1]
+                    inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
+                inverse_y_true[data_type][f"{out}"] = inverse_y[:, 1:]
+        return y_true, inverse_y_true
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, return_mode='deploy'):
@@ -73,7 +101,7 @@ class DataframeRegressionCallback:
                 for inp_col in source_col:
                     row_list.append(f"{options.dataframe.get('val')[inp_col][idx]}")
                 return_data[output_id]['preset'].append(row_list)
-                channel_inverse_col =[]
+                channel_inverse_col = []
                 for ch, col in enumerate(list(options.data.columns.get(output_id).keys())):
                     channel_inverse_col = []
                     if type(preprocess.get(col)).__name__ in ['StandardScaler', 'MinMaxScaler']:
@@ -85,6 +113,39 @@ class DataframeRegressionCallback:
                     channel_inverse_col.append(str(inverse_col[0]))
                 return_data[output_id]['label'].append(channel_inverse_col)
         return return_data
+
+    @staticmethod
+    def dataset_balance(options) -> dict:
+        dataset_balance = {}
+        for out in options.data.outputs.keys():
+            dataset_balance[f"{out}"] = {'histogram': {}, 'correlation': {}}
+            for data_type in ['train', 'val']:
+                dataset_balance[f"{out}"]['histogram'][data_type] = {}
+                for column in list(options.dataframe.get('train').columns):
+                    column_id = int(column.split("_")[0])
+                    column_task = options.data.columns.get(column_id).get(column).task
+                    column_data = list(options.dataframe.get(data_type)[column])
+                    if column_task == LayerInputTypeChoice.Text:
+                        continue
+                    elif column_task == LayerInputTypeChoice.Classification:
+                        x, y = get_distribution_histogram(column_data, categorical=True)
+                        hist_type = "histogram"
+                    else:
+                        x, y = get_distribution_histogram(column_data, categorical=False)
+                        hist_type = "bar"
+                    dataset_balance[f"{out}"]['histogram'][data_type][column] = {
+                        "name": column.split("_", 1)[-1],
+                        "type": hist_type,
+                        "x": x,
+                        "y": y
+                    }
+            for data_type in ['train', 'val']:
+                labels, matrix = get_correlation_matrix(pd.DataFrame(options.dataframe.get(data_type)))
+                dataset_balance[f"{out}"]['correlation'][data_type] = {
+                    "labels": labels,
+                    "matrix": matrix
+                }
+        return dataset_balance
 
 
 def prepare_example_idx_to_show(array: np.ndarray, true_array: np.ndarray, count: int,
@@ -172,7 +233,4 @@ def postprocess_regression(column_names: list, inverse_y_true: np.ndarray, inver
                     }
                 )
         return data
-
-
-
 

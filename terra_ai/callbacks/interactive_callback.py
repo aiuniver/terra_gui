@@ -1,6 +1,5 @@
-import colorsys
+
 import copy
-import importlib
 import math
 import os
 import random
@@ -8,14 +7,10 @@ import re
 import string
 from typing import Union, Optional
 
-import matplotlib
-import pandas as pd
-
 from tensorflow.keras.utils import to_categorical
 import numpy as np
 
 from terra_ai import progress
-from terra_ai.callbacks.postprocess_results import PostprocessResults
 from terra_ai.callbacks.utils import loss_metric_config, class_counter, get_image_class_colormap, \
     get_distribution_histogram, get_correlation_matrix, round_loss_metric, fill_graph_plot_data, \
     fill_graph_front_structure, get_confusion_matrix, fill_heatmap_front_structure, fill_table_front_structure, \
@@ -310,163 +305,6 @@ class InteractiveCallback:
             )
             return self.train_progress
 
-    # Методы для set_attributes()
-    @staticmethod
-    def _reformat_metrics(metrics: dict) -> dict:
-        output = {}
-        for out, out_metrics in metrics.items():
-            output[out] = []
-            for metric in out_metrics:
-                metric_name = metric.name
-                if re.search(r'_\d+$', metric_name):
-                    end = len(f"_{metric_name.split('_')[-1]}")
-                    metric_name = metric_name[:-end]
-                output[out].append(camelize(metric_name))
-        return output
-
-    @staticmethod
-    def _prepare_loss_obj(losses: dict) -> dict:
-        loss_obj = {}
-        for out in losses.keys():
-            loss_obj[out] = getattr(
-                importlib.import_module(loss_metric_config.get("loss").get(losses.get(out)).get("module")),
-                losses.get(out)
-            )
-        return loss_obj
-
-    @staticmethod
-    def _prepare_metric_obj(metrics: dict) -> dict:
-        metrics_obj = {}
-        for out in metrics.keys():
-            metrics_obj[out] = {}
-            for metric in metrics.get(out):
-                metric_name = metric.name
-                if re.search(r'_\d+$', metric_name):
-                    end = len(f"_{metric_name.split('_')[-1]}")
-                    metric_name = metric_name[:-end]
-                metrics_obj[out][camelize(metric_name)] = metric
-        return metrics_obj
-
-    def _get_classes_colors(self):
-        colors = []
-        for out in self.options.data.outputs.keys():
-            task = self.options.data.outputs.get(out).task
-            classes_colors = self.options.data.outputs.get(out).classes_colors
-            if task == LayerOutputTypeChoice.TextSegmentation and classes_colors:
-                self.class_colors = [color.as_rgb_tuple() for color in classes_colors]
-            elif task == LayerOutputTypeChoice.TextSegmentation or task == LayerOutputTypeChoice.ObjectDetection \
-                    and not classes_colors:
-                name_classes = self.options.data.outputs.get(out).classes_names
-                hsv_tuples = [(x / len(name_classes), 1., 1.) for x in range(len(name_classes))]
-                colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
-                colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
-                self.class_colors = colors
-            elif task == LayerOutputTypeChoice.Segmentation:
-                self.class_colors = [color.as_rgb_tuple() for color in classes_colors]
-            else:
-                self.class_colors = colors
-
-    @staticmethod
-    def _prepare_x_val(dataset: PrepareDataset):
-        x_val = None
-        inverse_x_val = None
-        if dataset.data.group == DatasetGroupChoice.keras:
-            x_val = dataset.X.get("val")
-        dataframe = False
-        for inp in dataset.data.inputs.keys():
-            if dataset.data.inputs.get(inp).task == LayerInputTypeChoice.Dataframe:
-                dataframe = True
-                break
-        ts = False
-        for out in dataset.data.outputs.keys():
-            if dataset.data.outputs.get(out).task == LayerOutputTypeChoice.Timeseries or \
-                    dataset.data.outputs.get(out).task == LayerOutputTypeChoice.TimeseriesTrend:
-                ts = True
-                break
-        if dataframe and not dataset.data.use_generator:
-            x_val = dataset.X.get("val")
-
-        elif dataframe and dataset.data.use_generator:
-            x_val = {}
-            for inp in dataset.dataset['val'].keys():
-                x_val[inp] = []
-                for x_val_, _ in dataset.dataset['val'].batch(1):
-                    x_val[inp].extend(x_val_.get(f'{inp}').numpy())
-                x_val[inp] = np.array(x_val[inp])
-        else:
-            pass
-
-        if ts:
-            inverse_x_val = {}
-            for input in x_val.keys():
-                preprocess_dict = dataset.preprocessing.preprocessing.get(int(input))
-                inverse_x = np.zeros_like(x_val.get(input)[:, :, 0:1])
-                for i, column in enumerate(preprocess_dict.keys()):
-                    if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
-                        _options = {
-                            int(input): {
-                                column: x_val.get(input)[:, :, i]
-                            }
-                        }
-                        inverse_col = np.expand_dims(
-                            dataset.preprocessing.inverse_data(_options).get(int(input)).get(column), axis=-1)
-                    else:
-                        inverse_col = x_val.get(input)[:, :, i:i + 1]
-                    inverse_x = np.concatenate([inverse_x, inverse_col], axis=-1)
-                inverse_x_val[input] = inverse_x[:, :, 1:]
-        return x_val, inverse_x_val
-
-    def _prepare_y_true(self, dataset: PrepareDataset):
-        y_true = {
-            "train": {},
-            "val": {}
-        }
-        inverse_y_true = {
-            "train": {},
-            "val": {}
-        }
-        for data_type in y_true.keys():
-            if dataset.data.architecture in self.basic_architecture:
-                for out in dataset.data.outputs.keys():
-                    task = dataset.data.outputs.get(out).task
-                    if not dataset.data.use_generator:
-                        y_true[data_type][f"{out}"] = dataset.Y.get(data_type).get(f"{out}")
-                    else:
-                        y_true[data_type][f"{out}"] = []
-                        for _, y_val in dataset.dataset[data_type].batch(1):
-                            y_true[data_type][f"{out}"].extend(y_val.get(f'{out}').numpy())
-                        y_true[data_type][f"{out}"] = np.array(y_true[data_type][f"{out}"])
-
-                    if task == LayerOutputTypeChoice.Regression or task == LayerOutputTypeChoice.Dataframe:
-                        preprocess_dict = dataset.preprocessing.preprocessing.get(out)
-                        inverse_y = np.zeros_like(y_true.get(data_type).get(f"{out}")[:, 0:1])
-                        for i, column in enumerate(preprocess_dict.keys()):
-                            if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
-                                _options = {int(out): {column: y_true.get(data_type).get(f"{out}")[:, i:i + 1]}}
-                                inverse_col = dataset.preprocessing.inverse_data(_options).get(out).get(column)
-                            else:
-                                inverse_col = y_true.get(data_type).get(f"{out}")[:, i:i + 1]
-                            inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
-                        inverse_y_true[data_type][f"{out}"] = inverse_y[:, 1:]
-
-                    if task == LayerOutputTypeChoice.Timeseries:
-                        preprocess_dict = dataset.preprocessing.preprocessing.get(int(out))
-                        inverse_y = np.zeros_like(y_true.get(data_type).get(f"{out}")[:, :, 0:1])
-                        for i, column in enumerate(preprocess_dict.keys()):
-                            if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
-                                _options = {int(out): {column: y_true.get(data_type).get(f"{out}")[:, :, i]}}
-                                inverse_col = np.expand_dims(
-                                    dataset.preprocessing.inverse_data(_options).get(int(out)).get(column), axis=-1)
-                            else:
-                                inverse_col = y_true.get(data_type).get(f"{out}")[:, :, i:i + 1]
-                            inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
-                        inverse_y_true[data_type][f"{out}"] = inverse_y[:, :, 1:]
-
-        if dataset.data.architecture in self.yolo_architecture:
-            y_true = CreateArray().get_yolo_y_true(options=dataset)
-
-        return y_true, inverse_y_true
-
     def _class_metric_list(self):
         self.class_graphics = {}
         for out in self.options.data.outputs.keys():
@@ -566,234 +404,6 @@ class InteractiveCallback:
                 self.log_history['output']["class_loss"]['prob_loss'][class_name] = []
                 self.log_history['output']["class_metrics"]['mAP50'][class_name] = []
                 self.log_history['output']["class_metrics"]['mAP95'][class_name] = []
-
-    def _prepare_dataset_balance(self) -> dict:
-        dataset_balance = {}
-        for out in self.options.data.outputs.keys():
-            task = self.options.data.outputs.get(out).task
-            encoding = self.options.data.outputs.get(out).encoding
-
-            if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
-                dataset_balance[f"{out}"] = {'class_histogramm': {}}
-                for data_type in ['train', 'val']:
-                    dataset_balance[f"{out}"]['class_histogramm'][data_type] = class_counter(
-                        y_array=self.y_true.get(data_type).get(f"{out}"),
-                        classes_names=self.options.data.outputs.get(out).classes_names,
-                        ohe=encoding == LayerEncodingChoice.ohe
-                    )
-
-            if task == LayerOutputTypeChoice.Segmentation and encoding == LayerEncodingChoice.ohe:
-                dataset_balance[f"{out}"] = {
-                    "presence_balance": {},
-                    "square_balance": {},
-                    "colormap": {}
-                }
-                for data_type in ['train', 'val']:
-                    dataset_balance[f"{out}"]["colormap"][data_type] = {}
-                    classes_names = self.options.data.outputs.get(out).classes_names
-                    classes = np.arange(self.options.data.outputs.get(out).num_classes)
-                    class_percent = {}
-                    class_count = {}
-                    for cl in classes:
-                        class_percent[classes_names[cl]] = np.round(
-                            np.sum(
-                                self.y_true.get(data_type).get(f"{out}")[:, :, :, cl]) * 100
-                            / np.prod(self.y_true.get(data_type).get(f"{out}")[:, :, :, 0].shape)
-                        ).astype("float").tolist()
-                        class_count[classes_names[cl]] = 0
-                        colormap_path = os.path.join(
-                            self.preset_path,
-                            f"balance_segmentation_colormap_{data_type}_class_{classes_names[cl]}.webp"
-                        )
-                        get_image_class_colormap(
-                            array=self.y_true.get(data_type).get(f"{out}"),
-                            colors=self.class_colors,
-                            class_id=cl,
-                            save_path=colormap_path
-                        )
-                        dataset_balance[f"{out}"]["colormap"][data_type][classes_names[cl]] = colormap_path
-
-                    for img_array in np.argmax(self.y_true.get(data_type).get(f"{out}"), axis=-1):
-                        for cl in classes:
-                            if cl in img_array:
-                                class_count[classes_names[cl]] += 1
-                    dataset_balance[f"{out}"]["presence_balance"][data_type] = class_count
-                    dataset_balance[f"{out}"]["square_balance"][data_type] = class_percent
-
-            if task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.ohe or \
-                    encoding == LayerEncodingChoice.multi:
-                dataset_balance[f"{out}"] = {
-                    "presence_balance": {},
-                    "percent_balance": {}
-                }
-                for data_type in ['train', 'val']:
-                    classes_names = self.options.data.outputs.get(out).classes_names
-                    classes = np.arange(self.options.data.outputs.get(out).num_classes)
-                    class_count = {}
-                    class_percent = {}
-                    for cl in classes:
-                        class_count[classes_names[cl]] = \
-                            np.sum(self.y_true.get(data_type).get(f"{out}")[:, :, cl]).item()
-                        class_percent[self.options.data.outputs.get(out).classes_names[cl]] = np.round(
-                            np.sum(self.y_true.get(data_type).get(f"{out}")[:, :, cl]) * 100
-                            / np.prod(self.y_true.get(data_type).get(f"{out}")[:, :, cl].shape)).item()
-                    dataset_balance[f"{out}"]["presence_balance"][data_type] = class_count
-                    dataset_balance[f"{out}"]["percent_balance"][data_type] = class_percent
-
-            if task == LayerOutputTypeChoice.Timeseries:
-                dataset_balance[f"{out}"] = {
-                    'graphic': {},
-                    'dense_histogram': {}
-                }
-                for output_channel in self.options.data.columns.get(out).keys():
-                    dataset_balance[f"{out}"]['graphic'][output_channel] = {}
-                    dataset_balance[f"{out}"]['dense_histogram'][output_channel] = {}
-                    for data_type in ['train', 'val']:
-                        dataset_balance[f"{out}"]['graphic'][output_channel][data_type] = {
-                            "type": "graphic",
-                            "x": np.array(self.options.dataframe.get(data_type).index).astype('float').tolist(),
-                            "y": np.array(self.options.dataframe.get(data_type)[output_channel]).astype(
-                                'float').tolist()
-                        }
-                        x, y = get_distribution_histogram(
-                            list(self.options.dataframe.get(data_type)[output_channel]),
-                            categorical=False
-                        )
-                        dataset_balance[f"{out}"]['dense_histogram'][output_channel][data_type] = {
-                            "type": "bar",
-                            "x": x,
-                            "y": y
-                        }
-
-            if task == LayerOutputTypeChoice.Regression:
-                dataset_balance[f"{out}"] = {
-                    'histogram': {},
-                    'correlation': {}
-                }
-                for data_type in ['train', 'val']:
-                    dataset_balance[f"{out}"]['histogram'][data_type] = {}
-                    for column in list(self.options.dataframe.get('train').columns):
-                        column_id = int(column.split("_")[0])
-                        column_task = self.options.data.columns.get(column_id).get(column).task
-                        column_data = list(self.options.dataframe.get(data_type)[column])
-                        if column_task == LayerInputTypeChoice.Text:
-                            continue
-                        elif column_task == LayerInputTypeChoice.Classification:
-                            x, y = get_distribution_histogram(column_data, categorical=True)
-                            hist_type = "histogram"
-                        else:
-                            x, y = get_distribution_histogram(column_data, categorical=False)
-                            hist_type = "bar"
-                        dataset_balance[f"{out}"]['histogram'][data_type][column] = {
-                            "name": column.split("_", 1)[-1],
-                            "type": hist_type,
-                            "x": x,
-                            "y": y
-                        }
-                for data_type in ['train', 'val']:
-                    labels, matrix = get_correlation_matrix(pd.DataFrame(self.options.dataframe.get(data_type)))
-                    dataset_balance[f"{out}"]['correlation'][data_type] = {
-                        "labels": labels,
-                        "matrix": matrix
-                    }
-
-            if task == LayerOutputTypeChoice.ObjectDetection:
-                name_classes = self.options.data.outputs.get(list(self.options.data.outputs.keys())[0]).classes_names
-                imsize = self.options.data.inputs.get(list(self.options.data.inputs.keys())[0]).shape
-                class_bb = {}
-                dataset_balance["output"] = {
-                    'class_count': {},
-                    'class_square': {},
-                    'colormap': {}
-                }
-                for data_type in ["train", "val"]:
-                    class_bb[data_type] = {}
-                    for cl in range(len(name_classes)):
-                        class_bb[data_type][cl] = []
-                    for index in range(len(self.options.dataset[data_type])):
-                        y_true = self.options.dataframe.get(data_type).iloc[index, 1].split(' ')
-                        bbox_data_gt = np.array([list(map(int, box.split(','))) for box in y_true])
-                        bboxes_gt, classes_gt = bbox_data_gt[:, :4], bbox_data_gt[:, 4]
-                        bboxes_gt = np.concatenate(
-                            [bboxes_gt[:, 1:2], bboxes_gt[:, 0:1], bboxes_gt[:, 3:4], bboxes_gt[:, 2:3]], axis=-1)
-                        for i, cl in enumerate(classes_gt):
-                            class_bb[data_type][cl].append(bboxes_gt[i].tolist())
-
-                    dataset_balance["output"]['class_count'][data_type] = {}
-                    dataset_balance["output"]['class_square'][data_type] = {}
-                    for key, item in class_bb[data_type].items():
-                        dataset_balance["output"]['class_count'][data_type][name_classes[key]] = len(item)
-                        dataset_balance["output"]['class_square'][data_type][name_classes[key]] = \
-                            round_loss_metric(self._get_box_square(item, imsize=(imsize[0], imsize[1])))
-
-                    dataset_balance["output"]['colormap'][data_type] = self._plot_bb_colormap(
-                        class_bb=class_bb,
-                        colors=self.class_colors,
-                        name_classes=name_classes,
-                        data_type=data_type,
-                        save_path=self.preset_path,
-                        imgsize=(imsize[0], imsize[1])
-                    )
-                break
-
-        return dataset_balance
-
-    @staticmethod
-    def _get_box_square(bbs, imsize=(416, 416)):
-        if len(bbs):
-            square = 0
-            for bb in bbs:
-                square += (bb[2] - bb[0]) * (bb[3] - bb[1])
-            return square / len(bbs) / np.prod(imsize) * 100
-        else:
-            return 0.
-
-    @staticmethod
-    def _plot_bb_colormap(class_bb: dict, colors: list, name_classes: list, data_type: str,
-                          save_path: str, imgsize=(416, 416)):
-        template = np.zeros((imgsize[0], imgsize[1], 3))
-        link_dict = {}
-        total_len = 0
-        for class_idx in class_bb[data_type].keys():
-            total_len += len(class_bb[data_type][class_idx])
-            class_template = np.zeros((imgsize[0], imgsize[1], 3))
-            for box in class_bb[data_type][class_idx]:
-                template[box[0]:box[2], box[1]:box[3], :] += np.array(colors[class_idx])
-                class_template[box[0]:box[2], box[1]:box[3], :] += np.array(colors[class_idx])
-            class_template = class_template / len(class_bb[data_type][class_idx])
-            class_template = (class_template * 255 / class_template.max()).astype("uint8")
-            img_save_path = os.path.join(
-                save_path, f"image_{data_type}_od_balance_colormap_class_{name_classes[class_idx]}.webp"
-            )
-            link_dict[name_classes[class_idx]] = img_save_path
-            matplotlib.image.imsave(img_save_path, class_template)
-
-        template = template / total_len
-        template = (template * 255 / template.max()).astype('uint8')
-        img_save_path = os.path.join(save_path, f"image_{data_type}_od_balance_colormap_all_classes.webp")
-        link_dict['all_classes'] = img_save_path
-        matplotlib.image.imsave(img_save_path, template)
-        return link_dict
-
-    def _prepare_class_idx(self) -> dict:
-        class_idx = {}
-        if self.options.data.architecture in self.basic_architecture:
-            for data_type in self.y_true.keys():
-                class_idx[data_type] = {}
-                for out in self.y_true.get(data_type).keys():
-                    class_idx[data_type][out] = {}
-                    task = self.options.data.outputs.get(int(out)).task
-                    if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
-                        ohe = self.options.data.outputs.get(int(out)).encoding == LayerEncodingChoice.ohe
-                        for name in self.options.data.outputs.get(int(out)).classes_names:
-                            class_idx[data_type][out][name] = []
-                        y_true = np.argmax(self.y_true.get(data_type).get(out), axis=-1) if ohe \
-                            else np.squeeze(self.y_true.get(data_type).get(out))
-                        for idx in range(len(y_true)):
-                            class_idx[data_type][out][
-                                self.options.data.outputs.get(int(out)).classes_names[y_true[idx]]
-                            ].append(idx)
-        return class_idx
 
     def _prepare_seed(self):
         if self.options.data.group == DatasetGroupChoice.keras or self.x_val:
@@ -2194,6 +1804,15 @@ class InteractiveCallback:
                                 preset = {}
                                 for data_type in ["train", "val"]:
                                     histogram = self.dataset_balance[f"{out}"][class_type][data_type][column]
+                                    if histogram.get("type") == 'histogram':
+                                        dict_to_sort = dict(zip(histogram.get("x"), histogram.get("y")))
+                                        x, y = CreateArray().sort_dict(
+                                            dict_to_sort=dict_to_sort,
+                                            mode=self.interactive_config.data_balance.sorted.name
+                                        )
+                                    else:
+                                        x = histogram.get("x")
+                                        y = histogram.get("y")
                                     data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
                                     preset[data_type] = fill_graph_front_structure(
                                         _id=_id,
@@ -2205,7 +1824,7 @@ class InteractiveCallback:
                                         x_label="Значение",
                                         y_label="Количество",
                                         plot_data=[
-                                            fill_graph_plot_data(x=histogram.get("x"), y=histogram.get("y"))],
+                                            fill_graph_plot_data(x=x, y=y)],
                                     )
                                     _id += 1
                                 return_data.append(preset)

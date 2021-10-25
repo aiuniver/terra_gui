@@ -1,6 +1,7 @@
 import numpy as np
 
-from terra_ai.callbacks.utils import fill_graph_front_structure, fill_graph_plot_data, sort_dict, round_list, get_y_true
+from terra_ai.callbacks.utils import fill_graph_front_structure, fill_graph_plot_data, sort_dict, round_list, \
+    get_y_true, get_distribution_histogram
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
 from terra_ai.settings import MAX_GRAPH_LENGTH, CALLBACK_REGRESSION_TREASHOLD_VALUE, DEPLOY_PRESET_PERCENT
@@ -36,6 +37,33 @@ class TimeseriesCallback:
                 inverse_x = np.concatenate([inverse_x, inverse_col], axis=-1)
             inverse_x_val[inp] = inverse_x[:, :, 1:]
         return x_val, inverse_x_val
+
+    @staticmethod
+    def get_y_true(options):
+        y_true = {"train": {}, "val": {}}
+        inverse_y_true = {"train": {}, "val": {}}
+        for data_type in y_true.keys():
+            for out in options.data.outputs.keys():
+                if not options.data.use_generator:
+                    y_true[data_type][f"{out}"] = options.Y.get(data_type).get(f"{out}")
+                else:
+                    y_true[data_type][f"{out}"] = []
+                    for _, y_val in options.dataset[data_type].batch(1):
+                        y_true[data_type][f"{out}"].extend(y_val.get(f'{out}').numpy())
+                    y_true[data_type][f"{out}"] = np.array(y_true[data_type][f"{out}"])
+                preprocess_dict = options.preprocessing.preprocessing.get(int(out))
+                inverse_y = np.zeros_like(y_true.get(data_type).get(f"{out}")[:, :, 0:1])
+                for i, column in enumerate(preprocess_dict.keys()):
+                    if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
+                        _options = {int(out): {column: y_true.get(data_type).get(f"{out}")[:, :, i]}}
+                        inverse_col = np.expand_dims(
+                            options.preprocessing.inverse_data(_options).get(int(out)).get(column), axis=-1)
+                    else:
+                        inverse_col = y_true.get(data_type).get(f"{out}")[:, :, i:i + 1]
+                    inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
+                inverse_y_true[data_type][f"{out}"] = inverse_y[:, :, 1:]
+
+        return y_true, inverse_y_true
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, inverse_x_array=None,
@@ -135,6 +163,30 @@ class TimeseriesCallback:
                     data['predict'][channel.split('_', 1)[-1]] = [inverse_true, inverse_pred]
                 return_data[output_id].append(data)
         return return_data
+
+    @staticmethod
+    def dataset_balance(options) -> dict:
+        dataset_balance = {}
+        for out in options.data.outputs.keys():
+            dataset_balance[f"{out}"] = {'graphic': {}, 'dense_histogram': {}}
+            for output_channel in options.data.columns.get(out).keys():
+                dataset_balance[f"{out}"]['graphic'][output_channel] = {}
+                dataset_balance[f"{out}"]['dense_histogram'][output_channel] = {}
+                for data_type in ['train', 'val']:
+                    dataset_balance[f"{out}"]['graphic'][output_channel][data_type] = {
+                        "type": "graphic",
+                        "x": np.array(options.dataframe.get(data_type).index).astype('float').tolist(),
+                        "y": np.array(options.dataframe.get(data_type)[output_channel]).astype(
+                            'float').tolist()
+                    }
+                    x, y = get_distribution_histogram(
+                        list(options.dataframe.get(data_type)[output_channel]),
+                        categorical=False
+                    )
+                    dataset_balance[f"{out}"]['dense_histogram'][output_channel][data_type] = {
+                        "type": "bar", "x": x, "y": y
+                    }
+        return dataset_balance
 
 
 def prepare_example_idx_to_show(array: np.ndarray, true_array: np.ndarray, count: int,
