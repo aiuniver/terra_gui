@@ -56,9 +56,9 @@ class DataframeRegressionCallback:
             else:
                 postprocess_array = array
             example_idx = prepare_example_idx_to_show(
-                array=postprocess_array,
-                true_array=true_array,
-                count=int(len(true_array) * DEPLOY_PRESET_PERCENT / 100)
+                array=postprocess_array[:len(array)],
+                true_array=true_array[:len(array)],
+                count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
             )
             return_data[output_id] = {
                 'preset': [],
@@ -73,14 +73,17 @@ class DataframeRegressionCallback:
                 for inp_col in source_col:
                     row_list.append(f"{options.dataframe.get('val')[inp_col][idx]}")
                 return_data[output_id]['preset'].append(row_list)
+                channel_inverse_col =[]
                 for ch, col in enumerate(list(options.data.columns.get(output_id).keys())):
+                    channel_inverse_col = []
                     if type(preprocess.get(col)).__name__ in ['StandardScaler', 'MinMaxScaler']:
                         _options = {int(output_id): {col: array[idx, ch:ch + 1].reshape(-1, 1)}}
                         inverse_col = options.preprocessing.inverse_data(_options).get(output_id).get(col)
                         inverse_col = inverse_col.squeeze().astype('float').tolist()
                     else:
                         inverse_col = array[idx, ch:ch + 1].astype('float').tolist()
-                return_data[output_id]['label'].append([str(inverse_col)])
+                    channel_inverse_col.append(str(inverse_col[0]))
+                return_data[output_id]['label'].append(channel_inverse_col)
         return return_data
 
 

@@ -87,7 +87,7 @@ class TimeseriesCallback:
             return source
 
     @staticmethod
-    def postprocess_results(array, options) -> dict:
+    def postprocess_deploy(array, options) -> dict:
         x_array, inverse_x_array = TimeseriesCallback.get_x_array(options)
         return_data = {}
         for i, output_id in enumerate(options.data.outputs.keys()):
@@ -97,9 +97,9 @@ class TimeseriesCallback:
             else:
                 postprocess_array = array
             example_idx = prepare_example_idx_to_show(
-                array=postprocess_array,
-                true_array=true_array,
-                count=int(len(true_array) * DEPLOY_PRESET_PERCENT / 100)
+                array=postprocess_array[:len(array)],
+                true_array=true_array[:len(array)],
+                count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
             )
             return_data[output_id] = []
             preprocess = options.preprocessing.preprocessing.get(output_id)

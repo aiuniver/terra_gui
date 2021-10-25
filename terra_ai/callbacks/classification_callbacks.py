@@ -84,7 +84,7 @@ class ImageClassificationCallback:
                 true_array=true_array,
                 options=options,
                 output=output_id,
-                count=int(len(true_array) * DEPLOY_PRESET_PERCENT / 100)
+                count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
             )
 
             return_data[output_id] = []
@@ -174,11 +174,10 @@ class TextClassificationCallback:
                 true_array=true_array,
                 options=options,
                 output=output_id,
-                count=int(len(true_array) * DEPLOY_PRESET_PERCENT / 100)
+                count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
             )
 
             return_data[output_id] = []
-            _id = 1
             for idx in example_idx:
                 source = TextClassificationCallback.postprocess_initial_source(
                     options=options,
@@ -199,8 +198,6 @@ class TextClassificationCallback:
                         "data": predict_values[0]
                     }
                 )
-                _id += 1
-
         return return_data
 
 
@@ -259,10 +256,9 @@ class DataframeClassificationCallback:
                 true_array=true_array,
                 options=options,
                 output=output_id,
-                count=int(len(true_array) * DEPLOY_PRESET_PERCENT / 100)
+                count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
             )
             return_data[output_id] = []
-            _id = 1
             for idx in example_idx:
                 input_id = list(options.data.inputs.keys())[0]
                 source = DataframeClassificationCallback.postprocess_initial_source(
@@ -284,7 +280,6 @@ class DataframeClassificationCallback:
                         "data": predict_values[0]
                     }
                 )
-                _id += 1
         return return_data
 
 
@@ -346,7 +341,7 @@ class AudioClassificationCallback:
                 true_array=true_array,
                 options=options,
                 output=output_id,
-                count=int(len(true_array) * DEPLOY_PRESET_PERCENT / 100)
+                count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
             )
 
             return_data[output_id] = []
@@ -438,7 +433,7 @@ class VideoClassificationCallback:
                 true_array=true_array,
                 options=options,
                 output=output_id,
-                count=int(len(true_array) * DEPLOY_PRESET_PERCENT / 100)
+                count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
             )
 
             return_data[output_id] = []
@@ -567,7 +562,7 @@ class TimeseriesTrendCallback:
                 true_array=true_array,
                 options=options,
                 output=output_id,
-                count=int(len(true_array) * DEPLOY_PRESET_PERCENT / 100)
+                count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
             )
             return_data[output_id] = {}
             # TODO: считаетм что инпут один
@@ -584,26 +579,26 @@ class TimeseriesTrendCallback:
                 for idx in example_idx:
                     if type(preprocess.get(channel[3])).__name__ in ['StandardScaler', 'MinMaxScaler']:
                         inp_options = {int(output_id): {
-                            channel[3]: options.X.get('val').get(f"{input_id}")[idx, channel[0]:channel[0] + 1]}
+                            channel[3]: options.X.get('val').get(f"{input_id}")[idx, :, channel[0]:channel[0] + 1]}
                         }
                         inverse_true = options.preprocessing.inverse_data(inp_options).get(output_id).get(
                             channel[3])
                         inverse_true = inverse_true.squeeze().astype('float').tolist()
                     else:
                         inverse_true = options.X.get('val').get(f"{input_id}")[
-                                       idx, channel[0]:channel[0] + 1].squeeze().astype('float').tolist()
+                                       idx, :, channel[0]:channel[0] + 1].squeeze().astype('float').tolist()
                     actual_value, predict_values = postprocess_classification(
                         predict_array=np.expand_dims(postprocess_array[idx], axis=0),
                         true_array=true_array[idx],
                         options=options.data.outputs[output_id],
                         return_mode='deploy'
                     )
-                    button_save_path = os.path.join(
-                        save_path, f"ts_trend_button_channel_{channel[2]}_image_{idx}.jpg")
+                    # button_save_path = os.path.join(
+                    #     save_path, f"ts_trend_button_channel_{channel[2]}_image_{idx}.jpg")
                     return_data[output_id][channel[3]].append(
                         {
-                            "button_link": button_save_path,
-                            "data": [inverse_true, predict_values]
+                            # "button_link": button_save_path,
+                            "data": [inverse_true, predict_values[0]]
                         }
                     )
 

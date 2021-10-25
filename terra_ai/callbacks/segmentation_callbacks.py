@@ -67,16 +67,17 @@ class ImageSegmentationCallback:
             else:
                 postprocess_array = array
             example_idx = prepare_example_idx_to_show(
-                array=postprocess_array,
-                true_array=true_array,
+                array=postprocess_array[:len(array)],
+                true_array=true_array[:len(array)],
                 options=options,
                 output=output_id,
-                count=int(len(true_array) * DEPLOY_PRESET_PERCENT / 100)
+                count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
             )
             return_data[output_id] = []
             data = []
             for j, cls in enumerate(options.data.outputs.get(output_id).classes_names):
                 data.append((cls, options.data.outputs.get(output_id).classes_colors[j].as_rgb_tuple()))
+            _id = 1
             for idx in example_idx:
                 input_id = list(options.data.inputs.keys())[0]
                 return_data[output_id].append(
@@ -84,7 +85,7 @@ class ImageSegmentationCallback:
                         "source": ImageSegmentationCallback.postprocess_initial_source(
                             options=options,
                             input_id=input_id,
-                            save_id=idx,
+                            save_id=_id,
                             example_id=idx,
                             dataset_path=dataset_path,
                             preset_path=save_path,
@@ -102,6 +103,7 @@ class ImageSegmentationCallback:
                         "data": data
                     }
                 )
+                _id += 1
         return return_data
 
 
@@ -154,11 +156,11 @@ class TextSegmentationCallback:
             else:
                 postprocess_array = array
             example_idx = prepare_example_idx_to_show(
-                array=postprocess_array,
-                true_array=true_array,
+                array=postprocess_array[:len(array)],
+                true_array=true_array[:len(array)],
                 options=options,
                 output=output_id,
-                count=int(len(true_array) * DEPLOY_PRESET_PERCENT / 100)
+                count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
             )
             return_data[output_id] = {"color_map": None, "data": []}
             output_column = list(options.instructions.get(output_id).keys())[0]
