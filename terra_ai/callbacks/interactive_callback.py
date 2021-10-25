@@ -10,14 +10,16 @@ from typing import Union, Optional
 
 import matplotlib
 import pandas as pd
-from pandas import DataFrame
 
 from tensorflow.keras.utils import to_categorical
-from sklearn.metrics import confusion_matrix, classification_report
 import numpy as np
 
 from terra_ai import progress
-from terra_ai.callbacks.utils import loss_metric_config, class_counter
+from terra_ai.callbacks.postprocess_results import PostprocessResults
+from terra_ai.callbacks.utils import loss_metric_config, class_counter, get_image_class_colormap, \
+    get_distribution_histogram, get_correlation_matrix, round_loss_metric, fill_graph_plot_data, \
+    fill_graph_front_structure, get_confusion_matrix, fill_heatmap_front_structure, fill_table_front_structure, \
+    get_scatter, get_classification_report, get_autocorrelation_graphic
 from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice, DatasetGroupChoice, \
     LayerEncodingChoice
 from terra_ai.data.presets.training import Metric
@@ -195,7 +197,7 @@ class InteractiveCallback:
                     self._reformat_y_pred(y_pred)
                     if self.interactive_config.intermediate_result.show_results:
                         out = f"{self.interactive_config.intermediate_result.main_output}"
-                        self.example_idx = CreateArray().prepare_example_idx_to_show(
+                        self.example_idx = PostprocessResults().prepare_example_idx_to_show(
                             array=self.y_pred.get(out),
                             true_array=self.y_true.get("val").get(out),
                             options=self.options,
@@ -603,7 +605,7 @@ class InteractiveCallback:
                             self.preset_path,
                             f"balance_segmentation_colormap_{data_type}_class_{classes_names[cl]}.webp"
                         )
-                        self._get_image_class_colormap(
+                        get_image_class_colormap(
                             array=self.y_true.get(data_type).get(f"{out}"),
                             colors=self.class_colors,
                             class_id=cl,
@@ -653,9 +655,8 @@ class InteractiveCallback:
                             "y": np.array(self.options.dataframe.get(data_type)[output_channel]).astype(
                                 'float').tolist()
                         }
-                        x, y = self._get_distribution_histogram(
+                        x, y = get_distribution_histogram(
                             list(self.options.dataframe.get(data_type)[output_channel]),
-                            bins=25,
                             categorical=False
                         )
                         dataset_balance[f"{out}"]['dense_histogram'][output_channel][data_type] = {
@@ -678,10 +679,10 @@ class InteractiveCallback:
                         if column_task == LayerInputTypeChoice.Text:
                             continue
                         elif column_task == LayerInputTypeChoice.Classification:
-                            x, y = self._get_distribution_histogram(column_data, bins=25, categorical=True)
+                            x, y = get_distribution_histogram(column_data, categorical=True)
                             hist_type = "histogram"
                         else:
-                            x, y = self._get_distribution_histogram(column_data, bins=25, categorical=False)
+                            x, y = get_distribution_histogram(column_data, categorical=False)
                             hist_type = "bar"
                         dataset_balance[f"{out}"]['histogram'][data_type][column] = {
                             "name": column.split("_", 1)[-1],
@@ -690,9 +691,7 @@ class InteractiveCallback:
                             "y": y
                         }
                 for data_type in ['train', 'val']:
-                    labels, matrix = self._get_correlation_matrix(
-                        pd.DataFrame(self.options.dataframe.get(data_type))
-                    )
+                    labels, matrix = get_correlation_matrix(pd.DataFrame(self.options.dataframe.get(data_type)))
                     dataset_balance[f"{out}"]['correlation'][data_type] = {
                         "labels": labels,
                         "matrix": matrix
@@ -725,7 +724,7 @@ class InteractiveCallback:
                     for key, item in class_bb[data_type].items():
                         dataset_balance["output"]['class_count'][data_type][name_classes[key]] = len(item)
                         dataset_balance["output"]['class_square'][data_type][name_classes[key]] = \
-                            self._round_loss_metric(self._get_box_square(item, imsize=(imsize[0], imsize[1])))
+                            round_loss_metric(self._get_box_square(item, imsize=(imsize[0], imsize[1])))
 
                     dataset_balance["output"]['colormap'][data_type] = self._plot_bb_colormap(
                         class_bb=class_bb,
@@ -804,18 +803,6 @@ class InteractiveCallback:
         np.random.shuffle(data_lenth)
         return data_lenth
 
-    # Методы для update_state()
-    @staticmethod
-    def _round_loss_metric(x: float) -> float:
-        if not x:
-            return x
-        elif x > 1000:
-            return np.round(x, 0).item()
-        elif x > 1:
-            return np.round(x, -int(math.floor(math.log10(abs(x))) - 3)).item()
-        else:
-            return np.round(x, -int(math.floor(math.log10(abs(x))) - 2)).item()
-
     def _reformat_fit_logs(self, logs) -> dict:
         interactive_log = {}
         if self.options.data.architecture in self.basic_architecture:
@@ -836,8 +823,8 @@ class InteractiveCallback:
                     val_loss = update_logs.get(f'val_{out}_loss')
                 interactive_log[out]['loss'] = {
                     self.losses.get(out): {
-                        'train': self._round_loss_metric(train_loss) if not math.isnan(float(train_loss)) else None,
-                        'val': self._round_loss_metric(val_loss) if not math.isnan(float(val_loss)) else None,
+                        'train': round_loss_metric(train_loss) if not math.isnan(float(train_loss)) else None,
+                        'val': round_loss_metric(val_loss) if not math.isnan(float(val_loss)) else None,
                     }
                 }
 
@@ -859,8 +846,8 @@ class InteractiveCallback:
                             [train_metric, val_metric], int(out), self.options.preprocessing
                         )
                     interactive_log[out]['metrics'][metric_name] = {
-                        'train': self._round_loss_metric(train_metric) if not math.isnan(float(train_metric)) else None,
-                        'val': self._round_loss_metric(val_metric) if not math.isnan(float(val_metric)) else None
+                        'train': round_loss_metric(train_metric) if not math.isnan(float(train_metric)) else None,
+                        'val': round_loss_metric(val_metric) if not math.isnan(float(val_metric)) else None
                     }
 
         if self.options.data.architecture in self.yolo_architecture:
@@ -966,12 +953,12 @@ class InteractiveCallback:
                             # fill losses
                             if data_idx or data_idx == 0:
                                 self.log_history[f"{out}"]['loss'][loss_name][data_type][data_idx] = \
-                                    self._round_loss_metric(
+                                    round_loss_metric(
                                         self.current_logs.get(f"{out}").get('loss').get(loss_name).get(data_type)
                                     )
                             else:
                                 self.log_history[f"{out}"]['loss'][loss_name][data_type].append(
-                                    self._round_loss_metric(
+                                    round_loss_metric(
                                         self.current_logs.get(f"{out}").get('loss').get(loss_name).get(data_type)
                                     )
                                 )
@@ -1002,12 +989,12 @@ class InteractiveCallback:
                             normal_state = True
 
                         if data_idx or data_idx == 0:
-                            self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['underfitting'][data_idx] = \
-                                loss_underfitting
-                            self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['overfitting'][data_idx] = \
-                                loss_overfitting
-                            self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['normal_state'][data_idx] = \
-                                normal_state
+                            self.log_history[f"{out}"]['progress_state']['loss'][loss_name][
+                                'underfitting'][data_idx] = loss_underfitting
+                            self.log_history[f"{out}"]['progress_state']['loss'][loss_name][
+                                'overfitting'][data_idx] = loss_overfitting
+                            self.log_history[f"{out}"]['progress_state']['loss'][loss_name][
+                                'normal_state'][data_idx] = normal_state
                         else:
                             self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['underfitting'].append(
                                 loss_underfitting)
@@ -1050,10 +1037,10 @@ class InteractiveCallback:
                                     )
                                 if data_idx or data_idx == 0:
                                     self.log_history[f"{out}"]['class_loss'][cls][loss_name][data_idx] = \
-                                        self._round_loss_metric(class_loss)
+                                        round_loss_metric(class_loss)
                                 else:
                                     self.log_history[f"{out}"]['class_loss'][cls][loss_name].append(
-                                        self._round_loss_metric(class_loss)
+                                        round_loss_metric(class_loss)
                                     )
 
                     for metric_name in self.log_history.get(f"{out}").get('metrics').keys():
@@ -1062,14 +1049,14 @@ class InteractiveCallback:
                             if data_idx or data_idx == 0:
                                 if self.current_logs:
                                     self.log_history[f"{out}"]['metrics'][metric_name][data_type][data_idx] = \
-                                        self._round_loss_metric(
+                                        round_loss_metric(
                                             self.current_logs.get(f"{out}").get('metrics').get(metric_name).get(
                                                 data_type)
                                         )
                             else:
                                 if self.current_logs:
                                     self.log_history[f"{out}"]['metrics'][metric_name][data_type].append(
-                                        self._round_loss_metric(
+                                        round_loss_metric(
                                             self.current_logs.get(f"{out}").get('metrics').get(metric_name).get(
                                                 data_type)
                                         )
@@ -1156,10 +1143,10 @@ class InteractiveCallback:
                                     )
                                 if data_idx or data_idx == 0:
                                     self.log_history[f"{out}"]['class_metrics'][cls][metric_name][data_idx] = \
-                                        self._round_loss_metric(class_metric)
+                                        round_loss_metric(class_metric)
                                 else:
                                     self.log_history[f"{out}"]['class_metrics'][cls][metric_name].append(
-                                        self._round_loss_metric(class_metric)
+                                        round_loss_metric(class_metric)
                                     )
 
             if self.options.data.architecture in self.yolo_architecture:
@@ -1168,26 +1155,24 @@ class InteractiveCallback:
                 for key in self.log_history['output']["loss"].keys():
                     for data_type in ['train', 'val']:
                         self.log_history['output']["loss"][key][data_type].append(
-                            self._round_loss_metric(self.current_logs.get('output').get(
-                                data_type).get('loss').get(key))
+                            round_loss_metric(self.current_logs.get('output').get(data_type).get('loss').get(key))
                         )
                 for key in self.log_history['output']["metrics"].keys():
                     for data_type in ['train', 'val']:
                         self.log_history['output']["metrics"][key][data_type].append(
-                            self._round_loss_metric(self.current_logs.get('output').get(
-                                data_type).get('metrics').get(key))
+                            round_loss_metric(self.current_logs.get('output').get(data_type).get('metrics').get(key))
                         )
                 for name in classes_names:
                     self.log_history['output']["class_loss"]['prob_loss'][name].append(
-                        self._round_loss_metric(self.current_logs.get('output').get("val").get(
+                        round_loss_metric(self.current_logs.get('output').get("val").get(
                             'class_loss').get("prob_loss").get(name))
                     )
                     self.log_history['output']["class_metrics"]['mAP50'][name].append(
-                        self._round_loss_metric(self.current_logs.get('output').get("val").get(
+                        round_loss_metric(self.current_logs.get('output').get("val").get(
                             'class_metrics').get("mAP50").get(name))
                     )
                     self.log_history['output']["class_metrics"]['mAP95'][name].append(
-                        self._round_loss_metric(self.current_logs.get('output').get("val").get(
+                        round_loss_metric(self.current_logs.get('output').get("val").get(
                             'class_metrics').get("mAP95").get(name))
                     )
 
@@ -1406,50 +1391,6 @@ class InteractiveCallback:
         else:
             return False
 
-    # Методы для конечных данных для вывода
-    @staticmethod
-    def _fill_graph_plot_data(x: list, y: list, label=None):
-        return {'label': label, 'x': x, 'y': y}
-
-    @staticmethod
-    def _fill_graph_front_structure(_id: int, _type: str, graph_name: str, short_name: str,
-                                    x_label: str, y_label: str, plot_data: list, best: list = None,
-                                    type_data: str = None, progress_state: str = None):
-        return {
-            'id': _id,
-            'type': _type,
-            'type_data': type_data,
-            'graph_name': graph_name,
-            'short_name': short_name,
-            'x_label': x_label,
-            'y_label': y_label,
-            'plot_data': plot_data,
-            'best': best,
-            'progress_state': progress_state
-        }
-
-    @staticmethod
-    def _fill_heatmap_front_structure(_id: int, _type: str, graph_name: str, short_name: str,
-                                      x_label: str, y_label: str, labels: list, data_array: list,
-                                      type_data: str = None, data_percent_array: list = None,
-                                      progress_state: str = None):
-        return {
-            'id': _id,
-            'type': _type,
-            'type_data': type_data,
-            'graph_name': graph_name,
-            'short_name': short_name,
-            'x_label': x_label,
-            'y_label': y_label,
-            'labels': labels,
-            'data_array': data_array,
-            'data_percent_array': data_percent_array,
-            'progress_state': progress_state
-        }
-
-    @staticmethod
-    def _fill_table_front_structure(_id: int, graph_name: str, plot_data: list):
-        return {'id': _id, 'type': 'table', 'graph_name': graph_name, 'plot_data': plot_data}
 
     def _get_loss_graph_data_request(self) -> list:
         data_return = []
@@ -1471,12 +1412,12 @@ class InteractiveCallback:
                 train_list = self.log_history.get(f"{loss_graph_config.output_idx}").get('loss').get(
                     self.losses.get(f"{loss_graph_config.output_idx}")).get('train')
                 best_train_value = min(train_list)
-                best_train = self._fill_graph_plot_data(
+                best_train = fill_graph_plot_data(
                     x=[self.log_history.get("epochs")[train_list.index(best_train_value)]],
                     y=[best_train_value],
                     label="Лучший результат на тренировочной выборке"
                 )
-                train_plot = self._fill_graph_plot_data(
+                train_plot = fill_graph_plot_data(
                     x=self.log_history.get("epochs"),
                     y=train_list,
                     label="Тренировочная выборка"
@@ -1485,12 +1426,12 @@ class InteractiveCallback:
                 val_list = self.log_history.get(f"{loss_graph_config.output_idx}").get('loss').get(
                     self.losses.get(f"{loss_graph_config.output_idx}")).get("val")
                 best_val_value = min(val_list)
-                best_val = self._fill_graph_plot_data(
+                best_val = fill_graph_plot_data(
                     x=[self.log_history.get("epochs")[val_list.index(best_val_value)]],
                     y=[best_val_value],
                     label="Лучший результат на проверочной выборке"
                 )
-                val_plot = self._fill_graph_plot_data(
+                val_plot = fill_graph_plot_data(
                     x=self.log_history.get("epochs"),
                     y=self.log_history.get(f"{loss_graph_config.output_idx}").get('loss').get(
                         self.losses.get(f"{loss_graph_config.output_idx}")).get("val"),
@@ -1498,7 +1439,7 @@ class InteractiveCallback:
                 )
 
                 data_return.append(
-                    self._fill_graph_front_structure(
+                    fill_graph_front_structure(
                         _id=loss_graph_config.id,
                         _type='graphic',
                         graph_name=f"Выходной слой «{loss_graph_config.output_idx}» - "
@@ -1514,7 +1455,7 @@ class InteractiveCallback:
             if loss_graph_config.show == LossGraphShowChoice.classes and \
                     self.class_graphics.get(loss_graph_config.output_idx):
                 data_return.append(
-                    self._fill_graph_front_structure(
+                    fill_graph_front_structure(
                         _id=loss_graph_config.id,
                         _type='graphic',
                         graph_name=f"Выходной слой «{loss_graph_config.output_idx}» - График ошибки обучения по классам"
@@ -1523,7 +1464,7 @@ class InteractiveCallback:
                         x_label="Эпоха",
                         y_label="Значение",
                         plot_data=[
-                            self._fill_graph_plot_data(
+                            fill_graph_plot_data(
                                 x=self.log_history.get("epochs"),
                                 y=self.log_history.get(f"{loss_graph_config.output_idx}").get('class_loss').get(
                                     class_name).get(self.losses.get(f"{loss_graph_config.output_idx}")),
@@ -1556,12 +1497,12 @@ class InteractiveCallback:
                 train_list = self.log_history.get(f"{metric_graph_config.output_idx}").get('metrics').get(
                     metric_graph_config.show_metric.name).get("train")
                 best_train_value = min(train_list) if min_max_mode == 'min' else max(train_list)
-                best_train = self._fill_graph_plot_data(
+                best_train = fill_graph_plot_data(
                     x=[self.log_history.get("epochs")[train_list.index(best_train_value)]],
                     y=[best_train_value],
                     label="Лучший результат на тренировочной выборке"
                 )
-                train_plot = self._fill_graph_plot_data(
+                train_plot = fill_graph_plot_data(
                     x=self.log_history.get("epochs"),
                     y=self.log_history.get(f"{metric_graph_config.output_idx}").get('metrics').get(
                         metric_graph_config.show_metric.name).get("train"),
@@ -1571,23 +1512,24 @@ class InteractiveCallback:
                 val_list = self.log_history.get(f"{metric_graph_config.output_idx}").get('metrics').get(
                     metric_graph_config.show_metric.name).get("val")
                 best_val_value = min(val_list) if min_max_mode == 'min' else max(val_list)
-                best_val = self._fill_graph_plot_data(
+                best_val = fill_graph_plot_data(
                     x=[self.log_history.get("epochs")[val_list.index(best_val_value)]],
                     y=[best_val_value],
                     label="Лучший результат на проверочной выборке"
                 )
-                val_plot = self._fill_graph_plot_data(
+                val_plot = fill_graph_plot_data(
                     x=self.log_history.get("epochs"),
                     y=self.log_history.get(f"{metric_graph_config.output_idx}").get('metrics').get(
                         metric_graph_config.show_metric.name).get("val"),
                     label="Проверочная выборка"
                 )
                 data_return.append(
-                    self._fill_graph_front_structure(
+                    fill_graph_front_structure(
                         _id=metric_graph_config.id,
                         _type='graphic',
                         graph_name=f"Выходной слой «{metric_graph_config.output_idx}» - График метрики "
-                                   f"{metric_graph_config.show_metric.name} - Эпоха №{self.log_history.get('epochs')[-1]}",
+                                   f"{metric_graph_config.show_metric.name} - "
+                                   f"Эпоха №{self.log_history.get('epochs')[-1]}",
                         short_name=f"{metric_graph_config.output_idx} - {metric_graph_config.show_metric.name}",
                         x_label="Эпоха",
                         y_label="Значение",
@@ -1599,16 +1541,18 @@ class InteractiveCallback:
             if metric_graph_config.show == MetricGraphShowChoice.classes and \
                     self.class_graphics.get(metric_graph_config.output_idx):
                 data_return.append(
-                    self._fill_graph_front_structure(
+                    fill_graph_front_structure(
                         _id=metric_graph_config.id,
                         _type='graphic',
                         graph_name=f"Выходной слой «{metric_graph_config.output_idx}» - График метрики "
-                                   f"{metric_graph_config.show_metric.name} по классам - Эпоха №{self.log_history.get('epochs')[-1]}",
-                        short_name=f"{metric_graph_config.output_idx} - {metric_graph_config.show_metric.name} по классам",
+                                   f"{metric_graph_config.show_metric.name} по классам - "
+                                   f"Эпоха №{self.log_history.get('epochs')[-1]}",
+                        short_name=f"{metric_graph_config.output_idx} - "
+                                   f"{metric_graph_config.show_metric.name} по классам",
                         x_label="Эпоха",
                         y_label="Значение",
                         plot_data=[
-                            self._fill_graph_plot_data(
+                            fill_graph_plot_data(
                                 x=self.log_history.get("epochs"),
                                 y=self.log_history.get(f"{metric_graph_config.output_idx}").get('class_metrics').get(
                                     class_name).get(metric_graph_config.show_metric),
@@ -1716,7 +1660,7 @@ class InteractiveCallback:
                             output_id=out,
                             depth=self.inverse_y_true.get("val").get(f"{out}")[self.example_idx[idx]].shape[-1],
                             show_stat=self.interactive_config.intermediate_result.show_statistic,
-                            templates=[self._fill_graph_plot_data, self._fill_graph_front_structure]
+                            templates=[fill_graph_plot_data, fill_graph_front_structure]
                         )
 
                     elif task == LayerOutputTypeChoice.Dataframe:
@@ -1810,14 +1754,14 @@ class InteractiveCallback:
                 encoding = self.options.data.outputs.get(out).encoding
                 if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend and \
                         encoding != LayerEncodingChoice.multi:
-                    cm, cm_percent = self._get_confusion_matrix(
+                    cm, cm_percent = get_confusion_matrix(
                         np.argmax(self.y_true.get("val").get(f'{out}'), axis=-1) if encoding == LayerEncodingChoice.ohe
                         else self.y_true.get("val").get(f'{out}'),
                         np.argmax(self.y_pred.get(f'{out}'), axis=-1),
                         get_percent=True
                     )
                     return_data.append(
-                        self._fill_heatmap_front_structure(
+                        fill_heatmap_front_structure(
                             _id=_id,
                             _type="heatmap",
                             graph_name=f"Выходной слой «{out}» - Confusion matrix",
@@ -1833,7 +1777,7 @@ class InteractiveCallback:
 
                 elif task == LayerOutputTypeChoice.Segmentation or \
                         (task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.ohe):
-                    cm, cm_percent = self._get_confusion_matrix(
+                    cm, cm_percent = get_confusion_matrix(
                         np.argmax(self.y_true.get("val").get(f"{out}"), axis=-1).reshape(
                             np.prod(np.argmax(self.y_true.get("val").get(f"{out}"), axis=-1).shape)).astype('int'),
                         np.argmax(self.y_pred.get(f'{out}'), axis=-1).reshape(
@@ -1841,7 +1785,7 @@ class InteractiveCallback:
                         get_percent=True
                     )
                     return_data.append(
-                        self._fill_heatmap_front_structure(
+                        fill_heatmap_front_structure(
                             _id=_id,
                             _type="heatmap",
                             graph_name=f"Выходной слой «{out}» - Confusion matrix",
@@ -1858,7 +1802,7 @@ class InteractiveCallback:
                 elif (task == LayerOutputTypeChoice.TextSegmentation or task == LayerOutputTypeChoice.Classification) \
                         and encoding == LayerEncodingChoice.multi:
 
-                    report = self._get_classification_report(
+                    report = get_classification_report(
                         y_true=self.y_true.get("val").get(f"{out}").reshape(
                             (np.prod(self.y_true.get("val").get(f"{out}").shape[:-1]),
                              self.y_true.get("val").get(f"{out}").shape[-1])
@@ -1869,7 +1813,7 @@ class InteractiveCallback:
                         labels=self.options.data.outputs.get(out).classes_names
                     )
                     return_data.append(
-                        self._fill_table_front_structure(
+                        fill_table_front_structure(
                             _id=_id,
                             graph_name=f"Выходной слой «{out}» - Отчет по классам",
                             plot_data=report
@@ -1880,43 +1824,43 @@ class InteractiveCallback:
                 elif task == LayerOutputTypeChoice.Regression:
                     y_true = self.inverse_y_true.get("val").get(f'{out}').squeeze()
                     y_pred = self.inverse_y_pred.get(f'{out}').squeeze()
-                    x_scatter, y_scatter = self._get_scatter(y_true, y_pred)
+                    x_scatter, y_scatter = get_scatter(y_true, y_pred)
                     return_data.append(
-                        self._fill_graph_front_structure(
+                        fill_graph_front_structure(
                             _id=_id,
                             _type='scatter',
                             graph_name=f"Выходной слой «{out}» - Скаттер",
                             short_name=f"{out} - Скаттер",
                             x_label="Истинные значения",
                             y_label="Предсказанные значения",
-                            plot_data=[self._fill_graph_plot_data(x=x_scatter, y=y_scatter)],
+                            plot_data=[fill_graph_plot_data(x=x_scatter, y=y_scatter)],
                         )
                     )
                     _id += 1
                     deviation = (y_pred - y_true) * 100 / y_true
-                    x_mae, y_mae = self._get_distribution_histogram(np.abs(deviation), bins=25, categorical=False)
+                    x_mae, y_mae = get_distribution_histogram(np.abs(deviation), categorical=False)
                     return_data.append(
-                        self._fill_graph_front_structure(
+                        fill_graph_front_structure(
                             _id=_id,
                             _type='bar',
                             graph_name=f'Выходной слой «{out}» - Распределение абсолютной ошибки',
                             short_name=f"{out} - Распределение MAE",
                             x_label="Абсолютная ошибка",
                             y_label="Значение",
-                            plot_data=[self._fill_graph_plot_data(x=x_mae, y=y_mae)],
+                            plot_data=[fill_graph_plot_data(x=x_mae, y=y_mae)],
                         )
                     )
                     _id += 1
-                    x_me, y_me = self._get_distribution_histogram(deviation, bins=25, categorical=False)
+                    x_me, y_me = get_distribution_histogram(deviation, categorical=False)
                     return_data.append(
-                        self._fill_graph_front_structure(
+                        fill_graph_front_structure(
                             _id=_id,
                             _type='bar',
                             graph_name=f'Выходной слой «{out}» - Распределение ошибки',
                             short_name=f"{out} - Распределение ME",
                             x_label="Ошибка",
                             y_label="Значение",
-                            plot_data=[self._fill_graph_plot_data(x=x_me, y=y_me)],
+                            plot_data=[fill_graph_plot_data(x=x_me, y=y_me)],
                         )
                     )
                     _id += 1
@@ -1928,7 +1872,7 @@ class InteractiveCallback:
                             y_pred = self.inverse_y_pred.get(f"{out}")[:, step, i].astype('float')
 
                             return_data.append(
-                                self._fill_graph_front_structure(
+                                fill_graph_front_structure(
                                     _id=_id,
                                     _type='graphic',
                                     graph_name=f"Выходной слой «{out}» - Предсказание канала "
@@ -1939,12 +1883,12 @@ class InteractiveCallback:
                                     x_label="Время",
                                     y_label="Значение",
                                     plot_data=[
-                                        self._fill_graph_plot_data(
+                                        fill_graph_plot_data(
                                             x=np.arange(len(y_true)).astype('int').tolist(),
                                             y=y_true.tolist(),
                                             label="Истинное значение"
                                         ),
-                                        self._fill_graph_plot_data(
+                                        fill_graph_plot_data(
                                             x=np.arange(len(y_true)).astype('int').tolist(),
                                             y=y_pred.tolist(),
                                             label="Предсказанное значение"
@@ -1953,11 +1897,11 @@ class InteractiveCallback:
                                 )
                             )
                             _id += 1
-                            x_axis, auto_corr_true, auto_corr_pred = self._get_autocorrelation_graphic(
+                            x_axis, auto_corr_true, auto_corr_pred = get_autocorrelation_graphic(
                                 y_true, y_pred, depth=10
                             )
                             return_data.append(
-                                self._fill_graph_front_structure(
+                                fill_graph_front_structure(
                                     _id=_id,
                                     _type='graphic',
                                     graph_name=f"Выходной слой «{out}» - Автокорреляция канала "
@@ -1967,19 +1911,16 @@ class InteractiveCallback:
                                     x_label="Время",
                                     y_label="Значение",
                                     plot_data=[
-                                        self._fill_graph_plot_data(x=x_axis, y=auto_corr_true,
-                                                                   label="Истинное значение"),
-                                        self._fill_graph_plot_data(x=x_axis, y=auto_corr_pred,
-                                                                   label="Предсказанное значение")
+                                        fill_graph_plot_data(x=x_axis, y=auto_corr_true, label="Истинное значение"),
+                                        fill_graph_plot_data(x=x_axis, y=auto_corr_pred, label="Предсказанное значение")
                                     ],
                                 )
                             )
                             _id += 1
                             deviation = (y_pred - y_true) * 100 / y_true
-                            x_mae, y_mae = self._get_distribution_histogram(np.abs(deviation), bins=25,
-                                                                            categorical=False)
+                            x_mae, y_mae = get_distribution_histogram(np.abs(deviation), categorical=False)
                             return_data.append(
-                                self._fill_graph_front_structure(
+                                fill_graph_front_structure(
                                     _id=_id,
                                     _type='bar',
                                     graph_name=f"Выходной слой «{out}» - Распределение абсолютной ошибки канала "
@@ -1988,13 +1929,13 @@ class InteractiveCallback:
                                     short_name=f"{out} - Распределение MAE канала «{channel_name.split('_', 1)[-1]}»",
                                     x_label="Абсолютная ошибка",
                                     y_label="Значение",
-                                    plot_data=[self._fill_graph_plot_data(x=x_mae, y=y_mae)],
+                                    plot_data=[fill_graph_plot_data(x=x_mae, y=y_mae)],
                                 )
                             )
                             _id += 1
-                            x_me, y_me = self._get_distribution_histogram(deviation, bins=25, categorical=False)
+                            x_me, y_me = get_distribution_histogram(deviation, categorical=False)
                             return_data.append(
-                                self._fill_graph_front_structure(
+                                fill_graph_front_structure(
                                     _id=_id,
                                     _type='bar',
                                     graph_name=f"Выходной слой «{out}» - Распределение ошибки канала "
@@ -2003,7 +1944,7 @@ class InteractiveCallback:
                                     short_name=f"{out} - Распределение ME канала «{channel_name.split('_', 1)[-1]}»",
                                     x_label="Ошибка",
                                     y_label="Значение",
-                                    plot_data=[self._fill_graph_plot_data(x=x_me, y=y_me)],
+                                    plot_data=[fill_graph_plot_data(x=x_me, y=y_me)],
                                 )
                             )
                             _id += 1
@@ -2022,9 +1963,9 @@ class InteractiveCallback:
                 sensitivity=self.yolo_interactive_config.statistic_data.sensitivity,
                 threashold=self.yolo_interactive_config.statistic_data.threashold
             )
-            object_TT = 0
-            object_TF = 0
-            object_FT = 0
+            object_tt = 0
+            object_tf = 0
+            object_ft = 0
 
             line_names = []
             class_accuracy_hist = {}
@@ -2045,11 +1986,11 @@ class InteractiveCallback:
                     name_classes=name_classes,
                     sensitivity=self.yolo_interactive_config.statistic_data.sensitivity
                 )
-                object_FT += len(example_stat['recognize']['empty'])
-                object_TF += len(example_stat['recognize']['unrecognize'])
+                object_ft += len(example_stat['recognize']['empty'])
+                object_tf += len(example_stat['recognize']['unrecognize'])
                 for class_name in line_names:
                     if class_name != 'empty':
-                        object_TT += len(example_stat['recognize'][class_name])
+                        object_tt += len(example_stat['recognize'][class_name])
                     for item in example_stat['recognize'][class_name]:
                         class_matrix[line_names.index(class_name)][line_names.index(item['pred_class'])] += 1
                         if class_name != 'empty':
@@ -2071,7 +2012,7 @@ class InteractiveCallback:
                 class_loss_hist[
                     class_name] else 0.
 
-            object_matrix = [[object_TT, object_TF], [object_FT, 0]]
+            object_matrix = [[object_tt, object_tf], [object_ft, 0]]
             class_matrix_percent = []
             for i in class_matrix:
                 class_matrix_percent.append(i * 100 / np.sum(i) if np.sum(i) else np.zeros_like(i))
@@ -2079,7 +2020,7 @@ class InteractiveCallback:
             class_matrix = class_matrix.astype('int').tolist()
 
             return_data.append(
-                self._fill_heatmap_front_structure(
+                fill_heatmap_front_structure(
                     _id=1,
                     _type="heatmap",
                     graph_name=f"Бокс-канал «{box_channel}» - Матрица неточностей определения классов",
@@ -2092,7 +2033,7 @@ class InteractiveCallback:
                 )
             )
             return_data.append(
-                self._fill_heatmap_front_structure(
+                fill_heatmap_front_structure(
                     _id=2,
                     _type="heatmap",
                     graph_name=f"Бокс-канал «{box_channel}» - Матрица неточностей определения объектов",
@@ -2105,7 +2046,7 @@ class InteractiveCallback:
                 )
             )
             return_data.append(
-                self._fill_graph_front_structure(
+                fill_graph_front_structure(
                     _id=3,
                     _type='histogram',
                     graph_name=f'Бокс-канал «{box_channel}» - Средняя точность определеня  классов',
@@ -2113,12 +2054,12 @@ class InteractiveCallback:
                     x_label="Имя класса",
                     y_label="Средняя точность, %",
                     plot_data=[
-                        self._fill_graph_plot_data(x=name_classes, y=[class_accuracy_hist[i] for i in name_classes])
+                        fill_graph_plot_data(x=name_classes, y=[class_accuracy_hist[i] for i in name_classes])
                     ],
                 )
             )
             return_data.append(
-                self._fill_graph_front_structure(
+                fill_graph_front_structure(
                     _id=4,
                     _type='histogram',
                     graph_name=f'Бокс-канал «{box_channel}» - Средняя ошибка определеня  классов',
@@ -2126,12 +2067,12 @@ class InteractiveCallback:
                     x_label="Имя класса",
                     y_label="Средняя ошибка, %",
                     plot_data=[
-                        self._fill_graph_plot_data(x=name_classes, y=[class_loss_hist[i] for i in name_classes])
+                        fill_graph_plot_data(x=name_classes, y=[class_loss_hist[i] for i in name_classes])
                     ],
                 )
             )
             return_data.append(
-                self._fill_graph_front_structure(
+                fill_graph_front_structure(
                     _id=5,
                     _type='histogram',
                     graph_name=f'Бокс-канал «{box_channel}» - '
@@ -2140,7 +2081,7 @@ class InteractiveCallback:
                     x_label="Имя класса",
                     y_label="Средняя точность, %",
                     plot_data=[
-                        self._fill_graph_plot_data(x=name_classes, y=[class_coord_accuracy[i] for i in name_classes])
+                        fill_graph_plot_data(x=name_classes, y=[class_coord_accuracy[i] for i in name_classes])
                     ],
                 )
             )
@@ -2165,7 +2106,7 @@ class InteractiveCallback:
                                 dict_to_sort=self.dataset_balance.get(f"{out}").get(class_type).get(data_type),
                                 mode=self.interactive_config.data_balance.sorted.name
                             )
-                            preset[data_type] = self._fill_graph_front_structure(
+                            preset[data_type] = fill_graph_front_structure(
                                 _id=_id,
                                 _type='histogram',
                                 type_data=data_type,
@@ -2174,7 +2115,7 @@ class InteractiveCallback:
                                 short_name=f"{out} - {'Тренировочная' if data_type == 'train' else 'Проверочная'}",
                                 x_label="Название класса",
                                 y_label="Значение",
-                                plot_data=[self._fill_graph_plot_data(x=class_names, y=class_count)],
+                                plot_data=[fill_graph_plot_data(x=class_names, y=class_count)],
                             )
                             _id += 1
                         return_data.append(preset)
@@ -2188,17 +2129,17 @@ class InteractiveCallback:
                                     dict_to_sort=self.dataset_balance.get(f"{out}").get(class_type).get(data_type),
                                     mode=self.interactive_config.data_balance.sorted.name
                                 )
-                                preset[data_type] = self._fill_graph_front_structure(
+                                preset[data_type] = fill_graph_front_structure(
                                     _id=_id,
                                     _type='histogram',
                                     type_data=data_type,
-                                    graph_name=f"Выход {out} - {'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка - "
+                                    graph_name=f"Выход {out} - {'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка - " 
                                                f"{'баланс присутсвия' if class_type == 'presence_balance' else 'процент пространства'}",
                                     short_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} - "
                                                f"{'присутсвие' if class_type == 'presence_balance' else 'пространство'}",
                                     x_label="Название класса",
                                     y_label="Значение",
-                                    plot_data=[self._fill_graph_plot_data(x=names, y=count)],
+                                    plot_data=[fill_graph_plot_data(x=names, y=count)],
                                 )
                                 _id += 1
                             return_data.append(preset)
@@ -2208,7 +2149,7 @@ class InteractiveCallback:
                                     'train').items():
                                 preset = {}
                                 for data_type in ['train', 'val']:
-                                    preset[data_type] = self._fill_graph_front_structure(
+                                    preset[data_type] = fill_graph_front_structure(
                                         _id=_id,
                                         _type='colormap',
                                         type_data=data_type,
@@ -2231,7 +2172,7 @@ class InteractiveCallback:
                                     dict_to_sort=self.dataset_balance.get(f"{out}").get(class_type).get(data_type),
                                     mode=self.interactive_config.data_balance.sorted.name
                                 )
-                                preset[data_type] = self._fill_graph_front_structure(
+                                preset[data_type] = fill_graph_front_structure(
                                     _id=_id,
                                     _type='histogram',
                                     type_data=data_type,
@@ -2241,7 +2182,7 @@ class InteractiveCallback:
                                                f"{'присутсвие' if class_type == 'presence_balance' else 'процент'}",
                                     x_label="Название класса",
                                     y_label="Значение",
-                                    plot_data=[self._fill_graph_plot_data(x=names, y=count)],
+                                    plot_data=[fill_graph_plot_data(x=names, y=count)],
                                 )
                                 _id += 1
                         return_data.append(preset)
@@ -2254,7 +2195,7 @@ class InteractiveCallback:
                                 for data_type in ["train", "val"]:
                                     histogram = self.dataset_balance[f"{out}"][class_type][data_type][column]
                                     data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
-                                    preset[data_type] = self._fill_graph_front_structure(
+                                    preset[data_type] = fill_graph_front_structure(
                                         _id=_id,
                                         _type=histogram.get("type"),
                                         type_data=data_type,
@@ -2264,7 +2205,7 @@ class InteractiveCallback:
                                         x_label="Значение",
                                         y_label="Количество",
                                         plot_data=[
-                                            self._fill_graph_plot_data(x=histogram.get("x"), y=histogram.get("y"))],
+                                            fill_graph_plot_data(x=histogram.get("x"), y=histogram.get("y"))],
                                     )
                                     _id += 1
                                 return_data.append(preset)
@@ -2273,7 +2214,7 @@ class InteractiveCallback:
                             preset = {}
                             for data_type in ["train", "val"]:
                                 data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
-                                preset[data_type] = self._fill_heatmap_front_structure(
+                                preset[data_type] = fill_heatmap_front_structure(
                                     _id=_id,
                                     _type="corheatmap",
                                     type_data=data_type,
@@ -2297,22 +2238,21 @@ class InteractiveCallback:
                                 y_true = self.options.dataframe.get(data_type)[channel_name].to_list()
                                 if class_type == 'graphic':
                                     x_graph_axis = np.arange(len(y_true)).astype('float').tolist()
-                                    plot_data = [self._fill_graph_plot_data(x=x_graph_axis, y=y_true)]
+                                    plot_data = [fill_graph_plot_data(x=x_graph_axis, y=y_true)]
                                     graph_name = f'Выход {out} - {data_type_name} выборка - ' \
                                                  f'График канала «{channel_name.split("_", 1)[-1]}»'
                                     short_name = f'{data_type_name} - «{channel_name.split("_", 1)[-1]}»'
                                     x_label = "Время"
                                     y_label = "Величина"
                                 if class_type == 'dense_histogram':
-                                    x_hist, y_hist = self._get_distribution_histogram(y_true, bins=25,
-                                                                                      categorical=False)
-                                    plot_data = [self._fill_graph_plot_data(x=x_hist, y=y_hist)]
+                                    x_hist, y_hist = get_distribution_histogram(y_true, categorical=False)
+                                    plot_data = [fill_graph_plot_data(x=x_hist, y=y_hist)]
                                     graph_name = f'Выход {out} - {data_type_name} выборка - ' \
                                                  f'Гистограмма плотности канала «{channel_name.split("_", 1)[-1]}»'
                                     short_name = f'{data_type_name} - Гистограмма «{channel_name.split("_", 1)[-1]}»'
                                     x_label = "Значение"
                                     y_label = "Количество"
-                                preset[data_type] = self._fill_graph_front_structure(
+                                preset[data_type] = fill_graph_front_structure(
                                     _id=_id,
                                     _type=graph_type,
                                     type_data=data_type,
@@ -2337,7 +2277,7 @@ class InteractiveCallback:
                             dict_to_sort=self.dataset_balance.get("output").get(class_type).get(data_type),
                             mode=self.interactive_config.data_balance.sorted.name
                         )
-                        preset[data_type] = self._fill_graph_front_structure(
+                        preset[data_type] = fill_graph_front_structure(
                             _id=_id,
                             _type='histogram',
                             type_data=data_type,
@@ -2347,7 +2287,7 @@ class InteractiveCallback:
                                        f"{'присутсвие' if class_type == 'class_count' else 'пространство'}",
                             x_label="Название класса",
                             y_label="Значение",
-                            plot_data=[self._fill_graph_plot_data(x=names, y=count)],
+                            plot_data=[fill_graph_plot_data(x=names, y=count)],
                         )
                         _id += 1
                     return_data.append(preset)
@@ -2358,7 +2298,7 @@ class InteractiveCallback:
                         preset = {}
                         for data_type in ['train', 'val']:
                             _dict = self.dataset_balance.get("output").get('colormap').get(data_type)
-                            preset[data_type] = self._fill_graph_front_structure(
+                            preset[data_type] = fill_graph_front_structure(
                                 _id=_id,
                                 _type='colormap',
                                 type_data=data_type,
@@ -2379,134 +2319,3 @@ class InteractiveCallback:
 
         return return_data
 
-    @staticmethod
-    def _get_confusion_matrix(y_true, y_pred, get_percent=True) -> tuple:
-        cm = confusion_matrix(y_true, y_pred)
-        cm_percent = None
-        if get_percent:
-            cm_percent = np.zeros_like(cm).astype('float')
-            for i in range(len(cm)):
-                total = np.sum(cm[i])
-                for j in range(len(cm[i])):
-                    cm_percent[i][j] = round(cm[i][j] * 100 / total, 1)
-        return cm.astype('float').tolist(), cm_percent.astype('float').tolist()
-
-    @staticmethod
-    def _get_classification_report(y_true, y_pred, labels):
-        cr = classification_report(y_true, y_pred, target_names=labels, output_dict=True)
-        return_stat = []
-        for lbl in labels:
-            return_stat.append(
-                {
-                    'Класс': lbl,
-                    "Точность": round(float(cr.get(lbl).get('precision')) * 100, 2),
-                    "Чувствительность": round(float(cr.get(lbl).get('recall')) * 100, 2),
-                    "F1-мера": round(float(cr.get(lbl).get('f1-score')) * 100, 2),
-                    "Количество": int(cr.get(lbl).get('support'))
-                }
-            )
-        for i in ['macro avg', 'micro avg', 'samples avg', 'weighted avg']:
-            return_stat.append(
-                {
-                    'Класс': i,
-                    "Точность": round(float(cr.get(i).get('precision')) * 100, 2),
-                    "Чувствительность": round(float(cr.get(i).get('recall')) * 100, 2),
-                    "F1-мера": round(float(cr.get(i).get('f1-score')) * 100, 2),
-                    "Количество": int(cr.get(i).get('support'))
-                }
-            )
-        return return_stat
-
-    @staticmethod
-    def _get_error_distribution(y_true, y_pred, bins=25, absolute=True):
-        error = (y_true - y_pred)  # "* 100 / y_true
-        if absolute:
-            error = np.abs(error)
-        return InteractiveCallback()._get_distribution_histogram(error, bins=bins, categorical=False)
-
-    @staticmethod
-    def _get_time_series_graphic(data):
-        return np.arange(len(data)).astype('int').tolist(), np.array(data).astype('float').tolist()
-
-    @staticmethod
-    def _get_correlation_matrix(data_frame: DataFrame):
-        corr = data_frame.corr()
-        labels = []
-        for lbl in list(corr.columns):
-            labels.append(lbl.split("_", 1)[-1])
-        return labels, np.array(np.round(corr, 2)).astype('float').tolist()
-
-    @staticmethod
-    def _get_scatter(y_true, y_pred):
-        return InteractiveCallback().clean_data_series([y_true, y_pred], mode="duo")
-
-    @staticmethod
-    def _get_distribution_histogram(data_series, bins=25, categorical=True):
-        if categorical:
-            hist_data = pd.Series(data_series).value_counts()
-            return hist_data.index.to_list(), hist_data.to_list()
-        else:
-            bins = int(len(data_series) / 10)
-            data_series = InteractiveCallback().clean_data_series([data_series], mode="mono")
-            bar_values, x_labels = np.histogram(data_series, bins=bins)
-            new_x = []
-            for i in range(len(x_labels[:-1])):
-                new_x.append(np.mean([x_labels[i], x_labels[i + 1]]))
-            new_x = np.array(new_x)
-            return new_x.astype('float').tolist(), bar_values.astype('int').tolist()
-
-    @staticmethod
-    def clean_data_series(data_series: list, mode="mono"):
-        if mode == "mono":
-            sort_x = pd.Series(data_series[0])
-            sort_x = sort_x[sort_x > sort_x.quantile(0.02)]
-            sort_x = sort_x[sort_x < sort_x.quantile(0.98)]
-            data_series = np.array(sort_x)
-            return data_series
-        elif mode == "duo":
-            sort = pd.DataFrame({
-                'y_true': np.array(data_series[0]).squeeze(),
-                'y_pred': np.array(data_series[1]).squeeze(),
-            })
-            sort = sort[sort['y_true'] > sort['y_true'].quantile(0.05)]
-            sort = sort[sort['y_true'] < sort['y_true'].quantile(0.95)]
-            return sort['y_true'].to_list(), sort['y_pred'].to_list()
-        else:
-            return None
-
-    @staticmethod
-    def _get_autocorrelation_graphic(y_true, y_pred, depth=10) -> (list, list, list):
-
-        def get_auto_corr(y_true, y_pred, k):
-            l = len(y_true)
-            time_series_1 = y_pred[:-k]
-            time_series_2 = y_true[k:]
-            time_series_mean = np.mean(y_true)
-            time_series_var = np.array([i ** 2 for i in y_true - time_series_mean]).sum()
-            auto_corr = 0
-            for i in range(l - k):
-                temp = (time_series_1[i] - time_series_mean) * (time_series_2[i] - time_series_mean) / time_series_var
-                auto_corr = auto_corr + temp
-            return auto_corr
-
-        x_axis = np.arange(depth).astype('int').tolist()
-
-        auto_corr_true = []
-        for i in range(depth):
-            auto_corr_true.append(get_auto_corr(y_true, y_true, i + 1))
-        auto_corr_pred = []
-        for i in range(depth):
-            auto_corr_pred.append(get_auto_corr(y_true, y_pred, i + 1))
-        return x_axis, auto_corr_true, auto_corr_pred
-
-    @staticmethod
-    def _dice_coef(y_true, y_pred, batch_mode=True, smooth=1.0):
-        return CreateArray().dice_coef(y_true, y_pred, batch_mode=batch_mode, smooth=smooth)
-
-    @staticmethod
-    def _get_image_class_colormap(array: np.ndarray, colors: list, class_id: int, save_path: str):
-        array = np.expand_dims(np.argmax(array, axis=-1), axis=-1) * 512
-        array = np.where(array == class_id * 512, np.array(colors[class_id]) if np.sum(np.array(colors[class_id])) > 50
-        else np.array((255, 255, 255)), np.array((0, 0, 0)))
-        array = (np.sum(array, axis=0) / len(array)).astype("uint8")
-        matplotlib.image.imsave(save_path, array)

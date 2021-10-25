@@ -41,7 +41,8 @@ from tensorflow import maximum as tf_maximum
 from tensorflow import minimum as tf_minimum
 import moviepy.editor as moviepy_editor
 
-from terra_ai.settings import DEPLOY_PRESET_PERCENT
+from terra_ai.settings import DEPLOY_PRESET_PERCENT, CALLBACK_CLASSIFICATION_TREASHOLD_VALUE, \
+    CALLBACK_REGRESSION_TREASHOLD_VALUE
 
 
 class CreateArray(object):
@@ -156,7 +157,7 @@ class CreateArray(object):
         open_symbol, close_symbol = None, None
         if options.get('open_tags'):
             open_tags, close_tags = options['open_tags'].split(' '), options['close_tags'].split(' ')
-        if open_tags:
+        # if open_tags:
             open_symbol = open_tags[0][0]
             close_symbol = close_tags[0][-1]
         length = options['length'] if options['text_mode'] == LayerTextModeChoice.length_and_step else \
@@ -615,7 +616,7 @@ class CreateArray(object):
 
         instructions = {'instructions': paths_list,
                         'parameters': {"classes_names": options['classes_names'],
-                                       "num_classes": options['classes_names'],
+                                       "num_classes": options['num_classes'],
                                        'cols_names': options['cols_names'],
                                        'put': options['put'],
                                        'type_processing': options['type_processing'],
@@ -1817,13 +1818,13 @@ class CreateArray(object):
     @staticmethod
     def prepare_example_idx_to_show(array: np.ndarray, true_array: np.ndarray, options, output: int, count: int,
                                     choice_type: str = "best", seed_idx: list = None) -> dict:
-        example_idx = {}
+        example_idx = []
         encoding = options.data.outputs.get(output).encoding
         task = options.data.outputs.get(output).task
         if choice_type == ExampleChoiceTypeChoice.best or choice_type == ExampleChoiceTypeChoice.worst:
             if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
-                if array.shape[-1] == true_array.shape[-1] and encoding == LayerEncodingChoice.ohe and true_array.shape[
-                    -1] > 1:
+                if array.shape[-1] == true_array.shape[-1] and encoding == \
+                        LayerEncodingChoice.ohe and true_array.shape[-1] > 1:
                     classes = np.argmax(true_array, axis=-1)
                 elif len(true_array.shape) == 1 and not encoding == LayerEncodingChoice.ohe and array.shape[-1] > 1:
                     classes = copy.deepcopy(true_array)
@@ -1831,12 +1832,25 @@ class CreateArray(object):
                     classes = copy.deepcopy(true_array)
                 else:
                     classes = copy.deepcopy(true_array)
-                probs = np.array([pred[classes[i]] for i, pred in enumerate(array)])
-                sorted_args = np.argsort(probs)
-                if choice_type == ExampleChoiceTypeChoice.best:
-                    example_idx = sorted_args[::-1][:count]
-                if choice_type == ExampleChoiceTypeChoice.worst:
-                    example_idx = sorted_args[:count]
+                class_idx = {}
+                for _id in range(options.data.outputs.get(output).num_classes):
+                    class_idx[_id] = {}
+                for i, pred in enumerate(array):
+                    class_idx[classes[i]][i] = pred[classes[i]]
+                for _id in range(options.data.outputs.get(output).num_classes):
+                    class_idx[_id] = list(CreateArray().sort_dict(
+                        class_idx[_id], mode=BalanceSortedChoice.ascending)[0])
+
+                num_ex = copy.deepcopy(count)
+                while num_ex:
+                    key = np.random.choice(list(class_idx.keys()))
+                    if choice_type == ExampleChoiceTypeChoice.best:
+                        example_idx.append(class_idx[key][-1])
+                        class_idx[key].pop(-1)
+                    if choice_type == ExampleChoiceTypeChoice.worst:
+                        example_idx.append(class_idx[key][0])
+                        class_idx[key].pop(0)
+                    num_ex -= 1
 
             elif task == LayerOutputTypeChoice.Segmentation or task == LayerOutputTypeChoice.TextSegmentation:
                 if encoding == LayerEncodingChoice.ohe:
@@ -1845,7 +1859,7 @@ class CreateArray(object):
                         num_classes=options.data.outputs.get(output).num_classes
                     )
                 if encoding == LayerEncodingChoice.multi:
-                    array = np.where(array >= 0.9, 1, 0)
+                    array = np.where(array >= CALLBACK_CLASSIFICATION_TREASHOLD_VALUE / 100, 1, 0)
                 dice_val = CreateArray().dice_coef(true_array, array, batch_mode=True)
                 dice_dict = dict(zip(np.arange(0, len(dice_val)), dice_val))
                 if choice_type == ExampleChoiceTypeChoice.best:
@@ -1866,6 +1880,7 @@ class CreateArray(object):
                 if choice_type == ExampleChoiceTypeChoice.worst:
                     example_idx, _ = CreateArray().sort_dict(delta_dict, mode=BalanceSortedChoice.descending)
                     example_idx = example_idx[:count]
+
             else:
                 pass
 
@@ -1873,7 +1888,90 @@ class CreateArray(object):
             example_idx = seed_idx[:count]
 
         elif choice_type == ExampleChoiceTypeChoice.random:
-            example_idx = np.random.randint(0, len(true_array), count)
+            if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
+                true_id = []
+                false_id = []
+                for i, ex in enumerate(true_array):
+                    if np.argmax(ex, axis=-1) == np.argmax(array[i], axis=-1):
+                        true_id.append(i)
+                    else:
+                        false_id.append(i)
+                np.random.shuffle(true_id)
+                np.random.shuffle(false_id)
+                true_false_dict = {'true': true_id, 'false': false_id}
+
+                for _ in range(count):
+                    if true_false_dict.get('true') and true_false_dict.get('false'):
+                        key = np.random.choice(list(true_false_dict.keys()))
+                    elif true_false_dict.get('true') and not true_false_dict.get('false'):
+                        key = 'true'
+                    else:
+                        key = 'false'
+                    example_idx.append(true_false_dict.get(key)[0])
+                    true_false_dict.get(key).pop(0)
+                np.random.shuffle(example_idx)
+
+            elif task == LayerOutputTypeChoice.Segmentation or task == LayerOutputTypeChoice.TextSegmentation:
+                if encoding == LayerEncodingChoice.ohe:
+                    array = to_categorical(
+                        np.argmax(array, axis=-1),
+                        num_classes=options.data.outputs.get(output).num_classes
+                    )
+                if encoding == LayerEncodingChoice.multi:
+                    array = np.where(array >= CALLBACK_CLASSIFICATION_TREASHOLD_VALUE / 100, 1, 0)
+                dice_val = CreateArray().dice_coef(true_array, array, batch_mode=True)
+
+                true_id = []
+                false_id = []
+                for i, ex in enumerate(dice_val):
+                    if ex >= CALLBACK_CLASSIFICATION_TREASHOLD_VALUE / 100:
+                        true_id.append(i)
+                    else:
+                        false_id.append(i)
+                np.random.shuffle(true_id)
+                np.random.shuffle(false_id)
+                true_false_dict = {'true': true_id, 'false': false_id}
+
+                for _ in range(count):
+                    if true_false_dict.get('true') and true_false_dict.get('false'):
+                        key = np.random.choice(list(true_false_dict.keys()))
+                    elif true_false_dict.get('true') and not true_false_dict.get('false'):
+                        key = 'true'
+                    else:
+                        key = 'false'
+                    example_idx.append(true_false_dict.get(key)[0])
+                    true_false_dict.get(key).pop(0)
+                np.random.shuffle(example_idx)
+
+            elif task == LayerOutputTypeChoice.Timeseries or task == LayerOutputTypeChoice.Regression:
+                delta = np.abs(true_array - array) * 100 / true_array
+                while len(delta.shape) != 1:
+                    delta = np.mean(delta, axis=-1)
+                true_id = []
+                false_id = []
+                for i, ex in enumerate(delta):
+                    if ex >= CALLBACK_REGRESSION_TREASHOLD_VALUE:
+                        true_id.append(i)
+                    else:
+                        false_id.append(i)
+                np.random.shuffle(true_id)
+                np.random.shuffle(false_id)
+                true_false_dict = {'true': true_id, 'false': false_id}
+
+                for _ in range(count):
+                    if true_false_dict.get('true') and true_false_dict.get('false'):
+                        key = np.random.choice(list(true_false_dict.keys()))
+                    elif true_false_dict.get('true') and not true_false_dict.get('false'):
+                        key = 'true'
+                    else:
+                        key = 'false'
+                    example_idx.append(true_false_dict.get(key)[0])
+                    true_false_dict.get(key).pop(0)
+                np.random.shuffle(example_idx)
+
+            else:
+                example_idx = np.random.randint(0, len(true_array), count)
+
         else:
             pass
         return example_idx
@@ -2185,12 +2283,7 @@ class CreateArray(object):
             return initinal_text, text_segmentation, data
 
         if return_mode == 'callback':
-            data = {
-                "y_true": {},
-                "y_pred": {},
-                "tags_color": {},
-                "stat": {}
-            }
+            data = {"y_true": {}, "y_pred": {}, "tags_color": {}, "stat": {}}
             text_for_preparation = dataframe.iat[example_id, 0]
             true_text_segmentation = text_colorization(
                 text=text_for_preparation,
@@ -2202,13 +2295,7 @@ class CreateArray(object):
 
             data["y_true"] = {
                 "type": "segmented_text",
-                "data": [
-                    {
-                        "title": "Текст",
-                        "value": true_text_segmentation,
-                        "color_mark": None
-                    }
-                ]
+                "data": [{"title": "Текст", "value": true_text_segmentation, "color_mark": None}]
             }
             pred_text_segmentation = text_colorization(
                 text=text_for_preparation,
@@ -2219,18 +2306,13 @@ class CreateArray(object):
             )
             data["y_pred"] = {
                 "type": "segmented_text",
-                "data": [
-                    {
-                        "title": "Текст",
-                        "value": pred_text_segmentation,
-                        "color_mark": None
-                    }
-                ]
+                "data": [{"title": "Текст", "value": pred_text_segmentation, "color_mark": None}]
             }
             colors_ = {}
             for key, val in colors.items():
                 colors_[key[1:-1]] = val
             data["tags_color"] = colors_
+
             if show_stat:
                 data["stat"] = {
                     "type": "str",
@@ -2242,38 +2324,34 @@ class CreateArray(object):
                 mean_val = 0
                 for idx, cls in enumerate(options.classes_names):
                     if np.sum(y_true[:, idx]) == 0 and np.sum(y_pred[:, idx]) == 0:
-                        data["stat"]["data"].append(
-                            {
-                                'title': cls,
-                                'value': "-",
-                                'color_mark': None
-                            }
-                        )
+                        data["stat"]["data"].append({'title': cls, 'value': "-", 'color_mark': None})
+                    elif np.sum(y_true[:, idx]) == 0:
+                        data["stat"]["data"].append({'title': cls, 'value': "0.0%", 'color_mark': 'wrong'})
+                        count += 1
                     else:
-                        dice_val = np.round(
-                            CreateArray().dice_coef(y_true[:, idx], y_pred[:, idx], batch_mode=False) * 100, 1)
+                        class_recall = np.sum(y_true[:, idx] * y_pred[:, idx]) * 100 / np.sum(y_true[:, idx])
+                        # dice_val = np.round(
+                        #     CreateArray().dice_coef(y_true[:, idx], y_pred[:, idx], batch_mode=False) * 100, 1)
                         data["stat"]["data"].append(
                             {
                                 'title': cls,
-                                'value': f"{dice_val} %",
-                                'color_mark': 'success' if dice_val >= 90 else 'wrong'
+                                'value': f"{np.round(class_recall, 1)} %",
+                                'color_mark': 'success' if class_recall >= 90 else 'wrong'
                             }
                         )
                         count += 1
-                        mean_val += dice_val
+                        mean_val += class_recall
                 if count and mean_val / count >= 90:
                     mean_color_mark = "success"
+                    mean_stat = f"{round(mean_val / count, 1)}%"
                 elif count and mean_val / count < 90:
                     mean_color_mark = "wrong"
+                    mean_stat = f"{round(mean_val / count, 2)}%"
                 else:
                     mean_color_mark = None
+                    mean_stat = '-'
                 data["stat"]["data"].insert(
-                    0,
-                    {
-                        'title': "Средняя точность",
-                        'value': f"{round(mean_val / count, 2)}%" if count else "-",
-                        'color_mark': mean_color_mark
-                    }
+                    0,  {'title': "Средняя точность", 'value': mean_stat, 'color_mark': mean_color_mark}
                 )
             return data
 
@@ -2285,21 +2363,14 @@ class CreateArray(object):
             show_stat: bool = False,
             return_mode='deploy',
     ):
-        data = {"y_true": {
-            "type": "str",
-            "data": []
-        }}
+        data = {"y_true": {"type": "str", "data": []}}
         if return_mode == 'deploy':
             source = []
             return source
         else:
             for i, name in enumerate(column_names):
                 data["y_true"]["data"].append(
-                    {
-                        "title": name.split('_', 1)[-1],
-                        "value": f"{inverse_y_true[i]: .2f}",
-                        "color_mark": None
-                    }
+                    {"title": name.split('_', 1)[-1], "value": f"{inverse_y_true[i]: .2f}", "color_mark": None}
                 )
             deviation = np.abs((inverse_y_pred - inverse_y_true) * 100 / inverse_y_true)
             data["y_pred"] = {
@@ -2316,10 +2387,7 @@ class CreateArray(object):
                     }
                 )
             if show_stat:
-                data["stat"] = {
-                    "type": "str",
-                    "data": []
-                }
+                data["stat"] = {"type": "str", "data": []}
                 for i, name in enumerate(column_names):
                     color_mark = 'success' if deviation[i] < 2 else "wrong"
                     data["stat"]["data"].append(
@@ -2343,6 +2411,7 @@ class CreateArray(object):
             templates: list = None,
             max_lenth: int = 50
     ):
+
         """
         real_x = self.inverse_x_val.get(f"{input}")[example_idx]
         inverse_y_true = self.inverse_y_true.get("val").get(output_id)[example_idx]
@@ -2350,11 +2419,8 @@ class CreateArray(object):
         depth = self.inverse_y_true.get("val").get(output_id)[example_idx].shape[-1]
         templates = [self._fill_graph_plot_data, self._fill_graph_front_structure]
         """
-        data = {
-            "y_true": {},
-            "y_pred": {},
-            "stat": {}
-        }
+        # try:
+        data = {"y_true": {}, "y_pred": {}, "stat": {}}
         graphics = []
         _id = 1
         for i, channel in enumerate(options.columns.get(output_id).keys()):
@@ -2425,7 +2491,8 @@ class CreateArray(object):
                             "Предсказание": f"{inverse_y_pred[step, i].astype('float'): .2f}",
                             "Отклонение": {
                                 "value": f"{deviation: .2f} %",
-                                "color_mark": "success" if abs(deviation) < 2 else "wrong"
+                                "color_mark": "success" if abs(deviation) < CALLBACK_REGRESSION_TREASHOLD_VALUE
+                                else "wrong"
                             }
                         }
                     )

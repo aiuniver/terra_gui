@@ -129,7 +129,9 @@ class ParametersScalerData(ParametersBaseData, MinMaxScalerData):
 
 class ParametersClassificationData(ParametersBaseData):
     one_hot_encoding: bool = True
-    type_processing: LayerTypeProcessingClassificationChoice
+    type_processing: Optional[
+        LayerTypeProcessingClassificationChoice
+    ] = LayerTypeProcessingClassificationChoice.categorical
     ranges: Optional[str]
     length: int = 0
     depth: int = 0

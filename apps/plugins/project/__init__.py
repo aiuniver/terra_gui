@@ -105,6 +105,10 @@ class ProjectPathData(BaseMixinData):
         os.makedirs(self.training, exist_ok=True)
         os.makedirs(self.deploy, exist_ok=True)
 
+    def clear_dataset(self):
+        shutil.rmtree(self.datasets)
+        os.makedirs(self.datasets, exist_ok=True)
+
 
 class TrainingDetailsData(BaseMixinData):
     base: TrainData = TrainData()
@@ -203,59 +207,53 @@ class Project(BaseMixinData):
         self.training = TrainingDetailsData()
         self.deploy = None
 
+    def _redefine_model_ids(self):
+        if not self.dataset:
+            return
+        dataset_model = self.dataset.model
+        for _index, _dataset_layer in enumerate(dataset_model.inputs):
+            self.model.switch_index(self.model.inputs[_index].id, _dataset_layer.id)
+        for _index, _dataset_layer in enumerate(dataset_model.outputs):
+            self.model.switch_index(self.model.outputs[_index].id, _dataset_layer.id)
+
+    def update_model_layers(self):
+        if not self.dataset:
+            return
+
+        model_init = self.dataset.model
+
+        for index, layer in enumerate(self.model.inputs):
+            layer_init = model_init.inputs.get(layer.id)
+            layer.shape = layer_init.shape
+            layer.task = layer_init.task
+            layer.num_classes = layer_init.num_classes
+            # layer.parameters = layer_init.parameters
+
+        for index, layer in enumerate(self.model.outputs):
+            layer_init = model_init.outputs.get(layer.id)
+            layer.shape = layer_init.shape
+            layer.task = layer_init.task
+            layer.num_classes = layer_init.num_classes
+            # layer.parameters = layer_init.parameters
+
     def set_dataset(self, dataset: DatasetData = None, reset_model: bool = False):
         if dataset is None:
             self.dataset = None
-            self.model = ModelDetailsData(**EmptyModelDetailsData)
+            project_path.clear_dataset()
+            defaults_data.modeling.set_layer_datatype(self.dataset)
             self.set_training()
             return
-        model_init = dataset.model
+
         self.dataset = dataset
         if not self.model.inputs or not self.model.outputs or reset_model:
-            self.model = model_init
+            self.model = self.dataset.model
         else:
-            if self.model.inputs and len(self.model.inputs) != len(model_init.inputs):
-                raise exceptions.DatasetModelInputsCountNotMatchException()
-            if self.model.outputs and len(self.model.outputs) != len(
-                model_init.outputs
-            ):
-                raise exceptions.DatasetModelOutputsCountNotMatchException()
+            self._redefine_model_ids()
+            self.update_model_layers()
 
-            for index, layer in enumerate(model_init.inputs):
-                layer_init = layer.native()
-                layer_data = self.model.inputs[index].native()
-                layer_data.update(
-                    {
-                        "type": layer_init.get("type"),
-                        "shape": layer_init.get("shape"),
-                        "task": layer_init.get("task"),
-                        "num_classes": layer_init.get("num_classes"),
-                        "parameters": layer_init.get("parameters"),
-                    }
-                )
-                if int(layer.id) != int(layer_data.get("id")):
-                    _layer = self.dataset.inputs.pop(layer.id)
-                    self.dataset.inputs[layer_data.get("id")] = _layer
-                self.model.layers.append(LayerData(**layer_data))
-
-            for index, layer in enumerate(model_init.outputs):
-                layer_init = layer.native()
-                layer_data = self.model.outputs[index].native()
-                layer_data.update(
-                    {
-                        "type": layer_init.get("type"),
-                        "shape": layer_init.get("shape"),
-                        "task": layer_init.get("task"),
-                        "num_classes": layer_init.get("num_classes"),
-                        "parameters": layer_init.get("parameters"),
-                    }
-                )
-                if int(layer.id) != int(layer_data.get("id")):
-                    _layer = self.dataset.outputs.pop(layer.id)
-                    self.dataset.outputs[layer_data.get("id")] = _layer
-                self.model.layers.append(LayerData(**layer_data))
-
+        defaults_data.modeling.set_layer_datatype(self.dataset)
         self.set_training()
+        self.save()
 
     def set_model(self, model: ModelDetailsData):
         if self.dataset:
@@ -265,7 +263,10 @@ class Project(BaseMixinData):
             if model.outputs and len(model.outputs) != len(dataset_model.outputs):
                 raise exceptions.DatasetModelOutputsCountNotMatchException()
         self.model = model
+        self._redefine_model_ids()
+        self.update_model_layers()
         self.set_training()
+        self.save()
 
     def update_training_base(self):
         outputs = []
@@ -303,17 +304,17 @@ class Project(BaseMixinData):
                 }
             )
         self.training.base.architecture.parameters.outputs = OutputsList(outputs)
-        if self.model.outputs:
-            checkpoint_data = {"layer": self.model.outputs[0].id}
-            if self.training.base.architecture.parameters.checkpoint:
-                checkpoint_data = (
-                    self.training.base.architecture.parameters.checkpoint.native()
-                )
-                if not checkpoint_data.get("layer"):
-                    checkpoint_data.update({"layer": self.model.outputs[0].id})
-            self.training.base.architecture.parameters.checkpoint = CheckpointData(
-                **checkpoint_data
-            )
+        # if self.model.outputs:
+        #     checkpoint_data = {"layer": self.model.outputs[0].id}
+        #     if self.training.base.architecture.parameters.checkpoint:
+        #         checkpoint_data = (
+        #             self.training.base.architecture.parameters.checkpoint.native()
+        #         )
+        #         if not checkpoint_data.get("layer"):
+        #             checkpoint_data.update({"layer": self.model.outputs[0].id})
+        #     self.training.base.architecture.parameters.checkpoint = CheckpointData(
+        #         **checkpoint_data
+        #     )
         defaults_data.update_by_model(self.model, self.training)
         # defaults_data.training.update(self.dataset, self.training.base)
 
@@ -400,3 +401,4 @@ if _config.get("deploy"):
     _config["deploy"].update({"path": project_path.deploy})
 project = Project(**_config)
 project.set_training()
+defaults_data.modeling.set_layer_datatype(project.dataset)

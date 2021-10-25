@@ -13,12 +13,14 @@ def predict(input_path):
 
     data = next(main_block.input(input_path))[columns]
     main_block(input_path)
+    out = {'source': {}, 'predict': {}}
 
-    out = {'in': {}, 'out': {}}
     for col in columns:
-        out['in'][col] = data[col].tolist()
+        out['source'][col] = data[col].tolist()
+
     for i, col in enumerate(out_columns):
-        out['out'][col] = main_block[-1].out[0][:, :, i].tolist()[0]
+        out['predict'][col] = [out['source'][col] if col in out['source'].keys() else [],
+                               main_block[-1].out[0][:, :, i].tolist()[0]]
 
     return print(out)
 

@@ -31,9 +31,11 @@ from terra_ai.data.training.train import TrainData, InteractiveData
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.deploy.create_deploy_package import CascadeCreator
+from terra_ai.exceptions.deploy import MethodNotImplementedException
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.customcallback import InteractiveCallback
-from terra_ai.training.customlosses import DiceCoef, RecallPercent, UnscaledMAE, BalancedRecall
+from terra_ai.training.customlosses import DiceCoef, UnscaledMAE, BalancedRecall, BalancedDiceCoef, \
+    BalancedPrecision, BalancedFScore, FScore
 from terra_ai.training.yolo_utils import create_yolo, CustomModelYolo, compute_loss, get_mAP, detect_image
 from terra_ai.exceptions import training as exceptions, terra_exception
 
@@ -42,6 +44,129 @@ __version__ = 0.02
 from terra_ai.utils import camelize, decamelize
 
 interactive = InteractiveCallback()
+
+
+class MyCallback(tf.keras.callbacks.Callback):
+    def __init__(self, dataset, yolo_pred, inp, image_path, epochs, batches):
+        self.dataset = dataset
+        self.yolo_pred = yolo_pred
+        self.epoch = 1
+        self.epochs = epochs
+        self.inp = inp
+        self.image_path = os.path.join(image_path, 'chess_{}.jpg')
+        if not dataset.data.use_generator:
+            self.batches = len(list(dataset.X.get('train').values())[0]) // batches
+        else:
+            self.batches = len(dataset.dataframe['train']) // batches
+        self.samples_train = []
+        self.samples_val = []
+
+    def logs_extract(self, logs):
+        pred_on_batch = []
+        for key in logs.keys():
+            if key.startswith('pred'):
+                pred_on_batch.append(logs[key])
+        return pred_on_batch
+
+    def on_train_batch_end(self, batch, logs=None):
+        ### пока что для yolo
+        self.samples_train.append(self.logs_extract(logs))
+        ###
+
+        if interactive.get_states().get("status") == "stopped":
+            self.model.stop_training = True
+        else:
+            result = {
+                'info': None,
+                "train_usage": {
+                    "hard_usage": {},
+                    "timings": {
+                        "estimated_time": 0,
+                        "elapsed_time": 0,
+                        "still_time": 0,
+                        "avg_epoch_time": 0,
+                        "elapsed_epoch_time": 0,
+                        "still_epoch_time": 0,
+                        "epoch": {
+                            "current": self.epoch,
+                            "total": self.epochs
+                        },
+                        "batch": {
+                            "current": batch + 1,
+                            "total": self.batches
+                        },
+                    }
+                },
+                'train_data': None,
+                'states': {}
+            }
+            progress.pool(
+                "training",
+                percent=self.epoch / self.epochs * 100,
+                message=f"Обучение YOLO. Эпоха {self.epoch} из {self.epochs}",
+                data=result,
+                finished=False,
+            )
+
+    def on_test_batch_end(self, batch, logs=None):
+        ### пока что для yolo
+        self.samples_val.append(self.logs_extract(logs))
+        ### пока что для yolo
+
+    def on_epoch_end(self, epoch, logs=None):
+        self.epoch += 1
+        output_path = self.image_path.format(epoch)
+        ### пока что для yolo
+        pred_train = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_train)]
+        pred_val = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_val)]
+
+        self.samples_train = []
+        self.samples_val = []
+
+        mAP = get_mAP(self.model, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
+                            TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names)
+        print(mAP)
+        ### Пока что для визуализации Yolo
+        detect_image(Yolo=self.yolo_pred, original_image=self.inp['1'].numpy()[0], output_path=output_path,
+                     CLASSES=self.dataset.data.outputs.get(2).classes_names)
+        ###
+
+    def on_train_end(self, logs=None):
+        result = {
+            'info': None,
+            "train_usage": {
+                "hard_usage": {},
+                "timings": {
+                    "estimated_time": 0,
+                    "elapsed_time": 0,
+                    "still_time": 0,
+                    "avg_epoch_time": 0,
+                    "elapsed_epoch_time": 0,
+                    "still_epoch_time": 0,
+                    "epoch": {
+                        "current": self.epoch - 1,
+                        "total": self.epochs
+                    },
+                    "batch": {
+                        "current": self.batches,
+                        "total": self.batches
+                    },
+                }
+            },
+            'train_data': None,
+            'states': {}
+        }
+        if self.model.stop_training:
+            interactive.set_status("stopped")
+        else:
+            interactive.set_status("trained")
+        progress.pool(
+            "training",
+            percent=100,
+            message=f"Обучение завершено.",
+            data=result,
+            finished=True,
+        )
 
 
 class GUINN:
@@ -68,6 +193,7 @@ class GUINN:
         self.optimizer = None
         self.loss: dict = {}
         self.metrics: dict = {}
+        self.yolo_pred = None
 
         self.batch_size = 128
         self.epochs = 5
@@ -83,17 +209,25 @@ class GUINN:
         self.progress_name = "training"
 
     @staticmethod
-    def _check_metrics(metrics: list, num_classes: int = 2) -> list:
+    def _check_metrics(metrics: list, options: DatasetOutputsData, num_classes: int = 2, ) -> list:
         output = []
         for metric in metrics:
             if metric == MetricChoice.MeanIoU.value:
                 output.append(getattr(importlib.import_module("tensorflow.keras.metrics"), metric)(num_classes))
             elif metric == MetricChoice.DiceCoef:
                 output.append(DiceCoef())
-            elif metric == MetricChoice.RecallPercent:
-                output.append(RecallPercent())
+            # elif metric == MetricChoice.RecallPercent:
+            #     output.append(RecallPercent())
+            elif metric == MetricChoice.BalancedPrecision:
+                output.append(BalancedPrecision())
+            elif metric == MetricChoice.BalancedFScore:
+                output.append(BalancedFScore())
+            elif metric == MetricChoice.FScore:
+                output.append(FScore())
             elif metric == MetricChoice.BalancedRecall:
                 output.append(BalancedRecall())
+            elif metric == MetricChoice.BalancedDiceCoef:
+                output.append(BalancedDiceCoef(encoding=options.encoding.value))
             elif metric == MetricChoice.UnscaledMAE:
                 output.append(UnscaledMAE())
             elif metric == MetricChoice.mAP50 or metric == MetricChoice.mAP95:
@@ -111,7 +245,6 @@ class GUINN:
             self.deploy_type = self.dataset.data.architecture
         self.training_path = training_path
         self.nn_name = "model"
-
         if self.dataset.data.use_generator:
             train_size = len(self.dataset.dataframe.get("train"))
         else:
@@ -124,12 +257,20 @@ class GUINN:
             raise exceptions.TooBigBatchSize(params.batch, train_size)
 
         if interactive.get_states().get("status") == "addtrain":
-            if self.callbacks[0].last_epoch - 1 >= self.sum_epoch:
-                self.sum_epoch += params.epochs
-            if (self.callbacks[0].last_epoch - 1) < self.sum_epoch:
-                self.epochs = self.sum_epoch - self.callbacks[0].last_epoch + 1
+            if self.deploy_type in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]:
+                if self.callbacks[0].epoch - 1 >= self.sum_epoch:
+                    self.sum_epoch += params.epochs
+                if (self.callbacks[0].epoch - 1) < self.sum_epoch:
+                    self.epochs = self.sum_epoch - self.callbacks[0].epoch + 1
+                else:
+                    self.epochs = params.epochs
             else:
-                self.epochs = params.epochs
+                if self.callbacks[0].last_epoch - 1 >= self.sum_epoch:
+                    self.sum_epoch += params.epochs
+                if (self.callbacks[0].last_epoch - 1) < self.sum_epoch:
+                    self.epochs = self.sum_epoch - self.callbacks[0].last_epoch + 1
+                else:
+                    self.epochs = params.epochs
         else:
             self.epochs = params.epochs
         self.batch_size = params.batch
@@ -138,24 +279,34 @@ class GUINN:
         for output_layer in params.architecture.outputs_dict:
             self.metrics.update({
                 str(output_layer["id"]):
-                    self._check_metrics(metrics=output_layer.get("metrics", []),
-                                        num_classes=output_layer.get("classes_quantity"))
+                    self._check_metrics(
+                        metrics=output_layer.get("metrics", []),
+                        num_classes=output_layer.get("classes_quantity"),
+                        options=self.dataset.data.outputs.get(output_layer["id"])
+                    )
             })
             self.loss.update({str(output_layer["id"]): output_layer["loss"]})
-
-        interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss,
-                                   dataset_path=dataset_path, training_path=training_path,
-                                   initial_config=initial_config)
+        if self.deploy_type not in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]:
+            interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss,
+                                       dataset_path=dataset_path, training_path=training_path,
+                                       initial_config=initial_config)
 
     def _set_callbacks(self, dataset: PrepareDataset, dataset_data: DatasetData,
                        batch_size: int, epochs: int, dataset_path: str,
                        checkpoint: dict, save_model_path: str) -> None:
         progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков...'})
         retrain_epochs = self.sum_epoch if interactive.get_states().get("status") == "addtrain" else self.epochs
-        callback = FitCallback(dataset=dataset, dataset_data=dataset_data, checkpoint_config=checkpoint,
-                               batch_size=batch_size, epochs=epochs, retrain_epochs=retrain_epochs,
-                               save_model_path=save_model_path, model_name=self.nn_name,
-                               dataset_path=dataset_path, deploy_type=self.deploy_type)
+        if dataset_data.architecture in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]:
+            for inp, out, serv in self.dataset.dataset['train'].batch(2).take(22):
+                pass
+            callback = MyCallback(dataset=dataset, yolo_pred=self.yolo_pred,
+                                  inp=inp, image_path=os.path.join(self.training_path, "deploy"),
+                                  epochs=epochs, batches=batch_size)
+        else:
+            callback = FitCallback(dataset=dataset, dataset_data=dataset_data, checkpoint_config=checkpoint,
+                                   batch_size=batch_size, epochs=epochs, retrain_epochs=retrain_epochs,
+                                   save_model_path=save_model_path, model_name=self.nn_name,
+                                   dataset_path=dataset_path, deploy_type=self.deploy_type)
         self.callbacks = [callback]
         # checkpoint.update([('filepath', 'test_model.h5')])
         # self.callbacks.append(keras.callbacks.ModelCheckpoint(**checkpoint))
@@ -204,7 +355,7 @@ class GUINN:
             deploy_type = ArchitectureChoice.__dict__[dataset.instructions.get(2).parameters.model.title() +
                                                        dataset.instructions.get(2).parameters.yolo.title()]
         else:
-            deploy_type = ArchitectureChoice.Basic
+            raise MethodNotImplementedException(__method=inp_task_name + out_task_name, __class="ArchitectureChoice")
         return deploy_type
 
     @staticmethod
@@ -323,11 +474,11 @@ class GUINN:
         self.model = self._set_model(model=gui_model)
         if interactive.get_states().get("status") == "training":
             self.save_model()
-        if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.ObjectDetection:
-            self.yolo_model_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
-        else:
-            self.base_model_fit(params=training_params, dataset=self.dataset, dataset_data=dataset,
-                                verbose=0, save_model_path=model_path, dataset_path=dataset_path)
+        # if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.ObjectDetection:
+        #     self.yolo_model_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
+        # else:
+        self.base_model_fit(params=training_params, dataset=self.dataset, dataset_data=dataset,
+                            verbose=0, save_model_path=model_path, dataset_path=dataset_path)
         return {"dataset": self.dataset, "metrics": self.metrics, "losses": self.loss}
 
     def nn_cleaner(self, retrain: bool = False) -> None:
@@ -361,12 +512,28 @@ class GUINN:
     @progress.threading
     def base_model_fit(self, params: TrainData, dataset: PrepareDataset, dataset_path: str,
                        dataset_data: DatasetData, save_model_path: str, verbose=0) -> None:
+
+        yolo_arch = True if self.deploy_type in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4] else False
+        model_yolo = None
+
         threading.enumerate()[-1].setName("current_train")
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели ...'})
-        self.model.compile(loss=self.loss,
-                           optimizer=self.optimizer,
-                           metrics=self.metrics
-                           )
+        if yolo_arch:
+            yolo = create_yolo(self.model, input_size=416, channels=3, training=True,
+                               classes=self.dataset.data.outputs.get(2).classes_names,
+                               version=self.dataset.instructions.get(2).get('2_object_detection').get('yolo'))
+            model_yolo = CustomModelYolo(yolo, self.dataset, self.dataset.data.outputs.get(2).classes_names,
+                                         self.epochs, self.batch_size)
+            model_yolo.compile(optimizer=self.optimizer,
+                               loss=compute_loss)
+            self.yolo_pred = create_yolo(self.model, input_size=416, channels=3, training=False,
+                                         classes=self.dataset.data.outputs.get(2).classes_names,
+                                         version=self.dataset.instructions.get(2).get('2_object_detection').get('yolo'))
+        else:
+            self.model.compile(loss=self.loss,
+                               optimizer=self.optimizer,
+                               metrics=self.metrics
+                               )
         # self.model.load_weight(os.path.join(self.training_path, self.nn_name))
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели выполнена'})
         self._set_callbacks(dataset=dataset, dataset_data=dataset_data, batch_size=params.batch,
@@ -385,8 +552,10 @@ class GUINN:
         else:
             n_repeat = (self.batch_size // critical_val_size) + 1
 
+        trained_model = model_yolo if model_yolo else self.model
+
         try:
-            self.history = self.model.fit(
+            self.history = trained_model.fit(
                 self.dataset.dataset.get('train').shuffle(buffer_size).batch(
                     self.batch_size, drop_remainder=True).prefetch(buffer_size=tf.data.AUTOTUNE).take(-1),
                 batch_size=self.batch_size,
@@ -398,15 +567,23 @@ class GUINN:
                 verbose=verbose,
                 callbacks=self.callbacks
             )
+            if yolo_arch:
+                self.model.save_weights(os.path.join(self.training_path, 'yolo_last.h5'))
         except Exception as error:
             self._check_interactive_status()
             progress.pool(self.progress_name, error=terra_exception(error).__str__(), finished=True)
-
-        if (interactive.get_states().get("status") == "stopped"
-            and self.callbacks[0].last_epoch < params.epochs) or \
-                (interactive.get_states().get("status") == "trained"
-                 and self.callbacks[0].last_epoch - 1 == params.epochs):
-            self.sum_epoch = params.epochs
+        if yolo_arch:
+            if (interactive.get_states().get("status") == "stopped"
+                and self.callbacks[0].epoch < params.epochs) or \
+                    (interactive.get_states().get("status") == "trained"
+                     and self.callbacks[0].epoch - 1 == params.epochs):
+                self.sum_epoch = params.epochs
+        else:
+            if (interactive.get_states().get("status") == "stopped"
+                and self.callbacks[0].last_epoch < params.epochs) or \
+                    (interactive.get_states().get("status") == "trained"
+                     and self.callbacks[0].last_epoch - 1 == params.epochs):
+                self.sum_epoch = params.epochs
 
     def yolo_model_fit(self, params: TrainData, dataset: PrepareDataset, verbose=0, retrain=False) -> None:
 
@@ -418,7 +595,8 @@ class GUINN:
         print('Save model.....')
 
         yolo = create_yolo(self.model, input_size=416, channels=3, training=True,
-                           classes=self.dataset.data.outputs.get(2).classes_names)
+                           classes=self.dataset.data.outputs.get(2).classes_names,
+                           version=self.dataset.instructions.get(2).get('2_object_detection').get('yolo'))
         print(yolo.summary())
         model_yolo = CustomModelYolo(yolo, self.dataset, self.dataset.data.outputs.get(2).classes_names,
                                      self.epochs, self.batch_size)
@@ -437,20 +615,41 @@ class GUINN:
         print(('Начало обучения', '...'))
 
         yolo_pred = create_yolo(self.model, input_size=416, channels=3, training=False,
-                                classes=self.dataset.data.outputs.get(2).classes_names)
+                                classes=self.dataset.data.outputs.get(2).classes_names,
+                                version=self.dataset.instructions.get(2).get('2_object_detection').get('yolo'))
 
         class MyCallback(tf.keras.callbacks.Callback):
-            def __init__(self, dataset, yolo_pred, inp):
+            def __init__(self, dataset, yolo_pred, inp, image_path):
                 self.dataset = dataset
                 self.yolo_pred = yolo_pred
                 self.inp = inp
+                self.image_path = os.path.join(image_path, 'chess_{}.jpg')
+                self.samples_train = []
+                self.samples_val = []
+
+            def logs_extract(self, logs):
+                pred_on_batch = []
+                for key in logs.keys():
+                    if key.startswith('pred'):
+                        pred_on_batch.append(logs[key])
+                return pred_on_batch
+
+            def on_train_batch_end(self, batch, logs=None):
+                self.samples_train.append(self.logs_extract(logs))
+
+            def on_test_batch_end(self, batch, logs=None):
+                self.samples_val.append(self.logs_extract(logs))
+
 
             def on_epoch_end(self, epoch, logs=None):
-                output_path = 'C:\PycharmProjects/terra_gui/test_example/chess_{}.jpg'.format(epoch)
+                output_path = self.image_path.format(epoch)
                 detect_image(Yolo=self.yolo_pred, original_image=inp['1'].numpy()[0], output_path=output_path,
                              CLASSES=self.dataset.data.outputs.get(2).classes_names)
-                pred, mAP = get_mAP(self.yolo_pred, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
+                mAP = get_mAP(self.yolo_pred, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
                               TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names)
+
+                self.samples_train = []
+                self.samples_val = []
 
         if self.dataset.data.use_generator:
             critical_size = len(self.dataset.dataframe.get("val"))
@@ -893,7 +1092,7 @@ class FitCallback(keras.callbacks.Callback):
         if status != "addtrain":
             self.batch = 0
         if not self.dataset.data.use_generator:
-            self.num_batches = self.dataset.X['train']['1'].shape[0] // self.batch_size
+            self.num_batches = len(list(self.dataset.X.get('train').values())[0]) // self.batch_size
         else:
             self.num_batches = len(self.dataset.dataframe['train']) // self.batch_size
 
@@ -901,7 +1100,6 @@ class FitCallback(keras.callbacks.Callback):
         self._time_first_step = time.time()
 
     def on_train_batch_end(self, batch, logs=None):
-
         if self._get_train_status() == "stopped":
             self.model.stop_training = True
             msg = f'ожидайте остановку...'
@@ -921,7 +1119,6 @@ class FitCallback(keras.callbacks.Callback):
             still_time = self.update_progress(self.num_batches * self.still_epochs,
                                               self.batch, self._start_time)
             self.batch += 1
-
             if interactive.urgent_predict:
                 upred = self._get_predict()
                 train_batch_data = interactive.update_state(y_pred=upred)

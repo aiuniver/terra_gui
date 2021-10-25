@@ -170,7 +170,9 @@ class ModelValidator:
     """Make validation of model plan"""
 
     def __init__(self, model: ModelDetailsData):
-        # print(model.native())
+        # print()
+        # for layer in model.layers:
+        #     print(layer)
         self.validator: LayerValidation = LayerValidation()
         self.model: ModelDetailsData = model
         self.filled_model: ModelDetailsData = model
@@ -353,7 +355,7 @@ class ModelValidator:
                 f"{self.keras_code}\n\nmodel = Model({inputs_str}, {outputs_str})"
             )
 
-    def get_validated(self) -> Tuple[ModelDetailsData, dict]:
+    def get_validated(self):# -> Tuple[ModelDetailsData, dict]:
         """Returns all necessary info about modeling"""
         self._model_validation()
         if self.valid:
@@ -392,7 +394,8 @@ class ModelValidator:
                 ]
 
         self.filled_model.keras = self.keras_code
-        return self.filled_model, self.val_dictionary
+        return self.val_dictionary
+        # return self.filled_model, self.val_dictionary
 
     def get_keras_model(self):
         mc = ModelCreator(self.model_plan, self.input_shape, self.block_plans, self.layers_config)
