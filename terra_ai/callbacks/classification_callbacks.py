@@ -632,11 +632,15 @@ def prepare_example_idx_to_show(array: np.ndarray, true_array: np.ndarray, optio
 
         num_ex = copy.deepcopy(count)
         while num_ex:
-            key = np.random.choice(list(class_idx.keys()))
+            stop = False
+            while not stop:
+                key = np.random.choice(list(class_idx.keys()))
+                if class_idx[key]:
+                    stop = True
             if choice_type == ExampleChoiceTypeChoice.best:
                 example_idx.append(class_idx[key][-1])
                 class_idx[key].pop(-1)
-            if choice_type == ExampleChoiceTypeChoice.worst:
+            if class_idx[key] and choice_type == ExampleChoiceTypeChoice.worst:
                 example_idx.append(class_idx[key][0])
                 class_idx[key].pop(0)
             num_ex -= 1

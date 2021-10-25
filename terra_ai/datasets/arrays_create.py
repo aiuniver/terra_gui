@@ -10,7 +10,8 @@ from pandas import DataFrame
 from tensorflow.python.keras.preprocessing import image
 from tensorflow.python.keras.utils.np_utils import to_categorical
 
-from terra_ai.callbacks.classification_callbacks import ImageClassificationCallback, TextClassificationCallback
+from terra_ai.callbacks.classification_callbacks import ImageClassificationCallback, TextClassificationCallback, \
+    DataframeClassificationCallback
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice, ArchitectureChoice
 from terra_ai.datasets.utils import get_yolo_anchors
 from terra_ai.data.datasets.dataset import DatasetOutputsData, DatasetData
@@ -1366,6 +1367,10 @@ class CreateArray(object):
             )
         elif options.data.architecture == ArchitectureChoice.TextClassification:
             return_data = TextClassificationCallback.postprocess_deploy(
+                array=array, options=options
+            )
+        elif options.data.architecture == ArchitectureChoice.DataframeClassification:
+            return_data = DataframeClassificationCallback.postprocess_deploy(
                 array=array, options=options
             )
         return return_data
