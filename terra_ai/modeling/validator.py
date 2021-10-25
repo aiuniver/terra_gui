@@ -170,13 +170,9 @@ class ModelValidator:
     """Make validation of model plan"""
 
     def __init__(self, model: ModelDetailsData):
-        # print('\nModelDetailsData__init__')
-        # for layer in model.layers:
-        #     print(layer.id, layer.name, layer.type.value, layer.shape)
         self.validator: LayerValidation = LayerValidation()
         self.model: ModelDetailsData = model
-        self.filled_model = model.native()
-        # print('\nfilled_model', self.filled_model)
+        self.filled_model = model   # .native()
         self.output_shape = {}
         self.all_indexes: List[int] = []
         self.start_row: List[int] = []
@@ -192,8 +188,6 @@ class ModelValidator:
         self.keras_code: str = ""
         self.valid: bool = True
 
-        # reset state in self.model_plan
-        # self.plan_name = ""
         self.input_shape = {}
         self.model_plan = []
         self.block_plans = {}
@@ -356,81 +350,82 @@ class ModelValidator:
                 f"{self.keras_code}\n\nmodel = Model({inputs_str}, {outputs_str})"
             )
 
-    def get_validated(self):# -> Tuple[ModelDetailsData, dict]:
+    def get_validated(self):
         """Returns all necessary info about modeling"""
         self._model_validation()
         if self.valid:
             self.compile_keras_code()
         else:
             self.keras_code = None
-        # for idx, layer in enumerate(self.filled_model.layers):
-        #     # fill inputs
-        #     if layer.group == LayerGroupChoice.input:
-        #         pass
-        #     elif not self.layer_input_shapes.get(layer.id) or self.layer_input_shapes.get(layer.id) == [None]:
-        #         self.filled_model.layers[idx].shape.input = []
-        #     elif len(self.layer_input_shapes.get(layer.id)) == 1:
-        #         self.filled_model.layers[idx].shape.input = [
-        #             self.layer_input_shapes.get(layer.id)[0][1:]
-        #             if self.layer_input_shapes.get(layer.id)[0]
-        #             else self.layer_input_shapes.get(layer.id)
-        #         ]
-        #     else:
-        #         front_shape = []
-        #         for shape in self.layer_input_shapes.get(layer.id):
-        #             if shape and shape != [None]:
-        #                 front_shape.append(shape[1:])
-        #             else:
-        #                 front_shape.append([])
-        #         self.filled_model.layers[idx].shape.input = front_shape
-        #
-        #     # fill outputs
-        #     if not self.layer_output_shapes.get(layer.id) or self.layer_output_shapes.get(layer.id) == [None]:
-        #         self.filled_model.layers[idx].shape.output = []
-        #     else:
-        #         self.filled_model.layers[idx].shape.output = [
-        #             self.layer_output_shapes.get(layer.id)[0][1:]
-        #             if self.layer_output_shapes.get(layer.id)[0]
-        #             else self.layer_output_shapes.get(layer.id)
-        #         ]
-
-        for idx, layer in enumerate(self.filled_model.get('layers')):
+        for idx, layer in enumerate(self.filled_model.layers):
             # fill inputs
-            if layer.get('group') == LayerGroupChoice.input:
+            if layer.group == LayerGroupChoice.input:
                 pass
-            elif not self.layer_input_shapes.get(layer.get('id')) or \
-                    self.layer_input_shapes.get(layer.get('id')) == [None]:
-                self.filled_model['layers'][idx]['shape']['input'] = []
-            elif len(self.layer_input_shapes.get(layer.get('id'))) == 1:
-                self.filled_model['layers'][idx]['shape']['input'] = [
-                    self.layer_input_shapes.get(layer.get('id'))[0][1:]
-                    if self.layer_input_shapes.get(layer.get('id'))[0]
-                    else self.layer_input_shapes.get(layer.get('id'))
+            elif not self.layer_input_shapes.get(layer.id) or self.layer_input_shapes.get(layer.id) == [None]:
+                self.filled_model.layers[idx].shape.input = []
+            elif len(self.layer_input_shapes.get(layer.id)) == 1:
+                self.filled_model.layers[idx].shape.input = [
+                    self.layer_input_shapes.get(layer.id)[0][1:]
+                    if self.layer_input_shapes.get(layer.id)[0]
+                    else self.layer_input_shapes.get(layer.id)
                 ]
             else:
                 front_shape = []
-                for shape in self.layer_input_shapes.get(layer.get('id')):
+                for shape in self.layer_input_shapes.get(layer.id):
                     if shape and shape != [None]:
                         front_shape.append(shape[1:])
                     else:
                         front_shape.append([])
-                self.filled_model['layers'][idx]['shape']['input'] = front_shape
+                self.filled_model.layers[idx].shape.input = front_shape
 
             # fill outputs
-            if not self.layer_output_shapes.get(layer.get('id')) or \
-                    self.layer_output_shapes.get(layer.get('id')) == [None]:
-                self.filled_model['layers'][idx]['shape']['output'] = []
+            if not self.layer_output_shapes.get(layer.id) or self.layer_output_shapes.get(layer.id) == [None]:
+                self.filled_model.layers[idx].shape.output = []
             else:
-                self.filled_model['layers'][idx]['shape']['output'] = [
-                    self.layer_output_shapes.get(layer.get('id'))[0][1:]
-                    if self.layer_output_shapes.get(layer.get('id'))[0]
-                    else self.layer_output_shapes.get(layer.get('id'))
+                self.filled_model.layers[idx].shape.output = [
+                    self.layer_output_shapes.get(layer.id)[0][1:]
+                    if self.layer_output_shapes.get(layer.id)[0]
+                    else self.layer_output_shapes.get(layer.id)
                 ]
-        self.filled_model = ModelDetailsData(**self.filled_model)
+
+        # for idx, layer in enumerate(self.filled_model.get('layers')):
+        #     # fill inputs
+        #     if layer.get('group') == LayerGroupChoice.input:
+        #         pass
+        #     elif not self.layer_input_shapes.get(layer.get('id')) or \
+        #             self.layer_input_shapes.get(layer.get('id')) == [None]:
+        #         self.filled_model['layers'][idx]['shape']['input'] = []
+        #     elif len(self.layer_input_shapes.get(layer.get('id'))) == 1:
+        #         self.filled_model['layers'][idx]['shape']['input'] = [
+        #             self.layer_input_shapes.get(layer.get('id'))[0][1:]
+        #             if self.layer_input_shapes.get(layer.get('id'))[0]
+        #             else self.layer_input_shapes.get(layer.get('id'))
+        #         ]
+        #     else:
+        #         front_shape = []
+        #         for shape in self.layer_input_shapes.get(layer.get('id')):
+        #             if shape and shape != [None]:
+        #                 front_shape.append(shape[1:])
+        #             else:
+        #                 front_shape.append([])
+        #         self.filled_model['layers'][idx]['shape']['input'] = front_shape
+        #
+        #     # fill outputs
+        #     if not self.layer_output_shapes.get(layer.get('id')) or \
+        #             self.layer_output_shapes.get(layer.get('id')) == [None]:
+        #         self.filled_model['layers'][idx]['shape']['output'] = []
+        #     else:
+        #         self.filled_model['layers'][idx]['shape']['output'] = [
+        #             self.layer_output_shapes.get(layer.get('id'))[0][1:]
+        #             if self.layer_output_shapes.get(layer.get('id'))[0]
+        #             else self.layer_output_shapes.get(layer.get('id'))
+        #         ]
+        # self.filled_model = ModelDetailsData(**self.filled_model)
         # print('\nfilled_model_end')
         # for layer in self.filled_model.layers:
         #     print(layer.id, layer.name, layer.type.value, layer.shape)
         self.filled_model.keras = self.keras_code
+        # print(self.keras_code, self.val_dictionary)
         return self.val_dictionary
         # return self.filled_model, self.val_dictionary
 
@@ -680,14 +675,8 @@ class LayerValidation:
         self.layer_parameters = parameters
         self.kwargs = kwargs
 
-        self.num_uplinks = (
-            config.num_uplinks.value,
-            config.num_uplinks.validation.value,
-        )
-        self.input_dimension = (
-            config.input_dimension.value,
-            config.input_dimension.validation.value,
-        )
+        self.num_uplinks = (config.num_uplinks.value, config.num_uplinks.validation.value)
+        self.input_dimension = (config.input_dimension.value, config.input_dimension.validation.value)
         self.module = importlib.import_module(config.module.value)
         self.module_type = config.module_type.value
 
@@ -698,11 +687,9 @@ class LayerValidation:
             return [None], error
         else:
             output_shape = [None]
-            if (
-                    self.module_type == ModuleTypeChoice.keras
-                    or self.module_type == ModuleTypeChoice.terra_layer
-                    or self.module_type == ModuleTypeChoice.keras_pretrained_model
-            ):
+            if self.module_type == ModuleTypeChoice.keras \
+                    or self.module_type == ModuleTypeChoice.terra_layer \
+                    or self.module_type == ModuleTypeChoice.keras_pretrained_model:
                 try:
                     params = copy.deepcopy(self.layer_parameters)
                     if self.layer_type == LayerTypeChoice.Input:
@@ -730,12 +717,12 @@ class LayerValidation:
                         for shape in output_shape[0]:
                             new.append(tensor_shape_to_tuple(shape))
                         return new, None
-
                     return output_shape, None
                 except ValueError:
                     return output_shape, self.parameters_validation()
                 except Exception:
                     return output_shape, self.parameters_validation()
+
 
             if self.module_type == ModuleTypeChoice.tensorflow:
                 try:
@@ -926,11 +913,9 @@ class LayerValidation:
                     if shape != self.inp_shape[0]:
                         return str(exceptions.InputShapesAreDifferentException()) % self.inp_shape
         else:
-            if (
-                    isinstance(self.input_dimension[0], int)
-                    and self.input_dimension[1] == LayerValidationMethodChoice.fixed
-                    and len(self.inp_shape[0]) != self.input_dimension[0]
-            ):
+            if isinstance(self.input_dimension[0], int) and \
+                self.input_dimension[1] == LayerValidationMethodChoice.fixed and \
+                    len(self.inp_shape[0]) != self.input_dimension[0]:
                 return str(exceptions.IncorrectQuantityInputDimensionsException(
                     self.input_dimension[0], len(self.inp_shape[0])
                 ))
