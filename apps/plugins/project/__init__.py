@@ -269,56 +269,66 @@ class Project(BaseMixinData):
         self.set_training()
         self.save()
 
-    def update_training_base(self):
-        # outputs = []
-        # for layer in self.model.outputs:
-        #     training_layer = self.training.base.architecture.parameters.outputs.get(
-        #         layer.id
-        #     )
-        #     training_task_rel = TrainingTasksRelations.get(layer.task)
-        #     training_losses = (
-        #         list(map(lambda item: item.name, training_task_rel.losses))
-        #         if training_task_rel
-        #         else None
-        #     )
-        #     training_metrics = (
-        #         list(map(lambda item: item.name, training_task_rel.metrics))
-        #         if training_task_rel
-        #         else None
-        #     )
-        #     need_loss = training_layer.loss if training_layer else None
-        #     if need_loss:
-        #         loss = need_loss if need_loss in training_losses else training_losses[0]
-        #     else:
-        #         loss = training_losses[0] if training_losses else None
-        #     need_metrics = training_layer.metrics if training_layer else []
-        #     metrics = list(set(need_metrics) & set(training_metrics or []))
-        #     outputs.append(
-        #         {
-        #             "id": layer.id,
-        #             "classes_quantity": layer.num_classes,
-        #             "task": layer.task,
-        #             "loss": loss,
-        #             "metrics": metrics
-        #             if len(metrics)
-        #             else ([training_metrics[0]] if training_metrics else []),
-        #         }
-        #     )
-        # self.training.base.architecture.parameters.outputs = OutputsList(outputs)
-        # if self.model.outputs:
-        #     checkpoint_data = {"layer": self.model.outputs[0].id}
-        #     if self.training.base.architecture.parameters.checkpoint:
-        #         checkpoint_data = (
-        #             self.training.base.architecture.parameters.checkpoint.native()
-        #         )
-        #         if not checkpoint_data.get("layer"):
-        #             checkpoint_data.update({"layer": self.model.outputs[0].id})
-        #     self.training.base.architecture.parameters.checkpoint = CheckpointData(
-        #         **checkpoint_data
-        #     )
-        # defaults_data.update_by_model(self.model, self.training)
+    def update_basic_training_base(self):
+        outputs = []
+        for layer in self.model.outputs:
+            training_layer = self.training.base.architecture.parameters.outputs.get(
+                layer.id
+            )
+            training_task_rel = TrainingTasksRelations.get(layer.task)
+            training_losses = (
+                list(map(lambda item: item.name, training_task_rel.losses))
+                if training_task_rel
+                else None
+            )
+            training_metrics = (
+                list(map(lambda item: item.name, training_task_rel.metrics))
+                if training_task_rel
+                else None
+            )
+            need_loss = training_layer.loss if training_layer else None
+            if need_loss:
+                loss = need_loss if need_loss in training_losses else training_losses[0]
+            else:
+                loss = training_losses[0] if training_losses else None
+            need_metrics = training_layer.metrics if training_layer else []
+            metrics = list(set(need_metrics) & set(training_metrics or []))
+            outputs.append(
+                {
+                    "id": layer.id,
+                    "classes_quantity": layer.num_classes,
+                    "task": layer.task,
+                    "loss": loss,
+                    "metrics": metrics
+                    if len(metrics)
+                    else ([training_metrics[0]] if training_metrics else []),
+                }
+            )
+        self.training.base.architecture.parameters.outputs = OutputsList(outputs)
+        if self.model.outputs:
+            checkpoint_data = {"layer": self.model.outputs[0].id}
+            if self.training.base.architecture.parameters.checkpoint:
+                checkpoint_data = (
+                    self.training.base.architecture.parameters.checkpoint.native()
+                )
+                if not checkpoint_data.get("layer"):
+                    checkpoint_data.update({"layer": self.model.outputs[0].id})
+            self.training.base.architecture.parameters.checkpoint = CheckpointData(
+                **checkpoint_data
+            )
 
-        self.training.base = TrainData(architecture=ArchitectureData(type=self.dataset.architecture if self.dataset else ArchitectureChoice.Basic))
+    def update_training_base(self):
+        architecture = self.dataset.architecture if self.dataset else ArchitectureChoice.Basic
+        
+        _method_name = f"update_{architecture.lower()}_training_base"
+        _method = getattr(self, _method_name, None)
+        
+        self.training.base = TrainData(architecture=ArchitectureData(type=architecture))
+
+        if _method:
+            _method()
+
+        # defaults_data.update_by_model(self.model, self.training)
         defaults_data.training.update(self.dataset, self.model, self.training.base)
 
     def update_training_interactive(self):

@@ -68,15 +68,16 @@ class DefaultsTrainingBaseData(BaseMixinData):
 
 class ArchitectureMixinForm(BaseMixinData):
     def update(self, data: Any, prefix: str = "", **kwargs):
-        for _key, _value in data.__fields__.items():
-            name_ = f"{prefix}{_key}"
-            if isinstance(_value.type_, ModelMetaclass):
-                self.update(getattr(data, _key), f"{name_}_")
-                continue
-            _method_name = f"_set_{name_}"
-            _method = getattr(self, _method_name, None)
-            if _method:
-                _method(getattr(data, _key), **kwargs)
+        if data:
+            for _key, _value in data.__fields__.items():
+                name_ = f"{prefix}{_key}"
+                if isinstance(_value.type_, ModelMetaclass):
+                    self.update(getattr(data, _key), f"{name_}_")
+                    continue
+                _method_name = f"_set_{name_}"
+                _method = getattr(self, _method_name, None)
+                if _method:
+                    _method(getattr(data, _key), **kwargs)
 
 
 class ArchitectureBaseForm(ArchitectureMixinForm):
