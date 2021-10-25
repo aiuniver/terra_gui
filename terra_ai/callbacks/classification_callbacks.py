@@ -10,7 +10,6 @@ from terra_ai.callbacks.utils import sort_dict, fill_graph_front_structure, fill
 from terra_ai.data.datasets.dataset import DatasetOutputsData
 from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, LayerEncodingChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
-# from terra_ai.datasets.preparing import PrepareDataset
 import moviepy.editor as moviepy_editor
 
 from terra_ai.settings import MAX_GRAPH_LENGTH, DEPLOY_PRESET_PERCENT
@@ -316,6 +315,7 @@ class AudioClassificationCallback:
         data = []
         data_type = ""
         source = os.path.join(preset_path, f"initial_data_audio_{save_id}_input_{input_id}.webm")
+        print(initial_file_path, source)
         AudioSegment.from_file(initial_file_path).export(source, format="webm")
         if return_mode == 'callback':
             data_type = LayerInputTypeChoice.Audio.name
@@ -407,6 +407,7 @@ class VideoClassificationCallback:
 
         clip = moviepy_editor.VideoFileClip(initial_file_path)
         source = os.path.join(preset_path, f"initial_data_video_{save_id}_input_{input_id}.webm")
+        print(source)
         clip.write_videofile(source)
 
         if return_mode == 'deploy':
@@ -553,7 +554,7 @@ class TimeseriesTrendCallback:
             return source
 
     @staticmethod
-    def postprocess_results(array, options, save_path: str = "") -> dict:
+    def postprocess_deploy(array, options, save_path: str = "") -> dict:
         return_data = {}
         for i, output_id in enumerate(options.data.outputs.keys()):
             true_array = get_y_true(options, output_id)

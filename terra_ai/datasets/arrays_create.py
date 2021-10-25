@@ -11,7 +11,7 @@ from tensorflow.python.keras.preprocessing import image
 from tensorflow.python.keras.utils.np_utils import to_categorical
 
 from terra_ai.callbacks.classification_callbacks import ImageClassificationCallback, TextClassificationCallback, \
-    DataframeClassificationCallback
+    DataframeClassificationCallback, AudioClassificationCallback, VideoClassificationCallback, TimeseriesTrendCallback
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice, ArchitectureChoice
 from terra_ai.datasets.utils import get_yolo_anchors
 from terra_ai.data.datasets.dataset import DatasetOutputsData, DatasetData
@@ -1372,6 +1372,18 @@ class CreateArray(object):
         elif options.data.architecture == ArchitectureChoice.DataframeClassification:
             return_data = DataframeClassificationCallback.postprocess_deploy(
                 array=array, options=options
+            )
+        elif options.data.architecture == ArchitectureChoice.AudioClassification:
+            return_data = AudioClassificationCallback.postprocess_deploy(
+                array=array, options=options, save_path=save_path, dataset_path=dataset_path
+            )
+        elif options.data.architecture == ArchitectureChoice.VideoClassification:
+            return_data = VideoClassificationCallback.postprocess_deploy(
+                array=array, options=options, save_path=save_path, dataset_path=dataset_path
+            )
+        elif options.data.architecture == ArchitectureChoice.TimeseriesTrend:
+            return_data = TimeseriesTrendCallback.postprocess_deploy(
+                array=array, options=options, save_path=save_path
             )
         return return_data
     #             true_array = CreateArray().get_y_true(options, output_id)
