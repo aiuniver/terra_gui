@@ -4,7 +4,7 @@ from pydantic import ValidationError, BaseModel, validator
 from pydantic_i18n import PydanticI18n, JsonLoader
 
 from terra_ai.exceptions.base import TerraBaseException
-from terra_ai.exceptions.translations.extra import errors
+from terra_ai.assets.translations.extra import errors
 from terra_ai.settings import TRANSLATIONS_DIR, LANGUAGE
 
 loader = JsonLoader(TRANSLATIONS_DIR)
