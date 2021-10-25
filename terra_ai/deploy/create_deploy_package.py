@@ -5,6 +5,7 @@ import os
 import json
 
 from pydantic.color import Color
+from terra_ai.settings import ASSETS_PATH
 
 
 class CascadeCreator:
@@ -18,17 +19,8 @@ class CascadeCreator:
         with open(dataset_path) as cfg:
             dataset_config = json.load(cfg)
 
-        # tags = dataset_config['tags'][1]['alias']
-        # if dataset_config["tags"][0]["alias"] == "text" and tags != "text_segmentation":
-        #     tags = f"text_{tags}"
-        # elif dataset_config["tags"][0]["alias"] != "text":
-        #     tags = f"{dataset_config['tags'][0]['alias']}_{tags}"
-        # if tags == "text_segmentation":
-        #     dataset_path = os.path.join(model_path, "dataset", "instructions", "parameters", f"2_{tags}.json")
-        #     with open(dataset_path) as cfg:
-        #         dataset_config = json.load(cfg)
-
-        cascade_json_path = f"terra_ai/deploy/demo_panel_templates/{func_name}.json"
+        cascade_json_path = os.path.join(ASSETS_PATH, "deploy_templates", f"{func_name}.json")
+        print(cascade_json_path)
         with open(cascade_json_path) as cfg:
             config = json.load(cfg)
 
