@@ -55,11 +55,24 @@ class MyCallback(tf.keras.callbacks.Callback):
         self.inp = inp
         self.image_path = os.path.join(image_path, 'chess_{}.jpg')
         if not dataset.data.use_generator:
-            self.batches = dataset.X['train']['1'].shape[0] // batches
+            self.batches = len(list(dataset.X.get('train').values())[0]) // batches
         else:
             self.batches = len(dataset.dataframe['train']) // batches
+        self.samples_train = []
+        self.samples_val = []
+
+    def logs_extract(self, logs):
+        pred_on_batch = []
+        for key in logs.keys():
+            if key.startswith('pred'):
+                pred_on_batch.append(logs[key])
+        return pred_on_batch
 
     def on_train_batch_end(self, batch, logs=None):
+        ### пока что для yolo
+        self.samples_train.append(self.logs_extract(logs))
+        ###
+
         if interactive.get_states().get("status") == "stopped":
             self.model.stop_training = True
         else:
@@ -95,13 +108,27 @@ class MyCallback(tf.keras.callbacks.Callback):
                 finished=False,
             )
 
+    def on_test_batch_end(self, batch, logs=None):
+        ### пока что для yolo
+        self.samples_val.append(self.logs_extract(logs))
+        ### пока что для yolo
+
     def on_epoch_end(self, epoch, logs=None):
         self.epoch += 1
         output_path = self.image_path.format(epoch)
+        ### пока что для yolo
+        pred_train = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_train)]
+        pred_val = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_val)]
+        self.samples_train = []
+        self.samples_val = []
+
+        mAP = get_mAP(self.yolo_pred, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
+                            TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names)
+
+        ### Пока что для визуализации Yolo
         detect_image(Yolo=self.yolo_pred, original_image=self.inp['1'].numpy()[0], output_path=output_path,
                      CLASSES=self.dataset.data.outputs.get(2).classes_names)
-        pred, mAP = get_mAP(self.yolo_pred, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
-                            TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names)
+        ###
 
     def on_train_end(self, logs=None):
         result = {
@@ -440,6 +467,7 @@ class GUINN:
         if interactive.get_states().get("status") != "addtrain":
             self._save_params_for_deploy(training_path=model_path, params=training_params)
         self.nn_cleaner(retrain=True if interactive.get_states().get("status") == "training" else False)
+
         self._set_training_params(dataset=dataset, dataset_path=dataset_path, model_path=model_path,
                                   params=training_params, training_path=training_path, initial_config=initial_config)
         self.model = self._set_model(model=gui_model)
@@ -491,13 +519,15 @@ class GUINN:
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели ...'})
         if yolo_arch:
             yolo = create_yolo(self.model, input_size=416, channels=3, training=True,
-                               classes=self.dataset.data.outputs.get(2).classes_names)
+                               classes=self.dataset.data.outputs.get(2).classes_names,
+                               version=self.dataset.instructions.get(2).get('2_object_detection').get('yolo'))
             model_yolo = CustomModelYolo(yolo, self.dataset, self.dataset.data.outputs.get(2).classes_names,
                                          self.epochs, self.batch_size)
             model_yolo.compile(optimizer=self.optimizer,
                                loss=compute_loss)
             self.yolo_pred = create_yolo(self.model, input_size=416, channels=3, training=False,
-                                    classes=self.dataset.data.outputs.get(2).classes_names)
+                                         classes=self.dataset.data.outputs.get(2).classes_names,
+                                         version=self.dataset.instructions.get(2).get('2_object_detection').get('yolo'))
         else:
             self.model.compile(loss=self.loss,
                                optimizer=self.optimizer,
@@ -564,7 +594,8 @@ class GUINN:
         print('Save model.....')
 
         yolo = create_yolo(self.model, input_size=416, channels=3, training=True,
-                           classes=self.dataset.data.outputs.get(2).classes_names)
+                           classes=self.dataset.data.outputs.get(2).classes_names,
+                           version=self.dataset.instructions.get(2).get('2_object_detection').get('yolo'))
         print(yolo.summary())
         model_yolo = CustomModelYolo(yolo, self.dataset, self.dataset.data.outputs.get(2).classes_names,
                                      self.epochs, self.batch_size)
@@ -583,7 +614,8 @@ class GUINN:
         print(('Начало обучения', '...'))
 
         yolo_pred = create_yolo(self.model, input_size=416, channels=3, training=False,
-                                classes=self.dataset.data.outputs.get(2).classes_names)
+                                classes=self.dataset.data.outputs.get(2).classes_names,
+                                version=self.dataset.instructions.get(2).get('2_object_detection').get('yolo'))
 
         class MyCallback(tf.keras.callbacks.Callback):
             def __init__(self, dataset, yolo_pred, inp, image_path):
@@ -591,13 +623,32 @@ class GUINN:
                 self.yolo_pred = yolo_pred
                 self.inp = inp
                 self.image_path = os.path.join(image_path, 'chess_{}.jpg')
+                self.samples_train = []
+                self.samples_val = []
+
+            def logs_extract(self, logs):
+                pred_on_batch = []
+                for key in logs.keys():
+                    if key.startswith('pred'):
+                        pred_on_batch.append(logs[key])
+                return pred_on_batch
+
+            def on_train_batch_end(self, batch, logs=None):
+                self.samples_train.append(self.logs_extract(logs))
+
+            def on_test_batch_end(self, batch, logs=None):
+                self.samples_val.append(self.logs_extract(logs))
+
 
             def on_epoch_end(self, epoch, logs=None):
                 output_path = self.image_path.format(epoch)
                 detect_image(Yolo=self.yolo_pred, original_image=inp['1'].numpy()[0], output_path=output_path,
                              CLASSES=self.dataset.data.outputs.get(2).classes_names)
-                pred, mAP = get_mAP(self.yolo_pred, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
+                mAP = get_mAP(self.yolo_pred, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
                               TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names)
+
+                self.samples_train = []
+                self.samples_val = []
 
         if self.dataset.data.use_generator:
             critical_size = len(self.dataset.dataframe.get("val"))

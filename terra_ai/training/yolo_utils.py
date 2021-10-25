@@ -340,8 +340,10 @@ def compute_loss(pred, conv, label, bboxes, i=0, CLASSES=None, STRIDES=None, YOL
     for cls in range(NUM_CLASS):
         conv_raw_prob_cls = conv[:, :, :, :, 5+cls:5+cls+1]
         label_prob_cls = label[:, :, :, :, 5+cls:5+cls+1]
-        prob_loss_cls[str(CLASSES[cls])] = tf.reduce_mean(tf.reduce_sum(respond_bbox * tf.nn.sigmoid_cross_entropy_with_logits(
-            labels=label_prob_cls, logits=conv_raw_prob_cls), axis=[1, 2, 3, 4]))
+        prob_loss_cls[str(CLASSES[cls])] = tf.reduce_mean(
+            tf.reduce_sum(
+                respond_bbox * tf.nn.sigmoid_cross_entropy_with_logits(
+                    labels=label_prob_cls, logits=conv_raw_prob_cls), axis=[1, 2, 3, 4]))
 
     return giou_loss, conf_loss, prob_loss, prob_loss_cls
 
@@ -351,7 +353,7 @@ def compute_loss(pred, conv, label, bboxes, i=0, CLASSES=None, STRIDES=None, YOL
 def decode(conv_output, NUM_CLASS, i=0, YOLO_TYPE="v3", STRIDES=None):
     if STRIDES is None:
         STRIDES = [8, 16, 32]
-    if YOLO_TYPE == "v4" or YOLO_TYPE == "v5":
+    if (YOLO_TYPE == "v4") or (YOLO_TYPE == "v5"):
         ANCHORS = [[[12, 16], [19, 36], [40, 28]],
                    [[36, 75], [76, 55], [72, 146]],
                    [[142, 110], [192, 243], [459, 401]]]
@@ -360,7 +362,6 @@ def decode(conv_output, NUM_CLASS, i=0, YOLO_TYPE="v3", STRIDES=None):
                    [[30, 61], [62, 45], [59, 119]],
                    [[116, 90], [156, 198], [373, 326]]]
     # Train options
-
     # where i = 0, 1 or 2 to correspond to the three grid scales
     conv_shape = tf.shape(conv_output)
     batch_size = conv_shape[0]
@@ -403,23 +404,21 @@ def decode(conv_output, NUM_CLASS, i=0, YOLO_TYPE="v3", STRIDES=None):
     return tf.concat([pred_xywh, pred_conf, pred_prob], axis=-1)
 
 # @tf.autograph.experimental.do_not_convert
-def create_yolo(model, input_size=416, channels=3, training=False, classes=None):
+def create_yolo(model, input_size=416, channels=3, training=False, classes=None, version='v3'):
     if classes is None:
         classes = []
     num_class = len(classes)
     input_layer = keras.layers.Input([input_size, input_size, channels])
-
     conv_tensors = model(input_layer)
     if conv_tensors[0].shape[1] == 13:
         conv_tensors.reverse()
     # print('conv_tensors', conv_tensors.reverse())
     output_tensors = []
     for i, conv_tensor in enumerate(conv_tensors):
-        pred_tensor = decode(conv_tensor, num_class, i)
+        pred_tensor = decode(conv_tensor, num_class, i, version)
         if training: output_tensors.append(conv_tensor)
         output_tensors.append(pred_tensor)
-    # output_tensors.reverse()
-    print('output_tensors', output_tensors)
+    # print('output_tensors', output_tensors)
     yolo = tf.keras.Model(input_layer, output_tensors)
     return yolo
 
@@ -499,26 +498,21 @@ class CustomModelYolo(keras.Model):
     # optimizer = tf.keras.optimizers.Adam()
     @tf.function
     def train_step(self, data):
-        # print("data", data)
         image_data, target, serv = data[0], data[1], data[2]
-        # print(image_data['1'])
-        print('target', target)
-        # print(serv)
         input_key = [x for x in image_data.keys()]
         with tf.GradientTape() as tape:
             pred_result = self.yolo(image_data.get(input_key[0], '1'), training=True)
             giou_loss = conf_loss = prob_loss = 0
             prob_loss_cls = {}
-            # print("pred_result", pred_result)
+            pred_out = {}
+
             # optimizing process
             grid = 3  # if not TRAIN_YOLO_TINY else 2
             for i, key in enumerate(target.keys()):
                 conv, pred = pred_result[i * 2], pred_result[i * 2 + 1]
-                print('conv', conv)
-                print()
-                print('pred', pred)
                 loss_items = self.loss_fn(pred, conv, *(target.get(key), serv.get(key)), i,
                                           CLASSES=self.CLASSES)
+                pred_out['pred_'+str(key)] = pred
                 giou_loss += loss_items[0]
                 conf_loss += loss_items[1]
                 prob_loss += loss_items[2]
@@ -541,39 +535,33 @@ class CustomModelYolo(keras.Model):
         # about warmup: https://arxiv.org/pdf/1812.01187.pdf&usg=ALkJrhglKOPDjNt6SHGbphTHyMcT0cuMJg
 
         self.global_steps.assign_add(1)
-        # print(self.global_steps.value())
-
         lr = self.change_lr()
         self.optimizer.lr.assign(tf.cast(lr, tf.float32))
-        # tf.print([prob_loss_cls.get(x) for x in prob_loss_cls.keys()])
-            # # writing summary data
-            # with writer.as_default():
-            #     tf.summary.scalar("lr", optimizer.lr, step=global_steps)
-            #     tf.summary.scalar("loss/total_loss", total_loss, step=global_steps)
-            #     tf.summary.scalar("loss/giou_loss", giou_loss, step=global_steps)
-            #     tf.summary.scalar("loss/conf_loss", conf_loss, step=global_steps)
-            #     tf.summary.scalar("loss/prob_loss", prob_loss, step=global_steps)
-            # writer.flush()
-        # validate_writer = tf.summary.create_file_writer(TRAIN_LOGDIR)
+
         out_info = {'global_steps': self.global_steps.value(), "optimizer.lr": self.optimizer.lr.value(),
-                "giou_loss": giou_loss, "conf_loss": conf_loss, "prob_loss": prob_loss, "total_loss": total_loss}
+                    "giou_loss": giou_loss, "conf_loss": conf_loss, "prob_loss": prob_loss, "total_loss": total_loss}
         out_info.update(prob_loss_cls)
+        out_info.update(pred_out)
+
         return out_info
 
     @tf.function
     def test_step(self, data):
         image_data, target, serv = data[0], data[1], data[2]
+        input_key = [x for x in image_data.keys()]
         with tf.GradientTape() as tape:
-            pred_result = self.yolo(image_data['1'], training=False)
+            pred_result = self.yolo(image_data.get(input_key[0], '1'), training=False)
             giou_loss = conf_loss = prob_loss = 0
             prob_loss_cls = {}
-
+            pred_out = {}
             # optimizing process
             grid = 3  # if not TRAIN_YOLO_TINY else 2
+
             for i, key in enumerate(target.keys()):
                 conv, pred = pred_result[i * 2], pred_result[i * 2 + 1]
                 loss_items = self.loss_fn(pred, conv, *(target.get(key), serv.get(key)),
                                           i, CLASSES=self.CLASSES)
+                pred_out['pred_'+str(key)] = pred
                 giou_loss += loss_items[0]
                 conf_loss += loss_items[1]
                 prob_loss += loss_items[2]
@@ -588,6 +576,7 @@ class CustomModelYolo(keras.Model):
 
         out_info = {"giou_loss": giou_loss, "conf_loss": conf_loss, "prob_loss": prob_loss, "total_loss": total_loss}
         out_info.update(prob_loss_cls)
+        out_info.update(pred_out)
 
         return out_info
     # mAP_model = Create_Yolo(input_size=YOLO_INPUT_SIZE, CLASSES=TRAIN_CLASSES)  # create second model to measure mAP
@@ -756,7 +745,7 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
     ap_dictionary = {}
     for i_iou in iou_threshold:
 
-        print(f'\ncalculating mAP{int(i_iou * 100)}...\n')
+        # print(f'\ncalculating mAP{int(i_iou * 100)}...\n')
         json_pred = [[] for i in range(n_classes)]
         class_predictions = {}
         len_bbox = 0
@@ -858,5 +847,5 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
         ap_dictionary[f"val_mAP{int(i_iou * 100)}"] = mAP * 100
     ap_dictionary["val_fps"] = fps
 
-    return predict, ap_dictionary
+    return ap_dictionary
 
