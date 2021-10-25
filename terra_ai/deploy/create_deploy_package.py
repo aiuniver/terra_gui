@@ -20,7 +20,6 @@ class CascadeCreator:
             dataset_config = json.load(cfg)
 
         cascade_json_path = os.path.join(ASSETS_PATH, "deploy_templates", f"{func_name}.json")
-        print(cascade_json_path)
         with open(cascade_json_path) as cfg:
             config = json.load(cfg)
 
