@@ -127,8 +127,8 @@ class MyCallback(tf.keras.callbacks.Callback):
                             TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names)
         print(mAP)
         ### Пока что для визуализации Yolo
-        detect_image(Yolo=self.yolo_pred, original_image=self.inp['1'].numpy()[0], output_path=output_path,
-                     CLASSES=self.dataset.data.outputs.get(2).classes_names)
+        detect_image(Yolo=self.model, original_image=self.inp['1'].numpy()[0], output_path=output_path,
+                     CLASSES=self.dataset.data.outputs.get(2).classes_names, train=True)
         ###
 
     def on_train_end(self, logs=None):
