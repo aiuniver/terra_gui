@@ -11,12 +11,18 @@ def terra_exception(exception: Exception) -> TerraBaseException:
     """Принимает на вход любой тип исключения Exception и возвращает исключение, унаследованное от TerraBaseException"""
 
     if not isinstance(exception, Exception):
-        raise TypeError(f"Функция ожидала на вход объект исключения, но получила '{type(exception).__name__}'")
+        raise TypeError(
+            f"Функция ожидала на вход объект исключения, но получила '{type(exception).__name__}'"
+        )
 
-    if isinstance(exception, pydantic.ValidationError):  # нативные исключения от Pydantic
+    if isinstance(
+        exception, pydantic.ValidationError
+    ):  # нативные исключения от Pydantic
         raise DataException(exception)
 
-    if isinstance(exception, tensorflow.errors.OpError):  # нативные исключения от TensorFlow
+    if isinstance(
+        exception, tensorflow.errors.OpError
+    ):  # нативные исключения от TensorFlow
         return getattr(
             tf_exceptions, exception.__class__.__name__, tf_exceptions.UnknownError
         )(exception.message)
