@@ -10,14 +10,14 @@ from terra_ai.callbacks.utils import sort_dict, fill_graph_front_structure, fill
 from terra_ai.data.datasets.dataset import DatasetOutputsData
 from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, LayerEncodingChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
-from terra_ai.datasets.preparing import PrepareDataset
+# from terra_ai.datasets.preparing import PrepareDataset
 import moviepy.editor as moviepy_editor
 
 from terra_ai.settings import MAX_GRAPH_LENGTH, DEPLOY_PRESET_PERCENT
 
 
 class ImageClassificationCallback:
-    def __init__(self, options: PrepareDataset):
+    def __init__(self, options):
         self.options = options
         pass
 
@@ -30,7 +30,7 @@ class ImageClassificationCallback:
         return x_val, inverse_x_val
 
     @staticmethod
-    def postprocess_initial_source(options: PrepareDataset, input_id: int, example_id: int, dataset_path: str,
+    def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str,
                                    preset_path: str, save_id: int = None, x_array=None, return_mode='deploy'):
         column_idx = []
         if options.data.group != DatasetGroupChoice.keras:
@@ -134,6 +134,10 @@ class TextClassificationCallback:
     @staticmethod
     def postprocess_initial_source(options, example_id: int, return_mode='deploy'):
         column_idx = []
+        for inp in options.data.inputs.keys():
+            for column_name in options.dataframe.get('val').columns:
+                if column_name.split('_')[0] == f"{inp}":
+                    column_idx.append(options.dataframe.get('val').columns.tolist().index(column_name))
         data = []
         data_type = ""
         source = ""
@@ -152,7 +156,6 @@ class TextClassificationCallback:
                         "color_mark": None
                     }
                 ]
-
         if return_mode == 'deploy':
             return source
         if return_mode == 'callback':
@@ -161,7 +164,6 @@ class TextClassificationCallback:
     @staticmethod
     def postprocess_deploy(array, options) -> dict:
         return_data = {}
-
         for i, output_id in enumerate(options.data.outputs.keys()):
             true_array = get_y_true(options, output_id)
             if len(options.data.outputs.keys()) > 1:
@@ -298,7 +300,7 @@ class AudioClassificationCallback:
         return x_val, inverse_x_val
 
     @staticmethod
-    def postprocess_initial_source(options: PrepareDataset, input_id: int, example_id: int, dataset_path: str,
+    def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str,
                                    preset_path: str, save_id: int = None, return_mode='deploy'):
         column_idx = []
         for inp in options.data.inputs.keys():
