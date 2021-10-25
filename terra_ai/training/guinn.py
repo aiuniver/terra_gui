@@ -119,12 +119,13 @@ class MyCallback(tf.keras.callbacks.Callback):
         ### пока что для yolo
         pred_train = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_train)]
         pred_val = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_val)]
+
         self.samples_train = []
         self.samples_val = []
 
-        mAP = get_mAP(self.yolo_pred, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
+        mAP = get_mAP(self.model, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
                             TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names)
-
+        print(mAP)
         ### Пока что для визуализации Yolo
         detect_image(Yolo=self.yolo_pred, original_image=self.inp['1'].numpy()[0], output_path=output_path,
                      CLASSES=self.dataset.data.outputs.get(2).classes_names)
