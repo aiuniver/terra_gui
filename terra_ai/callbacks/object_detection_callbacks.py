@@ -21,6 +21,18 @@ class YoloV3Callback:
         inverse_x_val = None
         return x_val, inverse_x_val
 
+    @staticmethod
+    def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "", sensitivity=0.15,
+                           threashold=0.1):
+        return postprocess_od_deploy(
+            array=array,
+            options=options,
+            save_path=save_path,
+            dataset_path=dataset_path,
+            sensitivity=sensitivity,
+            threashold=threashold
+        )
+
 
 class YoloV4Callback:
     def __init__(self):
@@ -31,6 +43,18 @@ class YoloV4Callback:
         x_val = None
         inverse_x_val = None
         return x_val, inverse_x_val
+
+    @staticmethod
+    def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "", sensitivity=0.15,
+                           threashold=0.1):
+        return postprocess_od_deploy(
+            array=array,
+            options=options,
+            save_path=save_path,
+            dataset_path=dataset_path,
+            sensitivity=sensitivity,
+            threashold=threashold
+        )
 
 
 def get_yolo_y_true(options):
@@ -530,8 +554,8 @@ def postprocess_object_detection(predict_array, true_array, image_path: str, col
         return data
 
 
-def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "", sensitivity=0.15,
-                       threashold=0.1) -> dict:
+def postprocess_od_deploy(array, options, save_path: str = "", dataset_path: str = "", sensitivity=0.15,
+                          threashold=0.1) -> dict:
     return_data = {}
     y_true = get_yolo_y_true(options)
     y_pred = get_yolo_y_pred(array, options, sensitivity=sensitivity, threashold=threashold)

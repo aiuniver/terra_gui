@@ -80,8 +80,8 @@ class ImageClassificationCallback:
             else:
                 postprocess_array = array
             example_idx = prepare_example_idx_to_show(
-                array=postprocess_array,
-                true_array=true_array,
+                array=postprocess_array[:len(array)],
+                true_array=true_array[:len(array)],
                 options=options,
                 output=output_id,
                 count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
@@ -170,8 +170,8 @@ class TextClassificationCallback:
             else:
                 postprocess_array = array
             example_idx = prepare_example_idx_to_show(
-                array=postprocess_array,
-                true_array=true_array,
+                array=postprocess_array[:len(array)],
+                true_array=true_array[:len(array)],
                 options=options,
                 output=output_id,
                 count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
@@ -252,8 +252,8 @@ class DataframeClassificationCallback:
             else:
                 postprocess_array = array
             example_idx = prepare_example_idx_to_show(
-                array=postprocess_array,
-                true_array=true_array,
+                array=postprocess_array[:len(array)],
+                true_array=true_array[:len(array)],
                 options=options,
                 output=output_id,
                 count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
@@ -337,8 +337,8 @@ class AudioClassificationCallback:
             else:
                 postprocess_array = array
             example_idx = prepare_example_idx_to_show(
-                array=postprocess_array,
-                true_array=true_array,
+                array=postprocess_array[:len(array)],
+                true_array=true_array[:len(array)],
                 options=options,
                 output=output_id,
                 count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
@@ -429,8 +429,8 @@ class VideoClassificationCallback:
             else:
                 postprocess_array = array
             example_idx = prepare_example_idx_to_show(
-                array=postprocess_array,
-                true_array=true_array,
+                array=postprocess_array[:len(array)],
+                true_array=true_array[:len(array)],
                 options=options,
                 output=output_id,
                 count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
@@ -549,7 +549,7 @@ class TimeseriesTrendCallback:
             return source
 
     @staticmethod
-    def postprocess_deploy(array, options, save_path: str = "") -> dict:
+    def postprocess_deploy(array, options) -> dict:
         return_data = {}
         for i, output_id in enumerate(options.data.outputs.keys()):
             true_array = get_y_true(options, output_id)
@@ -558,8 +558,8 @@ class TimeseriesTrendCallback:
             else:
                 postprocess_array = array
             example_idx = prepare_example_idx_to_show(
-                array=postprocess_array,
-                true_array=true_array,
+                array=postprocess_array[:len(array)],
+                true_array=true_array[:len(array)],
                 options=options,
                 output=output_id,
                 count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
@@ -593,11 +593,8 @@ class TimeseriesTrendCallback:
                         options=options.data.outputs[output_id],
                         return_mode='deploy'
                     )
-                    # button_save_path = os.path.join(
-                    #     save_path, f"ts_trend_button_channel_{channel[2]}_image_{idx}.jpg")
                     return_data[output_id][channel[3]].append(
                         {
-                            # "button_link": button_save_path,
                             "data": [inverse_true, predict_values[0]]
                         }
                     )

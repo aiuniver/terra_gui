@@ -12,6 +12,7 @@ from tensorflow.python.keras.utils.np_utils import to_categorical
 
 from terra_ai.callbacks.classification_callbacks import ImageClassificationCallback, TextClassificationCallback, \
     DataframeClassificationCallback, AudioClassificationCallback, VideoClassificationCallback, TimeseriesTrendCallback
+from terra_ai.callbacks.object_detection_callbacks import YoloV3Callback, YoloV4Callback
 from terra_ai.callbacks.regression_callbacks import DataframeRegressionCallback
 from terra_ai.callbacks.segmentation_callbacks import ImageSegmentationCallback, TextSegmentationCallback
 from terra_ai.callbacks.time_series_callbacks import TimeseriesCallback
@@ -1243,7 +1244,6 @@ class CreateArray(object):
 
         return array
 
-
     @staticmethod
     def postprocess_results(array, options, save_path: str = "", dataset_path: str = "", sensitivity=0.15,
                             threashold=0.1) -> dict:
@@ -1271,7 +1271,7 @@ class CreateArray(object):
             )
         elif options.data.architecture == ArchitectureChoice.TimeseriesTrend:
             return_data = TimeseriesTrendCallback.postprocess_deploy(
-                array=array, options=options, save_path=save_path
+                array=array, options=options
             )
         elif options.data.architecture == ArchitectureChoice.ImageSegmentation:
             return_data = ImageSegmentationCallback.postprocess_deploy(
@@ -1288,6 +1288,16 @@ class CreateArray(object):
         elif options.data.architecture == ArchitectureChoice.Timeseries:
             return_data = TimeseriesCallback.postprocess_deploy(
                 array=array, options=options
+            )
+        elif options.data.architecture == ArchitectureChoice.YoloV3:
+            return_data = YoloV3Callback.postprocess_deploy(
+                array=array, options=options, save_path=save_path, dataset_path=dataset_path,
+                sensitivity=sensitivity, threashold=threashold
+            )
+        elif options.data.architecture == ArchitectureChoice.YoloV4:
+            return_data = YoloV4Callback.postprocess_deploy(
+                array=array, options=options, save_path=save_path, dataset_path=dataset_path,
+                sensitivity=sensitivity, threashold=threashold
             )
         else:
             pass
