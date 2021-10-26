@@ -438,6 +438,7 @@ class InteractiveCallback:
         if not self.log_history:
             self._prepare_null_log_history_template()
         self.dataset_balance = self._prepare_dataset_balance()
+        print('\nself.dataset_balance', self.dataset_balance)
         self.class_idx = self._prepare_class_idx()
         self.seed_idx = self._prepare_seed()
         self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
@@ -904,6 +905,7 @@ class InteractiveCallback:
             dataset_balance = {}
             for out in self.options.data.outputs.keys():
                 task = self.options.data.outputs.get(out).task
+                print('self.options.data.outputs.get(out)', self.options.data.outputs.get(out))
                 encoding = self.options.data.outputs.get(out).encoding
 
                 if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
@@ -999,13 +1001,12 @@ class InteractiveCallback:
                             }
 
                 if task == LayerOutputTypeChoice.Regression:
-                    dataset_balance[f"{out}"] = {
-                        'histogram': {},
-                        'correlation': {}
-                    }
+                    dataset_balance[f"{out}"] = {'histogram': {},'correlation': {}}
+                    print('\nself.options.dataframe.keys()', list(self.options.dataframe.get('train').columns))
                     for data_type in ['train', 'val']:
                         dataset_balance[f"{out}"]['histogram'][data_type] = {}
                         for column in list(self.options.dataframe.get('train').columns):
+                            print('--column', column)
                             column_id = int(column.split("_")[0])
                             column_task = self.options.data.columns.get(column_id).get(column).task
                             column_data = list(self.options.dataframe.get(data_type)[column])
@@ -1508,7 +1509,7 @@ class InteractiveCallback:
                                     normal_state)
 
                             if out_task == LayerOutputTypeChoice.Classification or \
-                                    out_task == LayerOutputTypeChoice.Segmentation or \
+                                    out_task == LayerOutputTypeChoice.ImageSegmentation or \
                                     out_task == LayerOutputTypeChoice.TextSegmentation or \
                                     out_task == LayerOutputTypeChoice.TimeseriesTrend:
                                 for cls in self.log_history.get(f"{out}").get('class_metrics').keys():
@@ -1525,7 +1526,7 @@ class InteractiveCallback:
                                                 self.class_idx.get('val').get(f"{out}").get(cls)],
                                             show_class=True
                                         )
-                                    if out_task == LayerOutputTypeChoice.Segmentation or \
+                                    if out_task == LayerOutputTypeChoice.ImageSegmentation or \
                                             out_task == LayerOutputTypeChoice.TextSegmentation:
                                         class_idx = classes_names.index(cls)
                                         class_metric = self._get_metric_calculation(
@@ -1712,7 +1713,7 @@ class InteractiveCallback:
                 loss_value = float(loss_obj()(
                     y_true if encoding == LayerEncodingChoice.ohe else to_categorical(y_true, num_classes), y_pred
                 ).numpy())
-            elif task == LayerOutputTypeChoice.Segmentation or \
+            elif task == LayerOutputTypeChoice.ImageSegmentation or \
                     (task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.ohe):
                 loss_value = float(loss_obj()(
                     y_true if encoding == LayerEncodingChoice.ohe else to_categorical(y_true, num_classes), y_pred
@@ -1751,7 +1752,7 @@ class InteractiveCallback:
                         y_pred
                     )
                 metric_value = float(metric_obj.result().numpy())
-            elif task == LayerOutputTypeChoice.Segmentation or task == LayerOutputTypeChoice.TextSegmentation:
+            elif task == LayerOutputTypeChoice.ImageSegmentation or task == LayerOutputTypeChoice.TextSegmentation:
                 if metric_name == Metric.BalancedDiceCoef:
                     metric_obj.encoding = None
                     metric_obj.update_state(
@@ -2101,7 +2102,7 @@ class InteractiveCallback:
                                 return_mode='callback'
                             )
 
-                        elif task == LayerOutputTypeChoice.Segmentation:
+                        elif task == LayerOutputTypeChoice.ImageSegmentation:
                             data = CreateArray().postprocess_segmentation(
                                 predict_array=self.y_pred.get(f'{out}')[self.example_idx[idx]],
                                 true_array=self.y_true.get('val').get(f'{out}')[self.example_idx[idx]],
@@ -2266,7 +2267,7 @@ class InteractiveCallback:
                         )
                         _id += 1
 
-                    elif task == LayerOutputTypeChoice.Segmentation or \
+                    elif task == LayerOutputTypeChoice.ImageSegmentation or \
                             (task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.ohe):
                         cm, cm_percent = self._get_confusion_matrix(
                             np.argmax(self.y_true.get("val").get(f"{out}"), axis=-1).reshape(
@@ -2588,7 +2589,7 @@ class InteractiveCallback:
             if self.options.data.architecture in self.basic_architecture:
                 for out in self.options.data.outputs.keys():
                     task = self.options.data.outputs.get(out).task
-
+                    # print('task', task)
                     if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
                         for class_type in self.dataset_balance.get(f"{out}").keys():
                             preset = {}
@@ -2611,7 +2612,7 @@ class InteractiveCallback:
                                 _id += 1
                             return_data.append(preset)
 
-                    elif task == LayerOutputTypeChoice.Segmentation:
+                    elif task == LayerOutputTypeChoice.ImageSegmentation:
                         for class_type in self.dataset_balance.get(f"{out}").keys():
                             preset = {}
                             if class_type in ["presence_balance", "square_balance"]:
@@ -2679,9 +2680,12 @@ class InteractiveCallback:
                             return_data.append(preset)
 
                     elif task == LayerOutputTypeChoice.Regression:
+                        # print('-self.dataset_balance', self.dataset_balance.keys(), self.dataset_balance[f"{out}"])
                         for class_type in self.dataset_balance[f"{out}"].keys():
+                            # print('--class_type', class_type)
                             if class_type == 'histogram':
                                 for column in self.dataset_balance[f"{out}"][class_type]["train"].keys():
+                                    # print('----column', column)
                                     preset = {}
                                     for data_type in ["train", "val"]:
                                         histogram = self.dataset_balance[f"{out}"][class_type][data_type][column]
@@ -2812,7 +2816,8 @@ class InteractiveCallback:
 
             return return_data
         except Exception as e:
-            print_error(InteractiveCallback().name, method_name, e)
+            # print_error(InteractiveCallback().name, method_name, e)
+            pass
 
     @staticmethod
     def _get_confusion_matrix(y_true, y_pred, get_percent=True) -> tuple:
