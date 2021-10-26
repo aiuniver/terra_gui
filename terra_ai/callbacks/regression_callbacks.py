@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
 
-from terra_ai.callbacks.utils import sort_dict, get_y_true, get_distribution_histogram, get_correlation_matrix
+from terra_ai.callbacks.utils import sort_dict, get_y_true, get_distribution_histogram, get_correlation_matrix, \
+    get_scatter, fill_graph_front_structure, fill_graph_plot_data, fill_heatmap_front_structure
 from terra_ai.data.datasets.extra import LayerInputTypeChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
 from terra_ai.settings import CALLBACK_REGRESSION_TREASHOLD_VALUE, DEPLOY_PRESET_PERCENT
@@ -170,8 +171,8 @@ class DataframeRegressionCallback:
         return dataset_balance
 
     @staticmethod
-    def intermediate_result(interactive_config, options, example_idx,
-                            inverse_y_true, inverse_y_pred) -> dict:
+    def intermediate_result_request(interactive_config, options, example_idx,
+                                    inverse_y_true, inverse_y_pred) -> dict:
         return_data = {}
         if interactive_config.intermediate_result.show_results:
             for idx in range(interactive_config.intermediate_result.num_examples):
@@ -210,6 +211,109 @@ class DataframeRegressionCallback:
                         return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
                     else:
                         return_data[f"{idx + 1}"]['statistic_values'] = {}
+        return return_data
+
+    @staticmethod
+    def statistic_data_request(interactive_config, options, inverse_y_true, inverse_y_pred) -> list:
+        return_data = []
+        _id = 1
+        for out in interactive_config.statistic_data.output_id:
+            y_true = inverse_y_true.get("val").get(f'{out}').squeeze()
+            y_pred = inverse_y_pred.get(f'{out}').squeeze()
+            x_scatter, y_scatter = get_scatter(y_true, y_pred)
+            return_data.append(
+                fill_graph_front_structure(
+                    _id=_id,
+                    _type='scatter',
+                    graph_name=f"Выходной слой «{out}» - Скаттер",
+                    short_name=f"{out} - Скаттер",
+                    x_label="Истинные значения",
+                    y_label="Предсказанные значения",
+                    plot_data=[fill_graph_plot_data(x=x_scatter, y=y_scatter)],
+                )
+            )
+            _id += 1
+            deviation = (y_pred - y_true) * 100 / y_true
+            x_mae, y_mae = get_distribution_histogram(np.abs(deviation), categorical=False)
+            return_data.append(
+                fill_graph_front_structure(
+                    _id=_id,
+                    _type='bar',
+                    graph_name=f'Выходной слой «{out}» - Распределение абсолютной ошибки',
+                    short_name=f"{out} - Распределение MAE",
+                    x_label="Абсолютная ошибка",
+                    y_label="Значение",
+                    plot_data=[fill_graph_plot_data(x=x_mae, y=y_mae)],
+                )
+            )
+            _id += 1
+            x_me, y_me = get_distribution_histogram(deviation, categorical=False)
+            return_data.append(
+                fill_graph_front_structure(
+                    _id=_id,
+                    _type='bar',
+                    graph_name=f'Выходной слой «{out}» - Распределение ошибки',
+                    short_name=f"{out} - Распределение ME",
+                    x_label="Ошибка",
+                    y_label="Значение",
+                    plot_data=[fill_graph_plot_data(x=x_me, y=y_me)],
+                )
+            )
+            _id += 1
+        return return_data
+
+    @staticmethod
+    def balance_data_request(options, dataset_balance, interactive_config) -> list:
+        return_data = []
+        _id = 0
+        for out in options.data.outputs.keys():
+            for class_type in dataset_balance[f"{out}"].keys():
+                if class_type == 'histogram':
+                    for column in dataset_balance[f"{out}"][class_type]["train"].keys():
+                        preset = {}
+                        for data_type in ["train", "val"]:
+                            histogram = dataset_balance[f"{out}"][class_type][data_type][column]
+                            if histogram.get("type") == 'histogram':
+                                dict_to_sort = dict(zip(histogram.get("x"), histogram.get("y")))
+                                x, y = sort_dict(
+                                    dict_to_sort=dict_to_sort,
+                                    mode=interactive_config.data_balance.sorted.name
+                                )
+                            else:
+                                x = histogram.get("x")
+                                y = histogram.get("y")
+                            data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
+                            preset[data_type] = fill_graph_front_structure(
+                                _id=_id,
+                                _type=histogram.get("type"),
+                                type_data=data_type,
+                                graph_name=f"Выход {out} - {data_type_name} выборка - "
+                                           f"Гистограмма распределения колонки «{histogram['name']}»",
+                                short_name=f"{data_type_name} - {histogram['name']}",
+                                x_label="Значение",
+                                y_label="Количество",
+                                plot_data=[
+                                    fill_graph_plot_data(x=x, y=y)],
+                            )
+                            _id += 1
+                        return_data.append(preset)
+                if class_type == 'correlation':
+                    preset = {}
+                    for data_type in ["train", "val"]:
+                        data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
+                        preset[data_type] = fill_heatmap_front_structure(
+                            _id=_id,
+                            _type="corheatmap",
+                            type_data=data_type,
+                            graph_name=f"Выход {out} - {data_type_name} выборка - Матрица корреляций",
+                            short_name=f"Матрица корреляций",
+                            x_label="Колонка",
+                            y_label="Колонка",
+                            labels=dataset_balance[f"{out}"]['correlation'][data_type]["labels"],
+                            data_array=dataset_balance[f"{out}"]['correlation'][data_type]["matrix"],
+                        )
+                        _id += 1
+                    return_data.append(preset)
         return return_data
 
 

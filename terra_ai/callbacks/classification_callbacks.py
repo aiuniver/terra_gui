@@ -7,7 +7,8 @@ from pydub import AudioSegment
 from tensorflow.keras.preprocessing import image
 
 from terra_ai.callbacks.utils import sort_dict, fill_graph_front_structure, fill_graph_plot_data, get_y_true, \
-    class_counter
+    class_counter, get_confusion_matrix, fill_heatmap_front_structure, get_classification_report, \
+    fill_table_front_structure
 from terra_ai.data.datasets.dataset import DatasetOutputsData
 from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, LayerEncodingChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
@@ -132,6 +133,53 @@ class ImageClassificationCallback:
     def dataset_balance(options, y_true) -> dict:
         return prepare_dataset_balance(options, y_true)
 
+    @staticmethod
+    def intermediate_result_request(options, interactive_config, example_idx,
+                                    dataset_path, preset_path, x_val, inverse_x_val, y_pred, y_true):
+        return_data = {}
+        if interactive_config.intermediate_result.show_results:
+            for idx in range(interactive_config.intermediate_result.num_examples):
+                for inp in options.data.inputs.keys():
+                    data, type_choice = ImageClassificationCallback.postprocess_initial_source(
+                        options=options,
+                        input_id=inp,
+                        save_id=idx + 1,
+                        example_id=example_idx[idx],
+                        dataset_path=dataset_path,
+                        preset_path=preset_path,
+                        x_array=x_val.get(f"{inp}") if x_val else None,
+                        return_mode='callback'
+                    )
+                    return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
+                        'type': type_choice,
+                        'data': data,
+                    }
+
+                for out in options.data.outputs.keys():
+                    data = postprocess_classification(
+                        predict_array=y_pred.get(f'{out}')[example_idx[idx]],
+                        true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
+                        options=options.data.outputs.get(out),
+                        show_stat=interactive_config.intermediate_result.show_statistic,
+                        return_mode='callback'
+                    )
+                    if data.get('y_true'):
+                        return_data[f"{idx + 1}"]['true_value'][f"Выходной слой «{out}»"] = data.get('y_true')
+                    return_data[f"{idx + 1}"]['predict_value'][f"Выходной слой «{out}»"] = data.get('y_pred')
+                    return_data[f"{idx + 1}"]['tags_color'] = None
+                    if data.get('stat'):
+                        return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
+                    else:
+                        return_data[f"{idx + 1}"]['statistic_values'] = {}
+            return return_data
+
+    @staticmethod
+    def statistic_data_request(interactive_config, options, y_true, y_pred) -> list:
+        return get_statistic_data_request(interactive_config, options, y_true, y_pred)
+
+    @staticmethod
+    def balance_data_request(options, dataset_balance, interactive_config):
+        return get_balance_data_request(options, dataset_balance, interactive_config)
 
 class TextClassificationCallback:
     def __init__(self):
@@ -225,6 +273,48 @@ class TextClassificationCallback:
     def dataset_balance(options, y_true) -> dict:
         return prepare_dataset_balance(options, y_true)
 
+    @staticmethod
+    def intermediate_result_request(options, interactive_config, example_idx,
+                                    dataset_path, preset_path, x_val, inverse_x_val, y_pred, y_true):
+        return_data = {}
+        if interactive_config.intermediate_result.show_results:
+            for idx in range(interactive_config.intermediate_result.num_examples):
+                for inp in options.data.inputs.keys():
+                    data, type_choice = TextClassificationCallback.postprocess_initial_source(
+                        options=options,
+                        example_id=example_idx[idx],
+                        return_mode='callback'
+                    )
+                    return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
+                        'type': type_choice,
+                        'data': data,
+                    }
+
+                for out in options.data.outputs.keys():
+                    data = postprocess_classification(
+                        predict_array=y_pred.get(f'{out}')[example_idx[idx]],
+                        true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
+                        options=options.data.outputs.get(out),
+                        show_stat=interactive_config.intermediate_result.show_statistic,
+                        return_mode='callback'
+                    )
+                    if data.get('y_true'):
+                        return_data[f"{idx + 1}"]['true_value'][f"Выходной слой «{out}»"] = data.get('y_true')
+                    return_data[f"{idx + 1}"]['predict_value'][f"Выходной слой «{out}»"] = data.get('y_pred')
+                    return_data[f"{idx + 1}"]['tags_color'] = None
+                    if data.get('stat'):
+                        return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
+                    else:
+                        return_data[f"{idx + 1}"]['statistic_values'] = {}
+            return return_data
+
+    @staticmethod
+    def statistic_data_request(interactive_config, options, y_true, y_pred) -> list:
+        return get_statistic_data_request(interactive_config, options, y_true, y_pred)
+
+    @staticmethod
+    def balance_data_request(options, dataset_balance, interactive_config):
+        return get_balance_data_request(options, dataset_balance, interactive_config)
 
 class DataframeClassificationCallback:
     def __init__(self):
@@ -319,6 +409,49 @@ class DataframeClassificationCallback:
     def dataset_balance(options, y_true) -> dict:
         return prepare_dataset_balance(options, y_true)
 
+    @staticmethod
+    def intermediate_result_request(options, interactive_config, example_idx,
+                                    dataset_path, preset_path, x_val, inverse_x_val, y_pred, y_true):
+        return_data = {}
+        if interactive_config.intermediate_result.show_results:
+            for idx in range(interactive_config.intermediate_result.num_examples):
+                for inp in options.data.inputs.keys():
+                    data, type_choice = DataframeClassificationCallback.postprocess_initial_source(
+                        options=options,
+                        input_id=inp,
+                        example_id=example_idx[idx],
+                        return_mode='callback'
+                    )
+                    return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
+                        'type': type_choice,
+                        'data': data,
+                    }
+
+                for out in options.data.outputs.keys():
+                    data = postprocess_classification(
+                        predict_array=y_pred.get(f'{out}')[example_idx[idx]],
+                        true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
+                        options=options.data.outputs.get(out),
+                        show_stat=interactive_config.intermediate_result.show_statistic,
+                        return_mode='callback'
+                    )
+                    if data.get('y_true'):
+                        return_data[f"{idx + 1}"]['true_value'][f"Выходной слой «{out}»"] = data.get('y_true')
+                    return_data[f"{idx + 1}"]['predict_value'][f"Выходной слой «{out}»"] = data.get('y_pred')
+                    return_data[f"{idx + 1}"]['tags_color'] = None
+                    if data.get('stat'):
+                        return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
+                    else:
+                        return_data[f"{idx + 1}"]['statistic_values'] = {}
+            return return_data
+
+    @staticmethod
+    def statistic_data_request(interactive_config, options, y_true, y_pred) -> list:
+        return get_statistic_data_request(interactive_config, options, y_true, y_pred)
+
+    @staticmethod
+    def balance_data_request(options, dataset_balance, interactive_config):
+        return get_balance_data_request(options, dataset_balance, interactive_config)
 
 class AudioClassificationCallback:
     def __init__(self):
@@ -424,6 +557,52 @@ class AudioClassificationCallback:
     def dataset_balance(options, y_true) -> dict:
         return prepare_dataset_balance(options, y_true)
 
+    @staticmethod
+    def intermediate_result_request(options, interactive_config, example_idx,
+                                    dataset_path, preset_path, x_val, inverse_x_val, y_pred, y_true):
+        return_data = {}
+        if interactive_config.intermediate_result.show_results:
+            for idx in range(interactive_config.intermediate_result.num_examples):
+                for inp in options.data.inputs.keys():
+                    data, type_choice = AudioClassificationCallback.postprocess_initial_source(
+                        options=options,
+                        input_id=inp,
+                        save_id=idx + 1,
+                        example_id=example_idx[idx],
+                        dataset_path=dataset_path,
+                        preset_path=preset_path,
+                        return_mode='callback'
+                    )
+                    return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
+                        'type': type_choice,
+                        'data': data,
+                    }
+
+                for out in options.data.outputs.keys():
+                    data = postprocess_classification(
+                        predict_array=y_pred.get(f'{out}')[example_idx[idx]],
+                        true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
+                        options=options.data.outputs.get(out),
+                        show_stat=interactive_config.intermediate_result.show_statistic,
+                        return_mode='callback'
+                    )
+                    if data.get('y_true'):
+                        return_data[f"{idx + 1}"]['true_value'][f"Выходной слой «{out}»"] = data.get('y_true')
+                    return_data[f"{idx + 1}"]['predict_value'][f"Выходной слой «{out}»"] = data.get('y_pred')
+                    return_data[f"{idx + 1}"]['tags_color'] = None
+                    if data.get('stat'):
+                        return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
+                    else:
+                        return_data[f"{idx + 1}"]['statistic_values'] = {}
+            return return_data
+
+    @staticmethod
+    def statistic_data_request(interactive_config, options, y_true, y_pred) -> list:
+        return get_statistic_data_request(interactive_config, options, y_true, y_pred)
+
+    @staticmethod
+    def balance_data_request(options, dataset_balance, interactive_config):
+        return get_balance_data_request(options, dataset_balance, interactive_config)
 
 class VideoClassificationCallback:
     def __init__(self):
@@ -528,6 +707,52 @@ class VideoClassificationCallback:
     def dataset_balance(options, y_true) -> dict:
         return prepare_dataset_balance(options, y_true)
 
+    @staticmethod
+    def intermediate_result_request(options, interactive_config, example_idx,
+                                    dataset_path, preset_path, x_val, inverse_x_val, y_pred, y_true):
+        return_data = {}
+        if interactive_config.intermediate_result.show_results:
+            for idx in range(interactive_config.intermediate_result.num_examples):
+                for inp in options.data.inputs.keys():
+                    data, type_choice = VideoClassificationCallback.postprocess_initial_source(
+                        options=options,
+                        input_id=inp,
+                        save_id=idx + 1,
+                        example_id=example_idx[idx],
+                        dataset_path=dataset_path,
+                        preset_path=preset_path,
+                        return_mode='callback'
+                    )
+                    return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
+                        'type': type_choice,
+                        'data': data,
+                    }
+
+                for out in options.data.outputs.keys():
+                    data = postprocess_classification(
+                        predict_array=y_pred.get(f'{out}')[example_idx[idx]],
+                        true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
+                        options=options.data.outputs.get(out),
+                        show_stat=interactive_config.intermediate_result.show_statistic,
+                        return_mode='callback'
+                    )
+                    if data.get('y_true'):
+                        return_data[f"{idx + 1}"]['true_value'][f"Выходной слой «{out}»"] = data.get('y_true')
+                    return_data[f"{idx + 1}"]['predict_value'][f"Выходной слой «{out}»"] = data.get('y_pred')
+                    return_data[f"{idx + 1}"]['tags_color'] = None
+                    if data.get('stat'):
+                        return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
+                    else:
+                        return_data[f"{idx + 1}"]['statistic_values'] = {}
+            return return_data
+
+    @staticmethod
+    def statistic_data_request(interactive_config, options, y_true, y_pred) -> list:
+        return get_statistic_data_request(interactive_config, options, y_true, y_pred)
+
+    @staticmethod
+    def balance_data_request(options, dataset_balance, interactive_config):
+        return get_balance_data_request(options, dataset_balance, interactive_config)
 
 class TimeseriesTrendCallback:
     def __init__(self):
@@ -673,6 +898,50 @@ class TimeseriesTrendCallback:
     @staticmethod
     def dataset_balance(options, y_true) -> dict:
         return prepare_dataset_balance(options, y_true)
+
+    @staticmethod
+    def intermediate_result_request(options, interactive_config, example_idx,
+                                    dataset_path, preset_path, x_val, inverse_x_val, y_pred, y_true):
+        return_data = {}
+        if interactive_config.intermediate_result.show_results:
+            for idx in range(interactive_config.intermediate_result.num_examples):
+                for inp in options.data.inputs.keys():
+                    data, type_choice = TimeseriesTrendCallback.postprocess_initial_source(
+                        options=options,
+                        input_id=inp,
+                        example_id=example_idx[idx],
+                        return_mode='callback'
+                    )
+                    return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
+                        'type': type_choice,
+                        'data': data,
+                    }
+
+                for out in options.data.outputs.keys():
+                    data = postprocess_classification(
+                        predict_array=y_pred.get(f'{out}')[example_idx[idx]],
+                        true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
+                        options=options.data.outputs.get(out),
+                        show_stat=interactive_config.intermediate_result.show_statistic,
+                        return_mode='callback'
+                    )
+                    if data.get('y_true'):
+                        return_data[f"{idx + 1}"]['true_value'][f"Выходной слой «{out}»"] = data.get('y_true')
+                    return_data[f"{idx + 1}"]['predict_value'][f"Выходной слой «{out}»"] = data.get('y_pred')
+                    return_data[f"{idx + 1}"]['tags_color'] = None
+                    if data.get('stat'):
+                        return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
+                    else:
+                        return_data[f"{idx + 1}"]['statistic_values'] = {}
+            return return_data
+
+    @staticmethod
+    def statistic_data_request(interactive_config, options, y_true, y_pred) -> list:
+        return get_statistic_data_request(interactive_config, options, y_true, y_pred)
+
+    @staticmethod
+    def balance_data_request(options, dataset_balance, interactive_config):
+        return get_balance_data_request(options, dataset_balance, interactive_config)
 
 
 def prepare_y_true(options):
@@ -866,183 +1135,77 @@ def reformat_y_pred(y_true, y_pred):
     return reformat_pred, inverse_pred
 
 
-def _get_intermediate_result_request(self) -> dict:
-    return_data = {}
-    if self.options.data.architecture in self.basic_architecture and \
-            self.interactive_config.intermediate_result.show_results:
-        for idx in range(self.interactive_config.intermediate_result.num_examples):
-            return_data[f"{idx + 1}"] = {
-                'initial_data': {},
-                'true_value': {},
-                'predict_value': {},
-                'tags_color': {},
-                'statistic_values': {}
-            }
-            if not (
-                    len(self.options.data.outputs.keys()) == 1 and
-                    self.options.data.outputs.get(list(self.options.data.outputs.keys())[0]).task ==
-                    LayerOutputTypeChoice.TextSegmentation
-            ):
-                for inp in self.options.data.inputs.keys():
-                    data, type_choice = CreateArray().postprocess_initial_source(
-                        options=self.options,
-                        input_id=inp,
-                        save_id=idx + 1,
-                        example_id=self.example_idx[idx],
-                        dataset_path=self.dataset_path,
-                        preset_path=self.preset_path,
-                        x_array=self.x_val.get(f"{inp}") if self.x_val else None,
-                        inverse_x_array=self.inverse_x_val.get(f"{inp}") if self.inverse_x_val else None,
-                        return_mode='callback'
-                    )
-                    # random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
-                    return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
-                        # 'update': random_key,
-                        'type': type_choice,
-                        'data': data,
-                    }
-
-            for out in self.options.data.outputs.keys():
-                task = self.options.data.outputs.get(out).task
-
-                if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
-                    data = CreateArray().postprocess_classification(
-                        predict_array=self.y_pred.get(f'{out}')[self.example_idx[idx]],
-                        true_array=self.y_true.get('val').get(f'{out}')[self.example_idx[idx]],
-                        options=self.options.data.outputs.get(out),
-                        show_stat=self.interactive_config.intermediate_result.show_statistic,
-                        return_mode='callback'
-                    )
-
-                elif task == LayerOutputTypeChoice.Segmentation:
-                    data = CreateArray().postprocess_segmentation(
-                        predict_array=self.y_pred.get(f'{out}')[self.example_idx[idx]],
-                        true_array=self.y_true.get('val').get(f'{out}')[self.example_idx[idx]],
-                        options=self.options.data.outputs.get(out),
-                        colors=self.class_colors,
-                        output_id=out,
-                        image_id=idx,
-                        save_path=self.preset_path,
-                        return_mode='callback',
-                        show_stat=self.interactive_config.intermediate_result.show_statistic
-                    )
-
-                elif task == LayerOutputTypeChoice.TextSegmentation:
-                    # TODO: пока исходим что для сегментации текста есть только один вход с текстом, если будут сложные модели
-                    #  на сегментацию текста на несколько входов то придется искать решения
-                    output_col = list(self.options.instructions.get(out).keys())[0]
-                    data = CreateArray().postprocess_text_segmentation(
-                        pred_array=self.y_pred.get(f'{out}')[self.example_idx[idx]],
-                        true_array=self.y_true.get('val').get(f'{out}')[self.example_idx[idx]],
-                        options=self.options.data.outputs.get(out),
-                        dataframe=self.options.dataframe.get('val'),
-                        example_id=self.example_idx[idx],
-                        dataset_params=self.options.instructions.get(out).get(output_col),
-                        return_mode='callback',
-                        class_colors=self.class_colors,
-                        show_stat=self.interactive_config.intermediate_result.show_statistic
-                    )
-
-                elif task == LayerOutputTypeChoice.Regression:
-                    data = CreateArray().postprocess_regression(
-                        column_names=list(self.options.data.columns.get(out).keys()),
-                        inverse_y_true=self.inverse_y_true.get('val').get(f"{out}")[self.example_idx[idx]],
-                        inverse_y_pred=self.inverse_y_pred.get(f"{out}")[self.example_idx[idx]],
-                        show_stat=self.interactive_config.intermediate_result.show_statistic,
-                        return_mode='callback'
-                    )
-
-                elif task == LayerOutputTypeChoice.Timeseries:
-                    input = list(self.inverse_x_val.keys())[0]
-                    data = CreateArray().postprocess_time_series(
-                        options=self.options.data,
-                        real_x=self.inverse_x_val.get(f"{input}")[self.example_idx[idx]],
-                        inverse_y_true=self.inverse_y_true.get("val").get(f"{out}")[self.example_idx[idx]],
-                        inverse_y_pred=self.inverse_y_pred.get(f"{out}")[self.example_idx[idx]],
-                        output_id=out,
-                        depth=self.inverse_y_true.get("val").get(f"{out}")[self.example_idx[idx]].shape[-1],
-                        show_stat=self.interactive_config.intermediate_result.show_statistic,
-                        templates=[fill_graph_plot_data, fill_graph_front_structure]
-                    )
-
-                elif task == LayerOutputTypeChoice.Dataframe:
-                    data = {
-                        "y_true": {},
-                        "y_pred": {},
-                        "stat": {}
-                    }
-                    pass
-
-                elif task == LayerOutputTypeChoice.ObjectDetection:
-                    data = {
-                        "y_true": {},
-                        "y_pred": {},
-                        "stat": {}
-                    }
-                    # image with bb
-                    # accuracy, correlation bb for classes
-                    pass
-
-                else:
-                    data = {
-                        "y_true": {},
-                        "y_pred": {},
-                        "stat": {}
-                    }
-                if data.get('y_true'):
-                    return_data[f"{idx + 1}"]['true_value'][f"Выходной слой «{out}»"] = data.get('y_true')
-                return_data[f"{idx + 1}"]['predict_value'][f"Выходной слой «{out}»"] = data.get('y_pred')
-
-                if self.options.data.outputs.get(out).task == LayerOutputTypeChoice.TextSegmentation:
-                    return_data[f"{idx + 1}"]['tags_color'][f"Выходной слой «{out}»"] = data.get('tags_color')
-                else:
-                    return_data[f"{idx + 1}"]['tags_color'] = None
-
-                if data.get('stat'):
-                    return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
-                else:
-                    return_data[f"{idx + 1}"]['statistic_values'] = {}
-
-    elif self.options.data.architecture in self.yolo_architecture and \
-            self.yolo_interactive_config.intermediate_result.show_results:
-        self._reformat_y_pred(
-            y_pred=self.raw_y_pred,
-            sensitivity=self.yolo_interactive_config.intermediate_result.sensitivity,
-            threashold=self.yolo_interactive_config.intermediate_result.threashold
-        )
-        for idx in range(self.yolo_interactive_config.intermediate_result.num_examples):
-            return_data[f"{idx + 1}"] = {
-                'initial_data': {},
-                'true_value': {},
-                'predict_value': {},
-                'tags_color': {},
-                'statistic_values': {}
-            }
-            image_path = os.path.join(
-                self.dataset_path, self.options.dataframe.get('val').iat[self.example_idx[idx], 0])
-            out = self.yolo_interactive_config.intermediate_result.box_channel
-            data = CreateArray().postprocess_object_detection(
-                predict_array=copy.deepcopy(self.y_pred.get(out)[self.example_idx[idx]]),
-                true_array=self.y_true.get(out)[self.example_idx[idx]],
-                image_path=image_path,
-                colors=self.class_colors,
-                sensitivity=self.yolo_interactive_config.intermediate_result.sensitivity,
-                image_id=idx,
-                image_size=self.options.data.inputs.get(list(self.options.data.inputs.keys())[0]).shape[:2],
-                name_classes=self.options.data.outputs.get(list(self.options.data.outputs.keys())[0]).classes_names,
-                save_path=self.preset_path,
-                return_mode='callback',
-                show_stat=self.yolo_interactive_config.intermediate_result.show_statistic
+def get_statistic_data_request(interactive_config, options, y_true, y_pred) -> list:
+    return_data = []
+    _id = 1
+    for out in interactive_config.statistic_data.output_id:
+        encoding = options.data.outputs.get(out).encoding
+        if encoding != LayerEncodingChoice.multi:
+            cm, cm_percent = get_confusion_matrix(
+                np.argmax(y_true.get("val").get(f'{out}'), axis=-1) if encoding == LayerEncodingChoice.ohe
+                else y_true.get("val").get(f'{out}'),
+                np.argmax(y_pred.get(f'{out}'), axis=-1),
+                get_percent=True
             )
-            if data.get('y_true'):
-                return_data[f"{idx + 1}"]['true_value'][f"Выходной слой"] = data.get('y_true')
-            return_data[f"{idx + 1}"]['predict_value'][f"Выходной слой"] = data.get('y_pred')
+            return_data.append(
+                fill_heatmap_front_structure(
+                    _id=_id,
+                    _type="heatmap",
+                    graph_name=f"Выходной слой «{out}» - Confusion matrix",
+                    short_name=f"{out} - Confusion matrix",
+                    x_label="Предсказание",
+                    y_label="Истинное значение",
+                    labels=options.data.outputs.get(out).classes_names,
+                    data_array=cm,
+                    data_percent_array=cm_percent,
+                )
+            )
+            _id += 1
 
-            if data.get('stat'):
-                return_data[f"{idx + 1}"]['statistic_values'] = data.get('stat')
-            else:
-                return_data[f"{idx + 1}"]['statistic_values'] = {}
-    else:
-        pass
+        else:
+            report = get_classification_report(
+                y_true=y_true.get("val").get(f"{out}").reshape(
+                    (np.prod(y_true.get("val").get(f"{out}").shape[:-1]),
+                     y_true.get("val").get(f"{out}").shape[-1])
+                ),
+                y_pred=np.where(y_pred.get(f"{out}") >= 0.9, 1, 0).reshape(
+                    (np.prod(y_pred.get(f"{out}").shape[:-1]), y_pred.get(f"{out}").shape[-1])
+                ),
+                labels=options.data.outputs.get(out).classes_names
+            )
+            return_data.append(
+                fill_table_front_structure(
+                    _id=_id,
+                    graph_name=f"Выходной слой «{out}» - Отчет по классам",
+                    plot_data=report
+                )
+            )
+            _id += 1
+    return return_data
 
+
+def get_balance_data_request(options, dataset_balance, interactive_config) -> list:
+    return_data = []
+    _id = 0
+    for out in options.data.outputs.keys():
+        for class_type in dataset_balance.get(f"{out}").keys():
+            preset = {}
+            for data_type in ['train', 'val']:
+                class_names, class_count = sort_dict(
+                    dict_to_sort=dataset_balance.get(f"{out}").get(class_type).get(data_type),
+                    mode=interactive_config.data_balance.sorted.name
+                )
+                preset[data_type] = fill_graph_front_structure(
+                    _id=_id,
+                    _type='histogram',
+                    type_data=data_type,
+                    graph_name=f"Выход {out} - "
+                               f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка",
+                    short_name=f"{out} - {'Тренировочная' if data_type == 'train' else 'Проверочная'}",
+                    x_label="Название класса",
+                    y_label="Значение",
+                    plot_data=[fill_graph_plot_data(x=class_names, y=class_count)],
+                )
+                _id += 1
+            return_data.append(preset)
     return return_data

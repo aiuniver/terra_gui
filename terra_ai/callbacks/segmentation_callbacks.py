@@ -8,7 +8,9 @@ from PIL import Image
 from pandas import DataFrame
 from tensorflow.python.keras.utils.np_utils import to_categorical
 
-from terra_ai.callbacks.utils import dice_coef, sort_dict, get_y_true, get_image_class_colormap
+from terra_ai.callbacks.utils import dice_coef, sort_dict, get_y_true, get_image_class_colormap, get_confusion_matrix, \
+    fill_heatmap_front_structure, get_classification_report, fill_table_front_structure, fill_graph_front_structure, \
+    fill_graph_plot_data
 from terra_ai.data.datasets.dataset import DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerEncodingChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
@@ -154,7 +156,7 @@ class ImageSegmentationCallback:
         return dataset_balance
 
     @staticmethod
-    def intermediate_result(interactive_config, options, example_idx, dataset_path,
+    def intermediate_result_request(interactive_config, options, example_idx, dataset_path,
                                     preset_path, y_pred, y_true, class_colors) -> dict:
         return_data = {}
         if interactive_config.intermediate_result.show_results:
@@ -202,6 +204,81 @@ class ImageSegmentationCallback:
                         return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
                     else:
                         return_data[f"{idx + 1}"]['statistic_values'] = {}
+        return return_data
+
+    @staticmethod
+    def statistic_data_request(interactive_config, options, y_true, y_pred) -> list:
+        return_data = []
+        _id = 1
+        for out in interactive_config.statistic_data.output_id:
+            cm, cm_percent = get_confusion_matrix(
+                np.argmax(y_true.get("val").get(f"{out}"), axis=-1).reshape(
+                    np.prod(np.argmax(y_true.get("val").get(f"{out}"), axis=-1).shape)).astype('int'),
+                np.argmax(y_pred.get(f'{out}'), axis=-1).reshape(
+                    np.prod(np.argmax(y_pred.get(f'{out}'), axis=-1).shape)).astype('int'),
+                get_percent=True
+            )
+            return_data.append(
+                fill_heatmap_front_structure(
+                    _id=_id,
+                    _type="heatmap",
+                    graph_name=f"Выходной слой «{out}» - Confusion matrix",
+                    short_name=f"{out} - Confusion matrix",
+                    x_label="Предсказание",
+                    y_label="Истинное значение",
+                    labels=options.data.outputs.get(out).classes_names,
+                    data_array=cm,
+                    data_percent_array=cm_percent,
+                )
+            )
+            _id += 1
+        return return_data
+
+    @staticmethod
+    def balance_data_request(options, dataset_balance, interactive_config) -> list:
+        return_data = []
+        _id = 0
+        for out in options.data.outputs.keys():
+            for class_type in dataset_balance.get(f"{out}").keys():
+                preset = {}
+                if class_type in ["presence_balance", "square_balance"]:
+                    for data_type in ['train', 'val']:
+                        names, count = sort_dict(
+                            dict_to_sort=dataset_balance.get(f"{out}").get(class_type).get(data_type),
+                            mode=interactive_config.data_balance.sorted.name
+                        )
+                        preset[data_type] = fill_graph_front_structure(
+                            _id=_id,
+                            _type='histogram',
+                            type_data=data_type,
+                            graph_name=f"Выход {out} - {'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка - "
+                                       f"{'баланс присутсвия' if class_type == 'presence_balance' else 'процент пространства'}",
+                            short_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} - "
+                                       f"{'присутсвие' if class_type == 'presence_balance' else 'пространство'}",
+                            x_label="Название класса",
+                            y_label="Значение",
+                            plot_data=[fill_graph_plot_data(x=names, y=count)],
+                        )
+                        _id += 1
+                    return_data.append(preset)
+                if class_type == "colormap":
+                    for class_name, map_link in dataset_balance.get(f"{out}").get('colormap').get(
+                            'train').items():
+                        preset = {}
+                        for data_type in ['train', 'val']:
+                            preset[data_type] = fill_graph_front_structure(
+                                _id=_id,
+                                _type='colormap',
+                                type_data=data_type,
+                                graph_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка "
+                                           f"- Цветовая карта класса {class_name}",
+                                short_name="",
+                                x_label="",
+                                y_label="",
+                                plot_data=map_link,
+                            )
+                            _id += 1
+                        return_data.append(preset)
         return return_data
 
 
@@ -309,7 +386,7 @@ class TextSegmentationCallback:
         return dataset_balance
 
     @staticmethod
-    def intermediate_result(interactive_config, options, example_idx, dataset_path,
+    def intermediate_result_request(interactive_config, options, example_idx, dataset_path,
                                     preset_path, y_pred, y_true, class_colors) -> dict:
         return_data = {}
         if interactive_config.intermediate_result.show_results:
@@ -358,6 +435,86 @@ class TextSegmentationCallback:
                         return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
                     else:
                         return_data[f"{idx + 1}"]['statistic_values'] = {}
+        return return_data
+
+    @staticmethod
+    def statistic_data_request(interactive_config, options, y_true, y_pred) -> list:
+        return_data = []
+        _id = 1
+        for out in interactive_config.statistic_data.output_id:
+            encoding = options.data.outputs.get(out).encoding
+            if encoding == LayerEncodingChoice.ohe:
+                cm, cm_percent = get_confusion_matrix(
+                    np.argmax(y_true.get("val").get(f"{out}"), axis=-1).reshape(
+                        np.prod(np.argmax(y_true.get("val").get(f"{out}"), axis=-1).shape)).astype('int'),
+                    np.argmax(y_pred.get(f'{out}'), axis=-1).reshape(
+                        np.prod(np.argmax(y_pred.get(f'{out}'), axis=-1).shape)).astype('int'),
+                    get_percent=True
+                )
+                return_data.append(
+                    fill_heatmap_front_structure(
+                        _id=_id,
+                        _type="heatmap",
+                        graph_name=f"Выходной слой «{out}» - Confusion matrix",
+                        short_name=f"{out} - Confusion matrix",
+                        x_label="Предсказание",
+                        y_label="Истинное значение",
+                        labels=options.data.outputs.get(out).classes_names,
+                        data_array=cm,
+                        data_percent_array=cm_percent,
+                    )
+                )
+                _id += 1
+            elif encoding == LayerEncodingChoice.multi:
+                report = get_classification_report(
+                    y_true=y_true.get("val").get(f"{out}").reshape(
+                        (np.prod(y_true.get("val").get(f"{out}").shape[:-1]),
+                         y_true.get("val").get(f"{out}").shape[-1])
+                    ),
+                    y_pred=np.where(y_pred.get(f"{out}") >= 0.9, 1, 0).reshape(
+                        (np.prod(y_pred.get(f"{out}").shape[:-1]), y_pred.get(f"{out}").shape[-1])
+                    ),
+                    labels=options.data.outputs.get(out).classes_names
+                )
+                return_data.append(
+                    fill_table_front_structure(
+                        _id=_id,
+                        graph_name=f"Выходной слой «{out}» - Отчет по классам",
+                        plot_data=report
+                    )
+                )
+                _id += 1
+            else:
+                pass
+        return return_data
+
+    @staticmethod
+    def balance_data_request(options, dataset_balance, interactive_config) -> list:
+        return_data = []
+        _id = 0
+        for out in options.data.outputs.keys():
+            for class_type in dataset_balance.get(f"{out}").keys():
+                preset = {}
+                if class_type in ["presence_balance", "percent_balance"]:
+                    for data_type in ['train', 'val']:
+                        names, count = sort_dict(
+                            dict_to_sort=dataset_balance.get(f"{out}").get(class_type).get(data_type),
+                            mode=interactive_config.data_balance.sorted.name
+                        )
+                        preset[data_type] = fill_graph_front_structure(
+                            _id=_id,
+                            _type='histogram',
+                            type_data=data_type,
+                            graph_name=f"Выход {out} - {'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка - "
+                                       f"{'баланс присутсвия' if class_type == 'presence_balance' else 'процент пространства'}",
+                            short_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} - "
+                                       f"{'присутсвие' if class_type == 'presence_balance' else 'процент'}",
+                            x_label="Название класса",
+                            y_label="Значение",
+                            plot_data=[fill_graph_plot_data(x=names, y=count)],
+                        )
+                        _id += 1
+                return_data.append(preset)
         return return_data
 
 
@@ -676,4 +833,3 @@ def reformat_y_pred(y_true, y_pred):
         else:
             reformat_pred[out] = y_pred[idx]
     return reformat_pred, inverse_pred
-

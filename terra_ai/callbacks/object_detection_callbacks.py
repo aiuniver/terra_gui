@@ -8,7 +8,8 @@ import numpy as np
 from PIL import Image, ImageFont, ImageDraw
 from tensorflow.python.keras.utils.np_utils import to_categorical
 
-from terra_ai.callbacks.utils import sort_dict, round_loss_metric
+from terra_ai.callbacks.utils import sort_dict, round_loss_metric, fill_heatmap_front_structure, \
+    fill_graph_front_structure, fill_graph_plot_data
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
 from terra_ai.settings import DEPLOY_PRESET_PERCENT
 
@@ -44,8 +45,22 @@ class YoloV3Callback:
         )
 
     @staticmethod
-    def dataset_balance(options, y_true) -> dict:
-        return prepare_dataset_balance(options, y_true)
+    def dataset_balance(options, y_true, preset_path) -> dict:
+        return prepare_dataset_balance(options, y_true, preset_path)
+
+    @staticmethod
+    def intermediate_result_request(options, yolo_interactive_config, raw_y_pred, y_true, example_idx,
+                                    dataset_path, class_colors, preset_path):
+        return get_intermediate_result(options, yolo_interactive_config, raw_y_pred, y_true, example_idx,
+                                       dataset_path, class_colors, preset_path)
+
+    @staticmethod
+    def statistic_data_request(yolo_interactive_config, options, y_true, raw_y_pred) -> list:
+        return get_statistic_data_request(yolo_interactive_config, options, y_true, raw_y_pred)
+
+    @staticmethod
+    def balance_data_request(options, dataset_balance, interactive_config) -> list:
+        return get_balance_data_request(options, dataset_balance, interactive_config)
 
 
 class YoloV4Callback:
@@ -79,8 +94,22 @@ class YoloV4Callback:
         )
 
     @staticmethod
-    def dataset_balance(options, y_true) -> dict:
-        return prepare_dataset_balance(options, y_true)
+    def dataset_balance(options, y_true, preset_path) -> dict:
+        return prepare_dataset_balance(options, y_true, preset_path)
+
+    @staticmethod
+    def intermediate_result_request(options, yolo_interactive_config, raw_y_pred, y_true, example_idx,
+                                    dataset_path, class_colors, preset_path):
+        return get_intermediate_result(options, yolo_interactive_config, raw_y_pred, y_true, example_idx,
+                                       dataset_path, class_colors, preset_path)
+
+    @staticmethod
+    def statistic_data_request(yolo_interactive_config, options, y_true, raw_y_pred) -> list:
+        return get_statistic_data_request(yolo_interactive_config, options, y_true, raw_y_pred)
+
+    @staticmethod
+    def balance_data_request(options, dataset_balance, interactive_config) -> list:
+        return get_balance_data_request(options, dataset_balance, interactive_config)
 
 
 def get_yolo_y_true(options):
@@ -696,7 +725,6 @@ def prepare_dataset_balance(options, class_colors, preset_path) -> dict:
     return dataset_balance
 
 
-
 def get_intermediate_result(options, yolo_interactive_config, raw_y_pred, y_true, example_idx,
                             dataset_path, class_colors, preset_path) -> dict:
     return_data = {}
@@ -742,4 +770,189 @@ def get_intermediate_result(options, yolo_interactive_config, raw_y_pred, y_true
     else:
         pass
 
+    return return_data
+
+
+def get_statistic_data_request(yolo_interactive_config, options, y_true, raw_y_pred) -> list:
+    return_data = []
+    _id = 1
+    box_channel = yolo_interactive_config.statistic_data.box_channel
+    name_classes = options.data.outputs.get(list(options.data.outputs.keys())[0]).classes_names
+    y_pred = get_yolo_y_pred(
+        array=raw_y_pred,
+        options=options,
+        sensitivity=yolo_interactive_config.statistic_data.sensitivity,
+        threashold=yolo_interactive_config.statistic_data.threashold
+    )
+    object_tt = 0
+    object_tf = 0
+    object_ft = 0
+
+    line_names = []
+    class_accuracy_hist = {}
+    class_loss_hist = {}
+    class_coord_accuracy = {}
+    for class_name in name_classes:
+        line_names.append(class_name)
+        class_accuracy_hist[class_name] = []
+        class_loss_hist[class_name] = []
+        class_coord_accuracy[class_name] = []
+    line_names.append('empty')
+
+    class_matrix = np.zeros((len(line_names), len(line_names)))
+    for i in range(len(y_pred[box_channel])):
+        example_stat = get_yolo_example_statistic(
+            true_bb=y_true.get(box_channel)[i],
+            pred_bb=y_pred.get(box_channel)[i],
+            name_classes=name_classes,
+            sensitivity=yolo_interactive_config.statistic_data.sensitivity
+        )
+        object_ft += len(example_stat['recognize']['empty'])
+        object_tf += len(example_stat['recognize']['unrecognize'])
+        for class_name in line_names:
+            if class_name != 'empty':
+                object_tt += len(example_stat['recognize'][class_name])
+            for item in example_stat['recognize'][class_name]:
+                class_matrix[line_names.index(class_name)][line_names.index(item['pred_class'])] += 1
+                if class_name != 'empty':
+                    if item['class_result']:
+                        class_accuracy_hist[class_name].append(item['class_conf'])
+                        class_coord_accuracy[class_name].append(item['overlap'])
+                    else:
+                        class_loss_hist[class_name].append(item['class_conf'])
+        for item in example_stat['recognize']['unrecognize']:
+            class_matrix[line_names.index(item['class_name'])][-1] += 1
+
+    for class_name in name_classes:
+        class_accuracy_hist[class_name] = np.round(np.mean(class_accuracy_hist[class_name]) * 100, 2).item() if \
+            class_accuracy_hist[class_name] else 0.
+        class_coord_accuracy[class_name] = np.round(np.mean(class_coord_accuracy[class_name]) * 100,
+                                                    2).item() if \
+            class_coord_accuracy[class_name] else 0.
+        class_loss_hist[class_name] = np.round(np.mean(class_loss_hist[class_name]) * 100, 2).item() if \
+            class_loss_hist[
+                class_name] else 0.
+
+    object_matrix = [[object_tt, object_tf], [object_ft, 0]]
+    class_matrix_percent = []
+    for i in class_matrix:
+        class_matrix_percent.append(i * 100 / np.sum(i) if np.sum(i) else np.zeros_like(i))
+    class_matrix_percent = np.round(class_matrix_percent, 2).tolist()
+    class_matrix = class_matrix.astype('int').tolist()
+
+    return_data.append(
+        fill_heatmap_front_structure(
+            _id=1,
+            _type="heatmap",
+            graph_name=f"Бокс-канал «{box_channel}» - Матрица неточностей определения классов",
+            short_name=f"{box_channel} - Матрица классов",
+            x_label="Предсказание",
+            y_label="Истинное значение",
+            labels=name_classes,
+            data_array=class_matrix,
+            data_percent_array=class_matrix_percent,
+        )
+    )
+    return_data.append(
+        fill_heatmap_front_structure(
+            _id=2,
+            _type="heatmap",
+            graph_name=f"Бокс-канал «{box_channel}» - Матрица неточностей определения объектов",
+            short_name=f"{box_channel} - Матрица объектов",
+            x_label="Предсказание",
+            y_label="Истинное значение",
+            labels=['Объект', 'Отсутствие'],
+            data_array=object_matrix,
+            data_percent_array=None,
+        )
+    )
+    return_data.append(
+        fill_graph_front_structure(
+            _id=3,
+            _type='histogram',
+            graph_name=f'Бокс-канал «{box_channel}» - Средняя точность определеня  классов',
+            short_name=f"{box_channel} - точность классов",
+            x_label="Имя класса",
+            y_label="Средняя точность, %",
+            plot_data=[
+                fill_graph_plot_data(x=name_classes, y=[class_accuracy_hist[i] for i in name_classes])
+            ],
+        )
+    )
+    return_data.append(
+        fill_graph_front_structure(
+            _id=4,
+            _type='histogram',
+            graph_name=f'Бокс-канал «{box_channel}» - Средняя ошибка определеня  классов',
+            short_name=f"{box_channel} - ошибка классов",
+            x_label="Имя класса",
+            y_label="Средняя ошибка, %",
+            plot_data=[
+                fill_graph_plot_data(x=name_classes, y=[class_loss_hist[i] for i in name_classes])
+            ],
+        )
+    )
+    return_data.append(
+        fill_graph_front_structure(
+            _id=5,
+            _type='histogram',
+            graph_name=f'Бокс-канал «{box_channel}» - '
+                       f'Средняя точность определения  координат объекта класса (MeanIoU)',
+            short_name=f"{box_channel} - координаты классов",
+            x_label="Имя класса",
+            y_label="Средняя точность, %",
+            plot_data=[
+                fill_graph_plot_data(x=name_classes, y=[class_coord_accuracy[i] for i in name_classes])
+            ],
+        )
+    )
+    return return_data
+
+
+def get_balance_data_request(options, dataset_balance, interactive_config) -> list:
+    return_data = []
+    _id = 0
+    for class_type in dataset_balance.get("output").keys():
+        preset = {}
+        if class_type in ["class_count", "class_square"]:
+            for data_type in ['train', 'val']:
+                names, count = sort_dict(
+                    dict_to_sort=dataset_balance.get("output").get(class_type).get(data_type),
+                    mode=interactive_config.data_balance.sorted.name
+                )
+                preset[data_type] = fill_graph_front_structure(
+                    _id=_id,
+                    _type='histogram',
+                    type_data=data_type,
+                    graph_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка - "
+                               f"{'баланс присутсвия' if class_type == 'class_count' else 'процент пространства'}",
+                    short_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} - "
+                               f"{'присутсвие' if class_type == 'class_count' else 'пространство'}",
+                    x_label="Название класса",
+                    y_label="Значение",
+                    plot_data=[fill_graph_plot_data(x=names, y=count)],
+                )
+                _id += 1
+            return_data.append(preset)
+        if class_type == "colormap":
+            classes_name = sorted(list(dataset_balance.get("output").get('colormap').get('train').keys()))
+            for class_name in classes_name:
+                preset = {}
+                for data_type in ['train', 'val']:
+                    _dict = dataset_balance.get("output").get('colormap').get(data_type)
+                    preset[data_type] = fill_graph_front_structure(
+                        _id=_id,
+                        _type='colormap',
+                        type_data=data_type,
+                        graph_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка "
+                                   f"- Цветовая карта "
+                                   f"{'всех классов' if class_name == 'all_classes' else 'класса'} "
+                                   f"{'' if class_name == 'all_classes' else class_name}",
+                        short_name="",
+                        x_label="",
+                        y_label="",
+                        plot_data=_dict.get(class_name),
+                    )
+                    _id += 1
+                return_data.append(preset)
     return return_data
