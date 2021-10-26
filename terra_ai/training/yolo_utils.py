@@ -11,7 +11,7 @@ import colorsys
 ### DETECTION ###
 
 def detect_image(Yolo, original_image, output_path, input_size=416, show=False, CLASSES=None,
-                 score_threshold=0.3, iou_threshold=0.45, rectangle_colors=''):
+                 score_threshold=0.3, iou_threshold=0.45, rectangle_colors='', train=False):
     # original_image = cv2.imread(image_path)
     # original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
     # original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
@@ -26,6 +26,8 @@ def detect_image(Yolo, original_image, output_path, input_size=416, show=False, 
     # print(pred_bbox[0].shape)
     # print(pred_bbox[1].shape)
     # print(pred_bbox[2].shape)
+    if train:
+        pred_bbox = [pred_bbox[1], pred_bbox[3], pred_bbox[5]]
 
     pred_bbox = [tf.reshape(x, (-1, tf.shape(x)[-1])) for x in pred_bbox]
     pred_bbox = tf.concat(pred_bbox, axis=0)
@@ -586,6 +588,11 @@ class CustomModelYolo(keras.Model):
         out_info.update(target_out)
 
         return out_info
+
+    @tf.function
+    def predict_step(self, data):
+
+        return self.yolo(data, training=False)
     # mAP_model = Create_Yolo(input_size=YOLO_INPUT_SIZE, CLASSES=TRAIN_CLASSES)  # create second model to measure mAP
     # test_set = 70
     # best_val_loss = 1000  # should be large at start
@@ -684,7 +691,7 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
     if TRAIN_CLASSES is None:
         TRAIN_CLASSES = []
     if iou_threshold is None:
-        iou_threshold = [0.50, 0.95]
+        iou_threshold = [0.50]
     MINOVERLAP = 0.5  # default value (defined in the PASCAL VOC2012 challenge)
     NUM_CLASS = TRAIN_CLASSES
 
@@ -740,6 +747,7 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
         t1 = time.time()
 
         pred_bbox = Yolo.predict(image_data)
+        pred_bbox = [pred_bbox[1], pred_bbox[3], pred_bbox[5]]
         t2 = time.time()
         times.append(t2 - t1)
 

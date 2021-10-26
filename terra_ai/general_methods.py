@@ -221,7 +221,7 @@ def _postprocess_model(**params):
     # print(dataset_data)
     for key in dataset_data.outputs.keys():
         # print(dataset_data.outputs.get(key).task)
-        if dataset_data.outputs.get(key).task == 'ImageSegmentation':
+        if dataset_data.outputs.get(key).task == 'Segmentation':
             out = _plot_mask_segmentation(pred, dataset_data.num_classes.get(key),
                                           [x.as_rgb_tuple() for x in dataset_data.classes_colors.get(key)])
         elif dataset_data.outputs.get(key).task == 'Classification':
