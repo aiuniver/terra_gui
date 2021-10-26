@@ -67,7 +67,7 @@ def json2model_cascade(path: str):
     postprocessing = []
 
     for inp in config['outputs'].keys():
-        if config['outputs'][inp]['task'] != 'Timeseries':
+        if config['outputs'][inp]['task'] not in ['Timeseries', 'TimeseriesTrend']:
             for inp, param in config['columns'][inp].items():
                 with open(os.path.join(dataset_path, "instructions", "parameters", inp + '.json')) as cfg:
                     spec_config = json.load(cfg)
@@ -86,7 +86,7 @@ def json2model_cascade(path: str):
                 with open(os.path.join(dataset_path, "instructions", "parameters", key + '.json')) as cfg:
                     param[key].update(json.load(cfg))
             param = {'columns': param, 'dataset_path': dataset_path, 'shape': config['outputs'][inp]['shape']}
-            type_module = getattr(general_fucntions, 'timeseries')
+            type_module = getattr(general_fucntions, decamelize(config['outputs'][inp]['task']))
             postprocessing.append(getattr(type_module, 'main')(**param))
 
     if any(postprocessing):

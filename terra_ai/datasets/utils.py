@@ -15,9 +15,14 @@ ANNOTATION_SEPARATOR = ":"
 ANNOTATION_LABEL_NAME = "# label"
 ANNOTATION_COLOR_RGB = "color_rgb"
 
-PATH_TYPE_LIST = [decamelize(LayerInputTypeChoice.Image), decamelize(LayerOutputTypeChoice.Image),
-                  decamelize(LayerInputTypeChoice.Audio), decamelize(LayerOutputTypeChoice.Audio),
-                  decamelize(LayerInputTypeChoice.Video), decamelize(LayerOutputTypeChoice.Segmentation)]
+PATH_TYPE_LIST = [
+    decamelize(LayerInputTypeChoice.Image),
+    decamelize(LayerOutputTypeChoice.Image),
+    decamelize(LayerInputTypeChoice.Audio),
+    decamelize(LayerOutputTypeChoice.Audio),
+    decamelize(LayerInputTypeChoice.Video),
+    decamelize(LayerOutputTypeChoice.ImageSegmentation),
+]
 
 
 def _get_annotation_class(name: str, color: str):
@@ -102,13 +107,17 @@ def get_yolo_anchors(yolo_version) -> list:
 
     yolo_anchors: list = []
 
-    if yolo_version == 'v3':
-        yolo_anchors = [[[10, 13], [16, 30], [33, 23]],
-                        [[30, 61], [62, 45], [59, 119]],
-                        [[116, 90], [156, 198], [373, 326]]]
-    elif yolo_version == 'v4':
-        yolo_anchors = [[[12, 16], [19, 36], [40, 28]],
-                        [[36, 75], [76, 55], [72, 146]],
-                        [[142, 110], [192, 243], [459, 401]]]
+    if yolo_version == "v3":
+        yolo_anchors = [
+            [[10, 13], [16, 30], [33, 23]],
+            [[30, 61], [62, 45], [59, 119]],
+            [[116, 90], [156, 198], [373, 326]],
+        ]
+    elif yolo_version == "v4":
+        yolo_anchors = [
+            [[12, 16], [19, 36], [40, 28]],
+            [[36, 75], [76, 55], [72, 146]],
+            [[142, 110], [192, 243], [459, 401]],
+        ]
 
     return yolo_anchors

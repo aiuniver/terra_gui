@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from pandas import DataFrame
 from sklearn.metrics import classification_report, confusion_matrix
+from tensorflow.python.keras.utils.np_utils import to_categorical
 
 from terra_ai.data.training.extra import BalanceSortedChoice
 
@@ -505,3 +506,15 @@ def fill_heatmap_front_structure(_id: int, _type: str, graph_name: str, short_na
 
 def fill_table_front_structure(_id: int, graph_name: str, plot_data: list):
     return {'id': _id, 'type': 'table', 'graph_name': graph_name, 'plot_data': plot_data}
+
+
+def get_y_true(options, output_id):
+    if not options.data.use_generator:
+        y_true = options.Y.get('val').get(f"{output_id}")
+    else:
+        y_true = []
+        for _, y_val in options.dataset['val'].batch(1):
+            y_true.extend(y_val.get(f'{output_id}').numpy())
+        y_true = np.array(y_true)
+    return y_true
+
