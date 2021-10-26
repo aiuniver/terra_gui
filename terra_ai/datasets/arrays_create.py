@@ -576,6 +576,7 @@ class CreateArray(object):
                                        'sample_rate': options['sample_rate'],
                                        'resample': options['resample'],
                                        'parameter': options['parameter'],
+                                       'cols_names': options['cols_names'],
                                        'scaler': options['scaler'],
                                        'max_scaler': options['max_scaler'],
                                        'min_scaler': options['min_scaler'],
