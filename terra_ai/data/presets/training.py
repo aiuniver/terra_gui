@@ -7,7 +7,7 @@ from enum import Enum
 
 class Task(str, Enum):
     Classification = "Classification"
-    Segmentation = "Segmentation"
+    ImageSegmentation = "ImageSegmentation"
     Regression = "Regression"
     Timeseries = "Timeseries"
     ObjectDetection = "ObjectDetection"
@@ -135,7 +135,7 @@ TasksGroups = [
         ],
     },
     {
-        "task": Task.Segmentation,
+        "task": Task.ImageSegmentation,
         "losses": [
             Loss.CategoricalCrossentropy,
             Loss.BinaryCrossentropy,
@@ -243,9 +243,7 @@ TasksGroups = [
     },
     {
         "task": Task.ObjectDetection,
-        "losses": [
-            Loss.YoloLoss
-        ],
+        "losses": [Loss.YoloLoss],
         "metrics": [
             Metric.mAP50,
             # Metric.mAP95
@@ -386,6 +384,5 @@ TasksGroups = [
             # Metric.LogCoshError,
             # Metric.SquaredHinge,
         ],
-    }
+    },
 ]
-

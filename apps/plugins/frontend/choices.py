@@ -19,7 +19,7 @@ class LayerOutputTypeChoice(str, Enum):
     Audio = "Аудио"
     Dataframe = "Таблицы"
     Classification = "Классификация"
-    Segmentation = "Сегментация изображений"
+    ImageSegmentation = "Сегментация изображений"
     TextSegmentation = "Сегментация текстов"
     ObjectDetection = "Обнаружение объектов"
 

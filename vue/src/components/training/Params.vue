@@ -252,6 +252,7 @@ export default {
     },
     async stop() {
       // this.debounce(false);
+      this.stopLearning = true
       await this.$store.dispatch('trainings/stop', {});
     },
     async clear() {
