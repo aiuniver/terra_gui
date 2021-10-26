@@ -505,6 +505,7 @@ class CustomModelYolo(keras.Model):
             giou_loss = conf_loss = prob_loss = 0
             prob_loss_cls = {}
             pred_out = {}
+            target_out = {}
 
             # optimizing process
             grid = 3  # if not TRAIN_YOLO_TINY else 2
@@ -512,7 +513,8 @@ class CustomModelYolo(keras.Model):
                 conv, pred = pred_result[i * 2], pred_result[i * 2 + 1]
                 loss_items = self.loss_fn(pred, conv, *(target.get(key), serv.get(key)), i,
                                           CLASSES=self.CLASSES)
-                pred_out['pred_'+str(key)] = pred
+                pred_out['pred_' + str(key)] = pred
+                target_out['target_' + str(key)] = target.get(key)
                 giou_loss += loss_items[0]
                 conf_loss += loss_items[1]
                 prob_loss += loss_items[2]
@@ -542,6 +544,7 @@ class CustomModelYolo(keras.Model):
                     "giou_loss": giou_loss, "conf_loss": conf_loss, "prob_loss": prob_loss, "total_loss": total_loss}
         out_info.update(prob_loss_cls)
         out_info.update(pred_out)
+        out_info.update(target_out)
 
         return out_info
 
@@ -554,6 +557,8 @@ class CustomModelYolo(keras.Model):
             giou_loss = conf_loss = prob_loss = 0
             prob_loss_cls = {}
             pred_out = {}
+            target_out = {}
+
             # optimizing process
             grid = 3  # if not TRAIN_YOLO_TINY else 2
 
@@ -561,7 +566,8 @@ class CustomModelYolo(keras.Model):
                 conv, pred = pred_result[i * 2], pred_result[i * 2 + 1]
                 loss_items = self.loss_fn(pred, conv, *(target.get(key), serv.get(key)),
                                           i, CLASSES=self.CLASSES)
-                pred_out['pred_'+str(key)] = pred
+                pred_out['pred_' + str(key)] = pred
+                target_out['target_' + str(key)] = target.get(key)
                 giou_loss += loss_items[0]
                 conf_loss += loss_items[1]
                 prob_loss += loss_items[2]
@@ -577,6 +583,7 @@ class CustomModelYolo(keras.Model):
         out_info = {"giou_loss": giou_loss, "conf_loss": conf_loss, "prob_loss": prob_loss, "total_loss": total_loss}
         out_info.update(prob_loss_cls)
         out_info.update(pred_out)
+        out_info.update(target_out)
 
         return out_info
     # mAP_model = Create_Yolo(input_size=YOLO_INPUT_SIZE, CLASSES=TRAIN_CLASSES)  # create second model to measure mAP
@@ -731,6 +738,7 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
         image_data = inp['1'].numpy()
         original_image_shape.append(original_image.shape)
         t1 = time.time()
+
         pred_bbox = Yolo.predict(image_data)
         t2 = time.time()
         times.append(t2 - t1)
@@ -745,7 +753,6 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
     ap_dictionary = {}
     for i_iou in iou_threshold:
 
-        # print(f'\ncalculating mAP{int(i_iou * 100)}...\n')
         json_pred = [[] for i in range(n_classes)]
         class_predictions = {}
         len_bbox = 0
