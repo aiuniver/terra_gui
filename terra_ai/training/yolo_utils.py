@@ -516,6 +516,7 @@ class CustomModelYolo(keras.Model):
             giou_loss = conf_loss = prob_loss = 0
             prob_loss_cls = {}
             pred_out = {}
+            target_out = {}
 
             # optimizing process
             grid = 3  # if not TRAIN_YOLO_TINY else 2
@@ -524,6 +525,7 @@ class CustomModelYolo(keras.Model):
                 loss_items = self.loss_fn(pred, conv, *(target.get(key), serv.get(key)), i,
                                           CLASSES=self.CLASSES)
                 pred_out['pred_' + str(key)] = pred
+                target_out['target_' + str(key)] = target.get(key)
                 giou_loss += loss_items[0]
                 conf_loss += loss_items[1]
                 prob_loss += loss_items[2]
@@ -553,6 +555,7 @@ class CustomModelYolo(keras.Model):
                     "giou_loss": giou_loss, "conf_loss": conf_loss, "prob_loss": prob_loss, "total_loss": total_loss}
         out_info.update(prob_loss_cls)
         out_info.update(pred_out)
+        out_info.update(target_out)
 
         return out_info
 
@@ -565,6 +568,8 @@ class CustomModelYolo(keras.Model):
             giou_loss = conf_loss = prob_loss = 0
             prob_loss_cls = {}
             pred_out = {}
+            target_out = {}
+
             # optimizing process
             grid = 3  # if not TRAIN_YOLO_TINY else 2
 
@@ -573,6 +578,7 @@ class CustomModelYolo(keras.Model):
                 loss_items = self.loss_fn(pred, conv, *(target.get(key), serv.get(key)),
                                           i, CLASSES=self.CLASSES)
                 pred_out['pred_' + str(key)] = pred
+                target_out['target_' + str(key)] = target.get(key)
                 giou_loss += loss_items[0]
                 conf_loss += loss_items[1]
                 prob_loss += loss_items[2]
@@ -588,6 +594,7 @@ class CustomModelYolo(keras.Model):
         out_info = {"giou_loss": giou_loss, "conf_loss": conf_loss, "prob_loss": prob_loss, "total_loss": total_loss}
         out_info.update(prob_loss_cls)
         out_info.update(pred_out)
+        out_info.update(target_out)
 
         return out_info
 
@@ -701,7 +708,6 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
 
     gt_counter_per_class = {}
     id_ground_truth = {}
-    print('len(dataset.dataset[val])', len(dataset.dataset['val']))
     for index in range(len(dataset.dataset['val'])):
 
         y_true = dataset.dataframe.get("val").iloc[index, 1].split(' ')
@@ -750,11 +756,12 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
         image_data = inp.get(input_key[0]).numpy()
         original_image_shape.append(original_image.shape)
         t1 = time.time()
+
         pred_bbox = Yolo.predict(image_data)
         pred_bbox = [pred_bbox[1], pred_bbox[3], pred_bbox[5]]
         t2 = time.time()
         times.append(t2 - t1)
-        print('t2 - t1', t2 - t1)
+
         pred_bbox = [tf.reshape(x, (-1, tf.shape(x)[-1])) for x in pred_bbox]
         pred_bbox = tf.concat(pred_bbox, axis=0)
         predict.append(pred_bbox)
@@ -765,7 +772,6 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
     ap_dictionary = {}
     for i_iou in iou_threshold:
 
-        # print(f'\ncalculating mAP{int(i_iou * 100)}...\n')
         json_pred = [[] for i in range(n_classes)]
         class_predictions = {}
         len_bbox = 0
