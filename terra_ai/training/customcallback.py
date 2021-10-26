@@ -413,9 +413,10 @@ class InteractiveCallback:
     def set_attributes(self, dataset: PrepareDataset, metrics: dict, losses: dict, dataset_path: str,
                        training_path: str, initial_config: InteractiveData,
                        yolo_initial_config: YoloInteractiveData = None):
-        print('\ndataset.architecture', dataset.data.architecture)
-        print('\ndataset.data.outputs', dataset.data.outputs)
-        print('\ndataset.data.inputs', dataset.data.inputs)
+        # print('\ndataset.architecture', dataset.data.architecture)
+        # print('\ndataset.data.outputs', dataset.data.outputs)
+        # print('\ndataset.data.inputs', dataset.data.inputs)
+        # print('\ndataset.dataframe', dataset.dataframe.get('val')['1_Комнат'])
         self.preset_path = os.path.join(training_path, "presets")
         if not os.path.exists(self.preset_path):
             os.mkdir(self.preset_path)
@@ -438,6 +439,7 @@ class InteractiveCallback:
         if not self.log_history:
             self._prepare_null_log_history_template()
         self.dataset_balance = self._prepare_dataset_balance()
+        # print('\nself.dataset_balance', self.dataset_balance)
         self.class_idx = self._prepare_class_idx()
         self.seed_idx = self._prepare_seed()
         self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
@@ -674,7 +676,7 @@ class InteractiveCallback:
                     colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
                     colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
                     self.class_colors = colors
-                elif task == LayerOutputTypeChoice.ImageSegmentation:
+                elif task == LayerOutputTypeChoice.Segmentation:
                     self.class_colors = [color.as_rgb_tuple() for color in classes_colors]
                 else:
                     self.class_colors = colors
@@ -797,7 +799,7 @@ class InteractiveCallback:
             for out in self.options.data.outputs.keys():
                 out_task = self.options.data.outputs.get(out).task
                 if out_task == LayerOutputTypeChoice.Classification or \
-                        out_task == LayerOutputTypeChoice.ImageSegmentation or \
+                        out_task == LayerOutputTypeChoice.Segmentation or \
                         out_task == LayerOutputTypeChoice.TextSegmentation or \
                         out_task == LayerOutputTypeChoice.TimeseriesTrend or \
                         out_task == LayerOutputTypeChoice.ObjectDetection:
@@ -835,7 +837,7 @@ class InteractiveCallback:
                             "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
                         }
 
-                    if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.ImageSegmentation or \
+                    if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.Segmentation or \
                             task == LayerOutputTypeChoice.TextSegmentation or task == LayerOutputTypeChoice.TimeseriesTrend:
                         self.log_history[out]["class_loss"] = {}
                         self.log_history[out]["class_metrics"] = {}
@@ -904,6 +906,7 @@ class InteractiveCallback:
             dataset_balance = {}
             for out in self.options.data.outputs.keys():
                 task = self.options.data.outputs.get(out).task
+                # print('self.options.data.outputs.get(out)', self.options.data.outputs.get(out))
                 encoding = self.options.data.outputs.get(out).encoding
 
                 if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
@@ -915,7 +918,7 @@ class InteractiveCallback:
                             ohe=encoding == LayerEncodingChoice.ohe
                         )
 
-                if task == LayerOutputTypeChoice.ImageSegmentation and encoding == LayerEncodingChoice.ohe:
+                if task == LayerOutputTypeChoice.Segmentation and encoding == LayerEncodingChoice.ohe:
                     dataset_balance[f"{out}"] = {
                         "presence_balance": {},
                         "square_balance": {},
@@ -999,24 +1002,25 @@ class InteractiveCallback:
                             }
 
                 if task == LayerOutputTypeChoice.Regression:
-                    dataset_balance[f"{out}"] = {
-                        'histogram': {},
-                        'correlation': {}
-                    }
+                    dataset_balance[f"{out}"] = {'histogram': {}, 'correlation': {}}
+                    # print('\nself.options.dataframe.keys()', list(self.options.dataframe.get('train').columns))
                     for data_type in ['train', 'val']:
                         dataset_balance[f"{out}"]['histogram'][data_type] = {}
                         for column in list(self.options.dataframe.get('train').columns):
                             column_id = int(column.split("_")[0])
-                            column_task = self.options.data.columns.get(column_id).get(column).task
+                            column_task = self.options.data.columns.get(column_id).get(column).get('task')
                             column_data = list(self.options.dataframe.get(data_type)[column])
+                            # print('\n--column', column, column_task, column_data)
                             if column_task == LayerInputTypeChoice.Text:
                                 continue
-                            elif column_task == LayerInputTypeChoice.Classification:
+                            elif column_task == LayerInputTypeChoice.Classification or \
+                                    len(set(column_data)) < MAX_HISTOGRAM_BINS:
                                 x, y = self._get_distribution_histogram(column_data, categorical=True)
                                 hist_type = "histogram"
                             else:
                                 x, y = self._get_distribution_histogram(column_data, categorical=False)
                                 hist_type = "bar"
+                            # print('\n--column', column, column_task, '\n', x, '\n', y)
                             dataset_balance[f"{out}"]['histogram'][data_type][column] = {
                                 "name": column.split("_", 1)[-1],
                                 "type": hist_type,
@@ -1406,7 +1410,7 @@ class InteractiveCallback:
                                     normal_state)
 
                             if out_task == LayerOutputTypeChoice.Classification or \
-                                    out_task == LayerOutputTypeChoice.ImageSegmentation or \
+                                    out_task == LayerOutputTypeChoice.Segmentation or \
                                     out_task == LayerOutputTypeChoice.TextSegmentation or \
                                     out_task == LayerOutputTypeChoice.TimeseriesTrend:
                                 for cls in self.log_history.get(f"{out}").get('class_loss').keys():
@@ -1421,7 +1425,7 @@ class InteractiveCallback:
                                             y_pred=self.y_pred.get(f"{out}")[
                                                 self.class_idx.get('val').get(f"{out}").get(cls)],
                                         )
-                                    if out_task == LayerOutputTypeChoice.ImageSegmentation:
+                                    if out_task == LayerOutputTypeChoice.Segmentation:
                                         class_idx = classes_names.index(cls)
                                         class_loss = self._get_loss_calculation(
                                             loss_obj=self.loss_obj.get(f"{out}"),
@@ -1873,6 +1877,7 @@ class InteractiveCallback:
         return {'id': _id, 'type': 'table', 'graph_name': graph_name, 'plot_data': plot_data}
 
     def _get_loss_graph_data_request(self) -> list:
+        first = True
         method_name = '_get_loss_graph_data_request'
         try:
             data_return = []
@@ -1958,9 +1963,14 @@ class InteractiveCallback:
                     )
             return data_return
         except Exception as e:
-            print_error(InteractiveCallback().name, method_name, e)
+            if first:
+                print_error(InteractiveCallback().name, method_name, e)
+                first = False
+            else:
+                pass
 
     def _get_metric_graph_data_request(self) -> list:
+        first = True
         method_name = '_get_metric_graph_data_request'
         try:
             data_return = []
@@ -2047,9 +2057,14 @@ class InteractiveCallback:
                     )
             return data_return
         except Exception as e:
-            print_error(InteractiveCallback().name, method_name, e)
+            if first:
+                print_error(InteractiveCallback().name, method_name, e)
+                first = False
+            else:
+                pass
 
     def _get_intermediate_result_request(self) -> dict:
+        first = True
         method_name = '_get_intermediate_result_request'
         try:
             return_data = {}
@@ -2232,9 +2247,14 @@ class InteractiveCallback:
 
             return return_data
         except Exception as e:
-            print_error(InteractiveCallback().name, method_name, e)
+            if first:
+                print_error(InteractiveCallback().name, method_name, e)
+                first = False
+            else:
+                pass
 
     def _get_statistic_data_request(self) -> list:
+        first = True
         method_name = '_get_statistic_data_request'
         try:
             return_data = []
@@ -2578,17 +2598,23 @@ class InteractiveCallback:
 
             return return_data
         except Exception as e:
-            print_error(InteractiveCallback().name, method_name, e)
+            if first:
+                print_error(InteractiveCallback().name, method_name, e)
+                first = False
+            else:
+                pass
 
     def _get_balance_data_request(self) -> list:
+        first = True
         method_name = '_get_balance_data_request'
         try:
             return_data = []
             _id = 0
             if self.options.data.architecture in self.basic_architecture:
                 for out in self.options.data.outputs.keys():
+                    # print('self.options.data.outputs', self.options.data.outputs)
                     task = self.options.data.outputs.get(out).task
-
+                    # print('task', task)
                     if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
                         for class_type in self.dataset_balance.get(f"{out}").keys():
                             preset = {}
@@ -2679,12 +2705,24 @@ class InteractiveCallback:
                             return_data.append(preset)
 
                     elif task == LayerOutputTypeChoice.Regression:
+                        # print('-self.dataset_balance', self.dataset_balance.keys(), self.dataset_balance[f"{out}"])
                         for class_type in self.dataset_balance[f"{out}"].keys():
+                            # print('--class_type', class_type)
                             if class_type == 'histogram':
                                 for column in self.dataset_balance[f"{out}"][class_type]["train"].keys():
+                                    # print('----column', column)
                                     preset = {}
                                     for data_type in ["train", "val"]:
                                         histogram = self.dataset_balance[f"{out}"][class_type][data_type][column]
+                                        if histogram.get("type") == 'histogram':
+                                            x, y = CreateArray().sort_dict(
+                                                dict_to_sort=dict(zip(histogram.get("x"), histogram.get("y"))),
+                                                mode=self.interactive_config.data_balance.sorted.name
+                                            )
+                                            # print('\n--histogram', histogram, x, y)
+                                        else:
+                                            x = histogram.get("x")
+                                            y = histogram.get("y")
                                         data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
                                         preset[data_type] = self._fill_graph_front_structure(
                                             _id=_id,
@@ -2696,7 +2734,7 @@ class InteractiveCallback:
                                             x_label="Значение",
                                             y_label="Количество",
                                             plot_data=[
-                                                self._fill_graph_plot_data(x=histogram.get("x"), y=histogram.get("y"))],
+                                                self._fill_graph_plot_data(x=x, y=y)],
                                         )
                                         _id += 1
                                     return_data.append(preset)
@@ -2812,7 +2850,11 @@ class InteractiveCallback:
 
             return return_data
         except Exception as e:
-            print_error(InteractiveCallback().name, method_name, e)
+            if first:
+                print_error(InteractiveCallback().name, method_name, e)
+                first = False
+            else:
+                pass
 
     @staticmethod
     def _get_confusion_matrix(y_true, y_pred, get_percent=True) -> tuple:
@@ -2916,8 +2958,14 @@ class InteractiveCallback:
                 hist_data = pd.Series(data_series).value_counts()
                 return hist_data.index.to_list(), hist_data.to_list()
             else:
-                bins = int(len(data_series) / 10) if int(len(data_series) / 10) < MAX_HISTOGRAM_BINS else MAX_HISTOGRAM_BINS
-                data_series = InteractiveCallback().clean_data_series([data_series], mode="mono")
+                if len(InteractiveCallback().clean_data_series([data_series], mode="mono")) > 10:
+                    data_series = InteractiveCallback().clean_data_series([data_series], mode="mono")
+                if int(len(data_series) / 10) < MAX_HISTOGRAM_BINS:
+                    bins = int(len(data_series) / 10)
+                elif int(len(set(data_series))) < MAX_HISTOGRAM_BINS:
+                    bins = int(len(set(data_series)))
+                else:
+                    bins = MAX_HISTOGRAM_BINS
                 bar_values, x_labels = np.histogram(data_series, bins=bins)
                 new_x = []
                 for i in range(len(x_labels[:-1])):

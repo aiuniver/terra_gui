@@ -4,14 +4,34 @@
 		<div class="datasets__filter">
 			<DInputText small icon="search" v-model.trim="search" class="datasets__filter--search" placeholder="Найти в списке"/>
 			<div class="datasets__filter--sort">
-				<p><span>Последние просмотренные</span> <i class="ci-icon ci-chevron_down" /></p>
-				<i class="ci-icon ci-tile" />
-				<i class="ci-icon ci-text_align_justify" />
+				<p v-show="cardsDisplay"><span>Последние просмотренные</span> <i class="ci-icon ci-chevron_down" /></p>
+				<i @click="cardsDisplay = true" :class="['ci-icon', 'ci-tile', { selected: cardsDisplay }]" />
+				<i @click="cardsDisplay = false" :class="['ci-icon', 'ci-list', { selected: !cardsDisplay }]" />
 			</div>
 		</div>
 		<scrollbar class="datasets__scroll">
-			<div class="datasets__list">
+			<div v-if="cardsDisplay" class="datasets__cards">
 				<CardDataset v-for="(item, idx) in sortedList" :key="idx" :dataset="item"/>
+			</div>
+			<div v-else class="datasets__table--wrapper">
+				<table class="datasets__table">
+					<thead>
+						<tr>
+							<th>Название</th>
+							<th>Размер</th>
+							<th>Последнее использование</th>
+							<th>Создание</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr v-for="(item, idx) in sortedList" :key="'table'+idx">
+							<td><i class="ci-icon ci-image" /> <span>{{ item.name }}</span></td>
+							<td>{{ item.size ? item.size.short.toFixed(2) + ' ' + item.size.unit : 'Предустановленный' }}</td>
+							<td>1 минуту назад</td>
+							<td>1 минуту назад</td>
+						</tr>
+					</tbody>
+				</table>
 			</div>
 		</scrollbar>
 	</div>
@@ -27,7 +47,8 @@ export default {
 	},
 	data: () => ({
 		list: ['Недавние датасеты', 'Проектные датасеты', 'Датасеты Terra'],
-		search: ''
+		search: '',
+		cardsDisplay: true
 	}),
 	props: ['datasets', 'selectedType'],
 	computed: {
@@ -48,7 +69,7 @@ export default {
 	display: flex;
 	flex-direction: column;
 	gap: 30px;
-	&__list {
+	&__cards {
 		display: flex;
 		gap: 20px;
 		flex-wrap: wrap;
@@ -57,6 +78,7 @@ export default {
 	&__type {
 		font-size: 14px;
 		font-weight: 600;
+		height: 20px;
 	}
 	&__filter {
 		display: flex;
@@ -87,17 +109,85 @@ export default {
 	&__scroll {
 		justify-self: stretch;
 	}
+	&__table {
+		font-size: 14px;
+		font-weight: 400;
+		width: 100%;
+		&--wrapper {
+			width: calc(100% - 150px);
+			position: relative;
+		}
+		tr > *:nth-child(2) {
+			text-align: right;
+		}
+		thead {
+			background-color: #17212B;
+			color: #6C7883;
+			position: sticky;
+			top: 0;
+			tr {
+				height: 35px;
+			}
+			th {
+				font-weight: inherit;
+				padding: 0 50px;
+				min-width: 150px;
+				&:first-child {
+					padding: 15px 10px;
+				}
+			}
+		}
+		tbody {
+			tr {
+				height: 55px;
+				cursor: pointer;
+				&:hover {
+					background-color: #0E1621;
+				}
+			}
+			td {
+				color: #F2F5FA;
+				padding: 15px 50px;
+				white-space: nowrap;
+				text-overflow: ellipsis;
+				overflow: hidden;
+				max-width: 450px;
+				&:first-child {
+					padding: 15px 10px;
+				}
+				i {
+					font-size: 19px;
+					color: #6C7883;
+					margin-right: 15px;
+				}
+				* {
+					vertical-align: middle;
+				}
+			}
+		}
+	}
 }
 
 .ci-tile {
 	display: inline-block;
-	background-repeat: no-repeat;
-	border: 1px solid #65B9F4;
-	border-radius: 4px;
-	background-position: center;
-	background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQiIGhlaWdodD0iMTQiIHZpZXdCb3g9IjAgMCAxNCAxNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEzLjI1IDEzLjI1SDguNzVWOC43NUgxMy4yNVYxMy4yNVpNNS4yNSAxMy4yNUgwLjc1VjguNzVINS4yNVYxMy4yNVpNMTMuMjUgNS4yNUg4Ljc1VjAuNzVIMTMuMjVWNS4yNVpNNS4yNSA1LjI1SDAuNzVWMC43NUg1LjI1VjUuMjVaIiBzdHJva2U9IiM2NUI5RjQiIHN0cm9rZS13aWR0aD0iMS41Ii8+Cjwvc3ZnPgo=');
+	background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE4LjI1IDE4LjI1SDEzLjc1VjEzLjc1SDE4LjI1VjE4LjI1Wk0xMC4yNSAxOC4yNUg1Ljc1VjEzLjc1SDEwLjI1VjE4LjI1Wk0xOC4yNSAxMC4yNUgxMy43NVY1Ljc1SDE4LjI1VjEwLjI1Wk0xMC4yNSAxMC4yNUg1Ljc1VjUuNzVIMTAuMjVWMTAuMjVaIiBzdHJva2U9IiNBN0JFRDMiIHN0cm9rZS13aWR0aD0iMS41Ii8+Cjwvc3ZnPgo=');
 	width: 24px;
 	height: 24px;
+	border-radius: 4px;
+	&.selected {
+		background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE4LjI1IDE4LjI1SDEzLjc1VjEzLjc1SDE4LjI1VjE4LjI1Wk0xMC4yNSAxOC4yNUg1Ljc1VjEzLjc1SDEwLjI1VjE4LjI1Wk0xOC4yNSAxMC4yNUgxMy43NVY1Ljc1SDE4LjI1VjEwLjI1Wk0xMC4yNSAxMC4yNUg1Ljc1VjUuNzVIMTAuMjVWMTAuMjVaIiBzdHJva2U9IiM2NUI5RjQiIHN0cm9rZS13aWR0aD0iMS41Ii8+CjxwYXRoIGQ9Ik00IDFIMjBWLTFINFYxWk0yMyA0VjIwSDI1VjRIMjNaTTIwIDIzSDRWMjVIMjBWMjNaTTEgMjBWNEgtMVYyMEgxWk00IDIzQzIuMzQzMTUgMjMgMSAyMS42NTY5IDEgMjBILTFDLTEgMjIuNzYxNCAxLjIzODU4IDI1IDQgMjVWMjNaTTIzIDIwQzIzIDIxLjY1NjkgMjEuNjU2OSAyMyAyMCAyM1YyNUMyMi43NjE0IDI1IDI1IDIyLjc2MTQgMjUgMjBIMjNaTTIwIDFDMjEuNjU2OSAxIDIzIDIuMzQzMTUgMjMgNEgyNUMyNSAxLjIzODU4IDIyLjc2MTQgLTEgMjAgLTFWMVpNNCAtMUMxLjIzODU4IC0xIC0xIDEuMjM4NTggLTEgNEgxQzEgMi4zNDMxNSAyLjM0MzE1IDEgNCAxVi0xWiIgZmlsbD0iIzY1QjlGNCIvPgo8L3N2Zz4K');
+	}
+}
+
+.ci-list {
+	display: inline-block;
+	width: 24px;
+	height: 24px;
+	border-radius: 4px;
+	background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIwIDE5SDRWMTdIMjBWMTlaTTIwIDE1SDRWMTNIMjBWMTVaTTIwIDExSDRWOUgyMFYxMVpNMjAgN0g0VjVIMjBWN1oiIGZpbGw9IiNBN0JFRDMiLz4KPC9zdmc+Cg==');
+	&.selected {
+		background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIwIDE5SDRWMTdIMjBWMTlaTTIwIDE1SDRWMTNIMjBWMTVaTTIwIDExSDRWOUgyMFYxMVpNMjAgN0g0VjVIMjBWN1oiIGZpbGw9IiM2NUI5RjQiLz4KPHBhdGggZD0iTTQgMUgyMFYtMUg0VjFaTTIzIDRWMjBIMjVWNEgyM1pNMjAgMjNINFYyNUgyMFYyM1pNMSAyMFY0SC0xVjIwSDFaTTQgMjNDMi4zNDMxNSAyMyAxIDIxLjY1NjkgMSAyMEgtMUMtMSAyMi43NjE0IDEuMjM4NTggMjUgNCAyNVYyM1pNMjMgMjBDMjMgMjEuNjU2OSAyMS42NTY5IDIzIDIwIDIzVjI1QzIyLjc2MTQgMjUgMjUgMjIuNzYxNCAyNSAyMEgyM1pNMjAgMUMyMS42NTY5IDEgMjMgMi4zNDMxNSAyMyA0SDI1QzI1IDEuMjM4NTggMjIuNzYxNCAtMSAyMCAtMVYxWk00IC0xQzEuMjM4NTggLTEgLTEgMS4yMzg1OCAtMSA0SDFDMSAyLjM0MzE1IDIuMzQzMTUgMSA0IDFWLTFaIiBmaWxsPSIjNjVCOUY0Ii8+Cjwvc3ZnPgo=');
+	}
 }
 
 .ci-file {
