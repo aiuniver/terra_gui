@@ -708,7 +708,6 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
 
     gt_counter_per_class = {}
     id_ground_truth = {}
-    print('len(dataset.dataset[val])', len(dataset.dataset['val']))
     for index in range(len(dataset.dataset['val'])):
 
         y_true = dataset.dataframe.get("val").iloc[index, 1].split(' ')
@@ -762,7 +761,7 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
         pred_bbox = [pred_bbox[1], pred_bbox[3], pred_bbox[5]]
         t2 = time.time()
         times.append(t2 - t1)
-        print('t2 - t1', t2 - t1)
+
         pred_bbox = [tf.reshape(x, (-1, tf.shape(x)[-1])) for x in pred_bbox]
         pred_bbox = tf.concat(pred_bbox, axis=0)
         predict.append(pred_bbox)

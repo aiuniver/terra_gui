@@ -674,7 +674,7 @@ class InteractiveCallback:
                     colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
                     colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
                     self.class_colors = colors
-                elif task == LayerOutputTypeChoice.Segmentation:
+                elif task == LayerOutputTypeChoice.ImageSegmentation:
                     self.class_colors = [color.as_rgb_tuple() for color in classes_colors]
                 else:
                     self.class_colors = colors
@@ -797,7 +797,7 @@ class InteractiveCallback:
             for out in self.options.data.outputs.keys():
                 out_task = self.options.data.outputs.get(out).task
                 if out_task == LayerOutputTypeChoice.Classification or \
-                        out_task == LayerOutputTypeChoice.Segmentation or \
+                        out_task == LayerOutputTypeChoice.ImageSegmentation or \
                         out_task == LayerOutputTypeChoice.TextSegmentation or \
                         out_task == LayerOutputTypeChoice.TimeseriesTrend or \
                         out_task == LayerOutputTypeChoice.ObjectDetection:
@@ -835,7 +835,7 @@ class InteractiveCallback:
                             "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
                         }
 
-                    if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.Segmentation or \
+                    if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.ImageSegmentation or \
                             task == LayerOutputTypeChoice.TextSegmentation or task == LayerOutputTypeChoice.TimeseriesTrend:
                         self.log_history[out]["class_loss"] = {}
                         self.log_history[out]["class_metrics"] = {}
@@ -915,7 +915,7 @@ class InteractiveCallback:
                             ohe=encoding == LayerEncodingChoice.ohe
                         )
 
-                if task == LayerOutputTypeChoice.Segmentation and encoding == LayerEncodingChoice.ohe:
+                if task == LayerOutputTypeChoice.ImageSegmentation and encoding == LayerEncodingChoice.ohe:
                     dataset_balance[f"{out}"] = {
                         "presence_balance": {},
                         "square_balance": {},
@@ -1406,7 +1406,7 @@ class InteractiveCallback:
                                     normal_state)
 
                             if out_task == LayerOutputTypeChoice.Classification or \
-                                    out_task == LayerOutputTypeChoice.Segmentation or \
+                                    out_task == LayerOutputTypeChoice.ImageSegmentation or \
                                     out_task == LayerOutputTypeChoice.TextSegmentation or \
                                     out_task == LayerOutputTypeChoice.TimeseriesTrend:
                                 for cls in self.log_history.get(f"{out}").get('class_loss').keys():
@@ -1421,7 +1421,7 @@ class InteractiveCallback:
                                             y_pred=self.y_pred.get(f"{out}")[
                                                 self.class_idx.get('val').get(f"{out}").get(cls)],
                                         )
-                                    if out_task == LayerOutputTypeChoice.Segmentation:
+                                    if out_task == LayerOutputTypeChoice.ImageSegmentation:
                                         class_idx = classes_names.index(cls)
                                         class_loss = self._get_loss_calculation(
                                             loss_obj=self.loss_obj.get(f"{out}"),

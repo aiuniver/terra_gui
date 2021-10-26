@@ -557,7 +557,7 @@ DataSetsColumnProcessing = [
                                 },
                             },
                         ],
-                        "Segmentation": [
+                        "ImageSegmentation": [
                             {
                                 "type": "number",
                                 "label": "Диапазон каналов",
@@ -861,7 +861,7 @@ DataSetsOutput = [
             "Audio": LayerAudioDefaults,
             "Dataframe": LayerDataframeDefaults,
             "Classification": [],
-            "Segmentation": [
+            "ImageSegmentation": [
                 SourcesPaths,
                 {
                     "type": "number",
