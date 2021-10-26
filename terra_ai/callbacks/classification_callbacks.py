@@ -34,6 +34,10 @@ class ImageClassificationCallback:
         return prepare_y_true(options)
 
     @staticmethod
+    def get_y_pred(y_true, y_pred):
+        return reformat_y_pred(y_true, y_pred)
+
+    @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str,
                                    preset_path: str, save_id: int = None, x_array=None, return_mode='deploy'):
         column_idx = []
@@ -144,6 +148,10 @@ class TextClassificationCallback:
         return prepare_y_true(options)
 
     @staticmethod
+    def get_y_pred(y_true, y_pred):
+        return reformat_y_pred(y_true, y_pred)
+
+    @staticmethod
     def postprocess_initial_source(options, example_id: int, return_mode='deploy'):
         column_idx = []
         for inp in options.data.inputs.keys():
@@ -241,6 +249,10 @@ class DataframeClassificationCallback:
         return prepare_y_true(options)
 
     @staticmethod
+    def get_y_pred(y_true, y_pred):
+        return reformat_y_pred(y_true, y_pred)
+
+    @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, return_mode='deploy'):
         data = []
         data_type = "str"
@@ -321,6 +333,10 @@ class AudioClassificationCallback:
     @staticmethod
     def get_y_true(options):
         return prepare_y_true(options)
+
+    @staticmethod
+    def get_y_pred(y_true, y_pred):
+        return reformat_y_pred(y_true, y_pred)
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str,
@@ -422,6 +438,10 @@ class VideoClassificationCallback:
     @staticmethod
     def get_y_true(options):
         return prepare_y_true(options)
+
+    @staticmethod
+    def get_y_pred(y_true, y_pred):
+        return reformat_y_pred(y_true, y_pred)
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str, preset_path: str,
@@ -543,6 +563,10 @@ class TimeseriesTrendCallback:
     @staticmethod
     def get_y_true(options):
         return prepare_y_true(options)
+
+    @staticmethod
+    def get_y_pred(y_true, y_pred):
+        return reformat_y_pred(y_true, y_pred)
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, inverse_x_array=None,
@@ -829,3 +853,196 @@ def prepare_dataset_balance(options, y_true) -> dict:
                 ohe=encoding == LayerEncodingChoice.ohe
             )
     return dataset_balance
+
+
+def reformat_y_pred(y_true, y_pred):
+    reformat_pred = {}
+    inverse_pred = {}
+    for idx, out in enumerate(y_true.get('val').keys()):
+        if len(y_true.get('val').keys()) == 1:
+            reformat_pred[out] = y_pred
+        else:
+            reformat_pred[out] = y_pred[idx]
+    return reformat_pred, inverse_pred
+
+
+def _get_intermediate_result_request(self) -> dict:
+    return_data = {}
+    if self.options.data.architecture in self.basic_architecture and \
+            self.interactive_config.intermediate_result.show_results:
+        for idx in range(self.interactive_config.intermediate_result.num_examples):
+            return_data[f"{idx + 1}"] = {
+                'initial_data': {},
+                'true_value': {},
+                'predict_value': {},
+                'tags_color': {},
+                'statistic_values': {}
+            }
+            if not (
+                    len(self.options.data.outputs.keys()) == 1 and
+                    self.options.data.outputs.get(list(self.options.data.outputs.keys())[0]).task ==
+                    LayerOutputTypeChoice.TextSegmentation
+            ):
+                for inp in self.options.data.inputs.keys():
+                    data, type_choice = CreateArray().postprocess_initial_source(
+                        options=self.options,
+                        input_id=inp,
+                        save_id=idx + 1,
+                        example_id=self.example_idx[idx],
+                        dataset_path=self.dataset_path,
+                        preset_path=self.preset_path,
+                        x_array=self.x_val.get(f"{inp}") if self.x_val else None,
+                        inverse_x_array=self.inverse_x_val.get(f"{inp}") if self.inverse_x_val else None,
+                        return_mode='callback'
+                    )
+                    # random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
+                    return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
+                        # 'update': random_key,
+                        'type': type_choice,
+                        'data': data,
+                    }
+
+            for out in self.options.data.outputs.keys():
+                task = self.options.data.outputs.get(out).task
+
+                if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
+                    data = CreateArray().postprocess_classification(
+                        predict_array=self.y_pred.get(f'{out}')[self.example_idx[idx]],
+                        true_array=self.y_true.get('val').get(f'{out}')[self.example_idx[idx]],
+                        options=self.options.data.outputs.get(out),
+                        show_stat=self.interactive_config.intermediate_result.show_statistic,
+                        return_mode='callback'
+                    )
+
+                elif task == LayerOutputTypeChoice.Segmentation:
+                    data = CreateArray().postprocess_segmentation(
+                        predict_array=self.y_pred.get(f'{out}')[self.example_idx[idx]],
+                        true_array=self.y_true.get('val').get(f'{out}')[self.example_idx[idx]],
+                        options=self.options.data.outputs.get(out),
+                        colors=self.class_colors,
+                        output_id=out,
+                        image_id=idx,
+                        save_path=self.preset_path,
+                        return_mode='callback',
+                        show_stat=self.interactive_config.intermediate_result.show_statistic
+                    )
+
+                elif task == LayerOutputTypeChoice.TextSegmentation:
+                    # TODO: пока исходим что для сегментации текста есть только один вход с текстом, если будут сложные модели
+                    #  на сегментацию текста на несколько входов то придется искать решения
+                    output_col = list(self.options.instructions.get(out).keys())[0]
+                    data = CreateArray().postprocess_text_segmentation(
+                        pred_array=self.y_pred.get(f'{out}')[self.example_idx[idx]],
+                        true_array=self.y_true.get('val').get(f'{out}')[self.example_idx[idx]],
+                        options=self.options.data.outputs.get(out),
+                        dataframe=self.options.dataframe.get('val'),
+                        example_id=self.example_idx[idx],
+                        dataset_params=self.options.instructions.get(out).get(output_col),
+                        return_mode='callback',
+                        class_colors=self.class_colors,
+                        show_stat=self.interactive_config.intermediate_result.show_statistic
+                    )
+
+                elif task == LayerOutputTypeChoice.Regression:
+                    data = CreateArray().postprocess_regression(
+                        column_names=list(self.options.data.columns.get(out).keys()),
+                        inverse_y_true=self.inverse_y_true.get('val').get(f"{out}")[self.example_idx[idx]],
+                        inverse_y_pred=self.inverse_y_pred.get(f"{out}")[self.example_idx[idx]],
+                        show_stat=self.interactive_config.intermediate_result.show_statistic,
+                        return_mode='callback'
+                    )
+
+                elif task == LayerOutputTypeChoice.Timeseries:
+                    input = list(self.inverse_x_val.keys())[0]
+                    data = CreateArray().postprocess_time_series(
+                        options=self.options.data,
+                        real_x=self.inverse_x_val.get(f"{input}")[self.example_idx[idx]],
+                        inverse_y_true=self.inverse_y_true.get("val").get(f"{out}")[self.example_idx[idx]],
+                        inverse_y_pred=self.inverse_y_pred.get(f"{out}")[self.example_idx[idx]],
+                        output_id=out,
+                        depth=self.inverse_y_true.get("val").get(f"{out}")[self.example_idx[idx]].shape[-1],
+                        show_stat=self.interactive_config.intermediate_result.show_statistic,
+                        templates=[fill_graph_plot_data, fill_graph_front_structure]
+                    )
+
+                elif task == LayerOutputTypeChoice.Dataframe:
+                    data = {
+                        "y_true": {},
+                        "y_pred": {},
+                        "stat": {}
+                    }
+                    pass
+
+                elif task == LayerOutputTypeChoice.ObjectDetection:
+                    data = {
+                        "y_true": {},
+                        "y_pred": {},
+                        "stat": {}
+                    }
+                    # image with bb
+                    # accuracy, correlation bb for classes
+                    pass
+
+                else:
+                    data = {
+                        "y_true": {},
+                        "y_pred": {},
+                        "stat": {}
+                    }
+                if data.get('y_true'):
+                    return_data[f"{idx + 1}"]['true_value'][f"Выходной слой «{out}»"] = data.get('y_true')
+                return_data[f"{idx + 1}"]['predict_value'][f"Выходной слой «{out}»"] = data.get('y_pred')
+
+                if self.options.data.outputs.get(out).task == LayerOutputTypeChoice.TextSegmentation:
+                    return_data[f"{idx + 1}"]['tags_color'][f"Выходной слой «{out}»"] = data.get('tags_color')
+                else:
+                    return_data[f"{idx + 1}"]['tags_color'] = None
+
+                if data.get('stat'):
+                    return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
+                else:
+                    return_data[f"{idx + 1}"]['statistic_values'] = {}
+
+    elif self.options.data.architecture in self.yolo_architecture and \
+            self.yolo_interactive_config.intermediate_result.show_results:
+        self._reformat_y_pred(
+            y_pred=self.raw_y_pred,
+            sensitivity=self.yolo_interactive_config.intermediate_result.sensitivity,
+            threashold=self.yolo_interactive_config.intermediate_result.threashold
+        )
+        for idx in range(self.yolo_interactive_config.intermediate_result.num_examples):
+            return_data[f"{idx + 1}"] = {
+                'initial_data': {},
+                'true_value': {},
+                'predict_value': {},
+                'tags_color': {},
+                'statistic_values': {}
+            }
+            image_path = os.path.join(
+                self.dataset_path, self.options.dataframe.get('val').iat[self.example_idx[idx], 0])
+            out = self.yolo_interactive_config.intermediate_result.box_channel
+            data = CreateArray().postprocess_object_detection(
+                predict_array=copy.deepcopy(self.y_pred.get(out)[self.example_idx[idx]]),
+                true_array=self.y_true.get(out)[self.example_idx[idx]],
+                image_path=image_path,
+                colors=self.class_colors,
+                sensitivity=self.yolo_interactive_config.intermediate_result.sensitivity,
+                image_id=idx,
+                image_size=self.options.data.inputs.get(list(self.options.data.inputs.keys())[0]).shape[:2],
+                name_classes=self.options.data.outputs.get(list(self.options.data.outputs.keys())[0]).classes_names,
+                save_path=self.preset_path,
+                return_mode='callback',
+                show_stat=self.yolo_interactive_config.intermediate_result.show_statistic
+            )
+            if data.get('y_true'):
+                return_data[f"{idx + 1}"]['true_value'][f"Выходной слой"] = data.get('y_true')
+            return_data[f"{idx + 1}"]['predict_value'][f"Выходной слой"] = data.get('y_pred')
+
+            if data.get('stat'):
+                return_data[f"{idx + 1}"]['statistic_values'] = data.get('stat')
+            else:
+                return_data[f"{idx + 1}"]['statistic_values'] = {}
+    else:
+        pass
+
+    return return_data

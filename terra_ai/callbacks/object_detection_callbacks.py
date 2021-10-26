@@ -1,4 +1,5 @@
 import colorsys
+import copy
 import os
 from typing import Optional
 
@@ -23,8 +24,12 @@ class YoloV3Callback:
         return x_val, inverse_x_val
 
     @staticmethod
-    def prepare_y_true(options):
+    def get_y_true(options):
         return get_yolo_y_true(options=options)
+
+    @staticmethod
+    def get_y_pred(y_pred, options, sensitivity: float = 0.15, threashold: float = 0.1):
+        return get_yolo_y_pred(array=y_pred, options=options, sensitivity=sensitivity, threashold=threashold)
 
     @staticmethod
     def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "", sensitivity=0.15,
@@ -56,6 +61,10 @@ class YoloV4Callback:
     @staticmethod
     def prepare_y_true(options):
         return get_yolo_y_true(options=options)
+
+    @staticmethod
+    def get_y_pred(y_pred, options, sensitivity: float = 0.15, threashold: float = 0.1):
+        return get_yolo_y_pred(array=y_pred, options=options, sensitivity=sensitivity, threashold=threashold)
 
     @staticmethod
     def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "", sensitivity=0.15,
@@ -685,3 +694,52 @@ def prepare_dataset_balance(options, class_colors, preset_path) -> dict:
             imgsize=(imsize[0], imsize[1])
         )
     return dataset_balance
+
+
+
+def get_intermediate_result(options, yolo_interactive_config, raw_y_pred, y_true, example_idx,
+                            dataset_path, class_colors, preset_path) -> dict:
+    return_data = {}
+    if yolo_interactive_config.intermediate_result.show_results:
+        y_pred = get_yolo_y_pred(
+            array=raw_y_pred,
+            options=options,
+            sensitivity=yolo_interactive_config.intermediate_result.sensitivity,
+            threashold=yolo_interactive_config.intermediate_result.threashold
+        )
+        for idx in range(yolo_interactive_config.intermediate_result.num_examples):
+            return_data[f"{idx + 1}"] = {
+                'initial_data': {},
+                'true_value': {},
+                'predict_value': {},
+                'tags_color': {},
+                'statistic_values': {}
+            }
+            image_path = os.path.join(
+                dataset_path, options.dataframe.get('val').iat[example_idx[idx], 0])
+            out = yolo_interactive_config.intermediate_result.box_channel
+            data = postprocess_object_detection(
+                predict_array=copy.deepcopy(y_pred.get(out)[example_idx[idx]]),
+                true_array=y_true.get(out)[example_idx[idx]],
+                image_path=image_path,
+                colors=class_colors,
+                sensitivity=yolo_interactive_config.intermediate_result.sensitivity,
+                image_id=idx,
+                image_size=options.data.inputs.get(list(options.data.inputs.keys())[0]).shape[:2],
+                name_classes=options.data.outputs.get(list(options.data.outputs.keys())[0]).classes_names,
+                save_path=preset_path,
+                return_mode='callback',
+                show_stat=yolo_interactive_config.intermediate_result.show_statistic
+            )
+            if data.get('y_true'):
+                return_data[f"{idx + 1}"]['true_value'][f"Выходной слой"] = data.get('y_true')
+            return_data[f"{idx + 1}"]['predict_value'][f"Выходной слой"] = data.get('y_pred')
+
+            if data.get('stat'):
+                return_data[f"{idx + 1}"]['statistic_values'] = data.get('stat')
+            else:
+                return_data[f"{idx + 1}"]['statistic_values'] = {}
+    else:
+        pass
+
+    return return_data

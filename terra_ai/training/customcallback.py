@@ -17,6 +17,10 @@ from sklearn.metrics import confusion_matrix, classification_report
 import numpy as np
 
 from terra_ai import progress
+from terra_ai.callbacks.object_detection_callbacks import get_yolo_y_pred, prepare_yolo_example_idx_to_show, \
+    get_yolo_y_true
+from terra_ai.callbacks.segmentation_callbacks import TextSegmentationCallback
+from terra_ai.callbacks.utils import dice_coef
 from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice, DatasetGroupChoice, \
     LayerEncodingChoice
 from terra_ai.data.presets.training import Metric
@@ -498,7 +502,7 @@ class InteractiveCallback:
                     self._reformat_y_pred(y_pred)
                     if self.interactive_config.intermediate_result.show_results:
                         out = f"{self.interactive_config.intermediate_result.main_output}"
-                        self.example_idx = CreateArray().prepare_example_idx_to_show(
+                        self.example_idx = prepare_example_idx_to_show(
                             array=self.y_pred.get(out),
                             true_array=self.y_true.get("val").get(out),
                             options=self.options,
@@ -510,7 +514,7 @@ class InteractiveCallback:
                 if self.options.data.architecture in self.yolo_architecture:
                     self.raw_y_pred = y_pred
                     if self.yolo_interactive_config.intermediate_result.show_results:
-                        self.example_idx, _ = CreateArray().prepare_yolo_example_idx_to_show(
+                        self.example_idx, _ = prepare_yolo_example_idx_to_show(
                             array=copy.deepcopy(self.y_pred),
                             true_array=copy.deepcopy(self.y_true),
                             name_classes=self.options.data.outputs.get(
@@ -558,7 +562,7 @@ class InteractiveCallback:
             if self.options.data.architecture in self.basic_architecture:
                 if self.interactive_config.intermediate_result.show_results:
                     out = f"{self.interactive_config.intermediate_result.main_output}"
-                    self.example_idx = CreateArray().prepare_example_idx_to_show(
+                    self.example_idx = prepare_example_idx_to_show(
                         array=self.y_true.get("val").get(out),
                         true_array=self.y_true.get("val").get(out),
                         options=self.options,
@@ -575,7 +579,7 @@ class InteractiveCallback:
 
             if self.options.data.architecture in self.yolo_architecture:
                 if self.yolo_interactive_config.intermediate_result.show_results:
-                    self.example_idx, _ = CreateArray().prepare_yolo_example_idx_to_show(
+                    self.example_idx, _ = prepare_yolo_example_idx_to_show(
                         array=copy.deepcopy(self.y_pred),
                         true_array=copy.deepcopy(self.y_true),
                         name_classes=self.options.data.outputs.get(
@@ -786,7 +790,7 @@ class InteractiveCallback:
                             inverse_y_true[data_type][f"{out}"] = inverse_y[:, :, 1:]
 
             if dataset.data.architecture in self.yolo_architecture:
-                y_true = CreateArray().get_yolo_y_true(options=dataset)
+                y_true = get_yolo_y_true(options=dataset)
 
             return y_true, inverse_y_true
         except Exception as e:
@@ -910,9 +914,9 @@ class InteractiveCallback:
                 encoding = self.options.data.outputs.get(out).encoding
 
                 if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
-                    dataset_balance[f"{out}"] = {'class_histogram': {}}
+                    dataset_balance[f"{out}"] = {'class_histogramm': {}}
                     for data_type in ['train', 'val']:
-                        dataset_balance[f"{out}"]['class_histogram'][data_type] = class_counter(
+                        dataset_balance[f"{out}"]['class_histogramm'][data_type] = class_counter(
                             y_array=self.y_true.get(data_type).get(f"{out}"),
                             classes_names=self.options.data.outputs.get(out).classes_names,
                             ohe=encoding == LayerEncodingChoice.ohe
@@ -1331,7 +1335,7 @@ class InteractiveCallback:
                         self.inverse_y_pred[out] = inverse_y[:, :, 1:]
 
             if self.options.data.architecture in self.yolo_architecture:
-                self.y_pred = CreateArray().get_yolo_y_pred(
+                self.y_pred = get_yolo_y_pred(
                     array=y_pred,
                     options=self.options,
                     sensitivity=sensitivity,
@@ -2084,7 +2088,7 @@ class InteractiveCallback:
                             LayerOutputTypeChoice.TextSegmentation
                     ):
                         for inp in self.options.data.inputs.keys():
-                            data, type_choice = CreateArray().postprocess_initial_source(
+                            data, type_choice = TextSegmentationCallback.postprocess_initial_source(
                                 options=self.options,
                                 input_id=inp,
                                 save_id=idx + 1,
@@ -3031,7 +3035,7 @@ class InteractiveCallback:
     def _dice_coef(y_true, y_pred, batch_mode=True, smooth=1.0):
         method_name = '_dice_coef'
         try:
-            return CreateArray().dice_coef(y_true, y_pred, batch_mode=batch_mode, smooth=smooth)
+            return dice_coef(y_true, y_pred, batch_mode=batch_mode, smooth=smooth)
         except Exception as e:
             print_error(InteractiveCallback().name, method_name, e)
 

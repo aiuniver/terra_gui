@@ -52,6 +52,28 @@ class DataframeRegressionCallback:
         return y_true, inverse_y_true
 
     @staticmethod
+    def get_y_pred(y_true: dict, y_pred, options):
+        reformat_pred = {}
+        inverse_y_pred = {}
+        for idx, out in enumerate(y_true.get('val').keys()):
+            if len(y_true.get('val').keys()) == 1:
+                reformat_pred[out] = y_pred
+            else:
+                reformat_pred[out] = y_pred[idx]
+            preprocess_dict = options.preprocessing.preprocessing.get(int(out))
+            inverse_y = np.zeros_like(reformat_pred.get(out)[:, 0:1])
+            for i, column in enumerate(preprocess_dict.keys()):
+                if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
+                    _options = {int(out): {column: reformat_pred.get(out)[:, i:i + 1]}}
+                    inverse_col = options.preprocessing.inverse_data(_options).get(int(out)).get(column)
+                else:
+                    inverse_col = reformat_pred.get(out)[:, i:i + 1]
+                inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
+            inverse_y_pred[out] = inverse_y[:, 1:]
+
+        return reformat_pred, inverse_y_pred
+
+    @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, return_mode='deploy'):
         data = []
         data_type = "str"
@@ -147,6 +169,49 @@ class DataframeRegressionCallback:
                 }
         return dataset_balance
 
+    @staticmethod
+    def intermediate_result(interactive_config, options, example_idx,
+                            inverse_y_true, inverse_y_pred) -> dict:
+        return_data = {}
+        if interactive_config.intermediate_result.show_results:
+            for idx in range(interactive_config.intermediate_result.num_examples):
+                return_data[f"{idx + 1}"] = {
+                    'initial_data': {},
+                    'true_value': {},
+                    'predict_value': {},
+                    'tags_color': {},
+                    'statistic_values': {}
+                }
+                if not len(options.data.outputs.keys()) == 1:
+                    for inp in options.data.inputs.keys():
+                        data, type_choice = DataframeRegressionCallback.postprocess_initial_source(
+                            options=options,
+                            input_id=inp,
+                            example_id=example_idx[idx],
+                            return_mode='callback'
+                        )
+                        return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
+                            'type': type_choice, 'data': data,
+                        }
+
+                for out in options.data.outputs.keys():
+                    data = postprocess_regression(
+                        column_names=list(options.data.columns.get(out).keys()),
+                        inverse_y_true=inverse_y_true.get('val').get(f"{out}")[example_idx[idx]],
+                        inverse_y_pred=inverse_y_pred.get(f"{out}")[example_idx[idx]],
+                        show_stat=interactive_config.intermediate_result.show_statistic,
+                        return_mode='callback'
+                    )
+                    if data.get('y_true'):
+                        return_data[f"{idx + 1}"]['true_value'][f"Выходной слой «{out}»"] = data.get('y_true')
+                    return_data[f"{idx + 1}"]['predict_value'][f"Выходной слой «{out}»"] = data.get('y_pred')
+                    return_data[f"{idx + 1}"]['tags_color'] = None
+                    if data.get('stat'):
+                        return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
+                    else:
+                        return_data[f"{idx + 1}"]['statistic_values'] = {}
+        return return_data
+
 
 def prepare_example_idx_to_show(array: np.ndarray, true_array: np.ndarray, count: int,
                                 choice_type: str = "best", seed_idx: list = None) -> dict:
@@ -233,4 +298,3 @@ def postprocess_regression(column_names: list, inverse_y_true: np.ndarray, inver
                     }
                 )
         return data
-

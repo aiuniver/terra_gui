@@ -1,4 +1,3 @@
-
 import copy
 import math
 import os
@@ -14,7 +13,8 @@ from terra_ai import progress
 from terra_ai.callbacks.utils import loss_metric_config, class_counter, get_image_class_colormap, \
     get_distribution_histogram, get_correlation_matrix, round_loss_metric, fill_graph_plot_data, \
     fill_graph_front_structure, get_confusion_matrix, fill_heatmap_front_structure, fill_table_front_structure, \
-    get_scatter, get_classification_report, get_autocorrelation_graphic
+    get_scatter, get_classification_report, get_autocorrelation_graphic, reformat_metrics, prepare_loss_obj, \
+    prepare_metric_obj, get_classes_colors
 from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice, DatasetGroupChoice, \
     LayerEncodingChoice
 from terra_ai.data.presets.training import Metric
@@ -117,9 +117,9 @@ class InteractiveCallback:
             os.mkdir(self.preset_path)
         if dataset.data.architecture in self.basic_architecture:
             self.losses = losses
-            self.metrics = self._reformat_metrics(metrics)
-            self.loss_obj = self._prepare_loss_obj(losses)
-            self.metrics_obj = self._prepare_metric_obj(metrics)
+            self.metrics = reformat_metrics(metrics)
+            self.loss_obj = prepare_loss_obj(losses)
+            self.metrics_obj = prepare_metric_obj(metrics)
             self.interactive_config = initial_config
         if dataset.data.architecture in self.yolo_architecture:
             self.yolo_interactive_config = yolo_initial_config
@@ -127,7 +127,7 @@ class InteractiveCallback:
         self.options = dataset
         self._class_metric_list()
         self.dataset_path = dataset_path
-        self._get_classes_colors()
+        self.class_colors = get_classes_colors()
         self.x_val, self.inverse_x_val = self._prepare_x_val(dataset)
         self.y_true, self.inverse_y_true = self._prepare_y_true(dataset)
 
@@ -501,50 +501,6 @@ class InteractiveCallback:
                 interactive_log['output']['val']["class_metrics"]['mAP95'][name] = logs.get(f'val_mAP95_class_{name}')
 
         return interactive_log
-
-    def _reformat_y_pred(self, y_pred, sensitivity: float = 0.15, threashold: float = 0.1):
-        self.y_pred = {}
-        self.inverse_y_pred = {}
-        if self.options.data.architecture in self.basic_architecture:
-            for idx, out in enumerate(self.y_true.get('val').keys()):
-                task = self.options.data.outputs.get(int(out)).task
-                if len(self.y_true.get('val').keys()) == 1:
-                    self.y_pred[out] = y_pred
-                else:
-                    self.y_pred[out] = y_pred[idx]
-
-                if task == LayerOutputTypeChoice.Regression or task == LayerOutputTypeChoice.Dataframe:
-                    preprocess_dict = self.options.preprocessing.preprocessing.get(int(out))
-                    inverse_y = np.zeros_like(self.y_pred.get(out)[:, 0:1])
-                    for i, column in enumerate(preprocess_dict.keys()):
-                        if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
-                            _options = {int(out): {column: self.y_pred.get(out)[:, i:i + 1]}}
-                            inverse_col = self.options.preprocessing.inverse_data(_options).get(int(out)).get(column)
-                        else:
-                            inverse_col = self.y_pred.get(out)[:, i:i + 1]
-                        inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
-                    self.inverse_y_pred[out] = inverse_y[:, 1:]
-
-                if task == LayerOutputTypeChoice.Regression.Timeseries:
-                    preprocess_dict = self.options.preprocessing.preprocessing.get(int(out))
-                    inverse_y = np.zeros_like(self.y_pred.get(out)[:, :, 0:1])
-                    for i, column in enumerate(preprocess_dict.keys()):
-                        if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
-                            _options = {int(out): {column: self.y_pred.get(out)[:, :, i]}}
-                            inverse_col = np.expand_dims(
-                                self.options.preprocessing.inverse_data(_options).get(int(out)).get(column), axis=-1)
-                        else:
-                            inverse_col = self.y_pred.get(out)[:, :, i:i + 1]
-                        inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
-                    self.inverse_y_pred[out] = inverse_y[:, :, 1:]
-
-        if self.options.data.architecture in self.yolo_architecture:
-            self.y_pred = CreateArray().get_yolo_y_pred(
-                array=y_pred,
-                options=self.options,
-                sensitivity=sensitivity,
-                threashold=threashold
-            )
 
     def _update_log_history(self):
         data_idx = None
@@ -1000,7 +956,6 @@ class InteractiveCallback:
                 return False
         else:
             return False
-
 
     def _get_loss_graph_data_request(self) -> list:
         data_return = []
@@ -1619,8 +1574,8 @@ class InteractiveCallback:
                                                             2).item() if \
                     class_coord_accuracy[class_name] else 0.
                 class_loss_hist[class_name] = np.round(np.mean(class_loss_hist[class_name]) * 100, 2).item() if \
-                class_loss_hist[
-                    class_name] else 0.
+                    class_loss_hist[
+                        class_name] else 0.
 
             object_matrix = [[object_tt, object_tf], [object_ft, 0]]
             class_matrix_percent = []
@@ -1743,7 +1698,7 @@ class InteractiveCallback:
                                     _id=_id,
                                     _type='histogram',
                                     type_data=data_type,
-                                    graph_name=f"Выход {out} - {'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка - " 
+                                    graph_name=f"Выход {out} - {'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка - "
                                                f"{'баланс присутсвия' if class_type == 'presence_balance' else 'процент пространства'}",
                                     short_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} - "
                                                f"{'присутсвие' if class_type == 'presence_balance' else 'пространство'}",
@@ -1937,4 +1892,3 @@ class InteractiveCallback:
             pass
 
         return return_data
-

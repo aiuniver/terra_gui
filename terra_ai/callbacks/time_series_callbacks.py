@@ -66,6 +66,28 @@ class TimeseriesCallback:
         return y_true, inverse_y_true
 
     @staticmethod
+    def get_y_pred(y_true: dict, y_pred, options):
+        reformat_pred = {}
+        inverse_y_pred = {}
+        for idx, out in enumerate(y_true.get('val').keys()):
+            if len(y_true.get('val').keys()) == 1:
+                reformat_pred[out] = y_pred
+            else:
+                reformat_pred[out] = y_pred[idx]
+            preprocess_dict = options.preprocessing.preprocessing.get(int(out))
+            inverse_y = np.zeros_like(reformat_pred.get(out)[:, :, 0:1])
+            for i, column in enumerate(preprocess_dict.keys()):
+                if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
+                    _options = {int(out): {column: reformat_pred.get(out)[:, :, i]}}
+                    inverse_col = np.expand_dims(
+                        options.preprocessing.inverse_data(_options).get(int(out)).get(column), axis=-1)
+                else:
+                    inverse_col = reformat_pred.get(out)[:, :, i:i + 1]
+                inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
+            inverse_y_pred[out] = inverse_y[:, :, 1:]
+        return reformat_pred, inverse_y_pred
+
+    @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, inverse_x_array=None,
                                    return_mode='deploy'):
         column_idx = []
@@ -187,6 +209,41 @@ class TimeseriesCallback:
                         "type": "bar", "x": x, "y": y
                     }
         return dataset_balance
+
+    @staticmethod
+    def intermediate_result(interactive_config, options, inverse_x_val,
+                            inverse_y_true, example_idx, inverse_y_pred):
+        return_data = {}
+        if interactive_config.intermediate_result.show_results:
+            for idx in range(interactive_config.intermediate_result.num_examples):
+                return_data[f"{idx + 1}"] = {
+                    'initial_data': {},
+                    'true_value': {},
+                    'predict_value': {},
+                    'tags_color': {},
+                    'statistic_values': {}
+                }
+                for out in options.data.outputs.keys():
+                    inp = list(inverse_x_val.keys())[0]
+                    data = postprocess_time_series(
+                        options=options.data,
+                        real_x=inverse_x_val.get(f"{inp}")[example_idx[idx]],
+                        inverse_y_true=inverse_y_true.get("val").get(f"{out}")[example_idx[idx]],
+                        inverse_y_pred=inverse_y_pred.get(f"{out}")[example_idx[idx]],
+                        output_id=out,
+                        depth=inverse_y_true.get("val").get(f"{out}")[example_idx[idx]].shape[-1],
+                        show_stat=interactive_config.intermediate_result.show_statistic,
+                        templates=[fill_graph_plot_data, fill_graph_front_structure]
+                    )
+                    if data.get('y_true'):
+                        return_data[f"{idx + 1}"]['true_value'][f"Выходной слой «{out}»"] = data.get('y_true')
+                    return_data[f"{idx + 1}"]['predict_value'][f"Выходной слой «{out}»"] = data.get('y_pred')
+                    return_data[f"{idx + 1}"]['tags_color'] = None
+                    if data.get('stat'):
+                        return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
+                    else:
+                        return_data[f"{idx + 1}"]['statistic_values'] = {}
+        return return_data
 
 
 def prepare_example_idx_to_show(array: np.ndarray, true_array: np.ndarray, count: int,

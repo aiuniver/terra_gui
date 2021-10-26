@@ -30,6 +30,10 @@ class ImageSegmentationCallback:
         return prepare_y_true(options)
 
     @staticmethod
+    def get_y_pred(y_true, y_pred):
+        return reformat_y_pred(y_true, y_pred)
+
+    @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str, preset_path: str,
                                    save_id: int = None, return_mode='deploy'):
         column_idx = []
@@ -149,6 +153,57 @@ class ImageSegmentationCallback:
                 dataset_balance[f"{out}"]["square_balance"][data_type] = class_percent
         return dataset_balance
 
+    @staticmethod
+    def intermediate_result(interactive_config, options, example_idx, dataset_path,
+                                    preset_path, y_pred, y_true, class_colors) -> dict:
+        return_data = {}
+        if interactive_config.intermediate_result.show_results:
+            for idx in range(interactive_config.intermediate_result.num_examples):
+                return_data[f"{idx + 1}"] = {
+                    'initial_data': {},
+                    'true_value': {},
+                    'predict_value': {},
+                    'tags_color': {},
+                    'statistic_values': {}
+                }
+                if not len(options.data.outputs.keys()) == 1:
+                    for inp in options.data.inputs.keys():
+                        data, type_choice = ImageSegmentationCallback.postprocess_initial_source(
+                            options=options,
+                            input_id=inp,
+                            save_id=idx + 1,
+                            example_id=example_idx[idx],
+                            dataset_path=dataset_path,
+                            preset_path=preset_path,
+                            return_mode='callback'
+                        )
+                        return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
+                            'type': type_choice, 'data': data,
+                        }
+                for out in options.data.outputs.keys():
+                    data = postprocess_segmentation(
+                        predict_array=y_pred.get(f'{out}')[example_idx[idx]],
+                        true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
+                        options=options.data.outputs.get(out),
+                        colors=class_colors,
+                        output_id=out,
+                        image_id=idx,
+                        save_path=preset_path,
+                        return_mode='callback',
+                        show_stat=interactive_config.intermediate_result.show_statistic
+                    )
+                    if data.get('y_true'):
+                        return_data[f"{idx + 1}"]['true_value'][f"Выходной слой «{out}»"] = data.get('y_true')
+                    return_data[f"{idx + 1}"]['predict_value'][f"Выходной слой «{out}»"] = data.get('y_pred')
+
+                    return_data[f"{idx + 1}"]['tags_color'] = None
+
+                    if data.get('stat'):
+                        return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
+                    else:
+                        return_data[f"{idx + 1}"]['statistic_values'] = {}
+        return return_data
+
 
 class TextSegmentationCallback:
     def __init__(self):
@@ -163,6 +218,10 @@ class TextSegmentationCallback:
     @staticmethod
     def get_y_true(options):
         return prepare_y_true(options)
+
+    @staticmethod
+    def get_y_pred(y_true, y_pred):
+        return reformat_y_pred(y_true, y_pred)
 
     @staticmethod
     def postprocess_initial_source(options, example_id: int, return_mode='deploy'):
@@ -248,6 +307,58 @@ class TextSegmentationCallback:
                 dataset_balance[f"{out}"]["presence_balance"][data_type] = class_count
                 dataset_balance[f"{out}"]["percent_balance"][data_type] = class_percent
         return dataset_balance
+
+    @staticmethod
+    def intermediate_result(interactive_config, options, example_idx, dataset_path,
+                                    preset_path, y_pred, y_true, class_colors) -> dict:
+        return_data = {}
+        if interactive_config.intermediate_result.show_results:
+            for idx in range(interactive_config.intermediate_result.num_examples):
+                return_data[f"{idx + 1}"] = {
+                    'initial_data': {},
+                    'true_value': {},
+                    'predict_value': {},
+                    'tags_color': {},
+                    'statistic_values': {}
+                }
+                if not len(options.data.outputs.keys()) == 1:
+                    for inp in options.data.inputs.keys():
+                        data, type_choice = ImageSegmentationCallback.postprocess_initial_source(
+                            options=options,
+                            input_id=inp,
+                            save_id=idx + 1,
+                            example_id=example_idx[idx],
+                            dataset_path=dataset_path,
+                            preset_path=preset_path,
+                            return_mode='callback'
+                        )
+                        return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
+                            'type': type_choice, 'data': data,
+                        }
+                for out in options.data.outputs.keys():
+                    output_col = list(options.instructions.get(out).keys())[0]
+                    data = postprocess_text_segmentation(
+                        pred_array=y_pred.get(f'{out}')[example_idx[idx]],
+                        true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
+                        options=options.data.outputs.get(out),
+                        dataframe=options.dataframe.get('val'),
+                        example_id=example_idx[idx],
+                        dataset_params=options.instructions.get(out).get(output_col),
+                        return_mode='callback',
+                        class_colors=class_colors,
+                        show_stat=interactive_config.intermediate_result.show_statistic
+                    )
+                    if data.get('y_true'):
+                        return_data[f"{idx + 1}"]['true_value'][f"Выходной слой «{out}»"] = data.get('y_true')
+                    return_data[f"{idx + 1}"]['predict_value'][f"Выходной слой «{out}»"] = data.get('y_pred')
+
+                    return_data[f"{idx + 1}"]['tags_color'] = None
+
+                    if data.get('stat'):
+                        return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
+                    else:
+                        return_data[f"{idx + 1}"]['statistic_values'] = {}
+        return return_data
 
 
 def prepare_y_true(options):
@@ -554,4 +665,15 @@ def postprocess_text_segmentation(pred_array: np.ndarray, options: DatasetOutput
                 0, {'title': "Средняя точность", 'value': mean_stat, 'color_mark': mean_color_mark}
             )
         return data
+
+
+def reformat_y_pred(y_true, y_pred):
+    reformat_pred = {}
+    inverse_pred = {}
+    for idx, out in enumerate(y_true.get('val').keys()):
+        if len(y_true.get('val').keys()) == 1:
+            reformat_pred[out] = y_pred
+        else:
+            reformat_pred[out] = y_pred[idx]
+    return reformat_pred, inverse_pred
 
