@@ -413,10 +413,9 @@ class InteractiveCallback:
     def set_attributes(self, dataset: PrepareDataset, metrics: dict, losses: dict, dataset_path: str,
                        training_path: str, initial_config: InteractiveData,
                        yolo_initial_config: YoloInteractiveData = None):
-        # print('\ndataset.architecture', dataset.data.architecture)
-        # print('\ndataset.data.outputs', dataset.data.outputs)
-        # print('\ndataset.data.inputs', dataset.data.inputs)
-        # print('\ndataset.dataframe', dataset.dataframe.get('val')['1_Комнат'])
+        print('\ndataset.architecture', dataset.data.architecture)
+        print('\ndataset.data.outputs', dataset.data.outputs)
+        print('\ndataset.data.inputs', dataset.data.inputs)
         self.preset_path = os.path.join(training_path, "presets")
         if not os.path.exists(self.preset_path):
             os.mkdir(self.preset_path)
@@ -439,7 +438,7 @@ class InteractiveCallback:
         if not self.log_history:
             self._prepare_null_log_history_template()
         self.dataset_balance = self._prepare_dataset_balance()
-        # print('\nself.dataset_balance', self.dataset_balance)
+        print('\nself.dataset_balance', self.dataset_balance)
         self.class_idx = self._prepare_class_idx()
         self.seed_idx = self._prepare_seed()
         self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
@@ -492,6 +491,7 @@ class InteractiveCallback:
         self.train_progress = data
 
     def update_state(self, y_pred, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
+        print('\nupdate_state', fit_logs, len(y_pred))
         if self.log_history:
             if y_pred is not None:
                 if self.options.data.architecture in self.basic_architecture:
@@ -508,6 +508,8 @@ class InteractiveCallback:
                             seed_idx=self.seed_idx[:self.interactive_config.intermediate_result.num_examples]
                         )
                 if self.options.data.architecture in self.yolo_architecture:
+                    print(self.seed_idx)
+                    print(self.yolo_interactive_config.intermediate_result.num_examples)
                     self.raw_y_pred = y_pred
                     if self.yolo_interactive_config.intermediate_result.show_results:
                         self.example_idx, _ = CreateArray().prepare_yolo_example_idx_to_show(
@@ -1151,33 +1153,42 @@ class InteractiveCallback:
     def _prepare_seed(self):
         method_name = '_prepare_seed'
         try:
-            output = self.interactive_config.intermediate_result.main_output
-            task = self.options.data.outputs.get(output).task
-            example_idx = []
+            if self.options.data.architecture in self.yolo_architecture:
+                # output = self.yolo_interactive_config.intermediate_result.box_channel
+                example_idx = np.arange(len(self.options.dataframe.get("val")))
+                np.random.shuffle(example_idx)
+            elif self.options.data.architecture in self.basic_architecture:
+                output = self.interactive_config.intermediate_result.main_output
+                # print('self.options.data.outputs.get(output)', self.options.data.outputs.get(output))
+                task = self.options.data.outputs.get(output).task
+                example_idx = []
 
-            if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
-                y_true = np.argmax(self.y_true.get('val').get(f"{output}"), axis=-1)
-                class_idx = {}
-                for _id in range(self.options.data.outputs.get(output).num_classes):
-                    class_idx[_id] = []
-                for i, _id in enumerate(y_true):
-                    class_idx[_id].append(i)
-                for key in class_idx.keys():
-                    np.random.shuffle(class_idx[key])
-                num_ex = 25
-                while num_ex:
-                    key = np.random.choice(list(class_idx.keys()))
-                    if not class_idx.get(key):
-                        class_idx.pop(key)
+                if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
+                    y_true = np.argmax(self.y_true.get('val').get(f"{output}"), axis=-1)
+                    class_idx = {}
+                    for _id in range(self.options.data.outputs.get(output).num_classes):
+                        class_idx[_id] = []
+                    for i, _id in enumerate(y_true):
+                        class_idx[_id].append(i)
+                    for key in class_idx.keys():
+                        np.random.shuffle(class_idx[key])
+                    num_ex = 25
+                    while num_ex:
                         key = np.random.choice(list(class_idx.keys()))
-                    example_idx.append(class_idx[key][0])
-                    class_idx[key].pop(0)
-                    num_ex -= 1
-            else:
-                if self.options.data.group == DatasetGroupChoice.keras or self.x_val:
-                    example_idx = np.arange(len(self.y_true.get("val").get(list(self.y_true.get("val").keys())[0])))
+                        if not class_idx.get(key):
+                            class_idx.pop(key)
+                            key = np.random.choice(list(class_idx.keys()))
+                        example_idx.append(class_idx[key][0])
+                        class_idx[key].pop(0)
+                        num_ex -= 1
                 else:
-                    example_idx = np.arange(len(self.options.dataframe.get("val")))
+                    if self.options.data.group == DatasetGroupChoice.keras or self.x_val:
+                        example_idx = np.arange(len(self.y_true.get("val").get(list(self.y_true.get("val").keys())[0])))
+                    else:
+                        example_idx = np.arange(len(self.options.dataframe.get("val")))
+                    np.random.shuffle(example_idx)
+            else:
+                example_idx = np.arange(len(self.options.dataframe.get("val")))
                 np.random.shuffle(example_idx)
             return example_idx
         except Exception as e:
