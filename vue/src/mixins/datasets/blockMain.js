@@ -17,7 +17,7 @@ export default {
       Audio: ['folder', 'table'],
       Video: ['folder', 'table'],
       Classification: ['table'],
-      Segmentation: ['folder', 'table'],
+      ImageSegmentation: ['folder', 'table'],
       Regression: ['table'],
       Timeseries: ['table'],
       ObjectDetection: ['folder', 'table'],
