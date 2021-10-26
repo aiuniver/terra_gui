@@ -26,7 +26,7 @@ class Tags(dict, Enum):
     timeseriestrend = {"alias": "timeseriestrend", "name": "TimeseriesTrend"}
     terra_ai = {"alias": "terra_ai", "name": "Terra AI"}
     object_detection = {"alias": "object_detection", "name": "Object detection"}
-    image_segmentation = {"alias": "image_segmentation", "name": "Image Segmentation"}
+    segmentation = {"alias": "segmentation", "name": "Segmentation"}
     text_segmentation = {"alias": "text_segmentation", "name": "Text Segmentation"}
     audio = {"alias": "audio", "name": "Audio"}
     smart_home = {"alias": "smart_home", "name": "Smart home"}
@@ -44,7 +44,7 @@ OutputLayersDefaults = {
             "activation": ActivationChoice.softmax.value,
         },
     },
-    LayerOutputTypeChoice.ImageSegmentation: {
+    LayerOutputTypeChoice.Segmentation: {
         "1D": {
             "type": LayerTypeChoice.Conv1D.value,
             "activation": ActivationChoice.softmax.value,
@@ -727,7 +727,7 @@ DatasetsGroups = [
                 "group": DatasetGroupChoice.terra.value,
                 "tags": [
                     Tags.image.value,
-                    Tags.image_segmentation.value,
+                    Tags.segmentation.value,
                     Tags.terra_ai.value,
                 ],
             },
@@ -737,7 +737,7 @@ DatasetsGroups = [
                 "group": DatasetGroupChoice.terra.value,
                 "tags": [
                     Tags.image.value,
-                    Tags.image_segmentation.value,
+                    Tags.segmentation.value,
                     Tags.terra_ai.value,
                 ],
             },
@@ -747,7 +747,7 @@ DatasetsGroups = [
                 "group": DatasetGroupChoice.terra.value,
                 "tags": [
                     Tags.image.value,
-                    Tags.image_segmentation.value,
+                    Tags.segmentation.value,
                     Tags.terra_ai.value,
                 ],
             },
@@ -757,7 +757,7 @@ DatasetsGroups = [
                 "group": DatasetGroupChoice.terra.value,
                 "tags": [
                     Tags.image.value,
-                    Tags.image_segmentation.value,
+                    Tags.segmentation.value,
                     Tags.terra_ai.value,
                 ],
             },
@@ -767,7 +767,7 @@ DatasetsGroups = [
                 "group": DatasetGroupChoice.terra.value,
                 "tags": [
                     Tags.image.value,
-                    Tags.image_segmentation.value,
+                    Tags.segmentation.value,
                     Tags.terra_ai.value,
                 ],
             },

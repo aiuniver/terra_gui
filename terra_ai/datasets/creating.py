@@ -127,7 +127,7 @@ class CreateDataset(object):
                                         LayerInputTypeChoice.Audio, LayerInputTypeChoice.Video]:
                             out.parameters.sources_paths = inp.parameters.sources_paths
                         break
-            elif out.type == LayerOutputTypeChoice.ImageSegmentation:
+            elif out.type == LayerOutputTypeChoice.Segmentation:
                 for inp in creation_data.inputs:
                     if inp.type == LayerInputTypeChoice.Image:
                         out.parameters.width = inp.parameters.width

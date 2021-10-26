@@ -167,7 +167,7 @@ class LayerParametersClassificationSerializer(LayerParametersSerializer):
     pass
 
 
-class LayerParametersImageSegmentationSerializer(LayerParametersSerializer):
+class LayerParametersSegmentationSerializer(LayerParametersSerializer):
     width: serializers.IntegerField(min_value=1)
     height: serializers.IntegerField(min_value=1)
     mask_range = serializers.IntegerField(min_value=1)

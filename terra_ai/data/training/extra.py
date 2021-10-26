@@ -91,7 +91,7 @@ class OptimizerChoice(str, Enum):
 
 class TaskChoice(str, Enum):
     Classification = "Classification"
-    ImageSegmentation = "ImageSegmentation"
+    Segmentation = "Segmentation"
     Regression = "Regression"
     Timeseries = "Timeseries"
     ObjectDetection = "ObjectDetection"

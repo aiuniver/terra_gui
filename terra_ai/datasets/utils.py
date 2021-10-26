@@ -21,7 +21,7 @@ PATH_TYPE_LIST = [
     decamelize(LayerInputTypeChoice.Audio),
     decamelize(LayerOutputTypeChoice.Audio),
     decamelize(LayerInputTypeChoice.Video),
-    decamelize(LayerOutputTypeChoice.ImageSegmentation),
+    decamelize(LayerOutputTypeChoice.Segmentation),
 ]
 
 
