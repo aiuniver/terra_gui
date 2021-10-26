@@ -1445,7 +1445,7 @@ class CreateArray(object):
                                 }
                             )
 
-                elif options.data.outputs[output_id].task == LayerOutputTypeChoice.Segmentation:
+                elif options.data.outputs[output_id].task == LayerOutputTypeChoice.ImageSegmentation:
                     return_data[output_id] = []
                     data = []
                     for j, cls in enumerate(options.data.outputs.get(output_id).classes_names):
@@ -1853,7 +1853,7 @@ class CreateArray(object):
                         class_idx[key].pop(0)
                     num_ex -= 1
 
-            elif task == LayerOutputTypeChoice.Segmentation or task == LayerOutputTypeChoice.TextSegmentation:
+            elif task == LayerOutputTypeChoice.ImageSegmentation or task == LayerOutputTypeChoice.TextSegmentation:
                 if encoding == LayerEncodingChoice.ohe:
                     array = to_categorical(
                         np.argmax(array, axis=-1),
@@ -1912,7 +1912,7 @@ class CreateArray(object):
                     true_false_dict.get(key).pop(0)
                 np.random.shuffle(example_idx)
 
-            elif task == LayerOutputTypeChoice.Segmentation or task == LayerOutputTypeChoice.TextSegmentation:
+            elif task == LayerOutputTypeChoice.ImageSegmentation or task == LayerOutputTypeChoice.TextSegmentation:
                 if encoding == LayerEncodingChoice.ohe:
                     array = to_categorical(
                         np.argmax(array, axis=-1),
