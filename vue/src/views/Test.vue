@@ -70,8 +70,17 @@
           </div>
           <div class="col">
             <h3>Select</h3>
+            <t-field label="Disabled">
+              <DSelect disabled :list="list"/>
+            </t-field>
+            <t-field label="Error">
+              <DSelect :list="list" :error="errorText" />
+            </t-field>
             <t-field label="Medium">
-              <DSelect icon="search" :list="list"/>
+              <DSelect :list="list" @change="change" />
+            </t-field>
+            <t-field label="Small">
+              <DSelect small :list="list" @change="change" />
             </t-field>
           </div>
         </div>
