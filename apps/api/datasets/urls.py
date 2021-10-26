@@ -22,7 +22,7 @@ urlpatterns = [
     path("source/load/", views.SourceLoadAPIView.as_view(), name="source_load"),
     path(
         "source/segmentation/classes/autosearch/",
-        views.SourceSegmentationClassesAutosearchAPIView.as_view(),
+        views.SourceSegmentationClassesAutoSearchAPIView.as_view(),
         name="source_segmentation_classes_autosearch",
     ),
     path(
