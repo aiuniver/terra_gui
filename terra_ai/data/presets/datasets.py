@@ -812,26 +812,6 @@ DatasetsGroups = [
                 ],
             },
             {
-                "alias": "chess_v3",
-                "name": "Шахматы v3",
-                "group": DatasetGroupChoice.terra.value,
-                "tags": [
-                    Tags.image.value,
-                    Tags.object_detection.value,
-                    Tags.terra_ai.value,
-                ],
-            },
-            {
-                "alias": "chess_v4",
-                "name": "Шахматы v4",
-                "group": DatasetGroupChoice.terra.value,
-                "tags": [
-                    Tags.image.value,
-                    Tags.object_detection.value,
-                    Tags.terra_ai.value,
-                ],
-            },
-            {
                 "alias": "symptoms",
                 "name": "Симптомы",
                 "group": DatasetGroupChoice.terra.value,
