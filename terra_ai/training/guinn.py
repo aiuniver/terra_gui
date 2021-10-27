@@ -309,17 +309,17 @@ class GUINN:
                        checkpoint: dict, save_model_path: str) -> None:
         progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков...'})
         retrain_epochs = self.sum_epoch if interactive.get_states().get("status") == "addtrain" else self.epochs
-        if dataset_data.architecture in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]:
-            for inp, out, serv in self.dataset.dataset['train'].batch(2).take(22):
-                pass
-            callback = MyCallback(dataset=dataset, yolo_pred=self.yolo_pred,
-                                  inp=inp, image_path=os.path.join(self.training_path, "deploy"),
-                                  epochs=epochs, batches=batch_size)
-        else:
-            callback = FitCallback(dataset=dataset, dataset_data=dataset_data, checkpoint_config=checkpoint,
-                                   batch_size=batch_size, epochs=epochs, retrain_epochs=retrain_epochs,
-                                   save_model_path=save_model_path, model_name=self.nn_name,
-                                   dataset_path=dataset_path, deploy_type=self.deploy_type)
+        # if dataset_data.architecture in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]:
+        #     for inp, out, serv in self.dataset.dataset['train'].batch(2).take(22):
+        #         pass
+        #     callback = MyCallback(dataset=dataset, yolo_pred=self.yolo_pred,
+        #                           inp=inp, image_path=os.path.join(self.training_path, "deploy"),
+        #                           epochs=epochs, batches=batch_size)
+        # else:
+        callback = FitCallback(dataset=dataset, dataset_data=dataset_data, checkpoint_config=checkpoint,
+                               batch_size=batch_size, epochs=epochs, retrain_epochs=retrain_epochs,
+                               save_model_path=save_model_path, model_name=self.nn_name,
+                               dataset_path=dataset_path, deploy_type=self.deploy_type)
         self.callbacks = [callback]
         # checkpoint.update([('filepath', 'test_model.h5')])
         # self.callbacks.append(keras.callbacks.ModelCheckpoint(**checkpoint))
@@ -539,9 +539,9 @@ class GUINN:
                                          self.epochs, self.batch_size)
             model_yolo.compile(optimizer=self.optimizer,
                                loss=compute_loss)
-            self.yolo_pred = create_yolo(self.model, input_size=416, channels=3, training=False,
-                                         classes=self.dataset.data.outputs.get(2).classes_names,
-                                         version=self.dataset.instructions.get(2).get('2_object_detection').get('yolo'))
+            # self.yolo_pred = create_yolo(self.model, input_size=416, channels=3, training=False,
+            #                              classes=self.dataset.data.outputs.get(2).classes_names,
+            #                              version=self.dataset.instructions.get(2).get('2_object_detection').get('yolo'))
         else:
             self.model.compile(loss=self.loss,
                                optimizer=self.optimizer,
@@ -761,6 +761,7 @@ class FitCallback(keras.callbacks.Callback):
         self.dataset_data = dataset_data
         self.dataset_path = dataset_path
         self.deploy_type = deploy_type
+        self.is_yolo = True if self.deploy_type in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4] else False
         self.batch_size = batch_size
         self.epochs = epochs
         self.batch = 0
@@ -804,6 +805,13 @@ class FitCallback(keras.callbacks.Callback):
         self.num_outputs = len(self.dataset.data.outputs.keys())
         # аттрибуты для чекпоинта
         self.log_history = self._load_logs()
+
+        # yolo params
+        self.image_path = os.path.join(os.path.split(self.save_model_path)[0], "deploy", 'chess_{}.jpg')
+        self.samples_train = []
+        self.samples_val = []
+        self.samples_target_train = []
+        self.samples_target_val = []
 
     def _get_metric_name_checkpoint(self, logs: dict):
         """Поиск среди fit_logs нужного параметра"""
@@ -923,6 +931,24 @@ class FitCallback(keras.callbacks.Callback):
                 'logs': {}
             }
 
+    @staticmethod
+    def _logs_predict_extract(logs, prefix):
+        pred_on_batch = []
+        for key in logs.keys():
+            if key.startswith(prefix):
+                pred_on_batch.append(logs[key])
+        return pred_on_batch
+
+    @staticmethod
+    def _logs_losses_extract(logs, prefixes: list):
+        losses = {}
+        for key in logs.keys():
+            if key.find(prefixes[0]) != -1 or key.find(prefixes[1]) != -1:
+                pass
+            else:
+                losses.update({key: logs[key]})
+        return losses
+
     def _best_epoch_monitoring(self, logs):
         """Оценка текущей эпохи"""
         if self.checkpoint_config.get("mode") == CheckpointModeChoice.Min and \
@@ -959,12 +985,24 @@ class FitCallback(keras.callbacks.Callback):
 
     def _get_predict(self, deploy_model=None):
         current_model = deploy_model if deploy_model else self.model
-        if self.dataset.data.use_generator:
-            current_predict = current_model.predict(self.dataset.dataset.get('val').batch(1),
-                                                    batch_size=1)
+        if self.is_yolo:
+            # pred_train = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_train)]
+            current_predict = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_val)]
+            # pred_target_train = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_target_train)]
+            current_target = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_target_val)]
+
+            # print("pred_train", pred_train[0].shape, pred_train[1].shape, pred_train[2].shape)
+            # print("pred_val", pred_val[0].shape, pred_val[1].shape, pred_val[2].shape)
+            # print("pred_target_train", pred_target_train[0].shape, pred_target_train[1].shape, pred_target_train[2].shape)
+            # print("pred_target_val", pred_target_val[0].shape, pred_target_val[1].shape, pred_target_val[2].shape)
         else:
-            current_predict = current_model.predict(self.dataset.X.get('val'), batch_size=self.batch_size)
-        return current_predict
+            if self.dataset.data.use_generator:
+                current_predict = current_model.predict(self.dataset.dataset.get('val').batch(1),
+                                                        batch_size=1)
+            else:
+                current_predict = current_model.predict(self.dataset.X.get('val'), batch_size=self.batch_size)
+            current_target = None
+        return current_predict, current_target
 
     def _deploy_predict(self, presets_predict):
         # with open(os.path.join(self.save_model_path, "predict.txt"), "w", encoding="utf-8") as f:
@@ -1032,7 +1070,7 @@ class FitCallback(keras.callbacks.Callback):
                 weight = i
         if weight:
             self.model.load_weights(os.path.join(self.save_model_path, weight))
-        deploy_predict = self._get_predict()
+        deploy_predict, y_true = self._get_predict()
         deploy_presets_data = self._deploy_predict(deploy_predict)
         out_deploy_presets_data = {"data": deploy_presets_data}
         if self.deploy_type == ArchitectureChoice.TextSegmentation:
@@ -1104,6 +1142,7 @@ class FitCallback(keras.callbacks.Callback):
         self._start_time = time.time()
         if status != "addtrain":
             self.batch = 0
+
         if not self.dataset.data.use_generator:
             self.num_batches = len(list(self.dataset.X.get('train').values())[0]) // self.batch_size
         else:
@@ -1133,8 +1172,13 @@ class FitCallback(keras.callbacks.Callback):
                                               self.batch, self._start_time)
             self.batch += 1
             if interactive.urgent_predict:
-                upred = self._get_predict()
-                train_batch_data = interactive.update_state(y_pred=upred)
+
+                if self.is_yolo:
+                    self.samples_train.append(self._logs_predict_extract(logs, prefix='pred'))
+                    self.samples_target_train.append(self._logs_predict_extract(logs, prefix='target'))
+
+                y_pred, y_true = self._get_predict()
+                train_batch_data = interactive.update_state(y_pred=y_pred, y_true=y_true)
             else:
                 train_batch_data = interactive.update_state(y_pred=None)
             if train_batch_data:
@@ -1159,19 +1203,44 @@ class FitCallback(keras.callbacks.Callback):
                 finished=False,
             )
 
+    def on_test_batch_end(self, batch, logs=None):
+        if self.is_yolo:
+            self.samples_val.append(self._logs_predict_extract(logs, prefix='pred'))
+            self.samples_target_val.append(self._logs_predict_extract(logs, prefix='target'))
+
     def on_epoch_end(self, epoch, logs=None):
         """
         Returns:
             {}:
         """
-        scheduled_predict = self._get_predict()
-        interactive_logs = copy.deepcopy(logs)
+        y_pred, y_true = self._get_predict()
+
+        if self.is_yolo:
+            mAP = get_mAP(self.model, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
+                          TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names)
+            interactive_logs = self._logs_losses_extract(logs, prefixes=['pred', 'target'])
+            interactive_logs.update({'mAP': mAP})
+            output_path = self.image_path.format(epoch)
+            self.samples_train = []
+            self.samples_val = []
+            self.samples_target_train = []
+            self.samples_target_val = []
+            # print(interactive_logs)
+            # print(mAP)
+            # Пока что для визуализации Yolo
+            # detect_image(Yolo=self.model, original_image=self.inp['1'].numpy()[0], output_path=output_path,
+            #              CLASSES=self.dataset.data.outputs.get(2).classes_names, train=True)
+
+        else:
+            interactive_logs = copy.deepcopy(logs)
+
         interactive_logs['epoch'] = self.last_epoch
         current_epoch_time = time.time() - self._time_first_step
         self._sum_epoch_time += current_epoch_time
         train_epoch_data = interactive.update_state(
             fit_logs=interactive_logs,
-            y_pred=scheduled_predict,
+            y_pred=y_pred,
+            y_true=y_true,
             current_epoch_time=current_epoch_time,
             on_epoch_end_flag=True
         )
