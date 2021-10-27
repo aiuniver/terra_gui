@@ -13,10 +13,6 @@ class ArchitectureBasicData(ArchitectureBaseData, types.Basic.ParametersData):
     pass
 
 
-class ArchitectureYoloData(ArchitectureBaseData, types.Yolo.ParametersData):
-    pass
-
-
 class ArchitectureImageClassificationData(ArchitectureBasicData):
     pass
 
@@ -57,11 +53,11 @@ class ArchitectureVideoClassificationData(ArchitectureBasicData):
     pass
 
 
-class ArchitectureYoloV3Data(ArchitectureYoloData):
+class ArchitectureYoloV3Data(ArchitectureBaseData, types.YoloV3.ParametersData):
     pass
 
 
-class ArchitectureYoloV4Data(ArchitectureYoloData):
+class ArchitectureYoloV4Data(ArchitectureBaseData, types.YoloV4.ParametersData):
     pass
 
 
