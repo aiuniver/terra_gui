@@ -17,10 +17,6 @@ from sklearn.metrics import confusion_matrix, classification_report
 import numpy as np
 
 from terra_ai import progress
-from terra_ai.callbacks.object_detection_callbacks import get_yolo_y_pred, prepare_yolo_example_idx_to_show, \
-    get_yolo_y_true
-from terra_ai.callbacks.segmentation_callbacks import TextSegmentationCallback
-from terra_ai.callbacks.utils import dice_coef
 from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice, DatasetGroupChoice, \
     LayerEncodingChoice
 from terra_ai.data.presets.training import Metric
@@ -355,6 +351,7 @@ class InteractiveCallback:
         self.inverse_y_true = {}
         self.y_pred = {}
         self.raw_y_pred = None
+        self.raw_y_true = None
         self.inverse_y_pred = {}
         self.current_epoch = None
 
@@ -415,11 +412,11 @@ class InteractiveCallback:
         pass
 
     def set_attributes(self, dataset: PrepareDataset, metrics: dict, losses: dict, dataset_path: str,
-                       training_path: str, initial_config: InteractiveData,
+                       training_path: str, initial_config: InteractiveData = None,
                        yolo_initial_config: YoloInteractiveData = None):
-        print('\ndataset.architecture', dataset.data.architecture)
-        print('\ndataset.data.outputs', dataset.data.outputs)
-        print('\ndataset.data.inputs', dataset.data.inputs)
+        # print('\ndataset.architecture', dataset.data.architecture)
+        # print('\ndataset.data.outputs', dataset.data.outputs)
+        # print('\ndataset.data.inputs', dataset.data.inputs)
         self.preset_path = os.path.join(training_path, "presets")
         if not os.path.exists(self.preset_path):
             os.mkdir(self.preset_path)
@@ -494,7 +491,7 @@ class InteractiveCallback:
     def update_train_progress(self, data: dict):
         self.train_progress = data
 
-    def update_state(self, y_pred, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
+    def update_state(self, y_pred, y_true=None, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
         print('\nupdate_state', fit_logs, len(y_pred))
         if self.log_history:
             if y_pred is not None:
@@ -502,7 +499,7 @@ class InteractiveCallback:
                     self._reformat_y_pred(y_pred)
                     if self.interactive_config.intermediate_result.show_results:
                         out = f"{self.interactive_config.intermediate_result.main_output}"
-                        self.example_idx = prepare_example_idx_to_show(
+                        self.example_idx = CreateArray().prepare_example_idx_to_show(
                             array=self.y_pred.get(out),
                             true_array=self.y_true.get("val").get(out),
                             options=self.options,
@@ -515,8 +512,9 @@ class InteractiveCallback:
                     print(self.seed_idx)
                     print(self.yolo_interactive_config.intermediate_result.num_examples)
                     self.raw_y_pred = y_pred
+                    self.raw_y_true = y_true
                     if self.yolo_interactive_config.intermediate_result.show_results:
-                        self.example_idx, _ = prepare_yolo_example_idx_to_show(
+                        self.example_idx, _ = CreateArray().prepare_yolo_example_idx_to_show(
                             array=copy.deepcopy(self.y_pred),
                             true_array=copy.deepcopy(self.y_true),
                             name_classes=self.options.data.outputs.get(
@@ -564,7 +562,7 @@ class InteractiveCallback:
             if self.options.data.architecture in self.basic_architecture:
                 if self.interactive_config.intermediate_result.show_results:
                     out = f"{self.interactive_config.intermediate_result.main_output}"
-                    self.example_idx = prepare_example_idx_to_show(
+                    self.example_idx = CreateArray().prepare_example_idx_to_show(
                         array=self.y_true.get("val").get(out),
                         true_array=self.y_true.get("val").get(out),
                         options=self.options,
@@ -581,7 +579,7 @@ class InteractiveCallback:
 
             if self.options.data.architecture in self.yolo_architecture:
                 if self.yolo_interactive_config.intermediate_result.show_results:
-                    self.example_idx, _ = prepare_yolo_example_idx_to_show(
+                    self.example_idx, _ = CreateArray().prepare_yolo_example_idx_to_show(
                         array=copy.deepcopy(self.y_pred),
                         true_array=copy.deepcopy(self.y_true),
                         name_classes=self.options.data.outputs.get(
@@ -792,7 +790,7 @@ class InteractiveCallback:
                             inverse_y_true[data_type][f"{out}"] = inverse_y[:, :, 1:]
 
             if dataset.data.architecture in self.yolo_architecture:
-                y_true = get_yolo_y_true(options=dataset)
+                y_true = CreateArray().get_yolo_y_true(options=dataset)
 
             return y_true, inverse_y_true
         except Exception as e:
@@ -1346,7 +1344,7 @@ class InteractiveCallback:
                         self.inverse_y_pred[out] = inverse_y[:, :, 1:]
 
             if self.options.data.architecture in self.yolo_architecture:
-                self.y_pred = get_yolo_y_pred(
+                self.y_pred = CreateArray().get_yolo_y_pred(
                     array=y_pred,
                     options=self.options,
                     sensitivity=sensitivity,
@@ -2099,7 +2097,7 @@ class InteractiveCallback:
                             LayerOutputTypeChoice.TextSegmentation
                     ):
                         for inp in self.options.data.inputs.keys():
-                            data, type_choice = TextSegmentationCallback.postprocess_initial_source(
+                            data, type_choice = CreateArray().postprocess_initial_source(
                                 options=self.options,
                                 input_id=inp,
                                 save_id=idx + 1,
@@ -3046,7 +3044,7 @@ class InteractiveCallback:
     def _dice_coef(y_true, y_pred, batch_mode=True, smooth=1.0):
         method_name = '_dice_coef'
         try:
-            return dice_coef(y_true, y_pred, batch_mode=batch_mode, smooth=smooth)
+            return CreateArray().dice_coef(y_true, y_pred, batch_mode=batch_mode, smooth=smooth)
         except Exception as e:
             print_error(InteractiveCallback().name, method_name, e)
 
