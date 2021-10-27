@@ -412,7 +412,7 @@ class InteractiveCallback:
         pass
 
     def set_attributes(self, dataset: PrepareDataset, metrics: dict, losses: dict, dataset_path: str,
-                       training_path: str, initial_config: InteractiveData,
+                       training_path: str, initial_config: InteractiveData = None,
                        yolo_initial_config: YoloInteractiveData = None):
         # print('\ndataset.architecture', dataset.data.architecture)
         # print('\ndataset.data.outputs', dataset.data.outputs)

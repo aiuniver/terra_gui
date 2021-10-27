@@ -387,47 +387,8 @@ class ModelValidator:
                     if self.layer_output_shapes.get(layer.id)[0]
                     else self.layer_output_shapes.get(layer.id)
                 ]
-
-        # for idx, layer in enumerate(self.filled_model.get('layers')):
-        #     # fill inputs
-        #     if layer.get('group') == LayerGroupChoice.input:
-        #         pass
-        #     elif not self.layer_input_shapes.get(layer.get('id')) or \
-        #             self.layer_input_shapes.get(layer.get('id')) == [None]:
-        #         self.filled_model['layers'][idx]['shape']['input'] = []
-        #     elif len(self.layer_input_shapes.get(layer.get('id'))) == 1:
-        #         self.filled_model['layers'][idx]['shape']['input'] = [
-        #             self.layer_input_shapes.get(layer.get('id'))[0][1:]
-        #             if self.layer_input_shapes.get(layer.get('id'))[0]
-        #             else self.layer_input_shapes.get(layer.get('id'))
-        #         ]
-        #     else:
-        #         front_shape = []
-        #         for shape in self.layer_input_shapes.get(layer.get('id')):
-        #             if shape and shape != [None]:
-        #                 front_shape.append(shape[1:])
-        #             else:
-        #                 front_shape.append([])
-        #         self.filled_model['layers'][idx]['shape']['input'] = front_shape
-        #
-        #     # fill outputs
-        #     if not self.layer_output_shapes.get(layer.get('id')) or \
-        #             self.layer_output_shapes.get(layer.get('id')) == [None]:
-        #         self.filled_model['layers'][idx]['shape']['output'] = []
-        #     else:
-        #         self.filled_model['layers'][idx]['shape']['output'] = [
-        #             self.layer_output_shapes.get(layer.get('id'))[0][1:]
-        #             if self.layer_output_shapes.get(layer.get('id'))[0]
-        #             else self.layer_output_shapes.get(layer.get('id'))
-        #         ]
-        # self.filled_model = ModelDetailsData(**self.filled_model)
-        # print('\nfilled_model_end')
-        # for layer in self.filled_model.layers:
-        #     print(layer.id, layer.name, layer.type.value, layer.shape)
         self.filled_model.keras = self.keras_code
-        # print(self.keras_code, self.val_dictionary)
         return self.val_dictionary
-        # return self.filled_model, self.val_dictionary
 
     def get_keras_model(self):
         mc = ModelCreator(self.model_plan, self.input_shape, self.block_plans, self.layers_config)
