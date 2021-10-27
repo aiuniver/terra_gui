@@ -526,8 +526,6 @@ class Yolo:
         self.cls_hierarchy = cls_hierarchy
 
     def coordinateCvt2YOLO(self, size, box):
-        # dw = 1. / size[0]
-        # dh = 1. / size[1]
 
         # (xmin + xmax / 2)
         x = (box[0] + box[1]) / 2.0
@@ -539,10 +537,6 @@ class Yolo:
         # (ymax - ymin) = h
         h = box[3] - box[2]
 
-        # x = x*x * dw
-        # w = w*w * dw
-        # y = y*y * dh
-        # h = h*h * dh
         return int(x), int(y), int(w), int(h)
 
     def parse(self, label_path, img_path):
@@ -616,9 +610,6 @@ class Yolo:
         result = {}
 
         for key in data:
-            img_width = int(data[key]["size"]["width"])
-            img_height = int(data[key]["size"]["height"])
-
             contents = ""
 
             for idx in range(0, int(data[key]["objects"]["num_obj"])):
@@ -628,8 +619,7 @@ class Yolo:
                 xmax = data[key]["objects"][str(idx)]["bndbox"]["xmax"]
                 ymax = data[key]["objects"][str(idx)]["bndbox"]["ymax"]
 
-                b = (float(xmin), float(xmax), float(ymin), float(ymax))
-                bb = self.coordinateCvt2YOLO((img_width, img_height), b)
+                bb = (int(xmin), int(ymin), int(xmax), int(ymax))
                 cls_name = data[key]["objects"][str(idx)]["name"]
 
                 def get_class_index(cls_list, cls_hierarchy, cls_name):
