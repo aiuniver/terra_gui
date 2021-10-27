@@ -1,6 +1,8 @@
 from ....mixins import BaseMixinData
-from ...outputs import OutputData
+from ...outputs import OutputsList
+from ..extra import YoloParameters
 
 
 class ParametersData(BaseMixinData):
-    output: OutputData
+    outputs: OutputsList = OutputsList()
+    yolo: YoloParameters = YoloParameters()

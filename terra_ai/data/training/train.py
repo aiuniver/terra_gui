@@ -22,6 +22,11 @@ from .extra import (
     StateStatusChoice,
 )
 from ..types import ConstrainedFloatValueGe0Le1
+from terra_ai.utils import decamelize
+from terra_ai.data.modeling.model import ModelDetailsData
+from apps.plugins.frontend.presets.defaults.training import TrainingTasksRelations
+from terra_ai.data.training.checkpoint import CheckpointData
+from terra_ai.data.training.outputs import OutputsList
 
 
 class LossGraphData(IDMixinData):
@@ -190,3 +195,58 @@ class TrainData(BaseMixinData):
     epochs: PositiveInt = 20
     optimizer: OptimizerData = OptimizerData(type=OptimizerChoice.Adam)
     architecture: ArchitectureData = ArchitectureData(type=ArchitectureChoice.Basic)
+
+    def _update_arch_basic(self, model: ModelDetailsData):
+        outputs = []
+        for layer in model.outputs:
+            training_layer = self.architecture.parameters.outputs.get(
+                layer.id
+            )
+            training_task_rel = TrainingTasksRelations.get(layer.task)
+            training_losses = (
+                list(map(lambda item: item.name, training_task_rel.losses))
+                if training_task_rel
+                else None
+            )
+            training_metrics = (
+                list(map(lambda item: item.name, training_task_rel.metrics))
+                if training_task_rel
+                else None
+            )
+            need_loss = training_layer.loss if training_layer else None
+            if need_loss:
+                loss = need_loss if need_loss in training_losses else training_losses[0]
+            else:
+                loss = training_losses[0] if training_losses else None
+            need_metrics = training_layer.metrics if training_layer else []
+            metrics = list(set(need_metrics) & set(training_metrics or []))
+            outputs.append(
+                {
+                    "id": layer.id,
+                    "classes_quantity": layer.num_classes,
+                    "task": layer.task,
+                    "loss": loss,
+                    "metrics": metrics
+                    if len(metrics)
+                    else ([training_metrics[0]] if training_metrics else []),
+                }
+            )
+        self.architecture.parameters.outputs = OutputsList(outputs)
+        if model.outputs:
+            checkpoint_data = {"layer": self.architecture.parameters.outputs[0].id}
+            if self.architecture.parameters.checkpoint:
+                checkpoint_data = (
+                    self.architecture.parameters.checkpoint.native()
+                )
+                if not checkpoint_data.get("layer"):
+                    checkpoint_data.update({"layer": self.model.outputs[0].id})
+            self.architecture.parameters.checkpoint = CheckpointData(
+                **checkpoint_data
+            )
+
+    def update_by_model(self, model: ModelDetailsData):
+        _method_name = f"_update_arch_{decamelize(self.architecture.type)}"
+        _method = getattr(self, _method_name, None)
+
+        if _method:
+            _method(model)

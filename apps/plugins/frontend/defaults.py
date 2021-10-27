@@ -386,15 +386,105 @@ class ArchitectureBasicForm(ArchitectureBaseForm):
 
 
 class ArchitectureYoloV3Form(ArchitectureBaseForm):
+    yolo: DefaultsTrainingBaseGroupData
     outputs: DefaultsTrainingBaseGroupData
 
+    def _set_architecture_parameters_yolo_train_lr_init(self, value):
+        fields = list(
+            filter(
+                lambda item: item.name == "train_lr_init",
+                self.yolo.fields,
+            )
+        )
+        if not fields:
+            return
+        fields[0].value = value
+
+    def _set_architecture_parameters_yolo_train_lr_end(self, value):
+        fields = list(
+            filter(
+                lambda item: item.name == "train_lr_end",
+                self.yolo.fields,
+            )
+        )
+        if not fields:
+            return
+        fields[0].value = value
+
+    def _set_architecture_parameters_yolo_yolo_iou_loss_thresh(self, value):
+        fields = list(
+            filter(
+                lambda item: item.name == "yolo_iou_loss_thresh",
+                self.yolo.fields,
+            )
+        )
+        if not fields:
+            return
+        fields[0].value = value
+
+    def _set_architecture_parameters_yolo_train_warmup_epochs(self, value):
+        fields = list(
+            filter(
+                lambda item: item.name == "train_warmup_epochs",
+                self.yolo.fields,
+            )
+        )
+        if not fields:
+            return
+        fields[0].value = value
+        
 
 class ArchitectureYoloV4Form(ArchitectureBaseForm):
+    yolo: DefaultsTrainingBaseGroupData
     outputs: DefaultsTrainingBaseGroupData
+
+    def _set_architecture_parameters_yolo_train_lr_init(self, value):
+        fields = list(
+            filter(
+                lambda item: item.name == "train_lr_init",
+                self.yolo.fields,
+            )
+        )
+        if not fields:
+            return
+        fields[0].value = value
+
+    def _set_architecture_parameters_yolo_train_lr_end(self, value):
+        fields = list(
+            filter(
+                lambda item: item.name == "train_lr_end",
+                self.yolo.fields,
+            )
+        )
+        if not fields:
+            return
+        fields[0].value = value
+
+    def _set_architecture_parameters_yolo_yolo_iou_loss_thresh(self, value):
+        fields = list(
+            filter(
+                lambda item: item.name == "yolo_iou_loss_thresh",
+                self.yolo.fields,
+            )
+        )
+        if not fields:
+            return
+        fields[0].value = value
+
+    def _set_architecture_parameters_yolo_train_warmup_epochs(self, value):
+        fields = list(
+            filter(
+                lambda item: item.name == "train_warmup_epochs",
+                self.yolo.fields,
+            )
+        )
+        if not fields:
+            return
+        fields[0].value = value
 
 
 class DefaultsTrainingData(BaseMixinData):
-    base: ArchitectureBaseForm  # DefaultsTrainingBaseData
+    base: ArchitectureBaseForm # DefaultsTrainingBaseData
 
     def update(
         self, dataset: DatasetData, model: ModelDetailsData, training_base: TrainData
