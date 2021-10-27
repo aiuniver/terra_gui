@@ -1,22 +1,13 @@
 from dict_recursive_update import recursive_update
-from pydantic import ValidationError
 
 from terra_ai.agent import agent_exchange
-from terra_ai.agent.exceptions import ExchangeBaseException
-from terra_ai.exceptions.base import TerraBaseException
 from terra_ai.data.training.train import TrainData, InteractiveData
 from terra_ai.data.training.extra import StateStatusChoice
 
 from apps.plugins.project import project_path
-from terra_ai.training.guinn import interactive
 from apps.plugins.frontend import defaults_data
 
-from ..base import (
-    BaseAPIView,
-    BaseResponseSuccess,
-    BaseResponseErrorGeneral,
-    BaseResponseErrorFields,
-)
+from ..base import BaseAPIView, BaseResponseSuccess
 
 
 class StartAPIView(BaseAPIView):
@@ -30,9 +21,7 @@ class StartAPIView(BaseAPIView):
                 .get("outputs", []),
             )
         )
-        outputs = (
-            request.project.training.base.architecture.parameters.outputs.native()
-        )
+        outputs = request.project.training.base.architecture.parameters.outputs.native()
         for index, item in enumerate(outputs):
             outputs[index] = recursive_update(
                 item, request_outputs.get(item.get("id"), {})
@@ -61,9 +50,7 @@ class StopAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         agent_exchange("training_stop")
         request.project.training.set_state()
-        return BaseResponseSuccess(
-            {"state": request.project.training.state.native()}
-        )
+        return BaseResponseSuccess({"state": request.project.training.state.native()})
 
 
 class ClearAPIView(BaseAPIView):
@@ -71,9 +58,7 @@ class ClearAPIView(BaseAPIView):
         agent_exchange("training_clear")
         request.project.training.set_state()
         request.project.training.result = None
-        return BaseResponseSuccess(
-            {"state": request.project.training.state.native()}
-        )
+        return BaseResponseSuccess({"state": request.project.training.state.native()})
 
 
 class InteractiveAPIView(BaseAPIView):
@@ -109,21 +94,7 @@ class SaveAPIView(BaseAPIView):
         return BaseResponseSuccess()
 
 
-class ChangeAPIView(BaseAPIView):
+class UpdateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        training_base = TrainData(**request.project.training.base.native())
-        training_base.update_by_model(request.project.model)
-
-        defaults_data.training.update(
-            request.project.dataset,
-            request.project.model,
-            training_base
-        )
-
-        request.project.training.base = training_base
-
-        return BaseResponseSuccess(
-            {
-                "params": request.project.training.base.native(),
-            }
-        )
+        request.project.update_training_base(request.data)
+        return BaseResponseSuccess(defaults_data.training.native())

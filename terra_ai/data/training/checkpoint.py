@@ -15,8 +15,8 @@ from .extra import (
 
 class CheckpointData(BaseMixinData):
     layer: PositiveInt
+    metric_name: MetricChoice
     type: CheckpointTypeChoice = CheckpointTypeChoice.Metrics
-    metric_name: MetricChoice = MetricChoice.Accuracy
     indicator: CheckpointIndicatorChoice = CheckpointIndicatorChoice.Val
     mode: CheckpointModeChoice = CheckpointModeChoice.Max
     save_best: bool = True

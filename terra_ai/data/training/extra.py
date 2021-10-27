@@ -6,6 +6,7 @@ from enum import Enum
 from typing import List, Tuple
 
 from ..mixins import BaseMixinData, UniqueListMixin
+from ..presets.training import TasksGroups
 
 
 class StateStatusChoice(str, Enum):
@@ -171,3 +172,6 @@ class TasksGroupsList(UniqueListMixin):
     class Meta:
         source = TaskGroupData
         identifier = "task"
+
+
+TasksRelations = TasksGroupsList(TasksGroups)

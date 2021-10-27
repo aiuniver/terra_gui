@@ -270,17 +270,23 @@ class Project(BaseMixinData):
         self.set_training()
         self.save()
 
-    def update_training_base(self):
-        architecture = (
-            self.dataset.architecture if self.dataset else ArchitectureChoice.Basic
-        )
-        self.training.base = TrainData(architecture=ArchitectureData(type=architecture))
-        self.training.base.update_by_model(self.model)
+    def update_training_base(self, data: dict = None):
+        if isinstance(data, dict):
+            data["architecture"]["type"] = self.dataset.architecture.value
+            data["architecture"]["parameters"]["model"] = self.model
+        else:
+            data = {
+                "architecture": {
+                    "type": self.dataset.architecture.value
+                    if self.dataset
+                    else ArchitectureChoice.Basic.value,
+                    "parameters": {"model": self.model},
+                }
+            }
+        self.training.base = TrainData(**data)
         defaults_data.training = DefaultsTrainingData(
-            project=self, architecture=architecture
+            project=self, architecture=self.training.base.architecture.type
         )
-        # print(defaults_data.training.json(indent=2))
-        # defaults_data.training.update(self.dataset, self.model, self.training.base)
 
     def update_training_interactive(self):
         loss_graphs = []
@@ -339,10 +345,10 @@ class Project(BaseMixinData):
     def update_training_state(self):
         self.training.set_state()
 
-    def set_training(self):
-        self.update_training_base()
-        self.update_training_interactive()
-        self.update_training_state()
+    def set_training(self, data: dict = None):
+        self.update_training_base(data.get("base") if data else None)
+        # self.update_training_interactive()
+        # self.update_training_state()
 
     def clear_model(self):
         if self.dataset:
@@ -363,6 +369,7 @@ except Exception:
 _config.update({"hardware": agent_exchange("hardware_accelerator")})
 if _config.get("deploy"):
     _config["deploy"].update({"path": project_path.deploy})
+_training = _config.pop("training") if _config.get("training") else {}
 project = Project(**_config)
-project.set_training()
+project.set_training(_training)
 defaults_data.modeling.set_layer_datatype(project.dataset)
