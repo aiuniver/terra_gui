@@ -878,12 +878,7 @@ class CreateArray(object):
             tags = [0 for _ in range(options['num_classes'])]
             if elem:
                 for cls_name in elem:
-                    # print('cls_name', cls_name)
-                    # print('classes_names', options['classes_names'])
-                    # print('tags', tags)
-                    # print('list assignment index', options['classes_names'].index(cls_name))
                     tags[options['classes_names'].index(cls_name)] = 1
-                    # print('after tags', tags)
             array.append(tags)
         array = np.array(array, dtype='uint8')
 
@@ -969,10 +964,20 @@ class CreateArray(object):
 
         # height: int = options['height']
         # width: int = options['width']
+        x_scale = options['orig_x'] / 416
+        y_scale = options['orig_y'] / 416
 
         real_boxes = []
         for coord in coords.split(' '):
-            real_boxes.append([literal_eval(num) for num in coord.split(',')])
+            tmp = []
+            for i, num in enumerate(coord.split(',')):
+                if i in [0, 2]:
+                    tmp.append(literal_eval(num)/x_scale)
+                elif i in [1, 3]:
+                    tmp.append(literal_eval(num)/y_scale)
+                else:
+                    tmp.append(literal_eval(num))
+            real_boxes.append(tmp)
 
         num_classes: int = options['num_classes']
         zero_boxes_flag: bool = False

@@ -2,35 +2,33 @@
   <div
     class="d-input"
     :class="[{ 'd-input--error': error }, { 'd-input--small': small }, { 'd-input--disabled': isDisabled }]"
-    v-click-outside="outside"
   >
     <div v-if="icon" class="d-input__icon">
       <i :class="`ci-icon ci-${icon}`" />
     </div>
     <input
-      v-model="search"
+      v-model="input"
       v-bind="$attrs"
       autocomplete="off"
-      readonly
       :class="['d-input__input']"
       :type="type"
       :name="name"
       :placeholder="placeholder"
       :disabled="isDisabled"
-      @click="click"
+      @input="debounce"
       @focus="focus"
     />
     <div class="d-input__btn">
-      <div v-show="selected.value && !isDisabled" class="d-input__btn--cleener">
+      <div v-show="input && !isDisabled" class="d-input__btn--cleener">
         <i class="ci-icon ci-close_big" @click="clear" />
       </div>
-      <div :class="['d-input__btn--down', { 'd-input__btn--disabled': isDisabled }]" @click="click">
+      <div :class="['d-input__btn--down', { 'd-input__btn--disabled': isDisabled }]">
         <i class="ci-icon ci-caret_down" />
       </div>
     </div>
-    <div v-if="show" class="d-content">
-      <template v-for="({ label, value }, i) of filterList">
-        <div class="d-content__item" :key="label + i" @click="select({ label, value })">{{ label }}</div>
+    <div class="d-content">
+      <template v-for="({ label, value }, i) of list">
+        <div class="d-content__item" :key="label + i" @change="change({ label, value })">{{ label }}</div>
       </template>
     </div>
   </div>
@@ -52,53 +50,24 @@ export default {
     },
     placeholder: {
       type: String,
-      default: 'Выбрать пункт',
+      default: 'Введите текст',
     },
     value: [String],
   },
   data: () => ({
-    selected: {},
     input: '',
-    show: false,
   }),
-  computed: {
-    filterList() {
-      return this.list;
-    },
-    search: {
-      set(value) {
-        this.input = value;
-      },
-      get() {
-        return this.list.find(item => item.value === this.selected?.value)?.label || '';
-      },
-    },
-  },
+  computed: {},
   methods: {
-    outside() {
-      this.show = false;
-    },
     clear() {
-      this.selected = {};
+      this.input = '';
       this.send('');
     },
     focus(e) {
       this.$emit('focus', e);
     },
-    click(e) {
-      if (!this.isDisabled) {
-        if (!this.show) {
-          console.dir(this.$el.children[0].focus());
-        }
-        this.show = !this.show;
-        this.$emit('click', e);
-      }
-    },
-    select(item) {
-      console.log(item);
-      this.selected = item;
-      this.send(item.value);
-      this.show = false;
+    change({ target }) {
+      this.send(target.value);
     },
     send(value) {
       this.$emit('change', { name: this.name, value });
@@ -119,9 +88,6 @@ export default {
 <style lang="scss" scoped>
 @import '../scss/fields.scss';
 .d-input {
-  &__input {
-    cursor: default;
-  }
   &__btn {
     &--down {
       height: 100%;
@@ -145,15 +111,13 @@ export default {
   min-width: 100%;
   border-radius: 4px;
   overflow: hidden;
-  z-index: 5;
   &__item {
     height: 36px;
     padding: 5px 10px;
     cursor: pointer;
-    color: #a7bed3;
+
     &:hover {
       background-color: #0e1621;
-
       color: #65b9f4;
     }
   }

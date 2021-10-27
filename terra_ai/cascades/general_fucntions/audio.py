@@ -9,6 +9,7 @@ def main(**params):
     retype = change_type(np.float32)
 
     def fun(audio):
+
         y, sr = librosa.load(audio, sr=params['sample_rate'], res_type=params['resample'])
 
         duration = params['max_seconds'] * sr
