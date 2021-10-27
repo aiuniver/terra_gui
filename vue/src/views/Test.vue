@@ -39,6 +39,26 @@
         </div>
         <div class="row">
           <div class="col">
+            <h3>Checkbox</h3>
+            <t-field label="Disabled">
+              <DCheckbox disabled @change="change" />
+            </t-field>
+            <t-field label="Normal">
+              <DCheckbox @change="change" />
+            </t-field>
+            <t-field label="Inline" inline >
+              <DCheckbox @change="change" />
+            </t-field>
+          </div>
+          <div class="col">
+            <h3>Autocomplete</h3>
+          </div>
+          <div class="col">
+            <h3>Empty</h3>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col">
             <h3>Input number</h3>
             <t-field label="Disabled">
               <DInputNumber disabled @change="change" />
@@ -70,8 +90,17 @@
           </div>
           <div class="col">
             <h3>Select</h3>
+            <t-field label="Disabled">
+              <DSelect disabled :list="list" />
+            </t-field>
+            <t-field label="Error">
+              <DSelect :list="list" :error="errorText" />
+            </t-field>
             <t-field label="Medium">
-              <DSelect icon="search" :list="list"/>
+              <DSelect :list="list" @change="change" />
+            </t-field>
+            <t-field label="Small">
+              <DSelect small :list="list" @change="change" />
             </t-field>
           </div>
         </div>
@@ -110,6 +139,7 @@ export default {
     DInputNumber: () => import('@/components/global/design/forms/components/DInputNumber'),
     DSelect: () => import('@/components/global/design/forms/components/DSelect'),
     DButton: () => import('@/components/global/design/forms/components/DButton'),
+    DCheckbox: () => import('@/components/global/design/forms/components/DCheckbox'),
   },
   data: () => ({
     inputNumber: 0,
