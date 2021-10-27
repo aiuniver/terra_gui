@@ -9,6 +9,7 @@ from terra_ai.data.training.extra import StateStatusChoice
 
 from apps.plugins.project import project_path
 from terra_ai.training.guinn import interactive
+from apps.plugins.frontend import defaults_data
 
 from ..base import (
     BaseAPIView,
@@ -106,3 +107,23 @@ class SaveAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         agent_exchange("training_save")
         return BaseResponseSuccess()
+
+
+class ChangeAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        training_base = TrainData(**request.project.training.base.native())
+        training_base.update_by_model(request.project.model)
+
+        defaults_data.training.update(
+            request.project.dataset,
+            request.project.model,
+            training_base
+        )
+
+        request.project.training.base = training_base
+
+        return BaseResponseSuccess(
+            {
+                "params": request.project.training.base.native(),
+            }
+        )
