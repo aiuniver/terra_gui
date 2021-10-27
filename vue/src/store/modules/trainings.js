@@ -114,6 +114,18 @@ export default {
       dispatch('setState', res);
       return res
     },
+    async update({ dispatch }, parse) {
+      let data = JSON.parse(JSON.stringify(parse))
+      // console.log(data)
+      const arht = data.architecture.parameters.outputs || []
+      data.architecture.parameters.outputs = arht.map((item, index) => {
+        return item ? { id: index, ...item } : null
+      }).filter(item => item)
+
+      console.log(JSON.stringify(data, null, 2 ))
+      const res = await dispatch('axios', { url: '/training/update/', data }, { root: true });
+      return res
+    },
     async clear({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/clear/', data }, { root: true });
       dispatch('setState', res);

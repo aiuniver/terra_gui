@@ -7,8 +7,8 @@
       <div class="params__body">
         <div class="params__items">
           <at-collapse :value="collapse">
-            <at-collapse-item v-for="({ name, fields }, key) of params" :key="key" class="mt-3" :title="name || ''">
-              <div class="params__fields">
+            <at-collapse-item v-show="visible" v-for="({ visible, name, fields }, key) of params" :key="key" class="mt-3" :title="name || ''">
+              <div v-if="key !== 'outputs'" class="params__fields">
                 <template v-for="(data, i) of fields">
                   <t-auto-field-trainings
                     v-bind="data"
@@ -17,6 +17,25 @@
                     :inline="false"
                     @parse="parse"
                   />
+                </template>
+              </div>
+              <div v-else class="blocks-layers">
+                <template v-for="(field, i) of fields">
+                  <div class="block-layers" :key="'block_layers_' + i">
+                    <div class="block-layers__header">
+                      {{ field.name }}
+                    </div>
+                    <div class="block-layers__body">
+                      <template v-for="(data, i) of field.fields">
+                        <t-auto-field-trainings
+                          v-bind="data"
+                          :key="'checkpoint_' + i + data.parse"
+                          :inline="true"
+                          @parse="parse"
+                        />
+                      </template>
+                    </div>
+                  </div>
                 </template>
               </div>
             </at-collapse-item>
@@ -45,7 +64,7 @@
 
 <script>
 import { debounce } from '@/utils/core/utils';
-// import ser from '../../assets/js/myserialize';
+import ser from '../../assets/js/myserialize';
 import { mapGetters } from 'vuex';
 import LoadSpiner from '@/components/forms/LoadSpiner';
 export default {
@@ -59,6 +78,7 @@ export default {
     metricData: '',
     debounce: null,
     stopLearning: false,
+    trainSettings: {}
   }),
   computed: {
     ...mapGetters({
@@ -126,10 +146,13 @@ export default {
         }
       }
     },
-    parse({ parse, value, name }) {
-      console.log({ parse, value, name });
-      // ser(this.trainSettings, parse, value);
-      // this.trainSettings = { ...this.trainSettings };
+    parse({ parse, value, name, changeable, mounted }) {
+      console.log({ parse, value, name, changeable, mounted });
+      ser(this.trainSettings, parse, value);
+      this.trainSettings = { ...this.trainSettings };
+      if (!mounted && changeable) {
+        this.$store.dispatch('trainings/update', this.trainSettings)
+      }
       // if (name === 'architecture_parameters_checkpoint_layer') {
       //   this.metricData = value;
       //   if (value) {

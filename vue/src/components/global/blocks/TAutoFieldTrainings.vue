@@ -82,6 +82,7 @@ export default {
     id: Number,
     state: Object,
     inline: Boolean,
+    changeable: Boolean,
     disabled: [Boolean, Array],
   },
   data: () => ({
@@ -103,7 +104,7 @@ export default {
     change({ parse, name, value }) {
       // console.log(parse, value)
       // this.valueIn = null;
-      this.$emit('parse', { parse, name, value });
+      this.$emit('parse', { parse, name, value, changeable: this.changeable });
       // this.$nextTick(() => {
       //   this.valueIn = value;
       // });
@@ -113,7 +114,7 @@ export default {
     // console.log(this.disabled);
   },
   mounted() {
-    this.$emit('parse', { name: this.name, value: this.getValue, parse: this.parse });
+    this.$emit('parse', { name: this.name, value: this.getValue, parse: this.parse, changeable: this.changeable, mounted: true });
     // console.log(this.name, this.parameters, this.getValue)
     this.$nextTick(() => {
       this.valueIn = this.getValue;
