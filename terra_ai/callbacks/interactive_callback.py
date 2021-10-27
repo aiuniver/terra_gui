@@ -113,7 +113,7 @@ class InteractiveCallback:
         pass
 
     def set_attributes(self, dataset: PrepareDataset, metrics: dict, losses: dict, dataset_path: str,
-                       training_path: str, initial_config: InteractiveData,
+                       training_path: str, initial_config: InteractiveData = None,
                        yolo_initial_config: YoloInteractiveData = None):
 
         self._callback_router(dataset)
@@ -135,7 +135,6 @@ class InteractiveCallback:
         self.class_colors = get_classes_colors(dataset)
         self.x_val, self.inverse_x_val = self.callback.get_x_array(dataset)
         self.y_true, self.inverse_y_true = self.callback.get_y_true(dataset)
-
         if not self.log_history:
             self._prepare_null_log_history_template()
         self.dataset_balance = self.callback.dataset_balance(
@@ -228,14 +227,44 @@ class InteractiveCallback:
                     self._update_log_history()
                     self._update_progress_table(current_epoch_time)
                     if self.interactive_config.intermediate_result.autoupdate:
-                        self.intermediate_result = self._get_intermediate_result_request()
+                        self.intermediate_result = self.callback.intermediate_result_request(
+                            options=self.options,
+                            interactive_config=self.interactive_config,
+                            example_idx=self.example_idx,
+                            dataset_path=self.dataset_path,
+                            preset_path=self.preset_path,
+                            x_val=self.x_val,
+                            inverse_x_val=self.inverse_x_val,
+                            y_pred=self.y_pred,
+                            y_true=self.y_true
+                        )
                     if self.interactive_config.statistic_data.output_id \
                             and self.interactive_config.statistic_data.autoupdate:
-                        self.statistic_result = self._get_statistic_data_request()
+                        self.statistic_result = self.callback.statistic_data_request(
+                            interactive_config=self.interactive_config,
+                            options=self.options,
+                            y_true=self.y_true,
+                            y_pred=self.y_pred
+                        )
                 else:
-                    self.intermediate_result = self._get_intermediate_result_request()
+                    self.intermediate_result = self.callback.intermediate_result_request(
+                            options=self.options,
+                            interactive_config=self.interactive_config,
+                            example_idx=self.example_idx,
+                            dataset_path=self.dataset_path,
+                            preset_path=self.preset_path,
+                            x_val=self.x_val,
+                            inverse_x_val=self.inverse_x_val,
+                            y_pred=self.y_pred,
+                            y_true=self.y_true
+                        )
                     if self.interactive_config.statistic_data.output_id:
-                        self.statistic_result = self._get_statistic_data_request()
+                        self.statistic_result = self.callback.statistic_data_request(
+                            interactive_config=self.interactive_config,
+                            options=self.options,
+                            y_true=self.y_true,
+                            y_pred=self.y_pred
+                        )
                 self.urgent_predict = False
                 self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
             return {
@@ -246,7 +275,11 @@ class InteractiveCallback:
                 'intermediate_result': self.intermediate_result,
                 'progress_table': self.progress_table,
                 'statistic_data': self.statistic_result,
-                'data_balance': self._get_balance_data_request(),
+                'data_balance': self.callback.balance_data_request(
+                    options=self.options,
+                    dataset_balance=self.dataset_balance,
+                    interactive_config=self.interactive_config
+                ),
                 'addtrain_epochs': self.addtrain_epochs,
             }
         else:
@@ -621,14 +654,18 @@ class InteractiveCallback:
                             self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['normal_state'].append(
                                 normal_state)
 
-                        if out_task == LayerOutputTypeChoice.Classification or \
-                                out_task == LayerOutputTypeChoice.ImageSegmentation or \
-                                out_task == LayerOutputTypeChoice.TextSegmentation or \
-                                out_task == LayerOutputTypeChoice.TimeseriesTrend:
+                        if self.options.data.architecture in self.class_architecture:
                             for cls in self.log_history.get(f"{out}").get('class_loss').keys():
-                                class_loss = 0.
-                                if out_task == LayerOutputTypeChoice.Classification or \
-                                        out_task == LayerOutputTypeChoice.TimeseriesTrend:
+                                if self.options.data.architecture == ArchitectureChoice.ImageSegmentation or \
+                                        self.options.data.architecture == ArchitectureChoice.TextSegmentation:
+                                    class_idx = classes_names.index(cls)
+                                    class_loss = self._get_loss_calculation(
+                                        loss_obj=self.loss_obj.get(f"{out}"),
+                                        out=f"{out}",
+                                        y_true=self.y_true.get('val').get(f"{out}")[..., class_idx],
+                                        y_pred=self.y_pred.get(f"{out}")[..., class_idx],
+                                    )
+                                else:
                                     class_loss = self._get_loss_calculation(
                                         loss_obj=self.loss_obj.get(f"{out}"),
                                         out=f"{out}",
@@ -636,22 +673,6 @@ class InteractiveCallback:
                                             self.class_idx.get('val').get(f"{out}").get(cls)],
                                         y_pred=self.y_pred.get(f"{out}")[
                                             self.class_idx.get('val').get(f"{out}").get(cls)],
-                                    )
-                                if out_task == LayerOutputTypeChoice.ImageSegmentation:
-                                    class_idx = classes_names.index(cls)
-                                    class_loss = self._get_loss_calculation(
-                                        loss_obj=self.loss_obj.get(f"{out}"),
-                                        out=f"{out}",
-                                        y_true=self.y_true.get('val').get(f"{out}")[:, :, :, class_idx],
-                                        y_pred=self.y_pred.get(f"{out}")[:, :, :, class_idx],
-                                    )
-                                if out_task == LayerOutputTypeChoice.TextSegmentation:
-                                    class_idx = classes_names.index(cls)
-                                    class_loss = self._get_loss_calculation(
-                                        loss_obj=self.loss_obj.get(f"{out}"),
-                                        out=f"{out}",
-                                        y_true=self.y_true.get('val').get(f"{out}")[:, :, class_idx],
-                                        y_pred=self.y_pred.get(f"{out}")[:, :, class_idx],
                                     )
                                 if data_idx or data_idx == 0:
                                     self.log_history[f"{out}"]['class_loss'][cls][loss_name][data_idx] = \
@@ -723,14 +744,19 @@ class InteractiveCallback:
                             self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['normal_state'].append(
                                 normal_state)
 
-                        if out_task == LayerOutputTypeChoice.Classification or \
-                                out_task == LayerOutputTypeChoice.ImageSegmentation or \
-                                out_task == LayerOutputTypeChoice.TextSegmentation or \
-                                out_task == LayerOutputTypeChoice.TimeseriesTrend:
+                        if self.options.data.architecture in self.class_architecture:
                             for cls in self.log_history.get(f"{out}").get('class_metrics').keys():
-                                class_metric = 0.
-                                if out_task == LayerOutputTypeChoice.Classification or \
-                                        out_task == LayerOutputTypeChoice.TimeseriesTrend:
+                                if self.options.data.architecture == ArchitectureChoice.ImageSegmentation or \
+                                        self.options.data.architecture == ArchitectureChoice.TextSegmentation:
+                                    class_idx = classes_names.index(cls)
+                                    class_metric = self._get_metric_calculation(
+                                        metric_name=metric_name,
+                                        metric_obj=self.metrics_obj.get(f"{out}").get(metric_name),
+                                        out=f"{out}",
+                                        y_true=self.y_true.get('val').get(f"{out}")[..., class_idx],
+                                        y_pred=self.y_pred.get(f"{out}")[..., class_idx],
+                                    )
+                                else:
                                     class_metric = self._get_metric_calculation(
                                         metric_name=metric_name,
                                         metric_obj=self.metrics_obj.get(f"{out}").get(metric_name),
@@ -740,24 +766,6 @@ class InteractiveCallback:
                                         y_pred=self.y_pred.get(f"{out}")[
                                             self.class_idx.get('val').get(f"{out}").get(cls)],
                                         show_class=True
-                                    )
-                                if out_task == LayerOutputTypeChoice.ImageSegmentation:
-                                    class_idx = classes_names.index(cls)
-                                    class_metric = self._get_metric_calculation(
-                                        metric_name=metric_name,
-                                        metric_obj=self.metrics_obj.get(f"{out}").get(metric_name),
-                                        out=f"{out}",
-                                        y_true=self.y_true.get('val').get(f"{out}")[:, :, :, class_idx],
-                                        y_pred=self.y_pred.get(f"{out}")[:, :, :, class_idx],
-                                    )
-                                if out_task == LayerOutputTypeChoice.TextSegmentation:
-                                    class_idx = classes_names.index(cls)
-                                    class_metric = self._get_metric_calculation(
-                                        metric_name=metric_name,
-                                        metric_obj=self.metrics_obj.get(f"{out}").get(metric_name),
-                                        out=f"{out}",
-                                        y_true=self.y_true.get('val').get(f"{out}")[:, :, class_idx],
-                                        y_pred=self.y_pred.get(f"{out}")[:, :, class_idx],
                                     )
                                 if data_idx or data_idx == 0:
                                     self.log_history[f"{out}"]['class_metrics'][cls][metric_name][data_idx] = \
@@ -910,62 +918,52 @@ class InteractiveCallback:
 
     def _get_loss_calculation(self, loss_obj, out: str, y_true, y_pred):
         encoding = self.options.data.outputs.get(int(out)).encoding
-        task = self.options.data.outputs.get(int(out)).task
+        task = self.options.data.architecture
         num_classes = self.options.data.outputs.get(int(out)).num_classes
-        if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
-            loss_value = float(loss_obj()(
-                y_true if encoding == LayerEncodingChoice.ohe else to_categorical(y_true, num_classes), y_pred
-            ).numpy())
-        elif task == LayerOutputTypeChoice.ImageSegmentation or \
-                (task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.ohe):
-            loss_value = float(loss_obj()(
-                y_true if encoding == LayerEncodingChoice.ohe else to_categorical(y_true, num_classes), y_pred
-            ).numpy())
-        elif task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.multi:
-            loss_value = float(loss_obj()(y_true, y_pred).numpy())
-        elif task == LayerOutputTypeChoice.Regression or task == LayerOutputTypeChoice.Timeseries:
-            loss_value = float(loss_obj()(y_true, y_pred).numpy())
+        if task in self.class_architecture:
+            if encoding == LayerEncodingChoice.ohe or encoding == LayerEncodingChoice.multi:
+                loss_value = float(loss_obj()(y_true, y_pred).numpy())
+            else:
+                loss_value = float(loss_obj()(to_categorical(y_true, num_classes), y_pred).numpy())
         else:
-            loss_value = 0.
+            loss_value = float(loss_obj()(y_true, y_pred).numpy())
+        # if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
+        #     loss_value = float(loss_obj()(
+        #         y_true if encoding == LayerEncodingChoice.ohe else to_categorical(y_true, num_classes), y_pred
+        #     ).numpy())
+        # elif task == LayerOutputTypeChoice.ImageSegmentation or \
+        #         (task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.ohe):
+        #     loss_value = float(loss_obj()(
+        #         y_true if encoding == LayerEncodingChoice.ohe else to_categorical(y_true, num_classes), y_pred
+        #     ).numpy())
+        # elif task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.multi:
+        #     loss_value = float(loss_obj()(y_true, y_pred).numpy())
+        # elif task == LayerOutputTypeChoice.Regression or task == LayerOutputTypeChoice.Timeseries:
+        #     loss_value = float(loss_obj()(y_true, y_pred).numpy())
+        # else:
+        #     loss_value = 0.
         return loss_value if not math.isnan(loss_value) else None
 
     def _get_metric_calculation(self, metric_name, metric_obj, out: str, y_true, y_pred, show_class=False):
         encoding = self.options.data.outputs.get(int(out)).encoding
-        task = self.options.data.outputs.get(int(out)).task
+        task = self.options.data.architecture
         num_classes = self.options.data.outputs.get(int(out)).num_classes
-        if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
-            if metric_name == Metric.Accuracy:
-                metric_obj.update_state(
-                    np.argmax(y_true, axis=-1) if encoding == LayerEncodingChoice.ohe else y_true,
-                    np.argmax(y_pred, axis=-1)
-                )
-            if metric_name == Metric.BalancedRecall:
-                metric_obj.update_state(
-                    y_true if encoding == LayerEncodingChoice.ohe else to_categorical(y_true, num_classes),
-                    y_pred,
-                    show_class=show_class
-                )
+        if task in self.class_architecture:
+            if encoding == LayerEncodingChoice.ohe or encoding == LayerEncodingChoice.multi:
+                if metric_name == Metric.Accuracy:
+                    metric_obj.update_state(np.argmax(y_true, axis=-1), np.argmax(y_pred, axis=-1))
+                elif metric_name == Metric.BalancedRecall:
+                    metric_obj.update_state(y_true, y_pred, show_class=show_class)
+                else:
+                    metric_obj.update_state(y_true, y_pred)
             else:
-                metric_obj.update_state(
-                    y_true if encoding == LayerEncodingChoice.ohe else to_categorical(y_true, num_classes),
-                    y_pred
-                )
-            metric_value = float(metric_obj.result().numpy())
-        elif task == LayerOutputTypeChoice.ImageSegmentation or \
-                (task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.ohe):
-            metric_obj.update_state(
-                y_true if encoding == LayerEncodingChoice.ohe else to_categorical(y_true, num_classes),
-                y_pred
-            )
-            metric_value = float(metric_obj.result().numpy())
-        elif task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.multi:
-            metric_obj.update_state(y_true, y_pred)
-            metric_value = float(metric_obj.result().numpy())
-        elif task == LayerOutputTypeChoice.Regression or task == LayerOutputTypeChoice.Timeseries:
-            metric_obj.update_state(y_true, y_pred)
-            metric_value = float(metric_obj.result().numpy())
+                if metric_name == Metric.Accuracy:
+                    metric_obj.update_state(y_true, np.argmax(y_pred, axis=-1))
+                else:
+                    metric_obj.update_state(to_categorical(y_true, num_classes), y_pred)
         else:
-            metric_value = 0.
+            metric_obj.update_state(y_true, y_pred)
+        metric_value = float(metric_obj.result().numpy())
         return round(metric_value, 6) if not math.isnan(metric_value) else None
 
     def _get_mean_log(self, logs):
@@ -1180,14 +1178,14 @@ class InteractiveCallback:
                 )
         return data_return
 
-    def _get_intermediate_result_request(self) -> dict:
-        return_data = {}
-        return return_data
-
-    def _get_statistic_data_request(self) -> list:
-        return_data = []
-        return return_data
-
-    def _get_balance_data_request(self) -> list:
-        return_data = []
-        return return_data
+    # def _get_intermediate_result_request(self) -> dict:
+    #     return_data = {}
+    #     return return_data
+    #
+    # def _get_statistic_data_request(self) -> list:
+    #     return_data = []
+    #     return return_data
+    #
+    # def _get_balance_data_request(self) -> list:
+    #     return_data = []
+    #     return return_data

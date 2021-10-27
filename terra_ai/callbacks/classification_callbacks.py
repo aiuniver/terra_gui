@@ -272,7 +272,7 @@ class BaseClassificationCallback:
             return data
 
     @staticmethod
-    def prepare_class_idx(y_true, options) -> dict:
+    def prepare_class_idx(y_true: dict, options) -> dict:
         class_idx = {}
         for data_type in y_true.keys():
             class_idx[data_type] = {}
@@ -281,11 +281,11 @@ class BaseClassificationCallback:
                 ohe = options.data.outputs.get(int(out)).encoding == LayerEncodingChoice.ohe
                 for name in options.data.outputs.get(int(out)).classes_names:
                     class_idx[data_type][out][name] = []
-                y_true = np.argmax(y_true.get(data_type).get(out), axis=-1) if ohe \
+                y_true_argmax = np.argmax(y_true.get(data_type).get(out), axis=-1) if ohe \
                     else np.squeeze(y_true.get(data_type).get(out))
-                for idx in range(len(y_true)):
+                for idx in range(len(y_true_argmax)):
                     class_idx[data_type][out][
-                        options.data.outputs.get(int(out)).classes_names[y_true[idx]]].append(idx)
+                        options.data.outputs.get(int(out)).classes_names[y_true_argmax[idx]]].append(idx)
         return class_idx
 
 
