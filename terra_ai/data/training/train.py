@@ -199,9 +199,7 @@ class TrainData(BaseMixinData):
     def _update_arch_basic(self, model: ModelDetailsData):
         outputs = []
         for layer in model.outputs:
-            training_layer = self.architecture.parameters.outputs.get(
-                layer.id
-            )
+            training_layer = self.architecture.parameters.outputs.get(layer.id)
             training_task_rel = TrainingTasksRelations.get(layer.task)
             training_losses = (
                 list(map(lambda item: item.name, training_task_rel.losses))
@@ -235,14 +233,10 @@ class TrainData(BaseMixinData):
         if model.outputs:
             checkpoint_data = {"layer": self.architecture.parameters.outputs[0].id}
             if self.architecture.parameters.checkpoint:
-                checkpoint_data = (
-                    self.architecture.parameters.checkpoint.native()
-                )
+                checkpoint_data = self.architecture.parameters.checkpoint.native()
                 if not checkpoint_data.get("layer"):
-                    checkpoint_data.update({"layer": self.model.outputs[0].id})
-            self.architecture.parameters.checkpoint = CheckpointData(
-                **checkpoint_data
-            )
+                    checkpoint_data.update({"layer": model.outputs[0].id})
+            self.architecture.parameters.checkpoint = CheckpointData(**checkpoint_data)
 
     def update_by_model(self, model: ModelDetailsData):
         _method_name = f"_update_arch_{decamelize(self.architecture.type)}"

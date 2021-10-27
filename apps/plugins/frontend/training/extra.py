@@ -25,17 +25,3 @@ class GroupData(BaseModel):
     label: str
     collapsable: bool
     collapsed: bool
-
-
-# class ArchitectureChoice(str, Enum):
-#     Basic = "Базовая"
-#     YoloV3 = "YoloV3"
-#     YoloV4 = "YoloV4"
-
-#     @staticmethod
-#     def names() -> list:
-#         return list(map(lambda item: item.name, ArchitectureChoice))
-
-#     @staticmethod
-#     def options() -> List[Tuple[str, str]]:
-#         return list(map(lambda item: (item.name, item.value), ArchitectureChoice))

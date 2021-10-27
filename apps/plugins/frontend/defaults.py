@@ -1,6 +1,7 @@
 import sys
 
 from typing import List, Dict, Optional, Union, Any
+from pydantic import validator, PrivateAttr
 from pydantic.main import ModelMetaclass
 
 from terra_ai.data.mixins import BaseMixinData
@@ -55,35 +56,103 @@ class DefaultsTrainingBaseGroupData(BaseMixinData):
     name: Optional[str]
     collapsable: bool = False
     collapsed: bool = False
+    visible: bool = True
     fields: Union[List[Field], Dict[str, List[Field]]]
-
-
-class DefaultsTrainingBaseData(BaseMixinData):
-    main: DefaultsTrainingBaseGroupData
-    fit: DefaultsTrainingBaseGroupData
-    optimizer: DefaultsTrainingBaseGroupData
-    outputs: DefaultsTrainingBaseGroupData
-    checkpoint: DefaultsTrainingBaseGroupData
 
 
 class ArchitectureMixinForm(BaseMixinData):
     def update(self, data: Any, prefix: str = "", **kwargs):
-        if data:
-            for _key, _value in data.__fields__.items():
-                name_ = f"{prefix}{_key}"
-                if isinstance(_value.type_, ModelMetaclass):
-                    self.update(getattr(data, _key), f"{name_}_")
-                    continue
-                _method_name = f"_set_{name_}"
-                _method = getattr(self, _method_name, None)
-                if _method:
-                    _method(getattr(data, _key), **kwargs)
+        if not data:
+            return
+        for _key, _value in data.__fields__.items():
+            name_ = f"{prefix}{_key}"
+            if isinstance(_value.type_, ModelMetaclass):
+                self.update(getattr(data, _key), f"{name_}_")
+                continue
+            _method_name = f"_set_{name_}"
+            _method = getattr(self, _method_name, None)
+            if _method:
+                _method(getattr(data, _key), **kwargs)
 
 
 class ArchitectureBaseForm(ArchitectureMixinForm):
     main: DefaultsTrainingBaseGroupData
     fit: DefaultsTrainingBaseGroupData
     optimizer: DefaultsTrainingBaseGroupData
+    outputs: DefaultsTrainingBaseGroupData
+
+    def update(self, data: Any, prefix: str = "", **kwargs):
+        model = kwargs.get("model")
+        if model:
+            self._update_outputs(model.outputs, data)
+
+        return super().update(data, prefix=prefix, **kwargs)
+
+    def _update_outputs(self, layers: LayersList, training_data):
+        outputs = {}
+        for layer in layers:
+            losses_data = {**TrainingLossSelect}
+            training_task_rel = TrainingTasksRelations.get(layer.task)
+            training_layer = training_data.architecture.parameters.outputs.get(layer.id)
+            losses_list = list(
+                map(
+                    lambda item: {"label": item.value, "value": item.name},
+                    training_task_rel.losses if training_task_rel else [],
+                )
+            )
+            losses_data.update(
+                {
+                    "name": losses_data.get("name") % layer.id,
+                    "parse": losses_data.get("parse") % layer.id,
+                    "value": training_layer.loss
+                    if training_layer
+                    else (losses_list[0].get("label") if losses_list else ""),
+                    "list": losses_list,
+                }
+            )
+            metrics_data = {**TrainingMetricSelect}
+            metrics_list = list(
+                map(
+                    lambda item: {"label": item.value, "value": item.name},
+                    training_task_rel.metrics if training_task_rel else [],
+                )
+            )
+            available_metrics = list(
+                set(training_layer.metrics)
+                & set(training_task_rel.metrics if training_task_rel else [])
+            )
+            metrics_data.update(
+                {
+                    "name": metrics_data.get("name") % layer.id,
+                    "parse": metrics_data.get("parse") % layer.id,
+                    "value": available_metrics
+                    if available_metrics
+                    else ([metrics_list[0].get("label")] if metrics_list else []),
+                    "list": metrics_list,
+                }
+            )
+            classes_quantity_data = {**TrainingClassesQuantitySelect}
+            classes_quantity_data.update(
+                {
+                    "name": classes_quantity_data.get("name") % layer.id,
+                    "parse": classes_quantity_data.get("parse") % layer.id,
+                    "value": layer.num_classes,
+                }
+            )
+            outputs.update(
+                {
+                    layer.id: {
+                        "name": f"Слой «{layer.name}»",
+                        "classes_quantity": layer.num_classes,
+                        "fields": [
+                            Field(**losses_data),
+                            Field(**metrics_data),
+                            Field(**classes_quantity_data),
+                        ],
+                    }
+                }
+            )
+        self.outputs.fields = outputs
 
     def _set_batch(self, value: int, **kwargs):
         fields = list(filter(lambda item: item.name == "batch", self.fit.fields))
@@ -214,74 +283,14 @@ class ArchitectureBaseForm(ArchitectureMixinForm):
 
 
 class ArchitectureBasicForm(ArchitectureBaseForm):
-    outputs: DefaultsTrainingBaseGroupData
     checkpoint: DefaultsTrainingBaseGroupData
 
-    def _update_outputs(self, layers: LayersList, training_data):
-        outputs = {}
-        for layer in layers:
-            losses_data = {**TrainingLossSelect}
-            training_task_rel = TrainingTasksRelations.get(layer.task)
-            training_layer = training_data.architecture.parameters.outputs.get(layer.id)
-            losses_list = list(
-                map(
-                    lambda item: {"label": item.value, "value": item.name},
-                    training_task_rel.losses if training_task_rel else [],
-                )
-            )
-            losses_data.update(
-                {
-                    "name": losses_data.get("name") % layer.id,
-                    "parse": losses_data.get("parse") % layer.id,
-                    "value": training_layer.loss
-                    if training_layer
-                    else (losses_list[0].get("label") if losses_list else ""),
-                    "list": losses_list,
-                }
-            )
-            metrics_data = {**TrainingMetricSelect}
-            metrics_list = list(
-                map(
-                    lambda item: {"label": item.value, "value": item.name},
-                    training_task_rel.metrics if training_task_rel else [],
-                )
-            )
-            available_metrics = list(
-                set(training_layer.metrics)
-                & set(training_task_rel.metrics if training_task_rel else [])
-            )
-            metrics_data.update(
-                {
-                    "name": metrics_data.get("name") % layer.id,
-                    "parse": metrics_data.get("parse") % layer.id,
-                    "value": available_metrics
-                    if available_metrics
-                    else ([metrics_list[0].get("label")] if metrics_list else []),
-                    "list": metrics_list,
-                }
-            )
-            classes_quantity_data = {**TrainingClassesQuantitySelect}
-            classes_quantity_data.update(
-                {
-                    "name": classes_quantity_data.get("name") % layer.id,
-                    "parse": classes_quantity_data.get("parse") % layer.id,
-                    "value": layer.num_classes,
-                }
-            )
-            outputs.update(
-                {
-                    layer.id: {
-                        "name": f"Слой «{layer.name}»",
-                        "classes_quantity": layer.num_classes,
-                        "fields": [
-                            Field(**losses_data),
-                            Field(**metrics_data),
-                            Field(**classes_quantity_data),
-                        ],
-                    }
-                }
-            )
-        self.outputs.fields = outputs
+    def update(self, data: Any, prefix: str = "", **kwargs):
+        model = kwargs.get("model")
+        if model:
+            self._update_checkpoint(model.outputs)
+
+        return super().update(data, prefix=prefix, **kwargs)
 
     def _update_checkpoint(self, layers: LayersList):
         layers_choice = []
@@ -305,34 +314,27 @@ class ArchitectureBasicForm(ArchitectureBaseForm):
                     self.checkpoint.fields[index] = Field(**field_data)
                     break
 
-    def update(self, data: Any, prefix: str = "", **kwargs):
-        model = kwargs.get("model")
-        if model:
-            self._update_outputs(model.outputs, data)
-            self._update_checkpoint(model.outputs)
-
-        return super().update(data, prefix=prefix, **kwargs)
-
     def _set_architecture_parameters_outputs(self, value: List, **kwargs):
         for item in value:
-            self.update(item, "architecture_parameters_outputs_", id=item.id)
+            self.update(item, "architecture_parameters_outputs_", _id=item.id)
 
-    def _set_architecture_parameters_outputs_loss(self, value, id, **kwargs):
+    def _set_architecture_parameters_outputs_loss(self, value, _id, **kwargs):
         fields = list(
             filter(
-                lambda item: item.name == "architecture_parameters_outputs_2_loss",
-                self.outputs.fields[id]["fields"],
+                lambda item: item.name == f"architecture_parameters_outputs_{_id}_loss",
+                self.outputs.fields[_id]["fields"],
             )
         )
         if not fields:
             return
         fields[0].value = value
 
-    def _set_architecture_parameters_outputs_metrics(self, value, id, **kwargs):
+    def _set_architecture_parameters_outputs_metrics(self, value, _id, **kwargs):
         fields = list(
             filter(
-                lambda item: item.name == "architecture_parameters_outputs_2_metrics",
-                self.outputs.fields[id]["fields"],
+                lambda item: item.name
+                == f"architecture_parameters_outputs_{_id}_metrics",
+                self.outputs.fields[_id]["fields"],
             )
         )
         if not fields:
@@ -385,9 +387,8 @@ class ArchitectureBasicForm(ArchitectureBaseForm):
         fields[0].value = value
 
 
-class ArchitectureYoloV3Form(ArchitectureBaseForm):
+class ArchitectureYoloBaseForm(ArchitectureBaseForm):
     yolo: DefaultsTrainingBaseGroupData
-    outputs: DefaultsTrainingBaseGroupData
 
     def _set_architecture_parameters_yolo_train_lr_init(self, value):
         fields = list(
@@ -432,173 +433,43 @@ class ArchitectureYoloV3Form(ArchitectureBaseForm):
         if not fields:
             return
         fields[0].value = value
-        
 
-class ArchitectureYoloV4Form(ArchitectureBaseForm):
-    yolo: DefaultsTrainingBaseGroupData
-    outputs: DefaultsTrainingBaseGroupData
 
-    def _set_architecture_parameters_yolo_train_lr_init(self, value):
-        fields = list(
-            filter(
-                lambda item: item.name == "train_lr_init",
-                self.yolo.fields,
-            )
-        )
-        if not fields:
-            return
-        fields[0].value = value
+class ArchitectureYoloV3Form(ArchitectureYoloBaseForm):
+    pass
 
-    def _set_architecture_parameters_yolo_train_lr_end(self, value):
-        fields = list(
-            filter(
-                lambda item: item.name == "train_lr_end",
-                self.yolo.fields,
-            )
-        )
-        if not fields:
-            return
-        fields[0].value = value
 
-    def _set_architecture_parameters_yolo_yolo_iou_loss_thresh(self, value):
-        fields = list(
-            filter(
-                lambda item: item.name == "yolo_iou_loss_thresh",
-                self.yolo.fields,
-            )
-        )
-        if not fields:
-            return
-        fields[0].value = value
-
-    def _set_architecture_parameters_yolo_train_warmup_epochs(self, value):
-        fields = list(
-            filter(
-                lambda item: item.name == "train_warmup_epochs",
-                self.yolo.fields,
-            )
-        )
-        if not fields:
-            return
-        fields[0].value = value
+class ArchitectureYoloV4Form(ArchitectureYoloBaseForm):
+    pass
 
 
 class DefaultsTrainingData(BaseMixinData):
-    base: ArchitectureBaseForm # DefaultsTrainingBaseData
+    architecture: ArchitectureChoice
+    base: Optional[ArchitectureBaseForm]
 
-    def update(
-        self, dataset: DatasetData, model: ModelDetailsData, training_base: TrainData
-    ):
-        try:
-            _class = getattr(
-                sys.modules.get(__name__), f"Architecture{dataset.architecture}Form"
-            )
-        except Exception:
-            _class = ArchitectureBasicForm
+    def __init__(self, project: Any = None, **data):
+        data.update({"base": Architectures.get(data.get("architecture", "Base"))})
+        super().__init__(**data)
+        if project:
+            self._update(project)
 
-        self.base = _class(
-            **Architectures.get(
-                dataset.architecture if dataset else "Basic", ArchitectureChoice.Basic
-            )
+    @validator("architecture", pre=True)
+    def _validate_architecture(cls, value: ArchitectureChoice) -> ArchitectureChoice:
+        cls.__fields__["base"].required = True
+        cls.__fields__["base"].type_ = getattr(
+            sys.modules.get(__name__), f"Architecture{value}Form"
         )
-        self.base.update(training_base, model=model)
+        return value
+
+    @validator("base", pre=True)
+    def _validate_base(cls, value: Any, values, field) -> Any:
+        return field.type_(**value or {})
+
+    def _update(self, project: Any):
+        self.base.update(project.training.base, model=project.model)
 
 
 class DefaultsData(BaseMixinData):
     datasets: DefaultsDatasetsData
     modeling: DefaultsModelingData
     training: DefaultsTrainingData
-
-    def __update_training_outputs(self, layers: LayersList, training_data):
-        outputs = {}
-        for layer in layers:
-            losses_data = {**TrainingLossSelect}
-            training_task_rel = TrainingTasksRelations.get(layer.task)
-            training_layer = training_data.base.architecture.parameters.outputs.get(
-                layer.id
-            )
-            losses_list = list(
-                map(
-                    lambda item: {"label": item.value, "value": item.name},
-                    training_task_rel.losses if training_task_rel else [],
-                )
-            )
-            losses_data.update(
-                {
-                    "name": losses_data.get("name") % layer.id,
-                    "parse": losses_data.get("parse") % layer.id,
-                    "value": training_layer.loss
-                    if training_layer
-                    else (losses_list[0].get("label") if losses_list else ""),
-                    "list": losses_list,
-                }
-            )
-            metrics_data = {**TrainingMetricSelect}
-            metrics_list = list(
-                map(
-                    lambda item: {"label": item.value, "value": item.name},
-                    training_task_rel.metrics if training_task_rel else [],
-                )
-            )
-            available_metrics = list(
-                set(training_layer.metrics)
-                & set(training_task_rel.metrics if training_task_rel else [])
-            )
-            metrics_data.update(
-                {
-                    "name": metrics_data.get("name") % layer.id,
-                    "parse": metrics_data.get("parse") % layer.id,
-                    "value": available_metrics
-                    if available_metrics
-                    else ([metrics_list[0].get("label")] if metrics_list else []),
-                    "list": metrics_list,
-                }
-            )
-            classes_quantity_data = {**TrainingClassesQuantitySelect}
-            classes_quantity_data.update(
-                {
-                    "name": classes_quantity_data.get("name") % layer.id,
-                    "parse": classes_quantity_data.get("parse") % layer.id,
-                    "value": layer.num_classes,
-                }
-            )
-            outputs.update(
-                {
-                    layer.id: {
-                        "name": f"Слой «{layer.name}»",
-                        "classes_quantity": layer.num_classes,
-                        "fields": [
-                            Field(**losses_data),
-                            Field(**metrics_data),
-                            Field(**classes_quantity_data),
-                        ],
-                    }
-                }
-            )
-        self.training.base.outputs.fields = outputs
-
-    def __update_training_checkpoint(self, layers: LayersList):
-        layers_choice = []
-        for layer in layers:
-            layers_choice.append(
-                {
-                    "value": layer.id,
-                    "label": f"Слой «{layer.name}»",
-                }
-            )
-        if layers_choice:
-            for index, item in enumerate(self.training.base.checkpoint.fields):
-                if item.name == "architecture_parameters_checkpoint_layer":
-                    field_data = item.native()
-                    field_data.update(
-                        {
-                            "value": str(layers_choice[0].get("value")),
-                            "list": layers_choice,
-                        }
-                    )
-                    self.training.base.checkpoint.fields[index] = Field(**field_data)
-                    break
-
-    def update_by_model(self, model: ModelDetailsData, training_data):
-        self.__update_training_outputs(model.outputs, training_data)
-        self.__update_training_checkpoint(model.outputs)

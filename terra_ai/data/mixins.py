@@ -15,7 +15,6 @@ from .exceptions import (
 from ..exceptions.decorators import error_handler
 
 
-
 class BaseMixinData(BaseModel):
     """
     Базовая модель, которая должна применяться ко всем структурам.

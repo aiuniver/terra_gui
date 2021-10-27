@@ -10,16 +10,20 @@ from pydantic import validator, DirectoryPath, FilePath
 from transliterate import slugify
 
 from apps.plugins.frontend import defaults_data
+from apps.plugins.frontend.defaults import Architectures, DefaultsTrainingData
 from apps.plugins.project import exceptions
 from terra_ai.agent import agent_exchange
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.extra import HardwareAcceleratorData
 from terra_ai.data.mixins import BaseMixinData
-from terra_ai.data.modeling.layer import LayerData
 from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.presets.models import EmptyModelDetailsData
-from terra_ai.data.training.extra import LossGraphShowChoice, MetricGraphShowChoice, ArchitectureChoice
+from terra_ai.data.training.extra import (
+    LossGraphShowChoice,
+    MetricGraphShowChoice,
+    ArchitectureChoice,
+)
 from terra_ai.data.training.train import (
     TrainData,
     InteractiveData,
@@ -267,12 +271,16 @@ class Project(BaseMixinData):
         self.save()
 
     def update_training_base(self):
-        architecture = self.dataset.architecture if self.dataset else ArchitectureChoice.Basic
+        architecture = (
+            self.dataset.architecture if self.dataset else ArchitectureChoice.Basic
+        )
         self.training.base = TrainData(architecture=ArchitectureData(type=architecture))
-        
-        self.training.base.update_by_model(self.model)        
-        # defaults_data.update_by_model(self.model, self.training)
-        defaults_data.training.update(self.dataset, self.model, self.training.base)
+        self.training.base.update_by_model(self.model)
+        defaults_data.training = DefaultsTrainingData(
+            project=self, architecture=architecture
+        )
+        # print(defaults_data.training.json(indent=2))
+        # defaults_data.training.update(self.dataset, self.model, self.training.base)
 
     def update_training_interactive(self):
         loss_graphs = []

@@ -20,7 +20,7 @@ Defaults = {
         "layer_form": ModelingLayerForm,
         "layers_types": ModelingLayersTypes,
     },
-    "training": {"base": Architectures.get(ArchitectureChoice.Basic)},
+    "training": {"architecture": ArchitectureChoice.Basic},
 }
 
 

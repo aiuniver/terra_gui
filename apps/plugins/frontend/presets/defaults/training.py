@@ -46,6 +46,7 @@ ArchitectureGroupMain = {
             "label": "Оптимизатор",
             "name": "optimizer",
             "parse": "optimizer[type]",
+            "changeable": True,
             "value": OptimizerChoice.Adam.name,
             "list": list(
                 map(
@@ -358,9 +359,17 @@ Architectures = {
             "fields": [
                 {
                     "type": "select",
+                    "label": "Функция",
+                    "name": "architecture_parameters_checkpoint_metric_name",
+                    "parse": "architecture[parameters][checkpoint][metric_name]",
+                    "list": [],
+                },
+                {
+                    "type": "select",
                     "label": "Монитор",
                     "name": "architecture_parameters_checkpoint_layer",
                     "parse": "architecture[parameters][checkpoint][layer]",
+                    "list": [],
                 },
                 {
                     "type": "select",
@@ -401,20 +410,6 @@ Architectures = {
                         )
                     ),
                 },
-                # {
-                #     "type": "checkbox",
-                #     "label": "Сохранить лучшее",
-                #     "name": "architecture_parameters_checkpoint_save_best",
-                #     "parse": "architecture[parameters][checkpoint][save_best]",
-                #     "value": True,
-                # },
-                # {
-                #     "type": "checkbox",
-                #     "label": "Сохранить веса",
-                #     "name": "architecture_parameters_checkpoint_save_weights",
-                #     "parse": "architecture[parameters][checkpoint][save_weights]",
-                #     "value": False,
-                # },
             ],
         },
     },
@@ -422,24 +417,26 @@ Architectures = {
         "main": ArchitectureGroupMain,
         "fit": ArchitectureGroupFit,
         "optimizer": ArchitectureGroupOptimizer,
-        "yolo": ArchitectureGroupYoloV3,
         "outputs": {
             "name": "Параметры выходных слоев",
             "collapsable": True,
             "collapsed": False,
+            "visible": False,
             "fields": [],
-        }
+        },
+        "yolo": ArchitectureGroupYoloV3,
     },
     ArchitectureChoice.YoloV4: {
         "main": ArchitectureGroupMain,
         "fit": ArchitectureGroupFit,
         "optimizer": ArchitectureGroupOptimizer,
-        "yolo": ArchitectureGroupYoloV4,
         "outputs": {
             "name": "Параметры выходных слоев",
             "collapsable": True,
             "collapsed": False,
+            "visible": False,
             "fields": [],
-        }
+        },
+        "yolo": ArchitectureGroupYoloV4,
     },
 }
