@@ -17,6 +17,10 @@ class AnnotationPathsData(BaseMixinData):
 class MarkupTypeChoice(str, Enum):
     classification = "classification"
     tracker = "tracker"
+    object_detection = "object_detection"
+    image_segmentation = "image_segmentation"
+    text_segmentation = "text_segmentation"
+    video_segmentation = "video_segmentation"
 
 
 class AnnotationData(AliasMixinData):
