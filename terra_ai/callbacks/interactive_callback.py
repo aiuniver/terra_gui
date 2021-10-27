@@ -12,13 +12,15 @@ import numpy as np
 from terra_ai import progress
 from terra_ai.callbacks.classification_callbacks import ImageClassificationCallback, TextClassificationCallback, \
     AudioClassificationCallback, VideoClassificationCallback, DataframeClassificationCallback, TimeseriesTrendCallback
-from terra_ai.callbacks.object_detection_callbacks import YoloV3Callback, YoloV4Callback
+from terra_ai.callbacks.object_detection_callbacks import YoloV3Callback, YoloV4Callback, \
+    prepare_yolo_example_idx_to_show
 from terra_ai.callbacks.regression_callbacks import DataframeRegressionCallback
 from terra_ai.callbacks.segmentation_callbacks import ImageSegmentationCallback, TextSegmentationCallback
 from terra_ai.callbacks.time_series_callbacks import TimeseriesCallback
 from terra_ai.callbacks.utils import loss_metric_config, round_loss_metric, fill_graph_plot_data, \
     fill_graph_front_structure, reformat_metrics, prepare_loss_obj, prepare_metric_obj, get_classes_colors, print_error
-from terra_ai.data.datasets.extra import LayerOutputTypeChoice, DatasetGroupChoice, LayerEncodingChoice
+from terra_ai.data.datasets.extra import LayerOutputTypeChoice, DatasetGroupChoice, LayerEncodingChoice, \
+    LayerInputTypeChoice
 from terra_ai.data.presets.training import Metric
 from terra_ai.data.training.extra import LossGraphShowChoice, MetricGraphShowChoice, MetricChoice, ArchitectureChoice
 from terra_ai.data.training.train import InteractiveData, YoloInteractiveData
@@ -79,7 +81,7 @@ class InteractiveCallback:
                                    ArchitectureChoice.DataframeRegression, ArchitectureChoice.Timeseries,
                                    ArchitectureChoice.TimeseriesTrend]
         self.yolo_architecture = [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]
-        self.class_architecture = [ArchitectureChoice.ImageClassification,ArchitectureChoice.TimeseriesTrend,
+        self.class_architecture = [ArchitectureChoice.ImageClassification, ArchitectureChoice.TimeseriesTrend,
                                    ArchitectureChoice.ImageSegmentation, ArchitectureChoice.TextSegmentation,
                                    ArchitectureChoice.TextClassification, ArchitectureChoice.AudioClassification,
                                    ArchitectureChoice.VideoClassification, ArchitectureChoice.DataframeClassification,
@@ -118,7 +120,11 @@ class InteractiveCallback:
                        training_path: str, initial_config: InteractiveData = None,
                        yolo_initial_config: YoloInteractiveData = None):
 
+        self.options = dataset
         self._callback_router(dataset)
+        self._class_metric_list()
+        print('self._class_metric_list()', self.class_graphics)
+        print('\nset_attributes', dataset.data.architecture)
         self.preset_path = os.path.join(training_path, "presets")
         if not os.path.exists(self.preset_path):
             os.mkdir(self.preset_path)
@@ -130,9 +136,6 @@ class InteractiveCallback:
             self.interactive_config = initial_config
         if dataset.data.architecture in self.yolo_architecture:
             self.yolo_interactive_config = yolo_initial_config
-
-        self.options = dataset
-        self._class_metric_list()
         self.dataset_path = dataset_path
         self.class_colors = get_classes_colors(dataset)
         self.x_val, self.inverse_x_val = self.callback.get_x_array(dataset)
@@ -212,7 +215,7 @@ class InteractiveCallback:
                 if self.options.data.architecture in self.yolo_architecture:
                     self.raw_y_pred = y_pred
                     if self.yolo_interactive_config.intermediate_result.show_results:
-                        self.example_idx, _ = CreateArray().prepare_yolo_example_idx_to_show(
+                        self.example_idx, _ = prepare_yolo_example_idx_to_show(
                             array=copy.deepcopy(self.y_pred),
                             true_array=copy.deepcopy(self.y_true),
                             name_classes=self.options.data.outputs.get(
@@ -294,7 +297,7 @@ class InteractiveCallback:
             if self.options.data.architecture in self.basic_architecture:
                 if self.interactive_config.intermediate_result.show_results:
                     out = f"{self.interactive_config.intermediate_result.main_output}"
-                    self.example_idx = CreateArray().prepare_example_idx_to_show(
+                    self.example_idx = self.callback.prepare_example_idx_to_show(
                         array=self.y_true.get("val").get(out),
                         true_array=self.y_true.get("val").get(out),
                         options=self.options,
@@ -305,13 +308,28 @@ class InteractiveCallback:
                     )
                 if config.intermediate_result.show_results or config.statistic_data.output_id:
                     self.urgent_predict = True
-                    self.intermediate_result = self._get_intermediate_result_request()
+                    self.intermediate_result = self.callback.intermediate_result_request(
+                        options=self.options,
+                        interactive_config=self.interactive_config,
+                        example_idx=self.example_idx,
+                        dataset_path=self.dataset_path,
+                        preset_path=self.preset_path,
+                        x_val=self.x_val,
+                        inverse_x_val=self.inverse_x_val,
+                        y_pred=self.y_pred,
+                        y_true=self.y_true
+                    )
                     if self.interactive_config.statistic_data.output_id:
-                        self.statistic_result = self._get_statistic_data_request()
+                        self.statistic_result = self.callback.statistic_data_request(
+                            interactive_config=self.interactive_config,
+                            options=self.options,
+                            y_true=self.y_true,
+                            y_pred=self.y_pred
+                        )
 
             if self.options.data.architecture in self.yolo_architecture:
                 if self.yolo_interactive_config.intermediate_result.show_results:
-                    self.example_idx, _ = CreateArray().prepare_yolo_example_idx_to_show(
+                    self.example_idx, _ = prepare_yolo_example_idx_to_show(
                         array=copy.deepcopy(self.y_pred),
                         true_array=copy.deepcopy(self.y_true),
                         name_classes=self.options.data.outputs.get(
@@ -324,9 +342,24 @@ class InteractiveCallback:
                     )
                 if config.intermediate_result.show_results or config.statistic_data.box_channel:
                     self.urgent_predict = True
-                    self.intermediate_result = self._get_intermediate_result_request()
+                    self.intermediate_result = self.callback.intermediate_result_request(
+                        options=self.options,
+                        interactive_config=self.interactive_config,
+                        example_idx=self.example_idx,
+                        dataset_path=self.dataset_path,
+                        preset_path=self.preset_path,
+                        x_val=self.x_val,
+                        inverse_x_val=self.inverse_x_val,
+                        y_pred=self.y_pred,
+                        y_true=self.y_true
+                    )
                     if self.yolo_interactive_config.statistic_data.box_channel:
-                        self.statistic_result = self._get_statistic_data_request()
+                        self.statistic_result = self.callback.statistic_data_request(
+                            interactive_config=self.interactive_config,
+                            options=self.options,
+                            y_true=self.y_true,
+                            y_pred=self.y_pred
+                        )
 
             self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
             self.train_progress['train_data'] = {
@@ -337,7 +370,11 @@ class InteractiveCallback:
                 'intermediate_result': self.intermediate_result,
                 'progress_table': self.progress_table,
                 'statistic_data': self.statistic_result,
-                'data_balance': self._get_balance_data_request(),
+                'data_balance': self.callback.balance_data_request(
+                    options=self.options,
+                    dataset_balance=self.dataset_balance,
+                    interactive_config=self.interactive_config
+                ),
                 'addtrain_epochs': self.addtrain_epochs,
             }
             progress.pool(
@@ -351,7 +388,43 @@ class InteractiveCallback:
         method_name = '_callback_router'
         try:
             if dataset.data.architecture == ArchitectureChoice.Basic:
-                pass
+                for out in dataset.data.outputs.keys():
+                    if dataset.data.outputs.get(out).task == LayerOutputTypeChoice.Classification:
+                        for inp in dataset.data.inputs.keys():
+                            if dataset.data.inputs.get(inp).task == LayerInputTypeChoice.Image:
+                                self.options.data.architecture = ArchitectureChoice.ImageClassification
+                                self.callback = ImageClassificationCallback()
+                            elif dataset.data.inputs.get(inp).task == LayerInputTypeChoice.Text:
+                                self.options.data.architecture = ArchitectureChoice.TextClassification
+                                self.callback = TextClassificationCallback()
+                            elif dataset.data.inputs.get(inp).task == LayerInputTypeChoice.Audio:
+                                self.options.data.architecture = ArchitectureChoice.AudioClassification
+                                self.callback = AudioClassificationCallback()
+                            elif dataset.data.inputs.get(inp).task == LayerInputTypeChoice.Video:
+                                self.options.data.architecture = ArchitectureChoice.VideoClassification
+                                self.callback = VideoClassificationCallback()
+                            elif dataset.data.inputs.get(inp).task == LayerInputTypeChoice.Dataframe:
+                                self.options.data.architecture = ArchitectureChoice.DataframeClassification
+                                self.callback = DataframeClassificationCallback()
+                            else:
+                                pass
+                    elif dataset.data.outputs.get(out).task == LayerOutputTypeChoice.TimeseriesTrend:
+                        self.options.data.architecture = ArchitectureChoice.TimeseriesTrend
+                        self.callback = TimeseriesTrendCallback()
+                    elif dataset.data.outputs.get(out).task == LayerOutputTypeChoice.Regression:
+                        self.options.data.architecture = ArchitectureChoice.DataframeRegression
+                        self.callback = DataframeRegressionCallback()
+                    elif dataset.data.outputs.get(out).task == LayerOutputTypeChoice.Timeseries:
+                        self.options.data.architecture = ArchitectureChoice.Timeseries
+                        self.callback = TimeseriesCallback()
+                    elif dataset.data.outputs.get(out).task == LayerOutputTypeChoice.Segmentation:
+                        self.options.data.architecture = ArchitectureChoice.ImageSegmentation
+                        self.callback = ImageSegmentationCallback()
+                    elif dataset.data.outputs.get(out).task == LayerOutputTypeChoice.TextSegmentation:
+                        self.options.data.architecture = ArchitectureChoice.TextSegmentation
+                        self.callback = TextSegmentationCallback()
+                    else:
+                        pass
             elif dataset.data.architecture == ArchitectureChoice.ImageClassification:
                 self.callback = ImageClassificationCallback()
             elif dataset.data.architecture == ArchitectureChoice.ImageSegmentation:
@@ -984,10 +1057,13 @@ class InteractiveCallback:
     def _get_mean_log(self, logs):
         method_name = '_get_mean_log'
         try:
-            if len(logs) < self.log_gap:
-                return float(np.mean(logs))
+            copy_logs = copy.deepcopy(logs)
+            while None in copy_logs:
+                copy_logs.pop(copy_logs.index(None))
+            if len(copy_logs) < self.log_gap:
+                return float(np.mean(copy_logs))
             else:
-                return float(np.mean(logs[-self.log_gap:]))
+                return float(np.mean(copy_logs[-self.log_gap:]))
         except Exception as e:
             print_error(InteractiveCallback().name, method_name, e)
             return 0.

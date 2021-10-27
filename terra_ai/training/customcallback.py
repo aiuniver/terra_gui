@@ -40,13 +40,18 @@ def class_counter(y_array, classes_names: list, ohe=True):
         "class_name": int
     }
     """
-    class_dict = {}
-    for cl in classes_names:
-        class_dict[cl] = 0
-    y_array = np.argmax(y_array, axis=-1) if ohe else np.squeeze(y_array)
-    for y in y_array:
-        class_dict[classes_names[y]] += 1
-    return class_dict
+    method_name = 'class_counter'
+    try:
+        class_dict = {}
+        for cl in classes_names:
+            class_dict[cl] = 0
+        y_array_argmax = np.argmax(y_array, axis=-1) if ohe else np.squeeze(y_array)
+        # print(y_array_argmax.shape, y_array.shape, classes_names)
+        for y in y_array_argmax:
+            class_dict[classes_names[y]] += 1
+        return class_dict
+    except Exception as e:
+        print_error('None', method_name, e)
 
 
 loss_metric_config = {
@@ -414,9 +419,6 @@ class InteractiveCallback:
     def set_attributes(self, dataset: PrepareDataset, metrics: dict, losses: dict, dataset_path: str,
                        training_path: str, initial_config: InteractiveData = None,
                        yolo_initial_config: YoloInteractiveData = None):
-        # print('\ndataset.architecture', dataset.data.architecture)
-        # print('\ndataset.data.outputs', dataset.data.outputs)
-        # print('\ndataset.data.inputs', dataset.data.inputs)
         self.preset_path = os.path.join(training_path, "presets")
         if not os.path.exists(self.preset_path):
             os.mkdir(self.preset_path)
@@ -439,10 +441,10 @@ class InteractiveCallback:
         if not self.log_history:
             self._prepare_null_log_history_template()
         self.dataset_balance = self._prepare_dataset_balance()
-        print('\nself.dataset_balance', self.dataset_balance)
         self.class_idx = self._prepare_class_idx()
         self.seed_idx = self._prepare_seed()
         self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
+        # print('\nself.random_key', self.random_key)
 
     def set_status(self, status):
         self.train_states["status"] = status
@@ -491,7 +493,8 @@ class InteractiveCallback:
     def update_train_progress(self, data: dict):
         self.train_progress = data
 
-    def update_state(self, y_pred, y_true=None, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
+    def update_state(self, y_pred, y_true=None, fit_logs=None, current_epoch_time=None,
+                     on_epoch_end_flag=False) -> dict:
         print('\nupdate_state', fit_logs, len(y_pred))
         if self.log_history:
             if y_pred is not None:
@@ -910,7 +913,7 @@ class InteractiveCallback:
             dataset_balance = {}
             for out in self.options.data.outputs.keys():
                 task = self.options.data.outputs.get(out).task
-                # print('self.options.data.outputs.get(out)', self.options.data.outputs.get(out))
+                # print('\nself.options.data.outputs.get(out)', self.options.data.outputs.get(out))
                 encoding = self.options.data.outputs.get(out).encoding
 
                 if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
@@ -1041,7 +1044,8 @@ class InteractiveCallback:
                         }
 
                 if task == LayerOutputTypeChoice.ObjectDetection:
-                    name_classes = self.options.data.outputs.get(list(self.options.data.outputs.keys())[0]).classes_names
+                    name_classes = self.options.data.outputs.get(
+                        list(self.options.data.outputs.keys())[0]).classes_names
                     imsize = self.options.data.inputs.get(list(self.options.data.inputs.keys())[0]).shape
                     class_bb = {}
                     dataset_balance["output"] = {
@@ -1257,7 +1261,8 @@ class InteractiveCallback:
                                 [train_metric, val_metric], int(out), self.options.preprocessing
                             )
                         interactive_log[out]['metrics'][metric_name] = {
-                            'train': self._round_loss_metric(train_metric) if not math.isnan(float(train_metric)) else None,
+                            'train': self._round_loss_metric(train_metric) if not math.isnan(
+                                float(train_metric)) else None,
                             'val': self._round_loss_metric(val_metric) if not math.isnan(float(val_metric)) else None
                         }
 
@@ -1297,9 +1302,12 @@ class InteractiveCallback:
                     }
                 }
                 for name in self.options.data.outputs.get(list(self.options.data.outputs.keys())[0]).classes_names:
-                    interactive_log['output']['val']["class_loss"]['prob_loss'][name] = logs.get(f'val_prob_loss_{name}')
-                    interactive_log['output']['val']["class_metrics"]['mAP50'][name] = logs.get(f'val_mAP50_class_{name}')
-                    interactive_log['output']['val']["class_metrics"]['mAP95'][name] = logs.get(f'val_mAP95_class_{name}')
+                    interactive_log['output']['val']["class_loss"]['prob_loss'][name] = logs.get(
+                        f'val_prob_loss_{name}')
+                    interactive_log['output']['val']["class_metrics"]['mAP50'][name] = logs.get(
+                        f'val_mAP50_class_{name}')
+                    interactive_log['output']['val']["class_metrics"]['mAP95'][name] = logs.get(
+                        f'val_mAP95_class_{name}')
 
             return interactive_log
         except Exception as e:
@@ -1324,7 +1332,8 @@ class InteractiveCallback:
                         for i, column in enumerate(preprocess_dict.keys()):
                             if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
                                 _options = {int(out): {column: self.y_pred.get(out)[:, i:i + 1]}}
-                                inverse_col = self.options.preprocessing.inverse_data(_options).get(int(out)).get(column)
+                                inverse_col = self.options.preprocessing.inverse_data(_options).get(int(out)).get(
+                                    column)
                             else:
                                 inverse_col = self.y_pred.get(out)[:, i:i + 1]
                             inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
@@ -1337,7 +1346,8 @@ class InteractiveCallback:
                             if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
                                 _options = {int(out): {column: self.y_pred.get(out)[:, :, i]}}
                                 inverse_col = np.expand_dims(
-                                    self.options.preprocessing.inverse_data(_options).get(int(out)).get(column), axis=-1)
+                                    self.options.preprocessing.inverse_data(_options).get(int(out)).get(column),
+                                    axis=-1)
                             else:
                                 inverse_col = self.y_pred.get(out)[:, :, i:i + 1]
                             inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
@@ -1385,10 +1395,13 @@ class InteractiveCallback:
                             if data_idx or data_idx == 0:
                                 self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['mean_log_history'][
                                     data_idx] = \
-                                    self._get_mean_log(self.log_history.get(f"{out}").get('loss').get(loss_name).get('val'))
+                                    self._get_mean_log(
+                                        self.log_history.get(f"{out}").get('loss').get(loss_name).get('val'))
                             else:
-                                self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['mean_log_history'].append(
-                                    self._get_mean_log(self.log_history.get(f"{out}").get('loss').get(loss_name).get('val'))
+                                self.log_history[f"{out}"]['progress_state']['loss'][loss_name][
+                                    'mean_log_history'].append(
+                                    self._get_mean_log(
+                                        self.log_history.get(f"{out}").get('loss').get(loss_name).get('val'))
                                 )
                             # get progress state data
                             loss_underfitting = self._evaluate_underfitting(
@@ -1408,11 +1421,14 @@ class InteractiveCallback:
                                 normal_state = True
 
                             if data_idx or data_idx == 0:
-                                self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['underfitting'][data_idx] = \
+                                self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['underfitting'][
+                                    data_idx] = \
                                     loss_underfitting
-                                self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['overfitting'][data_idx] = \
+                                self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['overfitting'][
+                                    data_idx] = \
                                     loss_overfitting
-                                self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['normal_state'][data_idx] = \
+                                self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['normal_state'][
+                                    data_idx] = \
                                     normal_state
                             else:
                                 self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['underfitting'].append(
@@ -1482,7 +1498,8 @@ class InteractiveCallback:
                                         )
 
                             if data_idx or data_idx == 0:
-                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['mean_log_history'][
+                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name][
+                                    'mean_log_history'][
                                     data_idx] = \
                                     self._get_mean_log(self.log_history[f"{out}"]['metrics'][metric_name]['val'])
                             else:
@@ -1498,7 +1515,8 @@ class InteractiveCallback:
                             )
                             metric_overfittng = self._evaluate_overfitting(
                                 metric_name,
-                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['mean_log_history'],
+                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name][
+                                    'mean_log_history'],
                                 metric_type='metric'
                             )
                             if metric_underfittng or metric_overfittng:
@@ -1517,11 +1535,14 @@ class InteractiveCallback:
                                     data_idx] = \
                                     normal_state
                             else:
-                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['underfitting'].append(
+                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name][
+                                    'underfitting'].append(
                                     metric_underfittng)
-                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['overfitting'].append(
+                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name][
+                                    'overfitting'].append(
                                     metric_overfittng)
-                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['normal_state'].append(
+                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name][
+                                    'normal_state'].append(
                                     normal_state)
 
                             if out_task == LayerOutputTypeChoice.Classification or \
@@ -1601,7 +1622,8 @@ class InteractiveCallback:
                     for loss_name in self.log_history['output']["loss"].keys():
                         # fill loss progress state
                         if data_idx or data_idx == 0:
-                            self.log_history['output']['progress_state']['loss'][loss_name]['mean_log_history'][data_idx] = \
+                            self.log_history['output']['progress_state']['loss'][loss_name]['mean_log_history'][
+                                data_idx] = \
                                 self._get_mean_log(self.log_history.get('output').get('loss').get(loss_name).get('val'))
                         else:
                             self.log_history['output']['progress_state']['loss'][loss_name]['mean_log_history'].append(
@@ -1642,7 +1664,8 @@ class InteractiveCallback:
                     for metric_name in self.log_history.get('output').get('metrics').keys():
                         if data_idx or data_idx == 0:
                             self.log_history['output']['progress_state']['metrics'][metric_name]['mean_log_history'][
-                                data_idx] = self._get_mean_log(self.log_history['output']['metrics'][metric_name]['val'])
+                                data_idx] = self._get_mean_log(
+                                self.log_history['output']['metrics'][metric_name]['val'])
                         else:
                             self.log_history['output']['progress_state']['metrics'][metric_name][
                                 'mean_log_history'].append(
@@ -1991,7 +2014,8 @@ class InteractiveCallback:
                 return data_return
             for metric_graph_config in self.interactive_config.metric_graphs:
                 if metric_graph_config.show == MetricGraphShowChoice.model:
-                    min_max_mode = loss_metric_config.get("metric").get(metric_graph_config.show_metric.name).get("mode")
+                    min_max_mode = loss_metric_config.get("metric").get(metric_graph_config.show_metric.name).get(
+                        "mode")
                     if sum(self.log_history.get(f"{metric_graph_config.output_idx}").get("progress_state").get(
                             "metrics").get(metric_graph_config.show_metric.name).get(
                         'overfitting')[-self.log_gap:]) >= self.progress_threashold:
@@ -2060,7 +2084,8 @@ class InteractiveCallback:
                             plot_data=[
                                 self._fill_graph_plot_data(
                                     x=self.log_history.get("epochs"),
-                                    y=self.log_history.get(f"{metric_graph_config.output_idx}").get('class_metrics').get(
+                                    y=self.log_history.get(f"{metric_graph_config.output_idx}").get(
+                                        'class_metrics').get(
                                         class_name).get(metric_graph_config.show_metric),
                                     label=f"Класс {class_name}"
                                 ) for class_name in
@@ -2242,7 +2267,8 @@ class InteractiveCallback:
                         sensitivity=self.yolo_interactive_config.intermediate_result.sensitivity,
                         image_id=idx,
                         image_size=self.options.data.inputs.get(list(self.options.data.inputs.keys())[0]).shape[:2],
-                        name_classes=self.options.data.outputs.get(list(self.options.data.outputs.keys())[0]).classes_names,
+                        name_classes=self.options.data.outputs.get(
+                            list(self.options.data.outputs.keys())[0]).classes_names,
                         save_path=self.preset_path,
                         return_mode='callback',
                         show_stat=self.yolo_interactive_config.intermediate_result.show_statistic
@@ -2279,7 +2305,8 @@ class InteractiveCallback:
                     if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend and \
                             encoding != LayerEncodingChoice.multi:
                         cm, cm_percent = self._get_confusion_matrix(
-                            np.argmax(self.y_true.get("val").get(f'{out}'), axis=-1) if encoding == LayerEncodingChoice.ohe
+                            np.argmax(self.y_true.get("val").get(f'{out}'),
+                                      axis=-1) if encoding == LayerEncodingChoice.ohe
                             else self.y_true.get("val").get(f'{out}'),
                             np.argmax(self.y_pred.get(f'{out}'), axis=-1),
                             get_percent=True
@@ -2323,7 +2350,8 @@ class InteractiveCallback:
                         )
                         _id += 1
 
-                    elif (task == LayerOutputTypeChoice.TextSegmentation or task == LayerOutputTypeChoice.Classification) \
+                    elif (
+                            task == LayerOutputTypeChoice.TextSegmentation or task == LayerOutputTypeChoice.Classification) \
                             and encoding == LayerEncodingChoice.multi:
 
                         report = self._get_classification_report(
@@ -2523,7 +2551,8 @@ class InteractiveCallback:
                         class_matrix[line_names.index(item['class_name'])][-1] += 1
 
                 for class_name in name_classes:
-                    class_accuracy_hist[class_name] = np.round(np.mean(class_accuracy_hist[class_name]) * 100, 2).item() if \
+                    class_accuracy_hist[class_name] = np.round(np.mean(class_accuracy_hist[class_name]) * 100,
+                                                               2).item() if \
                         class_accuracy_hist[class_name] else 0.
                     class_coord_accuracy[class_name] = np.round(np.mean(class_coord_accuracy[class_name]) * 100,
                                                                 2).item() if \
@@ -2601,7 +2630,8 @@ class InteractiveCallback:
                         x_label="Имя класса",
                         y_label="Средняя точность, %",
                         plot_data=[
-                            self._fill_graph_plot_data(x=name_classes, y=[class_coord_accuracy[i] for i in name_classes])
+                            self._fill_graph_plot_data(x=name_classes,
+                                                       y=[class_coord_accuracy[i] for i in name_classes])
                         ],
                     )
                 )
@@ -2775,7 +2805,8 @@ class InteractiveCallback:
                             for channel_name in self.dataset_balance[f"{out}"][class_type].keys():
                                 preset = {}
                                 for data_type in ["train", "val"]:
-                                    graph_type = self.dataset_balance[f"{out}"][class_type][channel_name][data_type]['type']
+                                    graph_type = self.dataset_balance[f"{out}"][class_type][channel_name][data_type][
+                                        'type']
                                     data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
                                     y_true = self.options.dataframe.get(data_type)[channel_name].to_list()
                                     if class_type == 'graphic':
@@ -2837,7 +2868,8 @@ class InteractiveCallback:
                         return_data.append(preset)
 
                     if class_type == "colormap":
-                        classes_name = sorted(list(self.dataset_balance.get("output").get('colormap').get('train').keys()))
+                        classes_name = sorted(
+                            list(self.dataset_balance.get("output").get('colormap').get('train').keys()))
                         for class_name in classes_name:
                             preset = {}
                             for data_type in ['train', 'val']:
@@ -3053,8 +3085,9 @@ class InteractiveCallback:
         method_name = '_get_image_class_colormap'
         try:
             array = np.expand_dims(np.argmax(array, axis=-1), axis=-1) * 512
-            array = np.where(array == class_id * 512, np.array(colors[class_id]) if np.sum(np.array(colors[class_id])) > 50
-            else np.array((255, 255, 255)), np.array((0, 0, 0)))
+            array = np.where(array == class_id * 512,
+                             np.array(colors[class_id]) if np.sum(np.array(colors[class_id])) > 50
+                             else np.array((255, 255, 255)), np.array((0, 0, 0)))
             array = (np.sum(array, axis=0) / len(array)).astype("uint8")
             matplotlib.image.imsave(save_path, array)
         except Exception as e:

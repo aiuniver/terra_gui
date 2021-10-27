@@ -1247,7 +1247,7 @@ class CreateArray(object):
     @staticmethod
     def postprocess_results(array, options, save_path: str = "", dataset_path: str = "", sensitivity=0.15,
                             threashold=0.1) -> dict:
-
+        print('postprocess_results', options.data.architecture)
         return_data = {}
         if options.data.architecture == ArchitectureChoice.ImageClassification:
             return_data = ImageClassificationCallback.postprocess_deploy(
