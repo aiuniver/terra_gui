@@ -1,18 +1,15 @@
 import sys
 
 from typing import List, Dict, Optional, Union, Any
-from pydantic import validator, PrivateAttr
+from pydantic import validator
 from pydantic.main import ModelMetaclass
 
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.modeling.layer import LayersList
-from terra_ai.data.modeling.model import ModelDetailsData
-from terra_ai.data.training.train import TrainData
-from terra_ai.data.training.extra import ArchitectureChoice
+from terra_ai.data.training.extra import ArchitectureChoice, TasksRelations
 
 from .presets.defaults.training import (
-    TrainingTasksRelations,
     TrainingLossSelect,
     TrainingMetricSelect,
     TrainingClassesQuantitySelect,
@@ -83,7 +80,7 @@ class ArchitectureBaseForm(ArchitectureMixinForm):
 
     def update(self, data: Any, prefix: str = "", **kwargs):
         model = kwargs.get("model")
-        if model:
+        if model and model.outputs:
             self._update_outputs(model.outputs, data)
 
         return super().update(data, prefix=prefix, **kwargs)
@@ -92,7 +89,7 @@ class ArchitectureBaseForm(ArchitectureMixinForm):
         outputs = {}
         for layer in layers:
             losses_data = {**TrainingLossSelect}
-            training_task_rel = TrainingTasksRelations.get(layer.task)
+            training_task_rel = TasksRelations.get(layer.task)
             training_layer = training_data.architecture.parameters.outputs.get(layer.id)
             losses_list = list(
                 map(

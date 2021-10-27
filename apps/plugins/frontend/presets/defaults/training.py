@@ -5,13 +5,8 @@ from terra_ai.data.training.extra import (
     CheckpointModeChoice,
     ArchitectureChoice,
 )
-from terra_ai.data.training.extra import TasksGroupsList
-from terra_ai.data.presets.training import TasksGroups
 
 from ...extra import FieldTypeChoice
-
-
-TrainingTasksRelations = TasksGroupsList(TasksGroups)
 
 
 TrainingLossSelect = {

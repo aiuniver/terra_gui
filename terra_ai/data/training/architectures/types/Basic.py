@@ -1,21 +1,43 @@
-from typing import Optional
+from typing import Optional, Any
 from pydantic import validator
 
-from ....mixins import BaseMixinData
-from ....exceptions import ValueNotInListException
-from ...outputs import OutputsList
 from ...checkpoint import CheckpointData
+from ..extra import OutputsParametersData, TasksRelations
 
 
-class ParametersData(BaseMixinData):
-    outputs: OutputsList = OutputsList()
+class ParametersData(OutputsParametersData):
+    model: Any
     checkpoint: Optional[CheckpointData]
 
-    @validator("checkpoint")
-    def _validate_checkpoint(cls, value: CheckpointData, values) -> CheckpointData:
-        if value is None:
-            return value
-        __available = values.get("outputs").ids
-        if value.layer not in __available:
-            raise ValueNotInListException(value.layer, __available)
-        return value
+    def dict(self, **kwargs):
+        kwargs.update({"exclude": {"model"}})
+        return super().dict(**kwargs)
+
+    @validator("checkpoint", always=True)
+    def _validate_checkpoint(cls, data, values):
+        if not data:
+            data = {}
+
+        _model = values.get("model")
+        if not _model or not _model.layers:
+            return None
+
+        if isinstance(data, CheckpointData):
+            data = data.native()
+
+        _layer_id = int(data.get("layer", 0))
+        _layer = (
+            _model.outputs.get(_layer_id)
+            if _layer_id in _model.outputs.ids
+            else _model.outputs[0]
+        )
+        data["layer"] = _layer.id
+
+        _task = TasksRelations.get(_layer.task.value)
+        _task_metrics = (
+            list(map(lambda item: item.name, _task.metrics)) if _task else []
+        )
+        if data.get("metric_name") not in _task_metrics:
+            data["metric_name"] = _task_metrics[0]
+
+        return CheckpointData(**data)

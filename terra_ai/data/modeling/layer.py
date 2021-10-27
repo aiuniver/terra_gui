@@ -45,6 +45,7 @@ class LayerData(IDMixinData):
     """
     Данные слоя
     """
+
     name: str
     "Название"
     type: LayerTypeChoice
@@ -98,6 +99,22 @@ class LayerData(IDMixinData):
     @validator("parameters", always=True)
     def _validate_parameters(cls, value: Any, values, field) -> Any:
         return field.type_(**value or {})
+
+    @validator("group", pre=True)
+    def _validate_group(cls, value: LayerGroupChoice) -> LayerGroupChoice:
+        if value not in list(LayerGroupChoice):
+            raise EnumMemberError(enum_values=list(LayerGroupChoice))
+        if value == LayerGroupChoice.input:
+            cls.__fields__["task"].type_ = LayerInputTypeChoice
+        elif value == LayerGroupChoice.output:
+            cls.__fields__["task"].type_ = LayerOutputTypeChoice
+        return value
+
+    @validator("task", always=True)
+    def _validate_task(cls, value: Any, values, field) -> Any:
+        if not value:
+            return value
+        return field.type_(value)
 
 
 class LayersList(UniqueListMixin):
