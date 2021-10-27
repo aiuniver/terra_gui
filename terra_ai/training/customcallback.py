@@ -492,7 +492,8 @@ class InteractiveCallback:
         self.train_progress = data
 
     def update_state(self, y_pred, y_true=None, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
-        print('\nupdate_state', fit_logs, len(y_pred))
+        if y_pred is not None:
+            print('\nupdate_state', fit_logs, len(y_pred))
         if self.log_history:
             if y_pred is not None:
                 if self.options.data.architecture in self.basic_architecture:
