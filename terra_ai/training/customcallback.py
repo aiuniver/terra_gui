@@ -351,6 +351,7 @@ class InteractiveCallback:
         self.inverse_y_true = {}
         self.y_pred = {}
         self.raw_y_pred = None
+        self.raw_y_true = None
         self.inverse_y_pred = {}
         self.current_epoch = None
 
@@ -413,9 +414,9 @@ class InteractiveCallback:
     def set_attributes(self, dataset: PrepareDataset, metrics: dict, losses: dict, dataset_path: str,
                        training_path: str, initial_config: InteractiveData,
                        yolo_initial_config: YoloInteractiveData = None):
-        print('\ndataset.architecture', dataset.data.architecture)
-        print('\ndataset.data.outputs', dataset.data.outputs)
-        print('\ndataset.data.inputs', dataset.data.inputs)
+        # print('\ndataset.architecture', dataset.data.architecture)
+        # print('\ndataset.data.outputs', dataset.data.outputs)
+        # print('\ndataset.data.inputs', dataset.data.inputs)
         self.preset_path = os.path.join(training_path, "presets")
         if not os.path.exists(self.preset_path):
             os.mkdir(self.preset_path)
@@ -512,6 +513,7 @@ class InteractiveCallback:
                     print(self.seed_idx)
                     print(self.yolo_interactive_config.intermediate_result.num_examples)
                     self.raw_y_pred = y_pred
+                    self.raw_y_true = y_true
                     if self.yolo_interactive_config.intermediate_result.show_results:
                         self.example_idx, _ = CreateArray().prepare_yolo_example_idx_to_show(
                             array=copy.deepcopy(self.y_pred),
