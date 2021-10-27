@@ -35,7 +35,7 @@ class CascadeElement(Cascade):
         self.fun = fun
 
     def __call__(self, *agr):
-        if len(agr) > 1 or isinstance(self.fun, tensorflow.keras.models.Model):
+        if isinstance(self.fun, tensorflow.keras.models.Model):
             self.out = self.fun(agr)
         else:
             self.out = self.fun(*agr)
@@ -133,6 +133,7 @@ class CompleteCascade(Cascade):
                 for i, out in enumerate(self.output):
                     path = output_path[:-4] + f"_{i}" + output_path[-4:]
                     out.choose_path(path)
+
         for img in self.input(input_path):
             self.cascade_block(img)
 

@@ -878,12 +878,7 @@ class CreateArray(object):
             tags = [0 for _ in range(options['num_classes'])]
             if elem:
                 for cls_name in elem:
-                    # print('cls_name', cls_name)
-                    # print('classes_names', options['classes_names'])
-                    # print('tags', tags)
-                    # print('list assignment index', options['classes_names'].index(cls_name))
                     tags[options['classes_names'].index(cls_name)] = 1
-                    # print('after tags', tags)
             array.append(tags)
         array = np.array(array, dtype='uint8')
 

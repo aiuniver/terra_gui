@@ -266,6 +266,11 @@ class CreateDataset(object):
                                                                                           f"{decamelize(put.type)}"),
                                                                              **instr['parameters'])
 
+            if not put.type == LayerOutputTypeChoice.Classification:
+                y_classes = sorted(list(instr['instructions'].keys())) if isinstance(instr['instructions'], dict) \
+                    else instr['instructions']
+                self.y_cls += [os.path.basename(os.path.dirname(dir_name)) for dir_name in y_classes]
+
             return cut_data
 
         put_parameters: dict = {}
@@ -296,14 +301,10 @@ class CreateDataset(object):
 
                 results_list = []
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    results = tqdm(executor.map(instructions, temp_paths_list, repeat(put)), total=len(temp_paths_list))
+                    results = list(tqdm(executor.map(instructions, temp_paths_list, repeat(put)),
+                                        total=len(temp_paths_list)))
                     for result in results:
                         results_list += result['instructions']
-                        if not put.type == LayerOutputTypeChoice.Classification and\
-                                put.type not in LayerOutputTypeChoice.__dict__:
-                            y_classes = sorted(list(result['instructions'].keys()))\
-                                if isinstance(result['instructions'], dict) else result['instructions']
-                            self.y_cls += [os.path.basename(os.path.dirname(dir_name)) for dir_name in y_classes]
 
                 instructions_data = InstructionsData(instructions=results_list, parameters=result['parameters'])
 
@@ -738,11 +739,10 @@ class CreateDataset(object):
         def array_creation(row, instructions):
 
             full_array = []
-            for h in range(len(row)):
-                arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(row[h], **instructions[h])
-                arr = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(arr['instructions'],
-                                                                                       **arr['parameters'])
-                full_array.append(arr)
+            arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(row, **instructions)
+            arr = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(arr['instructions'],
+                                                                                   **arr['parameters'])
+            full_array.append(arr)
 
             return full_array
 
@@ -766,47 +766,42 @@ class CreateDataset(object):
                 data_to_pass = []
                 dict_to_pass = []
                 for i in range(0, len(self.dataframe[split]) - length - depth, step):
-                    tmp_data = []
-                    tmp_parameter_data = []
                     for col_name, data in put_data[key].items():
+                        if self.tags[key][col_name] in PATH_TYPE_LIST:
+                            data_to_pass.append(os.path.join(self.paths.basepath,
+                                                             self.dataframe[split].loc[i, col_name]))
+                        elif 'depth' in data.parameters.keys() and data.parameters['depth']:
+                            if 'trend' in data.parameters.keys() and data.parameters['trend']:
+                                data_to_pass.append([self.dataframe[split].loc[i, col_name],
+                                                     self.dataframe[split].loc[i + data.parameters['length'],
+                                                                               col_name]])
+                            elif 'trend' in data.parameters.keys():
+                                data_to_pass.append(
+                                    self.dataframe[split].loc[i + data.parameters['length']:i + data.parameters['length'] + data.parameters['depth'] - 1, col_name])
+                            else:
+                                data_to_pass.append(self.dataframe[split].loc[i:i + data.parameters['length'] - 1,
+                                                    col_name])
+                        else:
+                            data_to_pass.append(self.dataframe[split].loc[i, col_name])
                         parameters_to_pass = data.parameters.copy()
                         if self.preprocessing.preprocessing.get(key) and\
                                 self.preprocessing.preprocessing.get(key).get(col_name):
                             prep = self.preprocessing.preprocessing.get(key).get(col_name)
                             parameters_to_pass.update([('preprocess', prep)])
+                        dict_to_pass.append(parameters_to_pass)
 
-                        if self.tags[key][col_name] in PATH_TYPE_LIST:
-                            tmp_data.append(os.path.join(self.paths.basepath,
-                                                         self.dataframe[split].loc[i, col_name]))
-                        elif 'depth' in data.parameters.keys() and data.parameters['depth']:
-                            if 'trend' in data.parameters.keys() and data.parameters['trend']:
-                                tmp_data.append([self.dataframe[split].loc[i, col_name],
-                                                 self.dataframe[split].loc[i + data.parameters['length'],
-                                                                           col_name]])
-                            elif 'trend' in data.parameters.keys():
-                                tmp_data.append(
-                                    self.dataframe[split].loc[i + data.parameters['length']:i +
-                                                              data.parameters['length']
-                                                              + data.parameters['depth'] - 1, col_name])
-                            else:
-                                tmp_data.append(self.dataframe[split].loc[i:i + data.parameters['length'] - 1,
-                                                col_name])
-                        else:
-                            tmp_data.append(self.dataframe[split].loc[i, col_name])
-                        tmp_parameter_data.append(parameters_to_pass)
-                    data_to_pass.append(tmp_data)
-                    dict_to_pass.append(tmp_parameter_data)
-
+                # print(data_to_pass)
                 current_arrays: list = []
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    results = tqdm(executor.map(array_creation, data_to_pass, dict_to_pass), total=len(data_to_pass))
+                    results = list(tqdm(executor.map(array_creation, data_to_pass, dict_to_pass),
+                                        total=len(data_to_pass)))
                     for i, result in enumerate(results):
                         if psutil.virtual_memory()._asdict().get("percent") > 90:
                             current_arrays = []
                             raise Resource
                         if not self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
                             if depth:
-                                if 'trend' in dict_to_pass[i][0].keys() and dict_to_pass[i][0]['trend']:
+                                if 'trend' in dict_to_pass[i].keys() and dict_to_pass[i]['trend']:  # data.parameters.keys() and data.parameters['trend']:
                                     array = np.array(result[0])
                                 else:
                                     array = self.postprocess_timeseries(result)
