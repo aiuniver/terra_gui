@@ -58,6 +58,7 @@ def json2model_cascade(path: str):
 
     for inp in config['inputs'].keys():
         if config['inputs'][inp]['task'] != 'Dataframe':
+            param = {}  # for pycharm linter
             for inp, param in config['columns'][inp].items():
                 with open(os.path.join(dataset_path, "instructions", "parameters", inp + '.json')) as cfg:
                     param.update(json.load(cfg))
@@ -80,7 +81,7 @@ def json2model_cascade(path: str):
     postprocessing = []
     if object_detection:
         type_module = getattr(general_fucntions, "object_detection")
-        postprocessing.append(getattr(type_module, 'main')(**config['outputs']))
+        postprocessing = getattr(type_module, 'main')()
     else:
         for inp in config['outputs'].keys():
             if config['outputs'][inp]['task'] not in ['Timeseries', 'TimeseriesTrend']:
@@ -104,10 +105,10 @@ def json2model_cascade(path: str):
                 type_module = getattr(general_fucntions, decamelize(config['outputs'][inp]['task']))
                 postprocessing.append(getattr(type_module, 'main')(**param))
 
-    if any(postprocessing):
-        postprocessing = make_processing(postprocessing)
-    else:
-        postprocessing = None
+        if any(postprocessing):
+            postprocessing = make_processing(postprocessing)
+        else:
+            postprocessing = None
 
     model = BuildModelCascade(preprocess, model, postprocessing)
 
