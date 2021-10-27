@@ -266,7 +266,13 @@ class CreateDataset(object):
                                                                                           f"{decamelize(put.type)}"),
                                                                              **instr['parameters'])
 
-            return cut_data
+            class_name = [os.path.basename(os.path.dirname(x)) for x in list(instr['instructions'].keys())]\
+                if put.type == LayerInputTypeChoice.Text else None
+
+            if class_name:
+                return cut_data, class_name
+            else:
+                return (cut_data, )
 
         put_parameters: dict = {}
         for put in data:
@@ -298,14 +304,13 @@ class CreateDataset(object):
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     results = tqdm(executor.map(instructions, temp_paths_list, repeat(put)), total=len(temp_paths_list))
                     for result in results:
-                        results_list += result['instructions']
-                        if not put.type == LayerOutputTypeChoice.Classification and\
-                                put.type not in LayerOutputTypeChoice.__dict__:
-                            y_classes = sorted(list(result['instructions'].keys()))\
-                                if isinstance(result['instructions'], dict) else result['instructions']
-                            self.y_cls += [os.path.basename(os.path.dirname(dir_name)) for dir_name in y_classes]
-
-                instructions_data = InstructionsData(instructions=results_list, parameters=result['parameters'])
+                        results_list += result[0]['instructions']
+                        if not put.type == LayerOutputTypeChoice.Classification:
+                            #  and put.type not in LayerOutputTypeChoice.__dict__:
+                            y_classes = result[1] if len(result) > 1 else [os.path.basename(os.path.dirname(dir_name))
+                                                                           for dir_name in result[0]['instructions']]
+                            self.y_cls += y_classes
+                instructions_data = InstructionsData(instructions=results_list, parameters=result[0]['parameters'])
 
                 if decamelize(put.type) in PATH_TYPE_LIST:
                     new_paths = [path.replace(str(self.paths.basepath) + os.path.sep, '')
