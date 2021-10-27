@@ -1,13 +1,20 @@
 <template>
   <div class="params">
-    <div v-if="statusTrain === 'start'" class="params__overlay">
+    <div v-if="statusTrain === 'start'" class="params__overlay" key="fdgtr">
       <LoadSpiner :text="'Запуск обучения...'" />
     </div>
     <scrollbar>
       <div class="params__body">
         <div class="params__items">
-          <at-collapse :value="collapse">
-            <at-collapse-item v-show="visible" v-for="({ visible, name, fields }, key) of params" :key="key" class="mt-3" :title="name || ''">
+          <at-collapse :value="collapse" @on-change="onchange" :key="key">
+            <at-collapse-item
+              v-show="visible"
+              v-for="({ visible, name, fields }, key) of params"
+              :key="key"
+              class="mt-3"
+              :name="key"
+              :title="name || ''"
+            >
               <div v-if="key !== 'outputs'" class="params__fields">
                 <template v-for="(data, i) of fields">
                   <t-auto-field-trainings
@@ -73,12 +80,13 @@ export default {
     LoadSpiner,
   },
   data: () => ({
-    collapse: [0, 1, 3, 4],
+    collapse: ['main', 'fit', 'outputs', 'checkpoint'],
     optimizerValue: '',
     metricData: '',
     debounce: null,
     stopLearning: false,
-    trainSettings: {}
+    trainSettings: {},
+    key: '1212',
   }),
   computed: {
     ...mapGetters({
@@ -94,6 +102,10 @@ export default {
     },
   },
   methods: {
+    onchange(e) {
+      console.log(e);
+      console.log(this.collapse);
+    },
     btnEvent(key) {
       if (key === 'train') {
         this.start();
@@ -151,7 +163,7 @@ export default {
       ser(this.trainSettings, parse, value);
       this.trainSettings = { ...this.trainSettings };
       if (!mounted && changeable) {
-        this.$store.dispatch('trainings/update', this.trainSettings)
+        this.$store.dispatch('trainings/update', this.trainSettings);
       }
       // if (name === 'architecture_parameters_checkpoint_layer') {
       //   this.metricData = value;
@@ -184,6 +196,11 @@ export default {
   },
   beforeDestroy() {
     this.debounce(false);
+  },
+  watch: {
+    params() {
+      this.key = 'dsdsdsd';
+    },
   },
 };
 </script>
