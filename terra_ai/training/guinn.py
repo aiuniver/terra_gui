@@ -60,17 +60,20 @@ class MyCallback(tf.keras.callbacks.Callback):
             self.batches = len(dataset.dataframe['train']) // batches
         self.samples_train = []
         self.samples_val = []
+        self.samples_target_train = []
+        self.samples_target_val = []
 
-    def logs_extract(self, logs):
+    def logs_extract(self, logs, prefix):
         pred_on_batch = []
         for key in logs.keys():
-            if key.startswith('pred'):
+            if key.startswith(prefix):
                 pred_on_batch.append(logs[key])
         return pred_on_batch
 
     def on_train_batch_end(self, batch, logs=None):
         ### пока что для yolo
-        self.samples_train.append(self.logs_extract(logs))
+        self.samples_train.append(self.logs_extract(logs, prefix='pred'))
+        self.samples_target_train.append(self.logs_extract(logs, prefix='target'))
         ###
 
         if interactive.get_states().get("status") == "stopped":
@@ -110,7 +113,8 @@ class MyCallback(tf.keras.callbacks.Callback):
 
     def on_test_batch_end(self, batch, logs=None):
         ### пока что для yolo
-        self.samples_val.append(self.logs_extract(logs))
+        self.samples_val.append(self.logs_extract(logs, prefix='pred'))
+        self.samples_target_val.append(self.logs_extract(logs, prefix='target'))
         ### пока что для yolo
 
     def on_epoch_end(self, epoch, logs=None):
@@ -119,15 +123,25 @@ class MyCallback(tf.keras.callbacks.Callback):
         ### пока что для yolo
         pred_train = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_train)]
         pred_val = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_val)]
+        pred_target_train = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_target_train)]
+        pred_target_val = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_target_val)]
+
+        # print("pred_train", pred_train[0].shape, pred_train[1].shape, pred_train[2].shape)
+        # print("pred_val", pred_val[0].shape, pred_val[1].shape, pred_val[2].shape)
+        # print("pred_target_train", pred_target_train[0].shape, pred_target_train[1].shape, pred_target_train[2].shape)
+        # print("pred_target_val", pred_target_val[0].shape, pred_target_val[1].shape, pred_target_val[2].shape)
+
         self.samples_train = []
         self.samples_val = []
+        self.samples_target_train = []
+        self.samples_target_val = []
 
-        mAP = get_mAP(self.yolo_pred, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
+        mAP = get_mAP(self.model, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
                             TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names)
-
+        # print(mAP)
         ### Пока что для визуализации Yolo
-        detect_image(Yolo=self.yolo_pred, original_image=self.inp['1'].numpy()[0], output_path=output_path,
-                     CLASSES=self.dataset.data.outputs.get(2).classes_names)
+        detect_image(Yolo=self.model, original_image=self.inp['1'].numpy()[0], output_path=output_path,
+                     CLASSES=self.dataset.data.outputs.get(2).classes_names, train=True)
         ###
 
     def on_train_end(self, logs=None):

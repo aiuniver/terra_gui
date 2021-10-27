@@ -3,10 +3,10 @@ from . import terra_exception
 
 def error_handler(obj):
     """
-        Декоратор для класса и функции
+    Декоратор для класса и функции
 
-        Если внутри функции или метода класса вызывается исключение, это исключение
-        оборачивается в TerraBaseException (или в его потомка) и повторно вызывается
+    Если внутри функции или метода класса вызывается исключение, это исключение
+    оборачивается в TerraBaseException (или в его потомка) и повторно вызывается
     """
 
     if isinstance(obj, type):
@@ -21,4 +21,5 @@ def error_handler(obj):
             obj(*args, **kwargs)
         except Exception as error:
             raise terra_exception(error)
+
     return wrapper

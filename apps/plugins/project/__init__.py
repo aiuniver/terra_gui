@@ -101,12 +101,12 @@ class ProjectPathData(BaseMixinData):
         return value
 
     def clear_training(self):
-        shutil.rmtree(self.training)
+        shutil.rmtree(self.training, ignore_errors=True)
         os.makedirs(self.training, exist_ok=True)
         os.makedirs(self.deploy, exist_ok=True)
 
     def clear_dataset(self):
-        shutil.rmtree(self.datasets)
+        shutil.rmtree(self.datasets, ignore_errors=True)
         os.makedirs(self.datasets, exist_ok=True)
 
 
@@ -161,7 +161,7 @@ class Project(BaseMixinData):
 
     def front(self):
         _data = self.native()
-        if _data.get("deploy"):
+        if _data.get("deploy") and self.deploy:
             _data.update({"deploy": self.deploy.presets})
         return json.dumps(_data)
 

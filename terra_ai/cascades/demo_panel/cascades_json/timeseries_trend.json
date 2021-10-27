@@ -1,0 +1,19 @@
+{
+  "cascades": {
+    "input": {
+      "tag": "input",
+      "type": "dataframe"
+    },
+    "model": {
+      "tag": "model",
+      "task": "Timeseries",
+      "model": "C:\\Users\\Nill\\Documents\\terra_gui\\TerraProject\\models\\lukoil_trend_1col"
+    }
+  },
+
+  "adjacency_map": {
+    "model": [
+      "INPUT"
+    ]
+  }
+}
