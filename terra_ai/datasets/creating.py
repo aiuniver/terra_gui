@@ -562,6 +562,13 @@ class CreateDataset(object):
                     else:
                         data_to_pass = data.instructions[data.parameters['length']:data.parameters['length'] +
                                                                                    data.parameters['depth']]
+                elif decamelize(creation_data.outputs.get(key).type) == decamelize(
+                        LayerOutputTypeChoice.ObjectDetection):
+                    data_to_pass = data.instructions[0]
+                    tmp_im = cv2.imread(os.path.join(self.paths.basepath,
+                                                     self.dataframe['train'].iloc[0, 0]))
+                    data.parameters.update([('orig_x', tmp_im.shape[1]),
+                                            ('orig_y', tmp_im.shape[0])])
                 else:
                     data_to_pass = data.instructions[0]
                 arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(data_to_pass, **data.parameters,
@@ -781,6 +788,12 @@ class CreateDataset(object):
                             else:
                                 data_to_pass.append(self.dataframe[split].loc[i:i + data.parameters['length'] - 1,
                                                     col_name])
+                        elif self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
+                            data_to_pass.append(self.dataframe[split].loc[i, col_name])
+                            tmp_im = cv2.imread(os.path.join(self.paths.basepath,
+                                                             self.dataframe[split].iloc[i, 0]))
+                            data.parameters.update([('orig_x', tmp_im.shape[1]),
+                                                    ('orig_y', tmp_im.shape[0])])
                         else:
                             data_to_pass.append(self.dataframe[split].loc[i, col_name])
                         parameters_to_pass = data.parameters.copy()
