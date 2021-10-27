@@ -17,7 +17,7 @@ from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedC
 from terra_ai.settings import CALLBACK_CLASSIFICATION_TREASHOLD_VALUE, DEPLOY_PRESET_PERCENT
 
 
-class SegmentationCallback:
+class ImageSegmentationCallback:
     def __init__(self):
         pass
 
@@ -32,7 +32,7 @@ class SegmentationCallback:
         return prepare_y_true(options)
 
     @staticmethod
-    def get_y_pred(y_true, y_pred):
+    def get_y_pred(y_true, y_pred, options):
         return reformat_y_pred(y_true, y_pred)
 
     @staticmethod
@@ -92,7 +92,7 @@ class SegmentationCallback:
                 input_id = list(options.data.inputs.keys())[0]
                 return_data[output_id].append(
                     {
-                        "source": SegmentationCallback.postprocess_initial_source(
+                        "source": ImageSegmentationCallback.postprocess_initial_source(
                             options=options,
                             input_id=input_id,
                             save_id=_id,
@@ -297,7 +297,7 @@ class TextSegmentationCallback:
         return prepare_y_true(options)
 
     @staticmethod
-    def get_y_pred(y_true, y_pred):
+    def get_y_pred(y_true, y_pred, options):
         return reformat_y_pred(y_true, y_pred)
 
     @staticmethod
@@ -363,24 +363,24 @@ class TextSegmentationCallback:
         return return_data
 
     @staticmethod
-    def dataset_balance(self) -> dict:
+    def dataset_balance(options, y_true, preset_path: str, class_colors) -> dict:
         dataset_balance = {}
-        for out in self.options.data.outputs.keys():
+        for out in options.data.outputs.keys():
             dataset_balance[f"{out}"] = {
                 "presence_balance": {},
                 "percent_balance": {}
             }
             for data_type in ['train', 'val']:
-                classes_names = self.options.data.outputs.get(out).classes_names
-                classes = np.arange(self.options.data.outputs.get(out).num_classes)
+                classes_names = options.data.outputs.get(out).classes_names
+                classes = np.arange(options.data.outputs.get(out).num_classes)
                 class_count = {}
                 class_percent = {}
                 for cl in classes:
                     class_count[classes_names[cl]] = \
-                        np.sum(self.y_true.get(data_type).get(f"{out}")[:, :, cl]).item()
-                    class_percent[self.options.data.outputs.get(out).classes_names[cl]] = np.round(
-                        np.sum(self.y_true.get(data_type).get(f"{out}")[:, :, cl]) * 100
-                        / np.prod(self.y_true.get(data_type).get(f"{out}")[:, :, cl].shape)).item()
+                        np.sum(y_true.get(data_type).get(f"{out}")[:, :, cl]).item()
+                    class_percent[options.data.outputs.get(out).classes_names[cl]] = np.round(
+                        np.sum(y_true.get(data_type).get(f"{out}")[:, :, cl]) * 100
+                        / np.prod(y_true.get(data_type).get(f"{out}")[:, :, cl].shape)).item()
                 dataset_balance[f"{out}"]["presence_balance"][data_type] = class_count
                 dataset_balance[f"{out}"]["percent_balance"][data_type] = class_percent
         return dataset_balance

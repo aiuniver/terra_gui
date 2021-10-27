@@ -187,7 +187,7 @@ class TimeseriesCallback:
         return return_data
 
     @staticmethod
-    def dataset_balance(options) -> dict:
+    def dataset_balance(options, y_true, preset_path: str, class_colors) -> dict:
         dataset_balance = {}
         for out in options.data.outputs.keys():
             dataset_balance[f"{out}"] = {'graphic': {}, 'dense_histogram': {}}

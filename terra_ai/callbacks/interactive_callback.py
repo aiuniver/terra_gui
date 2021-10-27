@@ -10,6 +10,12 @@ from tensorflow.keras.utils import to_categorical
 import numpy as np
 
 from terra_ai import progress
+from terra_ai.callbacks.classification_callbacks import ImageClassificationCallback, TextClassificationCallback, \
+    AudioClassificationCallback, VideoClassificationCallback, DataframeClassificationCallback, TimeseriesTrendCallback
+from terra_ai.callbacks.object_detection_callbacks import YoloV3Callback, YoloV4Callback
+from terra_ai.callbacks.regression_callbacks import DataframeRegressionCallback
+from terra_ai.callbacks.segmentation_callbacks import ImageSegmentationCallback, TextSegmentationCallback
+from terra_ai.callbacks.time_series_callbacks import TimeseriesCallback
 from terra_ai.callbacks.utils import loss_metric_config, round_loss_metric, fill_graph_plot_data, \
     fill_graph_front_structure, reformat_metrics, prepare_loss_obj, prepare_metric_obj, get_classes_colors
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, DatasetGroupChoice, LayerEncodingChoice
@@ -54,6 +60,7 @@ class InteractiveCallback:
         self.dataset_balance = None
         self.class_idx = None
         self.class_graphics = {}
+        self.callback = None
 
         self.seed_idx = None
         self.example_idx = []
@@ -70,6 +77,11 @@ class InteractiveCallback:
                                    ArchitectureChoice.DataframeRegression, ArchitectureChoice.Timeseries,
                                    ArchitectureChoice.TimeseriesTrend]
         self.yolo_architecture = [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]
+        self.class_architecture = [ArchitectureChoice.ImageClassification,ArchitectureChoice.TimeseriesTrend,
+                                   ArchitectureChoice.ImageSegmentation, ArchitectureChoice.TextSegmentation,
+                                   ArchitectureChoice.TextClassification, ArchitectureChoice.AudioClassification,
+                                   ArchitectureChoice.VideoClassification, ArchitectureChoice.DataframeClassification,
+                                   ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]
 
         self.urgent_predict = False
         self.deploy_presets_data = None
@@ -104,6 +116,7 @@ class InteractiveCallback:
                        training_path: str, initial_config: InteractiveData,
                        yolo_initial_config: YoloInteractiveData = None):
 
+        self._callback_router(dataset)
         self.preset_path = os.path.join(training_path, "presets")
         if not os.path.exists(self.preset_path):
             os.mkdir(self.preset_path)
@@ -119,14 +132,16 @@ class InteractiveCallback:
         self.options = dataset
         self._class_metric_list()
         self.dataset_path = dataset_path
-        self.class_colors = get_classes_colors()
-        self.x_val, self.inverse_x_val = self._prepare_x_val(dataset)
-        self.y_true, self.inverse_y_true = self._prepare_y_true(dataset)
+        self.class_colors = get_classes_colors(dataset)
+        self.x_val, self.inverse_x_val = self.callback.get_x_array(dataset)
+        self.y_true, self.inverse_y_true = self.callback.get_y_true(dataset)
 
         if not self.log_history:
             self._prepare_null_log_history_template()
-        self.dataset_balance = self._prepare_dataset_balance()
-        self.class_idx = self._prepare_class_idx()
+        self.dataset_balance = self.callback.dataset_balance(
+            options=self.options, y_true=self.y_true, preset_path=self.preset_path, class_colors=self.class_colors
+        )
+        self.class_idx = self.callback.prepare_class_idx(self.y_true, self.options)
         self.seed_idx = self._prepare_seed()
         self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
 
@@ -181,10 +196,10 @@ class InteractiveCallback:
         if self.log_history:
             if y_pred is not None:
                 if self.options.data.architecture in self.basic_architecture:
-                    self._reformat_y_pred(y_pred)
+                    self.y_pred, self.inverse_y_pred = self.callback.get_y_pred(self.y_true, y_pred, self.options)
                     if self.interactive_config.intermediate_result.show_results:
                         out = f"{self.interactive_config.intermediate_result.main_output}"
-                        self.example_idx = PostprocessResults().prepare_example_idx_to_show(
+                        self.example_idx = self.callback.prepare_example_idx_to_show(
                             array=self.y_pred.get(out),
                             true_array=self.y_true.get("val").get(out),
                             options=self.options,
@@ -297,18 +312,49 @@ class InteractiveCallback:
             )
             return self.train_progress
 
+    def _callback_router(self, dataset: PrepareDataset):
+        if dataset.data.architecture == ArchitectureChoice.Basic:
+            pass
+        elif dataset.data.architecture == ArchitectureChoice.ImageClassification:
+            self.callback = ImageClassificationCallback()
+        elif dataset.data.architecture == ArchitectureChoice.ImageSegmentation:
+            self.callback = ImageSegmentationCallback()
+        elif dataset.data.architecture == ArchitectureChoice.TextSegmentation:
+            self.callback = TextSegmentationCallback()
+        elif dataset.data.architecture == ArchitectureChoice.TextClassification:
+            self.callback = TextClassificationCallback()
+        elif dataset.data.architecture == ArchitectureChoice.AudioClassification:
+            self.callback = AudioClassificationCallback()
+        elif dataset.data.architecture == ArchitectureChoice.VideoClassification:
+            self.callback = VideoClassificationCallback()
+        elif dataset.data.architecture == ArchitectureChoice.DataframeClassification:
+            self.callback = DataframeClassificationCallback()
+        elif dataset.data.architecture == ArchitectureChoice.DataframeRegression:
+            self.callback = DataframeRegressionCallback()
+        elif dataset.data.architecture == ArchitectureChoice.Timeseries:
+            self.callback = TimeseriesCallback()
+        elif dataset.data.architecture == ArchitectureChoice.TimeseriesTrend:
+            self.callback = TimeseriesTrendCallback()
+        elif dataset.data.architecture == ArchitectureChoice.YoloV3:
+            self.callback = YoloV3Callback()
+        elif dataset.data.architecture == ArchitectureChoice.YoloV4:
+            self.callback = YoloV4Callback()
+        else:
+            pass
+
     def _class_metric_list(self):
         self.class_graphics = {}
-        for out in self.options.data.outputs.keys():
-            out_task = self.options.data.outputs.get(out).task
-            if out_task == LayerOutputTypeChoice.Classification or \
-                    out_task == LayerOutputTypeChoice.Segmentation or \
-                    out_task == LayerOutputTypeChoice.TextSegmentation or \
-                    out_task == LayerOutputTypeChoice.TimeseriesTrend or \
-                    out_task == LayerOutputTypeChoice.ObjectDetection:
+        if self.options.data.architecture in self.class_architecture:
+            for out in self.options.data.outputs.keys():
+                # out_task = self.options.data.outputs.get(out).task
+                # if out_task == LayerOutputTypeChoice.Classification or \
+                #         out_task == LayerOutputTypeChoice.ImageSegmentation or \
+                #         out_task == LayerOutputTypeChoice.TextSegmentation or \
+                #         out_task == LayerOutputTypeChoice.TimeseriesTrend or \
+                #         out_task == LayerOutputTypeChoice.ObjectDetection:
                 self.class_graphics[out] = True
-            else:
-                self.class_graphics[out] = False
+            # else:
+            #     self.class_graphics[out] = False
 
     def _prepare_null_log_history_template(self):
         self.log_history["epochs"] = []
@@ -336,8 +382,7 @@ class InteractiveCallback:
                         "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
                     }
 
-                if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.Segmentation or \
-                        task == LayerOutputTypeChoice.TextSegmentation or task == LayerOutputTypeChoice.TimeseriesTrend:
+                if self.options.data.architecture in self.class_architecture:
                     self.log_history[out]["class_loss"] = {}
                     self.log_history[out]["class_metrics"] = {}
                     for class_name in self.options.data.outputs.get(int(out)).classes_names:
@@ -350,22 +395,12 @@ class InteractiveCallback:
             self.log_history['learning_rate'] = []
             self.log_history['output'] = {
                 "loss": {
-                    'giou_loss': {"train": [], "val": []},
-                    'conf_loss': {"train": [], "val": []},
-                    'prob_loss': {"train": [], "val": []},
-                    'total_loss': {"train": [], "val": []}
+                    'giou_loss': {"train": [], "val": []}, 'conf_loss': {"train": [], "val": []},
+                    'prob_loss': {"train": [], "val": []}, 'total_loss': {"train": [], "val": []}
                 },
-                "class_loss": {
-                    'prob_loss': {},
-                },
-                "metrics": {
-                    'mAP50': [],
-                    'mAP95': [],
-                },
-                "class_metrics": {
-                    'mAP50': {},
-                    'mAP95': {},
-                },
+                "class_loss": {'prob_loss': {}},
+                "metrics": {'mAP50': [], 'mAP95': []},
+                "class_metrics": {'mAP50': {}, 'mAP95': {}},
                 "progress_state": {
                     "loss": {
                         'giou_loss': {
@@ -382,12 +417,8 @@ class InteractiveCallback:
                         }
                     },
                     "metrics": {
-                        'mAP50': {
-                            "mean_log_history": [], "normal_state": [], "overfitting": []
-                        },
-                        'mAP95': {
-                            "mean_log_history": [], "normal_state": [], "overfitting": []
-                        },
+                        'mAP50': {"mean_log_history": [], "normal_state": [], "overfitting": []},
+                        'mAP95': {"mean_log_history": [], "normal_state": [], "overfitting": []},
                     }
                 }
             }
@@ -398,12 +429,41 @@ class InteractiveCallback:
                 self.log_history['output']["class_metrics"]['mAP95'][class_name] = []
 
     def _prepare_seed(self):
-        if self.options.data.group == DatasetGroupChoice.keras or self.x_val:
-            data_lenth = np.arange(len(self.y_true.get("val").get(list(self.y_true.get("val").keys())[0])))
+        if self.options.data.architecture in self.yolo_architecture:
+            example_idx = np.arange(len(self.options.dataframe.get("val")))
+            np.random.shuffle(example_idx)
+        elif self.options.data.architecture in self.basic_architecture:
+            output = self.interactive_config.intermediate_result.main_output
+            task = self.options.data.outputs.get(output).task
+            example_idx = []
+            if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
+                y_true = np.argmax(self.y_true.get('val').get(f"{output}"), axis=-1)
+                class_idx = {}
+                for _id in range(self.options.data.outputs.get(output).num_classes):
+                    class_idx[_id] = []
+                for i, _id in enumerate(y_true):
+                    class_idx[_id].append(i)
+                for key in class_idx.keys():
+                    np.random.shuffle(class_idx[key])
+                num_ex = 25
+                while num_ex:
+                    key = np.random.choice(list(class_idx.keys()))
+                    if not class_idx.get(key):
+                        class_idx.pop(key)
+                        key = np.random.choice(list(class_idx.keys()))
+                    example_idx.append(class_idx[key][0])
+                    class_idx[key].pop(0)
+                    num_ex -= 1
+            else:
+                if self.options.data.group == DatasetGroupChoice.keras or self.x_val:
+                    example_idx = np.arange(len(self.y_true.get("val").get(list(self.y_true.get("val").keys())[0])))
+                else:
+                    example_idx = np.arange(len(self.options.dataframe.get("val")))
+                np.random.shuffle(example_idx)
         else:
-            data_lenth = np.arange(len(self.options.dataframe.get("val")))
-        np.random.shuffle(data_lenth)
-        return data_lenth
+            example_idx = np.arange(len(self.options.dataframe.get("val")))
+            np.random.shuffle(example_idx)
+        return example_idx
 
     def _reformat_fit_logs(self, logs) -> dict:
         interactive_log = {}
@@ -562,7 +622,7 @@ class InteractiveCallback:
                                 normal_state)
 
                         if out_task == LayerOutputTypeChoice.Classification or \
-                                out_task == LayerOutputTypeChoice.Segmentation or \
+                                out_task == LayerOutputTypeChoice.ImageSegmentation or \
                                 out_task == LayerOutputTypeChoice.TextSegmentation or \
                                 out_task == LayerOutputTypeChoice.TimeseriesTrend:
                             for cls in self.log_history.get(f"{out}").get('class_loss').keys():
@@ -577,7 +637,7 @@ class InteractiveCallback:
                                         y_pred=self.y_pred.get(f"{out}")[
                                             self.class_idx.get('val').get(f"{out}").get(cls)],
                                     )
-                                if out_task == LayerOutputTypeChoice.Segmentation:
+                                if out_task == LayerOutputTypeChoice.ImageSegmentation:
                                     class_idx = classes_names.index(cls)
                                     class_loss = self._get_loss_calculation(
                                         loss_obj=self.loss_obj.get(f"{out}"),
@@ -664,7 +724,7 @@ class InteractiveCallback:
                                 normal_state)
 
                         if out_task == LayerOutputTypeChoice.Classification or \
-                                out_task == LayerOutputTypeChoice.Segmentation or \
+                                out_task == LayerOutputTypeChoice.ImageSegmentation or \
                                 out_task == LayerOutputTypeChoice.TextSegmentation or \
                                 out_task == LayerOutputTypeChoice.TimeseriesTrend:
                             for cls in self.log_history.get(f"{out}").get('class_metrics').keys():
@@ -681,7 +741,7 @@ class InteractiveCallback:
                                             self.class_idx.get('val').get(f"{out}").get(cls)],
                                         show_class=True
                                     )
-                                if out_task == LayerOutputTypeChoice.Segmentation:
+                                if out_task == LayerOutputTypeChoice.ImageSegmentation:
                                     class_idx = classes_names.index(cls)
                                     class_metric = self._get_metric_calculation(
                                         metric_name=metric_name,
@@ -856,7 +916,7 @@ class InteractiveCallback:
             loss_value = float(loss_obj()(
                 y_true if encoding == LayerEncodingChoice.ohe else to_categorical(y_true, num_classes), y_pred
             ).numpy())
-        elif task == LayerOutputTypeChoice.Segmentation or \
+        elif task == LayerOutputTypeChoice.ImageSegmentation or \
                 (task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.ohe):
             loss_value = float(loss_obj()(
                 y_true if encoding == LayerEncodingChoice.ohe else to_categorical(y_true, num_classes), y_pred
@@ -891,7 +951,7 @@ class InteractiveCallback:
                     y_pred
                 )
             metric_value = float(metric_obj.result().numpy())
-        elif task == LayerOutputTypeChoice.Segmentation or \
+        elif task == LayerOutputTypeChoice.ImageSegmentation or \
                 (task == LayerOutputTypeChoice.TextSegmentation and encoding == LayerEncodingChoice.ohe):
             metric_obj.update_state(
                 y_true if encoding == LayerEncodingChoice.ohe else to_categorical(y_true, num_classes),

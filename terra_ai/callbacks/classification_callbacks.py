@@ -17,11 +17,279 @@ import moviepy.editor as moviepy_editor
 from terra_ai.settings import MAX_GRAPH_LENGTH, DEPLOY_PRESET_PERCENT
 
 
-class ImageClassificationCallback:
-    def __init__(self, options):
-        self.options = options
+class BaseClassificationCallback:
+    def __init__(self):
         pass
 
+    @staticmethod
+    def get_y_true(options):
+        y_true = {"train": {}, "val": {}}
+        inverse_y_true = {"train": {}, "val": {}}
+        for data_type in y_true.keys():
+            for out in options.data.outputs.keys():
+                if not options.data.use_generator:
+                    y_true[data_type][f"{out}"] = options.Y.get(data_type).get(f"{out}")
+                else:
+                    y_true[data_type][f"{out}"] = []
+                    for _, y_val in options.dataset[data_type].batch(1):
+                        y_true[data_type][f"{out}"].extend(y_val.get(f'{out}').numpy())
+                    y_true[data_type][f"{out}"] = np.array(y_true[data_type][f"{out}"])
+        return y_true, inverse_y_true
+
+    @staticmethod
+    def get_y_pred(y_true, y_pred, options):
+        reformat_pred = {}
+        inverse_pred = {}
+        for idx, out in enumerate(y_true.get('val').keys()):
+            if len(y_true.get('val').keys()) == 1:
+                reformat_pred[out] = y_pred
+            else:
+                reformat_pred[out] = y_pred[idx]
+        return reformat_pred, inverse_pred
+
+    @staticmethod
+    def dataset_balance(options, y_true, preset_path: str, class_colors) -> dict:
+        dataset_balance = {}
+        for out in options.data.outputs.keys():
+            encoding = options.data.outputs.get(out).encoding
+            dataset_balance[f"{out}"] = {'class_histogramm': {}}
+            for data_type in ['train', 'val']:
+                dataset_balance[f"{out}"]['class_histogramm'][data_type] = class_counter(
+                    y_array=y_true.get(data_type).get(f"{out}"),
+                    classes_names=options.data.outputs.get(out).classes_names,
+                    ohe=encoding == LayerEncodingChoice.ohe
+                )
+        return dataset_balance
+
+    @staticmethod
+    def statistic_data_request(interactive_config, options, y_true, y_pred) -> list:
+        return_data = []
+        _id = 1
+        for out in interactive_config.statistic_data.output_id:
+            encoding = options.data.outputs.get(out).encoding
+            if encoding != LayerEncodingChoice.multi:
+                cm, cm_percent = get_confusion_matrix(
+                    np.argmax(y_true.get("val").get(f'{out}'), axis=-1) if encoding == LayerEncodingChoice.ohe
+                    else y_true.get("val").get(f'{out}'),
+                    np.argmax(y_pred.get(f'{out}'), axis=-1),
+                    get_percent=True
+                )
+                return_data.append(
+                    fill_heatmap_front_structure(
+                        _id=_id,
+                        _type="heatmap",
+                        graph_name=f"Выходной слой «{out}» - Confusion matrix",
+                        short_name=f"{out} - Confusion matrix",
+                        x_label="Предсказание",
+                        y_label="Истинное значение",
+                        labels=options.data.outputs.get(out).classes_names,
+                        data_array=cm,
+                        data_percent_array=cm_percent,
+                    )
+                )
+                _id += 1
+
+            else:
+                report = get_classification_report(
+                    y_true=y_true.get("val").get(f"{out}").reshape(
+                        (np.prod(y_true.get("val").get(f"{out}").shape[:-1]),
+                         y_true.get("val").get(f"{out}").shape[-1])
+                    ),
+                    y_pred=np.where(y_pred.get(f"{out}") >= 0.9, 1, 0).reshape(
+                        (np.prod(y_pred.get(f"{out}").shape[:-1]), y_pred.get(f"{out}").shape[-1])
+                    ),
+                    labels=options.data.outputs.get(out).classes_names
+                )
+                return_data.append(
+                    fill_table_front_structure(
+                        _id=_id,
+                        graph_name=f"Выходной слой «{out}» - Отчет по классам",
+                        plot_data=report
+                    )
+                )
+                _id += 1
+        return return_data
+
+    @staticmethod
+    def balance_data_request(options, dataset_balance, interactive_config):
+        return_data = []
+        _id = 0
+        for out in options.data.outputs.keys():
+            for class_type in dataset_balance.get(f"{out}").keys():
+                preset = {}
+                for data_type in ['train', 'val']:
+                    class_names, class_count = sort_dict(
+                        dict_to_sort=dataset_balance.get(f"{out}").get(class_type).get(data_type),
+                        mode=interactive_config.data_balance.sorted.name
+                    )
+                    preset[data_type] = fill_graph_front_structure(
+                        _id=_id,
+                        _type='histogram',
+                        type_data=data_type,
+                        graph_name=f"Выход {out} - "
+                                   f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка",
+                        short_name=f"{out} - {'Тренировочная' if data_type == 'train' else 'Проверочная'}",
+                        x_label="Название класса",
+                        y_label="Значение",
+                        plot_data=[fill_graph_plot_data(x=class_names, y=class_count)],
+                    )
+                    _id += 1
+                return_data.append(preset)
+        return return_data
+
+    @staticmethod
+    def prepare_example_idx_to_show(array: np.ndarray, true_array: np.ndarray, options, output: int, count: int,
+                                    choice_type: str = "best", seed_idx: list = None) -> dict:
+        example_idx = []
+        encoding = options.data.outputs.get(output).encoding
+        if choice_type == ExampleChoiceTypeChoice.best or choice_type == ExampleChoiceTypeChoice.worst:
+            if array.shape[-1] == true_array.shape[-1] and encoding == \
+                    LayerEncodingChoice.ohe and true_array.shape[-1] > 1:
+                classes = np.argmax(true_array, axis=-1)
+            elif len(true_array.shape) == 1 and not encoding == LayerEncodingChoice.ohe and array.shape[-1] > 1:
+                classes = copy.deepcopy(true_array)
+            elif len(true_array.shape) == 1 and not encoding == LayerEncodingChoice.ohe and array.shape[-1] == 1:
+                classes = copy.deepcopy(true_array)
+            else:
+                classes = copy.deepcopy(true_array)
+            class_idx = {}
+            for _id in range(options.data.outputs.get(output).num_classes):
+                class_idx[_id] = {}
+            for i, pred in enumerate(array):
+                class_idx[classes[i]][i] = pred[classes[i]]
+            for _id in range(options.data.outputs.get(output).num_classes):
+                class_idx[_id] = list(sort_dict(class_idx[_id], mode=BalanceSortedChoice.ascending)[0])
+            num_ex = copy.deepcopy(count)
+            while num_ex:
+                stop = False
+                while not stop:
+                    key = np.random.choice(list(class_idx.keys()))
+                    if class_idx[key]:
+                        stop = True
+                if choice_type == ExampleChoiceTypeChoice.best:
+                    example_idx.append(class_idx[key][-1])
+                    class_idx[key].pop(-1)
+                if class_idx[key] and choice_type == ExampleChoiceTypeChoice.worst:
+                    example_idx.append(class_idx[key][0])
+                    class_idx[key].pop(0)
+                num_ex -= 1
+
+        elif choice_type == ExampleChoiceTypeChoice.seed and len(seed_idx):
+            example_idx = seed_idx[:count]
+
+        elif choice_type == ExampleChoiceTypeChoice.random:
+            true_id = []
+            false_id = []
+            for i, ex in enumerate(true_array):
+                if np.argmax(ex, axis=-1) == np.argmax(array[i], axis=-1):
+                    true_id.append(i)
+                else:
+                    false_id.append(i)
+            np.random.shuffle(true_id)
+            np.random.shuffle(false_id)
+            true_false_dict = {'true': true_id, 'false': false_id}
+
+            for _ in range(count):
+                if true_false_dict.get('true') and true_false_dict.get('false'):
+                    key = np.random.choice(list(true_false_dict.keys()))
+                elif true_false_dict.get('true') and not true_false_dict.get('false'):
+                    key = 'true'
+                else:
+                    key = 'false'
+                example_idx.append(true_false_dict.get(key)[0])
+                true_false_dict.get(key).pop(0)
+            np.random.shuffle(example_idx)
+
+        else:
+            pass
+        return example_idx
+
+    @staticmethod
+    def postprocess_classification(predict_array: np.ndarray, true_array: np.ndarray, options: DatasetOutputsData,
+                                   show_stat: bool = False, return_mode='deploy'):
+        labels = options.classes_names
+        ohe = True if options.encoding == LayerEncodingChoice.ohe else False
+        actual_value = np.argmax(true_array, axis=-1) if ohe else true_array
+        data = {
+            "y_true": {},
+            "y_pred": {},
+            "stat": {}
+        }
+        if return_mode == 'deploy':
+            labels_from_array = []
+            for class_idx in predict_array:
+                class_dist = sorted(class_idx, reverse=True)
+                labels_dist = []
+                for j in class_dist:
+                    labels_dist.append((labels[list(class_idx).index(j)], round(float(j) * 100, 1)))
+                labels_from_array.append(labels_dist)
+            return labels[actual_value], labels_from_array
+
+        if return_mode == 'callback':
+            data["y_true"] = {
+                "type": "str",
+                "data": [
+                    {
+                        "title": "Класс",
+                        "value": labels[actual_value],
+                        "color_mark": None
+                    }
+                ]
+            }
+            if labels[actual_value] == labels[np.argmax(predict_array)]:
+                color_mark = 'success'
+            else:
+                color_mark = 'wrong'
+            data["y_pred"] = {
+                "type": "str",
+                "data": [
+                    {
+                        "title": "Класс",
+                        "value": labels[np.argmax(predict_array)],
+                        "color_mark": color_mark
+                    }
+                ]
+            }
+            if show_stat:
+                data["stat"] = {
+                    "type": "str",
+                    "data": []
+                }
+                for i, val in enumerate(predict_array):
+                    if val == max(predict_array) and labels[i] == labels[actual_value]:
+                        class_color_mark = "success"
+                    elif val == max(predict_array) and labels[i] != labels[actual_value]:
+                        class_color_mark = "wrong"
+                    else:
+                        class_color_mark = None
+                    data["stat"]["data"].append(
+                        {
+                            'title': labels[i],
+                            'value': f"{round(val * 100, 1)}%",
+                            'color_mark': class_color_mark
+                        }
+                    )
+            return data
+
+    @staticmethod
+    def prepare_class_idx(y_true, options) -> dict:
+        class_idx = {}
+        for data_type in y_true.keys():
+            class_idx[data_type] = {}
+            for out in y_true.get(data_type).keys():
+                class_idx[data_type][out] = {}
+                ohe = options.data.outputs.get(int(out)).encoding == LayerEncodingChoice.ohe
+                for name in options.data.outputs.get(int(out)).classes_names:
+                    class_idx[data_type][out][name] = []
+                y_true = np.argmax(y_true.get(data_type).get(out), axis=-1) if ohe \
+                    else np.squeeze(y_true.get(data_type).get(out))
+                for idx in range(len(y_true)):
+                    class_idx[data_type][out][
+                        options.data.outputs.get(int(out)).classes_names[y_true[idx]]].append(idx)
+        return class_idx
+
+
+class ImageClassificationCallback(BaseClassificationCallback):
     @staticmethod
     def get_x_array(options):
         x_val = None
@@ -29,14 +297,6 @@ class ImageClassificationCallback:
         if options.data.group == DatasetGroupChoice.keras:
             x_val = options.X.get("val")
         return x_val, inverse_x_val
-
-    @staticmethod
-    def get_y_true(options):
-        return prepare_y_true(options)
-
-    @staticmethod
-    def get_y_pred(y_true, y_pred):
-        return reformat_y_pred(y_true, y_pred)
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str,
@@ -89,7 +349,7 @@ class ImageClassificationCallback:
                 postprocess_array = array[i]
             else:
                 postprocess_array = array
-            example_idx = prepare_example_idx_to_show(
+            example_idx = ImageClassificationCallback.prepare_example_idx_to_show(
                 array=postprocess_array[:len(array)],
                 true_array=true_array[:len(array)],
                 options=options,
@@ -111,7 +371,7 @@ class ImageClassificationCallback:
                     x_array=None if not x_array else x_array.get(f"{input_id}"),
                     return_mode='deploy'
                 )
-                actual_value, predict_values = postprocess_classification(
+                actual_value, predict_values = ImageClassificationCallback.postprocess_classification(
                     predict_array=np.expand_dims(postprocess_array[idx], axis=0),
                     true_array=true_array[idx],
                     options=options.data.outputs[output_id],
@@ -128,10 +388,6 @@ class ImageClassificationCallback:
                 _id += 1
 
         return return_data
-
-    @staticmethod
-    def dataset_balance(options, y_true) -> dict:
-        return prepare_dataset_balance(options, y_true)
 
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx,
@@ -156,7 +412,7 @@ class ImageClassificationCallback:
                     }
 
                 for out in options.data.outputs.keys():
-                    data = postprocess_classification(
+                    data = ImageClassificationCallback.postprocess_classification(
                         predict_array=y_pred.get(f'{out}')[example_idx[idx]],
                         true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
                         options=options.data.outputs.get(out),
@@ -173,31 +429,13 @@ class ImageClassificationCallback:
                         return_data[f"{idx + 1}"]['statistic_values'] = {}
             return return_data
 
-    @staticmethod
-    def statistic_data_request(interactive_config, options, y_true, y_pred) -> list:
-        return get_statistic_data_request(interactive_config, options, y_true, y_pred)
 
-    @staticmethod
-    def balance_data_request(options, dataset_balance, interactive_config):
-        return get_balance_data_request(options, dataset_balance, interactive_config)
-
-class TextClassificationCallback:
-    def __init__(self):
-        pass
-
+class TextClassificationCallback(BaseClassificationCallback):
     @staticmethod
     def get_x_array():
         x_val = None
         inverse_x_val = None
         return x_val, inverse_x_val
-
-    @staticmethod
-    def get_y_true(options):
-        return prepare_y_true(options)
-
-    @staticmethod
-    def get_y_pred(y_true, y_pred):
-        return reformat_y_pred(y_true, y_pred)
 
     @staticmethod
     def postprocess_initial_source(options, example_id: int, return_mode='deploy'):
@@ -238,7 +476,7 @@ class TextClassificationCallback:
                 postprocess_array = array[i]
             else:
                 postprocess_array = array
-            example_idx = prepare_example_idx_to_show(
+            example_idx = ImageClassificationCallback.prepare_example_idx_to_show(
                 array=postprocess_array[:len(array)],
                 true_array=true_array[:len(array)],
                 options=options,
@@ -253,7 +491,7 @@ class TextClassificationCallback:
                     example_id=idx,
                     return_mode='deploy'
                 )
-                actual_value, predict_values = postprocess_classification(
+                actual_value, predict_values = ImageClassificationCallback.postprocess_classification(
                     predict_array=np.expand_dims(postprocess_array[idx], axis=0),
                     true_array=true_array[idx],
                     options=options.data.outputs[output_id],
@@ -268,10 +506,6 @@ class TextClassificationCallback:
                     }
                 )
         return return_data
-
-    @staticmethod
-    def dataset_balance(options, y_true) -> dict:
-        return prepare_dataset_balance(options, y_true)
 
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx,
@@ -291,7 +525,7 @@ class TextClassificationCallback:
                     }
 
                 for out in options.data.outputs.keys():
-                    data = postprocess_classification(
+                    data = ImageClassificationCallback.postprocess_classification(
                         predict_array=y_pred.get(f'{out}')[example_idx[idx]],
                         true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
                         options=options.data.outputs.get(out),
@@ -308,18 +542,8 @@ class TextClassificationCallback:
                         return_data[f"{idx + 1}"]['statistic_values'] = {}
             return return_data
 
-    @staticmethod
-    def statistic_data_request(interactive_config, options, y_true, y_pred) -> list:
-        return get_statistic_data_request(interactive_config, options, y_true, y_pred)
 
-    @staticmethod
-    def balance_data_request(options, dataset_balance, interactive_config):
-        return get_balance_data_request(options, dataset_balance, interactive_config)
-
-class DataframeClassificationCallback:
-    def __init__(self):
-        pass
-
+class DataframeClassificationCallback(BaseClassificationCallback):
     @staticmethod
     def get_x_array(options):
         inverse_x_val = None
@@ -333,14 +557,6 @@ class DataframeClassificationCallback:
                     x_val[inp].extend(x_val_.get(f'{inp}').numpy())
                 x_val[inp] = np.array(x_val[inp])
         return x_val, inverse_x_val
-
-    @staticmethod
-    def get_y_true(options):
-        return prepare_y_true(options)
-
-    @staticmethod
-    def get_y_pred(y_true, y_pred):
-        return reformat_y_pred(y_true, y_pred)
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, return_mode='deploy'):
@@ -374,7 +590,7 @@ class DataframeClassificationCallback:
                 postprocess_array = array[i]
             else:
                 postprocess_array = array
-            example_idx = prepare_example_idx_to_show(
+            example_idx = ImageClassificationCallback.prepare_example_idx_to_show(
                 array=postprocess_array[:len(array)],
                 true_array=true_array[:len(array)],
                 options=options,
@@ -390,7 +606,7 @@ class DataframeClassificationCallback:
                     example_id=idx,
                     return_mode='deploy'
                 )
-                actual_value, predict_values = postprocess_classification(
+                actual_value, predict_values = ImageClassificationCallback.postprocess_classification(
                     predict_array=np.expand_dims(postprocess_array[idx], axis=0),
                     true_array=true_array[idx],
                     options=options.data.outputs[output_id],
@@ -404,10 +620,6 @@ class DataframeClassificationCallback:
                     }
                 )
         return return_data
-
-    @staticmethod
-    def dataset_balance(options, y_true) -> dict:
-        return prepare_dataset_balance(options, y_true)
 
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx,
@@ -428,7 +640,7 @@ class DataframeClassificationCallback:
                     }
 
                 for out in options.data.outputs.keys():
-                    data = postprocess_classification(
+                    data = ImageClassificationCallback.postprocess_classification(
                         predict_array=y_pred.get(f'{out}')[example_idx[idx]],
                         true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
                         options=options.data.outputs.get(out),
@@ -445,31 +657,13 @@ class DataframeClassificationCallback:
                         return_data[f"{idx + 1}"]['statistic_values'] = {}
             return return_data
 
-    @staticmethod
-    def statistic_data_request(interactive_config, options, y_true, y_pred) -> list:
-        return get_statistic_data_request(interactive_config, options, y_true, y_pred)
 
-    @staticmethod
-    def balance_data_request(options, dataset_balance, interactive_config):
-        return get_balance_data_request(options, dataset_balance, interactive_config)
-
-class AudioClassificationCallback:
-    def __init__(self):
-        pass
-
+class AudioClassificationCallback(BaseClassificationCallback):
     @staticmethod
     def get_x_array():
         x_val = None
         inverse_x_val = None
         return x_val, inverse_x_val
-
-    @staticmethod
-    def get_y_true(options):
-        return prepare_y_true(options)
-
-    @staticmethod
-    def get_y_pred(y_true, y_pred):
-        return reformat_y_pred(y_true, y_pred)
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str,
@@ -514,7 +708,7 @@ class AudioClassificationCallback:
                 postprocess_array = array[i]
             else:
                 postprocess_array = array
-            example_idx = prepare_example_idx_to_show(
+            example_idx = ImageClassificationCallback.prepare_example_idx_to_show(
                 array=postprocess_array[:len(array)],
                 true_array=true_array[:len(array)],
                 options=options,
@@ -535,7 +729,7 @@ class AudioClassificationCallback:
                     preset_path=save_path,
                     return_mode='deploy'
                 )
-                actual_value, predict_values = postprocess_classification(
+                actual_value, predict_values = ImageClassificationCallback.postprocess_classification(
                     predict_array=np.expand_dims(postprocess_array[idx], axis=0),
                     true_array=true_array[idx],
                     options=options.data.outputs[output_id],
@@ -552,10 +746,6 @@ class AudioClassificationCallback:
                 _id += 1
 
         return return_data
-
-    @staticmethod
-    def dataset_balance(options, y_true) -> dict:
-        return prepare_dataset_balance(options, y_true)
 
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx,
@@ -579,7 +769,7 @@ class AudioClassificationCallback:
                     }
 
                 for out in options.data.outputs.keys():
-                    data = postprocess_classification(
+                    data = ImageClassificationCallback.postprocess_classification(
                         predict_array=y_pred.get(f'{out}')[example_idx[idx]],
                         true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
                         options=options.data.outputs.get(out),
@@ -596,31 +786,13 @@ class AudioClassificationCallback:
                         return_data[f"{idx + 1}"]['statistic_values'] = {}
             return return_data
 
-    @staticmethod
-    def statistic_data_request(interactive_config, options, y_true, y_pred) -> list:
-        return get_statistic_data_request(interactive_config, options, y_true, y_pred)
 
-    @staticmethod
-    def balance_data_request(options, dataset_balance, interactive_config):
-        return get_balance_data_request(options, dataset_balance, interactive_config)
-
-class VideoClassificationCallback:
-    def __init__(self):
-        pass
-
+class VideoClassificationCallback(BaseClassificationCallback):
     @staticmethod
     def get_x_array():
         x_val = None
         inverse_x_val = None
         return x_val, inverse_x_val
-
-    @staticmethod
-    def get_y_true(options):
-        return prepare_y_true(options)
-
-    @staticmethod
-    def get_y_pred(y_true, y_pred):
-        return reformat_y_pred(y_true, y_pred)
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str, preset_path: str,
@@ -664,7 +836,7 @@ class VideoClassificationCallback:
                 postprocess_array = array[i]
             else:
                 postprocess_array = array
-            example_idx = prepare_example_idx_to_show(
+            example_idx = ImageClassificationCallback.prepare_example_idx_to_show(
                 array=postprocess_array[:len(array)],
                 true_array=true_array[:len(array)],
                 options=options,
@@ -685,7 +857,7 @@ class VideoClassificationCallback:
                     preset_path=save_path,
                     return_mode='deploy'
                 )
-                actual_value, predict_values = postprocess_classification(
+                actual_value, predict_values = ImageClassificationCallback.postprocess_classification(
                     predict_array=np.expand_dims(postprocess_array[idx], axis=0),
                     true_array=true_array[idx],
                     options=options.data.outputs[output_id],
@@ -702,10 +874,6 @@ class VideoClassificationCallback:
                 _id += 1
 
         return return_data
-
-    @staticmethod
-    def dataset_balance(options, y_true) -> dict:
-        return prepare_dataset_balance(options, y_true)
 
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx,
@@ -729,7 +897,7 @@ class VideoClassificationCallback:
                     }
 
                 for out in options.data.outputs.keys():
-                    data = postprocess_classification(
+                    data = ImageClassificationCallback.postprocess_classification(
                         predict_array=y_pred.get(f'{out}')[example_idx[idx]],
                         true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
                         options=options.data.outputs.get(out),
@@ -746,17 +914,8 @@ class VideoClassificationCallback:
                         return_data[f"{idx + 1}"]['statistic_values'] = {}
             return return_data
 
-    @staticmethod
-    def statistic_data_request(interactive_config, options, y_true, y_pred) -> list:
-        return get_statistic_data_request(interactive_config, options, y_true, y_pred)
 
-    @staticmethod
-    def balance_data_request(options, dataset_balance, interactive_config):
-        return get_balance_data_request(options, dataset_balance, interactive_config)
-
-class TimeseriesTrendCallback:
-    def __init__(self):
-        pass
+class TimeseriesTrendCallback(BaseClassificationCallback):
 
     @staticmethod
     def get_x_array(options):
@@ -784,14 +943,6 @@ class TimeseriesTrendCallback:
                 inverse_x = np.concatenate([inverse_x, inverse_col], axis=-1)
             inverse_x_val[inp] = inverse_x[:, :, 1:]
         return x_val, inverse_x_val
-
-    @staticmethod
-    def get_y_true(options):
-        return prepare_y_true(options)
-
-    @staticmethod
-    def get_y_pred(y_true, y_pred):
-        return reformat_y_pred(y_true, y_pred)
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, inverse_x_array=None,
@@ -851,7 +1002,7 @@ class TimeseriesTrendCallback:
                 postprocess_array = array[i]
             else:
                 postprocess_array = array
-            example_idx = prepare_example_idx_to_show(
+            example_idx = ImageClassificationCallback.prepare_example_idx_to_show(
                 array=postprocess_array[:len(array)],
                 true_array=true_array[:len(array)],
                 options=options,
@@ -881,7 +1032,7 @@ class TimeseriesTrendCallback:
                     else:
                         inverse_true = options.X.get('val').get(f"{input_id}")[
                                        idx, :, channel[0]:channel[0] + 1].squeeze().astype('float').tolist()
-                    actual_value, predict_values = postprocess_classification(
+                    actual_value, predict_values = ImageClassificationCallback.postprocess_classification(
                         predict_array=np.expand_dims(postprocess_array[idx], axis=0),
                         true_array=true_array[idx],
                         options=options.data.outputs[output_id],
@@ -894,10 +1045,6 @@ class TimeseriesTrendCallback:
                     )
 
         return return_data
-
-    @staticmethod
-    def dataset_balance(options, y_true) -> dict:
-        return prepare_dataset_balance(options, y_true)
 
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx,
@@ -918,7 +1065,7 @@ class TimeseriesTrendCallback:
                     }
 
                 for out in options.data.outputs.keys():
-                    data = postprocess_classification(
+                    data = ImageClassificationCallback.postprocess_classification(
                         predict_array=y_pred.get(f'{out}')[example_idx[idx]],
                         true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
                         options=options.data.outputs.get(out),
@@ -934,278 +1081,3 @@ class TimeseriesTrendCallback:
                     else:
                         return_data[f"{idx + 1}"]['statistic_values'] = {}
             return return_data
-
-    @staticmethod
-    def statistic_data_request(interactive_config, options, y_true, y_pred) -> list:
-        return get_statistic_data_request(interactive_config, options, y_true, y_pred)
-
-    @staticmethod
-    def balance_data_request(options, dataset_balance, interactive_config):
-        return get_balance_data_request(options, dataset_balance, interactive_config)
-
-
-def prepare_y_true(options):
-    y_true = {"train": {}, "val": {}}
-    inverse_y_true = {"train": {}, "val": {}}
-    for data_type in y_true.keys():
-        for out in options.data.outputs.keys():
-            if not options.data.use_generator:
-                y_true[data_type][f"{out}"] = options.Y.get(data_type).get(f"{out}")
-            else:
-                y_true[data_type][f"{out}"] = []
-                for _, y_val in options.dataset[data_type].batch(1):
-                    y_true[data_type][f"{out}"].extend(y_val.get(f'{out}').numpy())
-                y_true[data_type][f"{out}"] = np.array(y_true[data_type][f"{out}"])
-    return y_true, inverse_y_true
-
-
-def prepare_example_idx_to_show(array: np.ndarray, true_array: np.ndarray, options, output: int, count: int,
-                                choice_type: str = "best", seed_idx: list = None) -> dict:
-    example_idx = []
-    encoding = options.data.outputs.get(output).encoding
-    if choice_type == ExampleChoiceTypeChoice.best or choice_type == ExampleChoiceTypeChoice.worst:
-        if array.shape[-1] == true_array.shape[-1] and encoding == LayerEncodingChoice.ohe and true_array.shape[-1] > 1:
-            classes = np.argmax(true_array, axis=-1)
-        elif len(true_array.shape) == 1 and not encoding == LayerEncodingChoice.ohe and array.shape[-1] > 1:
-            classes = copy.deepcopy(true_array)
-        elif len(true_array.shape) == 1 and not encoding == LayerEncodingChoice.ohe and array.shape[-1] == 1:
-            classes = copy.deepcopy(true_array)
-        else:
-            classes = copy.deepcopy(true_array)
-        class_idx = {}
-        for _id in range(options.data.outputs.get(output).num_classes):
-            class_idx[_id] = {}
-        for i, pred in enumerate(array):
-            class_idx[classes[i]][i] = pred[classes[i]]
-        for _id in range(options.data.outputs.get(output).num_classes):
-            class_idx[_id] = list(sort_dict(class_idx[_id], mode=BalanceSortedChoice.ascending)[0])
-
-        num_ex = copy.deepcopy(count)
-        while num_ex:
-            stop = False
-            while not stop:
-                key = np.random.choice(list(class_idx.keys()))
-                if class_idx[key]:
-                    stop = True
-            if choice_type == ExampleChoiceTypeChoice.best:
-                example_idx.append(class_idx[key][-1])
-                class_idx[key].pop(-1)
-            if class_idx[key] and choice_type == ExampleChoiceTypeChoice.worst:
-                example_idx.append(class_idx[key][0])
-                class_idx[key].pop(0)
-            num_ex -= 1
-
-    elif choice_type == ExampleChoiceTypeChoice.seed and len(seed_idx):
-        example_idx = seed_idx[:count]
-
-    elif choice_type == ExampleChoiceTypeChoice.random:
-        true_id = []
-        false_id = []
-        for i, ex in enumerate(true_array):
-            if np.argmax(ex, axis=-1) == np.argmax(array[i], axis=-1):
-                true_id.append(i)
-            else:
-                false_id.append(i)
-        np.random.shuffle(true_id)
-        np.random.shuffle(false_id)
-        true_false_dict = {'true': true_id, 'false': false_id}
-
-        for _ in range(count):
-            if true_false_dict.get('true') and true_false_dict.get('false'):
-                key = np.random.choice(list(true_false_dict.keys()))
-            elif true_false_dict.get('true') and not true_false_dict.get('false'):
-                key = 'true'
-            else:
-                key = 'false'
-            example_idx.append(true_false_dict.get(key)[0])
-            true_false_dict.get(key).pop(0)
-        np.random.shuffle(example_idx)
-
-    else:
-        pass
-    return example_idx
-
-
-def postprocess_classification(predict_array: np.ndarray, true_array: np.ndarray, options: DatasetOutputsData,
-                               show_stat: bool = False, return_mode='deploy'):
-    labels = options.classes_names
-    ohe = True if options.encoding == LayerEncodingChoice.ohe else False
-    actual_value = np.argmax(true_array, axis=-1) if ohe else true_array
-    data = {
-        "y_true": {},
-        "y_pred": {},
-        "stat": {}
-    }
-    if return_mode == 'deploy':
-        labels_from_array = []
-        for class_idx in predict_array:
-            class_dist = sorted(class_idx, reverse=True)
-            labels_dist = []
-            for j in class_dist:
-                labels_dist.append((labels[list(class_idx).index(j)], round(float(j) * 100, 1)))
-            labels_from_array.append(labels_dist)
-        return labels[actual_value], labels_from_array
-
-    if return_mode == 'callback':
-        data["y_true"] = {
-            "type": "str",
-            "data": [
-                {
-                    "title": "Класс",
-                    "value": labels[actual_value],
-                    "color_mark": None
-                }
-            ]
-        }
-        if labels[actual_value] == labels[np.argmax(predict_array)]:
-            color_mark = 'success'
-        else:
-            color_mark = 'wrong'
-        data["y_pred"] = {
-            "type": "str",
-            "data": [
-                {
-                    "title": "Класс",
-                    "value": labels[np.argmax(predict_array)],
-                    "color_mark": color_mark
-                }
-            ]
-        }
-        if show_stat:
-            data["stat"] = {
-                "type": "str",
-                "data": []
-            }
-            for i, val in enumerate(predict_array):
-                if val == max(predict_array) and labels[i] == labels[actual_value]:
-                    class_color_mark = "success"
-                elif val == max(predict_array) and labels[i] != labels[actual_value]:
-                    class_color_mark = "wrong"
-                else:
-                    class_color_mark = None
-                data["stat"]["data"].append(
-                    {
-                        'title': labels[i],
-                        'value': f"{round(val * 100, 1)}%",
-                        'color_mark': class_color_mark
-                    }
-                )
-        return data
-
-
-def prepare_class_idx(y_true, options) -> dict:
-    class_idx = {}
-    for data_type in y_true.keys():
-        class_idx[data_type] = {}
-        for out in y_true.get(data_type).keys():
-            class_idx[data_type][out] = {}
-            ohe = options.data.outputs.get(int(out)).encoding == LayerEncodingChoice.ohe
-            for name in options.data.outputs.get(int(out)).classes_names:
-                class_idx[data_type][out][name] = []
-            y_true = np.argmax(y_true.get(data_type).get(out), axis=-1) if ohe \
-                else np.squeeze(y_true.get(data_type).get(out))
-            for idx in range(len(y_true)):
-                class_idx[data_type][out][
-                    options.data.outputs.get(int(out)).classes_names[y_true[idx]]].append(idx)
-    return class_idx
-
-
-def prepare_dataset_balance(options, y_true) -> dict:
-    dataset_balance = {}
-    for out in options.data.outputs.keys():
-        encoding = options.data.outputs.get(out).encoding
-        dataset_balance[f"{out}"] = {'class_histogramm': {}}
-        for data_type in ['train', 'val']:
-            dataset_balance[f"{out}"]['class_histogramm'][data_type] = class_counter(
-                y_array=y_true.get(data_type).get(f"{out}"),
-                classes_names=options.data.outputs.get(out).classes_names,
-                ohe=encoding == LayerEncodingChoice.ohe
-            )
-    return dataset_balance
-
-
-def reformat_y_pred(y_true, y_pred):
-    reformat_pred = {}
-    inverse_pred = {}
-    for idx, out in enumerate(y_true.get('val').keys()):
-        if len(y_true.get('val').keys()) == 1:
-            reformat_pred[out] = y_pred
-        else:
-            reformat_pred[out] = y_pred[idx]
-    return reformat_pred, inverse_pred
-
-
-def get_statistic_data_request(interactive_config, options, y_true, y_pred) -> list:
-    return_data = []
-    _id = 1
-    for out in interactive_config.statistic_data.output_id:
-        encoding = options.data.outputs.get(out).encoding
-        if encoding != LayerEncodingChoice.multi:
-            cm, cm_percent = get_confusion_matrix(
-                np.argmax(y_true.get("val").get(f'{out}'), axis=-1) if encoding == LayerEncodingChoice.ohe
-                else y_true.get("val").get(f'{out}'),
-                np.argmax(y_pred.get(f'{out}'), axis=-1),
-                get_percent=True
-            )
-            return_data.append(
-                fill_heatmap_front_structure(
-                    _id=_id,
-                    _type="heatmap",
-                    graph_name=f"Выходной слой «{out}» - Confusion matrix",
-                    short_name=f"{out} - Confusion matrix",
-                    x_label="Предсказание",
-                    y_label="Истинное значение",
-                    labels=options.data.outputs.get(out).classes_names,
-                    data_array=cm,
-                    data_percent_array=cm_percent,
-                )
-            )
-            _id += 1
-
-        else:
-            report = get_classification_report(
-                y_true=y_true.get("val").get(f"{out}").reshape(
-                    (np.prod(y_true.get("val").get(f"{out}").shape[:-1]),
-                     y_true.get("val").get(f"{out}").shape[-1])
-                ),
-                y_pred=np.where(y_pred.get(f"{out}") >= 0.9, 1, 0).reshape(
-                    (np.prod(y_pred.get(f"{out}").shape[:-1]), y_pred.get(f"{out}").shape[-1])
-                ),
-                labels=options.data.outputs.get(out).classes_names
-            )
-            return_data.append(
-                fill_table_front_structure(
-                    _id=_id,
-                    graph_name=f"Выходной слой «{out}» - Отчет по классам",
-                    plot_data=report
-                )
-            )
-            _id += 1
-    return return_data
-
-
-def get_balance_data_request(options, dataset_balance, interactive_config) -> list:
-    return_data = []
-    _id = 0
-    for out in options.data.outputs.keys():
-        for class_type in dataset_balance.get(f"{out}").keys():
-            preset = {}
-            for data_type in ['train', 'val']:
-                class_names, class_count = sort_dict(
-                    dict_to_sort=dataset_balance.get(f"{out}").get(class_type).get(data_type),
-                    mode=interactive_config.data_balance.sorted.name
-                )
-                preset[data_type] = fill_graph_front_structure(
-                    _id=_id,
-                    _type='histogram',
-                    type_data=data_type,
-                    graph_name=f"Выход {out} - "
-                               f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка",
-                    short_name=f"{out} - {'Тренировочная' if data_type == 'train' else 'Проверочная'}",
-                    x_label="Название класса",
-                    y_label="Значение",
-                    plot_data=[fill_graph_plot_data(x=class_names, y=class_count)],
-                )
-                _id += 1
-            return_data.append(preset)
-    return return_data

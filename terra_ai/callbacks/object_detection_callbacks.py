@@ -45,7 +45,7 @@ class YoloV3Callback:
         )
 
     @staticmethod
-    def dataset_balance(options, y_true, preset_path) -> dict:
+    def dataset_balance(options, y_true, preset_path: str, class_colors) -> dict:
         return prepare_dataset_balance(options, y_true, preset_path)
 
     @staticmethod
@@ -94,7 +94,7 @@ class YoloV4Callback:
         )
 
     @staticmethod
-    def dataset_balance(options, y_true, preset_path) -> dict:
+    def dataset_balance(options, y_true, preset_path: str, class_colors) -> dict:
         return prepare_dataset_balance(options, y_true, preset_path)
 
     @staticmethod
@@ -114,6 +114,7 @@ class YoloV4Callback:
 
 def get_yolo_y_true(options):
     y_true = {}
+    inverse_y_true = {}
     bb = []
     for index in range(len(options.dataset['val'])):
         coord = options.dataframe.get('val').iloc[index, 1].split(' ')
@@ -129,11 +130,12 @@ def get_yolo_y_true(options):
         bb.append(_bb)
     for channel in range(len(options.Y.get('val').keys())):
         y_true[channel] = bb
-    return y_true
+    return y_true, inverse_y_true
 
 
 def get_yolo_y_pred(array, options, sensitivity: float = 0.15, threashold: float = 0.1):
     y_pred = {}
+    # inverse_y_pred = {}
     name_classes = options.data.outputs.get(list(options.data.outputs.keys())[0]).classes_names
     for i, box_array in enumerate(array):
         channel_boxes = []
