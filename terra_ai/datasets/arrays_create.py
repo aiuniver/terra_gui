@@ -674,7 +674,7 @@ class CreateArray(object):
                                        'close_tags': options['close_tags'],
                                        'put': options['put'],
                                        'num_classes': options['num_classes'],
-                                       'classes_names': options['open_tags'],
+                                       'classes_names': options['classes_names'],
                                        'length': options['length']
                                        }
                         }
