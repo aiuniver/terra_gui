@@ -270,6 +270,12 @@ loss_metric_config = {
 }
 
 
+def print_error(class_name: str, method_name: str, message: Exception):
+    return print(f'\n_________________________________________________\n'
+                 f'Error in class {class_name} method {method_name}: {message}'
+                 f'\n_________________________________________________\n')
+
+
 def class_counter(y_array, classes_names: list, ohe=True):
     """
     class_dict = {

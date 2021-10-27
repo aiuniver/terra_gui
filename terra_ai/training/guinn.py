@@ -21,6 +21,7 @@ from tensorflow.keras.models import load_model
 from tensorflow.python.framework.errors_impl import ResourceExhaustedError
 
 from terra_ai import progress
+from terra_ai.callbacks.interactive_callback import InteractiveCallback
 from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice, DatasetGroupChoice
 from terra_ai.data.deploy.tasks import DeployData
@@ -33,7 +34,7 @@ from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.exceptions.deploy import MethodNotImplementedException
 from terra_ai.modeling.validator import ModelValidator
-from terra_ai.training.customcallback import InteractiveCallback
+# from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.training.customlosses import DiceCoef, UnscaledMAE, BalancedRecall, BalancedDiceCoef, \
     BalancedPrecision, BalancedFScore, FScore
 from terra_ai.training.yolo_utils import create_yolo, CustomModelYolo, compute_loss, get_mAP, detect_image

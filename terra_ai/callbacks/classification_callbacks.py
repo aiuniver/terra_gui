@@ -395,8 +395,15 @@ class ImageClassificationCallback(BaseClassificationCallback):
         return_data = {}
         if interactive_config.intermediate_result.show_results:
             for idx in range(interactive_config.intermediate_result.num_examples):
+                return_data[f"{idx + 1}"] = {
+                    'initial_data': {},
+                    'true_value': {},
+                    'predict_value': {},
+                    'tags_color': None,
+                    'statistic_values': {}
+                }
                 for inp in options.data.inputs.keys():
-                    data, type_choice = ImageClassificationCallback.postprocess_initial_source(
+                    data = ImageClassificationCallback.postprocess_initial_source(
                         options=options,
                         input_id=inp,
                         save_id=idx + 1,
@@ -407,7 +414,7 @@ class ImageClassificationCallback(BaseClassificationCallback):
                         return_mode='callback'
                     )
                     return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
-                        'type': type_choice,
+                        'type': 'image',
                         'data': data,
                     }
 
@@ -514,13 +521,13 @@ class TextClassificationCallback(BaseClassificationCallback):
         if interactive_config.intermediate_result.show_results:
             for idx in range(interactive_config.intermediate_result.num_examples):
                 for inp in options.data.inputs.keys():
-                    data, type_choice = TextClassificationCallback.postprocess_initial_source(
+                    data = TextClassificationCallback.postprocess_initial_source(
                         options=options,
                         example_id=example_idx[idx],
                         return_mode='callback'
                     )
                     return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
-                        'type': type_choice,
+                        'type': 'text',
                         'data': data,
                     }
 
@@ -628,14 +635,14 @@ class DataframeClassificationCallback(BaseClassificationCallback):
         if interactive_config.intermediate_result.show_results:
             for idx in range(interactive_config.intermediate_result.num_examples):
                 for inp in options.data.inputs.keys():
-                    data, type_choice = DataframeClassificationCallback.postprocess_initial_source(
+                    data = DataframeClassificationCallback.postprocess_initial_source(
                         options=options,
                         input_id=inp,
                         example_id=example_idx[idx],
                         return_mode='callback'
                     )
                     return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
-                        'type': type_choice,
+                        'type': 'str',
                         'data': data,
                     }
 
@@ -754,7 +761,7 @@ class AudioClassificationCallback(BaseClassificationCallback):
         if interactive_config.intermediate_result.show_results:
             for idx in range(interactive_config.intermediate_result.num_examples):
                 for inp in options.data.inputs.keys():
-                    data, type_choice = AudioClassificationCallback.postprocess_initial_source(
+                    data = AudioClassificationCallback.postprocess_initial_source(
                         options=options,
                         input_id=inp,
                         save_id=idx + 1,
@@ -764,7 +771,7 @@ class AudioClassificationCallback(BaseClassificationCallback):
                         return_mode='callback'
                     )
                     return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
-                        'type': type_choice,
+                        'type': 'audio',
                         'data': data,
                     }
 
@@ -882,7 +889,7 @@ class VideoClassificationCallback(BaseClassificationCallback):
         if interactive_config.intermediate_result.show_results:
             for idx in range(interactive_config.intermediate_result.num_examples):
                 for inp in options.data.inputs.keys():
-                    data, type_choice = VideoClassificationCallback.postprocess_initial_source(
+                    data = VideoClassificationCallback.postprocess_initial_source(
                         options=options,
                         input_id=inp,
                         save_id=idx + 1,
@@ -892,7 +899,7 @@ class VideoClassificationCallback(BaseClassificationCallback):
                         return_mode='callback'
                     )
                     return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
-                        'type': type_choice,
+                        'type': 'video',
                         'data': data,
                     }
 
@@ -1053,14 +1060,14 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
         if interactive_config.intermediate_result.show_results:
             for idx in range(interactive_config.intermediate_result.num_examples):
                 for inp in options.data.inputs.keys():
-                    data, type_choice = TimeseriesTrendCallback.postprocess_initial_source(
+                    data = TimeseriesTrendCallback.postprocess_initial_source(
                         options=options,
                         input_id=inp,
                         example_id=example_idx[idx],
                         return_mode='callback'
                     )
                     return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
-                        'type': type_choice,
+                        'type': 'graphic',
                         'data': data,
                     }
 
