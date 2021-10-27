@@ -84,7 +84,6 @@ def main(**params):
 
         j = 0
         for column, proc in zip(columns, process):
-
             i = np.array(data[column[2:]])
 
             if proc:
