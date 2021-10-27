@@ -257,6 +257,22 @@ class CreateDataset(object):
 
     def create_put_instructions(self, data: Union[CreationInputsList, CreationOutputsList]) -> dict:
 
+        def instructions(path, put):
+
+            instr = getattr(CreateArray(), f"instructions_{decamelize(put.type)}")([path], **put.parameters.native())
+            cut_data = getattr(CreateArray(), f"cut_{decamelize(put.type)}")(instr['instructions'],
+                                                                             os.path.join(self.paths.sources,
+                                                                                          f"{put.id}_"
+                                                                                          f"{decamelize(put.type)}"),
+                                                                             **instr['parameters'])
+
+            if not put.type == LayerOutputTypeChoice.Classification:
+                y_classes = sorted(list(instr['instructions'].keys())) if isinstance(instr['instructions'], dict) \
+                    else instr['instructions']
+                self.y_cls += [os.path.basename(os.path.dirname(dir_name)) for dir_name in y_classes]
+
+            return cut_data
+
         put_parameters: dict = {}
         for put in data:
             self.tags[put.id] = {f"{put.id}_{decamelize(put.type)}": decamelize(put.type)}
@@ -282,28 +298,22 @@ class CreateDataset(object):
                 put.parameters.cols_names = f'{put.id}_{decamelize(put.type)}'
                 put.parameters.put = put.id
                 temp_paths_list = [os.path.join(self.source_path, x) for x in paths_list]
-                instr = getattr(CreateArray(), f"instructions_{decamelize(put.type)}")(temp_paths_list,
-                                                                                       **put.parameters.native())
 
-                if not put.type == LayerOutputTypeChoice.Classification:
-                    y_classes = sorted(list(instr['instructions'].keys())) if isinstance(instr['instructions'], dict) \
-                        else instr['instructions']
-                    self.y_cls = [os.path.basename(os.path.dirname(dir_name)) for dir_name in y_classes]
+                results_list = []
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    results = list(tqdm(executor.map(instructions, temp_paths_list, repeat(put)),
+                                        total=len(temp_paths_list)))
+                    for result in results:
+                        results_list += result['instructions']
 
-                instructions_data = InstructionsData(
-                    **getattr(CreateArray(), f"cut_{decamelize(put.type)}")(instr['instructions'],
-                                                                            os.path.join(self.paths.sources,
-                                                                                         f"{put.id}_"
-                                                                                         f"{decamelize(put.type)}"),
-                                                                            **instr['parameters']))
-
-                instructions_data.parameters = {'put_type': decamelize(put.type),
-                                                **instr['parameters']}
+                instructions_data = InstructionsData(instructions=results_list, parameters=result['parameters'])
 
                 if decamelize(put.type) in PATH_TYPE_LIST:
                     new_paths = [path.replace(str(self.paths.basepath) + os.path.sep, '')
                                  for path in instructions_data.instructions]
                     instructions_data.instructions = new_paths
+
+                instructions_data.parameters.update([('put_type', decamelize(put.type))])
 
             put_parameters[put.id] = {f'{put.id}_{decamelize(put.type)}': instructions_data}
 
@@ -726,15 +736,24 @@ class CreateDataset(object):
 
     def create_dataset_arrays(self, put_data: dict):
 
+        def array_creation(row, instructions):
+
+            full_array = []
+            arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(row, **instructions)
+            arr = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(arr['instructions'],
+                                                                                   **arr['parameters'])
+            full_array.append(arr)
+
+            return full_array
+
         out_array = {'train': {}, 'val': {}, 'test': {}}
         service = {'train': {}, 'val': {}, 'test': {}}
 
         for split in list(out_array.keys()):
             for key in put_data.keys():
-                current_arrays: list = []
                 col_name = None
-
                 length, depth, step = 0, 0, 1
+
                 for col_name, data in put_data[key].items():
                     depth = data.parameters['depth'] if 'depth' in data.parameters.keys() and \
                                                         data.parameters['depth'] else 0
@@ -743,63 +762,65 @@ class CreateDataset(object):
 
                 for j in range(6):
                     globals()[f'current_arrays_{j}'] = []
-                for i in range(0, len(self.dataframe[split]) - length - depth, step):
-                    if psutil.virtual_memory()._asdict().get("percent") > 90:
-                        current_arrays = []
-                        raise Resource
-                    full_array = []
-                    for col_name, data in put_data[key].items():
-                        prep = None
-                        if self.tags[key][col_name] in PATH_TYPE_LIST:
-                            data_to_pass = os.path.join(self.paths.basepath, self.dataframe[split].loc[i, col_name])
 
+                data_to_pass = []
+                dict_to_pass = []
+                for i in range(0, len(self.dataframe[split]) - length - depth, step):
+                    for col_name, data in put_data[key].items():
+                        if self.tags[key][col_name] in PATH_TYPE_LIST:
+                            data_to_pass.append(os.path.join(self.paths.basepath,
+                                                             self.dataframe[split].loc[i, col_name]))
                         elif 'depth' in data.parameters.keys() and data.parameters['depth']:
                             if 'trend' in data.parameters.keys() and data.parameters['trend']:
-                                data_to_pass = [self.dataframe[split].loc[i, col_name],
-                                                self.dataframe[split].loc[i + data.parameters['length'], col_name]]
+                                data_to_pass.append([self.dataframe[split].loc[i, col_name],
+                                                     self.dataframe[split].loc[i + data.parameters['length'],
+                                                                               col_name]])
                             elif 'trend' in data.parameters.keys():
-                                data_to_pass = self.dataframe[split].loc[
-                                               i + data.parameters['length']:i + data.parameters['length'] +
-                                                                             data.parameters['depth'] - 1, col_name]
+                                data_to_pass.append(
+                                    self.dataframe[split].loc[i + data.parameters['length']:i + data.parameters['length'] + data.parameters['depth'] - 1, col_name])
                             else:
-                                data_to_pass = self.dataframe[split].loc[i:i + data.parameters['length'] - 1, col_name]
+                                data_to_pass.append(self.dataframe[split].loc[i:i + data.parameters['length'] - 1,
+                                                    col_name])
                         else:
-                            data_to_pass = self.dataframe[split].loc[i, col_name]
-
-                        if self.preprocessing.preprocessing.get(key) and \
+                            data_to_pass.append(self.dataframe[split].loc[i, col_name])
+                        parameters_to_pass = data.parameters.copy()
+                        if self.preprocessing.preprocessing.get(key) and\
                                 self.preprocessing.preprocessing.get(key).get(col_name):
                             prep = self.preprocessing.preprocessing.get(key).get(col_name)
-                        arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(data_to_pass,
-                                                                                           **{'preprocess': prep},
-                                                                                           **data.parameters)
+                            parameters_to_pass.update([('preprocess', prep)])
+                        dict_to_pass.append(parameters_to_pass)
 
-                        arr = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(arr['instructions'],
-                                                                                               **arr['parameters'])
-
-                        if self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
-                            for n in range(6):
-                                globals()[f'current_arrays_{n}'].append(arr[n])
-                        else:
-                            full_array.append(arr)
-                    if not self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
-                        if depth:
-                            if 'trend' in data.parameters.keys() and data.parameters['trend']:
-                                array = np.array(full_array[0])
+                # print(data_to_pass)
+                current_arrays: list = []
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    results = list(tqdm(executor.map(array_creation, data_to_pass, dict_to_pass),
+                                        total=len(data_to_pass)))
+                    for i, result in enumerate(results):
+                        if psutil.virtual_memory()._asdict().get("percent") > 90:
+                            current_arrays = []
+                            raise Resource
+                        if not self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
+                            if depth:
+                                if 'trend' in dict_to_pass[i].keys() and dict_to_pass[i]['trend']:  # data.parameters.keys() and data.parameters['trend']:
+                                    array = np.array(result[0])
+                                else:
+                                    array = self.postprocess_timeseries(result)
                             else:
-                                array = self.postprocess_timeseries(full_array)
+                                array = np.concatenate(result, axis=0)
+                            current_arrays.append(array)
                         else:
-                            array = np.concatenate(full_array, axis=0)
-                        current_arrays.append(array)
+                            for n in range(6):
+                                globals()[f'current_arrays_{n}'].append(result[0][n])
 
                 if self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
                     for n in range(3):
                         out_array[split][key + n] = np.array(globals()[f'current_arrays_{n}'])
                         service[split][key + n] = np.array(globals()[f'current_arrays_{n + 3}'])
-                        # print(np.array(globals()[f'current_arrays_{n}']).shape)
-                        # print(np.array(globals()[f'current_arrays_{n + 3}']).shape)
+                        print(np.array(globals()[f'current_arrays_{n}']).shape)
+                        print(np.array(globals()[f'current_arrays_{n + 3}']).shape)
                 else:
                     out_array[split][key] = np.array(current_arrays)
-                    # print(out_array[split][key].shape)
+                    print(out_array[split][key].shape)
 
         if service['train']:
             return out_array, service

@@ -15,7 +15,7 @@ from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedC
 from terra_ai.settings import CALLBACK_CLASSIFICATION_TREASHOLD_VALUE, DEPLOY_PRESET_PERCENT
 
 
-class ImageSegmentationCallback:
+class SegmentationCallback:
     def __init__(self):
         pass
 
@@ -81,7 +81,7 @@ class ImageSegmentationCallback:
                 input_id = list(options.data.inputs.keys())[0]
                 return_data[output_id].append(
                     {
-                        "source": ImageSegmentationCallback.postprocess_initial_source(
+                        "source": SegmentationCallback.postprocess_initial_source(
                             options=options,
                             input_id=input_id,
                             save_id=idx,
