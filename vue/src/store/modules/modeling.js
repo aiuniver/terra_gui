@@ -19,7 +19,8 @@ export default {
   }),
   mutations: {
     SET_MODELING (state, value) {
-      state.modeling = { ...value };
+      const list = value.layer_form[1]['list'] || []
+      state.modeling = { ...value, list };
     },
     SET_ERRORS_BLOCKS (state, value) {
       state.errorsBlocks = { ...value }
@@ -28,10 +29,10 @@ export default {
       state.errorsFields = { ...value }
     },
     SET_MODEL (state, value) {
-      state.model = value;
+      state.model = { ...value };
       const { layers } = value;
-      state.blocks = prepareBlocks(layers, state.modeling.list);
-      state.links = prepareLinks(layers);
+      state.blocks = [...prepareBlocks(layers, state.modeling.list)];
+      state.links = [...prepareLinks(layers)];
     },
     SET_BLOCKS (state, value) {
       state.blocks = [...value];
@@ -177,6 +178,19 @@ export default {
     async getModel ({ dispatch }, value) {
       return await dispatch('axios', { url: '/modeling/get/', data: value }, { root: true });
     },
+    async changeId ({ commit, dispatch }, { value, id }) {
+      const { data } = await dispatch('axios', {
+        url: '/modeling/datatype/', data: {
+          "source": id,
+          "target": value
+        }
+      }, { root: true });
+      if (data) {
+        dispatch('deselectBlocks')
+        commit("modeling/SET_MODEL", data, { root: true });
+      }
+      return data
+    },
     resetAll ({ commit },) {
       commit('SET_ERRORS_BLOCKS', {})
       return
@@ -184,7 +198,7 @@ export default {
     async clearModel ({ commit, dispatch }) {
       const res = await dispatch('axios', { url: '/modeling/clear/' }, { root: true });
       if (res.success) {
-        console.log(res)
+        // console.log(res)
         commit('SET_ERRORS_BLOCKS', {})
         await dispatch('projects/get', {}, { root: true });
       }
@@ -211,13 +225,14 @@ export default {
     setBlock ({ commit, state: { blocks } }, value) {
       const index = blocks.findIndex(item => item.id == value.id);
       blocks[index] = value;
-      console.log(blocks);
+      // console.log(blocks);
       commit('SET_BLOCKS', blocks);
     },
   },
   getters: {
     getList: ({ modeling: { list } }) => list,
-    getLayersType: ({ modeling: { layers_types } }) => layers_types,
+    getLayersType: ({ modeling: { layers_types } }) => layers_types || {},
+    getLayersForm: ({ modeling: { layer_form } }) => layer_form || [],
     getModel: ({ model }) => model,
     getBlocks: ({ blocks }) => blocks,
     getErrorsBlocks: ({ errorsBlocks }) => errorsBlocks,

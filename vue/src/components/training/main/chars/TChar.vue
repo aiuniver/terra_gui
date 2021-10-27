@@ -198,7 +198,7 @@ export default {
     },
     changePlotData() {
       return this.plot_data.map(({ x, y, mode = 'lines', label }) => {
-        return { x, y, mode, name: label };
+        return { x, y, mode, name: label.replace(/[<>]/g, '') };
       });
     },
     data() {

@@ -22,6 +22,14 @@
       <div v-show="input && !isDisabled" class="d-input__btn--cleener">
         <i class="ci-icon ci-close_big" @click="clear" />
       </div>
+      <div :class="['d-input__btn--down', { 'd-input__btn--disabled': isDisabled }]">
+        <i class="ci-icon ci-caret_down" />
+      </div>
+    </div>
+    <div class="d-content">
+      <template v-for="({ label, value }, i) of list">
+        <div class="d-content__item" :key="label + i" @change="change({ label, value })">{{ label }}</div>
+      </template>
     </div>
   </div>
 </template>
@@ -29,9 +37,13 @@
 <script>
 import fields from '../../mixins/fields';
 export default {
-  name: 'd-input-text',
+  name: 'd-select',
   mixins: [fields],
   props: {
+    list: {
+      type: Array,
+      default: () => [],
+    },
     type: {
       type: String,
       default: 'text',
@@ -76,5 +88,38 @@ export default {
 <style lang="scss" scoped>
 @import '../scss/fields.scss';
 .d-input {
+  &__btn {
+    &--down {
+      height: 100%;
+      width: 35px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-left: 1px solid;
+      border-color: inherit;
+      .ci-icon {
+        font-size: 20px;
+      }
+    }
+  }
+}
+.d-content {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 5px);
+  background-color: #242f3d;
+  min-width: 100%;
+  border-radius: 4px;
+  overflow: hidden;
+  &__item {
+    height: 36px;
+    padding: 5px 10px;
+    cursor: pointer;
+
+    &:hover {
+      background-color: #0e1621;
+      color: #65b9f4;
+    }
+  }
 }
 </style>

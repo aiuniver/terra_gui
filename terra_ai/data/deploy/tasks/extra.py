@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import List, Any
-from pydantic import validator
+from pydantic import validator, DirectoryPath
 
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.exceptions.deploy import MethodNotImplementedException
@@ -8,7 +8,7 @@ from terra_ai.settings import DEPLOY_PRESET_COUNT
 
 
 class DataBaseList(List):
-    path: Path
+    path: DirectoryPath
     preset: List[Any] = []
 
     class Meta:
@@ -23,10 +23,11 @@ class DataBaseList(List):
         )
 
     @property
-    def presets(self) -> dict:
+    def presets(self) -> list:
         return list(map(lambda item: item.native() if item else None, self.preset))
 
-    def _positive_int_filter(self, value) -> int:
+    @staticmethod
+    def _positive_int_filter(value) -> int:
         try:
             value = int(value)
         except ValueError:

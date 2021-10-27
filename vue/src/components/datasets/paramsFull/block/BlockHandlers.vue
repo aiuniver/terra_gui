@@ -21,7 +21,7 @@
             <template v-slot:header>{{ `${handler.name}` }}</template>
             <template v-slot:default="{ data: { parameters, errors } }">
               <template v-for="(data, index) of formsHandler">
-                <t-auto-field
+                <t-auto-field-handler
                   v-bind="data"
                   :parameters="parameters"
                   :errors="errors"

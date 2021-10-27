@@ -4,6 +4,7 @@ from . import (
     TextSegmentation,
     TextClassification,
     AudioClassification,
-    # DataframeRegression,
-    # DataframeClassification
+    DataframeRegression,
+    DataframeClassification,
+    Timeseries
 )

@@ -9,7 +9,7 @@
           </button>
         </td>
         <td>Предсказанные данные</td>
-        <td>{{ extra.columns[extra.columns.length-1] }}</td>
+        <td>{{ columns[columns.length-1] }}</td>
         <td v-for="(name, i) of columns.slice(0, columns.length-1)" :key="'col_' + i">{{ name }}</td>
       </tr>
       <tr v-for="({ source, data, actual }, index) of data" :key="'row_' + index" class="fixed">
@@ -38,14 +38,14 @@ export default {
   props: {
     data: Array,
     source: Object,
-    extra: Object,
+    columns: Object,
   },
   data: () => ({}),
-  computed: {
-    columns() {
-      return this.extra?.columns ?? [];
-    },
-  },
+  // computed: {
+  //   columns() {
+  //     return this.extra?.columns ?? [];
+  //   },
+  // },
   methods: {
     ReloadRow(index) {
       console.log('RELOAD_ROW');
@@ -56,7 +56,8 @@ export default {
     },
   },
   mounted() {
-    console.log(this.extra.columns[this.extra.columns.length-1])
+    console.log(this.data)
+    console.log(this.columns)
   },
 };
 </script>

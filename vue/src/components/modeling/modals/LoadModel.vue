@@ -86,14 +86,14 @@ export default {
     loading: true,
   }),
   mounted() {
-    console.log(this.$el.getElementsByClassName('at-modal__footer')[0].remove());
+    this.$el.getElementsByClassName('at-modal__footer')[0].remove();
   },
   created() {
     this.load();
   },
   computed: {
     models() {
-      console.log(this.lists);
+      // console.log(this.lists);
       return [
         ...(this.lists[0]?.models || []).map(el => {
           return {

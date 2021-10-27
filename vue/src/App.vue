@@ -60,7 +60,7 @@ export default {
     await this.$store.dispatch('projects/get');
     await this.$store.dispatch('datasets/get');
     if (!this.project?.dataset) {
-      console.log(this.$route);
+      // console.log(this.$route);
       if (this.$route.meta.access == false) {
         try {
           const data = await this.$Modal.alert({

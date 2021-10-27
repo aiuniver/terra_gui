@@ -255,7 +255,7 @@ class ColumnProcessingInputTypeChoice(str, Enum):
     Text = "Текст"
     Audio = "Аудио"
     Video = "Видео"
-    Unique = "Уникальные"
+    Classification = "Уникальные"
     Scaler = "Скейлер"
 
     @staticmethod

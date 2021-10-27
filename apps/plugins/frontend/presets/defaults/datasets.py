@@ -395,7 +395,7 @@ DataSetsColumnProcessing = [
                                 },
                             },
                         ],
-                        "Unique": [
+                        "Classification": [
                             {
                                 "type": "checkbox",
                                 "label": "One-Hot encoding",
