@@ -37,6 +37,7 @@ class OutputsParametersData(BaseMixinData):
             filter(lambda item: int(item.get("id")) in _model.outputs.ids, data)
         )
 
+        _data = []
         for layer in _model.outputs:
             _outputs = list(
                 filter(
@@ -50,15 +51,6 @@ class OutputsParametersData(BaseMixinData):
                     "task": layer.task.value,
                 }
             ]
-            print(
-                2,
-                list(
-                    filter(
-                        lambda item: int(item.get("id")) == layer.id,
-                        data,
-                    )
-                ),
-            )
             _layer_data = _outputs[0]
 
             _task = TasksRelations.get(layer.task.value)
@@ -75,10 +67,9 @@ class OutputsParametersData(BaseMixinData):
                 list(map(lambda item: item.name, _task.metrics)) if _task else []
             )
             _metrics = list(set(_layer_data.get("metrics") or []) & set(_task_metrics))
-            if _metrics not in _task_metrics:
-                _metrics = [_task_metrics[0]]
+            if not _metrics:
+                _metrics = [_task_metrics[0]] if _task_metrics else []
             _layer_data["metrics"] = _metrics
-            data.append(_layer_data)
+            _data.append(_layer_data)
 
-        print(1, data)
-        return OutputsList(data)
+        return OutputsList(_data)

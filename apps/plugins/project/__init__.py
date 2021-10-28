@@ -273,6 +273,7 @@ class Project(BaseMixinData):
     def update_training_base(self, data: dict = None):
         if isinstance(data, dict):
             data["architecture"]["type"] = self.dataset.architecture.value
+            data["architecture"]["model"] = self.model
             data["architecture"]["parameters"]["model"] = self.model
         else:
             data = {
@@ -280,6 +281,7 @@ class Project(BaseMixinData):
                     "type": self.dataset.architecture.value
                     if self.dataset
                     else ArchitectureChoice.Basic.value,
+                    "model": self.model,
                     "parameters": {"model": self.model},
                 }
             }
@@ -287,6 +289,7 @@ class Project(BaseMixinData):
         defaults_data.training = DefaultsTrainingData(
             project=self, architecture=self.training.base.architecture.type
         )
+        self.save()
 
     def update_training_interactive(self):
         loss_graphs = []

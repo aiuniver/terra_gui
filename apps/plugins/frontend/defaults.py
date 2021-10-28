@@ -70,7 +70,6 @@ class ArchitectureMixinForm(BaseMixinData):
             _method_name = f"_set_{name_}"
             _method = getattr(self, _method_name, None)
             if _method:
-                print(_method_name)
                 _method(getattr(data, _key), **kwargs)
 
 
@@ -226,7 +225,6 @@ class ArchitectureOutputsGroupFrom(ArchitectureMixinForm):
         outputs = {}
         for layer in layers:
             _task_rel = TasksRelations.get(layer.task)
-            print("Generate outputs")
             _layer_data = data.architecture.parameters.outputs.get(layer.id)
 
             _losses_rel = _task_rel.losses if _task_rel else []
@@ -264,7 +262,6 @@ class ArchitectureOutputsGroupFrom(ArchitectureMixinForm):
             if _layer_data and _metrics_rel:
                 _metrics_value = list(set(_layer_data.metrics) & set(_metrics_rel))
             _metrics_data = {**TrainingMetricSelect}
-            print(_metrics_value)
             _metrics_data.update(
                 {
                     "name": _metrics_data.get("name") % layer.id,
@@ -340,7 +337,6 @@ class ArchitectureBasicForm(ArchitectureBaseForm):
                 fields_outputs[0].value,
             )
         )
-        print("Generate metric_name")
         fields[0].value = (
             value if value in fields_outputs[0] else fields_outputs[0].value[0]
         )

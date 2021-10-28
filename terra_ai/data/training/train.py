@@ -159,8 +159,13 @@ class OptimizerData(BaseMixinData):
 
 
 class ArchitectureData(BaseMixinData):
+    model: Any
     type: ArchitectureChoice
     parameters: Any
+
+    def dict(self, **kwargs):
+        kwargs.update({"exclude": {"model"}})
+        return super().dict(**kwargs)
 
     @property
     def outputs_dict(self) -> dict:
@@ -182,6 +187,14 @@ class ArchitectureData(BaseMixinData):
 
     @validator("parameters", always=True)
     def _validate_parameters(cls, value: Any, values, field) -> Any:
+        if not value:
+            return value
+        _model = values.get("model")
+        _outputs = value.get("outputs", [])
+        for _index, _output in enumerate(_outputs):
+            _output["task"] = _model.layers.get(_output.get("id")).task.value
+            _outputs[_index] = _output
+        value["outputs"] = _outputs
         return field.type_(**(value or {}))
 
 
