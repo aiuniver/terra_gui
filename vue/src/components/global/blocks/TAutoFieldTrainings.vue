@@ -2,6 +2,7 @@
   <div class="forms">
     <t-input
       v-if="type === 'tuple'"
+      v-show="visible"
       :value="getValue"
       :label="label"
       type="text"
@@ -11,7 +12,7 @@
       :disabled="disabled"
       @parse="change"
     />
-    <t-field v-if="type === 'number' || type === 'text'" :label="label" inline>
+    <t-field v-if="type === 'number' || type === 'text'" v-show="visible" :label="label" inline>
       <t-input-new
         small
         :style="{ width: '70px' }"
@@ -23,10 +24,10 @@
         @parse="change"
       />
     </t-field>
-    <t-field v-if="type === 'checkbox'" :label="label" inline>
+    <t-field v-if="type === 'checkbox'" :label="label" v-show="visible" inline>
       <t-checkbox-new :value="getValue" :parse="parse" :name="name" :disabled="disabled" @parse="change" />
     </t-field>
-    <t-field v-if="type === 'select'" :label="label" inline>
+    <t-field v-if="type === 'select'" :label="label" v-show="visible" inline>
       <t-select-new
         :value="getValue"
         :list="list"
@@ -39,7 +40,7 @@
       />
     </t-field>
 
-    <t-field v-if="type === 'auto_complete'" :label="label">
+    <t-field v-if="type === 'auto_complete'" :label="label" v-show="visible">
       <t-auto-complete-new
         :value="getValue"
         :list="list"
@@ -52,6 +53,7 @@
     </t-field>
     <MegaMultiSelect
       v-if="type === 'multiselect'"
+      v-show="visible"
       :value="getValue"
       :label="label"
       :list="list"
@@ -83,6 +85,7 @@ export default {
     state: Object,
     inline: Boolean,
     changeable: Boolean,
+    visible: Boolean,
     disabled: [Boolean, Array],
   },
   data: () => ({
