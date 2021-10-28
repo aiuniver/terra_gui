@@ -27,8 +27,12 @@ export default {
       state: {}
     },
     interactive: {},
+    architecture: '',
   }),
   mutations: {
+    SET_ARCHITECTURE (state, value) {
+      state.architecture = value;
+    },
     SET_INTERACTIV (state, value) {
       state.interactive = { ...value };
     },
@@ -217,6 +221,9 @@ export default {
   getters: {
     getTrainSettings: ({ trainSettings }) => {
       return trainSettings
+    },
+    getArchitecture: ({ architecture }) => {
+      return architecture
     },
     getStatusTrain: ({ statusTrain }) => {
       return statusTrain

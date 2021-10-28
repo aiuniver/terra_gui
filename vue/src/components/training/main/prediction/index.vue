@@ -4,39 +4,54 @@
     <div class="predictions__params">
       <div class="predictions__param">
         <t-field inline label="Данные для расчета">
-          <t-select-new :list="sortData" v-model="example_choice_type" small @change="show"/>
+          <t-select-new :list="sortData" v-model="example_choice_type" small @change="show" />
         </t-field>
         <t-field inline label="Тип выбора данных">
-          <t-select-new :list="sortOutput" v-model="main_output" small @change="show"/>
+          <t-select-new :list="sortOutput" v-model="main_output" small @change="show" />
         </t-field>
         <t-field inline label="Показать примеров">
-          <t-input-new v-model.number="num_examples" type="number" small style="width: 109px" :error="isError" @change="show"/>
+          <t-input-new
+            v-model.number="num_examples"
+            type="number"
+            small
+            style="width: 109px"
+            :error="isError"
+            @change="show"
+          />
+        </t-field>
+      </div>
+      <div v-if="isYolo" class="predictions__param">
+        <t-field inline label="Чувствительность">
+          <t-input-new type="number" small style="width: 109px" @change="show" />
+        </t-field>
+        <t-field inline label="Порог отображения">
+          <t-input-new type="number" small style="width: 109px" @change="show" />
         </t-field>
       </div>
       <div class="predictions__param">
         <t-field inline label="Выводить промежуточные результаты">
-          <t-checkbox-new v-model="show_results" small @change="show"/>
+          <t-checkbox-new v-model="show_results" small @change="show" />
         </t-field>
         <t-field inline label="Показать статистику">
-          <t-checkbox-new v-model="show_statistic" small @change="show"/>
+          <t-checkbox-new v-model="show_statistic" small @change="show" />
         </t-field>
         <t-field inline label="Фиксация колонок">
           <t-checkbox-new v-model="fixation" small />
         </t-field>
       </div>
-      <div class="predictions__param">
-        <t-field inline label="Автообновление">
-          <t-checkbox-new v-model="autoupdate" small @change="show"/>
-        </t-field>
-      </div>
+      <div class="predictions__param"></div>
       <div class="predictions__param">
         <t-button style="width: 150px" @click.native="show" :disabled="!!isError">
           {{ 'Обновить' }}
         </t-button>
+        <br />
+        <t-field inline label="Автообновление">
+          <t-checkbox-new v-model="autoupdate" small @change="show" />
+        </t-field>
       </div>
     </div>
     <div class="predictions__body">
-      <PredictTable v-if="isEmpty" :predict="predictData" :fixation="fixation" :update="predictUpdate"/>
+      <PredictTable v-if="isEmpty" :predict="predictData" :fixation="fixation" :update="predictUpdate" />
       <div v-else class="predictions__overlay">
         <LoadSpiner v-if="start && isLearning" text="Загрузка данных..." />
       </div>
@@ -79,7 +94,11 @@ export default {
   computed: {
     ...mapGetters({
       status: 'trainings/getStatus',
+      architecture: 'trainings/getArchitecture',
     }),
+    isYolo() {
+      return ['YoloV4', 'YoloV3'].includes(this.architecture);
+    },
     isLearning() {
       return ['addtrain', 'training'].includes(this.status);
     },

@@ -751,6 +751,7 @@ class FitCallback(keras.callbacks.Callback):
                 self.log_history['logs'][metric] = []
             self._get_metric_name_checkpoint(logs)
             # print(f"Chosen {self.metric_checkpoint} for monitoring")
+        # print("_fill_log_history", logs)
         self.log_history['epoch'].append(epoch)
         for metric in logs:
             if logs.get(metric):
@@ -876,11 +877,16 @@ class FitCallback(keras.callbacks.Callback):
     def _deploy_predict(self, presets_predict):
         # with open(os.path.join(self.save_model_path, "predict.txt"), "w", encoding="utf-8") as f:
         #     f.write(str(presets_predict[0].tolist()))
+        print("GET DEPLOY")
+        # print(len(presets_predict))
+        # print(presets_predict[0].shape, presets_predict[1].shape, presets_predict[2].shape)
+        # print('\n', self.dataset.data)
         result = CreateArray().postprocess_results(array=presets_predict,
                                                    options=self.dataset,
                                                    save_path=os.path.join(self.save_model_path,
                                                                           "deploy_presets"),
                                                    dataset_path=self.dataset_path)
+        print("RESULT DEPLOY", result)
         deploy_presets = []
         if result:
             deploy_presets = list(result.values())[0]

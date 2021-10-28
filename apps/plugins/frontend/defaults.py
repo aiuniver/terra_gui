@@ -297,11 +297,7 @@ class ArchitectureOutputsGroupFrom(ArchitectureMixinForm):
         self.outputs.fields = outputs
 
 
-class ArchitectureBaseForm(ArchitectureOutputsGroupFrom, ArchitectureBaseGroupForm):
-    pass
-
-
-class ArchitectureBasicForm(ArchitectureBaseForm):
+class ArchitectureCheckpointGroupFrom(ArchitectureMixinForm):
     checkpoint: DefaultsTrainingBaseGroupData
 
     def _set_architecture_parameters_checkpoint_metric_name(self, value, **kwargs):
@@ -395,6 +391,18 @@ class ArchitectureBasicForm(ArchitectureBaseForm):
         if not fields:
             return
         fields[0].value = value
+
+
+class ArchitectureBaseForm(
+    ArchitectureCheckpointGroupFrom,
+    ArchitectureOutputsGroupFrom,
+    ArchitectureBaseGroupForm,
+):
+    pass
+
+
+class ArchitectureBasicForm(ArchitectureBaseForm):
+    pass
 
 
 class ArchitectureImageClassificationForm(ArchitectureBasicForm):
