@@ -136,20 +136,12 @@ class GUINN:
             raise exceptions.TooBigBatchSize(params.batch, train_size)
 
         if interactive.get_states().get("status") == "addtrain":
-            if self.deploy_type in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]:
-                if self.callbacks[0].epoch - 1 >= self.sum_epoch:
-                    self.sum_epoch += params.epochs
-                if (self.callbacks[0].epoch - 1) < self.sum_epoch:
-                    self.epochs = self.sum_epoch - self.callbacks[0].epoch + 1
-                else:
-                    self.epochs = params.epochs
+            if self.callbacks[0].last_epoch - 1 >= self.sum_epoch:
+                self.sum_epoch += params.epochs
+            if (self.callbacks[0].last_epoch - 1) < self.sum_epoch:
+                self.epochs = self.sum_epoch - self.callbacks[0].last_epoch + 1
             else:
-                if self.callbacks[0].last_epoch - 1 >= self.sum_epoch:
-                    self.sum_epoch += params.epochs
-                if (self.callbacks[0].last_epoch - 1) < self.sum_epoch:
-                    self.epochs = self.sum_epoch - self.callbacks[0].last_epoch + 1
-                else:
-                    self.epochs = params.epochs
+                self.epochs = params.epochs
         else:
             self.epochs = params.epochs
         self.batch_size = params.batch
