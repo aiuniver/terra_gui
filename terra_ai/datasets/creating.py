@@ -13,6 +13,7 @@ from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoic
 from terra_ai.settings import DATASET_EXT, DATASET_CONFIG
 from terra_ai.data.datasets.creations.layers.output.types.ObjectDetection import LayerODDatasetTypeChoice
 
+from PIL import Image
 import psutil
 import cv2
 import os
@@ -575,10 +576,10 @@ class CreateDataset(object):
                 elif decamelize(creation_data.outputs.get(key).type) == decamelize(
                         LayerOutputTypeChoice.ObjectDetection):
                     data_to_pass = data.instructions[0]
-                    tmp_im = cv2.imread(os.path.join(self.paths.basepath,
+                    tmp_im = Image.open(os.path.join(self.paths.basepath,
                                                      self.dataframe['train'].iloc[0, 0]))
-                    data.parameters.update([('orig_x', tmp_im.shape[1]),
-                                            ('orig_y', tmp_im.shape[0])])
+                    data.parameters.update([('orig_x', tmp_im.width),
+                                            ('orig_y', tmp_im.height)])
                 else:
                     data_to_pass = data.instructions[0]
                 arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(data_to_pass, **data.parameters,
@@ -813,10 +814,10 @@ class CreateDataset(object):
 
                         elif self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
                             tmp_data.append(self.dataframe[split].loc[i, col_name])
-                            tmp_im = cv2.imread(os.path.join(self.paths.basepath,
+                            tmp_im = Image.open(os.path.join(self.paths.basepath,
                                                              self.dataframe[split].iloc[i, 0]))
-                            parameters_to_pass.update([('orig_x', tmp_im.shape[1]),
-                                                       ('orig_y', tmp_im.shape[0])])
+                            parameters_to_pass.update([('orig_x', tmp_im.width),
+                                                       ('orig_y', tmp_im.height)])
                         else:
                             tmp_data.append(self.dataframe[split].loc[i, col_name])
                         tmp_parameter_data.append(parameters_to_pass)
