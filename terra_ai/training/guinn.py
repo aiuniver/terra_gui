@@ -1014,9 +1014,9 @@ class FitCallback(keras.callbacks.Callback):
     def _best_epoch_monitoring(self, logs):
         """Оценка текущей эпохи"""
         try:
-            print('\nself.metric_checkpoint)', self.metric_checkpoint)
-            print('logs.get(self.metric_checkpoint)', logs.get(self.metric_checkpoint))
-            print('self.log_history.get("logs").get(self.metric_checkpoint))', self.log_history.get("logs").get(self.metric_checkpoint))
+            # print('\nself.metric_checkpoint)', self.metric_checkpoint)
+            # print('logs.get(self.metric_checkpoint)', logs.get(self.metric_checkpoint))
+            # print('self.log_history.get("logs").get(self.metric_checkpoint))', self.log_history.get("logs").get(self.metric_checkpoint))
             if self.checkpoint_config.get("mode") == CheckpointModeChoice.Min and \
                     logs.get(self.metric_checkpoint) < min(self.log_history.get("logs").get(self.metric_checkpoint)):
                 return True
@@ -1314,7 +1314,7 @@ class FitCallback(keras.callbacks.Callback):
             on_epoch_end_flag=True
         )
         self._set_result_data({'train_data': train_epoch_data})
-        print('/nprogress.pool', self.last_epoch, self.retrain_epochs, self.epochs)
+        # print('/nprogress.pool', self.last_epoch, self.retrain_epochs, self.epochs)
         progress.pool(
             self.progress_name,
             percent=(self.last_epoch - 1) / (
