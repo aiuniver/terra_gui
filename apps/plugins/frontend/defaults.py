@@ -215,7 +215,6 @@ class ArchitectureOutputsGroupFrom(ArchitectureMixinForm):
     outputs: DefaultsTrainingBaseGroupData
 
     def update(self, data: Any, prefix: str = "", **kwargs):
-        print(1)
         model = kwargs.get("model")
         if model and model.outputs:
             self._update_outputs(model.outputs, data)
@@ -226,6 +225,7 @@ class ArchitectureOutputsGroupFrom(ArchitectureMixinForm):
         outputs = {}
         for layer in layers:
             _task_rel = TasksRelations.get(layer.task)
+            print(data.architecture.parameters.outputs)
             _layer_data = data.architecture.parameters.outputs.get(layer.id)
 
             _losses_rel = _task_rel.losses if _task_rel else []
@@ -260,9 +260,12 @@ class ArchitectureOutputsGroupFrom(ArchitectureMixinForm):
                 )
             )
             _metrics_value = []
+            print(1, _layer_data)
+            print(2, _metrics_rel)
             if _layer_data and _metrics_rel:
                 _metrics_value = list(set(_layer_data.metrics) & set(_metrics_rel))
             _metrics_data = {**TrainingMetricSelect}
+            print(_metrics_value)
             _metrics_data.update(
                 {
                     "name": _metrics_data.get("name") % layer.id,
@@ -338,6 +341,7 @@ class ArchitectureBasicForm(ArchitectureBaseForm):
                 fields_outputs[0].value,
             )
         )
+        print(fields_outputs[0].value)
         fields[0].value = (
             value if value in fields_outputs[0] else fields_outputs[0].value[0]
         )
