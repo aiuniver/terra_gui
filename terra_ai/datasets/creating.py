@@ -1,7 +1,7 @@
 from terra_ai.utils import decamelize
 from terra_ai.exceptions.tensor_flow import ResourceExhaustedError as Resource
 from terra_ai.datasets.data import DataType, InstructionsData, DatasetInstructionsData
-from terra_ai.datasets.utils import PATH_TYPE_LIST
+from terra_ai.datasets.utils import PATH_TYPE_LIST, convert_object_detection
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preprocessing import CreatePreprocessing
 from terra_ai.data.training.extra import ArchitectureChoice
@@ -11,6 +11,7 @@ from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoic
     LayerPrepareMethodChoice, LayerScalerImageChoice, ColumnProcessingTypeChoice, \
     LayerTypeProcessingClassificationChoice, LayerEncodingChoice
 from terra_ai.settings import DATASET_EXT, DATASET_CONFIG
+from terra_ai.data.datasets.creations.layers.output.types.ObjectDetection import LayerODDatasetTypeChoice
 
 import psutil
 import cv2
@@ -148,6 +149,9 @@ class CreateDataset(object):
                         inp.parameters.open_tags = out.parameters.open_tags
                         inp.parameters.close_tags = out.parameters.close_tags
             elif out.type == LayerOutputTypeChoice.ObjectDetection:
+                if out.parameters.model_type != LayerODDatasetTypeChoice.Yolo:
+                    convert_object_detection(creation_data)
+                    out.parameters.sources_paths = [Path(os.path.join(creation_data.source_path, 'Yolo_annotations'))]
                 with open(creation_data.source_path.joinpath('obj.names'), 'r') as names:
                     names_list = names.read()
                 names_list = [elem for elem in names_list.split('\n') if elem]
@@ -806,6 +810,13 @@ class CreateDataset(object):
                             else:
                                 tmp_data.append(self.dataframe[split].loc[i:i + data.parameters['length'] - 1,
                                                 col_name])
+
+                        elif self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
+                            tmp_data.append(self.dataframe[split].loc[i, col_name])
+                            tmp_im = cv2.imread(os.path.join(self.paths.basepath,
+                                                             self.dataframe[split].iloc[i, 0]))
+                            parameters_to_pass.update([('orig_x', tmp_im.shape[1]),
+                                                       ('orig_y', tmp_im.shape[0])])
                         else:
                             tmp_data.append(self.dataframe[split].loc[i, col_name])
                         tmp_parameter_data.append(parameters_to_pass)
