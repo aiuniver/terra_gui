@@ -81,4 +81,9 @@ class SaveAPIView(BaseAPIView):
 class UpdateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         request.project.update_training_base(request.data)
-        return BaseResponseSuccess(defaults_data.training.native())
+        return BaseResponseSuccess(
+            {
+                "form": defaults_data.training.native(),
+                "data": request.project.training.native(),
+            }
+        )
