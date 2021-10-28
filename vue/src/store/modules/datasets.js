@@ -110,21 +110,25 @@ export default {
       newDataset.outputs = outputs
       const res = await dispatch('axios', { url: '/datasets/create/', data: newDataset }, { root: true });
       // console.log(res)
-      if (res) {
-        const { error } = res
-        if (error) {
-          const { fields } = error
-          if (fields) {
-            commit('SET_ERRORS', { ...fields?.inputs || {}, ...fields?.outputs || {} })
-          }
-        } else {
-          commit('SET_INPUT_DATA', []);
-          commit('SET_FILES_DROP', []);
-          commit('SET_ERRORS', {});
-          dispatch('get')
-        }
-      }
-      commit("settings/SET_OVERLAY", false, { root: true });
+      // if (res) {
+      //   const { error } = res
+      //   if (error) {
+      //     const { fields } = error
+      //     if (fields) {
+      //       commit('SET_ERRORS', { ...fields?.inputs || {}, ...fields?.outputs || {} })
+      //     }
+      //   } else {
+      //     commit('SET_INPUT_DATA', []);
+      //     commit('SET_FILES_DROP', []);
+      //     commit('SET_ERRORS', {});
+      //     dispatch('get')
+      //   }
+      // }
+      // commit("settings/SET_OVERLAY", false, { root: true });
+      return res
+    },
+    async createProgress({ dispatch }, data) {
+      const res = await dispatch('axios', { url: '/datasets/create/progress/', data }, { root: true });
       return res
     },
     async choice({ dispatch }, dataset) {
