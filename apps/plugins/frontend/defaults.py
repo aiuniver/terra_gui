@@ -304,106 +304,97 @@ class ArchitectureBaseForm(ArchitectureOutputsGroupFrom, ArchitectureBaseGroupFo
 class ArchitectureBasicForm(ArchitectureBaseForm):
     checkpoint: DefaultsTrainingBaseGroupData
 
-    # # def update(self, data: Any, prefix: str = "", **kwargs):
-    # #     model = kwargs.get("model")
-    # #     if model:
-    # #         self._update_checkpoint(model.outputs)
-    # #
-    # #     return super().update(data, prefix=prefix, **kwargs)
-    #
-    # # def _update_checkpoint(self, layers: LayersList):
-    # #     layers_choice = []
-    # #     for layer in layers:
-    # #         layers_choice.append(
-    # #             {
-    # #                 "value": layer.id,
-    # #                 "label": f"Слой «{layer.name}»",
-    # #             }
-    # #         )
-    # #     if layers_choice:
-    # #         for index, item in enumerate(self.checkpoint.fields):
-    # #             if item.name == "architecture_parameters_checkpoint_layer":
-    # #                 field_data = item.native()
-    # #                 field_data.update(
-    # #                     {
-    # #                         "value": str(layers_choice[0].get("value")),
-    # #                         "list": layers_choice,
-    # #                     }
-    # #                 )
-    # #                 self.checkpoint.fields[index] = Field(**field_data)
-    # #                 break
-    #
-    # def _set_architecture_parameters_outputs(self, value: List, **kwargs):
-    #     for item in value:
-    #         self.update(item, "architecture_parameters_outputs_", _id=item.id)
-    #
-    # def _set_architecture_parameters_outputs_loss(self, value, _id, **kwargs):
-    #     fields = list(
-    #         filter(
-    #             lambda item: item.name == f"architecture_parameters_outputs_{_id}_loss",
-    #             self.outputs.fields[_id]["fields"],
-    #         )
-    #     )
-    #     if not fields:
-    #         return
-    #     fields[0].value = value
-    #
-    # def _set_architecture_parameters_outputs_metrics(self, value, _id, **kwargs):
-    #     fields = list(
-    #         filter(
-    #             lambda item: item.name
-    #             == f"architecture_parameters_outputs_{_id}_metrics",
-    #             self.outputs.fields[_id]["fields"],
-    #         )
-    #     )
-    #     if not fields:
-    #         return
-    #     fields[0].value = value
-    #
-    # def _set_architecture_parameters_checkpoint_layer(self, value, **kwargs):
-    #     fields = list(
-    #         filter(
-    #             lambda item: item.name == "architecture_parameters_checkpoint_layer",
-    #             self.checkpoint.fields,
-    #         )
-    #     )
-    #     if not fields:
-    #         return
-    #     fields[0].value = value
-    #
-    # def _set_architecture_parameters_checkpoint_type(self, value, **kwargs):
-    #     fields = list(
-    #         filter(
-    #             lambda item: item.name == "architecture_parameters_checkpoint_type",
-    #             self.checkpoint.fields,
-    #         )
-    #     )
-    #     if not fields:
-    #         return
-    #     fields[0].value = value
-    #
-    # def _set_architecture_parameters_checkpoint_indicator(self, value, **kwargs):
-    #     fields = list(
-    #         filter(
-    #             lambda item: item.name
-    #             == "architecture_parameters_checkpoint_indicator",
-    #             self.checkpoint.fields,
-    #         )
-    #     )
-    #     if not fields:
-    #         return
-    #     fields[0].value = value
-    #
-    # def _set_architecture_parameters_checkpoint_mode(self, value, **kwargs):
-    #     fields = list(
-    #         filter(
-    #             lambda item: item.name == "architecture_parameters_checkpoint_mode",
-    #             self.checkpoint.fields,
-    #         )
-    #     )
-    #     if not fields:
-    #         return
-    #     fields[0].value = value
+    def _set_architecture_parameters_checkpoint_metric_name(self, value, **kwargs):
+        fields = list(
+            filter(
+                lambda item: item.name
+                == "architecture_parameters_checkpoint_metric_name",
+                self.checkpoint.fields,
+            )
+        )
+        if not fields:
+            return
+        fields_layer = list(
+            filter(
+                lambda item: item.name == "architecture_parameters_checkpoint_layer",
+                self.checkpoint.fields,
+            )
+        )
+        if not fields_layer:
+            return
+        fields_outputs = list(
+            filter(
+                lambda item: item.name
+                == f"architecture_parameters_outputs_{fields_layer[0].value}_metrics",
+                self.outputs.fields.get(fields_layer[0].value, {}).get("fields"),
+            )
+        )
+        if not fields_outputs:
+            return
+        fields[0].list = list(
+            map(
+                lambda item: {"value": item.name, "label": item.value},
+                fields_outputs[0].value,
+            )
+        )
+        fields[0].value = (
+            value if value in fields_outputs[0] else fields_outputs[0].value[0]
+        )
+
+    def _set_architecture_parameters_checkpoint_layer(self, value, **kwargs):
+        fields = list(
+            filter(
+                lambda item: item.name == "architecture_parameters_checkpoint_layer",
+                self.checkpoint.fields,
+            )
+        )
+        if not fields:
+            return
+        fields[0].list = list(
+            map(
+                lambda item: {"value": item[0], "label": item[1].get("name")},
+                self.outputs.fields.items(),
+            )
+        )
+        fields[0].value = (
+            value
+            if value in self.outputs.fields.keys()
+            else list(self.outputs.fields.keys())[0]
+        )
+
+    def _set_architecture_parameters_checkpoint_type(self, value, **kwargs):
+        fields = list(
+            filter(
+                lambda item: item.name == "architecture_parameters_checkpoint_type",
+                self.checkpoint.fields,
+            )
+        )
+        if not fields:
+            return
+        fields[0].value = value
+
+    def _set_architecture_parameters_checkpoint_indicator(self, value, **kwargs):
+        fields = list(
+            filter(
+                lambda item: item.name
+                == "architecture_parameters_checkpoint_indicator",
+                self.checkpoint.fields,
+            )
+        )
+        if not fields:
+            return
+        fields[0].value = value
+
+    def _set_architecture_parameters_checkpoint_mode(self, value, **kwargs):
+        fields = list(
+            filter(
+                lambda item: item.name == "architecture_parameters_checkpoint_mode",
+                self.checkpoint.fields,
+            )
+        )
+        if not fields:
+            return
+        fields[0].value = value
 
 
 class ArchitectureYoloBaseForm(ArchitectureBaseForm):
@@ -466,11 +457,11 @@ class DefaultsTrainingData(BaseMixinData):
     architecture: ArchitectureChoice
     base: Optional[ArchitectureBaseForm]
 
-    def __init__(self, project: Any = None, **data):
-        data.update({"base": Architectures.get(data.get("architecture", "Base"))})
-        super().__init__(**data)
-        if project:
-            self._update(project)
+    # def __init__(self, project: Any = None, **data):
+    #     data.update({"base": Architectures.get(data.get("architecture", "Base"))})
+    #     super().__init__(**data)
+    #     if project:
+    #         self._update(project)
 
     @validator("architecture", pre=True)
     def _validate_architecture(cls, value: ArchitectureChoice) -> ArchitectureChoice:
