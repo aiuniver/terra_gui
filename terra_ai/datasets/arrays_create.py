@@ -1358,7 +1358,7 @@ class CreateArray(object):
     @staticmethod
     def postprocess_results(array, options, save_path: str = "", dataset_path: str = "", sensitivity=0.15,
                             threashold=0.1) -> dict:
-        # print('\npostprocess_results')
+        # print('\npostprocess_results', options.data)
         x_array, inverse_x_array = CreateArray().get_x_array(options)
         return_data = {}
 
@@ -1597,25 +1597,30 @@ class CreateArray(object):
             )
             return_data[bb] = []
             for ex in example_idx:
+                img_path = os.path.join(dataset_path, options.dataframe['val'].iat[ex, 0])
+                img = Image.open(img_path)
+                img = img.convert('RGB')
+                source = os.path.join(save_path, f"deploy_od_initial_data_{ex}_box_{bb}.webp")
+                img.save(source, 'webp')
                 save_predict_path, _ = CreateArray().plot_boxes(
                     true_bb=y_true[bb][ex],
                     pred_bb=y_pred[bb][ex],
-                    img_path=os.path.join(dataset_path, options.dataframe['val'].iat[ex, 0]),
+                    img_path=img_path,
                     name_classes=name_classes,
                     colors=colors,
                     image_id=ex,
                     add_only_true=False,
-                    plot_true=True,
+                    plot_true=False,
                     image_size=image_size,
                     save_path=save_path,
                     return_mode='deploy'
                 )
                 return_data[bb].append(
                     {
-                        'predict_img': save_predict_path
+                        "source": source,
+                        "predict": save_predict_path
                     }
                 )
-
         else:
             return_data = {}
 

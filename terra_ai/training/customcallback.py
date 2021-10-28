@@ -1651,13 +1651,11 @@ class InteractiveCallback:
                                 self._round_loss_metric(self.current_logs.get('output').get(
                                     data_type).get('loss').get(key))
                             )
-                    # print(1)
                     for key in self.log_history['output']["metrics"].keys():
                         self.log_history['output']["metrics"][key].append(
                             self._round_loss_metric(self.current_logs.get('output').get(
                                 'val').get('metrics').get(key))
                         )
-                    # print(2)
                     for name in classes_names:
                         self.log_history['output']["class_loss"]['prob_loss'][name].append(
                             self._round_loss_metric(self.current_logs.get('output').get("val").get(
@@ -1671,7 +1669,6 @@ class InteractiveCallback:
                         #     self._round_loss_metric(self.current_logs.get('output').get("val").get(
                         #         'class_metrics').get("mAP95").get(name))
                         # )
-                    # print(3)
                     for loss_name in self.log_history['output']["loss"].keys():
                         # fill loss progress state
                         if data_idx or data_idx == 0:
@@ -1682,7 +1679,6 @@ class InteractiveCallback:
                             self.log_history['output']['progress_state']['loss'][loss_name]['mean_log_history'].append(
                                 self._get_mean_log(self.log_history.get('output').get('loss').get(loss_name).get('val'))
                             )
-                        # print(31)
                         # get progress state data
                         loss_underfitting = self._evaluate_underfitting(
                             loss_name,
@@ -1690,18 +1686,15 @@ class InteractiveCallback:
                             self.log_history['output']['loss'][loss_name]['val'][-1],
                             metric_type='loss'
                         )
-                        # print(32)
                         loss_overfitting = self._evaluate_overfitting(
                             loss_name,
                             self.log_history['output']['progress_state']['loss'][loss_name]['mean_log_history'],
                             metric_type='loss'
                         )
-                        # print(33)
                         if loss_underfitting or loss_overfitting:
                             normal_state = False
                         else:
                             normal_state = True
-                        # print(34)
                         if data_idx or data_idx == 0:
                             self.log_history['output']['progress_state']['loss'][loss_name]['underfitting'][data_idx] = \
                                 loss_underfitting
@@ -1709,7 +1702,6 @@ class InteractiveCallback:
                                 loss_overfitting
                             self.log_history['output']['progress_state']['loss'][loss_name]['normal_state'][data_idx] = \
                                 normal_state
-                            # print(35)
                         else:
                             self.log_history['output']['progress_state']['loss'][loss_name]['underfitting'].append(
                                 loss_underfitting)
@@ -1717,10 +1709,7 @@ class InteractiveCallback:
                                 loss_overfitting)
                             self.log_history['output']['progress_state']['loss'][loss_name]['normal_state'].append(
                                 normal_state)
-                            # print(36)
-                    # print(4)
                     for metric_name in self.log_history.get('output').get('metrics').keys():
-                        # print(41)
                         if data_idx or data_idx == 0:
                             self.log_history['output']['progress_state']['metrics'][metric_name]['mean_log_history'][
                                 data_idx] = self._get_mean_log(self.log_history['output']['metrics'][metric_name])
@@ -1729,18 +1718,15 @@ class InteractiveCallback:
                                 'mean_log_history'].append(
                                 self._get_mean_log(self.log_history['output']['metrics'][metric_name])
                             )
-                        # print(42)
                         metric_overfittng = self._evaluate_overfitting(
                             metric_name,
                             self.log_history['output']['progress_state']['metrics'][metric_name]['mean_log_history'],
                             metric_type='metric'
                         )
-                        # print(43)
                         if metric_overfittng:
                             normal_state = False
                         else:
                             normal_state = True
-                        # print(44, normal_state)
                         if data_idx or data_idx == 0:
                             self.log_history['output']['progress_state']['metrics'][metric_name]['overfitting'][
                                 data_idx] = metric_overfittng
@@ -1751,7 +1737,6 @@ class InteractiveCallback:
                                 metric_overfittng)
                             self.log_history['output']['progress_state']['metrics'][metric_name]['normal_state'].append(
                                 normal_state)
-                    # print(5)
         except Exception as e:
             print_error(InteractiveCallback().name, method_name, e)
 
@@ -2499,8 +2484,8 @@ class InteractiveCallback:
                     # print(image_path)
                     out = self.yolo_interactive_config.intermediate_result.box_channel
                     # print(out)
-                    print('self.example_idx[idx]', idx, self.example_idx[idx])
-                    print(out, len(self.y_pred.get(out)), len(self.y_true.get(out)))
+                    # print('self.example_idx[idx]', idx, self.example_idx[idx])
+                    # print(out, len(self.y_pred.get(out)), len(self.y_true.get(out)))
                     data = CreateArray().postprocess_object_detection(
                         predict_array=copy.deepcopy(self.y_pred.get(out)[self.example_idx[idx]]),
                         true_array=self.y_true.get(out)[self.example_idx[idx]],
