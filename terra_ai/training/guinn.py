@@ -168,6 +168,7 @@ class GUINN:
                                        dataset_path=dataset_path, training_path=training_path,
                                        initial_config=initial_config)
         if self.deploy_type in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]:
+            print('self.deploy_type', self.deploy_type)
             initial_config = YoloInteractiveData(**{
                 'loss_graphs': [
                     {
@@ -590,6 +591,7 @@ class FitCallback(keras.callbacks.Callback):
         """
 
         super().__init__()
+        print('\n FitCallback')
         self.usage_info = MemoryUsage(debug=False)
         self.dataset = dataset
         self.dataset_data = dataset_data
