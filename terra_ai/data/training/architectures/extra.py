@@ -50,6 +50,15 @@ class OutputsParametersData(BaseMixinData):
                     "task": layer.task.value,
                 }
             ]
+            print(
+                2,
+                list(
+                    filter(
+                        lambda item: int(item.get("id")) == layer.id,
+                        data,
+                    )
+                ),
+            )
             _layer_data = _outputs[0]
 
             _task = TasksRelations.get(layer.task.value)
@@ -71,4 +80,5 @@ class OutputsParametersData(BaseMixinData):
             _layer_data["metrics"] = _metrics
             data.append(_layer_data)
 
+        print(1, data)
         return OutputsList(data)

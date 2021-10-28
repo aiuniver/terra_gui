@@ -15,6 +15,7 @@ class ParametersData(OutputsParametersData):
 
     @validator("checkpoint", always=True)
     def _validate_checkpoint(cls, data, values):
+        print("CHECKPOINT")
         if not data:
             data = {}
 
