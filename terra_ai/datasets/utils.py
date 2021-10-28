@@ -297,7 +297,7 @@ class Coco:
 
     @staticmethod
     def parse(json_path, img_path):
-        json_data = json.load(open(json_path))
+        json_data = json.load(open(os.path.join(json_path, 'common.json')))
 
         images_info = json_data["images"]
         cls_info = json_data["categories"]
@@ -379,9 +379,8 @@ class Udacity:
 
     @staticmethod
     def parse(csv_path, img_path):
-        raw_f = open(csv_path, 'r', encoding='utf-8')
+        raw_f = open(os.path.join(csv_path, 'common.csv'), 'r', encoding='utf-8')
         csv_f = csv.reader(raw_f)
-
         raw_f.seek(0)
         data = {}
 

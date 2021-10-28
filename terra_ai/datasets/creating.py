@@ -12,8 +12,8 @@ from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoic
     LayerTypeProcessingClassificationChoice, LayerEncodingChoice
 from terra_ai.settings import DATASET_EXT, DATASET_CONFIG
 from terra_ai.data.datasets.creations.layers.output.types.ObjectDetection import LayerODDatasetTypeChoice
+from terra_ai import progress
 
-from PIL import Image
 import psutil
 import cv2
 import os
@@ -26,6 +26,8 @@ import tempfile
 import shutil
 import zipfile
 import concurrent.futures
+from math import ceil
+from PIL import Image
 from itertools import repeat
 from tqdm import tqdm
 from pathlib import Path
@@ -36,7 +38,14 @@ from pytz import timezone
 
 class CreateDataset(object):
 
+    progress_name = 'create_dataset'
+
+    @progress.threading
     def __init__(self, cr_data: CreationData):
+
+        progress.pool.reset(name=self.progress_name,
+                            message='Начало',
+                            finished=False)
 
         creation_data = self.preprocess_creation_data(cr_data)
 
@@ -60,7 +69,17 @@ class CreateDataset(object):
                 self.columns_processing[key] = value
 
         self.instructions: DatasetInstructionsData = self.create_instructions(creation_data)
+
+        progress.pool(self.progress_name,
+                      message='Создание препроцессинга'
+                      )
+
         self.create_preprocessing(self.instructions)
+
+        progress.pool(self.progress_name,
+                      message='Обучение препроцессинга'
+                      )
+
         self.fit_preprocessing(put_data=self.instructions.inputs)
         self.fit_preprocessing(put_data=self.instructions.outputs)
         self.create_table(creation_data=creation_data)
@@ -77,6 +96,10 @@ class CreateDataset(object):
         self.outputs = self.create_output_parameters(creation_data=creation_data)
         self.service = self.create_service_parameters(creation_data=creation_data)
 
+        progress.pool(self.progress_name,
+                      message='Сохранение датасета'
+                      )
+
         self.write_preprocesses_to_files()
         self.write_instructions_to_files()
         self.zip_dataset(self.paths.basepath, os.path.join(self.temp_directory, 'dataset'))
@@ -90,6 +113,13 @@ class CreateDataset(object):
             shutil.rmtree(Path(creation_data.datasets_path, f'{creation_data.alias}.{DATASET_EXT}'))
         shutil.move(str(self.paths.basepath), creation_data.datasets_path)
         shutil.rmtree(self.temp_directory)
+
+        progress.pool(self.progress_name,
+                      percent=100,
+                      message='Формирование завершено',
+                      finished=True,
+                      data=self.datasetdata
+                      )
 
     @staticmethod
     def postprocess_timeseries(full_array):
@@ -307,8 +337,13 @@ class CreateDataset(object):
 
                 results_list = []
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    results = tqdm(executor.map(instructions, temp_paths_list, repeat(put)), total=len(temp_paths_list))
-                    for result in results:
+                    results = executor.map(instructions, temp_paths_list, repeat(put))
+                    progress.pool(self.progress_name,
+                                  message='Формирование файлов')
+                    for i, result in enumerate(results):
+
+                        progress.pool(self.progress_name,
+                                      percent=ceil(i / len(temp_paths_list) * 100))
                         results_list += result[0]['instructions']
                         if put.type not in [LayerOutputTypeChoice.Classification, LayerOutputTypeChoice.Segmentation,
                                             LayerOutputTypeChoice.TextSegmentation,
