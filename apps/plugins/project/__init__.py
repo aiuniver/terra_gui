@@ -10,7 +10,7 @@ from pydantic import validator, DirectoryPath, FilePath
 from transliterate import slugify
 
 from apps.plugins.frontend import defaults_data
-from apps.plugins.frontend.defaults import Architectures, DefaultsTrainingData
+from apps.plugins.frontend.defaults import DefaultsTrainingData
 from apps.plugins.project import exceptions
 from terra_ai.agent import agent_exchange
 from terra_ai.data.datasets.dataset import DatasetData
@@ -31,7 +31,6 @@ from terra_ai.data.training.train import (
     LossGraphsList,
     MetricGraphsList,
     ProgressTableList,
-    ArchitectureData,
 )
 from terra_ai.data.types import confilepath
 from terra_ai.training.guinn import interactive as training_interactive
