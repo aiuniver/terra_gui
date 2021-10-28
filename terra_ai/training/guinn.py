@@ -1,6 +1,7 @@
 import gc
 import importlib
 import json
+import math
 import re
 import copy
 import os
@@ -985,7 +986,10 @@ class FitCallback(keras.callbacks.Callback):
             # print(f"Chosen {self.metric_checkpoint} for monitoring")
         self.log_history['epoch'].append(epoch)
         for metric in logs:
-            self.log_history['logs'][metric].append(logs.get(metric))
+            if logs.get(metric):
+                self.log_history['logs'][metric].append(float(logs.get(metric)))
+            else:
+                self.log_history['logs'][metric].append(None)
 
     def _save_logs(self):
         interactive_path = os.path.join(self.save_model_path, "interactive.history")
