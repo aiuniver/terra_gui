@@ -82,6 +82,21 @@ class CascadeCreator:
         return config
 
     @staticmethod
+    def make_timeseries_trend(config, dataset_config, model):
+        config['cascades']['model']['model'] = model
+        for _ in list(dataset_config['inputs'].keys())[1:]:
+            config['adjacency_map']['model'].append('INPUT')
+        return config
+
+    @staticmethod
+    def make_object_detection(config, dataset_config, model):
+        config['cascades']['model']['model'] = model
+        config['cascades']['normalize bboxes']['params']['input_size'] = dataset_config['inputs']['1']['shape'][0]
+        config['cascades']['plot bboxes']['params']['classes'] = dataset_config['outputs']['2']['classes_names']
+
+        return config
+
+    @staticmethod
     def copy_package(training_path):
         deploy_path = os.path.join(training_path, "deploy")
         if os.path.exists(os.path.join(deploy_path, "cascades")):

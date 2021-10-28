@@ -20,7 +20,7 @@ def predict(input_path):
 
     for i, col in enumerate(out_columns):
         out['predict'][col] = [out['source'][col] if col in out['source'].keys() else [],
-                               main_block[-1].out[0][:, :, i].tolist()[0]]
+                               main_block[-1].out[0][i]]
 
     return print(out)
 
