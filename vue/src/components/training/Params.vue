@@ -60,10 +60,7 @@
         class="params__btn"
         :class="{ params__save: key === 'clear' }"
       >
-        <t-button v-if="key !== 'save'" :disabled="!visible || stopLearning" @click="btnEvent(key)">
-          <!-- <load-spiner class="btn-spiner" v-if="stopLearning" text="" size="25px" /> -->
-          {{ title }}
-        </t-button>
+        <t-button v-if="key !== 'save'" :disabled="!visible" @click="btnEvent(key)">{{ title }}</t-button>
       </div>
     </div>
   </div>
@@ -80,7 +77,7 @@ export default {
     LoadSpiner,
   },
   data: () => ({
-    collapse: ['main', 'fit', 'outputs', 'checkpoint'],
+    collapse: ['main', 'fit', 'outputs', 'checkpoint', 'yolo'],
     optimizerValue: '',
     metricData: '',
     debounce: null,
@@ -126,12 +123,10 @@ export default {
         const { data } = res;
         if (data) {
           if (data?.state?.status) {
-            localStorage.setItem('settingsTrainings', JSON.stringify(this.state));
             this.debounce(true);
           }
         }
       }
-      // console.log(res);
     },
     async stop() {
       this.stopLearning = true;
@@ -165,17 +160,6 @@ export default {
       if (!mounted && changeable) {
         this.$store.dispatch('trainings/update', this.trainSettings);
       }
-      // if (name === 'architecture_parameters_checkpoint_layer') {
-      //   this.metricData = value;
-      //   if (value) {
-      //     this.state = { [`${parse}`]: value };
-      //   }
-      // } else {
-      //   this.state = { [`${parse}`]: value };
-      // }
-      // if (name === 'optimizer') {
-      //   this.optimizerValue = value;
-      // }
     },
   },
   created() {
@@ -185,14 +169,6 @@ export default {
       }
     }, 1000);
     this.debounce(this.isLearning);
-    // const settings = localStorage.getItem('settingsTrainings');
-    // if (settings) {
-    //   try {
-    //     this.state = JSON.parse(settings);
-    //   } catch (error) {
-    //     console.warn(error);
-    //   }
-    // }
   },
   beforeDestroy() {
     this.debounce(false);
