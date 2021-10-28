@@ -10,7 +10,7 @@ export default {
   namespaced: true,
   state: () => ({
     collapse: ['0', '1'],
-    params: [],
+    params: {},
     toolbar,
     stateParams: {},
     predict: {},
@@ -29,50 +29,47 @@ export default {
     interactive: {},
   }),
   mutations: {
-    SET_INTERACTIV(state, value) {
+    SET_INTERACTIV (state, value) {
       state.interactive = { ...value };
     },
-    SET_TRAIN_SETTINGS(state, value) {
+    SET_TRAIN_SETTINGS (state, value) {
       state.trainSettings = { ...value };
     },
-    SET_PARAMS(state, value) {
+    SET_PARAMS (state, value) {
       state.params = { ...value };
     },
-    SET_CONFIG(state, value) {
+    SET_CONFIG (state, value) {
       state.training = { ...value };
-      // console.log(value)
-      // if (!Object.keys(state.interactive).length) {
       state.interactive = JSON.parse(JSON.stringify(value.interactive))
-      // }
     },
-    SET_STATE_PARAMS(state, value) {
+    SET_STATE_PARAMS (state, value) {
       state.stateParams = { ...value };
     },
-    SET_INFO(state, value) {
+    SET_INFO (state, value) {
       state.info = value;
     },
-    SET_STATE(state, value) {
+    SET_STATE (state, value) {
       state.training.state = value;
       state.training = { ...state.training }
     },
-    SET_PREDICT(state, value) {
+    SET_PREDICT (state, value) {
       state.predict = { ...value };
     },
-    SET_TRAIN(state, value) {
+    SET_TRAIN (state, value) {
       state.trainData = { ...value };
     },
-    SET_TRAIN_USAGE(state, value) {
+    SET_TRAIN_USAGE (state, value) {
       state.trainUsage = { ...value };
     },
-    SET_COLLAPSE(state, value) {
+    SET_COLLAPSE (state, value) {
       state.collapse = [...value];
     },
-    SET_STATUS_TRAIN(state, value) {
+    SET_STATUS_TRAIN (state, value) {
       state.statusTrain = value;
     },
   },
   actions: {
-    setState({ dispatch, commit }, res) {
+    setState ({ dispatch, commit }, res) {
       // console.log(res)
       if (res && res?.data) {
         const state = res?.data?.data?.state || res?.data.state
@@ -82,7 +79,7 @@ export default {
         }
       }
     },
-    async start({ state: { training: { state: { status } } }, dispatch }, parse) {
+    async start ({ state: { training: { state: { status } } }, dispatch }, parse) {
       let isValid = true
       if (status === 'no_train') {
         const valid = await dispatch('modeling/validateModel', {}, { root: true })
@@ -109,18 +106,34 @@ export default {
       }
       return null
     },
-    async stop({ dispatch }, data) {
+    async stop ({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/stop/', data }, { root: true });
       dispatch('setState', res);
       return res
     },
-    async clear({ dispatch }, data) {
+    async update ({ commit, dispatch }, parse) {
+      let data = JSON.parse(JSON.stringify(parse))
+      // console.log(data)
+      const arht = data.architecture.parameters.outputs || []
+      data.architecture.parameters.outputs = arht.map((item, index) => {
+        return item ? { id: index, ...item } : null
+      }).filter(item => item)
+      // console.log(JSON.stringify(data, null, 2))
+      const res = await dispatch('axios', { url: '/training/update/', data }, { root: true });
+      if (res) {
+        const { data, form: { base } } = res.data
+        commit("SET_PARAMS", base);
+        commit("SET_CONFIG", data);
+      }
+      return res
+    },
+    async clear ({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/clear/', data }, { root: true });
       dispatch('setState', res);
       dispatch('resetTraining', {});
       return res
     },
-    async interactive({ state: { interactive }, dispatch }, part) {
+    async interactive ({ state: { interactive }, dispatch }, part) {
       const data = { ...interactive, ...part }
       const res = await dispatch('axios', { url: '/training/interactive/', data }, { root: true });
       if (res) {
@@ -132,7 +145,7 @@ export default {
       }
       return res
     },
-    async progress({ dispatch }, data) {
+    async progress ({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/progress/', data }, { root: true });
       if (res) {
         const { data, error } = res.data;
@@ -150,54 +163,54 @@ export default {
       }
       return res
     },
-    async resetTraining({ dispatch }) {
+    async resetTraining ({ dispatch }) {
       localStorage.removeItem('settingsTrainings');
       dispatch('messages/resetProgress', {}, { root: true });
       dispatch('setTrainData', {});
       dispatch('setTrainUsage', {});
       await dispatch('projects/get', {}, { root: true })
     },
-    async resetAllTraining({ commit, dispatch }) {
+    async resetAllTraining ({ commit, dispatch }) {
       dispatch('resetTraining', {});
       dispatch('setTrainSettings', {});
       dispatch('setTrainSettings', {});
       commit("SET_STATE_PARAMS", {});
     },
-    setDrawer({ commit }, data) {
+    setDrawer ({ commit }, data) {
       commit("SET_DRAWER", data);
     },
-    setStateParams({ commit, state: { stateParams } }, data) {
+    setStateParams ({ commit, state: { stateParams } }, data) {
       commit("SET_STATE_PARAMS", { ...stateParams, ...data });
     },
-    setInfo({ commit }, info) {
+    setInfo ({ commit }, info) {
       commit("SET_INFO", info);
     },
     // setStates({ commit }, data) {
     //   commit("SET_STATES", data);
     // },
-    setTrainData({ commit }, data) {
+    setTrainData ({ commit }, data) {
       commit("SET_TRAIN", data);
     },
-    setPredict({ commit }, data) {
+    setPredict ({ commit }, data) {
       commit("SET_PREDICT", data);
     },
-    setTrainUsage({ commit }, data) {
+    setTrainUsage ({ commit }, data) {
       commit("SET_TRAIN_USAGE", data);
     },
-    setTrainDisplay({ commit }, data) {
+    setTrainDisplay ({ commit }, data) {
       commit("SET_TRAIN_DISPLAY", data);
     },
-    setСollapse({ commit }, data) {
+    setСollapse ({ commit }, data) {
       commit("SET_COLLAPSE", data);
     },
-    setObjectInteractive({ state, commit }, charts) {
+    setObjectInteractive ({ state, commit }, charts) {
       const data = { ...state.interactive, ...charts }
       commit("SET_INTERACTIV", data);
     },
-    setStatusTrain({ commit }, value) {
+    setStatusTrain ({ commit }, value) {
       commit("SET_STATUS_TRAIN", value);
     },
-    setTrainSettings({ commit }, value) {
+    setTrainSettings ({ commit }, value) {
       commit("SET_TRAIN_SETTINGS", value);
     },
   },
@@ -214,28 +227,28 @@ export default {
     getArrayInteractive: ({ interactive }) => key => {
       return interactive?.[key] || []
     },
-    getStateParams({ stateParams }) {
+    getStateParams ({ stateParams }) {
       return stateParams || {}
     },
-    getСollapse({ collapse }) {
+    getСollapse ({ collapse }) {
       return collapse || []
     },
-    getInteractive({ training: { interactive } }) {
+    getInteractive ({ training: { interactive } }) {
       return interactive || {}
     },
-    getStatus({ training: { state: { status } } }) {
+    getStatus ({ training: { state: { status } } }) {
       return status || ''
     },
-    getButtons({ training: { state: { buttons } } }) {
+    getButtons ({ training: { state: { buttons } } }) {
       return buttons
     },
-    getOutputs({ training: { base } }) {
+    getOutputs ({ training: { base } }) {
       return base?.architecture?.parameters?.outputs || []
     },
-    getParams({ params }) {
+    getParams ({ params }) {
       return params || []
     },
-    getToolbar({ toolbar }) {
+    getToolbar ({ toolbar }) {
       return toolbar;
     },
     getTrainUsage: ({ trainUsage }) => {
@@ -244,7 +257,7 @@ export default {
     getTrainData: ({ trainData }) => (key) => {
       return trainData?.[key];
     },
-    getPredict({ predict }) {
+    getPredict ({ predict }) {
       return predict || {}
     },
   },

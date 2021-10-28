@@ -10,19 +10,20 @@ from pydantic import validator, DirectoryPath, FilePath
 from transliterate import slugify
 
 from apps.plugins.frontend import defaults_data
-from apps.plugins.frontend.presets.defaults.training import TrainingTasksRelations
+from apps.plugins.frontend.defaults import Architectures, DefaultsTrainingData
 from apps.plugins.project import exceptions
 from terra_ai.agent import agent_exchange
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.extra import HardwareAcceleratorData
 from terra_ai.data.mixins import BaseMixinData
-from terra_ai.data.modeling.layer import LayerData
 from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.presets.models import EmptyModelDetailsData
-from terra_ai.data.training.checkpoint import CheckpointData
-from terra_ai.data.training.extra import LossGraphShowChoice, MetricGraphShowChoice
-from terra_ai.data.training.outputs import OutputsList
+from terra_ai.data.training.extra import (
+    LossGraphShowChoice,
+    MetricGraphShowChoice,
+    ArchitectureChoice,
+)
 from terra_ai.data.training.train import (
     TrainData,
     InteractiveData,
@@ -30,6 +31,7 @@ from terra_ai.data.training.train import (
     LossGraphsList,
     MetricGraphsList,
     ProgressTableList,
+    ArchitectureData,
 )
 from terra_ai.data.types import confilepath
 from terra_ai.training.guinn import interactive as training_interactive
@@ -268,55 +270,26 @@ class Project(BaseMixinData):
         self.set_training()
         self.save()
 
-    def update_training_base(self):
-        outputs = []
-        for layer in self.model.outputs:
-            training_layer = self.training.base.architecture.parameters.outputs.get(
-                layer.id
-            )
-            training_task_rel = TrainingTasksRelations.get(layer.task)
-            training_losses = (
-                list(map(lambda item: item.name, training_task_rel.losses))
-                if training_task_rel
-                else None
-            )
-            training_metrics = (
-                list(map(lambda item: item.name, training_task_rel.metrics))
-                if training_task_rel
-                else None
-            )
-            need_loss = training_layer.loss if training_layer else None
-            if need_loss:
-                loss = need_loss if need_loss in training_losses else training_losses[0]
-            else:
-                loss = training_losses[0] if training_losses else None
-            need_metrics = training_layer.metrics if training_layer else []
-            metrics = list(set(need_metrics) & set(training_metrics or []))
-            outputs.append(
-                {
-                    "id": layer.id,
-                    "classes_quantity": layer.num_classes,
-                    "task": layer.task,
-                    "loss": loss,
-                    "metrics": metrics
-                    if len(metrics)
-                    else ([training_metrics[0]] if training_metrics else []),
+    def update_training_base(self, data: dict = None):
+        if isinstance(data, dict):
+            data["architecture"]["type"] = self.dataset.architecture.value
+            data["architecture"]["model"] = self.model
+            data["architecture"]["parameters"]["model"] = self.model
+        else:
+            data = {
+                "architecture": {
+                    "type": self.dataset.architecture.value
+                    if self.dataset
+                    else ArchitectureChoice.Basic.value,
+                    "model": self.model,
+                    "parameters": {"model": self.model},
                 }
-            )
-        self.training.base.architecture.parameters.outputs = OutputsList(outputs)
-        # if self.model.outputs:
-        #     checkpoint_data = {"layer": self.model.outputs[0].id}
-        #     if self.training.base.architecture.parameters.checkpoint:
-        #         checkpoint_data = (
-        #             self.training.base.architecture.parameters.checkpoint.native()
-        #         )
-        #         if not checkpoint_data.get("layer"):
-        #             checkpoint_data.update({"layer": self.model.outputs[0].id})
-        #     self.training.base.architecture.parameters.checkpoint = CheckpointData(
-        #         **checkpoint_data
-        #     )
-        defaults_data.update_by_model(self.model, self.training)
-        # defaults_data.training.update(self.dataset, self.training.base)
+            }
+        self.training.base = TrainData(**data)
+        defaults_data.training = DefaultsTrainingData(
+            project=self, architecture=self.training.base.architecture.type
+        )
+        self.save()
 
     def update_training_interactive(self):
         loss_graphs = []
@@ -375,8 +348,8 @@ class Project(BaseMixinData):
     def update_training_state(self):
         self.training.set_state()
 
-    def set_training(self):
-        self.update_training_base()
+    def set_training(self, data: dict = None):
+        self.update_training_base(data.get("base") if data else None)
         self.update_training_interactive()
         self.update_training_state()
 
@@ -399,6 +372,7 @@ except Exception:
 _config.update({"hardware": agent_exchange("hardware_accelerator")})
 if _config.get("deploy"):
     _config["deploy"].update({"path": project_path.deploy})
+_training = _config.pop("training") if _config.get("training") else {}
 project = Project(**_config)
-project.set_training()
+project.set_training(_training)
 defaults_data.modeling.set_layer_datatype(project.dataset)

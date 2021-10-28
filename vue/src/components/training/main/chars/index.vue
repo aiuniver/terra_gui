@@ -48,13 +48,11 @@ export default {
       return { isClass: this.classGraphics, outputs: this.allOutputs, type: this.metric };
     },
     allOutputs() {
-      const data = this.$store.getters['trainings/getTrainSettings'];
-      const outputs = data?.architecture?.parameters?.outputs || [];
-      return outputs
-        .map((item, index) => {
-          return item ? { id: index, ...item } : null;
-        })
-        .filter(item => item);
+      console.log(this.metrics);
+      return this.metrics.map((item, i) => ({
+        id: i,
+        ...item,
+      }));
     },
     classGraphics() {
       return this.$store.getters['trainings/getTrainData']('class_graphics');
@@ -78,6 +76,7 @@ export default {
       return this.outputs.find(item => item.id).id;
     },
     metrics() {
+      console.log(this.outputs)
       return this.outputs?.[0].metrics ?? [];
     },
   },
