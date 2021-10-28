@@ -926,7 +926,10 @@ class FitCallback(keras.callbacks.Callback):
         if self.dataset.data.alias not in ["imdb", "boston_housing", "reuters"]:
             if "Dataframe" in self.deploy_type:
                 self._create_form_data_for_dataframe_deploy(deploy_path=deploy_path)
-            func_name = decamelize(self.deploy_type)
+            if self.is_yolo:
+                func_name = "object_detection"
+            else:
+                func_name = decamelize(self.deploy_type)
             config = CascadeCreator()
             config.create_config(self.save_model_path, os.path.split(self.save_model_path)[0], func_name=func_name)
             config.copy_package(os.path.split(self.save_model_path)[0])
