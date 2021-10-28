@@ -12,23 +12,7 @@ from ..base import BaseAPIView, BaseResponseSuccess
 
 class StartAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        training_base = request.project.training.base.native()
-        request_outputs = dict(
-            map(
-                lambda item: (item.get("id"), item),
-                request.data.get("architecture", {})
-                .get("parameters", {})
-                .get("outputs", []),
-            )
-        )
-        outputs = request.project.training.base.architecture.parameters.outputs.native()
-        for index, item in enumerate(outputs):
-            outputs[index] = recursive_update(
-                item, request_outputs.get(item.get("id"), {})
-            )
-        training_base = recursive_update(training_base, request.data)
-        training_base["architecture"]["parameters"]["outputs"] = outputs
-        request.project.training.base = TrainData(**training_base)
+        request.project.update_training_base(request.data)
         data = {
             "dataset": request.project.dataset,
             "model": request.project.model,
