@@ -1091,7 +1091,7 @@ class FitCallback(keras.callbacks.Callback):
             {}:
         """
         y_pred, y_true = self._get_predict()
-
+        total_epochs = self.retrain_epochs if interactive.get_states().get('status') in ['addtrain', 'stopped'] else self.epochs
         if self.is_yolo:
             mAP = get_mAP(self.model, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
                           TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names)
@@ -1099,10 +1099,11 @@ class FitCallback(keras.callbacks.Callback):
             # interactive_logs.update({'mAP': mAP})
             interactive_logs.update(mAP)
             output_path = self.image_path.format(epoch)
-            self.samples_train = []
-            self.samples_val = []
-            self.samples_target_train = []
-            self.samples_target_val = []
+            if self.last_epoch < total_epochs:
+                self.samples_train = []
+                self.samples_val = []
+                self.samples_target_train = []
+                self.samples_target_val = []
             # print(interactive_logs)
             # print(mAP)
             # Пока что для визуализации Yolo
@@ -1152,7 +1153,7 @@ class FitCallback(keras.callbacks.Callback):
                     # print(f"Epoch {self.last_epoch} - best weights was successfully saved")
             except Exception as e:
                 print('\nself.model.save_weights failed', e)
-        self._fill_log_history(self.last_epoch, logs)
+        self._fill_log_history(self.last_epoch, interactive_logs)
         self.last_epoch += 1
 
     def on_train_end(self, logs=None):
