@@ -480,11 +480,17 @@ class GUINN:
         threading.enumerate()[-1].setName("current_train")
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели ...'})
         if yolo_arch:
+            warmup_epoch = params.architecture.parameters.yolo.train_warmup_epochs
+            lr_init = params.architecture.parameters.yolo.train_lr_init
+            lr_end = params.architecture.parameters.yolo.train_lr_end
+            iou_thresh = params.architecture.parameters.yolo.yolo_iou_loss_thresh
+
             yolo = create_yolo(self.model, input_size=416, channels=3, training=True,
                                classes=self.dataset.data.outputs.get(2).classes_names,
                                version=self.dataset.instructions.get(2).get('2_object_detection').get('yolo'))
             model_yolo = CustomModelYolo(yolo, self.dataset, self.dataset.data.outputs.get(2).classes_names,
-                                         self.epochs, self.batch_size)
+                                         self.epochs, self.batch_size, warmup_epoch=warmup_epoch,
+                                         lr_init=lr_init, lr_end=lr_end, iou_thresh=iou_thresh)
             model_yolo.compile(optimizer=self.optimizer,
                                loss=compute_loss)
             # self.yolo_pred = create_yolo(self.model, input_size=416, channels=3, training=False,
@@ -877,17 +883,13 @@ class FitCallback(keras.callbacks.Callback):
     def _deploy_predict(self, presets_predict):
         # with open(os.path.join(self.save_model_path, "predict.txt"), "w", encoding="utf-8") as f:
         #     f.write(str(presets_predict[0].tolist()))
-        print("GET DEPLOY")
-        # print(len(presets_predict))
-        # print(presets_predict[0].shape, presets_predict[1].shape, presets_predict[2].shape)
-        # print('\n', self.dataset.data)
         result = CreateArray().postprocess_results(array=presets_predict,
                                                    options=self.dataset,
                                                    save_path=os.path.join(self.save_model_path,
                                                                           "deploy_presets"),
                                                    dataset_path=self.dataset_path)
-        print("RESULT DEPLOY", result)
         deploy_presets = []
+        print(result.keys())
         if result:
             deploy_presets = list(result.values())[0]
         return deploy_presets
@@ -1100,7 +1102,7 @@ class FitCallback(keras.callbacks.Callback):
             # interactive_logs.update({'mAP': mAP})
             interactive_logs.update(mAP)
             output_path = self.image_path.format(epoch)
-            if self.last_epoch < total_epochs:
+            if self.last_epoch < total_epochs and not self.model.stop_training:
                 self.samples_train = []
                 self.samples_val = []
                 self.samples_target_train = []
