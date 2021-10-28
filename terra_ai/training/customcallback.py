@@ -524,8 +524,8 @@ class InteractiveCallback:
 
     def update_state(self, y_pred, y_true=None, fit_logs=None, current_epoch_time=None,
                      on_epoch_end_flag=False) -> dict:
-        if y_pred is not None:
-            print('\nupdate_state', fit_logs, len(y_pred), 'on_epoch_end_flag', on_epoch_end_flag)
+        # if y_pred is not None:
+            # print('\nupdate_state', fit_logs, len(y_pred), 'on_epoch_end_flag', on_epoch_end_flag)
         if self.log_history:
             if y_pred is not None:
                 if self.options.data.architecture in self.basic_architecture:
@@ -561,11 +561,11 @@ class InteractiveCallback:
                 if on_epoch_end_flag:
                     self.current_epoch = fit_logs.get('epoch')
                     self.current_logs = self._reformat_fit_logs(fit_logs)
-                    print('\nupdate_state self.current_logs', self.current_epoch, self.current_logs)
+                    # print('\nupdate_state self.current_logs', self.current_epoch, self.current_logs)
                     self._update_log_history()
-                    print('\nupdate_state self._update_log_history', self.log_history)
+                    # print('\nupdate_state self._update_log_history', self.log_history)
                     self._update_progress_table(current_epoch_time)
-                    print('\nupdate_state self._update_progress_table', self.progress_table)
+                    # print('\nupdate_state self._update_progress_table', self.progress_table)
                     if self.options.data.architecture in self.basic_architecture:
                         if self.interactive_config.intermediate_result.autoupdate:
                             self.intermediate_result = self._get_intermediate_result_request()
@@ -575,11 +575,11 @@ class InteractiveCallback:
                     if self.options.data.architecture in self.yolo_architecture:
                         if self.yolo_interactive_config.intermediate_result.autoupdate:
                             self.intermediate_result = self._get_intermediate_result_request()
-                            print('\nupdate_state self.intermediate_result', self.intermediate_result)
+                            # print('\nupdate_state self.intermediate_result', self.intermediate_result)
                         if self.yolo_interactive_config.statistic_data.box_channel \
                                 and self.yolo_interactive_config.statistic_data.autoupdate:
                             self.statistic_result = self._get_statistic_data_request()
-                            print('\nupdate_state self.statistic_result', self.statistic_result)
+                            # print('\nupdate_state self.statistic_result', self.statistic_result)
                     # print('\nupdate_state self._get_loss_graph_data_request()', self._get_loss_graph_data_request())
                     # print('\nupdate_state self._get_metric_graph_data_request()', self._get_metric_graph_data_request())
                 else:
@@ -592,7 +592,7 @@ class InteractiveCallback:
                             self.statistic_result = self._get_statistic_data_request()
                 self.urgent_predict = False
                 self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
-                print('\nupdate_state self.random_key', self.random_key)
+                # print('\nupdate_state self.random_key', self.random_key)
             return {
                 'update': self.random_key,
                 "class_graphics": self.class_graphics,
