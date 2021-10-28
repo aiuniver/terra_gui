@@ -674,7 +674,7 @@ class CreateArray(object):
                                        'close_tags': options['close_tags'],
                                        'put': options['put'],
                                        'num_classes': options['num_classes'],
-                                       'classes_names': options['open_tags'],
+                                       'classes_names': options['classes_names'],
                                        'length': options['length']
                                        }
                         }
@@ -964,10 +964,20 @@ class CreateArray(object):
 
         # height: int = options['height']
         # width: int = options['width']
+        x_scale = options['orig_x'] / 416
+        y_scale = options['orig_y'] / 416
 
         real_boxes = []
         for coord in coords.split(' '):
-            real_boxes.append([literal_eval(num) for num in coord.split(',')])
+            tmp = []
+            for i, num in enumerate(coord.split(',')):
+                if i in [0, 2]:
+                    tmp.append(literal_eval(num)/x_scale)
+                elif i in [1, 3]:
+                    tmp.append(literal_eval(num)/y_scale)
+                else:
+                    tmp.append(literal_eval(num))
+            real_boxes.append(tmp)
 
         num_classes: int = options['num_classes']
         zero_boxes_flag: bool = False
@@ -1348,6 +1358,7 @@ class CreateArray(object):
     @staticmethod
     def postprocess_results(array, options, save_path: str = "", dataset_path: str = "", sensitivity=0.15,
                             threashold=0.1) -> dict:
+        # print('\npostprocess_results')
         x_array, inverse_x_array = CreateArray().get_x_array(options)
         return_data = {}
 
@@ -1981,6 +1992,7 @@ class CreateArray(object):
     def prepare_yolo_example_idx_to_show(array: dict, true_array: dict, name_classes: list, box_channel: int,
                                          count: int, choice_type: str = "best", seed_idx: list = None,
                                          sensitivity: float = 0.25, get_optimal_channel=False):
+        # print('\nprepare_yolo_example_idx_to_show')
         if get_optimal_channel:
             channel_stat = []
             for channel in range(3):
@@ -2735,6 +2747,7 @@ class CreateArray(object):
     @staticmethod
     def plot_boxes(true_bb, pred_bb, img_path, name_classes, colors, image_id, add_only_true=False, plot_true=True,
                    image_size=(416, 416), save_path='', return_mode='deploy'):
+        # print('plot_boxes')
         image = Image.open(img_path)
         image = image.resize(image_size, Image.BICUBIC)
 
