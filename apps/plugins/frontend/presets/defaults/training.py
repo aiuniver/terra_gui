@@ -283,6 +283,34 @@ ArchitectureGroupFit = {
 }
 
 
+ArchitectureGroupFitYolo = {
+    "fields": [
+        {
+            "type": "number",
+            "label": "Размер батча",
+            "name": "batch",
+            "parse": "[batch]",
+            "value": 32,
+        },
+        {
+            "type": "number",
+            "label": "Количество эпох",
+            "name": "epochs",
+            "parse": "[epochs]",
+            "value": 20,
+        },
+        {
+            "type": "number",
+            "label": "Learning rate",
+            "name": "optimizer_main_learning_rate",
+            "parse": "optimizer[parameters][main][learning_rate]",
+            "value": 0.001,
+            "visible": False,
+        },
+    ],
+}
+
+
 ArchitectureGroupOptimizer = {
     "name": "Параметры оптимизатора",
     "collapsable": True,
@@ -426,7 +454,7 @@ Architectures = {
     ArchitectureChoice.VideoClassification: {**ArchitectureBasicForm},
     ArchitectureChoice.YoloV3: {
         "main": ArchitectureGroupMain,
-        "fit": ArchitectureGroupFit,
+        "fit": ArchitectureGroupFitYolo,
         "optimizer": ArchitectureGroupOptimizer,
         "outputs": {
             "name": "Параметры выходных слоев",
@@ -439,7 +467,7 @@ Architectures = {
     },
     ArchitectureChoice.YoloV4: {
         "main": ArchitectureGroupMain,
-        "fit": ArchitectureGroupFit,
+        "fit": ArchitectureGroupFitYolo,
         "optimizer": ArchitectureGroupOptimizer,
         "outputs": {
             "name": "Параметры выходных слоев",
