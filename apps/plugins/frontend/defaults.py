@@ -13,6 +13,7 @@ from .presets.defaults.training import (
     TrainingLossSelect,
     TrainingMetricSelect,
     TrainingClassesQuantitySelect,
+    ArchitectureOptimizerExtraFields,
     Architectures,
 )
 
@@ -72,84 +73,19 @@ class ArchitectureMixinForm(BaseMixinData):
                 _method(getattr(data, _key), **kwargs)
 
 
-class ArchitectureBaseForm(ArchitectureMixinForm):
+class ArchitectureBaseGroupForm(ArchitectureMixinForm):
     main: DefaultsTrainingBaseGroupData
     fit: DefaultsTrainingBaseGroupData
     optimizer: DefaultsTrainingBaseGroupData
-    outputs: DefaultsTrainingBaseGroupData
 
-    def update(self, data: Any, prefix: str = "", **kwargs):
-        model = kwargs.get("model")
-        if model and model.outputs:
-            self._update_outputs(model.outputs, data)
-
-        return super().update(data, prefix=prefix, **kwargs)
-
-    def _update_outputs(self, layers: LayersList, training_data):
-        outputs = {}
-        for layer in layers:
-            losses_data = {**TrainingLossSelect}
-            training_task_rel = TasksRelations.get(layer.task)
-            training_layer = training_data.architecture.parameters.outputs.get(layer.id)
-            losses_list = list(
-                map(
-                    lambda item: {"label": item.value, "value": item.name},
-                    training_task_rel.losses if training_task_rel else [],
-                )
-            )
-            losses_data.update(
-                {
-                    "name": losses_data.get("name") % layer.id,
-                    "parse": losses_data.get("parse") % layer.id,
-                    "value": training_layer.loss
-                    if training_layer
-                    else (losses_list[0].get("label") if losses_list else ""),
-                    "list": losses_list,
-                }
-            )
-            metrics_data = {**TrainingMetricSelect}
-            metrics_list = list(
-                map(
-                    lambda item: {"label": item.value, "value": item.name},
-                    training_task_rel.metrics if training_task_rel else [],
-                )
-            )
-            available_metrics = list(
-                set(training_layer.metrics)
-                & set(training_task_rel.metrics if training_task_rel else [])
-            )
-            metrics_data.update(
-                {
-                    "name": metrics_data.get("name") % layer.id,
-                    "parse": metrics_data.get("parse") % layer.id,
-                    "value": available_metrics
-                    if available_metrics
-                    else ([metrics_list[0].get("label")] if metrics_list else []),
-                    "list": metrics_list,
-                }
-            )
-            classes_quantity_data = {**TrainingClassesQuantitySelect}
-            classes_quantity_data.update(
-                {
-                    "name": classes_quantity_data.get("name") % layer.id,
-                    "parse": classes_quantity_data.get("parse") % layer.id,
-                    "value": layer.num_classes,
-                }
-            )
-            outputs.update(
-                {
-                    layer.id: {
-                        "name": f"Слой «{layer.name}»",
-                        "classes_quantity": layer.num_classes,
-                        "fields": [
-                            Field(**losses_data),
-                            Field(**metrics_data),
-                            Field(**classes_quantity_data),
-                        ],
-                    }
-                }
-            )
-        self.outputs.fields = outputs
+    def _set_optimizer_type(self, value, **kwargs):
+        fields = list(filter(lambda item: item.name == "optimizer", self.main.fields))
+        if not fields:
+            return
+        self.optimizer.fields = []
+        for item in ArchitectureOptimizerExtraFields.get(value):
+            self.optimizer.fields.append(Field(**item))
+        fields[0].value = value
 
     def _set_batch(self, value: int, **kwargs):
         fields = list(filter(lambda item: item.name == "batch", self.fit.fields))
@@ -163,15 +99,12 @@ class ArchitectureBaseForm(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-    def _set_optimizer_type(self, value, **kwargs):
-        fields = list(filter(lambda item: item.name == "optimizer", self.main.fields))
-        if not fields:
-            return
-        fields[0].value = value
-
     def _set_optimizer_parameters_main_learning_rate(self, value, **kwargs):
         fields = list(
-            filter(lambda item: item.name == "optimizer_learning_rate", self.fit.fields)
+            filter(
+                lambda item: item.name == "optimizer_main_learning_rate",
+                self.fit.fields,
+            )
         )
         if not fields:
             return
@@ -181,7 +114,7 @@ class ArchitectureBaseForm(ArchitectureMixinForm):
         fields = list(
             filter(
                 lambda item: item.name == "optimizer_extra_beta_1",
-                self.optimizer.fields[self.main.fields[0].value],
+                self.optimizer.fields,
             )
         )
         if not fields:
@@ -192,7 +125,7 @@ class ArchitectureBaseForm(ArchitectureMixinForm):
         fields = list(
             filter(
                 lambda item: item.name == "optimizer_extra_beta_2",
-                self.optimizer.fields[self.main.fields[0].value],
+                self.optimizer.fields,
             )
         )
         if not fields:
@@ -203,7 +136,7 @@ class ArchitectureBaseForm(ArchitectureMixinForm):
         fields = list(
             filter(
                 lambda item: item.name == "optimizer_extra_epsilon",
-                self.optimizer.fields[self.main.fields[0].value],
+                self.optimizer.fields,
             )
         )
         if not fields:
@@ -214,7 +147,7 @@ class ArchitectureBaseForm(ArchitectureMixinForm):
         fields = list(
             filter(
                 lambda item: item.name == "optimizer_extra_amsgrad",
-                self.optimizer.fields[self.main.fields[0].value],
+                self.optimizer.fields,
             )
         )
         if not fields:
@@ -225,7 +158,7 @@ class ArchitectureBaseForm(ArchitectureMixinForm):
         fields = list(
             filter(
                 lambda item: item.name == "optimizer_extra_nesterov",
-                self.optimizer.fields[self.main.fields[0].value],
+                self.optimizer.fields,
             )
         )
         if not fields:
@@ -236,7 +169,7 @@ class ArchitectureBaseForm(ArchitectureMixinForm):
         fields = list(
             filter(
                 lambda item: item.name == "optimizer_extra_momentum",
-                self.optimizer.fields[self.main.fields[0].value],
+                self.optimizer.fields,
             )
         )
         if not fields:
@@ -247,7 +180,7 @@ class ArchitectureBaseForm(ArchitectureMixinForm):
         fields = list(
             filter(
                 lambda item: item.name == "optimizer_extra_centered",
-                self.optimizer.fields[self.main.fields[0].value],
+                self.optimizer.fields,
             )
         )
         if not fields:
@@ -257,8 +190,7 @@ class ArchitectureBaseForm(ArchitectureMixinForm):
     def _set_optimizer_parameters_extra_rho(self, value, **kwargs):
         fields = list(
             filter(
-                lambda item: item.name == "optimizer_extra_rho",
-                self.optimizer.fields[self.main.fields[0].value],
+                lambda item: item.name == "optimizer_extra_rho", self.optimizer.fields
             )
         )
         if not fields:
@@ -271,117 +203,207 @@ class ArchitectureBaseForm(ArchitectureMixinForm):
         fields = list(
             filter(
                 lambda item: item.name == "optimizer_extra_initial_accumulator_value",
-                self.optimizer.fields[self.main.fields[0].value],
+                self.optimizer.fields,
             )
         )
         if not fields:
             return
         fields[0].value = value
+
+
+class ArchitectureOutputsGroupFrom(ArchitectureMixinForm):
+    outputs: DefaultsTrainingBaseGroupData
+
+    def update(self, data: Any, prefix: str = "", **kwargs):
+        model = kwargs.get("model")
+        if model and model.outputs:
+            self._update_outputs(model.outputs, data)
+
+        return super().update(data, prefix=prefix, **kwargs)
+
+    def _update_outputs(self, layers: LayersList, data):
+        outputs = {}
+        for layer in layers:
+            _task_rel = TasksRelations.get(layer.task)
+            _layer_data = data.architecture.parameters.outputs.get(layer.id)
+
+            _losses_rel = _task_rel.losses if _task_rel else []
+            _losses_list = list(
+                map(
+                    lambda item: {"label": item.value, "value": item.name},
+                    _losses_rel,
+                )
+            )
+            _losses_value = None
+            if _layer_data and _losses_rel:
+                _losses_value = (
+                    _layer_data.loss
+                    if _layer_data.loss in _losses_rel
+                    else _losses_rel[0]
+                )
+            _losses_data = {**TrainingLossSelect}
+            _losses_data.update(
+                {
+                    "name": _losses_data.get("name") % layer.id,
+                    "parse": _losses_data.get("parse") % layer.id,
+                    "value": _losses_value,
+                    "list": _losses_list,
+                }
+            )
+
+            _metrics_rel = _task_rel.metrics if _task_rel else []
+            _metrics_list = list(
+                map(
+                    lambda item: {"label": item.value, "value": item.name},
+                    _metrics_rel,
+                )
+            )
+            _metrics_value = []
+            if _layer_data and _metrics_rel:
+                _metrics_value = list(set(_layer_data.metrics) & set(_metrics_rel))
+            _metrics_data = {**TrainingMetricSelect}
+            _metrics_data.update(
+                {
+                    "name": _metrics_data.get("name") % layer.id,
+                    "parse": _metrics_data.get("parse") % layer.id,
+                    "value": _metrics_value,
+                    "list": _metrics_list,
+                    "changeable": True,
+                }
+            )
+
+            _classes_quantity_data = {**TrainingClassesQuantitySelect}
+            _classes_quantity_data.update(
+                {
+                    "name": _classes_quantity_data.get("name") % layer.id,
+                    "parse": _classes_quantity_data.get("parse") % layer.id,
+                    "value": layer.num_classes,
+                }
+            )
+
+            outputs.update(
+                {
+                    layer.id: {
+                        "name": f"Слой «{layer.name}»",
+                        "classes_quantity": layer.num_classes,
+                        "fields": [
+                            Field(**_losses_data),
+                            Field(**_metrics_data),
+                            Field(**_classes_quantity_data),
+                        ],
+                    }
+                }
+            )
+        self.outputs.fields = outputs
+
+
+class ArchitectureBaseForm(ArchitectureOutputsGroupFrom, ArchitectureBaseGroupForm):
+    pass
 
 
 class ArchitectureBasicForm(ArchitectureBaseForm):
     checkpoint: DefaultsTrainingBaseGroupData
 
-    def update(self, data: Any, prefix: str = "", **kwargs):
-        model = kwargs.get("model")
-        if model:
-            self._update_checkpoint(model.outputs)
-
-        return super().update(data, prefix=prefix, **kwargs)
-
-    def _update_checkpoint(self, layers: LayersList):
-        layers_choice = []
-        for layer in layers:
-            layers_choice.append(
-                {
-                    "value": layer.id,
-                    "label": f"Слой «{layer.name}»",
-                }
-            )
-        if layers_choice:
-            for index, item in enumerate(self.checkpoint.fields):
-                if item.name == "architecture_parameters_checkpoint_layer":
-                    field_data = item.native()
-                    field_data.update(
-                        {
-                            "value": str(layers_choice[0].get("value")),
-                            "list": layers_choice,
-                        }
-                    )
-                    self.checkpoint.fields[index] = Field(**field_data)
-                    break
-
-    def _set_architecture_parameters_outputs(self, value: List, **kwargs):
-        for item in value:
-            self.update(item, "architecture_parameters_outputs_", _id=item.id)
-
-    def _set_architecture_parameters_outputs_loss(self, value, _id, **kwargs):
-        fields = list(
-            filter(
-                lambda item: item.name == f"architecture_parameters_outputs_{_id}_loss",
-                self.outputs.fields[_id]["fields"],
-            )
-        )
-        if not fields:
-            return
-        fields[0].value = value
-
-    def _set_architecture_parameters_outputs_metrics(self, value, _id, **kwargs):
-        fields = list(
-            filter(
-                lambda item: item.name
-                == f"architecture_parameters_outputs_{_id}_metrics",
-                self.outputs.fields[_id]["fields"],
-            )
-        )
-        if not fields:
-            return
-        fields[0].value = value
-
-    def _set_architecture_parameters_checkpoint_layer(self, value, **kwargs):
-        fields = list(
-            filter(
-                lambda item: item.name == "architecture_parameters_checkpoint_layer",
-                self.checkpoint.fields,
-            )
-        )
-        if not fields:
-            return
-        fields[0].value = value
-
-    def _set_architecture_parameters_checkpoint_type(self, value, **kwargs):
-        fields = list(
-            filter(
-                lambda item: item.name == "architecture_parameters_checkpoint_type",
-                self.checkpoint.fields,
-            )
-        )
-        if not fields:
-            return
-        fields[0].value = value
-
-    def _set_architecture_parameters_checkpoint_indicator(self, value, **kwargs):
-        fields = list(
-            filter(
-                lambda item: item.name
-                == "architecture_parameters_checkpoint_indicator",
-                self.checkpoint.fields,
-            )
-        )
-        if not fields:
-            return
-        fields[0].value = value
-
-    def _set_architecture_parameters_checkpoint_mode(self, value, **kwargs):
-        fields = list(
-            filter(
-                lambda item: item.name == "architecture_parameters_checkpoint_mode",
-                self.checkpoint.fields,
-            )
-        )
-        if not fields:
-            return
-        fields[0].value = value
+    # # def update(self, data: Any, prefix: str = "", **kwargs):
+    # #     model = kwargs.get("model")
+    # #     if model:
+    # #         self._update_checkpoint(model.outputs)
+    # #
+    # #     return super().update(data, prefix=prefix, **kwargs)
+    #
+    # # def _update_checkpoint(self, layers: LayersList):
+    # #     layers_choice = []
+    # #     for layer in layers:
+    # #         layers_choice.append(
+    # #             {
+    # #                 "value": layer.id,
+    # #                 "label": f"Слой «{layer.name}»",
+    # #             }
+    # #         )
+    # #     if layers_choice:
+    # #         for index, item in enumerate(self.checkpoint.fields):
+    # #             if item.name == "architecture_parameters_checkpoint_layer":
+    # #                 field_data = item.native()
+    # #                 field_data.update(
+    # #                     {
+    # #                         "value": str(layers_choice[0].get("value")),
+    # #                         "list": layers_choice,
+    # #                     }
+    # #                 )
+    # #                 self.checkpoint.fields[index] = Field(**field_data)
+    # #                 break
+    #
+    # def _set_architecture_parameters_outputs(self, value: List, **kwargs):
+    #     for item in value:
+    #         self.update(item, "architecture_parameters_outputs_", _id=item.id)
+    #
+    # def _set_architecture_parameters_outputs_loss(self, value, _id, **kwargs):
+    #     fields = list(
+    #         filter(
+    #             lambda item: item.name == f"architecture_parameters_outputs_{_id}_loss",
+    #             self.outputs.fields[_id]["fields"],
+    #         )
+    #     )
+    #     if not fields:
+    #         return
+    #     fields[0].value = value
+    #
+    # def _set_architecture_parameters_outputs_metrics(self, value, _id, **kwargs):
+    #     fields = list(
+    #         filter(
+    #             lambda item: item.name
+    #             == f"architecture_parameters_outputs_{_id}_metrics",
+    #             self.outputs.fields[_id]["fields"],
+    #         )
+    #     )
+    #     if not fields:
+    #         return
+    #     fields[0].value = value
+    #
+    # def _set_architecture_parameters_checkpoint_layer(self, value, **kwargs):
+    #     fields = list(
+    #         filter(
+    #             lambda item: item.name == "architecture_parameters_checkpoint_layer",
+    #             self.checkpoint.fields,
+    #         )
+    #     )
+    #     if not fields:
+    #         return
+    #     fields[0].value = value
+    #
+    # def _set_architecture_parameters_checkpoint_type(self, value, **kwargs):
+    #     fields = list(
+    #         filter(
+    #             lambda item: item.name == "architecture_parameters_checkpoint_type",
+    #             self.checkpoint.fields,
+    #         )
+    #     )
+    #     if not fields:
+    #         return
+    #     fields[0].value = value
+    #
+    # def _set_architecture_parameters_checkpoint_indicator(self, value, **kwargs):
+    #     fields = list(
+    #         filter(
+    #             lambda item: item.name
+    #             == "architecture_parameters_checkpoint_indicator",
+    #             self.checkpoint.fields,
+    #         )
+    #     )
+    #     if not fields:
+    #         return
+    #     fields[0].value = value
+    #
+    # def _set_architecture_parameters_checkpoint_mode(self, value, **kwargs):
+    #     fields = list(
+    #         filter(
+    #             lambda item: item.name == "architecture_parameters_checkpoint_mode",
+    #             self.checkpoint.fields,
+    #         )
+    #     )
+    #     if not fields:
+    #         return
+    #     fields[0].value = value
 
 
 class ArchitectureYoloBaseForm(ArchitectureBaseForm):
