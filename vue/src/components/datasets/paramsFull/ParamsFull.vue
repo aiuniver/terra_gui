@@ -93,29 +93,15 @@ export default {
           this.debounce(true);
         }
       }
-      // if (res) {
-      //   const { data, error, success } = res;
-      //   if (data && success && !error) {
-      //     this.full = false;
-      //     this.$store.dispatch('messages/setMessage', { message: `Датасет "${obj.name}" создан` });
-      //   } else {
-      //     this.$store.dispatch('messages/setMessage', { error: `Ошибка создания датасета` });
-      //   }
-      //   console.log(data);
-      // }
     },
     async progress() {
       const res = await this.$store.dispatch('datasets/createProgress', {});
       if (res) {
-        const { finished, message, percent } = res.data;
-        this.$store.dispatch('messages/setProgressMessage', message);
-        this.$store.dispatch('messages/setProgress', percent);
-        // this.stopLearning = !this.isLearning;
+        const { finished } = res.data;
         if (!finished) {
           this.debounce(true);
         } else {
-          // this.$store.dispatch('projects/get');
-          // this.stopLearning = false;
+          this.full = false;
         }
       }
     },
