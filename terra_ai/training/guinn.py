@@ -764,7 +764,7 @@ class FitCallback(keras.callbacks.Callback):
             if logs.get(metric):
                 self.log_history['logs'][metric].append(float(logs.get(metric)))
             else:
-                self.log_history['logs'][metric].append(None-
+                self.log_history['logs'][metric].append(None)
 
     def _save_logs(self):
         interactive_path = os.path.join(self.save_model_path, "interactive.history")

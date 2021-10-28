@@ -1251,13 +1251,13 @@ class InteractiveCallback:
 
     # Методы для update_state()
     @staticmethod
-    def _round_loss_metric(x: float):
+    def _round_loss_metric(x):
         method_name = '_round_loss_metric'
         try:
-            if math.isnan(float(x)):
-                return None
             if not x:
                 return x
+            elif math.isnan(float(x)):
+                return None
             elif x > 1000:
                 return np.round(x, 0).item()
             elif x > 1:
