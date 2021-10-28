@@ -436,7 +436,8 @@ def create_yolo(model, input_size=416, channels=3, training=False, classes=None,
 
 class CustomModelYolo(keras.Model):
 
-    def __init__(self, yolo, dataset, classes, train_epochs, train_batch):
+    def __init__(self, yolo, dataset, classes, train_epochs, train_batch, warmup_epoch=2, lr_init=1e-4,
+                 lr_end=1e-6, iou_thresh=0.5):
         super().__init__()
         self.yolo = yolo
         self.dataset = dataset
@@ -445,30 +446,15 @@ class CustomModelYolo(keras.Model):
         self.train_batch = train_batch
         self.loss_fn = None
         self.optimizer = None
-        # global TRAIN_FROM_CHECKPOINT
-
-        # gpus = tf.config.experimental.list_physical_devices('GPU')
-        # print(f'GPUs {gpus}')
-        # if len(gpus) > 0:
-        #     try:
-        #         tf.config.experimental.set_memory_growth(gpus[0], True)
-        #     except RuntimeError:
-        #         pass
-
-        # if os.path.exists(TRAIN_LOGDIR): shutil.rmtree(TRAIN_LOGDIR)
-        # writer = tf.summary.create_file_writer(TRAIN_LOGDIR)
-        #
-        # trainset = dtts.dataset['train']
-        # testset = dtts.dataset['val']
-        self.TRAIN_WARMUP_EPOCHS = 2
+        self.TRAIN_WARMUP_EPOCHS = warmup_epoch
+        self.TRAIN_LR_INIT = lr_init
+        self.TRAIN_LR_END = lr_end
+        self.YOLO_IOU_LOSS_THRESH = iou_thresh
         self.steps_per_epoch = int(len(self.dataset.dataset['train']) // self.train_batch)
-        # print('self.steps_per_epoch', self.steps_per_epoch)
         self.global_steps = tf.Variable(1, trainable=False, dtype=tf.int64)
         self.warmup_steps = self.TRAIN_WARMUP_EPOCHS * self.steps_per_epoch
-        # print('self.warmup_steps', self.warmup_steps)
         self.total_steps = self.train_epochs * self.steps_per_epoch
-        self.TRAIN_LR_INIT = 1e-4
-        self.TRAIN_LR_END = 1e-6
+
 
     def compile(self, optimizer, loss):
         super(CustomModelYolo, self).compile()
@@ -477,7 +463,7 @@ class CustomModelYolo(keras.Model):
 
     @tf.function
     def change_lr(self):
-        if tf.less(self.global_steps.value(), self.warmup_steps):  # and not TRAIN_TRANSFER:
+        if tf.less(self.global_steps.value(), self.warmup_steps):
             lr = self.global_steps.value() / self.warmup_steps * self.TRAIN_LR_INIT
         else:
             lr = self.TRAIN_LR_END + 0.5 * (self.TRAIN_LR_INIT - self.TRAIN_LR_END) * (
@@ -485,28 +471,6 @@ class CustomModelYolo(keras.Model):
                             (self.total_steps - self.warmup_steps) * np.pi)))
         return lr
 
-    # if TRAIN_TRANSFER:
-    #     Darknet = Create_Yolo(input_size=YOLO_INPUT_SIZE, CLASSES=YOLO_COCO_CLASSES)
-    #     load_yolo_weights(Darknet, Darknet_weights)  # use darknet weights
-    #
-    # yolo = Create_Yolo(input_size=YOLO_INPUT_SIZE, training=True, CLASSES=TRAIN_CLASSES)
-    # if TRAIN_FROM_CHECKPOINT:
-    #     try:
-    #         yolo.load_weights(f"./checkpoints/{TRAIN_MODEL_NAME}")
-    #     except ValueError:
-    #         print("Shapes are incompatible, transfering Darknet weights")
-    #         TRAIN_FROM_CHECKPOINT = False
-    #
-    # if TRAIN_TRANSFER and not TRAIN_FROM_CHECKPOINT:
-    #     for i, l in enumerate(Darknet.layers):
-    #         layer_weights = l.get_weights()
-    #         if layer_weights != []:
-    #             try:
-    #                 yolo.layers[i].set_weights(layer_weights)
-    #             except:
-    #                 print("skipping", yolo.layers[i].name)
-
-    # optimizer = tf.keras.optimizers.Adam()
     @tf.function
     def train_step(self, data):
         image_data, target, serv = data[0], data[1], data[2]
@@ -523,7 +487,7 @@ class CustomModelYolo(keras.Model):
             for i, key in enumerate(target.keys()):
                 conv, pred = pred_result[i * 2], pred_result[i * 2 + 1]
                 loss_items = self.loss_fn(pred, conv, *(target.get(key), serv.get(key)), i,
-                                          CLASSES=self.CLASSES)
+                                          CLASSES=self.CLASSES, YOLO_IOU_LOSS_THRESH=self.YOLO_IOU_LOSS_THRESH)
                 pred_out['pred_' + str(key)] = pred
                 target_out['target_' + str(key)] = target.get(key)
                 giou_loss += loss_items[0]
@@ -537,9 +501,6 @@ class CustomModelYolo(keras.Model):
                         prob_loss_cls['prob_loss_' + str(cls_key)] = loss_items[3].get(cls_key)
 
             total_loss = giou_loss + conf_loss + prob_loss
-
-            # gradients = tape.gradient(total_loss, self.yolo.trainable_weights)
-            # self.optimizer.apply_gradients(zip(gradients, self.yolo.trainable_weights))
 
         gradients = tape.gradient(total_loss, self.yolo.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.yolo.trainable_variables))
@@ -602,53 +563,6 @@ class CustomModelYolo(keras.Model):
     def predict_step(self, data):
 
         return self.yolo(data, training=False)
-    # mAP_model = Create_Yolo(input_size=YOLO_INPUT_SIZE, CLASSES=TRAIN_CLASSES)  # create second model to measure mAP
-    # test_set = 70
-    # best_val_loss = 1000  # should be large at start
-    # for epoch in range(TRAIN_EPOCHS):
-    #     for image_data, target in trainset.batch(2):
-    #         results = train_step(image_data, target)
-    #         cur_step = results[0] % steps_per_epoch
-    #         print(
-    #             "epoch:{:2.0f} step:{:5.0f}/{}, lr:{:.6f}, giou_loss:{:7.2f}, conf_loss:{:7.2f}, prob_loss:{:7.2f}, total_loss:{:7.2f}"
-    #             .format(epoch, cur_step, steps_per_epoch, results[1], results[2], results[3], results[4], results[5]))
-    #
-    #     if test_set == 0:
-    #         print("configure TEST options to validate model")
-    #         yolo.save_weights(os.path.join(TRAIN_CHECKPOINTS_FOLDER, TRAIN_MODEL_NAME))
-    #         continue
-    #
-    #     count, giou_val, conf_val, prob_val, total_val = 0., 0, 0, 0, 0
-    #     for image_data, target in testset.batch(2):
-    #         results = validate_step(image_data, target)
-    #         count += 1
-    #         giou_val += results[0]
-    #         conf_val += results[1]
-    #         prob_val += results[2]
-    #         total_val += results[3]
-    #     # writing validate summary data
-    #     with validate_writer.as_default():
-    #         tf.summary.scalar("validate_loss/total_val", total_val / count, step=epoch)
-    #         tf.summary.scalar("validate_loss/giou_val", giou_val / count, step=epoch)
-    #         tf.summary.scalar("validate_loss/conf_val", conf_val / count, step=epoch)
-    #         tf.summary.scalar("validate_loss/prob_val", prob_val / count, step=epoch)
-    #     validate_writer.flush()
-    #
-    #     print("\n\ngiou_val_loss:{:7.2f}, conf_val_loss:{:7.2f}, prob_val_loss:{:7.2f}, total_val_loss:{:7.2f}\n\n".
-    #           format(giou_val / count, conf_val / count, prob_val / count, total_val / count))
-    #
-    #     if TRAIN_SAVE_CHECKPOINT and not TRAIN_SAVE_BEST_ONLY:
-    #         save_directory = os.path.join(TRAIN_CHECKPOINTS_FOLDER,
-    #                                       TRAIN_MODEL_NAME + "_val_loss_{:7.2f}.h5".format(total_val / count))
-    #         yolo.save_weights(save_directory)
-    #     if TRAIN_SAVE_BEST_ONLY and best_val_loss > total_val / count:
-    #         save_directory = os.path.join(TRAIN_CHECKPOINTS_FOLDER, TRAIN_MODEL_NAME)
-    #         yolo.save_weights(save_directory)
-    #         best_val_loss = total_val / count
-    #     if not TRAIN_SAVE_BEST_ONLY and not TRAIN_SAVE_CHECKPOINT:
-    #         save_directory = os.path.join(TRAIN_CHECKPOINTS_FOLDER, TRAIN_MODEL_NAME)
-    #         yolo.save_weights(save_directory)
-
 
 def voc_ap(rec, prec):
     """
