@@ -1,4 +1,4 @@
-from terra_ai.utils import decamelize
+from terra_ai.utils import decamelize, camelize
 from terra_ai.exceptions.tensor_flow import ResourceExhaustedError as Resource
 from terra_ai.datasets.data import DataType, InstructionsData, DatasetInstructionsData
 from terra_ai.datasets.utils import PATH_TYPE_LIST, convert_object_detection
@@ -29,7 +29,6 @@ import concurrent.futures
 from math import ceil
 from PIL import Image
 from itertools import repeat
-from tqdm import tqdm
 from pathlib import Path
 from typing import Union
 from datetime import datetime
@@ -70,16 +69,9 @@ class CreateDataset(object):
 
         self.instructions: DatasetInstructionsData = self.create_instructions(creation_data)
 
-        progress.pool(self.progress_name,
-                      message='Создание препроцессинга'
-                      )
+        progress.pool(self.progress_name, message='Создание препроцессинга', percent=0)
 
         self.create_preprocessing(self.instructions)
-
-        progress.pool(self.progress_name,
-                      message='Обучение препроцессинга'
-                      )
-
         self.fit_preprocessing(put_data=self.instructions.inputs)
         self.fit_preprocessing(put_data=self.instructions.outputs)
         self.create_table(creation_data=creation_data)
@@ -341,9 +333,7 @@ class CreateDataset(object):
                     progress.pool(self.progress_name,
                                   message='Формирование файлов')
                     for i, result in enumerate(results):
-
-                        progress.pool(self.progress_name,
-                                      percent=ceil(i / len(temp_paths_list) * 100))
+                        progress.pool(self.progress_name, percent=ceil(i / len(temp_paths_list) * 100))
                         results_list += result[0]['instructions']
                         if put.type not in [LayerOutputTypeChoice.Classification, LayerOutputTypeChoice.Segmentation,
                                             LayerOutputTypeChoice.TextSegmentation,
@@ -394,8 +384,11 @@ class CreateDataset(object):
             for col_name, data in put_data[key].items():
                 if 'scaler' in data.parameters and data.parameters['scaler'] not in [LayerScalerImageChoice.no_scaler,
                                                                                      None]:
+                    progress.pool(self.progress_name, message=f'Обучение {camelize(data.parameters["scaler"])}')
                     if self.tags[key][col_name] in PATH_TYPE_LIST:
                         for i in range(len(data.instructions)):
+                            progress.pool(self.progress_name,
+                                          percent=ceil(i / len(data.instructions) * 100))
 
                             arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(
                                 os.path.join(self.paths.basepath, data.instructions[i]),
@@ -859,13 +852,18 @@ class CreateDataset(object):
                     data_to_pass.append(tmp_data)
                     dict_to_pass.append(tmp_parameter_data)
 
+                progress.pool(self.progress_name,
+                              message=f'Формирование массивов {split.title()} выборки. ID: {key}.',
+                              percent=0)
+
                 current_arrays: list = []
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    results = tqdm(executor.map(array_creation, data_to_pass, dict_to_pass), total=len(data_to_pass))
+                    results = executor.map(array_creation, data_to_pass, dict_to_pass)
                     for i, result in enumerate(results):
                         if psutil.virtual_memory()._asdict().get("percent") > 90:
                             current_arrays = []
                             raise Resource
+                        progress.pool(self.progress_name, percent=ceil(i / len(data_to_pass) * 100))
                         if not self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
                             if depth:
                                 if 'trend' in dict_to_pass[i][0].keys() and dict_to_pass[i][0]['trend']:
@@ -883,11 +881,11 @@ class CreateDataset(object):
                     for n in range(3):
                         out_array[split][key + n] = np.array(globals()[f'current_arrays_{n}'])
                         service[split][key + n] = np.array(globals()[f'current_arrays_{n + 3}'])
-                        print(np.array(globals()[f'current_arrays_{n}']).shape)
-                        print(np.array(globals()[f'current_arrays_{n + 3}']).shape)
+                        # print(np.array(globals()[f'current_arrays_{n}']).shape)
+                        # print(np.array(globals()[f'current_arrays_{n + 3}']).shape)
                 else:
                     out_array[split][key] = np.array(current_arrays)
-                    print(out_array[split][key].shape)
+                    # print(out_array[split][key].shape)
 
         if service['train']:
             return out_array, service
