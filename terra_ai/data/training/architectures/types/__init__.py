@@ -1,4 +1,5 @@
 from . import (
     Basic,
-    Yolo,
+    YoloV3,
+    YoloV4,
 )

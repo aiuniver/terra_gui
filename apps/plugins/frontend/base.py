@@ -24,6 +24,7 @@ class Field(BaseMixinData):
     parse: Optional[str]
     value: Any = ""
     disabled: bool = False
+    changeable: bool = False
     list: Optional[List[Union[ListOptionData, ListOptgroupData]]]
     fields: Optional[Dict[str, List]]
     api: Optional[str]
