@@ -265,7 +265,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def instructions_image_segmentation(paths_list: list, **options: dict) -> dict:
+    def instructions_segmentation(paths_list: list, **options: dict) -> dict:
 
         p_list = []
         for elem in paths_list:
