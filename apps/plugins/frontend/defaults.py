@@ -215,6 +215,7 @@ class ArchitectureOutputsGroupFrom(ArchitectureMixinForm):
     outputs: DefaultsTrainingBaseGroupData
 
     def update(self, data: Any, prefix: str = "", **kwargs):
+        print(1)
         model = kwargs.get("model")
         if model and model.outputs:
             self._update_outputs(model.outputs, data)
@@ -457,11 +458,11 @@ class DefaultsTrainingData(BaseMixinData):
     architecture: ArchitectureChoice
     base: Optional[ArchitectureBaseForm]
 
-    # def __init__(self, project: Any = None, **data):
-    #     data.update({"base": Architectures.get(data.get("architecture", "Base"))})
-    #     super().__init__(**data)
-    #     if project:
-    #         self._update(project)
+    def __init__(self, project: Any = None, **data):
+        data.update({"base": Architectures.get(data.get("architecture", "Base"))})
+        super().__init__(**data)
+        if project:
+            self._update(project)
 
     @validator("architecture", pre=True)
     def _validate_architecture(cls, value: ArchitectureChoice) -> ArchitectureChoice:
