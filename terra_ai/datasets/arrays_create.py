@@ -1348,6 +1348,7 @@ class CreateArray(object):
     @staticmethod
     def postprocess_results(array, options, save_path: str = "", dataset_path: str = "", sensitivity=0.15,
                             threashold=0.1) -> dict:
+        # print('\npostprocess_results')
         x_array, inverse_x_array = CreateArray().get_x_array(options)
         return_data = {}
 
@@ -1981,6 +1982,7 @@ class CreateArray(object):
     def prepare_yolo_example_idx_to_show(array: dict, true_array: dict, name_classes: list, box_channel: int,
                                          count: int, choice_type: str = "best", seed_idx: list = None,
                                          sensitivity: float = 0.25, get_optimal_channel=False):
+        # print('\nprepare_yolo_example_idx_to_show')
         if get_optimal_channel:
             channel_stat = []
             for channel in range(3):
@@ -2735,6 +2737,7 @@ class CreateArray(object):
     @staticmethod
     def plot_boxes(true_bb, pred_bb, img_path, name_classes, colors, image_id, add_only_true=False, plot_true=True,
                    image_size=(416, 416), save_path='', return_mode='deploy'):
+        # print('plot_boxes')
         image = Image.open(img_path)
         image = image.resize(image_size, Image.BICUBIC)
 

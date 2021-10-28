@@ -27,7 +27,7 @@ from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
 from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, \
     CheckpointModeChoice, ArchitectureChoice
-from terra_ai.data.training.train import TrainData, InteractiveData
+from terra_ai.data.training.train import TrainData, InteractiveData, YoloInteractiveData
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.deploy.create_deploy_package import CascadeCreator
@@ -303,6 +303,66 @@ class GUINN:
             interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss,
                                        dataset_path=dataset_path, training_path=training_path,
                                        initial_config=initial_config)
+        if self.deploy_type in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]:
+            initial_config = YoloInteractiveData(**{
+                'loss_graphs': [
+                    {
+                        'id': 1,
+                        'output_idx': 2,
+                        'show': 'model',
+                    },
+                    {
+                        'id': 2,
+                        'output_idx': 2,
+                        'show': 'classes',
+                    },
+                ],
+                'metric_graphs': [
+                    {
+                        'id': 1,
+                        'output_idx': 2,
+                        'show': 'model',
+                        'show_metric': 'mAP50'
+                    },
+                    {
+                        'id': 2,
+                        'output_idx': 2,
+                        'show': 'classes',
+                        'show_metric': 'mAP50'
+                    }
+                ],
+                'intermediate_result': {
+                    'show_results': True,
+                    'example_choice_type': 'random',
+                    'box_channel': 1,
+                    'num_examples': 5,
+                    'show_statistic': True,
+                    'autoupdate': True,
+                    "sensitivity": 0.25,
+                    'threashold': 0.1
+                },
+                'progress_table': [
+                    {
+                        'output_idx': 2,
+                        'show_loss': True,
+                        'show_metrics': True,
+                    }
+                ],
+                'statistic_data': {
+                    'box_channel': 1,
+                    'autoupdate': True,
+                    "sensitivity": 0.15,
+                    'threashold': 0.1
+                },
+                'data_balance': {
+                    'show_train': False,
+                    'show_val': False,
+                    'sorted': 'alphabetic'  # 'descending', 'ascending'
+                }
+            })
+            interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss,
+                                       dataset_path=dataset_path, training_path=training_path,
+                                       yolo_initial_config=initial_config)
 
     def _set_callbacks(self, dataset: PrepareDataset, dataset_data: DatasetData,
                        batch_size: int, epochs: int, dataset_path: str,
@@ -815,7 +875,7 @@ class FitCallback(keras.callbacks.Callback):
 
     def _get_metric_name_checkpoint(self, logs: dict):
         """Поиск среди fit_logs нужного параметра"""
-        self.metric_checkpoint = "loss"
+        self.metric_checkpoint = "total_loss"
         for log in logs.keys():
             if self.checkpoint_config.get("type") == CheckpointTypeChoice.Loss and \
                     self.checkpoint_config.get("indicator") == CheckpointIndicatorChoice.Val and \
@@ -951,14 +1011,20 @@ class FitCallback(keras.callbacks.Callback):
 
     def _best_epoch_monitoring(self, logs):
         """Оценка текущей эпохи"""
-        if self.checkpoint_config.get("mode") == CheckpointModeChoice.Min and \
-                logs.get(self.metric_checkpoint) < min(self.log_history.get("logs").get(self.metric_checkpoint)):
-            return True
-        elif self.checkpoint_config.get("mode") == CheckpointModeChoice.Max and \
-                logs.get(self.metric_checkpoint) > max(self.log_history.get("logs").get(self.metric_checkpoint)):
-            return True
-        else:
-            return False
+        try:
+            print('\nself.metric_checkpoint)', self.metric_checkpoint)
+            print('logs.get(self.metric_checkpoint)', logs.get(self.metric_checkpoint))
+            print('self.log_history.get("logs").get(self.metric_checkpoint))', self.log_history.get("logs").get(self.metric_checkpoint))
+            if self.checkpoint_config.get("mode") == CheckpointModeChoice.Min and \
+                    logs.get(self.metric_checkpoint) < min(self.log_history.get("logs").get(self.metric_checkpoint)):
+                return True
+            elif self.checkpoint_config.get("mode") == CheckpointModeChoice.Max and \
+                    logs.get(self.metric_checkpoint) > max(self.log_history.get("logs").get(self.metric_checkpoint)):
+                return True
+            else:
+                return False
+        except Exception as e:
+            print('\n_best_epoch_monitoring failed', e)
 
     def _set_result_data(self, param: dict) -> None:
         for key in param.keys():
@@ -1219,7 +1285,8 @@ class FitCallback(keras.callbacks.Callback):
             mAP = get_mAP(self.model, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
                           TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names)
             interactive_logs = self._logs_losses_extract(logs, prefixes=['pred', 'target'])
-            interactive_logs.update({'mAP': mAP})
+            # interactive_logs.update({'mAP': mAP})
+            interactive_logs.update(mAP)
             output_path = self.image_path.format(epoch)
             self.samples_train = []
             self.samples_val = []
@@ -1245,6 +1312,7 @@ class FitCallback(keras.callbacks.Callback):
             on_epoch_end_flag=True
         )
         self._set_result_data({'train_data': train_epoch_data})
+        print('/nprogress.pool', self.last_epoch, self.retrain_epochs, self.epochs)
         progress.pool(
             self.progress_name,
             percent=(self.last_epoch - 1) / (
@@ -1260,17 +1328,19 @@ class FitCallback(keras.callbacks.Callback):
 
         # сохранение лучших весов
         if self.last_epoch > 1:
-            if self._best_epoch_monitoring(logs):
-                if not os.path.exists(self.save_model_path):
-                    os.mkdir(self.save_model_path)
-                if not os.path.exists(os.path.join(self.save_model_path, "deploy_presets")):
-                    os.mkdir(os.path.join(self.save_model_path, "deploy_presets"))
-                file_path_best: str = os.path.join(
-                    self.save_model_path, f"best_weights_{self.metric_checkpoint}.h5"
-                )
-                self.model.save_weights(file_path_best)
-                # print(f"Epoch {self.last_epoch} - best weights was successfully saved")
-
+            try:
+                if self._best_epoch_monitoring(logs):
+                    if not os.path.exists(self.save_model_path):
+                        os.mkdir(self.save_model_path)
+                    if not os.path.exists(os.path.join(self.save_model_path, "deploy_presets")):
+                        os.mkdir(os.path.join(self.save_model_path, "deploy_presets"))
+                    file_path_best: str = os.path.join(
+                        self.save_model_path, f"best_weights_{self.metric_checkpoint}.h5"
+                    )
+                    self.model.save_weights(file_path_best)
+                    # print(f"Epoch {self.last_epoch} - best weights was successfully saved")
+            except Exception as e:
+                print('\nself.model.save_weights failed', e)
         self._fill_log_history(self.last_epoch, logs)
         self.last_epoch += 1
 
