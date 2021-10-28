@@ -1251,9 +1251,11 @@ class InteractiveCallback:
 
     # Методы для update_state()
     @staticmethod
-    def _round_loss_metric(x: float) -> float:
+    def _round_loss_metric(x: float):
         method_name = '_round_loss_metric'
         try:
+            if math.isnan(float(x)):
+                return None
             if not x:
                 return x
             elif x > 1000:
@@ -1316,32 +1318,33 @@ class InteractiveCallback:
                         }
 
             if self.options.data.architecture in self.yolo_architecture:
-                interactive_log['learning_rate'] = logs.get('optimizer.lr')
+                # self._round_loss_metric(train_loss) if not math.isnan(float(train_loss)) else None
+                interactive_log['learning_rate'] = self._round_loss_metric(logs.get('optimizer.lr'))
                 interactive_log['output'] = {
                     "train": {
                         "loss": {
-                            'giou_loss': logs.get('giou_loss'),
-                            'conf_loss': logs.get('conf_loss'),
-                            'prob_loss': logs.get('prob_loss'),
-                            'total_loss': logs.get('total_loss')
+                            'giou_loss': self._round_loss_metric(logs.get('giou_loss')),
+                            'conf_loss': self._round_loss_metric(logs.get('conf_loss')),
+                            'prob_loss': self._round_loss_metric(logs.get('prob_loss')),
+                            'total_loss': self._round_loss_metric(logs.get('total_loss'))
                         },
                         "metrics": {
-                            'mAP50': logs.get('mAP50'),
+                            'mAP50': self._round_loss_metric(logs.get('mAP50')),
                             # 'mAP95': logs.get('mAP95'),
                         }
                     },
                     "val": {
                         "loss": {
-                            'giou_loss': logs.get('val_giou_loss'),
-                            'conf_loss': logs.get('val_conf_loss'),
-                            'prob_loss': logs.get('val_prob_loss'),
-                            'total_loss': logs.get('val_total_loss')
+                            'giou_loss': self._round_loss_metric(logs.get('val_giou_loss')),
+                            'conf_loss': self._round_loss_metric(logs.get('val_conf_loss')),
+                            'prob_loss': self._round_loss_metric(logs.get('val_prob_loss')),
+                            'total_loss': self._round_loss_metric(logs.get('val_total_loss'))
                         },
                         "class_loss": {
                             'prob_loss': {},
                         },
                         "metrics": {
-                            'mAP50': logs.get('val_mAP50'),
+                            'mAP50': self._round_loss_metric(logs.get('val_mAP50')),
                             # 'mAP95': logs.get('val_mAP95'),
                         },
                         "class_metrics": {
@@ -1351,10 +1354,10 @@ class InteractiveCallback:
                     }
                 }
                 for name in self.options.data.outputs.get(list(self.options.data.outputs.keys())[0]).classes_names:
-                    interactive_log['output']['val']["class_loss"]['prob_loss'][name] = logs.get(
-                        f'val_prob_loss_{name}')
-                    interactive_log['output']['val']["class_metrics"]['mAP50'][name] = logs.get(
-                        f'val_mAP50_class_{name}')
+                    interactive_log['output']['val']["class_loss"]['prob_loss'][name] = self._round_loss_metric(logs.get(
+                        f'val_prob_loss_{name}'))
+                    interactive_log['output']['val']["class_metrics"]['mAP50'][name] = self._round_loss_metric(logs.get(
+                        f'val_mAP50_class_{name}'))
                     # interactive_log['output']['val']["class_metrics"]['mAP95'][name] = logs.get(f'val_mAP95_class_{name}')
 
             return interactive_log
@@ -2496,8 +2499,8 @@ class InteractiveCallback:
                     # print(image_path)
                     out = self.yolo_interactive_config.intermediate_result.box_channel
                     # print(out)
-                    # print(self.y_true.keys())
-                    # print(self.y_pred.keys())
+                    print('self.example_idx[idx]', idx, self.example_idx[idx])
+                    print(out, len(self.y_pred.get(out)), len(self.y_true.get(out)))
                     data = CreateArray().postprocess_object_detection(
                         predict_array=copy.deepcopy(self.y_pred.get(out)[self.example_idx[idx]]),
                         true_array=self.y_true.get(out)[self.example_idx[idx]],
@@ -2750,9 +2753,9 @@ class InteractiveCallback:
                     sensitivity=self.yolo_interactive_config.statistic_data.sensitivity,
                     threashold=self.yolo_interactive_config.statistic_data.threashold
                 )
-                object_TT = 0
-                object_TF = 0
-                object_FT = 0
+                object_tt = 0
+                object_tf = 0
+                object_ft = 0
 
                 line_names = []
                 class_accuracy_hist = {}
@@ -2773,11 +2776,11 @@ class InteractiveCallback:
                         name_classes=name_classes,
                         sensitivity=self.yolo_interactive_config.statistic_data.sensitivity
                     )
-                    object_FT += len(example_stat['recognize']['empty'])
-                    object_TF += len(example_stat['recognize']['unrecognize'])
+                    object_ft += len(example_stat['recognize']['empty'])
+                    object_tf += len(example_stat['recognize']['unrecognize'])
                     for class_name in line_names:
                         if class_name != 'empty':
-                            object_TT += len(example_stat['recognize'][class_name])
+                            object_tt += len(example_stat['recognize'][class_name])
                         for item in example_stat['recognize'][class_name]:
                             class_matrix[line_names.index(class_name)][line_names.index(item['pred_class'])] += 1
                             if class_name != 'empty':
@@ -2800,15 +2803,15 @@ class InteractiveCallback:
                         class_loss_hist[
                             class_name] else 0.
 
-                object_matrix = [[object_TT, object_TF], [object_FT, 0]]
+                object_matrix = [[object_tt, object_tf], [object_ft, 0]]
                 class_matrix_percent = []
                 for i in class_matrix:
                     class_matrix_percent.append(i * 100 / np.sum(i) if np.sum(i) else np.zeros_like(i))
                 class_matrix_percent = np.round(class_matrix_percent, 2).tolist()
                 class_matrix = class_matrix.astype('int').tolist()
-                labels = copy.deepcopy(list(name_classes))
-                labels.append('Пустой бокс')
-                print('\nlabels', labels)
+                # labels = copy.deepcopy(list(name_classes))
+                # labels.append('Пустой бокс')
+                # print('\nlabels', labels)
                 return_data.append(
                     self._fill_heatmap_front_structure(
                         _id=1,
@@ -2817,7 +2820,7 @@ class InteractiveCallback:
                         short_name=f"{box_channel} - Матрица классов",
                         x_label="Предсказание",
                         y_label="Истинное значение",
-                        labels=labels,
+                        labels=line_names,
                         data_array=class_matrix,
                         data_percent_array=class_matrix_percent,
                     )
