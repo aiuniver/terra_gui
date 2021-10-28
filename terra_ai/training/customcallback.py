@@ -6,7 +6,7 @@ import os
 import random
 import re
 import string
-from typing import Union, Optional
+from typing import Union, Optional, List
 
 import matplotlib
 import pandas as pd
@@ -2806,7 +2806,9 @@ class InteractiveCallback:
                     class_matrix_percent.append(i * 100 / np.sum(i) if np.sum(i) else np.zeros_like(i))
                 class_matrix_percent = np.round(class_matrix_percent, 2).tolist()
                 class_matrix = class_matrix.astype('int').tolist()
-
+                labels = copy.deepcopy(list(name_classes))
+                labels.append('Пустой бокс')
+                print('\nlabels', labels)
                 return_data.append(
                     self._fill_heatmap_front_structure(
                         _id=1,
@@ -2815,7 +2817,7 @@ class InteractiveCallback:
                         short_name=f"{box_channel} - Матрица классов",
                         x_label="Предсказание",
                         y_label="Истинное значение",
-                        labels=name_classes,
+                        labels=labels,
                         data_array=class_matrix,
                         data_percent_array=class_matrix_percent,
                     )
