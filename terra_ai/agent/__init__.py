@@ -228,12 +228,17 @@ class Exchange:
         """
         return datasets_utils.get_classes_annotation(path).native()
 
-    def _call_dataset_create(self, creation_data: CreationData) -> DatasetData:
+    def _call_dataset_create(self, creation_data: CreationData):
         """
         Создание датасета из исходников
         """
-        creation = CreateDataset(creation_data)
-        return creation.datasetdata
+        CreateDataset(creation_data)
+
+    def _call_dataset_create_progress(self) -> progress.ProgressData:
+        """
+        Прогресс создание датасета из исходников
+        """
+        return progress.pool("create_dataset")
 
     def _call_datasets_sources(self, path: str) -> FilePathSourcesList:
         """

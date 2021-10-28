@@ -112,16 +112,20 @@ class CreateAPIView(BaseAPIView):
         serializer = CreateSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
-
         data = CreationData(**serializer.data)
+        agent_exchange("dataset_create", creation_data=data)
+        return BaseResponseSuccess()
 
-        try:
-            return BaseResponseSuccess(
-                data=agent_exchange("dataset_create", creation_data=data).native()
-            )
-        except (TerraBaseException, ExchangeBaseException) as error:
-            shutil.rmtree(data.path, ignore_errors=True)
-            return BaseResponseErrorGeneral(str(error))
+
+class CreateProgressAPIView(BaseAPIView):
+    @staticmethod
+    def post(request, **kwargs):
+        progress = agent_exchange("dataset_create_progress")
+        if progress.success:
+            return BaseResponseSuccess(progress.native())
+        else:
+            shutil.rmtree(progress.data.get("path"), ignore_errors=True)
+            return BaseResponseErrorGeneral(progress.error, data=progress.native())
 
 
 class SourcesAPIView(BaseAPIView):

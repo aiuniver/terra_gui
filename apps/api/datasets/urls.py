@@ -13,6 +13,11 @@ urlpatterns = [
         name="choice_progress",
     ),
     path("info/", views.InfoAPIView.as_view(), name="info"),
+    path(
+        "create/progress/",
+        views.CreateProgressAPIView.as_view(),
+        name="create_progress",
+    ),
     path("create/", views.CreateAPIView.as_view(), name="create"),
     path(
         "source/load/progress/",
