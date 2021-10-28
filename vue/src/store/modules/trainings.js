@@ -40,10 +40,7 @@ export default {
     },
     SET_CONFIG (state, value) {
       state.training = { ...value };
-      // console.log(value)
-      // if (!Object.keys(state.interactive).length) {
       state.interactive = JSON.parse(JSON.stringify(value.interactive))
-      // }
     },
     SET_STATE_PARAMS (state, value) {
       state.stateParams = { ...value };
@@ -124,8 +121,9 @@ export default {
       // console.log(JSON.stringify(data, null, 2))
       const res = await dispatch('axios', { url: '/training/update/', data }, { root: true });
       if (res) {
-        const { base } = res.data
+        const { data, form: { base } } = res.data
         commit("SET_PARAMS", base);
+        commit("SET_CONFIG", data);
       }
       return res
     },

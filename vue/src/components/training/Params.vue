@@ -153,8 +153,9 @@ export default {
         }
       }
     },
-    parse({ parse, value, name, changeable, mounted }) {
-      console.log({ parse, value, name, changeable, mounted });
+    parse({ parse, value, changeable, mounted }) {
+    // parse({ parse, value, name, changeable, mounted }) {
+      // console.log({ parse, value, name, changeable, mounted });
       ser(this.trainSettings, parse, value);
       this.trainSettings = { ...this.trainSettings };
       if (!mounted && changeable) {

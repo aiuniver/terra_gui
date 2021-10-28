@@ -223,7 +223,6 @@ export default {
       this.graphicShow = !this.graphicShow;
     },
     outside() {
-      console.log('sdsdsd');
       this.popMenuShow = false;
     },
   },
