@@ -397,6 +397,46 @@ class ArchitectureBasicForm(ArchitectureBaseForm):
         fields[0].value = value
 
 
+class ArchitectureImageClassificationForm(ArchitectureBasicForm):
+    pass
+
+
+class ArchitectureImageSegmentationForm(ArchitectureBasicForm):
+    pass
+
+
+class ArchitectureTextClassificationForm(ArchitectureBasicForm):
+    pass
+
+
+class ArchitectureTextSegmentationForm(ArchitectureBasicForm):
+    pass
+
+
+class ArchitectureDataframeClassificationForm(ArchitectureBasicForm):
+    pass
+
+
+class ArchitectureDataframeRegressionForm(ArchitectureBasicForm):
+    pass
+
+
+class ArchitectureTimeseriesForm(ArchitectureBasicForm):
+    pass
+
+
+class ArchitectureTimeseriesTrendForm(ArchitectureBasicForm):
+    pass
+
+
+class ArchitectureAudioClassificationForm(ArchitectureBasicForm):
+    pass
+
+
+class ArchitectureVideoClassificationForm(ArchitectureBasicForm):
+    pass
+
+
 class ArchitectureYoloBaseForm(ArchitectureBaseForm):
     yolo: DefaultsTrainingBaseGroupData
 

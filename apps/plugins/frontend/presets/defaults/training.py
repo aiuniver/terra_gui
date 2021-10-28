@@ -339,78 +339,91 @@ ArchitectureGroupYoloV4 = {
 }
 
 
-Architectures = {
-    ArchitectureChoice.Basic: {
-        "main": ArchitectureGroupMain,
-        "fit": ArchitectureGroupFit,
-        "optimizer": ArchitectureGroupOptimizer,
-        "outputs": {
-            "name": "Параметры выходных слоев",
-            "collapsable": True,
-            "collapsed": False,
-            "fields": {},
-        },
-        "checkpoint": {
-            "name": "Чекпоинты",
-            "collapsable": True,
-            "collapsed": False,
-            "fields": [
-                {
-                    "type": "select",
-                    "label": "Функция",
-                    "name": "architecture_parameters_checkpoint_metric_name",
-                    "parse": "architecture[parameters][checkpoint][metric_name]",
-                    "list": [],
-                },
-                {
-                    "type": "select",
-                    "label": "Монитор",
-                    "name": "architecture_parameters_checkpoint_layer",
-                    "parse": "architecture[parameters][checkpoint][layer]",
-                    "list": [],
-                },
-                {
-                    "type": "select",
-                    "label": "Indicator",
-                    "name": "architecture_parameters_checkpoint_indicator",
-                    "parse": "architecture[parameters][checkpoint][indicator]",
-                    "value": CheckpointIndicatorChoice.Val.name,
-                    "list": list(
-                        map(
-                            lambda item: {"value": item.name, "label": item.value},
-                            list(CheckpointIndicatorChoice),
-                        )
-                    ),
-                },
-                {
-                    "type": "select",
-                    "label": "Тип",
-                    "name": "architecture_parameters_checkpoint_type",
-                    "parse": "architecture[parameters][checkpoint][type]",
-                    "value": CheckpointTypeChoice.Metrics.name,
-                    "list": list(
-                        map(
-                            lambda item: {"value": item.name, "label": item.value},
-                            list(CheckpointTypeChoice),
-                        )
-                    ),
-                },
-                {
-                    "type": "select",
-                    "label": "Режим",
-                    "name": "architecture_parameters_checkpoint_mode",
-                    "parse": "architecture[parameters][checkpoint][mode]",
-                    "value": CheckpointModeChoice.Max.name,
-                    "list": list(
-                        map(
-                            lambda item: {"value": item.name, "label": item.value},
-                            list(CheckpointModeChoice),
-                        )
-                    ),
-                },
-            ],
-        },
+ArchitectureBasicForm = {
+    "main": ArchitectureGroupMain,
+    "fit": ArchitectureGroupFit,
+    "optimizer": ArchitectureGroupOptimizer,
+    "outputs": {
+        "name": "Параметры выходных слоев",
+        "collapsable": True,
+        "collapsed": False,
+        "fields": {},
     },
+    "checkpoint": {
+        "name": "Чекпоинты",
+        "collapsable": True,
+        "collapsed": False,
+        "fields": [
+            {
+                "type": "select",
+                "label": "Функция",
+                "name": "architecture_parameters_checkpoint_metric_name",
+                "parse": "architecture[parameters][checkpoint][metric_name]",
+                "list": [],
+            },
+            {
+                "type": "select",
+                "label": "Монитор",
+                "name": "architecture_parameters_checkpoint_layer",
+                "parse": "architecture[parameters][checkpoint][layer]",
+                "list": [],
+            },
+            {
+                "type": "select",
+                "label": "Indicator",
+                "name": "architecture_parameters_checkpoint_indicator",
+                "parse": "architecture[parameters][checkpoint][indicator]",
+                "value": CheckpointIndicatorChoice.Val.name,
+                "list": list(
+                    map(
+                        lambda item: {"value": item.name, "label": item.value},
+                        list(CheckpointIndicatorChoice),
+                    )
+                ),
+            },
+            {
+                "type": "select",
+                "label": "Тип",
+                "name": "architecture_parameters_checkpoint_type",
+                "parse": "architecture[parameters][checkpoint][type]",
+                "value": CheckpointTypeChoice.Metrics.name,
+                "list": list(
+                    map(
+                        lambda item: {"value": item.name, "label": item.value},
+                        list(CheckpointTypeChoice),
+                    )
+                ),
+            },
+            {
+                "type": "select",
+                "label": "Режим",
+                "name": "architecture_parameters_checkpoint_mode",
+                "parse": "architecture[parameters][checkpoint][mode]",
+                "value": CheckpointModeChoice.Max.name,
+                "list": list(
+                    map(
+                        lambda item: {"value": item.name, "label": item.value},
+                        list(CheckpointModeChoice),
+                    )
+                ),
+            },
+        ],
+    },
+}
+
+
+Architectures = {
+    ArchitectureChoice.Basic: {**ArchitectureBasicForm},
+    ArchitectureChoice.ImageClassification: {**ArchitectureBasicForm},
+    ArchitectureChoice.ImageSegmentation: {**ArchitectureBasicForm},
+    ArchitectureChoice.TextClassification: {**ArchitectureBasicForm},
+    ArchitectureChoice.TextSegmentation: {**ArchitectureBasicForm},
+    ArchitectureChoice.DataframeClassification: {**ArchitectureBasicForm},
+    ArchitectureChoice.DataframeRegression: {**ArchitectureBasicForm},
+    ArchitectureChoice.Timeseries: {**ArchitectureBasicForm},
+    ArchitectureChoice.TimeseriesTrend: {**ArchitectureBasicForm},
+    ArchitectureChoice.AudioClassification: {**ArchitectureBasicForm},
+    ArchitectureChoice.VideoClassification: {**ArchitectureBasicForm},
     ArchitectureChoice.YoloV3: {
         "main": ArchitectureGroupMain,
         "fit": ArchitectureGroupFit,

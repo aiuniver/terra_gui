@@ -350,8 +350,8 @@ class Project(BaseMixinData):
 
     def set_training(self, data: dict = None):
         self.update_training_base(data.get("base") if data else None)
-        # self.update_training_interactive()
-        # self.update_training_state()
+        self.update_training_interactive()
+        self.update_training_state()
 
     def clear_model(self):
         if self.dataset:
