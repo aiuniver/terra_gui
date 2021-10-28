@@ -137,7 +137,7 @@ class MyCallback(tf.keras.callbacks.Callback):
         self.samples_target_val = []
 
         mAP = get_mAP(self.model, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
-                            TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names)
+                      TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names)
         # print(mAP)
         ### Пока что для визуализации Yolo
         detect_image(Yolo=self.model, original_image=self.inp['1'].numpy()[0], output_path=output_path,
@@ -209,6 +209,7 @@ class GUINN:
         self.yolo_pred = None
 
         self.batch_size = 128
+        self.val_batch_size = 1
         self.epochs = 5
         self.sum_epoch = 0
         self.stop_training = False
@@ -427,7 +428,7 @@ class GUINN:
             deploy_type = ArchitectureChoice.__dict__[out_task_name]
         elif out_task_name == LayerOutputTypeChoice.ObjectDetection:
             deploy_type = ArchitectureChoice.__dict__[dataset.instructions.get(2).parameters.model.title() +
-                                                       dataset.instructions.get(2).parameters.yolo.title()]
+                                                      dataset.instructions.get(2).parameters.yolo.title()]
         else:
             raise MethodNotImplementedException(__method=inp_task_name + out_task_name, __class="ArchitectureChoice")
         return deploy_type
@@ -512,6 +513,35 @@ class GUINN:
                 progress.pool(self.progress_name, message="Найдено незавершенное обучение. Идет очистка. Подождите.")
                 one_thread.join()
                 interactive.set_status(current_status)
+
+    @staticmethod
+    def _get_val_batch_size(batch_size, len_val):
+        def issimple(a):
+            lst = []
+            for i in range(2, a):
+                if a % i == 0:
+                    if issimple(i) == []:
+                        lst.append(i)
+            return lst
+
+        min_step = 0
+        for i in range(3):
+            r = issimple(len_val - i)
+            if len(r):
+                try:
+                    min_step = min(r)
+                    if len_val // min_step > batch_size:
+                        for k in r:
+                            if len_val // k <= batch_size:
+                                min_step = k
+                                break
+                    break
+                except ValueError:
+                    pass
+            else:
+                min_step = len_val
+        val_batch_size = len_val // min_step
+        return val_batch_size
 
     def terra_fit(self,
                   dataset: DatasetData,
@@ -621,10 +651,10 @@ class GUINN:
             critical_val_size = len(self.dataset.dataset.get('val'))
             buffer_size = 1000
 
-        if (critical_val_size == self.batch_size) or (critical_val_size > self.batch_size):
-            n_repeat = 1
+        if (critical_val_size == self.batch_size) or ((critical_val_size % self.batch_size) == 0):
+            self.val_batch_size = self.batch_size
         else:
-            n_repeat = (self.batch_size // critical_val_size) + 1
+            self.val_batch_size = self._get_val_batch_size(self.batch_size, critical_val_size)
 
         trained_model = model_yolo if model_yolo else self.model
 
@@ -634,9 +664,10 @@ class GUINN:
                     self.batch_size, drop_remainder=True).prefetch(buffer_size=tf.data.AUTOTUNE).take(-1),
                 batch_size=self.batch_size,
                 shuffle=self.shuffle,
-                validation_data=self.dataset.dataset.get('val').repeat(n_repeat).batch(
-                    self.batch_size,
-                    drop_remainder=True).take(-1).prefetch(buffer_size=tf.data.AUTOTUNE),
+                validation_data=self.dataset.dataset.get('val').batch(
+                    self.val_batch_size,
+                    drop_remainder=True).prefetch(buffer_size=tf.data.AUTOTUNE).take(-1),
+                validation_batch_size=self.val_batch_size,
                 epochs=self.epochs,
                 verbose=verbose,
                 callbacks=self.callbacks
@@ -713,7 +744,6 @@ class GUINN:
 
             def on_test_batch_end(self, batch, logs=None):
                 self.samples_val.append(self.logs_extract(logs))
-
 
             def on_epoch_end(self, epoch, logs=None):
                 output_path = self.image_path.format(epoch)
