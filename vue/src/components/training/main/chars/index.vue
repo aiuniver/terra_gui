@@ -45,14 +45,7 @@ export default {
       return ['addtrain', 'training'].includes(this.status);
     },
     menus() {
-      return { isClass: this.classGraphics, outputs: this.allOutputs, type: this.metric };
-    },
-    allOutputs() {
-      console.log(this.metrics);
-      return this.metrics.map((item, i) => ({
-        id: i,
-        ...item,
-      }));
+      return { isClass: this.classGraphics, outputs: this.outputs, type: this.metric };
     },
     classGraphics() {
       return this.$store.getters['trainings/getTrainData']('class_graphics');
@@ -76,7 +69,6 @@ export default {
       return this.outputs.find(item => item.id).id;
     },
     metrics() {
-      console.log(this.outputs)
       return this.outputs?.[0].metrics ?? [];
     },
   },
