@@ -2570,7 +2570,8 @@ class CreateArray(object):
                         {
                             "title": "Изображение",
                             "value": save_true_predict_path,
-                            "color_mark": None
+                            "color_mark": None,
+                            "size": "large"
                         }
                     ]
                 }
@@ -2587,7 +2588,8 @@ class CreateArray(object):
                         {
                             "title": "Изображение",
                             "value": save_predict_path,
-                            "color_mark": None
+                            "color_mark": None,
+                            "size": "large"
                         }
                     ]
                 }
@@ -2623,8 +2625,8 @@ class CreateArray(object):
                             },
                             {
                                 "title": "Класс",
-                                "value": f"{np.round(box_stat['total_stat']['total_overlap'] * 100, 2)}%",
-                                "color_mark": 'success' if box_stat['total_stat']['total_overlap'] >= 0.7 else 'wrong'
+                                "value": f"{np.round(box_stat['total_stat']['total_class'] * 100, 2)}%",
+                                "color_mark": 'success' if box_stat['total_stat']['total_class'] >= 0.7 else 'wrong'
                             },
                         ]
                     }

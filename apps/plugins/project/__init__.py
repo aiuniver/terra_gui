@@ -271,7 +271,11 @@ class Project(BaseMixinData):
 
     def update_training_base(self, data: dict = None):
         if isinstance(data, dict):
-            data["architecture"]["type"] = self.dataset.architecture.value
+            data["architecture"]["type"] = (
+                self.dataset.architecture.value
+                if self.dataset
+                else ArchitectureChoice.Basic.value
+            )
             data["architecture"]["model"] = self.model
             data["architecture"]["parameters"]["model"] = self.model
         else:

@@ -223,7 +223,7 @@ class GUINN:
 
     def _set_callbacks(self, dataset: PrepareDataset, dataset_data: DatasetData,
                        batch_size: int, epochs: int, dataset_path: str,
-                       checkpoint: dict, save_model_path: str) -> None:
+                       checkpoint: dict, save_model_path: str, initial_model=None) -> None:
         progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков...'})
         retrain_epochs = self.sum_epoch if interactive.get_states().get("status") == "addtrain" else self.epochs
         # if dataset_data.architecture in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]:
@@ -236,7 +236,8 @@ class GUINN:
         callback = FitCallback(dataset=dataset, dataset_data=dataset_data, checkpoint_config=checkpoint,
                                batch_size=batch_size, epochs=epochs, retrain_epochs=retrain_epochs,
                                save_model_path=save_model_path, model_name=self.nn_name,
-                               dataset_path=dataset_path, deploy_type=self.deploy_type)
+                               dataset_path=dataset_path, deploy_type=self.deploy_type,
+                               initialed_model=initial_model)
         self.callbacks = [callback]
         # checkpoint.update([('filepath', 'test_model.h5')])
         # self.callbacks.append(keras.callbacks.ModelCheckpoint(**checkpoint))
@@ -378,6 +379,7 @@ class GUINN:
                     if issimple(i) == []:
                         lst.append(i)
             return lst
+
         min_step = 0
         for i in range(3):
             r = issimple(len_val - i)
@@ -504,7 +506,8 @@ class GUINN:
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели выполнена'})
         self._set_callbacks(dataset=dataset, dataset_data=dataset_data, batch_size=params.batch,
                             epochs=params.epochs, save_model_path=save_model_path, dataset_path=dataset_path,
-                            checkpoint=params.architecture.parameters.checkpoint.native())
+                            checkpoint=params.architecture.parameters.checkpoint.native(),
+                            initial_model=self.model if yolo_arch else None)
         progress.pool(self.progress_name, finished=False, data={'status': 'Начало обучения ...'})
         if self.dataset.data.use_generator:
             critical_val_size = len(self.dataset.dataframe.get("val"))
@@ -607,7 +610,7 @@ class FitCallback(keras.callbacks.Callback):
     def __init__(self, dataset: PrepareDataset, dataset_data: DatasetData, checkpoint_config: dict,
                  batch_size: int = None, epochs: int = None, dataset_path: str = "",
                  retrain_epochs: int = None, save_model_path: str = "./", model_name: str = "noname",
-                 deploy_type: str = ""):
+                 deploy_type: str = "", initialed_model=None):
         """
         Для примера
         "checkpoint": {
@@ -668,12 +671,15 @@ class FitCallback(keras.callbacks.Callback):
             'train_data': None,
             'states': {}
         }
+        # аттрибуты для чекпоинта
         self.checkpoint_config = checkpoint_config
         self.num_outputs = len(self.dataset.data.outputs.keys())
-        # аттрибуты для чекпоинта
+        self.metric_checkpoint = "val_mAP50" if self.is_yolo else "loss"
+
         self.log_history = self._load_logs()
 
         # yolo params
+        self.yolo_model = initialed_model
         self.image_path = os.path.join(os.path.split(self.save_model_path)[0], "deploy", 'chess_{}.jpg')
         self.samples_train = []
         self.samples_val = []
@@ -682,8 +688,6 @@ class FitCallback(keras.callbacks.Callback):
 
     def _get_metric_name_checkpoint(self, logs: dict):
         """Поиск среди fit_logs нужного параметра"""
-        # self.metric_checkpoint = "total_loss"
-        print('\n_get_metric_name_checkpoint', self.metric_checkpoint, self.checkpoint_config)
         for log in logs.keys():
             if self.checkpoint_config.get("type") == CheckpointTypeChoice.Loss and \
                     self.checkpoint_config.get("indicator") == CheckpointIndicatorChoice.Val and \
@@ -825,10 +829,9 @@ class FitCallback(keras.callbacks.Callback):
         """Оценка текущей эпохи"""
         try:
             if logs.get(self.metric_checkpoint):
-                print('\nself.metric_checkpoint)', self.metric_checkpoint)
-                print('logs.get(self.metric_checkpoint)', logs.get(self.metric_checkpoint))
-                print('self.log_history.get("logs").get(self.metric_checkpoint))',
-                      self.log_history.get("logs").get(self.metric_checkpoint))
+                # print('\nself.metric_checkpoint)', self.metric_checkpoint)
+                # print('logs.get(self.metric_checkpoint)', logs.get(self.metric_checkpoint))
+                # print('self.log_history.get("logs").get(self.metric_checkpoint))', self.log_history.get("logs").get(self.metric_checkpoint))
                 if self.checkpoint_config.get("mode") == CheckpointModeChoice.Min and \
                         logs.get(self.metric_checkpoint) < min(self.log_history.get("logs").get(self.metric_checkpoint)):
                     return True
@@ -894,7 +897,7 @@ class FitCallback(keras.callbacks.Callback):
                                                                           "deploy_presets"),
                                                    dataset_path=self.dataset_path)
         deploy_presets = []
-        print(result.keys())
+        # print(result.keys())
         if result:
             deploy_presets = list(result.values())[0]
         return deploy_presets
@@ -954,7 +957,10 @@ class FitCallback(keras.callbacks.Callback):
             if i[-3:] == '.h5' and 'best' in i:
                 weight = i
         if weight:
-            self.model.load_weights(os.path.join(self.save_model_path, weight))
+            if self.yolo_model:
+                self.yolo_model.load_weights(os.path.join(self.save_model_path, weight))
+            else:
+                self.model.load_weights(os.path.join(self.save_model_path, weight))
         deploy_predict, y_true = self._get_predict()
         deploy_presets_data = self._deploy_predict(deploy_predict)
         out_deploy_presets_data = {"data": deploy_presets_data}
@@ -1099,7 +1105,8 @@ class FitCallback(keras.callbacks.Callback):
             {}:
         """
         y_pred, y_true = self._get_predict()
-        total_epochs = self.retrain_epochs if interactive.get_states().get('status') in ['addtrain', 'stopped'] else self.epochs
+        total_epochs = self.retrain_epochs if interactive.get_states().get('status') in ['addtrain',
+                                                                                         'stopped'] else self.epochs
         if self.is_yolo:
             mAP = get_mAP(self.model, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
                           TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names)
@@ -1149,8 +1156,7 @@ class FitCallback(keras.callbacks.Callback):
         # сохранение лучших весов
         if self.last_epoch > 1:
             try:
-                print('\nself._best_epoch_monitoring', self._best_epoch_monitoring)
-                if self._best_epoch_monitoring(logs):
+                if self._best_epoch_monitoring(interactive_logs):
                     if not os.path.exists(self.save_model_path):
                         os.mkdir(self.save_model_path)
                     if not os.path.exists(os.path.join(self.save_model_path, "deploy_presets")):
@@ -1158,7 +1164,10 @@ class FitCallback(keras.callbacks.Callback):
                     file_path_best: str = os.path.join(
                         self.save_model_path, f"best_weights_{self.metric_checkpoint}.h5"
                     )
-                    self.model.save_weights(file_path_best)
+                    if self.yolo_model:
+                        self.yolo_model.save_weights(file_path_best)
+                    else:
+                        self.model.save_weights(file_path_best)
                     # print(f"Epoch {self.last_epoch} - best weights was successfully saved")
             except Exception as e:
                 print('\nself.model.save_weights failed', e)
@@ -1173,7 +1182,10 @@ class FitCallback(keras.callbacks.Callback):
             file_path_last: str = os.path.join(
                 self.save_model_path, f"last_weights_{self.metric_checkpoint}.h5"
             )
-            self.model.save_weights(file_path_last)
+            if self.yolo_model:
+                self.yolo_model.save_weights(file_path_last)
+            else:
+                self.model.save_weights(file_path_last)
         if not os.path.exists(os.path.join(self.save_model_path, "deploy_presets")):
             os.mkdir(os.path.join(self.save_model_path, "deploy_presets"))
         self._prepare_deploy()
