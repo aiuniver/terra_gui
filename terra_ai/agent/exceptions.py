@@ -60,11 +60,11 @@ class ExceptionMessages(dict, Enum):
     FailedDeleteModel = {"ru": "Не получилось удалить модель. %s",
                          "eng": "Error when deleting the model: %s"}
     # Training
-    FailedStartTrain = {"ru": "Не удалось начать обучение. %s",
+    FailedStartTrain = {"ru": "Ошибка при старте обучения: %s",
                         "eng": "Error when start training. %s"}
-    FailedStopTrain = {"ru": "Ошибка при попытке остановить обучение: %s",
+    FailedStopTrain = {"ru": "Ошибка при остановке обучения: %s",
                        "eng": "Error when stop training model: %s"}
-    FailedCleanTrain = {"ru": "Не удалось очистить обучение. %s",
+    FailedCleanTrain = {"ru": "Ошибка при сбросе обучения: %s",
                         "eng": "Error when clean training model: %s"}
     FailedSetInteractiveConfig = {"ru": "Не удалось обновить параметры обучения. %s",
                                   "eng": "Error when setting interactive config: %s"}

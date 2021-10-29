@@ -1,7 +1,10 @@
-import json
+import os
 import random
-from pathlib import Path
-from typing import List, Any
+from pathlib import Path, PurePath
+from typing import List
+
+from PIL import Image
+from pydantic import FilePath
 
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.settings import DEPLOY_PRESET_COUNT
@@ -9,11 +12,14 @@ from ..extra import DataBaseList, DataBase
 
 
 class Item(BaseMixinData):
-    source: dict
-    predict: Any
+    source: FilePath
+    predict: FilePath
 
 
 class DataList(DataBaseList):
+    preset_path: Path = PurePath()
+    predict_path: Path = PurePath()
+
     class Meta:
         source = Item
 
@@ -25,16 +31,23 @@ class DataList(DataBaseList):
         if not len(self):
             return
 
+        self.preset_path = Path(self.path, "preset", "in")
+        self.predict_path = Path(self.path, "preset", "out")
+        os.makedirs(self.preset_path, exist_ok=True)
+        os.makedirs(self.predict_path, exist_ok=True)
+
         for _index in indexes:
-            item = random.choice(self)
-            self.preset[_index] = item
+            self.update(_index)
 
-        _presets = []
-        for preset in self.preset:
-            _presets.append(preset.native())
+    def update(self, index: int):
+        item = random.choice(self)
+        self.preset[index] = item
 
-        with open(Path(self.path, "presets.json"), "w") as preset_file_ref:
-            preset_file_ref.write(json.dumps(_presets, ensure_ascii=False))
+        destination_source = Path(self.preset_path, f"{index + 1}.jpg")
+        destination_predict = Path(self.predict_path, f"{index + 1}.jpg")
+
+        Image.open(item.source).save(destination_source)
+        Image.open(item.predict).save(destination_predict)
 
 
 class Data(DataBase):
