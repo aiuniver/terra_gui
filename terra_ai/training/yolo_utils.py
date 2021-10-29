@@ -450,7 +450,7 @@ class CustomModelYolo(keras.Model):
         self.TRAIN_LR_INIT = lr_init
         self.TRAIN_LR_END = lr_end
         self.YOLO_IOU_LOSS_THRESH = iou_thresh
-        self.steps_per_epoch = int(len(self.dataset.dataset['train']) // self.train_batch)
+        self.steps_per_epoch = int(len(self.dataset.dataframe['train']) // self.train_batch)
         self.global_steps = tf.Variable(1, trainable=False, dtype=tf.int64)
         self.warmup_steps = self.TRAIN_WARMUP_EPOCHS * self.steps_per_epoch
         self.total_steps = self.train_epochs * self.steps_per_epoch
