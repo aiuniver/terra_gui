@@ -10,10 +10,13 @@
       </div>
       <div v-if="isYolo">
         <t-field inline label="Чувствительность">
-          <t-input-new type="number" small style="width: 109px" @change="show" />
+          <t-input-new v-model.number="settings.sensitivity" type="number" small style="width: 109px" @change="send" />
         </t-field>
         <t-field inline label="Порог отображения">
-          <t-input-new type="number" small style="width: 109px" @change="show" />
+          <t-input-new v-model.number="settings.threashold" type="number" small style="width: 109px" @change="send" />
+        </t-field>
+        <t-field inline label="Бокс-канал">
+          <t-select-new :list="numOutput" v-model="settings.box_channel" small @change="send" />
         </t-field>
       </div>
       <div>
@@ -81,6 +84,14 @@ export default {
         return {
           id: item.id,
           value: this.ids.includes(item.id),
+        };
+      });
+    },
+    numOutput() {
+      return this.outputs.map((_, i) => {
+        return {
+          label: `${i}`,
+          value: i,
         };
       });
     },
