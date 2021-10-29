@@ -270,7 +270,7 @@ class Project(BaseMixinData):
         self.save()
 
     def update_training_base(self, data: dict = None):
-        if isinstance(data, dict):
+        if isinstance(data, dict) and data:
             data["architecture"]["type"] = (
                 self.dataset.architecture.value
                 if self.dataset

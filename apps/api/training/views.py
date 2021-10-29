@@ -33,11 +33,11 @@ class StopAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         agent_exchange("training_stop")
         request.project.training.set_state()
-        request.project.update_training_base(request.data)
+        request.project.update_training_base(request.project.training.base.native())
         return BaseResponseSuccess(
             {
                 "form": defaults_data.training.native(),
-                "state": request.project.training.state.native()
+                "state": request.project.training.state.native(),
             }
         )
 
@@ -47,11 +47,11 @@ class ClearAPIView(BaseAPIView):
         agent_exchange("training_clear")
         request.project.training.set_state()
         request.project.training.result = None
-        request.project.update_training_base(request.data)
+        request.project.update_training_base(request.project.training.base.native())
         return BaseResponseSuccess(
             {
                 "form": defaults_data.training.native(),
-                "state": request.project.training.state.native()
+                "state": request.project.training.state.native(),
             }
         )
 
