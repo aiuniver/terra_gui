@@ -510,19 +510,22 @@ class GUINN:
                             initial_model=self.model if yolo_arch else None)
         progress.pool(self.progress_name, finished=False, data={'status': 'Начало обучения ...'})
         if self.dataset.data.use_generator:
+            print('use generator')
             critical_val_size = len(self.dataset.dataframe.get("val"))
             buffer_size = 100
         else:
+            print('dont use generator')
             critical_val_size = len(self.dataset.dataset.get('val'))
             buffer_size = 1000
-
+        print('critical_val_size', critical_val_size)
         if (critical_val_size == self.batch_size) or ((critical_val_size % self.batch_size) == 0):
             self.val_batch_size = self.batch_size
         elif critical_val_size < self.batch_size:
             self.val_batch_size = critical_val_size
         else:
             self.val_batch_size = self._get_val_batch_size(self.batch_size, critical_val_size)
-        print(self.val_batch_size)
+        print('self.batch_size', self.batch_size)
+        print('self.val_batch_size', self.val_batch_size)
         trained_model = model_yolo if model_yolo else self.model
 
         try:
