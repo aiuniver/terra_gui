@@ -31,7 +31,7 @@ __version__ = 0.085
 
 MAX_TS_GRAPH_COUNT = 200
 MAX_HISTOGRAM_BINS = 50
-MAX_INTERMEDIATE_GRAGH_LENTH = 50
+MAX_INTERMEDIATE_GRAPH_LENGTH = 50
 
 
 def class_counter(y_array, classes_names: list, ohe=True):
@@ -520,7 +520,7 @@ class InteractiveCallback:
     def update_state(self, y_pred, y_true=None, fit_logs=None, current_epoch_time=None,
                      on_epoch_end_flag=False) -> dict:
         # if y_pred is not None:
-            # print('\nupdate_state', fit_logs, len(y_pred), 'on_epoch_end_flag', on_epoch_end_flag)
+        # print('\nupdate_state', fit_logs, len(y_pred), 'on_epoch_end_flag', on_epoch_end_flag)
         if self.log_history:
             if y_pred is not None:
                 if self.options.data.architecture in self.basic_architecture:
@@ -541,17 +541,17 @@ class InteractiveCallback:
                     # print('\nupdate_state num_examples', self.yolo_interactive_config.intermediate_result.num_examples)
                     self.raw_y_pred = y_pred
                     self.raw_y_true = y_true
-                    if self.yolo_interactive_config.intermediate_result.show_results:
+                    if self.interactive_config.intermediate_result.show_results:
                         self.example_idx, _ = CreateArray().prepare_yolo_example_idx_to_show(
                             array=copy.deepcopy(self.y_pred),
                             true_array=copy.deepcopy(self.y_true),
                             name_classes=self.options.data.outputs.get(
                                 list(self.options.data.outputs.keys())[0]).classes_names,
-                            box_channel=self.yolo_interactive_config.intermediate_result.box_channel,
-                            count=self.yolo_interactive_config.intermediate_result.num_examples,
-                            choice_type=self.yolo_interactive_config.intermediate_result.example_choice_type,
+                            box_channel=self.interactive_config.intermediate_result.box_channel,
+                            count=self.interactive_config.intermediate_result.num_examples,
+                            choice_type=self.interactive_config.intermediate_result.example_choice_type,
                             seed_idx=self.seed_idx,
-                            sensitivity=self.yolo_interactive_config.intermediate_result.sensitivity,
+                            sensitivity=self.interactive_config.intermediate_result.sensitivity,
                         )
                 if on_epoch_end_flag:
                     self.current_epoch = fit_logs.get('epoch')
@@ -561,30 +561,27 @@ class InteractiveCallback:
                     # print('\nupdate_state self._update_log_history', self.log_history)
                     self._update_progress_table(current_epoch_time)
                     # print('\nupdate_state self._update_progress_table', self.progress_table)
-                    if self.options.data.architecture in self.basic_architecture:
-                        if self.interactive_config.intermediate_result.autoupdate:
-                            self.intermediate_result = self._get_intermediate_result_request()
-                        if self.interactive_config.statistic_data.output_id \
+                    if self.interactive_config.intermediate_result.autoupdate:
+                        self.intermediate_result = self._get_intermediate_result_request()
+                    if self.options.data.architecture in self.basic_architecture and \
+                            self.interactive_config.statistic_data.output_id \
+                            and self.interactive_config.statistic_data.autoupdate:
+                        self.statistic_result = self._get_statistic_data_request()
+                    if self.options.data.architecture in self.yolo_architecture and  \
+                            self.interactive_config.statistic_data.box_channel \
                                 and self.interactive_config.statistic_data.autoupdate:
-                            self.statistic_result = self._get_statistic_data_request()
-                    if self.options.data.architecture in self.yolo_architecture:
-                        if self.yolo_interactive_config.intermediate_result.autoupdate:
-                            self.intermediate_result = self._get_intermediate_result_request()
-                            # print('\nupdate_state self.intermediate_result', self.intermediate_result)
-                        if self.yolo_interactive_config.statistic_data.box_channel \
-                                and self.yolo_interactive_config.statistic_data.autoupdate:
-                            self.statistic_result = self._get_statistic_data_request()
+                        self.statistic_result = self._get_statistic_data_request()
                             # print('\nupdate_state self.statistic_result', self.statistic_result)
                     # print('\nupdate_state self._get_loss_graph_data_request()', self._get_loss_graph_data_request())
                     # print('\nupdate_state self._get_metric_graph_data_request()', self._get_metric_graph_data_request())
                 else:
                     self.intermediate_result = self._get_intermediate_result_request()
-                    if self.options.data.architecture in self.basic_architecture:
-                        if self.interactive_config.statistic_data.output_id:
-                            self.statistic_result = self._get_statistic_data_request()
-                    if self.options.data.architecture in self.yolo_architecture:
-                        if self.yolo_interactive_config.statistic_data.box_channel:
-                            self.statistic_result = self._get_statistic_data_request()
+                    if self.options.data.architecture in self.basic_architecture and \
+                            self.interactive_config.statistic_data.output_id:
+                        self.statistic_result = self._get_statistic_data_request()
+                    if self.options.data.architecture in self.yolo_architecture and \
+                            self.interactive_config.statistic_data.box_channel:
+                        self.statistic_result = self._get_statistic_data_request()
                 self.urgent_predict = False
                 self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
                 # print('\nupdate_state self.random_key', self.random_key)
@@ -625,22 +622,22 @@ class InteractiveCallback:
                         self.statistic_result = self._get_statistic_data_request()
 
             if self.options.data.architecture in self.yolo_architecture:
-                if self.yolo_interactive_config.intermediate_result.show_results:
+                if self.interactive_config.intermediate_result.show_results:
                     self.example_idx, _ = CreateArray().prepare_yolo_example_idx_to_show(
                         array=copy.deepcopy(self.y_pred),
                         true_array=copy.deepcopy(self.y_true),
                         name_classes=self.options.data.outputs.get(
                             list(self.options.data.outputs.keys())[0]).classes_names,
-                        box_channel=self.yolo_interactive_config.intermediate_result.box_channel,
-                        count=self.yolo_interactive_config.intermediate_result.num_examples,
-                        choice_type=self.yolo_interactive_config.intermediate_result.example_choice_type,
-                        seed_idx=self.seed_idx[:self.yolo_interactive_config.intermediate_result.num_examples],
-                        sensitivity=self.yolo_interactive_config.intermediate_result.sensitivity,
+                        box_channel=self.interactive_config.intermediate_result.box_channel,
+                        count=self.interactive_config.intermediate_result.num_examples,
+                        choice_type=self.interactive_config.intermediate_result.example_choice_type,
+                        seed_idx=self.seed_idx[:self.interactive_config.intermediate_result.num_examples],
+                        sensitivity=self.interactive_config.intermediate_result.sensitivity,
                     )
                 if config.intermediate_result.show_results or config.statistic_data.box_channel:
                     self.urgent_predict = True
                     self.intermediate_result = self._get_intermediate_result_request()
-                    if self.yolo_interactive_config.statistic_data.box_channel:
+                    if self.interactive_config.statistic_data.box_channel:
                         self.statistic_result = self._get_statistic_data_request()
 
             self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
@@ -1349,8 +1346,9 @@ class InteractiveCallback:
                     }
                 }
                 for name in self.options.data.outputs.get(list(self.options.data.outputs.keys())[0]).classes_names:
-                    interactive_log['output']['val']["class_loss"]['prob_loss'][name] = self._round_loss_metric(logs.get(
-                        f'val_prob_loss_{name}'))
+                    interactive_log['output']['val']["class_loss"]['prob_loss'][name] = self._round_loss_metric(
+                        logs.get(
+                            f'val_prob_loss_{name}'))
                     interactive_log['output']['val']["class_metrics"]['mAP50'][name] = self._round_loss_metric(logs.get(
                         f'val_mAP50_class_{name}'))
                     # interactive_log['output']['val']["class_metrics"]['mAP95'][name] = logs.get(f'val_mAP95_class_{name}')
@@ -1713,23 +1711,23 @@ class InteractiveCallback:
                                 'mean_log_history'].append(
                                 self._get_mean_log(self.log_history['output']['metrics'][metric_name])
                             )
-                        metric_overfittng = self._evaluate_overfitting(
+                        metric_overfitting = self._evaluate_overfitting(
                             metric_name,
                             self.log_history['output']['progress_state']['metrics'][metric_name]['mean_log_history'],
                             metric_type='metric'
                         )
-                        if metric_overfittng:
+                        if metric_overfitting:
                             normal_state = False
                         else:
                             normal_state = True
                         if data_idx or data_idx == 0:
                             self.log_history['output']['progress_state']['metrics'][metric_name]['overfitting'][
-                                data_idx] = metric_overfittng
+                                data_idx] = metric_overfitting
                             self.log_history['output']['progress_state']['metrics'][metric_name]['normal_state'][
                                 data_idx] = normal_state
                         else:
                             self.log_history['output']['progress_state']['metrics'][metric_name]['overfitting'].append(
-                                metric_overfittng)
+                                metric_overfitting)
                             self.log_history['output']['progress_state']['metrics'][metric_name]['normal_state'].append(
                                 normal_state)
         except Exception as e:
@@ -1771,7 +1769,7 @@ class InteractiveCallback:
                         f"{self.log_history.get('output').get('loss').get(loss).get('train')[-1]}"
                     self.progress_table[self.current_epoch]["data"]["Прогресс обучения"]["loss"][f'val_{loss}'] = \
                         f"{self.log_history.get('output').get('loss').get(loss).get('val')[-1]}"
-                # print('\nself.progress_table[self.current_epoch]', self.progress_table[self.current_epoch])
+                # print('\n self.progress_table[self.current_epoch]', self.progress_table[self.current_epoch])
                 # print('\n_update_progress_table self.log_history', self.log_history['output']["metrics"])
                 for metric in self.log_history['output']["metrics"].keys():
                     # print(metric)
@@ -1964,10 +1962,9 @@ class InteractiveCallback:
             data_return = []
             # config = self.interactive_config
             if self.options.data.architecture in self.basic_architecture:
-                config = self.interactive_config
-                if not config.loss_graphs or not self.log_history.get("epochs"):
+                if not self.interactive_config.loss_graphs or not self.log_history.get("epochs"):
                     return data_return
-                for loss_graph_config in config.loss_graphs:
+                for loss_graph_config in self.interactive_config.loss_graphs:
                     loss = self.losses.get(f"{loss_graph_config.output_idx}")
                     if self.options.data.architecture in self.yolo_architecture:
                         loss_graph_config.output_idx = 'output'
@@ -2042,16 +2039,16 @@ class InteractiveCallback:
                                             class_name).get(self.losses.get(f"{loss_graph_config.output_idx}")),
                                         label=f"Класс {class_name}"
                                     ) for class_name in
-                                    self.options.data.outputs.get(loss_graph_config.output_idx).classes_names
+                                    self.options.data.outputs.get(int(loss_graph_config.output_idx)).classes_names
                                 ],
                             )
                         )
 
             if self.options.data.architecture in self.yolo_architecture:
-                if not self.yolo_interactive_config.loss_graphs or not self.log_history.get("epochs"):
+                if not self.interactive_config.loss_graphs or not self.log_history.get("epochs"):
                     return data_return
                 _id = 1
-                for loss_graph_config in self.yolo_interactive_config.loss_graphs:
+                for loss_graph_config in self.interactive_config.loss_graphs:
                     # print('\nloss_graph_config', loss_graph_config)
                     if loss_graph_config.show == LossGraphShowChoice.model:
                         # print(self.log_history.get('output').get('loss').keys())
@@ -2228,11 +2225,10 @@ class InteractiveCallback:
                         )
 
             if self.options.data.architecture in self.yolo_architecture:
-                config = self.yolo_interactive_config
-                if not config.metric_graphs or not self.log_history.get("epochs"):
+                if not self.interactive_config.metric_graphs or not self.log_history.get("epochs"):
                     return data_return
                 _id = 1
-                for metric_graph_config in config.metric_graphs:
+                for metric_graph_config in self.interactive_config.metric_graphs:
                     if metric_graph_config.show == MetricGraphShowChoice.model:
                         min_max_mode = loss_metric_config.get("metric").get(metric_graph_config.show_metric.name).get(
                             "mode")
@@ -2350,7 +2346,7 @@ class InteractiveCallback:
                                 x_array=self.x_val.get(f"{inp}") if self.x_val else None,
                                 inverse_x_array=self.inverse_x_val.get(f"{inp}") if self.inverse_x_val else None,
                                 return_mode='callback',
-                                max_lenth=MAX_INTERMEDIATE_GRAGH_LENTH,
+                                max_lenth=MAX_INTERMEDIATE_GRAPH_LENGTH,
                                 templates=[self._fill_graph_plot_data, self._fill_graph_front_structure]
                             )
                             # random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
@@ -2421,7 +2417,7 @@ class InteractiveCallback:
                                 depth=self.inverse_y_true.get("val").get(f"{out}")[self.example_idx[idx]].shape[-2],
                                 show_stat=self.interactive_config.intermediate_result.show_statistic,
                                 templates=[self._fill_graph_plot_data, self._fill_graph_front_structure],
-                                max_lenth=MAX_INTERMEDIATE_GRAGH_LENTH
+                                max_lenth=MAX_INTERMEDIATE_GRAPH_LENGTH
                             )
 
                         elif task == LayerOutputTypeChoice.Dataframe:
@@ -2460,13 +2456,13 @@ class InteractiveCallback:
                             return_data[f"{idx + 1}"]['statistic_values'] = {}
 
             elif self.options.data.architecture in self.yolo_architecture and \
-                    self.yolo_interactive_config.intermediate_result.show_results:
+                    self.interactive_config.intermediate_result.show_results:
                 self._reformat_y_pred(
                     y_pred=self.raw_y_pred,
-                    sensitivity=self.yolo_interactive_config.intermediate_result.sensitivity,
-                    threashold=self.yolo_interactive_config.intermediate_result.threashold
+                    sensitivity=self.interactive_config.intermediate_result.sensitivity,
+                    threashold=self.interactive_config.intermediate_result.threashold
                 )
-                for idx in range(self.yolo_interactive_config.intermediate_result.num_examples):
+                for idx in range(self.interactive_config.intermediate_result.num_examples):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
                         'true_value': {},
@@ -2477,7 +2473,7 @@ class InteractiveCallback:
                     image_path = os.path.join(
                         self.dataset_path, self.options.dataframe.get('val').iat[self.example_idx[idx], 0])
                     # print(image_path)
-                    out = self.yolo_interactive_config.intermediate_result.box_channel
+                    out = self.interactive_config.intermediate_result.box_channel
                     # print(out)
                     # print('self.example_idx[idx]', idx, self.example_idx[idx])
                     # print(out, len(self.y_pred.get(out)), len(self.y_true.get(out)))
@@ -2486,14 +2482,14 @@ class InteractiveCallback:
                         true_array=self.y_true.get(out)[self.example_idx[idx]],
                         image_path=image_path,
                         colors=self.class_colors,
-                        sensitivity=self.yolo_interactive_config.intermediate_result.sensitivity,
+                        sensitivity=self.interactive_config.intermediate_result.sensitivity,
                         image_id=idx,
                         image_size=self.options.data.inputs.get(list(self.options.data.inputs.keys())[0]).shape[:2],
                         name_classes=self.options.data.outputs.get(
                             list(self.options.data.outputs.keys())[0]).classes_names,
                         save_path=self.preset_path,
                         return_mode='callback',
-                        show_stat=self.yolo_interactive_config.intermediate_result.show_statistic
+                        show_stat=self.interactive_config.intermediate_result.show_statistic
                     )
                     if data.get('y_true'):
                         return_data[f"{idx + 1}"]['true_value'][f"Выходной слой"] = data.get('y_true')
@@ -2726,12 +2722,12 @@ class InteractiveCallback:
                         pass
 
             elif self.options.data.architecture in self.yolo_architecture:
-                box_channel = self.yolo_interactive_config.statistic_data.box_channel
+                box_channel = self.interactive_config.statistic_data.box_channel
                 name_classes = self.options.data.outputs.get(list(self.options.data.outputs.keys())[0]).classes_names
                 self._reformat_y_pred(
                     y_pred=self.raw_y_pred,
-                    sensitivity=self.yolo_interactive_config.statistic_data.sensitivity,
-                    threashold=self.yolo_interactive_config.statistic_data.threashold
+                    sensitivity=self.interactive_config.statistic_data.sensitivity,
+                    threashold=self.interactive_config.statistic_data.threashold
                 )
                 object_tt = 0
                 object_tf = 0
@@ -2754,7 +2750,7 @@ class InteractiveCallback:
                         true_bb=self.y_true.get(box_channel)[i],
                         pred_bb=self.y_pred.get(box_channel)[i],
                         name_classes=name_classes,
-                        sensitivity=self.yolo_interactive_config.statistic_data.sensitivity
+                        sensitivity=self.interactive_config.statistic_data.sensitivity
                     )
                     object_ft += len(example_stat['recognize']['empty'])
                     object_tf += len(example_stat['recognize']['unrecognize'])
@@ -3177,7 +3173,7 @@ class InteractiveCallback:
             error = (y_true - y_pred)  # "* 100 / y_true
             if absolute:
                 error = np.abs(error)
-            return InteractiveCallback()._get_distribution_histogram(error, bins=bins, categorical=False)
+            return InteractiveCallback()._get_distribution_histogram(error, categorical=False)
         except Exception as e:
             print_error(InteractiveCallback().name, method_name, e)
 

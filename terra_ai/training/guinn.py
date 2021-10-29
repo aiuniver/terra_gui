@@ -227,7 +227,7 @@ class GUINN:
             })
             interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss,
                                        dataset_path=dataset_path, training_path=training_path,
-                                       yolo_initial_config=initial_config)
+                                       initial_config=initial_config)
 
     def _set_callbacks(self, dataset: PrepareDataset, dataset_data: DatasetData,
                        batch_size: int, epochs: int, dataset_path: str,

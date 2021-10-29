@@ -3,7 +3,7 @@
 """
 
 import json
-from typing import Any, Optional
+from typing import Any, Optional, List
 from pydantic import validator
 from pydantic.types import conint, confloat, PositiveInt
 from pydantic.errors import EnumMemberError
@@ -71,6 +71,7 @@ class ProgressTableList(UniqueListMixin):
 
 
 class StatisticData(BaseMixinData):
+    output_id: List[PositiveInt] = []
     box_channel: conint(ge=0, le=2) = 1
     autoupdate: bool = False
     sensitivity: confloat(gt=0, le=1) = 0.15
