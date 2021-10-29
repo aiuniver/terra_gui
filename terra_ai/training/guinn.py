@@ -160,63 +160,63 @@ class GUINN:
                                        dataset_path=dataset_path, training_path=training_path,
                                        initial_config=initial_config)
         if self.deploy_type in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]:
-            print('self.deploy_type', self.deploy_type)
-            initial_config = InteractiveData(**{
-                'loss_graphs': [
-                    {
-                        'id': 1,
-                        'output_idx': 2,
-                        'show': 'model',
-                    },
-                    {
-                        'id': 2,
-                        'output_idx': 2,
-                        'show': 'classes',
-                    },
-                ],
-                'metric_graphs': [
-                    {
-                        'id': 1,
-                        'output_idx': 2,
-                        'show': 'model',
-                        'show_metric': 'mAP50'
-                    },
-                    {
-                        'id': 2,
-                        'output_idx': 2,
-                        'show': 'classes',
-                        'show_metric': 'mAP50'
-                    }
-                ],
-                'intermediate_result': {
-                    'show_results': True,
-                    'example_choice_type': 'random',
-                    'box_channel': 1,
-                    'num_examples': 5,
-                    'show_statistic': True,
-                    'autoupdate': True,
-                    "sensitivity": 0.25,
-                    'threashold': 0.1
-                },
-                'progress_table': [
-                    {
-                        'output_idx': 2,
-                        'show_loss': True,
-                        'show_metrics': True,
-                    }
-                ],
-                'statistic_data': {
-                    'box_channel': 1,
-                    'autoupdate': True,
-                    "sensitivity": 0.15,
-                    'threashold': 0.1
-                },
-                'data_balance': {
-                    'show_train': False,
-                    'show_val': False,
-                    'sorted': 'alphabetic'  # 'descending', 'ascending'
-                }
-            })
+            # print('self.deploy_type', self.deploy_type)
+            # initial_config = InteractiveData(**{
+            #     'loss_graphs': [
+            #         {
+            #             'id': 1,
+            #             'output_idx': 2,
+            #             'show': 'model',
+            #         },
+            #         {
+            #             'id': 2,
+            #             'output_idx': 2,
+            #             'show': 'classes',
+            #         },
+            #     ],
+            #     'metric_graphs': [
+            #         {
+            #             'id': 1,
+            #             'output_idx': 2,
+            #             'show': 'model',
+            #             'show_metric': 'mAP50'
+            #         },
+            #         {
+            #             'id': 2,
+            #             'output_idx': 2,
+            #             'show': 'classes',
+            #             'show_metric': 'mAP50'
+            #         }
+            #     ],
+            #     'intermediate_result': {
+            #         'show_results': True,
+            #         'example_choice_type': 'random',
+            #         'box_channel': 1,
+            #         'num_examples': 5,
+            #         'show_statistic': True,
+            #         'autoupdate': True,
+            #         "sensitivity": 0.25,
+            #         'threashold': 0.1
+            #     },
+            #     'progress_table': [
+            #         {
+            #             'output_idx': 2,
+            #             'show_loss': True,
+            #             'show_metrics': True,
+            #         }
+            #     ],
+            #     'statistic_data': {
+            #         'box_channel': 1,
+            #         'autoupdate': True,
+            #         "sensitivity": 0.15,
+            #         'threashold': 0.1
+            #     },
+            #     'data_balance': {
+            #         'show_train': False,
+            #         'show_val': False,
+            #         'sorted': 'alphabetic'  # 'descending', 'ascending'
+            #     }
+            # })
             interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss,
                                        dataset_path=dataset_path, training_path=training_path,
                                        initial_config=initial_config)

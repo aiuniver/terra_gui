@@ -1276,7 +1276,7 @@ class CreateArray(object):
             conf_gt = np.expand_dims(np.ones(len(bboxes_gt)), axis=-1)
             _bb = np.concatenate([bboxes_gt, conf_gt, classes_gt], axis=-1)
             bb.append(_bb)
-        for channel in range(len(options.Y.get('val').keys())):
+        for channel in range(len(options.data.outputs.keys())):
             y_true[channel] = bb
         return y_true
 
