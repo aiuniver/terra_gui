@@ -6,7 +6,7 @@ import os
 import random
 import re
 import string
-from typing import Union, Optional, List
+from typing import Union, Optional
 
 import matplotlib
 import pandas as pd
@@ -21,7 +21,7 @@ from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeCh
     LayerEncodingChoice
 from terra_ai.data.presets.training import Metric
 from terra_ai.data.training.extra import LossGraphShowChoice, MetricGraphShowChoice, MetricChoice, ArchitectureChoice
-from terra_ai.data.training.train import InteractiveData, YoloInteractiveData
+from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.training.customlosses import UnscaledMAE
@@ -433,16 +433,15 @@ class InteractiveCallback:
         self.random_key = ''
 
         self.interactive_config: InteractiveData = InteractiveData(**{})
-        self.yolo_interactive_config: YoloInteractiveData = YoloInteractiveData(**{})
         pass
 
     def set_attributes(self, dataset: PrepareDataset, metrics: dict, losses: dict, dataset_path: str,
-                       training_path: str, initial_config: InteractiveData = None,
-                       yolo_initial_config: YoloInteractiveData = None):
+                       training_path: str, initial_config: InteractiveData):
         # print('\ndataset.architecture', dataset.data.architecture)
         # print('\ndataset.data.outputs', dataset.data.outputs)
         # print('\ndataset.data.inputs', dataset.data.inputs)
         self.preset_path = os.path.join(training_path, "presets")
+        self.interactive_config = initial_config
         if not os.path.exists(self.preset_path):
             os.mkdir(self.preset_path)
         if dataset.data.architecture in self.basic_architecture:
@@ -450,10 +449,6 @@ class InteractiveCallback:
             self.metrics = self._reformat_metrics(metrics)
             self.loss_obj = self._prepare_loss_obj(losses)
             self.metrics_obj = self._prepare_metric_obj(metrics)
-            self.interactive_config = initial_config
-        if dataset.data.architecture in self.yolo_architecture:
-            self.yolo_interactive_config = yolo_initial_config
-            # print('\nset_attributes self.yolo_interactive_config', self.yolo_interactive_config)
 
         self.options = dataset
         self._class_metric_list()

@@ -1,7 +1,6 @@
 import gc
 import importlib
 import json
-import math
 import re
 import copy
 import os
@@ -11,7 +10,7 @@ import psutil
 import time
 import pynvml as N
 
-from typing import Tuple, Optional
+from typing import Optional
 
 import numpy as np
 
@@ -19,16 +18,15 @@ import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow import keras
 from tensorflow.keras.models import load_model
-from tensorflow.python.framework.errors_impl import ResourceExhaustedError
 
 from terra_ai import progress
 from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
-from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice, DatasetGroupChoice
+from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice
 from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
 from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, \
     CheckpointModeChoice, ArchitectureChoice
-from terra_ai.data.training.train import TrainData, InteractiveData, YoloInteractiveData
+from terra_ai.data.training.train import TrainData, InteractiveData
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.deploy.create_deploy_package import CascadeCreator
@@ -37,7 +35,7 @@ from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.training.customlosses import DiceCoef, UnscaledMAE, BalancedRecall, BalancedDiceCoef, \
     BalancedPrecision, BalancedFScore, FScore
-from terra_ai.training.yolo_utils import create_yolo, CustomModelYolo, compute_loss, get_mAP, detect_image
+from terra_ai.training.yolo_utils import create_yolo, CustomModelYolo, compute_loss, get_mAP
 from terra_ai.exceptions import training as exceptions, terra_exception
 
 __version__ = 0.02
@@ -171,7 +169,7 @@ class GUINN:
                                        initial_config=initial_config)
         if self.deploy_type in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]:
             print('self.deploy_type', self.deploy_type)
-            initial_config = YoloInteractiveData(**{
+            initial_config = InteractiveData(**{
                 'loss_graphs': [
                     {
                         'id': 1,
