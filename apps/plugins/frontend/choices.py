@@ -236,6 +236,18 @@ class LayerYoloVersionChoice(str, Enum):
         return list(map(lambda item: (item.name, item.value), LayerYoloVersionChoice))
 
 
+class LayerODDatasetTypeChoice(str, Enum):
+    Kitti = "Kitti"
+    Voc = "Voc"
+    Coco = "Coco"
+    Udacity = "Udacity"
+    Yolo = "Yolo"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerODDatasetTypeChoice))
+
+
 class LayerTypeProcessingClassificationChoice(str, Enum):
     categorical = "По категориям"
     ranges = "По диапазонам"
