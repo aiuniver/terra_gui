@@ -63,15 +63,13 @@
 </template>
 
 <script>
-import PredictTable from './PredictTable';
-import LoadSpiner from '@/components/forms/LoadSpiner';
 import { mapGetters } from 'vuex';
 
 export default {
   name: 'Predictions',
   components: {
-    PredictTable,
-    LoadSpiner,
+    PredictTable: () => import('./PredictTable'),
+    // LoadSpiner: () => import('@/components/forms/LoadSpiner'),
   },
   props: {
     outputs: Array,
