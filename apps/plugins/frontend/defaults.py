@@ -148,7 +148,6 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
 
         if arch and status and field[0].name in StatesTrainingBaseParamsDisabled.get(arch, {}).get(status):
             field[0].disabled = True
-            print(field)
 
     def _set_optimizer_type(self, value, **kwargs):
         fields = list(filter(lambda item: item.name == "optimizer", self.main.fields))
