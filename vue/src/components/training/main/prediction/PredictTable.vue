@@ -148,7 +148,7 @@
 
                 <template v-for="key of statistic_values">
                   <template v-for="(item, i) in key.data">
-                    <th class="t-table__header--static" :key="'2th4' + i">{{ item.title }}</th>
+                    <th class="t-table__header--static" :key="'2th4' + i + Date.now()">{{ item.title }}</th>
                   </template>
                 </template>
               </tr>

@@ -15,10 +15,7 @@
       <div class="t-heatmap__x-label">{{ x_label }}</div>
       <scrollbar :ops="ops">
         <div class="t-heatmap__wrapper">
-          <div
-            class="t-heatmap__grid"
-            :style="gridTemplate"
-          >
+          <div class="t-heatmap__grid" :style="gridTemplate">
             <div class="t-heatmap__grid--x-labels">
               <span v-for="(item, idx) in labels" :key="idx" :title="item">{{ item }}</span>
             </div>
@@ -27,11 +24,9 @@
               v-for="(item, i) in values"
               :key="'col_' + i"
               :style="{ background: getColor(percent[i]) }"
-              :title="`${item} / ${percent[i]}%`"
+              :title="`${item}`"
             >
               {{ `${item}` }}
-              <br />
-              {{ `${percent[i]}%` }}
             </div>
           </div>
         </div>
@@ -42,7 +37,7 @@
 
 <script>
 export default {
-  name: 't-heatmap',
+  name: 't-valheatmap',
   props: {
     id: Number,
     task_type: String,
@@ -67,7 +62,9 @@ export default {
       return [].concat(...this.data_array);
     },
     percent() {
-      return [].concat(...this.data_percent_array);
+      return this.values.map(item => {
+        return Math.ceil((item / this.max) * 100)
+      });
     },
     averageVal() {
       return this.values.reduce((prev, cur) => prev + cur) / this.values.length;
@@ -85,18 +82,23 @@ export default {
       return `calc(100% - ${this.width - 10}px)`;
     },
     isSmallMap() {
-      return this.data_array.length < 5
+      return this.data_array.length < 5;
     },
     gridTemplate() {
-      const width = this.isSmallMap ? '80px': '40px'
-      return { gridTemplate: `repeat(${this.data_array.length}, ${width}) / repeat(${this.data_array.length}, ${width})` }
-    }
+      const width = this.isSmallMap ? '80px' : '40px';
+      return {
+        gridTemplate: `repeat(${this.data_array.length}, ${width}) / repeat(${this.data_array.length}, ${width})`,
+      };
+    },
   },
   methods: {
     getColor(val) {
       const light = 66 - (val / 100) * 41;
       return `hsl(212, 100%, ${light}%)`;
     },
+    // percent() {
+    //   return [].concat(...this.data_percent_array);
+    // },
   },
   mounted() {
     this.width = this.$refs.label.offsetWidth + this.$refs.scale.offsetWidth;
@@ -198,22 +200,23 @@ export default {
     }
   }
   &.t-heatmap--small {
-      .t-heatmap__grid {
-        font-size: 14px;
-      }
-      .t-heatmap__grid--x-labels, .t-heatmap__grid--y-labels {
-        font-size: 12px;
-        line-height: 16px;
-      }
-      .t-heatmap__grid--y-labels {
-        * {
-          flex-basis: 80px;
-        }
-      }
-      .t-heatmap__grid--x-labels * {
-        width: 80px;
+    .t-heatmap__grid {
+      font-size: 14px;
+    }
+    .t-heatmap__grid--x-labels,
+    .t-heatmap__grid--y-labels {
+      font-size: 12px;
+      line-height: 16px;
+    }
+    .t-heatmap__grid--y-labels {
+      * {
+        flex-basis: 80px;
       }
     }
+    .t-heatmap__grid--x-labels * {
+      width: 80px;
+    }
+  }
   &__scale {
     display: flex;
     gap: 5px;

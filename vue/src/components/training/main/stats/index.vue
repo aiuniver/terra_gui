@@ -47,6 +47,7 @@ export default {
     Colormap: () => import('../stats/Colormap'),
     Heatmap: () => import('../stats/Heatmap'),
     Corheatmap: () => import('../stats/Corheatmap'),
+    Valheatmap: () => import('../stats/Valheatmap'),
     Scatter: () => import('../stats/Scatter'),
     Histogram: () => import('../stats/Histogram'),
     Bar: () => import('../stats/Histogram'),
