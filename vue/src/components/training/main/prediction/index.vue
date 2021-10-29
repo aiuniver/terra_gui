@@ -22,10 +22,13 @@
       </div>
       <div v-if="isYolo" class="predictions__param">
         <t-field inline label="Чувствительность">
-          <t-input-new type="number" small style="width: 109px" @change="show" />
+          <t-input-new v-model="sensitivity" type="number" small style="width: 109px" @change="show" />
         </t-field>
         <t-field inline label="Порог отображения">
-          <t-input-new type="number" small style="width: 109px" @change="show" />
+          <t-input-new v-model="threashold" type="number" small style="width: 109px" @change="show" />
+        </t-field>
+        <t-field inline label="Бокс-канал">
+          <t-select-new :list="numOutput" v-model="box_channel" small @change="show" />
         </t-field>
       </div>
       <div class="predictions__param">
@@ -90,6 +93,9 @@ export default {
     show_statistic: true,
     fixation: false,
     max: 10,
+    sensitivity: 0.12,
+    box_channel: 1,
+    threashold: 0.1,
   }),
   computed: {
     ...mapGetters({
@@ -110,6 +116,14 @@ export default {
         return {
           label: `Выходной слой ${item.id}`,
           value: item.id,
+        };
+      });
+    },
+    numOutput() {
+      return this.outputs.map((_, i) => {
+        return {
+          label: `${i}`,
+          value: i,
         };
       });
     },
@@ -158,6 +172,8 @@ export default {
         num_examples: this.num_examples > 10 ? 10 : this.num_examples,
         show_results: this.show_results,
         show_statistic: this.show_statistic,
+        sensitivity: this.sensitivity,
+        box_channel: this.box_channel,
       };
       await this.$store.dispatch('trainings/interactive', { intermediate_result: data });
     },

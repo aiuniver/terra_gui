@@ -160,63 +160,63 @@ class GUINN:
                                        dataset_path=dataset_path, training_path=training_path,
                                        initial_config=initial_config)
         if self.deploy_type in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]:
-            print('self.deploy_type', self.deploy_type)
-            initial_config = InteractiveData(**{
-                'loss_graphs': [
-                    {
-                        'id': 1,
-                        'output_idx': 2,
-                        'show': 'model',
-                    },
-                    {
-                        'id': 2,
-                        'output_idx': 2,
-                        'show': 'classes',
-                    },
-                ],
-                'metric_graphs': [
-                    {
-                        'id': 1,
-                        'output_idx': 2,
-                        'show': 'model',
-                        'show_metric': 'mAP50'
-                    },
-                    {
-                        'id': 2,
-                        'output_idx': 2,
-                        'show': 'classes',
-                        'show_metric': 'mAP50'
-                    }
-                ],
-                'intermediate_result': {
-                    'show_results': True,
-                    'example_choice_type': 'random',
-                    'box_channel': 1,
-                    'num_examples': 5,
-                    'show_statistic': True,
-                    'autoupdate': True,
-                    "sensitivity": 0.25,
-                    'threashold': 0.1
-                },
-                'progress_table': [
-                    {
-                        'output_idx': 2,
-                        'show_loss': True,
-                        'show_metrics': True,
-                    }
-                ],
-                'statistic_data': {
-                    'box_channel': 1,
-                    'autoupdate': True,
-                    "sensitivity": 0.15,
-                    'threashold': 0.1
-                },
-                'data_balance': {
-                    'show_train': False,
-                    'show_val': False,
-                    'sorted': 'alphabetic'  # 'descending', 'ascending'
-                }
-            })
+            # print('self.deploy_type', self.deploy_type)
+            # initial_config = InteractiveData(**{
+            #     'loss_graphs': [
+            #         {
+            #             'id': 1,
+            #             'output_idx': 2,
+            #             'show': 'model',
+            #         },
+            #         {
+            #             'id': 2,
+            #             'output_idx': 2,
+            #             'show': 'classes',
+            #         },
+            #     ],
+            #     'metric_graphs': [
+            #         {
+            #             'id': 1,
+            #             'output_idx': 2,
+            #             'show': 'model',
+            #             'show_metric': 'mAP50'
+            #         },
+            #         {
+            #             'id': 2,
+            #             'output_idx': 2,
+            #             'show': 'classes',
+            #             'show_metric': 'mAP50'
+            #         }
+            #     ],
+            #     'intermediate_result': {
+            #         'show_results': True,
+            #         'example_choice_type': 'random',
+            #         'box_channel': 1,
+            #         'num_examples': 5,
+            #         'show_statistic': True,
+            #         'autoupdate': True,
+            #         "sensitivity": 0.25,
+            #         'threashold': 0.1
+            #     },
+            #     'progress_table': [
+            #         {
+            #             'output_idx': 2,
+            #             'show_loss': True,
+            #             'show_metrics': True,
+            #         }
+            #     ],
+            #     'statistic_data': {
+            #         'box_channel': 1,
+            #         'autoupdate': True,
+            #         "sensitivity": 0.15,
+            #         'threashold': 0.1
+            #     },
+            #     'data_balance': {
+            #         'show_train': False,
+            #         'show_val': False,
+            #         'sorted': 'alphabetic'  # 'descending', 'ascending'
+            #     }
+            # })
             interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss,
                                        dataset_path=dataset_path, training_path=training_path,
                                        initial_config=initial_config)
@@ -761,10 +761,10 @@ class FitCallback(keras.callbacks.Callback):
         # print("_fill_log_history", logs)
         self.log_history['epoch'].append(epoch)
         for metric in logs:
-            if logs.get(metric):
-                self.log_history['logs'][metric].append(float(logs.get(metric)))
-            else:
-                self.log_history['logs'][metric].append(None)
+            # if logs.get(metric):
+            self.log_history['logs'][metric].append(float(logs.get(metric)))
+            # else:
+            #     self.log_history['logs'][metric].append(0.)
 
     def _save_logs(self):
         interactive_path = os.path.join(self.save_model_path, "interactive.history")
@@ -823,15 +823,18 @@ class FitCallback(keras.callbacks.Callback):
     def _best_epoch_monitoring(self, logs):
         """Оценка текущей эпохи"""
         try:
-            # print('\nself.metric_checkpoint)', self.metric_checkpoint)
-            # print('logs.get(self.metric_checkpoint)', logs.get(self.metric_checkpoint))
-            # print('self.log_history.get("logs").get(self.metric_checkpoint))', self.log_history.get("logs").get(self.metric_checkpoint))
-            if self.checkpoint_config.get("mode") == CheckpointModeChoice.Min and \
-                    logs.get(self.metric_checkpoint) < min(self.log_history.get("logs").get(self.metric_checkpoint)):
-                return True
-            elif self.checkpoint_config.get("mode") == CheckpointModeChoice.Max and \
-                    logs.get(self.metric_checkpoint) > max(self.log_history.get("logs").get(self.metric_checkpoint)):
-                return True
+            if logs.get(self.metric_checkpoint):
+                # print('\nself.metric_checkpoint)', self.metric_checkpoint)
+                # print('logs.get(self.metric_checkpoint)', logs.get(self.metric_checkpoint))
+                # print('self.log_history.get("logs").get(self.metric_checkpoint))', self.log_history.get("logs").get(self.metric_checkpoint))
+                if self.checkpoint_config.get("mode") == CheckpointModeChoice.Min and \
+                        logs.get(self.metric_checkpoint) < min(self.log_history.get("logs").get(self.metric_checkpoint)):
+                    return True
+                elif self.checkpoint_config.get("mode") == CheckpointModeChoice.Max and \
+                        logs.get(self.metric_checkpoint) > max(self.log_history.get("logs").get(self.metric_checkpoint)):
+                    return True
+                else:
+                    return False
             else:
                 return False
         except Exception as e:
