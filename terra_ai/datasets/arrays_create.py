@@ -2417,17 +2417,9 @@ class CreateArray(object):
             return data
 
     @staticmethod
-    def postprocess_time_series(
-            options: DatasetData,
-            real_x: np.ndarray,
-            inverse_y_true: np.ndarray,
-            inverse_y_pred: np.ndarray,
-            output_id: int,
-            depth: int,
-            show_stat: bool = False,
-            templates: list = None,
-            max_lenth: int = 50
-    ):
+    def postprocess_time_series(options: DatasetData, real_x: np.ndarray, inverse_y_true: np.ndarray,
+            inverse_y_pred: np.ndarray, output_id: int, depth: int, show_stat: bool = False,
+            templates: list = None, max_lenth: int = 50):
 
         """
         real_x = self.inverse_x_val.get(f"{input}")[example_idx]
@@ -2529,17 +2521,9 @@ class CreateArray(object):
 
         if return_mode == 'callback':
             save_true_predict_path, _ = CreateArray().plot_boxes(
-                true_bb=true_array,
-                pred_bb=predict_array,
-                img_path=image_path,
-                name_classes=name_classes,
-                colors=colors,
-                image_id=image_id,
-                add_only_true=False,
-                plot_true=True,
-                image_size=image_size,
-                save_path=save_path,
-                return_mode=return_mode
+                true_bb=true_array, pred_bb=predict_array, img_path=image_path, name_classes=name_classes,
+                colors=colors, image_id=image_id, add_only_true=False, plot_true=True, image_size=image_size,
+                save_path=save_path, return_mode=return_mode
             )
 
             data["y_true"] = {
@@ -2554,17 +2538,9 @@ class CreateArray(object):
             }
 
             save_predict_path, _ = CreateArray().plot_boxes(
-                true_bb=true_array,
-                pred_bb=predict_array,
-                img_path=image_path,
-                name_classes=name_classes,
-                colors=colors,
-                image_id=image_id,
-                add_only_true=False,
-                plot_true=False,
-                image_size=image_size,
-                save_path=save_path,
-                return_mode=return_mode
+                true_bb=true_array, pred_bb=predict_array, img_path=image_path, name_classes=name_classes,
+                colors=colors, image_id=image_id, add_only_true=False, plot_true=False, image_size=image_size,
+                save_path=save_path, return_mode=return_mode
             )
 
             data["y_pred"] = {
@@ -2578,58 +2554,103 @@ class CreateArray(object):
                 ]
             }
             if show_stat:
+                # data["stat"] = {"type": "str", "data": []}
+                # for i, name in enumerate(column_names):
+                #     color_mark = 'success' if deviation[i] < 2 else "wrong"
+                #     data["stat"]["data"].append(
+                #         {
+                #             'title': f"Отклонение - «{name.split('_', 1)[-1]}»",
+                #             'value': f"{np.round(deviation[i], 2)} %",
+                #             'color_mark': color_mark
+                #         }
+                #     )
                 box_stat = CreateArray().get_yolo_example_statistic(
                     true_bb=true_array,
                     pred_bb=predict_array,
                     name_classes=name_classes,
                     sensitivity=sensitivity
                 )
-                data["stat"]["Общая точность"] = [
-                    {
-                        "title": "Среднее",
-                        "value": f"{np.round(box_stat['total_stat']['total_metric'] * 100, 2)}%",
-                        "color_mark": 'success' if box_stat['total_stat']['total_conf'] >= 0.7 else 'wrong'
-                    },
-                ]
-                data["stat"]['Средняя точность'] = [
-                    {
-                        "title": "Перекрытие",
-                        "value": f"{np.round(box_stat['total_stat']['total_overlap'] * 100, 2)}%",
-                        "color_mark": 'success' if box_stat['total_stat']['total_overlap'] >= 0.7 else 'wrong'
-                    },
-                    {
-                        "title": "Объект",
-                        "value": f"{np.round(box_stat['total_stat']['total_conf'] * 100, 2)}%",
-                        "color_mark": 'success' if box_stat['total_stat']['total_conf'] >= 0.7 else 'wrong'
-                    },
-                    {
-                        "title": "Класс",
-                        "value": f"{np.round(box_stat['total_stat']['total_overlap'] * 100, 2)}%",
-                        "color_mark": 'success' if box_stat['total_stat']['total_overlap'] >= 0.7 else 'wrong'
-                    },
-                ]
+                data["stat"]["Общая точность"] = {
+                    "type": "str",
+                    "data": [
+                        {
+                            "title": "Среднее",
+                            "value": f"{np.round(box_stat['total_stat']['total_metric'] * 100, 2)}%",
+                            "color_mark": 'success' if box_stat['total_stat']['total_conf'] >= 0.7 else 'wrong'
+                        },
+                    ]
+                }
+
+                #     [
+                #     {
+                #         "title": "Среднее",
+                #         "value": f"{np.round(box_stat['total_stat']['total_metric'] * 100, 2)}%",
+                #         "color_mark": 'success' if box_stat['total_stat']['total_conf'] >= 0.7 else 'wrong'
+                #     },
+                # ]
+                data["stat"]['Средняя точность'] = {
+                    "type": "str",
+                    "data": [
+                        {
+                            "title": "Перекрытие",
+                            "value": f"{np.round(box_stat['total_stat']['total_overlap'] * 100, 2)}%",
+                            "color_mark": 'success' if box_stat['total_stat']['total_overlap'] >= 0.7 else 'wrong'
+                        },
+                        {
+                            "title": "Объект",
+                            "value": f"{np.round(box_stat['total_stat']['total_conf'] * 100, 2)}%",
+                            "color_mark": 'success' if box_stat['total_stat']['total_conf'] >= 0.7 else 'wrong'
+                        },
+                        {
+                            "title": "Класс",
+                            "value": f"{np.round(box_stat['total_stat']['total_overlap'] * 100, 2)}%",
+                            "color_mark": 'success' if box_stat['total_stat']['total_overlap'] >= 0.7 else 'wrong'
+                        },
+                    ]
+                }
+
+                # data["stat"]['Средняя точность'] = [
+                #     {
+                #         "title": "Перекрытие",
+                #         "value": f"{np.round(box_stat['total_stat']['total_overlap'] * 100, 2)}%",
+                #         "color_mark": 'success' if box_stat['total_stat']['total_overlap'] >= 0.7 else 'wrong'
+                #     },
+                #     {
+                #         "title": "Объект",
+                #         "value": f"{np.round(box_stat['total_stat']['total_conf'] * 100, 2)}%",
+                #         "color_mark": 'success' if box_stat['total_stat']['total_conf'] >= 0.7 else 'wrong'
+                #     },
+                #     {
+                #         "title": "Класс",
+                #         "value": f"{np.round(box_stat['total_stat']['total_overlap'] * 100, 2)}%",
+                #         "color_mark": 'success' if box_stat['total_stat']['total_overlap'] >= 0.7 else 'wrong'
+                #     },
+                # ]
 
                 for class_name in name_classes:
                     mean_overlap = box_stat['class_stat'][class_name]['mean_overlap']
                     mean_conf = box_stat['class_stat'][class_name]['mean_conf']
                     mean_class = box_stat['class_stat'][class_name]['mean_class']
-                    data["stat"][class_name] = [
-                        {
-                            "title": "Перекрытие",
-                            "value": "-" if mean_overlap is None else f"{np.round(mean_overlap * 100, 2)}%",
-                            "color_mark": 'success' if mean_overlap and mean_overlap >= 0.7 else 'wrong'
-                        },
-                        {
-                            "title": "Объект",
-                            "value": "-" if mean_conf is None else f"{np.round(mean_conf * 100, 2)}%",
-                            "color_mark": 'success' if mean_conf and mean_conf >= 0.7 else 'wrong'
-                        },
-                        {
-                            "title": "Класс",
-                            "value": "-" if mean_class is None else f"{np.round(mean_class * 100, 2)}%",
-                            "color_mark": 'success' if mean_class and mean_class >= 0.7 else 'wrong'
-                        },
-                    ]
+                    data["stat"][f'{class_name}'] = {
+                        "type": "str",
+                        "data": [
+                            {
+                                "title": "Перекрытие",
+                                "value": "-" if mean_overlap is None else f"{np.round(mean_overlap * 100, 2)}%",
+                                "color_mark": 'success' if mean_overlap and mean_overlap >= 0.7 else 'wrong'
+                            },
+                            {
+                                "title": "Объект",
+                                "value": "-" if mean_conf is None else f"{np.round(mean_conf * 100, 2)}%",
+                                "color_mark": 'success' if mean_conf and mean_conf >= 0.7 else 'wrong'
+                            },
+                            {
+                                "title": "Класс",
+                                "value": "-" if mean_class is None else f"{np.round(mean_class * 100, 2)}%",
+                                "color_mark": 'success' if mean_class and mean_class >= 0.7 else 'wrong'
+                            },
+                        ]
+                    }
             return data
 
     @staticmethod

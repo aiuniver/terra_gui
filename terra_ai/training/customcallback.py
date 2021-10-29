@@ -2447,21 +2447,6 @@ class InteractiveCallback:
                                 max_lenth=MAX_INTERMEDIATE_GRAPH_LENGTH
                             )
 
-                        elif task == LayerOutputTypeChoice.Dataframe:
-                            data = {
-                                "y_true": {},
-                                "y_pred": {},
-                                "stat": {}
-                            }
-                            pass
-
-                        elif task == LayerOutputTypeChoice.ObjectDetection:
-                            data = {
-                                "y_true": {},
-                                "y_pred": {},
-                                "stat": {}
-                            }
-
                         else:
                             data = {
                                 "y_true": {},
