@@ -1307,26 +1307,26 @@ class InteractiveCallback:
                             m = BalancedRecall()
                             m.update_state(y_true=self.y_true.get('val').get(out), y_pred=self.y_pred.get(out))
                             val_metric = m.result().numpy().item()
-                            print('\nBalancedRecall', val_metric, update_logs.get(
-                                f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}"))
+                            # print('\nBalancedRecall', val_metric, update_logs.get(
+                            #     f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}"))
                         if metric_name == MetricChoice.BalancedPrecision:
                             m = BalancedPrecision()
                             m.update_state(y_true=self.y_true.get('val').get(out), y_pred=self.y_pred.get(out))
                             val_metric = m.result().numpy().item()
-                            print('BalancedPrecision', val_metric, update_logs.get(
-                                f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}"))
+                            # print('BalancedPrecision', val_metric, update_logs.get(
+                            #     f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}"))
                         if metric_name == MetricChoice.BalancedFScore:
                             m = BalancedFScore()
                             m.update_state(y_true=self.y_true.get('val').get(out), y_pred=self.y_pred.get(out))
                             val_metric = m.result().numpy().item()
-                            print('BalancedFScore', val_metric, update_logs.get(
-                                f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}"))
+                            # print('BalancedFScore', val_metric, update_logs.get(
+                            #     f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}"))
                         if metric_name == MetricChoice.FScore:
                             m = FScore()
                             m.update_state(y_true=self.y_true.get('val').get(out), y_pred=self.y_pred.get(out))
                             val_metric = m.result().numpy().item()
-                            print('FScore', val_metric, update_logs.get(
-                                f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}"))
+                            # print('FScore', val_metric, update_logs.get(
+                            #     f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}"))
                         interactive_log[out]['metrics'][metric_name] = {
                             'train': self._round_loss_metric(train_metric) if not math.isnan(
                                 float(train_metric)) else None,

@@ -761,10 +761,10 @@ class FitCallback(keras.callbacks.Callback):
         # print("_fill_log_history", logs)
         self.log_history['epoch'].append(epoch)
         for metric in logs:
-            if logs.get(metric):
-                self.log_history['logs'][metric].append(float(logs.get(metric)))
-            else:
-                self.log_history['logs'][metric].append(None)
+            # if logs.get(metric):
+            self.log_history['logs'][metric].append(float(logs.get(metric)))
+            # else:
+            #     self.log_history['logs'][metric].append(0.)
 
     def _save_logs(self):
         interactive_path = os.path.join(self.save_model_path, "interactive.history")
