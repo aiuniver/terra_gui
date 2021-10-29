@@ -864,7 +864,6 @@ class FitCallback(keras.callbacks.Callback):
             current_predict = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_val)]
             # pred_target_train = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_target_train)]
             current_target = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_target_val)]
-
             # print("pred_train", pred_train[0].shape, pred_train[1].shape, pred_train[2].shape)
             # print("pred_val", pred_val[0].shape, pred_val[1].shape, pred_val[2].shape)
             # print("pred_target_train", pred_target_train[0].shape, pred_target_train[1].shape, pred_target_train[2].shape)
