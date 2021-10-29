@@ -22,8 +22,10 @@
 						>{{ item.title }}</div>
 					</div>
 				</div>
-				<i @click="cardsDisplay = true" :class="['ci-icon', 'ci-tile', { selected: cardsDisplay }]" />
-				<i @click="cardsDisplay = false" :class="['ci-icon', 'ci-list', { selected: !cardsDisplay }]" />
+				<template v-if="selectedType !== 2">
+					<i @click="cardsDisplay = true" :class="['ci-icon', 'ci-tile', { selected: cardsDisplay }]" />
+					<i @click="cardsDisplay = false" :class="['ci-icon', 'ci-list', { selected: !cardsDisplay }]" />
+				</template>
 			</div>
 		</div>
 		<scrollbar class="datasets__scroll">
@@ -34,18 +36,18 @@
 				<table class="datasets__table">
 					<thead>
 						<tr>
-							<th>Название</th>
-							<th>Размер</th>
-							<th>Последнее использование</th>
-							<th>Создание</th>
+							<th v-for="(item, idx) in getHeaders" :key="idx" @click="selectTableSort(item.idx)">
+								<span>{{ item.title }}</span>
+								<i v-show="selectedHeader === item.idx" :class="['ci-icon', `ci-thin_long_02_${reverseSort ? 'down': 'up'}`]"/>
+							</th>
 						</tr>
 					</thead>
 					<tbody>
-						<tr v-for="(item, idx) in sortedList" :key="'table'+idx">
+						<tr v-for="(item, idx) in sortedTable" :key="'table'+idx">
 							<td><i class="ci-icon ci-image" /> <span>{{ item.name }}</span></td>
 							<td>{{ item.size ? item.size.short.toFixed(2) + ' ' + item.size.unit : 'Предустановленный' }}</td>
 							<td>1 минуту назад</td>
-							<td>{{ item.date ? item.date.toLocaleDateString() : '' }}</td>
+							<td>{{ item.date ? item.date.toLocaleString() : '' }}</td>
 						</tr>
 					</tbody>
 				</table>
@@ -97,17 +99,43 @@ export default {
 				value: 'last_added',
 				idx: 5
 			},
-		]
+		],
+		theaders: [
+			{
+				title: 'Название',
+				idx: 0
+			},
+			{
+				title: 'Размер',
+				idx: 1
+			},
+			{
+				title: 'Автор',
+				idx: 2
+			},
+			{
+				title: 'Последнее использование',
+				idx: 3
+			},
+			{
+				title: 'Создание',
+				idx: 4
+			},
+		],
+		selectedHeader: 0,
+		reverseSort: false
 	}),
 	props: ['datasets', 'selectedType'],
 	computed: {
 		datasetList() {
-			return this.datasets.map(item => {
+			return this.datasets
+			.map(item => {
 				if (item.date) {
 					item.date = new Date(item.date)
 				}
 				return item
-			}).filter(item => {
+			})
+			.filter(item => {
 				if (this.selectedType === 1) return item.group === 'custom'
 				if (this.selectedType === 2) return item.group !== 'custom'
 			})
@@ -117,6 +145,24 @@ export default {
 			if (this.selectedSort.value === 'alphabet') return this.datasetList.sort((a, b) => a.name.localeCompare(b.name))
 			if (this.selectedSort.value === 'alphabet_reverse') return this.datasetList.sort((a, b) => b.name.localeCompare(a.name))
 			return this.datasetList.sort((a, b) => b.date - a.date)
+		},
+		sortedTable() {
+			const selectedSort = this.theaders.find(item => item.idx === this.selectedHeader)
+			if (selectedSort.idx === 0) return this.reverseSort ?
+				this.datasetList.sort((a, b) => b.name.localeCompare(a.name)):
+				this.datasetList.sort((a, b) => a.name.localeCompare(b.name))
+			if (selectedSort.idx === 1) return this.reverseSort ?
+				this.datasetList.sort((a, b) => b.size.value - a.size.value):
+				this.datasetList.sort((a, b) => a.size.value - b.size.value)
+			if (selectedSort.idx === 2) return this.reverseSort ?
+				this.datasetList.sort((a, b) => a.name.localeCompare(b.name)):
+				this.datasetList.sort((a, b) => b.name.localeCompare(a.name))
+			if (selectedSort.idx === 3) return this.reverseSort ?
+				this.datasetList.sort((a, b) => a.date - b.date):
+				this.datasetList.sort((a, b) => b.date - a.date)
+			if (selectedSort.idx === 4) return this.reverseSort ?
+				this.datasetList.sort((a, b) => a.date - b.date):
+				this.datasetList.sort((a, b) => b.date - a.date)
 		},
 		/* eslint-enable */
 		searchResults() {
@@ -129,7 +175,15 @@ export default {
 		getSortOptions() {
 			if (this.selectedType === 0) return this.sortOptions.slice(0, 4)
 			if (this.selectedType === 1) return this.sortOptions.slice(0, 3)
-			return this.sortOptions.slice(4)
+			return this.sortOptions.slice(4, 6)
+		},
+		getHeaders() {
+			const arr = [...this.theaders]
+			if (this.selectedType === 1) {
+				arr.splice(2, 1)
+				return arr
+			}
+			return arr.slice(0, 4)
 		}
 	},
 	methods: {
@@ -139,11 +193,18 @@ export default {
 		selectSort(idx) {
 			this.sortIdx = idx
 			this.showSortOpt = false
+		},
+		selectTableSort(idx) {
+			if (this.selectedHeader === idx) return this.reverseSort = !this.reverseSort
+			this.selectedHeader = idx
 		}
 	},
 	watch: {
 		selectedType(idx) {
-			if (idx === 2) return this.sortIdx = 4
+			if (idx === 2) {
+				this.cardsDisplay = true
+				return this.sortIdx = 4
+			}
 			this.sortIdx = 0
 		}
 	}
@@ -220,6 +281,7 @@ export default {
 				position: relative;
 				cursor: pointer;
 				min-width: 220px;
+				user-select: none;
 				&--selected {
 					display: flex;
 					align-items: center;
@@ -269,6 +331,11 @@ export default {
 			color: #6C7883;
 			position: sticky;
 			top: 0;
+			i {
+				color: #65B9F4;
+				font-size: 20px;
+				vertical-align: middle;
+			}
 			tr {
 				height: 35px;
 			}
@@ -276,8 +343,13 @@ export default {
 				font-weight: inherit;
 				padding: 0 50px;
 				min-width: 150px;
+				user-select: none;
 				&:first-child {
 					padding: 15px 10px;
+				}
+				* {
+					vertical-align: middle;
+					cursor: pointer;
 				}
 			}
 		}
