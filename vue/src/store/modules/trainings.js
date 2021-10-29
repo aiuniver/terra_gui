@@ -125,9 +125,11 @@ export default {
       // console.log(JSON.stringify(data, null, 2))
       const res = await dispatch('axios', { url: '/training/update/', data }, { root: true });
       if (res) {
-        const { data, form: { base } } = res.data
-        commit("SET_PARAMS", base);
-        commit("SET_CONFIG", data);
+        const { data, error } = res
+        if (data && !error) {
+          commit("SET_PARAMS", data.form.base);
+          commit("SET_CONFIG", data.data);
+        }
       }
       return res
     },
