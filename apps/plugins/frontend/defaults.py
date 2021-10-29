@@ -10,7 +10,7 @@ from terra_ai.data.modeling.layer import LayersList
 from terra_ai.data.training.extra import (
     ArchitectureChoice,
     TasksRelations,
-    StatesTrainingBaseParamsDisabled,
+    StateStatusChoice,
 )
 
 from .presets.defaults.training import (
@@ -62,6 +62,60 @@ class DefaultsTrainingBaseGroupData(BaseMixinData):
     fields: Union[List[Field], Dict[str, List[Field]]]
 
 
+StatesTrainingBaseParamsDisabled = {
+    "Basic": {
+        StateStatusChoice.no_train: [],
+        StateStatusChoice.training: [
+            "batch",
+            "epochs",
+            "optimizer",
+            "optimizer_main_learning_rate",
+            "optimizer_extra_beta_1",
+            "optimizer_extra_beta_2",
+            "optimizer_extra_epsilon",
+            "optimizer_extra_amsgrad",
+            "architecture_parameters_checkpoint_layer",
+            "architecture_parameters_checkpoint_metric_name",
+            "architecture_parameters_checkpoint_type",
+            "architecture_parameters_checkpoint_indicator",
+            "architecture_parameters_checkpoint_mode",
+        ],
+        StateStatusChoice.trained: [
+            "architecture_parameters_checkpoint_layer",
+            "architecture_parameters_checkpoint_metric_name",
+            "architecture_parameters_checkpoint_type",
+            "architecture_parameters_checkpoint_indicator",
+            "architecture_parameters_checkpoint_mode",
+        ],
+        StateStatusChoice.stopped: [
+            "epochs",
+            "architecture_parameters_checkpoint_layer",
+            "architecture_parameters_checkpoint_metric_name",
+            "architecture_parameters_checkpoint_type",
+            "architecture_parameters_checkpoint_indicator",
+            "architecture_parameters_checkpoint_mode",
+        ],
+        StateStatusChoice.addtrain: [
+            "batch",
+            "epochs",
+            "optimizer",
+            "optimizer_main_learning_rate",
+            "optimizer_extra_beta_1",
+            "optimizer_extra_beta_2",
+            "optimizer_extra_epsilon",
+            "optimizer_extra_amsgrad",
+            "architecture_parameters_checkpoint_layer",
+            "architecture_parameters_checkpoint_metric_name",
+            "architecture_parameters_checkpoint_type",
+            "architecture_parameters_checkpoint_indicator",
+            "architecture_parameters_checkpoint_mode",
+        ],
+    },
+    "YoloV3": {},
+    "YoloV4": {},
+}
+
+
 class ArchitectureMixinForm(BaseMixinData):
     def update(self, data: Any, prefix: str = "", **kwargs):
         if not data:
@@ -88,6 +142,14 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
     fit: DefaultsTrainingBaseGroupData
     optimizer: DefaultsTrainingBaseGroupData
 
+    def disable_by_state(self, field, **kwargs):
+        arch = kwargs.get("architecture")
+        status = kwargs.get("status")
+
+        if arch and status and field[0].name in StatesTrainingBaseParamsDisabled.get(arch, {}).get(status):
+            field[0].disabled = True
+            print(field)
+
     def _set_optimizer_type(self, value, **kwargs):
         fields = list(filter(lambda item: item.name == "optimizer", self.main.fields))
         if not fields:
@@ -97,11 +159,7 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
             self.optimizer.fields.append(Field(**item))
         fields[0].value = value
 
-        arch = kwargs.get("architecture")
-        status = kwargs.get("status")
-
-        if arch and status and fields[0].name in StatesTrainingBaseParamsDisabled.get(arch).get(status):
-            fields[0].disabled = False
+        self.disable_by_state(fields, **kwargs)
             
     def _set_batch(self, value: int, **kwargs):
         fields = list(filter(lambda item: item.name == "batch", self.fit.fields))
@@ -109,11 +167,7 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        arch = kwargs.get("architecture")
-        status = kwargs.get("status")
-
-        if arch and status and fields[0].name in StatesTrainingBaseParamsDisabled.get(arch).get(status):
-            fields[0].disabled = True
+        self.disable_by_state(fields, **kwargs)
             
     def _set_epochs(self, value: int, **kwargs):
         fields = list(filter(lambda item: item.name == "epochs", self.fit.fields))
@@ -121,11 +175,7 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        arch = kwargs.get("architecture")
-        status = kwargs.get("status")
-
-        if arch and status and fields[0].name in StatesTrainingBaseParamsDisabled.get(arch).get(status):
-            fields[0].disabled = False
+        self.disable_by_state(fields, **kwargs)
             
     def _set_optimizer_parameters_main_learning_rate(self, value, **kwargs):
         fields = list(
@@ -138,11 +188,7 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        arch = kwargs.get("architecture")
-        status = kwargs.get("status")
-
-        if arch and status and fields[0].name in StatesTrainingBaseParamsDisabled.get(arch).get(status):
-            fields[0].disabled = False
+        self.disable_by_state(fields, **kwargs)
             
     def _set_optimizer_parameters_extra_beta_1(self, value, **kwargs):
         fields = list(
@@ -155,11 +201,7 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        arch = kwargs.get("architecture")
-        status = kwargs.get("status")
-
-        if arch and status and fields[0].name in StatesTrainingBaseParamsDisabled.get(arch).get(status):
-            fields[0].disabled = False
+        self.disable_by_state(fields, **kwargs)
             
     def _set_optimizer_parameters_extra_beta_2(self, value, **kwargs):
         fields = list(
@@ -172,11 +214,7 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        arch = kwargs.get("architecture")
-        status = kwargs.get("status")
-
-        if arch and status and fields[0].name in StatesTrainingBaseParamsDisabled.get(arch).get(status):
-            fields[0].disabled = False
+        self.disable_by_state(fields, **kwargs)
             
     def _set_optimizer_parameters_extra_epsilon(self, value, **kwargs):
         fields = list(
@@ -189,11 +227,7 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        arch = kwargs.get("architecture")
-        status = kwargs.get("status")
-
-        if arch and status and fields[0].name in StatesTrainingBaseParamsDisabled.get(arch).get(status):
-            fields[0].disabled = False
+        self.disable_by_state(fields, **kwargs)
             
     def _set_optimizer_parameters_extra_amsgrad(self, value, **kwargs):
         fields = list(
@@ -206,11 +240,7 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        arch = kwargs.get("architecture")
-        status = kwargs.get("status")
-
-        if arch and status and fields[0].name in StatesTrainingBaseParamsDisabled.get(arch).get(status):
-            fields[0].disabled = False
+        self.disable_by_state(fields, **kwargs)
             
     def _set_optimizer_parameters_extra_nesterov(self, value, **kwargs):
         fields = list(
@@ -223,11 +253,7 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        arch = kwargs.get("architecture")
-        status = kwargs.get("status")
-
-        if arch and status and fields[0].name in StatesTrainingBaseParamsDisabled.get(arch).get(status):
-            fields[0].disabled = False
+        self.disable_by_state(fields, **kwargs)
             
     def _set_optimizer_parameters_extra_momentum(self, value, **kwargs):
         fields = list(
@@ -240,11 +266,7 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        arch = kwargs.get("architecture")
-        status = kwargs.get("status")
-
-        if arch and status and fields[0].name in StatesTrainingBaseParamsDisabled.get(arch).get(status):
-            fields[0].disabled = False
+        self.disable_by_state(fields, **kwargs)
             
     def _set_optimizer_parameters_extra_centered(self, value, **kwargs):
         fields = list(
@@ -257,11 +279,7 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        arch = kwargs.get("architecture")
-        status = kwargs.get("status")
-
-        if arch and status and fields[0].name in StatesTrainingBaseParamsDisabled.get(arch).get(status):
-            fields[0].disabled = False
+        self.disable_by_state(fields, **kwargs)
             
     def _set_optimizer_parameters_extra_rho(self, value, **kwargs):
         fields = list(
@@ -273,11 +291,7 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        arch = kwargs.get("architecture")
-        status = kwargs.get("status")
-
-        if arch and status and fields[0].name in StatesTrainingBaseParamsDisabled.get(arch).get(status):
-            fields[0].disabled = False    
+        self.disable_by_state(fields, **kwargs)
 
     def _set_optimizer_parameters_extra_initial_accumulator_value(
         self, value, **kwargs
@@ -292,11 +306,7 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        arch = kwargs.get("architecture")
-        status = kwargs.get("status")
-
-        if arch and status and fields[0].name in StatesTrainingBaseParamsDisabled.get(arch).get(status):
-            fields[0].disabled = False
+        self.disable_by_state(fields, **kwargs)
 
 
 class ArchitectureOutputsCheckpointGroupFrom(ArchitectureMixinForm):
@@ -422,11 +432,7 @@ class ArchitectureOutputsCheckpointGroupFrom(ArchitectureMixinForm):
             value if value in fields_outputs[0] else fields_outputs[0].value[0]
         )
 
-        arch = kwargs.get("architecture")
-        status = kwargs.get("status")
-
-        if arch and status and fields[0].name in StatesTrainingBaseParamsDisabled.get(arch).get(status):
-            fields[0].disabled = False
+        self.disable_by_state(fields, **kwargs)
 
     def _set_architecture_parameters_checkpoint_layer(self, value, **kwargs):
         fields = list(
@@ -449,11 +455,7 @@ class ArchitectureOutputsCheckpointGroupFrom(ArchitectureMixinForm):
             else list(self.outputs.fields.keys())[0]
         )
         
-        arch = kwargs.get("architecture")
-        status = kwargs.get("status")
-
-        if arch and status and fields[0].name in StatesTrainingBaseParamsDisabled.get(arch).get(status):
-            fields[0].disabled = False
+        self.disable_by_state(fields, **kwargs)
 
     def _set_architecture_parameters_checkpoint_type(self, value, **kwargs):
         fields = list(
@@ -466,11 +468,7 @@ class ArchitectureOutputsCheckpointGroupFrom(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        arch = kwargs.get("architecture")
-        status = kwargs.get("status")
-
-        if arch and status and fields[0].name in StatesTrainingBaseParamsDisabled.get(arch).get(status):
-            fields[0].disabled = False
+        self.disable_by_state(fields, **kwargs)
 
     def _set_architecture_parameters_checkpoint_indicator(self, value, **kwargs):
         fields = list(
@@ -484,11 +482,7 @@ class ArchitectureOutputsCheckpointGroupFrom(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        arch = kwargs.get("architecture")
-        status = kwargs.get("status")
-
-        if arch and status and fields[0].name in StatesTrainingBaseParamsDisabled.get(arch).get(status):
-            fields[0].disabled = False
+        self.disable_by_state(fields, **kwargs)
 
     def _set_architecture_parameters_checkpoint_mode(self, value, **kwargs):
         fields = list(
@@ -501,11 +495,7 @@ class ArchitectureOutputsCheckpointGroupFrom(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        arch = kwargs.get("architecture")
-        status = kwargs.get("status")
-
-        if arch and status and fields[0].name in StatesTrainingBaseParamsDisabled.get(arch).get(status):
-            fields[0].disabled = False
+        self.disable_by_state(fields, **kwargs)
 
 
 class ArchitectureBaseForm(
@@ -572,11 +562,7 @@ class ArchitectureYoloBaseForm(ArchitectureBaseForm):
             return
         fields[0].value = value
 
-        arch = kwargs.get("architecture")
-        status = kwargs.get("status")
-
-        if arch and status and fields[0].name in StatesTrainingBaseParamsDisabled.get(arch).get(status):
-            fields[0].disabled = False
+        self.disable_by_state(fields, **kwargs)
 
     def _set_architecture_parameters_yolo_train_lr_end(self, value, **kwargs):
         fields = list(
@@ -589,11 +575,7 @@ class ArchitectureYoloBaseForm(ArchitectureBaseForm):
             return
         fields[0].value = value
 
-        arch = kwargs.get("architecture")
-        status = kwargs.get("status")
-
-        if arch and status and fields[0].name in StatesTrainingBaseParamsDisabled.get(arch).get(status):
-            fields[0].disabled = False
+        self.disable_by_state(fields, **kwargs)
 
     def _set_architecture_parameters_yolo_yolo_iou_loss_thresh(self, value, **kwargs):
         fields = list(
@@ -606,11 +588,7 @@ class ArchitectureYoloBaseForm(ArchitectureBaseForm):
             return
         fields[0].value = value
 
-        arch = kwargs.get("architecture")
-        status = kwargs.get("status")
-
-        if arch and status and fields[0].name in StatesTrainingBaseParamsDisabled.get(arch).get(status):
-            fields[0].disabled = False
+        self.disable_by_state(fields, **kwargs)
 
     def _set_architecture_parameters_yolo_train_warmup_epochs(self, value, **kwargs):
         fields = list(
@@ -623,11 +601,7 @@ class ArchitectureYoloBaseForm(ArchitectureBaseForm):
             return
         fields[0].value = value
 
-        arch = kwargs.get("architecture")
-        status = kwargs.get("status")
-
-        if arch and status and fields[0].name in StatesTrainingBaseParamsDisabled.get(arch).get(status):
-            fields[0].disabled = False
+        self.disable_by_state(fields, **kwargs)
 
 
 class ArchitectureYoloV3Form(ArchitectureYoloBaseForm):

@@ -17,24 +17,6 @@ class StateStatusChoice(str, Enum):
     addtrain = "addtrain"  # Дообучение или возобновление после остановки
 
 
-StatesTrainingBaseParamsDisabled = {
-    "Basic": {
-        StateStatusChoice.no_train: ["batch", "optimizer"],
-        StateStatusChoice.training: ["batch", ],
-        StateStatusChoice.trained: ["batch", ],
-        StateStatusChoice.stopped: ["batch", ],
-        StateStatusChoice.addtrain: ["batch", ],
-    },
-    "YoloV3": {
-        StateStatusChoice.no_train: ["architecture_parameters_yolo_train_lr_init", ],
-        StateStatusChoice.training: ["architecture_parameters_yolo_train_lr_init", ],
-        StateStatusChoice.trained: ["architecture_parameters_yolo_train_lr_init", ],
-        StateStatusChoice.stopped: ["architecture_parameters_yolo_train_lr_init", ],
-        StateStatusChoice.addtrain: ["architecture_parameters_yolo_train_lr_init", ],
-    }
-}
-
-
 class LossGraphShowChoice(str, Enum):
     model = "model"
     classes = "classes"
