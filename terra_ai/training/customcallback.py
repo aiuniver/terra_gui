@@ -1098,7 +1098,7 @@ class InteractiveCallback:
                         class_bb[data_type] = {}
                         for cl in range(len(name_classes)):
                             class_bb[data_type][cl] = []
-                        for index in range(len(self.options.dataset[data_type])):
+                        for index in range(len(self.options.dataframe[data_type])):
                             y_true = self.options.dataframe.get(data_type).iloc[index, 1].split(' ')
                             bbox_data_gt = np.array([list(map(int, box.split(','))) for box in y_true])
                             bboxes_gt, classes_gt = bbox_data_gt[:, :4], bbox_data_gt[:, 4]
@@ -2816,7 +2816,7 @@ class InteractiveCallback:
                 return_data.append(
                     self._fill_heatmap_front_structure(
                         _id=2,
-                        _type="heatmap",
+                        _type="valheatmap",
                         graph_name=f"Бокс-канал «{box_channel}» - Матрица неточностей определения объектов",
                         short_name=f"{box_channel} - Матрица объектов",
                         x_label="Предсказание",

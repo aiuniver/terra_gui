@@ -506,8 +506,7 @@ class GUINN:
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели выполнена'})
         self._set_callbacks(dataset=dataset, dataset_data=dataset_data, batch_size=params.batch,
                             epochs=params.epochs, save_model_path=save_model_path, dataset_path=dataset_path,
-                            checkpoint=params.architecture.parameters.checkpoint.native(),
-                            initial_model=self.model if yolo_arch else None)
+                            checkpoint=params.architecture.parameters.checkpoint.native())
         progress.pool(self.progress_name, finished=False, data={'status': 'Начало обучения ...'})
         if self.dataset.data.use_generator:
             critical_val_size = len(self.dataset.dataframe.get("val"))
