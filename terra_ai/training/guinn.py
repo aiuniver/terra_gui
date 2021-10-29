@@ -28,7 +28,7 @@ from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
 from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, \
     CheckpointModeChoice, ArchitectureChoice
-from terra_ai.data.training.train import TrainData, InteractiveData, YoloInteractiveData
+from terra_ai.data.training.train import TrainData, InteractiveData
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.deploy.create_deploy_package import CascadeCreator
@@ -380,7 +380,6 @@ class GUINN:
                     if issimple(i) == []:
                         lst.append(i)
             return lst
-
         min_step = 0
         for i in range(3):
             r = issimple(len_val - i)
@@ -392,6 +391,8 @@ class GUINN:
                             if len_val // k <= batch_size:
                                 min_step = k
                                 break
+                            else:
+                                min_step = len_val
                     break
                 except ValueError:
                     pass
@@ -516,9 +517,11 @@ class GUINN:
 
         if (critical_val_size == self.batch_size) or ((critical_val_size % self.batch_size) == 0):
             self.val_batch_size = self.batch_size
+        elif critical_val_size < self.batch_size:
+            self.val_batch_size = critical_val_size
         else:
             self.val_batch_size = self._get_val_batch_size(self.batch_size, critical_val_size)
-
+        print(self.val_batch_size)
         trained_model = model_yolo if model_yolo else self.model
 
         try:
