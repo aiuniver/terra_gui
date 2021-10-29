@@ -2074,9 +2074,32 @@ class CreateArray(object):
                 example_idx = seed_idx[:count]
 
             elif choice_type == ExampleChoiceTypeChoice.random:
-                example_idx = np.random.randint(0, len(true_array.get(box_channel)), count)
+                true_false_dict = {'true': [], 'false': []}
+                for i, example in enumerate(array.get(box_channel)):
+                    ex_stat = CreateArray().get_yolo_example_statistic(
+                            true_bb=true_array.get(box_channel)[example],
+                            pred_bb=array.get(box_channel)[example],
+                            name_classes=name_classes,
+                            sensitivity=sensitivity
+                        )['total_stat']['total_metric']
+                    if ex_stat > 0.7:
+                        true_false_dict['true'].append(i)
+                    else:
+                        true_false_dict['false'].append(i)
+                example_idx = []
+                for _ in range(count):
+                    if true_false_dict.get('true') and true_false_dict.get('false'):
+                        key = np.random.choice(list(true_false_dict.keys()))
+                    elif true_false_dict.get('true') and not true_false_dict.get('false'):
+                        key = 'true'
+                    else:
+                        key = 'false'
+                    example_idx.append(true_false_dict.get(key)[0])
+                    true_false_dict.get(key).pop(0)
+                np.random.shuffle(example_idx)
+                # example_idx = np.random.randint(0, len(true_array.get(box_channel)), count)
             else:
-                example_idx = np.arange(count)
+                example_idx = np.random.randint(0, len(true_array.get(box_channel)), count)
             return example_idx, box_channel
         except Exception as e:
             print_error("CreateArray", method_name, e)
