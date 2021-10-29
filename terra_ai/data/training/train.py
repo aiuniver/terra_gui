@@ -170,7 +170,11 @@ class ArchitectureData(BaseMixinData):
         _model = values.get("model")
         _outputs = value.get("outputs", [])
         for _index, _output in enumerate(_outputs):
-            _output["task"] = str(_model.layers.get(_output.get("id")).task)
+            _output["task"] = (
+                _model.layers.get(_output.get("id")).task.value
+                if _model.layers.get(_output.get("id")).task
+                else None
+            )
             _outputs[_index] = _output
         value["outputs"] = _outputs
         return field.type_(**(value or {}))

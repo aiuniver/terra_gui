@@ -43,12 +43,12 @@ class ParametersData(BaseMixinData):
                 {
                     "id": layer.id,
                     "classes_quantity": layer.num_classes,
-                    "task": str(layer.task),
+                    "task": layer.task.value if layer.task else None,
                 }
             ]
             _layer_data = _outputs[0]
 
-            _task = TasksRelations.get(str(layer.task))
+            _task = TasksRelations.get(layer.task.value if layer.task else None)
             if not _task:
                 continue
 
@@ -91,7 +91,7 @@ class ParametersData(BaseMixinData):
         )
         data["layer"] = _layer.id
 
-        _task = TasksRelations.get(str(_layer.task))
+        _task = TasksRelations.get(_layer.task.value if _layer.task else None)
         if not _task:
             return None
         _task_metrics = (
