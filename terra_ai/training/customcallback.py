@@ -21,7 +21,7 @@ from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeCh
     LayerEncodingChoice
 from terra_ai.data.presets.training import Metric
 from terra_ai.data.training.extra import LossGraphShowChoice, MetricGraphShowChoice, MetricChoice, ArchitectureChoice
-from terra_ai.data.training.train import InteractiveData, YoloInteractiveData
+from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.training.customlosses import UnscaledMAE
@@ -433,12 +433,12 @@ class InteractiveCallback:
         self.random_key = ''
 
         self.interactive_config: InteractiveData = InteractiveData(**{})
-        self.yolo_interactive_config: YoloInteractiveData = YoloInteractiveData(**{})
+        self.yolo_interactive_config: InteractiveData = InteractiveData(**{})
         pass
 
     def set_attributes(self, dataset: PrepareDataset, metrics: dict, losses: dict, dataset_path: str,
                        training_path: str, initial_config: InteractiveData = None,
-                       yolo_initial_config: YoloInteractiveData = None):
+                       yolo_initial_config: InteractiveData = None):
         # print('\ndataset.architecture', dataset.data.architecture)
         # print('\ndataset.data.outputs', dataset.data.outputs)
         # print('\ndataset.data.inputs', dataset.data.inputs)

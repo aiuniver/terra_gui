@@ -28,7 +28,7 @@ from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
 from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, \
     CheckpointModeChoice, ArchitectureChoice
-from terra_ai.data.training.train import TrainData, InteractiveData, YoloInteractiveData
+from terra_ai.data.training.train import TrainData, InteractiveData
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.deploy.create_deploy_package import CascadeCreator
@@ -163,7 +163,7 @@ class GUINN:
                                        initial_config=initial_config)
         if self.deploy_type in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]:
             print('self.deploy_type', self.deploy_type)
-            initial_config = YoloInteractiveData(**{
+            initial_config = InteractiveData(**{
                 'loss_graphs': [
                     {
                         'id': 1,
