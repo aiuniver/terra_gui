@@ -211,8 +211,9 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
         fields[0].value = value
 
 
-class ArchitectureOutputsGroupFrom(ArchitectureMixinForm):
+class ArchitectureOutputsCheckpointGroupFrom(ArchitectureMixinForm):
     outputs: DefaultsTrainingBaseGroupData
+    checkpoint: DefaultsTrainingBaseGroupData
 
     def update(self, data: Any, prefix: str = "", **kwargs):
         model = kwargs.get("model")
@@ -295,10 +296,6 @@ class ArchitectureOutputsGroupFrom(ArchitectureMixinForm):
                 }
             )
         self.outputs.fields = outputs
-
-
-class ArchitectureCheckpointGroupFrom(ArchitectureMixinForm):
-    checkpoint: DefaultsTrainingBaseGroupData
 
     def _set_architecture_parameters_checkpoint_metric_name(self, value, **kwargs):
         fields = list(
@@ -394,9 +391,7 @@ class ArchitectureCheckpointGroupFrom(ArchitectureMixinForm):
 
 
 class ArchitectureBaseForm(
-    ArchitectureCheckpointGroupFrom,
-    ArchitectureOutputsGroupFrom,
-    ArchitectureBaseGroupForm,
+    ArchitectureOutputsCheckpointGroupFrom, ArchitectureBaseGroupForm
 ):
     pass
 
