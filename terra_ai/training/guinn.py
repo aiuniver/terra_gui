@@ -824,8 +824,8 @@ class FitCallback(keras.callbacks.Callback):
         """Оценка текущей эпохи"""
         try:
             if logs.get(self.metric_checkpoint):
-                # print('\nself.metric_checkpoint)', self.metric_checkpoint)
-                # print('logs.get(self.metric_checkpoint)', logs.get(self.metric_checkpoint))
+                print('\nself.metric_checkpoint)', self.metric_checkpoint)
+                print('logs.get(self.metric_checkpoint)', logs.get(self.metric_checkpoint))
                 # print('self.log_history.get("logs").get(self.metric_checkpoint))', self.log_history.get("logs").get(self.metric_checkpoint))
                 if self.checkpoint_config.get("mode") == CheckpointModeChoice.Min and \
                         logs.get(self.metric_checkpoint) < min(self.log_history.get("logs").get(self.metric_checkpoint)):
@@ -1147,6 +1147,7 @@ class FitCallback(keras.callbacks.Callback):
         # сохранение лучших весов
         if self.last_epoch > 1:
             try:
+                print('\nself._best_epoch_monitoring', self._best_epoch_monitoring)
                 if self._best_epoch_monitoring(logs):
                     if not os.path.exists(self.save_model_path):
                         os.mkdir(self.save_model_path)
