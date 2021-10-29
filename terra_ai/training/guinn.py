@@ -378,6 +378,7 @@ class GUINN:
                     if issimple(i) == []:
                         lst.append(i)
             return lst
+
         min_step = 0
         for i in range(3):
             r = issimple(len_val - i)
@@ -669,6 +670,7 @@ class FitCallback(keras.callbacks.Callback):
             'states': {}
         }
         self.checkpoint_config = checkpoint_config
+        print('checkpoint_config', checkpoint_config)
         self.num_outputs = len(self.dataset.data.outputs.keys())
         # аттрибуты для чекпоинта
         self.log_history = self._load_logs()
@@ -682,8 +684,8 @@ class FitCallback(keras.callbacks.Callback):
 
     def _get_metric_name_checkpoint(self, logs: dict):
         """Поиск среди fit_logs нужного параметра"""
-        # self.metric_checkpoint = "total_loss"
-        print('\n_get_metric_name_checkpoint', self.metric_checkpoint, self.checkpoint_config)
+        self.metric_checkpoint = "total_loss"
+        # print('\n_get_metric_name_checkpoint', self.metric_checkpoint, self.checkpoint_config)
         for log in logs.keys():
             if self.checkpoint_config.get("type") == CheckpointTypeChoice.Loss and \
                     self.checkpoint_config.get("indicator") == CheckpointIndicatorChoice.Val and \
@@ -706,6 +708,13 @@ class FitCallback(keras.callbacks.Callback):
                     if f"{self.checkpoint_config.get('layer')}" in log:
                         self.metric_checkpoint = log
                         break
+
+            elif self.is_yolo:
+                if self.checkpoint_config.get("indicator") == CheckpointIndicatorChoice.Val:
+                    self.metric_checkpoint = f"val_{self.checkpoint_config.get('metric_name')}"
+                else:
+                    self.metric_checkpoint = self.checkpoint_config.get('metric_name')
+                    break
 
             elif self.checkpoint_config.get("type") == CheckpointTypeChoice.Metrics and \
                     self.checkpoint_config.get("indicator") == CheckpointIndicatorChoice.Val and \
@@ -824,16 +833,19 @@ class FitCallback(keras.callbacks.Callback):
     def _best_epoch_monitoring(self, logs):
         """Оценка текущей эпохи"""
         try:
+            print('\n_best_epoch_monitoring')
             if logs.get(self.metric_checkpoint):
-                print('\nself.metric_checkpoint)', self.metric_checkpoint)
+                print('self.metric_checkpoint', self.metric_checkpoint)
                 print('logs.get(self.metric_checkpoint)', logs.get(self.metric_checkpoint))
                 print('self.log_history.get("logs").get(self.metric_checkpoint))',
                       self.log_history.get("logs").get(self.metric_checkpoint))
                 if self.checkpoint_config.get("mode") == CheckpointModeChoice.Min and \
-                        logs.get(self.metric_checkpoint) < min(self.log_history.get("logs").get(self.metric_checkpoint)):
+                        logs.get(self.metric_checkpoint) < min(
+                    self.log_history.get("logs").get(self.metric_checkpoint)):
                     return True
                 elif self.checkpoint_config.get("mode") == CheckpointModeChoice.Max and \
-                        logs.get(self.metric_checkpoint) > max(self.log_history.get("logs").get(self.metric_checkpoint)):
+                        logs.get(self.metric_checkpoint) > max(
+                    self.log_history.get("logs").get(self.metric_checkpoint)):
                     return True
                 else:
                     return False
@@ -1099,13 +1111,16 @@ class FitCallback(keras.callbacks.Callback):
             {}:
         """
         y_pred, y_true = self._get_predict()
-        total_epochs = self.retrain_epochs if interactive.get_states().get('status') in ['addtrain', 'stopped'] else self.epochs
+        total_epochs = self.retrain_epochs if interactive.get_states().get('status') in ['addtrain',
+                                                                                         'stopped'] else self.epochs
         if self.is_yolo:
             mAP = get_mAP(self.model, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
                           TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names)
+            print('\nmAP', mAP)
             interactive_logs = self._logs_losses_extract(logs, prefixes=['pred', 'target'])
             # interactive_logs.update({'mAP': mAP})
             interactive_logs.update(mAP)
+            logs.update(mAP)
             output_path = self.image_path.format(epoch)
             if self.last_epoch < total_epochs and not self.model.stop_training:
                 self.samples_train = []
@@ -1149,7 +1164,7 @@ class FitCallback(keras.callbacks.Callback):
         # сохранение лучших весов
         if self.last_epoch > 1:
             try:
-                print('\nself._best_epoch_monitoring', self._best_epoch_monitoring)
+                print('\nself._best_epoch_monitoring', self._best_epoch_monitoring(logs))
                 if self._best_epoch_monitoring(logs):
                     if not os.path.exists(self.save_model_path):
                         os.mkdir(self.save_model_path)
@@ -1159,7 +1174,9 @@ class FitCallback(keras.callbacks.Callback):
                         self.save_model_path, f"best_weights_{self.metric_checkpoint}.h5"
                     )
                     self.model.save_weights(file_path_best)
-                    # print(f"Epoch {self.last_epoch} - best weights was successfully saved")
+                    print(f'\n_________________________________________________\n'
+                          f'Epoch {self.last_epoch} - best weights was successfully saved'
+                          f'\n_________________________________________________\n')
             except Exception as e:
                 print('\nself.model.save_weights failed', e)
         self._fill_log_history(self.last_epoch, interactive_logs)
