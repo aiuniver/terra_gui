@@ -69,7 +69,7 @@ export default {
   name: 'Predictions',
   components: {
     PredictTable: () => import('./PredictTable'),
-    // LoadSpiner: () => import('@/components/forms/LoadSpiner'),
+    LoadSpiner: () => import('@/components/forms/LoadSpiner'),
   },
   props: {
     outputs: Array,
