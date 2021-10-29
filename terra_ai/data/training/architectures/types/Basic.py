@@ -43,12 +43,14 @@ class ParametersData(BaseMixinData):
                 {
                     "id": layer.id,
                     "classes_quantity": layer.num_classes,
-                    "task": layer.task.value,
+                    "task": str(layer.task),
                 }
             ]
             _layer_data = _outputs[0]
 
-            _task = TasksRelations.get(layer.task.value)
+            _task = TasksRelations.get(str(layer.task))
+            if not _task:
+                continue
 
             _task_loss = (
                 list(map(lambda item: item.name, _task.losses)) if _task else []
@@ -89,7 +91,9 @@ class ParametersData(BaseMixinData):
         )
         data["layer"] = _layer.id
 
-        _task = TasksRelations.get(_layer.task.value)
+        _task = TasksRelations.get(str(_layer.task))
+        if not _task:
+            return None
         _task_metrics = (
             list(map(lambda item: item.name, _task.metrics)) if _task else []
         )
