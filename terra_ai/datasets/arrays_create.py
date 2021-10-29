@@ -1623,7 +1623,6 @@ class CreateArray(object):
                 )
         else:
             return_data = {}
-
         return return_data
 
     @staticmethod

@@ -1,7 +1,6 @@
 import gc
 import importlib
 import json
-import math
 import re
 import copy
 import os
@@ -11,7 +10,7 @@ import psutil
 import time
 import pynvml as N
 
-from typing import Tuple, Optional
+from typing import Optional
 
 import numpy as np
 
@@ -19,11 +18,10 @@ import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow import keras
 from tensorflow.keras.models import load_model
-from tensorflow.python.framework.errors_impl import ResourceExhaustedError
 
 from terra_ai import progress
 from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
-from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice, DatasetGroupChoice
+from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice
 from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
 from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, \
@@ -37,7 +35,7 @@ from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.training.customlosses import DiceCoef, UnscaledMAE, BalancedRecall, BalancedDiceCoef, \
     BalancedPrecision, BalancedFScore, FScore
-from terra_ai.training.yolo_utils import create_yolo, CustomModelYolo, compute_loss, get_mAP, detect_image
+from terra_ai.training.yolo_utils import create_yolo, CustomModelYolo, compute_loss, get_mAP
 from terra_ai.exceptions import training as exceptions, terra_exception
 
 __version__ = 0.02
@@ -221,7 +219,7 @@ class GUINN:
             })
             interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss,
                                        dataset_path=dataset_path, training_path=training_path,
-                                       yolo_initial_config=initial_config)
+                                       initial_config=initial_config)
 
     def _set_callbacks(self, dataset: PrepareDataset, dataset_data: DatasetData,
                        batch_size: int, epochs: int, dataset_path: str,
@@ -380,7 +378,6 @@ class GUINN:
                     if issimple(i) == []:
                         lst.append(i)
             return lst
-
         min_step = 0
         for i in range(3):
             r = issimple(len_val - i)
@@ -392,6 +389,8 @@ class GUINN:
                             if len_val // k <= batch_size:
                                 min_step = k
                                 break
+                            else:
+                                min_step = len_val
                     break
                 except ValueError:
                     pass
@@ -516,9 +515,11 @@ class GUINN:
 
         if (critical_val_size == self.batch_size) or ((critical_val_size % self.batch_size) == 0):
             self.val_batch_size = self.batch_size
+        elif critical_val_size < self.batch_size:
+            self.val_batch_size = critical_val_size
         else:
             self.val_batch_size = self._get_val_batch_size(self.batch_size, critical_val_size)
-
+        print(self.val_batch_size)
         trained_model = model_yolo if model_yolo else self.model
 
         try:
@@ -866,7 +867,6 @@ class FitCallback(keras.callbacks.Callback):
             current_predict = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_val)]
             # pred_target_train = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_target_train)]
             current_target = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_target_val)]
-
             # print("pred_train", pred_train[0].shape, pred_train[1].shape, pred_train[2].shape)
             # print("pred_val", pred_val[0].shape, pred_val[1].shape, pred_val[2].shape)
             # print("pred_target_train", pred_target_train[0].shape, pred_target_train[1].shape, pred_target_train[2].shape)
