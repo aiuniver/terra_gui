@@ -21,6 +21,7 @@
                     v-bind="data"
                     :class="`params__fields--${key}`"
                     :key="key + i"
+                    :state="state"
                     :inline="false"
                     @parse="parse"
                   />
@@ -37,6 +38,7 @@
                         <t-auto-field-trainings
                           v-bind="data"
                           :key="'checkpoint_' + i + data.parse"
+                          :state="state"
                           :inline="true"
                           @parse="parse"
                         />
@@ -84,6 +86,9 @@ export default {
     stopLearning: false,
     trainSettings: {},
     key: '1212',
+    doNotSave: [
+      'architecture[parameters][checkpoint][metric_name]'
+    ]
   }),
   computed: {
     ...mapGetters({
@@ -96,6 +101,14 @@ export default {
     },
     statusTrain() {
       return this.$store.getters['trainings/getStatusTrain'];
+    },
+    state: {
+      set(value) {
+        this.$store.dispatch('trainings/setStateParams', value);
+      },
+      get() {
+        return this.$store.getters['trainings/getStateParams'];
+      },
     },
   },
   methods: {
@@ -153,13 +166,18 @@ export default {
         }
       }
     },
-    parse({ parse, value, changeable, mounted }) {
-    // parse({ parse, value, name, changeable, mounted }) {
-      // console.log({ parse, value, name, changeable, mounted });
+    // parse({ parse, value, changeable, mounted }) {
+    parse({ parse, value, name, changeable, mounted }) {
+      console.log({ parse, value, name, changeable, mounted });
       ser(this.trainSettings, parse, value);
       this.trainSettings = { ...this.trainSettings };
       if (!mounted && changeable) {
         this.$store.dispatch('trainings/update', this.trainSettings);
+        this.state = { [`architecture[parameters][checkpoint][metric_name]`]: null };
+      } else {
+        if (value) {
+          this.state = { [`${parse}`]: value };
+        }
       }
     },
   },
