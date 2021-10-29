@@ -2606,7 +2606,7 @@ class CreateArray(object):
                             {
                                 "title": "Среднее",
                                 "value": f"{np.round(box_stat['total_stat']['total_metric'] * 100, 2)}%",
-                                "color_mark": 'success' if box_stat['total_stat']['total_conf'] >= 0.7 else 'wrong'
+                                "color_mark": 'success' if box_stat['total_stat']['total_metric'] >= 0.7 else 'wrong'
                             },
                         ]
                     }
