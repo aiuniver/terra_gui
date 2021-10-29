@@ -24,7 +24,7 @@ from terra_ai.data.training.extra import LossGraphShowChoice, MetricGraphShowCho
 from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
-from terra_ai.training.customlosses import UnscaledMAE
+from terra_ai.training.customlosses import UnscaledMAE, BalancedRecall, BalancedPrecision, BalancedFScore, FScore
 from terra_ai.utils import camelize, decamelize
 
 __version__ = 0.085
@@ -1303,6 +1303,30 @@ class InteractiveCallback:
                             train_metric, val_metric = UnscaledMAE().unscale_result(
                                 [train_metric, val_metric], int(out), self.options.preprocessing
                             )
+                        if metric_name == MetricChoice.BalancedRecall:
+                            m = BalancedRecall()
+                            m.update_state(y_true=self.y_true.get('val').get(out), y_pred=self.y_pred.get(out))
+                            val_metric = m.result().numpy().item()
+                            print('\nBalancedRecall', val_metric, update_logs.get(
+                                f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}"))
+                        if metric_name == MetricChoice.BalancedPrecision:
+                            m = BalancedPrecision()
+                            m.update_state(y_true=self.y_true.get('val').get(out), y_pred=self.y_pred.get(out))
+                            val_metric = m.result().numpy().item()
+                            print('BalancedPrecision', val_metric, update_logs.get(
+                                f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}"))
+                        if metric_name == MetricChoice.BalancedFScore:
+                            m = BalancedFScore()
+                            m.update_state(y_true=self.y_true.get('val').get(out), y_pred=self.y_pred.get(out))
+                            val_metric = m.result().numpy().item()
+                            print('BalancedFScore', val_metric, update_logs.get(
+                                f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}"))
+                        if metric_name == MetricChoice.FScore:
+                            m = FScore()
+                            m.update_state(y_true=self.y_true.get('val').get(out), y_pred=self.y_pred.get(out))
+                            val_metric = m.result().numpy().item()
+                            print('FScore', val_metric, update_logs.get(
+                                f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}"))
                         interactive_log[out]['metrics'][metric_name] = {
                             'train': self._round_loss_metric(train_metric) if not math.isnan(
                                 float(train_metric)) else None,
@@ -1354,6 +1378,7 @@ class InteractiveCallback:
                     # interactive_log['output']['val']["class_metrics"]['mAP95'][name] = logs.get(f'val_mAP95_class_{name}')
 
             return interactive_log
+
         except Exception as e:
             print_error(InteractiveCallback().name, method_name, e)
 
@@ -2156,7 +2181,7 @@ class InteractiveCallback:
                             progress_state = 'underfitting'
                         else:
                             progress_state = 'normal'
-
+                        # print(1)
                         train_list = self.log_history.get(f"{metric_graph_config.output_idx}").get('metrics').get(
                             metric_graph_config.show_metric.name).get("train")
                         best_train_value = min(train_list) if min_max_mode == 'min' else max(train_list)
@@ -2171,7 +2196,7 @@ class InteractiveCallback:
                                 metric_graph_config.show_metric.name).get("train"),
                             label="Тренировочная выборка"
                         )
-
+                        # print(2)
                         val_list = self.log_history.get(f"{metric_graph_config.output_idx}").get('metrics').get(
                             metric_graph_config.show_metric.name).get("val")
                         best_val_value = min(val_list) if min_max_mode == 'min' else max(val_list)
@@ -2186,6 +2211,7 @@ class InteractiveCallback:
                                 metric_graph_config.show_metric.name).get("val"),
                             label="Проверочная выборка"
                         )
+                        # print(3)
                         data_return.append(
                             self._fill_graph_front_structure(
                                 _id=metric_graph_config.id,
@@ -2223,6 +2249,7 @@ class InteractiveCallback:
                                 ],
                             )
                         )
+                        # print(4)
 
             if self.options.data.architecture in self.yolo_architecture:
                 if not self.interactive_config.metric_graphs or not self.log_history.get("epochs"):

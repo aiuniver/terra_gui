@@ -823,15 +823,18 @@ class FitCallback(keras.callbacks.Callback):
     def _best_epoch_monitoring(self, logs):
         """Оценка текущей эпохи"""
         try:
-            # print('\nself.metric_checkpoint)', self.metric_checkpoint)
-            # print('logs.get(self.metric_checkpoint)', logs.get(self.metric_checkpoint))
-            # print('self.log_history.get("logs").get(self.metric_checkpoint))', self.log_history.get("logs").get(self.metric_checkpoint))
-            if self.checkpoint_config.get("mode") == CheckpointModeChoice.Min and \
-                    logs.get(self.metric_checkpoint) < min(self.log_history.get("logs").get(self.metric_checkpoint)):
-                return True
-            elif self.checkpoint_config.get("mode") == CheckpointModeChoice.Max and \
-                    logs.get(self.metric_checkpoint) > max(self.log_history.get("logs").get(self.metric_checkpoint)):
-                return True
+            if logs.get(self.metric_checkpoint):
+                # print('\nself.metric_checkpoint)', self.metric_checkpoint)
+                # print('logs.get(self.metric_checkpoint)', logs.get(self.metric_checkpoint))
+                # print('self.log_history.get("logs").get(self.metric_checkpoint))', self.log_history.get("logs").get(self.metric_checkpoint))
+                if self.checkpoint_config.get("mode") == CheckpointModeChoice.Min and \
+                        logs.get(self.metric_checkpoint) < min(self.log_history.get("logs").get(self.metric_checkpoint)):
+                    return True
+                elif self.checkpoint_config.get("mode") == CheckpointModeChoice.Max and \
+                        logs.get(self.metric_checkpoint) > max(self.log_history.get("logs").get(self.metric_checkpoint)):
+                    return True
+                else:
+                    return False
             else:
                 return False
         except Exception as e:
