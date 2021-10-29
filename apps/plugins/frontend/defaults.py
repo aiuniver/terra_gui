@@ -127,7 +127,7 @@ class ArchitectureMixinForm(BaseMixinData):
                     getattr(data, _key),
                     f"{name_}_",
                     status=kwargs.get("status"),
-                    architecture=kwargs.get("architecture")
+                    architecture=kwargs.get("architecture"),
                 )
                 continue
 
@@ -136,18 +136,21 @@ class ArchitectureMixinForm(BaseMixinData):
             if _method:
                 _method(getattr(data, _key), **kwargs)
 
+    def disable_by_state(
+        self, field, architecture: str = None, status: str = None, **kwargs
+    ):
+        if not architecture or not status:
+            return
+        if field.name in StatesTrainingBaseParamsDisabled.get(
+            str(architecture), {}
+        ).get(str(status), []):
+            field.disabled = True
+
 
 class ArchitectureBaseGroupForm(ArchitectureMixinForm):
     main: DefaultsTrainingBaseGroupData
     fit: DefaultsTrainingBaseGroupData
     optimizer: DefaultsTrainingBaseGroupData
-
-    def disable_by_state(self, field, **kwargs):
-        arch = kwargs.get("architecture")
-        status = kwargs.get("status")
-
-        if arch and status and field[0].name in StatesTrainingBaseParamsDisabled.get(arch, {}).get(status):
-            field[0].disabled = True
 
     def _set_optimizer_type(self, value, **kwargs):
         fields = list(filter(lambda item: item.name == "optimizer", self.main.fields))
@@ -158,24 +161,24 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
             self.optimizer.fields.append(Field(**item))
         fields[0].value = value
 
-        self.disable_by_state(fields, **kwargs)
-            
+        self.disable_by_state(fields[0], **kwargs)
+
     def _set_batch(self, value: int, **kwargs):
         fields = list(filter(lambda item: item.name == "batch", self.fit.fields))
         if not fields:
             return
         fields[0].value = value
 
-        self.disable_by_state(fields, **kwargs)
-            
+        self.disable_by_state(fields[0], **kwargs)
+
     def _set_epochs(self, value: int, **kwargs):
         fields = list(filter(lambda item: item.name == "epochs", self.fit.fields))
         if not fields:
             return
         fields[0].value = value
 
-        self.disable_by_state(fields, **kwargs)
-            
+        self.disable_by_state(fields[0], **kwargs)
+
     def _set_optimizer_parameters_main_learning_rate(self, value, **kwargs):
         fields = list(
             filter(
@@ -187,8 +190,8 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        self.disable_by_state(fields, **kwargs)
-            
+        self.disable_by_state(fields[0], **kwargs)
+
     def _set_optimizer_parameters_extra_beta_1(self, value, **kwargs):
         fields = list(
             filter(
@@ -200,8 +203,8 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        self.disable_by_state(fields, **kwargs)
-            
+        self.disable_by_state(fields[0], **kwargs)
+
     def _set_optimizer_parameters_extra_beta_2(self, value, **kwargs):
         fields = list(
             filter(
@@ -213,8 +216,8 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        self.disable_by_state(fields, **kwargs)
-            
+        self.disable_by_state(fields[0], **kwargs)
+
     def _set_optimizer_parameters_extra_epsilon(self, value, **kwargs):
         fields = list(
             filter(
@@ -226,8 +229,8 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        self.disable_by_state(fields, **kwargs)
-            
+        self.disable_by_state(fields[0], **kwargs)
+
     def _set_optimizer_parameters_extra_amsgrad(self, value, **kwargs):
         fields = list(
             filter(
@@ -239,8 +242,8 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        self.disable_by_state(fields, **kwargs)
-            
+        self.disable_by_state(fields[0], **kwargs)
+
     def _set_optimizer_parameters_extra_nesterov(self, value, **kwargs):
         fields = list(
             filter(
@@ -252,8 +255,8 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        self.disable_by_state(fields, **kwargs)
-            
+        self.disable_by_state(fields[0], **kwargs)
+
     def _set_optimizer_parameters_extra_momentum(self, value, **kwargs):
         fields = list(
             filter(
@@ -265,8 +268,8 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        self.disable_by_state(fields, **kwargs)
-            
+        self.disable_by_state(fields[0], **kwargs)
+
     def _set_optimizer_parameters_extra_centered(self, value, **kwargs):
         fields = list(
             filter(
@@ -278,8 +281,8 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        self.disable_by_state(fields, **kwargs)
-            
+        self.disable_by_state(fields[0], **kwargs)
+
     def _set_optimizer_parameters_extra_rho(self, value, **kwargs):
         fields = list(
             filter(
@@ -290,7 +293,7 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        self.disable_by_state(fields, **kwargs)
+        self.disable_by_state(fields[0], **kwargs)
 
     def _set_optimizer_parameters_extra_initial_accumulator_value(
         self, value, **kwargs
@@ -305,7 +308,7 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        self.disable_by_state(fields, **kwargs)
+        self.disable_by_state(fields[0], **kwargs)
 
 
 class ArchitectureOutputsCheckpointGroupFrom(ArchitectureMixinForm):
@@ -431,7 +434,7 @@ class ArchitectureOutputsCheckpointGroupFrom(ArchitectureMixinForm):
             value if value in fields_outputs[0] else fields_outputs[0].value[0]
         )
 
-        self.disable_by_state(fields, **kwargs)
+        self.disable_by_state(fields[0], **kwargs)
 
     def _set_architecture_parameters_checkpoint_layer(self, value, **kwargs):
         fields = list(
@@ -453,8 +456,8 @@ class ArchitectureOutputsCheckpointGroupFrom(ArchitectureMixinForm):
             if value in self.outputs.fields.keys()
             else list(self.outputs.fields.keys())[0]
         )
-        
-        self.disable_by_state(fields, **kwargs)
+
+        self.disable_by_state(fields[0], **kwargs)
 
     def _set_architecture_parameters_checkpoint_type(self, value, **kwargs):
         fields = list(
@@ -467,7 +470,7 @@ class ArchitectureOutputsCheckpointGroupFrom(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        self.disable_by_state(fields, **kwargs)
+        self.disable_by_state(fields[0], **kwargs)
 
     def _set_architecture_parameters_checkpoint_indicator(self, value, **kwargs):
         fields = list(
@@ -481,7 +484,7 @@ class ArchitectureOutputsCheckpointGroupFrom(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        self.disable_by_state(fields, **kwargs)
+        self.disable_by_state(fields[0], **kwargs)
 
     def _set_architecture_parameters_checkpoint_mode(self, value, **kwargs):
         fields = list(
@@ -494,7 +497,7 @@ class ArchitectureOutputsCheckpointGroupFrom(ArchitectureMixinForm):
             return
         fields[0].value = value
 
-        self.disable_by_state(fields, **kwargs)
+        self.disable_by_state(fields[0], **kwargs)
 
 
 class ArchitectureBaseForm(
@@ -561,7 +564,7 @@ class ArchitectureYoloBaseForm(ArchitectureBaseForm):
             return
         fields[0].value = value
 
-        self.disable_by_state(fields, **kwargs)
+        self.disable_by_state(fields[0], **kwargs)
 
     def _set_architecture_parameters_yolo_train_lr_end(self, value, **kwargs):
         fields = list(
@@ -574,12 +577,13 @@ class ArchitectureYoloBaseForm(ArchitectureBaseForm):
             return
         fields[0].value = value
 
-        self.disable_by_state(fields, **kwargs)
+        self.disable_by_state(fields[0], **kwargs)
 
     def _set_architecture_parameters_yolo_yolo_iou_loss_thresh(self, value, **kwargs):
         fields = list(
             filter(
-                lambda item: item.name == "architecture_parameters_yolo_yolo_iou_loss_thresh",
+                lambda item: item.name
+                == "architecture_parameters_yolo_yolo_iou_loss_thresh",
                 self.yolo.fields,
             )
         )
@@ -587,12 +591,13 @@ class ArchitectureYoloBaseForm(ArchitectureBaseForm):
             return
         fields[0].value = value
 
-        self.disable_by_state(fields, **kwargs)
+        self.disable_by_state(fields[0], **kwargs)
 
     def _set_architecture_parameters_yolo_train_warmup_epochs(self, value, **kwargs):
         fields = list(
             filter(
-                lambda item: item.name == "architecture_parameters_yolo_train_warmup_epochs",
+                lambda item: item.name
+                == "architecture_parameters_yolo_train_warmup_epochs",
                 self.yolo.fields,
             )
         )
@@ -600,7 +605,7 @@ class ArchitectureYoloBaseForm(ArchitectureBaseForm):
             return
         fields[0].value = value
 
-        self.disable_by_state(fields, **kwargs)
+        self.disable_by_state(fields[0], **kwargs)
 
 
 class ArchitectureYoloV3Form(ArchitectureYoloBaseForm):
@@ -638,7 +643,7 @@ class DefaultsTrainingData(BaseMixinData):
             project.training.base,
             model=project.model,
             status=project.training.state.status,
-            architecture=self.architecture
+            architecture=self.architecture,
         )
 
 
