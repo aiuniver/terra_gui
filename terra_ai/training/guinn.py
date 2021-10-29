@@ -506,7 +506,8 @@ class GUINN:
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели выполнена'})
         self._set_callbacks(dataset=dataset, dataset_data=dataset_data, batch_size=params.batch,
                             epochs=params.epochs, save_model_path=save_model_path, dataset_path=dataset_path,
-                            checkpoint=params.architecture.parameters.checkpoint.native())
+                            checkpoint=params.architecture.parameters.checkpoint.native(),
+                            initial_model=self.model if yolo_arch else None)
         progress.pool(self.progress_name, finished=False, data={'status': 'Начало обучения ...'})
         if self.dataset.data.use_generator:
             critical_val_size = len(self.dataset.dataframe.get("val"))
@@ -832,12 +833,10 @@ class FitCallback(keras.callbacks.Callback):
                 # print('logs.get(self.metric_checkpoint)', logs.get(self.metric_checkpoint))
                 # print('self.log_history.get("logs").get(self.metric_checkpoint))', self.log_history.get("logs").get(self.metric_checkpoint))
                 if self.checkpoint_config.get("mode") == CheckpointModeChoice.Min and \
-                        logs.get(self.metric_checkpoint) < min(
-                    self.log_history.get("logs").get(self.metric_checkpoint)):
+                        logs.get(self.metric_checkpoint) < min(self.log_history.get("logs").get(self.metric_checkpoint)):
                     return True
                 elif self.checkpoint_config.get("mode") == CheckpointModeChoice.Max and \
-                        logs.get(self.metric_checkpoint) > max(
-                    self.log_history.get("logs").get(self.metric_checkpoint)):
+                        logs.get(self.metric_checkpoint) > max(self.log_history.get("logs").get(self.metric_checkpoint)):
                     return True
                 else:
                     return False
@@ -898,7 +897,7 @@ class FitCallback(keras.callbacks.Callback):
                                                                           "deploy_presets"),
                                                    dataset_path=self.dataset_path)
         deploy_presets = []
-        print(result.keys())
+        # print(result.keys())
         if result:
             deploy_presets = list(result.values())[0]
         return deploy_presets
