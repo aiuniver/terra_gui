@@ -682,7 +682,8 @@ class FitCallback(keras.callbacks.Callback):
 
     def _get_metric_name_checkpoint(self, logs: dict):
         """Поиск среди fit_logs нужного параметра"""
-        self.metric_checkpoint = "total_loss"
+        # self.metric_checkpoint = "total_loss"
+        print('\n_get_metric_name_checkpoint', self.metric_checkpoint, self.checkpoint_config)
         for log in logs.keys():
             if self.checkpoint_config.get("type") == CheckpointTypeChoice.Loss and \
                     self.checkpoint_config.get("indicator") == CheckpointIndicatorChoice.Val and \
@@ -826,7 +827,8 @@ class FitCallback(keras.callbacks.Callback):
             if logs.get(self.metric_checkpoint):
                 print('\nself.metric_checkpoint)', self.metric_checkpoint)
                 print('logs.get(self.metric_checkpoint)', logs.get(self.metric_checkpoint))
-                # print('self.log_history.get("logs").get(self.metric_checkpoint))', self.log_history.get("logs").get(self.metric_checkpoint))
+                print('self.log_history.get("logs").get(self.metric_checkpoint))',
+                      self.log_history.get("logs").get(self.metric_checkpoint))
                 if self.checkpoint_config.get("mode") == CheckpointModeChoice.Min and \
                         logs.get(self.metric_checkpoint) < min(self.log_history.get("logs").get(self.metric_checkpoint)):
                     return True

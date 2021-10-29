@@ -2816,7 +2816,7 @@ class InteractiveCallback:
                 return_data.append(
                     self._fill_heatmap_front_structure(
                         _id=2,
-                        _type="сorheatmap",
+                        _type="corheatmap",
                         graph_name=f"Бокс-канал «{box_channel}» - Матрица неточностей определения объектов",
                         short_name=f"{box_channel} - Матрица объектов",
                         x_label="Предсказание",
