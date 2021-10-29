@@ -226,8 +226,11 @@ class CreateDataset(object):
         put_parameters = {}
 
         for put in data:
-
-            df = pd.read_csv(put.parameters.sources_paths[0], nrows=0, sep=None, engine='python').columns
+            try:
+                df = pd.read_csv(put.parameters.sources_paths[0], nrows=0, sep=None, engine='python').columns
+            except Exception:
+                progress.pool(self.progress_name, error='Ошибка чтения csv-файла')
+                raise
             output_cols = list(put.parameters.cols_names.keys())
             cols_names_dict = {str_idx: df[int(str_idx)] for str_idx in output_cols}
 
@@ -242,30 +245,34 @@ class CreateDataset(object):
                 instructions_data = None
                 list_of_data = dataframe.loc[:, name].to_numpy().tolist()
                 if put.parameters.cols_names[name_index]:
-                    for worker in put.parameters.cols_names[name_index]:  # На будущее после 1 октября - очень аккуратно!
-                        self.tags[put.id][f'{put.id}_{name}'] = decamelize(self.columns_processing[str(worker)].type)
-                        if decamelize(self.columns_processing[str(worker)].type) in PATH_TYPE_LIST:
-                            list_of_data = [os.path.join(self.source_path, x) for x in list_of_data]
-                        instr = getattr(CreateArray(),
-                                        f'instructions_{decamelize(self.columns_processing[str(worker)].type)}')(
-                            list_of_data, **{'cols_names': f'{put.id}_{name}', 'put': put.id},
-                            **self.columns_processing[str(worker)].parameters.native())
-                        if decamelize(self.columns_processing[str(worker)].type) in PATH_TYPE_LIST:
-                            data_to_cut = [os.path.join(self.source_path, elem) for elem in instr['instructions']]
-                        else:
-                            data_to_cut = instr['instructions']
-                        instructions_data = InstructionsData(
-                            **getattr(CreateArray(),
-                                      f"cut_{decamelize(self.columns_processing[str(worker)].type)}")(
-                                data_to_cut, os.path.join(self.paths.sources, f'{put.id}_{name}'),
-                                **instr['parameters']))
-                        if decamelize(self.columns_processing[str(worker)].type) in PATH_TYPE_LIST:
-                            instructions_data.instructions = [path.replace(str(self.paths.basepath) + os.path.sep, '')
-                                                              for path in instructions_data.instructions]
+                    try:
+                        for worker in put.parameters.cols_names[name_index]:  # На будущее после 1 октября - очень аккуратно!
+                            self.tags[put.id][f'{put.id}_{name}'] = decamelize(self.columns_processing[str(worker)].type)
+                            if decamelize(self.columns_processing[str(worker)].type) in PATH_TYPE_LIST:
+                                list_of_data = [os.path.join(self.source_path, x) for x in list_of_data]
+                            instr = getattr(CreateArray(),
+                                            f'instructions_{decamelize(self.columns_processing[str(worker)].type)}')(
+                                list_of_data, **{'cols_names': f'{put.id}_{name}', 'put': put.id},
+                                **self.columns_processing[str(worker)].parameters.native())
+                            if decamelize(self.columns_processing[str(worker)].type) in PATH_TYPE_LIST:
+                                data_to_cut = [os.path.join(self.source_path, elem) for elem in instr['instructions']]
+                            else:
+                                data_to_cut = instr['instructions']
+                            instructions_data = InstructionsData(
+                                **getattr(CreateArray(),
+                                          f"cut_{decamelize(self.columns_processing[str(worker)].type)}")(
+                                    data_to_cut, os.path.join(self.paths.sources, f'{put.id}_{name}'),
+                                    **instr['parameters']))
+                            if decamelize(self.columns_processing[str(worker)].type) in PATH_TYPE_LIST:
+                                instructions_data.instructions = [path.replace(str(self.paths.basepath) + os.path.sep, '')
+                                                                  for path in instructions_data.instructions]
 
-                        instructions_data.parameters = {'put_type': decamelize(self.columns_processing[
-                                                                                   str(worker)].type),
-                                                        **instr['parameters']}
+                            instructions_data.parameters = {'put_type': decamelize(self.columns_processing[
+                                                                                       str(worker)].type),
+                                                            **instr['parameters']}
+                    except Exception:
+                        progress.pool(self.progress_name, error='Ошибка создания инструкций')
+                        raise
                 else:
                     self.tags[put.id][f'{put.id}_{name}'] = decamelize(LayerInputTypeChoice.Raw)
                     instructions_data = InstructionsData(**{'instructions': list_of_data,
@@ -285,13 +292,17 @@ class CreateDataset(object):
     def create_put_instructions(self, data: Union[CreationInputsList, CreationOutputsList]) -> dict:
 
         def instructions(path, put):
-
-            instr = getattr(CreateArray(), f"instructions_{decamelize(put.type)}")([path], **put.parameters.native())
-            cut_data = getattr(CreateArray(), f"cut_{decamelize(put.type)}")(instr['instructions'],
-                                                                             os.path.join(self.paths.sources,
-                                                                                          f"{put.id}_"
-                                                                                          f"{decamelize(put.type)}"),
-                                                                             **instr['parameters'])
+            try:
+                instr = getattr(CreateArray(), f"instructions_{decamelize(put.type)}")([path],
+                                                                                       **put.parameters.native())
+                cut_data = getattr(CreateArray(), f"cut_{decamelize(put.type)}")(instr['instructions'],
+                                                                                 os.path.join(self.paths.sources,
+                                                                                              f"{put.id}_"
+                                                                                              f"{decamelize(put.type)}"),
+                                                                                 **instr['parameters'])
+            except Exception:
+                progress.pool(self.progress_name, error='Ошибка создания инструкций')
+                raise
 
             class_name = [os.path.basename(os.path.dirname(x)) for x in list(instr['instructions'].keys())]\
                 if put.type == LayerInputTypeChoice.Text else None
@@ -385,25 +396,29 @@ class CreateDataset(object):
                 if 'scaler' in data.parameters and data.parameters['scaler'] not in [LayerScalerImageChoice.no_scaler,
                                                                                      None]:
                     progress.pool(self.progress_name, message=f'Обучение {camelize(data.parameters["scaler"])}')
-                    if self.tags[key][col_name] in PATH_TYPE_LIST:
-                        for i in range(len(data.instructions)):
-                            progress.pool(self.progress_name,
-                                          percent=ceil(i / len(data.instructions) * 100))
+                    try:
+                        if self.tags[key][col_name] in PATH_TYPE_LIST:
+                            for i in range(len(data.instructions)):
+                                progress.pool(self.progress_name,
+                                              percent=ceil(i / len(data.instructions) * 100))
 
-                            arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(
-                                os.path.join(self.paths.basepath, data.instructions[i]),
-                                **data.parameters)
+                                arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(
+                                    os.path.join(self.paths.basepath, data.instructions[i]),
+                                    **data.parameters)
 
-                            if data.parameters['put_type'] in [decamelize(LayerInputTypeChoice.Image),
-                                                               decamelize(LayerOutputTypeChoice.Image)]:
-                                arr = {'instructions': cv2.resize(arr['instructions'], (data.parameters['width'],
-                                                                                        data.parameters['height']))}
-                            if data.parameters['scaler'] == 'terra_image_scaler':
-                                self.preprocessing.preprocessing[key][col_name].fit(arr['instructions'])
-                            else:
-                                self.preprocessing.preprocessing[key][col_name].fit(arr['instructions'].reshape(-1, 1))
-                    else:
-                        self.preprocessing.preprocessing[key][col_name].fit(np.array(data.instructions).reshape(-1, 1))
+                                if data.parameters['put_type'] in [decamelize(LayerInputTypeChoice.Image),
+                                                                   decamelize(LayerOutputTypeChoice.Image)]:
+                                    arr = {'instructions': cv2.resize(arr['instructions'], (data.parameters['width'],
+                                                                                            data.parameters['height']))}
+                                if data.parameters['scaler'] == 'terra_image_scaler':
+                                    self.preprocessing.preprocessing[key][col_name].fit(arr['instructions'])
+                                else:
+                                    self.preprocessing.preprocessing[key][col_name].fit(arr['instructions'].reshape(-1, 1))
+                        else:
+                            self.preprocessing.preprocessing[key][col_name].fit(np.array(data.instructions).reshape(-1, 1))
+                    except Exception:
+                        progress.pool(self.progress_name, error='Ошибка обучения скейлера')
+                        raise
 
     def create_table(self, creation_data: CreationData):
 
@@ -449,8 +464,12 @@ class CreateDataset(object):
         for out in self.instructions.outputs.keys():
             for key, value in self.instructions.outputs[out].items():
                 build_dataframe[key] = value.instructions
-
-        dataframe = pd.DataFrame(build_dataframe)
+        try:
+            dataframe = pd.DataFrame(build_dataframe)
+        except Exception:
+            progress.pool(self.progress_name,
+                          error='Ошибка создания датасета. Нессответствие количества входных/выходных данных')
+            raise
         for key, value in split_sequence.items():
             self.dataframe[key] = dataframe.loc[value, :].reset_index(drop=True)
         # print(self.dataframe['train'])
@@ -466,8 +485,12 @@ class CreateDataset(object):
                 column_names = []
                 encoding = LayerEncodingChoice.none
                 if creation_data.inputs.get(key).type == LayerInputTypeChoice.Dataframe:
-                    column_names = pd.read_csv(creation_data.inputs.get(key).parameters.sources_paths[0], nrows=0,
-                                               sep=None, engine='python').columns.to_list()
+                    try:
+                        column_names = pd.read_csv(creation_data.inputs.get(key).parameters.sources_paths[0], nrows=0,
+                                                   sep=None, engine='python').columns.to_list()
+                    except Exception:
+                        progress.pool(self.progress_name, error='Ошибка чтения csv-файла')
+                        raise
                     current_col_name = '_'.join(col_name.split('_')[1:])
                     idx = column_names.index(current_col_name)
                     try:
@@ -629,8 +652,12 @@ class CreateDataset(object):
                 num_classes = len(classes_names)
 
                 if creation_data.outputs.get(key).type == LayerOutputTypeChoice.Dataframe:
-                    column_names = pd.read_csv(creation_data.outputs.get(key).parameters.sources_paths[0], nrows=0,
-                                               sep=None, engine='python').columns.to_list()
+                    try:
+                        column_names = pd.read_csv(creation_data.outputs.get(key).parameters.sources_paths[0], nrows=0,
+                                                   sep=None, engine='python').columns.to_list()
+                    except Exception:
+                        progress.pool(self.progress_name, error='Ошибка чтения csv-файла')
+                        raise
                     current_col_name = '_'.join(col_name.split('_')[1:])
                     idx = column_names.index(current_col_name)
                     try:
@@ -786,10 +813,14 @@ class CreateDataset(object):
 
             full_array = []
             for h in range(len(row)):
-                arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(row[h], **instructions[h])
-                arr = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(arr['instructions'],
-                                                                                       **arr['parameters'])
-                full_array.append(arr)
+                try:
+                    arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(row[h], **instructions[h])
+                    arr = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(arr['instructions'],
+                                                                                           **arr['parameters'])
+                    full_array.append(arr)
+                except Exception:
+                    progress.pool(self.progress_name, error='Ошибка создания массивов данных')
+                    raise
 
             return full_array
 
