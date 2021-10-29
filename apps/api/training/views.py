@@ -22,6 +22,7 @@ class StartAPIView(BaseAPIView):
         agent_exchange("training_start", **data)
         return BaseResponseSuccess(
             {
+                "form": defaults_data.training.native(),
                 "interactive": request.project.training.interactive.native(),
                 "state": request.project.training.state.native(),
             }
@@ -32,7 +33,13 @@ class StopAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         agent_exchange("training_stop")
         request.project.training.set_state()
-        return BaseResponseSuccess({"state": request.project.training.state.native()})
+        request.project.update_training_base(request.data)
+        return BaseResponseSuccess(
+            {
+                "form": defaults_data.training.native(),
+                "state": request.project.training.state.native()
+            }
+        )
 
 
 class ClearAPIView(BaseAPIView):
@@ -40,7 +47,13 @@ class ClearAPIView(BaseAPIView):
         agent_exchange("training_clear")
         request.project.training.set_state()
         request.project.training.result = None
-        return BaseResponseSuccess({"state": request.project.training.state.native()})
+        request.project.update_training_base(request.data)
+        return BaseResponseSuccess(
+            {
+                "form": defaults_data.training.native(),
+                "state": request.project.training.state.native()
+            }
+        )
 
 
 class InteractiveAPIView(BaseAPIView):
