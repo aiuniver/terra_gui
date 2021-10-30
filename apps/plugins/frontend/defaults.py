@@ -228,8 +228,8 @@ class ArchitectureMixinForm(BaseMixinData):
         if not architecture or not status:
             return
         if field.name in StatesTrainingBaseParamsDisabled.get(
-            str(architecture), {}
-        ).get(str(status), []):
+            architecture, {}
+        ).get(status, []):
             field.disabled = True
 
 
