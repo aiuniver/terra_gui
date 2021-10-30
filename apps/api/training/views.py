@@ -45,6 +45,7 @@ class StopAPIView(BaseAPIView):
 class ClearAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         agent_exchange("training_clear")
+        request.project.clear_training()
         request.project.training.set_state()
         request.project.training.result = None
         request.project.update_training_base(request.project.training.base.native())
