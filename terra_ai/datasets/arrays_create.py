@@ -1623,7 +1623,7 @@ class CreateArray(object):
                 for ex in example_idx:
                     img_path = os.path.join(dataset_path, options.dataframe['val'].iat[ex, 0])
                     img = Image.open(img_path)
-                    img = img.resize(image_size, Image.BICUBIC)
+                    # img = img.resize(image_size, Image.BICUBIC)
                     img = img.convert('RGB')
                     source = os.path.join(save_path, f"deploy_od_initial_data_{ex}_box_{bb}.webp")
                     img.save(source, 'webp')
