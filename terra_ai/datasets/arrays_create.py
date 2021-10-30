@@ -1269,17 +1269,19 @@ class CreateArray(object):
                     dataset_path, options.dataframe['val'][options.dataframe['val'].columns[0]][index])
                 img = Image.open(image_path)
                 real_size = img.size
-                scale_w = int(model_size[0] / real_size[0])
-                scale_h = int(model_size[1] / real_size[1])
+                scale_w = model_size[0] / real_size[0]
+                scale_h = model_size[1] / real_size[1]
                 coord = options.dataframe.get('val').iloc[index, 1].split(' ')
                 bbox_data_gt = np.array([list(map(int, box.split(','))) for box in coord])
-                bboxes_gt, classes_gt = bbox_data_gt[:, :4], bbox_data_gt[:, 4]
+                bboxes_gt, classes_gt = bbox_data_gt[:, :4].astype('float'), bbox_data_gt[:, 4]
+                # print('\n bboxes_gt', bboxes_gt)
                 classes_gt = to_categorical(
                     classes_gt, num_classes=len(options.data.outputs.get(2).classes_names)
                 )
                 bboxes_gt = np.concatenate(
                     [bboxes_gt[:, 1:2] * scale_h, bboxes_gt[:, 0:1] * scale_w,
-                     bboxes_gt[:, 3:4] * scale_h, bboxes_gt[:, 2:3] * scale_w], axis=-1)
+                     bboxes_gt[:, 3:4] * scale_h, bboxes_gt[:, 2:3] * scale_w], axis=-1).astype('int')
+                # print(bboxes_gt)
                 conf_gt = np.expand_dims(np.ones(len(bboxes_gt)), axis=-1)
                 _bb = np.concatenate([bboxes_gt, conf_gt, classes_gt], axis=-1)
                 bb.append(_bb)
@@ -2816,19 +2818,22 @@ class CreateArray(object):
             #     dataset_path, options.dataframe['val'][options.dataframe['val'].columns[0]][index])
             # img = Image.open(image_path)
             real_size = image.size
-            scale_w = int(real_size[0] / image_size[0])
-            scale_h = int(real_size[1] / image_size[1])
+            scale_w = real_size[0] / image_size[0]
+            scale_h = real_size[1] / image_size[1]
 
             def resize_bb(boxes, scale_width, scale_height):
-                coord = boxes[:, :4]
+                coord = boxes[:, :4].astype('float')
                 resized_coord = np.concatenate(
                     [coord[:, 0:1] * scale_height, coord[:, 1:2] * scale_width,
-                     coord[:, 2:3] * scale_height, coord[:, 3:4] * scale_width], axis=-1)
-                resized_coord = np.concatenate([resized_coord, boxes[4:]], axis=-1)
+                     coord[:, 2:3] * scale_height, coord[:, 3:4] * scale_width], axis=-1).astype('int')
+                resized_coord = np.concatenate([resized_coord, boxes[:, 4:]], axis=-1)
                 return resized_coord
-
+            # print('\n true_bb', true_bb)
             true_bb = resize_bb(true_bb, scale_w, scale_h)
+            # print(true_bb)
+            print('\n pred_bb', pred_bb)
             pred_bb = resize_bb(pred_bb, scale_w, scale_h)
+            print(pred_bb)
 
             def draw_box(draw, box, color, thickness, label=None, label_size=None,
                          dash_mode=False, show_label=False):
@@ -2861,7 +2866,7 @@ class CreateArray(object):
                         [tuple(text_origin), tuple(text_origin + label_size)],
                         fill=color
                     )
-                    draw.text(tuple(text_origin), label, fill=(255, 255, 255), font=font)
+                    draw.text(tuple(text_origin), label, fill=(0, 0, 0), font=font)
                 return draw
 
             font = ImageFont.load_default()
@@ -2872,7 +2877,7 @@ class CreateArray(object):
                 for i, box in enumerate(true_bb[:, :4]):
                     draw = ImageDraw.Draw(image_pred)
                     true_class = name_classes[classes[i]]
-                    label = '{}'.format(true_class)
+                    label = ' {} '.format(true_class)
                     label_size = draw.textsize(label, font)
                     draw = draw_box(draw, box, colors[classes[i]], thickness,
                                     label=label, label_size=label_size,
@@ -2884,7 +2889,7 @@ class CreateArray(object):
                 draw = ImageDraw.Draw(image_pred)
                 predicted_class = name_classes[classes[i]]
                 score = pred_bb[:, 5:][i][classes[i]]  # * pred_bb[:, 4][i]
-                label = '{} {:.2f}'.format(predicted_class, score)
+                label = ' {} {:.2f} '.format(predicted_class, score)
                 label_size = draw.textsize(label, font)
                 draw = draw_box(draw, box, colors[classes[i]], thickness,
                                 label=label, label_size=label_size,
@@ -2902,7 +2907,7 @@ class CreateArray(object):
                 for i, box in enumerate(true_bb[:, :4]):
                     draw = ImageDraw.Draw(image_true)
                     true_class = name_classes[classes[i]]
-                    label = '{}'.format(true_class)
+                    label = ' {} '.format(true_class)
                     label_size = draw.textsize(label, font)
                     draw = draw_box(draw, box, colors[classes[i]], thickness,
                                     label=label, label_size=label_size,

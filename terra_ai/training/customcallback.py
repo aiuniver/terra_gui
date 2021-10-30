@@ -520,7 +520,7 @@ class InteractiveCallback:
     def update_state(self, y_pred, y_true=None, fit_logs=None, current_epoch_time=None,
                      on_epoch_end_flag=False) -> dict:
         # if y_pred is not None:
-        # print('\nupdate_state', fit_logs, len(y_pred), 'on_epoch_end_flag', on_epoch_end_flag)
+            # print('\nupdate_state', fit_logs, len(y_pred), 'on_epoch_end_flag', on_epoch_end_flag)
         if self.log_history:
             if y_pred is not None:
                 if self.options.data.architecture in self.basic_architecture:
@@ -571,11 +571,12 @@ class InteractiveCallback:
                             self.interactive_config.statistic_data.box_channel \
                                 and self.interactive_config.statistic_data.autoupdate:
                         self.statistic_result = self._get_statistic_data_request()
-                            # print('\nupdate_state self.statistic_result', self.statistic_result)
+                        # print('\nupdate_state self.statistic_result', self.statistic_result)
                     # print('\nupdate_state self._get_loss_graph_data_request()', self._get_loss_graph_data_request())
                     # print('\nupdate_state self._get_metric_graph_data_request()', self._get_metric_graph_data_request())
                 else:
                     self.intermediate_result = self._get_intermediate_result_request()
+                    # print('\nupdate_state self.intermediate_result', self.intermediate_result)
                     if self.options.data.architecture in self.basic_architecture and \
                             self.interactive_config.statistic_data.output_id:
                         self.statistic_result = self._get_statistic_data_request()
@@ -2009,9 +2010,10 @@ class InteractiveCallback:
                         for x in train_list:
                             if x is not None:
                                 no_none_train.append(x)
-                        best_train_value = min(no_none_train)
+                        best_train_value = min(no_none_train) if no_none_train else None
                         best_train = self._fill_graph_plot_data(
-                            x=[self.log_history.get("epochs")[train_list.index(best_train_value)]],
+                            x=[self.log_history.get("epochs")[train_list.index(best_train_value)]
+                               if best_train_value is not None else None],
                             y=[best_train_value],
                             label="Лучший результат на тренировочной выборке"
                         )
@@ -2026,11 +2028,12 @@ class InteractiveCallback:
                         no_none_val = []
                         for x in val_list:
                             if x is not None:
-                                no_none_train.append(x)
-                        best_val_value = min(no_none_val)
+                                no_none_val.append(x)
+                        best_val_value = min(no_none_val) if no_none_val else None
                         # best_val_value = min(val_list)
                         best_val = self._fill_graph_plot_data(
-                            x=[self.log_history.get("epochs")[val_list.index(best_val_value)]],
+                            x=[self.log_history.get("epochs")[val_list.index(best_val_value)]
+                               if best_val_value is not None else None],
                             y=[best_val_value],
                             label="Лучший результат на проверочной выборке"
                         )
@@ -2085,7 +2088,7 @@ class InteractiveCallback:
                 for loss_graph_config in self.interactive_config.loss_graphs:
                     # print('\nloss_graph_config', loss_graph_config)
                     if loss_graph_config.show == LossGraphShowChoice.model:
-                        # print(self.log_history.get('output').get('loss').keys())
+                        # print('self.log_history.get(output).get(loss).keys()', self.log_history.get('output').get('loss').keys())
                         for loss in self.log_history.get('output').get('loss').keys():
                             # print(loss)
                             if sum(self.log_history.get("output").get("progress_state").get("loss").get(loss).get(
@@ -2101,10 +2104,11 @@ class InteractiveCallback:
                             for x in train_list:
                                 if x is not None:
                                     no_none_train.append(x)
-                            best_train_value = min(no_none_train)
-                            # print('best_train_value', best_train_value)
+                            best_train_value = min(no_none_train) if no_none_train else None
+                            # print('train_list', train_list, best_train_value, no_none_train)
                             best_train = self._fill_graph_plot_data(
-                                x=[self.log_history.get("epochs")[train_list.index(best_train_value)]],
+                                x=[self.log_history.get("epochs")[train_list.index(best_train_value)]
+                                   if best_train_value is not None else None],
                                 y=[best_train_value],
                                 label="Лучший результат на тренировочной выборке"
                             )
@@ -2113,15 +2117,17 @@ class InteractiveCallback:
                                 y=train_list,
                                 label="Тренировочная выборка"
                             )
+                            # print('train_plot', train_plot)
                             val_list = self.log_history.get("output").get('loss').get(loss).get("val")
                             no_none_val = []
                             for x in val_list:
                                 if x is not None:
-                                    no_none_train.append(x)
-                            best_val_value = min(no_none_val)
-                            # print('best_val_value', best_val_value)
+                                    no_none_val.append(x)
+                            best_val_value = min(no_none_val) if no_none_val else None
+                            # print('val_list', val_list, best_val_value, no_none_val)
                             best_val = self._fill_graph_plot_data(
-                                x=[self.log_history.get("epochs")[val_list.index(best_val_value)]],
+                                x=[self.log_history.get("epochs")[val_list.index(best_val_value)]
+                                   if best_val_value is not None else None],
                                 y=[best_val_value],
                                 label="Лучший результат на проверочной выборке"
                             )
@@ -2130,6 +2136,7 @@ class InteractiveCallback:
                                 y=self.log_history.get("output").get('loss').get(loss).get("val"),
                                 label="Проверочная выборка"
                             )
+                            # print('val_plot', val_plot)
                             data_return.append(
                                 self._fill_graph_front_structure(
                                     _id=_id,
