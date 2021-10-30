@@ -243,9 +243,7 @@ TasksGroups = [
     },
     {
         "task": Task.ObjectDetection,
-        "losses": [
-            Loss.YoloLoss
-        ],
+        "losses": [Loss.YoloLoss],
         "metrics": [
             Metric.mAP50,
             # Metric.mAP95
@@ -386,6 +384,5 @@ TasksGroups = [
             # Metric.LogCoshError,
             # Metric.SquaredHinge,
         ],
-    }
+    },
 ]
-

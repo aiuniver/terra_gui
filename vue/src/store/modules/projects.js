@@ -23,7 +23,7 @@ export default {
       if (!data) {
         return;
       }
-      const { project, user, defaults: { modeling: { layers_types, layer_form }, datasets: { creation }, training: { base } } } = data;
+      const { project, user, defaults: { modeling: { layers_types, layer_form }, datasets: { creation }, training: { base, architecture } } } = data;
       const { model, training, deploy } = project;
       commit("SET_PROJECT", project);
       commit("SET_USER", user);
@@ -31,6 +31,7 @@ export default {
       commit("modeling/SET_MODEL", model, { root: true });
       commit("datasets/SET_CREATION", creation, { root: true });
       commit("trainings/SET_PARAMS", base, { root: true });
+      commit("trainings/SET_ARCHITECTURE", architecture, { root: true });
       commit("trainings/SET_CONFIG", training, { root: true });
       if (deploy) {
         commit("deploy/SET_DEPLOY", deploy.data, { root: true });

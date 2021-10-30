@@ -1,7 +1,12 @@
-from ...extra import SourcesPathsData
-from .....extra import LayerYoloChoice, LayerObjectDetectionModelChoice
 from pydantic.types import PositiveInt
 from typing import Optional
+
+from .....extra import (
+    LayerYoloChoice,
+    LayerODDatasetTypeChoice,
+    LayerObjectDetectionModelChoice,
+)
+from ...extra import SourcesPathsData
 
 
 class ParametersData(SourcesPathsData):
@@ -11,6 +16,7 @@ class ParametersData(SourcesPathsData):
     num_classes: Optional[PositiveInt]
     put: Optional[PositiveInt]
     cols_names: Optional[str]
+    model_type: LayerODDatasetTypeChoice = LayerODDatasetTypeChoice.Yolo
 
     def __init__(self, **data):
         data.update({"cols_names": None})

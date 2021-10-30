@@ -642,7 +642,7 @@ class YOLOv3ResBlock(Model):
     #     return cls(**config)
 
 
-class YOLOConvBlock(Layer):
+class YOLOConvBlock(Model):
     """Unet block layer """
 
     def __init__(self,
@@ -731,7 +731,7 @@ class YOLOConvBlock(Layer):
     #     return cls(**config)
 
 
-class Mish(Layer):
+class Mish(Model):
     """
     Mish Activation Function.
     .. math::

@@ -12,6 +12,7 @@ from .exceptions import (
     UniqueListIdentifierException,
     UniqueListUndefinedIdentifierException,
 )
+from ..exceptions.decorators import error_handler
 
 
 class BaseMixinData(BaseModel):
@@ -19,6 +20,7 @@ class BaseMixinData(BaseModel):
     Базовая модель, которая должна применяться ко всем структурам.
     """
 
+    @error_handler
     def __init__(self, **data):
         for __name, __field in self.__fields__.items():
             __type = __field.type_

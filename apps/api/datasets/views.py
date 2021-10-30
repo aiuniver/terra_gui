@@ -1,21 +1,10 @@
 import shutil
 
-from pydantic import ValidationError
-
 from apps.plugins.project import data_path, project_path
-from apps.plugins.project import exceptions as project_exceptions
-
-from terra_ai.data.datasets.creation import CreationData
-from terra_ai.exceptions.base import TerraBaseException
 from terra_ai.agent import agent_exchange
 from terra_ai.agent.exceptions import ExchangeBaseException
-
-from ..base import (
-    BaseAPIView,
-    BaseResponseSuccess,
-    BaseResponseErrorFields,
-    BaseResponseErrorGeneral,
-)
+from terra_ai.data.datasets.creation import CreationData
+from terra_ai.exceptions.base import TerraBaseException
 from .serializers import (
     SourceLoadSerializer,
     ChoiceSerializer,
@@ -23,38 +12,38 @@ from .serializers import (
     DeleteSerializer,
     SourceSegmentationClassesAutosearchSerializer,
 )
+from ..base import (
+    BaseAPIView,
+    BaseResponseSuccess,
+    BaseResponseErrorFields,
+    BaseResponseErrorGeneral,
+)
 
 
 class ChoiceAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
+    @staticmethod
+    def post(request, **kwargs):
         serializer = ChoiceSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
-        try:
-            agent_exchange(
-                "dataset_choice",
-                custom_path=data_path.datasets,
-                destination=project_path.datasets,
-                **serializer.validated_data,
-            )
-            return BaseResponseSuccess()
-        except ValidationError as error:
-            return BaseResponseErrorFields(error)
-        except (TerraBaseException, ExchangeBaseException) as error:
-            return BaseResponseErrorGeneral(str(error))
+        agent_exchange(
+            "dataset_choice",
+            custom_path=data_path.datasets,
+            destination=project_path.datasets,
+            **serializer.validated_data,
+        )
+        return BaseResponseSuccess()
 
 
 class ChoiceProgressAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
+    @staticmethod
+    def post(request, **kwargs):
         save_project = False
-        try:
-            progress = agent_exchange("dataset_choice_progress")
-            if progress.finished and progress.data:
-                request.project.clear_training()
-                request.project.set_dataset(**progress.data)
-                save_project = True
-        except (project_exceptions.ProjectException, ExchangeBaseException) as error:
-            return BaseResponseErrorGeneral(str(error))
+        progress = agent_exchange("dataset_choice_progress")
+        if progress.finished and progress.data:
+            request.project.clear_training()
+            request.project.set_dataset(**progress.data)
+            save_project = True
         if progress.success:
             return BaseResponseSuccess(
                 data=progress.native(), save_project=save_project
@@ -64,122 +53,104 @@ class ChoiceProgressAPIView(BaseAPIView):
 
 
 class InfoAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        try:
-            return BaseResponseSuccess(
-                agent_exchange("datasets_info", path=data_path.datasets).native()
-            )
-        except ExchangeBaseException as error:
-            return BaseResponseErrorGeneral(str(error))
+    @staticmethod
+    def post(request, **kwargs):
+        return BaseResponseSuccess(
+            agent_exchange("datasets_info", path=data_path.datasets).native()
+        )
 
 
 class SourceLoadAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
+    @staticmethod
+    def post(request, **kwargs):
         serializer = SourceLoadSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
-        try:
-            agent_exchange("dataset_source_load", **serializer.validated_data)
-            return BaseResponseSuccess()
-        except ValidationError as error:
-            return BaseResponseErrorFields(error)
-        except (ExchangeBaseException, TerraBaseException) as error:
-            return BaseResponseErrorGeneral(str(error))
+        agent_exchange("dataset_source_load", **serializer.validated_data)
+        return BaseResponseSuccess()
 
 
 class SourceLoadProgressAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        try:
-            progress = agent_exchange("dataset_source_load_progress")
-            if progress.success:
-                return BaseResponseSuccess(data=progress.native())
-            else:
-                return BaseResponseErrorGeneral(progress.error, data=progress.native())
-        except ExchangeBaseException as error:
-            return BaseResponseErrorGeneral(str(error))
+    @staticmethod
+    def post(request, **kwargs):
+        progress = agent_exchange("dataset_source_load_progress")
+        if progress.success:
+            return BaseResponseSuccess(data=progress.native())
+        else:
+            return BaseResponseErrorGeneral(progress.error, data=progress.native())
 
 
-class SourceSegmentationClassesAutosearchAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
+class SourceSegmentationClassesAutoSearchAPIView(BaseAPIView):
+    @staticmethod
+    def post(request, **kwargs):
         serializer = SourceSegmentationClassesAutosearchSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
-        try:
-            return BaseResponseSuccess(
-                agent_exchange(
-                    "dataset_source_segmentation_classes_autosearch",
-                    path=request.data.get("path"),
-                    **serializer.validated_data,
-                )
+        return BaseResponseSuccess(
+            agent_exchange(
+                "dataset_source_segmentation_classes_auto_search",
+                path=request.data.get("path"),
+                **serializer.validated_data,
             )
-        except ValidationError as error:
-            return BaseResponseErrorFields(error)
-        except (ExchangeBaseException, TerraBaseException) as error:
-            return BaseResponseErrorGeneral(str(error))
+        )
 
 
 class SourceSegmentationClassesAnnotationAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        try:
-            return BaseResponseSuccess(
-                agent_exchange(
-                    "dataset_source_segmentation_classes_annotation",
-                    path=request.data.get("path"),
-                )
+    @staticmethod
+    def post(request, **kwargs):
+        return BaseResponseSuccess(
+            agent_exchange(
+                "dataset_source_segmentation_classes_annotation",
+                path=request.data.get("path"),
             )
-        except ValidationError as error:
-            return BaseResponseErrorFields(error)
-        except (ExchangeBaseException, TerraBaseException) as error:
-            return BaseResponseErrorGeneral(str(error))
+        )
 
 
 class CreateAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
+    @staticmethod
+    def post(request, **kwargs):
         serializer = CreateSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
-        try:
-            data = CreationData(**serializer.data)
-        except ValidationError as error:
-            return BaseResponseErrorFields(error)
-        try:
-            return BaseResponseSuccess(
-                data=agent_exchange("dataset_create", creation_data=data).native()
-            )
-        except (TerraBaseException, ExchangeBaseException) as error:
-            shutil.rmtree(data.path, ignore_errors=True)
-            return BaseResponseErrorGeneral(str(error))
+        data = CreationData(**serializer.data)
+        agent_exchange("dataset_create", creation_data=data)
+        return BaseResponseSuccess()
+
+
+class CreateProgressAPIView(BaseAPIView):
+    @staticmethod
+    def post(request, **kwargs):
+        progress = agent_exchange("dataset_create_progress")
+        if progress.success:
+            return BaseResponseSuccess(progress.native())
+        else:
+            shutil.rmtree(progress.data.get("path"), ignore_errors=True)
+            return BaseResponseErrorGeneral(progress.error, data=progress.native())
 
 
 class SourcesAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        try:
-            return BaseResponseSuccess(
-                agent_exchange("datasets_sources", path=str(data_path.sources)).native()
-            )
-        except (TerraBaseException, ExchangeBaseException) as error:
-            return BaseResponseErrorGeneral(str(error))
+    @staticmethod
+    def post(request, **kwargs):
+        return BaseResponseSuccess(
+            agent_exchange("datasets_sources", path=str(data_path.sources)).native()
+        )
 
 
 class DeleteAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
+    @staticmethod
+    def post(request, **kwargs):
         save_project = False
         serializer = DeleteSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
-        try:
-            agent_exchange(
-                "dataset_delete",
-                path=str(data_path.datasets),
-                **serializer.validated_data,
-            )
-            if request.project.dataset and (
-                request.project.dataset.alias == serializer.validated_data.get("alias")
-            ):
-                request.project.set_dataset()
-                save_project = True
-            return BaseResponseSuccess(save_project=save_project)
-        except ValidationError as error:
-            return BaseResponseErrorFields(error)
-        except (ExchangeBaseException, TerraBaseException) as error:
-            return BaseResponseErrorGeneral(str(error))
+        agent_exchange(
+            "dataset_delete",
+            path=str(data_path.datasets),
+            **serializer.validated_data,
+        )
+        if request.project.dataset and (
+            request.project.dataset.alias == serializer.validated_data.get("alias")
+        ):
+            request.project.set_dataset()
+            save_project = True
+        return BaseResponseSuccess(save_project=save_project)

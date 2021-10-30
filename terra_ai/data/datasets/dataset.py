@@ -178,7 +178,7 @@ import json
 import os
 from pathlib import Path
 from datetime import datetime
-from typing import Optional, Dict, List, Tuple, Union
+from typing import Optional, Dict, List, Tuple, Any
 from pydantic import validator, DirectoryPath
 from pydantic.types import PositiveInt
 from pydantic.color import Color
@@ -290,9 +290,7 @@ class DatasetData(AliasMixinData):
     inputs: Dict[PositiveInt, DatasetInputsData] = {}
     outputs: Dict[PositiveInt, DatasetOutputsData] = {}
     service: Optional[Dict[PositiveInt, DatasetOutputsData]] = {}
-    columns: Optional[
-        Dict[PositiveInt, Dict[str, Union[DatasetInputsData, DatasetOutputsData]]]
-    ] = {}
+    columns: Optional[Dict[PositiveInt, Dict[str, Any]]] = {}
 
     @property
     def model(self) -> ModelDetailsData:

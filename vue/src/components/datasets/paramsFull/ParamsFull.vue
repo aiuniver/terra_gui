@@ -39,7 +39,7 @@ import BlockHeader from './block/BlockHeader.vue';
 import BlockMainLeft from './block/BlockMainLeft.vue';
 import BlockMainRight from './block/BlockMainRight.vue';
 import BlockHandlers from './block/BlockHandlers.vue';
-
+import { debounce } from '@/utils/core/utils';
 export default {
   name: 'ParamsFull',
   components: {
@@ -48,16 +48,17 @@ export default {
     BlockHeader,
     BlockMainLeft,
     BlockMainRight,
-    BlockHandlers
+    BlockHandlers,
   },
   data: () => ({
     toggle: true,
+    debounce: null,
     ops: {
       scrollPanel: {
         scrollingX: false,
         scrollingY: true,
       },
-    }
+    },
   }),
   computed: {
     // ...mapGetters({
@@ -78,30 +79,49 @@ export default {
       return { flex: '0 0 ' + height + 'px', height: height + 'px' };
     },
     isTable() {
-      return this.$store.getters['datasets/getFilesDrop'].some(val => val.type === 'table')
-    }
+      return this.$store.getters['datasets/getFilesDrop'].some(val => val.type === 'table');
+    },
   },
   methods: {
     async createObject(obj) {
       this.$store.dispatch('messages/setMessage', { info: `Создается датасет "${obj.name}"` });
       const res = await this.$store.dispatch('datasets/createDataset', obj);
-      console.log(res)
+      console.log(res);
       if (res) {
-        const { data, error, success } = res;
-        if (data && success && !error) {
-          this.full = false;
-          this.$store.dispatch('messages/setMessage', { message: `Датасет "${obj.name}" создан` });
-        } else {
-          this.$store.dispatch('messages/setMessage', { error: `Ошибка создания датасета` });
+        const { success } = res;
+        if (success) {
+          this.debounce(true);
         }
-        console.log(data);
+      }
+    },
+    async progress() {
+      const res = await this.$store.dispatch('datasets/createProgress', {});
+      if (res) {
+        const { finished } = res.data;
+        if (!finished) {
+          this.debounce(true);
+        } else {
+          this.full = false;
+        }
       }
     },
     change(value) {
       this.toggle = value;
     },
   },
-  mounted() {},
+  created() {
+    this.debounce = debounce(status => {
+      console.log(status);
+      if (status) {
+        this.progress();
+      }
+    }, 1000);
+
+    // this.debounce(this.isLearning);
+  },
+  beforeDestroy() {
+    this.debounce(false);
+  },
 };
 </script>
 

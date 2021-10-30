@@ -3,7 +3,6 @@ import shutil
 import zipfile
 import requests
 
-from tqdm import tqdm
 from pathlib import Path
 from tempfile import mkdtemp, NamedTemporaryFile
 from pydantic.networks import HttpUrl
@@ -60,10 +59,10 @@ def unpack(progress_name: str, title: str, zipfile_path: Path) -> Path:
     pool.reset(progress_name, message=title, finished=False)
     try:
         with zipfile.ZipFile(zipfile_path) as zipfile_ref:
-            __tqdm = tqdm(zipfile_ref.infolist())
-            for member in __tqdm:
-                zipfile_ref.extract(member, zip_destination)
-                pool(progress_name, percent=__tqdm.n / __tqdm.total * 100)
+            files_list = zipfile_ref.infolist()
+            for _index, _member in enumerate(files_list):
+                zipfile_ref.extract(_member, zip_destination)
+                pool(progress_name, percent=(_index + 1) / len(files_list) * 100)
             pool(progress_name, percent=100)
     except Exception as error:
         shutil.rmtree(zip_destination, ignore_errors=True)

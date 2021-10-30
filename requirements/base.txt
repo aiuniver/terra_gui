@@ -7,6 +7,7 @@ django-htmlmin==0.11.0
 pymorphy2==0.9.1
 dill>=0.3.4
 pydantic>=1.8.2
+pydantic-i18n==0.2.1
 cairosvg==2.5.2
 PyYAML~=5.4.1
 transliterate==1.10.2

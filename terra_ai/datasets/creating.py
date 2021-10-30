@@ -1,7 +1,8 @@
-from terra_ai.utils import decamelize
+from terra_ai.data.datasets.creations.layers.image_augmentation import AugmentationData
+from terra_ai.utils import decamelize, camelize
 from terra_ai.exceptions.tensor_flow import ResourceExhaustedError as Resource
 from terra_ai.datasets.data import DataType, InstructionsData, DatasetInstructionsData
-from terra_ai.datasets.utils import PATH_TYPE_LIST
+from terra_ai.datasets.utils import PATH_TYPE_LIST, convert_object_detection
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preprocessing import CreatePreprocessing
 from terra_ai.data.training.extra import ArchitectureChoice
@@ -11,6 +12,8 @@ from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoic
     LayerPrepareMethodChoice, LayerScalerImageChoice, ColumnProcessingTypeChoice, \
     LayerTypeProcessingClassificationChoice, LayerEncodingChoice
 from terra_ai.settings import DATASET_EXT, DATASET_CONFIG
+from terra_ai.data.datasets.creations.layers.output.types.ObjectDetection import LayerODDatasetTypeChoice
+from terra_ai import progress
 
 import psutil
 import cv2
@@ -24,8 +27,9 @@ import tempfile
 import shutil
 import zipfile
 import concurrent.futures
+from math import ceil
+from PIL import Image
 from itertools import repeat
-from tqdm import tqdm
 from pathlib import Path
 from typing import Union
 from datetime import datetime
@@ -34,9 +38,21 @@ from pytz import timezone
 
 class CreateDataset(object):
 
+    progress_name = 'create_dataset'
+
+    @progress.threading
     def __init__(self, cr_data: CreationData):
 
-        creation_data = self.preprocess_creation_data(cr_data)
+        progress.pool.reset(name=self.progress_name,
+                            message='Начало',
+                            finished=False)
+
+        try:
+            creation_data = self.preprocess_creation_data(cr_data)
+        except Exception:
+            progress.pool(self.progress_name,
+                          error='Ошибка выбора параметров создания датасета')
+            raise
 
         self.temp_directory = tempfile.mkdtemp()
         os.makedirs(Path(self.temp_directory, f'{creation_data.alias}.{DATASET_EXT}'), exist_ok=True)
@@ -51,6 +67,7 @@ class CreateDataset(object):
         self.source_path = creation_data.source_path
         self.y_cls: list = []
         self.columns = {}
+        self.augmentation = {'object': None, 'data': []}
 
         self.columns_processing = {}
         if creation_data.columns_processing:
@@ -58,6 +75,8 @@ class CreateDataset(object):
                 self.columns_processing[key] = value
 
         self.instructions: DatasetInstructionsData = self.create_instructions(creation_data)
+
+        progress.pool(self.progress_name, message='Создание препроцессинга', percent=0)
         self.create_preprocessing(self.instructions)
         self.fit_preprocessing(put_data=self.instructions.inputs)
         self.fit_preprocessing(put_data=self.instructions.outputs)
@@ -75,6 +94,11 @@ class CreateDataset(object):
         self.outputs = self.create_output_parameters(creation_data=creation_data)
         self.service = self.create_service_parameters(creation_data=creation_data)
 
+        progress.pool(self.progress_name,
+                      message='Сохранение датасета',
+                      percent=100
+                      )
+
         self.write_preprocesses_to_files()
         self.write_instructions_to_files()
         self.zip_dataset(self.paths.basepath, os.path.join(self.temp_directory, 'dataset'))
@@ -88,6 +112,13 @@ class CreateDataset(object):
             shutil.rmtree(Path(creation_data.datasets_path, f'{creation_data.alias}.{DATASET_EXT}'))
         shutil.move(str(self.paths.basepath), creation_data.datasets_path)
         shutil.rmtree(self.temp_directory)
+
+        progress.pool(self.progress_name,
+                      percent=100,
+                      message='Формирование завершено',
+                      finished=True,
+                      data=self.datasetdata
+                      )
 
     @staticmethod
     def postprocess_timeseries(full_array):
@@ -148,6 +179,9 @@ class CreateDataset(object):
                         inp.parameters.open_tags = out.parameters.open_tags
                         inp.parameters.close_tags = out.parameters.close_tags
             elif out.type == LayerOutputTypeChoice.ObjectDetection:
+                if out.parameters.model_type != LayerODDatasetTypeChoice.Yolo:
+                    convert_object_detection(creation_data)
+                    out.parameters.sources_paths = [Path(os.path.join(creation_data.source_path, 'Yolo_annotations'))]
                 with open(creation_data.source_path.joinpath('obj.names'), 'r') as names:
                     names_list = names.read()
                 names_list = [elem for elem in names_list.split('\n') if elem]
@@ -199,8 +233,11 @@ class CreateDataset(object):
         put_parameters = {}
 
         for put in data:
-
-            df = pd.read_csv(put.parameters.sources_paths[0], nrows=0, sep=None, engine='python').columns
+            try:
+                df = pd.read_csv(put.parameters.sources_paths[0], nrows=0, sep=None, engine='python').columns
+            except Exception:
+                progress.pool(self.progress_name, error='Ошибка чтения csv-файла')
+                raise
             output_cols = list(put.parameters.cols_names.keys())
             cols_names_dict = {str_idx: df[int(str_idx)] for str_idx in output_cols}
 
@@ -215,30 +252,34 @@ class CreateDataset(object):
                 instructions_data = None
                 list_of_data = dataframe.loc[:, name].to_numpy().tolist()
                 if put.parameters.cols_names[name_index]:
-                    for worker in put.parameters.cols_names[name_index]:  # На будущее после 1 октября - очень аккуратно!
-                        self.tags[put.id][f'{put.id}_{name}'] = decamelize(self.columns_processing[str(worker)].type)
-                        if decamelize(self.columns_processing[str(worker)].type) in PATH_TYPE_LIST:
-                            list_of_data = [os.path.join(self.source_path, x) for x in list_of_data]
-                        instr = getattr(CreateArray(),
-                                        f'instructions_{decamelize(self.columns_processing[str(worker)].type)}')(
-                            list_of_data, **{'cols_names': f'{put.id}_{name}', 'put': put.id},
-                            **self.columns_processing[str(worker)].parameters.native())
-                        if decamelize(self.columns_processing[str(worker)].type) in PATH_TYPE_LIST:
-                            data_to_cut = [os.path.join(self.source_path, elem) for elem in instr['instructions']]
-                        else:
-                            data_to_cut = instr['instructions']
-                        instructions_data = InstructionsData(
-                            **getattr(CreateArray(),
-                                      f"cut_{decamelize(self.columns_processing[str(worker)].type)}")(
-                                data_to_cut, os.path.join(self.paths.sources, f'{put.id}_{name}'),
-                                **instr['parameters']))
-                        if decamelize(self.columns_processing[str(worker)].type) in PATH_TYPE_LIST:
-                            instructions_data.instructions = [path.replace(str(self.paths.basepath) + os.path.sep, '')
-                                                              for path in instructions_data.instructions]
+                    try:
+                        for worker in put.parameters.cols_names[name_index]:  # На будущее после 1 октября - очень аккуратно!
+                            self.tags[put.id][f'{put.id}_{name}'] = decamelize(self.columns_processing[str(worker)].type)
+                            if decamelize(self.columns_processing[str(worker)].type) in PATH_TYPE_LIST:
+                                list_of_data = [os.path.join(self.source_path, x) for x in list_of_data]
+                            instr = getattr(CreateArray(),
+                                            f'instructions_{decamelize(self.columns_processing[str(worker)].type)}')(
+                                list_of_data, **{'cols_names': f'{put.id}_{name}', 'put': put.id},
+                                **self.columns_processing[str(worker)].parameters.native())
+                            if decamelize(self.columns_processing[str(worker)].type) in PATH_TYPE_LIST:
+                                data_to_cut = [os.path.join(self.source_path, elem) for elem in instr['instructions']]
+                            else:
+                                data_to_cut = instr['instructions']
+                            instructions_data = InstructionsData(
+                                **getattr(CreateArray(),
+                                          f"cut_{decamelize(self.columns_processing[str(worker)].type)}")(
+                                    data_to_cut, os.path.join(self.paths.sources, f'{put.id}_{name}'),
+                                    **instr['parameters']))
+                            if decamelize(self.columns_processing[str(worker)].type) in PATH_TYPE_LIST:
+                                instructions_data.instructions = [path.replace(str(self.paths.basepath) + os.path.sep, '')
+                                                                  for path in instructions_data.instructions]
 
-                        instructions_data.parameters = {'put_type': decamelize(self.columns_processing[
-                                                                                   str(worker)].type),
-                                                        **instr['parameters']}
+                            instructions_data.parameters = {'put_type': decamelize(self.columns_processing[
+                                                                                       str(worker)].type),
+                                                            **instr['parameters']}
+                    except Exception:
+                        progress.pool(self.progress_name, error='Ошибка создания инструкций')
+                        raise
                 else:
                     self.tags[put.id][f'{put.id}_{name}'] = decamelize(LayerInputTypeChoice.Raw)
                     instructions_data = InstructionsData(**{'instructions': list_of_data,
@@ -256,6 +297,27 @@ class CreateDataset(object):
         return put_parameters
 
     def create_put_instructions(self, data: Union[CreationInputsList, CreationOutputsList]) -> dict:
+
+        def instructions(path, put):
+            try:
+                instr = getattr(CreateArray(), f"instructions_{decamelize(put.type)}")([path],
+                                                                                       **put.parameters.native())
+                cut_data = getattr(CreateArray(), f"cut_{decamelize(put.type)}")(instr['instructions'],
+                                                                                 os.path.join(self.paths.sources,
+                                                                                              f"{put.id}_"
+                                                                                              f"{decamelize(put.type)}"),
+                                                                                 **instr['parameters'])
+            except Exception:
+                progress.pool(self.progress_name, error='Ошибка создания инструкций')
+                raise
+
+            class_name = [os.path.basename(os.path.dirname(x)) for x in list(instr['instructions'].keys())]\
+                if put.type == LayerInputTypeChoice.Text else None
+
+            if class_name:
+                return cut_data, class_name
+            else:
+                return (cut_data, )
 
         put_parameters: dict = {}
         for put in data:
@@ -282,28 +344,30 @@ class CreateDataset(object):
                 put.parameters.cols_names = f'{put.id}_{decamelize(put.type)}'
                 put.parameters.put = put.id
                 temp_paths_list = [os.path.join(self.source_path, x) for x in paths_list]
-                instr = getattr(CreateArray(), f"instructions_{decamelize(put.type)}")(temp_paths_list,
-                                                                                       **put.parameters.native())
 
-                if not put.type == LayerOutputTypeChoice.Classification:
-                    y_classes = sorted(list(instr['instructions'].keys())) if isinstance(instr['instructions'], dict) \
-                        else instr['instructions']
-                    self.y_cls = [os.path.basename(os.path.dirname(dir_name)) for dir_name in y_classes]
-
-                instructions_data = InstructionsData(
-                    **getattr(CreateArray(), f"cut_{decamelize(put.type)}")(instr['instructions'],
-                                                                            os.path.join(self.paths.sources,
-                                                                                         f"{put.id}_"
-                                                                                         f"{decamelize(put.type)}"),
-                                                                            **instr['parameters']))
-
-                instructions_data.parameters = {'put_type': decamelize(put.type),
-                                                **instr['parameters']}
+                results_list = []
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    results = executor.map(instructions, temp_paths_list, repeat(put))
+                    progress.pool(self.progress_name,
+                                  message='Формирование файлов')
+                    for i, result in enumerate(results):
+                        progress.pool(self.progress_name, percent=ceil(i / len(temp_paths_list) * 100))
+                        results_list += result[0]['instructions']
+                        if put.type not in [LayerOutputTypeChoice.Classification, LayerOutputTypeChoice.Segmentation,
+                                            LayerOutputTypeChoice.TextSegmentation,
+                                            LayerOutputTypeChoice.ObjectDetection, LayerOutputTypeChoice.Timeseries,
+                                            LayerOutputTypeChoice.TimeseriesTrend, LayerOutputTypeChoice.Regression]:
+                            y_classes = result[1] if len(result) > 1 else [os.path.basename(os.path.dirname(dir_name))
+                                                                           for dir_name in result[0]['instructions']]
+                            self.y_cls += y_classes
+                instructions_data = InstructionsData(instructions=results_list, parameters=result[0]['parameters'])
 
                 if decamelize(put.type) in PATH_TYPE_LIST:
                     new_paths = [path.replace(str(self.paths.basepath) + os.path.sep, '')
                                  for path in instructions_data.instructions]
                     instructions_data.instructions = new_paths
+
+                instructions_data.parameters.update([('put_type', decamelize(put.type))])
 
             put_parameters[put.id] = {f'{put.id}_{decamelize(put.type)}': instructions_data}
 
@@ -331,6 +395,9 @@ class CreateDataset(object):
                         self.preprocessing.create_tokenizer(text_list=data.instructions, **data.parameters)
                     elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
                         self.preprocessing.create_word2vec(text_list=data.instructions, **data.parameters)
+                if 'augmentation' in data.parameters.keys() and data.parameters['augmentation']:
+                    self.augmentation['object'] =\
+                        self.preprocessing.create_image_augmentation(data.parameters['augmentation'])
 
     def fit_preprocessing(self, put_data):
 
@@ -338,23 +405,30 @@ class CreateDataset(object):
             for col_name, data in put_data[key].items():
                 if 'scaler' in data.parameters and data.parameters['scaler'] not in [LayerScalerImageChoice.no_scaler,
                                                                                      None]:
-                    if self.tags[key][col_name] in PATH_TYPE_LIST:
-                        for i in range(len(data.instructions)):
+                    progress.pool(self.progress_name, message=f'Обучение {camelize(data.parameters["scaler"])}')
+                    try:
+                        if self.tags[key][col_name] in PATH_TYPE_LIST:
+                            for i in range(len(data.instructions)):
+                                progress.pool(self.progress_name,
+                                              percent=ceil(i / len(data.instructions) * 100))
 
-                            arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(
-                                os.path.join(self.paths.basepath, data.instructions[i]),
-                                **data.parameters)
+                                arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(
+                                    os.path.join(self.paths.basepath, data.instructions[i]),
+                                    **data.parameters)
 
-                            if data.parameters['put_type'] in [decamelize(LayerInputTypeChoice.Image),
-                                                               decamelize(LayerOutputTypeChoice.Image)]:
-                                arr = {'instructions': cv2.resize(arr['instructions'], (data.parameters['width'],
-                                                                                        data.parameters['height']))}
-                            if data.parameters['scaler'] == 'terra_image_scaler':
-                                self.preprocessing.preprocessing[key][col_name].fit(arr['instructions'])
-                            else:
-                                self.preprocessing.preprocessing[key][col_name].fit(arr['instructions'].reshape(-1, 1))
-                    else:
-                        self.preprocessing.preprocessing[key][col_name].fit(np.array(data.instructions).reshape(-1, 1))
+                                if data.parameters['put_type'] in [decamelize(LayerInputTypeChoice.Image),
+                                                                   decamelize(LayerOutputTypeChoice.Image)]:
+                                    arr = {'instructions': cv2.resize(arr['instructions'], (data.parameters['width'],
+                                                                                            data.parameters['height']))}
+                                if data.parameters['scaler'] == 'terra_image_scaler':
+                                    self.preprocessing.preprocessing[key][col_name].fit(arr['instructions'])
+                                else:
+                                    self.preprocessing.preprocessing[key][col_name].fit(arr['instructions'].reshape(-1, 1))
+                        else:
+                            self.preprocessing.preprocessing[key][col_name].fit(np.array(data.instructions).reshape(-1, 1))
+                    except Exception:
+                        progress.pool(self.progress_name, error='Ошибка обучения скейлера')
+                        raise
 
     def create_table(self, creation_data: CreationData):
 
@@ -400,8 +474,12 @@ class CreateDataset(object):
         for out in self.instructions.outputs.keys():
             for key, value in self.instructions.outputs[out].items():
                 build_dataframe[key] = value.instructions
-
-        dataframe = pd.DataFrame(build_dataframe)
+        try:
+            dataframe = pd.DataFrame(build_dataframe)
+        except Exception:
+            progress.pool(self.progress_name,
+                          error='Ошибка создания датасета. Нессответствие количества входных/выходных данных')
+            raise
         for key, value in split_sequence.items():
             self.dataframe[key] = dataframe.loc[value, :].reset_index(drop=True)
         # print(self.dataframe['train'])
@@ -417,8 +495,12 @@ class CreateDataset(object):
                 column_names = []
                 encoding = LayerEncodingChoice.none
                 if creation_data.inputs.get(key).type == LayerInputTypeChoice.Dataframe:
-                    column_names = pd.read_csv(creation_data.inputs.get(key).parameters.sources_paths[0], nrows=0,
-                                               sep=None, engine='python').columns.to_list()
+                    try:
+                        column_names = pd.read_csv(creation_data.inputs.get(key).parameters.sources_paths[0], nrows=0,
+                                                   sep=None, engine='python').columns.to_list()
+                    except Exception:
+                        progress.pool(self.progress_name, error='Ошибка чтения csv-файла')
+                        raise
                     current_col_name = '_'.join(col_name.split('_')[1:])
                     idx = column_names.index(current_col_name)
                     try:
@@ -552,6 +634,13 @@ class CreateDataset(object):
                     else:
                         data_to_pass = data.instructions[data.parameters['length']:data.parameters['length'] +
                                                                                    data.parameters['depth']]
+                elif decamelize(creation_data.outputs.get(key).type) == decamelize(
+                        LayerOutputTypeChoice.ObjectDetection):
+                    data_to_pass = data.instructions[0]
+                    tmp_im = Image.open(os.path.join(self.paths.basepath,
+                                                     self.dataframe['train'].iloc[0, 0]))
+                    data.parameters.update([('orig_x', tmp_im.width),
+                                            ('orig_y', tmp_im.height)])
                 else:
                     data_to_pass = data.instructions[0]
                 arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(data_to_pass, **data.parameters,
@@ -573,8 +662,12 @@ class CreateDataset(object):
                 num_classes = len(classes_names)
 
                 if creation_data.outputs.get(key).type == LayerOutputTypeChoice.Dataframe:
-                    column_names = pd.read_csv(creation_data.outputs.get(key).parameters.sources_paths[0], nrows=0,
-                                               sep=None, engine='python').columns.to_list()
+                    try:
+                        column_names = pd.read_csv(creation_data.outputs.get(key).parameters.sources_paths[0], nrows=0,
+                                                   sep=None, engine='python').columns.to_list()
+                    except Exception:
+                        progress.pool(self.progress_name, error='Ошибка чтения csv-файла')
+                        raise
                     current_col_name = '_'.join(col_name.split('_')[1:])
                     idx = column_names.index(current_col_name)
                     try:
@@ -726,15 +819,29 @@ class CreateDataset(object):
 
     def create_dataset_arrays(self, put_data: dict):
 
+        def array_creation(row, instructions):
+
+            full_array = []
+            for h in range(len(row)):
+                try:
+                    arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(row[h], **instructions[h])
+                    arr = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(arr['instructions'],
+                                                                                           **arr['parameters'])
+                    full_array.append(arr)
+                except Exception:
+                    progress.pool(self.progress_name, error='Ошибка создания массивов данных')
+                    raise
+
+            return full_array
+
         out_array = {'train': {}, 'val': {}, 'test': {}}
         service = {'train': {}, 'val': {}, 'test': {}}
 
         for split in list(out_array.keys()):
             for key in put_data.keys():
-                current_arrays: list = []
                 col_name = None
-
                 length, depth, step = 0, 0, 1
+
                 for col_name, data in put_data[key].items():
                     depth = data.parameters['depth'] if 'depth' in data.parameters.keys() and \
                                                         data.parameters['depth'] else 0
@@ -743,53 +850,73 @@ class CreateDataset(object):
 
                 for j in range(6):
                     globals()[f'current_arrays_{j}'] = []
+
+                data_to_pass = []
+                dict_to_pass = []
                 for i in range(0, len(self.dataframe[split]) - length - depth, step):
-                    if psutil.virtual_memory()._asdict().get("percent") > 90:
-                        current_arrays = []
-                        raise Resource
-                    full_array = []
+                    tmp_data = []
+                    tmp_parameter_data = []
                     for col_name, data in put_data[key].items():
-                        prep = None
-                        if self.tags[key][col_name] in PATH_TYPE_LIST:
-                            data_to_pass = os.path.join(self.paths.basepath, self.dataframe[split].loc[i, col_name])
-
-                        elif 'depth' in data.parameters.keys() and data.parameters['depth']:
-                            if 'trend' in data.parameters.keys() and data.parameters['trend']:
-                                data_to_pass = [self.dataframe[split].loc[i, col_name],
-                                                self.dataframe[split].loc[i + data.parameters['length'], col_name]]
-                            elif 'trend' in data.parameters.keys():
-                                data_to_pass = self.dataframe[split].loc[
-                                               i + data.parameters['length']:i + data.parameters['length'] +
-                                                                             data.parameters['depth'] - 1, col_name]
-                            else:
-                                data_to_pass = self.dataframe[split].loc[i:i + data.parameters['length'] - 1, col_name]
-                        else:
-                            data_to_pass = self.dataframe[split].loc[i, col_name]
-
+                        parameters_to_pass = data.parameters.copy()
                         if self.preprocessing.preprocessing.get(key) and \
                                 self.preprocessing.preprocessing.get(key).get(col_name):
                             prep = self.preprocessing.preprocessing.get(key).get(col_name)
-                        arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(data_to_pass,
-                                                                                           **{'preprocess': prep},
-                                                                                           **data.parameters)
+                            parameters_to_pass.update([('preprocess', prep)])
 
-                        arr = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(arr['instructions'],
-                                                                                               **arr['parameters'])
-
-                        if self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
-                            for n in range(6):
-                                globals()[f'current_arrays_{n}'].append(arr[n])
-                        else:
-                            full_array.append(arr)
-                    if not self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
-                        if depth:
+                        if self.tags[key][col_name] in PATH_TYPE_LIST:
+                            tmp_data.append(os.path.join(self.paths.basepath,
+                                                         self.dataframe[split].loc[i, col_name]))
+                        elif 'depth' in data.parameters.keys() and data.parameters['depth']:
                             if 'trend' in data.parameters.keys() and data.parameters['trend']:
-                                array = np.array(full_array[0])
+                                tmp_data.append([self.dataframe[split].loc[i, col_name],
+                                                 self.dataframe[split].loc[i + data.parameters['length'],
+                                                                           col_name]])
+                            elif 'trend' in data.parameters.keys():
+                                tmp_data.append(
+                                    self.dataframe[split].loc[i + data.parameters['length']:i +
+                                                                                            data.parameters['length']
+                                                                                            + data.parameters[
+                                                                                                'depth'] - 1, col_name])
                             else:
-                                array = self.postprocess_timeseries(full_array)
+                                tmp_data.append(self.dataframe[split].loc[i:i + data.parameters['length'] - 1,
+                                                col_name])
+
+                        elif self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
+                            tmp_data.append(self.dataframe[split].loc[i, col_name])
+                            tmp_im = Image.open(os.path.join(self.paths.basepath,
+                                                             self.dataframe[split].iloc[i, 0]))
+                            parameters_to_pass.update([('orig_x', tmp_im.width),
+                                                       ('orig_y', tmp_im.height)])
                         else:
-                            array = np.concatenate(full_array, axis=0)
-                        current_arrays.append(array)
+                            tmp_data.append(self.dataframe[split].loc[i, col_name])
+                        tmp_parameter_data.append(parameters_to_pass)
+                    data_to_pass.append(tmp_data)
+                    dict_to_pass.append(tmp_parameter_data)
+
+                progress.pool(self.progress_name,
+                              message=f'Формирование массивов {split.title()} выборки. ID: {key}.',
+                              percent=0)
+
+                current_arrays: list = []
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    results = executor.map(array_creation, data_to_pass, dict_to_pass)
+                    for i, result in enumerate(results):
+                        if psutil.virtual_memory()._asdict().get("percent") > 90:
+                            current_arrays = []
+                            raise Resource
+                        progress.pool(self.progress_name, percent=ceil(i / len(data_to_pass) * 100))
+                        if not self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
+                            if depth:
+                                if 'trend' in dict_to_pass[i][0].keys() and dict_to_pass[i][0]['trend']:
+                                    array = np.array(result[0])
+                                else:
+                                    array = self.postprocess_timeseries(result)
+                            else:
+                                array = np.concatenate(result, axis=0)
+                            current_arrays.append(array)
+                        else:
+                            for n in range(6):
+                                globals()[f'current_arrays_{n}'].append(result[0][n])
 
                 if self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
                     for n in range(3):

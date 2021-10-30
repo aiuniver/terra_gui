@@ -3,9 +3,9 @@
 """
 
 import json
-from typing import Any, List, Optional
+from typing import Any, Optional, List
 from pydantic import validator
-from pydantic.types import conint, PositiveInt
+from pydantic.types import conint, confloat, PositiveInt
 from pydantic.errors import EnumMemberError
 
 from ..mixins import BaseMixinData, UniqueListMixin, IDMixinData
@@ -21,7 +21,6 @@ from .extra import (
     MetricChoice,
     StateStatusChoice,
 )
-from ..types import ConstrainedFloatValueGe0Le1
 
 
 class LossGraphData(IDMixinData):
@@ -51,18 +50,10 @@ class IntermediateResultData(BaseMixinData):
     show_results: bool = False
     example_choice_type: ExampleChoiceTypeChoice = ExampleChoiceTypeChoice.seed
     main_output: Optional[PositiveInt]
-    num_examples: conint(ge=1, le=10) = 10
-    show_statistic: bool = False
-    autoupdate: bool = False
-
-
-class YoloIntermediateResultData(BaseMixinData):
-    show_results: bool = False
-    example_choice_type: ExampleChoiceTypeChoice = ExampleChoiceTypeChoice.seed
     box_channel: conint(ge=0, le=2) = 1
     num_examples: conint(ge=1, le=10) = 10
-    sensitivity: ConstrainedFloatValueGe0Le1 = 0.15
-    threashold: ConstrainedFloatValueGe0Le1 = 0.1
+    sensitivity: confloat(gt=0, le=1) = 0.15
+    threashold: confloat(gt=0, le=1) = 0.1
     show_statistic: bool = False
     autoupdate: bool = False
 
@@ -81,14 +72,10 @@ class ProgressTableList(UniqueListMixin):
 
 class StatisticData(BaseMixinData):
     output_id: List[PositiveInt] = []
-    autoupdate: bool = False
-
-
-class YoloStatisticData(BaseMixinData):
     box_channel: conint(ge=0, le=2) = 1
     autoupdate: bool = False
-    sensitivity: ConstrainedFloatValueGe0Le1 = 0.15
-    threashold: ConstrainedFloatValueGe0Le1 = 0.1
+    sensitivity: confloat(gt=0, le=1) = 0.15
+    threashold: confloat(gt=0, le=1) = 0.1
 
 
 class BalanceData(BaseMixinData):
@@ -103,15 +90,6 @@ class InteractiveData(BaseMixinData):
     intermediate_result: IntermediateResultData = IntermediateResultData()
     progress_table: ProgressTableList = ProgressTableList()
     statistic_data: StatisticData = StatisticData()
-    data_balance: BalanceData = BalanceData()
-
-
-class YoloInteractiveData(BaseMixinData):
-    loss_graphs: LossGraphsList = LossGraphsList()
-    metric_graphs: MetricGraphsList = MetricGraphsList()
-    intermediate_result: YoloIntermediateResultData = YoloIntermediateResultData()
-    progress_table: ProgressTableList = ProgressTableList()
-    statistic_data: YoloStatisticData = YoloStatisticData()
     data_balance: BalanceData = BalanceData()
 
 
@@ -155,12 +133,17 @@ class OptimizerData(BaseMixinData):
 
     @validator("parameters", always=True)
     def _validate_parameters(cls, value: Any, values, field) -> Any:
-        return field.type_(**value or {})
+        return field.type_(**(value or {}))
 
 
 class ArchitectureData(BaseMixinData):
+    model: Any
     type: ArchitectureChoice
     parameters: Any
+
+    def dict(self, **kwargs):
+        kwargs.update({"exclude": {"model"}})
+        return super().dict(**kwargs)
 
     @property
     def outputs_dict(self) -> dict:
@@ -182,7 +165,19 @@ class ArchitectureData(BaseMixinData):
 
     @validator("parameters", always=True)
     def _validate_parameters(cls, value: Any, values, field) -> Any:
-        return field.type_(**value or {})
+        if not value:
+            return value
+        _model = values.get("model")
+        _outputs = value.get("outputs", [])
+        for _index, _output in enumerate(_outputs):
+            _output["task"] = (
+                _model.layers.get(_output.get("id")).task.value
+                if _model.layers.get(_output.get("id")).task
+                else None
+            )
+            _outputs[_index] = _output
+        value["outputs"] = _outputs
+        return field.type_(**(value or {}))
 
 
 class TrainData(BaseMixinData):

@@ -71,7 +71,7 @@
           <div class="col">
             <h3>Select</h3>
             <t-field label="Medium">
-              <DSelect icon="search" />
+              <DSelect icon="search" :list="list"/>
             </t-field>
           </div>
         </div>

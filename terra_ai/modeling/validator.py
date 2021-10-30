@@ -170,12 +170,9 @@ class ModelValidator:
     """Make validation of model plan"""
 
     def __init__(self, model: ModelDetailsData):
-        # print()
-        # for layer in model.layers:
-        #     print(layer)
         self.validator: LayerValidation = LayerValidation()
         self.model: ModelDetailsData = model
-        self.filled_model: ModelDetailsData = model
+        self.filled_model = model   # .native()
         self.output_shape = {}
         self.all_indexes: List[int] = []
         self.start_row: List[int] = []
@@ -191,8 +188,6 @@ class ModelValidator:
         self.keras_code: str = ""
         self.valid: bool = True
 
-        # reset state in self.model_plan
-        # self.plan_name = ""
         self.input_shape = {}
         self.model_plan = []
         self.block_plans = {}
@@ -355,7 +350,7 @@ class ModelValidator:
                 f"{self.keras_code}\n\nmodel = Model({inputs_str}, {outputs_str})"
             )
 
-    def get_validated(self):# -> Tuple[ModelDetailsData, dict]:
+    def get_validated(self):
         """Returns all necessary info about modeling"""
         self._model_validation()
         if self.valid:
@@ -392,10 +387,8 @@ class ModelValidator:
                     if self.layer_output_shapes.get(layer.id)[0]
                     else self.layer_output_shapes.get(layer.id)
                 ]
-
         self.filled_model.keras = self.keras_code
         return self.val_dictionary
-        # return self.filled_model, self.val_dictionary
 
     def get_keras_model(self):
         mc = ModelCreator(self.model_plan, self.input_shape, self.block_plans, self.layers_config)
@@ -643,14 +636,8 @@ class LayerValidation:
         self.layer_parameters = parameters
         self.kwargs = kwargs
 
-        self.num_uplinks = (
-            config.num_uplinks.value,
-            config.num_uplinks.validation.value,
-        )
-        self.input_dimension = (
-            config.input_dimension.value,
-            config.input_dimension.validation.value,
-        )
+        self.num_uplinks = (config.num_uplinks.value, config.num_uplinks.validation.value)
+        self.input_dimension = (config.input_dimension.value, config.input_dimension.validation.value)
         self.module = importlib.import_module(config.module.value)
         self.module_type = config.module_type.value
 
@@ -661,11 +648,9 @@ class LayerValidation:
             return [None], error
         else:
             output_shape = [None]
-            if (
-                    self.module_type == ModuleTypeChoice.keras
-                    or self.module_type == ModuleTypeChoice.terra_layer
-                    or self.module_type == ModuleTypeChoice.keras_pretrained_model
-            ):
+            if self.module_type == ModuleTypeChoice.keras \
+                    or self.module_type == ModuleTypeChoice.terra_layer \
+                    or self.module_type == ModuleTypeChoice.keras_pretrained_model:
                 try:
                     params = copy.deepcopy(self.layer_parameters)
                     if self.layer_type == LayerTypeChoice.Input:
@@ -693,12 +678,12 @@ class LayerValidation:
                         for shape in output_shape[0]:
                             new.append(tensor_shape_to_tuple(shape))
                         return new, None
-
                     return output_shape, None
                 except ValueError:
                     return output_shape, self.parameters_validation()
                 except Exception:
                     return output_shape, self.parameters_validation()
+
 
             if self.module_type == ModuleTypeChoice.tensorflow:
                 try:
@@ -889,11 +874,9 @@ class LayerValidation:
                     if shape != self.inp_shape[0]:
                         return str(exceptions.InputShapesAreDifferentException()) % self.inp_shape
         else:
-            if (
-                    isinstance(self.input_dimension[0], int)
-                    and self.input_dimension[1] == LayerValidationMethodChoice.fixed
-                    and len(self.inp_shape[0]) != self.input_dimension[0]
-            ):
+            if isinstance(self.input_dimension[0], int) and \
+                self.input_dimension[1] == LayerValidationMethodChoice.fixed and \
+                    len(self.inp_shape[0]) != self.input_dimension[0]:
                 return str(exceptions.IncorrectQuantityInputDimensionsException(
                     self.input_dimension[0], len(self.inp_shape[0])
                 ))
