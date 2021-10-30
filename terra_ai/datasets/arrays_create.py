@@ -2831,9 +2831,9 @@ class CreateArray(object):
             # print('\n true_bb', true_bb)
             true_bb = resize_bb(true_bb, scale_w, scale_h)
             # print(true_bb)
-            print('\n pred_bb', pred_bb)
+            # print('\n pred_bb', pred_bb)
             pred_bb = resize_bb(pred_bb, scale_w, scale_h)
-            print(pred_bb)
+            # print(pred_bb)
 
             def draw_box(draw, box, color, thickness, label=None, label_size=None,
                          dash_mode=False, show_label=False):
