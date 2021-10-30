@@ -1,5 +1,5 @@
 from terra_ai.agent import agent_exchange
-from terra_ai.data.training.train import InteractiveData
+from terra_ai.data.training.train import InteractiveData, StateStatusChoice
 from terra_ai.data.training.extra import StateStatusChoice
 
 from apps.plugins.project import project_path
@@ -10,6 +10,7 @@ from ..base import BaseAPIView, BaseResponseSuccess
 
 class StartAPIView(BaseAPIView):
     def post(self, request, **kwargs):
+        request.project.training.state.status = StateStatusChoice.training
         request.project.update_training_base(request.data)
         data = {
             "dataset": request.project.dataset,
