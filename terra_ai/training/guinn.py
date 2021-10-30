@@ -1112,7 +1112,7 @@ class FitCallback(keras.callbacks.Callback):
                                                                                          'stopped'] else self.epochs
         if self.is_yolo:
             mAP = get_mAP(self.model, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
-                          TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names)
+                          TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names, dataset_path= self.dataset_path)
             interactive_logs = self._logs_losses_extract(logs, prefixes=['pred', 'target'])
             # interactive_logs.update({'mAP': mAP})
             interactive_logs.update(mAP)

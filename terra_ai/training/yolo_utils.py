@@ -1,12 +1,13 @@
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras.models import Model
 import numpy as np
 import cv2
 import random
 import time
 import colorsys
-
+from tensorflow.keras.preprocessing.image import load_img
+import os
+from terra_ai.datasets.utils import resize_bboxes
 
 ### DETECTION ###
 
@@ -682,10 +683,34 @@ def voc_ap(rec, prec):
     except Exception as e:
         print_error("module yolo_utils", method_name, e)
 
+# def resize_bboxes(coords, orig_x, orig_y, out_size = 416):
+#     x_scale = orig_x / out_size
+#     y_scale = orig_y / out_size
+#     real_boxes = []
+#     if x_scale == 1 and y_scale == 1:
+#         for coord in coords.split(' '):
+#             real_boxes.append([literal_eval(num) for num in coord.split(',')])
+#     else:
+#         for coord in coords.split(' '):
+#             tmp = []
+#             for i, num in enumerate(coord.split(',')):
+#                 if i in [0, 2]:
+#                     tmp_value = int(literal_eval(num) / x_scale) - 1
+#                     scale_value = orig_x if tmp_value > orig_x else tmp_value
+#                     tmp.append(scale_value)
+#                 elif i in [1, 3]:
+#                     tmp_value = int(literal_eval(num) / y_scale) - 1
+#                     scale_value = orig_y if tmp_value > orig_y else tmp_value
+#                     tmp.append(scale_value)
+#                 else:
+#                     tmp.append(literal_eval(num))
+#             real_boxes.append(tmp)
+#     return real_boxes
 
 def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_SIZE=416, TRAIN_CLASSES=None,
-            pred=None):
+            pred=None, dataset_path=''):
     method_name = 'get_mAP'
+    tt1 = time.time()
     try:
         if TRAIN_CLASSES is None:
             TRAIN_CLASSES = []
@@ -698,8 +723,10 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
         id_ground_truth = {}
         for index in range(len(dataset.dataframe.get("val"))):
 
-            y_true = dataset.dataframe.get("val").iloc[index, 1].split(' ')
-            bbox_data_gt = np.array([list(map(int, box.split(','))) for box in y_true])
+            true_bbox = dataset.dataframe.get("val").iloc[index, 1] #.split(' ')
+            tmp_im = load_img(os.path.join(dataset_path, dataset.dataframe.get("val").iloc[index, 0]))
+            bbox_data_gt = np.array(resize_bboxes(true_bbox, tmp_im.width, tmp_im.height))
+            # bbox_data_gt = np.array([list(map(int, box.split(','))) for box in y_true])
 
             if len(bbox_data_gt) == 0:
                 bboxes_gt = []
@@ -872,6 +899,8 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
 
             ap_dictionary[f"val_mAP{int(i_iou * 100)}"] = mAP * 100
         ap_dictionary["val_fps"] = fps
+        tt2 = time.time()
+        print('tt2-tt1', tt2-tt1)
         return ap_dictionary
     except Exception as e:
         print_error("module yolo_utils", method_name, e)
