@@ -11,7 +11,7 @@ from tensorflow.python.keras.preprocessing import image
 from tensorflow.python.keras.utils.np_utils import to_categorical
 
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice, ArchitectureChoice
-from terra_ai.datasets.utils import get_yolo_anchors
+from terra_ai.datasets.utils import get_yolo_anchors, resize_bboxes
 from terra_ai.data.datasets.dataset import DatasetOutputsData, DatasetData
 from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice, \
     LayerOutputTypeChoice, DatasetGroupChoice, LayerInputTypeChoice, LayerEncodingChoice
@@ -969,26 +969,7 @@ class CreateArray(object):
 
             return 1.0 * inter_area / union_area
 
-        # height: int = options['height']
-        # width: int = options['width']
-        x_scale = options['orig_x'] / 416
-        y_scale = options['orig_y'] / 416
-
-        real_boxes = []
-        for coord in coords.split(' '):
-            tmp = []
-            for i, num in enumerate(coord.split(',')):
-                if i in [0, 2]:
-                    tmp_value = int(literal_eval(num) / x_scale) - 1
-                    scale_value = options['orig_x'] if tmp_value > options['orig_x'] else tmp_value
-                    tmp.append(scale_value)
-                elif i in [1, 3]:
-                    tmp_value = int(literal_eval(num) / y_scale) - 1
-                    scale_value = options['orig_y'] if tmp_value > options['orig_y'] else tmp_value
-                    tmp.append(scale_value)
-                else:
-                    tmp.append(literal_eval(num))
-            real_boxes.append(tmp)
+        real_boxes = resize_bboxes(coords, options['orig_x'], options['orig_y'])
 
         num_classes: int = options['num_classes']
         zero_boxes_flag: bool = False

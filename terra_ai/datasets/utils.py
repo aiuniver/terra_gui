@@ -16,6 +16,7 @@ import xml.etree.ElementTree as Et
 from xml.etree.ElementTree import Element, ElementTree
 import csv
 from PIL import Image
+from ast import literal_eval
 import json
 
 ANNOTATION_SEPARATOR = ":"
@@ -667,3 +668,28 @@ def convert_object_detection(creation_data: CreationData):
     yolo.save(data, Path(os.path.join(creation_data.source_path, 'Yolo_annotations')),
               creation_data.inputs.get(len(creation_data.inputs)).parameters.sources_paths[0],
               creation_data.source_path)
+
+
+def resize_bboxes(coords, orig_x, orig_y):
+    x_scale = orig_x / 416
+    y_scale = orig_y / 416
+    real_boxes = []
+    if x_scale == 1 and y_scale == 1:
+        for coord in coords.split(' '):
+            real_boxes.append([literal_eval(num) for num in coord.split(',')])
+    else:
+        for coord in coords.split(' '):
+            tmp = []
+            for i, num in enumerate(coord.split(',')):
+                if i in [0, 2]:
+                    tmp_value = int(literal_eval(num) / x_scale) - 1
+                    scale_value = orig_x if tmp_value > orig_x else tmp_value
+                    tmp.append(scale_value)
+                elif i in [1, 3]:
+                    tmp_value = int(literal_eval(num) / y_scale) - 1
+                    scale_value = orig_y if tmp_value > orig_y else tmp_value
+                    tmp.append(scale_value)
+                else:
+                    tmp.append(literal_eval(num))
+            real_boxes.append(tmp)
+    return real_boxes
