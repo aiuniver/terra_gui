@@ -77,8 +77,13 @@ export default {
       // console.log(res)
       if (res && res?.data) {
         const state = res?.data?.data?.state || res?.data.state
+        const base = res?.data?.form?.base
         if (state) {
           commit("SET_STATE", state);
+          if (base) {
+            console.log(base)
+            commit("SET_PARAMS", base);
+          }
           dispatch('setStatusTrain', state.status);
         }
       }

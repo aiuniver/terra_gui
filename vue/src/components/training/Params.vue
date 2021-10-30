@@ -114,7 +114,7 @@ export default {
   methods: {
     onchange(e) {
       console.log(e);
-      console.log(this.collapse);
+      // console.log(this.collapse);
     },
     btnEvent(key) {
       if (key === 'train') {
