@@ -62,9 +62,57 @@ class DefaultsTrainingBaseGroupData(BaseMixinData):
     fields: Union[List[Field], Dict[str, List[Field]]]
 
 
+StatesTrainingYoloParamsDisabled = {
+    StateStatusChoice.no_train: [],
+    StateStatusChoice.training: [
+        "batch",
+        "epochs",
+        "optimizer",
+        "optimizer_main_learning_rate",
+        "optimizer_extra_beta_1",
+        "optimizer_extra_beta_2",
+        "optimizer_extra_epsilon",
+        "optimizer_extra_amsgrad",
+        "architecture_parameters_yolo_train_lr_init",
+        "architecture_parameters_yolo_train_lr_end",
+        "architecture_parameters_yolo_yolo_iou_loss_thresh",
+        "architecture_parameters_yolo_train_warmup_epochs",
+    ],
+    StateStatusChoice.trained: [
+        "architecture_parameters_yolo_train_lr_init",
+        "architecture_parameters_yolo_train_lr_end",
+        "architecture_parameters_yolo_yolo_iou_loss_thresh",
+        "architecture_parameters_yolo_train_warmup_epochs",
+    ],
+    StateStatusChoice.stopped: [
+        "epochs",
+        "architecture_parameters_yolo_train_lr_init",
+        "architecture_parameters_yolo_train_lr_end",
+        "architecture_parameters_yolo_yolo_iou_loss_thresh",
+        "architecture_parameters_yolo_train_warmup_epochs",
+    ],
+    StateStatusChoice.addtrain: [
+        "batch",
+        "epochs",
+        "optimizer",
+        "optimizer_main_learning_rate",
+        "optimizer_extra_beta_1",
+        "optimizer_extra_beta_2",
+        "optimizer_extra_epsilon",
+        "optimizer_extra_amsgrad",
+        "architecture_parameters_yolo_train_lr_init",
+        "architecture_parameters_yolo_train_lr_end",
+        "architecture_parameters_yolo_yolo_iou_loss_thresh",
+        "architecture_parameters_yolo_train_warmup_epochs",
+    ],
+}
+
+
 StatesTrainingBaseParamsDisabled = {
     "Basic": {
-        StateStatusChoice.no_train: [],
+        StateStatusChoice.no_train: [
+            "architecture_parameters_outputs_%s_classes_quantity"
+        ],
         StateStatusChoice.training: [
             "batch",
             "epochs",
@@ -74,6 +122,9 @@ StatesTrainingBaseParamsDisabled = {
             "optimizer_extra_beta_2",
             "optimizer_extra_epsilon",
             "optimizer_extra_amsgrad",
+            "architecture_parameters_outputs_%s_loss",
+            "architecture_parameters_outputs_%s_metrics",
+            "architecture_parameters_outputs_%s_classes_quantity",
             "architecture_parameters_checkpoint_layer",
             "architecture_parameters_checkpoint_metric_name",
             "architecture_parameters_checkpoint_type",
@@ -81,6 +132,9 @@ StatesTrainingBaseParamsDisabled = {
             "architecture_parameters_checkpoint_mode",
         ],
         StateStatusChoice.trained: [
+            "architecture_parameters_outputs_%s_loss",
+            "architecture_parameters_outputs_%s_metrics",
+            "architecture_parameters_outputs_%s_classes_quantity",
             "architecture_parameters_checkpoint_layer",
             "architecture_parameters_checkpoint_metric_name",
             "architecture_parameters_checkpoint_type",
@@ -89,6 +143,9 @@ StatesTrainingBaseParamsDisabled = {
         ],
         StateStatusChoice.stopped: [
             "epochs",
+            "architecture_parameters_outputs_%s_loss",
+            "architecture_parameters_outputs_%s_metrics",
+            "architecture_parameters_outputs_%s_classes_quantity",
             "architecture_parameters_checkpoint_layer",
             "architecture_parameters_checkpoint_metric_name",
             "architecture_parameters_checkpoint_type",
@@ -104,6 +161,9 @@ StatesTrainingBaseParamsDisabled = {
             "optimizer_extra_beta_2",
             "optimizer_extra_epsilon",
             "optimizer_extra_amsgrad",
+            "architecture_parameters_outputs_%s_loss",
+            "architecture_parameters_outputs_%s_metrics",
+            "architecture_parameters_outputs_%s_classes_quantity",
             "architecture_parameters_checkpoint_layer",
             "architecture_parameters_checkpoint_metric_name",
             "architecture_parameters_checkpoint_type",
@@ -111,94 +171,8 @@ StatesTrainingBaseParamsDisabled = {
             "architecture_parameters_checkpoint_mode",
         ],
     },
-    "YoloV3": {
-        StateStatusChoice.no_train: [],
-        StateStatusChoice.training: [
-            "batch",
-            "epochs",
-            "optimizer",
-            "optimizer_main_learning_rate",
-            "optimizer_extra_beta_1",
-            "optimizer_extra_beta_2",
-            "optimizer_extra_epsilon",
-            "optimizer_extra_amsgrad",
-            "architecture_parameters_yolo_train_lr_init",
-            "architecture_parameters_yolo_train_lr_end",
-            "architecture_parameters_yolo_yolo_iou_loss_thresh",
-            "architecture_parameters_yolo_train_warmup_epochs",
-        ],
-        StateStatusChoice.trained: [
-            "architecture_parameters_yolo_train_lr_init",
-            "architecture_parameters_yolo_train_lr_end",
-            "architecture_parameters_yolo_yolo_iou_loss_thresh",
-            "architecture_parameters_yolo_train_warmup_epochs",
-        ],
-        StateStatusChoice.stopped: [
-            "epochs",
-            "architecture_parameters_yolo_train_lr_init",
-            "architecture_parameters_yolo_train_lr_end",
-            "architecture_parameters_yolo_yolo_iou_loss_thresh",
-            "architecture_parameters_yolo_train_warmup_epochs",
-        ],
-        StateStatusChoice.addtrain: [
-            "batch",
-            "epochs",
-            "optimizer",
-            "optimizer_main_learning_rate",
-            "optimizer_extra_beta_1",
-            "optimizer_extra_beta_2",
-            "optimizer_extra_epsilon",
-            "optimizer_extra_amsgrad",
-            "architecture_parameters_yolo_train_lr_init",
-            "architecture_parameters_yolo_train_lr_end",
-            "architecture_parameters_yolo_yolo_iou_loss_thresh",
-            "architecture_parameters_yolo_train_warmup_epochs",
-        ],
-    },
-    "YoloV4": {
-        StateStatusChoice.no_train: [],
-        StateStatusChoice.training: [
-            "batch",
-            "epochs",
-            "optimizer",
-            "optimizer_main_learning_rate",
-            "optimizer_extra_beta_1",
-            "optimizer_extra_beta_2",
-            "optimizer_extra_epsilon",
-            "optimizer_extra_amsgrad",
-            "architecture_parameters_yolo_train_lr_init",
-            "architecture_parameters_yolo_train_lr_end",
-            "architecture_parameters_yolo_yolo_iou_loss_thresh",
-            "architecture_parameters_yolo_train_warmup_epochs",
-        ],
-        StateStatusChoice.trained: [
-            "architecture_parameters_yolo_train_lr_init",
-            "architecture_parameters_yolo_train_lr_end",
-            "architecture_parameters_yolo_yolo_iou_loss_thresh",
-            "architecture_parameters_yolo_train_warmup_epochs",
-        ],
-        StateStatusChoice.stopped: [
-            "epochs",
-            "architecture_parameters_yolo_train_lr_init",
-            "architecture_parameters_yolo_train_lr_end",
-            "architecture_parameters_yolo_yolo_iou_loss_thresh",
-            "architecture_parameters_yolo_train_warmup_epochs",
-        ],
-        StateStatusChoice.addtrain: [
-            "batch",
-            "epochs",
-            "optimizer",
-            "optimizer_main_learning_rate",
-            "optimizer_extra_beta_1",
-            "optimizer_extra_beta_2",
-            "optimizer_extra_epsilon",
-            "optimizer_extra_amsgrad",
-            "architecture_parameters_yolo_train_lr_init",
-            "architecture_parameters_yolo_train_lr_end",
-            "architecture_parameters_yolo_yolo_iou_loss_thresh",
-            "architecture_parameters_yolo_train_warmup_epochs",
-        ],
-    },
+    "YoloV3": {**StatesTrainingYoloParamsDisabled},
+    "YoloV4": {**StatesTrainingYoloParamsDisabled},
 }
 
 
@@ -227,9 +201,27 @@ class ArchitectureMixinForm(BaseMixinData):
     ):
         if not architecture or not status:
             return
-        if field.name in StatesTrainingBaseParamsDisabled.get(
-            architecture, {}
-        ).get(status, []):
+        if field.name in StatesTrainingBaseParamsDisabled.get(architecture, {}).get(
+            status, []
+        ):
+            field.disabled = True
+
+    def disable_by_state_layer(
+        self,
+        field,
+        layer_id: int,
+        architecture: str = None,
+        status: str = None,
+        **kwargs,
+    ):
+        if not architecture or not status:
+            return
+        if field.name in list(
+            map(
+                lambda item: item % str(layer_id) if "%s" in item else item,
+                StatesTrainingBaseParamsDisabled.get(architecture, {}).get(status, []),
+            )
+        ):
             field.disabled = True
 
 
@@ -404,11 +396,11 @@ class ArchitectureOutputsCheckpointGroupFrom(ArchitectureMixinForm):
     def update(self, data: Any, prefix: str = "", **kwargs):
         model = kwargs.get("model")
         if model and model.outputs:
-            self._update_outputs(model.outputs, data)
+            self._update_outputs(model.outputs, data, **kwargs)
 
         return super().update(data, prefix=prefix, **kwargs)
 
-    def _update_outputs(self, layers: LayersList, data):
+    def _update_outputs(self, layers: LayersList, data, **kwargs):
         outputs = {}
         for layer in layers:
             _task_rel = TasksRelations.get(layer.task)
@@ -468,15 +460,23 @@ class ArchitectureOutputsCheckpointGroupFrom(ArchitectureMixinForm):
                 }
             )
 
+            _loss_field = Field(**_losses_data)
+            _metrics_field = Field(**_metrics_data)
+            _classes_quantity_field = Field(**_classes_quantity_data)
+
+            self.disable_by_state_layer(_loss_field, layer.id, **kwargs)
+            self.disable_by_state_layer(_metrics_field, layer.id, **kwargs)
+            self.disable_by_state_layer(_classes_quantity_field, layer.id, **kwargs)
+
             outputs.update(
                 {
                     layer.id: {
                         "name": f"Слой «{layer.name}»",
                         "classes_quantity": layer.num_classes,
                         "fields": [
-                            Field(**_losses_data),
-                            Field(**_metrics_data),
-                            Field(**_classes_quantity_data),
+                            _loss_field,
+                            _metrics_field,
+                            _classes_quantity_field,
                         ],
                     }
                 }

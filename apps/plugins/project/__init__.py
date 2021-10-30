@@ -204,9 +204,10 @@ class Project(BaseMixinData):
             json.dump(json.loads(self.json()), _config_ref)
 
     def clear_training(self):
+        self.deploy = None
         project_path.clear_training()
         self.training = TrainingDetailsData()
-        self.deploy = None
+        self.save()
 
     def _redefine_model_ids(self):
         if not self.dataset:
@@ -270,14 +271,20 @@ class Project(BaseMixinData):
         self.save()
 
     def update_training_base(self, data: dict = None):
-        if isinstance(data, dict) and data:
-            data["architecture"]["type"] = (
-                self.dataset.architecture.value
-                if self.dataset
-                else ArchitectureChoice.Basic.value
+        if isinstance(data, dict):
+            if not data.get("architecture"):
+                data.update({"architecture": {}})
+            data["architecture"].update(
+                {
+                    "type": self.dataset.architecture.value
+                    if self.dataset
+                    else ArchitectureChoice.Basic.value,
+                    "model": self.model,
+                }
             )
-            data["architecture"]["model"] = self.model
-            data["architecture"]["parameters"]["model"] = self.model
+            if not data["architecture"].get("parameters"):
+                data["architecture"].update({"parameters": {}})
+            data["architecture"]["parameters"].update({"model": self.model})
         else:
             data = {
                 "architecture": {

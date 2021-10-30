@@ -30,7 +30,6 @@ TrainingClassesQuantitySelect = {
     "label": "Количество классов",
     "name": "architecture_parameters_outputs_%i_classes_quantity",
     "parse": "architecture[parameters][outputs][%i][classes_quantity]",
-    "disabled": True,
 }
 
 
