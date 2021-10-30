@@ -1,5 +1,5 @@
 from terra_ai.agent import agent_exchange
-from terra_ai.data.training.train import InteractiveData, StateStatusChoice
+from terra_ai.data.training.train import InteractiveData
 from terra_ai.data.training.extra import StateStatusChoice
 
 from apps.plugins.project import project_path
@@ -10,7 +10,6 @@ from ..base import BaseAPIView, BaseResponseSuccess
 
 class StartAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        request.project.training.state.status = StateStatusChoice.training
         request.project.update_training_base(request.data)
         data = {
             "dataset": request.project.dataset,
@@ -72,9 +71,13 @@ class InteractiveAPIView(BaseAPIView):
 
 class ProgressAPIView(BaseAPIView):
     def post(self, request, **kwargs):
+        current_state = request.project.training.state.status
         data = agent_exchange("training_progress").native()
         request.project.training.set_state()
         data.update({"state": request.project.training.state.native()})
+        if current_state != request.project.training.state.status:
+            request.project.update_training_base(request.project.training.base.native())
+            data.update({"form": defaults_data.training.native()})
         _finished = data.get("finished")
         if _finished:
             request.project.deploy = agent_exchange("deploy_presets")
