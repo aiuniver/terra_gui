@@ -47,7 +47,12 @@ class CreateDataset(object):
                             message='Начало',
                             finished=False)
 
-        creation_data = self.preprocess_creation_data(cr_data)
+        try:
+            creation_data = self.preprocess_creation_data(cr_data)
+        except Exception:
+            progress.pool(self.progress_name,
+                          error='Ошибка выбора параметров создания датасета')
+            raise
 
         self.temp_directory = tempfile.mkdtemp()
         os.makedirs(Path(self.temp_directory, f'{creation_data.alias}.{DATASET_EXT}'), exist_ok=True)
