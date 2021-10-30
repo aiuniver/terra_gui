@@ -2,6 +2,7 @@ import colorsys
 import copy
 import math
 import string
+from typing import Optional
 
 import matplotlib
 from PIL import Image, UnidentifiedImageError, ImageFont, ImageDraw
@@ -11,7 +12,7 @@ from tensorflow.python.keras.preprocessing import image
 from tensorflow.python.keras.utils.np_utils import to_categorical
 
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice, ArchitectureChoice
-from terra_ai.datasets.utils import get_yolo_anchors
+from terra_ai.datasets.utils import get_yolo_anchors, resize_bboxes
 from terra_ai.data.datasets.dataset import DatasetOutputsData, DatasetData
 from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice, \
     LayerOutputTypeChoice, DatasetGroupChoice, LayerInputTypeChoice, LayerEncodingChoice
@@ -454,7 +455,8 @@ class CreateArray(object):
                                        'max_scaler': options['max_scaler'],
                                        'min_scaler': options['min_scaler'],
                                        'put': options['put'],
-                                       'cols_names': options['cols_names']
+                                       'cols_names': options['cols_names'],
+                                       'augmentation': options.get('augmentation')
                                        }
                         }
 
@@ -968,22 +970,7 @@ class CreateArray(object):
 
             return 1.0 * inter_area / union_area
 
-        # height: int = options['height']
-        # width: int = options['width']
-        x_scale = options['orig_x'] / 416
-        y_scale = options['orig_y'] / 416
-
-        real_boxes = []
-        for coord in coords.split(' '):
-            tmp = []
-            for i, num in enumerate(coord.split(',')):
-                if i in [0, 2]:
-                    tmp.append(int(literal_eval(num) / x_scale) - 1)
-                elif i in [1, 3]:
-                    tmp.append(int(literal_eval(num) / y_scale) - 1)
-                else:
-                    tmp.append(literal_eval(num))
-            real_boxes.append(tmp)
+        real_boxes = resize_bboxes(coords, options['orig_x'], options['orig_y'])
 
         num_classes: int = options['num_classes']
         zero_boxes_flag: bool = False
@@ -1271,12 +1258,19 @@ class CreateArray(object):
             print_error("CreateArray", method_name, e)
 
     @staticmethod
-    def get_yolo_y_true(options):
+    def get_yolo_y_true(options, dataset_path):
         method_name = 'get_yolo_y_true'
         try:
             y_true = {}
             bb = []
+            model_size = options.data.inputs.get(list(options.data.inputs.keys())[0]).shape[:2]
             for index in range(len(options.dataframe['val'])):
+                image_path = os.path.join(
+                    dataset_path, options.dataframe['val'][options.dataframe['val'].columns[0]][index])
+                img = Image.open(image_path)
+                real_size = img.size
+                scale_w = int(model_size[0] / real_size[0])
+                scale_h = int(model_size[1] / real_size[1])
                 coord = options.dataframe.get('val').iloc[index, 1].split(' ')
                 bbox_data_gt = np.array([list(map(int, box.split(','))) for box in coord])
                 bboxes_gt, classes_gt = bbox_data_gt[:, :4], bbox_data_gt[:, 4]
@@ -1284,7 +1278,8 @@ class CreateArray(object):
                     classes_gt, num_classes=len(options.data.outputs.get(2).classes_names)
                 )
                 bboxes_gt = np.concatenate(
-                    [bboxes_gt[:, 1:2], bboxes_gt[:, 0:1], bboxes_gt[:, 3:4], bboxes_gt[:, 2:3]], axis=-1)
+                    [bboxes_gt[:, 1:2] * scale_h, bboxes_gt[:, 0:1] * scale_w,
+                     bboxes_gt[:, 3:4] * scale_h, bboxes_gt[:, 2:3] * scale_w], axis=-1)
                 conf_gt = np.expand_dims(np.ones(len(bboxes_gt)), axis=-1)
                 _bb = np.concatenate([bboxes_gt, conf_gt, classes_gt], axis=-1)
                 bb.append(_bb)
@@ -1606,7 +1601,7 @@ class CreateArray(object):
                         return_data[output_id] = []
 
             elif options.data.architecture in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]:
-                y_true = CreateArray().get_yolo_y_true(options)
+                y_true = CreateArray().get_yolo_y_true(options, dataset_path)
                 y_pred = CreateArray().get_yolo_y_pred(array, options, sensitivity=sensitivity, threashold=threashold)
                 name_classes = options.data.outputs.get(list(options.data.outputs.keys())[0]).classes_names
                 hsv_tuples = [(x / len(name_classes), 1., 1.) for x in range(len(name_classes))]
@@ -1628,6 +1623,7 @@ class CreateArray(object):
                 for ex in example_idx:
                     img_path = os.path.join(dataset_path, options.dataframe['val'].iat[ex, 0])
                     img = Image.open(img_path)
+                    # img = img.resize(image_size, Image.BICUBIC)
                     img = img.convert('RGB')
                     source = os.path.join(save_path, f"deploy_od_initial_data_{ex}_box_{bb}.webp")
                     img.save(source, 'webp')
@@ -2074,16 +2070,39 @@ class CreateArray(object):
                 example_idx = seed_idx[:count]
 
             elif choice_type == ExampleChoiceTypeChoice.random:
-                example_idx = np.random.randint(0, len(true_array.get(box_channel)), count)
+                true_false_dict = {'true': [], 'false': []}
+                for i, example in enumerate(array.get(box_channel)):
+                    ex_stat = CreateArray().get_yolo_example_statistic(
+                        true_bb=true_array.get(box_channel)[example],
+                        pred_bb=array.get(box_channel)[example],
+                        name_classes=name_classes,
+                        sensitivity=sensitivity
+                    )['total_stat']['total_metric']
+                    if ex_stat > 0.7:
+                        true_false_dict['true'].append(i)
+                    else:
+                        true_false_dict['false'].append(i)
+                example_idx = []
+                for _ in range(count):
+                    if true_false_dict.get('true') and true_false_dict.get('false'):
+                        key = np.random.choice(list(true_false_dict.keys()))
+                    elif true_false_dict.get('true') and not true_false_dict.get('false'):
+                        key = 'true'
+                    else:
+                        key = 'false'
+                    example_idx.append(true_false_dict.get(key)[0])
+                    true_false_dict.get(key).pop(0)
+                np.random.shuffle(example_idx)
+                # example_idx = np.random.randint(0, len(true_array.get(box_channel)), count)
             else:
-                example_idx = np.arange(count)
+                example_idx = np.random.randint(0, len(true_array.get(box_channel)), count)
             return example_idx, box_channel
         except Exception as e:
             print_error("CreateArray", method_name, e)
 
     @staticmethod
     def postprocess_classification(predict_array: np.ndarray, true_array: np.ndarray, options: DatasetOutputsData,
-            show_stat: bool = False, return_mode='deploy'):
+                                   show_stat: bool = False, return_mode='deploy'):
         method_name = 'postprocess_classification'
         try:
             labels = options.classes_names
@@ -2606,7 +2625,7 @@ class CreateArray(object):
                             {
                                 "title": "Среднее",
                                 "value": f"{np.round(box_stat['total_stat']['total_metric'] * 100, 2)}%",
-                                "color_mark": 'success' if box_stat['total_stat']['total_conf'] >= 0.7 else 'wrong'
+                                "color_mark": 'success' if box_stat['total_stat']['total_metric'] >= 0.7 else 'wrong'
                             },
                         ]
                     }
@@ -2792,7 +2811,24 @@ class CreateArray(object):
         method_name = 'plot_boxes'
         try:
             image = Image.open(img_path)
-            image = image.resize(image_size, Image.BICUBIC)
+            # image = image.resize(image_size, Image.BICUBIC)
+            # image_path = os.path.join(
+            #     dataset_path, options.dataframe['val'][options.dataframe['val'].columns[0]][index])
+            # img = Image.open(image_path)
+            real_size = image.size
+            scale_w = int(real_size[0] / image_size[0])
+            scale_h = int(real_size[1] / image_size[1])
+
+            def resize_bb(boxes, scale_width, scale_height):
+                coord = boxes[:, :4]
+                resized_coord = np.concatenate(
+                    [coord[:, 0:1] * scale_height, coord[:, 1:2] * scale_width,
+                     coord[:, 2:3] * scale_height, coord[:, 3:4] * scale_width], axis=-1)
+                resized_coord = np.concatenate([resized_coord, boxes[4:]], axis=-1)
+                return resized_coord
+
+            true_bb = resize_bb(true_bb, scale_w, scale_h)
+            pred_bb = resize_bb(pred_bb, scale_w, scale_h)
 
             def draw_box(draw, box, color, thickness, label=None, label_size=None,
                          dash_mode=False, show_label=False):

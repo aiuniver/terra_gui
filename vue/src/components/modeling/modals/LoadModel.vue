@@ -1,5 +1,8 @@
 <template>
   <at-modal v-model="dialog" width="680" showClose>
+    <div class="t-model__overlay" v-show="modelDownload">
+      <LoadSpiner text="Загрузка модели" />
+    </div>
     <div slot="header" class="t-model__header">
       <span>Загрузка модели</span>
       <div class="t-model__search">
@@ -72,8 +75,13 @@
 </template>
 
 <script>
+import LoadSpiner from "@/components/forms/LoadSpiner";
+
 export default {
   name: 'ModalLoadModel',
+  components: {
+    LoadSpiner
+  },
   props: {
     value: Boolean,
   },
@@ -84,6 +92,7 @@ export default {
     selected: '',
     search: '',
     loading: true,
+    modelDownload: false
   }),
   mounted() {
     this.$el.getElementsByClassName('at-modal__footer')[0].remove();
@@ -153,6 +162,8 @@ export default {
     },
     async download() {
       if (!this.loading) {
+        this.loading = true;
+        this.modelDownload = true;
         const { success: successValidate, data } = await this.$store.dispatch('datasets/validateDatasetOrModel', {
           model: this.model,
         });
@@ -172,6 +183,8 @@ export default {
           await this.onChoice();
         }
         this.$emit('input', false);
+        this.loading = false;
+        this.modelDownload = false;
       }
     },
     async onChoice({ reset_dataset = false } = {}) {
@@ -198,6 +211,19 @@ export default {
 
 <style lang="scss" scoped>
 .t-model {
+  &__overlay {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    height: 100%;
+    background-color: rgb(14 22 33 / 90%);
+    z-index: 801;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
   &__header {
     text-align: center;
     display: flex;

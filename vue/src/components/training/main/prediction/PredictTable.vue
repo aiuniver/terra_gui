@@ -14,9 +14,15 @@
         <thead class="t-table__header" :style="{ height: `${headHeight}px` }">
           <tr>
             <th class="t-table__header--index" rowspan="3" ref="th_layer">Слой</th>
-            <th v-if="getDataColSpan('initial_data')" :colspan="getDataColSpan('initial_data')" ref="th_input">Исходные данные</th>
-            <th v-if="getDataColSpan('true_value')" :colspan="getDataColSpan('true_value')" ref="th_true">Истинное значение</th>
-            <th v-if="getDataColSpan('predict_value')" :colspan="getDataColSpan('predict_value')" ref="th_predict">Предсказание</th>
+            <th v-if="getDataColSpan('initial_data')" :colspan="getDataColSpan('initial_data')" ref="th_input">
+              Исходные данные
+            </th>
+            <th v-if="getDataColSpan('true_value')" :colspan="getDataColSpan('true_value')" ref="th_true">
+              Истинное значение
+            </th>
+            <th v-if="getDataColSpan('predict_value')" :colspan="getDataColSpan('predict_value')" ref="th_predict">
+              Предсказание
+            </th>
           </tr>
 
           <template v-for="({ initial_data, true_value, predict_value }, id) of predict">
@@ -24,16 +30,22 @@
               <tr :key="'f1tr1_' + id">
                 <template v-for="(data, key, i) of initial_data">
                   <template>
-                    <th :colspan="getLayerColSpan(initial_data, key)" :key="'f1th1_' + JSON.stringify(key) + i">{{ key }}</th>
+                    <th :colspan="getLayerColSpan(initial_data, key)" :key="'f1th1_' + JSON.stringify(key) + i">
+                      {{ key }}
+                    </th>
                   </template>
                 </template>
 
                 <template v-for="(data, key, i) of true_value">
-                  <th :colspan="getLayerColSpan(true_value, key)" :key="'f1th2_' + JSON.stringify(key) + i">{{ key }}</th>
+                  <th :colspan="getLayerColSpan(true_value, key)" :key="'f1th2_' + JSON.stringify(key) + i">
+                    {{ key }}
+                  </th>
                 </template>
 
                 <template v-for="(data, key, i) of predict_value">
-                  <th :colspan="getLayerColSpan(predict_value, key)" :key="'f1th3_' + JSON.stringify(key) + i">{{ key }}</th>
+                  <th :colspan="getLayerColSpan(predict_value, key)" :key="'f1th3_' + JSON.stringify(key) + i">
+                    {{ key }}
+                  </th>
                 </template>
               </tr>
 
@@ -99,10 +111,18 @@
         <thead ref="orig_head" class="t-table__header">
           <tr>
             <th class="t-table__header--index" rowspan="3" ref="th_layer">Слой</th>
-            <th v-if="getDataColSpan('initial_data')" :colspan="getDataColSpan('initial_data')" ref="th_input">Исходные данные</th>
-            <th v-if="getDataColSpan('true_value')" :colspan="getDataColSpan('true_value')" ref="th_true">Истинное значение</th>
-            <th v-if="getDataColSpan('predict_value')" :colspan="getDataColSpan('predict_value')" ref="th_predict">Предсказание</th>
-            <th v-if="getDataColSpan('statistic_values')" :colspan="getDataColSpan('statistic_values')" ref="stats">Статистика примеров</th>
+            <th v-if="getDataColSpan('initial_data')" :colspan="getDataColSpan('initial_data')" ref="th_input">
+              Исходные данные
+            </th>
+            <th v-if="getDataColSpan('true_value')" :colspan="getDataColSpan('true_value')" ref="th_true">
+              Истинное значение
+            </th>
+            <th v-if="getDataColSpan('predict_value')" :colspan="getDataColSpan('predict_value')" ref="th_predict">
+              Предсказание
+            </th>
+            <th v-if="getDataColSpan('statistic_values')" :colspan="getDataColSpan('statistic_values')" ref="stats">
+              Статистика примеров
+            </th>
           </tr>
 
           <template v-for="({ initial_data, true_value, predict_value, statistic_values }, id) of predict">
@@ -110,45 +130,53 @@
               <tr :key="'1tr1_' + id">
                 <template v-for="(data, key, i) of initial_data">
                   <template>
-                    <th :colspan="getLayerColSpan(initial_data, key)" :key="'1th1_' + JSON.stringify(key) + i">{{ key }}</th>
+                    <th :colspan="getLayerColSpan(initial_data, key)" :key="'1th1_' + JSON.stringify(key) + i">
+                      {{ key }}
+                    </th>
                   </template>
                 </template>
 
                 <template v-for="(data, key, i) of true_value">
-                  <th :colspan="getLayerColSpan(true_value, key)" :key="'1th2_' + JSON.stringify(key) + i">{{ key }}</th>
+                  <th :colspan="getLayerColSpan(true_value, key)" :key="'1th2_' + JSON.stringify(key) + i">
+                    {{ key }}
+                  </th>
                 </template>
 
                 <template v-for="(data, key, i) of predict_value">
-                  <th :colspan="getLayerColSpan(predict_value, key)" :key="'1th3_' + JSON.stringify(key) + i">{{ key }}</th>
+                  <th :colspan="getLayerColSpan(predict_value, key)" :key="'1th3_' + JSON.stringify(key) + i">
+                    {{ key }}
+                  </th>
                 </template>
 
                 <template v-for="(data, key, i) of statistic_values">
-                  <th :colspan="getLayerColSpan(statistic_values, key)" :key="'1th4_' + JSON.stringify(key) + i">{{ key }}</th>
+                  <th :colspan="getLayerColSpan(statistic_values, key)" :key="'1th4_' + JSON.stringify(key) + i">
+                    {{ key }}
+                  </th>
                 </template>
               </tr>
 
               <tr ref="stat_headers" :key="'2tr_' + id">
-                <template v-for="key of initial_data">
-                  <template v-for="(item, i) in key.data">
-                    <th :key="'2th1' + i + JSON.stringify(key)">{{ item.title }}</th>
+                <template v-for="(data, key) of initial_data">
+                  <template v-for="(item, i) in data.data">
+                    <th :key="'2th1' + i + +key">{{ item.title }}</th>
                   </template>
                 </template>
 
-                <template v-for="key of true_value">
-                  <template v-for="(item, i) in key.data">
-                    <th :key="'2th2' + i">{{ item.title }}</th>
+                <template v-for="(data, key) of true_value">
+                  <template v-for="(item, i) in data.data">
+                    <th :key="'2th2' + i + key">{{ item.title }}</th>
                   </template>
                 </template>
 
-                <template v-for="key of predict_value">
-                  <template v-for="(item, i) in key.data">
-                    <th :key="'2th3' + i">{{ item.title }}</th>
+                <template v-for="(data, key) of predict_value">
+                  <template v-for="(item, i) in data.data">
+                    <th :key="'2th3' + i + key">{{ item.title }}</th>
                   </template>
                 </template>
 
-                <template v-for="key of statistic_values">
-                  <template v-for="(item, i) in key.data">
-                    <th class="t-table__header--static" :key="'2th4' + i + Date.now()">{{ item.title }}</th>
+                <template v-for="(data, key) of statistic_values">
+                  <template v-for="(item, i) in data.data">
+                    <th class="t-table__header--static" :key="'2th4' + i + key">{{ item.title }}</th>
                   </template>
                 </template>
               </tr>
@@ -174,7 +202,7 @@
               <template v-for="({ type, data }, key) in true_value">
                 <template v-for="(item, i) of data">
                   <td :key="'true_layer_' + i + JSON.stringify(key) + update">
-                    <Forms :data="item" :tags_color="tags_color" :layer="key" :update="update" :type="type"/>
+                    <Forms :data="item" :tags_color="tags_color" :layer="key" :update="update" :type="type" />
                   </td>
                 </template>
               </template>
@@ -194,7 +222,6 @@
                   </td>
                 </template>
               </template>
-
             </tr>
           </template>
         </tbody>
@@ -218,52 +245,52 @@ export default {
       default: () => ({}),
     },
     fixation: {
-      type: Boolean
+      type: Boolean,
     },
-    update: String
+    update: String,
   },
   data: () => ({
     ops: {
       scrollPanel: {
-        initialScrollY: 1
-      }
+        initialScrollY: 1,
+      },
     },
     headHeight: 0,
     scrollLeft: 0,
     statsWidth: 0,
     keysHeight: 0,
-    fixedWidth: 0
+    fixedWidth: 0,
   }),
   methods: {
     handleScroll(vert, horiz) {
-      this.scrollLeft = horiz.scrollLeft
-      this.scrollTop = vert.scrollTop
-      this.tableResize()
+      this.scrollLeft = horiz.scrollLeft;
+      this.scrollTop = vert.scrollTop;
+      this.tableResize();
     },
     tableResize() {
-      this.statsWidth = this.$refs?.stats?.offsetWidth || 0
-      this.fixedWidth = (this.$refs?.original?.offsetWidth || 0) - this.statsWidth
-      this.keysHeight = this.$refs?.stat_headers?.[0]?.offsetHeight || 0
-      this.headHeight = this.$refs?.orig_head?.offsetHeight || 0
+      this.statsWidth = this.$refs?.stats?.offsetWidth || 0;
+      this.fixedWidth = (this.$refs?.original?.offsetWidth || 0) - this.statsWidth;
+      this.keysHeight = this.$refs?.stat_headers?.[0]?.offsetHeight || 0;
+      this.headHeight = this.$refs?.orig_head?.offsetHeight || 0;
     },
     getLayerColSpan(data, key) {
-      return data[key].data.length
+      return data[key].data.length;
     },
     getDataColSpan(data) {
-      let layers = 0
+      let layers = 0;
       Object.keys(this.predict[1][data]).forEach(item => {
-        layers += this.predict[1][data][item].data.length
-      })
-      return layers
-    }
+        layers += this.predict[1][data][item].data.length;
+      });
+      return layers;
+    },
   },
   mounted() {
-    this.$on('resize', this.tableResize)
-    this.tableResize()
+    this.$on('resize', this.tableResize);
+    this.tableResize();
   },
   updated() {
-    this.tableResize()
-  }
+    this.tableResize();
+  },
 };
 </script>
 

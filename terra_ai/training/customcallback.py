@@ -834,7 +834,7 @@ class InteractiveCallback:
                             inverse_y_true[data_type][f"{out}"] = inverse_y[:, :, 1:]
 
             if dataset.data.architecture in self.yolo_architecture:
-                y_true = CreateArray().get_yolo_y_true(options=dataset)
+                y_true = CreateArray().get_yolo_y_true(options=dataset, dataset_path=self.dataset_path)
 
             return y_true, inverse_y_true
         except Exception as e:
@@ -2005,7 +2005,11 @@ class InteractiveCallback:
 
                         train_list = self.log_history.get(f"{loss_graph_config.output_idx}").get('loss').get(
                             self.losses.get(f"{loss_graph_config.output_idx}")).get('train')
-                        best_train_value = min(train_list)
+                        no_none_train = []
+                        for x in train_list:
+                            if x is not None:
+                                no_none_train.append(x)
+                        best_train_value = min(no_none_train)
                         best_train = self._fill_graph_plot_data(
                             x=[self.log_history.get("epochs")[train_list.index(best_train_value)]],
                             y=[best_train_value],
@@ -2019,7 +2023,12 @@ class InteractiveCallback:
 
                         val_list = self.log_history.get(f"{loss_graph_config.output_idx}").get('loss').get(
                             self.losses.get(f"{loss_graph_config.output_idx}")).get("val")
-                        best_val_value = min(val_list)
+                        no_none_val = []
+                        for x in val_list:
+                            if x is not None:
+                                no_none_train.append(x)
+                        best_val_value = min(no_none_val)
+                        # best_val_value = min(val_list)
                         best_val = self._fill_graph_plot_data(
                             x=[self.log_history.get("epochs")[val_list.index(best_val_value)]],
                             y=[best_val_value],
@@ -2088,7 +2097,11 @@ class InteractiveCallback:
                             else:
                                 progress_state = "normal"
                             train_list = self.log_history.get("output").get('loss').get(loss).get('train')
-                            best_train_value = min(train_list)
+                            no_none_train = []
+                            for x in train_list:
+                                if x is not None:
+                                    no_none_train.append(x)
+                            best_train_value = min(no_none_train)
                             # print('best_train_value', best_train_value)
                             best_train = self._fill_graph_plot_data(
                                 x=[self.log_history.get("epochs")[train_list.index(best_train_value)]],
@@ -2101,7 +2114,11 @@ class InteractiveCallback:
                                 label="Тренировочная выборка"
                             )
                             val_list = self.log_history.get("output").get('loss').get(loss).get("val")
-                            best_val_value = min(val_list)
+                            no_none_val = []
+                            for x in val_list:
+                                if x is not None:
+                                    no_none_train.append(x)
+                            best_val_value = min(no_none_val)
                             # print('best_val_value', best_val_value)
                             best_val = self._fill_graph_plot_data(
                                 x=[self.log_history.get("epochs")[val_list.index(best_val_value)]],

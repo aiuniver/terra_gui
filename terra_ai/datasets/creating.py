@@ -1,3 +1,4 @@
+from terra_ai.data.datasets.creations.layers.image_augmentation import AugmentationData
 from terra_ai.utils import decamelize, camelize
 from terra_ai.exceptions.tensor_flow import ResourceExhaustedError as Resource
 from terra_ai.datasets.data import DataType, InstructionsData, DatasetInstructionsData
@@ -46,7 +47,12 @@ class CreateDataset(object):
                             message='Начало',
                             finished=False)
 
-        creation_data = self.preprocess_creation_data(cr_data)
+        try:
+            creation_data = self.preprocess_creation_data(cr_data)
+        except Exception:
+            progress.pool(self.progress_name,
+                          error='Ошибка выбора параметров создания датасета')
+            raise
 
         self.temp_directory = tempfile.mkdtemp()
         os.makedirs(Path(self.temp_directory, f'{creation_data.alias}.{DATASET_EXT}'), exist_ok=True)
@@ -61,6 +67,7 @@ class CreateDataset(object):
         self.source_path = creation_data.source_path
         self.y_cls: list = []
         self.columns = {}
+        self.augmentation = {'object': None, 'data': []}
 
         self.columns_processing = {}
         if creation_data.columns_processing:
@@ -70,7 +77,6 @@ class CreateDataset(object):
         self.instructions: DatasetInstructionsData = self.create_instructions(creation_data)
 
         progress.pool(self.progress_name, message='Создание препроцессинга', percent=0)
-
         self.create_preprocessing(self.instructions)
         self.fit_preprocessing(put_data=self.instructions.inputs)
         self.fit_preprocessing(put_data=self.instructions.outputs)
@@ -89,7 +95,8 @@ class CreateDataset(object):
         self.service = self.create_service_parameters(creation_data=creation_data)
 
         progress.pool(self.progress_name,
-                      message='Сохранение датасета'
+                      message='Сохранение датасета',
+                      percent=100
                       )
 
         self.write_preprocesses_to_files()
@@ -388,6 +395,9 @@ class CreateDataset(object):
                         self.preprocessing.create_tokenizer(text_list=data.instructions, **data.parameters)
                     elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
                         self.preprocessing.create_word2vec(text_list=data.instructions, **data.parameters)
+                if 'augmentation' in data.parameters.keys() and data.parameters['augmentation']:
+                    self.augmentation['object'] =\
+                        self.preprocessing.create_image_augmentation(data.parameters['augmentation'])
 
     def fit_preprocessing(self, put_data):
 

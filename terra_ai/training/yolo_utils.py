@@ -200,7 +200,7 @@ def postprocess_boxes(pred_bbox, original_image, input_size, score_threshold):
         pred_coor = np.concatenate([pred_xywh[:, :2] - pred_xywh[:, 2:] * 0.5,
                                     pred_xywh[:, :2] + pred_xywh[:, 2:] * 0.5], axis=-1)
         # 2. (xmin, ymin, xmax, ymax) -> (xmin_org, ymin_org, xmax_org, ymax_org)
-        if isinstance(original_image, tuple):
+        if isinstance(original_image, tuple) or (original_image == None):
             org_h, org_w = input_size, input_size
         else:
             org_h, org_w = original_image.shape[:2]
@@ -503,7 +503,7 @@ class CustomModelYolo(keras.Model):
         self.TRAIN_LR_INIT = lr_init
         self.TRAIN_LR_END = lr_end
         self.YOLO_IOU_LOSS_THRESH = iou_thresh
-        self.steps_per_epoch = int(len(self.dataset.dataframe['train']) // self.train_batch)
+        self.steps_per_epoch = int(len(self.dataset.dataframe.get("train")) // self.train_batch)
         self.global_steps = tf.Variable(1, trainable=False, dtype=tf.int64)
         self.warmup_steps = self.TRAIN_WARMUP_EPOCHS * self.steps_per_epoch
         self.total_steps = self.train_epochs * self.steps_per_epoch
@@ -683,7 +683,8 @@ def voc_ap(rec, prec):
         print_error("module yolo_utils", method_name, e)
 
 
-def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_SIZE=416, TRAIN_CLASSES=None):
+def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_SIZE=416, TRAIN_CLASSES=None,
+            pred=None):
     method_name = 'get_mAP'
     try:
         if TRAIN_CLASSES is None:
@@ -695,7 +696,7 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
 
         gt_counter_per_class = {}
         id_ground_truth = {}
-        for index in range(len(dataset.dataframe['val'])):
+        for index in range(len(dataset.dataframe.get("val"))):
 
             y_true = dataset.dataframe.get("val").iloc[index, 1].split(' ')
             bbox_data_gt = np.array([list(map(int, box.split(','))) for box in y_true])
@@ -737,23 +738,35 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
         times = []
         predict = []
         original_image_shape = []
-        for inp, out, serv in dataset.dataset['val'].batch(1).take(-1):
-            original_image = inp['1'].numpy()[0]
-            image_data = inp['1'].numpy()
-            original_image_shape.append(original_image.shape)
-            t1 = time.time()
+        if pred is not None:
+            for pred_bbox in pred:
+                original_image_shape.append(None)
+                t1 = time.time()
+                pred_bbox = [tf.reshape(x, (-1, tf.shape(x)[-1])) for x in pred_bbox]
+                pred_bbox = tf.concat(pred_bbox, axis=0)
+                predict.append(pred_bbox)
+                t2 = time.time()
+                times.append(t2 - t1)
+                ms = sum(times) / len(times) * 1000
+                fps = 1000 / ms
+        else:
+            for inp, out, serv in dataset.dataset['val'].batch(1).take(-1):
+                original_image = inp['1'].numpy()[0]
+                image_data = inp['1'].numpy()
+                original_image_shape.append(original_image.shape)
+                t1 = time.time()
 
-            pred_bbox = Yolo.predict(image_data)
-            pred_bbox = [pred_bbox[1], pred_bbox[3], pred_bbox[5]]
-            t2 = time.time()
-            times.append(t2 - t1)
+                pred_bbox = Yolo.predict(image_data)
+                pred_bbox = [pred_bbox[1], pred_bbox[3], pred_bbox[5]]
+                t2 = time.time()
+                times.append(t2 - t1)
 
-            pred_bbox = [tf.reshape(x, (-1, tf.shape(x)[-1])) for x in pred_bbox]
-            pred_bbox = tf.concat(pred_bbox, axis=0)
-            predict.append(pred_bbox)
+                pred_bbox = [tf.reshape(x, (-1, tf.shape(x)[-1])) for x in pred_bbox]
+                pred_bbox = tf.concat(pred_bbox, axis=0)
+                predict.append(pred_bbox)
 
-        ms = sum(times) / len(times) * 1000
-        fps = 1000 / ms
+                ms = sum(times) / len(times) * 1000
+                fps = 1000 / ms
 
         ap_dictionary = {}
         for i_iou in iou_threshold:
@@ -859,7 +872,6 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
 
             ap_dictionary[f"val_mAP{int(i_iou * 100)}"] = mAP * 100
         ap_dictionary["val_fps"] = fps
-
         return ap_dictionary
     except Exception as e:
         print_error("module yolo_utils", method_name, e)
