@@ -454,7 +454,8 @@ class CreateArray(object):
                                        'max_scaler': options['max_scaler'],
                                        'min_scaler': options['min_scaler'],
                                        'put': options['put'],
-                                       'cols_names': options['cols_names']
+                                       'cols_names': options['cols_names'],
+                                       'augmentation': options.get('augmentation')
                                        }
                         }
 
