@@ -21,14 +21,14 @@
         </t-field>
       </div>
       <div v-if="isYolo" class="predictions__param">
+        <t-field inline label="Бокс-канал">
+          <t-select-new :list="numOutput" v-model="box_channel" small @change="show" />
+        </t-field>
         <t-field inline label="Чувствительность">
           <t-input-new v-model="sensitivity" type="number" small style="width: 109px" @change="show" />
         </t-field>
         <t-field inline label="Порог отображения">
           <t-input-new v-model="threashold" type="number" small style="width: 109px" @change="show" />
-        </t-field>
-        <t-field inline label="Бокс-канал">
-          <t-select-new :list="numOutput" v-model="box_channel" small @change="show" />
         </t-field>
       </div>
       <div class="predictions__param">
