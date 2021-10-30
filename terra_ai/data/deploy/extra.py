@@ -21,7 +21,7 @@ class DeployTypeChoice(str, Enum):
 
     @property
     def demo(self) -> str:
-        return DeployTypeDemoChoice(self.value).value
+        return DeployTypeDemoChoice[self.value].value
 
 
 class DeployTypeDemoChoice(str, Enum):
