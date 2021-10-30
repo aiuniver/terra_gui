@@ -851,26 +851,26 @@ DatasetsGroups = [
                     Tags.terra_ai.value,
                 ],
             },
-            # {
-            #     "alias": "potholes_v4",
-            #     "name": "Ямы на дорогах v4",
-            #     "group": DatasetGroupChoice.terra.value,
-            #     "tags": [
-            #         Tags.image.value,
-            #         Tags.object_detection.value,
-            #         Tags.terra_ai.value,
-            #     ],
-            # },
-            # {
-            #     "alias": "trash_v4",
-            #     "name": "Подводный мусор v4 (генератор)",
-            #     "group": DatasetGroupChoice.terra.value,
-            #     "tags": [
-            #         Tags.image.value,
-            #         Tags.object_detection.value,
-            #         Tags.terra_ai.value,
-            #     ],
-            # },
+            {
+                "alias": "potholes_v4",
+                "name": "Ямы на дорогах v4",
+                "group": DatasetGroupChoice.terra.value,
+                "tags": [
+                    Tags.image.value,
+                    Tags.object_detection.value,
+                    Tags.terra_ai.value,
+                ],
+            },
+            {
+                "alias": "trash_v4",
+                "name": "Подводный мусор v4 (генератор)",
+                "group": DatasetGroupChoice.terra.value,
+                "tags": [
+                    Tags.image.value,
+                    Tags.object_detection.value,
+                    Tags.terra_ai.value,
+                ],
+            },
             {
                 "alias": "symptoms",
                 "name": "Симптомы",
