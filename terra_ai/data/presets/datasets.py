@@ -823,7 +823,47 @@ DatasetsGroups = [
             },
             {
                 "alias": "chess_v4",
-                "name": "Шахматы v4",
+                "name": "Шахматы v4 (генератор)",
+                "group": DatasetGroupChoice.terra.value,
+                "tags": [
+                    Tags.image.value,
+                    Tags.object_detection.value,
+                    Tags.terra_ai.value,
+                ],
+            },
+            {
+                "alias": "products_v4",
+                "name": "Молоко v4 (генератор)",
+                "group": DatasetGroupChoice.terra.value,
+                "tags": [
+                    Tags.image.value,
+                    Tags.object_detection.value,
+                    Tags.terra_ai.value,
+                ],
+            },
+            {
+                "alias": "cards_v4",
+                "name": "Игральные карты v4",
+                "group": DatasetGroupChoice.terra.value,
+                "tags": [
+                    Tags.image.value,
+                    Tags.object_detection.value,
+                    Tags.terra_ai.value,
+                ],
+            },
+            {
+                "alias": "potholes_v4",
+                "name": "Ямы на дорогах v4",
+                "group": DatasetGroupChoice.terra.value,
+                "tags": [
+                    Tags.image.value,
+                    Tags.object_detection.value,
+                    Tags.terra_ai.value,
+                ],
+            },
+            {
+                "alias": "trash_v4",
+                "name": "Подводный мусор v4 (генератор)",
                 "group": DatasetGroupChoice.terra.value,
                 "tags": [
                     Tags.image.value,
