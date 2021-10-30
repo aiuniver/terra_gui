@@ -49,6 +49,7 @@ class DataList(DataBaseList):
         Image.open(item.source).save(destination_source)
         Image.open(item.predict).save(destination_predict)
 
+
 class Data(DataBase):
     class Meta:
         source = DataList
