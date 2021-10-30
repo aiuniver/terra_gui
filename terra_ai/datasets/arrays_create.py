@@ -979,9 +979,13 @@ class CreateArray(object):
             tmp = []
             for i, num in enumerate(coord.split(',')):
                 if i in [0, 2]:
-                    tmp.append(int(literal_eval(num) / x_scale) - 1)
+                    tmp_value = int(literal_eval(num) / x_scale) - 1
+                    scale_value = options['orig_x'] if tmp_value > options['orig_x'] else tmp_value
+                    tmp.append(scale_value)
                 elif i in [1, 3]:
-                    tmp.append(int(literal_eval(num) / y_scale) - 1)
+                    tmp_value = int(literal_eval(num) / y_scale) - 1
+                    scale_value = options['orig_y'] if tmp_value > options['orig_y'] else tmp_value
+                    tmp.append(scale_value)
                 else:
                     tmp.append(literal_eval(num))
             real_boxes.append(tmp)
