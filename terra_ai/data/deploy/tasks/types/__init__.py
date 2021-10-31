@@ -4,7 +4,11 @@ from . import (
     TextSegmentation,
     TextClassification,
     AudioClassification,
+    VideoClassification,
     DataframeRegression,
     DataframeClassification,
-    Timeseries
+    Timeseries,
+    TimeseriesTrend,
+    YoloV3,
+    YoloV4,
 )

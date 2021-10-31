@@ -18,48 +18,48 @@ export default {
     full: false,
   }),
   mutations: {
-    SET_TABLE_GROUP(state, value) {
+    SET_TABLE_GROUP (state, value) {
       state.tableGroup = [...value];
     },
-    SET_DATASETS(state, value) {
+    SET_DATASETS (state, value) {
       state.datasets = [...value];
     },
-    SET_ERRORS(state, value) {
+    SET_ERRORS (state, value) {
       state.errors = { ...value };
     },
-    SET_INPUT_DATA(state, value) {
+    SET_INPUT_DATA (state, value) {
       state.inputData = value;
     },
-    SET_SELECTED(state, value) {
+    SET_SELECTED (state, value) {
       state.selected = value;
     },
-    SET_TAGS(state, tags) {
+    SET_TAGS (state, tags) {
       state.tags = [...tags];
     },
-    SET_TAGS_FILTER(state, value) {
+    SET_TAGS_FILTER (state, value) {
       state.tagsFilter = value;
     },
-    SET_FULL(state, value) {
+    SET_FULL (state, value) {
       state.full = value;
     },
-    SET_FILES_SOURCE(state, value) {
+    SET_FILES_SOURCE (state, value) {
       state.filesSource = value;
     },
-    SET_SOURCE_PATH(state, value) {
+    SET_SOURCE_PATH (state, value) {
       state.sourcePath = value;
     },
-    SET_FILES_DROP(state, value) {
+    SET_FILES_DROP (state, value) {
       state.filesDrop = value;
     },
-    SET_CREATION(state, value) {
+    SET_CREATION (state, value) {
       state.creation = value;
     },
-    SET_SELECTED_INDEX(state, value) {
+    SET_SELECTED_INDEX (state, value) {
       state.selectedIndex = value;
     },
   },
   actions: {
-    async createDataset({ commit, dispatch, state: { inputData, sourcePath, filesSource }, rootState: { tables: { saveCols, handlers } } }, data) {
+    async createDataset ({ commit, dispatch, state: { inputData, sourcePath, filesSource }, rootState: { tables: { saveCols, handlers } } }, data) {
       commit("settings/SET_OVERLAY", true, { root: true });
       const newDataset = data
       const colsNames = {}
@@ -117,55 +117,63 @@ export default {
           if (fields) {
             commit('SET_ERRORS', { ...fields?.inputs || {}, ...fields?.outputs || {} })
           }
-        } else {
-          commit('SET_INPUT_DATA', []);
-          commit('SET_FILES_DROP', []);
-          commit('SET_ERRORS', {});
-          dispatch('get')
+          commit("settings/SET_OVERLAY", false, { root: true });
         }
       }
-      commit("settings/SET_OVERLAY", false, { root: true });
       return res
     },
-    async choice({ dispatch }, dataset) {
+    async createProgress ({ commit, dispatch }, data) {
+      const res = await dispatch('axios', { url: '/datasets/create/progress/', data }, { root: true });
+      if (res) {
+        const { finished, message, percent } = res.data;
+        dispatch('messages/setProgressMessage', message, { root: true });
+        dispatch('messages/setProgress', percent, { root: true });
+        if (finished) {
+          dispatch('get');
+          commit("settings/SET_OVERLAY", false, { root: true });
+        }
+      }
+      return res
+    },
+    async choice ({ dispatch }, dataset) {
       // console.log(dataset)
       await dispatch('trainings/resetAllTraining', {}, { root: true });
       dispatch('modeling/resetAll', {}, { root: true });
       return await dispatch('axios', { url: '/datasets/choice/', data: dataset }, { root: true });
     },
-    async deleteDataset({ dispatch }, dataset) {
+    async deleteDataset ({ dispatch }, dataset) {
       const { success } = await dispatch('axios', { url: '/datasets/delete/', data: dataset }, { root: true });
       dispatch('get')
       return success
     },
-    async choiceProgress({ dispatch }, source) {
+    async choiceProgress ({ dispatch }, source) {
       return await dispatch('axios', { url: '/datasets/choice/progress/', data: source }, { root: true });
     },
-    async sourceLoad({ dispatch }, source) {
+    async sourceLoad ({ dispatch }, source) {
       dispatch('resetDatasets', {});
       return await dispatch('axios', { url: '/datasets/source/load/', data: source }, { root: true });
     },
 
-    async classesAnnotation({ dispatch, state: { sourcePath } }) {
+    async classesAnnotation ({ dispatch, state: { sourcePath } }) {
       const data = { path: sourcePath }
       return await dispatch('axios', { url: '/datasets/source/segmentation/classes/annotation/', data }, { root: true });
     },
-    async classesAutosearch({ dispatch }, data) {
+    async classesAutosearch ({ dispatch }, data) {
       return await dispatch('axios', { url: '/datasets/source/segmentation/classes/autosearch/', data }, { root: true });
     },
-    resetDatasets({ commit, dispatch }) {
+    resetDatasets ({ commit, dispatch }) {
       commit('SET_INPUT_DATA', []);
       commit('SET_FILES_DROP', []);
       commit('SET_ERRORS', {});
       dispatch('tables/resetTable', {}, { root: true });
     },
-    async loadProgress({ dispatch }, source) {
+    async loadProgress ({ dispatch }, source) {
       return await dispatch('axios', { url: '/datasets/source/load/progress/', data: source }, { root: true });
     },
-    async validateDatasetOrModel({ dispatch }, data) {
+    async validateDatasetOrModel ({ dispatch }, data) {
       return await dispatch('axios', { url: '/common/validate-dataset-model/', data }, { root: true });
     },
-    async get({ dispatch, commit, rootState }) {
+    async get ({ dispatch, commit, rootState }) {
       const { data } = await dispatch('axios', { url: '/datasets/info/' }, { root: true });
       if (!data) {
         return;
@@ -194,7 +202,7 @@ export default {
       commit('SET_DATASETS', datasets);
       commit('SET_TAGS', tags);
     },
-    setSelect({ commit, state: { datasets } }, dataset) {
+    setSelect ({ commit, state: { datasets } }, dataset) {
       const data = datasets.map(item => {
         item.active = item.name === dataset.name;
         return item;
@@ -202,40 +210,40 @@ export default {
       commit('SET_DATASETS', data);
       commit('SET_SELECTED', dataset);
     },
-    setTagsFilter({ commit }, value) {
+    setTagsFilter ({ commit }, value) {
       commit('SET_TAGS_FILTER', value);
     },
-    setFull({ commit }, value) {
+    setFull ({ commit }, value) {
       commit('SET_FULL', value);
     },
-    setFilesSource({ commit }, value) {
+    setFilesSource ({ commit }, value) {
       console.log(changeStructTable(value))
       commit('SET_FILES_SOURCE', value);
     },
-    setSourcePath({ commit }, value) {
+    setSourcePath ({ commit }, value) {
       commit('SET_SOURCE_PATH', value);
     },
-    setFilesDrop({ commit }, value) {
+    setFilesDrop ({ commit }, value) {
       commit('SET_FILES_DROP', value);
     },
-    setSelectedIndex({ commit }, value) {
+    setSelectedIndex ({ commit }, value) {
       commit('SET_SELECTED_INDEX', value);
     },
-    createInputData({ commit, state: { inputData } }, { layer }) {
+    createInputData ({ commit, state: { inputData } }, { layer }) {
       let maxID = Math.max(0, ...inputData.map(o => o.id));
       const usedColors = inputData.map(item => item.color)
       commit('SET_INPUT_DATA', [...inputData, createInputData(maxID + 1, layer, usedColors)]);
     },
-    cloneInputData({ commit, state: { inputData } }, id) {
+    cloneInputData ({ commit, state: { inputData } }, id) {
       let maxID = Math.max(0, ...inputData.map(o => o.id));
       const usedColors = inputData.map(item => item.color)
       const layer = inputData.find(item => item.id === id)
       commit('SET_INPUT_DATA', [...inputData, cloneInputData(maxID + 1, usedColors, layer)]);
     },
-    clearInputData({ commit }) {
+    clearInputData ({ commit }) {
       commit('SET_INPUT_DATA', []);
     },
-    updateInputData({ commit, state: { inputData } }, { id, name, value, root }) {
+    updateInputData ({ commit, state: { inputData } }, { id, name, value, root }) {
       const index = inputData.findIndex(item => item.id === id);
       if (index !== -1) {
         if (root && name === 'type') {
@@ -252,13 +260,13 @@ export default {
         // console.log(inputData)
       }
     },
-    removeInputData({ commit, state: { inputData } }, id) {
+    removeInputData ({ commit, state: { inputData } }, id) {
       commit(
         'SET_INPUT_DATA',
         inputData.filter(item => item.id !== id)
       );
     },
-    cleanError({ state: { errors } }, { id, name }) {
+    cleanError ({ state: { errors } }, { id, name }) {
       if (errors?.[id]?.[name]) {
         errors[id][name] = ''
       }
@@ -266,18 +274,18 @@ export default {
         errors[id]['parameters'][name] = ''
       }
     },
-    setErrors({ commit, state: { errors } }, error) {
+    setErrors ({ commit, state: { errors } }, error) {
       commit('SET_ERRORS', { ...errors, ...error })
     },
-    setTableGroup({ commit }, data) {
+    setTableGroup ({ commit }, data) {
       commit('SET_TABLE_GROUP', data)
     }
   },
   getters: {
-    getTableGroup({ tableGroup }) {
+    getTableGroup ({ tableGroup }) {
       return tableGroup;
     },
-    getInputData({ inputData }) {
+    getInputData ({ inputData }) {
       // console.log(inputData)
       return inputData;
     },
@@ -290,37 +298,37 @@ export default {
           // console.log(inputData, id);
           return inputData.find(item => item.id === id);
         },
-    getTypeInput({ creation: { input } }) {
+    getTypeInput ({ creation: { input } }) {
       return input || [];
     },
-    getFormsHandler({ creation: { column_processing } }) {
+    getFormsHandler ({ creation: { column_processing } }) {
       return column_processing || [];
     },
-    getTypeOutput({ creation: { output } }) {
+    getTypeOutput ({ creation: { output } }) {
       return output || [];
     },
-    getSelected({ selected }) {
+    getSelected ({ selected }) {
       return selected;
     },
-    getFilesSource({ filesSource }) {
+    getFilesSource ({ filesSource }) {
       return filesSource;
     },
-    getFilesDrop({ filesDrop }) {
+    getFilesDrop ({ filesDrop }) {
       return filesDrop;
     },
-    getFull({ full }) {
+    getFull ({ full }) {
       return full;
     },
-    getTags({ tags }) {
+    getTags ({ tags }) {
       return tags;
     },
-    getSelectedIndex({ selectedIndex }) {
+    getSelectedIndex ({ selectedIndex }) {
       return selectedIndex;
     },
-    getTagsFilter({ tagsFilter }) {
+    getTagsFilter ({ tagsFilter }) {
       return tagsFilter;
     },
-    getDatasets({ datasets, tagsFilter }) {
+    getDatasets ({ datasets, tagsFilter }) {
       if (!tagsFilter.length) {
         return datasets;
       }

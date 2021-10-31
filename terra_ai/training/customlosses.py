@@ -259,7 +259,7 @@ class FScore(tf.keras.metrics.Metric):
 
     def __init__(self, name='f_score', **kwargs):
         super(FScore, self).__init__(name=name, **kwargs)
-        self.score: float = 0
+        self.score = tf.convert_to_tensor(0., dtype=tf.float32)
         # pass
 
     def update_state(self, y_true, y_pred, sample_weight=None):
@@ -269,9 +269,10 @@ class FScore(tf.keras.metrics.Metric):
         true_guess = K.sum(y_true * y_pred)
         total_true = K.sum(y_true)
         total_pred = K.sum(y_pred)
-        recall = tf.convert_to_tensor(true_guess / total_true)
-        precision = tf.convert_to_tensor(true_guess / total_pred)
+        recall = tf.convert_to_tensor(true_guess / total_true, dtype=tf.float32)
+        precision = tf.convert_to_tensor(true_guess / total_pred, dtype=tf.float32)
         self.score = tf.convert_to_tensor(2 * precision * recall * 100 / (precision + recall))
+        # print('\nFScore', recall, precision, self.score)
 
     def get_config(self):
         """
@@ -296,7 +297,7 @@ class BalancedFScore(tf.keras.metrics.Metric):
 
     def __init__(self, name='balanced_f_score', **kwargs):
         super(BalancedFScore, self).__init__(name=name, **kwargs)
-        self.score: float = 0
+        self.score = tf.convert_to_tensor(0., dtype=tf.float32)
         # pass
 
     def update_state(self, y_true, y_pred, show_class=False, sample_weight=None):
@@ -310,7 +311,7 @@ class BalancedFScore(tf.keras.metrics.Metric):
             total_pred = K.sum(y_pred)
             recall = tf.convert_to_tensor(true_guess / total_true)
             precision = tf.convert_to_tensor(true_guess / total_pred)
-            self.score = tf.convert_to_tensor(2 * precision * recall * 100 / (precision + recall))
+            self.score = tf.convert_to_tensor(2 * precision * recall * 100 / (precision + recall), dtype=tf.float32)
         else:
             balanced_score = tf.convert_to_tensor(0., dtype=tf.float32)
             for i in range(y_true.shape[-1]):
@@ -322,8 +323,11 @@ class BalancedFScore(tf.keras.metrics.Metric):
                 else:
                     recall = tf.convert_to_tensor(true_guess / total_true)
                     precision = tf.convert_to_tensor(true_guess / total_pred)
-                    balanced_score = tf.convert_to_tensor(2 * precision * recall * 100 / (precision + recall))
-            self.score = balanced_score
+                    balanced_score = tf.add(
+                        balanced_score, tf.convert_to_tensor(2 * precision * recall * 100 / (precision + recall))
+                    )
+            self.score = tf.convert_to_tensor(balanced_score / y_true.shape[-1], dtype=tf.float32)
+            # self.score = tf.add(balanced_score, self.score)
             # self.score = tf.convert_to_tensor(balanced_score / y_true.shape[-1])
 
     def get_config(self):

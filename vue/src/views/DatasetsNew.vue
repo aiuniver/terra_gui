@@ -54,7 +54,7 @@ export default {
         Dataset: () => import('@/components/datasets/DatasetNew.vue')
     },
 	data: () => ({
-		selectedType: 0
+		selectedType: 1
 	}),
 	computed: {
 		...mapGetters({

@@ -111,6 +111,7 @@ export default {
   margin: 35px 0;
   gap: 5px;
   max-width: 100%;
+  position: relative;
   &__body {
     position: relative;
     max-width: calc(100% - 60px);

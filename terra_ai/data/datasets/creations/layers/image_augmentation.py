@@ -1,4 +1,6 @@
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Union
+
+from pydantic.types import PositiveInt
 
 from ....mixins import BaseMixinData
 from ....types import ConstrainedFloatValueGe0, ConstrainedFloatValueGe0Le1, ConstrainedIntValueGe0Le2
@@ -25,10 +27,11 @@ class LinearContrastData(BaseMixinData):
     per_channel: bool = True
 
 
-class AdditiveGaussianNoiseData(BaseMixinData):
-    scale: Tuple[ConstrainedFloatValueGe0, ConstrainedFloatValueGe0]
-    # 'scale': (0.0, 0.05 * 255)
-    per_channel: bool = True
+# Исключен в связи с плохой работой с типом float32
+# class AdditiveGaussianNoiseData(BaseMixinData):
+#     scale: Tuple[ConstrainedFloatValueGe0, ConstrainedFloatValueGe0]
+#     # 'scale': (0.0, 0.05 * 255)
+#     per_channel: bool = True
 
 
 class MultiplyData(BaseMixinData):
@@ -36,9 +39,10 @@ class MultiplyData(BaseMixinData):
     per_channel: bool = True
 
 
-class AddToHueAndSaturationData(BaseMixinData):
-    value: Tuple[int, int]
-    per_channel: bool = True
+# Исключен в связи с невозможностью работать с типом float32
+# class AddToHueAndSaturationData(BaseMixinData):
+#     value: Tuple[int, int]
+#     per_channel: bool = True
 
 
 class ChannelShuffleData(BaseMixinData):
@@ -47,7 +51,7 @@ class ChannelShuffleData(BaseMixinData):
 
 
 class MotionBlurData(BaseMixinData):
-    k: ConstrainedFloatValueGe0Le1
+    k: Union[PositiveInt, Tuple[PositiveInt, PositiveInt]]
     angle: List[int]
 
 
@@ -72,9 +76,9 @@ class AugmentationData(BaseMixinData):
     Crop: Optional[CropData]
     GaussianBlur: Optional[GaussianBlurData]
     LinearContrast: Optional[LinearContrastData]
-    AdditiveGaussianNoise: Optional[AdditiveGaussianNoiseData]
+    # AdditiveGaussianNoise: Optional[AdditiveGaussianNoiseData]
     Multiply: Optional[MultiplyData]
-    AddToHueAndSaturation: Optional[AddToHueAndSaturationData]
+    # AddToHueAndSaturation: Optional[AddToHueAndSaturationData]
     ChannelShuffle: Optional[ChannelShuffleData]
     MotionBlur: Optional[MotionBlurData]
     Affine: Optional[AffineData]

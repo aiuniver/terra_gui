@@ -62,9 +62,7 @@ class LoadAPIView(BaseAPIView):
             request.project.set_dataset()
         else:
             request.project.set_model(model)
-        return BaseResponseSuccess(
-            request.project.model.native(), save_project=True
-        )
+        return BaseResponseSuccess(request.project.model.native(), save_project=True)
 
 
 class InfoAPIView(BaseAPIView):
@@ -102,9 +100,7 @@ class UpdateAPIView(BaseAPIView):
                     item.get("group") == LayerGroupChoice.input
                     and request.project.dataset is None
                 ):
-                    item["shape"] = {
-                        "input": item.get("shape", {}).get("input", [])
-                    }
+                    item["shape"] = {"input": item.get("shape", {}).get("input", [])}
                 else:
                     del item["shape"]
         model_data = model.native()
@@ -164,9 +160,7 @@ class CreateAPIView(BaseAPIView):
                 "alias": re.sub(
                     r"([\-]+)",
                     "_",
-                    slugify(
-                        serializer.validated_data.get("name"), language_code="ru"
-                    ),
+                    slugify(serializer.validated_data.get("name"), language_code="ru"),
                 ),
                 "image": serializer.validated_data.get("preview"),
             }

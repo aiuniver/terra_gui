@@ -61,7 +61,8 @@ class OptimizersData(BaseModel):
 
 class ArchitecturesData(BaseModel):
     Basic: architectures.Basic.GroupsData
-    Yolo: architectures.Yolo.GroupsData
+    YoloV3: architectures.YoloV3.GroupsData
+    YoloV4: architectures.YoloV4.GroupsData
 
 
 class FormMain(BaseModel):
