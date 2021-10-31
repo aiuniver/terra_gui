@@ -86,6 +86,11 @@ class InteractiveCallback:
                                    ArchitectureChoice.TextClassification, ArchitectureChoice.AudioClassification,
                                    ArchitectureChoice.VideoClassification, ArchitectureChoice.DataframeClassification,
                                    ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]
+        self.classification_architecture = [
+            ArchitectureChoice.ImageClassification, ArchitectureChoice.TimeseriesTrend,
+            ArchitectureChoice.TextClassification, ArchitectureChoice.AudioClassification,
+            ArchitectureChoice.VideoClassification, ArchitectureChoice.DataframeClassification,
+        ]
 
         self.urgent_predict = False
         self.deploy_presets_data = None
@@ -141,7 +146,8 @@ class InteractiveCallback:
         self.dataset_balance = self.callback.dataset_balance(
             options=self.options, y_true=self.y_true, preset_path=self.preset_path, class_colors=self.class_colors
         )
-        self.class_idx = self.callback.prepare_class_idx(self.y_true, self.options)
+        if dataset.data.architecture in self.classification_architecture:
+            self.class_idx = self.callback.prepare_class_idx(self.y_true, self.options)
         self.seed_idx = self._prepare_seed()
         self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
 
@@ -192,7 +198,8 @@ class InteractiveCallback:
     def update_train_progress(self, data: dict):
         self.train_progress = data
 
-    def update_state(self, y_pred, y_true=None, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
+    def update_state(self, y_pred, y_true=None, fit_logs=None, current_epoch_time=None,
+                     on_epoch_end_flag=False) -> dict:
         if self.log_history:
             if y_pred is not None:
                 if self.options.data.architecture in self.basic_architecture:
@@ -224,6 +231,7 @@ class InteractiveCallback:
                             sensitivity=self.interactive_config.intermediate_result.sensitivity,
                         )
                 if on_epoch_end_flag:
+                    print('fit_logs', fit_logs)
                     self.current_epoch = fit_logs.get('epoch')
                     self.current_logs = self._reformat_fit_logs(fit_logs)
                     self._update_log_history()
@@ -238,7 +246,8 @@ class InteractiveCallback:
                             x_val=self.x_val,
                             inverse_x_val=self.inverse_x_val,
                             y_pred=self.y_pred,
-                            y_true=self.y_true
+                            y_true=self.y_true,
+                            class_colors=self.class_colors
                         )
                     if self.options.data.architecture in self.basic_architecture and \
                             self.interactive_config.statistic_data.output_id \
@@ -567,7 +576,7 @@ class InteractiveCallback:
                 output = self.interactive_config.intermediate_result.main_output
                 task = self.options.data.outputs.get(output).task
                 example_idx = []
-                if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
+                if self.options.data.architecture in self.classification_architecture:
                     y_true = np.argmax(self.y_true.get('val').get(f"{output}"), axis=-1)
                     class_idx = {}
                     for _id in range(self.options.data.outputs.get(output).num_classes):
@@ -1337,11 +1346,11 @@ class InteractiveCallback:
                             "mode")
                         if sum(self.log_history.get(f"{metric_graph_config.output_idx}").get(
                                 "progress_state").get("metrics").get(metric_graph_config.show_metric.name).get(
-                                'overfitting')[-self.log_gap:]) >= self.progress_threashold:
+                            'overfitting')[-self.log_gap:]) >= self.progress_threashold:
                             progress_state = 'overfitting'
                         elif sum(self.log_history.get(f"{metric_graph_config.output_idx}").get(
                                 "progress_state").get("metrics").get(metric_graph_config.show_metric.name).get(
-                                'underfitting')[-self.log_gap:]) >= self.progress_threashold:
+                            'underfitting')[-self.log_gap:]) >= self.progress_threashold:
                             progress_state = 'underfitting'
                         else:
                             progress_state = 'normal'
@@ -1424,7 +1433,7 @@ class InteractiveCallback:
                             "mode")
                         if sum(self.log_history.get("output").get("progress_state").get(
                                 "metrics").get(metric_graph_config.show_metric.name).get(
-                                'overfitting')[-self.log_gap:]) >= self.progress_threashold:
+                            'overfitting')[-self.log_gap:]) >= self.progress_threashold:
                             progress_state = 'overfitting'
                         else:
                             progress_state = 'normal'
