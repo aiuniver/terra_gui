@@ -67,7 +67,7 @@ class BalancedDiceCoef(tf.keras.metrics.Metric):
         elif self.encoding == 'multi':
             y_pred = tf.where(y_pred > 0.9, 1., 0.)
         else:
-            pass
+            y_pred = tf.where(y_pred > 0.5, 1., 0.)
 
         balanced_dice = tf.convert_to_tensor(0., dtype=tf.float32)
         for i in range(y_true.shape[-1]):

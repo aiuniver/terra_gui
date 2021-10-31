@@ -622,6 +622,7 @@ class InteractiveCallback:
                         log = log[:-end]
                     update_logs[re.sub("__", "_", decamelize(log))] = val
                 for out in self.metrics.keys():
+                    encoding = self.options.data.outputs.get(int(out)).encoding.name
                     interactive_log[out] = {}
                     if len(self.metrics.keys()) == 1:
                         train_loss = update_logs.get('loss')
@@ -670,17 +671,16 @@ class InteractiveCallback:
                             m = FScore()
                             m.update_state(y_true=self.y_true.get('val').get(out), y_pred=self.y_pred.get(out))
                             val_metric = m.result().numpy().item()
-                        # if metric_name == MetricChoice.BalancedDiceCoef:
-                        #     val_metric = 0
-                        #     for cls in range(self.y_true.get('val').get(out).shape[-1]):
-                        #         m = BalancedDiceCoef(encoding=self.options.data.outputs.get(int(out)).encoding)
-                        #         m.update_state(
-                        #             y_true=self.y_true.get('val').get(out)[..., cls:cls+1],
-                        #             y_pred=self.y_pred.get(out)[..., cls:cls+1], show_class=False)
-                        #         val_metric += m.result().numpy().item()
-                        #         m.reset_state()
-                        #         print('\nMetricChoice.BalancedDiceCoef', m.result().numpy().item())
-                        #     val_metric = val_metric / self.y_true.get('val').get(out).shape[-1]
+                        if metric_name == MetricChoice.BalancedDiceCoef:
+                            val_metric = 0
+                            for cls in range(self.y_true.get('val').get(out).shape[-1]):
+                                m = BalancedDiceCoef(encoding='multi' if encoding == 'multi' else None)
+                                m.update_state(y_true=self.y_true.get('val').get(out)[..., cls:cls+1],
+                                               y_pred=self.y_pred.get(out)[..., cls:cls+1])
+                                val_metric += m.result().numpy().item()
+                                m.reset_state()
+                            #     print('MetricChoice.BalancedDiceCoef', m.result().numpy().item())
+                            val_metric = val_metric / self.y_true.get('val').get(out).shape[-1]
                         interactive_log[out]['metrics'][metric_name] = {
                             'train': round_loss_metric(train_metric) if not math.isnan(float(train_metric)) else None,
                             'val': round_loss_metric(val_metric) if not math.isnan(float(val_metric)) else None
@@ -893,7 +893,7 @@ class InteractiveCallback:
                                             y_true=self.y_true.get('val').get(f"{out}")[..., class_idx],
                                             y_pred=self.y_pred.get(f"{out}")[..., class_idx],
                                         )
-                                        print('class_metric', cls, class_metric)
+                                        print('class_metric', cls, class_metric, self.current_epoch)
                                     else:
                                         class_metric = self._get_metric_calculation(
                                             metric_name=metric_name,
@@ -1082,6 +1082,9 @@ class InteractiveCallback:
                         metric_obj.update_state(np.argmax(y_true, axis=-1), np.argmax(y_pred, axis=-1))
                     elif metric_name in [Metric.BalancedRecall, Metric.BalancedPrecision, Metric.BalancedFScore]:
                         metric_obj.update_state(y_true, y_pred, show_class=show_class)
+                    elif metric_name == Metric.BalancedDiceCoef:
+                        metric_obj.encoding = 'multi' if encoding == 'multi' else None
+                        metric_obj.update_state(y_true, y_pred)
                     else:
                         metric_obj.update_state(y_true, y_pred)
                 else:
