@@ -513,14 +513,12 @@ class TextClassificationCallback(BaseClassificationCallback):
                     if column_name.split('_')[0] == f"{inp}":
                         column_idx.append(options.dataframe.get('val').columns.tolist().index(column_name))
             data = []
-            data_type = ""
             source = ""
             for column in column_idx:
                 source = options.dataframe.get('val').iat[example_id, column]
                 if return_mode == 'deploy':
                     break
                 if return_mode == 'callback':
-                    data_type = LayerInputTypeChoice.Text.name
                     title = "Текст"
                     data = [
                         {
@@ -532,7 +530,7 @@ class TextClassificationCallback(BaseClassificationCallback):
             if return_mode == 'deploy':
                 return source
             if return_mode == 'callback':
-                return data, data_type.lower()
+                return data
         except Exception as e:
             print_error(TextClassificationCallback().name, method_name, e)
 
@@ -621,7 +619,6 @@ class TextClassificationCallback(BaseClassificationCallback):
                             return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
                         else:
                             return_data[f"{idx + 1}"]['statistic_values'] = {}
-                print('\nreturn_data', return_data)
                 return return_data
         except Exception as e:
             print_error(TextClassificationCallback().name, method_name, e)
@@ -655,7 +652,6 @@ class DataframeClassificationCallback(BaseClassificationCallback):
         method_name = 'postprocess_initial_source'
         try:
             data = []
-            data_type = "str"
             source = []
             for col_name in options.data.columns.get(input_id).keys():
                 value = options.dataframe.get('val')[col_name].to_list()[example_id]
@@ -673,7 +669,7 @@ class DataframeClassificationCallback(BaseClassificationCallback):
             if return_mode == 'deploy':
                 return source
             if return_mode == 'callback':
-                return data, data_type.lower()
+                return data
         except Exception as e:
             print_error(DataframeClassificationCallback().name, method_name, e)
 
@@ -801,9 +797,7 @@ class AudioClassificationCallback(BaseClassificationCallback):
                 return str(os.path.abspath(initial_file_path))
 
             data = []
-            data_type = ""
             source = os.path.join(preset_path, f"initial_data_audio_{save_id}_input_{input_id}.webm")
-            print(initial_file_path, source)
             AudioSegment.from_file(initial_file_path).export(source, format="webm")
             if return_mode == 'callback':
                 data_type = LayerInputTypeChoice.Audio.name
@@ -817,7 +811,7 @@ class AudioClassificationCallback(BaseClassificationCallback):
             if return_mode == 'deploy':
                 return source
             if return_mode == 'callback':
-                return data, data_type.lower()
+                return data
         except Exception as e:
             print_error(AudioClassificationCallback().name, method_name, e)
 
@@ -954,13 +948,11 @@ class VideoClassificationCallback(BaseClassificationCallback):
 
             clip = moviepy_editor.VideoFileClip(initial_file_path)
             source = os.path.join(preset_path, f"initial_data_video_{save_id}_input_{input_id}.webm")
-            print(source)
             clip.write_videofile(source)
 
             if return_mode == 'deploy':
                 return source
             if return_mode == 'callback':
-                data_type = LayerInputTypeChoice.Video.name
                 data = [
                     {
                         "title": "Видео",
@@ -968,7 +960,7 @@ class VideoClassificationCallback(BaseClassificationCallback):
                         "color_mark": None
                     }
                 ]
-                return data, data_type.lower()
+                return data
         except Exception as e:
             print_error(VideoClassificationCallback().name, method_name, e)
 
@@ -1141,7 +1133,6 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
                         ],
                     )
                 )
-            data_type = "graphic"
             data = [
                 {
                     "title": f"График{'и' if multi else ''} по канал{'ам' if multi else 'у'} {names[:-2]}",
@@ -1149,7 +1140,7 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
                     "color_mark": None
                 }
             ]
-            return data, data_type.lower()
+            return data
         except Exception as e:
             print_error(TimeseriesTrendCallback().name, method_name, e)
 
@@ -1251,7 +1242,6 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
                             return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
                         else:
                             return_data[f"{idx + 1}"]['statistic_values'] = {}
-            print('\n intermediate_result_request', return_data)
             return return_data
         except Exception as e:
             print_error(TimeseriesTrendCallback().name, method_name, e)
