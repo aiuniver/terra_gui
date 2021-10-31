@@ -278,7 +278,8 @@ class InteractiveCallback:
                         x_val=self.x_val,
                         inverse_x_val=self.inverse_x_val,
                         y_pred=self.y_pred,
-                        y_true=self.y_true
+                        y_true=self.y_true,
+                        class_colors=self.class_colors
                     )
                     if self.options.data.architecture in self.basic_architecture and \
                             self.interactive_config.statistic_data.output_id:
@@ -344,7 +345,8 @@ class InteractiveCallback:
                         x_val=self.x_val,
                         inverse_x_val=self.inverse_x_val,
                         y_pred=self.y_pred,
-                        y_true=self.y_true
+                        y_true=self.y_true,
+                        class_colors=self.class_colors
                     )
                     if self.interactive_config.statistic_data.output_id:
                         self.statistic_result = self.callback.statistic_data_request(
@@ -378,7 +380,8 @@ class InteractiveCallback:
                         x_val=self.x_val,
                         inverse_x_val=self.inverse_x_val,
                         y_pred=self.y_pred,
-                        y_true=self.y_true
+                        y_true=self.y_true,
+                        class_colors=self.class_colors
                     )
                     if self.interactive_config.statistic_data.box_channel:
                         self.statistic_result = self.callback.statistic_data_request(
