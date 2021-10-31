@@ -50,6 +50,7 @@ class InteractiveCallback:
         self.inverse_y_true = {}
         self.y_pred = {}
         self.raw_y_pred = None
+        self.raw_y_true = None
         self.inverse_y_pred = {}
         self.current_epoch = None
 
@@ -191,7 +192,7 @@ class InteractiveCallback:
     def update_train_progress(self, data: dict):
         self.train_progress = data
 
-    def update_state(self, y_pred, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
+    def update_state(self, y_pred, y_true=None, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
         if self.log_history:
             if y_pred is not None:
                 if self.options.data.architecture in self.basic_architecture:
@@ -209,6 +210,7 @@ class InteractiveCallback:
                         )
                 if self.options.data.architecture in self.yolo_architecture:
                     self.raw_y_pred = y_pred
+                    self.raw_y_true = y_true
                     if self.interactive_config.intermediate_result.show_results:
                         self.example_idx, _ = prepare_yolo_example_idx_to_show(
                             array=copy.deepcopy(self.y_pred),

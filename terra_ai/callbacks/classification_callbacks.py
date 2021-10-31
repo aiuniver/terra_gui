@@ -1225,7 +1225,6 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
                         'statistic_values': {}
                     }
                     for inp in options.data.inputs.keys():
-                        # options, input_id: int, example_id: int, inverse_x_array = None,
                         data = TimeseriesTrendCallback.postprocess_initial_source(
                             options=options,
                             input_id=inp,
@@ -1252,6 +1251,7 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
                             return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
                         else:
                             return_data[f"{idx + 1}"]['statistic_values'] = {}
-                return return_data
+            print('\n intermediate_result_request', return_data)
+            return return_data
         except Exception as e:
             print_error(TimeseriesTrendCallback().name, method_name, e)

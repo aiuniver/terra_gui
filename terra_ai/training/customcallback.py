@@ -2537,7 +2537,6 @@ class InteractiveCallback:
                         return_data[f"{idx + 1}"]['statistic_values'] = {}
             else:
                 pass
-            # print('\n_get_intermediate_result_request', return_data)
             return return_data
         except Exception as e:
             if self.first:
