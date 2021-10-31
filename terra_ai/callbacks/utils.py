@@ -718,3 +718,19 @@ def get_classes_colors(options):
         return colors
     except Exception as e:
         print_error(f"None ({MODULE_NAME})", method_name, e)
+
+
+def segmentation_metric(true_array, pred_array):
+    axis = tuple(np.arange(1, len(true_array.shape)))
+    stat = np.zeros((true_array.shape[0],)).astype('float')
+    for cls in range(true_array.shape[-1]):
+        metric = np.sum(true_array[..., cls:cls + 1] * pred_array[..., cls:cls + 1], axis=axis) / np.sum(
+            true_array[..., cls:cls + 1], axis=axis)
+        empty_dots = np.sum(true_array[..., cls:cls + 1], axis=axis) + np.sum(pred_array[..., cls:cls + 1], axis=axis)
+        metric = np.where(empty_dots == 0., 0.1, metric)
+        metric = np.where(metric >= 0, metric, 0.)
+        stat += metric
+    stat = stat / true_array.shape[-1]
+    return stat
+
+

@@ -1,4 +1,5 @@
 import colorsys
+import copy
 import os
 from typing import Optional
 
@@ -10,7 +11,7 @@ from tensorflow.python.keras.utils.np_utils import to_categorical
 
 from terra_ai.callbacks.utils import dice_coef, sort_dict, get_y_true, get_image_class_colormap, get_confusion_matrix, \
     fill_heatmap_front_structure, get_classification_report, fill_table_front_structure, fill_graph_front_structure, \
-    fill_graph_plot_data, print_error
+    fill_graph_plot_data, print_error, segmentation_metric
 from terra_ai.data.datasets.dataset import DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerEncodingChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
@@ -67,7 +68,8 @@ class BaseSegmentationCallback:
 
     @staticmethod
     def prepare_example_idx_to_show(array: np.ndarray, true_array: np.ndarray, options, output: int, count: int,
-                                    choice_type: str = "best", seed_idx: list = None) -> dict:
+                                    choice_type: ExampleChoiceTypeChoice = ExampleChoiceTypeChoice.best,
+                                    seed_idx: list = None) -> dict:
         method_name = 'prepare_example_idx_to_show'
         try:
             example_idx = []
@@ -75,11 +77,10 @@ class BaseSegmentationCallback:
             if choice_type == ExampleChoiceTypeChoice.best or choice_type == ExampleChoiceTypeChoice.worst:
                 if encoding == LayerEncodingChoice.ohe:
                     array = to_categorical(
-                        np.argmax(array, axis=-1),
-                        num_classes=options.data.outputs.get(output).num_classes
+                        np.argmax(array, axis=-1), num_classes=options.data.outputs.get(output).num_classes
                     )
                 if encoding == LayerEncodingChoice.multi:
-                    array = np.where(array >= CALLBACK_CLASSIFICATION_TREASHOLD_VALUE / 100, 1, 0)
+                    array = np.where(array >= CALLBACK_CLASSIFICATION_TREASHOLD_VALUE / 100, 1., 0.)
                 dice_val = dice_coef(true_array, array, batch_mode=True)
                 dice_dict = dict(zip(np.arange(0, len(dice_val)), dice_val))
                 if choice_type == ExampleChoiceTypeChoice.best:
@@ -101,7 +102,6 @@ class BaseSegmentationCallback:
                 if encoding == LayerEncodingChoice.multi:
                     array = np.where(array >= CALLBACK_CLASSIFICATION_TREASHOLD_VALUE / 100, 1, 0)
                 dice_val = dice_coef(true_array, array, batch_mode=True)
-
                 true_id = []
                 false_id = []
                 for i, ex in enumerate(dice_val):
@@ -668,7 +668,7 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                             mean_val += class_recall
                     if count and mean_val / count >= 90:
                         mean_color_mark = "success"
-                        mean_stat = f"{round(mean_val / count, 1)}%"
+                        mean_stat = f"{round(mean_val / count, 2)}%"
                     elif count and mean_val / count < 90:
                         mean_color_mark = "wrong"
                         mean_stat = f"{round(mean_val / count, 2)}%"
@@ -694,11 +694,12 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                 else:
                     postprocess_array = array
                 example_idx = TextSegmentationCallback().prepare_example_idx_to_show(
-                    array=postprocess_array[:len(array)],
+                    array=postprocess_array,
                     true_array=true_array[:len(array)],
                     options=options,
                     output=output_id,
-                    count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
+                    count=int(len(array) * DEPLOY_PRESET_PERCENT / 100),
+                    choice_type=ExampleChoiceTypeChoice.best,
                 )
                 return_data[output_id] = {"color_map": None, "data": []}
                 output_column = list(options.instructions.get(output_id).keys())[0]

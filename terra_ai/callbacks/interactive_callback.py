@@ -25,7 +25,8 @@ from terra_ai.data.presets.training import Metric
 from terra_ai.data.training.extra import LossGraphShowChoice, MetricGraphShowChoice, MetricChoice, ArchitectureChoice
 from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.preparing import PrepareDataset
-from terra_ai.training.customlosses import UnscaledMAE, FScore, BalancedFScore, BalancedRecall, BalancedPrecision
+from terra_ai.training.customlosses import UnscaledMAE, FScore, BalancedFScore, BalancedRecall, BalancedPrecision, \
+    BalancedDiceCoef
 from terra_ai.utils import decamelize
 
 __version__ = 0.085
@@ -139,7 +140,6 @@ class InteractiveCallback:
             self.metrics_obj = prepare_metric_obj(metrics)
         self.dataset_path = dataset_path
         self.class_colors = get_classes_colors(dataset)
-        print('\nself.class_colors', self.class_colors)
         self.x_val, self.inverse_x_val = self.callback.get_x_array(dataset)
         self.y_true, self.inverse_y_true = self.callback.get_y_true(dataset)
         if not self.log_history:
@@ -578,7 +578,6 @@ class InteractiveCallback:
                 np.random.shuffle(example_idx)
             elif self.options.data.architecture in self.basic_architecture:
                 output = self.interactive_config.intermediate_result.main_output
-                task = self.options.data.outputs.get(output).task
                 example_idx = []
                 if self.options.data.architecture in self.classification_architecture:
                     y_true = np.argmax(self.y_true.get('val').get(f"{output}"), axis=-1)
@@ -659,33 +658,35 @@ class InteractiveCallback:
                             m = BalancedRecall()
                             m.update_state(y_true=self.y_true.get('val').get(out), y_pred=self.y_pred.get(out))
                             val_metric = m.result().numpy().item()
-                            # print('\nBalancedRecall', val_metric, update_logs.get(
-                            #     f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}"))
                         if metric_name == MetricChoice.BalancedPrecision:
                             m = BalancedPrecision()
                             m.update_state(y_true=self.y_true.get('val').get(out), y_pred=self.y_pred.get(out))
                             val_metric = m.result().numpy().item()
-                            # print('BalancedPrecision', val_metric, update_logs.get(
-                            #     f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}"))
                         if metric_name == MetricChoice.BalancedFScore:
                             m = BalancedFScore()
                             m.update_state(y_true=self.y_true.get('val').get(out), y_pred=self.y_pred.get(out))
                             val_metric = m.result().numpy().item()
-                            # print('BalancedFScore', val_metric, update_logs.get(
-                            #     f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}"))
                         if metric_name == MetricChoice.FScore:
                             m = FScore()
                             m.update_state(y_true=self.y_true.get('val').get(out), y_pred=self.y_pred.get(out))
                             val_metric = m.result().numpy().item()
-                            # print('FScore', val_metric, update_logs.get(
-                            #     f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}"))
+                        # if metric_name == MetricChoice.BalancedDiceCoef:
+                        #     val_metric = 0
+                        #     for cls in range(self.y_true.get('val').get(out).shape[-1]):
+                        #         m = BalancedDiceCoef(encoding=self.options.data.outputs.get(int(out)).encoding)
+                        #         m.update_state(
+                        #             y_true=self.y_true.get('val').get(out)[..., cls:cls+1],
+                        #             y_pred=self.y_pred.get(out)[..., cls:cls+1], show_class=False)
+                        #         val_metric += m.result().numpy().item()
+                        #         m.reset_state()
+                        #         print('\nMetricChoice.BalancedDiceCoef', m.result().numpy().item())
+                        #     val_metric = val_metric / self.y_true.get('val').get(out).shape[-1]
                         interactive_log[out]['metrics'][metric_name] = {
                             'train': round_loss_metric(train_metric) if not math.isnan(float(train_metric)) else None,
                             'val': round_loss_metric(val_metric) if not math.isnan(float(val_metric)) else None
                         }
 
             if self.options.data.architecture in self.yolo_architecture:
-                # self._round_loss_metric(train_loss) if not math.isnan(float(train_loss)) else None
                 interactive_log['learning_rate'] = logs.get('optimizer.lr')
                 interactive_log['output'] = {
                     "train": {
@@ -889,9 +890,10 @@ class InteractiveCallback:
                                             metric_name=metric_name,
                                             metric_obj=self.metrics_obj.get(f"{out}").get(metric_name),
                                             out=f"{out}",
-                                            y_true=self.y_true.get('val').get(f"{out}")[..., class_idx:class_idx + 1],
-                                            y_pred=self.y_pred.get(f"{out}")[..., class_idx:class_idx + 1],
+                                            y_true=self.y_true.get('val').get(f"{out}")[..., class_idx],
+                                            y_pred=self.y_pred.get(f"{out}")[..., class_idx],
                                         )
+                                        print('class_metric', cls, class_metric)
                                     else:
                                         class_metric = self._get_metric_calculation(
                                             metric_name=metric_name,
@@ -1249,7 +1251,6 @@ class InteractiveCallback:
                 for loss_graph_config in self.interactive_config.loss_graphs:
                     if loss_graph_config.show == LossGraphShowChoice.model:
                         for loss in self.log_history.get('output').get('loss').keys():
-                            # print(loss)
                             if sum(self.log_history.get("output").get("progress_state").get("loss").get(loss).get(
                                     'overfitting')[-self.log_gap:]) >= self.progress_threashold:
                                 progress_state = "overfitting"
@@ -1292,7 +1293,6 @@ class InteractiveCallback:
                                 y=self.log_history.get("output").get('loss').get(loss).get("val"),
                                 label="Проверочная выборка"
                             )
-                            # print('val_plot', val_plot)
                             data_return.append(
                                 fill_graph_front_structure(
                                     _id=_id,

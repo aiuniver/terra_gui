@@ -159,7 +159,8 @@ class BaseClassificationCallback:
 
     @staticmethod
     def prepare_example_idx_to_show(array: np.ndarray, true_array: np.ndarray, options, output: int, count: int,
-                                    choice_type: str = "best", seed_idx: list = None) -> dict:
+                                    choice_type: ExampleChoiceTypeChoice = ExampleChoiceTypeChoice.best,
+                                    seed_idx: list = None) -> dict:
         method_name = 'prepare_example_idx_to_show'
         try:
             example_idx = []
