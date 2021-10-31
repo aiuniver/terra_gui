@@ -381,7 +381,6 @@ class ImageClassificationCallback(BaseClassificationCallback):
         except Exception as e:
             print_error(ImageClassificationCallback().name, method_name, e)
 
-
     @staticmethod
     def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "") -> dict:
         method_name = 'postprocess_deploy'
@@ -538,7 +537,7 @@ class TextClassificationCallback(BaseClassificationCallback):
             print_error(TextClassificationCallback().name, method_name, e)
 
     @staticmethod
-    def postprocess_deploy(array, options) -> dict:
+    def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "") -> dict:
         method_name = 'postprocess_deploy'
         try:
             return_data = {}
@@ -679,7 +678,7 @@ class DataframeClassificationCallback(BaseClassificationCallback):
             print_error(DataframeClassificationCallback().name, method_name, e)
 
     @staticmethod
-    def postprocess_deploy(array, options) -> dict:
+    def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "") -> dict:
         method_name = 'postprocess_deploy'
         try:
             return_data = {}
@@ -1109,8 +1108,7 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
             print_error(TimeseriesTrendCallback().name, method_name, e)
 
     @staticmethod
-    def postprocess_initial_source(options, input_id: int, example_id: int, inverse_x_array=None,
-                                   return_mode='deploy'):
+    def postprocess_initial_source(options, input_id: int, example_id: int, inverse_x_array=None):
         method_name = 'postprocess_initial_source'
         try:
             column_idx = []
@@ -1118,50 +1116,45 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
                 for column_name in options.dataframe.get('val').columns:
                     if column_name.split('_')[0] == f"{inp}":
                         column_idx.append(options.dataframe.get('val').columns.tolist().index(column_name))
-
-            source = ""
             graphics_data = []
             names = ""
             multi = False
-            if return_mode == 'callback':
-                for i, channel in enumerate(options.data.columns.get(input_id).keys()):
-                    multi = True if i > 0 else False
-                    names += f"«{channel.split('_', 1)[-1]}», "
-                    length = len(inverse_x_array) if len(inverse_x_array) < MAX_GRAPH_LENGTH else MAX_GRAPH_LENGTH
-                    graphics_data.append(
-                        fill_graph_front_structure(
-                            _id=i + 1,
-                            _type='graphic',
-                            graph_name=f"График канала «{channel.split('_', 1)[-1]}»",
-                            short_name=f"«{channel.split('_', 1)[-1]}»",
-                            x_label="Время",
-                            y_label="Значение",
-                            plot_data=[
-                                fill_graph_plot_data(
-                                    label="Исходное значение",
-                                    x=np.arange(inverse_x_array[example_id].shape[-2]).astype('int').tolist()[
-                                      -length:],
-                                    y=inverse_x_array[example_id][:, i].astype('float').tolist()[-length:]
-                                )
-                            ],
-                        )
+            inverse_x = inverse_x_array.get(f'{input_id}')
+            for i, channel in enumerate(options.data.columns.get(input_id).keys()):
+                multi = True if i > 0 else False
+                names += f"«{channel.split('_', 1)[-1]}», "
+                length = len(inverse_x) if len(inverse_x) < MAX_GRAPH_LENGTH else MAX_GRAPH_LENGTH
+                graphics_data.append(
+                    fill_graph_front_structure(
+                        _id=i + 1,
+                        _type='graphic',
+                        graph_name=f"График канала «{channel.split('_', 1)[-1]}»",
+                        short_name=f"«{channel.split('_', 1)[-1]}»",
+                        x_label="Время",
+                        y_label="Значение",
+                        plot_data=[
+                            fill_graph_plot_data(
+                                label="Исходное значение",
+                                x=np.arange(inverse_x[example_id].shape[-2]).astype('int').tolist()[-length:],
+                                y=inverse_x[example_id][:, i].astype('float').tolist()[-length:]
+                            )
+                        ],
                     )
-                data_type = "graphic"
-                data = [
-                    {
-                        "title": f"График{'и' if multi else ''} по канал{'ам' if multi else 'у'} {names[:-2]}",
-                        "value": graphics_data,
-                        "color_mark": None
-                    }
-                ]
-                return data, data_type.lower()
-            if return_mode == 'deploy':
-                return source
+                )
+            data_type = "graphic"
+            data = [
+                {
+                    "title": f"График{'и' if multi else ''} по канал{'ам' if multi else 'у'} {names[:-2]}",
+                    "value": graphics_data,
+                    "color_mark": None
+                }
+            ]
+            return data, data_type.lower()
         except Exception as e:
             print_error(TimeseriesTrendCallback().name, method_name, e)
 
     @staticmethod
-    def postprocess_deploy(array, options) -> dict:
+    def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "") -> dict:
         method_name = 'postprocess_deploy'
         try:
             return_data = {}
@@ -1232,11 +1225,12 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
                         'statistic_values': {}
                     }
                     for inp in options.data.inputs.keys():
+                        # options, input_id: int, example_id: int, inverse_x_array = None,
                         data = TimeseriesTrendCallback.postprocess_initial_source(
                             options=options,
                             input_id=inp,
                             example_id=example_idx[idx],
-                            return_mode='callback'
+                            inverse_x_array=inverse_x_val,
                         )
                         return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
                             'type': 'graphic',

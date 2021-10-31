@@ -23,10 +23,9 @@ from terra_ai.data.datasets.extra import LayerOutputTypeChoice, DatasetGroupChoi
     LayerInputTypeChoice
 from terra_ai.data.presets.training import Metric
 from terra_ai.data.training.extra import LossGraphShowChoice, MetricGraphShowChoice, MetricChoice, ArchitectureChoice
-from terra_ai.data.training.train import InteractiveData, YoloInteractiveData
-from terra_ai.datasets.arrays_create import CreateArray
+from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.preparing import PrepareDataset
-from terra_ai.training.customlosses import UnscaledMAE
+from terra_ai.training.customlosses import UnscaledMAE, FScore, BalancedFScore, BalancedRecall, BalancedPrecision
 from terra_ai.utils import decamelize
 
 __version__ = 0.085
@@ -113,12 +112,10 @@ class InteractiveCallback:
         self.random_key = ''
 
         self.interactive_config: InteractiveData = InteractiveData(**{})
-        self.yolo_interactive_config: YoloInteractiveData = YoloInteractiveData(**{})
         pass
 
     def set_attributes(self, dataset: PrepareDataset, metrics: dict, losses: dict, dataset_path: str,
-                       training_path: str, initial_config: InteractiveData = None,
-                       yolo_initial_config: YoloInteractiveData = None):
+                       training_path: str, initial_config: InteractiveData):
 
         self.options = dataset
         self._callback_router(dataset)
@@ -128,14 +125,12 @@ class InteractiveCallback:
         self.preset_path = os.path.join(training_path, "presets")
         if not os.path.exists(self.preset_path):
             os.mkdir(self.preset_path)
+        self.interactive_config = initial_config
         if dataset.data.architecture in self.basic_architecture:
             self.losses = losses
             self.metrics = reformat_metrics(metrics)
             self.loss_obj = prepare_loss_obj(losses)
             self.metrics_obj = prepare_metric_obj(metrics)
-            self.interactive_config = initial_config
-        if dataset.data.architecture in self.yolo_architecture:
-            self.yolo_interactive_config = yolo_initial_config
         self.dataset_path = dataset_path
         self.class_colors = get_classes_colors(dataset)
         self.x_val, self.inverse_x_val = self.callback.get_x_array(dataset)
@@ -214,17 +209,17 @@ class InteractiveCallback:
                         )
                 if self.options.data.architecture in self.yolo_architecture:
                     self.raw_y_pred = y_pred
-                    if self.yolo_interactive_config.intermediate_result.show_results:
+                    if self.interactive_config.intermediate_result.show_results:
                         self.example_idx, _ = prepare_yolo_example_idx_to_show(
                             array=copy.deepcopy(self.y_pred),
                             true_array=copy.deepcopy(self.y_true),
                             name_classes=self.options.data.outputs.get(
                                 list(self.options.data.outputs.keys())[0]).classes_names,
-                            box_channel=self.yolo_interactive_config.intermediate_result.box_channel,
-                            count=self.yolo_interactive_config.intermediate_result.num_examples,
-                            choice_type=self.yolo_interactive_config.intermediate_result.example_choice_type,
+                            box_channel=self.interactive_config.intermediate_result.box_channel,
+                            count=self.interactive_config.intermediate_result.num_examples,
+                            choice_type=self.interactive_config.intermediate_result.example_choice_type,
                             seed_idx=self.seed_idx,
-                            sensitivity=self.yolo_interactive_config.intermediate_result.sensitivity,
+                            sensitivity=self.interactive_config.intermediate_result.sensitivity,
                         )
                 if on_epoch_end_flag:
                     self.current_epoch = fit_logs.get('epoch')
@@ -243,8 +238,19 @@ class InteractiveCallback:
                             y_pred=self.y_pred,
                             y_true=self.y_true
                         )
-                    if self.interactive_config.statistic_data.output_id \
+                    if self.options.data.architecture in self.basic_architecture and \
+                            self.interactive_config.statistic_data.output_id \
                             and self.interactive_config.statistic_data.autoupdate:
+                        self.statistic_result = self.callback.statistic_data_request(
+                            interactive_config=self.interactive_config,
+                            options=self.options,
+                            y_true=self.y_true,
+                            y_pred=self.y_pred
+                        )
+                    if self.options.data.architecture in self.yolo_architecture and \
+                            self.interactive_config.statistic_data.box_channel \
+                            and self.interactive_config.statistic_data.autoupdate:
+                        # TODO: CHECK!!!
                         self.statistic_result = self.callback.statistic_data_request(
                             interactive_config=self.interactive_config,
                             options=self.options,
@@ -253,17 +259,27 @@ class InteractiveCallback:
                         )
                 else:
                     self.intermediate_result = self.callback.intermediate_result_request(
-                            options=self.options,
+                        options=self.options,
+                        interactive_config=self.interactive_config,
+                        example_idx=self.example_idx,
+                        dataset_path=self.dataset_path,
+                        preset_path=self.preset_path,
+                        x_val=self.x_val,
+                        inverse_x_val=self.inverse_x_val,
+                        y_pred=self.y_pred,
+                        y_true=self.y_true
+                    )
+                    if self.options.data.architecture in self.basic_architecture and \
+                            self.interactive_config.statistic_data.output_id:
+                        self.statistic_result = self.callback.statistic_data_request(
                             interactive_config=self.interactive_config,
-                            example_idx=self.example_idx,
-                            dataset_path=self.dataset_path,
-                            preset_path=self.preset_path,
-                            x_val=self.x_val,
-                            inverse_x_val=self.inverse_x_val,
-                            y_pred=self.y_pred,
-                            y_true=self.y_true
+                            options=self.options,
+                            y_true=self.y_true,
+                            y_pred=self.y_pred
                         )
-                    if self.interactive_config.statistic_data.output_id:
+                    if self.options.data.architecture in self.yolo_architecture and \
+                            self.interactive_config.statistic_data.box_channel:
+                        # TODO: CHECK!!!
                         self.statistic_result = self.callback.statistic_data_request(
                             interactive_config=self.interactive_config,
                             options=self.options,
@@ -328,17 +344,17 @@ class InteractiveCallback:
                         )
 
             if self.options.data.architecture in self.yolo_architecture:
-                if self.yolo_interactive_config.intermediate_result.show_results:
+                if self.interactive_config.intermediate_result.show_results:
                     self.example_idx, _ = prepare_yolo_example_idx_to_show(
                         array=copy.deepcopy(self.y_pred),
                         true_array=copy.deepcopy(self.y_true),
                         name_classes=self.options.data.outputs.get(
                             list(self.options.data.outputs.keys())[0]).classes_names,
-                        box_channel=self.yolo_interactive_config.intermediate_result.box_channel,
-                        count=self.yolo_interactive_config.intermediate_result.num_examples,
-                        choice_type=self.yolo_interactive_config.intermediate_result.example_choice_type,
-                        seed_idx=self.seed_idx[:self.yolo_interactive_config.intermediate_result.num_examples],
-                        sensitivity=self.yolo_interactive_config.intermediate_result.sensitivity,
+                        box_channel=self.interactive_config.intermediate_result.box_channel,
+                        count=self.interactive_config.intermediate_result.num_examples,
+                        choice_type=self.interactive_config.intermediate_result.example_choice_type,
+                        seed_idx=self.seed_idx[:self.interactive_config.intermediate_result.num_examples],
+                        sensitivity=self.interactive_config.intermediate_result.sensitivity,
                     )
                 if config.intermediate_result.show_results or config.statistic_data.box_channel:
                     self.urgent_predict = True
@@ -353,7 +369,7 @@ class InteractiveCallback:
                         y_pred=self.y_pred,
                         y_true=self.y_true
                     )
-                    if self.yolo_interactive_config.statistic_data.box_channel:
+                    if self.interactive_config.statistic_data.box_channel:
                         self.statistic_result = self.callback.statistic_data_request(
                             interactive_config=self.interactive_config,
                             options=self.options,
@@ -470,7 +486,6 @@ class InteractiveCallback:
             self.log_history["epochs"] = []
             if self.options.data.architecture in self.basic_architecture:
                 for out in self.losses.keys():
-                    task = self.options.data.outputs.get(int(out)).task
                     self.log_history[out] = {
                         "loss": {},
                         "metrics": {},
@@ -509,7 +524,7 @@ class InteractiveCallback:
                         'prob_loss': {"train": [], "val": []}, 'total_loss': {"train": [], "val": []}
                     },
                     "class_loss": {'prob_loss': {}},
-                    "metrics": {'mAP50': [], 'mAP95': []},
+                    "metrics": {'mAP50': []},
                     "class_metrics": {'mAP50': {}, 'mAP95': {}},
                     "progress_state": {
                         "loss": {
@@ -528,7 +543,7 @@ class InteractiveCallback:
                         },
                         "metrics": {
                             'mAP50': {"mean_log_history": [], "normal_state": [], "overfitting": []},
-                            'mAP95': {"mean_log_history": [], "normal_state": [], "overfitting": []},
+                            # 'mAP95': {"mean_log_history": [], "normal_state": [], "overfitting": []},
                         }
                     }
                 }
@@ -536,7 +551,7 @@ class InteractiveCallback:
                 for class_name in self.options.data.outputs.get(out).classes_names:
                     self.log_history['output']["class_loss"]['prob_loss'][class_name] = []
                     self.log_history['output']["class_metrics"]['mAP50'][class_name] = []
-                    self.log_history['output']["class_metrics"]['mAP95'][class_name] = []
+                    # self.log_history['output']["class_metrics"]['mAP95'][class_name] = []
         except Exception as e:
             print_error(InteractiveCallback().name, method_name, e)
 
@@ -592,7 +607,6 @@ class InteractiveCallback:
                         end = len(f"_{log.split('_')[-1]}")
                         log = log[:-end]
                     update_logs[re.sub("__", "_", decamelize(log))] = val
-
                 for out in self.metrics.keys():
                     interactive_log[out] = {}
                     if len(self.metrics.keys()) == 1:
@@ -621,16 +635,42 @@ class InteractiveCallback:
                                 f"{out}_{loss_metric_config.get('metric').get(metric_name).get('log_name')}")
                             val_metric = update_logs.get(
                                 f"val_{out}_{loss_metric_config.get('metric').get(metric_name).get('log_name')}")
+
                         if metric_name == MetricChoice.UnscaledMAE:
                             train_metric, val_metric = UnscaledMAE().unscale_result(
                                 [train_metric, val_metric], int(out), self.options.preprocessing
                             )
+                        if metric_name == MetricChoice.BalancedRecall:
+                            m = BalancedRecall()
+                            m.update_state(y_true=self.y_true.get('val').get(out), y_pred=self.y_pred.get(out))
+                            val_metric = m.result().numpy().item()
+                            # print('\nBalancedRecall', val_metric, update_logs.get(
+                            #     f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}"))
+                        if metric_name == MetricChoice.BalancedPrecision:
+                            m = BalancedPrecision()
+                            m.update_state(y_true=self.y_true.get('val').get(out), y_pred=self.y_pred.get(out))
+                            val_metric = m.result().numpy().item()
+                            # print('BalancedPrecision', val_metric, update_logs.get(
+                            #     f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}"))
+                        if metric_name == MetricChoice.BalancedFScore:
+                            m = BalancedFScore()
+                            m.update_state(y_true=self.y_true.get('val').get(out), y_pred=self.y_pred.get(out))
+                            val_metric = m.result().numpy().item()
+                            # print('BalancedFScore', val_metric, update_logs.get(
+                            #     f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}"))
+                        if metric_name == MetricChoice.FScore:
+                            m = FScore()
+                            m.update_state(y_true=self.y_true.get('val').get(out), y_pred=self.y_pred.get(out))
+                            val_metric = m.result().numpy().item()
+                            # print('FScore', val_metric, update_logs.get(
+                            #     f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}"))
                         interactive_log[out]['metrics'][metric_name] = {
                             'train': round_loss_metric(train_metric) if not math.isnan(float(train_metric)) else None,
                             'val': round_loss_metric(val_metric) if not math.isnan(float(val_metric)) else None
                         }
 
             if self.options.data.architecture in self.yolo_architecture:
+                # self._round_loss_metric(train_loss) if not math.isnan(float(train_loss)) else None
                 interactive_log['learning_rate'] = logs.get('optimizer.lr')
                 interactive_log['output'] = {
                     "train": {
@@ -640,10 +680,7 @@ class InteractiveCallback:
                             'prob_loss': logs.get('prob_loss'),
                             'total_loss': logs.get('total_loss')
                         },
-                        "metrics": {
-                            'mAP50': logs.get('mAP50'),
-                            'mAP95': logs.get('mAP95'),
-                        }
+                        "metrics": {'mAP50': logs.get('mAP50')}
                     },
                     "val": {
                         "loss": {
@@ -652,25 +689,19 @@ class InteractiveCallback:
                             'prob_loss': logs.get('val_prob_loss'),
                             'total_loss': logs.get('val_total_loss')
                         },
-                        "class_loss": {
-                            'prob_loss': {},
-                        },
-                        "metrics": {
-                            'mAP50': logs.get('val_mAP50'),
-                            'mAP95': logs.get('val_mAP95'),
-                        },
-                        "class_metrics": {
-                            'mAP50': {},
-                            'mAP95': {},
-                        }
+                        "class_loss": {'prob_loss': {}},
+                        "metrics": {'mAP50': logs.get('val_mAP50')},
+                        "class_metrics": {'mAP50': {}}
                     }
                 }
                 for name in self.options.data.outputs.get(list(self.options.data.outputs.keys())[0]).classes_names:
-                    interactive_log['output']['val']["class_loss"]['prob_loss'][name] = logs.get(f'val_prob_loss_{name}')
-                    interactive_log['output']['val']["class_metrics"]['mAP50'][name] = logs.get(f'val_mAP50_class_{name}')
-                    interactive_log['output']['val']["class_metrics"]['mAP95'][name] = logs.get(f'val_mAP95_class_{name}')
+                    interactive_log['output']['val']["class_loss"]['prob_loss'][name] = logs.get(
+                        f'val_prob_loss_{name}')
+                    interactive_log['output']['val']["class_metrics"]['mAP50'][name] = logs.get(
+                        f'val_mAP50_class_{name}')
 
             return interactive_log
+
         except Exception as e:
             print_error(InteractiveCallback().name, method_name, e)
 
@@ -686,7 +717,6 @@ class InteractiveCallback:
 
                 if self.options.data.architecture in self.basic_architecture:
                     for out in self.options.data.outputs.keys():
-                        out_task = self.options.data.outputs.get(out).task
                         classes_names = self.options.data.outputs.get(out).classes_names
                         for loss_name in self.log_history.get(f"{out}").get('loss').keys():
                             for data_type in ['train', 'val']:
@@ -706,10 +736,13 @@ class InteractiveCallback:
                             if data_idx or data_idx == 0:
                                 self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['mean_log_history'][
                                     data_idx] = \
-                                    self._get_mean_log(self.log_history.get(f"{out}").get('loss').get(loss_name).get('val'))
+                                    self._get_mean_log(
+                                        self.log_history.get(f"{out}").get('loss').get(loss_name).get('val'))
                             else:
-                                self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['mean_log_history'].append(
-                                    self._get_mean_log(self.log_history.get(f"{out}").get('loss').get(loss_name).get('val'))
+                                self.log_history[f"{out}"]['progress_state']['loss'][loss_name][
+                                    'mean_log_history'].append(
+                                    self._get_mean_log(
+                                        self.log_history.get(f"{out}").get('loss').get(loss_name).get('val'))
                                 )
                             # get progress state data
                             loss_underfitting = self._evaluate_underfitting(
@@ -791,7 +824,8 @@ class InteractiveCallback:
                                         )
 
                             if data_idx or data_idx == 0:
-                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['mean_log_history'][
+                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name][
+                                    'mean_log_history'][
                                     data_idx] = \
                                     self._get_mean_log(self.log_history[f"{out}"]['metrics'][metric_name]['val'])
                             else:
@@ -805,33 +839,31 @@ class InteractiveCallback:
                                 self.log_history[f"{out}"]['metrics'][metric_name]['val'][-1],
                                 metric_type='metric'
                             )
-                            metric_overfittng = self._evaluate_overfitting(
+                            metric_overfitting = self._evaluate_overfitting(
                                 metric_name,
-                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['mean_log_history'],
+                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name][
+                                    'mean_log_history'],
                                 metric_type='metric'
                             )
-                            if metric_underfittng or metric_overfittng:
+                            if metric_underfittng or metric_overfitting:
                                 normal_state = False
                             else:
                                 normal_state = True
 
                             if data_idx or data_idx == 0:
                                 self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['underfitting'][
-                                    data_idx] = \
-                                    metric_underfittng
+                                    data_idx] = metric_underfittng
                                 self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['overfitting'][
-                                    data_idx] = \
-                                    metric_overfittng
+                                    data_idx] = metric_overfitting
                                 self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['normal_state'][
-                                    data_idx] = \
-                                    normal_state
+                                    data_idx] = normal_state
                             else:
-                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['underfitting'].append(
-                                    metric_underfittng)
-                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['overfitting'].append(
-                                    metric_overfittng)
-                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['normal_state'].append(
-                                    normal_state)
+                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name][
+                                    'underfitting'].append(metric_underfittng)
+                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name][
+                                    'overfitting'].append(metric_overfitting)
+                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name][
+                                    'normal_state'].append(normal_state)
 
                             if self.options.data.architecture in self.class_architecture:
                                 for cls in self.log_history.get(f"{out}").get('class_metrics').keys():
@@ -842,8 +874,8 @@ class InteractiveCallback:
                                             metric_name=metric_name,
                                             metric_obj=self.metrics_obj.get(f"{out}").get(metric_name),
                                             out=f"{out}",
-                                            y_true=self.y_true.get('val').get(f"{out}")[..., class_idx],
-                                            y_pred=self.y_pred.get(f"{out}")[..., class_idx],
+                                            y_true=self.y_true.get('val').get(f"{out}")[..., class_idx:class_idx + 1],
+                                            y_pred=self.y_pred.get(f"{out}")[..., class_idx:class_idx + 1],
                                         )
                                     else:
                                         class_metric = self._get_metric_calculation(
@@ -866,6 +898,7 @@ class InteractiveCallback:
 
                 if self.options.data.architecture in self.yolo_architecture:
                     out = list(self.options.data.outputs.keys())[0]
+                    self.log_history['learning_rate'] = self.current_logs.get('learning_rate')
                     classes_names = self.options.data.outputs.get(out).classes_names
                     for key in self.log_history['output']["loss"].keys():
                         for data_type in ['train', 'val']:
@@ -875,7 +908,8 @@ class InteractiveCallback:
                     for key in self.log_history['output']["metrics"].keys():
                         for data_type in ['train', 'val']:
                             self.log_history['output']["metrics"][key][data_type].append(
-                                round_loss_metric(self.current_logs.get('output').get(data_type).get('metrics').get(key))
+                                round_loss_metric(
+                                    self.current_logs.get('output').get(data_type).get('metrics').get(key))
                             )
                     for name in classes_names:
                         self.log_history['output']["class_loss"]['prob_loss'][name].append(
@@ -886,15 +920,12 @@ class InteractiveCallback:
                             round_loss_metric(self.current_logs.get('output').get("val").get(
                                 'class_metrics').get("mAP50").get(name))
                         )
-                        self.log_history['output']["class_metrics"]['mAP95'][name].append(
-                            round_loss_metric(self.current_logs.get('output').get("val").get(
-                                'class_metrics').get("mAP95").get(name))
-                        )
 
                     for loss_name in self.log_history['output']["loss"].keys():
                         # fill loss progress state
                         if data_idx or data_idx == 0:
-                            self.log_history['output']['progress_state']['loss'][loss_name]['mean_log_history'][data_idx] = \
+                            self.log_history['output']['progress_state']['loss'][loss_name]['mean_log_history'][
+                                data_idx] = \
                                 self._get_mean_log(self.log_history.get('output').get('loss').get(loss_name).get('val'))
                         else:
                             self.log_history['output']['progress_state']['loss'][loss_name]['mean_log_history'].append(
@@ -918,12 +949,12 @@ class InteractiveCallback:
                             normal_state = True
 
                         if data_idx or data_idx == 0:
-                            self.log_history['output']['progress_state']['loss'][loss_name]['underfitting'][data_idx] = \
-                                loss_underfitting
-                            self.log_history['output']['progress_state']['loss'][loss_name]['overfitting'][data_idx] = \
-                                loss_overfitting
-                            self.log_history['output']['progress_state']['loss'][loss_name]['normal_state'][data_idx] = \
-                                normal_state
+                            self.log_history['output']['progress_state']['loss'][loss_name][
+                                'underfitting'][data_idx] = loss_underfitting
+                            self.log_history['output']['progress_state']['loss'][loss_name][
+                                'overfitting'][data_idx] = loss_overfitting
+                            self.log_history['output']['progress_state']['loss'][loss_name][
+                                'normal_state'][data_idx] = normal_state
                         else:
                             self.log_history['output']['progress_state']['loss'][loss_name]['underfitting'].append(
                                 loss_underfitting)
@@ -935,30 +966,30 @@ class InteractiveCallback:
                     for metric_name in self.log_history.get('output').get('metrics').keys():
                         if data_idx or data_idx == 0:
                             self.log_history['output']['progress_state']['metrics'][metric_name]['mean_log_history'][
-                                data_idx] = self._get_mean_log(self.log_history['output']['metrics'][metric_name]['val'])
+                                data_idx] = self._get_mean_log(self.log_history['output']['metrics'][metric_name])
                         else:
                             self.log_history['output']['progress_state']['metrics'][metric_name][
                                 'mean_log_history'].append(
-                                self._get_mean_log(self.log_history['output']['metrics'][metric_name]['val'])
+                                self._get_mean_log(self.log_history['output']['metrics'][metric_name])
                             )
-                        metric_overfittng = self._evaluate_overfitting(
+                        metric_overfitting = self._evaluate_overfitting(
                             metric_name,
                             self.log_history['output']['progress_state']['metrics'][metric_name]['mean_log_history'],
                             metric_type='metric'
                         )
-                        if metric_overfittng:
+                        if metric_overfitting:
                             normal_state = False
                         else:
                             normal_state = True
 
                         if data_idx or data_idx == 0:
                             self.log_history['output']['progress_state']['metrics'][metric_name]['overfitting'][
-                                data_idx] = metric_overfittng
+                                data_idx] = metric_overfitting
                             self.log_history['output']['progress_state']['metrics'][metric_name]['normal_state'][
                                 data_idx] = normal_state
                         else:
                             self.log_history['output']['progress_state']['metrics'][metric_name]['overfitting'].append(
-                                metric_overfittng)
+                                metric_overfitting)
                             self.log_history['output']['progress_state']['metrics'][metric_name]['normal_state'].append(
                                 normal_state)
         except Exception as e:
@@ -992,22 +1023,16 @@ class InteractiveCallback:
                 self.progress_table[self.current_epoch] = {
                     "time": epoch_time,
                     "learning_rate": self.current_logs.get("learning_rate"),
-                    "data": {}
-                }
-                self.progress_table[self.current_epoch]["data"][f"Прогресс обучения"] = {
-                    'loss': {},
-                    'metrics': {}
+                    "data": {f"Прогресс обучения": {'loss': {}, 'metrics': {}}}
                 }
                 for loss in self.log_history['output']["loss"].keys():
-                    self.progress_table[self.current_epoch]["data"][f"Прогресс обучения"]["loss"] = {
-                        'loss': f"{self.log_history.get('output').get('loss').get(loss).get('train')[-1]}",
-                        'val_loss': f"{self.log_history.get('output').get('loss').get(loss).get('val')[-1]}"
-                    }
+                    self.progress_table[self.current_epoch]["data"]["Прогресс обучения"]["loss"][f'{loss}'] = \
+                        f"{self.log_history.get('output').get('loss').get(loss).get('train')[-1]}"
+                    self.progress_table[self.current_epoch]["data"]["Прогресс обучения"]["loss"][f'val_{loss}'] = \
+                        f"{self.log_history.get('output').get('loss').get(loss).get('val')[-1]}"
                 for metric in self.log_history['output']["metrics"].keys():
-                    self.progress_table[self.current_epoch]["data"][f"Прогресс обучения»"]["metrics"][metric] = \
-                        f"{self.log_history.get('output').get('metrics').get(metric).get('train')[-1]}"
-                    self.progress_table[self.current_epoch]["data"][f"Прогресс обучения»"]["metrics"][f"val_{metric}"] = \
-                        f"{self.log_history.get('output').get('metrics').get(metric).get('val')[-1]}"
+                    self.progress_table[self.current_epoch]["data"]["Прогресс обучения"]["metrics"][f"{metric}"] = \
+                        f"{self.log_history.get('output').get('metrics').get(metric)[-1]}"
         except Exception as e:
             print_error(InteractiveCallback().name, method_name, e)
 
@@ -1038,7 +1063,7 @@ class InteractiveCallback:
                 if encoding == LayerEncodingChoice.ohe or encoding == LayerEncodingChoice.multi:
                     if metric_name == Metric.Accuracy:
                         metric_obj.update_state(np.argmax(y_true, axis=-1), np.argmax(y_pred, axis=-1))
-                    elif metric_name == Metric.BalancedRecall:
+                    elif metric_name in [Metric.BalancedRecall, Metric.BalancedPrecision, Metric.BalancedFScore]:
                         metric_obj.update_state(y_true, y_pred, show_class=show_class)
                     else:
                         metric_obj.update_state(y_true, y_pred)
@@ -1073,17 +1098,16 @@ class InteractiveCallback:
         method_name = '_evaluate_overfitting'
         try:
             mode = loss_metric_config.get(metric_type).get(metric_name).get("mode")
-            if min(mean_log) or max(mean_log) and mean_log[-1]:
-                if mode == 'min' and mean_log[-1] > min(mean_log) and \
+            overfitting = False
+            if mode == 'min':
+                if min(mean_log) and mean_log[-1] and mean_log[-1] > min(mean_log) and \
                         (mean_log[-1] - min(mean_log)) * 100 / min(mean_log) > 2:
-                    return True
-                elif mode == 'max' and mean_log[-1] < max(mean_log) and \
+                    overfitting = True
+            if mode == 'max':
+                if max(mean_log) and mean_log[-1] and mean_log[-1] < max(mean_log) and \
                         (max(mean_log) - mean_log[-1]) * 100 / max(mean_log) > 2:
-                    return True
-                else:
-                    return False
-            else:
-                return False
+                    overfitting = True
+            return overfitting
         except Exception as e:
             print_error(InteractiveCallback().name, method_name, e)
 
@@ -1092,18 +1116,15 @@ class InteractiveCallback:
         method_name = '_evaluate_underfitting'
         try:
             mode = loss_metric_config.get(metric_type).get(metric_name).get("mode")
-            if train_log and val_log:
-                if mode == 'min' and val_log < 1 and train_log < 1 and (val_log - train_log) > 0.05:
-                    return True
-                elif mode == 'min' and (val_log >= 1 or train_log >= 1) \
-                        and (val_log - train_log) / train_log * 100 > 5:
-                    return True
-                elif mode == 'max' and (train_log - val_log) / train_log * 100 > 3:
-                    return True
-                else:
-                    return False
-            else:
-                return False
+            underfitting = False
+            if mode == 'min' and train_log and val_log:
+                if val_log < 1 and train_log < 1 and (val_log - train_log) > 0.05:
+                    underfitting = True
+                if (val_log >= 1 or train_log >= 1) and (val_log - train_log) / train_log * 100 > 5:
+                    underfitting = True
+            if mode == 'max' and train_log and val_log and (train_log - val_log) / train_log * 100 > 3:
+                underfitting = True
+            return underfitting
         except Exception as e:
             print_error(InteractiveCallback().name, method_name, e)
 
@@ -1111,86 +1132,188 @@ class InteractiveCallback:
         method_name = '_get_loss_graph_data_request'
         try:
             data_return = []
-            if not self.interactive_config.loss_graphs or not self.log_history.get("epochs"):
-                return data_return
-            for loss_graph_config in self.interactive_config.loss_graphs:
-                if loss_graph_config.show == LossGraphShowChoice.model:
-                    if sum(self.log_history.get(f"{loss_graph_config.output_idx}").get("progress_state").get(
-                            "loss").get(self.losses.get(f"{loss_graph_config.output_idx}")).get(
-                        'overfitting')[-self.log_gap:]) >= self.progress_threashold:
-                        progress_state = "overfitting"
-                    elif sum(self.log_history.get(f"{loss_graph_config.output_idx}").get("progress_state").get(
-                            "loss").get(self.losses.get(f"{loss_graph_config.output_idx}")).get(
-                        'underfitting')[-self.log_gap:]) >= self.progress_threashold:
-                        progress_state = "underfitting"
-                    else:
-                        progress_state = "normal"
+            if self.options.data.architecture in self.basic_architecture:
+                if not self.interactive_config.loss_graphs or not self.log_history.get("epochs"):
+                    return data_return
+                for loss_graph_config in self.interactive_config.loss_graphs:
+                    loss = self.losses.get(f"{loss_graph_config.output_idx}")
+                    if self.options.data.architecture in self.yolo_architecture:
+                        loss_graph_config.output_idx = 'output'
+                    if loss_graph_config.show == LossGraphShowChoice.model:
+                        if sum(self.log_history.get(f"{loss_graph_config.output_idx}").get("progress_state").get(
+                                "loss").get(loss).get('overfitting')[-self.log_gap:]) >= self.progress_threashold:
+                            progress_state = "overfitting"
+                        elif sum(self.log_history.get(f"{loss_graph_config.output_idx}").get("progress_state").get(
+                                "loss").get(loss).get('underfitting')[-self.log_gap:]) >= self.progress_threashold:
+                            progress_state = "underfitting"
+                        else:
+                            progress_state = "normal"
 
-                    train_list = self.log_history.get(f"{loss_graph_config.output_idx}").get('loss').get(
-                        self.losses.get(f"{loss_graph_config.output_idx}")).get('train')
-                    best_train_value = min(train_list)
-                    best_train = fill_graph_plot_data(
-                        x=[self.log_history.get("epochs")[train_list.index(best_train_value)]],
-                        y=[best_train_value],
-                        label="Лучший результат на тренировочной выборке"
-                    )
-                    train_plot = fill_graph_plot_data(
-                        x=self.log_history.get("epochs"),
-                        y=train_list,
-                        label="Тренировочная выборка"
-                    )
-
-                    val_list = self.log_history.get(f"{loss_graph_config.output_idx}").get('loss').get(
-                        self.losses.get(f"{loss_graph_config.output_idx}")).get("val")
-                    best_val_value = min(val_list)
-                    best_val = fill_graph_plot_data(
-                        x=[self.log_history.get("epochs")[val_list.index(best_val_value)]],
-                        y=[best_val_value],
-                        label="Лучший результат на проверочной выборке"
-                    )
-                    val_plot = fill_graph_plot_data(
-                        x=self.log_history.get("epochs"),
-                        y=self.log_history.get(f"{loss_graph_config.output_idx}").get('loss').get(
-                            self.losses.get(f"{loss_graph_config.output_idx}")).get("val"),
-                        label="Проверочная выборка"
-                    )
-
-                    data_return.append(
-                        fill_graph_front_structure(
-                            _id=loss_graph_config.id,
-                            _type='graphic',
-                            graph_name=f"Выходной слой «{loss_graph_config.output_idx}» - "
-                                       f"График ошибки обучения - Эпоха №{self.log_history.get('epochs')[-1]}",
-                            short_name=f"{loss_graph_config.output_idx} - График ошибки обучения",
-                            x_label="Эпоха",
-                            y_label="Значение",
-                            plot_data=[train_plot, val_plot],
-                            best=[best_train, best_val],
-                            progress_state=progress_state
+                        train_list = self.log_history.get(f"{loss_graph_config.output_idx}").get('loss').get(
+                            self.losses.get(f"{loss_graph_config.output_idx}")).get('train')
+                        no_none_train = []
+                        for x in train_list:
+                            if x is not None:
+                                no_none_train.append(x)
+                        best_train_value = min(no_none_train) if no_none_train else None
+                        best_train = fill_graph_plot_data(
+                            x=[self.log_history.get("epochs")[train_list.index(best_train_value)]
+                               if best_train_value is not None else None],
+                            y=[best_train_value],
+                            label="Лучший результат на тренировочной выборке"
                         )
-                    )
-                if loss_graph_config.show == LossGraphShowChoice.classes and \
-                        self.class_graphics.get(loss_graph_config.output_idx):
-                    data_return.append(
-                        fill_graph_front_structure(
-                            _id=loss_graph_config.id,
-                            _type='graphic',
-                            graph_name=f"Выходной слой «{loss_graph_config.output_idx}» - График ошибки обучения по классам"
-                                       f" - Эпоха №{self.log_history.get('epochs')[-1]}",
-                            short_name=f"{loss_graph_config.output_idx} - График ошибки обучения по классам",
-                            x_label="Эпоха",
-                            y_label="Значение",
-                            plot_data=[
-                                fill_graph_plot_data(
-                                    x=self.log_history.get("epochs"),
-                                    y=self.log_history.get(f"{loss_graph_config.output_idx}").get('class_loss').get(
-                                        class_name).get(self.losses.get(f"{loss_graph_config.output_idx}")),
-                                    label=f"Класс {class_name}"
-                                ) for class_name in
-                                self.options.data.outputs.get(loss_graph_config.output_idx).classes_names
-                            ],
+                        train_plot = fill_graph_plot_data(
+                            x=self.log_history.get("epochs"),
+                            y=train_list,
+                            label="Тренировочная выборка"
                         )
-                    )
+
+                        val_list = self.log_history.get(f"{loss_graph_config.output_idx}").get('loss').get(
+                            self.losses.get(f"{loss_graph_config.output_idx}")).get("val")
+                        no_none_val = []
+                        for x in val_list:
+                            if x is not None:
+                                no_none_val.append(x)
+                        best_val_value = min(no_none_val) if no_none_val else None
+                        # best_val_value = min(val_list)
+                        best_val = fill_graph_plot_data(
+                            x=[self.log_history.get("epochs")[val_list.index(best_val_value)]
+                               if best_val_value is not None else None],
+                            y=[best_val_value],
+                            label="Лучший результат на проверочной выборке"
+                        )
+                        val_plot = fill_graph_plot_data(
+                            x=self.log_history.get("epochs"),
+                            y=self.log_history.get(f"{loss_graph_config.output_idx}").get('loss').get(
+                                self.losses.get(f"{loss_graph_config.output_idx}")).get("val"),
+                            label="Проверочная выборка"
+                        )
+
+                        data_return.append(
+                            fill_graph_front_structure(
+                                _id=loss_graph_config.id,
+                                _type='graphic',
+                                graph_name=f"Выходной слой «{loss_graph_config.output_idx}» - "
+                                           f"График ошибки обучения - Эпоха №{self.log_history.get('epochs')[-1]}",
+                                short_name=f"{loss_graph_config.output_idx} - График ошибки обучения",
+                                x_label="Эпоха",
+                                y_label="Значение",
+                                plot_data=[train_plot, val_plot],
+                                best=[best_train, best_val],
+                                progress_state=progress_state
+                            )
+                        )
+                    if loss_graph_config.show == LossGraphShowChoice.classes and \
+                            self.class_graphics.get(loss_graph_config.output_idx):
+                        data_return.append(
+                            fill_graph_front_structure(
+                                _id=loss_graph_config.id,
+                                _type='graphic',
+                                graph_name=f"Выходной слой «{loss_graph_config.output_idx}» - "
+                                           f"График ошибки обучения по классам"
+                                           f" - Эпоха №{self.log_history.get('epochs')[-1]}",
+                                short_name=f"{loss_graph_config.output_idx} - График ошибки обучения по классам",
+                                x_label="Эпоха",
+                                y_label="Значение",
+                                plot_data=[
+                                    fill_graph_plot_data(
+                                        x=self.log_history.get("epochs"),
+                                        y=self.log_history.get(f"{loss_graph_config.output_idx}").get('class_loss').get(
+                                            class_name).get(self.losses.get(f"{loss_graph_config.output_idx}")),
+                                        label=f"Класс {class_name}"
+                                    ) for class_name in
+                                    self.options.data.outputs.get(int(loss_graph_config.output_idx)).classes_names
+                                ],
+                            )
+                        )
+
+            if self.options.data.architecture in self.yolo_architecture:
+                if not self.interactive_config.loss_graphs or not self.log_history.get("epochs"):
+                    return data_return
+                _id = 1
+                for loss_graph_config in self.interactive_config.loss_graphs:
+                    if loss_graph_config.show == LossGraphShowChoice.model:
+                        for loss in self.log_history.get('output').get('loss').keys():
+                            # print(loss)
+                            if sum(self.log_history.get("output").get("progress_state").get("loss").get(loss).get(
+                                    'overfitting')[-self.log_gap:]) >= self.progress_threashold:
+                                progress_state = "overfitting"
+                            elif sum(self.log_history.get("output").get("progress_state").get("loss").get(
+                                    loss).get('underfitting')[-self.log_gap:]) >= self.progress_threashold:
+                                progress_state = "underfitting"
+                            else:
+                                progress_state = "normal"
+                            train_list = self.log_history.get("output").get('loss').get(loss).get('train')
+                            no_none_train = []
+                            for x in train_list:
+                                if x is not None:
+                                    no_none_train.append(x)
+                            best_train_value = min(no_none_train) if no_none_train else None
+                            best_train = fill_graph_plot_data(
+                                x=[self.log_history.get("epochs")[train_list.index(best_train_value)]
+                                   if best_train_value is not None else None],
+                                y=[best_train_value],
+                                label="Лучший результат на тренировочной выборке"
+                            )
+                            train_plot = fill_graph_plot_data(
+                                x=self.log_history.get("epochs"),
+                                y=train_list,
+                                label="Тренировочная выборка"
+                            )
+                            val_list = self.log_history.get("output").get('loss').get(loss).get("val")
+                            no_none_val = []
+                            for x in val_list:
+                                if x is not None:
+                                    no_none_val.append(x)
+                            best_val_value = min(no_none_val) if no_none_val else None
+                            best_val = fill_graph_plot_data(
+                                x=[self.log_history.get("epochs")[val_list.index(best_val_value)]
+                                   if best_val_value is not None else None],
+                                y=[best_val_value],
+                                label="Лучший результат на проверочной выборке"
+                            )
+                            val_plot = fill_graph_plot_data(
+                                x=self.log_history.get("epochs"),
+                                y=self.log_history.get("output").get('loss').get(loss).get("val"),
+                                label="Проверочная выборка"
+                            )
+                            # print('val_plot', val_plot)
+                            data_return.append(
+                                fill_graph_front_structure(
+                                    _id=_id,
+                                    _type='graphic',
+                                    graph_name=f"График ошибки обучения «{loss}» - "
+                                               f"Эпоха №{self.log_history.get('epochs')[-1]}",
+                                    short_name=f"График «{loss}»",
+                                    x_label="Эпоха",
+                                    y_label="Значение",
+                                    plot_data=[train_plot, val_plot],
+                                    best=[best_train, best_val],
+                                    progress_state=progress_state
+                                )
+                            )
+                            _id += 1
+                    if loss_graph_config.show == LossGraphShowChoice.classes:
+                        output_idx = list(self.options.data.outputs.keys())[0]
+                        data_return.append(
+                            fill_graph_front_structure(
+                                _id=_id,
+                                _type='graphic',
+                                graph_name=f"График ошибки обучения «prob_loss» по классам"
+                                           f" - Эпоха №{self.log_history.get('epochs')[-1]}",
+                                short_name=f"График ошибки обучения по классам",
+                                x_label="Эпоха",
+                                y_label="Значение",
+                                plot_data=[
+                                    fill_graph_plot_data(
+                                        x=self.log_history.get("epochs"),
+                                        y=self.log_history.get("output").get('class_loss').get('prob_loss').get(
+                                            class_name),
+                                        label=f"Класс {class_name}"
+                                    ) for class_name in self.options.data.outputs.get(output_idx).classes_names
+                                ],
+                            )
+                        )
             return data_return
         except Exception as e:
             if self.first_error:
@@ -1203,90 +1326,157 @@ class InteractiveCallback:
         method_name = '_get_metric_graph_data_request'
         try:
             data_return = []
-            if not self.interactive_config.metric_graphs or not self.log_history.get("epochs"):
-                return data_return
-            for metric_graph_config in self.interactive_config.metric_graphs:
-                if metric_graph_config.show == MetricGraphShowChoice.model:
-                    min_max_mode = loss_metric_config.get("metric").get(metric_graph_config.show_metric.name).get("mode")
-                    if sum(self.log_history.get(f"{metric_graph_config.output_idx}").get("progress_state").get(
-                            "metrics").get(metric_graph_config.show_metric.name).get(
-                        'overfitting')[-self.log_gap:]) >= self.progress_threashold:
-                        progress_state = 'overfitting'
-                    elif sum(self.log_history.get(f"{metric_graph_config.output_idx}").get("progress_state").get(
-                            "metrics").get(metric_graph_config.show_metric.name).get(
-                        'underfitting')[-self.log_gap:]) >= self.progress_threashold:
-                        progress_state = 'underfitting'
-                    else:
-                        progress_state = 'normal'
-
-                    train_list = self.log_history.get(f"{metric_graph_config.output_idx}").get('metrics').get(
-                        metric_graph_config.show_metric.name).get("train")
-                    best_train_value = min(train_list) if min_max_mode == 'min' else max(train_list)
-                    best_train = fill_graph_plot_data(
-                        x=[self.log_history.get("epochs")[train_list.index(best_train_value)]],
-                        y=[best_train_value],
-                        label="Лучший результат на тренировочной выборке"
-                    )
-                    train_plot = fill_graph_plot_data(
-                        x=self.log_history.get("epochs"),
-                        y=self.log_history.get(f"{metric_graph_config.output_idx}").get('metrics').get(
-                            metric_graph_config.show_metric.name).get("train"),
-                        label="Тренировочная выборка"
-                    )
-
-                    val_list = self.log_history.get(f"{metric_graph_config.output_idx}").get('metrics').get(
-                        metric_graph_config.show_metric.name).get("val")
-                    best_val_value = min(val_list) if min_max_mode == 'min' else max(val_list)
-                    best_val = fill_graph_plot_data(
-                        x=[self.log_history.get("epochs")[val_list.index(best_val_value)]],
-                        y=[best_val_value],
-                        label="Лучший результат на проверочной выборке"
-                    )
-                    val_plot = fill_graph_plot_data(
-                        x=self.log_history.get("epochs"),
-                        y=self.log_history.get(f"{metric_graph_config.output_idx}").get('metrics').get(
-                            metric_graph_config.show_metric.name).get("val"),
-                        label="Проверочная выборка"
-                    )
-                    data_return.append(
-                        fill_graph_front_structure(
-                            _id=metric_graph_config.id,
-                            _type='graphic',
-                            graph_name=f"Выходной слой «{metric_graph_config.output_idx}» - График метрики "
-                                       f"{metric_graph_config.show_metric.name} - "
-                                       f"Эпоха №{self.log_history.get('epochs')[-1]}",
-                            short_name=f"{metric_graph_config.output_idx} - {metric_graph_config.show_metric.name}",
-                            x_label="Эпоха",
-                            y_label="Значение",
-                            plot_data=[train_plot, val_plot],
-                            best=[best_train, best_val],
-                            progress_state=progress_state
+            if self.options.data.architecture in self.basic_architecture:
+                if not self.interactive_config.metric_graphs or not self.log_history.get("epochs"):
+                    return data_return
+                for metric_graph_config in self.interactive_config.metric_graphs:
+                    if metric_graph_config.show == MetricGraphShowChoice.model:
+                        min_max_mode = loss_metric_config.get("metric").get(metric_graph_config.show_metric.name).get(
+                            "mode")
+                        if sum(self.log_history.get(f"{metric_graph_config.output_idx}").get(
+                                "progress_state").get("metrics").get(metric_graph_config.show_metric.name).get(
+                                'overfitting')[-self.log_gap:]) >= self.progress_threashold:
+                            progress_state = 'overfitting'
+                        elif sum(self.log_history.get(f"{metric_graph_config.output_idx}").get(
+                                "progress_state").get("metrics").get(metric_graph_config.show_metric.name).get(
+                                'underfitting')[-self.log_gap:]) >= self.progress_threashold:
+                            progress_state = 'underfitting'
+                        else:
+                            progress_state = 'normal'
+                        train_list = self.log_history.get(f"{metric_graph_config.output_idx}").get('metrics').get(
+                            metric_graph_config.show_metric.name).get("train")
+                        best_train_value = min(train_list) if min_max_mode == 'min' else max(train_list)
+                        best_train = fill_graph_plot_data(
+                            x=[self.log_history.get("epochs")[train_list.index(best_train_value)]],
+                            y=[best_train_value],
+                            label="Лучший результат на тренировочной выборке"
                         )
-                    )
-                if metric_graph_config.show == MetricGraphShowChoice.classes and \
-                        self.class_graphics.get(metric_graph_config.output_idx):
-                    data_return.append(
-                        fill_graph_front_structure(
-                            _id=metric_graph_config.id,
-                            _type='graphic',
-                            graph_name=f"Выходной слой «{metric_graph_config.output_idx}» - График метрики "
-                                       f"{metric_graph_config.show_metric.name} по классам - "
-                                       f"Эпоха №{self.log_history.get('epochs')[-1]}",
-                            short_name=f"{metric_graph_config.output_idx} - "
-                                       f"{metric_graph_config.show_metric.name} по классам",
-                            x_label="Эпоха",
-                            y_label="Значение",
-                            plot_data=[
-                                fill_graph_plot_data(
-                                    x=self.log_history.get("epochs"),
-                                    y=self.log_history.get(f"{metric_graph_config.output_idx}").get('class_metrics').get(
-                                        class_name).get(metric_graph_config.show_metric),
-                                    label=f"Класс {class_name}"
-                                ) for class_name in
-                                self.options.data.outputs.get(metric_graph_config.output_idx).classes_names
-                            ],
+                        train_plot = fill_graph_plot_data(
+                            x=self.log_history.get("epochs"),
+                            y=self.log_history.get(f"{metric_graph_config.output_idx}").get('metrics').get(
+                                metric_graph_config.show_metric.name).get("train"),
+                            label="Тренировочная выборка"
                         )
-                    )
+                        val_list = self.log_history.get(f"{metric_graph_config.output_idx}").get('metrics').get(
+                            metric_graph_config.show_metric.name).get("val")
+                        best_val_value = min(val_list) if min_max_mode == 'min' else max(val_list)
+                        best_val = fill_graph_plot_data(
+                            x=[self.log_history.get("epochs")[val_list.index(best_val_value)]],
+                            y=[best_val_value],
+                            label="Лучший результат на проверочной выборке"
+                        )
+                        val_plot = fill_graph_plot_data(
+                            x=self.log_history.get("epochs"),
+                            y=self.log_history.get(f"{metric_graph_config.output_idx}").get('metrics').get(
+                                metric_graph_config.show_metric.name).get("val"),
+                            label="Проверочная выборка"
+                        )
+                        data_return.append(
+                            fill_graph_front_structure(
+                                _id=metric_graph_config.id,
+                                _type='graphic',
+                                graph_name=f"Выходной слой «{metric_graph_config.output_idx}» - График метрики "
+                                           f"{metric_graph_config.show_metric.name} - "
+                                           f"Эпоха №{self.log_history.get('epochs')[-1]}",
+                                short_name=f"{metric_graph_config.output_idx} - {metric_graph_config.show_metric.name}",
+                                x_label="Эпоха",
+                                y_label="Значение",
+                                plot_data=[train_plot, val_plot],
+                                best=[best_train, best_val],
+                                progress_state=progress_state
+                            )
+                        )
+                    if metric_graph_config.show == MetricGraphShowChoice.classes and \
+                            self.class_graphics.get(metric_graph_config.output_idx):
+                        data_return.append(
+                            fill_graph_front_structure(
+                                _id=metric_graph_config.id,
+                                _type='graphic',
+                                graph_name=f"Выходной слой «{metric_graph_config.output_idx}» - График метрики "
+                                           f"{metric_graph_config.show_metric.name} по классам - "
+                                           f"Эпоха №{self.log_history.get('epochs')[-1]}",
+                                short_name=f"{metric_graph_config.output_idx} - "
+                                           f"{metric_graph_config.show_metric.name} по классам",
+                                x_label="Эпоха",
+                                y_label="Значение",
+                                plot_data=[
+                                    fill_graph_plot_data(
+                                        x=self.log_history.get("epochs"),
+                                        y=self.log_history.get(f"{metric_graph_config.output_idx}").get(
+                                            'class_metrics').get(
+                                            class_name).get(metric_graph_config.show_metric),
+                                        label=f"Класс {class_name}"
+                                    ) for class_name in
+                                    self.options.data.outputs.get(metric_graph_config.output_idx).classes_names
+                                ],
+                            )
+                        )
+
+            if self.options.data.architecture in self.yolo_architecture:
+                if not self.interactive_config.metric_graphs or not self.log_history.get("epochs"):
+                    return data_return
+                _id = 1
+                for metric_graph_config in self.interactive_config.metric_graphs:
+                    if metric_graph_config.show == MetricGraphShowChoice.model:
+                        min_max_mode = loss_metric_config.get("metric").get(metric_graph_config.show_metric.name).get(
+                            "mode")
+                        if sum(self.log_history.get("output").get("progress_state").get(
+                                "metrics").get(metric_graph_config.show_metric.name).get(
+                                'overfitting')[-self.log_gap:]) >= self.progress_threashold:
+                            progress_state = 'overfitting'
+                        else:
+                            progress_state = 'normal'
+                        val_list = self.log_history.get("output").get('metrics').get(
+                            metric_graph_config.show_metric.name)
+                        best_val_value = min(val_list) if min_max_mode == 'min' else max(val_list)
+                        best_val = fill_graph_plot_data(
+                            x=[self.log_history.get("epochs")[val_list.index(best_val_value)]],
+                            y=[best_val_value],
+                            label="Лучший результат на проверочной выборке"
+                        )
+                        val_plot = fill_graph_plot_data(
+                            x=self.log_history.get("epochs"),
+                            y=self.log_history.get("output").get('metrics').get(
+                                metric_graph_config.show_metric.name),
+                            label="Проверочная выборка"
+                        )
+                        data_return.append(
+                            fill_graph_front_structure(
+                                _id=_id,
+                                _type='graphic',
+                                graph_name=f"График метрики {metric_graph_config.show_metric.name} - "
+                                           f"Эпоха №{self.log_history.get('epochs')[-1]}",
+                                short_name=f"{metric_graph_config.show_metric.name}",
+                                x_label="Эпоха",
+                                y_label="Значение",
+                                plot_data=[val_plot],
+                                best=[best_val],
+                                progress_state=progress_state
+                            )
+                        )
+                        _id += 1
+                    if metric_graph_config.show == MetricGraphShowChoice.classes:
+                        output_idx = list(self.options.data.outputs.keys())[0]
+                        data_return.append(
+                            fill_graph_front_structure(
+                                _id=_id,
+                                _type='graphic',
+                                graph_name=f"График метрики {metric_graph_config.show_metric.name} по классам - "
+                                           f"Эпоха №{self.log_history.get('epochs')[-1]}",
+                                short_name=f"{metric_graph_config.show_metric.name} по классам",
+                                x_label="Эпоха",
+                                y_label="Значение",
+                                plot_data=[
+                                    fill_graph_plot_data(
+                                        x=self.log_history.get("epochs"),
+                                        y=self.log_history.get("output").get('class_metrics').get(
+                                            metric_graph_config.show_metric.name).get(class_name),
+                                        label=f"Класс {class_name}"
+                                    ) for class_name in self.options.data.outputs.get(output_idx).classes_names
+                                ],
+                            )
+                        )
+                        _id += 1
             return data_return
         except Exception as e:
             if self.first_error:

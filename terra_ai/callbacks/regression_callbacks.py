@@ -146,7 +146,7 @@ class DataframeRegressionCallback:
                 dataset_balance[f"{out}"]['histogram'][data_type] = {}
                 for column in list(options.dataframe.get('train').columns):
                     column_id = int(column.split("_")[0])
-                    column_task = options.data.columns.get(column_id).get(column).task
+                    column_task = options.data.columns.get(column_id).get(column).get('task')
                     column_data = list(options.dataframe.get(data_type)[column])
                     if column_task == LayerInputTypeChoice.Text:
                         continue
