@@ -792,7 +792,7 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                             return_data[f"{idx + 1}"]['true_value'][f"Выходной слой «{out}»"] = data.get('y_true')
                         return_data[f"{idx + 1}"]['predict_value'][f"Выходной слой «{out}»"] = data.get('y_pred')
 
-                        return_data[f"{idx + 1}"]['tags_color'] = None
+                        return_data[f"{idx + 1}"]['tags_color'][f"Выходной слой «{out}»"] = data.get('tags_color')
 
                         if data.get('stat'):
                             return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')

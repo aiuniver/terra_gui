@@ -139,6 +139,7 @@ class InteractiveCallback:
             self.metrics_obj = prepare_metric_obj(metrics)
         self.dataset_path = dataset_path
         self.class_colors = get_classes_colors(dataset)
+        print('\nself.class_colors', self.class_colors)
         self.x_val, self.inverse_x_val = self.callback.get_x_array(dataset)
         self.y_true, self.inverse_y_true = self.callback.get_y_true(dataset)
         if not self.log_history:
