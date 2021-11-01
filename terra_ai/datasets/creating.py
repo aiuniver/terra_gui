@@ -2,7 +2,7 @@ from terra_ai.data.datasets.creations.layers.image_augmentation import Augmentat
 from terra_ai.utils import decamelize, camelize
 from terra_ai.exceptions.tensor_flow import ResourceExhaustedError as Resource
 from terra_ai.datasets.data import DataType, InstructionsData, DatasetInstructionsData
-from terra_ai.datasets.utils import PATH_TYPE_LIST, convert_object_detection
+from terra_ai.datasets.utils import PATH_TYPE_LIST, get_od_names
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preprocessing import CreatePreprocessing
 from terra_ai.data.training.extra import ArchitectureChoice
@@ -179,12 +179,7 @@ class CreateDataset(object):
                         inp.parameters.open_tags = out.parameters.open_tags
                         inp.parameters.close_tags = out.parameters.close_tags
             elif out.type == LayerOutputTypeChoice.ObjectDetection:
-                if out.parameters.model_type != LayerODDatasetTypeChoice.Yolo:
-                    convert_object_detection(creation_data)
-                    out.parameters.sources_paths = [Path(os.path.join(creation_data.source_path, 'Yolo_annotations'))]
-                with open(creation_data.source_path.joinpath('obj.names'), 'r') as names:
-                    names_list = names.read()
-                names_list = [elem for elem in names_list.split('\n') if elem]
+                names_list = get_od_names(creation_data)
                 out.parameters.classes_names = names_list
                 out.parameters.num_classes = len(names_list)
 

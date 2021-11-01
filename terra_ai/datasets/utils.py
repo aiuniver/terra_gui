@@ -11,6 +11,7 @@ from terra_ai.settings import DATASET_ANNOTATION
 from terra_ai.datasets.data import AnnotationClassesList
 from terra_ai.utils import decamelize
 from terra_ai.data.datasets.creation import CreationData
+from terra_ai.data.datasets.creations.layers.output.types.ObjectDetection import LayerODDatasetTypeChoice
 
 import xml.etree.ElementTree as Et
 from xml.etree.ElementTree import Element, ElementTree
@@ -656,18 +657,18 @@ class Yolo:
                     output_txt_file.write(data[key])
 
 
-def convert_object_detection(creation_data: CreationData):
-    id_sum = len(creation_data.inputs) + len(creation_data.outputs)
-    model_type = eval(f'{creation_data.outputs.get(id_sum).parameters.model_type}()')
-    data, cls_hierarchy = model_type.parse(creation_data.outputs.get(id_sum).parameters.sources_paths[0],
-                                           creation_data.inputs.get(len(creation_data.inputs)).parameters.sources_paths[
-                                               0])
-    yolo = Yolo(os.path.abspath(creation_data.source_path.joinpath('obj.names')), cls_hierarchy=cls_hierarchy)
-    data = yolo.generate(data)
-    os.makedirs(os.path.join(creation_data.source_path, 'Yolo_annotations'), exist_ok=True)
-    yolo.save(data, Path(os.path.join(creation_data.source_path, 'Yolo_annotations')),
-              creation_data.inputs.get(len(creation_data.inputs)).parameters.sources_paths[0],
-              creation_data.source_path)
+# def convert_object_detection(creation_data: CreationData):
+#     id_sum = len(creation_data.inputs) + len(creation_data.outputs)
+#     model_type = eval(f'{creation_data.outputs.get(id_sum).parameters.model_type}()')
+#     data, cls_hierarchy = model_type.parse(creation_data.outputs.get(id_sum).parameters.sources_paths[0],
+#                                            creation_data.inputs.get(len(creation_data.inputs)).parameters.sources_paths[
+#                                                0])
+#     yolo = Yolo(os.path.abspath(creation_data.source_path.joinpath('obj.names')), cls_hierarchy=cls_hierarchy)
+#     data = yolo.generate(data)
+#     os.makedirs(os.path.join(creation_data.source_path, 'Yolo_annotations'), exist_ok=True)
+#     yolo.save(data, Path(os.path.join(creation_data.source_path, 'Yolo_annotations')),
+#               creation_data.inputs.get(len(creation_data.inputs)).parameters.sources_paths[0],
+#               creation_data.source_path)
 
 
 def resize_bboxes(coords, orig_x, orig_y):
@@ -693,3 +694,75 @@ def resize_bboxes(coords, orig_x, orig_y):
                     tmp.append(literal_eval(num))
             real_boxes.append(tmp)
     return real_boxes
+
+
+def get_od_names(creation_data):
+    names_list = []
+    for out in creation_data.outputs:
+        if out.type == LayerOutputTypeChoice.ObjectDetection:
+            if out.parameters.model_type in [LayerODDatasetTypeChoice.Yolov1, LayerODDatasetTypeChoice.Yolo_terra]:
+                with open(creation_data.source_path.joinpath('obj.names'), 'r') as names:
+                    names_list = names.read()
+                names_list = [elem for elem in names_list.split('\n') if elem]
+
+            elif out.parameters.model_type == LayerODDatasetTypeChoice.Cvat:
+                for i in os.listdir(creation_data.source_path):
+                    if i.endswith('.xml'):
+                        xml = open(os.path.join(creation_data.source_path, i), "r")
+                tree = Et.parse(xml)
+                root = tree.getroot()
+
+                meta = root.findall("meta")
+                task = meta[0].find("task")
+                lbl_field = task.find("labels")
+                lbls = lbl_field.findall('label')
+                for lbl in lbls:
+                    names_list.append(lbl.find("name").text)
+                names_list = sorted(set(names_list))
+
+            elif out.parameters.model_type == LayerODDatasetTypeChoice.Coco:
+                for js_file in os.listdir(out.parameters.sources_paths[0]):
+                    json_data = json.load(open(os.path.join(out.parameters.sources_paths[0], js_file)))
+
+                names_list = [0 for i in json_data["categories"]]
+                for i in json_data["categories"]:
+                    names_list[i['id']] = i['name']
+
+            elif out.parameters.model_type == LayerODDatasetTypeChoice.Voc:
+                (dir_path, dir_names, filenames) = next(os.walk(os.path.abspath(out.parameters.sources_paths[0])))
+                for filename in filenames:
+                    xml = open(os.path.join(dir_path, filename), "r")
+                    tree = Et.parse(xml)
+                    root = tree.getroot()
+                    objects = root.findall("object")
+                    for _object in objects:
+                        names_list.append(_object.find("name").text)
+                names_list = sorted(set(names_list))
+
+            elif out.parameters.model_type == LayerODDatasetTypeChoice.Kitti:
+                (dir_path, dir_names, filenames) = next(os.walk(os.path.abspath(out.parameters.sources_paths[0])))
+                for filename in filenames:
+                    txt = open(os.path.join(dir_path, filename), "r")
+                    for line in txt:
+                        elements = line.split(" ")
+                        names_list.append(elements[0])
+                names_list = sorted(set(names_list))
+
+            elif out.parameters.model_type == LayerODDatasetTypeChoice.Udacity:
+                for i in os.listdir(creation_data.source_path):
+                    if i.endswith('.csv'):
+                        raw_f = open(os.path.join(creation_data.source_path, i), 'r', encoding='utf-8')
+                csv_f = csv.reader(raw_f)
+                raw_f.seek(0)
+
+                for line in csv_f:
+                    raw_line = line[0].split(" ")
+                    raw_line_length = len(raw_line)
+                    cls = raw_line[6].split('"')[1]
+                    if raw_line_length == 8:
+                        state = raw_line[7].split('"')[1]
+                        cls = cls + state
+                    names_list.append(cls)
+                names_list = sorted(set(names_list))
+
+    return names_list

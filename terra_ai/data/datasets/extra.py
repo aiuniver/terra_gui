@@ -145,7 +145,9 @@ class LayerODDatasetTypeChoice(str, Enum):
     Voc = "Voc"
     Coco = "Coco"
     Udacity = "Udacity"
-    Yolo = "Yolo"
+    Yolov1 = "Yolov1"
+    Yolo_terra = "Yolo_terra"
+    Cvat = "Cvat"
 
 
 class LayerEncodingChoice(str, Enum):
