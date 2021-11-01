@@ -74,7 +74,8 @@ class BaseClassificationCallback:
             print_error(BaseClassificationCallback().name, method_name, e)
 
     @staticmethod
-    def statistic_data_request(interactive_config, options, y_true, y_pred) -> list:
+    def statistic_data_request(interactive_config, options, y_true, inverse_y_true,
+                               y_pred, inverse_y_pred) -> list:
         method_name = 'statistic_data_request'
         try:
             return_data = []
@@ -438,8 +439,9 @@ class ImageClassificationCallback(BaseClassificationCallback):
             print_error(ImageClassificationCallback().name, method_name, e)
 
     @staticmethod
-    def intermediate_result_request(options, interactive_config, example_idx, dataset_path, preset_path,
-                                    x_val, inverse_x_val, y_pred, y_true, class_colors):
+    def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
+                                    preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
+                                    y_true, inverse_y_true, class_colors):
         method_name = 'intermediate_result_request'
         try:
             return_data = {}
@@ -580,8 +582,9 @@ class TextClassificationCallback(BaseClassificationCallback):
             print_error(TextClassificationCallback().name, method_name, e)
 
     @staticmethod
-    def intermediate_result_request(options, interactive_config, example_idx, dataset_path, preset_path,
-                                    x_val, inverse_x_val, y_pred, y_true, class_colors):
+    def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
+                                    preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
+                                    y_true, inverse_y_true, class_colors):
         method_name = 'intermediate_result_request'
         try:
             return_data = {}
@@ -719,8 +722,9 @@ class DataframeClassificationCallback(BaseClassificationCallback):
             print_error(DataframeClassificationCallback().name, method_name, e)
 
     @staticmethod
-    def intermediate_result_request(options, interactive_config, example_idx, dataset_path, preset_path,
-                                    x_val, inverse_x_val, y_pred, y_true, class_colors):
+    def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
+                                    preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
+                                    y_true, inverse_y_true, class_colors):
         method_name = 'intermediate_result_request'
         try:
             return_data = {}
@@ -866,8 +870,9 @@ class AudioClassificationCallback(BaseClassificationCallback):
             print_error(AudioClassificationCallback().name, method_name, e)
 
     @staticmethod
-    def intermediate_result_request(options, interactive_config, example_idx, dataset_path, preset_path,
-                                    x_val, inverse_x_val, y_pred, y_true, class_colors):
+    def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
+                                    preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
+                                    y_true, inverse_y_true, class_colors):
         method_name = 'intermediate_result_request'
         try:
             return_data = {}
@@ -1015,8 +1020,9 @@ class VideoClassificationCallback(BaseClassificationCallback):
             print_error(VideoClassificationCallback().name, method_name, e)
 
     @staticmethod
-    def intermediate_result_request(options, interactive_config, example_idx, dataset_path, preset_path,
-                                    x_val, inverse_x_val, y_pred, y_true, class_colors):
+    def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
+                                    preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
+                                    y_true, inverse_y_true, class_colors):
         method_name = 'intermediate_result_request'
         try:
             return_data = {}
@@ -1202,8 +1208,9 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
             print_error(TimeseriesTrendCallback().name, method_name, e)
 
     @staticmethod
-    def intermediate_result_request(options, interactive_config, example_idx, dataset_path, preset_path,
-                                    x_val, inverse_x_val, y_pred, y_true, class_colors):
+    def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
+                                    preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
+                                    y_true, inverse_y_true, class_colors):
         method_name = 'intermediate_result_request'
         try:
             return_data = {}

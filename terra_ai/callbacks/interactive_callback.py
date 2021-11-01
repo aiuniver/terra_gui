@@ -247,7 +247,9 @@ class InteractiveCallback:
                             x_val=self.x_val,
                             inverse_x_val=self.inverse_x_val,
                             y_pred=self.y_pred,
+                            inverse_y_pred=self.inverse_y_pred,
                             y_true=self.y_true,
+                            inverse_y_true=self.inverse_y_true,
                             class_colors=self.class_colors
                         )
                     if self.options.data.architecture in self.basic_architecture and \
@@ -257,7 +259,9 @@ class InteractiveCallback:
                             interactive_config=self.interactive_config,
                             options=self.options,
                             y_true=self.y_true,
-                            y_pred=self.y_pred
+                            inverse_y_true=self.inverse_y_true,
+                            y_pred=self.y_pred,
+                            inverse_y_pred=self.inverse_y_pred
                         )
                     if self.options.data.architecture in self.yolo_architecture and \
                             self.interactive_config.statistic_data.box_channel \
@@ -267,7 +271,9 @@ class InteractiveCallback:
                             interactive_config=self.interactive_config,
                             options=self.options,
                             y_true=self.y_true,
-                            y_pred=self.y_pred
+                            y_pred=self.y_pred,
+                            inverse_y_pred=self.inverse_y_pred,
+                            inverse_y_true=self.inverse_y_true,
                         )
                 else:
                     self.intermediate_result = self.callback.intermediate_result_request(
@@ -279,7 +285,9 @@ class InteractiveCallback:
                         x_val=self.x_val,
                         inverse_x_val=self.inverse_x_val,
                         y_pred=self.y_pred,
+                        inverse_y_pred=self.inverse_y_pred,
                         y_true=self.y_true,
+                        inverse_y_true=self.inverse_y_true,
                         class_colors=self.class_colors
                     )
                     if self.options.data.architecture in self.basic_architecture and \
@@ -288,7 +296,9 @@ class InteractiveCallback:
                             interactive_config=self.interactive_config,
                             options=self.options,
                             y_true=self.y_true,
-                            y_pred=self.y_pred
+                            y_pred=self.y_pred,
+                            inverse_y_pred=self.inverse_y_pred,
+                            inverse_y_true=self.inverse_y_true,
                         )
                     if self.options.data.architecture in self.yolo_architecture and \
                             self.interactive_config.statistic_data.box_channel:
@@ -297,7 +307,9 @@ class InteractiveCallback:
                             interactive_config=self.interactive_config,
                             options=self.options,
                             y_true=self.y_true,
-                            y_pred=self.y_pred
+                            y_pred=self.y_pred,
+                            inverse_y_pred=self.inverse_y_pred,
+                            inverse_y_true=self.inverse_y_true,
                         )
                 self.urgent_predict = False
                 self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
@@ -346,7 +358,9 @@ class InteractiveCallback:
                         x_val=self.x_val,
                         inverse_x_val=self.inverse_x_val,
                         y_pred=self.y_pred,
+                        inverse_y_pred=self.inverse_y_pred,
                         y_true=self.y_true,
+                        inverse_y_true=self.inverse_y_true,
                         class_colors=self.class_colors
                     )
                     if self.interactive_config.statistic_data.output_id:
@@ -354,7 +368,9 @@ class InteractiveCallback:
                             interactive_config=self.interactive_config,
                             options=self.options,
                             y_true=self.y_true,
-                            y_pred=self.y_pred
+                            y_pred=self.y_pred,
+                            inverse_y_pred=self.inverse_y_pred,
+                            inverse_y_true=self.inverse_y_true,
                         )
 
             if self.options.data.architecture in self.yolo_architecture:
@@ -381,7 +397,9 @@ class InteractiveCallback:
                         x_val=self.x_val,
                         inverse_x_val=self.inverse_x_val,
                         y_pred=self.y_pred,
+                        inverse_y_pred=self.inverse_y_pred,
                         y_true=self.y_true,
+                        inverse_y_true=self.inverse_y_true,
                         class_colors=self.class_colors
                     )
                     if self.interactive_config.statistic_data.box_channel:
@@ -389,7 +407,9 @@ class InteractiveCallback:
                             interactive_config=self.interactive_config,
                             options=self.options,
                             y_true=self.y_true,
-                            y_pred=self.y_pred
+                            y_pred=self.y_pred,
+                            inverse_y_pred=self.inverse_y_pred,
+                            inverse_y_true=self.inverse_y_true,
                         )
 
             self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
@@ -893,7 +913,7 @@ class InteractiveCallback:
                                             y_true=self.y_true.get('val').get(f"{out}")[..., class_idx],
                                             y_pred=self.y_pred.get(f"{out}")[..., class_idx],
                                         )
-                                        print('class_metric', cls, class_metric, self.current_epoch)
+                                        # print('class_metric', cls, class_metric, self.current_epoch)
                                     else:
                                         class_metric = self._get_metric_calculation(
                                             metric_name=metric_name,

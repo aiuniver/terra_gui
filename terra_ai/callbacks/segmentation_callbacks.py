@@ -372,7 +372,8 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
 
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
-                                    preset_path, x_val, inverse_x_val, y_pred, y_true, class_colors) -> dict:
+                                    preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
+                                    y_true, inverse_y_true, class_colors) -> dict:
         method_name = 'intermediate_result_request'
         try:
             return_data = {}
@@ -426,7 +427,8 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
             print_error(ImageSegmentationCallback().name, method_name, e)
 
     @staticmethod
-    def statistic_data_request(interactive_config, options, y_true, y_pred) -> list:
+    def statistic_data_request(interactive_config, options, y_true, inverse_y_true,
+                               y_pred, inverse_y_pred) -> list:
         method_name = 'statistic_data_request'
         try:
             return_data = []
@@ -749,7 +751,8 @@ class TextSegmentationCallback(BaseSegmentationCallback):
 
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
-                                    preset_path, x_val, inverse_x_val, y_pred, y_true, class_colors) -> dict:
+                                    preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
+                                    y_true, inverse_y_true, class_colors) -> dict:
         method_name = 'intermediate_result_request'
         try:
             return_data = {}
@@ -804,7 +807,8 @@ class TextSegmentationCallback(BaseSegmentationCallback):
             print_error(TextSegmentationCallback().name, method_name, e)
 
     @staticmethod
-    def statistic_data_request(interactive_config, options, y_true, y_pred) -> list:
+    def statistic_data_request(interactive_config, options, y_true, inverse_y_true,
+                               y_pred, inverse_y_pred) -> list:
         method_name = 'statistic_data_request'
         try:
             return_data = []
