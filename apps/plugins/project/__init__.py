@@ -305,42 +305,43 @@ class Project(BaseMixinData):
         loss_graphs = []
         metric_graphs = []
         progress_table = []
-        index = 0
+        _index_m = 0
+        _index_l = 0
         for layer in self.model.outputs:
-            index += 1
-            layer_for_metrics = self.training.base.architecture.parameters.outputs.get(
-                layer.id
-            )
-            metrics = layer_for_metrics.metrics if layer_for_metrics else None
+            outputs = self.training.base.architecture.parameters.outputs.get(layer.id)
+            for metric in outputs.metrics:
+                _index_m += 1
+                metric_graphs.append(
+                    {
+                        "id": _index_m,
+                        "output_idx": layer.id,
+                        "show": MetricGraphShowChoice.model,
+                        "show_metric": metric,
+                    }
+                )
+                _index_m += 1
+                metric_graphs.append(
+                    {
+                        "id": _index_m,
+                        "output_idx": layer.id,
+                        "show": MetricGraphShowChoice.classes,
+                        "show_metric": metric,
+                    }
+                )
+            _index_l += 1
             loss_graphs.append(
                 {
-                    "id": index,
+                    "id": _index_l,
                     "output_idx": layer.id,
                     "show": LossGraphShowChoice.model,
                 }
             )
-            metric_graphs.append(
-                {
-                    "id": index,
-                    "output_idx": layer.id,
-                    "show": MetricGraphShowChoice.model,
-                    "show_metric": metrics[0] if metrics else None,
-                }
-            )
-            index += 1
+            _index_l += 1
             loss_graphs.append(
                 {
-                    "id": index,
+                    "id": _index_l,
                     "output_idx": layer.id,
                     "show": LossGraphShowChoice.classes,
-                }
-            )
-            metric_graphs.append(
-                {
-                    "id": index,
-                    "output_idx": layer.id,
-                    "show": MetricGraphShowChoice.classes,
-                    "show_metric": metrics[0] if metrics else None,
                 }
             )
             progress_table.append(
