@@ -586,7 +586,7 @@ def round_loss_metric(x: float):
         elif math.isnan(float(x)):
             return None
         elif x > 1000:
-            return np.round(x, 0).item()
+            return np.round(x, 1).item()
         elif x > 1:
             return np.round(x, -int(math.floor(math.log10(abs(x))) - 3)).item()
         else:
@@ -721,16 +721,34 @@ def get_classes_colors(options):
 
 
 def segmentation_metric(true_array, pred_array):
-    axis = tuple(np.arange(1, len(true_array.shape)))
-    stat = np.zeros((true_array.shape[0],)).astype('float')
-    for cls in range(true_array.shape[-1]):
-        metric = np.sum(true_array[..., cls:cls + 1] * pred_array[..., cls:cls + 1], axis=axis) / np.sum(
-            true_array[..., cls:cls + 1], axis=axis)
-        empty_dots = np.sum(true_array[..., cls:cls + 1], axis=axis) + np.sum(pred_array[..., cls:cls + 1], axis=axis)
-        metric = np.where(empty_dots == 0., 0.1, metric)
-        metric = np.where(metric >= 0, metric, 0.)
-        stat += metric
-    stat = stat / true_array.shape[-1]
-    return stat
+    method_name = 'segmentation_metric'
+    try:
+        axis = tuple(np.arange(1, len(true_array.shape)))
+        stat = np.zeros((true_array.shape[0],)).astype('float')
+        for cls in range(true_array.shape[-1]):
+            metric = np.sum(true_array[..., cls:cls + 1] * pred_array[..., cls:cls + 1], axis=axis) / np.sum(
+                true_array[..., cls:cls + 1], axis=axis)
+            empty_dots = np.sum(true_array[..., cls:cls + 1], axis=axis) + np.sum(pred_array[..., cls:cls + 1], axis=axis)
+            metric = np.where(empty_dots == 0., 0.1, metric)
+            metric = np.where(metric >= 0, metric, 0.)
+            stat += metric
+        stat = stat / true_array.shape[-1]
+        return stat
+    except Exception as e:
+        print_error(f"None ({MODULE_NAME})", method_name, e)
 
+
+def get_time_series_graphic(data, make_short=False):
+    method_name = 'get_time_series_graphic'
+    try:
+        if make_short and len(data) > MAX_TS_GRAPH_COUNT:
+            union = int(len(data) // MAX_TS_GRAPH_COUNT)
+            short_data = []
+            for i in range(int(len(data) / union)):
+                short_data.append(round_loss_metric(np.mean(data[union * i:union * i + union]).item()))
+            return np.arange(len(short_data)).astype('int').tolist(), np.array(short_data).astype('float').tolist()
+        else:
+            return np.arange(len(data)).astype('int').tolist(), np.array(data).astype('float').tolist()
+    except Exception as e:
+        print_error(f"None ({MODULE_NAME})", method_name, e)
 

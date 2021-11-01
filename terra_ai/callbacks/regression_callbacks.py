@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 
 from terra_ai.callbacks.utils import sort_dict, get_y_true, get_distribution_histogram, get_correlation_matrix, \
-    get_scatter, fill_graph_front_structure, fill_graph_plot_data, fill_heatmap_front_structure, print_error
+    get_scatter, fill_graph_front_structure, fill_graph_plot_data, fill_heatmap_front_structure, print_error, \
+    round_loss_metric
 from terra_ai.data.datasets.extra import LayerInputTypeChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
 from terra_ai.settings import CALLBACK_REGRESSION_TREASHOLD_VALUE, DEPLOY_PRESET_PERCENT
@@ -116,6 +117,7 @@ class DataframeRegressionCallback:
     def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "") -> dict:
         method_name = 'postprocess_deploy'
         try:
+            # print(1)
             return_data = {}
             for i, output_id in enumerate(options.data.outputs.keys()):
                 true_array = get_y_true(options, output_id)
@@ -133,6 +135,7 @@ class DataframeRegressionCallback:
                 for inp in options.data.inputs.keys():
                     source_col.extend(list(options.data.columns.get(inp).keys()))
                 preprocess = options.preprocessing.preprocessing.get(output_id)
+                # print(preprocess)
                 for idx in example_idx:
                     row_list = []
                     for inp_col in source_col:
@@ -141,14 +144,17 @@ class DataframeRegressionCallback:
                     channel_inverse_col = []
                     for ch, col in enumerate(list(options.data.columns.get(output_id).keys())):
                         channel_inverse_col = []
+                        # print('\n--ch, col', idx, ch, col)
                         if type(preprocess.get(col)).__name__ in ['StandardScaler', 'MinMaxScaler']:
                             _options = {int(output_id): {col: array[idx, ch:ch + 1].reshape(-1, 1)}}
                             inverse_col = options.preprocessing.inverse_data(_options).get(output_id).get(col)
                             inverse_col = inverse_col.squeeze().astype('float').tolist()
                         else:
                             inverse_col = array[idx, ch:ch + 1].astype('float').tolist()
-                        channel_inverse_col.append(str(inverse_col))
-                    return_data[output_id]['label'].append(channel_inverse_col)
+                        # print('inverse_col', inverse_col)
+                        channel_inverse_col.append(round_loss_metric(inverse_col))
+                    return_data[output_id]['label'].append(channel_inverse_col)  #[0]
+            # print('return_data', return_data)
             return return_data
         except Exception as e:
             print_error(DataframeRegressionCallback().name, method_name, e)
@@ -240,7 +246,7 @@ class DataframeRegressionCallback:
 
     @staticmethod
     def statistic_data_request(interactive_config, inverse_y_true, y_pred, inverse_y_pred, options=None,
-                               y_true=None, ) -> list:
+                               y_true=None) -> list:
         method_name = 'statistic_data_request'
         try:
             return_data = []

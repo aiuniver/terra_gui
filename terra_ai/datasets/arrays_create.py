@@ -1418,6 +1418,7 @@ class CreateArray(object):
                 array=array, options=options
             )
         elif options.data.architecture == ArchitectureChoice.DataframeRegression:
+            # print('options.data.architecture == ArchitectureChoice.DataframeRegression')
             return_data = DataframeRegressionCallback.postprocess_deploy(
                 array=array, options=options
             )
@@ -1440,175 +1441,175 @@ class CreateArray(object):
         return return_data
 
 
-    @staticmethod
-    def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str, preset_path: str,
-                                   save_id: int = None, x_array=None, inverse_x_array=None, return_mode='deploy',
-                                   max_lenth: int = 50, templates: list = None):
-        method_name = 'postprocess_initial_source'
-        try:
-            column_idx = []
-            input_task = options.data.inputs.get(input_id).task
-            if options.data.group != DatasetGroupChoice.keras:
-                for inp in options.data.inputs.keys():
-                    if options.data.inputs.get(inp).task == LayerInputTypeChoice.Dataframe:
-                        input_task = LayerInputTypeChoice.Dataframe
-                    for column_name in options.dataframe.get('val').columns:
-                        if column_name.split('_')[0] == f"{inp}":
-                            column_idx.append(options.dataframe.get('val').columns.tolist().index(column_name))
-                if input_task == LayerInputTypeChoice.Text or input_task == LayerInputTypeChoice.Dataframe:
-                    initial_file_path = ""
-                else:
-                    initial_file_path = os.path.join(dataset_path,
-                                                     options.dataframe.get('val').iat[example_id, column_idx[0]])
-                if not save_id:
-                    return str(os.path.abspath(initial_file_path))
-            else:
-                initial_file_path = ""
-
-            data = []
-            data_type = ""
-            source = ""
-
-            if input_task == LayerInputTypeChoice.Image:
-                if options.data.group != DatasetGroupChoice.keras:
-                    img = Image.open(initial_file_path)
-                    img = img.resize(
-                        options.data.inputs.get(input_id).shape[0:2][::-1],
-                        Image.ANTIALIAS
-                    )
-                else:
-                    img = image.array_to_img(x_array[example_id])
-                img = img.convert('RGB')
-                source = os.path.join(preset_path, f"initial_data_image_{save_id}_input_{input_id}.webp")
-                img.save(source, 'webp')
-                if return_mode == 'callback':
-                    data_type = LayerInputTypeChoice.Image.name
-                    data = [
-                        {
-                            "title": "Изображение",
-                            "value": source,
-                            "color_mark": None
-                        }
-                    ]
-
-            elif input_task == LayerInputTypeChoice.Text:
-                regression_task = False
-                for out in options.data.outputs.keys():
-                    if options.data.outputs.get(out).task == LayerOutputTypeChoice.Regression:
-                        regression_task = True
-                for column in column_idx:
-                    source = options.dataframe.get('val').iat[example_id, column]
-                    if return_mode == 'deploy':
-                        break
-                    if return_mode == 'callback':
-                        data_type = LayerInputTypeChoice.Text.name
-                        title = "Текст"
-                        if regression_task:
-                            title = list(options.dataframe.get('val').columns)[column].split("_", 1)[-1]
-                        data = [
-                            {
-                                "title": title,
-                                "value": source,
-                                "color_mark": None
-                            }
-                        ]
-
-            elif input_task == LayerInputTypeChoice.Video:
-                clip = moviepy_editor.VideoFileClip(initial_file_path)
-                source = os.path.join(preset_path, f"initial_data_video_{save_id}_input_{input_id}.webm")
-                clip.write_videofile(source)
-                if return_mode == 'callback':
-                    data_type = LayerInputTypeChoice.Video.name
-                    data = [
-                        {
-                            "title": "Видео",
-                            "value": source,
-                            "color_mark": None
-                        }
-                    ]
-
-            elif input_task == LayerInputTypeChoice.Audio:
-                source = os.path.join(preset_path, f"initial_data_audio_{save_id}_input_{input_id}.webm")
-                AudioSegment.from_file(initial_file_path).export(source, format="webm")
-                if return_mode == 'callback':
-                    data_type = LayerInputTypeChoice.Audio.name
-                    data = [
-                        {
-                            "title": "Аудио",
-                            "value": source,
-                            "color_mark": None
-                        }
-                    ]
-
-            elif input_task == LayerInputTypeChoice.Dataframe:
-                time_series_choice = False
-                for out in options.data.outputs.keys():
-                    if options.data.outputs.get(out).task == LayerOutputTypeChoice.Timeseries or \
-                            options.data.outputs.get(out).task == LayerOutputTypeChoice.TimeseriesTrend:
-                        time_series_choice = True
-                        break
-                if time_series_choice:
-                    graphics_data = []
-                    names = ""
-                    multi = False
-                    if return_mode == 'callback':
-                        for i, channel in enumerate(options.data.columns.get(input_id).keys()):
-                            multi = True if i > 0 else False
-                            names += f"«{channel.split('_', 1)[-1]}», "
-                            lenth = len(inverse_x_array) if len(inverse_x_array) < max_lenth else max_lenth
-                            graphics_data.append(
-                                templates[1](
-                                    _id=i + 1,
-                                    _type='graphic',
-                                    graph_name=f"График канала «{channel.split('_', 1)[-1]}»",
-                                    short_name=f"«{channel.split('_', 1)[-1]}»",
-                                    x_label="Время",
-                                    y_label="Значение",
-                                    plot_data=[
-                                        templates[0](
-                                            label="Исходное значение",
-                                            x=np.arange(inverse_x_array[example_id].shape[-2]).astype('int').tolist()[
-                                              -lenth:],
-                                            y=inverse_x_array[example_id][:, i].astype('float').tolist()[-lenth:]
-                                        )
-                                    ],
-                                )
-                            )
-                        data_type = "graphic"
-                        data = [
-                            {
-                                "title": f"График{'и' if multi else ''} по канал{'ам' if multi else 'у'} {names[:-2]}",
-                                "value": graphics_data,
-                                "color_mark": None
-                            }
-                        ]
-                else:
-                    data_type = "str"
-                    source = []
-                    # for inp in options.data.inputs.keys():
-                    for col_name in options.data.columns.get(input_id).keys():
-                        value = options.dataframe.get('val')[col_name].to_list()[example_id]
-                        # source.append((col_name, value))
-                        if return_mode == 'deploy':
-                            source.append(value)
-                        if return_mode == 'callback':
-                            data.append(
-                                {
-                                    "title": col_name.split("_", 1)[-1],
-                                    "value": value,
-                                    "color_mark": None
-                                }
-                            )
-
-            else:
-                pass
-
-            if return_mode == 'deploy':
-                return source
-            if return_mode == 'callback':
-                return data, data_type.lower()
-        except Exception as e:
-            print_error("CreateArray", method_name, e)
+    # @staticmethod
+    # def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str, preset_path: str,
+    #                                save_id: int = None, x_array=None, inverse_x_array=None, return_mode='deploy',
+    #                                max_lenth: int = 50, templates: list = None):
+    #     method_name = 'postprocess_initial_source'
+    #     try:
+    #         column_idx = []
+    #         input_task = options.data.inputs.get(input_id).task
+    #         if options.data.group != DatasetGroupChoice.keras:
+    #             for inp in options.data.inputs.keys():
+    #                 if options.data.inputs.get(inp).task == LayerInputTypeChoice.Dataframe:
+    #                     input_task = LayerInputTypeChoice.Dataframe
+    #                 for column_name in options.dataframe.get('val').columns:
+    #                     if column_name.split('_')[0] == f"{inp}":
+    #                         column_idx.append(options.dataframe.get('val').columns.tolist().index(column_name))
+    #             if input_task == LayerInputTypeChoice.Text or input_task == LayerInputTypeChoice.Dataframe:
+    #                 initial_file_path = ""
+    #             else:
+    #                 initial_file_path = os.path.join(dataset_path,
+    #                                                  options.dataframe.get('val').iat[example_id, column_idx[0]])
+    #             if not save_id:
+    #                 return str(os.path.abspath(initial_file_path))
+    #         else:
+    #             initial_file_path = ""
+    #
+    #         data = []
+    #         data_type = ""
+    #         source = ""
+    #
+    #         if input_task == LayerInputTypeChoice.Image:
+    #             if options.data.group != DatasetGroupChoice.keras:
+    #                 img = Image.open(initial_file_path)
+    #                 img = img.resize(
+    #                     options.data.inputs.get(input_id).shape[0:2][::-1],
+    #                     Image.ANTIALIAS
+    #                 )
+    #             else:
+    #                 img = image.array_to_img(x_array[example_id])
+    #             img = img.convert('RGB')
+    #             source = os.path.join(preset_path, f"initial_data_image_{save_id}_input_{input_id}.webp")
+    #             img.save(source, 'webp')
+    #             if return_mode == 'callback':
+    #                 data_type = LayerInputTypeChoice.Image.name
+    #                 data = [
+    #                     {
+    #                         "title": "Изображение",
+    #                         "value": source,
+    #                         "color_mark": None
+    #                     }
+    #                 ]
+    #
+    #         elif input_task == LayerInputTypeChoice.Text:
+    #             regression_task = False
+    #             for out in options.data.outputs.keys():
+    #                 if options.data.outputs.get(out).task == LayerOutputTypeChoice.Regression:
+    #                     regression_task = True
+    #             for column in column_idx:
+    #                 source = options.dataframe.get('val').iat[example_id, column]
+    #                 if return_mode == 'deploy':
+    #                     break
+    #                 if return_mode == 'callback':
+    #                     data_type = LayerInputTypeChoice.Text.name
+    #                     title = "Текст"
+    #                     if regression_task:
+    #                         title = list(options.dataframe.get('val').columns)[column].split("_", 1)[-1]
+    #                     data = [
+    #                         {
+    #                             "title": title,
+    #                             "value": source,
+    #                             "color_mark": None
+    #                         }
+    #                     ]
+    #
+    #         elif input_task == LayerInputTypeChoice.Video:
+    #             clip = moviepy_editor.VideoFileClip(initial_file_path)
+    #             source = os.path.join(preset_path, f"initial_data_video_{save_id}_input_{input_id}.webm")
+    #             clip.write_videofile(source)
+    #             if return_mode == 'callback':
+    #                 data_type = LayerInputTypeChoice.Video.name
+    #                 data = [
+    #                     {
+    #                         "title": "Видео",
+    #                         "value": source,
+    #                         "color_mark": None
+    #                     }
+    #                 ]
+    #
+    #         elif input_task == LayerInputTypeChoice.Audio:
+    #             source = os.path.join(preset_path, f"initial_data_audio_{save_id}_input_{input_id}.webm")
+    #             AudioSegment.from_file(initial_file_path).export(source, format="webm")
+    #             if return_mode == 'callback':
+    #                 data_type = LayerInputTypeChoice.Audio.name
+    #                 data = [
+    #                     {
+    #                         "title": "Аудио",
+    #                         "value": source,
+    #                         "color_mark": None
+    #                     }
+    #                 ]
+    #
+    #         elif input_task == LayerInputTypeChoice.Dataframe:
+    #             time_series_choice = False
+    #             for out in options.data.outputs.keys():
+    #                 if options.data.outputs.get(out).task == LayerOutputTypeChoice.Timeseries or \
+    #                         options.data.outputs.get(out).task == LayerOutputTypeChoice.TimeseriesTrend:
+    #                     time_series_choice = True
+    #                     break
+    #             if time_series_choice:
+    #                 graphics_data = []
+    #                 names = ""
+    #                 multi = False
+    #                 if return_mode == 'callback':
+    #                     for i, channel in enumerate(options.data.columns.get(input_id).keys()):
+    #                         multi = True if i > 0 else False
+    #                         names += f"«{channel.split('_', 1)[-1]}», "
+    #                         lenth = len(inverse_x_array) if len(inverse_x_array) < max_lenth else max_lenth
+    #                         graphics_data.append(
+    #                             templates[1](
+    #                                 _id=i + 1,
+    #                                 _type='graphic',
+    #                                 graph_name=f"График канала «{channel.split('_', 1)[-1]}»",
+    #                                 short_name=f"«{channel.split('_', 1)[-1]}»",
+    #                                 x_label="Время",
+    #                                 y_label="Значение",
+    #                                 plot_data=[
+    #                                     templates[0](
+    #                                         label="Исходное значение",
+    #                                         x=np.arange(inverse_x_array[example_id].shape[-2]).astype('int').tolist()[
+    #                                           -lenth:],
+    #                                         y=inverse_x_array[example_id][:, i].astype('float').tolist()[-lenth:]
+    #                                     )
+    #                                 ],
+    #                             )
+    #                         )
+    #                     data_type = "graphic"
+    #                     data = [
+    #                         {
+    #                             "title": f"График{'и' if multi else ''} по канал{'ам' if multi else 'у'} {names[:-2]}",
+    #                             "value": graphics_data,
+    #                             "color_mark": None
+    #                         }
+    #                     ]
+    #             else:
+    #                 data_type = "str"
+    #                 source = []
+    #                 # for inp in options.data.inputs.keys():
+    #                 for col_name in options.data.columns.get(input_id).keys():
+    #                     value = options.dataframe.get('val')[col_name].to_list()[example_id]
+    #                     # source.append((col_name, value))
+    #                     if return_mode == 'deploy':
+    #                         source.append(value)
+    #                     if return_mode == 'callback':
+    #                         data.append(
+    #                             {
+    #                                 "title": col_name.split("_", 1)[-1],
+    #                                 "value": value,
+    #                                 "color_mark": None
+    #                             }
+    #                         )
+    #
+    #         else:
+    #             pass
+    #
+    #         if return_mode == 'deploy':
+    #             return source
+    #         if return_mode == 'callback':
+    #             return data, data_type.lower()
+    #     except Exception as e:
+    #         print_error("CreateArray", method_name, e)
 
     # @staticmethod
     # def postprocess_results(array, options, save_path: str = "", dataset_path: str = "", sensitivity=0.15,
