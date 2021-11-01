@@ -309,6 +309,8 @@ class Project(BaseMixinData):
         _index_l = 0
         for layer in self.model.outputs:
             outputs = self.training.base.architecture.parameters.outputs.get(layer.id)
+            if not outputs:
+                continue
             for metric in outputs.metrics:
                 _index_m += 1
                 metric_graphs.append(
