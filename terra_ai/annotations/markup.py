@@ -64,9 +64,9 @@ class MarkUp:
         df = pd.read_csv(os.path.join(self.annot_path, 'dataframe.csv'))
         for idx, label in idx_lbl.items():
             df.loc[idx, 'result'] = label
-        df.to_csv(os.path.join(self.annot_path, 'dataframe.csv'), index=False)
 
         self.make_json(df)
+        df.to_csv(os.path.join(self.annot_path, 'dataframe.csv'), index=False)
 
     def export_dataset(self):
         if self.task_type == 'tracker':
@@ -94,6 +94,33 @@ class MarkUp:
                             df.loc[i, 'file'] = os.path.join(df.loc[i, 'result'], image)
                             shutil.copyfile(os.path.join(self.raw_path, image),
                                             os.path.join(dst_src, df.loc[i, 'result'], image))
+            df.to_csv(os.path.join(self.annot_path, 'dataframe.csv'), index=False)
+        elif self.task_type == 'object_detection':
+            dst_src = os.path.join(self.annot_path, 'Done')
+            os.makedirs(os.path.join(self.annot_path, 'Done', 'images'), exist_ok=True)
+            os.makedirs(os.path.join(self.annot_path, 'Done', 'annotations'), exist_ok=True)
+
+            if os.path.isdir(os.path.join(self.raw_path, sorted(os.listdir(self.raw_path))[0])):
+                for folder in sorted(os.listdir(self.raw_path)):
+                    for image in sorted(os.listdir(os.path.join(self.raw_path, folder))):
+                        shutil.copyfile(os.path.join(self.raw_path, folder, image),
+                                        os.path.join(dst_src, 'images', image))
+            else:
+                for image in sorted(os.listdir(self.raw_path)):
+                    shutil.copyfile(os.path.join(self.raw_path, image),
+                                    os.path.join(dst_src, 'images', image))
+
+            df = pd.read_csv(os.path.join(self.annot_path, 'dataframe.csv'))
+
+            for i in range(len(df)):
+                df.loc[i, 'file'] = os.path.join('images', df.loc[i, 'file'].split(os.sep)[-1])
+                with open(os.path.join(self.annot_path, 'Done', 'annotations',
+                                       f"{'.'.join(df.loc[i, 'file'].split(os.sep)[-1].split('.')[:-1])}.txt"),
+                          'w') as f:
+                    for bbox in df.loc[i, 'result'].split(' '):
+                        f.write(f"{bbox}\n")
+                df.loc[i, 'result'] = os.path.join('annotations',
+                                                f"{'.'.join(df.loc[i, 'file'].split(os.sep)[-1].split('.')[:-1])}.txt")
             df.to_csv(os.path.join(self.annot_path, 'dataframe.csv'), index=False)
         else:
             dst_src = os.path.join(self.annot_path, 'Done')
