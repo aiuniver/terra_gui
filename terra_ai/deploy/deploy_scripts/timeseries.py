@@ -35,6 +35,7 @@ def get_params(config_path):
 
     return columns, out_columns
 
+
 if __name__ in ["__main__", "script"]:
     from cascades.create import json2cascade
 else:

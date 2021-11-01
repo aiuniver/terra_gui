@@ -37,7 +37,7 @@
 
 <script>
 export default {
-  name: 't-cor-heatmap',
+  name: 't-corheatmap',
   props: {
     id: Number,
     task_type: String,

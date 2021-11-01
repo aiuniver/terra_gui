@@ -2,7 +2,7 @@ import tensorflow
 import pydantic
 
 from . import tensor_flow as tf_exceptions
-from .data import DataException
+from .data import PydanticException
 
 from .base import TerraBaseException
 
@@ -18,7 +18,7 @@ def terra_exception(exception: Exception) -> TerraBaseException:
     if isinstance(
         exception, pydantic.ValidationError
     ):  # нативные исключения от Pydantic
-        raise DataException(exception)
+        raise PydanticException(exception)
 
     if isinstance(
         exception, tensorflow.errors.OpError

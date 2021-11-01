@@ -4,39 +4,57 @@
     <div class="predictions__params">
       <div class="predictions__param">
         <t-field inline label="Данные для расчета">
-          <t-select-new :list="sortData" v-model="example_choice_type" small @change="show"/>
+          <t-select-new :list="sortData" v-model="example_choice_type" small @change="show" />
         </t-field>
         <t-field inline label="Тип выбора данных">
-          <t-select-new :list="sortOutput" v-model="main_output" small @change="show"/>
+          <t-select-new :list="sortOutput" v-model="main_output" small @change="show" />
         </t-field>
         <t-field inline label="Показать примеров">
-          <t-input-new v-model.number="num_examples" type="number" small style="width: 109px" :error="isError" @change="show"/>
+          <t-input-new
+            v-model.number="num_examples"
+            type="number"
+            small
+            style="width: 109px"
+            :error="isError"
+            @change="show"
+          />
+        </t-field>
+      </div>
+      <div v-if="isYolo" class="predictions__param">
+        <t-field inline label="Бокс-канал">
+          <t-select-new :list="numOutput" v-model="box_channel" small @change="show" />
+        </t-field>
+        <t-field inline label="Чувствительность">
+          <t-input-new v-model="sensitivity" type="number" small style="width: 109px" @change="show" />
+        </t-field>
+        <t-field inline label="Порог отображения">
+          <t-input-new v-model="threashold" type="number" small style="width: 109px" @change="show" />
         </t-field>
       </div>
       <div class="predictions__param">
         <t-field inline label="Выводить промежуточные результаты">
-          <t-checkbox-new v-model="show_results" small @change="show"/>
+          <t-checkbox-new v-model="show_results" small @change="show" />
         </t-field>
         <t-field inline label="Показать статистику">
-          <t-checkbox-new v-model="show_statistic" small @change="show"/>
+          <t-checkbox-new v-model="show_statistic" small @change="show" />
         </t-field>
         <t-field inline label="Фиксация колонок">
           <t-checkbox-new v-model="fixation" small />
         </t-field>
       </div>
-      <div class="predictions__param">
-        <t-field inline label="Автообновление">
-          <t-checkbox-new v-model="autoupdate" small @change="show"/>
-        </t-field>
-      </div>
+      <div class="predictions__param"></div>
       <div class="predictions__param">
         <t-button style="width: 150px" @click.native="show" :disabled="!!isError">
           {{ 'Обновить' }}
         </t-button>
+        <br />
+        <t-field inline label="Автообновление">
+          <t-checkbox-new v-model="autoupdate" small @change="show" />
+        </t-field>
       </div>
     </div>
     <div class="predictions__body">
-      <PredictTable v-if="isEmpty" :predict="predictData" :fixation="fixation" :update="predictUpdate"/>
+      <PredictTable v-if="isEmpty" :predict="predictData" :fixation="fixation" :update="predictUpdate" />
       <div v-else class="predictions__overlay">
         <LoadSpiner v-if="start && isLearning" text="Загрузка данных..." />
       </div>
@@ -45,15 +63,13 @@
 </template>
 
 <script>
-import PredictTable from './PredictTable';
-import LoadSpiner from '@/components/forms/LoadSpiner';
 import { mapGetters } from 'vuex';
 
 export default {
   name: 'Predictions',
   components: {
-    PredictTable,
-    LoadSpiner,
+    PredictTable: () => import('./PredictTable'),
+    LoadSpiner: () => import('@/components/forms/LoadSpiner'),
   },
   props: {
     outputs: Array,
@@ -75,11 +91,18 @@ export default {
     show_statistic: true,
     fixation: false,
     max: 10,
+    sensitivity: 0.12,
+    box_channel: 1,
+    threashold: 0.1,
   }),
   computed: {
     ...mapGetters({
       status: 'trainings/getStatus',
+      architecture: 'trainings/getArchitecture',
     }),
+    isYolo() {
+      return ['YoloV4', 'YoloV3'].includes(this.architecture);
+    },
     isLearning() {
       return ['addtrain', 'training'].includes(this.status);
     },
@@ -91,6 +114,14 @@ export default {
         return {
           label: `Выходной слой ${item.id}`,
           value: item.id,
+        };
+      });
+    },
+    numOutput() {
+      return this.outputs.map((_, i) => {
+        return {
+          label: `${i}`,
+          value: i,
         };
       });
     },
@@ -139,6 +170,8 @@ export default {
         num_examples: this.num_examples > 10 ? 10 : this.num_examples,
         show_results: this.show_results,
         show_statistic: this.show_statistic,
+        sensitivity: this.sensitivity,
+        box_channel: this.box_channel,
       };
       await this.$store.dispatch('trainings/interactive', { intermediate_result: data });
     },

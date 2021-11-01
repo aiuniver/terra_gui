@@ -13,14 +13,20 @@ import sys
 
 def make_processing(preprocess_list):
     def fun(*x):
+        inp = []
+        for i in x:
+            if isinstance(i, tuple):
+                inp += i
+            else:
+                inp.append(i)
 
         out = []
 
-        for prep, element in zip(preprocess_list, x):
+        for prep, element in zip(preprocess_list, inp):
             if prep:
                 out.append(prep(element))
             else:
-                out.append(x)
+                out.append(element)
 
         return out
     return fun
@@ -52,6 +58,7 @@ def json2model_cascade(path: str):
 
     for inp in config['inputs'].keys():
         if config['inputs'][inp]['task'] != 'Dataframe':
+            param = {}  # for pycharm linter
             for inp, param in config['columns'][inp].items():
                 with open(os.path.join(dataset_path, "instructions", "parameters", inp + '.json')) as cfg:
                     param.update(json.load(cfg))
@@ -74,8 +81,7 @@ def json2model_cascade(path: str):
     postprocessing = []
     if object_detection:
         type_module = getattr(general_fucntions, "object_detection")
-        postprocessing.append(getattr(type_module, 'main')(**config['outputs']))
-        print('nice')
+        postprocessing = getattr(type_module, 'main')()
     else:
         for inp in config['outputs'].keys():
             if config['outputs'][inp]['task'] not in ['Timeseries', 'TimeseriesTrend']:
@@ -83,27 +89,26 @@ def json2model_cascade(path: str):
                     with open(os.path.join(dataset_path, "instructions", "parameters", inp + '.json')) as cfg:
                         spec_config = json.load(cfg)
 
-                        param.update(spec_config)
+                    param.update(spec_config)
+                    try:
+                        type_module = getattr(general_fucntions, decamelize(param['task']))
+                        postprocessing.append(getattr(type_module, 'main')(**param, dataset_path=dataset_path, key=inp))
+                    except:
+                        postprocessing.append(None)
+            else:
+                param = {}
+                for key, cur_param in config['columns'][inp].items():
+                    param[key] = cur_param
+                    with open(os.path.join(dataset_path, "instructions", "parameters", key + '.json')) as cfg:
+                        param[key].update(json.load(cfg))
+                param = {'columns': param, 'dataset_path': dataset_path, 'shape': config['outputs'][inp]['shape']}
+                type_module = getattr(general_fucntions, decamelize(config['outputs'][inp]['task']))
+                postprocessing.append(getattr(type_module, 'main')(**param))
 
-                        try:
-                            type_module = getattr(general_fucntions, decamelize(param['task']))
-                            postprocessing.append(getattr(type_module, 'main')(**param, dataset_path=dataset_path, key=inp))
-                        except:
-                            postprocessing.append(None)
-                else:
-                    param = {}
-                    for key, cur_param in config['columns'][inp].items():
-                        param[key] = cur_param
-                        with open(os.path.join(dataset_path, "instructions", "parameters", key + '.json')) as cfg:
-                            param[key].update(json.load(cfg))
-                    param = {'columns': param, 'dataset_path': dataset_path, 'shape': config['outputs'][inp]['shape']}
-                    type_module = getattr(general_fucntions, decamelize(config['outputs'][inp]['task']))
-                    postprocessing.append(getattr(type_module, 'main')(**param))
-
-    if any(postprocessing):
-        postprocessing = make_processing(postprocessing)
-    else:
-        postprocessing = None
+        if any(postprocessing):
+            postprocessing = make_processing(postprocessing)
+        else:
+            postprocessing = None
 
     model = BuildModelCascade(preprocess, model, postprocessing)
 

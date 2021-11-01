@@ -50,6 +50,14 @@
           <ImgCard :imgUrl="card.segment" />
         </div>
       </div>
+      <div v-if="type == 'YoloV3' || type == 'YoloV4'">
+        <div class="card__original">
+          <TableImage size="large" :value="card.source" />
+        </div>
+        <div class="card__result">
+          <TableImage size="large" :value="card.predict" />
+        </div>
+      </div>
       <div class="card__graphic" v-if="type == 'Timeseries'">
         <GraphicCard v-bind="card" :key="'graphic_' + index"/>
       </div>
@@ -75,6 +83,7 @@ export default {
     AudioCard,
     TableTextSegmented,
     SegmentationTags,
+    TableImage: () => import('@/components/training/main/prediction/components/TableImage'),
 
   },
   data: () => ({

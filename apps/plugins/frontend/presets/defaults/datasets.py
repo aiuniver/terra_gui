@@ -17,6 +17,7 @@ from ...choices import (
     LayerPrepareMethodChoice,
     LayerDefineClassesChoice,
     LayerYoloVersionChoice,
+    LayerODDatasetTypeChoice,
     LayerTypeProcessingClassificationChoice,
     ColumnProcessingInputTypeChoice,
     ColumnProcessingOutputTypeChoice,
@@ -1052,6 +1053,22 @@ DataSetsOutput = [
                                 "label": item.value,
                             },
                             list(LayerYoloVersionChoice),
+                        )
+                    ),
+                },
+                {
+                    "type": "select",
+                    "label": "Тип аннотации",
+                    "name": "model_type",
+                    "parse": "model_type",
+                    "value": LayerODDatasetTypeChoice.Yolo.name,
+                    "list": list(
+                        map(
+                            lambda item: {
+                                "value": item.name,
+                                "label": item.value,
+                            },
+                            list(LayerODDatasetTypeChoice),
                         )
                     ),
                 },

@@ -45,16 +45,7 @@ export default {
       return ['addtrain', 'training'].includes(this.status);
     },
     menus() {
-      return { isClass: this.classGraphics, outputs: this.allOutputs, type: this.metric };
-    },
-    allOutputs() {
-      const data = this.$store.getters['trainings/getTrainSettings'];
-      const outputs = data?.architecture?.parameters?.outputs || [];
-      return outputs
-        .map((item, index) => {
-          return item ? { id: index, ...item } : null;
-        })
-        .filter(item => item);
+      return { isClass: this.classGraphics, outputs: this.outputs, type: this.metric };
     },
     classGraphics() {
       return this.$store.getters['trainings/getTrainData']('class_graphics');

@@ -6,6 +6,14 @@ from terra_ai.cascades.common import ROOT_PATH, make_path
 from pydantic.color import Color
 
 
+def make_object_detection(config, dataset_config, model):
+    config['cascades']['model']['model'] = model
+    config['cascades']['normalize bboxes']['params']['input_size'] = dataset_config['inputs']['1']['shape'][0]
+    config['cascades']['plot bboxes']['params']['classes'] = dataset_config['outputs']['2']['classes_names']
+
+    return config
+
+
 def make_classification(config, dataset_config, model):
     config['cascades']['model']['model'] = model
     for _ in list(dataset_config['inputs'].keys())[1:]:

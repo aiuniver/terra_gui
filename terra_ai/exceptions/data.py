@@ -7,8 +7,6 @@ from terra_ai.exceptions.base import TerraBaseException
 from terra_ai.assets.translations.extra import errors
 from terra_ai.settings import TRANSLATIONS_DIR, LANGUAGE
 
-loader = JsonLoader(TRANSLATIONS_DIR)
-tr = PydanticI18n(loader)
 LANGUAGE = "en_US" if LANGUAGE == "eng" else LANGUAGE
 
 
@@ -27,15 +25,15 @@ class Error(BaseModel):
         return value
 
 
-class DataException(TerraBaseException):
+class PydanticException(TerraBaseException):
     errors: List[Error] = []
 
     def __init__(self, exception: ValidationError):
         if not isinstance(exception, ValidationError):
-            raise TypeError(f"Функция инициализации ожидала на вход объект исключения ValidationError, '"
-                            f"'но получила '{type(exception).__name__}'")
-
-        translated_errors = tr.translate(exception.errors(), locale=LANGUAGE)
+            raise TypeError(f"DataException ожидает на вход объект исключения ValidationError, '"
+                            f"'но получил '{type(exception).__name__}'")
+        loader = JsonLoader(TRANSLATIONS_DIR)
+        translated_errors = PydanticI18n(loader).translate(exception.errors(), locale=LANGUAGE)
         self.errors = [Error(
             loc=error['loc'],
             msg=error['msg'],

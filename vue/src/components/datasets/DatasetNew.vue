@@ -2,11 +2,30 @@
 	<div class="datasets">
 		<p class="datasets__type">{{ list[selectedType] }} <i class="ci-icon ci-file" v-show="selectedType === 1" /></p>
 		<div class="datasets__filter">
-			<DInputText small icon="search" v-model.trim="search" class="datasets__filter--search" placeholder="Найти в списке"/>
+			<div class="datasets__filter--search">
+				<DInputText small icon="search" v-model.trim="search" placeholder="Найти в списке"/>
+				<div class="datasets__filter--search-results">
+					<div v-for="(item, idx) in searchResults" :key="idx">{{ item.name }}</div>
+				</div>
+			</div>
 			<div class="datasets__filter--sort">
-				<p v-show="cardsDisplay"><span>Последние просмотренные</span> <i class="ci-icon ci-chevron_down" /></p>
-				<i @click="cardsDisplay = true" :class="['ci-icon', 'ci-tile', { selected: cardsDisplay }]" />
-				<i @click="cardsDisplay = false" :class="['ci-icon', 'ci-list', { selected: !cardsDisplay }]" />
+				<div class="datasets__filter--sort-opt" v-show="cardsDisplay">
+					<div class="datasets__filter--sort-opt--selected" @click="showSort(!showSortOpt)">
+						<span>{{ selectedSort.title }}</span> <i class="ci-icon ci-chevron_down" />
+					</div>
+					<div class="options"
+					v-show="showSortOpt"
+					>
+						<div v-for="(item, idx) in getSortOptions"
+						:key="idx"
+						@click="selectSort(item.idx)"
+						>{{ item.title }}</div>
+					</div>
+				</div>
+				<template v-if="selectedType !== 2">
+					<i @click="cardsDisplay = true" :class="['ci-icon', 'ci-tile', { selected: cardsDisplay }]" />
+					<i @click="cardsDisplay = false" :class="['ci-icon', 'ci-list', { selected: !cardsDisplay }]" />
+				</template>
 			</div>
 		</div>
 		<scrollbar class="datasets__scroll">
@@ -17,18 +36,18 @@
 				<table class="datasets__table">
 					<thead>
 						<tr>
-							<th>Название</th>
-							<th>Размер</th>
-							<th>Последнее использование</th>
-							<th>Создание</th>
+							<th v-for="(item, idx) in getHeaders" :key="idx" @click="selectTableSort(item.idx)">
+								<span>{{ item.title }}</span>
+								<i v-show="selectedHeader === item.idx" :class="['ci-icon', `ci-thin_long_02_${reverseSort ? 'down': 'up'}`]"/>
+							</th>
 						</tr>
 					</thead>
 					<tbody>
-						<tr v-for="(item, idx) in sortedList" :key="'table'+idx">
+						<tr v-for="(item, idx) in sortedTable" :key="'table'+idx">
 							<td><i class="ci-icon ci-image" /> <span>{{ item.name }}</span></td>
 							<td>{{ item.size ? item.size.short.toFixed(2) + ' ' + item.size.unit : 'Предустановленный' }}</td>
 							<td>1 минуту назад</td>
-							<td>1 минуту назад</td>
+							<td>{{ item.date ? item.date.toLocaleString() : '' }}</td>
 						</tr>
 					</tbody>
 				</table>
@@ -38,24 +57,155 @@
 </template>
 
 <script>
-import CardDataset from './cards/CardDatasetNew.vue'
-
 export default {
 	components: {
-		CardDataset,
-		DInputText: () => import('@/components/global/design/forms/components/DInputText')
+		DInputText: () => import('@/components/global/design/forms/components/DInputText'),
+		CardDataset: () => import('./cards/CardDatasetNew.vue')
 	},
 	data: () => ({
 		list: ['Недавние датасеты', 'Проектные датасеты', 'Датасеты Terra'],
 		search: '',
-		cardsDisplay: true
+		cardsDisplay: true,
+		showSortOpt: false,
+		sortIdx: 0,
+		sortOptions: [
+			{
+				title: 'По алфавиту от А до Я',
+				value: 'alphabet',
+				idx: 0
+			},
+			{
+				title: 'По алфавиту от Я до А',
+				value: 'alphabet_reverse',
+				idx: 1
+			},
+			{
+				title: 'Последние созданные',
+				value: 'last_created',
+				idx: 2
+			},
+			{
+				title: 'Последние использованные',
+				value: 'last_used',
+				idx: 3
+			},
+			{
+				title: 'Популярные',
+				value: 'popular',
+				idx: 4
+			},
+			{
+				title: 'Последние добавленные',
+				value: 'last_added',
+				idx: 5
+			},
+		],
+		theaders: [
+			{
+				title: 'Название',
+				idx: 0
+			},
+			{
+				title: 'Размер',
+				idx: 1
+			},
+			{
+				title: 'Автор',
+				idx: 2
+			},
+			{
+				title: 'Последнее использование',
+				idx: 3
+			},
+			{
+				title: 'Создание',
+				idx: 4
+			},
+		],
+		selectedHeader: 0,
+		reverseSort: false
 	}),
 	props: ['datasets', 'selectedType'],
 	computed: {
-		sortedList() {
-			return this.datasets.filter(item => {
-				return item.name.toLowerCase().includes(this.search.toLowerCase())
+		datasetList() {
+			return this.datasets
+			.map(item => {
+				if (item.date) {
+					item.date = new Date(item.date)
+				}
+				return item
 			})
+			.filter(item => {
+				if (this.selectedType === 1) return item.group === 'custom'
+				if (this.selectedType === 2) return item.group !== 'custom'
+			})
+		},
+		/* eslint-disable */
+		sortedList() {
+			if (this.selectedSort.value === 'alphabet') return this.datasetList.sort((a, b) => a.name.localeCompare(b.name))
+			if (this.selectedSort.value === 'alphabet_reverse') return this.datasetList.sort((a, b) => b.name.localeCompare(a.name))
+			return this.datasetList.sort((a, b) => b.date - a.date)
+		},
+		sortedTable() {
+			const selectedSort = this.theaders.find(item => item.idx === this.selectedHeader)
+			if (selectedSort.idx === 0) return this.reverseSort ?
+				this.datasetList.sort((a, b) => b.name.localeCompare(a.name)):
+				this.datasetList.sort((a, b) => a.name.localeCompare(b.name))
+			if (selectedSort.idx === 1) return this.reverseSort ?
+				this.datasetList.sort((a, b) => b.size.value - a.size.value):
+				this.datasetList.sort((a, b) => a.size.value - b.size.value)
+			if (selectedSort.idx === 2) return this.reverseSort ?
+				this.datasetList.sort((a, b) => a.name.localeCompare(b.name)):
+				this.datasetList.sort((a, b) => b.name.localeCompare(a.name))
+			if (selectedSort.idx === 3) return this.reverseSort ?
+				this.datasetList.sort((a, b) => a.date - b.date):
+				this.datasetList.sort((a, b) => b.date - a.date)
+			if (selectedSort.idx === 4) return this.reverseSort ?
+				this.datasetList.sort((a, b) => a.date - b.date):
+				this.datasetList.sort((a, b) => b.date - a.date)
+		},
+		/* eslint-enable */
+		searchResults() {
+			return this.search ?
+			this.sortedList.filter(item => item.name.toLowerCase().includes(this.search.toLowerCase())): []
+		},
+		selectedSort() {
+			return this.sortOptions.find(opt => opt.idx === this.sortIdx)
+		},
+		getSortOptions() {
+			if (this.selectedType === 0) return this.sortOptions.slice(0, 4)
+			if (this.selectedType === 1) return this.sortOptions.slice(0, 3)
+			return this.sortOptions.slice(4, 6)
+		},
+		getHeaders() {
+			const arr = [...this.theaders]
+			if (this.selectedType === 1) {
+				arr.splice(2, 1)
+				return arr
+			}
+			return arr.slice(0, 4)
+		}
+	},
+	methods: {
+		showSort(val = false) {
+			this.showSortOpt = val
+		},
+		selectSort(idx) {
+			this.sortIdx = idx
+			this.showSortOpt = false
+		},
+		selectTableSort(idx) {
+			if (this.selectedHeader === idx) return this.reverseSort = !this.reverseSort
+			this.selectedHeader = idx
+		}
+	},
+	watch: {
+		selectedType(idx) {
+			if (idx === 2) {
+				this.cardsDisplay = true
+				return this.sortIdx = 4
+			}
+			this.sortIdx = 0
 		}
 	}
 }
@@ -86,17 +236,73 @@ export default {
 		align-items: center;
 		margin-right: 60px;
 		&--search {
-			max-width: 426px;
+			flex: 0 0 426px;
+			position: relative;
+			&-results {
+				background: #233849;
+				color: #A7BED3;
+				box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.25);
+				border-radius: 4px;
+				position: absolute;
+				top: calc(100% + 5px);
+				width: 100%;
+				z-index: 1;
+				overflow: hidden auto;
+				max-height: 440px;
+				scrollbar-width: thin;
+				scrollbar-color: #a7bed3 #233849;
+				&::-webkit-scrollbar {
+					width: 5px;
+				}
+				&::-webkit-scrollbar-thumb {
+					background-color: #a7bed3;
+					border-radius: 4px;
+				}
+				div {
+					padding: 10px;
+					cursor: pointer;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					white-space: nowrap;
+					&:hover {
+						background-color: #1E2734;
+						color: #65B9F4;
+					}
+				}
+			}
 		}
 		&--sort {
 			display: flex;
 			gap: 20px;
 			align-items: center;
-			p {
+			&-opt {
 				color: #A7BED3;
 				font-size: 14px;
-				* {
-					vertical-align: middle;
+				position: relative;
+				cursor: pointer;
+				min-width: 220px;
+				user-select: none;
+				&--selected {
+					display: flex;
+					align-items: center;
+					gap: 10px;
+					justify-content: flex-end;
+				}
+				.options {
+					position: absolute;
+					top: calc(100% + 10px);
+					background-color: #242F3D;
+					z-index: 1;
+					border-radius: 4px;
+					overflow: hidden;
+					width: 100%;
+					div {
+						padding: 10px;
+						&:hover {
+							color: #65B9F4;
+							background-color: #1E2734;
+						}
+					}
 				}
 			}
 			i {
@@ -125,6 +331,11 @@ export default {
 			color: #6C7883;
 			position: sticky;
 			top: 0;
+			i {
+				color: #65B9F4;
+				font-size: 20px;
+				vertical-align: middle;
+			}
 			tr {
 				height: 35px;
 			}
@@ -132,8 +343,13 @@ export default {
 				font-weight: inherit;
 				padding: 0 50px;
 				min-width: 150px;
+				user-select: none;
 				&:first-child {
 					padding: 15px 10px;
+				}
+				* {
+					vertical-align: middle;
+					cursor: pointer;
 				}
 			}
 		}

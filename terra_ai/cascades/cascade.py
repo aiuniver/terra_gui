@@ -1,5 +1,6 @@
 from typing import Callable
 from collections import OrderedDict
+from inspect import signature
 import tensorflow
 
 
@@ -33,9 +34,13 @@ class CascadeElement(Cascade):
         super(CascadeElement, self).__init__(name)
 
         self.fun = fun
+        param = signature(fun).parameters
+        self.all_arg = len(param.keys()) > 1 and all(['*' not in a for a in str(param)])
 
     def __call__(self, *agr):
-        if isinstance(self.fun, tensorflow.keras.models.Model):
+        if self.all_arg:
+            self.out = self.fun(*agr)
+        elif len(agr) > 1 or isinstance(self.fun, tensorflow.keras.models.Model):
             self.out = self.fun(agr)
         else:
             self.out = self.fun(*agr)
@@ -133,12 +138,15 @@ class CompleteCascade(Cascade):
                 for i, out in enumerate(self.output):
                     path = output_path[:-4] + f"_{i}" + output_path[-4:]
                     out.choose_path(path)
-
         for img in self.input(input_path):
             self.cascade_block(img)
 
+        self.out = self.cascade_block[-1].out
+
         for i in self.output:
             i.release()
+
+        return self.out
 
 
 class BuildModelCascade(CascadeBlock):

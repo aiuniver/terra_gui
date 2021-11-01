@@ -6,14 +6,15 @@ from enum import Enum
 from typing import List, Tuple
 
 from ..mixins import BaseMixinData, UniqueListMixin
+from ..presets.training import TasksGroups
 
 
 class StateStatusChoice(str, Enum):
-    no_train = "no_train"
-    training = "training"
-    trained = "trained"
-    stopped = "stopped"
-    addtrain = "addtrain"
+    no_train = "no_train"  # Сетка в начальном состоянии (без обучений)
+    training = "training"  # Сетка в обучении
+    trained = "trained"  # Сетка обучена
+    stopped = "stopped"  # Обучение Остановлена
+    addtrain = "addtrain"  # Дообучение или возобновление после остановки
 
 
 class LossGraphShowChoice(str, Enum):
@@ -171,3 +172,6 @@ class TasksGroupsList(UniqueListMixin):
     class Meta:
         source = TaskGroupData
         identifier = "task"
+
+
+TasksRelations = TasksGroupsList(TasksGroups)
