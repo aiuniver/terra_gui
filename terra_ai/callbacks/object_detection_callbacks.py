@@ -405,7 +405,7 @@ class BaseObjectDetectionCallback:
 
             if choice_type == ExampleChoiceTypeChoice.best or choice_type == ExampleChoiceTypeChoice.worst:
                 stat = []
-                print('array', array.get(box_channel)[0])
+                print('array', array.get(box_channel)[0].shape)
                 for example in range(len(array.get(box_channel))):
                     print('stat', example)
                     stat.append(
@@ -434,7 +434,7 @@ class BaseObjectDetectionCallback:
 
             elif choice_type == ExampleChoiceTypeChoice.random:
                 true_false_dict = {'true': [], 'false': []}
-                print('array', array.get(box_channel)[0])
+                print('array', array.get(box_channel)[0].shape)
                 for i, example in enumerate(array.get(box_channel)):
                     print('i, example', i)
                     ex_stat = BaseObjectDetectionCallback().get_yolo_example_statistic(
@@ -462,6 +462,7 @@ class BaseObjectDetectionCallback:
                 np.random.shuffle(example_idx)
             else:
                 example_idx = np.random.randint(0, len(true_array.get(box_channel)), count)
+            print('return example_idx, box_channel', example_idx, box_channel)
             return example_idx, box_channel
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
@@ -685,19 +686,21 @@ class BaseObjectDetectionCallback:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
 
     @staticmethod
-    def get_intermediate_result(options, yolo_interactive_config, raw_y_pred, y_true, example_idx,
+    def get_intermediate_result(options, yolo_interactive_config, y_pred, y_true, example_idx,
                                 dataset_path, class_colors, preset_path) -> dict:
         method_name = 'get_intermediate_result'
         try:
             return_data = {}
             if yolo_interactive_config.intermediate_result.show_results:
-                y_pred = BaseObjectDetectionCallback().get_yolo_y_pred(
-                    array=raw_y_pred,
-                    options=options,
-                    sensitivity=yolo_interactive_config.intermediate_result.sensitivity,
-                    threashold=yolo_interactive_config.intermediate_result.threashold
-                )
+                # y_pred = BaseObjectDetectionCallback().get_yolo_y_pred(
+                #     array=raw_y_pred,
+                #     options=options,
+                #     sensitivity=yolo_interactive_config.intermediate_result.sensitivity,
+                #     threashold=yolo_interactive_config.intermediate_result.threashold
+                # )
+                print('get_intermediate_result', 1)
                 for idx in range(yolo_interactive_config.intermediate_result.num_examples):
+                    print('get_intermediate_result', idx, 0)
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
                         'true_value': {},
@@ -705,9 +708,12 @@ class BaseObjectDetectionCallback:
                         'tags_color': {},
                         'statistic_values': {}
                     }
+                    print('get_intermediate_result', idx, 1)
                     image_path = os.path.join(
                         dataset_path, options.dataframe.get('val').iat[example_idx[idx], 0])
+                    print('get_intermediate_result', idx, 2)
                     out = yolo_interactive_config.intermediate_result.box_channel
+                    print('get_intermediate_result', idx, 3)
                     data = BaseObjectDetectionCallback().postprocess_object_detection(
                         predict_array=copy.deepcopy(y_pred.get(out)[example_idx[idx]]),
                         true_array=y_true.get(out)[example_idx[idx]],
@@ -721,31 +727,38 @@ class BaseObjectDetectionCallback:
                         return_mode='callback',
                         show_stat=yolo_interactive_config.intermediate_result.show_statistic
                     )
+                    print('get_intermediate_result', idx, 4)
                     if data.get('y_true'):
                         return_data[f"{idx + 1}"]['true_value'][f"Выходной слой"] = data.get('y_true')
+                    print('get_intermediate_result', idx, 5)
                     return_data[f"{idx + 1}"]['predict_value'][f"Выходной слой"] = data.get('y_pred')
+                    print('get_intermediate_result', idx, 6)
 
                     if data.get('stat'):
                         return_data[f"{idx + 1}"]['statistic_values'] = data.get('stat')
+                        print('get_intermediate_result', idx, 7)
                     else:
                         return_data[f"{idx + 1}"]['statistic_values'] = {}
+                        print('get_intermediate_result', idx, 8)
             return return_data
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
 
     @staticmethod
-    def get_statistic_data_request(yolo_interactive_config, options, y_true, raw_y_pred) -> list:
+    def get_statistic_data_request(yolo_interactive_config, options, y_true, y_pred) -> list:
         method_name = 'get_statistic_data_request'
         try:
+            print('get_statistic_data_request', 1)
             return_data = []
             box_channel = yolo_interactive_config.statistic_data.box_channel
             name_classes = options.data.outputs.get(list(options.data.outputs.keys())[0]).classes_names
-            y_pred = BaseObjectDetectionCallback().get_yolo_y_pred(
-                array=raw_y_pred,
-                options=options,
-                sensitivity=yolo_interactive_config.statistic_data.sensitivity,
-                threashold=yolo_interactive_config.statistic_data.threashold
-            )
+            print('get_statistic_data_request', 2)
+            # y_pred = BaseObjectDetectionCallback().get_yolo_y_pred(
+            #     array=raw_y_pred,
+            #     options=options,
+            #     sensitivity=yolo_interactive_config.statistic_data.sensitivity,
+            #     threashold=yolo_interactive_config.statistic_data.threashold
+            # )
             object_tt = 0
             object_tf = 0
             object_ft = 0
@@ -758,18 +771,22 @@ class BaseObjectDetectionCallback:
                 class_accuracy_hist[class_name] = []
                 class_loss_hist[class_name] = []
                 class_coord_accuracy[class_name] = []
+            print('get_statistic_data_request', 3)
             line_names.append('empty')
 
             class_matrix = np.zeros((len(line_names), len(line_names)))
-            for i in range(len(y_pred[box_channel])):
+            print('get_statistic_data_request', 4)
+            for i in range(len(y_pred.get(box_channel))):
                 example_stat = BaseObjectDetectionCallback().get_yolo_example_statistic(
                     true_bb=y_true.get(box_channel)[i],
                     pred_bb=y_pred.get(box_channel)[i],
                     name_classes=name_classes,
                     sensitivity=yolo_interactive_config.statistic_data.sensitivity
                 )
+                print('get_statistic_data_request', i, 5)
                 object_ft += len(example_stat['recognize']['empty'])
                 object_tf += len(example_stat['recognize']['unrecognize'])
+                print('get_statistic_data_request', i, 6)
                 for class_name in line_names:
                     if class_name != 'empty':
                         object_tt += len(example_stat['recognize'][class_name])
@@ -781,9 +798,10 @@ class BaseObjectDetectionCallback:
                                 class_coord_accuracy[class_name].append(item['overlap'])
                             else:
                                 class_loss_hist[class_name].append(item['class_conf'])
+                print('get_statistic_data_request', i, 7)
                 for item in example_stat['recognize']['unrecognize']:
                     class_matrix[line_names.index(item['class_name'])][-1] += 1
-
+            print('get_statistic_data_request', 8)
             for class_name in name_classes:
                 class_accuracy_hist[class_name] = np.round(np.mean(class_accuracy_hist[class_name]) * 100,
                                                            2).item() if \
@@ -794,13 +812,15 @@ class BaseObjectDetectionCallback:
                 class_loss_hist[class_name] = np.round(np.mean(class_loss_hist[class_name]) * 100, 2).item() if \
                     class_loss_hist[
                         class_name] else 0.
-
+            print('get_statistic_data_request', 9)
             object_matrix = [[object_tt, object_tf], [object_ft, 0]]
             class_matrix_percent = []
             for i in class_matrix:
                 class_matrix_percent.append(i * 100 / np.sum(i) if np.sum(i) else np.zeros_like(i))
+            print('get_statistic_data_request', 10)
             class_matrix_percent = np.round(class_matrix_percent, 2).tolist()
             class_matrix = class_matrix.astype('int').tolist()
+            print('get_statistic_data_request', 11)
             return_data.append(
                 fill_heatmap_front_structure(
                     _id=1,
