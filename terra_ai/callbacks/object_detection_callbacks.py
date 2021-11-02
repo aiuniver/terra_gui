@@ -1,7 +1,5 @@
 import colorsys
-import copy
 import os
-from typing import Optional
 
 import matplotlib
 import numpy as np
@@ -371,8 +369,8 @@ class BaseObjectDetectionCallback:
                         'mean_overlap': mean_overlap / len(compat['recognize'][cl]) if len(
                             compat['recognize'][cl]) else None
                     }
-            count = count + len(compat['recognize']['empty'])
-            count = count + len(compat['recognize']['unrecognize'])
+            count += len(compat['recognize']['empty'])
+            # count = count + len(compat['recognize']['unrecognize'])
             compat['total_stat'] = {
                 'total_conf': total_conf / count if count else 0.,
                 'total_class': total_class / count if count else 0.,
@@ -446,9 +444,9 @@ class BaseObjectDetectionCallback:
                         sensitivity=sensitivity
                     )['total_stat']['total_metric']
                     if ex_stat > 0.7:
-                        true_false_dict['true'].append(i)
+                        true_false_dict['true'].append(example)
                     else:
-                        true_false_dict['false'].append(i)
+                        true_false_dict['false'].append(example)
                 np.random.shuffle(true_false_dict['true'])
                 np.random.shuffle(true_false_dict['false'])
                 # print('true_false_dict', true_false_dict)
