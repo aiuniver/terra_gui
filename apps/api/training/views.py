@@ -33,7 +33,6 @@ class StopAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         training_base = request.project.training.base.native()
         agent_exchange("training_stop")
-        request.project.training.set_state()
         request.project.set_training({"base": training_base})
         return BaseResponseSuccess(
             {
@@ -48,7 +47,6 @@ class ClearAPIView(BaseAPIView):
         training_base = request.project.training.base.native()
         agent_exchange("training_clear")
         request.project.clear_training()
-        request.project.training.set_state()
         request.project.training.result = None
         request.project.set_training({"base": training_base})
         return BaseResponseSuccess(
@@ -76,7 +74,6 @@ class ProgressAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         current_state = request.project.training.state.status
         data = agent_exchange("training_progress").native()
-        request.project.training.set_state()
         data.update({"state": request.project.training.state.native()})
         if current_state != request.project.training.state.status:
             request.project.set_training(

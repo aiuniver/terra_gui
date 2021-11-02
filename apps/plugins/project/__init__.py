@@ -366,13 +366,9 @@ class Project(BaseMixinData):
             self.model.outputs[0].id if len(self.model.outputs) else None
         )
 
-    def update_training_state(self):
-        self.training.set_state()
-
     def set_training(self, data: dict = None):
         self.update_training_base(data.get("base") if data else None)
         self.update_training_interactive()
-        self.update_training_state()
 
     def clear_model(self):
         if self.dataset:
