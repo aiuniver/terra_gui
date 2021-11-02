@@ -328,14 +328,44 @@ class CreateDataset(object):
                 instructions_data = InstructionsData(instructions=instructions, parameters=parameters)
             else:
                 paths_list: list = []
-                for paths in put.parameters.sources_paths:
-                    if paths.is_dir():
-                        for directory, folder, file_name in sorted(os.walk(os.path.join(self.source_directory, paths))):
-                            if file_name:
-                                file_folder = directory.replace(self.source_directory, '')[1:]
-                                for name in sorted(file_name):
-                                    paths_list.append(os.path.join(file_folder, name))
+                if 'model_type' in put.parameters.native().keys() and \
+                                                        put.parameters.model_type in [LayerODDatasetTypeChoice.Udacity]:
+                    for file_name in os.listdir(os.sep.join(str(put.parameters.sources_paths).split(os.sep)[:-1])):
+                        if file_name.endswith('.xml') or file_name.endswith('.csv'):
+                            paths_list.append(file_name)
 
+                elif 'model_type' in put.parameters.native().keys() and \
+                        put.parameters.model_type in [LayerODDatasetTypeChoice.Yolov1]:
+                    for paths in put.parameters.sources_paths:
+                        if paths.is_dir():
+                            for directory, folder, file_name in sorted(os.walk(os.path.join(self.source_directory,
+                                                                                            paths))):
+                                if file_name:
+                                    file_folder = directory.replace(self.source_directory, '')[1:]
+                                    for name in sorted(file_name):
+                                        if name.endswith('.txt'):
+                                            paths_list.append(os.path.join(file_folder, name))
+
+                elif decamelize(put.type) == decamelize(LayerInputTypeChoice.Image):
+                    for paths in put.parameters.sources_paths:
+                        if paths.is_dir():
+                            for directory, folder, file_name in sorted(os.walk(os.path.join(self.source_directory,
+                                                                                            paths))):
+                                if file_name:
+                                    file_folder = directory.replace(self.source_directory, '')[1:]
+                                    for name in sorted(file_name):
+                                        if not name.endswith('.txt'):
+                                            paths_list.append(os.path.join(file_folder, name))
+
+                else:
+                    for paths in put.parameters.sources_paths:
+                        if paths.is_dir():
+                            for directory, folder, file_name in sorted(os.walk(os.path.join(self.source_directory,
+                                                                                            paths))):
+                                if file_name:
+                                    file_folder = directory.replace(self.source_directory, '')[1:]
+                                    for name in sorted(file_name):
+                                        paths_list.append(os.path.join(file_folder, name))
                 put.parameters.cols_names = f'{put.id}_{decamelize(put.type)}'
                 put.parameters.put = put.id
                 temp_paths_list = [os.path.join(self.source_path, x) for x in paths_list]

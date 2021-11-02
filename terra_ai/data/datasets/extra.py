@@ -141,13 +141,12 @@ class LayerYoloChoice(str, Enum):
 
 
 class LayerODDatasetTypeChoice(str, Enum):
-    Kitti = "Kitti"
-    Voc = "Voc"
-    Coco = "Coco"
-    Udacity = "Udacity"
-    Yolov1 = "Yolov1"
     Yolo_terra = "Yolo_terra"
-    Cvat = "Cvat"
+    Voc = "Voc"
+    Kitti = "Kitti"
+    Coco = "Coco"
+    Yolov1 = "Yolov1"
+    Udacity = "Udacity"
 
 
 class LayerEncodingChoice(str, Enum):

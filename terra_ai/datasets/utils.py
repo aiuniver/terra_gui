@@ -132,22 +132,23 @@ class Voc:
     Handler Class for VOC PASCAL Format
     """
 
-    def xml_indent(self, elem, level=0):
-        i = "\n" + level * "\t"
-        if len(elem):
-            if not elem.text or not elem.text.strip():
-                elem.text = i + "\t"
-            if not elem.tail or not elem.tail.strip():
-                elem.tail = i
-            for elem in elem:
-                self.xml_indent(elem, level + 1)
-            if not elem.tail or not elem.tail.strip():
-                elem.tail = i
-        else:
-            if level and (not elem.tail or not elem.tail.strip()):
-                elem.tail = i
+    @staticmethod
+    def generate(data):
+        def xml_indent(elem, level=0):
+            i = "\n" + level * "\t"
+            if len(elem):
+                if not elem.text or not elem.text.strip():
+                    elem.text = i + "\t"
+                if not elem.tail or not elem.tail.strip():
+                    elem.tail = i
+                for elem in elem:
+                    xml_indent(elem, level + 1)
+                if not elem.tail or not elem.tail.strip():
+                    elem.tail = i
+            else:
+                if level and (not elem.tail or not elem.tail.strip()):
+                    elem.tail = i
 
-    def generate(self, data):
         xml_list = {}
 
         for key in data:
@@ -221,7 +222,7 @@ class Voc:
 
                 xml_annotation.append(xml_object)
 
-            self.xml_indent(xml_annotation)
+            xml_indent(xml_annotation)
 
             xml_list[key.split(".")[0]] = xml_annotation
         return xml_list
@@ -236,15 +237,10 @@ class Voc:
             ElementTree(xml).write(filepath)
 
     @staticmethod
-    def parse(path, path2):
-        (dir_path, dir_names, filenames) = next(
-            os.walk(os.path.abspath(path)))
-
+    def parse(paths_list):
         data = {}
-
-        for filename in filenames:
-
-            xml = open(os.path.join(dir_path, filename), "r")
+        for filename in paths_list:
+            xml = open(filename, "r")
 
             tree = Et.parse(xml)
             root = tree.getroot()
@@ -289,17 +285,16 @@ class Voc:
             }
 
             data[root.find("filename").text.split(".")[0]] = annotation
+
         return data, {}
 
 
 class Coco:
-    """
-    Handler Class for COCO Format
-    """
-
+    """ Handler Class for COCO Format """
     @staticmethod
-    def parse(json_path, img_path):
-        json_data = json.load(open(os.path.join(json_path, 'common.json')))
+    def parse(paths_list):
+        json_path = paths_list[0]
+        json_data = json.load(open(json_path))
 
         images_info = json_data["images"]
         cls_info = json_data["categories"]
@@ -322,12 +317,6 @@ class Coco:
                     filename, img_width, img_height = \
                         info["file_name"].split(
                             ".")[0], info["width"], info["height"]
-
-                    if img_width == 0 or img_height == 0:
-                        img = Image.open(os.path.join(
-                            img_path, info["file_name"]))
-                        img_width = str(img.size[0])
-                        img_height = str(img.size[1])
 
             for category in cls_info:
                 if category["id"] == cls_id:
@@ -380,8 +369,8 @@ class Udacity:
     """
 
     @staticmethod
-    def parse(csv_path, img_path):
-        raw_f = open(os.path.join(csv_path, 'common.csv'), 'r', encoding='utf-8')
+    def parse(paths_list):
+        raw_f = open(paths_list[0], 'r', encoding='utf-8')
         csv_f = csv.reader(raw_f)
         raw_f.seek(0)
         data = {}
@@ -402,17 +391,6 @@ class Udacity:
                 state = raw_line[7].split('"')[1]
                 cls = cls + state
 
-            img = Image.open(os.path.join(
-                img_path, "".join([filename, ".jpg"])))
-            img_width = str(img.size[0])
-            img_height = str(img.size[1])
-            img_depth = 3
-
-            size = {
-                "width": img_width,
-                "height": img_height,
-                "depth": img_depth
-            }
 
             bndbox = {
                 "xmin": xmin,
@@ -436,10 +414,7 @@ class Udacity:
                     "0": obj_info
                 }
 
-                data[filename] = {
-                    "size": size,
-                    "objects": obj
-                }
+                data[filename] = {"objects": obj}
         return data, {}
 
 
@@ -449,29 +424,12 @@ class Kitti:
     """
 
     @staticmethod
-    def parse(label_path, img_path):
-        img_type = ".jpg"
-        # with open("box_groups.txt", "w") as bboxGroups:
-        (dir_path, dir_names, filenames) = next(
-            os.walk(os.path.abspath(label_path)))
-
+    def parse(paths_list):
         data = {}
 
-        for filename in filenames:
-            txt = open(os.path.join(dir_path, filename), "r")
+        for filename in paths_list:
+            txt = open(filename, "r")
             filename = filename.split(".")[0]
-
-            img = Image.open(os.path.join(
-                img_path, "".join([filename, img_type])))
-            img_width = str(img.size[0])
-            img_height = str(img.size[1])
-            img_depth = 3
-
-            size = {
-                "width": img_width,
-                "height": img_height,
-                "depth": img_depth
-            }
 
             obj = {}
             obj_cnt = 0
@@ -494,9 +452,6 @@ class Kitti:
                     "ymax": float(ymax)
                 }
 
-                # bboxGroups.write("{} {} {} {}\n".format(float(xmin), float(
-                #     ymin), float(xmax) - float(xmin), float(ymax) - float(ymin)))
-
                 obj_info = {
                     "name": name,
                     "bndbox": bndbox
@@ -507,105 +462,19 @@ class Kitti:
 
             obj["num_obj"] = obj_cnt
 
-            data[filename] = {
-                "size": size,
-                "objects": obj
-            }
+            data[filename] = {"objects": obj}
         return data, {}
 
 
-class Yolo:
+class Yolo_terra:
     """
     Handler Class for YOLO Format
     """
 
-    def __init__(self, cls_list_path, cls_hierarchy={}):
-        with open(cls_list_path, 'r') as file:
-            l = file.read().splitlines()
+    def __init__(self, classes, cls_hierarchy={}):
 
-        self.cls_list = l
+        self.cls_list = classes
         self.cls_hierarchy = cls_hierarchy
-
-    def coordinateCvt2YOLO(self, size, box):
-
-        # (xmin + xmax / 2)
-        x = (box[0] + box[1]) / 2.0
-        # (ymin + ymax / 2)
-        y = (box[2] + box[3]) / 2.0
-
-        # (xmax - xmin) = w
-        w = box[1] - box[0]
-        # (ymax - ymin) = h
-        h = box[3] - box[2]
-
-        return int(x), int(y), int(w), int(h)
-
-    def parse(self, label_path, img_path):
-        img_type = ".jpg"
-        (dir_path, dir_names, filenames) = next(
-            os.walk(os.path.abspath(label_path)))
-
-        data = {}
-
-        for filename in filenames:
-
-            txt = open(os.path.join(dir_path, filename), "r")
-
-            filename = filename.split(".")[0]
-
-            img = Image.open(os.path.join(
-                img_path, "".join([filename, img_type])))
-            img_width = str(img.size[0])
-            img_height = str(img.size[1])
-            img_depth = 3
-
-            size = {
-                "width": img_width,
-                "height": img_height,
-                "depth": img_depth
-            }
-
-            obj = {}
-            obj_cnt = 0
-
-            for line in txt:
-                elements = line.split(" ")
-                name_id = elements[0]
-
-                xminAddxmax = float(elements[1]) * (2.0 * float(img_width))
-                yminAddymax = float(
-                    elements[2]) * (2.0 * float(img_height))
-
-                w = float(elements[3]) * float(img_width)
-                h = float(elements[4]) * float(img_height)
-
-                xmin = (xminAddxmax - w) / 2
-                ymin = (yminAddymax - h) / 2
-                xmax = xmin + w
-                ymax = ymin + h
-
-                bndbox = {
-                    "xmin": float(xmin),
-                    "ymin": float(ymin),
-                    "xmax": float(xmax),
-                    "ymax": float(ymax)
-                }
-
-                obj_info = {
-                    "bndbox": bndbox,
-                    "name": name_id,
-                }
-
-                obj[str(obj_cnt)] = obj_info
-                obj_cnt += 1
-
-            obj["num_obj"] = obj_cnt
-
-            data[filename] = {
-                "size": size,
-                "objects": obj
-            }
-        return data, {}
 
     def generate(self, data):
         result = {}
@@ -636,39 +505,97 @@ class Yolo:
                     self.cls_list, self.cls_hierarchy, cls_name)
 
                 bndbox = "".join(["".join([str(e), ","]) for e in bb])
-                contents = "".join(
-                    [contents, bndbox[:-1], ",", str(cls_id), "\n"])
+                contents = "".join([contents, bndbox[:-1], ",", str(cls_id), " "])
 
-            result[key] = contents
+            result[key] = contents[:-1]
         return result
 
-    def save(self, data, save_path, img_path, manifest_path):
-        if os.path.isdir(manifest_path):
-            manifest_abspath = os.path.join(manifest_path, "manifest.txt")
-        else:
-            manifest_abspath = manifest_path
 
-        with open(os.path.abspath(manifest_abspath), "w") as manifest_file:
-            for key in data:
-                manifest_file.write(os.path.abspath(os.path.join(
-                    img_path, "".join([key, '.jpg', "\n"]))))
+class Yolov1:
 
-                with open(os.path.abspath(os.path.join(save_path, "".join([key, ".txt"]))), "w") as output_txt_file:
-                    output_txt_file.write(data[key])
+    @staticmethod
+    def coordinateCvt2YOLO(size, box):
+        dw = 1. / size[0]
+        dh = 1. / size[1]
 
+        # (xmin + xmax / 2)
+        x = (box[0] + box[1]) / 2.0
+        # (ymin + ymax / 2)
+        y = (box[2] + box[3]) / 2.0
 
-# def convert_object_detection(creation_data: CreationData):
-#     id_sum = len(creation_data.inputs) + len(creation_data.outputs)
-#     model_type = eval(f'{creation_data.outputs.get(id_sum).parameters.model_type}()')
-#     data, cls_hierarchy = model_type.parse(creation_data.outputs.get(id_sum).parameters.sources_paths[0],
-#                                            creation_data.inputs.get(len(creation_data.inputs)).parameters.sources_paths[
-#                                                0])
-#     yolo = Yolo(os.path.abspath(creation_data.source_path.joinpath('obj.names')), cls_hierarchy=cls_hierarchy)
-#     data = yolo.generate(data)
-#     os.makedirs(os.path.join(creation_data.source_path, 'Yolo_annotations'), exist_ok=True)
-#     yolo.save(data, Path(os.path.join(creation_data.source_path, 'Yolo_annotations')),
-#               creation_data.inputs.get(len(creation_data.inputs)).parameters.sources_paths[0],
-#               creation_data.source_path)
+        # (xmax - xmin) = w
+        w = box[1] - box[0]
+        # (ymax - ymin) = h
+        h = box[3] - box[2]
+
+        x = x * dw
+        w = w * dw
+        y = y * dh
+        h = h * dh
+        return round(x, 3), round(y, 3), round(w, 3), round(h, 3)
+
+    @staticmethod
+    def parse(paths_list):
+        data = {}
+        folder = os.sep.join(paths_list[0].split(os.sep)[:-1])
+        for ann_file in paths_list:
+            txt = open(ann_file, "r")
+            filename = ann_file.split(os.sep)[-1].split('.')[0]
+            for im_txt in os.listdir(folder):
+                img_name = im_txt.split('.')[0]
+                if filename == img_name and not im_txt.endswith('.txt'):
+                    img = Image.open(os.path.join(folder, im_txt))
+                    break
+
+            img_width = str(img.size[0])
+            img_height = str(img.size[1])
+            img_depth = 3
+
+            size = {
+                "width": img_width,
+                "height": img_height,
+                "depth": img_depth
+            }
+
+            obj = {}
+            obj_cnt = 0
+
+            for line in txt:
+                elements = line.split(" ")
+                name_id = elements[0]
+
+                xminAddxmax = float(elements[1]) * (2.0 * float(img_width))
+                yminAddymax = float(elements[2]) * (2.0 * float(img_height))
+                w = float(elements[3]) * float(img_width)
+                h = float(elements[4]) * float(img_height)
+
+                xmin = (xminAddxmax - w) / 2
+                ymin = (yminAddymax - h) / 2
+                xmax = xmin + w
+                ymax = ymin + h
+
+                bndbox = {
+                    "xmin": float(xmin),
+                    "ymin": float(ymin),
+                    "xmax": float(xmax),
+                    "ymax": float(ymax)
+                }
+
+                obj_info = {
+                    "bndbox": bndbox,
+                    "name": name_id,
+                }
+
+                obj[str(obj_cnt)] = obj_info
+                obj_cnt += 1
+
+            obj["num_obj"] = obj_cnt
+
+            data[filename] = {
+                "size": size,
+                "objects": obj
+            }
+        return data, {}
 
 
 def resize_bboxes(coords, orig_x, orig_y):
@@ -704,21 +631,6 @@ def get_od_names(creation_data):
                 with open(creation_data.source_path.joinpath('obj.names'), 'r') as names:
                     names_list = names.read()
                 names_list = [elem for elem in names_list.split('\n') if elem]
-
-            elif out.parameters.model_type == LayerODDatasetTypeChoice.Cvat:
-                for i in os.listdir(creation_data.source_path):
-                    if i.endswith('.xml'):
-                        xml = open(os.path.join(creation_data.source_path, i), "r")
-                tree = Et.parse(xml)
-                root = tree.getroot()
-
-                meta = root.findall("meta")
-                task = meta[0].find("task")
-                lbl_field = task.find("labels")
-                lbls = lbl_field.findall('label')
-                for lbl in lbls:
-                    names_list.append(lbl.find("name").text)
-                names_list = sorted(set(names_list))
 
             elif out.parameters.model_type == LayerODDatasetTypeChoice.Coco:
                 for js_file in os.listdir(out.parameters.sources_paths[0]):

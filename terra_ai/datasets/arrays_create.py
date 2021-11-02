@@ -12,12 +12,13 @@ from tensorflow.python.keras.preprocessing import image
 from tensorflow.python.keras.utils.np_utils import to_categorical
 
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice, ArchitectureChoice
-from terra_ai.datasets.utils import get_yolo_anchors, resize_bboxes
+from terra_ai.datasets.utils import get_yolo_anchors, resize_bboxes, Yolo_terra, Voc, Coco, Udacity, Kitti, Yolov1
 from terra_ai.data.datasets.dataset import DatasetOutputsData, DatasetData
 from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice, \
     LayerOutputTypeChoice, DatasetGroupChoice, LayerInputTypeChoice, LayerEncodingChoice
 from terra_ai.data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice, \
     LayerTextModeChoice, LayerAudioModeChoice, LayerVideoModeChoice, LayerScalerAudioChoice
+from terra_ai.data.datasets.creations.layers.output.types.ObjectDetection import LayerODDatasetTypeChoice
 
 import os
 import re
@@ -423,12 +424,20 @@ class CreateArray(object):
     def instructions_object_detection(paths_list: list, **options: dict) -> dict:
 
         coordinates_list = []
-        for path in paths_list:
-            with open(path, 'r') as coordinates:
-                coordinate = coordinates.read()
+        annot_type = options['model_type']
+        if annot_type == LayerODDatasetTypeChoice.Yolo_terra:
+            for path in paths_list:
+                with open(path, 'r') as coordinates:
+                    coordinate = coordinates.read()
+                coordinates_list.append(' '.join([coord for coord in coordinate.split('\n') if coord]))
 
-            coordinates_list.append(' '.join([coord for coord in coordinate.split('\n') if coord]))
-
+        else:
+            model_type = eval(f'{annot_type}()')
+            data, cls_hierarchy = model_type.parse(paths_list)
+            yolo_terra = Yolo_terra(options['classes_names'], cls_hierarchy=cls_hierarchy)
+            data = yolo_terra.generate(data)
+            for key in data:
+                coordinates_list.append(data[key])
         instructions = {'instructions': coordinates_list,
                         'parameters': options
                         }
