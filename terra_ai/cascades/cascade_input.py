@@ -21,12 +21,12 @@ def image(path):
     return out_img
 
 
-def folder(path):
-    for i in os.listdir(path):
-        img = cv2.imread(os.path.join(path, i))
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        img = img[np.newaxis, ...]
-        yield img
+# def folder(path):
+#     for i in os.listdir(path):
+#         img = cv2.imread(os.path.join(path, i))
+#         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+#         img = img[np.newaxis, ...]
+#         yield img
 
 
 def text(paths):
