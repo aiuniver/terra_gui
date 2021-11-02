@@ -369,7 +369,7 @@ class BaseObjectDetectionCallback:
                         'mean_overlap': mean_overlap / len(compat['recognize'][cl]) if len(
                             compat['recognize'][cl]) else None
                     }
-            count += len(compat['recognize']['empty'])
+            # count += len(compat['recognize']['empty'])
             # count = count + len(compat['recognize']['unrecognize'])
             compat['total_stat'] = {
                 'total_conf': total_conf / count if count else 0.,
