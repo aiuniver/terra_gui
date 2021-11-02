@@ -447,6 +447,8 @@ class BaseObjectDetectionCallback:
                         true_false_dict['true'].append(i)
                     else:
                         true_false_dict['false'].append(i)
+                np.random.shuffle(true_false_dict['true'])
+                np.random.shuffle(true_false_dict['false'])
                 print('true_false_dict', true_false_dict)
                 example_idx = []
                 for _ in range(count):
