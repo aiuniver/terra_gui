@@ -331,8 +331,9 @@ class BaseObjectDetectionCallback:
                                 'overlap': mean_iou.item()
                             }
                         )
-                        count += 1
+                        # count += 1
                         if np.argmax(true_bb[:, 5:][i], axis=-1) == np.argmax(pred_bb[:, 5:][j], axis=-1):
+                            count += 1
                             total_conf += pred_bb[:, 4][j].item()
                             total_class += pred_bb[:, 5:][j][np.argmax(pred_bb[:, 5:][j], axis=-1)]
                             total_overlap += mean_iou.item()
@@ -369,8 +370,8 @@ class BaseObjectDetectionCallback:
                         'mean_overlap': mean_overlap / len(compat['recognize'][cl]) if len(
                             compat['recognize'][cl]) else None
                     }
-            # count += len(compat['recognize']['empty'])
-            # count = count + len(compat['recognize']['unrecognize'])
+            count += len(compat['recognize']['empty'])
+            count = count + len(compat['recognize']['unrecognize'])
             compat['total_stat'] = {
                 'total_conf': total_conf / count if count else 0.,
                 'total_class': total_class / count if count else 0.,
@@ -490,11 +491,15 @@ class BaseObjectDetectionCallback:
                               "color_mark": None, "size": "large"}]
                 }
                 if show_stat:
-                    true_classes = []
+                    box_classes = []
                     for box in true_array:
                         cls = name_classes[np.argmax(box[5:], axis=-1)]
-                        if cls not in true_classes:
-                            true_classes.append(cls)
+                        if cls not in box_classes:
+                            box_classes.append(cls)
+                    for box in predict_array:
+                        cls = name_classes[np.argmax(box[5:], axis=-1)]
+                        if cls not in box_classes:
+                            box_classes.append(cls)
                     box_stat = BaseObjectDetectionCallback().get_yolo_example_statistic(
                         true_bb=true_array, pred_bb=predict_array, name_classes=name_classes,
                         sensitivity=sensitivity
@@ -540,19 +545,19 @@ class BaseObjectDetectionCallback:
                             "data": [
                                 {
                                     "title": "Перекрытие",
-                                    "value": "-" if class_name not in true_classes
+                                    "value": "-" if class_name not in box_classes
                                     else f"{np.round(mean_overlap * 100, 2)}%",
                                     "color_mark": 'success' if mean_overlap and mean_overlap >= 0.7 else 'wrong'
                                 },
                                 {
                                     "title": "Объект",
-                                    "value": "-" if class_name not in true_classes
+                                    "value": "-" if class_name not in box_classes
                                     else f"{np.round(mean_conf * 100, 2)}%",
                                     "color_mark": 'success' if mean_conf and mean_conf >= 0.7 else 'wrong'
                                 },
                                 {
                                     "title": "Класс",
-                                    "value": "-" if class_name not in true_classes
+                                    "value": "-" if class_name not in box_classes
                                     else f"{np.round(mean_class * 100, 2)}%",
                                     "color_mark": 'success' if mean_class and mean_class >= 0.7 else 'wrong'
                                 },
