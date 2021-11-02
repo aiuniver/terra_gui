@@ -10,8 +10,8 @@ from terra_ai.settings import ASSETS_PATH
 
 class CascadeCreator:
 
-    def create_config(self, model_path: str, out_path: str, func_name: str):
-        out_path = os.path.join(out_path, "deploy")
+    def create_config(self, training_path: str, model_path: str, func_name: str):
+        out_path = os.path.join(training_path, "deploy")
         if func_name == "text_segmentation":
             dataset_path = os.path.join(model_path, "dataset", "instructions", "parameters", f"2_{func_name}.json")
         else:
