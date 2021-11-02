@@ -332,7 +332,7 @@ class CreateDataset(object):
                 if 'model_type' in put.parameters.native().keys() and \
                                                         put.parameters.model_type in [LayerODDatasetTypeChoice.Udacity]:
                     for file_name in os.listdir(os.sep.join(str(put.parameters.sources_paths).split(os.sep)[:-1])):
-                        if file_name.endswith('.xml') or file_name.endswith('.csv'):
+                        if file_name.endswith('.csv'):
                             paths_list.append(file_name)
 
                 elif 'model_type' in put.parameters.native().keys() and \
