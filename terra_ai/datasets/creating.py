@@ -2,7 +2,7 @@ from terra_ai.data.datasets.creations.layers.image_augmentation import Augmentat
 from terra_ai.utils import decamelize, camelize
 from terra_ai.exceptions.tensor_flow import ResourceExhaustedError as Resource
 from terra_ai.datasets.data import DataType, InstructionsData, DatasetInstructionsData
-from terra_ai.datasets.utils import PATH_TYPE_LIST, convert_object_detection
+from terra_ai.datasets.utils import PATH_TYPE_LIST, get_od_names
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preprocessing import CreatePreprocessing
 from terra_ai.data.training.extra import ArchitectureChoice
@@ -67,7 +67,8 @@ class CreateDataset(object):
         self.source_path = creation_data.source_path
         self.y_cls: list = []
         self.columns = {}
-        self.augmentation = {'object': None, 'data': []}
+        self.augmentation = {}
+        # self.augmentation = {'object': None, 'data': []}
 
         self.columns_processing = {}
         if creation_data.columns_processing:
@@ -179,12 +180,7 @@ class CreateDataset(object):
                         inp.parameters.open_tags = out.parameters.open_tags
                         inp.parameters.close_tags = out.parameters.close_tags
             elif out.type == LayerOutputTypeChoice.ObjectDetection:
-                if out.parameters.model_type != LayerODDatasetTypeChoice.Yolo:
-                    convert_object_detection(creation_data)
-                    out.parameters.sources_paths = [Path(os.path.join(creation_data.source_path, 'Yolo_annotations'))]
-                with open(creation_data.source_path.joinpath('obj.names'), 'r') as names:
-                    names_list = names.read()
-                names_list = [elem for elem in names_list.split('\n') if elem]
+                names_list = get_od_names(creation_data)
                 out.parameters.classes_names = names_list
                 out.parameters.num_classes = len(names_list)
 
@@ -333,14 +329,44 @@ class CreateDataset(object):
                 instructions_data = InstructionsData(instructions=instructions, parameters=parameters)
             else:
                 paths_list: list = []
-                for paths in put.parameters.sources_paths:
-                    if paths.is_dir():
-                        for directory, folder, file_name in sorted(os.walk(os.path.join(self.source_directory, paths))):
-                            if file_name:
-                                file_folder = directory.replace(self.source_directory, '')[1:]
-                                for name in sorted(file_name):
-                                    paths_list.append(os.path.join(file_folder, name))
+                if 'model_type' in put.parameters.native().keys() and \
+                                                        put.parameters.model_type in [LayerODDatasetTypeChoice.Udacity]:
+                    for file_name in os.listdir(os.sep.join(str(put.parameters.sources_paths).split(os.sep)[:-1])):
+                        if file_name.endswith('.csv'):
+                            paths_list.append(file_name)
 
+                elif 'model_type' in put.parameters.native().keys() and \
+                        put.parameters.model_type in [LayerODDatasetTypeChoice.Yolov1]:
+                    for paths in put.parameters.sources_paths:
+                        if paths.is_dir():
+                            for directory, folder, file_name in sorted(os.walk(os.path.join(self.source_directory,
+                                                                                            paths))):
+                                if file_name:
+                                    file_folder = directory.replace(self.source_directory, '')[1:]
+                                    for name in sorted(file_name):
+                                        if name.endswith('.txt'):
+                                            paths_list.append(os.path.join(file_folder, name))
+
+                elif decamelize(put.type) == decamelize(LayerInputTypeChoice.Image):
+                    for paths in put.parameters.sources_paths:
+                        if paths.is_dir():
+                            for directory, folder, file_name in sorted(os.walk(os.path.join(self.source_directory,
+                                                                                            paths))):
+                                if file_name:
+                                    file_folder = directory.replace(self.source_directory, '')[1:]
+                                    for name in sorted(file_name):
+                                        if not name.endswith('.txt'):
+                                            paths_list.append(os.path.join(file_folder, name))
+
+                else:
+                    for paths in put.parameters.sources_paths:
+                        if paths.is_dir():
+                            for directory, folder, file_name in sorted(os.walk(os.path.join(self.source_directory,
+                                                                                            paths))):
+                                if file_name:
+                                    file_folder = directory.replace(self.source_directory, '')[1:]
+                                    for name in sorted(file_name):
+                                        paths_list.append(os.path.join(file_folder, name))
                 put.parameters.cols_names = f'{put.id}_{decamelize(put.type)}'
                 put.parameters.put = put.id
                 temp_paths_list = [os.path.join(self.source_path, x) for x in paths_list]
@@ -396,8 +422,9 @@ class CreateDataset(object):
                     elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
                         self.preprocessing.create_word2vec(text_list=data.instructions, **data.parameters)
                 if 'augmentation' in data.parameters.keys() and data.parameters['augmentation']:
-                    self.augmentation['object'] =\
-                        self.preprocessing.create_image_augmentation(data.parameters['augmentation'])
+                    self.augmentation[data.parameters['cols_names']] =\
+                        {'object': self.preprocessing.create_image_augmentation(data.parameters['augmentation']),
+                         'data': []}
 
     def fit_preprocessing(self, put_data):
 

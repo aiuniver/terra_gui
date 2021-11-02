@@ -29,7 +29,8 @@ def masked_image(class_id=1):
     return fun
 
 
-def plot_mask_segmentation(num_class, classes_colors):
+def plot_mask_segmentation(classes_colors):
+    num_class = len(classes_colors)
 
     def fun(img, mask):
 
