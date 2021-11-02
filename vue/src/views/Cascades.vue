@@ -1,11 +1,12 @@
 <template>
-  <main class="page-modeling">
+  <main class="page-cascades">
     <div class="cont">
       <LoadModel v-model="dialogLoadModel" />
-      <SaveModel v-model="dialogSaveModel" :image="imageModel"/>
+      <SaveModel v-model="dialogSaveModel" :image="imageModel" />
       <Toolbar @actions="actions" />
-      <Blocks ref="container" @blockSelect="selectBlock = $event" @blockDeselect="selectBlock = null" @save="saveLayers" />
-      <Params ref="params" :selectBlock="selectBlock" />
+      <Blocks ref="container" />
+      <Params />
+      <CopyModal v-model="kerasModal" :title="'Код на keras'">{{ keras }}</CopyModal>
     </div>
   </main>
 </template>
@@ -16,65 +17,73 @@ import Blocks from '@/components/cascades/block/Blocks';
 import Params from '@/components/cascades/Params';
 import LoadModel from '@/components/cascades/modals/LoadModel';
 import SaveModel from '@/components/cascades/modals/SaveModel';
-import { groups } from '../store/const/cascades';
+import CopyModal from '../components/global/modals/CopyModal';
 
 export default {
-  name: 'Cascades',
+  name: 'cascades',
   components: {
     Toolbar,
     Blocks,
     Params,
     LoadModel,
     SaveModel,
+    CopyModal,
   },
   data: () => ({
     dialogLoadModel: false,
     dialogSaveModel: false,
-    selectBlock: null,
     imageModel: null,
+    kerasModal: false,
   }),
+  computed: {
+    keras() {
+      return this.$store.getters['cascades/getModel']?.keras || '';
+    },
+  },
   methods: {
+    async isTraining() {
+      this.dialogLoadModel = await this.$store.dispatch('dialogs/trining', { ctx: this, page: 'модели' });
+    },
     addBlock(type) {
-      console.log(type);
+      const position = this.$refs.container.getCenter();
       this.create = false;
-      this.selectBlockType = '';
-      this.$refs.container.addNewBlock(type);
+      this.$store.dispatch('cascades/addBlock', { type, position });
     },
     async saveModel() {
-      this.imageModel = null
+      this.imageModel = null;
       this.dialogSaveModel = true;
-      this.imageModel = await this.$refs.container.getImages();
+      let image = await this.$refs.container.getImages();
+      const { data = null } = await this.$store.dispatch('cascades/getImageModel', image.slice(22));
+      if (data) this.imageModel = data;
     },
-    async saveLayers() {
-      await this.$store.dispatch("cascades/saveModel", {});
+    async validateModel() {
+      await this.$store.dispatch('cascades/validateModel', {});
+    },
+    async clearModel() {
+      const action = await this.$store.dispatch('dialogs/confirm', { ctx: this, content: 'Очистить модель?' });
+      if (action == 'confirm') {
+        await this.$store.dispatch('cascades/clearModel');
+      }
     },
     actions(btn) {
       if (btn === 'load') {
-        this.dialogLoadModel = true;
+        this.isTraining();
       }
-      if (groups.includes(btn)) {
+      if (['input', 'model', 'function', 'custom', 'output'].includes(btn)) {
         this.addBlock(btn);
       }
       if (btn === 'save') {
-        this.saveModel()  
+        this.saveModel();
+        this.$store.dispatch('cascades/selectBlock', {});
       }
       if (btn === 'validation') {
-        // this.create = true
-        console.log('hjkhjh')
-        this.$refs.params.saveModel()
+        this.validateModel();
       }
       if (btn === 'clear') {
-        this.$Modal.confirm({
-          title: 'Внимание!',
-          content: 'Очистить модель?',
-          width: 300,
-          callback: function (action) {
-            // this.$Message(action)
-            if(action == "confirm"){
-              console.log("DELETE MODEL")
-            }
-          }
-        })
+        this.clearModel();
+      }
+      if (btn === 'keras') {
+        this.kerasModal = true;
       }
       console.log(btn);
     },
