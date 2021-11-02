@@ -67,7 +67,8 @@ class CreateDataset(object):
         self.source_path = creation_data.source_path
         self.y_cls: list = []
         self.columns = {}
-        self.augmentation = {'object': None, 'data': []}
+        self.augmentation = {}
+        # self.augmentation = {'object': None, 'data': []}
 
         self.columns_processing = {}
         if creation_data.columns_processing:
@@ -421,8 +422,9 @@ class CreateDataset(object):
                     elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
                         self.preprocessing.create_word2vec(text_list=data.instructions, **data.parameters)
                 if 'augmentation' in data.parameters.keys() and data.parameters['augmentation']:
-                    self.augmentation['object'] =\
-                        self.preprocessing.create_image_augmentation(data.parameters['augmentation'])
+                    self.augmentation[data.parameters['cols_names']] =\
+                        {'object': self.preprocessing.create_image_augmentation(data.parameters['augmentation']),
+                         'data': []}
 
     def fit_preprocessing(self, put_data):
 

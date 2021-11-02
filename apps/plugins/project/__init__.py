@@ -51,6 +51,9 @@ PROJECT_PATH = {
     "modeling": Path(settings.TERRA_AI_PROJECT_PATH, "modeling").absolute(),
     "training": Path(settings.TERRA_AI_PROJECT_PATH, "training").absolute(),
     "deploy": Path(settings.TERRA_AI_PROJECT_PATH, "training", "deploy").absolute(),
+    "training_model": Path(
+        settings.TERRA_AI_PROJECT_PATH, "training", "model"
+    ).absolute(),
 }
 
 
@@ -84,9 +87,17 @@ class ProjectPathData(BaseMixinData):
     modeling: DirectoryPath
     training: DirectoryPath
     deploy: DirectoryPath
+    training_model: DirectoryPath
 
     @validator(
-        "base", "datasets", "modeling", "training", "deploy", allow_reuse=True, pre=True
+        "base",
+        "datasets",
+        "modeling",
+        "training",
+        "deploy",
+        "training_model",
+        allow_reuse=True,
+        pre=True,
     )
     def _validate_directory(cls, value: DirectoryPath) -> DirectoryPath:
         os.makedirs(value, exist_ok=True)
@@ -112,6 +123,7 @@ class ProjectPathData(BaseMixinData):
 
 
 class TrainingDetailsData(BaseMixinData):
+    name: str = "__current"
     base: TrainData = TrainData()
     interactive: InteractiveData = InteractiveData()
     state: StateData = StateData()
@@ -305,42 +317,45 @@ class Project(BaseMixinData):
         loss_graphs = []
         metric_graphs = []
         progress_table = []
-        index = 0
+        _index_m = 0
+        _index_l = 0
         for layer in self.model.outputs:
-            index += 1
-            layer_for_metrics = self.training.base.architecture.parameters.outputs.get(
-                layer.id
-            )
-            metrics = layer_for_metrics.metrics if layer_for_metrics else None
+            outputs = self.training.base.architecture.parameters.outputs.get(layer.id)
+            if not outputs:
+                continue
+            for metric in outputs.metrics:
+                _index_m += 1
+                metric_graphs.append(
+                    {
+                        "id": _index_m,
+                        "output_idx": layer.id,
+                        "show": MetricGraphShowChoice.model,
+                        "show_metric": metric,
+                    }
+                )
+                _index_m += 1
+                metric_graphs.append(
+                    {
+                        "id": _index_m,
+                        "output_idx": layer.id,
+                        "show": MetricGraphShowChoice.classes,
+                        "show_metric": metric,
+                    }
+                )
+            _index_l += 1
             loss_graphs.append(
                 {
-                    "id": index,
+                    "id": _index_l,
                     "output_idx": layer.id,
                     "show": LossGraphShowChoice.model,
                 }
             )
-            metric_graphs.append(
-                {
-                    "id": index,
-                    "output_idx": layer.id,
-                    "show": MetricGraphShowChoice.model,
-                    "show_metric": metrics[0] if metrics else None,
-                }
-            )
-            index += 1
+            _index_l += 1
             loss_graphs.append(
                 {
-                    "id": index,
+                    "id": _index_l,
                     "output_idx": layer.id,
                     "show": LossGraphShowChoice.classes,
-                }
-            )
-            metric_graphs.append(
-                {
-                    "id": index,
-                    "output_idx": layer.id,
-                    "show": MetricGraphShowChoice.classes,
-                    "show_metric": metrics[0] if metrics else None,
                 }
             )
             progress_table.append(

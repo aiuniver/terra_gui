@@ -1093,7 +1093,11 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def preprocess_image(array: np.ndarray, **options) -> np.ndarray:
+    def preprocess_image(array: np.ndarray, **options) -> dict:
+
+        def apply_augmentation(array, aug_object):
+
+            pass
 
         array = cv2.resize(array, (options['width'], options['height']))
         if options['net'] == LayerNetChoice.linear:
@@ -1105,6 +1109,11 @@ class CreateArray(object):
                 array = array.reshape(orig_shape).astype('float32')
             elif options['scaler'] == 'terra_image_scaler':
                 array = options['preprocess'].transform(array)
+
+        # instructions = {'instructions': array,
+        #                 'parameters': options}
+        #
+        # return instructions
 
         return array
 
