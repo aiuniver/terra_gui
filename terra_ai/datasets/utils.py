@@ -237,7 +237,7 @@ class Voc:
             ElementTree(xml).write(filepath)
 
     @staticmethod
-    def parse(paths_list):
+    def parse(paths_list, tmp_lst):
         data = {}
         for filename in paths_list:
             xml = open(filename, "r")
@@ -292,7 +292,7 @@ class Voc:
 class Coco:
     """ Handler Class for COCO Format """
     @staticmethod
-    def parse(paths_list):
+    def parse(paths_list, tmp_lst):
         json_path = paths_list[0]
         json_data = json.load(open(json_path))
 
@@ -369,7 +369,7 @@ class Udacity:
     """
 
     @staticmethod
-    def parse(paths_list):
+    def parse(paths_list, tmp_lst):
         raw_f = open(paths_list[0], 'r', encoding='utf-8')
         csv_f = csv.reader(raw_f)
         raw_f.seek(0)
@@ -424,7 +424,7 @@ class Kitti:
     """
 
     @staticmethod
-    def parse(paths_list):
+    def parse(paths_list, tmp_lst):
         data = {}
 
         for filename in paths_list:
@@ -535,7 +535,7 @@ class Yolov1:
         return round(x, 3), round(y, 3), round(w, 3), round(h, 3)
 
     @staticmethod
-    def parse(paths_list):
+    def parse(paths_list, classes_names_list):
         data = {}
         folder = os.sep.join(paths_list[0].split(os.sep)[:-1])
         for ann_file in paths_list:
@@ -562,7 +562,7 @@ class Yolov1:
 
             for line in txt:
                 elements = line.split(" ")
-                name_id = elements[0]
+                name_id = int(elements[0])
 
                 xminAddxmax = float(elements[1]) * (2.0 * float(img_width))
                 yminAddymax = float(elements[2]) * (2.0 * float(img_height))
@@ -583,7 +583,7 @@ class Yolov1:
 
                 obj_info = {
                     "bndbox": bndbox,
-                    "name": name_id,
+                    "name": classes_names_list[name_id],
                 }
 
                 obj[str(obj_cnt)] = obj_info

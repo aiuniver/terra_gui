@@ -433,14 +433,14 @@ class CreateArray(object):
 
         else:
             model_type = eval(f'{annot_type}()')
-            data, cls_hierarchy = model_type.parse(paths_list)
+            data, cls_hierarchy = model_type.parse(paths_list, options['classes_names'])
             yolo_terra = Yolo_terra(options['classes_names'], cls_hierarchy=cls_hierarchy)
             data = yolo_terra.generate(data)
             for key in data:
                 coordinates_list.append(data[key])
+
         instructions = {'instructions': coordinates_list,
-                        'parameters': options
-                        }
+                        'parameters': options}
 
         return instructions
 
