@@ -214,6 +214,7 @@ class InteractiveCallback:
                             choice_type=self.interactive_config.intermediate_result.example_choice_type,
                             seed_idx=self.seed_idx[:self.interactive_config.intermediate_result.num_examples]
                         )
+
                 if self.options.data.architecture in self.yolo_architecture:
                     self.raw_y_pred = y_pred
                     self.y_pred = self.callback.get_y_pred(

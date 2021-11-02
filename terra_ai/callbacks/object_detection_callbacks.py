@@ -434,8 +434,9 @@ class BaseObjectDetectionCallback:
 
             elif choice_type == ExampleChoiceTypeChoice.random:
                 true_false_dict = {'true': [], 'false': []}
+                print('\narray', array)
                 for i, example in enumerate(array.get(box_channel)):
-                    # print('i, example', i)
+                    print('i, example', i)
                     ex_stat = BaseObjectDetectionCallback().get_yolo_example_statistic(
                         true_bb=true_array.get(box_channel)[i],
                         pred_bb=array.get(box_channel)[i],
