@@ -239,11 +239,15 @@ class InteractiveCallback:
 
                 if on_epoch_end_flag:
                     # print('fit_logs', fit_logs)
+                    print('if on_epoch_end_flag:', self.y_pred.keys() if self.y_pred else None,
+                          self.y_true.keys() if self.y_true else None)
                     self.current_epoch = fit_logs.get('epoch')
                     self.current_logs = self._reformat_fit_logs(fit_logs)
                     self._update_log_history()
                     self._update_progress_table(current_epoch_time)
                     if self.interactive_config.intermediate_result.autoupdate:
+                        print('if on_epoch_end_flag:  if self.interactive_config.intermediate_result.autoupdate:', self.y_pred.keys() if self.y_pred else None,
+                              self.y_true.keys() if self.y_true else None)
                         self.intermediate_result = self.callback.intermediate_result_request(
                             options=self.options,
                             interactive_config=self.interactive_config,
@@ -276,8 +280,8 @@ class InteractiveCallback:
                             and self.interactive_config.statistic_data.autoupdate:
                         print('if self.options.data.architecture in self.yolo_architecture and '
                               'self.interactive_config.statistic_data.box_channel '
-                              'and self.interactive_config.statistic_data.autoupdate:',
-                              self.interactive_config.statistic_data.box_channel, self.interactive_config.statistic_data.autoupdate)
+                              'and self.interactive_config.statistic_data.autoupdate:', self.y_pred.keys() if self.y_pred else None,
+                              self.y_true.keys() if self.y_true else None)
                         self.statistic_result = self.callback.statistic_data_request(
                             interactive_config=self.interactive_config,
                             options=self.options,
@@ -288,6 +292,8 @@ class InteractiveCallback:
                             # raw_y_pred=self.raw_y_pred
                         )
                 else:
+                    print('else:', self.y_pred.keys() if self.y_pred else None,
+                          self.y_true.keys() if self.y_true else None)
                     self.intermediate_result = self.callback.intermediate_result_request(
                         options=self.options,
                         interactive_config=self.interactive_config,
@@ -319,8 +325,8 @@ class InteractiveCallback:
                     if self.options.data.architecture in self.yolo_architecture and \
                             self.interactive_config.statistic_data.box_channel:
                         print('if self.options.data.architecture in self.yolo_architecture and '
-                              'self.interactive_config.statistic_data.box_channel:', self.options.data.architecture,
-                              self.interactive_config.statistic_data.box_channel)
+                              'self.interactive_config.statistic_data.box_channel:', self.y_pred.keys() if self.y_pred else None,
+                          self.y_true.keys() if self.y_true else None)
                         self.statistic_result = self.callback.statistic_data_request(
                             interactive_config=self.interactive_config,
                             options=self.options,
@@ -399,8 +405,9 @@ class InteractiveCallback:
                     sensitivity=self.interactive_config.intermediate_result.sensitivity,
                     threashold=self.interactive_config.intermediate_result.threashold
                 )
-                print('get_train_results', self.y_pred.keys(), self.y_true.keys())
                 if self.interactive_config.intermediate_result.show_results:
+                    print('if self.interactive_config.intermediate_result.show_results:', self.y_pred.keys() if self.y_pred else None,
+                          self.y_true.keys() if self.y_true else None)
                     self.example_idx, _ = self.callback.prepare_example_idx_to_show(
                         array=copy.deepcopy(self.y_pred),
                         true_array=copy.deepcopy(self.y_true),
@@ -413,6 +420,8 @@ class InteractiveCallback:
                         sensitivity=self.interactive_config.intermediate_result.sensitivity,
                     )
                 if config.intermediate_result.show_results or config.statistic_data.box_channel:
+                    print('if config.intermediate_result.show_results or config.statistic_data.box_channel:', self.y_pred.keys() if self.y_pred else None,
+                          self.y_true.keys() if self.y_true else None)
                     self.urgent_predict = True
                     self.intermediate_result = self.callback.intermediate_result_request(
                         options=self.options,
@@ -430,6 +439,8 @@ class InteractiveCallback:
                         # raw_y_pred=self.raw_y_pred
                     )
                     if self.interactive_config.statistic_data.box_channel:
+                        print('if self.interactive_config.statistic_data.box_channel:', self.y_pred.keys() if self.y_pred else None,
+                              self.y_true.keys() if self.y_true else None)
                         self.statistic_result = self.callback.statistic_data_request(
                             interactive_config=self.interactive_config,
                             options=self.options,
