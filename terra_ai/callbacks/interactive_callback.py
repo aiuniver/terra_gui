@@ -24,8 +24,7 @@ from terra_ai.data.presets.training import Metric
 from terra_ai.data.training.extra import LossGraphShowChoice, MetricGraphShowChoice, MetricChoice, ArchitectureChoice
 from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.preparing import PrepareDataset
-from terra_ai.training.customlosses import UnscaledMAE, FScore, BalancedFScore, BalancedRecall, BalancedPrecision, \
-    BalancedDiceCoef
+from terra_ai.training.customlosses import UnscaledMAE, FScore, BalancedFScore, BalancedRecall, BalancedPrecision
 from terra_ai.utils import decamelize
 
 __version__ = 0.085
@@ -650,7 +649,6 @@ class InteractiveCallback:
                         log = log[:-end]
                     update_logs[re.sub("__", "_", decamelize(log))] = val
                 for out in self.metrics.keys():
-                    encoding = self.options.data.outputs.get(int(out)).encoding.name
                     interactive_log[out] = {}
                     if len(self.metrics.keys()) == 1:
                         train_loss = update_logs.get('loss')
@@ -687,65 +685,75 @@ class InteractiveCallback:
                             m = BalancedRecall()
                             m.update_state(y_true=self.y_true.get('val').get(out), y_pred=self.y_pred.get(out))
                             val_metric = m.result().numpy().item()
+                            # print('\nBalancedRecall', val_metric, update_logs.get(
+                            #     f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}"))
                         if metric_name == MetricChoice.BalancedPrecision:
                             m = BalancedPrecision()
                             m.update_state(y_true=self.y_true.get('val').get(out), y_pred=self.y_pred.get(out))
                             val_metric = m.result().numpy().item()
+                            # print('BalancedPrecision', val_metric, update_logs.get(
+                            #     f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}"))
                         if metric_name == MetricChoice.BalancedFScore:
                             m = BalancedFScore()
                             m.update_state(y_true=self.y_true.get('val').get(out), y_pred=self.y_pred.get(out))
                             val_metric = m.result().numpy().item()
+                            # print('BalancedFScore', val_metric, update_logs.get(
+                            #     f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}"))
                         if metric_name == MetricChoice.FScore:
                             m = FScore()
                             m.update_state(y_true=self.y_true.get('val').get(out), y_pred=self.y_pred.get(out))
                             val_metric = m.result().numpy().item()
-                        if metric_name == MetricChoice.BalancedDiceCoef:
-                            val_metric = 0
-                            for cls in range(self.y_true.get('val').get(out).shape[-1]):
-                                m = BalancedDiceCoef(encoding='multi' if encoding == 'multi' else None)
-                                m.update_state(y_true=self.y_true.get('val').get(out)[..., cls:cls+1],
-                                               y_pred=self.y_pred.get(out)[..., cls:cls+1])
-                                val_metric += m.result().numpy().item()
-                                m.reset_state()
-                            #     print('MetricChoice.BalancedDiceCoef', m.result().numpy().item())
-                            val_metric = val_metric / self.y_true.get('val').get(out).shape[-1]
+                            # print('FScore', val_metric, update_logs.get(
+                            #     f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}"))
                         interactive_log[out]['metrics'][metric_name] = {
-                            'train': round_loss_metric(train_metric) if not math.isnan(float(train_metric)) else None,
+                            'train': round_loss_metric(train_metric) if not math.isnan(
+                                float(train_metric)) else None,
                             'val': round_loss_metric(val_metric) if not math.isnan(float(val_metric)) else None
                         }
 
             if self.options.data.architecture in self.yolo_architecture:
-                interactive_log['learning_rate'] = logs.get('optimizer.lr')
+                # self._round_loss_metric(train_loss) if not math.isnan(float(train_loss)) else None
+                interactive_log['learning_rate'] = round_loss_metric(logs.get('optimizer.lr'))
                 interactive_log['output'] = {
                     "train": {
                         "loss": {
-                            'giou_loss': logs.get('giou_loss'),
-                            'conf_loss': logs.get('conf_loss'),
-                            'prob_loss': logs.get('prob_loss'),
-                            'total_loss': logs.get('total_loss')
+                            'giou_loss': round_loss_metric(logs.get('giou_loss')),
+                            'conf_loss': round_loss_metric(logs.get('conf_loss')),
+                            'prob_loss': round_loss_metric(logs.get('prob_loss')),
+                            'total_loss': round_loss_metric(logs.get('total_loss'))
                         },
-                        "metrics": {'mAP50': logs.get('mAP50')}
+                        "metrics": {
+                            'mAP50': round_loss_metric(logs.get('mAP50')),
+                            # 'mAP95': logs.get('mAP95'),
+                        }
                     },
                     "val": {
                         "loss": {
-                            'giou_loss': logs.get('val_giou_loss'),
-                            'conf_loss': logs.get('val_conf_loss'),
-                            'prob_loss': logs.get('val_prob_loss'),
-                            'total_loss': logs.get('val_total_loss')
+                            'giou_loss': round_loss_metric(logs.get('val_giou_loss')),
+                            'conf_loss': round_loss_metric(logs.get('val_conf_loss')),
+                            'prob_loss': round_loss_metric(logs.get('val_prob_loss')),
+                            'total_loss': round_loss_metric(logs.get('val_total_loss'))
                         },
-                        "class_loss": {'prob_loss': {}},
-                        "metrics": {'mAP50': logs.get('val_mAP50')},
-                        "class_metrics": {'mAP50': {}}
+                        "class_loss": {
+                            'prob_loss': {},
+                        },
+                        "metrics": {
+                            'mAP50': round_loss_metric(logs.get('val_mAP50')),
+                            # 'mAP95': logs.get('val_mAP95'),
+                        },
+                        "class_metrics": {
+                            'mAP50': {},
+                            # 'mAP95': {},
+                        }
                     }
                 }
                 for name in self.options.data.outputs.get(list(self.options.data.outputs.keys())[0]).classes_names:
-                    interactive_log['output']['val']["class_loss"]['prob_loss'][name] = logs.get(
-                        f'val_prob_loss_{name}')
-                    interactive_log['output']['val']["class_metrics"]['mAP50'][name] = logs.get(
-                        f'val_mAP50_class_{name}')
-
+                    interactive_log['output']['val']["class_loss"]['prob_loss'][name] = round_loss_metric(
+                        logs.get(
+                            f'val_prob_loss_{name}'))
+                    interactive_log['output']['val']["class_metrics"]['mAP50'][name] = round_loss_metric(logs.get(
+                        f'val_mAP50_class_{name}'))
             return interactive_log
-
         except Exception as e:
             print_error(InteractiveCallback().name, method_name, e)
 
@@ -761,6 +769,7 @@ class InteractiveCallback:
 
                 if self.options.data.architecture in self.basic_architecture:
                     for out in self.options.data.outputs.keys():
+                        out_task = self.options.data.outputs.get(out).task
                         classes_names = self.options.data.outputs.get(out).classes_names
                         for loss_name in self.log_history.get(f"{out}").get('loss').keys():
                             for data_type in ['train', 'val']:
@@ -806,12 +815,15 @@ class InteractiveCallback:
                                 normal_state = True
 
                             if data_idx or data_idx == 0:
-                                self.log_history[f"{out}"]['progress_state']['loss'][loss_name][
-                                    'underfitting'][data_idx] = loss_underfitting
-                                self.log_history[f"{out}"]['progress_state']['loss'][loss_name][
-                                    'overfitting'][data_idx] = loss_overfitting
-                                self.log_history[f"{out}"]['progress_state']['loss'][loss_name][
-                                    'normal_state'][data_idx] = normal_state
+                                self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['underfitting'][
+                                    data_idx] = \
+                                    loss_underfitting
+                                self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['overfitting'][
+                                    data_idx] = \
+                                    loss_overfitting
+                                self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['normal_state'][
+                                    data_idx] = \
+                                    normal_state
                             else:
                                 self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['underfitting'].append(
                                     loss_underfitting)
@@ -820,18 +832,14 @@ class InteractiveCallback:
                                 self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['normal_state'].append(
                                     normal_state)
 
-                            if self.options.data.architecture in self.class_architecture:
+                            if out_task == LayerOutputTypeChoice.Classification or \
+                                    out_task == LayerOutputTypeChoice.Segmentation or \
+                                    out_task == LayerOutputTypeChoice.TextSegmentation or \
+                                    out_task == LayerOutputTypeChoice.TimeseriesTrend:
                                 for cls in self.log_history.get(f"{out}").get('class_loss').keys():
-                                    if self.options.data.architecture == ArchitectureChoice.ImageSegmentation or \
-                                            self.options.data.architecture == ArchitectureChoice.TextSegmentation:
-                                        class_idx = classes_names.index(cls)
-                                        class_loss = self._get_loss_calculation(
-                                            loss_obj=self.loss_obj.get(f"{out}"),
-                                            out=f"{out}",
-                                            y_true=self.y_true.get('val').get(f"{out}")[..., class_idx],
-                                            y_pred=self.y_pred.get(f"{out}")[..., class_idx],
-                                        )
-                                    else:
+                                    class_loss = 0.
+                                    if out_task == LayerOutputTypeChoice.Classification or \
+                                            out_task == LayerOutputTypeChoice.TimeseriesTrend:
                                         class_loss = self._get_loss_calculation(
                                             loss_obj=self.loss_obj.get(f"{out}"),
                                             out=f"{out}",
@@ -839,6 +847,22 @@ class InteractiveCallback:
                                                 self.class_idx.get('val').get(f"{out}").get(cls)],
                                             y_pred=self.y_pred.get(f"{out}")[
                                                 self.class_idx.get('val').get(f"{out}").get(cls)],
+                                        )
+                                    if out_task == LayerOutputTypeChoice.Segmentation:
+                                        class_idx = classes_names.index(cls)
+                                        class_loss = self._get_loss_calculation(
+                                            loss_obj=self.loss_obj.get(f"{out}"),
+                                            out=f"{out}",
+                                            y_true=self.y_true.get('val').get(f"{out}")[:, :, :, class_idx],
+                                            y_pred=self.y_pred.get(f"{out}")[:, :, :, class_idx],
+                                        )
+                                    if out_task == LayerOutputTypeChoice.TextSegmentation:
+                                        class_idx = classes_names.index(cls)
+                                        class_loss = self._get_loss_calculation(
+                                            loss_obj=self.loss_obj.get(f"{out}"),
+                                            out=f"{out}",
+                                            y_true=self.y_true.get('val').get(f"{out}")[:, :, class_idx],
+                                            y_pred=self.y_pred.get(f"{out}")[:, :, class_idx],
                                         )
                                     if data_idx or data_idx == 0:
                                         self.log_history[f"{out}"]['class_loss'][cls][loss_name][data_idx] = \
@@ -896,33 +920,33 @@ class InteractiveCallback:
 
                             if data_idx or data_idx == 0:
                                 self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['underfitting'][
-                                    data_idx] = metric_underfittng
+                                    data_idx] = \
+                                    metric_underfittng
                                 self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['overfitting'][
-                                    data_idx] = metric_overfitting
+                                    data_idx] = \
+                                    metric_overfitting
                                 self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['normal_state'][
-                                    data_idx] = normal_state
+                                    data_idx] = \
+                                    normal_state
                             else:
                                 self.log_history[f"{out}"]['progress_state']['metrics'][metric_name][
-                                    'underfitting'].append(metric_underfittng)
+                                    'underfitting'].append(
+                                    metric_underfittng)
                                 self.log_history[f"{out}"]['progress_state']['metrics'][metric_name][
-                                    'overfitting'].append(metric_overfitting)
+                                    'overfitting'].append(
+                                    metric_overfitting)
                                 self.log_history[f"{out}"]['progress_state']['metrics'][metric_name][
-                                    'normal_state'].append(normal_state)
+                                    'normal_state'].append(
+                                    normal_state)
 
-                            if self.options.data.architecture in self.class_architecture:
+                            if out_task == LayerOutputTypeChoice.Classification or \
+                                    out_task == LayerOutputTypeChoice.Segmentation or \
+                                    out_task == LayerOutputTypeChoice.TextSegmentation or \
+                                    out_task == LayerOutputTypeChoice.TimeseriesTrend:
                                 for cls in self.log_history.get(f"{out}").get('class_metrics').keys():
-                                    if self.options.data.architecture == ArchitectureChoice.ImageSegmentation or \
-                                            self.options.data.architecture == ArchitectureChoice.TextSegmentation:
-                                        class_idx = classes_names.index(cls)
-                                        class_metric = self._get_metric_calculation(
-                                            metric_name=metric_name,
-                                            metric_obj=self.metrics_obj.get(f"{out}").get(metric_name),
-                                            out=f"{out}",
-                                            y_true=self.y_true.get('val').get(f"{out}")[..., class_idx],
-                                            y_pred=self.y_pred.get(f"{out}")[..., class_idx],
-                                        )
-                                        # print('class_metric', cls, class_metric, self.current_epoch)
-                                    else:
+                                    class_metric = 0.
+                                    if out_task == LayerOutputTypeChoice.Classification or \
+                                            out_task == LayerOutputTypeChoice.TimeseriesTrend:
                                         class_metric = self._get_metric_calculation(
                                             metric_name=metric_name,
                                             metric_obj=self.metrics_obj.get(f"{out}").get(metric_name),
@@ -933,6 +957,25 @@ class InteractiveCallback:
                                                 self.class_idx.get('val').get(f"{out}").get(cls)],
                                             show_class=True
                                         )
+                                    if out_task == LayerOutputTypeChoice.Segmentation or \
+                                            out_task == LayerOutputTypeChoice.TextSegmentation:
+                                        class_idx = classes_names.index(cls)
+                                        class_metric = self._get_metric_calculation(
+                                            metric_name=metric_name,
+                                            metric_obj=self.metrics_obj.get(f"{out}").get(metric_name),
+                                            out=f"{out}",
+                                            y_true=self.y_true.get('val').get(f"{out}")[..., class_idx:class_idx + 1],
+                                            y_pred=self.y_pred.get(f"{out}")[..., class_idx:class_idx + 1],
+                                        )
+                                    # if out_task == LayerOutputTypeChoice.TextSegmentation:
+                                    #     class_idx = classes_names.index(cls)
+                                    #     class_metric = self._get_metric_calculation(
+                                    #         metric_name=metric_name,
+                                    #         metric_obj=self.metrics_obj.get(f"{out}").get(metric_name),
+                                    #         out=f"{out}",
+                                    #         y_true=self.y_true.get('val').get(f"{out}")[:, :, class_idx],
+                                    #         y_pred=self.y_pred.get(f"{out}")[:, :, class_idx],
+                                    #     )
                                     if data_idx or data_idx == 0:
                                         self.log_history[f"{out}"]['class_metrics'][cls][metric_name][data_idx] = \
                                             round_loss_metric(class_metric)
@@ -942,20 +985,20 @@ class InteractiveCallback:
                                         )
 
                 if self.options.data.architecture in self.yolo_architecture:
-                    out = list(self.options.data.outputs.keys())[0]
                     self.log_history['learning_rate'] = self.current_logs.get('learning_rate')
+                    out = list(self.options.data.outputs.keys())[0]
                     classes_names = self.options.data.outputs.get(out).classes_names
                     for key in self.log_history['output']["loss"].keys():
                         for data_type in ['train', 'val']:
                             self.log_history['output']["loss"][key][data_type].append(
-                                round_loss_metric(self.current_logs.get('output').get(data_type).get('loss').get(key))
+                                round_loss_metric(self.current_logs.get('output').get(
+                                    data_type).get('loss').get(key))
                             )
                     for key in self.log_history['output']["metrics"].keys():
-                        for data_type in ['train', 'val']:
-                            self.log_history['output']["metrics"][key][data_type].append(
-                                round_loss_metric(
-                                    self.current_logs.get('output').get(data_type).get('metrics').get(key))
-                            )
+                        self.log_history['output']["metrics"][key].append(
+                            round_loss_metric(self.current_logs.get('output').get(
+                                'val').get('metrics').get(key))
+                        )
                     for name in classes_names:
                         self.log_history['output']["class_loss"]['prob_loss'][name].append(
                             round_loss_metric(self.current_logs.get('output').get("val").get(
@@ -965,7 +1008,10 @@ class InteractiveCallback:
                             round_loss_metric(self.current_logs.get('output').get("val").get(
                                 'class_metrics').get("mAP50").get(name))
                         )
-
+                        # self.log_history['output']["class_metrics"]['mAP95'][name].append(
+                        #     self._round_loss_metric(self.current_logs.get('output').get("val").get(
+                        #         'class_metrics').get("mAP95").get(name))
+                        # )
                     for loss_name in self.log_history['output']["loss"].keys():
                         # fill loss progress state
                         if data_idx or data_idx == 0:
@@ -992,7 +1038,6 @@ class InteractiveCallback:
                             normal_state = False
                         else:
                             normal_state = True
-
                         if data_idx or data_idx == 0:
                             self.log_history['output']['progress_state']['loss'][loss_name][
                                 'underfitting'][data_idx] = loss_underfitting
@@ -1007,7 +1052,6 @@ class InteractiveCallback:
                                 loss_overfitting)
                             self.log_history['output']['progress_state']['loss'][loss_name]['normal_state'].append(
                                 normal_state)
-
                     for metric_name in self.log_history.get('output').get('metrics').keys():
                         if data_idx or data_idx == 0:
                             self.log_history['output']['progress_state']['metrics'][metric_name]['mean_log_history'][
@@ -1026,7 +1070,6 @@ class InteractiveCallback:
                             normal_state = False
                         else:
                             normal_state = True
-
                         if data_idx or data_idx == 0:
                             self.log_history['output']['progress_state']['metrics'][metric_name]['overfitting'][
                                 data_idx] = metric_overfitting
@@ -1070,12 +1113,18 @@ class InteractiveCallback:
                     "learning_rate": self.current_logs.get("learning_rate"),
                     "data": {f"Прогресс обучения": {'loss': {}, 'metrics': {}}}
                 }
+                # print('\n_update_progress_table self.log_history', self.log_history['output']["loss"])
                 for loss in self.log_history['output']["loss"].keys():
                     self.progress_table[self.current_epoch]["data"]["Прогресс обучения"]["loss"][f'{loss}'] = \
                         f"{self.log_history.get('output').get('loss').get(loss).get('train')[-1]}"
                     self.progress_table[self.current_epoch]["data"]["Прогресс обучения"]["loss"][f'val_{loss}'] = \
                         f"{self.log_history.get('output').get('loss').get(loss).get('val')[-1]}"
+                # print('\n self.progress_table[self.current_epoch]', self.progress_table[self.current_epoch])
+                # print('\n_update_progress_table self.log_history', self.log_history['output']["metrics"])
                 for metric in self.log_history['output']["metrics"].keys():
+                    # print(metric)
+                    # self.progress_table[self.current_epoch]["data"][f"Прогресс обучения»"]["metrics"][metric] = \
+                    #     f"{self.log_history.get('output').get('metrics').get(metric)[-1]}"
                     self.progress_table[self.current_epoch]["data"]["Прогресс обучения"]["metrics"][f"{metric}"] = \
                         f"{self.log_history.get('output').get('metrics').get(metric)[-1]}"
         except Exception as e:
@@ -1381,11 +1430,11 @@ class InteractiveCallback:
                             "mode")
                         if sum(self.log_history.get(f"{metric_graph_config.output_idx}").get(
                                 "progress_state").get("metrics").get(metric_graph_config.show_metric.name).get(
-                            'overfitting')[-self.log_gap:]) >= self.progress_threashold:
+                                'overfitting')[-self.log_gap:]) >= self.progress_threashold:
                             progress_state = 'overfitting'
                         elif sum(self.log_history.get(f"{metric_graph_config.output_idx}").get(
                                 "progress_state").get("metrics").get(metric_graph_config.show_metric.name).get(
-                            'underfitting')[-self.log_gap:]) >= self.progress_threashold:
+                                'underfitting')[-self.log_gap:]) >= self.progress_threashold:
                             progress_state = 'underfitting'
                         else:
                             progress_state = 'normal'
@@ -1468,7 +1517,7 @@ class InteractiveCallback:
                             "mode")
                         if sum(self.log_history.get("output").get("progress_state").get(
                                 "metrics").get(metric_graph_config.show_metric.name).get(
-                            'overfitting')[-self.log_gap:]) >= self.progress_threashold:
+                                'overfitting')[-self.log_gap:]) >= self.progress_threashold:
                             progress_state = 'overfitting'
                         else:
                             progress_state = 'normal'
