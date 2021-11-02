@@ -30,7 +30,7 @@ from ..data.modeling.model import ModelsGroupsList, ModelLoadData, ModelDetailsD
 from ..data.presets.datasets import DatasetsGroups
 from ..data.presets.models import ModelsGroups
 from ..data.projects.project import ProjectsInfoData, ProjectsList
-from ..data.training.train import TrainData, InteractiveData
+from ..data.training.train import TrainingDetailsData, InteractiveData
 from ..datasets import loading as datasets_loading
 from ..datasets import utils as datasets_utils
 from ..datasets.creating import CreateDataset
@@ -314,8 +314,7 @@ class Exchange:
         model: ModelDetailsData,
         training_path: Path,
         dataset_path: Path,
-        params: TrainData,
-        initial_config: InteractiveData,
+        training: TrainingDetailsData,
     ):
         """
         Старт обучения
@@ -339,8 +338,7 @@ class Exchange:
             gui_model=model,
             training_path=training_path,
             dataset_path=dataset_path,
-            training_params=params,
-            initial_config=initial_config,
+            training=training,
         )
         return interactive.train_states
 

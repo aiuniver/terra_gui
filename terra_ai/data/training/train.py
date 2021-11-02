@@ -109,9 +109,8 @@ class StateData(BaseMixinData):
     status: StateStatusChoice
     buttons: Optional[StateButtonsData]
 
-    @validator("buttons", always=True)
-    def _validate_buttons(cls, value: StateButtonsData, values) -> StateButtonsData:
-        status = values.get("status")
+    @staticmethod
+    def get_buttons(status: StateStatusChoice) -> dict:
         value = {
             "train": {"title": "Обучить", "visible": True},
             "stop": {"title": "Остановить", "visible": False},
@@ -134,6 +133,14 @@ class StateData(BaseMixinData):
             value["clear"].update({"visible": True})
             value["save"].update({"visible": True})
         return StateButtonsData(**value)
+
+    @validator("buttons", always=True)
+    def _validate_buttons(cls, value: StateButtonsData, values) -> StateButtonsData:
+        return StateData.get_buttons(values.get("status"))
+
+    def set(self, value: str):
+        self.status = StateStatusChoice[value]
+        self.buttons = StateData.get_buttons(self.status)
 
 
 class OptimizerData(BaseMixinData):
@@ -211,3 +218,11 @@ class TrainData(BaseMixinData):
     epochs: PositiveInt = 20
     optimizer: OptimizerData = OptimizerData(type=OptimizerChoice.Adam)
     architecture: ArchitectureData = ArchitectureData(type=ArchitectureChoice.Basic)
+
+
+class TrainingDetailsData(BaseMixinData):
+    name: str = "__current"
+    base: TrainData = TrainData()
+    interactive: InteractiveData = InteractiveData()
+    state: StateData = StateData(status="no_train")
+    result: Optional[dict]
