@@ -387,9 +387,9 @@ class BaseObjectDetectionCallback:
                                     sensitivity: float = 0.25, get_optimal_channel=False):
         method_name = 'prepare_example_idx_to_show'
         try:
-            # print(box_channel)
+            print(box_channel)
             if get_optimal_channel:
-                # print('get_optimal_channel', get_optimal_channel)
+                print('get_optimal_channel', get_optimal_channel)
                 channel_stat = []
                 for channel in range(3):
                     total_metric = 0
@@ -414,18 +414,18 @@ class BaseObjectDetectionCallback:
                             sensitivity=sensitivity
                         )['total_stat']['total_metric']
                     )
-                # print('stat', stat)
+                print('stat', stat)
                 stat_dict = dict(zip(np.arange(0, len(stat)), stat))
-                # print('stat_dict', stat_dict)
+                print('stat_dict', stat_dict)
                 if choice_type == ExampleChoiceTypeChoice.best:
                     # print('choice_type', choice_type)
                     example_idx, _ = sort_dict(stat_dict, mode=BalanceSortedChoice.descending)
                     example_idx = example_idx[:count]
-                    # print('example_idx', example_idx)
+                    print('example_idx', example_idx)
                 else:
                     example_idx, _ = sort_dict(stat_dict, mode=BalanceSortedChoice.ascending)
                     example_idx = example_idx[:count]
-                    # print('example_idx', example_idx)
+                    print('example_idx', example_idx)
 
             elif choice_type == ExampleChoiceTypeChoice.seed:
                 example_idx = seed_idx[:count]
@@ -444,7 +444,7 @@ class BaseObjectDetectionCallback:
                         true_false_dict['true'].append(i)
                     else:
                         true_false_dict['false'].append(i)
-                # print('true_false_dict', true_false_dict)
+                print('true_false_dict', true_false_dict)
                 example_idx = []
                 for _ in range(count):
                     if true_false_dict.get('true') and true_false_dict.get('false'):
@@ -455,7 +455,7 @@ class BaseObjectDetectionCallback:
                         key = 'false'
                     example_idx.append(true_false_dict.get(key)[0])
                     true_false_dict.get(key).pop(0)
-                # print('example_idx', example_idx)
+                print('example_idx', example_idx)
                 np.random.shuffle(example_idx)
             else:
                 example_idx = np.random.randint(0, len(true_array.get(box_channel)), count)

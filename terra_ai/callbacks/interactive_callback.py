@@ -272,7 +272,6 @@ class InteractiveCallback:
                     if self.options.data.architecture in self.yolo_architecture and \
                             self.interactive_config.statistic_data.box_channel \
                             and self.interactive_config.statistic_data.autoupdate:
-                        # TODO: CHECK!!!
                         self.statistic_result = self.callback.statistic_data_request(
                             interactive_config=self.interactive_config,
                             options=self.options,
