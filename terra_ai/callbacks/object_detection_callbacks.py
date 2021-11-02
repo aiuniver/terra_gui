@@ -387,7 +387,7 @@ class BaseObjectDetectionCallback:
                                     sensitivity: float = 0.25, get_optimal_channel=False):
         method_name = 'prepare_example_idx_to_show'
         try:
-            print(box_channel)
+            print('box_channel', box_channel)
             if get_optimal_channel:
                 print('get_optimal_channel', get_optimal_channel)
                 channel_stat = []
@@ -405,7 +405,7 @@ class BaseObjectDetectionCallback:
 
             if choice_type == ExampleChoiceTypeChoice.best or choice_type == ExampleChoiceTypeChoice.worst:
                 stat = []
-                print('array', array)
+                print('array', array.get(box_channel)[0])
                 for example in range(len(array.get(box_channel))):
                     print('stat', example)
                     stat.append(
@@ -434,7 +434,7 @@ class BaseObjectDetectionCallback:
 
             elif choice_type == ExampleChoiceTypeChoice.random:
                 true_false_dict = {'true': [], 'false': []}
-                print('\narray', array)
+                print('array', array.get(box_channel)[0])
                 for i, example in enumerate(array.get(box_channel)):
                     print('i, example', i)
                     ex_stat = BaseObjectDetectionCallback().get_yolo_example_statistic(
