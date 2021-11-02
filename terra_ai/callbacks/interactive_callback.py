@@ -12,8 +12,7 @@ import numpy as np
 from terra_ai import progress
 from terra_ai.callbacks.classification_callbacks import ImageClassificationCallback, TextClassificationCallback, \
     AudioClassificationCallback, VideoClassificationCallback, DataframeClassificationCallback, TimeseriesTrendCallback
-from terra_ai.callbacks.object_detection_callbacks import YoloV3Callback, YoloV4Callback, \
-    prepare_yolo_example_idx_to_show
+from terra_ai.callbacks.object_detection_callbacks import YoloV3Callback, YoloV4Callback
 from terra_ai.callbacks.regression_callbacks import DataframeRegressionCallback
 from terra_ai.callbacks.segmentation_callbacks import ImageSegmentationCallback, TextSegmentationCallback
 from terra_ai.callbacks.time_series_callbacks import TimeseriesCallback
@@ -127,8 +126,8 @@ class InteractiveCallback:
         self.options = dataset
         self._callback_router(dataset)
         self._class_metric_list()
-        print('self._class_metric_list()', self.class_graphics)
-        print('\nset_attributes', dataset.data.architecture)
+        print('\nself._class_metric_list()', self.class_graphics)
+        print('set_attributes', dataset.data.architecture)
         self.preset_path = os.path.join(training_path, "presets")
         if not os.path.exists(self.preset_path):
             os.mkdir(self.preset_path)
@@ -141,7 +140,7 @@ class InteractiveCallback:
         self.dataset_path = dataset_path
         self.class_colors = get_classes_colors(dataset)
         self.x_val, self.inverse_x_val = self.callback.get_x_array(dataset)
-        self.y_true, self.inverse_y_true = self.callback.get_y_true(dataset)
+        self.y_true, self.inverse_y_true = self.callback.get_y_true(dataset, dataset_path)
         if not self.log_history:
             self._prepare_null_log_history_template()
         self.dataset_balance = self.callback.dataset_balance(
@@ -220,7 +219,7 @@ class InteractiveCallback:
                     self.raw_y_pred = y_pred
                     self.raw_y_true = y_true
                     if self.interactive_config.intermediate_result.show_results:
-                        self.example_idx, _ = prepare_yolo_example_idx_to_show(
+                        self.example_idx, _ = self.callback.prepare_example_idx_to_show(
                             array=copy.deepcopy(self.y_pred),
                             true_array=copy.deepcopy(self.y_true),
                             name_classes=self.options.data.outputs.get(
@@ -250,7 +249,8 @@ class InteractiveCallback:
                             inverse_y_pred=self.inverse_y_pred,
                             y_true=self.y_true,
                             inverse_y_true=self.inverse_y_true,
-                            class_colors=self.class_colors
+                            class_colors=self.class_colors,
+                            raw_y_pred=self.raw_y_pred
                         )
                     if self.options.data.architecture in self.basic_architecture and \
                             self.interactive_config.statistic_data.output_id \
@@ -261,7 +261,8 @@ class InteractiveCallback:
                             y_true=self.y_true,
                             inverse_y_true=self.inverse_y_true,
                             y_pred=self.y_pred,
-                            inverse_y_pred=self.inverse_y_pred
+                            inverse_y_pred=self.inverse_y_pred,
+                            raw_y_pred=self.raw_y_pred
                         )
                     if self.options.data.architecture in self.yolo_architecture and \
                             self.interactive_config.statistic_data.box_channel \
@@ -274,6 +275,7 @@ class InteractiveCallback:
                             y_pred=self.y_pred,
                             inverse_y_pred=self.inverse_y_pred,
                             inverse_y_true=self.inverse_y_true,
+                            raw_y_pred=self.raw_y_pred
                         )
                 else:
                     self.intermediate_result = self.callback.intermediate_result_request(
@@ -288,7 +290,8 @@ class InteractiveCallback:
                         inverse_y_pred=self.inverse_y_pred,
                         y_true=self.y_true,
                         inverse_y_true=self.inverse_y_true,
-                        class_colors=self.class_colors
+                        class_colors=self.class_colors,
+                        raw_y_pred=self.raw_y_pred
                     )
                     if self.options.data.architecture in self.basic_architecture and \
                             self.interactive_config.statistic_data.output_id:
@@ -299,6 +302,7 @@ class InteractiveCallback:
                             y_pred=self.y_pred,
                             inverse_y_pred=self.inverse_y_pred,
                             inverse_y_true=self.inverse_y_true,
+                            raw_y_pred=self.raw_y_pred
                         )
                     if self.options.data.architecture in self.yolo_architecture and \
                             self.interactive_config.statistic_data.box_channel:
@@ -310,6 +314,7 @@ class InteractiveCallback:
                             y_pred=self.y_pred,
                             inverse_y_pred=self.inverse_y_pred,
                             inverse_y_true=self.inverse_y_true,
+                            raw_y_pred=self.raw_y_pred
                         )
                 self.urgent_predict = False
                 self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
@@ -361,7 +366,8 @@ class InteractiveCallback:
                         inverse_y_pred=self.inverse_y_pred,
                         y_true=self.y_true,
                         inverse_y_true=self.inverse_y_true,
-                        class_colors=self.class_colors
+                        class_colors=self.class_colors,
+                        raw_y_pred=self.raw_y_pred
                     )
                     if self.interactive_config.statistic_data.output_id:
                         self.statistic_result = self.callback.statistic_data_request(
@@ -375,7 +381,7 @@ class InteractiveCallback:
 
             if self.options.data.architecture in self.yolo_architecture:
                 if self.interactive_config.intermediate_result.show_results:
-                    self.example_idx, _ = prepare_yolo_example_idx_to_show(
+                    self.example_idx, _ = self.callback.prepare_example_idx_to_show(
                         array=copy.deepcopy(self.y_pred),
                         true_array=copy.deepcopy(self.y_true),
                         name_classes=self.options.data.outputs.get(
@@ -400,7 +406,8 @@ class InteractiveCallback:
                         inverse_y_pred=self.inverse_y_pred,
                         y_true=self.y_true,
                         inverse_y_true=self.inverse_y_true,
-                        class_colors=self.class_colors
+                        class_colors=self.class_colors,
+                        raw_y_pred=self.raw_y_pred
                     )
                     if self.interactive_config.statistic_data.box_channel:
                         self.statistic_result = self.callback.statistic_data_request(
@@ -410,6 +417,7 @@ class InteractiveCallback:
                             y_pred=self.y_pred,
                             inverse_y_pred=self.inverse_y_pred,
                             inverse_y_true=self.inverse_y_true,
+                            raw_y_pred=self.raw_y_pred
                         )
 
             self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))

@@ -358,7 +358,7 @@ def print_error(class_name: str, method_name: str, message: Exception):
                  f'\n_________________________________________________\n')
 
 
-class InteractiveCallback:
+class InteractiveCallbackOld:
     """Callback for interactive requests"""
 
     def __init__(self):
@@ -955,10 +955,12 @@ class InteractiveCallback:
             dataset_balance = {}
             for out in self.options.data.outputs.keys():
                 task = self.options.data.outputs.get(out).task
-                # print('self.options.data.outputs.get(out)', self.options.data.outputs.get(out))
+                print('self.options.data.outputs.get(out)', self.options.data.outputs.get(out))
                 encoding = self.options.data.outputs.get(out).encoding
 
                 if task == LayerOutputTypeChoice.Classification or task == LayerOutputTypeChoice.TimeseriesTrend:
+                    print('self.y_true.get(data_type)', self.y_true.get('train').keys(), self.options.data.outputs.get(out).classes_names)
+                    print('self.y_true.get(data_type).get(f"{out}")', self.y_true.get('train').get(f"{out}").shape)
                     dataset_balance[f"{out}"] = {'class_histogramm': {}}
                     for data_type in ['train', 'val']:
                         dataset_balance[f"{out}"]['class_histogramm'][data_type] = class_counter(

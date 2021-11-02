@@ -33,7 +33,7 @@ class BaseSegmentationCallback:
             print_error(BaseSegmentationCallback().name, method_name, e)
 
     @staticmethod
-    def get_y_true(options):
+    def get_y_true(options, dataset_path):
         method_name = 'get_y_true'
         try:
             y_true = {"train": {}, "val": {}}
@@ -136,6 +136,7 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
     def __init__(self):
         super().__init__()
         self.name = 'ImageSegmentationCallback'
+        print(f'Callback {self.name} is called')
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str, preset_path: str,
@@ -373,7 +374,7 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
                                     preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
-                                    y_true, inverse_y_true, class_colors) -> dict:
+                                    y_true, inverse_y_true, class_colors, raw_y_pred) -> dict:
         method_name = 'intermediate_result_request'
         try:
             return_data = {}
@@ -428,7 +429,7 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
 
     @staticmethod
     def statistic_data_request(interactive_config, options, y_true, inverse_y_true,
-                               y_pred, inverse_y_pred) -> list:
+                               y_pred, inverse_y_pred, raw_y_pred=None) -> list:
         method_name = 'statistic_data_request'
         try:
             return_data = []
@@ -515,6 +516,7 @@ class TextSegmentationCallback(BaseSegmentationCallback):
     def __init__(self):
         super().__init__()
         self.name = 'ImageSegmentationCallback'
+        print(f'Callback {self.name} is called')
 
     @staticmethod
     def postprocess_initial_source(options, example_id: int, return_mode='deploy'):
@@ -752,7 +754,7 @@ class TextSegmentationCallback(BaseSegmentationCallback):
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
                                     preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
-                                    y_true, inverse_y_true, class_colors) -> dict:
+                                    y_true, inverse_y_true, class_colors, raw_y_pred) -> dict:
         method_name = 'intermediate_result_request'
         try:
             return_data = {}
@@ -808,7 +810,7 @@ class TextSegmentationCallback(BaseSegmentationCallback):
 
     @staticmethod
     def statistic_data_request(interactive_config, options, y_true, inverse_y_true,
-                               y_pred, inverse_y_pred) -> list:
+                               y_pred, inverse_y_pred, raw_y_pred=None) -> list:
         method_name = 'statistic_data_request'
         try:
             return_data = []

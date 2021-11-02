@@ -22,7 +22,7 @@ class BaseClassificationCallback:
         self.name = 'BaseClassificationCallback'
 
     @staticmethod
-    def get_y_true(options):
+    def get_y_true(options, dataset_path):
         method_name = 'get_y_true'
         try:
             y_true = {"train": {}, "val": {}}
@@ -75,7 +75,7 @@ class BaseClassificationCallback:
 
     @staticmethod
     def statistic_data_request(interactive_config, options, y_true, inverse_y_true,
-                               y_pred, inverse_y_pred) -> list:
+                               y_pred, inverse_y_pred, raw_y_pred=None) -> list:
         method_name = 'statistic_data_request'
         try:
             return_data = []
@@ -326,6 +326,7 @@ class ImageClassificationCallback(BaseClassificationCallback):
     def __init__(self):
         super().__init__()
         self.name = 'ImageClassificationCallback'
+        print(f'Callback {self.name} is called')
 
     @staticmethod
     def get_x_array(options):
@@ -441,7 +442,7 @@ class ImageClassificationCallback(BaseClassificationCallback):
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
                                     preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
-                                    y_true, inverse_y_true, class_colors):
+                                    y_true, inverse_y_true, class_colors, raw_y_pred):
         method_name = 'intermediate_result_request'
         try:
             return_data = {}
@@ -495,6 +496,7 @@ class TextClassificationCallback(BaseClassificationCallback):
     def __init__(self):
         super().__init__()
         self.name = 'TextClassificationCallback'
+        print(f'Callback {self.name} is called')
 
     @staticmethod
     def get_x_array(options):
@@ -584,7 +586,7 @@ class TextClassificationCallback(BaseClassificationCallback):
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
                                     preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
-                                    y_true, inverse_y_true, class_colors):
+                                    y_true, inverse_y_true, class_colors, raw_y_pred):
         method_name = 'intermediate_result_request'
         try:
             return_data = {}
@@ -632,6 +634,7 @@ class DataframeClassificationCallback(BaseClassificationCallback):
     def __init__(self):
         super().__init__()
         self.name = 'DataframeClassificationCallback'
+        print(f'Callback {self.name} is called')
 
     @staticmethod
     def get_x_array(options):
@@ -724,7 +727,7 @@ class DataframeClassificationCallback(BaseClassificationCallback):
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
                                     preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
-                                    y_true, inverse_y_true, class_colors):
+                                    y_true, inverse_y_true, class_colors, raw_y_pred):
         method_name = 'intermediate_result_request'
         try:
             return_data = {}
@@ -774,6 +777,7 @@ class AudioClassificationCallback(BaseClassificationCallback):
     def __init__(self):
         super().__init__()
         self.name = 'AudioClassificationCallback'
+        print(f'Callback {self.name} is called')
 
     @staticmethod
     def get_x_array(options):
@@ -872,7 +876,7 @@ class AudioClassificationCallback(BaseClassificationCallback):
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
                                     preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
-                                    y_true, inverse_y_true, class_colors):
+                                    y_true, inverse_y_true, class_colors, raw_y_pred):
         method_name = 'intermediate_result_request'
         try:
             return_data = {}
@@ -925,6 +929,7 @@ class VideoClassificationCallback(BaseClassificationCallback):
     def __init__(self):
         super().__init__()
         self.name = 'VideoClassificationCallback'
+        print(f'Callback {self.name} is called')
 
     @staticmethod
     def get_x_array(options):
@@ -1022,7 +1027,7 @@ class VideoClassificationCallback(BaseClassificationCallback):
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
                                     preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
-                                    y_true, inverse_y_true, class_colors):
+                                    y_true, inverse_y_true, class_colors, raw_y_pred):
         method_name = 'intermediate_result_request'
         try:
             return_data = {}
@@ -1074,6 +1079,7 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
     def __init__(self):
         super().__init__()
         self.name = 'TimeseriesTrendCallback'
+        print(f'Callback {self.name} is called')
 
     @staticmethod
     def get_x_array(options):
@@ -1210,7 +1216,7 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
                                     preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
-                                    y_true, inverse_y_true, class_colors):
+                                    y_true, inverse_y_true, class_colors, raw_y_pred):
         method_name = 'intermediate_result_request'
         try:
             return_data = {}

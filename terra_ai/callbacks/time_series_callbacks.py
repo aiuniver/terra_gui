@@ -11,7 +11,7 @@ from terra_ai.settings import MAX_GRAPH_LENGTH, CALLBACK_REGRESSION_TREASHOLD_VA
 class TimeseriesCallback:
     def __init__(self):
         self.name = 'TimeseriesCallback'
-        pass
+        print(f'Callback {self.name} is called')
 
     @staticmethod
     def get_x_array(options):
@@ -45,7 +45,7 @@ class TimeseriesCallback:
             print_error(TimeseriesCallback().name, method_name, e)
 
     @staticmethod
-    def get_y_true(options):
+    def get_y_true(options, dataset_path):
         method_name = 'get_y_true'
         try:
             y_true = {"train": {}, "val": {}}
@@ -238,7 +238,7 @@ class TimeseriesCallback:
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
                                     preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
-                                    y_true, inverse_y_true, class_colors):
+                                    y_true, inverse_y_true, class_colors, raw_y_pred):
         method_name = 'intermediate_result_request'
         try:
             return_data = {}
@@ -290,7 +290,7 @@ class TimeseriesCallback:
 
     @staticmethod
     def statistic_data_request(interactive_config, inverse_y_true, y_pred, inverse_y_pred, options=None,
-                               y_true=None) -> list:
+                               y_true=None, raw_y_pred=None) -> list:
         method_name = 'statistic_data_request'
         try:
             return_data = []

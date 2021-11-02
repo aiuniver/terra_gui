@@ -20,42 +20,55 @@ class BaseObjectDetectionCallback:
         pass
 
     @staticmethod
-    def get_yolo_y_true(options):
-        method_name = 'get_x_array'
+    def get_x_array(options):
+        x_val = None
+        inverse_x_val = None
+        return x_val, inverse_x_val
+
+    @staticmethod
+    def get_yolo_y_true(options, dataset_path):
+        method_name = 'get_yolo_y_true'
         try:
             y_true = {}
-            inverse_y_true = {}
             bb = []
-            for index in range(len(options.dataset['val'])):
+            model_size = options.data.inputs.get(list(options.data.inputs.keys())[0]).shape[:2]
+            for index in range(len(options.dataframe['val'])):
+                image_path = os.path.join(
+                    dataset_path, options.dataframe['val'][options.dataframe['val'].columns[0]][index])
+                img = Image.open(image_path)
+                real_size = img.size
+                scale_w = model_size[0] / real_size[0]
+                scale_h = model_size[1] / real_size[1]
                 coord = options.dataframe.get('val').iloc[index, 1].split(' ')
                 bbox_data_gt = np.array([list(map(int, box.split(','))) for box in coord])
-                bboxes_gt, classes_gt = bbox_data_gt[:, :4], bbox_data_gt[:, 4]
+                bboxes_gt, classes_gt = bbox_data_gt[:, :4].astype('float'), bbox_data_gt[:, 4]
+                # print('\n bboxes_gt', bboxes_gt)
                 classes_gt = to_categorical(
                     classes_gt, num_classes=len(options.data.outputs.get(2).classes_names)
                 )
                 bboxes_gt = np.concatenate(
-                    [bboxes_gt[:, 1:2], bboxes_gt[:, 0:1], bboxes_gt[:, 3:4], bboxes_gt[:, 2:3]], axis=-1)
+                    [bboxes_gt[:, 1:2] * scale_h, bboxes_gt[:, 0:1] * scale_w,
+                     bboxes_gt[:, 3:4] * scale_h, bboxes_gt[:, 2:3] * scale_w], axis=-1).astype('int')
+                # print(bboxes_gt)
                 conf_gt = np.expand_dims(np.ones(len(bboxes_gt)), axis=-1)
                 _bb = np.concatenate([bboxes_gt, conf_gt, classes_gt], axis=-1)
                 bb.append(_bb)
-            for channel in range(len(options.Y.get('val').keys())):
+            for channel in range(len(options.data.outputs.keys())):
                 y_true[channel] = bb
-            return y_true, inverse_y_true
+            return y_true, None
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
 
-
     @staticmethod
     def get_yolo_y_pred(array, options, sensitivity: float = 0.15, threashold: float = 0.1):
-        method_name = 'get_x_array'
+        method_name = 'get_yolo_y_pred'
         try:
             y_pred = {}
-            # inverse_y_pred = {}
             name_classes = options.data.outputs.get(list(options.data.outputs.keys())[0]).classes_names
             for i, box_array in enumerate(array):
                 channel_boxes = []
                 for ex in box_array:
-                    boxes = get_predict_boxes(
+                    boxes = BaseObjectDetectionCallback().get_predict_boxes(
                         array=np.expand_dims(ex, axis=0),
                         name_classes=name_classes,
                         bb_size=i,
@@ -68,70 +81,55 @@ class BaseObjectDetectionCallback:
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
 
-
     @staticmethod
     def bboxes_iou(boxes1, boxes2):
-        method_name = 'get_x_array'
+        method_name = 'bboxes_iou'
         try:
             boxes1 = np.array(boxes1)
             boxes2 = np.array(boxes2)
-
             boxes1_area = (boxes1[..., 2] - boxes1[..., 0]) * (boxes1[..., 3] - boxes1[..., 1])
             boxes2_area = (boxes2[..., 2] - boxes2[..., 0]) * (boxes2[..., 3] - boxes2[..., 1])
-
             left_up = np.maximum(boxes1[..., :2], boxes2[..., :2])
             right_down = np.minimum(boxes1[..., 2:], boxes2[..., 2:])
-
             inter_section = np.maximum(right_down - left_up, 0.0)
             inter_area = inter_section[..., 0] * inter_section[..., 1]
             union_area = boxes1_area + boxes2_area - inter_area
             ious = np.maximum(1.0 * inter_area / union_area, np.finfo(np.float32).eps)
-
             return ious
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
 
-
     @staticmethod
     def non_max_suppression_fast(boxes: np.ndarray, scores: np.ndarray, sensitivity: float = 0.15):
-        method_name = 'get_x_array'
+        method_name = 'non_max_suppression_fast'
         try:
             if len(boxes) == 0:
                 return [], []
-
             pick = []
-
             x1 = boxes[:, 0]
             y1 = boxes[:, 1]
             x2 = boxes[:, 2]
             y2 = boxes[:, 3]
-
             area = (x2 - x1 + 1) * (y2 - y1 + 1)
             classes = np.argmax(scores, axis=-1)
             idxs = np.argsort(classes)[..., ::-1]
-
             mean_iou = []
             while len(idxs) > 0:
                 last = len(idxs) - 1
                 i = idxs[last]
                 pick.append(i)
-
                 xx1 = np.maximum(x1[i], x1[idxs[:last]])
                 yy1 = np.maximum(y1[i], y1[idxs[:last]])
                 xx2 = np.minimum(x2[i], x2[idxs[:last]])
                 yy2 = np.minimum(y2[i], y2[idxs[:last]])
-
                 w = np.maximum(0, xx2 - xx1 + 1)
                 h = np.maximum(0, yy2 - yy1 + 1)
-
                 overlap = (w * h) / area[idxs[:last]]
                 mean_iou.append(overlap)
                 idxs = np.delete(idxs, np.concatenate(([last], np.where(overlap > sensitivity)[0])))
-
             return pick, mean_iou
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
-
 
     @staticmethod
     def get_predict_boxes(array, name_classes: list, bb_size: int = 1, sensitivity: float = 0.15,
@@ -139,30 +137,23 @@ class BaseObjectDetectionCallback:
         """
         Boxes for 1 example
         """
-        method_name = 'get_x_array'
+        method_name = 'get_predict_boxes'
         try:
             num_classes = len(name_classes)
             anchors = np.array([[10, 13], [16, 30], [33, 23],
                                 [30, 61], [62, 45], [59, 119],
                                 [116, 90], [156, 198], [373, 326]])
-
             anchor_mask = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
-
             level_anchor = bb_size
             num_anchors = len(anchors[anchor_mask[level_anchor]])
-
             grid_shape = array.shape[1:3]
-
             feats = np.reshape(array, (-1, grid_shape[0], grid_shape[1], num_anchors, num_classes + 5))
-
             xy_param = feats[..., :2]
             wh_param = feats[..., 2:4]
             conf_param = feats[..., 4:5]
             class_param = feats[..., 5:]
-
             box_yx = xy_param[..., ::-1].copy()
             box_hw = wh_param[..., ::-1].copy()
-
             box_mins = box_yx - (box_hw / 2.)
             box_maxes = box_yx + (box_hw / 2.)
             _boxes = np.concatenate([
@@ -171,7 +162,6 @@ class BaseObjectDetectionCallback:
                 box_maxes[..., 0:1],
                 box_maxes[..., 1:2]
             ], axis=-1)
-
             _boxes_reshape = np.reshape(_boxes, (-1, 4))
             _box_scores = conf_param * class_param
             _box_scores_reshape = np.reshape(_box_scores, (-1, num_classes))
@@ -189,19 +179,31 @@ class BaseObjectDetectionCallback:
             _scores_out = _scores_out[1:]
             _class_param_out = _class_param_out[1:]
             _conf_param = (_scores_out / _class_param_out)[:, :1]
-            pick, _ = non_max_suppression_fast(_boxes_out, _scores_out, sensitivity)
+            pick, _ = BaseObjectDetectionCallback().non_max_suppression_fast(_boxes_out, _scores_out, sensitivity)
             return np.concatenate([_boxes_out[pick], _conf_param[pick], _scores_out[pick]], axis=-1)
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
 
-
     @staticmethod
     def plot_boxes(true_bb, pred_bb, img_path, name_classes, colors, image_id, add_only_true=False, plot_true=True,
                    image_size=(416, 416), save_path='', return_mode='deploy'):
-        method_name = 'get_x_array'
+        method_name = 'plot_boxes'
         try:
             image = Image.open(img_path)
-            image = image.resize(image_size, Image.BICUBIC)
+            real_size = image.size
+            scale_w = real_size[0] / image_size[0]
+            scale_h = real_size[1] / image_size[1]
+
+            def resize_bb(boxes, scale_width, scale_height):
+                coord = boxes[:, :4].astype('float')
+                resized_coord = np.concatenate(
+                    [coord[:, 0:1] * scale_height, coord[:, 1:2] * scale_width,
+                     coord[:, 2:3] * scale_height, coord[:, 3:4] * scale_width], axis=-1).astype('int')
+                resized_coord = np.concatenate([resized_coord, boxes[:, 4:]], axis=-1)
+                return resized_coord
+
+            true_bb = resize_bb(true_bb, scale_w, scale_h)
+            pred_bb = resize_bb(pred_bb, scale_w, scale_h)
 
             def draw_box(draw, box, color, thickness, label=None, label_size=None,
                          dash_mode=False, show_label=False):
@@ -223,18 +225,17 @@ class BaseObjectDetectionCallback:
                         for x in range(top, bottom, 4):
                             draw.line([(cur_y, x), (cur_y + thickness, x)], fill=color, width=2)
                 else:
-                    for th in range(thickness):
+                    for i in range(thickness):
                         draw.rectangle(
-                            [left + th, top + th, right - th, bottom - th],
+                            [left + i, top + i, right - i, bottom - i],
                             outline=color,
                         )
-
                 if show_label:
                     draw.rectangle(
                         [tuple(text_origin), tuple(text_origin + label_size)],
                         fill=color
                     )
-                    draw.text(tuple(text_origin), label, fill=(255, 255, 255), font=font)
+                    draw.text(tuple(text_origin), label, fill=(0, 0, 0), font=font)
                 return draw
 
             font = ImageFont.load_default()
@@ -245,7 +246,7 @@ class BaseObjectDetectionCallback:
                 for i, box in enumerate(true_bb[:, :4]):
                     draw = ImageDraw.Draw(image_pred)
                     true_class = name_classes[classes[i]]
-                    label = '{}'.format(true_class)
+                    label = ' {} '.format(true_class)
                     label_size = draw.textsize(label, font)
                     draw = draw_box(draw, box, colors[classes[i]], thickness,
                                     label=label, label_size=label_size,
@@ -257,7 +258,7 @@ class BaseObjectDetectionCallback:
                 draw = ImageDraw.Draw(image_pred)
                 predicted_class = name_classes[classes[i]]
                 score = pred_bb[:, 5:][i][classes[i]]  # * pred_bb[:, 4][i]
-                label = '{} {:.2f}'.format(predicted_class, score)
+                label = ' {} {:.2f} '.format(predicted_class, score)
                 label_size = draw.textsize(label, font)
                 draw = draw_box(draw, box, colors[classes[i]], thickness,
                                 label=label, label_size=label_size,
@@ -275,7 +276,7 @@ class BaseObjectDetectionCallback:
                 for i, box in enumerate(true_bb[:, :4]):
                     draw = ImageDraw.Draw(image_true)
                     true_class = name_classes[classes[i]]
-                    label = '{}'.format(true_class)
+                    label = ' {} '.format(true_class)
                     label_size = draw.textsize(label, font)
                     draw = draw_box(draw, box, colors[classes[i]], thickness,
                                     label=label, label_size=label_size,
@@ -289,16 +290,12 @@ class BaseObjectDetectionCallback:
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
 
-
     @staticmethod
     def get_yolo_example_statistic(true_bb, pred_bb, name_classes, sensitivity=0.25):
-        method_name = 'get_x_array'
+        method_name = 'get_yolo_example_statistic'
         try:
             compat = {
-                'recognize': {
-                    "empty": [],
-                    'unrecognize': []
-                },
+                'recognize': {"empty": [], 'unrecognize': []},
                 'class_stat': {},
                 'total_stat': {}
             }
@@ -322,9 +319,10 @@ class BaseObjectDetectionCallback:
                 for j, pr in enumerate(pred_bb[:, :4]):
                     boxes = np.array([true_bb[:, :4][i], pred_bb[:, :4][j]])
                     scores = np.array([true_bb[:, 5:][i], pred_bb[:, 5:][j]])
-                    pick, _ = non_max_suppression_fast(boxes, scores, sensitivity=sensitivity)
+                    pick, _ = BaseObjectDetectionCallback().non_max_suppression_fast(
+                        boxes, scores, sensitivity=sensitivity)
                     if len(pick) == 1:
-                        mean_iou = bboxes_iou(boxes[0], boxes[1])
+                        mean_iou = BaseObjectDetectionCallback().bboxes_iou(boxes[0], boxes[1])
                         compat['recognize'][name_classes[np.argmax(true_bb[:, 5:][i], axis=-1)]].append(
                             {
                                 'pred_class': name_classes[np.argmax(pred_bb[:, 5:][j], axis=-1)],
@@ -353,9 +351,7 @@ class BaseObjectDetectionCallback:
             if all_true:
                 for idx in all_true:
                     compat['recognize']['unrecognize'].append(
-                        {
-                            "class_name": name_classes[np.argmax(true_bb[idx, 5:], axis=-1)]
-                        }
+                        {"class_name": name_classes[np.argmax(true_bb[idx, 5:], axis=-1)]}
                     )
 
             for cl in compat['recognize'].keys():
@@ -370,7 +366,8 @@ class BaseObjectDetectionCallback:
                             mean_overlap += pr['overlap']
                     compat['class_stat'][cl] = {
                         'mean_conf': mean_conf / len(compat['recognize'][cl]) if len(compat['recognize'][cl]) else None,
-                        'mean_class': mean_class / len(compat['recognize'][cl]) if len(compat['recognize'][cl]) else None,
+                        'mean_class': mean_class / len(compat['recognize'][cl]) if len(
+                            compat['recognize'][cl]) else None,
                         'mean_overlap': mean_overlap / len(compat['recognize'][cl]) if len(
                             compat['recognize'][cl]) else None
                     }
@@ -384,19 +381,18 @@ class BaseObjectDetectionCallback:
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
 
-
     @staticmethod
-    def prepare_yolo_example_idx_to_show(array: dict, true_array: dict, name_classes: list, box_channel: Optional[int],
-                                         count: int, choice_type: str = "best", seed_idx: list = None,
-                                         sensitivity: float = 0.25, get_optimal_channel=False):
-        method_name = 'get_x_array'
+    def prepare_example_idx_to_show(array: dict, true_array: dict, name_classes: list, box_channel: Optional[int],
+                                    count: int, choice_type: str = "best", seed_idx: list = None,
+                                    sensitivity: float = 0.25, get_optimal_channel=False):
+        method_name = 'prepare_yolo_example_idx_to_show'
         try:
             if get_optimal_channel:
                 channel_stat = []
                 for channel in range(3):
                     total_metric = 0
                     for example in range(len(array.get(channel))):
-                        total_metric += get_yolo_example_statistic(
+                        total_metric += BaseObjectDetectionCallback().get_yolo_example_statistic(
                             true_bb=true_array.get(channel)[example],
                             pred_bb=array.get(channel)[example],
                             name_classes=name_classes,
@@ -409,7 +405,7 @@ class BaseObjectDetectionCallback:
                 stat = []
                 for example in range(len(array.get(box_channel))):
                     stat.append(
-                        get_yolo_example_statistic(
+                        BaseObjectDetectionCallback().get_yolo_example_statistic(
                             true_bb=true_array.get(box_channel)[example],
                             pred_bb=array.get(box_channel)[example],
                             name_classes=name_classes,
@@ -428,151 +424,146 @@ class BaseObjectDetectionCallback:
                 example_idx = seed_idx[:count]
 
             elif choice_type == ExampleChoiceTypeChoice.random:
-                example_idx = np.random.randint(0, len(true_array.get(box_channel)), count)
+                true_false_dict = {'true': [], 'false': []}
+                for i, example in enumerate(array.get(box_channel)):
+                    ex_stat = BaseObjectDetectionCallback().get_yolo_example_statistic(
+                        true_bb=true_array.get(box_channel)[example],
+                        pred_bb=array.get(box_channel)[example],
+                        name_classes=name_classes,
+                        sensitivity=sensitivity
+                    )['total_stat']['total_metric']
+                    if ex_stat > 0.7:
+                        true_false_dict['true'].append(i)
+                    else:
+                        true_false_dict['false'].append(i)
+                example_idx = []
+                for _ in range(count):
+                    if true_false_dict.get('true') and true_false_dict.get('false'):
+                        key = np.random.choice(list(true_false_dict.keys()))
+                    elif true_false_dict.get('true') and not true_false_dict.get('false'):
+                        key = 'true'
+                    else:
+                        key = 'false'
+                    example_idx.append(true_false_dict.get(key)[0])
+                    true_false_dict.get(key).pop(0)
+                np.random.shuffle(example_idx)
             else:
-                example_idx = np.arange(count)
+                example_idx = np.random.randint(0, len(true_array.get(box_channel)), count)
             return example_idx, box_channel
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
-
 
     @staticmethod
     def postprocess_object_detection(predict_array, true_array, image_path: str, colors: list,
                                      sensitivity: float, image_id: int, save_path: str, show_stat: bool,
                                      name_classes: list, return_mode='deploy', image_size=(416, 416)):
-        method_name = 'get_x_array'
+        method_name = 'postprocess_object_detection'
         try:
-            data = {
-                "y_true": {},
-                "y_pred": {},
-                "stat": {}
-            }
+            data = {"y_true": {}, "y_pred": {}, "stat": {}}
             if return_mode == 'deploy':
                 pass
 
             if return_mode == 'callback':
-                save_true_predict_path, _ = plot_boxes(
-                    true_bb=true_array,
-                    pred_bb=predict_array,
-                    img_path=image_path,
-                    name_classes=name_classes,
-                    colors=colors,
-                    image_id=image_id,
-                    add_only_true=False,
-                    plot_true=True,
-                    image_size=image_size,
-                    save_path=save_path,
-                    return_mode=return_mode
+                save_true_predict_path, _ = BaseObjectDetectionCallback().plot_boxes(
+                    true_bb=true_array, pred_bb=predict_array, img_path=image_path, name_classes=name_classes,
+                    colors=colors, image_id=image_id, add_only_true=False, plot_true=True, image_size=image_size,
+                    save_path=save_path, return_mode=return_mode
                 )
 
                 data["y_true"] = {
                     "type": "image",
-                    "data": [
-                        {
-                            "title": "Изображение",
-                            "value": save_true_predict_path,
-                            "color_mark": None
-                        }
-                    ]
+                    "data": [{"title": "Изображение", "value": save_true_predict_path,
+                              "color_mark": None, "size": "large"}]
                 }
 
-                save_predict_path, _ = plot_boxes(
-                    true_bb=true_array,
-                    pred_bb=predict_array,
-                    img_path=image_path,
-                    name_classes=name_classes,
-                    colors=colors,
-                    image_id=image_id,
-                    add_only_true=False,
-                    plot_true=False,
-                    image_size=image_size,
-                    save_path=save_path,
-                    return_mode=return_mode
+                save_predict_path, _ = BaseObjectDetectionCallback().plot_boxes(
+                    true_bb=true_array, pred_bb=predict_array, img_path=image_path, name_classes=name_classes,
+                    colors=colors, image_id=image_id, add_only_true=False, plot_true=False, image_size=image_size,
+                    save_path=save_path, return_mode=return_mode
                 )
 
                 data["y_pred"] = {
                     "type": "image",
-                    "data": [
-                        {
-                            "title": "Изображение",
-                            "value": save_predict_path,
-                            "color_mark": None
-                        }
-                    ]
+                    "data": [{"title": "Изображение", "value": save_predict_path,
+                              "color_mark": None, "size": "large"}]
                 }
                 if show_stat:
-                    box_stat = get_yolo_example_statistic(
-                        true_bb=true_array,
-                        pred_bb=predict_array,
-                        name_classes=name_classes,
+                    box_stat = BaseObjectDetectionCallback().get_yolo_example_statistic(
+                        true_bb=true_array, pred_bb=predict_array, name_classes=name_classes,
                         sensitivity=sensitivity
                     )
-                    data["stat"]["Общая точность"] = [
-                        {
+                    data["stat"]["Общая точность"] = {
+                        "type": "str",
+                        "data": [{
                             "title": "Среднее",
                             "value": f"{np.round(box_stat['total_stat']['total_metric'] * 100, 2)}%",
-                            "color_mark": 'success' if box_stat['total_stat']['total_conf'] >= 0.7 else 'wrong'
-                        },
-                    ]
-                    data["stat"]['Средняя точность'] = [
-                        {
-                            "title": "Перекрытие",
-                            "value": f"{np.round(box_stat['total_stat']['total_overlap'] * 100, 2)}%",
-                            "color_mark": 'success' if box_stat['total_stat']['total_overlap'] >= 0.7 else 'wrong'
-                        },
-                        {
-                            "title": "Объект",
-                            "value": f"{np.round(box_stat['total_stat']['total_conf'] * 100, 2)}%",
-                            "color_mark": 'success' if box_stat['total_stat']['total_conf'] >= 0.7 else 'wrong'
-                        },
-                        {
-                            "title": "Класс",
-                            "value": f"{np.round(box_stat['total_stat']['total_overlap'] * 100, 2)}%",
-                            "color_mark": 'success' if box_stat['total_stat']['total_overlap'] >= 0.7 else 'wrong'
-                        },
-                    ]
-
+                            "color_mark": 'success' if box_stat['total_stat']['total_metric'] >= 0.7 else 'wrong'
+                        }]
+                    }
+                    data["stat"]['Средняя точность'] = {
+                        "type": "str",
+                        "data": [
+                            {
+                                "title": "Перекрытие",
+                                "value": f"{np.round(box_stat['total_stat']['total_overlap'] * 100, 2)}%",
+                                "color_mark": 'success' if box_stat['total_stat']['total_overlap'] >= 0.7 else 'wrong'
+                            },
+                            {
+                                "title": "Объект",
+                                "value": f"{np.round(box_stat['total_stat']['total_conf'] * 100, 2)}%",
+                                "color_mark": 'success' if box_stat['total_stat']['total_conf'] >= 0.7 else 'wrong'
+                            },
+                            {
+                                "title": "Класс",
+                                "value": f"{np.round(box_stat['total_stat']['total_class'] * 100, 2)}%",
+                                "color_mark": 'success' if box_stat['total_stat']['total_class'] >= 0.7 else 'wrong'
+                            },
+                        ]
+                    }
                     for class_name in name_classes:
                         mean_overlap = box_stat['class_stat'][class_name]['mean_overlap']
                         mean_conf = box_stat['class_stat'][class_name]['mean_conf']
                         mean_class = box_stat['class_stat'][class_name]['mean_class']
-                        data["stat"][class_name] = [
-                            {
-                                "title": "Перекрытие",
-                                "value": "-" if mean_overlap is None else f"{np.round(mean_overlap * 100, 2)}%",
-                                "color_mark": 'success' if mean_overlap and mean_overlap >= 0.7 else 'wrong'
-                            },
-                            {
-                                "title": "Объект",
-                                "value": "-" if mean_conf is None else f"{np.round(mean_conf * 100, 2)}%",
-                                "color_mark": 'success' if mean_conf and mean_conf >= 0.7 else 'wrong'
-                            },
-                            {
-                                "title": "Класс",
-                                "value": "-" if mean_class is None else f"{np.round(mean_class * 100, 2)}%",
-                                "color_mark": 'success' if mean_class and mean_class >= 0.7 else 'wrong'
-                            },
-                        ]
+                        data["stat"][f'{class_name}'] = {
+                            "type": "str",
+                            "data": [
+                                {
+                                    "title": "Перекрытие",
+                                    "value": "-" if mean_overlap is None else f"{np.round(mean_overlap * 100, 2)}%",
+                                    "color_mark": 'success' if mean_overlap and mean_overlap >= 0.7 else 'wrong'
+                                },
+                                {
+                                    "title": "Объект",
+                                    "value": "-" if mean_conf is None else f"{np.round(mean_conf * 100, 2)}%",
+                                    "color_mark": 'success' if mean_conf and mean_conf >= 0.7 else 'wrong'
+                                },
+                                {
+                                    "title": "Класс",
+                                    "value": "-" if mean_class is None else f"{np.round(mean_class * 100, 2)}%",
+                                    "color_mark": 'success' if mean_class and mean_class >= 0.7 else 'wrong'
+                                },
+                            ]
+                        }
                 return data
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
 
-
     @staticmethod
     def postprocess_od_deploy(array, options, save_path: str = "", dataset_path: str = "", sensitivity=0.15,
                               threashold=0.1) -> dict:
-        method_name = 'get_x_array'
+        method_name = 'postprocess_od_deploy'
         try:
             return_data = {}
-            y_true = get_yolo_y_true(options)
-            y_pred = get_yolo_y_pred(array, options, sensitivity=sensitivity, threashold=threashold)
+            y_true = BaseObjectDetectionCallback().get_yolo_y_true(options, dataset_path)[0]
+            y_pred = BaseObjectDetectionCallback().get_yolo_y_pred(
+                array, options, sensitivity=sensitivity, threashold=threashold)
             name_classes = options.data.outputs.get(list(options.data.outputs.keys())[0]).classes_names
             hsv_tuples = [(x / len(name_classes), 1., 1.) for x in range(len(name_classes))]
             colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
             colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
             image_size = options.data.inputs.get(list(options.data.inputs.keys())[0]).shape[:2]
 
-            example_idx, bb = prepare_yolo_example_idx_to_show(
+            example_idx, bb = BaseObjectDetectionCallback().prepare_example_idx_to_show(
                 array=y_pred,
                 true_array=y_true,
                 name_classes=options.data.outputs.get(list(options.data.outputs.keys())[0]).classes_names,
@@ -584,32 +575,24 @@ class BaseObjectDetectionCallback:
             )
             return_data[bb] = []
             for ex in example_idx:
-                save_predict_path, _ = plot_boxes(
-                    true_bb=y_true[bb][ex],
-                    pred_bb=y_pred[bb][ex],
-                    img_path=os.path.join(dataset_path, options.dataframe['val'].iat[ex, 0]),
-                    name_classes=name_classes,
-                    colors=colors,
-                    image_id=ex,
-                    add_only_true=False,
-                    plot_true=True,
-                    image_size=image_size,
-                    save_path=save_path,
-                    return_mode='deploy'
+                img_path = os.path.join(dataset_path, options.dataframe['val'].iat[ex, 0])
+                img = Image.open(img_path)
+                img = img.convert('RGB')
+                source = os.path.join(save_path, f"deploy_od_initial_data_{ex}_box_{bb}.webp")
+                img.save(source, 'webp')
+                save_predict_path, _ = BaseObjectDetectionCallback().plot_boxes(
+                    true_bb=y_true[bb][ex], pred_bb=y_pred[bb][ex], img_path=img_path, name_classes=name_classes,
+                    colors=colors, image_id=ex, add_only_true=False, plot_true=False, image_size=image_size,
+                    save_path=save_path, return_mode='deploy'
                 )
-                return_data[bb].append(
-                    {
-                        'predict_img': save_predict_path
-                    }
-                )
+                return_data[bb].append({"source": source, "predict": save_predict_path})
             return return_data
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
 
-
     @staticmethod
     def get_box_square(bbs, imsize=(416, 416)):
-        method_name = 'get_x_array'
+        method_name = 'get_box_square'
         try:
             if len(bbs):
                 square = 0
@@ -621,11 +604,10 @@ class BaseObjectDetectionCallback:
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
 
-
     @staticmethod
     def plot_bb_colormap(class_bb: dict, colors: list, name_classes: list, data_type: str,
                          save_path: str, imgsize=(416, 416)):
-        method_name = 'get_x_array'
+        method_name = 'plot_bb_colormap'
         try:
             template = np.zeros((imgsize[0], imgsize[1], 3))
             link_dict = {}
@@ -643,7 +625,6 @@ class BaseObjectDetectionCallback:
                 )
                 link_dict[name_classes[class_idx]] = img_save_path
                 matplotlib.image.imsave(img_save_path, class_template)
-
             template = template / total_len
             template = (template * 255 / template.max()).astype('uint8')
             img_save_path = os.path.join(save_path, f"image_{data_type}_od_balance_colormap_all_classes.webp")
@@ -653,10 +634,9 @@ class BaseObjectDetectionCallback:
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
 
-
     @staticmethod
     def prepare_dataset_balance(options, class_colors, preset_path) -> dict:
-        method_name = 'get_x_array'
+        method_name = 'prepare_dataset_balance'
         try:
             dataset_balance = {}
             name_classes = options.data.outputs.get(list(options.data.outputs.keys())[0]).classes_names
@@ -667,7 +647,7 @@ class BaseObjectDetectionCallback:
                 class_bb[data_type] = {}
                 for cl in range(len(name_classes)):
                     class_bb[data_type][cl] = []
-                for index in range(len(options.dataset[data_type])):
+                for index in range(len(options.dataframe[data_type])):
                     y_true = options.dataframe.get(data_type).iloc[index, 1].split(' ')
                     bbox_data_gt = np.array([list(map(int, box.split(','))) for box in y_true])
                     bboxes_gt, classes_gt = bbox_data_gt[:, :4], bbox_data_gt[:, 4]
@@ -675,33 +655,30 @@ class BaseObjectDetectionCallback:
                         [bboxes_gt[:, 1:2], bboxes_gt[:, 0:1], bboxes_gt[:, 3:4], bboxes_gt[:, 2:3]], axis=-1)
                     for i, cl in enumerate(classes_gt):
                         class_bb[data_type][cl].append(bboxes_gt[i].tolist())
+
                 dataset_balance["output"]['class_count'][data_type] = {}
                 dataset_balance["output"]['class_square'][data_type] = {}
                 for key, item in class_bb[data_type].items():
                     dataset_balance["output"]['class_count'][data_type][name_classes[key]] = len(item)
                     dataset_balance["output"]['class_square'][data_type][name_classes[key]] = \
-                        round_loss_metric(get_box_square(item, imsize=(imsize[0], imsize[1])))
-                dataset_balance["output"]['colormap'][data_type] = plot_bb_colormap(
-                    class_bb=class_bb,
-                    colors=class_colors,
-                    name_classes=name_classes,
-                    data_type=data_type,
-                    save_path=preset_path,
-                    imgsize=(imsize[0], imsize[1])
+                        round_loss_metric(
+                            BaseObjectDetectionCallback().get_box_square(item, imsize=(imsize[0], imsize[1])))
+                dataset_balance["output"]['colormap'][data_type] = BaseObjectDetectionCallback().plot_bb_colormap(
+                    class_bb=class_bb, colors=class_colors, name_classes=name_classes, data_type=data_type,
+                    save_path=preset_path, imgsize=(imsize[0], imsize[1])
                 )
             return dataset_balance
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
 
-
     @staticmethod
     def get_intermediate_result(options, yolo_interactive_config, raw_y_pred, y_true, example_idx,
                                 dataset_path, class_colors, preset_path) -> dict:
-        method_name = 'get_x_array'
+        method_name = 'get_intermediate_result'
         try:
             return_data = {}
             if yolo_interactive_config.intermediate_result.show_results:
-                y_pred = get_yolo_y_pred(
+                y_pred = BaseObjectDetectionCallback().get_yolo_y_pred(
                     array=raw_y_pred,
                     options=options,
                     sensitivity=yolo_interactive_config.intermediate_result.sensitivity,
@@ -718,7 +695,7 @@ class BaseObjectDetectionCallback:
                     image_path = os.path.join(
                         dataset_path, options.dataframe.get('val').iat[example_idx[idx], 0])
                     out = yolo_interactive_config.intermediate_result.box_channel
-                    data = postprocess_object_detection(
+                    data = BaseObjectDetectionCallback().postprocess_object_detection(
                         predict_array=copy.deepcopy(y_pred.get(out)[example_idx[idx]]),
                         true_array=y_true.get(out)[example_idx[idx]],
                         image_path=image_path,
@@ -739,23 +716,18 @@ class BaseObjectDetectionCallback:
                         return_data[f"{idx + 1}"]['statistic_values'] = data.get('stat')
                     else:
                         return_data[f"{idx + 1}"]['statistic_values'] = {}
-            else:
-                pass
-
             return return_data
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
 
-
     @staticmethod
     def get_statistic_data_request(yolo_interactive_config, options, y_true, raw_y_pred) -> list:
-        method_name = 'get_x_array'
+        method_name = 'get_statistic_data_request'
         try:
             return_data = []
-            _id = 1
             box_channel = yolo_interactive_config.statistic_data.box_channel
             name_classes = options.data.outputs.get(list(options.data.outputs.keys())[0]).classes_names
-            y_pred = get_yolo_y_pred(
+            y_pred = BaseObjectDetectionCallback().get_yolo_y_pred(
                 array=raw_y_pred,
                 options=options,
                 sensitivity=yolo_interactive_config.statistic_data.sensitivity,
@@ -764,7 +736,6 @@ class BaseObjectDetectionCallback:
             object_tt = 0
             object_tf = 0
             object_ft = 0
-
             line_names = []
             class_accuracy_hist = {}
             class_loss_hist = {}
@@ -778,7 +749,7 @@ class BaseObjectDetectionCallback:
 
             class_matrix = np.zeros((len(line_names), len(line_names)))
             for i in range(len(y_pred[box_channel])):
-                example_stat = get_yolo_example_statistic(
+                example_stat = BaseObjectDetectionCallback().get_yolo_example_statistic(
                     true_bb=y_true.get(box_channel)[i],
                     pred_bb=y_pred.get(box_channel)[i],
                     name_classes=name_classes,
@@ -801,7 +772,8 @@ class BaseObjectDetectionCallback:
                     class_matrix[line_names.index(item['class_name'])][-1] += 1
 
             for class_name in name_classes:
-                class_accuracy_hist[class_name] = np.round(np.mean(class_accuracy_hist[class_name]) * 100, 2).item() if \
+                class_accuracy_hist[class_name] = np.round(np.mean(class_accuracy_hist[class_name]) * 100,
+                                                           2).item() if \
                     class_accuracy_hist[class_name] else 0.
                 class_coord_accuracy[class_name] = np.round(np.mean(class_coord_accuracy[class_name]) * 100,
                                                             2).item() if \
@@ -816,7 +788,6 @@ class BaseObjectDetectionCallback:
                 class_matrix_percent.append(i * 100 / np.sum(i) if np.sum(i) else np.zeros_like(i))
             class_matrix_percent = np.round(class_matrix_percent, 2).tolist()
             class_matrix = class_matrix.astype('int').tolist()
-
             return_data.append(
                 fill_heatmap_front_structure(
                     _id=1,
@@ -825,7 +796,7 @@ class BaseObjectDetectionCallback:
                     short_name=f"{box_channel} - Матрица классов",
                     x_label="Предсказание",
                     y_label="Истинное значение",
-                    labels=name_classes,
+                    labels=line_names,
                     data_array=class_matrix,
                     data_percent_array=class_matrix_percent,
                 )
@@ -833,7 +804,7 @@ class BaseObjectDetectionCallback:
             return_data.append(
                 fill_heatmap_front_structure(
                     _id=2,
-                    _type="heatmap",
+                    _type="valheatmap",
                     graph_name=f"Бокс-канал «{box_channel}» - Матрица неточностей определения объектов",
                     short_name=f"{box_channel} - Матрица объектов",
                     x_label="Предсказание",
@@ -887,10 +858,9 @@ class BaseObjectDetectionCallback:
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
 
-
     @staticmethod
     def get_balance_data_request(options, dataset_balance, interactive_config) -> list:
-        method_name = 'get_x_array'
+        method_name = 'get_balance_data_request'
         try:
             return_data = []
             _id = 0
@@ -916,8 +886,10 @@ class BaseObjectDetectionCallback:
                         )
                         _id += 1
                     return_data.append(preset)
+
                 if class_type == "colormap":
-                    classes_name = sorted(list(dataset_balance.get("output").get('colormap').get('train').keys()))
+                    classes_name = sorted(
+                        list(dataset_balance.get("output").get('colormap').get('train').keys()))
                     for class_name in classes_name:
                         preset = {}
                         for data_type in ['train', 'val']:
@@ -946,99 +918,93 @@ class YoloV3Callback(BaseObjectDetectionCallback):
     def __init__(self):
         super().__init__()
         self.name = 'YoloV3Callback'
+        print(f'Callback {self.name} is called')
 
     @staticmethod
-    def get_x_array():
-        x_val = None
-        inverse_x_val = None
-        return x_val, inverse_x_val
-
-    @staticmethod
-    def get_y_true(options):
-        return get_yolo_y_true(options=options)
+    def get_y_true(options, dataset_path):
+        return YoloV3Callback().get_yolo_y_true(options=options, dataset_path=dataset_path)
 
     @staticmethod
     def get_y_pred(y_pred, options, sensitivity: float = 0.15, threashold: float = 0.1):
-        return get_yolo_y_pred(array=y_pred, options=options, sensitivity=sensitivity, threashold=threashold)
+        return YoloV3Callback().get_yolo_y_pred(
+            array=y_pred, options=options, sensitivity=sensitivity, threashold=threashold)
 
     @staticmethod
     def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "", sensitivity=0.15,
                            threashold=0.1):
-        return postprocess_od_deploy(
-            array=array,
-            options=options,
-            save_path=save_path,
-            dataset_path=dataset_path,
-            sensitivity=sensitivity,
-            threashold=threashold
+        return YoloV3Callback().postprocess_od_deploy(
+            array=array, options=options, save_path=save_path, dataset_path=dataset_path,
+            sensitivity=sensitivity, threashold=threashold
         )
 
     @staticmethod
     def dataset_balance(options, y_true, preset_path: str, class_colors) -> dict:
-        return prepare_dataset_balance(options, y_true, preset_path)
+        return YoloV3Callback().prepare_dataset_balance(
+            options=options, class_colors=class_colors, preset_path=preset_path)
 
     @staticmethod
-    def intermediate_result_request(options, yolo_interactive_config, raw_y_pred, y_true, example_idx,
-                                    dataset_path, class_colors, preset_path):
-        return get_intermediate_result(options, yolo_interactive_config, raw_y_pred, y_true, example_idx,
-                                       dataset_path, class_colors, preset_path)
+    def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
+                                    preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
+                                    y_true, inverse_y_true, class_colors, raw_y_pred):
+        return YoloV3Callback().get_intermediate_result(
+            options=options, yolo_interactive_config=interactive_config, raw_y_pred=raw_y_pred, y_true=y_true,
+            example_idx=example_idx, dataset_path=dataset_path, class_colors=class_colors, preset_path=preset_path)
 
     @staticmethod
-    def statistic_data_request(yolo_interactive_config, options, y_true, raw_y_pred) -> list:
-        return get_statistic_data_request(yolo_interactive_config, options, y_true, raw_y_pred)
+    def statistic_data_request(interactive_config, inverse_y_true, y_pred, inverse_y_pred, raw_y_pred, options=None,
+                               y_true=None) -> list:
+        return YoloV3Callback().get_statistic_data_request(
+            yolo_interactive_config=interactive_config, options=options, y_true=y_true, raw_y_pred=raw_y_pred)
 
     @staticmethod
     def balance_data_request(options, dataset_balance, interactive_config) -> list:
-        return get_balance_data_request(options, dataset_balance, interactive_config)
+        return YoloV3Callback().get_balance_data_request(
+            options=options, dataset_balance=dataset_balance, interactive_config=interactive_config)
 
 
-class YoloV4Callback:
+class YoloV4Callback(BaseObjectDetectionCallback):
     def __init__(self):
+        super().__init__()
         self.name = 'YoloV4Callback'
-        pass
+        print(f'Callback {self.name} is called')
 
     @staticmethod
-    def get_x_array():
-        x_val = None
-        inverse_x_val = None
-        return x_val, inverse_x_val
-
-    @staticmethod
-    def prepare_y_true(options):
-        return get_yolo_y_true(options=options)
+    def get_y_true(options, dataset_path):
+        return YoloV4Callback().get_yolo_y_true(options=options, dataset_path=dataset_path)
 
     @staticmethod
     def get_y_pred(y_pred, options, sensitivity: float = 0.15, threashold: float = 0.1):
-        return get_yolo_y_pred(array=y_pred, options=options, sensitivity=sensitivity, threashold=threashold)
+        return YoloV4Callback().get_yolo_y_pred(
+            array=y_pred, options=options, sensitivity=sensitivity, threashold=threashold)
 
     @staticmethod
     def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "", sensitivity=0.15,
                            threashold=0.1):
-        return postprocess_od_deploy(
-            array=array,
-            options=options,
-            save_path=save_path,
-            dataset_path=dataset_path,
-            sensitivity=sensitivity,
-            threashold=threashold
+        return YoloV4Callback().postprocess_od_deploy(
+            array=array, options=options, save_path=save_path, dataset_path=dataset_path,
+            sensitivity=sensitivity, threashold=threashold
         )
 
     @staticmethod
     def dataset_balance(options, y_true, preset_path: str, class_colors) -> dict:
-        return prepare_dataset_balance(options, y_true, preset_path)
+        return YoloV4Callback().prepare_dataset_balance(
+            options=options, class_colors=class_colors, preset_path=preset_path)
 
     @staticmethod
-    def intermediate_result_request(options, yolo_interactive_config, raw_y_pred, y_true, example_idx,
-                                    dataset_path, class_colors, preset_path):
-        return get_intermediate_result(options, yolo_interactive_config, raw_y_pred, y_true, example_idx,
-                                       dataset_path, class_colors, preset_path)
+    def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
+                                    preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
+                                    y_true, inverse_y_true, class_colors, raw_y_pred):
+        return YoloV3Callback().get_intermediate_result(
+            options=options, yolo_interactive_config=interactive_config, raw_y_pred=raw_y_pred, y_true=y_true,
+            example_idx=example_idx, dataset_path=dataset_path, class_colors=class_colors, preset_path=preset_path)
 
     @staticmethod
-    def statistic_data_request(yolo_interactive_config, options, y_true, raw_y_pred) -> list:
-        return get_statistic_data_request(yolo_interactive_config, options, y_true, raw_y_pred)
+    def statistic_data_request(interactive_config, inverse_y_true, y_pred, inverse_y_pred, raw_y_pred, options=None,
+                               y_true=None) -> list:
+        return YoloV4Callback().get_statistic_data_request(
+            yolo_interactive_config=interactive_config, options=options, y_true=y_true, raw_y_pred=raw_y_pred)
 
     @staticmethod
     def balance_data_request(options, dataset_balance, interactive_config) -> list:
-        return get_balance_data_request(options, dataset_balance, interactive_config)
-
-
+        return YoloV4Callback().get_balance_data_request(
+            options=options, dataset_balance=dataset_balance, interactive_config=interactive_config)
