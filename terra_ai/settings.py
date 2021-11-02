@@ -24,6 +24,9 @@ DATASET_ANNOTATION = "labelmap.txt"
 # Modeling
 MODEL_EXT = "model"
 
+# Cascade
+CASCADE_EXT = "cascade"
+
 # Deploy
 DEPLOY_URL = "https://srv1.demo.neural-university.ru/autodeployterra_upload/"
 DEPLOY_PRESET_COUNT = 10

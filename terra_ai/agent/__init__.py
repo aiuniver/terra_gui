@@ -27,6 +27,7 @@ from ..data.extra import (
 )
 from ..data.modeling.extra import ModelGroupChoice
 from ..data.modeling.model import ModelsGroupsList, ModelLoadData, ModelDetailsData
+from ..data.cascades.cascade import CascadesList, CascadeLoadData, CascadeDetailsData
 from ..data.presets.datasets import DatasetsGroups
 from ..data.presets.models import ModelsGroups
 from ..data.projects.project import ProjectsInfoData, ProjectsList
@@ -375,6 +376,21 @@ class Exchange:
         Сохранение обучения
         """
         pass
+
+    def _call_cascade_get(self, value: str) -> CascadeDetailsData:
+        """
+        Получение каскада
+        """
+        data = CascadeLoadData(value=value)
+        with open(data.value.absolute(), "r") as config_ref:
+            config = json.load(config_ref)
+            return CascadeDetailsData(**config)
+
+    def _call_cascades_info(self, path: str) -> CascadesList:
+        """
+        Получение списка каскадов
+        """
+        return CascadesList(path)
 
     def _call_deploy_presets(self):
         """

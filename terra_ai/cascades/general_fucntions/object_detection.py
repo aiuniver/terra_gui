@@ -5,7 +5,7 @@ from PIL import Image, ImageDraw
 from random import randrange
 
 
-def bboxes_iou():
+def _bboxes_iou():
     def fun(boxes1, boxes2):
         boxes1 = np.array(boxes1)
         boxes2 = np.array(boxes2)
@@ -27,7 +27,7 @@ def bboxes_iou():
 
 
 def postprocess_boxes(input_size=416, score_threshold=.3, iou_threshold=.45, method='nms', sigma=.3):
-    bb = bboxes_iou()
+    bb = _bboxes_iou()
 
     def fun(pred_bbox, original_image):
         if len(original_image.shape) == 4:
