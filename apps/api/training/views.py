@@ -15,9 +15,9 @@ class StartAPIView(BaseAPIView):
             **{
                 "dataset": request.project.dataset,
                 "model": request.project.model,
+                "training": request.project.training,
                 "training_path": request.project.training_path,
                 "dataset_path": request.project.dataset_path,
-                "training": request.project.training,
             }
         )
         return BaseResponseSuccess(

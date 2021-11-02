@@ -312,9 +312,9 @@ class Exchange:
         self,
         dataset: DatasetData,
         model: ModelDetailsData,
+        training: TrainingDetailsData,
         training_path: Path,
         dataset_path: Path,
-        training: TrainingDetailsData,
     ):
         """
         Старт обучения
@@ -336,9 +336,9 @@ class Exchange:
         training_obj.terra_fit(
             dataset=dataset,
             gui_model=model,
+            training=training,
             training_path=training_path,
             dataset_path=dataset_path,
-            training=training,
         )
         return interactive.train_states
 
