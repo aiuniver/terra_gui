@@ -980,16 +980,16 @@ class YoloV3Callback(BaseObjectDetectionCallback):
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
                                     preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
-                                    y_true, inverse_y_true, class_colors, raw_y_pred):
+                                    y_true, inverse_y_true, class_colors):
         return YoloV3Callback().get_intermediate_result(
-            options=options, yolo_interactive_config=interactive_config, raw_y_pred=raw_y_pred, y_true=y_true,
+            options=options, yolo_interactive_config=interactive_config, y_true=y_true, y_pred=y_pred,
             example_idx=example_idx, dataset_path=dataset_path, class_colors=class_colors, preset_path=preset_path)
 
     @staticmethod
-    def statistic_data_request(interactive_config, inverse_y_true, y_pred, inverse_y_pred, raw_y_pred, options=None,
+    def statistic_data_request(interactive_config, inverse_y_true, y_pred, inverse_y_pred, options=None,
                                y_true=None) -> list:
         return YoloV3Callback().get_statistic_data_request(
-            yolo_interactive_config=interactive_config, options=options, y_true=y_true, raw_y_pred=raw_y_pred)
+            yolo_interactive_config=interactive_config, options=options, y_true=y_true, y_pred=y_pred)
 
     @staticmethod
     def balance_data_request(options, dataset_balance, interactive_config) -> list:
@@ -1028,16 +1028,16 @@ class YoloV4Callback(BaseObjectDetectionCallback):
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
                                     preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
-                                    y_true, inverse_y_true, class_colors, raw_y_pred):
+                                    y_true, inverse_y_true, class_colors):
         return YoloV4Callback().get_intermediate_result(
-            options=options, yolo_interactive_config=interactive_config, raw_y_pred=raw_y_pred, y_true=y_true,
+            options=options, yolo_interactive_config=interactive_config, y_true=y_true, y_pred=y_pred,
             example_idx=example_idx, dataset_path=dataset_path, class_colors=class_colors, preset_path=preset_path)
 
     @staticmethod
-    def statistic_data_request(interactive_config, inverse_y_true, y_pred, inverse_y_pred, raw_y_pred, options=None,
+    def statistic_data_request(interactive_config, inverse_y_true, y_pred, inverse_y_pred, options=None,
                                y_true=None) -> list:
         return YoloV4Callback().get_statistic_data_request(
-            yolo_interactive_config=interactive_config, options=options, y_true=y_true, raw_y_pred=raw_y_pred)
+            yolo_interactive_config=interactive_config, options=options, y_true=y_true, y_pred=y_pred)
 
     @staticmethod
     def balance_data_request(options, dataset_balance, interactive_config) -> list:
