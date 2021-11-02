@@ -832,7 +832,7 @@ DatasetsGroups = [
                 ],
             },
             {
-                "alias": "products_v4",
+                "alias": "milk_v4",
                 "name": "Молоко v4 (генератор)",
                 "group": DatasetGroupChoice.terra.value,
                 "tags": [

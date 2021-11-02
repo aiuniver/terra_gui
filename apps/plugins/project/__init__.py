@@ -51,6 +51,9 @@ PROJECT_PATH = {
     "modeling": Path(settings.TERRA_AI_PROJECT_PATH, "modeling").absolute(),
     "training": Path(settings.TERRA_AI_PROJECT_PATH, "training").absolute(),
     "deploy": Path(settings.TERRA_AI_PROJECT_PATH, "training", "deploy").absolute(),
+    "training_model": Path(
+        settings.TERRA_AI_PROJECT_PATH, "training", "model"
+    ).absolute(),
 }
 
 
@@ -84,9 +87,17 @@ class ProjectPathData(BaseMixinData):
     modeling: DirectoryPath
     training: DirectoryPath
     deploy: DirectoryPath
+    training_model: DirectoryPath
 
     @validator(
-        "base", "datasets", "modeling", "training", "deploy", allow_reuse=True, pre=True
+        "base",
+        "datasets",
+        "modeling",
+        "training",
+        "deploy",
+        "training_model",
+        allow_reuse=True,
+        pre=True,
     )
     def _validate_directory(cls, value: DirectoryPath) -> DirectoryPath:
         os.makedirs(value, exist_ok=True)
@@ -112,6 +123,7 @@ class ProjectPathData(BaseMixinData):
 
 
 class TrainingDetailsData(BaseMixinData):
+    name: str = "__current"
     base: TrainData = TrainData()
     interactive: InteractiveData = InteractiveData()
     state: StateData = StateData()
