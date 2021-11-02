@@ -384,6 +384,11 @@ class InteractiveCallback:
                         )
 
             if self.options.data.architecture in self.yolo_architecture:
+                self.y_pred = self.callback.get_y_pred(
+                    y_pred=self.raw_y_pred, options=self.options,
+                    sensitivity=self.interactive_config.intermediate_result.sensitivity,
+                    threashold=self.interactive_config.intermediate_result.threashold
+                )
                 if self.interactive_config.intermediate_result.show_results:
                     self.example_idx, _ = self.callback.prepare_example_idx_to_show(
                         array=copy.deepcopy(self.y_pred),
