@@ -41,7 +41,6 @@ class ChoiceProgressAPIView(BaseAPIView):
         save_project = False
         progress = agent_exchange("dataset_choice_progress")
         if progress.finished and progress.data:
-            request.project.clear_training()
             request.project.set_dataset(**progress.data)
             save_project = True
         if progress.success:

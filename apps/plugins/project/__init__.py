@@ -49,10 +49,6 @@ PROJECT_PATH = {
     "datasets": Path(settings.TERRA_AI_PROJECT_PATH, "datasets").absolute(),
     "modeling": Path(settings.TERRA_AI_PROJECT_PATH, "modeling").absolute(),
     "training": Path(settings.TERRA_AI_PROJECT_PATH, "training").absolute(),
-    "deploy": Path(settings.TERRA_AI_PROJECT_PATH, "training", "deploy").absolute(),
-    "training_model": Path(
-        settings.TERRA_AI_PROJECT_PATH, "training", "model"
-    ).absolute(),
 }
 
 
@@ -85,16 +81,12 @@ class ProjectPathData(BaseMixinData):
     datasets: DirectoryPath
     modeling: DirectoryPath
     training: DirectoryPath
-    deploy: DirectoryPath
-    training_model: DirectoryPath
 
     @validator(
         "base",
         "datasets",
         "modeling",
         "training",
-        "deploy",
-        "training_model",
         allow_reuse=True,
         pre=True,
     )
@@ -111,11 +103,6 @@ class ProjectPathData(BaseMixinData):
             pass
         return value
 
-    def clear_training(self):
-        shutil.rmtree(self.training, ignore_errors=True)
-        os.makedirs(self.training, exist_ok=True)
-        os.makedirs(self.deploy, exist_ok=True)
-
     def clear_dataset(self):
         shutil.rmtree(self.datasets, ignore_errors=True)
         os.makedirs(self.datasets, exist_ok=True)
@@ -125,15 +112,19 @@ class Project(BaseMixinData):
     name: str = UNKNOWN_NAME
     dataset: Optional[DatasetData]
     model: ModelDetailsData = ModelDetailsData(**EmptyModelDetailsData)
-    training: TrainingDetailsData = TrainingDetailsData()
+    training: TrainingDetailsData
 
-    @property
-    def dataset_path(self) -> Path:
-        return project_path.datasets
+    def __init__(self, **data):
+        if not data.get("training"):
+            data["training"] = {}
+        data["training"]["path"] = project_path.training
 
-    @property
-    def training_path(self) -> Path:
-        return project_path.training_model
+        if data.get("dataset"):
+            data["dataset"]["path"] = project_path.datasets
+
+        super().__init__(**data)
+
+        defaults_data.modeling.set_layer_datatype(self.dataset)
 
     @property
     def name_alias(self) -> str:
@@ -142,6 +133,36 @@ class Project(BaseMixinData):
     @property
     def hardware(self) -> HardwareAcceleratorData:
         return agent_exchange("hardware_accelerator")
+
+    @validator("training", pre=True, allow_reuse=True)
+    def _validate_training(cls, value, values):
+        if not value:
+            value = {}
+        value.update({"model": values.get("model")})
+        return value
+
+    def set_training(self, value: str = None):
+        if Path(project_path.training, value).is_dir():
+            self.training = TrainingDetailsData(name=value, path=project_path.training)
+
+    def set_dataset(self, dataset: DatasetData = None, reset_model: bool = False):
+        if dataset is None:
+            self.dataset = None
+            project_path.clear_dataset()
+            defaults_data.modeling.set_layer_datatype(self.dataset)
+            self.set_training()
+            return
+
+        self.dataset = dataset
+        if not self.model.inputs or not self.model.outputs or reset_model:
+            self.model = self.dataset.model
+        else:
+            self._redefine_model_ids()
+            self.update_model_layers()
+
+        defaults_data.modeling.set_layer_datatype(self.dataset)
+        self.set_training()
+        self.save()
 
     def _set_data(
         self,
@@ -211,9 +232,8 @@ class Project(BaseMixinData):
             json.dump(json.loads(self.json()), _config_ref)
 
     def clear_training(self):
-        self.deploy = None
+
         project_path.clear_training()
-        self.training = TrainingDetailsData()
         self.save()
 
     def _redefine_model_ids(self):
@@ -244,25 +264,6 @@ class Project(BaseMixinData):
             layer.task = layer_init.task
             layer.num_classes = layer_init.num_classes
             # layer.parameters = layer_init.parameters
-
-    def set_dataset(self, dataset: DatasetData = None, reset_model: bool = False):
-        if dataset is None:
-            self.dataset = None
-            project_path.clear_dataset()
-            defaults_data.modeling.set_layer_datatype(self.dataset)
-            self.set_training()
-            return
-
-        self.dataset = dataset
-        if not self.model.inputs or not self.model.outputs or reset_model:
-            self.model = self.dataset.model
-        else:
-            self._redefine_model_ids()
-            self.update_model_layers()
-
-        defaults_data.modeling.set_layer_datatype(self.dataset)
-        self.set_training()
-        self.save()
 
     def set_model(self, model: ModelDetailsData):
         if self.dataset:
@@ -365,9 +366,9 @@ class Project(BaseMixinData):
             self.model.outputs[0].id if len(self.model.outputs) else None
         )
 
-    def set_training(self, data: dict = None):
-        self.update_training_base(data.get("base") if data else None)
-        self.update_training_interactive()
+    # def set_training(self, data: dict = None):
+    #     self.update_training_base(data.get("base") if data else None)
+    #     self.update_training_interactive()
 
     def clear_model(self):
         if self.dataset:
@@ -386,9 +387,5 @@ except Exception:
     _config = {}
 
 _config.update({"hardware": agent_exchange("hardware_accelerator")})
-if _config.get("deploy"):
-    _config["deploy"].update({"path": project_path.deploy})
-_training = _config.pop("training") if _config.get("training") else {}
+
 project = Project(**_config)
-project.set_training(_training)
-defaults_data.modeling.set_layer_datatype(project.dataset)

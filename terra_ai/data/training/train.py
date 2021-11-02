@@ -2,9 +2,13 @@
 ## Структура данных обучения
 """
 
+import os
 import json
+import shutil
+
+from pathlib import Path
 from typing import Any, Optional, List
-from pydantic import validator
+from pydantic import validator, PrivateAttr
 from pydantic.types import conint, confloat, PositiveInt
 from pydantic.errors import EnumMemberError
 
@@ -21,6 +25,10 @@ from terra_ai.data.training.extra import (
     MetricChoice,
     StateStatusChoice,
 )
+
+
+DEFAULT_TRAINING_PATH_NAME = "__current"
+CONFIG_TRAINING_FILENAME = "config.json"
 
 
 class LossGraphData(IDMixinData):
@@ -210,22 +218,80 @@ class ArchitectureData(BaseMixinData):
             )
             _outputs[_index] = _output
         value["outputs"] = _outputs
+        value["model"] = _model
         return field.type_(**(value or {}))
 
 
 class TrainData(BaseMixinData):
+    model: Any
     batch: PositiveInt = 32
     epochs: PositiveInt = 20
     optimizer: OptimizerData = OptimizerData(type=OptimizerChoice.Adam)
     architecture: ArchitectureData = ArchitectureData(type=ArchitectureChoice.Basic)
 
+    @validator("architecture", pre=True, allow_reuse=True)
+    def _validate_architecture(cls, value, values):
+        if not value:
+            value = {}
+        value.update({"model": values.get("model")})
+        return value
+
+    def dict(self, **kwargs):
+        kwargs.update({"exclude": {"model"}})
+        return super().dict(**kwargs)
+
 
 class TrainingDetailsData(BaseMixinData):
+    model: Any
+    name: Optional[str]
     base: TrainData = TrainData()
     interactive: InteractiveData = InteractiveData()
     state: StateData = StateData(status="no_train")
     result: Optional[dict]
     deploy: Optional[DeployData]
 
+    _path: Path = PrivateAttr()
+
+    def __init__(self, **data):
+        self._path = Path(data.get("path"))
+
+        _name = data.get("name", DEFAULT_TRAINING_PATH_NAME)
+        if _name == DEFAULT_TRAINING_PATH_NAME:
+            os.makedirs(Path(self._path, DEFAULT_TRAINING_PATH_NAME), exist_ok=True)
+
+        if not Path(self._path, _name).is_dir():
+            _name = DEFAULT_TRAINING_PATH_NAME
+
+        config = Path(self._path, _name, CONFIG_TRAINING_FILENAME)
+        if not config.is_file():
+            with open(config, "w") as config_ref:
+                json.dump({"name": _name}, config_ref)
+        with open(config) as config_ref:
+            data = json.load(config_ref)
+        data["name"] = _name
+
+        super().__init__(**data)
+
+    @property
+    def path(self) -> Path:
+        return Path(self._path, self.name)
+
+    @validator("base", pre=True, allow_reuse=True)
+    def _validate_base(cls, value, values):
+        if not value:
+            value = {}
+        value.update({"model": values.get("model")})
+        return value
+
+    def dict(self, **kwargs):
+        kwargs.update({"exclude": {"model"}})
+        return super().dict(**kwargs)
+
+    def rename(self, value: str):
+        source = self.path
+        self.name = value
+        shutil.rmtree(self.path, ignore_errors=True)
+        shutil.move(source, self.path)
+
     def clear(self):
-        pass
+        print(self.path)
