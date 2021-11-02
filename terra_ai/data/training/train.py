@@ -8,10 +8,10 @@ from pydantic import validator
 from pydantic.types import conint, confloat, PositiveInt
 from pydantic.errors import EnumMemberError
 
-from ..mixins import BaseMixinData, UniqueListMixin, IDMixinData
-from . import optimizers
-from . import architectures
-from .extra import (
+from terra_ai.data.deploy.tasks import DeployData
+from terra_ai.data.mixins import BaseMixinData, UniqueListMixin, IDMixinData
+from terra_ai.data.training import optimizers, architectures
+from terra_ai.data.training.extra import (
     OptimizerChoice,
     ArchitectureChoice,
     LossGraphShowChoice,
@@ -221,8 +221,11 @@ class TrainData(BaseMixinData):
 
 
 class TrainingDetailsData(BaseMixinData):
-    name: str = "__current"
     base: TrainData = TrainData()
     interactive: InteractiveData = InteractiveData()
     state: StateData = StateData(status="no_train")
     result: Optional[dict]
+    deploy: Optional[DeployData]
+
+    def clear(self):
+        pass
