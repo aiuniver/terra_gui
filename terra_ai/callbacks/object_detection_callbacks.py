@@ -717,7 +717,7 @@ class BaseObjectDetectionCallback:
                     out = yolo_interactive_config.intermediate_result.box_channel
                     # print('get_intermediate_result', idx, 3)
                     data = BaseObjectDetectionCallback().postprocess_object_detection(
-                        predict_array=copy.deepcopy(y_pred.get(out)[example_idx[idx]]),
+                        predict_array=y_pred.get(out)[example_idx[idx]],
                         true_array=y_true.get(out)[example_idx[idx]],
                         image_path=image_path,
                         colors=class_colors,
