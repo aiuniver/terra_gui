@@ -12,7 +12,7 @@ from terra_ai.settings import CALLBACK_REGRESSION_TREASHOLD_VALUE, DEPLOY_PRESET
 class DataframeRegressionCallback:
     def __init__(self):
         self.name = 'DataframeRegressionCallback'
-        print(f'Callback {self.name} is called')
+        # print(f'Callback {self.name} is called')
 
     @staticmethod
     def get_x_array(options):

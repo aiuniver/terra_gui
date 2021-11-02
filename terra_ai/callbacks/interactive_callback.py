@@ -216,8 +216,14 @@ class InteractiveCallback:
                         )
                 if self.options.data.architecture in self.yolo_architecture:
                     self.raw_y_pred = y_pred
+                    self.y_pred = self.callback.get_y_pred(
+                        y_pred=y_pred, options=self.options,
+                        sensitivity=self.interactive_config.intermediate_result.sensitivity,
+                        threashold=self.interactive_config.intermediate_result.threashold
+                    )
                     self.raw_y_true = y_true
                     if self.interactive_config.intermediate_result.show_results:
+                        # print('self.interactive_config', self.interactive_config.intermediate_result)
                         self.example_idx, _ = self.callback.prepare_example_idx_to_show(
                             array=copy.deepcopy(self.y_pred),
                             true_array=copy.deepcopy(self.y_true),
@@ -230,7 +236,7 @@ class InteractiveCallback:
                             sensitivity=self.interactive_config.intermediate_result.sensitivity,
                         )
                 if on_epoch_end_flag:
-                    print('fit_logs', fit_logs)
+                    # print('fit_logs', fit_logs)
                     self.current_epoch = fit_logs.get('epoch')
                     self.current_logs = self._reformat_fit_logs(fit_logs)
                     self._update_log_history()

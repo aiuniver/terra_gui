@@ -136,7 +136,7 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
     def __init__(self):
         super().__init__()
         self.name = 'ImageSegmentationCallback'
-        print(f'Callback {self.name} is called')
+        # print(f'Callback {self.name} is called')
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str, preset_path: str,
@@ -516,7 +516,7 @@ class TextSegmentationCallback(BaseSegmentationCallback):
     def __init__(self):
         super().__init__()
         self.name = 'ImageSegmentationCallback'
-        print(f'Callback {self.name} is called')
+        # print(f'Callback {self.name} is called')
 
     @staticmethod
     def postprocess_initial_source(options, example_id: int, return_mode='deploy'):

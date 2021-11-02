@@ -20,20 +20,20 @@ from tensorflow import keras
 from tensorflow.keras.models import load_model
 
 from terra_ai import progress
-from terra_ai.callbacks.interactive_callback import InteractiveCallback
+# from terra_ai.callbacks.interactive_callback import InteractiveCallback
+from terra_ai.callbacks.utils import loss_metric_config
 from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice
 from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
-from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, \
-    CheckpointModeChoice, ArchitectureChoice
+from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, ArchitectureChoice
 from terra_ai.data.training.train import TrainData, InteractiveData
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.exceptions.deploy import MethodNotImplementedException
 from terra_ai.modeling.validator import ModelValidator
-# from terra_ai.training.customcallback import InteractiveCallback
+from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.training.customlosses import DiceCoef, UnscaledMAE, BalancedRecall, BalancedDiceCoef, \
     BalancedPrecision, BalancedFScore, FScore
 from terra_ai.training.yolo_utils import create_yolo, CustomModelYolo, compute_loss, get_mAP
@@ -621,7 +621,7 @@ class FitCallback(keras.callbacks.Callback):
                 "layer": 2,
                 "type": "Metrics",
                 "indicator": "Val",
-                "mode": "max",
+                # "mode": "max",
                 "metric_name": "Accuracy",
                 "save_best": True,
                 "save_weights": False,
@@ -630,6 +630,7 @@ class FitCallback(keras.callbacks.Callback):
 
         super().__init__()
         print('\n FitCallback')
+        print('checkpoint_config', checkpoint_config)
         self.usage_info = MemoryUsage(debug=False)
         self.dataset = dataset
         self.dataset_data = dataset_data
@@ -677,6 +678,8 @@ class FitCallback(keras.callbacks.Callback):
         }
         # аттрибуты для чекпоинта
         self.checkpoint_config = checkpoint_config
+        self.checkpoint_mode = self._get_checkpoint_mode()  # min max
+        print('self.checkpoint_mode', self.checkpoint_mode)
         self.num_outputs = len(self.dataset.data.outputs.keys())
         self.metric_checkpoint = "val_mAP50" if self.is_yolo else "loss"
 
@@ -689,6 +692,16 @@ class FitCallback(keras.callbacks.Callback):
         self.samples_val = []
         self.samples_target_train = []
         self.samples_target_val = []
+
+    def _get_checkpoint_mode(self):
+        if self.checkpoint_config.get("type") == CheckpointTypeChoice.Loss:
+            return 'min'
+        elif self.checkpoint_config.get("type") == CheckpointTypeChoice.Metrics:
+            metric_name = self.checkpoint_config.get("metric_name")
+            return loss_metric_config.get("metric").get(metric_name).get("mode")
+        else:
+            print('\nClass FitCallback method _get_checkpoint_mode: No checkpoint types are found\n')
+            return None
 
     def _get_metric_name_checkpoint(self, logs: dict):
         """Поиск среди fit_logs нужного параметра"""
@@ -836,10 +849,11 @@ class FitCallback(keras.callbacks.Callback):
                 # print('\nself.metric_checkpoint)', self.metric_checkpoint)
                 # print('logs.get(self.metric_checkpoint)', logs.get(self.metric_checkpoint))
                 # print('self.log_history.get("logs").get(self.metric_checkpoint))', self.log_history.get("logs").get(self.metric_checkpoint))
-                if self.checkpoint_config.get("mode") == CheckpointModeChoice.Min and \
+                # print()
+                if self.checkpoint_mode == 'min' and \
                         logs.get(self.metric_checkpoint) < min(self.log_history.get("logs").get(self.metric_checkpoint)):
                     return True
-                elif self.checkpoint_config.get("mode") == CheckpointModeChoice.Max and \
+                elif self.checkpoint_mode == 'max' and \
                         logs.get(self.metric_checkpoint) > max(self.log_history.get("logs").get(self.metric_checkpoint)):
                     return True
                 else:
@@ -1172,7 +1186,7 @@ class FitCallback(keras.callbacks.Callback):
                         self.yolo_model.save_weights(file_path_best)
                     else:
                         self.model.save_weights(file_path_best)
-                    # print(f"Epoch {self.last_epoch} - best weights was successfully saved")
+                    print(f"\nEpoch {self.last_epoch} - best weights was successfully saved\n")
             except Exception as e:
                 print('\nself.model.save_weights failed', e)
         self._fill_log_history(self.last_epoch, interactive_logs)

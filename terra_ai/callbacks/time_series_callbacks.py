@@ -11,7 +11,7 @@ from terra_ai.settings import MAX_GRAPH_LENGTH, CALLBACK_REGRESSION_TREASHOLD_VA
 class TimeseriesCallback:
     def __init__(self):
         self.name = 'TimeseriesCallback'
-        print(f'Callback {self.name} is called')
+        # print(f'Callback {self.name} is called')
 
     @staticmethod
     def get_x_array(options):

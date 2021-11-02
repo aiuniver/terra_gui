@@ -496,7 +496,7 @@ class TextClassificationCallback(BaseClassificationCallback):
     def __init__(self):
         super().__init__()
         self.name = 'TextClassificationCallback'
-        print(f'Callback {self.name} is called')
+        # print(f'Callback {self.name} is called')
 
     @staticmethod
     def get_x_array(options):
@@ -634,7 +634,7 @@ class DataframeClassificationCallback(BaseClassificationCallback):
     def __init__(self):
         super().__init__()
         self.name = 'DataframeClassificationCallback'
-        print(f'Callback {self.name} is called')
+        # print(f'Callback {self.name} is called')
 
     @staticmethod
     def get_x_array(options):
@@ -777,7 +777,7 @@ class AudioClassificationCallback(BaseClassificationCallback):
     def __init__(self):
         super().__init__()
         self.name = 'AudioClassificationCallback'
-        print(f'Callback {self.name} is called')
+        # print(f'Callback {self.name} is called')
 
     @staticmethod
     def get_x_array(options):
@@ -929,7 +929,7 @@ class VideoClassificationCallback(BaseClassificationCallback):
     def __init__(self):
         super().__init__()
         self.name = 'VideoClassificationCallback'
-        print(f'Callback {self.name} is called')
+        # print(f'Callback {self.name} is called')
 
     @staticmethod
     def get_x_array(options):
@@ -1079,7 +1079,7 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
     def __init__(self):
         super().__init__()
         self.name = 'TimeseriesTrendCallback'
-        print(f'Callback {self.name} is called')
+        # print(f'Callback {self.name} is called')
 
     @staticmethod
     def get_x_array(options):

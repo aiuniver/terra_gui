@@ -319,6 +319,7 @@ MAX_TS_GRAPH_COUNT = 200
 MAX_HISTOGRAM_BINS = 50
 MAX_INTERMEDIATE_GRAPH_LENGTH = 50
 
+
 def print_error(class_name: str, method_name: str, message: Exception):
     return print(f'\n_________________________________________________\n'
                  f'Error in class {class_name} method {method_name}: {message}'
@@ -728,7 +729,8 @@ def segmentation_metric(true_array, pred_array):
         for cls in range(true_array.shape[-1]):
             metric = np.sum(true_array[..., cls:cls + 1] * pred_array[..., cls:cls + 1], axis=axis) / np.sum(
                 true_array[..., cls:cls + 1], axis=axis)
-            empty_dots = np.sum(true_array[..., cls:cls + 1], axis=axis) + np.sum(pred_array[..., cls:cls + 1], axis=axis)
+            empty_dots = np.sum(true_array[..., cls:cls + 1], axis=axis) + np.sum(pred_array[..., cls:cls + 1],
+                                                                                  axis=axis)
             metric = np.where(empty_dots == 0., 0.1, metric)
             metric = np.where(metric >= 0, metric, 0.)
             stat += metric
@@ -751,4 +753,3 @@ def get_time_series_graphic(data, make_short=False):
             return np.arange(len(data)).astype('int').tolist(), np.array(data).astype('float').tolist()
     except Exception as e:
         print_error(f"None ({MODULE_NAME})", method_name, e)
-
