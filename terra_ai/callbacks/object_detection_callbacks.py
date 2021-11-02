@@ -490,10 +490,16 @@ class BaseObjectDetectionCallback:
                               "color_mark": None, "size": "large"}]
                 }
                 if show_stat:
+                    true_classes = []
+                    for box in true_array:
+                        cls = name_classes[np.argmax(box[5:], axis=-1)]
+                        if cls not in true_classes:
+                            true_classes.append(cls)
                     box_stat = BaseObjectDetectionCallback().get_yolo_example_statistic(
                         true_bb=true_array, pred_bb=predict_array, name_classes=name_classes,
                         sensitivity=sensitivity
                     )
+                    print('\nbox_stat', box_stat)
                     data["stat"]["Общая точность"] = {
                         "type": "str",
                         "data": [{
@@ -523,25 +529,31 @@ class BaseObjectDetectionCallback:
                         ]
                     }
                     for class_name in name_classes:
-                        mean_overlap = box_stat['class_stat'][class_name]['mean_overlap']
-                        mean_conf = box_stat['class_stat'][class_name]['mean_conf']
-                        mean_class = box_stat['class_stat'][class_name]['mean_class']
+                        mean_overlap = box_stat['class_stat'][class_name]['mean_overlap'] \
+                            if box_stat['class_stat'][class_name]['mean_overlap'] else 0.
+                        mean_conf = box_stat['class_stat'][class_name]['mean_conf']\
+                            if box_stat['class_stat'][class_name]['mean_conf'] else 0.
+                        mean_class = box_stat['class_stat'][class_name]['mean_class']\
+                            if box_stat['class_stat'][class_name]['mean_class'] else 0.
                         data["stat"][f'{class_name}'] = {
                             "type": "str",
                             "data": [
                                 {
                                     "title": "Перекрытие",
-                                    "value": "-" if mean_overlap is None else f"{np.round(mean_overlap * 100, 2)}%",
+                                    "value": "-" if class_name not in true_classes
+                                    else f"{np.round(mean_overlap * 100, 2)}%",
                                     "color_mark": 'success' if mean_overlap and mean_overlap >= 0.7 else 'wrong'
                                 },
                                 {
                                     "title": "Объект",
-                                    "value": "-" if mean_conf is None else f"{np.round(mean_conf * 100, 2)}%",
+                                    "value": "-" if class_name not in true_classes
+                                    else f"{np.round(mean_conf * 100, 2)}%",
                                     "color_mark": 'success' if mean_conf and mean_conf >= 0.7 else 'wrong'
                                 },
                                 {
                                     "title": "Класс",
-                                    "value": "-" if mean_class is None else f"{np.round(mean_class * 100, 2)}%",
+                                    "value": "-" if class_name not in true_classes
+                                    else f"{np.round(mean_class * 100, 2)}%",
                                     "color_mark": 'success' if mean_class and mean_class >= 0.7 else 'wrong'
                                 },
                             ]
