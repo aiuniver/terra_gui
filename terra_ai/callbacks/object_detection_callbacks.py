@@ -405,7 +405,9 @@ class BaseObjectDetectionCallback:
 
             if choice_type == ExampleChoiceTypeChoice.best or choice_type == ExampleChoiceTypeChoice.worst:
                 stat = []
+                print('array', array)
                 for example in range(len(array.get(box_channel))):
+                    print('stat', example)
                     stat.append(
                         BaseObjectDetectionCallback().get_yolo_example_statistic(
                             true_bb=true_array.get(box_channel)[example],
