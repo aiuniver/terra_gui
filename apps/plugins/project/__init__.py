@@ -126,7 +126,6 @@ class Project(BaseMixinData):
     dataset: Optional[DatasetData]
     model: ModelDetailsData = ModelDetailsData(**EmptyModelDetailsData)
     training: TrainingDetailsData = TrainingDetailsData()
-    deploy: Optional[DeployData]
 
     @property
     def dataset_path(self) -> Path:
