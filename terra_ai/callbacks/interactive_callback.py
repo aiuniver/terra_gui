@@ -413,28 +413,29 @@ class InteractiveCallback:
                         sensitivity=self.interactive_config.intermediate_result.sensitivity,
                         threashold=self.interactive_config.intermediate_result.threashold
                     )
-                    self.example_idx, _ = self.callback.prepare_example_idx_to_show(
-                        array=copy.deepcopy(self.y_pred),
-                        true_array=copy.deepcopy(self.y_true),
-                        name_classes=self.options.data.outputs.get(
-                            list(self.options.data.outputs.keys())[0]).classes_names,
-                        box_channel=self.interactive_config.intermediate_result.box_channel,
-                        count=self.interactive_config.intermediate_result.num_examples,
-                        choice_type=self.interactive_config.intermediate_result.example_choice_type,
-                        seed_idx=self.seed_idx[:self.interactive_config.intermediate_result.num_examples],
-                        sensitivity=self.interactive_config.intermediate_result.sensitivity,
-                    )
-                if config.intermediate_result.show_results or config.statistic_data.box_channel:
-                    print('get_train_results if config.intermediate_result.show_results or '
-                          'config.statistic_data.box_channel:',
-                          self.y_pred.keys() if self.y_pred else None,
-                          self.y_true.keys() if self.y_true else None, type(self.raw_y_pred))
-                    self.urgent_predict = True
-                    self.y_pred = self.callback.get_y_pred(
-                        y_pred=self.raw_y_pred, options=self.options,
-                        sensitivity=self.interactive_config.intermediate_result.sensitivity,
-                        threashold=self.interactive_config.intermediate_result.threashold
-                    )
+                    # self.example_idx, _ = self.callback.prepare_example_idx_to_show(
+                    #     array=copy.deepcopy(self.y_pred),
+                    #     true_array=copy.deepcopy(self.y_true),
+                    #     name_classes=self.options.data.outputs.get(
+                    #         list(self.options.data.outputs.keys())[0]).classes_names,
+                    #     box_channel=self.interactive_config.intermediate_result.box_channel,
+                    #     count=self.interactive_config.intermediate_result.num_examples,
+                    #     choice_type=self.interactive_config.intermediate_result.example_choice_type,
+                    #     seed_idx=self.seed_idx[:self.interactive_config.intermediate_result.num_examples],
+                    #     sensitivity=self.interactive_config.intermediate_result.sensitivity,
+                    # )
+                    # if self.interactive_config.intermediate_result.show_results or \
+                    #     self.interactive_config.statistic_data.box_channel:
+                    # print('get_train_results if config.intermediate_result.show_results or '
+                    #       'config.statistic_data.box_channel:',
+                    #       self.y_pred.keys() if self.y_pred else None,
+                    #       self.y_true.keys() if self.y_true else None, type(self.raw_y_pred))
+                    # self.urgent_predict = True
+                    # self.y_pred = self.callback.get_y_pred(
+                    #     y_pred=self.raw_y_pred, options=self.options,
+                    #     sensitivity=self.interactive_config.intermediate_result.sensitivity,
+                    #     threashold=self.interactive_config.intermediate_result.threashold
+                    # )
                     self.example_idx, _ = self.callback.prepare_example_idx_to_show(
                         array=self.y_pred,
                         true_array=self.y_true,
@@ -466,7 +467,8 @@ class InteractiveCallback:
                         # raw_y_pred=self.raw_y_pred
                     )
                     # if self.interactive_config.statistic_data.box_channel:
-                    print('get_train_results if self.interactive_config.statistic_data.box_channel: self.statistic_result',
+                    print('get_train_results if self.interactive_config.statistic_data.box_channel: '
+                          'self.statistic_result',
                           self.y_pred.keys() if self.y_pred else None,
                           self.y_true.keys() if self.y_true else None, type(self.raw_y_pred))
                     self.statistic_result = self.callback.statistic_data_request(

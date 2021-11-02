@@ -442,7 +442,7 @@ class ImageClassificationCallback(BaseClassificationCallback):
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
                                     preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
-                                    y_true, inverse_y_true, class_colors, raw_y_pred):
+                                    y_true, inverse_y_true, class_colors, raw_y_pred=None):
         method_name = 'intermediate_result_request'
         try:
             return_data = {}
@@ -586,7 +586,7 @@ class TextClassificationCallback(BaseClassificationCallback):
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
                                     preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
-                                    y_true, inverse_y_true, class_colors, raw_y_pred):
+                                    y_true, inverse_y_true, class_colors, raw_y_pred=None):
         method_name = 'intermediate_result_request'
         try:
             return_data = {}
@@ -727,7 +727,7 @@ class DataframeClassificationCallback(BaseClassificationCallback):
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
                                     preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
-                                    y_true, inverse_y_true, class_colors, raw_y_pred):
+                                    y_true, inverse_y_true, class_colors, raw_y_pred=None):
         method_name = 'intermediate_result_request'
         try:
             return_data = {}
@@ -876,7 +876,7 @@ class AudioClassificationCallback(BaseClassificationCallback):
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
                                     preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
-                                    y_true, inverse_y_true, class_colors, raw_y_pred):
+                                    y_true, inverse_y_true, class_colors, raw_y_pred=None):
         method_name = 'intermediate_result_request'
         try:
             return_data = {}
@@ -1027,7 +1027,7 @@ class VideoClassificationCallback(BaseClassificationCallback):
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
                                     preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
-                                    y_true, inverse_y_true, class_colors, raw_y_pred):
+                                    y_true, inverse_y_true, class_colors, raw_y_pred=None):
         method_name = 'intermediate_result_request'
         try:
             return_data = {}
@@ -1216,7 +1216,7 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
                                     preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
-                                    y_true, inverse_y_true, class_colors, raw_y_pred):
+                                    y_true, inverse_y_true, class_colors, raw_y_pred=None):
         method_name = 'intermediate_result_request'
         try:
             return_data = {}

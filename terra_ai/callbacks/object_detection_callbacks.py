@@ -371,6 +371,8 @@ class BaseObjectDetectionCallback:
                         'mean_overlap': mean_overlap / len(compat['recognize'][cl]) if len(
                             compat['recognize'][cl]) else None
                     }
+            count = count + len(compat['recognize']['empty'])
+            count = count + len(compat['recognize']['unrecognize'])
             compat['total_stat'] = {
                 'total_conf': total_conf / count if count else 0.,
                 'total_class': total_class / count if count else 0.,
@@ -382,14 +384,14 @@ class BaseObjectDetectionCallback:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
 
     @staticmethod
-    def prepare_example_idx_to_show(array: dict, true_array: dict, name_classes: list, box_channel: Optional[int],
+    def prepare_example_idx_to_show(array: dict, true_array: dict, name_classes: list, box_channel,
                                     count: int, choice_type: str = "best", seed_idx: list = None,
                                     sensitivity: float = 0.25, get_optimal_channel=False):
         method_name = 'prepare_example_idx_to_show'
         try:
-            print('box_channel', box_channel)
+            # print('box_channel', box_channel)
             if get_optimal_channel:
-                print('get_optimal_channel', get_optimal_channel)
+                # print('get_optimal_channel', get_optimal_channel)
                 channel_stat = []
                 for channel in range(3):
                     total_metric = 0
@@ -405,7 +407,7 @@ class BaseObjectDetectionCallback:
 
             if choice_type == ExampleChoiceTypeChoice.best or choice_type == ExampleChoiceTypeChoice.worst:
                 stat = []
-                print('array', array.get(box_channel)[0].shape)
+                # print('array', array.get(box_channel)[0].shape)
                 for example in range(len(array.get(box_channel))):
                     # print('stat', example)
                     stat.append(
@@ -416,30 +418,30 @@ class BaseObjectDetectionCallback:
                             sensitivity=sensitivity
                         )['total_stat']['total_metric']
                     )
-                print('stat', stat)
+                # print('stat', stat)
                 stat_dict = dict(zip(np.arange(0, len(stat)), stat))
-                print('stat_dict', stat_dict)
+                # print('stat_dict', stat_dict)
                 if choice_type == ExampleChoiceTypeChoice.best:
                     # print('choice_type', choice_type)
                     example_idx, _ = sort_dict(stat_dict, mode=BalanceSortedChoice.descending)
                     example_idx = example_idx[:count]
-                    print('example_idx', example_idx)
+                    # print('example_idx', example_idx)
                 else:
                     example_idx, _ = sort_dict(stat_dict, mode=BalanceSortedChoice.ascending)
                     example_idx = example_idx[:count]
-                    print('example_idx', example_idx)
+                    # print('example_idx', example_idx)
 
             elif choice_type == ExampleChoiceTypeChoice.seed:
                 example_idx = seed_idx[:count]
 
             elif choice_type == ExampleChoiceTypeChoice.random:
                 true_false_dict = {'true': [], 'false': []}
-                print('array', array.get(box_channel)[0].shape)
-                for i, example in enumerate(array.get(box_channel)):
+                # print('array', array.get(box_channel)[0].shape)
+                for example in range(len(array.get(box_channel))):
                     # print('i, example', i)
                     ex_stat = BaseObjectDetectionCallback().get_yolo_example_statistic(
-                        true_bb=true_array.get(box_channel)[i],
-                        pred_bb=array.get(box_channel)[i],
+                        true_bb=true_array.get(box_channel)[example],
+                        pred_bb=array.get(box_channel)[example],
                         name_classes=name_classes,
                         sensitivity=sensitivity
                     )['total_stat']['total_metric']
@@ -449,7 +451,7 @@ class BaseObjectDetectionCallback:
                         true_false_dict['false'].append(i)
                 np.random.shuffle(true_false_dict['true'])
                 np.random.shuffle(true_false_dict['false'])
-                print('true_false_dict', true_false_dict)
+                # print('true_false_dict', true_false_dict)
                 example_idx = []
                 for _ in range(count):
                     if true_false_dict.get('true') and true_false_dict.get('false'):
@@ -460,11 +462,11 @@ class BaseObjectDetectionCallback:
                         key = 'false'
                     example_idx.append(true_false_dict.get(key)[0])
                     true_false_dict.get(key).pop(0)
-                print('example_idx', example_idx)
+                # print('example_idx', example_idx)
                 np.random.shuffle(example_idx)
             else:
                 example_idx = np.random.randint(0, len(true_array.get(box_channel)), count)
-            print('return example_idx, box_channel', example_idx, box_channel)
+            # print('return example_idx, box_channel', example_idx, box_channel)
             return example_idx, box_channel
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
@@ -788,7 +790,7 @@ class BaseObjectDetectionCallback:
                 # print('get_statistic_data_request', i, 5)
                 object_ft += len(example_stat['recognize']['empty'])
                 object_tf += len(example_stat['recognize']['unrecognize'])
-                print('get_statistic_data_request', i, 6)
+                # print('get_statistic_data_request', i, 6)
                 for class_name in line_names:
                     if class_name != 'empty':
                         object_tt += len(example_stat['recognize'][class_name])

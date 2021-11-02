@@ -199,7 +199,7 @@ class DataframeRegressionCallback:
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
                                     preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
-                                    y_true, inverse_y_true, class_colors, raw_y_pred) -> dict:
+                                    y_true, inverse_y_true, class_colors, raw_y_pred=None) -> dict:
         method_name = 'intermediate_result_request'
         try:
             return_data = {}
