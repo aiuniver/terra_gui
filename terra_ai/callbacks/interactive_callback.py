@@ -446,6 +446,10 @@ class InteractiveCallback:
                         seed_idx=self.seed_idx,
                         sensitivity=self.interactive_config.intermediate_result.sensitivity,
                     )
+                    print('get_train_results if config.intermediate_result.show_results or '
+                          'config.statistic_data.box_channel: self.intermediate_result',
+                          self.y_pred.keys() if self.y_pred else None,
+                          self.y_true.keys() if self.y_true else None, type(self.raw_y_pred))
                     self.intermediate_result = self.callback.intermediate_result_request(
                         options=self.options,
                         interactive_config=self.interactive_config,
@@ -462,9 +466,9 @@ class InteractiveCallback:
                         # raw_y_pred=self.raw_y_pred
                     )
                     # if self.interactive_config.statistic_data.box_channel:
-                    print('get_train_results if self.interactive_config.statistic_data.box_channel:',
+                    print('get_train_results if self.interactive_config.statistic_data.box_channel: self.statistic_result',
                           self.y_pred.keys() if self.y_pred else None,
-                          self.y_true.keys() if self.y_true else None)
+                          self.y_true.keys() if self.y_true else None, type(self.raw_y_pred))
                     self.statistic_result = self.callback.statistic_data_request(
                         interactive_config=self.interactive_config,
                         options=self.options,
