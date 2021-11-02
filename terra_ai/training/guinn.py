@@ -165,7 +165,7 @@ class GUINN:
     def _set_callbacks(self, dataset: PrepareDataset, dataset_data: DatasetData,
                        batch_size: int, epochs: int, dataset_path: Path,
                        checkpoint: dict, save_model_path: Path,
-                       state: StateData, initial_model=None) -> None:
+                       state: StateData, deploy: DeployData, initial_model=None) -> None:
         progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков...'})
         retrain_epochs = self.sum_epoch if state.status == "addtrain" else self.epochs
 
@@ -173,7 +173,7 @@ class GUINN:
                                batch_size=batch_size, epochs=epochs, retrain_epochs=retrain_epochs,
                                training_path=save_model_path, model_name=self.nn_name,
                                dataset_path=dataset_path, deploy_type=self.deploy_type,
-                               initialed_model=initial_model, state=state)
+                               initialed_model=initial_model, state=state, deploy=deploy)
         self.callbacks = [callback]
         progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков выполнено'})
 
@@ -428,7 +428,8 @@ class GUINN:
         self._set_callbacks(dataset=dataset, dataset_data=dataset_data, batch_size=params.base.batch,
                             epochs=params.base.epochs, save_model_path=save_model_path, dataset_path=dataset_path,
                             checkpoint=params.base.architecture.parameters.checkpoint.native(),
-                            initial_model=self.model if yolo_arch else None, state=params.state)
+                            initial_model=self.model if yolo_arch else None, state=params.state,
+                            deploy=params.deploy)
         progress.pool(self.progress_name, finished=False, data={'status': 'Начало обучения ...'})
         if self.dataset.data.use_generator:
             print('use generator')
@@ -530,8 +531,9 @@ class FitCallback(keras.callbacks.Callback):
     """CustomCallback for all task type"""
 
     def __init__(self, dataset: PrepareDataset, dataset_data: DatasetData, checkpoint_config: dict,
-                 state: StateData, batch_size: int = None, epochs: int = None, dataset_path: Path = Path(""),
-                 retrain_epochs: int = None, training_path: Path = Path("./"), model_name: str = "model",
+                 state: StateData, deploy: DeployData, batch_size: int = None, epochs: int = None,
+                 dataset_path: Path = Path(""), retrain_epochs: int = None,
+                 training_path: Path = Path("./"), model_name: str = "model",
                  deploy_type: str = "", initialed_model=None):
         """
         Для примера
@@ -570,6 +572,7 @@ class FitCallback(keras.callbacks.Callback):
         self.save_model_path = os.path.join(self.training_path, model_name)
         self.nn_name = model_name
         self.state = state
+        self.deploy = deploy
         self.progress_name = "training"
         self.result = {
             'info': None,
@@ -754,10 +757,12 @@ class FitCallback(keras.callbacks.Callback):
         try:
             if logs.get(self.metric_checkpoint):
                 if self.checkpoint_config.get("mode") == CheckpointModeChoice.Min and \
-                        logs.get(self.metric_checkpoint) < min(self.log_history.get("logs").get(self.metric_checkpoint)):
+                        logs.get(self.metric_checkpoint) < min(
+                    self.log_history.get("logs").get(self.metric_checkpoint)):
                     return True
                 elif self.checkpoint_config.get("mode") == CheckpointModeChoice.Max and \
-                        logs.get(self.metric_checkpoint) > max(self.log_history.get("logs").get(self.metric_checkpoint)):
+                        logs.get(self.metric_checkpoint) > max(
+                    self.log_history.get("logs").get(self.metric_checkpoint)):
                     return True
                 else:
                     return False
@@ -896,7 +901,7 @@ class FitCallback(keras.callbacks.Callback):
             out_deploy_presets_data["columns"] = columns
             out_deploy_presets_data["predict_column"] = predict_column if predict_column else "Предсказанные значения"
         # print(deploy_presets_data["predict"])
-        interactive.deploy_presets_data = DeployData(
+        self.deploy = DeployData(
             path=deploy_path,
             type=self.deploy_type,
             data=out_deploy_presets_data
@@ -1016,11 +1021,11 @@ class FitCallback(keras.callbacks.Callback):
             {}:
         """
         y_pred, y_true = self._get_predict()
-        total_epochs = self.retrain_epochs if interactive.get_states().get('status') in ['addtrain',
-                                                                                         'stopped'] else self.epochs
+        total_epochs = self.retrain_epochs if self._get_train_status() in ['addtrain',
+                                                                           'stopped'] else self.epochs
         if self.is_yolo:
             mAP = get_mAP(self.model, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
-                          TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names, dataset_path= self.dataset_path)
+                          TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names, dataset_path=self.dataset_path)
             interactive_logs = self._logs_losses_extract(logs, prefixes=['pred', 'target'])
             # interactive_logs.update({'mAP': mAP})
             interactive_logs.update(mAP)
@@ -1030,12 +1035,6 @@ class FitCallback(keras.callbacks.Callback):
                 self.samples_val = []
                 self.samples_target_train = []
                 self.samples_target_val = []
-            # print(interactive_logs)
-            # print(mAP)
-            # Пока что для визуализации Yolo
-            # detect_image(Yolo=self.model, original_image=self.inp['1'].numpy()[0], output_path=output_path,
-            #              CLASSES=self.dataset.data.outputs.get(2).classes_names, train=True)
-
         else:
             interactive_logs = copy.deepcopy(logs)
 
@@ -1104,8 +1103,8 @@ class FitCallback(keras.callbacks.Callback):
         time_end = self.update_progress(self.num_batches * self.epochs + 1,
                                         self.batch, self._start_time, finalize=True)
         self._sum_time += time_end
-        total_epochs = self.retrain_epochs if interactive.get_states().get('status') \
-                                              in ['addtrain', 'trained'] else self.epochs
+        total_epochs = self.retrain_epochs if self._get_train_status() in ['addtrain',
+                                                                           'trained'] else self.epochs
         if self.model.stop_training:
             self._set_result_data({'info': f"Обучение остановлено. Модель сохранена."})
             progress.pool(
@@ -1124,15 +1123,15 @@ class FitCallback(keras.callbacks.Callback):
                       f'{self.eta_format(self._sum_time)} '
             self._set_result_data({'info': f"Обучение закончено. {msg}"})
             percent = (self.last_epoch - 1) / (
-                self.retrain_epochs if interactive.get_states().get("status") ==
-                                       "addtrain" or interactive.get_states().get("status") == "stopped"
+                self.retrain_epochs if self._get_train_status() ==
+                                       "addtrain" or self._get_train_status() == "stopped"
                 else self.epochs
             ) * 100
 
             # if os.path.exists(self.save_model_path) and interactive.deploy_presets_data:
             #     with open(os.path.join(self.save_model_path, "config.presets"), "w", encoding="utf-8") as presets:
             #         presets.write(str(interactive.deploy_presets_data))
-            interactive.set_status("trained")
+            self.state.set("trained")
             progress.pool(
                 self.progress_name,
                 percent=percent,
