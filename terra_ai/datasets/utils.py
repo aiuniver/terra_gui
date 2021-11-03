@@ -288,6 +288,10 @@ class Voc:
 
         return data, {}
 
+    @staticmethod
+    def generate_save(data):
+        pass
+
 
 class Coco:
     """ Handler Class for COCO Format """
@@ -362,6 +366,10 @@ class Coco:
                 }
         return data, cls_hierarchy
 
+    @staticmethod
+    def generate_save(data):
+        pass
+
 
 class Udacity:
     """
@@ -417,6 +425,10 @@ class Udacity:
                 data[filename] = {"objects": obj}
         return data, {}
 
+    @staticmethod
+    def generate_save(data):
+        pass
+
 
 class Kitti:
     """
@@ -465,6 +477,10 @@ class Kitti:
             data[filename] = {"objects": obj}
         return data, {}
 
+    @staticmethod
+    def generate_save(data):
+        pass
+
 
 class Yolo_terra:
     """
@@ -509,6 +525,11 @@ class Yolo_terra:
 
             result[key] = contents[:-1]
         return result
+
+    def parse(self):
+        data = {}
+        return data
+        pass
 
 
 class Yolov1:
@@ -596,6 +617,10 @@ class Yolov1:
                 "objects": obj
             }
         return data, {}
+
+    @staticmethod
+    def generate_save(data):
+        pass
 
 
 def resize_bboxes(coords, orig_x, orig_y):
