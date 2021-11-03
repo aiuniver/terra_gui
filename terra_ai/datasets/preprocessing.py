@@ -77,25 +77,25 @@ class CreatePreprocessing(object):
         self.dataset_path = dataset_path
         self.preprocessing = {}
 
-    @staticmethod
-    def create_image_augmentation(options):
-
-        # КОСТЫЛЬ ИЗ-ЗА .NATIVE()
-        for key, value in options.items():
-            for name, elem in value.items():
-                if key != 'ChannelShuffle':
-                    if isinstance(options[key][name], list):
-                        options[key][name] = tuple(options[key][name])
-                    elif isinstance(options[key][name], dict):
-                        for name2, elem2 in options[key][name].items():
-                            options[key][name][name2] = tuple(options[key][name][name2])
-
-        aug_parameters = []
-        for key, value in options.items():
-            aug_parameters.append(getattr(imgaug.augmenters, key)(**value))
-        augmentation = imgaug.augmenters.Sequential(aug_parameters, random_order=True)
-
-        return augmentation
+    # @staticmethod
+    # def create_image_augmentation(options):
+    #
+    #     # КОСТЫЛЬ ИЗ-ЗА .NATIVE()
+    #     for key, value in options.items():
+    #         for name, elem in value.items():
+    #             if key != 'ChannelShuffle':
+    #                 if isinstance(options[key][name], list):
+    #                     options[key][name] = tuple(options[key][name])
+    #                 elif isinstance(options[key][name], dict):
+    #                     for name2, elem2 in options[key][name].items():
+    #                         options[key][name][name2] = tuple(options[key][name][name2])
+    #
+    #     aug_parameters = []
+    #     for key, value in options.items():
+    #         aug_parameters.append(getattr(imgaug.augmenters, key)(**value))
+    #     augmentation = imgaug.augmenters.Sequential(aug_parameters, random_order=True)
+    #
+    #     return augmentation
 
     def load_preprocesses(self, put_data):
 
