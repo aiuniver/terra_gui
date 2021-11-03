@@ -3,10 +3,10 @@ import numpy as np
 from .array import change_type, change_size, min_max_scale
 
 
-def gaussian_blur(params: dict):
-    fun = lambda img: cv2.GaussianBlur(img, **params)
-
-    return fun
+# def gaussian_blur(params: dict):
+#     fun = lambda img: cv2.GaussianBlur(img, **params)
+#
+#     return fun
 
 
 def main(**params):
