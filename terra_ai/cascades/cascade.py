@@ -142,8 +142,6 @@ class CompleteCascade(Cascade):
             self.cascade_block(img)
 
         self.out = self.cascade_block[-1].out
-        while len(self.out) == 1:
-            self.out = self.out[0]
 
         for i in self.output:
             i.release()
