@@ -425,7 +425,7 @@ class TimeseriesCallback:
         try:
             example_idx = []
             if choice_type == ExampleChoiceTypeChoice.best or choice_type == ExampleChoiceTypeChoice.worst:
-                delta = np.abs(true_array - array) * 100 / true_array
+                delta = np.abs(true_array - array + 0.000001) * 100 / (true_array + 0.000001)
                 while len(delta.shape) != 1:
                     delta = np.mean(delta, axis=-1)
                 delta_dict = dict(zip(np.arange(0, len(delta)), delta))
@@ -440,7 +440,7 @@ class TimeseriesCallback:
                 example_idx = seed_idx[:count]
 
             elif choice_type == ExampleChoiceTypeChoice.random:
-                delta = np.abs(true_array - array) * 100 / true_array
+                delta = np.abs(true_array - array + 0.000001) * 100 / (true_array + 0.000001)
                 while len(delta.shape) != 1:
                     delta = np.mean(delta, axis=-1)
                 true_id = []
