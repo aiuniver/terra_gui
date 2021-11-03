@@ -472,10 +472,13 @@ class CreateArray(object):
         paths_list = [os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)), os.path.basename(elem))
                       for elem in paths_list]
 
+        image_mode = 'stretch' if not options.get('image_mode') else options['image_mode']
+
         instructions = {'instructions': paths_list,
                         'parameters': {'height': options['height'],
                                        'width': options['width'],
                                        'net': options['net'],
+                                       'image_mode': image_mode,
                                        # 'object_detection': options['object_detection'],
                                        'scaler': options['scaler'],
                                        'max_scaler': options['max_scaler'],
@@ -1165,12 +1168,76 @@ class CreateArray(object):
             else:
                 return image_array_aug
 
-        # instructions = {}
+        def resize_frame(image_array, target_shape, frame_mode):
+
+            original_shape = (image_array.shape[0], image_array.shape[1])
+            resized = None
+            if frame_mode == 'stretch':
+                resized = cv2.resize(image_array, (target_shape[1], target_shape[0]))
+            elif frame_mode == 'fit':
+                if image_array.shape[1] >= image_array.shape[0]:
+                    resized_shape = list(target_shape).copy()
+                    resized_shape[0] = int(image_array.shape[0] / (image_array.shape[1] / target_shape[1]))
+                    if resized_shape[0] > target_shape[0]:
+                        resized_shape = list(target_shape).copy()
+                        resized_shape[1] = int(image_array.shape[1] / (image_array.shape[0] / target_shape[0]))
+                    image_array = cv2.resize(image_array, (resized_shape[1], resized_shape[0]))
+                elif image_array.shape[0] >= image_array.shape[1]:
+                    resized_shape = list(target_shape).copy()
+                    resized_shape[1] = int(image_array.shape[1] / (image_array.shape[0] / target_shape[0]))
+                    if resized_shape[1] > target_shape[1]:
+                        resized_shape = list(target_shape).copy()
+                        resized_shape[0] = int(image_array.shape[0] / (image_array.shape[1] / target_shape[1]))
+                    image_array = cv2.resize(image_array, (resized_shape[1], resized_shape[0]))
+                resized = image_array
+                if resized.shape[0] < target_shape[0]:
+                    black_bar = np.zeros((int((target_shape[0] - resized.shape[0]) / 2), resized.shape[1], 3),
+                                         dtype='uint8')
+                    resized = np.concatenate((black_bar, resized))
+                    black_bar_2 = np.zeros((int((target_shape[0] - resized.shape[0])), resized.shape[1], 3),
+                                           dtype='uint8')
+                    resized = np.concatenate((resized, black_bar_2))
+                if resized.shape[1] < target_shape[1]:
+                    black_bar = np.zeros((target_shape[0], int((target_shape[1] - resized.shape[1]) / 2), 3),
+                                         dtype='uint8')
+                    resized = np.concatenate((black_bar, resized), axis=1)
+                    black_bar_2 = np.zeros((target_shape[0], int((target_shape[1] - resized.shape[1])), 3),
+                                           dtype='uint8')
+                    resized = np.concatenate((resized, black_bar_2), axis=1)
+            elif frame_mode == 'cut':
+                resized = image_array.copy()
+                if original_shape[0] > target_shape[0]:
+                    resized = resized[int(original_shape[0] / 2 - target_shape[0] / 2):int(
+                        original_shape[0] / 2 - target_shape[0] / 2) + target_shape[0], :]
+                else:
+                    black_bar = np.zeros((int((target_shape[0] - original_shape[0]) / 2), original_shape[1], 3),
+                                         dtype='uint8')
+                    resized = np.concatenate((black_bar, resized))
+                    black_bar_2 = np.zeros((int((target_shape[0] - resized.shape[0])), original_shape[1], 3),
+                                           dtype='uint8')
+                    resized = np.concatenate((resized, black_bar_2))
+                if original_shape[1] > target_shape[1]:
+                    resized = resized[:, int(original_shape[1] / 2 - target_shape[1] / 2):int(
+                        original_shape[1] / 2 - target_shape[1] / 2) + target_shape[1]]
+                else:
+                    black_bar = np.zeros((target_shape[0], int((target_shape[1] - original_shape[1]) / 2), 3),
+                                         dtype='uint8')
+                    resized = np.concatenate((black_bar, resized), axis=1)
+                    black_bar_2 = np.zeros((target_shape[0], int((target_shape[1] - resized.shape[1])), 3),
+                                           dtype='uint8')
+                    resized = np.concatenate((resized, black_bar_2), axis=1)
+            return resized
+
         augm_data = None
         if options.get('augmentation') and options.get('augm_data'):
-            array, augm_data = augmentation_image(array, options['augm_data'], options['augmentation'])
+            array, augm_data = augmentation_image(image_array=array,
+                                                  coords=options['augm_data'],
+                                                  augmentation_dict=options['augmentation'])
 
-        array = cv2.resize(array, (options['width'], options['height']))
+        array = resize_frame(image_array=array,
+                             target_shape=(options['height'], options['width']),
+                             frame_mode=options['image_mode'])
+
         if options['net'] == LayerNetChoice.linear:
             array = array.reshape(np.prod(np.array(array.shape)))
         if options['scaler'] != LayerScalerImageChoice.no_scaler and options.get('preprocess'):
