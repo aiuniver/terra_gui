@@ -25,7 +25,7 @@ class MarkUp:
         self.raw_path = os.path.join(self.annot_path, 'Raw')
 
         self.task_type = markup_data.task_type
-        self.classes_names = markup_data.classes_names
+        self.classes_names = sorted(markup_data.classes_names)
         self.classes_colors = markup_data.classes_colors
         self.alias = markup_data.alias
         self.to_do = markup_data.to_do
