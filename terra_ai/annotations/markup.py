@@ -69,8 +69,10 @@ class MarkUp:
         df.to_csv(os.path.join(self.annot_path, 'dataframe.csv'), index=False)
 
     def export_dataset(self):
+
         if self.task_type == 'tracker':
             dst_src = self.raw_path
+
         elif self.task_type == 'classification':
             dst_src = os.path.join(self.annot_path, 'Done')
 
@@ -95,6 +97,7 @@ class MarkUp:
                             shutil.copyfile(os.path.join(self.raw_path, image),
                                             os.path.join(dst_src, df.loc[i, 'result'], image))
             df.to_csv(os.path.join(self.annot_path, 'dataframe.csv'), index=False)
+
         elif self.task_type == 'object_detection':
             dst_src = os.path.join(self.annot_path, 'Done')
             os.makedirs(os.path.join(self.annot_path, 'Done', 'images'), exist_ok=True)
@@ -122,6 +125,10 @@ class MarkUp:
                 df.loc[i, 'result'] = os.path.join('annotations',
                                                 f"{'.'.join(df.loc[i, 'file'].split(os.sep)[-1].split('.')[:-1])}.txt")
             df.to_csv(os.path.join(self.annot_path, 'dataframe.csv'), index=False)
+            with open(os.path.join(dst_src, 'obj.names'), 'w') as f:
+                for item in self.classes_names:
+                    f.write("%s\n" % item)
+
         else:
             dst_src = os.path.join(self.annot_path, 'Done')
             os.makedirs(os.path.join(self.annot_path, 'Done', 'images'), exist_ok=True)
