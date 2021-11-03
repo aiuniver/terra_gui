@@ -50,6 +50,7 @@ PROJECT_PATH = {
     "datasets": Path(settings.TERRA_AI_PROJECT_PATH, "datasets").absolute(),
     "modeling": Path(settings.TERRA_AI_PROJECT_PATH, "modeling").absolute(),
     "training": Path(settings.TERRA_AI_PROJECT_PATH, "training").absolute(),
+    "cascades": Path(settings.TERRA_AI_PROJECT_PATH, "cascades").absolute(),
     "deploy": Path(settings.TERRA_AI_PROJECT_PATH, "training", "deploy").absolute(),
     "training_model": Path(
         settings.TERRA_AI_PROJECT_PATH, "training", "model"
@@ -86,6 +87,7 @@ class ProjectPathData(BaseMixinData):
     datasets: DirectoryPath
     modeling: DirectoryPath
     training: DirectoryPath
+    cascades: DirectoryPath
     deploy: DirectoryPath
     training_model: DirectoryPath
 
@@ -94,6 +96,7 @@ class ProjectPathData(BaseMixinData):
         "datasets",
         "modeling",
         "training",
+        "cascades",
         "deploy",
         "training_model",
         allow_reuse=True,

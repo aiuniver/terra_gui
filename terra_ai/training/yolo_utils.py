@@ -900,7 +900,7 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
             ap_dictionary[f"val_mAP{int(i_iou * 100)}"] = mAP * 100
         ap_dictionary["val_fps"] = fps
         tt2 = time.time()
-        print('tt2-tt1', tt2-tt1)
+        # print('tt2-tt1', tt2-tt1)
         return ap_dictionary
     except Exception as e:
         print_error("module yolo_utils", method_name, e)

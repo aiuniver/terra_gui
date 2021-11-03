@@ -20,19 +20,20 @@ from tensorflow import keras
 from tensorflow.keras.models import load_model
 
 from terra_ai import progress
+from terra_ai.callbacks.interactive_callback import InteractiveCallback
+from terra_ai.callbacks.utils import loss_metric_config
 from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice
 from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
-from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, \
-    CheckpointModeChoice, ArchitectureChoice
+from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, ArchitectureChoice
 from terra_ai.data.training.train import TrainData, InteractiveData
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.exceptions.deploy import MethodNotImplementedException
 from terra_ai.modeling.validator import ModelValidator
-from terra_ai.training.customcallback import InteractiveCallback
+# from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.training.customlosses import DiceCoef, UnscaledMAE, BalancedRecall, BalancedDiceCoef, \
     BalancedPrecision, BalancedFScore, FScore
 from terra_ai.training.yolo_utils import create_yolo, CustomModelYolo, compute_loss, get_mAP
@@ -160,63 +161,6 @@ class GUINN:
                                        dataset_path=dataset_path, training_path=training_path,
                                        initial_config=initial_config)
         if self.deploy_type in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]:
-            # print('self.deploy_type', self.deploy_type)
-            # initial_config = InteractiveData(**{
-            #     'loss_graphs': [
-            #         {
-            #             'id': 1,
-            #             'output_idx': 2,
-            #             'show': 'model',
-            #         },
-            #         {
-            #             'id': 2,
-            #             'output_idx': 2,
-            #             'show': 'classes',
-            #         },
-            #     ],
-            #     'metric_graphs': [
-            #         {
-            #             'id': 1,
-            #             'output_idx': 2,
-            #             'show': 'model',
-            #             'show_metric': 'mAP50'
-            #         },
-            #         {
-            #             'id': 2,
-            #             'output_idx': 2,
-            #             'show': 'classes',
-            #             'show_metric': 'mAP50'
-            #         }
-            #     ],
-            #     'intermediate_result': {
-            #         'show_results': True,
-            #         'example_choice_type': 'random',
-            #         'box_channel': 1,
-            #         'num_examples': 5,
-            #         'show_statistic': True,
-            #         'autoupdate': True,
-            #         "sensitivity": 0.25,
-            #         'threashold': 0.1
-            #     },
-            #     'progress_table': [
-            #         {
-            #             'output_idx': 2,
-            #             'show_loss': True,
-            #             'show_metrics': True,
-            #         }
-            #     ],
-            #     'statistic_data': {
-            #         'box_channel': 1,
-            #         'autoupdate': True,
-            #         "sensitivity": 0.15,
-            #         'threashold': 0.1
-            #     },
-            #     'data_balance': {
-            #         'show_train': False,
-            #         'show_val': False,
-            #         'sorted': 'alphabetic'  # 'descending', 'ascending'
-            #     }
-            # })
             interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss,
                                        dataset_path=dataset_path, training_path=training_path,
                                        initial_config=initial_config)
@@ -226,13 +170,6 @@ class GUINN:
                        checkpoint: dict, save_model_path: str, initial_model=None) -> None:
         progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков...'})
         retrain_epochs = self.sum_epoch if interactive.get_states().get("status") == "addtrain" else self.epochs
-        # if dataset_data.architecture in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]:
-        #     for inp, out, serv in self.dataset.dataset['train'].batch(2).take(22):
-        #         pass
-        #     callback = MyCallback(dataset=dataset, yolo_pred=self.yolo_pred,
-        #                           inp=inp, image_path=os.path.join(self.training_path, "deploy"),
-        #                           epochs=epochs, batches=batch_size)
-        # else:
         callback = FitCallback(dataset=dataset, dataset_data=dataset_data, checkpoint_config=checkpoint,
                                batch_size=batch_size, epochs=epochs, retrain_epochs=retrain_epochs,
                                save_model_path=save_model_path, model_name=self.nn_name,
@@ -517,7 +454,6 @@ class GUINN:
             print('dont use generator')
             critical_val_size = len(self.dataset.dataset.get('val'))
             buffer_size = 1000
-        # print('critical_val_size', critical_val_size)
         if (critical_val_size == self.batch_size) or ((critical_val_size % self.batch_size) == 0):
             self.val_batch_size = self.batch_size
         elif critical_val_size < self.batch_size:
@@ -620,7 +556,7 @@ class FitCallback(keras.callbacks.Callback):
                 "layer": 2,
                 "type": "Metrics",
                 "indicator": "Val",
-                "mode": "max",
+                # "mode": "max",
                 "metric_name": "Accuracy",
                 "save_best": True,
                 "save_weights": False,
@@ -676,6 +612,7 @@ class FitCallback(keras.callbacks.Callback):
         }
         # аттрибуты для чекпоинта
         self.checkpoint_config = checkpoint_config
+        self.checkpoint_mode = self._get_checkpoint_mode()  # min max
         self.num_outputs = len(self.dataset.data.outputs.keys())
         self.metric_checkpoint = "val_mAP50" if self.is_yolo else "loss"
 
@@ -688,6 +625,16 @@ class FitCallback(keras.callbacks.Callback):
         self.samples_val = []
         self.samples_target_train = []
         self.samples_target_val = []
+
+    def _get_checkpoint_mode(self):
+        if self.checkpoint_config.get("type") == CheckpointTypeChoice.Loss:
+            return 'min'
+        elif self.checkpoint_config.get("type") == CheckpointTypeChoice.Metrics:
+            metric_name = self.checkpoint_config.get("metric_name")
+            return loss_metric_config.get("metric").get(metric_name).get("mode")
+        else:
+            print('\nClass FitCallback method _get_checkpoint_mode: No checkpoint types are found\n')
+            return None
 
     def _get_metric_name_checkpoint(self, logs: dict):
         """Поиск среди fit_logs нужного параметра"""
@@ -835,10 +782,11 @@ class FitCallback(keras.callbacks.Callback):
                 # print('\nself.metric_checkpoint)', self.metric_checkpoint)
                 # print('logs.get(self.metric_checkpoint)', logs.get(self.metric_checkpoint))
                 # print('self.log_history.get("logs").get(self.metric_checkpoint))', self.log_history.get("logs").get(self.metric_checkpoint))
-                if self.checkpoint_config.get("mode") == CheckpointModeChoice.Min and \
+                # print()
+                if self.checkpoint_mode == 'min' and \
                         logs.get(self.metric_checkpoint) < min(self.log_history.get("logs").get(self.metric_checkpoint)):
                     return True
-                elif self.checkpoint_config.get("mode") == CheckpointModeChoice.Max and \
+                elif self.checkpoint_mode == 'max' and \
                         logs.get(self.metric_checkpoint) > max(self.log_history.get("logs").get(self.metric_checkpoint)):
                     return True
                 else:
@@ -874,14 +822,8 @@ class FitCallback(keras.callbacks.Callback):
     def _get_predict(self, deploy_model=None):
         current_model = deploy_model if deploy_model else self.model
         if self.is_yolo:
-            # pred_train = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_train)]
             current_predict = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_val)]
-            # pred_target_train = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_target_train)]
             current_target = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_target_val)]
-            # print("pred_train", pred_train[0].shape, pred_train[1].shape, pred_train[2].shape)
-            # print("pred_val", pred_val[0].shape, pred_val[1].shape, pred_val[2].shape)
-            # print("pred_target_train", pred_target_train[0].shape, pred_target_train[1].shape, pred_target_train[2].shape)
-            # print("pred_target_val", pred_target_val[0].shape, pred_target_val[1].shape, pred_target_val[2].shape)
         else:
             if self.dataset.data.use_generator:
                 current_predict = current_model.predict(self.dataset.dataset.get('val').batch(1),
@@ -892,15 +834,12 @@ class FitCallback(keras.callbacks.Callback):
         return current_predict, current_target
 
     def _deploy_predict(self, presets_predict):
-        # with open(os.path.join(self.save_model_path, "predict.txt"), "w", encoding="utf-8") as f:
-        #     f.write(str(presets_predict[0].tolist()))
         result = CreateArray().postprocess_results(array=presets_predict,
                                                    options=self.dataset,
                                                    save_path=os.path.join(self.save_model_path,
                                                                           "deploy_presets"),
                                                    dataset_path=self.dataset_path)
         deploy_presets = []
-        # print(result.keys())
         if result:
             deploy_presets = list(result.values())[0]
         return deploy_presets
@@ -987,13 +926,11 @@ class FitCallback(keras.callbacks.Callback):
                 out_deploy_presets_data = {"data": tmp_deploy}
             out_deploy_presets_data["columns"] = columns
             out_deploy_presets_data["predict_column"] = predict_column if predict_column else "Предсказанные значения"
-        # print(deploy_presets_data["predict"])
         interactive.deploy_presets_data = DeployData(
             path=deploy_path,
             type=self.deploy_type,
             data=out_deploy_presets_data
         )
-        # print(interactive.deploy_presets_data)
         self._create_cascade(**cascade_data)
 
     @staticmethod
@@ -1085,7 +1022,6 @@ class FitCallback(keras.callbacks.Callback):
                 result_data = {'timings': [estimated_time, elapsed_time, still_time,
                                            elapsed_epoch_time, still_epoch_time, msg_epoch, msg_batch]}
             self._set_result_data(result_data)
-            # print("PROGRESS", [type(num) for num in self._get_result_data().get("train_data", {}).get("data_balance", {}).get("2", ["0"])[0].get("plot_data", ["0"])[0].get("values")])
             progress.pool(
                 self.progress_name,
                 percent=(self.last_epoch - 1) / (
@@ -1171,7 +1107,7 @@ class FitCallback(keras.callbacks.Callback):
                         self.yolo_model.save_weights(file_path_best)
                     else:
                         self.model.save_weights(file_path_best)
-                    # print(f"Epoch {self.last_epoch} - best weights was successfully saved")
+                    print(f"\nEpoch {self.last_epoch} - best weights was successfully saved\n")
             except Exception as e:
                 print('\nself.model.save_weights failed', e)
         self._fill_log_history(self.last_epoch, interactive_logs)
