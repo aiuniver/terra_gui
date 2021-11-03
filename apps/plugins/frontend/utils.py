@@ -19,6 +19,12 @@ from terra_ai.data.modeling.layers.extra import (
     SpaceToDepthDataFormatChoice, CONVBlockConfigChoice,
 )
 
+from terra_ai.data.cascades.blocks.extra import (
+    BlockOutputDataSaveAsChoice,
+    BlockFunctionGroupChoice,
+    BlockCustomGroupChoice
+)
+
 from .base import Field
 from .extra import FieldTypeChoice
 
@@ -47,12 +53,18 @@ SELECT_TYPES = [
     YOLOActivationChoice,
     VAELatentRegularizerChoice,
     SpaceToDepthDataFormatChoice,
-    CONVBlockConfigChoice
+    CONVBlockConfigChoice,
+    BlockOutputDataSaveAsChoice,
+    BlockFunctionGroupChoice,
+    BlockCustomGroupChoice,
 ]
 
 
 class Labels(str, Enum):
     block_size = "Размер блока"
+    save_as = "Сохранить как"
+    group = "Группа"
+    postprocess = "Использовать постобработку"
 
 
 def __prepare_label(value: str) -> str:
