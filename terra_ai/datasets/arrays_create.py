@@ -25,6 +25,8 @@ from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVide
 from terra_ai.data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice, \
     LayerTextModeChoice, LayerAudioModeChoice, LayerVideoModeChoice, LayerScalerAudioChoice
 from terra_ai.data.datasets.creations.layers.output.types.ObjectDetection import LayerODDatasetTypeChoice
+from terra_ai.settings import DEPLOY_PRESET_PERCENT, CALLBACK_CLASSIFICATION_TREASHOLD_VALUE, \
+    CALLBACK_REGRESSION_TREASHOLD_VALUE
 
 import os
 import re
@@ -35,6 +37,19 @@ import shutil
 import pymorphy2
 import random
 import librosa.feature as librosa_feature
+import moviepy.editor as moviepy_editor
+import imgaug
+import colorsys
+import copy
+import math
+import string
+import matplotlib
+from typing import Optional
+from PIL import Image, UnidentifiedImageError, ImageFont, ImageDraw
+from matplotlib import pyplot as plt
+from pandas import DataFrame
+from tensorflow.python.keras.preprocessing import image
+from tensorflow.python.keras.utils.np_utils import to_categorical
 from ast import literal_eval
 from sklearn.cluster import KMeans
 from pydub import AudioSegment
@@ -47,10 +62,6 @@ from tensorflow.keras import utils
 from tensorflow import concat as tf_concat
 from tensorflow import maximum as tf_maximum
 from tensorflow import minimum as tf_minimum
-import moviepy.editor as moviepy_editor
-
-from terra_ai.settings import DEPLOY_PRESET_PERCENT, CALLBACK_CLASSIFICATION_TREASHOLD_VALUE, \
-    CALLBACK_REGRESSION_TREASHOLD_VALUE
 
 
 def print_error(class_name: str, method_name: str, message: Exception):
@@ -599,6 +610,7 @@ class CreateArray(object):
                                        'sample_rate': options['sample_rate'],
                                        'resample': options['resample'],
                                        'parameter': options['parameter'],
+                                       'cols_names': options['cols_names'],
                                        'scaler': options['scaler'],
                                        'max_scaler': options['max_scaler'],
                                        'min_scaler': options['min_scaler'],
@@ -638,8 +650,9 @@ class CreateArray(object):
     def cut_classification(paths_list: list, dataset_folder=None, **options: dict):
 
         instructions = {'instructions': paths_list,
-                        'parameters': {"classes_names": options['classes_names'],
-                                       "num_classes": options['num_classes'],
+                        'parameters': {'classes_names': options['classes_names'],
+                                       'one_hot_encoding': True,
+                                       'num_classes': options['num_classes'],
                                        'cols_names': options['cols_names'],
                                        'put': options['put'],
                                        'type_processing': options['type_processing'],
@@ -984,7 +997,10 @@ class CreateArray(object):
 
             return 1.0 * inter_area / union_area
 
-        real_boxes = resize_bboxes(coords, options['orig_x'], options['orig_y'])
+        if coords:
+            real_boxes = resize_bboxes(coords, options['orig_x'], options['orig_y'])
+        else:
+            real_boxes = [[0, 0, 0, 0, 0]]
 
         num_classes: int = options['num_classes']
         zero_boxes_flag: bool = False
@@ -1098,11 +1114,61 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def preprocess_image(array: np.ndarray, **options) -> dict:
+    def preprocess_image(array: np.ndarray, **options) -> tuple:
 
-        def apply_augmentation(array, aug_object):
+        def augmentation_image(image_array, coords, augmentation_dict):
 
-            pass
+            # КОСТЫЛЬ ИЗ-ЗА .NATIVE()
+            for key, value in augmentation_dict.items():
+                if value:
+                    for name, elem in value.items():
+                        if key != 'ChannelShuffle':
+                            if isinstance(augmentation_dict[key][name], list):
+                                augmentation_dict[key][name] = tuple(augmentation_dict[key][name])
+                            elif isinstance(augmentation_dict[key][name], dict):
+                                for name2, elem2 in augmentation_dict[key][name].items():
+                                    augmentation_dict[key][name][name2] = tuple(augmentation_dict[key][name][name2])
+
+            aug_parameters = []
+            for key, value in augmentation_dict.items():
+                if value:
+                    aug_parameters.append(getattr(imgaug.augmenters, key)(**value))
+            augmentation_object = imgaug.augmenters.Sequential(aug_parameters, random_order=True)
+
+            augmentation_object_data = {'images': np.expand_dims(image_array, axis=0)}
+            if coords:
+                coords = coords.split(' ')
+                for i in range(len(coords)):
+                    coords[i] = [float(x) for x in coords[i].split(',')]
+                bounding_boxes = []
+                for elem in coords:
+                    bounding_boxes.append(imgaug.BoundingBox(*elem))
+                bounding_boxes = imgaug.augmentables.bbs.BoundingBoxesOnImage(bounding_boxes,
+                                                                              shape=(image_array.shape[0],
+                                                                                     image_array.shape[1])
+                                                                              )
+                augmentation_object_data.update([('bounding_boxes', bounding_boxes)])
+
+            image_array_aug = augmentation_object(**augmentation_object_data)
+            if coords:
+                bounding_boxes_aug = image_array_aug[1]
+                image_array_aug = image_array_aug[0][0]
+                bounding_boxes_aug = bounding_boxes_aug.remove_out_of_image().clip_out_of_image()
+                aug_coords = []
+                for elem in bounding_boxes_aug.bounding_boxes:
+                    aug_coords.append(
+                        ','.join(str(x) for x in [elem.x1_int, elem.y1_int, elem.x2_int, elem.y2_int, elem.label]))
+                aug_coords = ' '.join(aug_coords)
+                if not aug_coords:
+                    aug_coords = ''
+                return image_array_aug, aug_coords
+            else:
+                return image_array_aug
+
+        # instructions = {}
+        augm_data = None
+        if options.get('augmentation') and options.get('augm_data'):
+            array, augm_data = augmentation_image(array, options['augm_data'], options['augmentation'])
 
         array = cv2.resize(array, (options['width'], options['height']))
         if options['net'] == LayerNetChoice.linear:
@@ -1115,12 +1181,10 @@ class CreateArray(object):
             elif options['scaler'] == 'terra_image_scaler':
                 array = options['preprocess'].transform(array)
 
-        # instructions = {'instructions': array,
-        #                 'parameters': options}
-        #
-        # return instructions
-
-        return array
+        if isinstance(augm_data, str):
+            return array, augm_data
+        else:
+            return array
 
     @staticmethod
     def preprocess_video(array: np.ndarray, **options) -> np.ndarray:
