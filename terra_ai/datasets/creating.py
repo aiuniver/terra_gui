@@ -855,9 +855,9 @@ class CreateDataset(object):
             augm_data = ''
             for h in range(len(row)):
                 try:
-                    arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(row[h], **instructions[h])
-                    arr = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(arr['instructions'],
-                                                                                           **arr['parameters'])
+                    arr = getattr(CreateArray(), f'create_{instructions[h]["put_type"]}')(row[h], **instructions[h])
+                    arr = getattr(CreateArray(), f'preprocess_{instructions[h]["put_type"]}')(arr['instructions'],
+                                                                                              **arr['parameters'])
                     if isinstance(arr, tuple):
                         full_array.append(arr[0])
                         augm_data += arr[1]
@@ -867,7 +867,7 @@ class CreateDataset(object):
                     progress.pool(self.progress_name, error='Ошибка создания массивов данных')
                     raise
 
-            return full_array, augm_data  # ВОТ СЮДА НАДО RETURN
+            return full_array, augm_data
 
         out_array = {'train': {}, 'val': {}, 'test': {}}
         service = {'train': {}, 'val': {}, 'test': {}}
