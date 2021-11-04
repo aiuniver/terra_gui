@@ -8,10 +8,12 @@ import shutil
 
 from pathlib import Path
 from typing import Any, Optional, List
+from dict_recursive_update import recursive_update
 from pydantic import validator, PrivateAttr
 from pydantic.types import conint, confloat, PositiveInt
 from pydantic.errors import EnumMemberError
 
+from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.mixins import BaseMixinData, UniqueListMixin, IDMixinData
 from terra_ai.data.training import optimizers, architectures
@@ -207,7 +209,7 @@ class ArchitectureData(BaseMixinData):
     @validator("parameters", always=True)
     def _validate_parameters(cls, value: Any, values, field) -> Any:
         if not value:
-            return value
+            value = {}
         _model = values.get("model")
         _outputs = value.get("outputs", [])
         for _index, _output in enumerate(_outputs):
@@ -256,21 +258,23 @@ class TrainingDetailsData(BaseMixinData):
         self._path = Path(data.get("path"))
 
         _name = data.get("name", DEFAULT_TRAINING_PATH_NAME)
-        if _name == DEFAULT_TRAINING_PATH_NAME:
-            os.makedirs(Path(self._path, DEFAULT_TRAINING_PATH_NAME), exist_ok=True)
-
-        if not Path(self._path, _name).is_dir():
-            _name = DEFAULT_TRAINING_PATH_NAME
-
-        config = Path(self._path, _name, CONFIG_TRAINING_FILENAME)
-        if not config.is_file():
-            with open(config, "w") as config_ref:
-                json.dump({"name": _name}, config_ref)
-        with open(config) as config_ref:
-            data = json.load(config_ref)
+        _path = Path(self._path, _name)
+        if _path.is_file():
+            os.remove(_path)
+        os.makedirs(_path, exist_ok=True)
         data["name"] = _name
 
+        config = Path(_path, CONFIG_TRAINING_FILENAME)
+        if config.is_file():
+            with open(config) as config_ref:
+                config_data = json.load(config_ref)
+                config_data.update(**data)
+                data = config_data
+
         super().__init__(**data)
+
+        with open(config, "w") as config_ref:
+            json.dump(self.native(), config_ref)
 
     @property
     def path(self) -> Path:
@@ -293,5 +297,77 @@ class TrainingDetailsData(BaseMixinData):
         shutil.rmtree(self.path, ignore_errors=True)
         shutil.move(source, self.path)
 
-    def clear(self):
-        print(self.path)
+    def set_base(self, data: dict, dataset: DatasetData):
+        base_data = self.base.native()
+        data = recursive_update(base_data, data)
+        data["model"] = self.model
+        if not data.get("architecture"):
+            data.update({"architecture": {}})
+        data["architecture"].update(
+            {
+                "type": dataset.architecture.value
+                if dataset
+                else ArchitectureChoice.Basic.value,
+            }
+        )
+        if not data["architecture"].get("parameters"):
+            data["architecture"].update({"parameters": {}})
+        self.base = TrainData(**data)
+        self.set_interactive()
+
+    def set_interactive(self):
+        loss_graphs = []
+        metric_graphs = []
+        progress_table = []
+        _index_m = 0
+        _index_l = 0
+        for layer in self.model.outputs:
+            outputs = self.base.architecture.parameters.outputs.get(layer.id)
+            if not outputs:
+                continue
+            for metric in outputs.metrics:
+                _index_m += 1
+                metric_graphs.append(
+                    {
+                        "id": _index_m,
+                        "output_idx": layer.id,
+                        "show": MetricGraphShowChoice.model,
+                        "show_metric": metric,
+                    }
+                )
+                _index_m += 1
+                metric_graphs.append(
+                    {
+                        "id": _index_m,
+                        "output_idx": layer.id,
+                        "show": MetricGraphShowChoice.classes,
+                        "show_metric": metric,
+                    }
+                )
+            _index_l += 1
+            loss_graphs.append(
+                {
+                    "id": _index_l,
+                    "output_idx": layer.id,
+                    "show": LossGraphShowChoice.model,
+                }
+            )
+            _index_l += 1
+            loss_graphs.append(
+                {
+                    "id": _index_l,
+                    "output_idx": layer.id,
+                    "show": LossGraphShowChoice.classes,
+                }
+            )
+            progress_table.append(
+                {
+                    "output_idx": layer.id,
+                }
+            )
+        self.interactive.loss_graphs = LossGraphsList(loss_graphs)
+        self.interactive.metric_graphs = MetricGraphsList(metric_graphs)
+        self.interactive.progress_table = ProgressTableList(progress_table)
+        self.interactive.intermediate_result.main_output = (
+            self.model.outputs[0].id if len(self.model.outputs) else None
+        )

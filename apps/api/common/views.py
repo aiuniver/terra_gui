@@ -3,7 +3,8 @@ from apps.plugins.project import data_path
 from terra_ai.agent import agent_exchange
 from terra_ai.agent.exceptions import FailedGetModelException
 
-from ..base import BaseAPIView, BaseResponseSuccess, BaseResponseErrorFields
+from apps.api.base import BaseAPIView, BaseResponseSuccess, BaseResponseErrorFields
+
 from .serializers import ValidateDatasetModelSerializer
 
 
