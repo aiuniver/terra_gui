@@ -317,16 +317,13 @@ class Exchange:
         """
         Старт обучения
         """
-        if (
-            interactive.get_states().get("status") == "stopped"
-            or interactive.get_states().get("status") == "trained"
-        ):
-            interactive.set_status("addtrain")
+        if training.state.status == "stopped" or training.state.status == "trained":
+            training.state.set("addtrain")
         else:
-            interactive.set_status("training")
+            training.state.set("training")
 
         training_obj.terra_fit(dataset=dataset, gui_model=model, training=training)
-        return interactive.train_states
+        return training.state.native()
 
     def _call_training_stop(self):
         """
