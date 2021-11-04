@@ -35,6 +35,7 @@ export default {
       if (this.isLarge) {
         this.show = value;
       }
+      if (value) this.$store.dispatch('trainings/setLargeImg', this.src)
     },
     outside() {
       this.show = false;
