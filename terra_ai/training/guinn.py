@@ -66,7 +66,8 @@ class GUINN:
         self.dataset = None
         self.deploy_type = None
         self.model: Optional[Model] = None
-        self.training_path: str = ""
+        self.model_path: Path = Path("./")
+        self.deploy_path: Path = Path("./")
         self.optimizer = None
         self.loss: dict = {}
         self.metrics: dict = {}
@@ -114,18 +115,19 @@ class GUINN:
                 output.append(getattr(importlib.import_module("tensorflow.keras.metrics"), metric)())
         return output
 
-    def _set_training_params(self, dataset: DatasetData, train_params: TrainingDetailsData,
-                             training_path: Path) -> None:
+    def _set_training_params(self, dataset: DatasetData, train_params: TrainingDetailsData) -> None:
         params = train_params.base
-        self.dataset = self._prepare_dataset(dataset, training_path, state=train_params.state.status)
+        self.model_path = train_params.model_path
+        self.deploy_path = train_params.deploy_path
+        self.dataset = self._prepare_dataset(dataset=dataset, model_path=self.model_path,
+                                             state=train_params.state.status)
 
         if not self.dataset.data.architecture or self.dataset.data.architecture == ArchitectureChoice.Basic:
             self.deploy_type = self._set_deploy_type(self.dataset)
         else:
             self.deploy_type = self.dataset.data.architecture
 
-        self.training_path = training_path
-        self.nn_name = os.path.split(training_path)[-1] if not os.path.split(training_path)[-1].startswith("__") else "model"
+        self.nn_name = "trained_model"
 
         if self.dataset.data.use_generator:
             train_size = len(self.dataset.dataframe.get("train"))
@@ -164,19 +166,20 @@ class GUINN:
             self.loss.update({str(output_layer["id"]): output_layer["loss"]})
 
         interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss,
-                                   dataset_path=dataset.path, training_path=training_path,
+                                   dataset_path=dataset.path, training_path=self.model_path,
                                    initial_config=train_params.interactive)
 
     def _set_callbacks(self, dataset: PrepareDataset, dataset_data: DatasetData,
-                       batch_size: int, epochs: int, checkpoint: dict, save_model_path: Path,
+                       batch_size: int, epochs: int, checkpoint: dict,
                        state: StateData, deploy: DeployData, initial_model=None) -> None:
         progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков...'})
         retrain_epochs = self.sum_epoch if state.status == "addtrain" else self.epochs
 
         callback = FitCallback(dataset=dataset, dataset_data=dataset_data, checkpoint_config=checkpoint,
                                batch_size=batch_size, epochs=epochs, retrain_epochs=retrain_epochs,
-                               training_path=save_model_path, model_name=self.nn_name,
-                               deploy_type=self.deploy_type, initialed_model=initial_model, state=state,
+                               model_path=self.model_path, deploy_path=self.deploy_path,
+                               model_name=self.nn_name, deploy_type=self.deploy_type,
+                               initialed_model=initial_model, state=state,
                                deploy=deploy)
         self.callbacks = [callback]
         progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков выполнено'})
@@ -240,14 +243,14 @@ class GUINN:
             validator = ModelValidator(model)
             train_model = validator.get_keras_model()
         else:
-            train_model = load_model(os.path.join(self.training_path, self.nn_name, f"{self.nn_name}.trm"),
+            train_model = load_model(os.path.join(self.model_path, f"{self.nn_name}.trm"),
                                      compile=False)
             weight = None
-            for i in os.listdir(os.path.join(self.training_path, self.nn_name)):
+            for i in os.listdir(os.path.join(self.model_path, self.nn_name)):
                 if i[-3:] == '.h5' and 'last' in i:
                     weight = i
             if weight:
-                train_model.load_weights(os.path.join(self.training_path, self.nn_name, weight))
+                train_model.load_weights(os.path.join(self.model_path, weight))
         return train_model
 
     @staticmethod
@@ -265,27 +268,6 @@ class GUINN:
         optimizer_object = getattr(keras.optimizers, params.optimizer.type.value)
         self.optimizer = optimizer_object(**params.optimizer.parameters_dict)
 
-    def show_training_params(self) -> None:
-        """
-        output the parameters of the neural network: batch_size, epochs, shuffle, callbacks, loss, metrics,
-        x_train_shape, num_classes
-        """
-        # print("\nself.DTS.classes_names", self.DTS.classes_names)
-        x_shape = []
-        v_shape = []
-        t_shape = []
-        for i_key in self.DTS.X.keys():
-            x_shape.append([i_key, self.DTS.X[i_key]['data'][0].shape])
-            v_shape.append([i_key, self.DTS.X[i_key]['data'][1].shape])
-            t_shape.append([i_key, self.DTS.X[i_key]['data'][2].shape])
-
-        msg = f'num_classes = {self.DTS.num_classes}, x_Train_shape = {x_shape}, x_Val_shape = {v_shape}, \n' \
-              f'x_Test_shape = {t_shape}, epochs = {self.epochs}, \n' \
-              f'callbacks = {self.callbacks}, batch_size = {self.batch_size},shuffle = {self.shuffle}, \n' \
-              f'loss = {self.loss}, metrics = {self.metrics} \n'
-
-        pass
-
     def save_model(self) -> None:
         """
         Saving last model on each epoch end
@@ -293,9 +275,8 @@ class GUINN:
         Returns:
             None
         """
-        model_name = f"{self.nn_name}.trm"
         file_path_model: str = os.path.join(
-            self.training_path, f"{model_name}"
+            self.model_path, f"{self.nn_name}.trm"
         )
         self.model.save(file_path_model)
 
@@ -359,11 +340,10 @@ class GUINN:
         progress.pool.reset(self.progress_name)
 
         if training.state.status != "addtrain":
-            self._save_params_for_deploy(training_path=training.path, params=training.base)
+            self._save_params_for_deploy(training_path=training.model_path, params=training.base)
 
         self.nn_cleaner(retrain=True if training.state.status == "training" else False)
-        self._set_training_params(dataset=dataset, train_params=training,
-                                  training_path=training.path)
+        self._set_training_params(dataset=dataset, train_params=training)
 
         self.model = self._set_model(model=gui_model, state=training.state.status)
         if training.state.status == "training":
@@ -423,11 +403,12 @@ class GUINN:
                                metrics=self.metrics
                                )
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели выполнена'})
-        self._set_callbacks(dataset=dataset, dataset_data=dataset_data, batch_size=params.base.batch,
-                            epochs=params.base.epochs, save_model_path=params.path,
-                            checkpoint=params.base.architecture.parameters.checkpoint.native(),
-                            initial_model=self.model if yolo_arch else None, state=params.state,
-                            deploy=params.deploy)
+        self._set_callbacks(
+            dataset=dataset, dataset_data=dataset_data, batch_size=params.base.batch,
+            epochs=params.base.epochs, deploy=params.deploy,
+            checkpoint=params.base.architecture.parameters.checkpoint.native(),
+            initial_model=self.model if yolo_arch else None, state=params.state
+        )
         progress.pool(self.progress_name, finished=False, data={'status': 'Начало обучения ...'})
         if self.dataset.data.use_generator:
             print('use generator')
@@ -437,15 +418,14 @@ class GUINN:
             print('dont use generator')
             critical_val_size = len(self.dataset.dataset.get('val'))
             buffer_size = 1000
-        # print('critical_val_size', critical_val_size)
+
         if (critical_val_size == self.batch_size) or ((critical_val_size % self.batch_size) == 0):
             self.val_batch_size = self.batch_size
         elif critical_val_size < self.batch_size:
             self.val_batch_size = critical_val_size
         else:
             self.val_batch_size = self._get_val_batch_size(self.batch_size, critical_val_size)
-        # print('self.batch_size', self.batch_size)
-        # print('self.val_batch_size', self.val_batch_size)
+
         trained_model = model_yolo if model_yolo else self.model
 
         try:
@@ -462,8 +442,6 @@ class GUINN:
                 verbose=verbose,
                 callbacks=self.callbacks
             )
-            if yolo_arch:
-                self.model.save_weights(os.path.join(self.training_path, 'yolo_last.h5'))
         except Exception as error:
             params.state.set("stopped") if params.state.status == "addtrain" else params.state.set("no_train")
             progress.pool(self.progress_name, error=terra_exception(error).__str__(), finished=True)
@@ -529,9 +507,9 @@ class FitCallback(keras.callbacks.Callback):
     """CustomCallback for all task type"""
 
     def __init__(self, dataset: PrepareDataset, dataset_data: DatasetData, checkpoint_config: dict,
-                 state: StateData, deploy: DeployData, batch_size: int = None, epochs: int = None,
-                 retrain_epochs: int = None, training_path: Path = Path("./"), model_name: str = "model",
-                 deploy_type: str = "", initialed_model=None):
+                 state: StateData, deploy: DeployData, model_path: Path, deploy_path: Path,
+                 batch_size: int = None, epochs: int = None, retrain_epochs: int = None,
+                 model_name: str = "model", deploy_type: str = "", initialed_model=None):
         """
         Для примера
         "checkpoint": {
@@ -565,8 +543,8 @@ class FitCallback(keras.callbacks.Callback):
         self._sum_epoch_time = 0
         self.retrain_epochs = retrain_epochs
         self.still_epochs = epochs
-        self.training_path = training_path
-        self.save_model_path = os.path.join(self.training_path, model_name)
+        self.model_path = model_path
+        self.deploy_path = deploy_path
         self.nn_name = model_name
         self.state = state
         self.deploy = deploy
@@ -604,7 +582,6 @@ class FitCallback(keras.callbacks.Callback):
 
         # yolo params
         self.yolo_model = initialed_model
-        self.image_path = os.path.join(self.training_path, "deploy", 'chess_{}.jpg')
         self.samples_train = []
         self.samples_val = []
         self.samples_target_train = []
@@ -696,10 +673,10 @@ class FitCallback(keras.callbacks.Callback):
             #     self.log_history['logs'][metric].append(0.)
 
     def _save_logs(self):
-        interactive_path = os.path.join(self.save_model_path, "interactive.history")
+        interactive_path = os.path.join(self.model_path, "interactive.history")
         if not os.path.exists(interactive_path):
             os.mkdir(interactive_path)
-        with open(os.path.join(self.save_model_path, "log.history"), "w", encoding="utf-8") as history:
+        with open(os.path.join(self.model_path, "log.history"), "w", encoding="utf-8") as history:
             json.dump(self.log_history, history)
         with open(os.path.join(interactive_path, "log.int"), "w", encoding="utf-8") as log:
             json.dump(interactive.log_history, log)
@@ -709,9 +686,9 @@ class FitCallback(keras.callbacks.Callback):
             json.dump({"addtrain_epochs": interactive.addtrain_epochs}, addtraining)
 
     def _load_logs(self):
-        interactive_path = os.path.join(self.save_model_path, "interactive.history")
+        interactive_path = os.path.join(self.model_path, "interactive.history")
         if self.state.status == "addtrain":
-            with open(os.path.join(self.save_model_path, "log.history"), "r", encoding="utf-8") as history:
+            with open(os.path.join(self.model_path, "log.history"), "r", encoding="utf-8") as history:
                 logs = json.load(history)
             with open(os.path.join(interactive_path, "log.int"), "r", encoding="utf-8") as int_log:
                 interactive_logs = json.load(int_log)
@@ -807,7 +784,7 @@ class FitCallback(keras.callbacks.Callback):
     def _deploy_predict(self, presets_predict):
         result = CreateArray().postprocess_results(array=presets_predict,
                                                    options=self.dataset,
-                                                   save_path=os.path.join(self.save_model_path,
+                                                   save_path=os.path.join(self.model_path,
                                                                           "deploy_presets"),
                                                    dataset_path=str(self.dataset_path))
         deploy_presets = []
@@ -815,7 +792,7 @@ class FitCallback(keras.callbacks.Callback):
             deploy_presets = list(result.values())[0]
         return deploy_presets
 
-    def _create_form_data_for_dataframe_deploy(self, deploy_path):
+    def _create_form_data_for_dataframe_deploy(self):
         form_data = []
         with open(os.path.join(self.dataset_path, "config.json"), "r", encoding="utf-8") as dataset_conf:
             dataset_info = json.load(dataset_conf).get("columns", {})
@@ -839,41 +816,39 @@ class FitCallback(keras.callbacks.Callback):
                             "type": input_type
                         }
                     form_data.append(table_column_data)
-        with open(os.path.join(deploy_path, "form.json"), "w", encoding="utf-8") as form_file:
+        with open(os.path.join(self.deploy_path, "form.json"), "w", encoding="utf-8") as form_file:
             json.dump(form_data, form_file, ensure_ascii=False)
 
     def _create_cascade(self, **data):
-        deploy_path = data.get("deploy_path")
         if self.dataset.data.alias not in ["imdb", "boston_housing", "reuters"]:
             if "Dataframe" in self.deploy_type:
-                self._create_form_data_for_dataframe_deploy(deploy_path=deploy_path)
+                self._create_form_data_for_dataframe_deploy()
             if self.is_yolo:
                 func_name = "object_detection"
             else:
                 func_name = decamelize(self.deploy_type)
             config = CascadeCreator()
-            config.create_config(str(self.training_path), str(self.save_model_path), func_name=func_name)
-            config.copy_package(str(self.training_path))
+            config.create_config(deploy_path=self.deploy_path, model_path=self.model_path, func_name=func_name)
+            config.copy_package(deploy_path=self.deploy_path, model_path=self.model_path)
             config.copy_script(
-                training_path=str(self.training_path),
+                deploy_path=self.deploy_path,
                 function_name=func_name
             )
             if self.deploy_type == ArchitectureChoice.TextSegmentation:
-                with open(os.path.join(deploy_path, "format.txt"), "w", encoding="utf-8") as format_file:
+                with open(os.path.join(self.deploy_path, "format.txt"), "w", encoding="utf-8") as format_file:
                     format_file.write(str(data.get("tags_map", "")))
 
     def _prepare_deploy(self):
-        deploy_path = os.path.join(self.training_path, "deploy")
         weight = None
-        cascade_data = {"deploy_path": deploy_path}
-        for i in os.listdir(self.save_model_path):
+        cascade_data = {"deploy_path": self.deploy_path}
+        for i in os.listdir(self.model_path):
             if i[-3:] == '.h5' and 'best' in i:
                 weight = i
         if weight:
             if self.yolo_model:
-                self.yolo_model.load_weights(os.path.join(self.save_model_path, weight))
+                self.yolo_model.load_weights(os.path.join(self.model_path, weight))
             else:
-                self.model.load_weights(os.path.join(self.save_model_path, weight))
+                self.model.load_weights(os.path.join(self.model_path, weight))
         deploy_predict, y_true = self._get_predict()
         deploy_presets_data = self._deploy_predict(deploy_predict)
         out_deploy_presets_data = {"data": deploy_presets_data}
@@ -899,7 +874,7 @@ class FitCallback(keras.callbacks.Callback):
             out_deploy_presets_data["predict_column"] = predict_column if predict_column else "Предсказанные значения"
         # print(deploy_presets_data["predict"])
         self.deploy = DeployData(
-            path=deploy_path,
+            path=self.deploy_path,
             type=self.deploy_type,
             data=out_deploy_presets_data
         )
@@ -964,7 +939,7 @@ class FitCallback(keras.callbacks.Callback):
         else:
             msg_batch = {"current": batch + 1, "total": self.num_batches}
             msg_epoch = {"current": self.last_epoch,
-                         "total": self.retrain_epochs if interactive.get_states().get("status") == "addtrain"
+                         "total": self.retrain_epochs if self._get_train_status() == "addtrain"
                          else self.epochs}
             still_epoch_time = self.update_progress(self.num_batches, batch, self._time_first_step)
             elapsed_epoch_time = time.time() - self._time_first_step
@@ -1063,12 +1038,12 @@ class FitCallback(keras.callbacks.Callback):
         if self.last_epoch > 1:
             try:
                 if self._best_epoch_monitoring(interactive_logs):
-                    if not os.path.exists(self.save_model_path):
-                        os.mkdir(self.save_model_path)
-                    if not os.path.exists(os.path.join(self.save_model_path, "deploy_presets")):
-                        os.mkdir(os.path.join(self.save_model_path, "deploy_presets"))
+                    if not os.path.exists(self.model_path):
+                        os.mkdir(self.model_path)
+                    if not os.path.exists(os.path.join(self.model_path, "deploy_presets")):
+                        os.mkdir(os.path.join(self.model_path, "deploy_presets"))
                     file_path_best: str = os.path.join(
-                        self.save_model_path, f"best_weights_{self.metric_checkpoint}.h5"
+                        self.model_path, f"best_weights_{self.metric_checkpoint}.h5"
                     )
                     if self.yolo_model:
                         self.yolo_model.save_weights(file_path_best)
@@ -1086,14 +1061,14 @@ class FitCallback(keras.callbacks.Callback):
 
         if (self.last_epoch - 1) > 1:
             file_path_last: str = os.path.join(
-                self.save_model_path, f"last_weights_{self.metric_checkpoint}.h5"
+                self.model_path, f"last_weights_{self.metric_checkpoint}.h5"
             )
             if self.yolo_model:
                 self.yolo_model.save_weights(file_path_last)
             else:
                 self.model.save_weights(file_path_last)
-        if not os.path.exists(os.path.join(self.save_model_path, "deploy_presets")):
-            os.mkdir(os.path.join(self.save_model_path, "deploy_presets"))
+        if not os.path.exists(os.path.join(self.model_path, "deploy_presets")):
+            os.mkdir(os.path.join(self.model_path, "deploy_presets"))
         self._prepare_deploy()
 
         time_end = self.update_progress(self.num_batches * self.epochs + 1,
