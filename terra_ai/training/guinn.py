@@ -243,10 +243,11 @@ class GUINN:
             validator = ModelValidator(model)
             train_model = validator.get_keras_model()
         else:
-            train_model = load_model(os.path.join(self.model_path, f"{self.nn_name}.trm"),
+            model_file = f"{self.nn_name}.trm"
+            train_model = load_model(os.path.join(self.model_path, f"{model_file}"),
                                      compile=False)
             weight = None
-            for i in os.listdir(os.path.join(self.model_path, self.nn_name)):
+            for i in os.listdir(self.model_path):
                 if i[-3:] == '.h5' and 'last' in i:
                     weight = i
             if weight:
