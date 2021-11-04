@@ -7,14 +7,11 @@ import time
 import colorsys
 from tensorflow.keras.preprocessing.image import load_img
 import os
+
+from terra_ai.callbacks.utils import print_error
 from terra_ai.datasets.utils import resize_bboxes
 
 ### DETECTION ###
-
-def print_error(class_name: str, method_name: str, message: Exception):
-    return print(f'\n_________________________________________________\n'
-                 f'Error in class {class_name} method {method_name}: {message}'
-                 f'\n_________________________________________________\n')
 
 
 def detect_image(Yolo, original_image, output_path, input_size=416, show=False, CLASSES=None,
@@ -628,7 +625,6 @@ class CustomModelYolo(keras.Model):
 
     @tf.function
     def predict_step(self, data):
-
         return self.yolo(data, training=False)
 
 

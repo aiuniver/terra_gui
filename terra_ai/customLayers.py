@@ -166,8 +166,8 @@ class InstanceNormalization(Layer):
 class CustomUNETBlock(Model):
     """Unet block layer """
 
-    def __init__(self, filters=32, activation='relu'):
-        super(CustomUNETBlock, self).__init__(name='')
+    def __init__(self, filters=32, activation='relu', **kwargs):
+        super(CustomUNETBlock, self).__init__(**kwargs)
         self.filters = filters
         self.activation = activation
         self.x_1 = layers.Conv2D(filters=self.filters, kernel_size=(3, 3), strides=(1, 1), padding='same',
@@ -338,7 +338,7 @@ class VAEBlock(Model):
             sample = VAEBlock(latent_regularizer='bvae', beta=16,
                               latent_size=32)(x)
         '''
-        super(VAEBlock, self).__init__(name='vaeblock', **kwargs)
+        super(VAEBlock, self).__init__(**kwargs)
         # sampling
         self.reg = latent_regularizer
         self.beta = beta
@@ -838,11 +838,7 @@ class DarkNetConvolutional(Model):
 
 class DarkNetResBlock(Model):
 
-    def __init__(self,
-                 filter_num1=32,
-                 filter_num2=32,
-                 activate_type='LeakyReLU',
-                 **kwargs):
+    def __init__(self, filter_num1=32, filter_num2=32, activate_type='LeakyReLU', **kwargs):
         super(DarkNetResBlock, self).__init__(**kwargs)
         self.filter_num1 = filter_num1
         self.filter_num2 = filter_num2
@@ -884,23 +880,13 @@ class DarkNetUpsample(Model):
         config = super(DarkNetUpsample, self).get_config()
         return config
 
+
 class CONVBlock(Model):
     """Conv block layer """
 
-    def __init__(self,
-                 n_conv_layers=2,
-                 filters=16,
-                 activation='relu',
-                 kernel_size=(3, 3),
-                 strides=(1, 1),
-                 dilation=(1, 1),
-                 padding='same',
-                 batch_norm_layer=True,
-                 dropout_layer=True,
-                 dropout_rate=0.1,
-                 leaky_relu_layer=True,
-                 leaky_relu_alpha=0.3,
-                 layers_seq_config: str = 'conv_conv_bn_lrelu_drop',
+    def __init__(self, n_conv_layers=2, filters=16, activation='relu', kernel_size=(3, 3), strides=(1, 1),
+                 dilation=(1, 1), padding='same', batch_norm_layer=True, dropout_layer=True, dropout_rate=0.1,
+                 leaky_relu_layer=True, leaky_relu_alpha=0.3, layers_seq_config: str = 'conv_conv_bn_lrelu_drop',
                  **kwargs):
 
         super(CONVBlock, self).__init__(**kwargs)
@@ -1013,19 +999,9 @@ class PSPBlock(Model):
     n_conv_layers - number of conv layers in one downsampling/upsampling segment
     """
 
-    def __init__(self,
-                 n_pooling_branches=2,
-                 filters_coef=2,
-                 n_conv_layers=2,
-                 activation='relu',
-                 kernel_size=(3, 3),
-                 strides=(1, 1),
-                 dilation=(1, 1),
-                 padding='same',
-                 batch_norm_layer=True,
-                 dropout_layer=True,
-                 dropout_rate=0.1,
-                 **kwargs):
+    def __init__(self, n_pooling_branches=2, filters_coef=2, n_conv_layers=2, activation='relu', kernel_size=(3, 3),
+                 strides=(1, 1), dilation=(1, 1), padding='same', batch_norm_layer=True, dropout_layer=True,
+                 dropout_rate=0.1, **kwargs):
 
         super(PSPBlock, self).__init__(**kwargs)
         self.n_pooling_branches = n_pooling_branches
@@ -1052,7 +1028,7 @@ class PSPBlock(Model):
             setattr(self, f"maxpool_{i}",
                     layers.MaxPool2D(pool_size=2 ** i, padding='same'))
             for j in range(self.n_conv_layers):
-                setattr(self, f"conv_{i,j}",
+                setattr(self, f"conv_{i, j}",
                         layers.Conv2D(filters=self.filters_coef * 16 * (i + 1), kernel_size=self.kernel_size,
                                       strides=self.strides,
                                       padding=self.padding, activation=self.activation, data_format='channels_last',
@@ -1067,7 +1043,7 @@ class PSPBlock(Model):
             if self.batch_norm_layer:
                 setattr(self, f"batchnorm_{i}", layers.BatchNormalization())
             if self.dropout_layer:
-                setattr(self, f"dropout_{i}", layers.Dropout(rate = self.dropout_rate))
+                setattr(self, f"dropout_{i}", layers.Dropout(rate=self.dropout_rate))
 
         self.concatenate = layers.Concatenate()
 
@@ -1091,7 +1067,7 @@ class PSPBlock(Model):
         for i in range(0, self.n_pooling_branches):
             setattr(self, f'x_{i}', getattr(self, f'maxpool_{i}')(x))
             for j in range(self.n_conv_layers):
-                setattr(self, f'x_{i}', getattr(self, f'conv_{i,j}')(getattr(self, f'x_{i}')))
+                setattr(self, f'x_{i}', getattr(self, f'conv_{i, j}')(getattr(self, f'x_{i}')))
             if self.batch_norm_layer:
                 setattr(self, f'x_{i}', getattr(self, f'batchnorm_{i}')(getattr(self, f'x_{i}')))
             if self.dropout_layer:
@@ -1137,19 +1113,9 @@ class UNETBlock(Model):
     n_conv_layers - number of conv layers in one downsampling/upsampling segment
     """
 
-    def __init__(self,
-                 n_pooling_branches=2,
-                 filters_coef=2,
-                 n_conv_layers=2,
-                 activation='relu',
-                 kernel_size=(3, 3),
-                 strides=(1, 1),
-                 dilation=(1, 1),
-                 padding='same',
-                 batch_norm_layer=True,
-                 dropout_layer=True,
-                 dropout_rate=0.1,
-                 **kwargs):
+    def __init__(self, n_pooling_branches=2, filters_coef=2, n_conv_layers=2, activation='relu', kernel_size=(3, 3),
+                 strides=(1, 1), dilation=(1, 1), padding='same', batch_norm_layer=True, dropout_layer=True,
+                 dropout_rate=0.1, **kwargs):
 
         super(UNETBlock, self).__init__(**kwargs)
         self.n_pooling_branches = n_pooling_branches
@@ -1290,7 +1256,6 @@ class UNETBlock(Model):
         base_config = super(UNETBlock, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
-
     @classmethod
     def from_config(cls, config):
         return cls(**config)
@@ -1308,4 +1273,3 @@ if __name__ == "__main__":
     x = YOLOv3ResBlock(filters=32, num_resblocks=1)
     print(x.compute_output_shape(input_shape=(None, 32, 32, 64)))
     pass
-
