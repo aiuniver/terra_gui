@@ -1,7 +1,7 @@
 <template>
   <at-modal v-model="dialog" width="400" showClose>
     <div slot="header" style="text-align: center">
-      <span>Сохранить модель</span>
+      <span>Сохранить каскад</span>
     </div>
     <div class="model modal-save-model">
       <div class="model__image">
@@ -78,8 +78,8 @@ export default {
           overwrite: this.overwrite,
         });
         if (res?.error && res?.error?.general) {
-          await this.$store.dispatch('messages/setMessage', { error: `Moдель '${this.name}' уже создана` });
-          this.err = `Moдель '${this.name}' уже создана`;
+          await this.$store.dispatch('messages/setMessage', { error: `Каскад '${this.name}' уже создана` });
+          this.err = `Каскад '${this.name}' уже создана`;
         } else if (res?.error?.fields) {
           this.err = res?.error?.fields?.alias;
           await this.$store.dispatch('messages/setMessage', { error: res?.error?.fields });
@@ -90,7 +90,7 @@ export default {
 
         if (!this.err) {
           this.dialog = false;
-          await this.$store.dispatch('messages/setMessage', { message: `Moдель '${this.name}' сохранена` });
+          await this.$store.dispatch('messages/setMessage', { message: `Каскад '${this.name}' сохранен` });
         }
       }
     },

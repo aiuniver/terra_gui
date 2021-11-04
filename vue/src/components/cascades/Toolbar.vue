@@ -1,13 +1,13 @@
 <template>
   <div class="toolbar">
     <ul class="toolbar__menu">
-      <!-- <li :class="['toolbar__menu--item', { disabled: false }]" @click="click($event, 'load')" title="Загрузить модель">
+      <li :class="['toolbar__menu--item', { disabled: false }]" @click="click($event, 'load')" title="Загрузить каскад">
         <i class="t-icon icon-model-load"></i>
-      </li> -->
+      </li>
       <li
         :class="['toolbar__menu--item', { disabled: isSave }]"
         @click="click($event, 'save')"
-        title="Сохранить модель"
+        title="Сохранить каскад"
       >
         <i class="t-icon icon-model-save"></i>
       </li>
@@ -48,7 +48,7 @@
       <li
         :class="['toolbar__menu--item', { disabled: false }]"
         @click="click($event, 'save')"
-        title="Сохранить модель"
+        title="Сохранить каскад"
       >
         <i class="t-icon icon-model-save"></i>
       </li>
