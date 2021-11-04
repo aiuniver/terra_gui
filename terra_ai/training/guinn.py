@@ -150,7 +150,6 @@ class GUINN:
                 self.epochs = params.epochs
         else:
             self.epochs = params.epochs
-
         self.batch_size = params.batch
         self.set_optimizer(params)
 
@@ -351,7 +350,7 @@ class GUINN:
             self.save_model()
 
         self.base_model_fit(params=training, dataset=self.dataset, dataset_data=dataset, verbose=0)
-
+        training.deploy = self.callbacks[0].deploy
         return {"dataset": self.dataset, "metrics": self.metrics, "losses": self.loss}
 
     def nn_cleaner(self, retrain: bool = False) -> None:
