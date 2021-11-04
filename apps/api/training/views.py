@@ -31,7 +31,7 @@ class StopAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         training_base = request.project.training.base.native()
         agent_exchange("training_stop")
-        request.project.set_training({"base": training_base})
+        request.project.set_training_base(training_base)
         return BaseResponseSuccess(
             {
                 "form": defaults_data.training.native(),

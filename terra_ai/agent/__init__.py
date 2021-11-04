@@ -325,12 +325,6 @@ class Exchange:
         else:
             interactive.set_status("training")
 
-        # print("\033[1;33m—————————————————— Training params ——————————————————\033[0m")
-        # print(params.json(indent=2, ensure_ascii=False))
-        # print("\033[1;33m—————————————————— Initial config ———————————————————\033[0m")
-        # print(initial_config.json(indent=2, ensure_ascii=False))
-        # print("\033[1;33m—————————————————————————————————————————————————————\033[0m")
-
         training_obj.terra_fit(dataset=dataset, gui_model=model, training=training)
         return interactive.train_states
 
