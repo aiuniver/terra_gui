@@ -4,11 +4,18 @@ from terra_ai.data.training.extra import StateStatusChoice
 
 from apps.plugins.frontend import defaults_data
 
-from ..base import BaseAPIView, BaseResponseSuccess
+from apps.api.base import BaseAPIView, BaseResponseSuccess
 
 
 class StartAPIView(BaseAPIView):
     def post(self, request, **kwargs):
+        if (
+            request.project.training.state.status == StateStatusChoice.stopped
+            or request.project.training.state.status == StateStatusChoice.trained
+        ):
+            request.project.training.state.set(StateStatusChoice.addtrain)
+        else:
+            request.project.training.state.set(StateStatusChoice.addtrain.training)
         request.project.set_training_base(request.data)
         agent_exchange(
             "training_start",
@@ -30,7 +37,7 @@ class StartAPIView(BaseAPIView):
 class StopAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         training_base = request.project.training.base.native()
-        agent_exchange("training_stop")
+        agent_exchange("training_stop", training=request.project.training)
         request.project.set_training_base(training_base)
         return BaseResponseSuccess(
             {
@@ -43,7 +50,7 @@ class StopAPIView(BaseAPIView):
 class ClearAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         name = request.project.training.name
-        agent_exchange("training_clear")
+        agent_exchange("training_clear", training=request.project.training)
         request.project.clear_training(name)
         return BaseResponseSuccess(
             {
@@ -72,14 +79,9 @@ class ProgressAPIView(BaseAPIView):
         data = agent_exchange("training_progress").native()
         data.update({"state": request.project.training.state.native()})
         if current_state != request.project.training.state.status:
-            request.project.set_training(
-                {"base": request.project.training.base.native()}
-            )
+            request.project.set_training_base(request.project.training.base.native())
             data.update({"form": defaults_data.training.native()})
         _finished = data.get("finished")
-        if _finished:
-            request.project.deploy = agent_exchange("deploy_presets")
-        request.project.training.result = data.get("data", {}).get("train_data", {})
         if _finished:
             request.project.save()
         return BaseResponseSuccess(data)

@@ -31,6 +31,7 @@ from ..data.presets.datasets import DatasetsGroups
 from ..data.presets.models import ModelsGroups
 from ..data.projects.project import ProjectsInfoData, ProjectsList
 from ..data.training.train import TrainingDetailsData, InteractiveData
+from ..data.training.extra import StateStatusChoice
 from ..datasets import loading as datasets_loading
 from ..datasets import utils as datasets_utils
 from ..datasets.creating import CreateDataset
@@ -317,27 +318,20 @@ class Exchange:
         """
         Старт обучения
         """
-        if training.state.status == "stopped" or training.state.status == "trained":
-            training.state.set("addtrain")
-        else:
-            training.state.set("training")
-
         training_obj.terra_fit(dataset=dataset, gui_model=model, training=training)
         return training.state.native()
 
-    def _call_training_stop(self):
+    def _call_training_stop(self, training: TrainingDetailsData):
         """
         Остановить обучение
         """
-        interactive.set_status("stopped")
-        return interactive.train_states
+        training.state.set(StateStatusChoice.stopped)
 
-    def _call_training_clear(self):
+    def _call_training_clear(self, training: TrainingDetailsData):
         """
         Очистить обучение
         """
-        interactive.set_status("no_train")
-        return interactive.train_states
+        training.state.set(StateStatusChoice.no_train)
 
     def _call_training_interactive(self, config: InteractiveData) -> dict:
         """
@@ -356,12 +350,6 @@ class Exchange:
         Сохранение обучения
         """
         pass
-
-    def _call_deploy_presets(self):
-        """
-        получение данных для отображения пресетов на странице деплоя
-        """
-        return interactive.deploy_presets_data
 
     def _call_deploy_cascades_create(self, training_path: str, model_name: str):
         pass
