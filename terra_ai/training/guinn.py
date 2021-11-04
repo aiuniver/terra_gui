@@ -235,8 +235,8 @@ class GUINN:
             prepared_dataset.deploy_export(os.path.join(model_path, "dataset"))
         return prepared_dataset
 
-    def _set_model(self, model: ModelDetailsData) -> ModelData:
-        if interactive.get_states().get("status") == "training":
+    def _set_model(self, model: ModelDetailsData, state: str) -> ModelData:
+        if state == "training":
             validator = ModelValidator(model)
             train_model = validator.get_keras_model()
         else:
@@ -365,7 +365,7 @@ class GUINN:
         self._set_training_params(dataset=dataset, train_params=training,
                                   training_path=training.path)
 
-        self.model = self._set_model(model=gui_model)
+        self.model = self._set_model(model=gui_model, state=training.state.status)
         if training.state.status == "training":
             self.save_model()
 
@@ -999,10 +999,10 @@ class FitCallback(keras.callbacks.Callback):
             progress.pool(
                 self.progress_name,
                 percent=(self.last_epoch - 1) / (
-                    self.retrain_epochs if interactive.get_states().get("status") == "addtrain" else self.epochs
+                    self.retrain_epochs if self._get_train_status() == "addtrain" else self.epochs
                 ) * 100,
                 message=f"Обучение. Эпоха {self.last_epoch} из "
-                        f"{self.retrain_epochs if interactive.get_states().get('status') in ['addtrain', 'stopped'] else self.epochs}",
+                        f"{self.retrain_epochs if self._get_train_status() in ['addtrain', 'stopped'] else self.epochs}",
                 data=self._get_result_data(),
                 finished=False,
             )
@@ -1050,12 +1050,11 @@ class FitCallback(keras.callbacks.Callback):
         progress.pool(
             self.progress_name,
             percent=(self.last_epoch - 1) / (
-                self.retrain_epochs if interactive.get_states().get("status") ==
-                                       "addtrain" or interactive.get_states().get("status") == "stopped"
+                self.retrain_epochs if self._get_train_status() == "addtrain" or self._get_train_status() == "stopped"
                 else self.epochs
             ) * 100,
             message=f"Обучение. Эпоха {self.last_epoch} из "
-                    f"{self.retrain_epochs if interactive.get_states().get('status') in ['addtrain', 'stopped'] else self.epochs}",
+                    f"{self.retrain_epochs if self._get_train_status() in ['addtrain', 'stopped'] else self.epochs}",
             data=self._get_result_data(),
             finished=False,
         )
