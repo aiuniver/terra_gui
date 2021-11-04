@@ -28,6 +28,7 @@ export default {
     },
     interactive: {},
     architecture: '',
+    largeImgSrc: null
   }),
   mutations: {
     SET_ARCHITECTURE (state, value) {
@@ -70,6 +71,9 @@ export default {
     },
     SET_STATUS_TRAIN (state, value) {
       state.statusTrain = value;
+    },
+    SET_LARGE_IMAGE (state, value) {
+      state.largeImgSrc = value;
     },
   },
   actions: {
@@ -224,6 +228,9 @@ export default {
     setTrainSettings ({ commit }, value) {
       commit("SET_TRAIN_SETTINGS", value);
     },
+    setLargeImg ({ commit }, value = null) {
+      commit("SET_LARGE_IMAGE", value);
+    },
   },
   getters: {
     getTrainSettings: ({ trainSettings }) => {
@@ -273,6 +280,9 @@ export default {
     },
     getPredict ({ predict }) {
       return predict || {}
+    },
+    getLargeImg ({ largeImgSrc }) {
+      return largeImgSrc
     },
   },
 };
