@@ -313,8 +313,6 @@ class Exchange:
         dataset: DatasetData,
         model: ModelDetailsData,
         training: TrainingDetailsData,
-        training_path: Path,
-        dataset_path: Path,
     ):
         """
         Старт обучения
@@ -333,13 +331,7 @@ class Exchange:
         # print(initial_config.json(indent=2, ensure_ascii=False))
         # print("\033[1;33m—————————————————————————————————————————————————————\033[0m")
 
-        training_obj.terra_fit(
-            dataset=dataset,
-            gui_model=model,
-            training=training,
-            training_path=training_path,
-            dataset_path=dataset_path,
-        )
+        training_obj.terra_fit(dataset=dataset, gui_model=model, training=training)
         return interactive.train_states
 
     def _call_training_stop(self):

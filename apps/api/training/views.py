@@ -9,15 +9,13 @@ from ..base import BaseAPIView, BaseResponseSuccess
 
 class StartAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        request.project.set_training({"base": request.data})
+        request.project.set_training_base(request.data)
         agent_exchange(
             "training_start",
             **{
                 "dataset": request.project.dataset,
                 "model": request.project.model,
                 "training": request.project.training,
-                "training_path": request.project.training_path,
-                "dataset_path": request.project.dataset_path,
             }
         )
         return BaseResponseSuccess(
@@ -97,7 +95,7 @@ class SaveAPIView(BaseAPIView):
 
 class UpdateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        request.project.set_training({"base": request.data})
+        request.project.set_training_base(request.data)
         return BaseResponseSuccess(
             {
                 "form": defaults_data.training.native(),

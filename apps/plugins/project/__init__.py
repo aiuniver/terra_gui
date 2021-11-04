@@ -189,15 +189,16 @@ class Project(BaseMixinData):
             name=name, path=project_path.training, model=self.model
         )
         self.set_training_base()
-        defaults_data.training = DefaultsTrainingData(
-            project=self, architecture=self.training.base.architecture.type
-        )
         self.save()
 
     def set_training_base(self, data: dict = None):
         if data is None:
             data = {}
         self.training.set_base(data, self.dataset)
+        defaults_data.training = DefaultsTrainingData(
+            project=self, architecture=self.training.base.architecture.type
+        )
+        self.save()
 
     def clear_dataset(self):
         self.dataset = None
