@@ -26,7 +26,8 @@ from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice
 from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
-from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, ArchitectureChoice
+from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, \
+    ArchitectureChoice
 from terra_ai.data.training.train import TrainData, InteractiveData
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
@@ -490,6 +491,72 @@ class GUINN:
                  and self.callbacks[0].last_epoch - 1 == params.epochs):
             self.sum_epoch = params.epochs
 
+    def train_base_model(self, params: TrainData, dataset: PrepareDataset, dataset_path: str,
+                         dataset_data: DatasetData, save_model_path: str, verbose=0):
+
+        @tf.function
+        def train_step(x_batch_train, y_batch_train, losses, model, optimizer):
+            """
+            losses = {'2': loss_fn}
+            """
+            with tf.GradientTape() as tape:
+                logits = model(x_batch_train, training=True)
+                y_true = list(y_batch_train.values())
+                if not isinstance(logits, list):
+                    loss_fn = losses.get(list(losses.keys())[0])
+                    total_loss = loss_fn(y_true[0], logits)
+                else:
+                    total_loss = tf.convert_to_tensor(0.)
+                    for i, key in enumerate(losses.keys()):
+                        loss_fn = losses[key]
+                        total_loss = tf.add(loss_fn(y_true[i], logits[i]), total_loss)
+            grads = tape.gradient(total_loss, model.trainable_weights)
+            optimizer.apply_gradients(zip(grads, model.trainable_weights))
+            return y_true, logits
+
+        current_epoch = 0
+        model = self.model
+        optimizer = self.optimizer
+        for epoch in range(current_epoch, params.epochs):
+            # Iterate over the batches of the dataset.
+            train_pred = None
+            train_true = None
+            train_steps = 0
+            for x_batch_train, y_batch_train in dataset.dataset.get('train').batch(params.batch, drop_remainder=False):
+                y_true, logits = train_step(
+                    x_batch_train=x_batch_train, y_batch_train=y_batch_train, model=model,
+                    losses=self.loss, optimizer=optimizer
+                )
+                if train_true is None:
+                    train_pred = logits
+                    train_true = y_true
+                else:
+                    train_pred = tf.concat([train_pred, logits], axis=0)
+                    train_true = tf.concat([train_true, y_true], axis=0)
+                train_steps += 1
+
+            # TODO: функция расчета метрик с выводом словаря логов
+            # acc_metric.update_state(train_true, train_pred)
+            # train_acc = acc_metric.result()
+
+            # Run a validation loop at the end of each epoch.
+            val_pred = None
+            val_true = None
+            start = time.time()
+            for x_batch_val, y_batch_val in dataset.dataset.get('val').batch(params.batch, drop_remainder=False):
+                val_logits = model(x_batch_val, training=False)
+                if val_true is None:
+                    val_pred = val_logits.numpy()
+                    val_true = list(y_batch_val.values())[0].numpy()
+                else:
+                    val_pred = np.concatenate([val_pred, val_logits.numpy()], axis=0)
+                    val_true = np.concatenate([val_true, list(y_batch_val.values())[0].numpy()], axis=0)
+
+            # TODO: функция расчета метрик для val с выводом словаря логов
+            # acc_metric.update_state(val_true[...], val_pred)
+            # val_acc = acc_metric.result()
+            # acc_metric.reset_states()
+
 
 class MemoryUsage:
     def __init__(self, debug=False):
@@ -784,10 +851,12 @@ class FitCallback(keras.callbacks.Callback):
                 # print('self.log_history.get("logs").get(self.metric_checkpoint))', self.log_history.get("logs").get(self.metric_checkpoint))
                 # print()
                 if self.checkpoint_mode == 'min' and \
-                        logs.get(self.metric_checkpoint) < min(self.log_history.get("logs").get(self.metric_checkpoint)):
+                        logs.get(self.metric_checkpoint) < min(
+                    self.log_history.get("logs").get(self.metric_checkpoint)):
                     return True
                 elif self.checkpoint_mode == 'max' and \
-                        logs.get(self.metric_checkpoint) > max(self.log_history.get("logs").get(self.metric_checkpoint)):
+                        logs.get(self.metric_checkpoint) > max(
+                    self.log_history.get("logs").get(self.metric_checkpoint)):
                     return True
                 else:
                     return False
@@ -1048,7 +1117,7 @@ class FitCallback(keras.callbacks.Callback):
                                                                                          'stopped'] else self.epochs
         if self.is_yolo:
             mAP = get_mAP(self.model, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
-                          TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names, dataset_path= self.dataset_path)
+                          TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names, dataset_path=self.dataset_path)
             interactive_logs = self._logs_losses_extract(logs, prefixes=['pred', 'target'])
             # interactive_logs.update({'mAP': mAP})
             interactive_logs.update(mAP)
