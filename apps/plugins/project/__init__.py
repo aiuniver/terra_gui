@@ -149,8 +149,8 @@ class Project(BaseMixinData):
 
     def frontend(self):
         _data = self.native()
-        if _data.get("deploy") and self.deploy:
-            _data.update({"deploy": self.deploy.presets})
+        if _data.get("training", {}).get("deploy") and self.training.deploy:
+            _data["training"].update({"deploy": self.training.deploy.presets})
         return json.dumps(_data)
 
     def set_name(self, name: str):

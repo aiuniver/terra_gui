@@ -272,6 +272,10 @@ class TrainingDetailsData(BaseMixinData):
                 config_data.update(**data)
                 data = config_data
 
+        if data.get("deploy"):
+            data["deploy"].update(
+                {"path": str(Path(self._path, _name, settings.TRAINING_DEPLOY_DIRNAME))}
+            )
         super().__init__(**data)
 
         with open(config, "w") as config_ref:
