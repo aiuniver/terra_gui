@@ -285,7 +285,7 @@ class TrainingDetailsData(BaseMixinData):
     def deploy_path(self) -> Path:
         _path = Path(self.path, settings.TRAINING_DEPLOY_DIRNAME)
         os.makedirs(_path, exist_ok=True)
-        return
+        return _path
 
     @property
     def model_path(self) -> Path:
