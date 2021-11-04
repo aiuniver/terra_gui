@@ -275,8 +275,9 @@ class GUINN:
         Returns:
             None
         """
+        model = f"{self.nn_name}.trm"
         file_path_model: str = os.path.join(
-            self.model_path, f"{self.nn_name}.trm"
+            self.model_path, f"{model}"
         )
         self.model.save(file_path_model)
 
@@ -350,7 +351,6 @@ class GUINN:
             self.save_model()
 
         self.base_model_fit(params=training, dataset=self.dataset, dataset_data=dataset, verbose=0)
-        training.deploy = self.callbacks[0].deploy
         return {"dataset": self.dataset, "metrics": self.metrics, "losses": self.loss}
 
     def nn_cleaner(self, retrain: bool = False) -> None:
@@ -449,6 +449,7 @@ class GUINN:
         if (params.state.status == "stopped" and self.callbacks[0].last_epoch < params.base.epochs) or \
                 (params.state.status == "trained" and self.callbacks[0].last_epoch - 1 == params.base.epochs):
             self.sum_epoch = params.base.epochs
+        params.deploy = self.callbacks[0].deploy
 
 
 class MemoryUsage:
@@ -921,7 +922,6 @@ class FitCallback(keras.callbacks.Callback):
         self._start_time = time.time()
         if status != "addtrain":
             self.batch = 0
-
         if not self.dataset.data.use_generator:
             self.num_batches = len(list(self.dataset.X.get('train').values())[0]) // self.batch_size
         else:
