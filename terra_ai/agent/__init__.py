@@ -318,8 +318,14 @@ class Exchange:
         """
         Старт обучения
         """
+        if (
+            training.state.status == StateStatusChoice.stopped
+            or training.state.status == StateStatusChoice.trained
+        ):
+            training.state.set(StateStatusChoice.addtrain)
+        else:
+            training.state.set(StateStatusChoice.addtrain.training)
         training_obj.terra_fit(dataset=dataset, gui_model=model, training=training)
-        return training.state.native()
 
     def _call_training_stop(self, training: TrainingDetailsData):
         """

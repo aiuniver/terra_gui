@@ -24,6 +24,10 @@ DATASET_ANNOTATION = "labelmap.txt"
 # Modeling
 MODEL_EXT = "model"
 
+# Training
+TRAINING_DEPLOY_DIRNAME = "deploy"
+TRAINING_MODEL_DIRNAME = "model"
+
 # Deploy
 DEPLOY_URL = "https://srv1.demo.neural-university.ru/autodeployterra_upload/"
 DEPLOY_PRESET_COUNT = 10
@@ -37,5 +41,4 @@ MAX_GRAPH_LENGTH = 50
 TRANSLATIONS_DIR = Path(ASSETS_PATH, "translations")
 
 # User settings
-
 LANGUAGE = "ru"

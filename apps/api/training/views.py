@@ -9,14 +9,6 @@ from apps.api.base import BaseAPIView, BaseResponseSuccess
 
 class StartAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        if (
-            request.project.training.state.status == StateStatusChoice.stopped
-            or request.project.training.state.status == StateStatusChoice.trained
-        ):
-            request.project.training.state.set(StateStatusChoice.addtrain)
-        else:
-            request.project.training.state.set(StateStatusChoice.addtrain.training)
-        request.project.set_training_base(request.data)
         agent_exchange(
             "training_start",
             **{
@@ -25,6 +17,7 @@ class StartAPIView(BaseAPIView):
                 "training": request.project.training,
             }
         )
+        request.project.set_training_base(request.data)
         return BaseResponseSuccess(
             {
                 "form": defaults_data.training.native(),

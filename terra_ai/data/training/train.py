@@ -13,6 +13,7 @@ from pydantic import validator, PrivateAttr
 from pydantic.types import conint, confloat, PositiveInt
 from pydantic.errors import EnumMemberError
 
+from terra_ai import settings
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.mixins import BaseMixinData, UniqueListMixin, IDMixinData
@@ -279,6 +280,18 @@ class TrainingDetailsData(BaseMixinData):
     @property
     def path(self) -> Path:
         return Path(self._path, self.name)
+
+    @property
+    def deploy_path(self) -> Path:
+        _path = Path(self.path, settings.TRAINING_DEPLOY_DIRNAME)
+        os.makedirs(_path, exist_ok=True)
+        return
+
+    @property
+    def model_path(self) -> Path:
+        _path = Path(self.path, settings.TRAINING_MODEL_DIRNAME)
+        os.makedirs(_path, exist_ok=True)
+        return _path
 
     @validator("base", pre=True, allow_reuse=True)
     def _validate_base(cls, value, values):
