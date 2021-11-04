@@ -115,19 +115,23 @@ class GUINN:
         return output
 
     def _set_training_params(self, dataset: DatasetData, train_params: TrainingDetailsData,
-                             training_path: Path, dataset_path: Path) -> None:
+                             training_path: Path) -> None:
         params = train_params.base
-        self.dataset = self._prepare_dataset(dataset, dataset_path, training_path, state=train_params.state.status)
+        self.dataset = self._prepare_dataset(dataset, training_path, state=train_params.state.status)
+
         if not self.dataset.data.architecture or self.dataset.data.architecture == ArchitectureChoice.Basic:
             self.deploy_type = self._set_deploy_type(self.dataset)
         else:
             self.deploy_type = self.dataset.data.architecture
+
         self.training_path = training_path
-        self.nn_name = str(training_path).split()[1] if not str(training_path).split()[1].startswith("__") else "model"
+        self.nn_name = os.path.split(training_path)[-1] if not os.path.split(training_path)[-1].startswith("__") else "model"
+
         if self.dataset.data.use_generator:
             train_size = len(self.dataset.dataframe.get("train"))
         else:
             train_size = len(self.dataset.dataset.get('train'))
+
         if params.batch > train_size:
             if train_params.state.status == "addtrain":
                 train_params.state.set("stopped")
@@ -144,6 +148,7 @@ class GUINN:
                 self.epochs = params.epochs
         else:
             self.epochs = params.epochs
+
         self.batch_size = params.batch
         self.set_optimizer(params)
 
@@ -159,12 +164,11 @@ class GUINN:
             self.loss.update({str(output_layer["id"]): output_layer["loss"]})
 
         interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss,
-                                   dataset_path=dataset_path, training_path=training_path,
+                                   dataset_path=dataset.path, training_path=training_path,
                                    initial_config=train_params.interactive)
 
     def _set_callbacks(self, dataset: PrepareDataset, dataset_data: DatasetData,
-                       batch_size: int, epochs: int, dataset_path: Path,
-                       checkpoint: dict, save_model_path: Path,
+                       batch_size: int, epochs: int, checkpoint: dict, save_model_path: Path,
                        state: StateData, deploy: DeployData, initial_model=None) -> None:
         progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков...'})
         retrain_epochs = self.sum_epoch if state.status == "addtrain" else self.epochs
@@ -172,8 +176,8 @@ class GUINN:
         callback = FitCallback(dataset=dataset, dataset_data=dataset_data, checkpoint_config=checkpoint,
                                batch_size=batch_size, epochs=epochs, retrain_epochs=retrain_epochs,
                                training_path=save_model_path, model_name=self.nn_name,
-                               dataset_path=dataset_path, deploy_type=self.deploy_type,
-                               initialed_model=initial_model, state=state, deploy=deploy)
+                               deploy_type=self.deploy_type, initialed_model=initial_model, state=state,
+                               deploy=deploy)
         self.callbacks = [callback]
         progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков выполнено'})
 
@@ -224,8 +228,8 @@ class GUINN:
         return deploy_type
 
     @staticmethod
-    def _prepare_dataset(dataset: DatasetData, dataset_path: Path, model_path: Path, state: str) -> PrepareDataset:
-        prepared_dataset = PrepareDataset(data=dataset, datasets_path=dataset_path)
+    def _prepare_dataset(dataset: DatasetData, model_path: Path, state: str) -> PrepareDataset:
+        prepared_dataset = PrepareDataset(data=dataset, datasets_path=dataset.path)
         prepared_dataset.prepare_dataset()
         if state != "addtrain":
             prepared_dataset.deploy_export(os.path.join(model_path, "dataset"))
@@ -338,11 +342,7 @@ class GUINN:
     def terra_fit(self,
                   dataset: DatasetData,
                   gui_model: ModelDetailsData,
-                  training: TrainingDetailsData,
-                  training_path: Path = "",
-                  dataset_path: Path = ""
-                  # training_params: TrainData = None,
-                  # initial_config: InteractiveData = None
+                  training: TrainingDetailsData
                   ) -> dict:
         """
         This method created for using wth externally compiled models
@@ -351,8 +351,6 @@ class GUINN:
             dataset: DatasetData
             gui_model: Keras model for fit - ModelDetailsData
             training: TrainingDetailsData
-            training_path:
-            dataset_path: str
 
         Return:
             dict
@@ -361,18 +359,18 @@ class GUINN:
         progress.pool.reset(self.progress_name)
 
         if training.state.status != "addtrain":
-            self._save_params_for_deploy(training_path=training_path, params=training.base)
+            self._save_params_for_deploy(training_path=training.path, params=training.base)
+
         self.nn_cleaner(retrain=True if training.state.status == "training" else False)
-
         self._set_training_params(dataset=dataset, train_params=training,
-                                  dataset_path=dataset_path, training_path=training_path)
-        self.model = self._set_model(model=gui_model)
+                                  training_path=training.path)
 
+        self.model = self._set_model(model=gui_model)
         if training.state.status == "training":
             self.save_model()
 
-        self.base_model_fit(params=training, dataset=self.dataset, dataset_data=dataset,
-                            verbose=0, save_model_path=training_path, dataset_path=dataset_path)
+        self.base_model_fit(params=training, dataset=self.dataset, dataset_data=dataset, verbose=0)
+
         return {"dataset": self.dataset, "metrics": self.metrics, "losses": self.loss}
 
     def nn_cleaner(self, retrain: bool = False) -> None:
@@ -397,8 +395,8 @@ class GUINN:
         return self
 
     @progress.threading
-    def base_model_fit(self, params: TrainingDetailsData, dataset: PrepareDataset, dataset_path: Path,
-                       dataset_data: DatasetData, save_model_path: Path, verbose=0) -> None:
+    def base_model_fit(self, params: TrainingDetailsData, dataset: PrepareDataset,
+                       dataset_data: DatasetData, verbose=0) -> None:
 
         yolo_arch = True if self.deploy_type in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4] else False
         model_yolo = None
@@ -426,7 +424,7 @@ class GUINN:
                                )
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели выполнена'})
         self._set_callbacks(dataset=dataset, dataset_data=dataset_data, batch_size=params.base.batch,
-                            epochs=params.base.epochs, save_model_path=save_model_path, dataset_path=dataset_path,
+                            epochs=params.base.epochs, save_model_path=params.path,
                             checkpoint=params.base.architecture.parameters.checkpoint.native(),
                             initial_model=self.model if yolo_arch else None, state=params.state,
                             deploy=params.deploy)
@@ -532,8 +530,7 @@ class FitCallback(keras.callbacks.Callback):
 
     def __init__(self, dataset: PrepareDataset, dataset_data: DatasetData, checkpoint_config: dict,
                  state: StateData, deploy: DeployData, batch_size: int = None, epochs: int = None,
-                 dataset_path: Path = Path(""), retrain_epochs: int = None,
-                 training_path: Path = Path("./"), model_name: str = "model",
+                 retrain_epochs: int = None, training_path: Path = Path("./"), model_name: str = "model",
                  deploy_type: str = "", initialed_model=None):
         """
         Для примера
@@ -553,7 +550,7 @@ class FitCallback(keras.callbacks.Callback):
         self.usage_info = MemoryUsage(debug=False)
         self.dataset = dataset
         self.dataset_data = dataset_data
-        self.dataset_path = dataset_path
+        self.dataset_path = dataset_data.path
         self.deploy_type = deploy_type
         self.is_yolo = True if self.deploy_type in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4] else False
         self.batch_size = batch_size
