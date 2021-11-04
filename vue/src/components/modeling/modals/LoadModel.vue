@@ -32,7 +32,7 @@
               <i class="loaded-list__item--icon"></i>
               <span class="loaded-list__item--text">{{ list.label }}</span>
               <!-- <div class="loaded-list__item--empty"></div> -->
-              <div class="loaded-list__item--remove" v-if="list.uid === 'custom'" @click="removeModel(list.value)">
+              <div class="loaded-list__item--remove" v-if="list.uid === 'custom'" @click.stop="removeModel(list.value)">
                 <i class="t-icon"></i>
               </div>
             </li>
