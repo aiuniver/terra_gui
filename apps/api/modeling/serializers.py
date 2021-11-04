@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
-from terra_ai.data.modeling.extra import LayerTypeChoice
-from terra_ai.data.modeling.extra import LayerGroupChoice
+from terra_ai.data.modeling.extra import LayerTypeChoice, LayerGroupChoice
 
 
 class ModelGetSerializer(serializers.Serializer):
