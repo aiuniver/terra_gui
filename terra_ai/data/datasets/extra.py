@@ -113,14 +113,23 @@ class LayerVideoFillModeChoice(str, Enum):
     average_value = "average_value"
 
 
-class LayerVideoFrameModeChoice(str, Enum):
-    keep_proportions = "keep_proportions"
-    stretch = "stretch"
-
-
 class LayerVideoModeChoice(str, Enum):
     completely = "completely"
     length_and_step = "length_and_step"
+
+
+class LayerVideoFrameModeChoice(str, Enum):
+    keep_proportions = "keep_proportions"
+    stretch = "stretch"
+    # stretch = "stretch"
+    fit = "fit"
+    cut = "cut"
+
+
+class LayerImageFrameModeChoice(str, Enum):
+    stretch = "stretch"
+    fit = "fit"
+    cut = "cut"
 
 
 class LayerTypeProcessingClassificationChoice(str, Enum):

@@ -61,9 +61,9 @@ class CheckpointIndicatorChoice(str, Enum):
     Train = "Train"
 
 
-class CheckpointModeChoice(str, Enum):
-    Min = "Min"
-    Max = "Max"
+# class CheckpointModeChoice(str, Enum):
+#     Min = "Min"
+#     Max = "Max"
 
 
 class CheckpointTypeChoice(str, Enum):

@@ -732,8 +732,14 @@ class DefaultsTrainingData(BaseMixinData):
             architecture=self.architecture,
         )
 
+    
+class DefaultsCascadesData(BaseMixinData):
+    block_form: List[Field]
+    blocks_types: dict
+
 
 class DefaultsData(BaseMixinData):
     datasets: DefaultsDatasetsData
     modeling: DefaultsModelingData
     training: DefaultsTrainingData
+    cascades: DefaultsCascadesData
