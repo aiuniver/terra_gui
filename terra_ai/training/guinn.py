@@ -1,6 +1,7 @@
 import gc
 import importlib
 import json
+import math
 import re
 import copy
 import os
@@ -15,17 +16,20 @@ from typing import Optional
 import numpy as np
 
 import tensorflow as tf
+from keras.utils.np_utils import to_categorical
 from tensorflow.keras.models import Model
 from tensorflow import keras
 from tensorflow.keras.models import load_model
 
 from terra_ai import progress
 from terra_ai.callbacks.interactive_callback import InteractiveCallback
-from terra_ai.callbacks.utils import loss_metric_config
+from terra_ai.callbacks.utils import loss_metric_config, print_error, YOLO_ARCHITECTURE, CLASS_ARCHITECTURE, \
+    BASIC_ARCHITECTURE, round_loss_metric
 from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
-from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice
+from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice, LayerEncodingChoice
 from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
+from terra_ai.data.presets.training import Metric
 from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, \
     ArchitectureChoice
 from terra_ai.data.training.train import TrainData, InteractiveData
@@ -491,17 +495,17 @@ class GUINN:
                  and self.callbacks[0].last_epoch - 1 == params.epochs):
             self.sum_epoch = params.epochs
 
-    def train_base_model(self, params: TrainData, dataset: PrepareDataset, dataset_path: str,
-                         dataset_data: DatasetData, save_model_path: str, verbose=0):
+    def train_base_model(self, params: TrainData, dataset: PrepareDataset, model, dataset_path: str,
+                         dataset_data: DatasetData, save_model_path: str, callback=None):
 
         @tf.function
-        def train_step(x_batch_train, y_batch_train, losses, model, optimizer):
+        def train_step(x_batch, y_batch, losses, model, optimizer):
             """
             losses = {'2': loss_fn}
             """
             with tf.GradientTape() as tape:
-                logits = model(x_batch_train, training=True)
-                y_true = list(y_batch_train.values())
+                logits = model(x_batch, training=True)
+                y_true = list(y_batch.values())
                 if not isinstance(logits, list):
                     loss_fn = losses.get(list(losses.keys())[0])
                     total_loss = loss_fn(y_true[0], logits)
@@ -515,24 +519,28 @@ class GUINN:
             return y_true, logits
 
         current_epoch = 0
-        model = self.model
+        # model = self.model
+        train_pred = None
+        train_true = None
         optimizer = self.optimizer
+        first_epoch = True
         for epoch in range(current_epoch, params.epochs):
             # Iterate over the batches of the dataset.
-            train_pred = None
-            train_true = None
             train_steps = 0
             for x_batch_train, y_batch_train in dataset.dataset.get('train').batch(params.batch, drop_remainder=False):
                 y_true, logits = train_step(
-                    x_batch_train=x_batch_train, y_batch_train=y_batch_train, model=model,
+                    x_batch=x_batch_train, y_batch=y_batch_train, model=model,
                     losses=self.loss, optimizer=optimizer
                 )
                 if train_true is None:
                     train_pred = logits
                     train_true = y_true
-                else:
+                elif first_epoch:
                     train_pred = tf.concat([train_pred, logits], axis=0)
                     train_true = tf.concat([train_true, y_true], axis=0)
+                else:
+                    train_pred = tf.concat([train_pred[logits.shape[0]:], logits], axis=0)
+                    train_true = tf.concat([train_true[y_true.shape[0]:], y_true], axis=0)
                 train_steps += 1
 
             # TODO: функция расчета метрик с выводом словаря логов
@@ -544,18 +552,23 @@ class GUINN:
             val_true = None
             start = time.time()
             for x_batch_val, y_batch_val in dataset.dataset.get('val').batch(params.batch, drop_remainder=False):
-                val_logits = model(x_batch_val, training=False)
+                val_logits = model(x_batch_val, training=False).numpy()
+                y_true = list(y_batch_val.values())[0].numpy()
                 if val_true is None:
-                    val_pred = val_logits.numpy()
-                    val_true = list(y_batch_val.values())[0].numpy()
+                    val_pred = val_logits
+                    val_true = y_true
+                elif first_epoch:
+                    val_pred = np.concatenate([val_pred, val_logits], axis=0)
+                    val_true = np.concatenate([val_true, y_true], axis=0)
                 else:
-                    val_pred = np.concatenate([val_pred, val_logits.numpy()], axis=0)
-                    val_true = np.concatenate([val_true, list(y_batch_val.values())[0].numpy()], axis=0)
+                    val_pred = tf.concat([val_pred[val_logits.shape[0]:], val_logits], axis=0)
+                    val_true = tf.concat([val_true[y_true.shape[0]:], y_true], axis=0)
 
             # TODO: функция расчета метрик для val с выводом словаря логов
             # acc_metric.update_state(val_true[...], val_pred)
             # val_acc = acc_metric.result()
             # acc_metric.reset_states()
+            first_epoch = False
 
 
 class MemoryUsage:
@@ -613,7 +626,7 @@ class MemoryUsage:
 class FitCallback(keras.callbacks.Callback):
     """CustomCallback for all task type"""
 
-    def __init__(self, dataset: PrepareDataset, dataset_data: DatasetData, checkpoint_config: dict,
+    def __init__(self, dataset: PrepareDataset, dataset_data: DatasetData, params: TrainData, checkpoint_config: dict,
                  batch_size: int = None, epochs: int = None, dataset_path: str = "",
                  retrain_epochs: int = None, save_model_path: str = "./", model_name: str = "noname",
                  deploy_type: str = "", initialed_model=None):
@@ -636,6 +649,7 @@ class FitCallback(keras.callbacks.Callback):
         self.dataset = dataset
         self.dataset_data = dataset_data
         self.dataset_path = dataset_path
+        self.params = params
         self.deploy_type = deploy_type
         self.is_yolo = True if self.deploy_type in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4] else False
         self.batch_size = batch_size
@@ -692,6 +706,172 @@ class FitCallback(keras.callbacks.Callback):
         self.samples_val = []
         self.samples_target_train = []
         self.samples_target_val = []
+
+    @staticmethod
+    def _prepare_null_log_history_template(options: PrepareDataset, params: TrainData):
+        method_name = '_prepare_null_log_history_template'
+        try:
+            log_history = {"epochs": []}
+            if options.data.architecture in BASIC_ARCHITECTURE:
+                for output_layer in params.architecture.outputs_dict:
+                    out = f"{output_layer['id']}"
+                    log_history[out] = {
+                        "loss": {}, "metrics": {},
+                        "progress_state": {"loss": {}, "metrics": {}}
+                    }
+                    log_history[out]["loss"][output_layer.get("loss")] = {"train": [], "val": []}
+                    log_history[out]["progress_state"]["loss"][output_layer.get("loss")] = {
+                        "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
+                    }
+                    for metric in output_layer.get("metrics", []):
+                        log_history[out]["metrics"][metric] = {"train": [], "val": []}
+                        log_history[out]["progress_state"]["metrics"][metric] = {
+                            "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
+                        }
+
+                    if options.data.architecture in CLASS_ARCHITECTURE:
+                        log_history[out]["class_loss"] = {}
+                        log_history[out]["class_metrics"] = {}
+                        for class_name in options.data.outputs.get(int(out)).classes_names:
+                            log_history[out]["class_metrics"][f"{class_name}"] = {}
+                            log_history[out]["class_loss"][f"{class_name}"] = {output_layer.get("loss"): []}
+                            for metric in output_layer.get("metrics", []):
+                                log_history[out]["class_metrics"][f"{class_name}"][metric] = []
+
+            if options.data.architecture in YOLO_ARCHITECTURE:
+                log_history['learning_rate'] = []
+                log_history['output'] = {
+                    "loss": {
+                        'giou_loss': {"train": [], "val": []},
+                        'conf_loss': {"train": [], "val": []},
+                        'prob_loss': {"train": [], "val": []},
+                        'total_loss': {"train": [], "val": []}
+                    },
+                    "class_loss": {'prob_loss': {}},
+                    "metrics": {'mAP50': []},
+                    "class_metrics": {'mAP50': {}, 'mAP95': {}},
+                    "progress_state": {
+                        "loss": {
+                            'giou_loss': {
+                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
+                            },
+                            'conf_loss': {
+                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
+                            },
+                            'prob_loss': {
+                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
+                            },
+                            'total_loss': {
+                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
+                            }
+                        },
+                        "metrics": {
+                            'mAP50': {"mean_log_history": [], "normal_state": [], "overfitting": []},
+                        }
+                    }
+                }
+                out = list(options.data.outputs.keys())[0]
+                for class_name in options.data.outputs.get(out).classes_names:
+                    log_history['output']["class_loss"]['prob_loss'][class_name] = []
+                    log_history['output']["class_metrics"]['mAP50'][class_name] = []
+            return log_history
+        except Exception as e:
+            print_error(InteractiveCallback().name, method_name, e)
+
+    def _get_loss_calculation(self, loss_obj, out: str, y_true, y_pred):
+        method_name = '_get_loss_calculation'
+        try:
+            encoding = self.options.data.outputs.get(int(out)).encoding
+            task = self.options.data.architecture
+            num_classes = self.options.data.outputs.get(int(out)).num_classes
+            if task in CLASS_ARCHITECTURE:
+                if encoding == LayerEncodingChoice.ohe or encoding == LayerEncodingChoice.multi:
+                    loss_value = float(loss_obj()(y_true, y_pred).numpy())
+                else:
+                    loss_value = float(loss_obj()(to_categorical(y_true, num_classes), y_pred).numpy())
+            else:
+                loss_value = float(loss_obj()(y_true, y_pred).numpy())
+            return loss_value if not math.isnan(loss_value) else None
+        except Exception as e:
+            print_error(InteractiveCallback().name, method_name, e)
+
+    def _get_metric_calculation(self, metric_name, metric_obj, out: str, y_true, y_pred, show_class=False):
+        method_name = '_get_metric_calculation'
+        try:
+            encoding = self.options.data.outputs.get(int(out)).encoding
+            task = self.options.data.architecture
+            num_classes = self.options.data.outputs.get(int(out)).num_classes
+            if task in CLASS_ARCHITECTURE:
+                if encoding == LayerEncodingChoice.ohe or encoding == LayerEncodingChoice.multi:
+                    if metric_name == Metric.Accuracy:
+                        metric_obj.update_state(np.argmax(y_true, axis=-1), np.argmax(y_pred, axis=-1))
+                    elif metric_name in [Metric.BalancedRecall, Metric.BalancedPrecision, Metric.BalancedFScore]:
+                        metric_obj.update_state(y_true, y_pred, show_class=show_class)
+                    elif metric_name == Metric.BalancedDiceCoef:
+                        metric_obj.encoding = 'multi' if encoding == 'multi' else None
+                        metric_obj.update_state(y_true, y_pred)
+                    else:
+                        metric_obj.update_state(y_true, y_pred)
+                else:
+                    if metric_name == Metric.Accuracy:
+                        metric_obj.update_state(y_true, np.argmax(y_pred, axis=-1))
+                    else:
+                        metric_obj.update_state(to_categorical(y_true, num_classes), y_pred)
+            else:
+                metric_obj.update_state(y_true, y_pred)
+            metric_value = float(metric_obj.result().numpy())
+            return round(metric_value, 6) if not math.isnan(metric_value) else None
+        except Exception as e:
+            print_error(InteractiveCallback().name, method_name, e)
+
+    def _get_mean_log(self, logs):
+        method_name = '_get_mean_log'
+        try:
+            copy_logs = copy.deepcopy(logs)
+            while None in copy_logs:
+                copy_logs.pop(copy_logs.index(None))
+            if len(copy_logs) < self.log_gap:
+                return float(np.mean(copy_logs))
+            else:
+                return float(np.mean(copy_logs[-self.log_gap:]))
+        except Exception as e:
+            print_error(InteractiveCallback().name, method_name, e)
+            return 0.
+
+    @staticmethod
+    def _evaluate_overfitting(metric_name: str, mean_log: list, metric_type: str):
+        method_name = '_evaluate_overfitting'
+        try:
+            mode = loss_metric_config.get(metric_type).get(metric_name).get("mode")
+            overfitting = False
+            if mode == 'min':
+                if min(mean_log) and mean_log[-1] and mean_log[-1] > min(mean_log) and \
+                        (mean_log[-1] - min(mean_log)) * 100 / min(mean_log) > 2:
+                    overfitting = True
+            if mode == 'max':
+                if max(mean_log) and mean_log[-1] and mean_log[-1] < max(mean_log) and \
+                        (max(mean_log) - mean_log[-1]) * 100 / max(mean_log) > 2:
+                    overfitting = True
+            return overfitting
+        except Exception as e:
+            print_error(InteractiveCallback().name, method_name, e)
+
+    @staticmethod
+    def _evaluate_underfitting(metric_name: str, train_log: float, val_log: float, metric_type: str):
+        method_name = '_evaluate_underfitting'
+        try:
+            mode = loss_metric_config.get(metric_type).get(metric_name).get("mode")
+            underfitting = False
+            if mode == 'min' and train_log and val_log:
+                if val_log < 1 and train_log < 1 and (val_log - train_log) > 0.05:
+                    underfitting = True
+                if (val_log >= 1 or train_log >= 1) and (val_log - train_log) / train_log * 100 > 5:
+                    underfitting = True
+            if mode == 'max' and train_log and val_log and (train_log - val_log) / train_log * 100 > 3:
+                underfitting = True
+            return underfitting
+        except Exception as e:
+            print_error(InteractiveCallback().name, method_name, e)
 
     def _get_checkpoint_mode(self):
         if self.checkpoint_config.get("type") == CheckpointTypeChoice.Loss:
@@ -819,10 +999,7 @@ class FitCallback(keras.callbacks.Callback):
             interactive.progress_table = interactive_table
             return logs
         else:
-            return {
-                'epoch': [],
-                'logs': {}
-            }
+            return self._prepare_null_log_history_template(self.dataset, self.params)
 
     @staticmethod
     def _logs_predict_extract(logs, prefix):

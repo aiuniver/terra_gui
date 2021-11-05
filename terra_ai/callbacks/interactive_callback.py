@@ -17,7 +17,8 @@ from terra_ai.callbacks.regression_callbacks import DataframeRegressionCallback
 from terra_ai.callbacks.segmentation_callbacks import ImageSegmentationCallback, TextSegmentationCallback
 from terra_ai.callbacks.time_series_callbacks import TimeseriesCallback
 from terra_ai.callbacks.utils import loss_metric_config, round_loss_metric, fill_graph_plot_data, \
-    fill_graph_front_structure, reformat_metrics, prepare_loss_obj, prepare_metric_obj, get_classes_colors, print_error
+    fill_graph_front_structure, reformat_metrics, prepare_loss_obj, prepare_metric_obj, get_classes_colors, \
+    print_error, BASIC_ARCHITECTURE, CLASSIFICATION_ARCHITECTURE, YOLO_ARCHITECTURE, CLASS_ARCHITECTURE
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, DatasetGroupChoice, LayerEncodingChoice, \
     LayerInputTypeChoice
 from terra_ai.data.presets.training import Metric
@@ -73,24 +74,6 @@ class InteractiveCallback:
         self.addtrain_epochs = []
         self.progress_name = "training"
         self.preset_path = ""
-        self.basic_architecture = [ArchitectureChoice.Basic, ArchitectureChoice.ImageClassification,
-                                   ArchitectureChoice.ImageSegmentation, ArchitectureChoice.TextSegmentation,
-                                   ArchitectureChoice.TextClassification, ArchitectureChoice.AudioClassification,
-                                   ArchitectureChoice.VideoClassification, ArchitectureChoice.DataframeClassification,
-                                   ArchitectureChoice.DataframeRegression, ArchitectureChoice.Timeseries,
-                                   ArchitectureChoice.TimeseriesTrend]
-        self.yolo_architecture = [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]
-        self.class_architecture = [ArchitectureChoice.ImageClassification, ArchitectureChoice.TimeseriesTrend,
-                                   ArchitectureChoice.ImageSegmentation, ArchitectureChoice.TextSegmentation,
-                                   ArchitectureChoice.TextClassification, ArchitectureChoice.AudioClassification,
-                                   ArchitectureChoice.VideoClassification, ArchitectureChoice.DataframeClassification,
-                                   ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]
-        self.classification_architecture = [
-            ArchitectureChoice.ImageClassification, ArchitectureChoice.TimeseriesTrend,
-            ArchitectureChoice.TextClassification, ArchitectureChoice.AudioClassification,
-            ArchitectureChoice.VideoClassification, ArchitectureChoice.DataframeClassification,
-        ]
-
         self.urgent_predict = False
         self.deploy_presets_data = None
         self.train_states = {
@@ -131,7 +114,7 @@ class InteractiveCallback:
         if not os.path.exists(self.preset_path):
             os.mkdir(self.preset_path)
         self.interactive_config = initial_config
-        if dataset.data.architecture in self.basic_architecture:
+        if dataset.data.architecture in BASIC_ARCHITECTURE:
             self.losses = losses
             self.metrics = reformat_metrics(metrics)
             self.loss_obj = prepare_loss_obj(losses)
@@ -145,7 +128,7 @@ class InteractiveCallback:
         self.dataset_balance = self.callback.dataset_balance(
             options=self.options, y_true=self.y_true, preset_path=self.preset_path, class_colors=self.class_colors
         )
-        if dataset.data.architecture in self.classification_architecture:
+        if dataset.data.architecture in CLASSIFICATION_ARCHITECTURE:
             self.class_idx = self.callback.prepare_class_idx(self.y_true, self.options)
         self.seed_idx = self._prepare_seed()
         self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
@@ -201,7 +184,7 @@ class InteractiveCallback:
                      on_epoch_end_flag=False) -> dict:
         if self.log_history:
             if y_pred is not None:
-                if self.options.data.architecture in self.basic_architecture:
+                if self.options.data.architecture in BASIC_ARCHITECTURE:
                     self.y_pred, self.inverse_y_pred = self.callback.get_y_pred(self.y_true, y_pred, self.options)
                     out = f"{self.interactive_config.intermediate_result.main_output}"
                     self.example_idx = self.callback.prepare_example_idx_to_show(
@@ -213,7 +196,7 @@ class InteractiveCallback:
                         choice_type=self.interactive_config.intermediate_result.example_choice_type,
                         seed_idx=self.seed_idx[:self.interactive_config.intermediate_result.num_examples]
                     )
-                if self.options.data.architecture in self.yolo_architecture:
+                if self.options.data.architecture in YOLO_ARCHITECTURE:
                     self.raw_y_pred = y_pred
                     self.y_pred = self.callback.get_y_pred(
                         y_pred=y_pred, options=self.options,
@@ -253,7 +236,7 @@ class InteractiveCallback:
                             inverse_y_true=self.inverse_y_true,
                             class_colors=self.class_colors,
                         )
-                    if self.options.data.architecture in self.basic_architecture and \
+                    if self.options.data.architecture in BASIC_ARCHITECTURE and \
                             self.interactive_config.statistic_data.output_id \
                             and self.interactive_config.statistic_data.autoupdate:
                         self.statistic_result = self.callback.statistic_data_request(
@@ -264,7 +247,7 @@ class InteractiveCallback:
                             y_pred=self.y_pred,
                             inverse_y_pred=self.inverse_y_pred,
                         )
-                    if self.options.data.architecture in self.yolo_architecture and \
+                    if self.options.data.architecture in YOLO_ARCHITECTURE and \
                             self.interactive_config.statistic_data.box_channel \
                             and self.interactive_config.statistic_data.autoupdate:
                         self.statistic_result = self.callback.statistic_data_request(
@@ -291,7 +274,7 @@ class InteractiveCallback:
                         class_colors=self.class_colors,
                         # raw_y_pred=self.raw_y_pred
                     )
-                    if self.options.data.architecture in self.basic_architecture and \
+                    if self.options.data.architecture in BASIC_ARCHITECTURE and \
                             self.interactive_config.statistic_data.output_id:
                         self.statistic_result = self.callback.statistic_data_request(
                             interactive_config=self.interactive_config,
@@ -301,7 +284,7 @@ class InteractiveCallback:
                             inverse_y_pred=self.inverse_y_pred,
                             inverse_y_true=self.inverse_y_true,
                         )
-                    if self.options.data.architecture in self.yolo_architecture and \
+                    if self.options.data.architecture in YOLO_ARCHITECTURE and \
                             self.interactive_config.statistic_data.box_channel:
                         self.statistic_result = self.callback.statistic_data_request(
                             interactive_config=self.interactive_config,
@@ -335,7 +318,7 @@ class InteractiveCallback:
         """Return dict with data for current interactive request"""
         self.interactive_config = config if config else self.interactive_config
         if self.log_history and self.log_history.get("epochs", {}):
-            if self.options.data.architecture in self.basic_architecture:
+            if self.options.data.architecture in BASIC_ARCHITECTURE:
                 if self.interactive_config.intermediate_result.show_results:
                     out = f"{self.interactive_config.intermediate_result.main_output}"
                     self.example_idx = self.callback.prepare_example_idx_to_show(
@@ -374,7 +357,7 @@ class InteractiveCallback:
                             inverse_y_true=self.inverse_y_true,
                         )
 
-            if self.options.data.architecture in self.yolo_architecture:
+            if self.options.data.architecture in YOLO_ARCHITECTURE:
                 if self.interactive_config.intermediate_result.show_results:
                     self.y_pred = self.callback.get_y_pred(
                         y_pred=self.raw_y_pred, options=self.options,
@@ -512,97 +495,22 @@ class InteractiveCallback:
         method_name = '_class_metric_list'
         try:
             self.class_graphics = {}
-            if self.options.data.architecture in self.class_architecture:
+            if self.options.data.architecture in CLASS_ARCHITECTURE:
                 for out in self.options.data.outputs.keys():
                     self.class_graphics[out] = True
-        except Exception as e:
-            print_error(InteractiveCallback().name, method_name, e)
-
-    def _prepare_null_log_history_template(self):
-        method_name = '_prepare_null_log_history_template'
-        try:
-            self.log_history["epochs"] = []
-            if self.options.data.architecture in self.basic_architecture:
-                for out in self.losses.keys():
-                    self.log_history[out] = {
-                        "loss": {},
-                        "metrics": {},
-                        "progress_state": {
-                            "loss": {},
-                            "metrics": {}
-                        }
-                    }
-                    if self.metrics.get(out) and isinstance(self.metrics.get(out), str):
-                        self.metrics[out] = [self.metrics.get(out)]
-
-                    self.log_history[out]["loss"][self.losses.get(out)] = {"train": [], "val": []}
-                    self.log_history[out]["progress_state"]["loss"][self.losses.get(out)] = {
-                        "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
-                    }
-                    for metric in self.metrics.get(out):
-                        self.log_history[out]["metrics"][f"{metric}"] = {"train": [], "val": []}
-                        self.log_history[out]["progress_state"]["metrics"][f"{metric}"] = {
-                            "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
-                        }
-
-                    if self.options.data.architecture in self.class_architecture:
-                        self.log_history[out]["class_loss"] = {}
-                        self.log_history[out]["class_metrics"] = {}
-                        for class_name in self.options.data.outputs.get(int(out)).classes_names:
-                            self.log_history[out]["class_metrics"][f"{class_name}"] = {}
-                            self.log_history[out]["class_loss"][f"{class_name}"] = {self.losses.get(out): []}
-                            for metric in self.metrics.get(out):
-                                self.log_history[out]["class_metrics"][f"{class_name}"][f"{metric}"] = []
-
-            if self.options.data.architecture in self.yolo_architecture:
-                self.log_history['learning_rate'] = []
-                self.log_history['output'] = {
-                    "loss": {
-                        'giou_loss': {"train": [], "val": []}, 'conf_loss': {"train": [], "val": []},
-                        'prob_loss': {"train": [], "val": []}, 'total_loss': {"train": [], "val": []}
-                    },
-                    "class_loss": {'prob_loss': {}},
-                    "metrics": {'mAP50': []},
-                    "class_metrics": {'mAP50': {}, 'mAP95': {}},
-                    "progress_state": {
-                        "loss": {
-                            'giou_loss': {
-                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
-                            },
-                            'conf_loss': {
-                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
-                            },
-                            'prob_loss': {
-                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
-                            },
-                            'total_loss': {
-                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
-                            }
-                        },
-                        "metrics": {
-                            'mAP50': {"mean_log_history": [], "normal_state": [], "overfitting": []},
-                            # 'mAP95': {"mean_log_history": [], "normal_state": [], "overfitting": []},
-                        }
-                    }
-                }
-                out = list(self.options.data.outputs.keys())[0]
-                for class_name in self.options.data.outputs.get(out).classes_names:
-                    self.log_history['output']["class_loss"]['prob_loss'][class_name] = []
-                    self.log_history['output']["class_metrics"]['mAP50'][class_name] = []
-                    # self.log_history['output']["class_metrics"]['mAP95'][class_name] = []
         except Exception as e:
             print_error(InteractiveCallback().name, method_name, e)
 
     def _prepare_seed(self):
         method_name = '_prepare_seed'
         try:
-            if self.options.data.architecture in self.yolo_architecture:
+            if self.options.data.architecture in YOLO_ARCHITECTURE:
                 example_idx = np.arange(len(self.options.dataframe.get("val")))
                 np.random.shuffle(example_idx)
-            elif self.options.data.architecture in self.basic_architecture:
+            elif self.options.data.architecture in BASIC_ARCHITECTURE:
                 output = self.interactive_config.intermediate_result.main_output
                 example_idx = []
-                if self.options.data.architecture in self.classification_architecture:
+                if self.options.data.architecture in CLASSIFICATION_ARCHITECTURE:
                     y_true = np.argmax(self.y_true.get('val').get(f"{output}"), axis=-1)
                     class_idx = {}
                     for _id in range(self.options.data.outputs.get(output).num_classes):
@@ -633,117 +541,18 @@ class InteractiveCallback:
         except Exception as e:
             print_error(InteractiveCallback().name, method_name, e)
 
-    def _reformat_fit_logs(self, logs) -> dict:
-        method_name = '_reformat_fit_logs'
-        try:
-            interactive_log = {}
-            if self.options.data.architecture in self.basic_architecture:
-                update_logs = {}
-                for log, val in logs.items():
-                    if re.search(r"_\d+$", log):
-                        end = len(f"_{log.split('_')[-1]}")
-                        log = log[:-end]
-                    update_logs[re.sub("__", "_", decamelize(log))] = val
-                for out in self.metrics.keys():
-                    interactive_log[out] = {}
-                    if len(self.metrics.keys()) == 1:
-                        train_loss = update_logs.get('loss')
-                        val_loss = update_logs.get('val_loss')
-                    else:
-                        train_loss = update_logs.get(f'{out}_loss')
-                        val_loss = update_logs.get(f'val_{out}_loss')
-                    interactive_log[out]['loss'] = {
-                        self.losses.get(out): {
-                            'train': round_loss_metric(train_loss) if not math.isnan(float(train_loss)) else None,
-                            'val': round_loss_metric(val_loss) if not math.isnan(float(val_loss)) else None,
-                        }
-                    }
-
-                    interactive_log[out]['metrics'] = {}
-                    for metric_name in self.metrics.get(out):
-                        interactive_log[out]['metrics'][metric_name] = {}
-                        if len(self.metrics.keys()) == 1:
-                            train_metric = update_logs.get(
-                                loss_metric_config.get('metric').get(metric_name).get('log_name'))
-                            val_metric = update_logs.get(
-                                f"val_{loss_metric_config.get('metric').get(metric_name).get('log_name')}")
-                        else:
-                            train_metric = update_logs.get(
-                                f"{out}_{loss_metric_config.get('metric').get(metric_name).get('log_name')}")
-                            val_metric = update_logs.get(
-                                f"val_{out}_{loss_metric_config.get('metric').get(metric_name).get('log_name')}")
-
-                        if metric_name == MetricChoice.UnscaledMAE:
-                            train_metric, val_metric = UnscaledMAE().unscale_result(
-                                [train_metric, val_metric], int(out), self.options.preprocessing
-                            )
-                        if metric_name == MetricChoice.BalancedRecall:
-                            m = BalancedRecall()
-                            m.update_state(y_true=self.y_true.get('val').get(out), y_pred=self.y_pred.get(out))
-                            val_metric = m.result().numpy().item()
-                        if metric_name == MetricChoice.BalancedPrecision:
-                            m = BalancedPrecision()
-                            m.update_state(y_true=self.y_true.get('val').get(out), y_pred=self.y_pred.get(out))
-                            val_metric = m.result().numpy().item()
-                        if metric_name == MetricChoice.BalancedFScore:
-                            m = BalancedFScore()
-                            m.update_state(y_true=self.y_true.get('val').get(out), y_pred=self.y_pred.get(out))
-                            val_metric = m.result().numpy().item()
-                        if metric_name == MetricChoice.FScore:
-                            m = FScore()
-                            m.update_state(y_true=self.y_true.get('val').get(out), y_pred=self.y_pred.get(out))
-                            val_metric = m.result().numpy().item()
-                        interactive_log[out]['metrics'][metric_name] = {
-                            'train': round_loss_metric(train_metric) if not math.isnan(
-                                float(train_metric)) else None,
-                            'val': round_loss_metric(val_metric) if not math.isnan(float(val_metric)) else None
-                        }
-
-            if self.options.data.architecture in self.yolo_architecture:
-                interactive_log['learning_rate'] = round_loss_metric(logs.get('optimizer.lr'))
-                interactive_log['output'] = {
-                    "train": {
-                        "loss": {
-                            'giou_loss': round_loss_metric(logs.get('giou_loss')),
-                            'conf_loss': round_loss_metric(logs.get('conf_loss')),
-                            'prob_loss': round_loss_metric(logs.get('prob_loss')),
-                            'total_loss': round_loss_metric(logs.get('total_loss'))
-                        },
-                        "metrics": {'mAP50': round_loss_metric(logs.get('mAP50'))}
-                    },
-                    "val": {
-                        "loss": {
-                            'giou_loss': round_loss_metric(logs.get('val_giou_loss')),
-                            'conf_loss': round_loss_metric(logs.get('val_conf_loss')),
-                            'prob_loss': round_loss_metric(logs.get('val_prob_loss')),
-                            'total_loss': round_loss_metric(logs.get('val_total_loss'))
-                        },
-                        "class_loss": {'prob_loss': {}},
-                        "metrics": {'mAP50': round_loss_metric(logs.get('val_mAP50'))},
-                        "class_metrics": {'mAP50': {}}
-                    }
-                }
-                for name in self.options.data.outputs.get(list(self.options.data.outputs.keys())[0]).classes_names:
-                    interactive_log['output']['val']["class_loss"]['prob_loss'][name] = round_loss_metric(
-                        logs.get(f'val_prob_loss_{name}'))
-                    interactive_log['output']['val']["class_metrics"]['mAP50'][name] = round_loss_metric(logs.get(
-                        f'val_mAP50_class_{name}'))
-            return interactive_log
-        except Exception as e:
-            print_error(InteractiveCallback().name, method_name, e)
-
-    def _update_log_history(self):
+    def _update_log_history(self, log_history: dict, current_epoch: int, options: PrepareDataset):
         method_name = '_update_log_history'
         try:
             data_idx = None
-            if self.log_history:
-                if self.current_epoch in self.log_history['epochs']:
-                    data_idx = self.log_history['epochs'].index(self.current_epoch)
+            if log_history:
+                if current_epoch in log_history['epochs']:
+                    data_idx = log_history['epochs'].index(current_epoch)
                 else:
-                    self.log_history['epochs'].append(self.current_epoch)
+                    log_history['epochs'].append(current_epoch)
 
-                if self.options.data.architecture in self.basic_architecture:
-                    for out in self.options.data.outputs.keys():
+                if options.data.architecture in BASIC_ARCHITECTURE:
+                    for out in options.data.outputs.keys():
                         out_task = self.options.data.outputs.get(out).task
                         classes_names = self.options.data.outputs.get(out).classes_names
                         for loss_name in self.log_history.get(f"{out}").get('loss').keys():
@@ -942,15 +751,6 @@ class InteractiveCallback:
                                             y_true=self.y_true.get('val').get(f"{out}")[..., class_idx:class_idx + 1],
                                             y_pred=self.y_pred.get(f"{out}")[..., class_idx:class_idx + 1],
                                         )
-                                    # if out_task == LayerOutputTypeChoice.TextSegmentation:
-                                    #     class_idx = classes_names.index(cls)
-                                    #     class_metric = self._get_metric_calculation(
-                                    #         metric_name=metric_name,
-                                    #         metric_obj=self.metrics_obj.get(f"{out}").get(metric_name),
-                                    #         out=f"{out}",
-                                    #         y_true=self.y_true.get('val').get(f"{out}")[:, :, class_idx],
-                                    #         y_pred=self.y_pred.get(f"{out}")[:, :, class_idx],
-                                    #     )
                                     if data_idx or data_idx == 0:
                                         self.log_history[f"{out}"]['class_metrics'][cls][metric_name][data_idx] = \
                                             round_loss_metric(class_metric)
@@ -959,7 +759,7 @@ class InteractiveCallback:
                                             round_loss_metric(class_metric)
                                         )
 
-                if self.options.data.architecture in self.yolo_architecture:
+                if self.options.data.architecture in YOLO_ARCHITECTURE:
                     self.log_history['learning_rate'] = self.current_logs.get('learning_rate')
                     out = list(self.options.data.outputs.keys())[0]
                     classes_names = self.options.data.outputs.get(out).classes_names
@@ -1061,7 +861,7 @@ class InteractiveCallback:
     def _update_progress_table(self, epoch_time: float):
         method_name = '_update_progress_table'
         try:
-            if self.options.data.architecture in self.basic_architecture:
+            if self.options.data.architecture in BASIC_ARCHITECTURE:
                 self.progress_table[self.current_epoch] = {
                     "time": epoch_time,
                     "data": {}
@@ -1082,7 +882,7 @@ class InteractiveCallback:
                             f"val_{metric}"] = \
                             f"{self.log_history.get(out).get('metrics').get(metric).get('val')[-1]}"
 
-            if self.options.data.architecture in self.yolo_architecture:
+            if self.options.data.architecture in YOLO_ARCHITECTURE:
                 self.progress_table[self.current_epoch] = {
                     "time": epoch_time,
                     "learning_rate": self.current_logs.get("learning_rate"),
@@ -1099,111 +899,16 @@ class InteractiveCallback:
         except Exception as e:
             print_error(InteractiveCallback().name, method_name, e)
 
-    def _get_loss_calculation(self, loss_obj, out: str, y_true, y_pred):
-        method_name = '_get_loss_calculation'
-        try:
-            encoding = self.options.data.outputs.get(int(out)).encoding
-            task = self.options.data.architecture
-            num_classes = self.options.data.outputs.get(int(out)).num_classes
-            if task in self.class_architecture:
-                if encoding == LayerEncodingChoice.ohe or encoding == LayerEncodingChoice.multi:
-                    loss_value = float(loss_obj()(y_true, y_pred).numpy())
-                else:
-                    loss_value = float(loss_obj()(to_categorical(y_true, num_classes), y_pred).numpy())
-            else:
-                loss_value = float(loss_obj()(y_true, y_pred).numpy())
-            return loss_value if not math.isnan(loss_value) else None
-        except Exception as e:
-            print_error(InteractiveCallback().name, method_name, e)
-
-    def _get_metric_calculation(self, metric_name, metric_obj, out: str, y_true, y_pred, show_class=False):
-        method_name = '_get_metric_calculation'
-        try:
-            encoding = self.options.data.outputs.get(int(out)).encoding
-            task = self.options.data.architecture
-            num_classes = self.options.data.outputs.get(int(out)).num_classes
-            if task in self.class_architecture:
-                if encoding == LayerEncodingChoice.ohe or encoding == LayerEncodingChoice.multi:
-                    if metric_name == Metric.Accuracy:
-                        metric_obj.update_state(np.argmax(y_true, axis=-1), np.argmax(y_pred, axis=-1))
-                    elif metric_name in [Metric.BalancedRecall, Metric.BalancedPrecision, Metric.BalancedFScore]:
-                        metric_obj.update_state(y_true, y_pred, show_class=show_class)
-                    elif metric_name == Metric.BalancedDiceCoef:
-                        metric_obj.encoding = 'multi' if encoding == 'multi' else None
-                        metric_obj.update_state(y_true, y_pred)
-                    else:
-                        metric_obj.update_state(y_true, y_pred)
-                else:
-                    if metric_name == Metric.Accuracy:
-                        metric_obj.update_state(y_true, np.argmax(y_pred, axis=-1))
-                    else:
-                        metric_obj.update_state(to_categorical(y_true, num_classes), y_pred)
-            else:
-                metric_obj.update_state(y_true, y_pred)
-            metric_value = float(metric_obj.result().numpy())
-            return round(metric_value, 6) if not math.isnan(metric_value) else None
-        except Exception as e:
-            print_error(InteractiveCallback().name, method_name, e)
-
-    def _get_mean_log(self, logs):
-        method_name = '_get_mean_log'
-        try:
-            copy_logs = copy.deepcopy(logs)
-            while None in copy_logs:
-                copy_logs.pop(copy_logs.index(None))
-            if len(copy_logs) < self.log_gap:
-                return float(np.mean(copy_logs))
-            else:
-                return float(np.mean(copy_logs[-self.log_gap:]))
-        except Exception as e:
-            print_error(InteractiveCallback().name, method_name, e)
-            return 0.
-
-    @staticmethod
-    def _evaluate_overfitting(metric_name: str, mean_log: list, metric_type: str):
-        method_name = '_evaluate_overfitting'
-        try:
-            mode = loss_metric_config.get(metric_type).get(metric_name).get("mode")
-            overfitting = False
-            if mode == 'min':
-                if min(mean_log) and mean_log[-1] and mean_log[-1] > min(mean_log) and \
-                        (mean_log[-1] - min(mean_log)) * 100 / min(mean_log) > 2:
-                    overfitting = True
-            if mode == 'max':
-                if max(mean_log) and mean_log[-1] and mean_log[-1] < max(mean_log) and \
-                        (max(mean_log) - mean_log[-1]) * 100 / max(mean_log) > 2:
-                    overfitting = True
-            return overfitting
-        except Exception as e:
-            print_error(InteractiveCallback().name, method_name, e)
-
-    @staticmethod
-    def _evaluate_underfitting(metric_name: str, train_log: float, val_log: float, metric_type: str):
-        method_name = '_evaluate_underfitting'
-        try:
-            mode = loss_metric_config.get(metric_type).get(metric_name).get("mode")
-            underfitting = False
-            if mode == 'min' and train_log and val_log:
-                if val_log < 1 and train_log < 1 and (val_log - train_log) > 0.05:
-                    underfitting = True
-                if (val_log >= 1 or train_log >= 1) and (val_log - train_log) / train_log * 100 > 5:
-                    underfitting = True
-            if mode == 'max' and train_log and val_log and (train_log - val_log) / train_log * 100 > 3:
-                underfitting = True
-            return underfitting
-        except Exception as e:
-            print_error(InteractiveCallback().name, method_name, e)
-
     def _get_loss_graph_data_request(self) -> list:
         method_name = '_get_loss_graph_data_request'
         try:
             data_return = []
-            if self.options.data.architecture in self.basic_architecture:
+            if self.options.data.architecture in BASIC_ARCHITECTURE:
                 if not self.interactive_config.loss_graphs or not self.log_history.get("epochs"):
                     return data_return
                 for loss_graph_config in self.interactive_config.loss_graphs:
                     loss = self.losses.get(f"{loss_graph_config.output_idx}")
-                    if self.options.data.architecture in self.yolo_architecture:
+                    if self.options.data.architecture in YOLO_ARCHITECTURE:
                         loss_graph_config.output_idx = 'output'
                     if loss_graph_config.show == LossGraphShowChoice.model:
                         if sum(self.log_history.get(f"{loss_graph_config.output_idx}").get("progress_state").get(
@@ -1293,7 +998,7 @@ class InteractiveCallback:
                             )
                         )
 
-            if self.options.data.architecture in self.yolo_architecture:
+            if self.options.data.architecture in YOLO_ARCHITECTURE:
                 if not self.interactive_config.loss_graphs or not self.log_history.get("epochs"):
                     return data_return
                 _id = 1
@@ -1390,7 +1095,7 @@ class InteractiveCallback:
         method_name = '_get_metric_graph_data_request'
         try:
             data_return = []
-            if self.options.data.architecture in self.basic_architecture:
+            if self.options.data.architecture in BASIC_ARCHITECTURE:
                 if not self.interactive_config.metric_graphs or not self.log_history.get("epochs"):
                     return data_return
                 for metric_graph_config in self.interactive_config.metric_graphs:
@@ -1399,11 +1104,11 @@ class InteractiveCallback:
                             "mode")
                         if sum(self.log_history.get(f"{metric_graph_config.output_idx}").get(
                                 "progress_state").get("metrics").get(metric_graph_config.show_metric.name).get(
-                            'overfitting')[-self.log_gap:]) >= self.progress_threashold:
+                                'overfitting')[-self.log_gap:]) >= self.progress_threashold:
                             progress_state = 'overfitting'
                         elif sum(self.log_history.get(f"{metric_graph_config.output_idx}").get(
                                 "progress_state").get("metrics").get(metric_graph_config.show_metric.name).get(
-                            'underfitting')[-self.log_gap:]) >= self.progress_threashold:
+                                'underfitting')[-self.log_gap:]) >= self.progress_threashold:
                             progress_state = 'underfitting'
                         else:
                             progress_state = 'normal'
@@ -1476,7 +1181,7 @@ class InteractiveCallback:
                             )
                         )
 
-            if self.options.data.architecture in self.yolo_architecture:
+            if self.options.data.architecture in YOLO_ARCHITECTURE:
                 if not self.interactive_config.metric_graphs or not self.log_history.get("epochs"):
                     return data_return
                 _id = 1
@@ -1486,7 +1191,7 @@ class InteractiveCallback:
                             "mode")
                         if sum(self.log_history.get("output").get("progress_state").get(
                                 "metrics").get(metric_graph_config.show_metric.name).get(
-                            'overfitting')[-self.log_gap:]) >= self.progress_threashold:
+                                'overfitting')[-self.log_gap:]) >= self.progress_threashold:
                             progress_state = 'overfitting'
                         else:
                             progress_state = 'normal'

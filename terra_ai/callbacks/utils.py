@@ -9,7 +9,7 @@ import pandas as pd
 from pandas import DataFrame
 from sklearn.metrics import classification_report, confusion_matrix
 
-from terra_ai.data.training.extra import BalanceSortedChoice
+from terra_ai.data.training.extra import BalanceSortedChoice, ArchitectureChoice
 from terra_ai.utils import camelize
 
 loss_metric_config = {
@@ -318,6 +318,25 @@ MODULE_NAME = 'module /callbacks/utils.py'
 MAX_TS_GRAPH_COUNT = 200
 MAX_HISTOGRAM_BINS = 50
 MAX_INTERMEDIATE_GRAPH_LENGTH = 50
+
+BASIC_ARCHITECTURE = [
+    ArchitectureChoice.Basic, ArchitectureChoice.ImageClassification, ArchitectureChoice.ImageSegmentation,
+    ArchitectureChoice.TextSegmentation, ArchitectureChoice.TextClassification, ArchitectureChoice.AudioClassification,
+    ArchitectureChoice.VideoClassification, ArchitectureChoice.DataframeClassification,
+    ArchitectureChoice.DataframeRegression, ArchitectureChoice.Timeseries, ArchitectureChoice.TimeseriesTrend
+]
+YOLO_ARCHITECTURE = [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]
+CLASS_ARCHITECTURE = [
+    ArchitectureChoice.ImageClassification, ArchitectureChoice.TimeseriesTrend, ArchitectureChoice.ImageSegmentation,
+    ArchitectureChoice.TextSegmentation, ArchitectureChoice.TextClassification, ArchitectureChoice.AudioClassification,
+    ArchitectureChoice.VideoClassification, ArchitectureChoice.DataframeClassification,
+    ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4
+]
+CLASSIFICATION_ARCHITECTURE = [
+    ArchitectureChoice.ImageClassification, ArchitectureChoice.TimeseriesTrend,
+    ArchitectureChoice.TextClassification, ArchitectureChoice.AudioClassification,
+    ArchitectureChoice.VideoClassification, ArchitectureChoice.DataframeClassification,
+]
 
 
 def print_error(class_name: str, method_name: str, message: Exception):
