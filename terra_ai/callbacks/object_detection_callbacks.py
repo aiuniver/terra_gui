@@ -504,7 +504,7 @@ class BaseObjectDetectionCallback:
                         true_bb=true_array, pred_bb=predict_array, name_classes=name_classes,
                         sensitivity=sensitivity
                     )
-                    print('\nbox_stat', box_stat)
+                    # print('\nbox_stat', box_stat)
                     data["stat"]["Общая точность"] = {
                         "type": "str",
                         "data": [{
@@ -729,7 +729,7 @@ class BaseObjectDetectionCallback:
                         return_data[f"{idx + 1}"]['statistic_values'] = data.get('stat')
                     else:
                         return_data[f"{idx + 1}"]['statistic_values'] = {}
-            print('\nget_intermediate_result', return_data)
+            # print('\nget_intermediate_result', return_data)
             return return_data
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
