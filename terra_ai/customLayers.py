@@ -310,7 +310,7 @@ class VAEBlock(Model):
     '''
 
     def __init__(self, latent_size=32, latent_regularizer='vae', beta=5.,
-                 capacity=128., randomSample=True, roll_up=True, **kwargs):
+                 capacity=128., random_sample=True, roll_up=True, **kwargs):
         '''
         args:
         ------
@@ -326,7 +326,7 @@ class VAEBlock(Model):
                 of basis. (e.g. at 25, the network will try to use
                 25 dimensions of the latent space)
             (unused if 'bvae' not selected)
-        randomSample : bool
+        random_sample : bool
             whether or not to use random sampling when selecting from
                 distribution.
             if false, the latent vector equals the mean, essentially turning
@@ -343,7 +343,7 @@ class VAEBlock(Model):
         self.reg = latent_regularizer
         self.beta = beta
         self.capacity = capacity
-        self.random = randomSample
+        self.random = random_sample
         # variational encoder
         self.latent_size = latent_size
         self.roll_up = roll_up
