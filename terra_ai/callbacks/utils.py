@@ -345,6 +345,18 @@ def print_error(class_name: str, method_name: str, message: Exception):
                  f'\n_________________________________________________\n')
 
 
+def class_metric_list(options):
+    method_name = '_class_metric_list'
+    try:
+        class_graphics = {}
+        if options.data.architecture in CLASS_ARCHITECTURE:
+            for out in options.data.outputs.keys():
+                class_graphics[out] = True
+        return class_graphics
+    except Exception as e:
+        print_error(f"None ({MODULE_NAME})", method_name, e)
+
+
 def class_counter(y_array, classes_names: list, ohe=True):
     """
     class_dict = {

@@ -24,7 +24,7 @@ from tensorflow.keras.models import load_model
 from terra_ai import progress
 from terra_ai.callbacks.interactive_callback import InteractiveCallback
 from terra_ai.callbacks.utils import loss_metric_config, print_error, YOLO_ARCHITECTURE, CLASS_ARCHITECTURE, \
-    BASIC_ARCHITECTURE, round_loss_metric
+    BASIC_ARCHITECTURE, round_loss_metric, class_metric_list
 from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice, LayerEncodingChoice
 from terra_ai.data.deploy.tasks import DeployData
@@ -343,14 +343,10 @@ class GUINN:
         val_batch_size = len_val // min_step
         return val_batch_size
 
-    def terra_fit(self,
-                  dataset: DatasetData,
-                  gui_model: ModelDetailsData,
-                  training_path: str = "",
-                  dataset_path: str = "",
-                  training_params: TrainData = None,
-                  initial_config: InteractiveData = None
-                  ) -> dict:
+    def terra_fit(
+            self, dataset: DatasetData, gui_model: ModelDetailsData, training_path: str = "",
+            dataset_path: str = "", training_params: TrainData = None, initial_config: InteractiveData = None
+    ) -> dict:
         """
         This method created for using wth externally compiled models
 
@@ -403,7 +399,6 @@ class GUINN:
 
     def get_nn(self):
         self.nn_cleaner(retrain=True)
-
         return self
 
     @staticmethod
@@ -496,7 +491,7 @@ class GUINN:
             self.sum_epoch = params.epochs
 
     def train_base_model(self, params: TrainData, dataset: PrepareDataset, model, dataset_path: str,
-                         dataset_data: DatasetData, save_model_path: str, callback=None):
+                         save_model_path: str, callback=None):
 
         @tf.function
         def train_step(x_batch, y_batch, losses, model, optimizer):
@@ -524,7 +519,9 @@ class GUINN:
         train_true = None
         optimizer = self.optimizer
         first_epoch = True
+        data_idxs = []
         for epoch in range(current_epoch, params.epochs):
+            new_batch = True
             # Iterate over the batches of the dataset.
             train_steps = 0
             for x_batch_train, y_batch_train in dataset.dataset.get('train').batch(params.batch, drop_remainder=False):
@@ -535,13 +532,21 @@ class GUINN:
                 if train_true is None:
                     train_pred = logits
                     train_true = y_true
+                    data_idxs = list(range(y_true.shape[0]))
                 elif first_epoch:
                     train_pred = tf.concat([train_pred, logits], axis=0)
                     train_true = tf.concat([train_true, y_true], axis=0)
+                    data_idxs = data_idxs.extend(list(range(data_idxs[-1] + 1, data_idxs[-1] + 1 + y_true.shape[0])))
                 else:
                     train_pred = tf.concat([train_pred[logits.shape[0]:], logits], axis=0)
                     train_true = tf.concat([train_true[y_true.shape[0]:], y_true], axis=0)
+                    if new_batch:
+                        data_idxs = data_idxs[y_true.shape[0]:].extend(list(range(y_true.shape[0])))
+                    else:
+                        data_idxs = data_idxs[y_true.shape[0]:].extend(
+                            list(range(data_idxs[-1] + 1, data_idxs[-1] + 1 + y_true.shape[0])))
                 train_steps += 1
+                new_batch = False
 
             # TODO: функция расчета метрик с выводом словаря логов
             # acc_metric.update_state(train_true, train_pred)
@@ -645,6 +650,9 @@ class FitCallback(keras.callbacks.Callback):
 
         super().__init__()
         print('\n FitCallback')
+        self.name = "FitCallback"
+        self.current_logs = {}
+        self.class_outputs = class_metric_list(dataset)
         self.usage_info = MemoryUsage(debug=False)
         self.dataset = dataset
         self.dataset_data = dataset_data
@@ -708,8 +716,8 @@ class FitCallback(keras.callbacks.Callback):
         self.samples_target_val = []
 
     @staticmethod
-    def _prepare_null_log_history_template(options: PrepareDataset, params: TrainData):
-        method_name = '_prepare_null_log_history_template'
+    def _prepare_log_history_template(options: PrepareDataset, params: TrainData):
+        method_name = '_prepare_log_history_template'
         try:
             log_history = {"epochs": []}
             if options.data.architecture in BASIC_ARCHITECTURE:
@@ -717,6 +725,7 @@ class FitCallback(keras.callbacks.Callback):
                     out = f"{output_layer['id']}"
                     log_history[out] = {
                         "loss": {}, "metrics": {},
+                        "class_loss": {}, "class_metrics": {},
                         "progress_state": {"loss": {}, "metrics": {}}
                     }
                     log_history[out]["loss"][output_layer.get("loss")] = {"train": [], "val": []}
@@ -734,9 +743,10 @@ class FitCallback(keras.callbacks.Callback):
                         log_history[out]["class_metrics"] = {}
                         for class_name in options.data.outputs.get(int(out)).classes_names:
                             log_history[out]["class_metrics"][f"{class_name}"] = {}
-                            log_history[out]["class_loss"][f"{class_name}"] = {output_layer.get("loss"): []}
+                            log_history[out]["class_loss"][f"{class_name}"] = \
+                                {output_layer.get("loss"): {"train": [], "val": []}}
                             for metric in output_layer.get("metrics", []):
-                                log_history[out]["class_metrics"][f"{class_name}"][metric] = []
+                                log_history[out]["class_metrics"][f"{class_name}"][metric] = {"train": [], "val": []}
 
             if options.data.architecture in YOLO_ARCHITECTURE:
                 log_history['learning_rate'] = []
@@ -753,20 +763,16 @@ class FitCallback(keras.callbacks.Callback):
                     "progress_state": {
                         "loss": {
                             'giou_loss': {
-                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
-                            },
+                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
                             'conf_loss': {
-                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
-                            },
+                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
                             'prob_loss': {
-                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
-                            },
+                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
                             'total_loss': {
-                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
-                            }
+                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []}
                         },
                         "metrics": {
-                            'mAP50': {"mean_log_history": [], "normal_state": [], "overfitting": []},
+                            'mAP50': {"mean_log_history": [], "normal_state": [], "overfitting": []}
                         }
                     }
                 }
@@ -776,7 +782,58 @@ class FitCallback(keras.callbacks.Callback):
                     log_history['output']["class_metrics"]['mAP50'][class_name] = []
             return log_history
         except Exception as e:
-            print_error(InteractiveCallback().name, method_name, e)
+            print_error(FitCallback.name, method_name, e)
+
+    def current_basic_logs(self, epoch, train_y_true, train_y_pred, val_y_true, val_y_pred):
+        method_name = 'current_basic_logs'
+        try:
+            self.current_logs = {"epochs": epoch}
+            for output_layer in self.params.architecture.outputs_dict:
+                out = f"{output_layer['id']}"
+                name_classes = self.dataset.data.outputs.get(output_layer['id']).classes_names
+                self.current_logs[out] = {"loss": {}, "metrics": {}, "class_loss": {}, "class_metrics": {}}
+
+                # calculate loss
+                loss_name = output_layer.get("loss")
+                loss_fn = getattr(
+                    importlib.import_module(loss_metric_config.get("loss").get(loss_name, {}).get('module')), loss_name
+                )
+                train_loss = self._get_loss_calculation(loss_fn, out, train_y_true, train_y_pred)
+                val_loss = self._get_loss_calculation(loss_fn, out, val_y_true, val_y_pred)
+                # train_loss = float(loss_fn()(y_true, y_pred).numpy())
+                # val_loss = float(loss_fn()(val_y_true, val_y_pred).numpy())
+                self.current_logs[out]["loss"][output_layer.get("loss")] = {"train": train_loss, "val": val_loss}
+                if self.class_outputs.get(output_layer['id']):
+                    for i, cls in enumerate(name_classes):
+                        train_class_loss = self._get_loss_calculation(
+                            loss_obj=loss_fn, out=out, y_true=train_y_true[..., i:i + 1], y_pred=train_y_pred[..., i:i + 1])
+                        val_class_loss = self._get_loss_calculation(
+                            loss_obj=loss_fn, out=out, y_true=val_y_true[..., i:i + 1], y_pred=val_y_pred[..., i:i + 1])
+                        self.current_logs[out]["class_metrics"][cls] = \
+                            {output_layer.get("loss"): {"train": train_class_loss, "val": val_class_loss}}
+
+                # calculate metrics
+                for metric_name in output_layer.get("metrics", []):
+                    metric_fn = getattr(
+                        importlib.import_module(loss_metric_config.get("metric").get(metric_name, {}).get('module')),
+                        metric_name
+                    )
+                    train_metric = self._get_metric_calculation(metric_name, metric_fn, out, train_y_true, train_y_pred)
+                    val_metric = self._get_metric_calculation(metric_name, metric_fn, out, val_y_true, val_y_pred)
+                    self.current_logs[out]["metrics"][metric_name] = {"train": train_metric, "val": val_metric}
+
+                    if self.class_outputs.get(output_layer['id']):
+                        for i, cls in enumerate(name_classes):
+                            train_class_metric = self._get_metric_calculation(
+                                metric_name=metric_name, metric_obj=metric_fn, out=out, show_class=True,
+                                y_true=train_y_true[..., i:i + 1], y_pred=train_y_pred[..., i:i + 1])
+                            val_class_metric = self._get_metric_calculation(
+                                metric_name=metric_name, metric_obj=metric_fn, out=out, show_class=True,
+                                y_true=val_y_true[..., i:i + 1], y_pred=val_y_pred[..., i:i + 1])
+                            self.current_logs[out]["class_metrics"][cls] = \
+                                {metric_name: {"train": train_class_metric, "val": val_class_metric}}
+        except Exception as e:
+            print_error(FitCallback.name, method_name, e)
 
     def _get_loss_calculation(self, loss_obj, out: str, y_true, y_pred):
         method_name = '_get_loss_calculation'
@@ -793,7 +850,7 @@ class FitCallback(keras.callbacks.Callback):
                 loss_value = float(loss_obj()(y_true, y_pred).numpy())
             return loss_value if not math.isnan(loss_value) else None
         except Exception as e:
-            print_error(InteractiveCallback().name, method_name, e)
+            print_error(FitCallback.name, method_name, e)
 
     def _get_metric_calculation(self, metric_name, metric_obj, out: str, y_true, y_pred, show_class=False):
         method_name = '_get_metric_calculation'
@@ -801,28 +858,349 @@ class FitCallback(keras.callbacks.Callback):
             encoding = self.options.data.outputs.get(int(out)).encoding
             task = self.options.data.architecture
             num_classes = self.options.data.outputs.get(int(out)).num_classes
+            if metric_name == Metric.MeanIoU:
+                m = metric_obj(num_classes)
+            else:
+                m = metric_obj()
             if task in CLASS_ARCHITECTURE:
                 if encoding == LayerEncodingChoice.ohe or encoding == LayerEncodingChoice.multi:
                     if metric_name == Metric.Accuracy:
-                        metric_obj.update_state(np.argmax(y_true, axis=-1), np.argmax(y_pred, axis=-1))
+                        m.update_state(np.argmax(y_true, axis=-1), np.argmax(y_pred, axis=-1))
                     elif metric_name in [Metric.BalancedRecall, Metric.BalancedPrecision, Metric.BalancedFScore]:
-                        metric_obj.update_state(y_true, y_pred, show_class=show_class)
+                        m.update_state(y_true, y_pred, show_class=show_class)
                     elif metric_name == Metric.BalancedDiceCoef:
-                        metric_obj.encoding = 'multi' if encoding == 'multi' else None
-                        metric_obj.update_state(y_true, y_pred)
+                        m.encoding = 'multi' if encoding == 'multi' else None
+                        m.update_state(y_true, y_pred)
                     else:
-                        metric_obj.update_state(y_true, y_pred)
+                        m.update_state(y_true, y_pred)
                 else:
                     if metric_name == Metric.Accuracy:
-                        metric_obj.update_state(y_true, np.argmax(y_pred, axis=-1))
+                        m.update_state(y_true, np.argmax(y_pred, axis=-1))
                     else:
-                        metric_obj.update_state(to_categorical(y_true, num_classes), y_pred)
+                        m.update_state(to_categorical(y_true, num_classes), y_pred)
             else:
-                metric_obj.update_state(y_true, y_pred)
-            metric_value = float(metric_obj.result().numpy())
-            return round(metric_value, 6) if not math.isnan(metric_value) else None
+                m.update_state(y_true, y_pred)
+            metric_value = float(m.result().numpy())
+            return metric_value if not math.isnan(metric_value) else None
         except Exception as e:
-            print_error(InteractiveCallback().name, method_name, e)
+            print_error(FitCallback.name, method_name, e)
+
+    def _update_log_history(self, log_history: dict, current_epoch: int, options: PrepareDataset):
+        method_name = '_update_log_history'
+        try:
+            data_idx = None
+            if log_history:
+                if current_epoch in log_history['epochs']:
+                    data_idx = log_history['epochs'].index(current_epoch)
+                else:
+                    log_history['epochs'].append(current_epoch)
+
+                if options.data.architecture in BASIC_ARCHITECTURE:
+                    for out in options.data.outputs.keys():
+                        out_task = self.options.data.outputs.get(out).task
+                        classes_names = self.options.data.outputs.get(out).classes_names
+                        for loss_name in self.log_history.get(f"{out}").get('loss').keys():
+                            for data_type in ['train', 'val']:
+                                # fill losses
+                                if data_idx or data_idx == 0:
+                                    self.log_history[f"{out}"]['loss'][loss_name][data_type][data_idx] = \
+                                        round_loss_metric(
+                                            self.current_logs.get(f"{out}").get('loss').get(loss_name).get(data_type)
+                                        )
+                                else:
+                                    self.log_history[f"{out}"]['loss'][loss_name][data_type].append(
+                                        round_loss_metric(
+                                            self.current_logs.get(f"{out}").get('loss').get(loss_name).get(data_type)
+                                        )
+                                    )
+                            # fill loss progress state
+                            if data_idx or data_idx == 0:
+                                self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['mean_log_history'][
+                                    data_idx] = \
+                                    self._get_mean_log(
+                                        self.log_history.get(f"{out}").get('loss').get(loss_name).get('val'))
+                            else:
+                                self.log_history[f"{out}"]['progress_state']['loss'][loss_name][
+                                    'mean_log_history'].append(
+                                    self._get_mean_log(
+                                        self.log_history.get(f"{out}").get('loss').get(loss_name).get('val'))
+                                )
+                            # get progress state data
+                            loss_underfitting = self._evaluate_underfitting(
+                                loss_name,
+                                self.log_history[f"{out}"]['loss'][loss_name]['train'][-1],
+                                self.log_history[f"{out}"]['loss'][loss_name]['val'][-1],
+                                metric_type='loss'
+                            )
+                            loss_overfitting = self._evaluate_overfitting(
+                                loss_name,
+                                self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['mean_log_history'],
+                                metric_type='loss'
+                            )
+                            if loss_underfitting or loss_overfitting:
+                                normal_state = False
+                            else:
+                                normal_state = True
+
+                            if data_idx or data_idx == 0:
+                                self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['underfitting'][
+                                    data_idx] = \
+                                    loss_underfitting
+                                self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['overfitting'][
+                                    data_idx] = \
+                                    loss_overfitting
+                                self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['normal_state'][
+                                    data_idx] = \
+                                    normal_state
+                            else:
+                                self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['underfitting'].append(
+                                    loss_underfitting)
+                                self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['overfitting'].append(
+                                    loss_overfitting)
+                                self.log_history[f"{out}"]['progress_state']['loss'][loss_name]['normal_state'].append(
+                                    normal_state)
+
+                            if out_task == LayerOutputTypeChoice.Classification or \
+                                    out_task == LayerOutputTypeChoice.Segmentation or \
+                                    out_task == LayerOutputTypeChoice.TextSegmentation or \
+                                    out_task == LayerOutputTypeChoice.TimeseriesTrend:
+                                for cls in self.log_history.get(f"{out}").get('class_loss').keys():
+                                    class_loss = 0.
+                                    if out_task == LayerOutputTypeChoice.Classification or \
+                                            out_task == LayerOutputTypeChoice.TimeseriesTrend:
+                                        class_loss = self._get_loss_calculation(
+                                            loss_obj=self.loss_obj.get(f"{out}"),
+                                            out=f"{out}",
+                                            y_true=self.y_true.get('val').get(f"{out}")[
+                                                self.class_idx.get('val').get(f"{out}").get(cls)],
+                                            y_pred=self.y_pred.get(f"{out}")[
+                                                self.class_idx.get('val').get(f"{out}").get(cls)],
+                                        )
+                                    if out_task == LayerOutputTypeChoice.Segmentation:
+                                        class_idx = classes_names.index(cls)
+                                        class_loss = self._get_loss_calculation(
+                                            loss_obj=self.loss_obj.get(f"{out}"),
+                                            out=f"{out}",
+                                            y_true=self.y_true.get('val').get(f"{out}")[:, :, :, class_idx],
+                                            y_pred=self.y_pred.get(f"{out}")[:, :, :, class_idx],
+                                        )
+                                    if out_task == LayerOutputTypeChoice.TextSegmentation:
+                                        class_idx = classes_names.index(cls)
+                                        class_loss = self._get_loss_calculation(
+                                            loss_obj=self.loss_obj.get(f"{out}"),
+                                            out=f"{out}",
+                                            y_true=self.y_true.get('val').get(f"{out}")[:, :, class_idx],
+                                            y_pred=self.y_pred.get(f"{out}")[:, :, class_idx],
+                                        )
+                                    if data_idx or data_idx == 0:
+                                        self.log_history[f"{out}"]['class_loss'][cls][loss_name][data_idx] = \
+                                            round_loss_metric(class_loss)
+                                    else:
+                                        self.log_history[f"{out}"]['class_loss'][cls][loss_name].append(
+                                            round_loss_metric(class_loss)
+                                        )
+
+                        for metric_name in self.log_history.get(f"{out}").get('metrics').keys():
+                            for data_type in ['train', 'val']:
+                                # fill metrics
+                                if data_idx or data_idx == 0:
+                                    if self.current_logs:
+                                        self.log_history[f"{out}"]['metrics'][metric_name][data_type][data_idx] = \
+                                            round_loss_metric(
+                                                self.current_logs.get(f"{out}").get('metrics').get(metric_name).get(
+                                                    data_type)
+                                            )
+                                else:
+                                    if self.current_logs:
+                                        self.log_history[f"{out}"]['metrics'][metric_name][data_type].append(
+                                            round_loss_metric(
+                                                self.current_logs.get(f"{out}").get('metrics').get(metric_name).get(
+                                                    data_type)
+                                            )
+                                        )
+
+                            if data_idx or data_idx == 0:
+                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name][
+                                    'mean_log_history'][
+                                    data_idx] = \
+                                    self._get_mean_log(self.log_history[f"{out}"]['metrics'][metric_name]['val'])
+                            else:
+                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name][
+                                    'mean_log_history'].append(
+                                    self._get_mean_log(self.log_history[f"{out}"]['metrics'][metric_name]['val'])
+                                )
+                            metric_underfittng = self._evaluate_underfitting(
+                                metric_name,
+                                self.log_history[f"{out}"]['metrics'][metric_name]['train'][-1],
+                                self.log_history[f"{out}"]['metrics'][metric_name]['val'][-1],
+                                metric_type='metric'
+                            )
+                            metric_overfitting = self._evaluate_overfitting(
+                                metric_name,
+                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name][
+                                    'mean_log_history'],
+                                metric_type='metric'
+                            )
+                            if metric_underfittng or metric_overfitting:
+                                normal_state = False
+                            else:
+                                normal_state = True
+
+                            if data_idx or data_idx == 0:
+                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['underfitting'][
+                                    data_idx] = \
+                                    metric_underfittng
+                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['overfitting'][
+                                    data_idx] = \
+                                    metric_overfitting
+                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name]['normal_state'][
+                                    data_idx] = \
+                                    normal_state
+                            else:
+                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name][
+                                    'underfitting'].append(
+                                    metric_underfittng)
+                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name][
+                                    'overfitting'].append(
+                                    metric_overfitting)
+                                self.log_history[f"{out}"]['progress_state']['metrics'][metric_name][
+                                    'normal_state'].append(
+                                    normal_state)
+
+                            if out_task == LayerOutputTypeChoice.Classification or \
+                                    out_task == LayerOutputTypeChoice.Segmentation or \
+                                    out_task == LayerOutputTypeChoice.TextSegmentation or \
+                                    out_task == LayerOutputTypeChoice.TimeseriesTrend:
+                                for cls in self.log_history.get(f"{out}").get('class_metrics').keys():
+                                    class_metric = 0.
+                                    if out_task == LayerOutputTypeChoice.Classification or \
+                                            out_task == LayerOutputTypeChoice.TimeseriesTrend:
+                                        class_metric = self._get_metric_calculation(
+                                            metric_name=metric_name,
+                                            metric_obj=self.metrics_obj.get(f"{out}").get(metric_name),
+                                            out=f"{out}",
+                                            y_true=self.y_true.get('val').get(f"{out}")[
+                                                self.class_idx.get('val').get(f"{out}").get(cls)],
+                                            y_pred=self.y_pred.get(f"{out}")[
+                                                self.class_idx.get('val').get(f"{out}").get(cls)],
+                                            show_class=True
+                                        )
+                                    if out_task == LayerOutputTypeChoice.Segmentation or \
+                                            out_task == LayerOutputTypeChoice.TextSegmentation:
+                                        class_idx = classes_names.index(cls)
+                                        class_metric = self._get_metric_calculation(
+                                            metric_name=metric_name,
+                                            metric_obj=self.metrics_obj.get(f"{out}").get(metric_name),
+                                            out=f"{out}",
+                                            y_true=self.y_true.get('val').get(f"{out}")[..., class_idx:class_idx + 1],
+                                            y_pred=self.y_pred.get(f"{out}")[..., class_idx:class_idx + 1],
+                                        )
+                                    if data_idx or data_idx == 0:
+                                        self.log_history[f"{out}"]['class_metrics'][cls][metric_name][data_idx] = \
+                                            round_loss_metric(class_metric)
+                                    else:
+                                        self.log_history[f"{out}"]['class_metrics'][cls][metric_name].append(
+                                            round_loss_metric(class_metric)
+                                        )
+
+                if self.options.data.architecture in YOLO_ARCHITECTURE:
+                    self.log_history['learning_rate'] = self.current_logs.get('learning_rate')
+                    out = list(self.options.data.outputs.keys())[0]
+                    classes_names = self.options.data.outputs.get(out).classes_names
+                    for key in self.log_history['output']["loss"].keys():
+                        for data_type in ['train', 'val']:
+                            self.log_history['output']["loss"][key][data_type].append(
+                                round_loss_metric(self.current_logs.get('output').get(
+                                    data_type).get('loss').get(key))
+                            )
+                    for key in self.log_history['output']["metrics"].keys():
+                        self.log_history['output']["metrics"][key].append(
+                            round_loss_metric(self.current_logs.get('output').get(
+                                'val').get('metrics').get(key))
+                        )
+                    for name in classes_names:
+                        self.log_history['output']["class_loss"]['prob_loss'][name].append(
+                            round_loss_metric(self.current_logs.get('output').get("val").get(
+                                'class_loss').get("prob_loss").get(name))
+                        )
+                        self.log_history['output']["class_metrics"]['mAP50'][name].append(
+                            round_loss_metric(self.current_logs.get('output').get("val").get(
+                                'class_metrics').get("mAP50").get(name))
+                        )
+                        # self.log_history['output']["class_metrics"]['mAP95'][name].append(
+                        #     self._round_loss_metric(self.current_logs.get('output').get("val").get(
+                        #         'class_metrics').get("mAP95").get(name))
+                        # )
+                    for loss_name in self.log_history['output']["loss"].keys():
+                        # fill loss progress state
+                        if data_idx or data_idx == 0:
+                            self.log_history['output']['progress_state']['loss'][loss_name]['mean_log_history'][
+                                data_idx] = \
+                                self._get_mean_log(self.log_history.get('output').get('loss').get(loss_name).get('val'))
+                        else:
+                            self.log_history['output']['progress_state']['loss'][loss_name]['mean_log_history'].append(
+                                self._get_mean_log(self.log_history.get('output').get('loss').get(loss_name).get('val'))
+                            )
+                        # get progress state data
+                        loss_underfitting = self._evaluate_underfitting(
+                            loss_name,
+                            self.log_history['output']['loss'][loss_name]['train'][-1],
+                            self.log_history['output']['loss'][loss_name]['val'][-1],
+                            metric_type='loss'
+                        )
+                        loss_overfitting = self._evaluate_overfitting(
+                            loss_name,
+                            self.log_history['output']['progress_state']['loss'][loss_name]['mean_log_history'],
+                            metric_type='loss'
+                        )
+                        if loss_underfitting or loss_overfitting:
+                            normal_state = False
+                        else:
+                            normal_state = True
+                        if data_idx or data_idx == 0:
+                            self.log_history['output']['progress_state']['loss'][loss_name][
+                                'underfitting'][data_idx] = loss_underfitting
+                            self.log_history['output']['progress_state']['loss'][loss_name][
+                                'overfitting'][data_idx] = loss_overfitting
+                            self.log_history['output']['progress_state']['loss'][loss_name][
+                                'normal_state'][data_idx] = normal_state
+                        else:
+                            self.log_history['output']['progress_state']['loss'][loss_name]['underfitting'].append(
+                                loss_underfitting)
+                            self.log_history['output']['progress_state']['loss'][loss_name]['overfitting'].append(
+                                loss_overfitting)
+                            self.log_history['output']['progress_state']['loss'][loss_name]['normal_state'].append(
+                                normal_state)
+                    for metric_name in self.log_history.get('output').get('metrics').keys():
+                        if data_idx or data_idx == 0:
+                            self.log_history['output']['progress_state']['metrics'][metric_name]['mean_log_history'][
+                                data_idx] = self._get_mean_log(self.log_history['output']['metrics'][metric_name])
+                        else:
+                            self.log_history['output']['progress_state']['metrics'][metric_name][
+                                'mean_log_history'].append(
+                                self._get_mean_log(self.log_history['output']['metrics'][metric_name])
+                            )
+                        metric_overfitting = self._evaluate_overfitting(
+                            metric_name,
+                            self.log_history['output']['progress_state']['metrics'][metric_name]['mean_log_history'],
+                            metric_type='metric'
+                        )
+                        if metric_overfitting:
+                            normal_state = False
+                        else:
+                            normal_state = True
+                        if data_idx or data_idx == 0:
+                            self.log_history['output']['progress_state']['metrics'][metric_name]['overfitting'][
+                                data_idx] = metric_overfitting
+                            self.log_history['output']['progress_state']['metrics'][metric_name]['normal_state'][
+                                data_idx] = normal_state
+                        else:
+                            self.log_history['output']['progress_state']['metrics'][metric_name]['overfitting'].append(
+                                metric_overfitting)
+                            self.log_history['output']['progress_state']['metrics'][metric_name]['normal_state'].append(
+                                normal_state)
+        except Exception as e:
+            print_error(FitCallback.name, method_name, e)
 
     def _get_mean_log(self, logs):
         method_name = '_get_mean_log'
@@ -835,7 +1213,7 @@ class FitCallback(keras.callbacks.Callback):
             else:
                 return float(np.mean(copy_logs[-self.log_gap:]))
         except Exception as e:
-            print_error(InteractiveCallback().name, method_name, e)
+            print_error(FitCallback.name, method_name, e)
             return 0.
 
     @staticmethod
@@ -854,7 +1232,7 @@ class FitCallback(keras.callbacks.Callback):
                     overfitting = True
             return overfitting
         except Exception as e:
-            print_error(InteractiveCallback().name, method_name, e)
+            print_error(FitCallback.name, method_name, e)
 
     @staticmethod
     def _evaluate_underfitting(metric_name: str, train_log: float, val_log: float, metric_type: str):
@@ -871,157 +1249,190 @@ class FitCallback(keras.callbacks.Callback):
                 underfitting = True
             return underfitting
         except Exception as e:
-            print_error(InteractiveCallback().name, method_name, e)
+            print_error(FitCallback.name, method_name, e)
 
     def _get_checkpoint_mode(self):
-        if self.checkpoint_config.get("type") == CheckpointTypeChoice.Loss:
-            return 'min'
-        elif self.checkpoint_config.get("type") == CheckpointTypeChoice.Metrics:
-            metric_name = self.checkpoint_config.get("metric_name")
-            return loss_metric_config.get("metric").get(metric_name).get("mode")
-        else:
-            print('\nClass FitCallback method _get_checkpoint_mode: No checkpoint types are found\n')
-            return None
+        method_name = '_get_checkpoint_mode'
+        try:
+            if self.checkpoint_config.get("type") == CheckpointTypeChoice.Loss:
+                return 'min'
+            elif self.checkpoint_config.get("type") == CheckpointTypeChoice.Metrics:
+                metric_name = self.checkpoint_config.get("metric_name")
+                return loss_metric_config.get("metric").get(metric_name).get("mode")
+            else:
+                print('\nClass FitCallback method _get_checkpoint_mode: No checkpoint types are found\n')
+                return None
+        except Exception as e:
+            print_error(FitCallback.name, method_name, e)
 
     def _get_metric_name_checkpoint(self, logs: dict):
-        """Поиск среди fit_logs нужного параметра"""
-        for log in logs.keys():
-            if self.checkpoint_config.get("type") == CheckpointTypeChoice.Loss and \
-                    self.checkpoint_config.get("indicator") == CheckpointIndicatorChoice.Val and \
-                    'val' in log and 'loss' in log:
-                if self.num_outputs == 1:
-                    self.metric_checkpoint = log
-                    break
-                else:
-                    if f"{self.checkpoint_config.get('layer')}" in log:
+        method_name = '_get_metric_name_checkpoint'
+        try:
+            """Поиск среди fit_logs нужного параметра"""
+            for log in logs.keys():
+                if self.checkpoint_config.get("type") == CheckpointTypeChoice.Loss and \
+                        self.checkpoint_config.get("indicator") == CheckpointIndicatorChoice.Val and \
+                        'val' in log and 'loss' in log:
+                    if self.num_outputs == 1:
                         self.metric_checkpoint = log
                         break
+                    else:
+                        if f"{self.checkpoint_config.get('layer')}" in log:
+                            self.metric_checkpoint = log
+                            break
 
-            elif self.checkpoint_config.get("type") == CheckpointTypeChoice.Loss and \
-                    self.checkpoint_config.get("indicator") == CheckpointIndicatorChoice.Train and \
-                    'val' not in log and 'loss' in log:
-                if self.num_outputs == 1:
-                    self.metric_checkpoint = log
-                    break
-                else:
-                    if f"{self.checkpoint_config.get('layer')}" in log:
+                elif self.checkpoint_config.get("type") == CheckpointTypeChoice.Loss and \
+                        self.checkpoint_config.get("indicator") == CheckpointIndicatorChoice.Train and \
+                        'val' not in log and 'loss' in log:
+                    if self.num_outputs == 1:
                         self.metric_checkpoint = log
                         break
+                    else:
+                        if f"{self.checkpoint_config.get('layer')}" in log:
+                            self.metric_checkpoint = log
+                            break
 
-            elif self.checkpoint_config.get("type") == CheckpointTypeChoice.Metrics and \
-                    self.checkpoint_config.get("indicator") == CheckpointIndicatorChoice.Val and \
-                    "val" in log:
-                camelize_log = self._clean_and_camelize_log_name(log)
-                if self.num_outputs == 1 and camelize_log == self.checkpoint_config.get("metric_name"):
-                    self.metric_checkpoint = log
-                    break
-                else:
-                    if f"{self.checkpoint_config.get('layer')}" in log and \
-                            camelize_log == self.checkpoint_config.get("metric_name"):
+                elif self.checkpoint_config.get("type") == CheckpointTypeChoice.Metrics and \
+                        self.checkpoint_config.get("indicator") == CheckpointIndicatorChoice.Val and \
+                        "val" in log:
+                    camelize_log = self._clean_and_camelize_log_name(log)
+                    if self.num_outputs == 1 and camelize_log == self.checkpoint_config.get("metric_name"):
                         self.metric_checkpoint = log
                         break
+                    else:
+                        if f"{self.checkpoint_config.get('layer')}" in log and \
+                                camelize_log == self.checkpoint_config.get("metric_name"):
+                            self.metric_checkpoint = log
+                            break
 
-            elif self.checkpoint_config.get("type") == CheckpointTypeChoice.Metrics and \
-                    self.checkpoint_config.get("indicator") == CheckpointIndicatorChoice.Train and \
-                    'val' not in log:
-                camelize_log = self._clean_and_camelize_log_name(log)
-                if self.num_outputs == 1 and camelize_log == self.checkpoint_config.get("metric_name"):
-                    self.metric_checkpoint = log
-                    break
-                else:
-                    if f"{self.checkpoint_config.get('layer')}" in log and \
-                            camelize_log == self.checkpoint_config.get('metric_name'):
+                elif self.checkpoint_config.get("type") == CheckpointTypeChoice.Metrics and \
+                        self.checkpoint_config.get("indicator") == CheckpointIndicatorChoice.Train and \
+                        'val' not in log:
+                    camelize_log = self._clean_and_camelize_log_name(log)
+                    if self.num_outputs == 1 and camelize_log == self.checkpoint_config.get("metric_name"):
                         self.metric_checkpoint = log
                         break
-            else:
-                pass
+                    else:
+                        if f"{self.checkpoint_config.get('layer')}" in log and \
+                                camelize_log == self.checkpoint_config.get('metric_name'):
+                            self.metric_checkpoint = log
+                            break
+                else:
+                    pass
+        except Exception as e:
+            print_error(FitCallback.name, method_name, e)
 
     @staticmethod
     def _clean_and_camelize_log_name(fit_log_name):
-        """Камелизатор исключительно для fit_logs"""
-        if re.search(r'_\d+$', fit_log_name):
-            end = len(f"_{fit_log_name.split('_')[-1]}")
-            fit_log_name = fit_log_name[:-end]
-        if "val" in fit_log_name:
-            fit_log_name = fit_log_name[4:]
-        if re.search(r'^\d+_', fit_log_name):
-            start = len(f"{fit_log_name.split('_')[0]}_")
-            fit_log_name = fit_log_name[start:]
-        return camelize(fit_log_name)
+        method_name = '_clean_and_camelize_log_name'
+        try:
+            """Камелизатор исключительно для fit_logs"""
+            if re.search(r'_\d+$', fit_log_name):
+                end = len(f"_{fit_log_name.split('_')[-1]}")
+                fit_log_name = fit_log_name[:-end]
+            if "val" in fit_log_name:
+                fit_log_name = fit_log_name[4:]
+            if re.search(r'^\d+_', fit_log_name):
+                start = len(f"{fit_log_name.split('_')[0]}_")
+                fit_log_name = fit_log_name[start:]
+            return camelize(fit_log_name)
+        except Exception as e:
+            print_error(FitCallback.name, method_name, e)
 
     def _fill_log_history(self, epoch, logs):
-        """Заполнение истории логов"""
-        if epoch == 1:
-            self.log_history = {
-                'epoch': [],
-                'logs': {}
-            }
+        method_name = '_fill_log_history'
+        try:
+            """Заполнение истории логов"""
+            if epoch == 1:
+                self.log_history = {
+                    'epoch': [],
+                    'logs': {}
+                }
+                for metric in logs:
+                    self.log_history['logs'][metric] = []
+                self._get_metric_name_checkpoint(logs)
+                # print(f"Chosen {self.metric_checkpoint} for monitoring")
+            # print("_fill_log_history", logs)
+            self.log_history['epoch'].append(epoch)
             for metric in logs:
-                self.log_history['logs'][metric] = []
-            self._get_metric_name_checkpoint(logs)
-            # print(f"Chosen {self.metric_checkpoint} for monitoring")
-        # print("_fill_log_history", logs)
-        self.log_history['epoch'].append(epoch)
-        for metric in logs:
-            # if logs.get(metric):
-            self.log_history['logs'][metric].append(float(logs.get(metric)))
-            # else:
-            #     self.log_history['logs'][metric].append(0.)
+                # if logs.get(metric):
+                self.log_history['logs'][metric].append(float(logs.get(metric)))
+                # else:
+                #     self.log_history['logs'][metric].append(0.)
+        except Exception as e:
+            print_error(FitCallback.name, method_name, e)
 
     def _save_logs(self):
-        interactive_path = os.path.join(self.save_model_path, "interactive.history")
-        if not os.path.exists(interactive_path):
-            os.mkdir(interactive_path)
-        with open(os.path.join(self.save_model_path, "log.history"), "w", encoding="utf-8") as history:
-            json.dump(self.log_history, history)
-        with open(os.path.join(interactive_path, "log.int"), "w", encoding="utf-8") as log:
-            json.dump(interactive.log_history, log)
-        with open(os.path.join(interactive_path, "table.int"), "w", encoding="utf-8") as table:
-            json.dump(interactive.progress_table, table)
-        with open(os.path.join(interactive_path, "addtraining.int"), "w", encoding="utf-8") as addtraining:
-            json.dump({"addtrain_epochs": interactive.addtrain_epochs}, addtraining)
+        method_name = '_save_logs'
+        try:
+            interactive_path = os.path.join(self.save_model_path, "interactive.history")
+            if not os.path.exists(interactive_path):
+                os.mkdir(interactive_path)
+            with open(os.path.join(self.save_model_path, "log.history"), "w", encoding="utf-8") as history:
+                json.dump(self.log_history, history)
+            with open(os.path.join(interactive_path, "log.int"), "w", encoding="utf-8") as log:
+                json.dump(interactive.log_history, log)
+            with open(os.path.join(interactive_path, "table.int"), "w", encoding="utf-8") as table:
+                json.dump(interactive.progress_table, table)
+            with open(os.path.join(interactive_path, "addtraining.int"), "w", encoding="utf-8") as addtraining:
+                json.dump({"addtrain_epochs": interactive.addtrain_epochs}, addtraining)
+        except Exception as e:
+            print_error(FitCallback.name, method_name, e)
 
     def _load_logs(self):
-        interactive_path = os.path.join(self.save_model_path, "interactive.history")
-        if interactive.get_states().get("status") == "addtrain":
-            with open(os.path.join(self.save_model_path, "log.history"), "r", encoding="utf-8") as history:
-                logs = json.load(history)
-            with open(os.path.join(interactive_path, "log.int"), "r", encoding="utf-8") as int_log:
-                interactive_logs = json.load(int_log)
-            with open(os.path.join(interactive_path, "table.int"), "r", encoding="utf-8") as table_int:
-                interactive_table = json.load(table_int)
-            with open(os.path.join(interactive_path, "addtraining.int"), "r", encoding="utf-8") as addtraining_int:
-                interactive.addtrain_epochs = json.load(addtraining_int)["addtrain_epochs"]
-            self.last_epoch = max(logs.get('epoch')) + 1
-            self.still_epochs = self.retrain_epochs - self.last_epoch + 1
-            self._get_metric_name_checkpoint(logs.get('logs'))
-            interactive.log_history = interactive_logs
-            interactive.progress_table = interactive_table
-            return logs
-        else:
-            return self._prepare_null_log_history_template(self.dataset, self.params)
+        method_name = '_load_logs'
+        try:
+            interactive_path = os.path.join(self.save_model_path, "interactive.history")
+            if interactive.get_states().get("status") == "addtrain":
+                with open(os.path.join(self.save_model_path, "log.history"), "r", encoding="utf-8") as history:
+                    logs = json.load(history)
+                with open(os.path.join(interactive_path, "log.int"), "r", encoding="utf-8") as int_log:
+                    interactive_logs = json.load(int_log)
+                with open(os.path.join(interactive_path, "table.int"), "r", encoding="utf-8") as table_int:
+                    interactive_table = json.load(table_int)
+                with open(os.path.join(interactive_path, "addtraining.int"), "r", encoding="utf-8") as addtraining_int:
+                    interactive.addtrain_epochs = json.load(addtraining_int)["addtrain_epochs"]
+                self.last_epoch = max(logs.get('epoch')) + 1
+                self.still_epochs = self.retrain_epochs - self.last_epoch + 1
+                self._get_metric_name_checkpoint(logs.get('logs'))
+                interactive.log_history = interactive_logs
+                interactive.progress_table = interactive_table
+                return logs
+            else:
+                return self._prepare_null_log_history_template(self.dataset, self.params)
+        except Exception as e:
+            print_error(FitCallback.name, method_name, e)
 
     @staticmethod
     def _logs_predict_extract(logs, prefix):
-        pred_on_batch = []
-        for key in logs.keys():
-            if key.startswith(prefix):
-                pred_on_batch.append(logs[key])
-        return pred_on_batch
+        method_name = '_logs_predict_extract'
+        try:
+            pred_on_batch = []
+            for key in logs.keys():
+                if key.startswith(prefix):
+                    pred_on_batch.append(logs[key])
+            return pred_on_batch
+        except Exception as e:
+            print_error(FitCallback.name, method_name, e)
 
     @staticmethod
     def _logs_losses_extract(logs, prefixes: list):
-        losses = {}
-        for key in logs.keys():
-            if key.find(prefixes[0]) != -1 or key.find(prefixes[1]) != -1:
-                pass
-            else:
-                losses.update({key: logs[key]})
-        return losses
+        method_name = '_logs_losses_extract'
+        try:
+            losses = {}
+            for key in logs.keys():
+                if key.find(prefixes[0]) != -1 or key.find(prefixes[1]) != -1:
+                    pass
+                else:
+                    losses.update({key: logs[key]})
+            return losses
+        except Exception as e:
+            print_error(FitCallback.name, method_name, e)
 
     def _best_epoch_monitoring(self, logs):
-        """Оценка текущей эпохи"""
+        method_name = '_best_epoch_monitoring'
         try:
+            """Оценка текущей эпохи"""
             if logs.get(self.metric_checkpoint):
                 # print('\nself.metric_checkpoint)', self.metric_checkpoint)
                 # print('logs.get(self.metric_checkpoint)', logs.get(self.metric_checkpoint))
@@ -1041,21 +1452,26 @@ class FitCallback(keras.callbacks.Callback):
                 return False
         except Exception as e:
             print('\n_best_epoch_monitoring failed', e)
+            print_error(FitCallback.name, method_name, e)
 
     def _set_result_data(self, param: dict) -> None:
-        for key in param.keys():
-            if key in self.result.keys():
-                self.result[key] = param[key]
-            elif key == "timings":
-                self.result["train_usage"]["timings"]["estimated_time"] = param[key][1] + param[key][2]
-                self.result["train_usage"]["timings"]["elapsed_time"] = param[key][1]
-                self.result["train_usage"]["timings"]["still_time"] = param[key][2]
-                self.result["train_usage"]["timings"]["avg_epoch_time"] = int(self._sum_epoch_time / self.last_epoch)
-                self.result["train_usage"]["timings"]["elapsed_epoch_time"] = param[key][3]
-                self.result["train_usage"]["timings"]["still_epoch_time"] = param[key][4]
-                self.result["train_usage"]["timings"]["epoch"] = param[key][5]
-                self.result["train_usage"]["timings"]["batch"] = param[key][6]
-        self.result["train_usage"]["hard_usage"] = self.usage_info.get_usage()
+        method_name = '_set_result_data'
+        try:
+            for key in param.keys():
+                if key in self.result.keys():
+                    self.result[key] = param[key]
+                elif key == "timings":
+                    self.result["train_usage"]["timings"]["estimated_time"] = param[key][1] + param[key][2]
+                    self.result["train_usage"]["timings"]["elapsed_time"] = param[key][1]
+                    self.result["train_usage"]["timings"]["still_time"] = param[key][2]
+                    self.result["train_usage"]["timings"]["avg_epoch_time"] = int(self._sum_epoch_time / self.last_epoch)
+                    self.result["train_usage"]["timings"]["elapsed_epoch_time"] = param[key][3]
+                    self.result["train_usage"]["timings"]["still_epoch_time"] = param[key][4]
+                    self.result["train_usage"]["timings"]["epoch"] = param[key][5]
+                    self.result["train_usage"]["timings"]["batch"] = param[key][6]
+            self.result["train_usage"]["hard_usage"] = self.usage_info.get_usage()
+        except Exception as e:
+            print_error(FitCallback.name, method_name, e)
 
     def _get_result_data(self):
         self.result["states"] = interactive.get_states()
@@ -1066,212 +1482,311 @@ class FitCallback(keras.callbacks.Callback):
         return interactive.get_states().get("status")
 
     def _get_predict(self, deploy_model=None):
-        current_model = deploy_model if deploy_model else self.model
-        if self.is_yolo:
-            current_predict = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_val)]
-            current_target = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_target_val)]
-        else:
-            if self.dataset.data.use_generator:
-                current_predict = current_model.predict(self.dataset.dataset.get('val').batch(1),
-                                                        batch_size=1)
+        method_name = '_get_predict'
+        try:
+            current_model = deploy_model if deploy_model else self.model
+            if self.is_yolo:
+                current_predict = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_val)]
+                current_target = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_target_val)]
             else:
-                current_predict = current_model.predict(self.dataset.X.get('val'), batch_size=self.batch_size)
-            current_target = None
-        return current_predict, current_target
+                if self.dataset.data.use_generator:
+                    current_predict = current_model.predict(self.dataset.dataset.get('val').batch(1),
+                                                            batch_size=1)
+                else:
+                    current_predict = current_model.predict(self.dataset.X.get('val'), batch_size=self.batch_size)
+                current_target = None
+            return current_predict, current_target
+        except Exception as e:
+            print_error(FitCallback.name, method_name, e)
 
     def _deploy_predict(self, presets_predict):
-        result = CreateArray().postprocess_results(array=presets_predict,
-                                                   options=self.dataset,
-                                                   save_path=os.path.join(self.save_model_path,
-                                                                          "deploy_presets"),
-                                                   dataset_path=self.dataset_path)
-        deploy_presets = []
-        if result:
-            deploy_presets = list(result.values())[0]
-        return deploy_presets
+        method_name = '_deploy_predict'
+        try:
+            result = CreateArray().postprocess_results(array=presets_predict,
+                                                       options=self.dataset,
+                                                       save_path=os.path.join(self.save_model_path,
+                                                                              "deploy_presets"),
+                                                       dataset_path=self.dataset_path)
+            deploy_presets = []
+            if result:
+                deploy_presets = list(result.values())[0]
+            return deploy_presets
+        except Exception as e:
+            print_error(FitCallback.name, method_name, e)
 
     def _create_form_data_for_dataframe_deploy(self, deploy_path):
-        form_data = []
-        with open(os.path.join(self.dataset_path, "config.json"), "r", encoding="utf-8") as dataset_conf:
-            dataset_info = json.load(dataset_conf).get("columns", {})
-        for inputs, input_data in dataset_info.items():
-            if int(inputs) not in list(self.dataset.data.outputs.keys()):
-                for column, column_data in input_data.items():
-                    label = column
-                    available = column_data.get("classes_names") if column_data.get("classes_names") else None
-                    widget = "select" if available else "input"
-                    input_type = "text"
-                    if widget == "select":
-                        table_column_data = {
-                            "label": label,
-                            "widget": widget,
-                            "available": available
-                        }
-                    else:
-                        table_column_data = {
-                            "label": label,
-                            "widget": widget,
-                            "type": input_type
-                        }
-                    form_data.append(table_column_data)
-        with open(os.path.join(deploy_path, "form.json"), "w", encoding="utf-8") as form_file:
-            json.dump(form_data, form_file, ensure_ascii=False)
+        method_name = '_create_form_data_for_dataframe_deploy'
+        try:
+            form_data = []
+            with open(os.path.join(self.dataset_path, "config.json"), "r", encoding="utf-8") as dataset_conf:
+                dataset_info = json.load(dataset_conf).get("columns", {})
+            for inputs, input_data in dataset_info.items():
+                if int(inputs) not in list(self.dataset.data.outputs.keys()):
+                    for column, column_data in input_data.items():
+                        label = column
+                        available = column_data.get("classes_names") if column_data.get("classes_names") else None
+                        widget = "select" if available else "input"
+                        input_type = "text"
+                        if widget == "select":
+                            table_column_data = {
+                                "label": label,
+                                "widget": widget,
+                                "available": available
+                            }
+                        else:
+                            table_column_data = {
+                                "label": label,
+                                "widget": widget,
+                                "type": input_type
+                            }
+                        form_data.append(table_column_data)
+            with open(os.path.join(deploy_path, "form.json"), "w", encoding="utf-8") as form_file:
+                json.dump(form_data, form_file, ensure_ascii=False)
+        except Exception as e:
+            print_error(FitCallback.name, method_name, e)
 
     def _create_cascade(self, **data):
-        deploy_path = data.get("deploy_path")
-        if self.dataset.data.alias not in ["imdb", "boston_housing", "reuters"]:
-            if "Dataframe" in self.deploy_type:
-                self._create_form_data_for_dataframe_deploy(deploy_path=deploy_path)
-            if self.is_yolo:
-                func_name = "object_detection"
-            else:
-                func_name = decamelize(self.deploy_type)
-            config = CascadeCreator()
-            config.create_config(self.save_model_path, os.path.split(self.save_model_path)[0], func_name=func_name)
-            config.copy_package(os.path.split(self.save_model_path)[0])
-            config.copy_script(
-                training_path=os.path.split(self.save_model_path)[0],
-                function_name=func_name
-            )
-            if self.deploy_type == ArchitectureChoice.TextSegmentation:
-                with open(os.path.join(deploy_path, "format.txt"), "w", encoding="utf-8") as format_file:
-                    format_file.write(str(data.get("tags_map", "")))
+        method_name = '_create_cascade'
+        try:
+            deploy_path = data.get("deploy_path")
+            if self.dataset.data.alias not in ["imdb", "boston_housing", "reuters"]:
+                if "Dataframe" in self.deploy_type:
+                    self._create_form_data_for_dataframe_deploy(deploy_path=deploy_path)
+                if self.is_yolo:
+                    func_name = "object_detection"
+                else:
+                    func_name = decamelize(self.deploy_type)
+                config = CascadeCreator()
+                config.create_config(self.save_model_path, os.path.split(self.save_model_path)[0], func_name=func_name)
+                config.copy_package(os.path.split(self.save_model_path)[0])
+                config.copy_script(
+                    training_path=os.path.split(self.save_model_path)[0],
+                    function_name=func_name
+                )
+                if self.deploy_type == ArchitectureChoice.TextSegmentation:
+                    with open(os.path.join(deploy_path, "format.txt"), "w", encoding="utf-8") as format_file:
+                        format_file.write(str(data.get("tags_map", "")))
+        except Exception as e:
+            print_error(FitCallback.name, method_name, e)
 
     def _prepare_deploy(self):
-        deploy_path = os.path.join(os.path.split(self.save_model_path)[0], "deploy")
-        weight = None
-        cascade_data = {"deploy_path": deploy_path}
-        for i in os.listdir(self.save_model_path):
-            if i[-3:] == '.h5' and 'best' in i:
-                weight = i
-        if weight:
-            if self.yolo_model:
-                self.yolo_model.load_weights(os.path.join(self.save_model_path, weight))
-            else:
-                self.model.load_weights(os.path.join(self.save_model_path, weight))
-        deploy_predict, y_true = self._get_predict()
-        deploy_presets_data = self._deploy_predict(deploy_predict)
-        out_deploy_presets_data = {"data": deploy_presets_data}
-        if self.deploy_type == ArchitectureChoice.TextSegmentation:
-            cascade_data.update({"tags_map": deploy_presets_data.get("color_map")})
-            out_deploy_presets_data = {
-                "data": deploy_presets_data.get("data", {}),
-                "color_map": deploy_presets_data.get("color_map")
-            }
-        elif "Dataframe" in self.deploy_type:
-            columns = []
-            predict_column = ""
-            for input, input_columns in self.dataset.data.columns.items():
-                for column_name in input_columns.keys():
-                    columns.append(column_name[len(str(input)) + 1:])
-                    if input_columns[column_name].__class__ == DatasetOutputsData:
-                        predict_column = column_name[len(str(input)) + 1:]
-            if self.deploy_type == ArchitectureChoice.DataframeRegression:
-                tmp_data = list(zip(deploy_presets_data.get("preset"), deploy_presets_data.get("label")))
-                tmp_deploy = [{"preset": elem[0], "label": elem[1]} for elem in tmp_data]
-                out_deploy_presets_data = {"data": tmp_deploy}
-            out_deploy_presets_data["columns"] = columns
-            out_deploy_presets_data["predict_column"] = predict_column if predict_column else "Предсказанные значения"
-        interactive.deploy_presets_data = DeployData(
-            path=deploy_path,
-            type=self.deploy_type,
-            data=out_deploy_presets_data
-        )
-        self._create_cascade(**cascade_data)
+        method_name = '_prepare_deploy'
+        try:
+            deploy_path = os.path.join(os.path.split(self.save_model_path)[0], "deploy")
+            weight = None
+            cascade_data = {"deploy_path": deploy_path}
+            for i in os.listdir(self.save_model_path):
+                if i[-3:] == '.h5' and 'best' in i:
+                    weight = i
+            if weight:
+                if self.yolo_model:
+                    self.yolo_model.load_weights(os.path.join(self.save_model_path, weight))
+                else:
+                    self.model.load_weights(os.path.join(self.save_model_path, weight))
+            deploy_predict, y_true = self._get_predict()
+            deploy_presets_data = self._deploy_predict(deploy_predict)
+            out_deploy_presets_data = {"data": deploy_presets_data}
+            if self.deploy_type == ArchitectureChoice.TextSegmentation:
+                cascade_data.update({"tags_map": deploy_presets_data.get("color_map")})
+                out_deploy_presets_data = {
+                    "data": deploy_presets_data.get("data", {}),
+                    "color_map": deploy_presets_data.get("color_map")
+                }
+            elif "Dataframe" in self.deploy_type:
+                columns = []
+                predict_column = ""
+                for input, input_columns in self.dataset.data.columns.items():
+                    for column_name in input_columns.keys():
+                        columns.append(column_name[len(str(input)) + 1:])
+                        if input_columns[column_name].__class__ == DatasetOutputsData:
+                            predict_column = column_name[len(str(input)) + 1:]
+                if self.deploy_type == ArchitectureChoice.DataframeRegression:
+                    tmp_data = list(zip(deploy_presets_data.get("preset"), deploy_presets_data.get("label")))
+                    tmp_deploy = [{"preset": elem[0], "label": elem[1]} for elem in tmp_data]
+                    out_deploy_presets_data = {"data": tmp_deploy}
+                out_deploy_presets_data["columns"] = columns
+                out_deploy_presets_data["predict_column"] = predict_column if predict_column else "Предсказанные значения"
+            interactive.deploy_presets_data = DeployData(
+                path=deploy_path, type=self.deploy_type, data=out_deploy_presets_data
+            )
+            self._create_cascade(**cascade_data)
+        except Exception as e:
+            print_error(FitCallback.name, method_name, e)
 
     @staticmethod
     def _estimate_step(current, start, now):
-        if current:
-            _time_per_unit = (now - start) / current
-        else:
-            _time_per_unit = (now - start)
-        return _time_per_unit
+        method_name = '_estimate_step'
+        try:
+            if current:
+                _time_per_unit = (now - start) / current
+            else:
+                _time_per_unit = (now - start)
+            return _time_per_unit
+        except Exception as e:
+            print_error(FitCallback.name, method_name, e)
 
     @staticmethod
     def eta_format(eta):
-        if eta > 3600:
-            eta_format = '%d ч %02d мин %02d сек' % (eta // 3600,
-                                                     (eta % 3600) // 60, eta % 60)
-        elif eta > 60:
-            eta_format = '%d мин %02d сек' % (eta // 60, eta % 60)
-        else:
-            eta_format = '%d сек' % eta
-        return ' %s' % eta_format
+        method_name = 'eta_format'
+        try:
+            if eta > 3600:
+                eta_format = '%d ч %02d мин %02d сек' % (eta // 3600,
+                                                         (eta % 3600) // 60, eta % 60)
+            elif eta > 60:
+                eta_format = '%d мин %02d сек' % (eta // 60, eta % 60)
+            else:
+                eta_format = '%d сек' % eta
+            return ' %s' % eta_format
+        except Exception as e:
+            print_error(FitCallback.name, method_name, e)
 
     def update_progress(self, target, current, start_time, finalize=False, stop_current=0, stop_flag=False):
         """
         Updates the progress bar.
         """
-        if finalize:
-            _now_time = time.time()
-            eta = _now_time - start_time
-        else:
-            _now_time = time.time()
-            if stop_flag:
-                time_per_unit = self._estimate_step(stop_current, start_time, _now_time)
+        method_name = 'update_progress'
+        try:
+            if finalize:
+                _now_time = time.time()
+                eta = _now_time - start_time
             else:
-                time_per_unit = self._estimate_step(current, start_time, _now_time)
-            eta = time_per_unit * (target - current)
-        return int(eta)
+                _now_time = time.time()
+                if stop_flag:
+                    time_per_unit = self._estimate_step(stop_current, start_time, _now_time)
+                else:
+                    time_per_unit = self._estimate_step(current, start_time, _now_time)
+                eta = time_per_unit * (target - current)
+            return int(eta)
+        except Exception as e:
+            print_error(FitCallback.name, method_name, e)
 
     def on_train_begin(self, logs=None):
-        status = self._get_train_status()
-        self._start_time = time.time()
-        if status != "addtrain":
-            self.batch = 0
+        method_name = 'on_train_begin'
+        try:
+            status = self._get_train_status()
+            self._start_time = time.time()
+            if status != "addtrain":
+                self.batch = 0
 
-        if not self.dataset.data.use_generator:
-            self.num_batches = len(list(self.dataset.X.get('train').values())[0]) // self.batch_size
-        else:
-            self.num_batches = len(self.dataset.dataframe['train']) // self.batch_size
+            if not self.dataset.data.use_generator:
+                self.num_batches = len(list(self.dataset.X.get('train').values())[0]) // self.batch_size
+            else:
+                self.num_batches = len(self.dataset.dataframe['train']) // self.batch_size
+        except Exception as e:
+            print_error(FitCallback.name, method_name, e)
 
     def on_epoch_begin(self, epoch, logs=None):
         self._time_first_step = time.time()
 
     def on_train_batch_end(self, batch, logs=None):
-        if self._get_train_status() == "stopped":
-            self.model.stop_training = True
-            msg = f'ожидайте остановку...'
-            # self.batch += 1
-            self._set_result_data({'info': f"'Обучение остановлено пользователем, '{msg}"})
-        else:
-            msg_batch = {"current": batch + 1, "total": self.num_batches}
-            msg_epoch = {"current": self.last_epoch,
-                         "total": self.retrain_epochs if interactive.get_states().get("status") == "addtrain"
-                         else self.epochs}
-            still_epoch_time = self.update_progress(self.num_batches, batch, self._time_first_step)
-            elapsed_epoch_time = time.time() - self._time_first_step
-            elapsed_time = time.time() - self._start_time
-            estimated_time = self.update_progress(self.num_batches * self.still_epochs,
-                                                  self.batch, self._start_time, finalize=True)
-
-            still_time = self.update_progress(self.num_batches * self.still_epochs,
-                                              self.batch, self._start_time)
-            self.batch += 1
-            if interactive.urgent_predict:
-
-                if self.is_yolo:
-                    self.samples_train.append(self._logs_predict_extract(logs, prefix='pred'))
-                    self.samples_target_train.append(self._logs_predict_extract(logs, prefix='target'))
-
-                y_pred, y_true = self._get_predict()
-                train_batch_data = interactive.update_state(y_pred=y_pred, y_true=y_true)
+        method_name = 'on_train_batch_end'
+        try:
+            if self._get_train_status() == "stopped":
+                self.model.stop_training = True
+                msg = f'ожидайте остановку...'
+                # self.batch += 1
+                self._set_result_data({'info': f"'Обучение остановлено пользователем, '{msg}"})
             else:
-                train_batch_data = interactive.update_state(y_pred=None)
-            if train_batch_data:
-                result_data = {
-                    'timings': [estimated_time, elapsed_time, still_time,
-                                elapsed_epoch_time, still_epoch_time, msg_epoch, msg_batch],
-                    'train_data': train_batch_data
-                }
+                msg_batch = {"current": batch + 1, "total": self.num_batches}
+                msg_epoch = {"current": self.last_epoch,
+                             "total": self.retrain_epochs if interactive.get_states().get("status") == "addtrain"
+                             else self.epochs}
+                still_epoch_time = self.update_progress(self.num_batches, batch, self._time_first_step)
+                elapsed_epoch_time = time.time() - self._time_first_step
+                elapsed_time = time.time() - self._start_time
+                estimated_time = self.update_progress(self.num_batches * self.still_epochs,
+                                                      self.batch, self._start_time, finalize=True)
+
+                still_time = self.update_progress(self.num_batches * self.still_epochs,
+                                                  self.batch, self._start_time)
+                self.batch += 1
+                if interactive.urgent_predict:
+
+                    if self.is_yolo:
+                        self.samples_train.append(self._logs_predict_extract(logs, prefix='pred'))
+                        self.samples_target_train.append(self._logs_predict_extract(logs, prefix='target'))
+
+                    y_pred, y_true = self._get_predict()
+                    train_batch_data = interactive.update_state(y_pred=y_pred, y_true=y_true)
+                else:
+                    train_batch_data = interactive.update_state(y_pred=None)
+                if train_batch_data:
+                    result_data = {
+                        'timings': [estimated_time, elapsed_time, still_time,
+                                    elapsed_epoch_time, still_epoch_time, msg_epoch, msg_batch],
+                        'train_data': train_batch_data
+                    }
+                else:
+                    result_data = {'timings': [estimated_time, elapsed_time, still_time,
+                                               elapsed_epoch_time, still_epoch_time, msg_epoch, msg_batch]}
+                self._set_result_data(result_data)
+                progress.pool(
+                    self.progress_name,
+                    percent=(self.last_epoch - 1) / (
+                        self.retrain_epochs if interactive.get_states().get("status") == "addtrain" else self.epochs
+                    ) * 100,
+                    message=f"Обучение. Эпоха {self.last_epoch} из "
+                            f"{self.retrain_epochs if interactive.get_states().get('status') in ['addtrain', 'stopped'] else self.epochs}",
+                    data=self._get_result_data(),
+                    finished=False,
+                )
+        except Exception as e:
+            print_error(FitCallback.name, method_name, e)
+
+    def on_test_batch_end(self, batch, logs=None):
+        method_name = 'on_test_batch_end'
+        try:
+            if self.is_yolo:
+                self.samples_val.append(self._logs_predict_extract(logs, prefix='pred'))
+                self.samples_target_val.append(self._logs_predict_extract(logs, prefix='target'))
+        except Exception as e:
+            print_error(FitCallback.name, method_name, e)
+
+    def on_epoch_end(self, epoch, logs=None):
+        method_name = 'on_epoch_end'
+        try:
+            y_pred, y_true = self._get_predict()
+            total_epochs = self.retrain_epochs if interactive.get_states().get('status') in ['addtrain',
+                                                                                             'stopped'] else self.epochs
+            if self.is_yolo:
+                mAP = get_mAP(self.model, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
+                              TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names, dataset_path=self.dataset_path)
+                interactive_logs = self._logs_losses_extract(logs, prefixes=['pred', 'target'])
+                # interactive_logs.update({'mAP': mAP})
+                interactive_logs.update(mAP)
+                output_path = self.image_path.format(epoch)
+                if self.last_epoch < total_epochs and not self.model.stop_training:
+                    self.samples_train = []
+                    self.samples_val = []
+                    self.samples_target_train = []
+                    self.samples_target_val = []
+                # print(interactive_logs)
+                # print(mAP)
+                # Пока что для визуализации Yolo
+                # detect_image(Yolo=self.model, original_image=self.inp['1'].numpy()[0], output_path=output_path,
+                #              CLASSES=self.dataset.data.outputs.get(2).classes_names, train=True)
+
             else:
-                result_data = {'timings': [estimated_time, elapsed_time, still_time,
-                                           elapsed_epoch_time, still_epoch_time, msg_epoch, msg_batch]}
-            self._set_result_data(result_data)
+                interactive_logs = copy.deepcopy(logs)
+
+            interactive_logs['epoch'] = self.last_epoch
+            current_epoch_time = time.time() - self._time_first_step
+            self._sum_epoch_time += current_epoch_time
+            train_epoch_data = interactive.update_state(
+                fit_logs=interactive_logs,
+                y_pred=y_pred,
+                y_true=y_true,
+                current_epoch_time=current_epoch_time,
+                on_epoch_end_flag=True
+            )
+            self._set_result_data({'train_data': train_epoch_data})
+            # print('/nprogress.pool', self.last_epoch, self.retrain_epochs, self.epochs)
             progress.pool(
                 self.progress_name,
                 percent=(self.last_epoch - 1) / (
-                    self.retrain_epochs if interactive.get_states().get("status") == "addtrain" else self.epochs
+                    self.retrain_epochs if interactive.get_states().get("status") ==
+                                           "addtrain" or interactive.get_states().get("status") == "stopped"
+                    else self.epochs
                 ) * 100,
                 message=f"Обучение. Эпоха {self.last_epoch} из "
                         f"{self.retrain_epochs if interactive.get_states().get('status') in ['addtrain', 'stopped'] else self.epochs}",
@@ -1279,139 +1794,86 @@ class FitCallback(keras.callbacks.Callback):
                 finished=False,
             )
 
-    def on_test_batch_end(self, batch, logs=None):
-        if self.is_yolo:
-            self.samples_val.append(self._logs_predict_extract(logs, prefix='pred'))
-            self.samples_target_val.append(self._logs_predict_extract(logs, prefix='target'))
-
-    def on_epoch_end(self, epoch, logs=None):
-        """
-        Returns:
-            {}:
-        """
-        y_pred, y_true = self._get_predict()
-        total_epochs = self.retrain_epochs if interactive.get_states().get('status') in ['addtrain',
-                                                                                         'stopped'] else self.epochs
-        if self.is_yolo:
-            mAP = get_mAP(self.model, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
-                          TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names, dataset_path=self.dataset_path)
-            interactive_logs = self._logs_losses_extract(logs, prefixes=['pred', 'target'])
-            # interactive_logs.update({'mAP': mAP})
-            interactive_logs.update(mAP)
-            output_path = self.image_path.format(epoch)
-            if self.last_epoch < total_epochs and not self.model.stop_training:
-                self.samples_train = []
-                self.samples_val = []
-                self.samples_target_train = []
-                self.samples_target_val = []
-            # print(interactive_logs)
-            # print(mAP)
-            # Пока что для визуализации Yolo
-            # detect_image(Yolo=self.model, original_image=self.inp['1'].numpy()[0], output_path=output_path,
-            #              CLASSES=self.dataset.data.outputs.get(2).classes_names, train=True)
-
-        else:
-            interactive_logs = copy.deepcopy(logs)
-
-        interactive_logs['epoch'] = self.last_epoch
-        current_epoch_time = time.time() - self._time_first_step
-        self._sum_epoch_time += current_epoch_time
-        train_epoch_data = interactive.update_state(
-            fit_logs=interactive_logs,
-            y_pred=y_pred,
-            y_true=y_true,
-            current_epoch_time=current_epoch_time,
-            on_epoch_end_flag=True
-        )
-        self._set_result_data({'train_data': train_epoch_data})
-        # print('/nprogress.pool', self.last_epoch, self.retrain_epochs, self.epochs)
-        progress.pool(
-            self.progress_name,
-            percent=(self.last_epoch - 1) / (
-                self.retrain_epochs if interactive.get_states().get("status") ==
-                                       "addtrain" or interactive.get_states().get("status") == "stopped"
-                else self.epochs
-            ) * 100,
-            message=f"Обучение. Эпоха {self.last_epoch} из "
-                    f"{self.retrain_epochs if interactive.get_states().get('status') in ['addtrain', 'stopped'] else self.epochs}",
-            data=self._get_result_data(),
-            finished=False,
-        )
-
-        # сохранение лучших весов
-        if self.last_epoch > 1:
-            try:
-                if self._best_epoch_monitoring(interactive_logs):
-                    if not os.path.exists(self.save_model_path):
-                        os.mkdir(self.save_model_path)
-                    if not os.path.exists(os.path.join(self.save_model_path, "deploy_presets")):
-                        os.mkdir(os.path.join(self.save_model_path, "deploy_presets"))
-                    file_path_best: str = os.path.join(
-                        self.save_model_path, f"best_weights_{self.metric_checkpoint}.h5"
-                    )
-                    if self.yolo_model:
-                        self.yolo_model.save_weights(file_path_best)
-                    else:
-                        self.model.save_weights(file_path_best)
-                    print(f"\nEpoch {self.last_epoch} - best weights was successfully saved\n")
-            except Exception as e:
-                print('\nself.model.save_weights failed', e)
-        self._fill_log_history(self.last_epoch, interactive_logs)
-        self.last_epoch += 1
+            # сохранение лучших весов
+            if self.last_epoch > 1:
+                try:
+                    if self._best_epoch_monitoring(interactive_logs):
+                        if not os.path.exists(self.save_model_path):
+                            os.mkdir(self.save_model_path)
+                        if not os.path.exists(os.path.join(self.save_model_path, "deploy_presets")):
+                            os.mkdir(os.path.join(self.save_model_path, "deploy_presets"))
+                        file_path_best: str = os.path.join(
+                            self.save_model_path, f"best_weights_{self.metric_checkpoint}.h5"
+                        )
+                        if self.yolo_model:
+                            self.yolo_model.save_weights(file_path_best)
+                        else:
+                            self.model.save_weights(file_path_best)
+                        print(f"\nEpoch {self.last_epoch} - best weights was successfully saved\n")
+                except Exception as e:
+                    print('\nself.model.save_weights failed', e)
+            self._fill_log_history(self.last_epoch, interactive_logs)
+            self.last_epoch += 1
+        except Exception as e:
+            print_error(FitCallback.name, method_name, e)
 
     def on_train_end(self, logs=None):
-        interactive.addtrain_epochs.append(self.last_epoch - 1)
-        self._save_logs()
+        method_name = 'on_train_end'
+        try:
+            interactive.addtrain_epochs.append(self.last_epoch - 1)
+            self._save_logs()
 
-        if (self.last_epoch - 1) > 1:
-            file_path_last: str = os.path.join(
-                self.save_model_path, f"last_weights_{self.metric_checkpoint}.h5"
-            )
-            if self.yolo_model:
-                self.yolo_model.save_weights(file_path_last)
+            if (self.last_epoch - 1) > 1:
+                file_path_last: str = os.path.join(
+                    self.save_model_path, f"last_weights_{self.metric_checkpoint}.h5"
+                )
+                if self.yolo_model:
+                    self.yolo_model.save_weights(file_path_last)
+                else:
+                    self.model.save_weights(file_path_last)
+            if not os.path.exists(os.path.join(self.save_model_path, "deploy_presets")):
+                os.mkdir(os.path.join(self.save_model_path, "deploy_presets"))
+            self._prepare_deploy()
+
+            time_end = self.update_progress(self.num_batches * self.epochs + 1,
+                                            self.batch, self._start_time, finalize=True)
+            self._sum_time += time_end
+            total_epochs = self.retrain_epochs if interactive.get_states().get('status') \
+                                                  in ['addtrain', 'trained'] else self.epochs
+            if self.model.stop_training:
+                self._set_result_data({'info': f"Обучение остановлено. Модель сохранена."})
+                progress.pool(
+                    self.progress_name,
+                    message=f"Обучение остановлено. Эпоха {self.last_epoch - 1} из "
+                            f"{total_epochs}",
+                    data=self._get_result_data(),
+                    finished=True,
+                )
             else:
-                self.model.save_weights(file_path_last)
-        if not os.path.exists(os.path.join(self.save_model_path, "deploy_presets")):
-            os.mkdir(os.path.join(self.save_model_path, "deploy_presets"))
-        self._prepare_deploy()
+                if self._get_train_status() == "retrain":
+                    msg = f'Затрачено времени на обучение: ' \
+                          f'{self.eta_format(time_end)} '
+                else:
+                    msg = f'Затрачено времени на обучение: ' \
+                          f'{self.eta_format(self._sum_time)} '
+                self._set_result_data({'info': f"Обучение закончено. {msg}"})
+                percent = (self.last_epoch - 1) / (
+                    self.retrain_epochs if interactive.get_states().get("status") ==
+                                           "addtrain" or interactive.get_states().get("status") == "stopped"
+                    else self.epochs
+                ) * 100
 
-        time_end = self.update_progress(self.num_batches * self.epochs + 1,
-                                        self.batch, self._start_time, finalize=True)
-        self._sum_time += time_end
-        total_epochs = self.retrain_epochs if interactive.get_states().get('status') \
-                                              in ['addtrain', 'trained'] else self.epochs
-        if self.model.stop_training:
-            self._set_result_data({'info': f"Обучение остановлено. Модель сохранена."})
-            progress.pool(
-                self.progress_name,
-                message=f"Обучение остановлено. Эпоха {self.last_epoch - 1} из "
-                        f"{total_epochs}",
-                data=self._get_result_data(),
-                finished=True,
-            )
-        else:
-            if self._get_train_status() == "retrain":
-                msg = f'Затрачено времени на обучение: ' \
-                      f'{self.eta_format(time_end)} '
-            else:
-                msg = f'Затрачено времени на обучение: ' \
-                      f'{self.eta_format(self._sum_time)} '
-            self._set_result_data({'info': f"Обучение закончено. {msg}"})
-            percent = (self.last_epoch - 1) / (
-                self.retrain_epochs if interactive.get_states().get("status") ==
-                                       "addtrain" or interactive.get_states().get("status") == "stopped"
-                else self.epochs
-            ) * 100
-
-            # if os.path.exists(self.save_model_path) and interactive.deploy_presets_data:
-            #     with open(os.path.join(self.save_model_path, "config.presets"), "w", encoding="utf-8") as presets:
-            #         presets.write(str(interactive.deploy_presets_data))
-            interactive.set_status("trained")
-            progress.pool(
-                self.progress_name,
-                percent=percent,
-                message=f"Обучение завершено. Эпоха {self.last_epoch - 1} из "
-                        f"{total_epochs}",
-                data=self._get_result_data(),
-                finished=True,
-            )
+                # if os.path.exists(self.save_model_path) and interactive.deploy_presets_data:
+                #     with open(os.path.join(self.save_model_path, "config.presets"), "w", encoding="utf-8") as presets:
+                #         presets.write(str(interactive.deploy_presets_data))
+                interactive.set_status("trained")
+                progress.pool(
+                    self.progress_name,
+                    percent=percent,
+                    message=f"Обучение завершено. Эпоха {self.last_epoch - 1} из "
+                            f"{total_epochs}",
+                    data=self._get_result_data(),
+                    finished=True,
+                )
+        except Exception as e:
+            print_error(FitCallback.name, method_name, e)

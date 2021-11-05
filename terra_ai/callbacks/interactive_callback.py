@@ -18,7 +18,8 @@ from terra_ai.callbacks.segmentation_callbacks import ImageSegmentationCallback,
 from terra_ai.callbacks.time_series_callbacks import TimeseriesCallback
 from terra_ai.callbacks.utils import loss_metric_config, round_loss_metric, fill_graph_plot_data, \
     fill_graph_front_structure, reformat_metrics, prepare_loss_obj, prepare_metric_obj, get_classes_colors, \
-    print_error, BASIC_ARCHITECTURE, CLASSIFICATION_ARCHITECTURE, YOLO_ARCHITECTURE, CLASS_ARCHITECTURE
+    print_error, BASIC_ARCHITECTURE, CLASSIFICATION_ARCHITECTURE, YOLO_ARCHITECTURE, CLASS_ARCHITECTURE, \
+    class_metric_list
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, DatasetGroupChoice, LayerEncodingChoice, \
     LayerInputTypeChoice
 from terra_ai.data.presets.training import Metric
@@ -494,10 +495,7 @@ class InteractiveCallback:
     def _class_metric_list(self):
         method_name = '_class_metric_list'
         try:
-            self.class_graphics = {}
-            if self.options.data.architecture in CLASS_ARCHITECTURE:
-                for out in self.options.data.outputs.keys():
-                    self.class_graphics[out] = True
+            return class_metric_list(self.options)
         except Exception as e:
             print_error(InteractiveCallback().name, method_name, e)
 
