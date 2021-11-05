@@ -37,13 +37,60 @@
         </div>
       </router-link>
     </div>
+    <DModal v-model="DialogProfile" title="Мой профиль">
+      <t-field class="profile-modal-content__wrapper" label="Имя *">
+        <DInputText v-model.trim="firstName" :error="errFirst" @input="errFirst=''"/>
+      </t-field>
+      <t-field class="profile-modal-content__wrapper" label="Фамилия *">
+        <DInputText v-model.trim="lastName" :error="errLast" @input="errLast=''"/>
+      </t-field>
+       <t-field class="profile-modal-content__wrapper" label="Логин">
+        <p>{{ user.login }}</p>
+      </t-field>
+      <t-field class="profile-modal-content__wrapper" label="E-mail">
+        <p>{{ user.email }}</p>
+      </t-field>
+      <t-field class="profile-modal-content__wrapper" label="Token">
+        <p>
+          <span ref="token">{{ user.token }}</span>
+          <i class="btn-copy" @click="copy"></i>
+          <span class="copy-msg"></span>
+        </p>
+        <div @click="updateTokenProfile" class="btn-text">Обновить токен</div>
+      </t-field>
+      <t-field class="profile-modal-content__wrapper" v-show="showNoticeProfile">
+        <div>
+          <i class="notice__icon"></i>
+          <p>{{ noticeMsgProfile }}</p>
+        </div>
+      </t-field>
+      <template slot="footer">
+        <DButton @click="saveProfile" :loading="isLoadingProfile" :disabled="isLoadingProfile" color="primary" direction="left" >Сохранить</DButton>
+      </template>
+    </DModal>
   </div>
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
+
 export default {
   name: 'NewHeader',
+  components:{
+    DModal: () => import('@/components/global/modals/DModal'),
+    DButton: () => import('@/components/global/design/forms/components/DButton'),
+    DInputText: () => import('@/components/global/design/forms/components/DInputText'),
+  },
   data: () => ({
+    DialogProfile: true,
+    isChangedProfile: false,
+    showNoticeProfile: false,
+    noticeMsgProfile: '',
+    errFirst: '',
+    errLast: '',
+    isLoadingProfile: false,
+
+
     iconRight: [
       {
         title: 'вопрос',
@@ -58,6 +105,25 @@ export default {
     selectedGeneratedId: 1,
   }),
   computed: {
+    ...mapGetters({
+      user: 'projects/getUser',
+    }),
+    firstName: {
+      set(first_name) {
+        this.$store.commit('projects/SET_USER', { first_name });
+      },
+      get() {
+        return this.user.first_name;
+      },
+    },
+    lastName: {
+      set(last_name) {
+        this.$store.commit('projects/SET_USER', { last_name });
+      },
+      get() {
+        return this.user.last_name;
+      },
+    },
     routes() {
       return [
         {
@@ -98,12 +164,78 @@ export default {
     },
     selectedGenerated(){
       return  this.generated[this.selectedGeneratedId]
-    }
+    },
   },
+  methods:{
+    copy() {
+      let selection = window.getSelection();
+      let range = document.createRange();
+
+      range.selectNodeContents(this.$refs.token);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      document.execCommand('copy');
+      selection.removeAllRanges();
+      document.querySelector('.copy-msg').textContent = 'Token скопирован в буфер обмена'
+    },
+    async updateTokenProfile() {
+      const res = await this.$store.dispatch('axios', { url: '/profile/update_token/' });
+      if (res.success) {
+        this.$refs.token.textContent = res.data.new_token;
+        this.$store.dispatch('messages/setMessage', { message: `Ваш token успешно обновлен` });
+      }
+    },
+    async saveProfile() {
+      if (!this.firstName) this.errFirst = 'Поле обязательно для заполнения';
+      if (!this.lastName) this.errLast = 'Поле обязательно для заполнения';
+
+      if (this.firstName && this.lastName) {
+        this.isLoadingProfile = true;
+        const res = await this.$store.dispatch('profile/save', {
+          first_name: this.firstName,
+          last_name: this.lastName,
+        });
+        this.isLoadingProfile = false;
+
+        if (res.success) this.$store.dispatch('messages/setMessage', { message: `Ваши данные успешно изменены` });
+      }
+    },
+  },
+  watch: {
+    firstName() {
+      this.isChangedProfile = true;
+    },
+    lastName() {
+      this.isChangedProfile = true;
+    },
+  }
 };
 </script>
 
 <style lang="scss" scoped>
+
+// Modal
+
+.profile-modal{
+  &-content{
+    &__wrapper{
+      margin-bottom: 25px;
+        .btn-text {
+        display: inline-block;
+        margin-top: 10px;
+        cursor: pointer;
+        color: #65b9f4;
+        font-size: 14px;
+        line-height: 24px;
+        height: 27px;
+        &:hover {
+          border-bottom: 1px solid #65b9f4;
+        }
+      }
+    }
+  }
+}
+
 .header {
   background: #17212b;
   width: 100%;
