@@ -31,13 +31,13 @@
       <div v-for="({ title, icon }, i) of iconRight" :key="'menu_' + i" class="header-right__icon" :title="title">
         <i :class="[icon]"></i>
       </div>
-      <router-link to="/profile">
+      <div @click="DialogProfile = true">
         <div class="header-right__icon">
           <i class="profile"></i>
         </div>
-      </router-link>
+      </div>
     </div>
-    <DModal v-model="DialogProfile" title="Мой профиль">
+    <DModal style="position: absolute;" v-model="DialogProfile" title="Мой профиль">
       <t-field class="profile-modal-content__wrapper" label="Имя *">
         <DInputText v-model.trim="firstName" :error="errFirst" @input="errFirst=''"/>
       </t-field>
@@ -65,7 +65,7 @@
         </div>
       </t-field>
       <template slot="footer">
-        <DButton @click="saveProfile" :loading="isLoadingProfile" :disabled="isLoadingProfile" color="primary" direction="left" >Сохранить</DButton>
+        <DButton style="margin-left: auto;" @click="saveProfile" :loading="isLoadingProfile" :disabled="isLoadingProfile" color="primary" direction="left" >Сохранить</DButton>
       </template>
     </DModal>
   </div>
@@ -82,7 +82,7 @@ export default {
     DInputText: () => import('@/components/global/design/forms/components/DInputText'),
   },
   data: () => ({
-    DialogProfile: true,
+    DialogProfile: false,
     isChangedProfile: false,
     showNoticeProfile: false,
     noticeMsgProfile: '',
