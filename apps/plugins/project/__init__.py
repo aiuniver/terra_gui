@@ -268,37 +268,6 @@ class Project(BaseMixinData):
         except Exception:
             self.reset()
 
-    def update_training_base(self, data: dict = None):
-        if isinstance(data, dict):
-            if not data.get("architecture"):
-                data.update({"architecture": {}})
-            data["architecture"].update(
-                {
-                    "type": self.dataset.architecture.value
-                    if self.dataset
-                    else ArchitectureChoice.Basic.value,
-                    "model": self.model,
-                }
-            )
-            if not data["architecture"].get("parameters"):
-                data["architecture"].update({"parameters": {}})
-            data["architecture"]["parameters"].update({"model": self.model})
-        else:
-            data = {
-                "architecture": {
-                    "type": self.dataset.architecture.value
-                    if self.dataset
-                    else ArchitectureChoice.Basic.value,
-                    "model": self.model,
-                    "parameters": {"model": self.model},
-                }
-            }
-        self.training.base = TrainData(**data)
-        defaults_data.training = DefaultsTrainingData(
-            project=self, architecture=self.training.base.architecture.type
-        )
-        self.save()
-
 
 data_path = DataPathData(**DATA_PATH)
 project_path = ProjectPathData(**PROJECT_PATH)

@@ -6,6 +6,8 @@ from apps.plugins.frontend import defaults_data
 
 from apps.api.base import BaseAPIView, BaseResponseSuccess
 
+from . import serializers
+
 
 class StartAPIView(BaseAPIView):
     def post(self, request, **kwargs):
