@@ -2,7 +2,7 @@ from terra_ai.data.datasets.creations.layers.image_augmentation import Augmentat
 from terra_ai.utils import decamelize, camelize
 from terra_ai.exceptions.tensor_flow import ResourceExhaustedError as Resource
 from terra_ai.datasets.data import DataType, InstructionsData, DatasetInstructionsData
-from terra_ai.datasets.utils import PATH_TYPE_LIST, convert_object_detection
+from terra_ai.datasets.utils import PATH_TYPE_LIST, get_od_names
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preprocessing import CreatePreprocessing
 from terra_ai.data.training.extra import ArchitectureChoice
@@ -68,7 +68,6 @@ class CreateDataset(object):
         self.y_cls: list = []
         self.columns = {}
         self.augmentation = {}
-        # self.augmentation = {'object': None, 'data': []}
 
         self.columns_processing = {}
         if creation_data.columns_processing:
@@ -180,12 +179,7 @@ class CreateDataset(object):
                         inp.parameters.open_tags = out.parameters.open_tags
                         inp.parameters.close_tags = out.parameters.close_tags
             elif out.type == LayerOutputTypeChoice.ObjectDetection:
-                if out.parameters.model_type != LayerODDatasetTypeChoice.Yolo:
-                    convert_object_detection(creation_data)
-                    out.parameters.sources_paths = [Path(os.path.join(creation_data.source_path, 'Yolo_annotations'))]
-                with open(creation_data.source_path.joinpath('obj.names'), 'r') as names:
-                    names_list = names.read()
-                names_list = [elem for elem in names_list.split('\n') if elem]
+                names_list = get_od_names(creation_data)
                 out.parameters.classes_names = names_list
                 out.parameters.num_classes = len(names_list)
 
@@ -334,14 +328,44 @@ class CreateDataset(object):
                 instructions_data = InstructionsData(instructions=instructions, parameters=parameters)
             else:
                 paths_list: list = []
-                for paths in put.parameters.sources_paths:
-                    if paths.is_dir():
-                        for directory, folder, file_name in sorted(os.walk(os.path.join(self.source_directory, paths))):
-                            if file_name:
-                                file_folder = directory.replace(self.source_directory, '')[1:]
-                                for name in sorted(file_name):
-                                    paths_list.append(os.path.join(file_folder, name))
+                if 'model_type' in put.parameters.native().keys() and \
+                                                        put.parameters.model_type in [LayerODDatasetTypeChoice.Udacity]:
+                    for file_name in os.listdir(os.sep.join(str(put.parameters.sources_paths).split(os.sep)[:-1])):
+                        if file_name.endswith('.csv'):
+                            paths_list.append(file_name)
 
+                elif 'model_type' in put.parameters.native().keys() and \
+                        put.parameters.model_type in [LayerODDatasetTypeChoice.Yolov1]:
+                    for paths in put.parameters.sources_paths:
+                        if paths.is_dir():
+                            for directory, folder, file_name in sorted(os.walk(os.path.join(self.source_directory,
+                                                                                            paths))):
+                                if file_name:
+                                    file_folder = directory.replace(self.source_directory, '')[1:]
+                                    for name in sorted(file_name):
+                                        if name.endswith('.txt'):
+                                            paths_list.append(os.path.join(file_folder, name))
+
+                elif decamelize(put.type) == decamelize(LayerInputTypeChoice.Image):
+                    for paths in put.parameters.sources_paths:
+                        if paths.is_dir():
+                            for directory, folder, file_name in sorted(os.walk(os.path.join(self.source_directory,
+                                                                                            paths))):
+                                if file_name:
+                                    file_folder = directory.replace(self.source_directory, '')[1:]
+                                    for name in sorted(file_name):
+                                        if not name.endswith('.txt'):
+                                            paths_list.append(os.path.join(file_folder, name))
+
+                else:
+                    for paths in put.parameters.sources_paths:
+                        if paths.is_dir():
+                            for directory, folder, file_name in sorted(os.walk(os.path.join(self.source_directory,
+                                                                                            paths))):
+                                if file_name:
+                                    file_folder = directory.replace(self.source_directory, '')[1:]
+                                    for name in sorted(file_name):
+                                        paths_list.append(os.path.join(file_folder, name))
                 put.parameters.cols_names = f'{put.id}_{decamelize(put.type)}'
                 put.parameters.put = put.id
                 temp_paths_list = [os.path.join(self.source_path, x) for x in paths_list]
@@ -396,10 +420,10 @@ class CreateDataset(object):
                         self.preprocessing.create_tokenizer(text_list=data.instructions, **data.parameters)
                     elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
                         self.preprocessing.create_word2vec(text_list=data.instructions, **data.parameters)
-                if 'augmentation' in data.parameters.keys() and data.parameters['augmentation']:
-                    self.augmentation[data.parameters['cols_names']] =\
-                        {'object': self.preprocessing.create_image_augmentation(data.parameters['augmentation']),
-                         'data': []}
+                # if 'augmentation' in data.parameters.keys() and data.parameters['augmentation']:
+                    # self.augmentation[data.parameters['cols_names']] = {'train': [], 'val': [], 'test': []}
+                    # {'object': self.preprocessing.create_image_augmentation(data.parameters['augmentation']),
+                    # 'data': []}
 
     def fit_preprocessing(self, put_data):
 
@@ -546,6 +570,7 @@ class CreateDataset(object):
 
                 array = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(arr['instructions'],
                                                                                          **arr['parameters'])
+                array = array[0] if isinstance(array, tuple) else array
                 if not array.shape:
                     array = np.expand_dims(array, 0)
                 input_array.append(array)
@@ -653,6 +678,8 @@ class CreateDataset(object):
 
                 if isinstance(array, list):  # Условие для ObjectDetection
                     output_array = [arr for arr in array]
+                elif isinstance(array, tuple):
+                    array = array[0]
                 else:
                     if not array.shape:
                         array = np.expand_dims(array, 0)
@@ -824,17 +851,22 @@ class CreateDataset(object):
         def array_creation(row, instructions):
 
             full_array = []
+            augm_data = ''
             for h in range(len(row)):
                 try:
-                    arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(row[h], **instructions[h])
-                    arr = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(arr['instructions'],
-                                                                                           **arr['parameters'])
-                    full_array.append(arr)
+                    arr = getattr(CreateArray(), f'create_{instructions[h]["put_type"]}')(row[h], **instructions[h])
+                    arr = getattr(CreateArray(), f'preprocess_{instructions[h]["put_type"]}')(arr['instructions'],
+                                                                                              **arr['parameters'])
+                    if isinstance(arr, tuple):
+                        full_array.append(arr[0])
+                        augm_data += arr[1]
+                    else:
+                        full_array.append(arr)
                 except Exception:
                     progress.pool(self.progress_name, error='Ошибка создания массивов данных')
                     raise
 
-            return full_array
+            return full_array, augm_data
 
         out_array = {'train': {}, 'val': {}, 'test': {}}
         service = {'train': {}, 'val': {}, 'test': {}}
@@ -884,13 +916,19 @@ class CreateDataset(object):
                                                 col_name])
 
                         elif self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
-                            tmp_data.append(self.dataframe[split].loc[i, col_name])
+                            if self.augmentation[split]['1_image']:
+                                tmp_data.append(self.augmentation[split]['1_image'][i])
+                            else:
+                                tmp_data.append(self.dataframe[split].loc[i, col_name])
                             tmp_im = Image.open(os.path.join(self.paths.basepath,
                                                              self.dataframe[split].iloc[i, 0]))
                             parameters_to_pass.update([('orig_x', tmp_im.width),
                                                        ('orig_y', tmp_im.height)])
                         else:
                             tmp_data.append(self.dataframe[split].loc[i, col_name])
+                        if self.tags[key][col_name] == decamelize(LayerInputTypeChoice.Image) and\
+                                '2_object_detection' in self.dataframe[split].columns:
+                            parameters_to_pass.update([('augm_data', self.dataframe[split].loc[i, '2_object_detection'])])
                         tmp_parameter_data.append(parameters_to_pass)
                     data_to_pass.append(tmp_data)
                     dict_to_pass.append(tmp_parameter_data)
@@ -898,7 +936,8 @@ class CreateDataset(object):
                 progress.pool(self.progress_name,
                               message=f'Формирование массивов {split.title()} выборки. ID: {key}.',
                               percent=0)
-
+                if not self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
+                    self.augmentation[split] = {col_name: []}
                 current_arrays: list = []
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     results = executor.map(array_creation, data_to_pass, dict_to_pass)
@@ -906,6 +945,11 @@ class CreateDataset(object):
                         if psutil.virtual_memory()._asdict().get("percent") > 90:
                             current_arrays = []
                             raise Resource
+                        if isinstance(result, tuple):
+                            augm_data = result[1]
+                            result = result[0]
+                            if not augm_data:
+                                augm_data = ''
                         progress.pool(self.progress_name, percent=ceil(i / len(data_to_pass) * 100))
                         if not self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
                             if depth:
@@ -916,6 +960,8 @@ class CreateDataset(object):
                             else:
                                 array = np.concatenate(result, axis=0)
                             current_arrays.append(array)
+                            if isinstance(augm_data, str):
+                                self.augmentation[split][col_name].append(augm_data)
                         else:
                             for n in range(6):
                                 globals()[f'current_arrays_{n}'].append(result[0][n])

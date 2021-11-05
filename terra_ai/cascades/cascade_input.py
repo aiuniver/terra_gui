@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-import os
 from tensorflow.keras.utils import load_img
 import pandas as pd
 
@@ -14,6 +13,19 @@ def video(paths):
         yield path
 
 
+def video_by_frame(path):
+    cap = cv2.VideoCapture(path)
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        yield frame
+
+
 def image(path):
     img = load_img(path)
     out_img = np.array(img)
@@ -21,12 +33,12 @@ def image(path):
     return out_img
 
 
-def folder(path):
-    for i in os.listdir(path):
-        img = cv2.imread(os.path.join(path, i))
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        img = img[np.newaxis, ...]
-        yield img
+# def folder(path):
+#     for i in os.listdir(path):
+#         img = cv2.imread(os.path.join(path, i))
+#         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+#         img = img[np.newaxis, ...]
+#         yield img
 
 
 def text(paths):
