@@ -1,5 +1,5 @@
 from terra_ai.data.mixins import BaseMixinData
 
 
-class ParametersData(BaseMixinData):
-    pass
+class ParametersMainData(BaseMixinData):
+    postprocess: bool = True

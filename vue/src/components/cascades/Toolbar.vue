@@ -1,23 +1,16 @@
 <template>
   <div class="toolbar">
     <ul class="toolbar__menu">
-      <!-- <li :class="['toolbar__menu--item', { disabled: false }]" @click="click($event, 'load')" title="Загрузить модель">
+      <li :class="['toolbar__menu--item', { disabled: false }]" @click="click($event, 'load')" title="Загрузить каскад">
         <i class="t-icon icon-model-load"></i>
-      </li> -->
-      <li
+      </li>
+      <!-- <li
         :class="['toolbar__menu--item', { disabled: isSave }]"
         @click="click($event, 'save')"
-        title="Сохранить модель"
+        title="Сохранить каскад"
       >
         <i class="t-icon icon-model-save"></i>
-      </li>
-      <li
-        :class="['toolbar__menu--item', { disabled: isValidation }]"
-        @click="click($event, 'validation')"
-        title="Валидация"
-      >
-        <i class="t-icon icon-model-validation"></i>
-      </li>
+      </li> -->
       <li :class="['toolbar__menu--item', { disabled: isClear }]" @click="click($event, 'clear')" title="Очистить">
         <i class="t-icon icon-model-clear"></i>
       </li>
@@ -38,26 +31,14 @@
         <i class="t-icon icon-layer-output"></i>
       </li>
       <hr />
-      <li
-        :class="['toolbar__menu--item', { disabled: false }]"
-        @click="click($event, 'play')"
-        title="Запустить"
-      >
+      <li :class="['toolbar__menu--item', { disabled: false }]" @click="click($event, 'validation')" title="Валидация">
+        <i class="t-icon icon-model-validation"></i>
+      </li>
+      <li :class="['toolbar__menu--item', { disabled: false }]" @click="click($event, 'play')" title="Запустить">
         <i class="t-icon icon-model-play"></i>
       </li>
-      <li
-        :class="['toolbar__menu--item', { disabled: false }]"
-        @click="click($event, 'save')"
-        title="Сохранить модель"
-      >
+      <li :class="['toolbar__menu--item', { disabled: false }]" @click="click($event, 'save')" title="Сохранить каскад">
         <i class="t-icon icon-model-save"></i>
-      </li>
-      <li
-        :class="['toolbar__menu--item', { disabled: false }]"
-        @click="click($event, 'validation')"
-        title="Валидация"
-      >
-        <i class="t-icon icon-model-validation"></i>
       </li>
     </ul>
   </div>

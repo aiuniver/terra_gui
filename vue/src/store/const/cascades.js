@@ -2,7 +2,7 @@ const typeBlock = [
     {
       group: "input",
       name: 'Вход ',
-      type: 'Input',
+      type: 'InputData',
       inputs: [],
       outputs: [{}],
     },
@@ -30,7 +30,7 @@ const typeBlock = [
     {
       group: "output",
       name: 'Выход ',
-      type: 'Dense',
+      type: 'OutputData',
       inputs: [{}],
       outputs: [],
     },

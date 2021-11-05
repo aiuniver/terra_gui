@@ -26,6 +26,7 @@ MODEL_EXT = "model"
 
 # Cascade
 CASCADE_EXT = "cascade"
+CASCADE_CONFIG = "config.json"
 
 # Deploy
 DEPLOY_URL = "https://srv1.demo.neural-university.ru/autodeployterra_upload/"

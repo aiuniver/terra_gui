@@ -382,7 +382,7 @@ class Exchange:
         Получение каскада
         """
         data = CascadeLoadData(value=value)
-        with open(data.value.absolute(), "r") as config_ref:
+        with open(Path(data.value, settings.CASCADE_CONFIG).absolute(), "r") as config_ref:
             config = json.load(config_ref)
             return CascadeDetailsData(**config)
 
@@ -391,6 +391,12 @@ class Exchange:
         Получение списка каскадов
         """
         return CascadesList(path)
+
+    def _call_cascade_update(self, cascade: dict) -> CascadeDetailsData:
+        """
+        Обновление каскада
+        """
+        return CascadeDetailsData(**cascade)
 
     def _call_deploy_presets(self):
         """
