@@ -17,8 +17,8 @@
       </div>
     </div>
     <template slot="footer">
-      <t-button @click="save({ name, overwrite })" :loading="loading">Сохранить</t-button>
-      <t-button @click="dialog = false" cancel :disabled="loading">Отменить</t-button>
+      <t-button :disabled="name === ''" :loading="loading" @click="save({ name, overwrite })">Сохранить</t-button>
+      <t-button cancel :disabled="loading" @click="dialog = false">Отменить</t-button>
     </template>
   </at-modal>
 </template>
@@ -49,6 +49,7 @@ export default {
     async save(data) {
       try {
         this.loading = true;
+        console.log(data)
         // this.$emit('message', { message: `Сохранения проекта «${data.name}»` });
         const res = await this.$store.dispatch('trainings/save', {});
         if (res && !res.error) {
@@ -68,7 +69,8 @@ export default {
   watch: {
     dialog(value) {
       if (value) {
-        this.name = this.$store.getters['projects/getProject'].name;
+        const name = this.$store.getters['projects/getProject'].training.name;
+        this.name = name === '__current' ? '' : name;
       }
     },
   },

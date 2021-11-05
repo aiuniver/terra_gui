@@ -120,6 +120,10 @@ export default {
       dispatch('setState', res);
       return res
     },
+    async save ({ dispatch }, data) {
+      const res = await dispatch('axios', { url: '/training/save/', data }, { root: true });
+      return res
+    },
     async update ({ commit, dispatch }, parse) {
       let data = JSON.parse(JSON.stringify(parse))
       // console.log(data)
