@@ -1,0 +1,25 @@
+
+@use './variables/default.scss';
+
+* {
+  box-sizing:border-box
+}
+html, body {
+  height: 100%;
+  width: 100%;
+  font-family: 'Open Sans', sans-serif;
+}
+
+:root {
+  --color-bg: default.$color-black;
+  --color-page: default.$color-border;
+  --color__text: #fff;
+
+  @media screen {
+    &[data-theme="light"] {
+      --color__bg: #121212;
+      --color__page: #121212;
+      --color__text: #ffffff;
+    }
+  }
+}
