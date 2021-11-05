@@ -3,7 +3,7 @@
     <div class="t-large-image__mask" @click="close"></div>
     <div class="t-large-image__fixed">
       <i class="ci-icon ci-close_big" @click="close"/>
-      <img width="auto" :height="600" :src="imgSrc" :alt="'value'" :key="imgSrc" />
+      <img width="auto" :height="450" :src="imgSrc" :alt="'value'" :key="imgSrc" />
     </div>
   </div>
 </template>
