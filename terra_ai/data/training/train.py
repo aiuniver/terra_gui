@@ -8,10 +8,10 @@ from pydantic import validator
 from pydantic.types import conint, confloat, PositiveInt
 from pydantic.errors import EnumMemberError
 
-from ..mixins import BaseMixinData, UniqueListMixin, IDMixinData
-from . import optimizers
-from . import architectures
-from .extra import (
+from terra_ai.data.deploy.tasks import DeployData
+from terra_ai.data.mixins import BaseMixinData, UniqueListMixin, IDMixinData
+from terra_ai.data.training import optimizers, architectures
+from terra_ai.data.training.extra import (
     OptimizerChoice,
     ArchitectureChoice,
     LossGraphShowChoice,
@@ -99,15 +99,48 @@ class StateButtonData(BaseMixinData):
 
 
 class StateButtonsData(BaseMixinData):
-    train: StateButtonData = StateButtonData(title="Обучить", visible=False)
-    stop: StateButtonData = StateButtonData(title="Остановить", visible=False)
-    clear: StateButtonData = StateButtonData(title="Сбросить", visible=False)
-    save: StateButtonData = StateButtonData(title="Сохранить", visible=False)
+    train: StateButtonData
+    stop: StateButtonData
+    clear: StateButtonData
+    save: StateButtonData
 
 
 class StateData(BaseMixinData):
-    status: StateStatusChoice = StateStatusChoice.no_train
-    buttons: StateButtonsData = StateButtonsData()
+    status: StateStatusChoice
+    buttons: Optional[StateButtonsData]
+
+    @staticmethod
+    def get_buttons(status: StateStatusChoice) -> dict:
+        value = {
+            "train": {"title": "Обучить", "visible": True},
+            "stop": {"title": "Остановить", "visible": False},
+            "clear": {"title": "Сбросить", "visible": False},
+            "save": {"title": "Сохранить", "visible": False},
+        }
+        if status in [StateStatusChoice.training, StateStatusChoice.addtrain]:
+            value["train"].update({"visible": False, "title": "Возобновить"})
+            value["stop"].update({"visible": True})
+            value["clear"].update({"visible": False})
+            value["save"].update({"visible": False})
+        elif status == StateStatusChoice.trained:
+            value["train"].update({"visible": True, "title": "Дообучить"})
+            value["stop"].update({"visible": False})
+            value["clear"].update({"visible": True})
+            value["save"].update({"visible": True})
+        elif status == StateStatusChoice.stopped:
+            value["train"].update({"visible": True, "title": "Возобновить"})
+            value["stop"].update({"visible": False})
+            value["clear"].update({"visible": True})
+            value["save"].update({"visible": True})
+        return StateButtonsData(**value)
+
+    @validator("buttons", always=True)
+    def _validate_buttons(cls, value: StateButtonsData, values) -> StateButtonsData:
+        return StateData.get_buttons(values.get("status"))
+
+    def set(self, value: str):
+        self.status = StateStatusChoice[value]
+        self.buttons = StateData.get_buttons(self.status)
 
 
 class OptimizerData(BaseMixinData):
@@ -185,3 +218,14 @@ class TrainData(BaseMixinData):
     epochs: PositiveInt = 20
     optimizer: OptimizerData = OptimizerData(type=OptimizerChoice.Adam)
     architecture: ArchitectureData = ArchitectureData(type=ArchitectureChoice.Basic)
+
+
+class TrainingDetailsData(BaseMixinData):
+    base: TrainData = TrainData()
+    interactive: InteractiveData = InteractiveData()
+    state: StateData = StateData(status="no_train")
+    result: Optional[dict]
+    deploy: Optional[DeployData]
+
+    def clear(self):
+        pass

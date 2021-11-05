@@ -26,14 +26,13 @@ from terra_ai.data.training.extra import (
 )
 from terra_ai.data.training.train import (
     TrainData,
-    InteractiveData,
-    StateData,
+    TrainingDetailsData,
     LossGraphsList,
     MetricGraphsList,
     ProgressTableList,
 )
 from terra_ai.data.types import confilepath
-from terra_ai.training.guinn import interactive as training_interactive
+
 
 UNKNOWN_NAME = "NoName"
 DATA_PATH = {
@@ -125,23 +124,19 @@ class ProjectPathData(BaseMixinData):
         os.makedirs(self.datasets, exist_ok=True)
 
 
-class TrainingDetailsData(BaseMixinData):
-    name: str = "__current"
-    base: TrainData = TrainData()
-    interactive: InteractiveData = InteractiveData()
-    state: StateData = StateData()
-    result: Optional[dict]
-
-    def set_state(self):
-        self.state = StateData(**training_interactive.train_states)
-
-
 class Project(BaseMixinData):
     name: str = UNKNOWN_NAME
     dataset: Optional[DatasetData]
     model: ModelDetailsData = ModelDetailsData(**EmptyModelDetailsData)
     training: TrainingDetailsData = TrainingDetailsData()
-    deploy: Optional[DeployData]
+
+    @property
+    def dataset_path(self) -> Path:
+        return project_path.datasets
+
+    @property
+    def training_path(self) -> Path:
+        return project_path.training_model
 
     @property
     def name_alias(self) -> str:
@@ -373,13 +368,9 @@ class Project(BaseMixinData):
             self.model.outputs[0].id if len(self.model.outputs) else None
         )
 
-    def update_training_state(self):
-        self.training.set_state()
-
     def set_training(self, data: dict = None):
         self.update_training_base(data.get("base") if data else None)
         self.update_training_interactive()
-        self.update_training_state()
 
     def clear_model(self):
         if self.dataset:
