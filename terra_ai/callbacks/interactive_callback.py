@@ -4,6 +4,7 @@ import os
 import random
 import re
 import string
+from pathlib import Path
 from typing import Union, Optional
 
 from tensorflow.keras.utils import to_categorical
@@ -93,34 +94,13 @@ class InteractiveCallback:
 
         self.urgent_predict = False
         self.deploy_presets_data = None
-        self.train_states = {
-            "status": "no_train",  # training, trained, stopped, addtrain
-            "buttons": {
-                "train": {
-                    "title": "Обучить",  # Возобновить, Дообучить
-                    "visible": True
-                },
-                "stop": {
-                    "title": "Остановить",
-                    "visible": False
-                },
-                "clear": {
-                    "title": "Сбросить",
-                    "visible": False
-                },
-                "save": {
-                    "title": "Сохранить",
-                    "visible": False
-                }
-            }
-        }
         self.random_key = ''
 
         self.interactive_config: InteractiveData = InteractiveData(**{})
         pass
 
-    def set_attributes(self, dataset: PrepareDataset, metrics: dict, losses: dict, dataset_path: str,
-                       training_path: str, initial_config: InteractiveData):
+    def set_attributes(self, dataset: PrepareDataset, metrics: dict, losses: dict, dataset_path: Path,
+                       training_path: Path, initial_config: InteractiveData):
 
         self.options = dataset
         self._callback_router(dataset)
@@ -150,34 +130,6 @@ class InteractiveCallback:
         self.seed_idx = self._prepare_seed()
         self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
 
-    def set_status(self, status):
-        self.train_states["status"] = status
-        if status in ["training", "addtrain"]:
-            self.train_states["buttons"]["train"]["title"] = "Возобновить"
-            self.train_states["buttons"]["train"]["visible"] = False
-            self.train_states["buttons"]["stop"]["visible"] = True
-            self.train_states["buttons"]["clear"]["visible"] = False
-            self.train_states["buttons"]["save"]["visible"] = False
-        elif status == "trained":
-            self.train_states["buttons"]["train"]["title"] = "Дообучить"
-            self.train_states["buttons"]["train"]["visible"] = True
-            self.train_states["buttons"]["stop"]["visible"] = False
-            self.train_states["buttons"]["clear"]["visible"] = True
-            self.train_states["buttons"]["save"]["visible"] = True
-        elif status == "stopped":
-            self.train_states["buttons"]["train"]["title"] = "Возобновить"
-            self.train_states["buttons"]["train"]["visible"] = True
-            self.train_states["buttons"]["stop"]["visible"] = False
-            self.train_states["buttons"]["clear"]["visible"] = True
-            self.train_states["buttons"]["save"]["visible"] = True
-        else:
-            self.clear_history()
-            self.train_states["buttons"]["train"]["title"] = "Обучить"
-            self.train_states["buttons"]["train"]["visible"] = True
-            self.train_states["buttons"]["stop"]["visible"] = False
-            self.train_states["buttons"]["clear"]["visible"] = False
-            self.train_states["buttons"]["save"]["visible"] = False
-
     def clear_history(self):
         self.log_history = {}
         self.current_logs = {}
@@ -187,9 +139,6 @@ class InteractiveCallback:
         self.train_progress = {}
         self.addtrain_epochs = []
         self.deploy_presets_data = None
-
-    def get_states(self):
-        return self.train_states
 
     def get_presets(self):
         return self.deploy_presets_data
