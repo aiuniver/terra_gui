@@ -8,6 +8,10 @@ class BlockGroupChoice(str, Enum):
     Function = "Function"
     Custom = "Custom"
 
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, BlockGroupChoice))
+
 
 class BlockFunctionGroupChoice(str, Enum):
     Audio = "Audio"

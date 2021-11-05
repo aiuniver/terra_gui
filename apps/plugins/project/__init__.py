@@ -18,7 +18,9 @@ from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.extra import HardwareAcceleratorData
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.modeling.model import ModelDetailsData
+from terra_ai.data.cascades.cascade import CascadeDetailsData
 from terra_ai.data.presets.models import EmptyModelDetailsData
+from terra_ai.data.presets.cascades import EmptyCascadeDetailsData
 from terra_ai.data.presets.training import TasksGroups
 from terra_ai.data.training.extra import (
     LossGraphShowChoice,
@@ -142,6 +144,7 @@ class Project(BaseMixinData):
     dataset: Optional[DatasetData]
     model: ModelDetailsData = ModelDetailsData(**EmptyModelDetailsData)
     training: TrainingDetailsData = TrainingDetailsData()
+    cascade: CascadeDetailsData = CascadeDetailsData(**EmptyCascadeDetailsData)
     deploy: Optional[DeployData]
 
     @property
@@ -158,12 +161,14 @@ class Project(BaseMixinData):
         dataset: DatasetData,
         model: ModelDetailsData,
         training: TrainingDetailsData,
+        cascade: CascadeDetailsData,
         deploy: DeployData = None,
     ):
         self.name = name
         self.dataset = dataset
         self.model = model
         self.training = training
+        self.cascade = cascade
         self.deploy = deploy
 
     def dict(self, **kwargs):
@@ -273,10 +278,12 @@ class Project(BaseMixinData):
                 _dataset = _config.get("dataset", None)
                 _model = _config.get("model", None)
                 _training = _config.get("training", None)
+                _cascade = _config.get("cascade", None)
                 self._set_data(
                     name=_config.get("name", UNKNOWN_NAME),
                     dataset=DatasetData(**_dataset) if _dataset else None,
                     model=ModelDetailsData(**(_model or EmptyModelDetailsData)),
+                    cascade=CascadeDetailsData(**(_cascade or EmptyCascadeDetailsData)),
                     training=TrainingDetailsData(
                         **(
                             _correct_training(
@@ -301,6 +308,9 @@ class Project(BaseMixinData):
         project_path.clear_training()
         self.training = TrainingDetailsData()
         self.save()
+
+    def clear_cascade(self):
+        pass
 
     def _redefine_model_ids(self):
         if not self.dataset:
@@ -336,6 +346,7 @@ class Project(BaseMixinData):
             self.dataset = None
             project_path.clear_dataset()
             defaults_data.modeling.set_layer_datatype(self.dataset)
+            # self.clear_cascade()
             self.set_training()
             return
 
@@ -347,6 +358,7 @@ class Project(BaseMixinData):
             self.update_model_layers()
 
         defaults_data.modeling.set_layer_datatype(self.dataset)
+        # self.set_cascade()
         self.set_training()
         self.save()
 
@@ -362,6 +374,9 @@ class Project(BaseMixinData):
         self.update_model_layers()
         self.set_training()
         self.save()
+
+    def set_cascade(self, cascade: CascadeDetailsData):
+        self.cascade = cascade
 
     def update_training_base(self, data: dict = None):
         if isinstance(data, dict):
