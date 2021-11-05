@@ -1,11 +1,11 @@
 <template>
   <at-modal v-model="dialog" width="400" :maskClosable="false" :showClose="false">
     <div slot="header">
-      <span>Сохранить проект</span>
+      <span>Сохранить обучение</span>
     </div>
     <div class="inner form-inline-label">
       <div class="field-form">
-        <label>Название проекта</label>
+        <label>Название</label>
         <input v-model="name" type="text" :disabled="loading" />
       </div>
       <div class="field-form field-inline field-reverse">
@@ -49,9 +49,9 @@ export default {
     async save(data) {
       try {
         this.loading = true;
-        console.log(data)
+        // console.log(data)
         // this.$emit('message', { message: `Сохранения проекта «${data.name}»` });
-        const res = await this.$store.dispatch('trainings/save', {});
+        const res = await this.$store.dispatch('trainings/save', data);
         if (res && !res.error) {
           this.$emit('message', { message: `Проект «${data.name}» сохранен` });
           this.dialog = false;
