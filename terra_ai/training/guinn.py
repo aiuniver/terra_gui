@@ -27,14 +27,9 @@ from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice
 from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
-<<<<<<< HEAD
 from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, ArchitectureChoice
-from terra_ai.data.training.train import TrainData, InteractiveData
-=======
-from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, \
-    CheckpointModeChoice, ArchitectureChoice
-from terra_ai.data.training.train import TrainData, InteractiveData, TrainingDetailsData, StateData
->>>>>>> features/training
+from terra_ai.data.training.train import TrainData, TrainingDetailsData, StateData
+
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.deploy.create_deploy_package import CascadeCreator
@@ -170,32 +165,17 @@ class GUINN:
                     )
             })
             self.loss.update({str(output_layer["id"]): output_layer["loss"]})
-<<<<<<< HEAD
-        if self.deploy_type not in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]:
-            interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss,
-                                       dataset_path=dataset_path, training_path=training_path,
-                                       initial_config=initial_config)
-        if self.deploy_type in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]:
-            interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss,
-                                       dataset_path=dataset_path, training_path=training_path,
-                                       initial_config=initial_config)
-=======
 
         interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss,
                                    dataset_path=dataset.path, training_path=self.model_path,
                                    initial_config=train_params.interactive)
->>>>>>> features/training
 
     def _set_callbacks(self, dataset: PrepareDataset, dataset_data: DatasetData,
                        batch_size: int, epochs: int, checkpoint: dict,
                        state: StateData, deploy: DeployData, initial_model=None) -> None:
         progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков...'})
-<<<<<<< HEAD
-        retrain_epochs = self.sum_epoch if interactive.get_states().get("status") == "addtrain" else self.epochs
-=======
         retrain_epochs = self.sum_epoch if state.status == "addtrain" else self.epochs
 
->>>>>>> features/training
         callback = FitCallback(dataset=dataset, dataset_data=dataset_data, checkpoint_config=checkpoint,
                                batch_size=batch_size, epochs=epochs, retrain_epochs=retrain_epochs,
                                model_path=self.model_path, deploy_path=self.deploy_path,
@@ -440,10 +420,7 @@ class GUINN:
             print('dont use generator')
             critical_val_size = len(self.dataset.dataset.get('val'))
             buffer_size = 1000
-<<<<<<< HEAD
-=======
 
->>>>>>> features/training
         if (critical_val_size == self.batch_size) or ((critical_val_size % self.batch_size) == 0):
             self.val_batch_size = self.batch_size
         elif critical_val_size < self.batch_size:
@@ -767,25 +744,11 @@ class FitCallback(keras.callbacks.Callback):
         """Оценка текущей эпохи"""
         try:
             if logs.get(self.metric_checkpoint):
-<<<<<<< HEAD
-                # print('\nself.metric_checkpoint)', self.metric_checkpoint)
-                # print('logs.get(self.metric_checkpoint)', logs.get(self.metric_checkpoint))
-                # print('self.log_history.get("logs").get(self.metric_checkpoint))', self.log_history.get("logs").get(self.metric_checkpoint))
-                # print()
                 if self.checkpoint_mode == 'min' and \
                         logs.get(self.metric_checkpoint) < min(self.log_history.get("logs").get(self.metric_checkpoint)):
                     return True
                 elif self.checkpoint_mode == 'max' and \
                         logs.get(self.metric_checkpoint) > max(self.log_history.get("logs").get(self.metric_checkpoint)):
-=======
-                if self.checkpoint_config.get("mode") == CheckpointModeChoice.Min and \
-                        logs.get(self.metric_checkpoint) < min(
-                    self.log_history.get("logs").get(self.metric_checkpoint)):
-                    return True
-                elif self.checkpoint_config.get("mode") == CheckpointModeChoice.Max and \
-                        logs.get(self.metric_checkpoint) > max(
-                    self.log_history.get("logs").get(self.metric_checkpoint)):
->>>>>>> features/training
                     return True
                 else:
                     return False
@@ -921,21 +884,13 @@ class FitCallback(keras.callbacks.Callback):
                 out_deploy_presets_data = {"data": tmp_deploy}
             out_deploy_presets_data["columns"] = columns
             out_deploy_presets_data["predict_column"] = predict_column if predict_column else "Предсказанные значения"
-<<<<<<< HEAD
-        interactive.deploy_presets_data = DeployData(
-            path=deploy_path,
-            type=self.deploy_type,
-            data=out_deploy_presets_data
-        )
-=======
+
         out_deploy_data = dict([
             ("path", self.deploy_path),
             ("type", self.deploy_type),
             ("data", out_deploy_presets_data)
         ])
         self.deploy = DeployData(**out_deploy_data)
-        # print(interactive.deploy_presets_data)
->>>>>>> features/training
         self._create_cascade(**cascade_data)
 
     @staticmethod
