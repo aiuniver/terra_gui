@@ -174,12 +174,13 @@ In [7]: print(data.json(indent=2, ensure_ascii=False))
 ```
 """
 
-import json
 import os
+import json
+
 from pathlib import Path
 from datetime import datetime
 from typing import Optional, Dict, List, Tuple, Any
-from pydantic import validator, DirectoryPath
+from pydantic import validator, DirectoryPath, PrivateAttr
 from pydantic.types import PositiveInt
 from pydantic.color import Color
 
@@ -292,6 +293,18 @@ class DatasetData(AliasMixinData):
     service: Optional[Dict[PositiveInt, DatasetOutputsData]] = {}
     columns: Optional[Dict[PositiveInt, Dict[str, Any]]] = {}
 
+    _path: Path = PrivateAttr()
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        _path = data.get("path")
+        if _path:
+            self.set_path(_path)
+
+    @property
+    def path(self):
+        return self._path
+
     @property
     def model(self) -> ModelDetailsData:
         data = {**EmptyModelDetailsData}
@@ -349,6 +362,9 @@ class DatasetData(AliasMixinData):
             layers.append(_data)
         data.update({"layers": layers})
         return ModelDetailsData(**data)
+
+    def set_path(self, value):
+        self._path = Path(value)
 
 
 class DatasetsList(UniqueListMixin):

@@ -1,42 +1,30 @@
 import os
-import re
 import json
 import shutil
+
 from pathlib import Path
 from typing import Optional
+from pydantic import validator, DirectoryPath, FilePath
 
 from django.conf import settings
-from pydantic import validator, DirectoryPath, FilePath
-from transliterate import slugify
 
 from apps.plugins.frontend import defaults_data
 from apps.plugins.frontend.defaults import DefaultsTrainingData
 from apps.plugins.project import exceptions
+
 from terra_ai.agent import agent_exchange
-from terra_ai.data.datasets.dataset import DatasetData
-from terra_ai.data.deploy.tasks import DeployData
+from terra_ai.data.types import confilepath
 from terra_ai.data.extra import HardwareAcceleratorData
 from terra_ai.data.mixins import BaseMixinData
+from terra_ai.data.datasets.dataset import DatasetData
+from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.modeling.model import ModelDetailsData
+from terra_ai.data.training.train import TrainingDetailsData, DEFAULT_TRAINING_PATH_NAME
 from terra_ai.data.cascades.cascade import CascadeDetailsData
 from terra_ai.data.presets.models import EmptyModelDetailsData
 from terra_ai.data.presets.cascades import EmptyCascadeDetailsData
 from terra_ai.data.presets.training import TasksGroups
-from terra_ai.data.training.extra import (
-    LossGraphShowChoice,
-    MetricGraphShowChoice,
-    ArchitectureChoice,
-)
-from terra_ai.data.training.train import (
-    TrainData,
-    InteractiveData,
-    StateData,
-    LossGraphsList,
-    MetricGraphsList,
-    ProgressTableList,
-)
-from terra_ai.data.types import confilepath
-from terra_ai.training.guinn import interactive as training_interactive
+
 
 UNKNOWN_NAME = "NoName"
 DATA_PATH = {
@@ -54,10 +42,6 @@ PROJECT_PATH = {
     "modeling": Path(settings.TERRA_AI_PROJECT_PATH, "modeling").absolute(),
     "training": Path(settings.TERRA_AI_PROJECT_PATH, "training").absolute(),
     "cascades": Path(settings.TERRA_AI_PROJECT_PATH, "cascades").absolute(),
-    "deploy": Path(settings.TERRA_AI_PROJECT_PATH, "training", "deploy").absolute(),
-    "training_model": Path(
-        settings.TERRA_AI_PROJECT_PATH, "training", "model"
-    ).absolute(),
 }
 
 
@@ -91,8 +75,6 @@ class ProjectPathData(BaseMixinData):
     modeling: DirectoryPath
     training: DirectoryPath
     cascades: DirectoryPath
-    deploy: DirectoryPath
-    training_model: DirectoryPath
 
     @validator(
         "base",
@@ -100,8 +82,6 @@ class ProjectPathData(BaseMixinData):
         "modeling",
         "training",
         "cascades",
-        "deploy",
-        "training_model",
         allow_reuse=True,
         pre=True,
     )
@@ -118,42 +98,125 @@ class ProjectPathData(BaseMixinData):
             pass
         return value
 
-    def clear_training(self):
-        shutil.rmtree(self.training, ignore_errors=True)
-        os.makedirs(self.training, exist_ok=True)
-        os.makedirs(self.deploy, exist_ok=True)
-
-    def clear_dataset(self):
-        shutil.rmtree(self.datasets, ignore_errors=True)
-        os.makedirs(self.datasets, exist_ok=True)
-
-
-class TrainingDetailsData(BaseMixinData):
-    name: str = "__current"
-    base: TrainData = TrainData()
-    interactive: InteractiveData = InteractiveData()
-    state: StateData = StateData()
-    result: Optional[dict]
-
-    def set_state(self):
-        self.state = StateData(**training_interactive.train_states)
-
 
 class Project(BaseMixinData):
     name: str = UNKNOWN_NAME
     dataset: Optional[DatasetData]
     model: ModelDetailsData = ModelDetailsData(**EmptyModelDetailsData)
-    training: TrainingDetailsData = TrainingDetailsData()
+    training: TrainingDetailsData
     cascade: CascadeDetailsData = CascadeDetailsData(**EmptyCascadeDetailsData)
-    deploy: Optional[DeployData]
 
-    @property
-    def name_alias(self) -> str:
-        return re.sub(r"([\-]+)", "_", slugify(self.name, language_code="ru"))
+    def __init__(self, **data):
+        if not data.get("training"):
+            data["training"] = {}
+        data["training"]["path"] = project_path.training
+
+        if data.get("dataset"):
+            data["dataset"]["path"] = project_path.datasets
+
+        super().__init__(**data)
+
+        defaults_data.modeling.set_layer_datatype(self.dataset)
+        defaults_data.training = DefaultsTrainingData(
+            project=self, architecture=self.training.base.architecture.type
+        )
 
     @property
     def hardware(self) -> HardwareAcceleratorData:
         return agent_exchange("hardware_accelerator")
+
+    @validator("training", pre=True, allow_reuse=True)
+    def _validate_training(cls, value, values):
+        if not value:
+            value = {}
+        value.update({"model": values.get("model")})
+        return value
+
+    def dict(self, **kwargs):
+        _data = super().dict(**kwargs)
+        _data.update({"hardware": self.hardware})
+        return _data
+
+    def save(self):
+        data = self.native()
+        if data.get("hardware"):
+            data.pop("hardware")
+        with open(project_path.config, "w") as _config_ref:
+            json.dump(data, _config_ref)
+
+    def frontend(self):
+        _data = self.native()
+        if _data.get("training", {}).get("deploy") and self.training.deploy:
+            _data["training"].update({"deploy": self.training.deploy.presets})
+        return json.dumps(_data)
+
+    def set_name(self, name: str):
+        self.name = name
+        self.save()
+
+    def set_dataset(
+        self, dataset: DatasetData, destination: Path, reset_model: bool = False
+    ):
+        dataset.set_path(destination)
+        self.dataset = dataset
+
+        if not self.model.inputs or not self.model.outputs or reset_model:
+            self.model = self.dataset.model
+
+        self.model.set_dataset_indexes(self.dataset)
+        self.model.update_layers(self.dataset)
+
+        defaults_data.modeling.set_layer_datatype(self.dataset)
+        self.clear_training(DEFAULT_TRAINING_PATH_NAME)
+        self.save()
+
+    def set_model(self, model: ModelDetailsData, clear_dataset: bool = False):
+        if clear_dataset:
+            self.clear_dataset()
+        self.model = model
+        if self.dataset:
+            self.model.set_dataset_indexes(self.dataset)
+            self.model.update_layers(self.dataset)
+        defaults_data.modeling.set_layer_datatype(self.dataset)
+        self.clear_training(DEFAULT_TRAINING_PATH_NAME)
+        self.save()
+
+    def set_training(self, name: str = None):
+        self.training = TrainingDetailsData(
+            name=name, path=project_path.training, model=self.model
+        )
+        self.set_training_base()
+        self.save()
+
+    def set_training_base(self, data: dict = None):
+        if data is None:
+            data = {}
+        self.training.set_base(data, self.dataset)
+        defaults_data.training = DefaultsTrainingData(
+            project=self, architecture=self.training.base.architecture.type
+        )
+        self.save()
+
+    def clear_dataset(self):
+        self.dataset = None
+        shutil.rmtree(project_path.datasets, ignore_errors=True)
+        os.makedirs(project_path.datasets, exist_ok=True)
+        defaults_data.modeling.set_layer_datatype(self.dataset)
+        self.clear_training(DEFAULT_TRAINING_PATH_NAME)
+        self.save()
+
+    def clear_model(self):
+        self.set_model(
+            self.dataset.model
+            if self.dataset
+            else ModelDetailsData(**EmptyModelDetailsData)
+        )
+        self.save()
+
+    def clear_training(self, name: str):
+        shutil.rmtree(Path(project_path.training, name), ignore_errors=True)
+        self.set_training(name)
+        self.save()
 
     def _set_data(
         self,
@@ -171,22 +234,6 @@ class Project(BaseMixinData):
         self.cascade = cascade
         self.deploy = deploy
 
-    def dict(self, **kwargs):
-        _data = super().dict(**kwargs)
-        _data.update(
-            {
-                "name_alias": self.name_alias,
-                "hardware": self.hardware,
-            }
-        )
-        return _data
-
-    def front(self):
-        _data = self.native()
-        if _data.get("deploy") and self.deploy:
-            _data.update({"deploy": self.deploy.presets})
-        return json.dumps(_data)
-
     def reset(self):
         agent_exchange("training_clear")
         shutil.rmtree(project_path.base, ignore_errors=True)
@@ -196,6 +243,7 @@ class Project(BaseMixinData):
             dataset=None,
             model=ModelDetailsData(**EmptyModelDetailsData),
             training=TrainingDetailsData(),
+            cascade=CascadeDetailsData(**EmptyCascadeDetailsData),
             deploy=None,
         )
         self.save()
@@ -299,187 +347,6 @@ class Project(BaseMixinData):
             print("ERROR PROJECT LOAD:", error)
             self.reset()
 
-    def save(self):
-        with open(project_path.config, "w") as _config_ref:
-            json.dump(json.loads(self.json()), _config_ref)
-
-    def clear_training(self):
-        self.deploy = None
-        project_path.clear_training()
-        self.training = TrainingDetailsData()
-        self.save()
-
-    def clear_cascade(self):
-        pass
-
-    def _redefine_model_ids(self):
-        if not self.dataset:
-            return
-        dataset_model = self.dataset.model
-        for _index, _dataset_layer in enumerate(dataset_model.inputs):
-            self.model.switch_index(self.model.inputs[_index].id, _dataset_layer.id)
-        for _index, _dataset_layer in enumerate(dataset_model.outputs):
-            self.model.switch_index(self.model.outputs[_index].id, _dataset_layer.id)
-
-    def update_model_layers(self):
-        if not self.dataset:
-            return
-
-        model_init = self.dataset.model
-
-        for index, layer in enumerate(self.model.inputs):
-            layer_init = model_init.inputs.get(layer.id)
-            layer.shape = layer_init.shape
-            layer.task = layer_init.task
-            layer.num_classes = layer_init.num_classes
-            # layer.parameters = layer_init.parameters
-
-        for index, layer in enumerate(self.model.outputs):
-            layer_init = model_init.outputs.get(layer.id)
-            layer.shape = layer_init.shape
-            layer.task = layer_init.task
-            layer.num_classes = layer_init.num_classes
-            # layer.parameters = layer_init.parameters
-
-    def set_dataset(self, dataset: DatasetData = None, reset_model: bool = False):
-        if dataset is None:
-            self.dataset = None
-            project_path.clear_dataset()
-            defaults_data.modeling.set_layer_datatype(self.dataset)
-            # self.clear_cascade()
-            self.set_training()
-            return
-
-        self.dataset = dataset
-        if not self.model.inputs or not self.model.outputs or reset_model:
-            self.model = self.dataset.model
-        else:
-            self._redefine_model_ids()
-            self.update_model_layers()
-
-        defaults_data.modeling.set_layer_datatype(self.dataset)
-        # self.set_cascade()
-        self.set_training()
-        self.save()
-
-    def set_model(self, model: ModelDetailsData):
-        if self.dataset:
-            dataset_model = self.dataset.model
-            if model.inputs and len(model.inputs) != len(dataset_model.inputs):
-                raise exceptions.DatasetModelInputsCountNotMatchException()
-            if model.outputs and len(model.outputs) != len(dataset_model.outputs):
-                raise exceptions.DatasetModelOutputsCountNotMatchException()
-        self.model = model
-        self._redefine_model_ids()
-        self.update_model_layers()
-        self.set_training()
-        self.save()
-
-    def set_cascade(self, cascade: CascadeDetailsData):
-        self.cascade = cascade
-
-    def update_training_base(self, data: dict = None):
-        if isinstance(data, dict):
-            if not data.get("architecture"):
-                data.update({"architecture": {}})
-            data["architecture"].update(
-                {
-                    "type": self.dataset.architecture.value
-                    if self.dataset
-                    else ArchitectureChoice.Basic.value,
-                    "model": self.model,
-                }
-            )
-            if not data["architecture"].get("parameters"):
-                data["architecture"].update({"parameters": {}})
-            data["architecture"]["parameters"].update({"model": self.model})
-        else:
-            data = {
-                "architecture": {
-                    "type": self.dataset.architecture.value
-                    if self.dataset
-                    else ArchitectureChoice.Basic.value,
-                    "model": self.model,
-                    "parameters": {"model": self.model},
-                }
-            }
-        self.training.base = TrainData(**data)
-        defaults_data.training = DefaultsTrainingData(
-            project=self, architecture=self.training.base.architecture.type
-        )
-        self.save()
-
-    def update_training_interactive(self):
-        loss_graphs = []
-        metric_graphs = []
-        progress_table = []
-        _index_m = 0
-        _index_l = 0
-        for layer in self.model.outputs:
-            outputs = self.training.base.architecture.parameters.outputs.get(layer.id)
-            if not outputs:
-                continue
-            for metric in outputs.metrics:
-                _index_m += 1
-                metric_graphs.append(
-                    {
-                        "id": _index_m,
-                        "output_idx": layer.id,
-                        "show": MetricGraphShowChoice.model,
-                        "show_metric": metric,
-                    }
-                )
-                _index_m += 1
-                metric_graphs.append(
-                    {
-                        "id": _index_m,
-                        "output_idx": layer.id,
-                        "show": MetricGraphShowChoice.classes,
-                        "show_metric": metric,
-                    }
-                )
-            _index_l += 1
-            loss_graphs.append(
-                {
-                    "id": _index_l,
-                    "output_idx": layer.id,
-                    "show": LossGraphShowChoice.model,
-                }
-            )
-            _index_l += 1
-            loss_graphs.append(
-                {
-                    "id": _index_l,
-                    "output_idx": layer.id,
-                    "show": LossGraphShowChoice.classes,
-                }
-            )
-            progress_table.append(
-                {
-                    "output_idx": layer.id,
-                }
-            )
-        self.training.interactive.loss_graphs = LossGraphsList(loss_graphs)
-        self.training.interactive.metric_graphs = MetricGraphsList(metric_graphs)
-        self.training.interactive.progress_table = ProgressTableList(progress_table)
-        self.training.interactive.intermediate_result.main_output = (
-            self.model.outputs[0].id if len(self.model.outputs) else None
-        )
-
-    def update_training_state(self):
-        self.training.set_state()
-
-    def set_training(self, data: dict = None):
-        self.update_training_base(data.get("base") if data else None)
-        self.update_training_interactive()
-        self.update_training_state()
-
-    def clear_model(self):
-        if self.dataset:
-            self.model = self.dataset.model
-        else:
-            self.model = ModelDetailsData(**EmptyModelDetailsData)
-
 
 data_path = DataPathData(**DATA_PATH)
 project_path = ProjectPathData(**PROJECT_PATH)
@@ -491,9 +358,6 @@ except Exception:
     _config = {}
 
 _config.update({"hardware": agent_exchange("hardware_accelerator")})
-if _config.get("deploy"):
-    _config["deploy"].update({"path": project_path.deploy})
-_training = _config.pop("training") if _config.get("training") else {}
+
 project = Project(**_config)
-project.set_training(_training)
-defaults_data.modeling.set_layer_datatype(project.dataset)
+project.save()

@@ -31,7 +31,8 @@ from ..data.cascades.cascade import CascadesList, CascadeLoadData, CascadeDetail
 from ..data.presets.datasets import DatasetsGroups
 from ..data.presets.models import ModelsGroups
 from ..data.projects.project import ProjectsInfoData, ProjectsList
-from ..data.training.train import TrainData, InteractiveData
+from ..data.training.train import TrainingDetailsData, InteractiveData
+from ..data.training.extra import StateStatusChoice
 from ..datasets import loading as datasets_loading
 from ..datasets import utils as datasets_utils
 from ..datasets.creating import CreateDataset
@@ -313,51 +314,24 @@ class Exchange:
         self,
         dataset: DatasetData,
         model: ModelDetailsData,
-        training_path: Path,
-        dataset_path: Path,
-        params: TrainData,
-        initial_config: InteractiveData,
+        training: TrainingDetailsData,
     ):
         """
         Старт обучения
         """
-        if (
-            interactive.get_states().get("status") == "stopped"
-            or interactive.get_states().get("status") == "trained"
-        ):
-            interactive.set_status("addtrain")
-        else:
-            interactive.set_status("training")
+        training_obj.terra_fit(dataset=dataset, gui_model=model, training=training)
 
-        # print("\033[1;33m—————————————————— Training params ——————————————————\033[0m")
-        # print(params.json(indent=2, ensure_ascii=False))
-        # print("\033[1;33m—————————————————— Initial config ———————————————————\033[0m")
-        # print(initial_config.json(indent=2, ensure_ascii=False))
-        # print("\033[1;33m—————————————————————————————————————————————————————\033[0m")
-
-        training_obj.terra_fit(
-            dataset=dataset,
-            gui_model=model,
-            training_path=training_path,
-            dataset_path=dataset_path,
-            training_params=params,
-            initial_config=initial_config,
-        )
-        return interactive.train_states
-
-    def _call_training_stop(self):
+    def _call_training_stop(self, training: TrainingDetailsData):
         """
         Остановить обучение
         """
-        interactive.set_status("stopped")
-        return interactive.train_states
+        training.state.set(StateStatusChoice.stopped)
 
-    def _call_training_clear(self):
+    def _call_training_clear(self, training: TrainingDetailsData):
         """
         Очистить обучение
         """
-        interactive.set_status("no_train")
-        return interactive.train_states
+        training.state.set(StateStatusChoice.no_train)
 
     def _call_training_interactive(self, config: InteractiveData) -> dict:
         """
@@ -382,7 +356,9 @@ class Exchange:
         Получение каскада
         """
         data = CascadeLoadData(value=value)
-        with open(Path(data.value, settings.CASCADE_CONFIG).absolute(), "r") as config_ref:
+        with open(
+            Path(data.value, settings.CASCADE_CONFIG).absolute(), "r"
+        ) as config_ref:
             config = json.load(config_ref)
             return CascadeDetailsData(**config)
 

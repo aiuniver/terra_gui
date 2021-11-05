@@ -1,6 +1,6 @@
-from enum import Enum
-
 import dotenv
+
+from enum import Enum
 
 from django.conf import settings
 
@@ -9,11 +9,11 @@ dotenv.load_dotenv(env_file)
 
 
 class Keys(str, Enum):
-    login = 'USER_LOGIN'
-    first_name = 'USER_NAME'
-    last_name = 'USER_LASTNAME'
-    email = 'USER_EMAIL'
-    token = 'USER_TOKEN'
+    login = "USER_LOGIN"
+    first_name = "USER_NAME"
+    last_name = "USER_LASTNAME"
+    email = "USER_EMAIL"
+    token = "USER_TOKEN"
 
 
 def update_env_file(**kwargs):
