@@ -63,6 +63,9 @@
     "last 2 versions",
     "not dead"
   ],
+  "ignorePatterns": [
+    "**/src/assets/js/*.js"
+  ],
   "jest": {
     "preset": "@vue/cli-plugin-unit-jest"
   }

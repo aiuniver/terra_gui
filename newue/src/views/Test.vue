@@ -148,14 +148,14 @@ export default {
 .page-test {
   width: 100%;
   height: 100%;
-  background-color: var(--color__bg);
+  // background-color: var(--color__bg);
   overflow: hidden;
 }
 .cont {
   height: 100%;
   width: 100%;
   padding: 20px;
-  background-color: var(--color__page);
+  // background-color: var(--color__page);
   .row {
     width: 100%;
     display: flex;
@@ -170,6 +170,6 @@ export default {
 h3 {
   margin: 0 0 20px 0;
   text-decoration-line: underline;
-  color: #c7dddd;
+  // color: #c7dddd;
 }
 </style>

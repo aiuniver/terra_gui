@@ -3,14 +3,18 @@ import Vuex from "vuex";
 import axios from 'axios';
 
 import messages from './modules/messages';
+import logging from './modules/logging';
 import projects from './modules/projects';
+import themes from './modules/themes';
 
 Vue.use(Vuex);
 
 export default new Vuex.Store({
   modules: {
+    logging,
     messages,
     projects,
+    themes
   },
   state: {},
   mutations: {},

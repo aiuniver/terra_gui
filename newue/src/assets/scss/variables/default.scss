@@ -26,11 +26,16 @@ $color-cascades-input: #17212b;
 $color: #17212b;
 
 
-$color-text: #ffffff;
+// Theme dark
+$color-dark-bg: $color-dark;
+$color-dark-border: $color-black;
+$color-dark-text: $color-white;
 
-$color-bg: $color-dark;
-$color-border: $color-black;
-$color-base: #0e1621;
+// Theme light
+$color-light-bg: $color-white;
+$color-light-border: #E1E1E1;
+$color-light-text: #ADADAD;
+
 
 /* Color */
 $color-normal: #6190e8;

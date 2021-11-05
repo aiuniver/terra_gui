@@ -30,8 +30,8 @@
       {{ `Copyright © «Университет искусственного интеллекта», ${new Date().getFullYear()}` }}
       <span v-if="version" class="footer__version">{{ version }}</span>
     </div>
-    <LoggingModal v-if="errors.length" v-model="dialogErrors" :errors="errors" :title="'Логи'" @error="clickError" />
-    <CopyModal v-model="dialogError" :title="'Ошибка!'">{{ text }}</CopyModal>
+    <!-- <LoggingModal v-if="errors.length" v-model="dialogErrors" :errors="errors" :title="'Логи'" @error="clickError" /> -->
+    <!-- <CopyModal v-model="dialogError" :title="'Ошибка!'">{{ text }}</CopyModal> -->
   </div>
 </template>
 
@@ -39,8 +39,8 @@
 import { mapGetters } from 'vuex';
 export default {
   components: {
-    CopyModal: () => import('../global/modals/CopyModal'),
-    LoggingModal: () => import('../global/modals/LoggingModal'),
+    // CopyModal: () => import('../global/modals/CopyModal'),
+    // LoggingModal: () => import('../global/modals/LoggingModal'),
   },
   data: () => ({
     dialogError: false,
