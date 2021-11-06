@@ -237,7 +237,7 @@ class LayerYoloVersionChoice(str, Enum):
 
 
 class LayerODDatasetTypeChoice(str, Enum):
-    Yolo_terra = "Yolo_terra"
+    Yolo_terra = "Yolo"
     Voc = "Voc"
     Kitti = "Kitti"
     Coco = "Coco"
