@@ -17,12 +17,14 @@ from typing import Optional
 import numpy as np
 
 import tensorflow as tf
+import tensorflow.keras.callbacks
 from tensorflow.keras.models import Model
 from tensorflow import keras
 from tensorflow.keras.models import load_model
 from tensorflow.python.keras.utils.np_utils import to_categorical
 
 from terra_ai import progress
+from terra_ai.callbacks.interactive_callback import InteractiveCallback
 from terra_ai.callbacks.utils import print_error, loss_metric_config, BASIC_ARCHITECTURE, CLASS_ARCHITECTURE, \
     YOLO_ARCHITECTURE, round_loss_metric
 from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
@@ -30,14 +32,15 @@ from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeCh
 from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
 from terra_ai.data.presets.training import Metric
-from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, ArchitectureChoice
+from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, \
+    ArchitectureChoice
 from terra_ai.data.training.train import TrainData, TrainingDetailsData, StateData
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.exceptions.deploy import MethodNotImplementedException
 from terra_ai.modeling.validator import ModelValidator
-from terra_ai.training.customcallback import InteractiveCallback
+# from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.training.customlosses import DiceCoef, UnscaledMAE, BalancedRecall, BalancedDiceCoef, \
     BalancedPrecision, BalancedFScore, FScore
 from terra_ai.training.yolo_utils import create_yolo, CustomModelYolo, compute_loss, get_mAP
@@ -51,32 +54,19 @@ interactive = InteractiveCallback()
 
 
 class GUINN:
-    """
-    GUINN: class, for train model
-    """
 
     def __init__(self) -> None:
-        """
-        GUINN init method
-        """
         self.name = "GUINN"
         self.callbacks = []
-        self.chp_monitor = 'loss'
-
-        """
-        For model settings
-        """
         self.nn_name: str = ''
-        self.DTS = None
         self.dataset = None
         self.deploy_type = None
         self.model: Optional[Model] = None
         self.training_path: str = ""
         self.optimizer = None
-        self.loss: dict = {}
-        self.metrics: dict = {}
+        # self.loss: dict = {}
+        # self.metrics: dict = {}
         self.yolo_pred = None
-
         self.batch_size = 128
         self.val_batch_size = 1
         self.epochs = 5
@@ -85,43 +75,39 @@ class GUINN:
         self.retrain_flag = False
         self.shuffle: bool = True
         self.model_is_trained: bool = False
-        """
-        Logs
-        """
-        self.history: dict = {}
         self.progress_name = "training"
 
-    @staticmethod
-    def _check_metrics(metrics: list, options: DatasetOutputsData, num_classes: int = 2, ) -> list:
-        method_name = '_check_metrics'
-        try:
-            output = []
-            for metric in metrics:
-                if metric == MetricChoice.MeanIoU.value:
-                    output.append(getattr(importlib.import_module("tensorflow.keras.metrics"), metric)(num_classes))
-                elif metric == MetricChoice.DiceCoef:
-                    output.append(DiceCoef())
-                # elif metric == MetricChoice.RecallPercent:
-                #     output.append(RecallPercent())
-                elif metric == MetricChoice.BalancedPrecision:
-                    output.append(BalancedPrecision())
-                elif metric == MetricChoice.BalancedFScore:
-                    output.append(BalancedFScore())
-                elif metric == MetricChoice.FScore:
-                    output.append(FScore())
-                elif metric == MetricChoice.BalancedRecall:
-                    output.append(BalancedRecall())
-                elif metric == MetricChoice.BalancedDiceCoef:
-                    output.append(BalancedDiceCoef(encoding=options.encoding.value))
-                elif metric == MetricChoice.UnscaledMAE:
-                    output.append(UnscaledMAE())
-                elif metric == MetricChoice.mAP50 or metric == MetricChoice.mAP95:
-                    pass
-                else:
-                    output.append(getattr(importlib.import_module("tensorflow.keras.metrics"), metric)())
-            return output
-        except Exception as e:
-            print_error(GUINN.name, method_name, e)
+    # @staticmethod
+    # def _check_metrics(metrics: list, options: DatasetOutputsData, num_classes: int = 2, ) -> list:
+    #     method_name = '_check_metrics'
+    #     try:
+    #         output = []
+    #         for metric in metrics:
+    #             if metric == MetricChoice.MeanIoU.value:
+    #                 output.append(getattr(importlib.import_module("tensorflow.keras.metrics"), metric)(num_classes))
+    #             elif metric == MetricChoice.DiceCoef:
+    #                 output.append(DiceCoef())
+    #             # elif metric == MetricChoice.RecallPercent:
+    #             #     output.append(RecallPercent())
+    #             elif metric == MetricChoice.BalancedPrecision:
+    #                 output.append(BalancedPrecision())
+    #             elif metric == MetricChoice.BalancedFScore:
+    #                 output.append(BalancedFScore())
+    #             elif metric == MetricChoice.FScore:
+    #                 output.append(FScore())
+    #             elif metric == MetricChoice.BalancedRecall:
+    #                 output.append(BalancedRecall())
+    #             elif metric == MetricChoice.BalancedDiceCoef:
+    #                 output.append(BalancedDiceCoef(encoding=options.encoding.value))
+    #             elif metric == MetricChoice.UnscaledMAE:
+    #                 output.append(UnscaledMAE())
+    #             elif metric == MetricChoice.mAP50 or metric == MetricChoice.mAP95:
+    #                 pass
+    #             else:
+    #                 output.append(getattr(importlib.import_module("tensorflow.keras.metrics"), metric)())
+    #         return output
+    #     except Exception as e:
+    #         print_error(GUINN().name, method_name, e)
 
     def _set_training_params(self, dataset: DatasetData, train_params: TrainingDetailsData,
                              training_path: Path, dataset_path: Path) -> None:
@@ -158,16 +144,16 @@ class GUINN:
             self.batch_size = params.batch
             self.set_optimizer(params)
 
-            for output_layer in params.architecture.outputs_dict:
-                self.metrics.update({
-                    str(output_layer["id"]):
-                        self._check_metrics(
-                            metrics=output_layer.get("metrics", []),
-                            num_classes=output_layer.get("classes_quantity"),
-                            options=self.dataset.data.outputs.get(output_layer["id"])
-                        )
-                })
-                self.loss.update({str(output_layer["id"]): output_layer["loss"]})
+            # for output_layer in params.architecture.outputs_dict:
+            #     self.metrics.update({
+            #         str(output_layer["id"]):
+            #             self._check_metrics(
+            #                 metrics=output_layer.get("metrics", []),
+            #                 num_classes=output_layer.get("classes_quantity"),
+            #                 options=self.dataset.data.outputs.get(output_layer["id"])
+            #             )
+            #     })
+            #     self.loss.update({str(output_layer["id"]): output_layer["loss"]})
 
             interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss,
                                        dataset_path=dataset_path, training_path=training_path,
@@ -298,29 +284,6 @@ class GUINN:
         except Exception as e:
             print_error(GUINN.name, method_name, e)
 
-    def show_training_params(self) -> None:
-        method_name = 'show_training_params'
-        try:
-            """
-            output the parameters of the neural network: batch_size, epochs, shuffle, callbacks, loss, metrics,
-            x_train_shape, num_classes
-            """
-            # print("\nself.DTS.classes_names", self.DTS.classes_names)
-            x_shape = []
-            v_shape = []
-            t_shape = []
-            for i_key in self.DTS.X.keys():
-                x_shape.append([i_key, self.DTS.X[i_key]['data'][0].shape])
-                v_shape.append([i_key, self.DTS.X[i_key]['data'][1].shape])
-                t_shape.append([i_key, self.DTS.X[i_key]['data'][2].shape])
-
-            msg = f'num_classes = {self.DTS.num_classes}, x_Train_shape = {x_shape}, x_Val_shape = {v_shape}, \n' \
-                  f'x_Test_shape = {t_shape}, epochs = {self.epochs}, \n' \
-                  f'callbacks = {self.callbacks}, batch_size = {self.batch_size},shuffle = {self.shuffle}, \n' \
-                  f'loss = {self.loss}, metrics = {self.metrics} \n'
-        except Exception as e:
-            print_error(GUINN.name, method_name, e)
-
     def save_model(self) -> None:
         method_name = 'save_model'
         try:
@@ -429,18 +392,15 @@ class GUINN:
         method_name = 'nn_cleaner'
         try:
             keras.backend.clear_session()
-            self.DTS = None
             self.dataset = None
             self.deploy_type = None
             self.model = None
             if retrain:
                 self.sum_epoch = 0
-                self.chp_monitor = ""
                 self.optimizer = None
                 self.loss = {}
                 self.metrics = {}
                 self.callbacks = []
-                self.history = {}
             gc.collect()
         except Exception as e:
             print_error(GUINN.name, method_name, e)
@@ -506,7 +466,7 @@ class GUINN:
             trained_model = model_yolo if model_yolo else self.model
 
             try:
-                self.history = trained_model.fit(
+                trained_model.fit(
                     self.dataset.dataset.get('train').shuffle(buffer_size).batch(
                         self.batch_size, drop_remainder=True).prefetch(buffer_size=tf.data.AUTOTUNE).take(-1),
                     batch_size=self.batch_size,
@@ -673,7 +633,7 @@ class MemoryUsage:
         return usage_dict
 
 
-class FitCallback(keras.callbacks.Callback):
+class FitCallback(tf.keras.callbacks.Callback):
     """CustomCallback for all task type"""
 
     def __init__(self, dataset: PrepareDataset, dataset_data: DatasetData, checkpoint_config: dict,
@@ -687,7 +647,6 @@ class FitCallback(keras.callbacks.Callback):
                 "layer": 2,
                 "type": "Metrics",
                 "indicator": "Val",
-                "mode": "max",
                 "metric_name": "Accuracy",
                 "save_best": True,
                 "save_weights": False,
@@ -703,7 +662,7 @@ class FitCallback(keras.callbacks.Callback):
         self.dataset_data = dataset_data
         self.dataset_path = dataset_path
         self.deploy_type = deploy_type
-        self.is_yolo = True if self.deploy_type in [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4] else False
+        self.is_yolo = True if self.deploy_type in YOLO_ARCHITECTURE else False
         self.batch_size = batch_size
         self.epochs = epochs
         self.batch = 0
@@ -806,7 +765,7 @@ class FitCallback(keras.callbacks.Callback):
                     },
                     "class_loss": {'prob_loss': {}},
                     "metrics": {'mAP50': []},
-                    "class_metrics": {'mAP50': {}, 'mAP95': {}},
+                    "class_metrics": {'mAP50': {}},
                     "progress_state": {
                         "loss": {
                             'giou_loss': {
@@ -1733,9 +1692,7 @@ class FitCallback(keras.callbacks.Callback):
                 mAP = get_mAP(self.model, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
                               TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names, dataset_path=self.dataset_path)
                 interactive_logs = self._logs_losses_extract(logs, prefixes=['pred', 'target'])
-                # interactive_logs.update({'mAP': mAP})
                 interactive_logs.update(mAP)
-                output_path = self.image_path.format(epoch)
                 if self.last_epoch < total_epochs and not self.model.stop_training:
                     self.samples_train = []
                     self.samples_val = []
@@ -1755,7 +1712,6 @@ class FitCallback(keras.callbacks.Callback):
                 on_epoch_end_flag=True
             )
             self._set_result_data({'train_data': train_epoch_data})
-            # print('/nprogress.pool', self.last_epoch, self.retrain_epochs, self.epochs)
             progress.pool(
                 self.progress_name,
                 percent=(self.last_epoch - 1) / (
@@ -1784,7 +1740,6 @@ class FitCallback(keras.callbacks.Callback):
                             self.yolo_model.save_weights(file_path_best)
                         else:
                             self.model.save_weights(file_path_best)
-                        # print(f"Epoch {self.last_epoch} - best weights was successfully saved")
                 except Exception as e:
                     print('\nself.model.save_weights failed', e)
             self._fill_log_history(self.last_epoch, interactive_logs)
@@ -1837,10 +1792,6 @@ class FitCallback(keras.callbacks.Callback):
                                            "addtrain" or self._get_train_status() == "stopped"
                     else self.epochs
                 ) * 100
-
-                # if os.path.exists(self.save_model_path) and interactive.deploy_presets_data:
-                #     with open(os.path.join(self.save_model_path, "config.presets"), "w", encoding="utf-8") as presets:
-                #         presets.write(str(interactive.deploy_presets_data))
                 self.state.set("trained")
                 progress.pool(
                     self.progress_name,

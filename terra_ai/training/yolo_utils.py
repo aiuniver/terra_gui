@@ -703,8 +703,8 @@ def voc_ap(rec, prec):
 #             real_boxes.append(tmp)
 #     return real_boxes
 
-def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_SIZE=416, TRAIN_CLASSES=None,
-            pred=None, dataset_path=''):
+def get_mAP(Yolo: object, dataset: object, score_threshold: object = 0.25, iou_threshold: object = None, TEST_INPUT_SIZE: object = 416, TRAIN_CLASSES: object = None,
+            pred: object = None, dataset_path: object = '') -> object:
     method_name = 'get_mAP'
     tt1 = time.time()
     try:
@@ -794,7 +794,7 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
         ap_dictionary = {}
         for i_iou in iou_threshold:
 
-            json_pred = [[] for i in range(n_classes)]
+            json_pred = [[] for _ in range(n_classes)]
             class_predictions = {}
             len_bbox = 0
             for i_image, pred_bbox in enumerate(predict):
@@ -895,7 +895,7 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
 
             ap_dictionary[f"val_mAP{int(i_iou * 100)}"] = mAP * 100
         ap_dictionary["val_fps"] = fps
-        tt2 = time.time()
+        # tt2 = time.time()
         # print('tt2-tt1', tt2-tt1)
         return ap_dictionary
     except Exception as e:
