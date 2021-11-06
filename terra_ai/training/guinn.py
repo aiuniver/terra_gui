@@ -1011,7 +1011,7 @@ class FitCallback(keras.callbacks.Callback):
             interactive_logs = self._logs_losses_extract(logs, prefixes=['pred', 'target'])
             # interactive_logs.update({'mAP': mAP})
             interactive_logs.update(mAP)
-            output_path = self.image_path.format(epoch)
+            # output_path = self.image_path.format(epoch)
             if self.last_epoch < total_epochs and not self.model.stop_training:
                 self.samples_train = []
                 self.samples_val = []
