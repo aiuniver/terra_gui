@@ -57,7 +57,7 @@ class GUINN:
     def __init__(self) -> None:
         self.name = "GUINN"
         self.callbacks = []
-        self.params: TrainData = TrainData(**{})
+        self.params: dict = {}
         self.nn_name: str = ''
         self.dataset: Optional[PrepareDataset] = None
         self.deploy_type = None
@@ -143,7 +143,7 @@ class GUINN:
             else:
                 self.epochs = params.epochs
             self.batch_size = params.batch
-            self.set_optimizer(params)
+            # self.set_optimizer(params)
 
             # for output_layer in params.architecture.outputs_dict:
             #     self.metrics.update({
@@ -665,7 +665,7 @@ class MemoryUsage:
 class FitCallback(tf.keras.callbacks.Callback):
     """CustomCallback for all task type"""
 
-    def __init__(self, dataset: PrepareDataset, dataset_data: DatasetData, checkpoint_config: dict,
+    def __init__(self, dataset: PrepareDataset, checkpoint_config: dict,
                  state: StateData, deploy: DeployData, batch_size: int = None, epochs: int = None,
                  dataset_path: Path = Path(""), retrain_epochs: int = None,
                  training_path: Path = Path("./"), model_name: str = "model",
@@ -688,7 +688,6 @@ class FitCallback(tf.keras.callbacks.Callback):
         self.current_logs = {}
         self.usage_info = MemoryUsage(debug=False)
         self.dataset = dataset
-        self.dataset_data = dataset_data
         self.dataset_path = dataset_path
         self.deploy_type = deploy_type
         self.is_yolo = True if self.deploy_type in YOLO_ARCHITECTURE else False
@@ -823,7 +822,7 @@ class FitCallback(tf.keras.callbacks.Callback):
         method_name = 'current_basic_logs'
         try:
             self.current_logs = {"epochs": epoch}
-            for output_layer in self.params.architecture.outputs_dict:
+            for output_layer in self.params.get('architecture').get('parameters').get("outputs"):
                 out = f"{output_layer['id']}"
                 name_classes = self.dataset.data.outputs.get(output_layer['id']).classes_names
                 self.current_logs[out] = {"loss": {}, "metrics": {}, "class_loss": {}, "class_metrics": {}}
@@ -1028,7 +1027,7 @@ class FitCallback(tf.keras.callbacks.Callback):
         try:
             self.log_history['epochs'].append(self.current_logs['epochs'])
             if self.dataset.data.architecture in BASIC_ARCHITECTURE:
-                for output_layer in self.params.architecture.outputs_dict:
+                for output_layer in self.params.get('architecture').get('parameters').get("outputs"):
                     out = f"{output_layer['id']}"
                     classes_names = self.options.data.outputs.get(out).classes_names
                     loss_name = output_layer.get('loss')
