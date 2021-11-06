@@ -5,30 +5,9 @@ from rest_framework import serializers
 from transliterate import slugify
 
 from apps.plugins.project import data_path
-from apps.plugins.frontend.choices import (
-    LayerInputTypeChoice,
-    LayerOutputTypeChoice,
-    LayerNetChoice,
-    LayerScalerImageChoice,
-    LayerScalerAudioChoice,
-    LayerScalerVideoChoice,
-    LayerScalerRegressionChoice,
-    LayerScalerTimeseriesChoice,
-    LayerTextModeChoice,
-    LayerPrepareMethodChoice,
-    LayerAudioModeChoice,
-    LayerAudioFillModeChoice,
-    LayerAudioParameterChoice,
-    LayerAudioResampleChoice,
-    LayerVideoFillModeChoice,
-    LayerVideoFrameModeChoice,
-    LayerVideoModeChoice,
-    LayerYoloVersionChoice,
-    ColumnProcessingInputTypeChoice,
-    ColumnProcessingOutputTypeChoice,
-)
+from apps.plugins.frontend import choices as frontend_choices
 
-from ..fields import DirectoryPathField, DirectoryOrFilePathField
+from apps.api.fields import DirectoryPathField, DirectoryOrFilePathField
 
 
 class MinMaxScalerSerializer(serializers.Serializer):
@@ -61,44 +40,51 @@ class LayerParametersSerializer(serializers.Serializer):
 class LayerParametersImageSerializer(MinMaxScalerSerializer, LayerParametersSerializer):
     width = serializers.IntegerField(min_value=1)
     height = serializers.IntegerField(min_value=1)
-    net = serializers.ChoiceField(choices=LayerNetChoice.items_tuple())
-    scaler = serializers.ChoiceField(choices=LayerScalerImageChoice.items_tuple())
+    net = serializers.ChoiceField(choices=frontend_choices.LayerNetChoice.items_tuple())
+    scaler = serializers.ChoiceField(
+        choices=frontend_choices.LayerScalerImageChoice.items_tuple()
+    )
 
 
 class LayerParametersTextSerializer(LayerParametersSerializer):
     filters = serializers.CharField(
         default='–—!"#$%&()*+,-./:;<=>?@[\\]^«»№_`{|}~\t\n\xa0–\ufeff'
     )
-    text_mode = serializers.ChoiceField(choices=LayerTextModeChoice.items_tuple())
+    text_mode = serializers.ChoiceField(
+        choices=frontend_choices.LayerTextModeChoice.items_tuple()
+    )
     max_words = serializers.IntegerField(required=False, min_value=1)
     length = serializers.IntegerField(required=False, min_value=1)
     step = serializers.IntegerField(required=False, min_value=1)
     pymorphy = serializers.BooleanField(default=False)
     prepare_method = serializers.ChoiceField(
-        choices=LayerPrepareMethodChoice.items_tuple()
+        choices=frontend_choices.LayerPrepareMethodChoice.items_tuple()
     )
     max_words_count = serializers.IntegerField(required=False, min_value=1)
     word_to_vec_size = serializers.IntegerField(required=False, min_value=1)
 
     def __init__(self, instance=None, data=None, **kwargs):
         _text_mode = data.get("text_mode")
-        if _text_mode == LayerTextModeChoice.completely.name:
+        if _text_mode == frontend_choices.LayerTextModeChoice.completely.name:
             self.fields.get("max_words").required = True
             data.pop("length", None)
             data.pop("step", None)
-        elif _text_mode == LayerTextModeChoice.length_and_step.name:
+        elif _text_mode == frontend_choices.LayerTextModeChoice.length_and_step.name:
             self.fields.get("length").required = True
             self.fields.get("step").required = True
             data.pop("max_words", None)
 
         _prepare_method = data.get("prepare_method")
         if _prepare_method in [
-            LayerPrepareMethodChoice.embedding.name,
-            LayerPrepareMethodChoice.bag_of_words.name,
+            frontend_choices.LayerPrepareMethodChoice.embedding.name,
+            frontend_choices.LayerPrepareMethodChoice.bag_of_words.name,
         ]:
             self.fields.get("max_words_count").required = True
             data.pop("word_to_vec_size", None)
-        elif _prepare_method == LayerPrepareMethodChoice.word_to_vec.name:
+        elif (
+            _prepare_method
+            == frontend_choices.LayerPrepareMethodChoice.word_to_vec.name
+        ):
             self.fields.get("word_to_vec_size").required = True
             data.pop("max_words_count", None)
 
@@ -107,22 +93,32 @@ class LayerParametersTextSerializer(LayerParametersSerializer):
 
 class LayerParametersAudioSerializer(MinMaxScalerSerializer, LayerParametersSerializer):
     sample_rate = serializers.IntegerField(min_value=1)
-    audio_mode = serializers.ChoiceField(choices=LayerAudioModeChoice.items_tuple())
+    audio_mode = serializers.ChoiceField(
+        choices=frontend_choices.LayerAudioModeChoice.items_tuple()
+    )
     max_seconds = serializers.FloatField(required=False, min_value=0, allow_null=True)
     length = serializers.FloatField(required=False, min_value=0, allow_null=True)
     step = serializers.FloatField(required=False, min_value=0, allow_null=True)
-    fill_mode = serializers.ChoiceField(choices=LayerAudioFillModeChoice.items_tuple())
-    parameter = serializers.ChoiceField(choices=LayerAudioParameterChoice.items_tuple())
-    resample = serializers.ChoiceField(choices=LayerAudioResampleChoice.items_tuple())
-    scaler = serializers.ChoiceField(choices=LayerScalerAudioChoice.items_tuple())
+    fill_mode = serializers.ChoiceField(
+        choices=frontend_choices.LayerAudioFillModeChoice.items_tuple()
+    )
+    parameter = serializers.ChoiceField(
+        choices=frontend_choices.LayerAudioParameterChoice.items_tuple()
+    )
+    resample = serializers.ChoiceField(
+        choices=frontend_choices.LayerAudioResampleChoice.items_tuple()
+    )
+    scaler = serializers.ChoiceField(
+        choices=frontend_choices.LayerScalerAudioChoice.items_tuple()
+    )
 
     def __init__(self, instance=None, data=None, **kwargs):
         _audio_mode = data.get("audio_mode")
-        if _audio_mode == LayerAudioModeChoice.completely.name:
+        if _audio_mode == frontend_choices.LayerAudioModeChoice.completely.name:
             self.fields.get("max_seconds").required = True
             data.pop("length", None)
             data.pop("step", None)
-        elif _audio_mode == LayerAudioModeChoice.length_and_step.name:
+        elif _audio_mode == frontend_choices.LayerAudioModeChoice.length_and_step.name:
             self.fields.get("length").required = True
             self.fields.get("step").required = True
             data.pop("max_seconds", None)
@@ -133,23 +129,29 @@ class LayerParametersAudioSerializer(MinMaxScalerSerializer, LayerParametersSeri
 class LayerParametersVideoSerializer(MinMaxScalerSerializer, LayerParametersSerializer):
     width = serializers.IntegerField(min_value=1)
     height = serializers.IntegerField(min_value=1)
-    fill_mode = serializers.ChoiceField(choices=LayerVideoFillModeChoice.items_tuple())
-    frame_mode = serializers.ChoiceField(
-        choices=LayerVideoFrameModeChoice.items_tuple()
+    fill_mode = serializers.ChoiceField(
+        choices=frontend_choices.LayerVideoFillModeChoice.items_tuple()
     )
-    video_mode = serializers.ChoiceField(choices=LayerVideoModeChoice.items_tuple())
+    frame_mode = serializers.ChoiceField(
+        choices=frontend_choices.LayerVideoFrameModeChoice.items_tuple()
+    )
+    video_mode = serializers.ChoiceField(
+        choices=frontend_choices.LayerVideoModeChoice.items_tuple()
+    )
     max_frames = serializers.IntegerField(required=False, min_value=1)
     length = serializers.IntegerField(required=False, min_value=1)
     step = serializers.IntegerField(required=False, min_value=1)
-    scaler = serializers.ChoiceField(choices=LayerScalerVideoChoice.items_tuple())
+    scaler = serializers.ChoiceField(
+        choices=frontend_choices.LayerScalerVideoChoice.items_tuple()
+    )
 
     def __init__(self, instance=None, data=None, **kwargs):
         _video_mode = data.get("video_mode")
-        if _video_mode == LayerAudioModeChoice.completely.name:
+        if _video_mode == frontend_choices.LayerAudioModeChoice.completely.name:
             self.fields.get("max_frames").required = True
             data.pop("length", None)
             data.pop("step", None)
-        elif _video_mode == LayerAudioModeChoice.length_and_step.name:
+        elif _video_mode == frontend_choices.LayerAudioModeChoice.length_and_step.name:
             self.fields.get("length").required = True
             self.fields.get("step").required = True
             data.pop("max_frames", None)
@@ -183,7 +185,7 @@ class LayerParametersTextSegmentationSerializer(serializers.Serializer):
 class LayerParametersRegressionSerializer(
     MinMaxScalerSerializer, LayerParametersSerializer
 ):
-    scaler: LayerScalerRegressionChoice
+    scaler: frontend_choices.LayerScalerRegressionChoice
 
 
 class LayerParametersTimeseriesSerializer(
@@ -194,7 +196,7 @@ class LayerParametersTimeseriesSerializer(
     trend: serializers.BooleanField()
     trend_limit: serializers.CharField(required=False)
     depth: serializers.IntegerField(required=False, min_value=1)
-    scaler: LayerScalerTimeseriesChoice
+    scaler: frontend_choices.LayerScalerTimeseriesChoice
 
     def __init__(self, instance=None, data=None, **kwargs):
         _trend = data.get("trend")
@@ -208,7 +210,9 @@ class LayerParametersTimeseriesSerializer(
 
 
 class LayerParametersObjectDetectionSerializer(LayerParametersSerializer):
-    yolo = serializers.ChoiceField(choices=LayerYoloVersionChoice.items_tuple())
+    yolo = serializers.ChoiceField(
+        choices=frontend_choices.LayerYoloVersionChoice.items_tuple()
+    )
 
 
 class CreateLayerSerializer(serializers.Serializer):
@@ -218,11 +222,15 @@ class CreateLayerSerializer(serializers.Serializer):
 
 
 class CreateLayerInputSerializer(CreateLayerSerializer):
-    type = serializers.ChoiceField(choices=LayerInputTypeChoice.items_tuple())
+    type = serializers.ChoiceField(
+        choices=frontend_choices.LayerInputTypeChoice.items_tuple()
+    )
 
 
 class CreateLayerOutputSerializer(CreateLayerSerializer):
-    type = serializers.ChoiceField(choices=LayerOutputTypeChoice.items_tuple())
+    type = serializers.ChoiceField(
+        choices=frontend_choices.LayerOutputTypeChoice.items_tuple()
+    )
 
 
 class CreateTagSerializer(serializers.Serializer):
@@ -257,8 +265,8 @@ class CreateInfoSerializer(serializers.Serializer):
 
 class CreateColumnProcessingSerializer(serializers.Serializer):
     type = serializers.ChoiceField(
-        choices=ColumnProcessingInputTypeChoice.items_tuple()
-        + ColumnProcessingOutputTypeChoice.items_tuple()
+        choices=frontend_choices.ColumnProcessingInputTypeChoice.items_tuple()
+        + frontend_choices.ColumnProcessingOutputTypeChoice.items_tuple()
     )
     parameters = serializers.DictField()
 

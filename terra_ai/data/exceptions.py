@@ -20,6 +20,7 @@ class ExceptionMessages(str, Enum):
     PartTotal = "%s: Sum of all properties must by 1"
     ListEmpty = "%s: must not be empty"
     FilePathExtension = '%s: File name must have "%s" extension'
+    DirectoryPathExtension = '%s: Directory name must have "%s" extension'
     FileNameExtension = '%s: File name must have "%s" extension'
     Base64Extension = "Incorrect base64 string value"
     ValueNotInList = "%s: Value must be in list %s"
@@ -106,6 +107,16 @@ class FilePathExtensionException(TerraDataException):
             (
                 (args[0] if len(args) else ExceptionMessages.FilePathExtension)
                 % (str(__file_path), str(__extension))
+            )
+        )
+
+
+class DirectoryPathExtensionException(TerraDataException):
+    def __init__(self, __dir_path: Any, __extension: Any, *args):
+        super().__init__(
+            (
+                (args[0] if len(args) else ExceptionMessages.DirectoryPathExtension)
+                % (str(__dir_path), str(__extension))
             )
         )
 

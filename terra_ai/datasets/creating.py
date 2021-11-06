@@ -68,7 +68,6 @@ class CreateDataset(object):
         self.y_cls: list = []
         self.columns = {}
         self.augmentation = {}
-        # self.augmentation = {'object': None, 'data': []}
 
         self.columns_processing = {}
         if creation_data.columns_processing:

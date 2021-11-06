@@ -90,8 +90,8 @@ OutputLayersDefaults = {
 KerasInstructions = {
     "mnist": {
         1: {
-            "1_image": {
-                "cols_names": "1_image",
+            "1_mnist": {
+                "cols_names": "1_mnist",
                 "height": 28,
                 "width": 28,
                 "max_scaler": 1,
@@ -111,8 +111,8 @@ KerasInstructions = {
     },
     "fashion_mnist": {
         1: {
-            "1_image": {
-                "cols_names": "1_image",
+            "1_fashion_mnist": {
+                "cols_names": "1_fashion_mnist",
                 "height": 28,
                 "width": 28,
                 "max_scaler": 1,
@@ -132,8 +132,8 @@ KerasInstructions = {
     },
     "cifar10": {
         1: {
-            "1_image": {
-                "cols_names": "1_image",
+            "1_cifar10": {
+                "cols_names": "1_cifar10",
                 "height": 32,
                 "width": 32,
                 "max_scaler": 1,
@@ -153,8 +153,8 @@ KerasInstructions = {
     },
     "cifar100": {
         1: {
-            "1_image": {
-                "cols_names": "1_image",
+            "1_cifar100": {
+                "cols_names": "1_cifar100",
                 "height": 32,
                 "width": 32,
                 "max_scaler": 1,

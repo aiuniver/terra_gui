@@ -163,6 +163,29 @@ class ModelBaseDetailsData(AliasMixinData):
             self.switch_index(_id_intermediate, source_id)
         return target_id
 
+    def set_dataset_indexes(self, dataset):
+        dataset_model = dataset.model
+
+        for _index, _dataset_layer in enumerate(dataset_model.inputs):
+            self.switch_index(self.inputs[_index].id, _dataset_layer.id)
+        for _index, _dataset_layer in enumerate(dataset_model.outputs):
+            self.switch_index(self.outputs[_index].id, _dataset_layer.id)
+
+    def update_layers(self, dataset):
+        dataset_model = dataset.model
+
+        for index, layer in enumerate(self.inputs):
+            layer_init = dataset_model.inputs.get(layer.id)
+            layer.shape = layer_init.shape
+            layer.task = layer_init.task
+            layer.num_classes = layer_init.num_classes
+
+        for index, layer in enumerate(self.outputs):
+            layer_init = dataset_model.outputs.get(layer.id)
+            layer.shape = layer_init.shape
+            layer.task = layer_init.task
+            layer.num_classes = layer_init.num_classes
+
     def dict(self, **kwargs):
         data = super().dict(**kwargs)
         data.update({"input_shape": self.input_shape})

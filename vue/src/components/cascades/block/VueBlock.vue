@@ -256,7 +256,7 @@ $circleConnectedColor: #569dcf;
     position: absolute;
     top: 0px;
     right: 0px;
-    height: 42px;
+    height: 52px;
     background-color: #294c6f;
     border-radius: 5px;
     cursor: context-menu;
@@ -293,7 +293,7 @@ $circleConnectedColor: #569dcf;
   &__header {
     background: #bfbfbf;
     text-align: center;
-    min-height: 42px;
+    min-height: 52px;
     padding: 0 10px;
     // height: 42px;
     border-radius: 5px;
