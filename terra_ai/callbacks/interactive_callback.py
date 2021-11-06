@@ -4,6 +4,8 @@ import os
 import random
 import re
 import string
+import time
+
 from pathlib import Path
 from typing import Union, Optional
 
@@ -151,7 +153,10 @@ class InteractiveCallback:
         if self.log_history:
             if y_pred is not None:
                 if self.options.data.architecture in self.basic_architecture:
+                    # print('start')
+                    s = time.time()
                     self.y_pred, self.inverse_y_pred = self.callback.get_y_pred(self.y_true, y_pred, self.options)
+                    # print('y_pred', time.time() - s)
                     out = f"{self.interactive_config.intermediate_result.main_output}"
                     self.example_idx = self.callback.prepare_example_idx_to_show(
                         array=self.y_pred.get(out),
@@ -162,14 +167,20 @@ class InteractiveCallback:
                         choice_type=self.interactive_config.intermediate_result.example_choice_type,
                         seed_idx=self.seed_idx[:self.interactive_config.intermediate_result.num_examples]
                     )
+                    # print('example_idx', time.time() - s)
                 if self.options.data.architecture in self.yolo_architecture:
+                    # print('start')
+                    s = time.time()
                     self.raw_y_pred = y_pred
+                    # print('raw_y_pred', time.time() - s)
                     self.y_pred = self.callback.get_y_pred(
                         y_pred=y_pred, options=self.options,
                         sensitivity=self.interactive_config.intermediate_result.sensitivity,
                         threashold=self.interactive_config.intermediate_result.threashold
                     )
+                    # print('y_pred', time.time() - s)
                     self.raw_y_true = y_true
+                    # print('raw_y_true', time.time() - s)
                     self.example_idx, _ = self.callback.prepare_example_idx_to_show(
                         array=self.y_pred,
                         true_array=self.y_true,
@@ -181,6 +192,7 @@ class InteractiveCallback:
                         seed_idx=self.seed_idx,
                         sensitivity=self.interactive_config.intermediate_result.sensitivity,
                     )
+                    # print('example_idx', time.time() - s)
 
                 if on_epoch_end_flag:
                     self.current_epoch = fit_logs.get('epoch')
@@ -224,6 +236,11 @@ class InteractiveCallback:
                             inverse_y_pred=self.inverse_y_pred,
                             inverse_y_true=self.inverse_y_true
                         )
+                    # print('\n self.intermediate_result', self.intermediate_result)
+                    # print('\n self.statistic_result', self.statistic_result)
+                    # print('\n self.balance_data_request', self.callback.balance_data_request(
+                    #     options=self.options, dataset_balance=self.dataset_balance,
+                    #     interactive_config=self.interactive_config))
                 else:
                     self.intermediate_result = self.callback.intermediate_result_request(
                         options=self.options,
@@ -240,6 +257,7 @@ class InteractiveCallback:
                         class_colors=self.class_colors,
                         # raw_y_pred=self.raw_y_pred
                     )
+                    # print('intermediate_result', time.time() - s)
                     if self.options.data.architecture in self.basic_architecture and \
                             self.interactive_config.statistic_data.output_id:
                         self.statistic_result = self.callback.statistic_data_request(
@@ -250,6 +268,7 @@ class InteractiveCallback:
                             inverse_y_pred=self.inverse_y_pred,
                             inverse_y_true=self.inverse_y_true,
                         )
+
                     if self.options.data.architecture in self.yolo_architecture and \
                             self.interactive_config.statistic_data.box_channel:
                         self.statistic_result = self.callback.statistic_data_request(
@@ -260,6 +279,7 @@ class InteractiveCallback:
                             inverse_y_pred=self.inverse_y_pred,
                             inverse_y_true=self.inverse_y_true,
                         )
+                    # print('statistic_result', time.time() - s)
                 self.urgent_predict = False
                 self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
             return {
