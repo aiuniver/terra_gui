@@ -123,6 +123,12 @@ class LayerVideoModeChoice(str, Enum):
     length_and_step = "length_and_step"
 
 
+class LayerImageFrameModeChoice(str, Enum):
+    stretch = "stretch"
+    fit = "fit"
+    cut = "cut"
+
+
 class LayerTypeProcessingClassificationChoice(str, Enum):
     categorical = "categorical"
     ranges = "ranges"
