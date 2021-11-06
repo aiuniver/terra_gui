@@ -369,6 +369,7 @@ class GUINN:
             self.metrics = {}
             self.callbacks = []
             self.history = {}
+            interactive.clear_history()
         gc.collect()
 
     def get_nn(self):
