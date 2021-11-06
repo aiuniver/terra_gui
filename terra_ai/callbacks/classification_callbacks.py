@@ -41,6 +41,13 @@ class BaseClassificationCallback:
             print_error(BaseClassificationCallback().name, method_name, e)
 
     @staticmethod
+    def get_inverse_array(array: dict, options, type="output"):
+        inverse_array = {"train": {}, "val": {}}
+        # for data_type in inverse_array.keys():
+        #     for out in options.data.outputs.keys():
+        return inverse_array
+
+    @staticmethod
     def get_y_pred(y_true, y_pred, options):
         method_name = 'get_y_pred'
         try:

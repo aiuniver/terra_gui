@@ -345,6 +345,23 @@ def print_error(class_name: str, method_name: str, message: Exception):
                  f'\n_________________________________________________\n')
 
 
+def reformat_fit_array(array: dict, train_idx: list = None, options=None):
+    method_name = 'reformat_fit_array'
+    try:
+        reformat_true = {}
+        for data_type in array.keys():
+            reformat_true[data_type] = {}
+            for out in array.get(data_type).keys():
+                if data_type == "train" and train_idx.index(0):
+                    separator = train_idx.index(0)
+                    reformat_true[data_type][out] = np.concatenate(
+                        [array[data_type][out][separator:], array[data_type][out][:separator]], axis=0)
+                else:
+                    reformat_true[data_type][out] = array[data_type][out]
+        return reformat_true
+    except Exception as e:
+        print_error(f"None ({MODULE_NAME})", method_name, e)
+
 def class_metric_list(options):
     method_name = '_class_metric_list'
     try:

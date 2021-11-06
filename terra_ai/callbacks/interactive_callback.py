@@ -14,7 +14,7 @@ from terra_ai.callbacks.time_series_callbacks import TimeseriesCallback
 from terra_ai.callbacks.utils import loss_metric_config, round_loss_metric, fill_graph_plot_data, \
     fill_graph_front_structure, reformat_metrics, prepare_loss_obj, prepare_metric_obj, get_classes_colors, \
     print_error, BASIC_ARCHITECTURE, CLASSIFICATION_ARCHITECTURE, YOLO_ARCHITECTURE, CLASS_ARCHITECTURE, \
-    class_metric_list
+    class_metric_list, reformat_fit_array
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, DatasetGroupChoice, LayerEncodingChoice, \
     LayerInputTypeChoice
 from terra_ai.data.presets.training import Metric
@@ -98,7 +98,7 @@ class InteractiveCallback:
         self.interactive_config: InteractiveData = InteractiveData(**{})
         pass
 
-    def set_attributes(self, dataset: PrepareDataset, metrics: dict, losses: dict, dataset_path: str,
+    def set_attributes(self, dataset: PrepareDataset, dataset_path: str,
                        training_path: str, initial_config: InteractiveData):
 
         self.options = dataset
@@ -110,17 +110,10 @@ class InteractiveCallback:
         if not os.path.exists(self.preset_path):
             os.mkdir(self.preset_path)
         self.interactive_config = initial_config
-        if dataset.data.architecture in BASIC_ARCHITECTURE:
-            self.losses = losses
-            self.metrics = reformat_metrics(metrics)
-            self.loss_obj = prepare_loss_obj(losses)
-            self.metrics_obj = prepare_metric_obj(metrics)
         self.dataset_path = dataset_path
         self.class_colors = get_classes_colors(dataset)
         self.x_val, self.inverse_x_val = self.callback.get_x_array(dataset)
         self.y_true, self.inverse_y_true = self.callback.get_y_true(dataset, dataset_path)
-        if not self.log_history:
-            self._prepare_null_log_history_template()
         self.dataset_balance = self.callback.dataset_balance(
             options=self.options, y_true=self.y_true, preset_path=self.preset_path, class_colors=self.class_colors
         )
@@ -176,12 +169,22 @@ class InteractiveCallback:
     def update_train_progress(self, data: dict):
         self.train_progress = data
 
-    def update_state(self, y_pred, y_true=None, fit_logs=None, current_epoch_time=None,
-                     on_epoch_end_flag=False) -> dict:
+    def update_state(self, arrays: dict = None, fit_logs=None, current_epoch_time=None,
+                     on_epoch_end_flag=False, train_idx: list = None) -> dict:
+        if arrays is None:
+            arrays = {}
         if self.log_history:
-            if y_pred is not None:
+            if arrays:
                 if self.options.data.architecture in BASIC_ARCHITECTURE:
-                    self.y_pred, self.inverse_y_pred = self.callback.get_y_pred(self.y_true, y_pred, self.options)
+                    self.y_true = reformat_fit_array(
+                        array={"train": arrays.get("train_true"), "val": arrays.get("val_true")},
+                        options=self.options, train_idx=train_idx)
+                    self.inverse_y_true = self.callback.get_inverse_array(self.y_true, self.options)
+                    self.y_pred = reformat_fit_array(
+                        array={"train": arrays.get("train_pred"), "val": arrays.get("val_pred")},
+                        options=self.options, train_idx=train_idx)
+                    self.inverse_y_pred = self.callback.get_inverse_array(self.y_pred, self.options)
+                    # self.y_pred, self.inverse_y_pred = self.callback.get_y_pred(self.y_true, y_pred, self.options)
                     out = f"{self.interactive_config.intermediate_result.main_output}"
                     self.example_idx = self.callback.prepare_example_idx_to_show(
                         array=self.y_pred.get(out),
@@ -213,9 +216,9 @@ class InteractiveCallback:
                     )
 
                 if on_epoch_end_flag:
-                    self.current_epoch = fit_logs.get('epoch')
-                    self.current_logs = self._reformat_fit_logs(fit_logs)
-                    self._update_log_history()
+                    self.current_epoch = fit_logs.get('epochs')[-1]
+                    self.log_history = fit_logs
+                    # self._update_log_history()
                     self._update_progress_table(current_epoch_time)
                     if self.interactive_config.intermediate_result.autoupdate:
                         self.intermediate_result = self.callback.intermediate_result_request(
@@ -864,16 +867,16 @@ class InteractiveCallback:
                         'loss': {},
                         'metrics': {}
                     }
+                    loss_name = list(self.log_history.get(out).get('loss').keys())[0]
                     self.progress_table[self.current_epoch]["data"][f"Выходной слой «{out}»"]["loss"] = {
-                        'loss': f"{self.log_history.get(out).get('loss').get(self.losses.get(out)).get('train')[-1]}",
-                        'val_loss': f"{self.log_history.get(out).get('loss').get(self.losses.get(out)).get('val')[-1]}"
+                        'loss': f"{self.log_history.get(out).get('loss').get(loss_name).get('train')[-1]}",
+                        'val_loss': f"{self.log_history.get(out).get('loss').get(loss_name).get('val')[-1]}"
                     }
-                    for metric in self.metrics.get(out):
+                    for metric in self.log_history.get(out).get('metrics').keys():
                         self.progress_table[self.current_epoch]["data"][f"Выходной слой «{out}»"]["metrics"][metric] = \
                             f"{self.log_history.get(out).get('metrics').get(metric).get('train')[-1]}"
                         self.progress_table[self.current_epoch]["data"][f"Выходной слой «{out}»"]["metrics"][
-                            f"val_{metric}"] = \
-                            f"{self.log_history.get(out).get('metrics').get(metric).get('val')[-1]}"
+                            f"val_{metric}"] = f"{self.log_history.get(out).get('metrics').get(metric).get('val')[-1]}"
 
             if self.options.data.architecture in YOLO_ARCHITECTURE:
                 self.progress_table[self.current_epoch] = {
@@ -1097,11 +1100,11 @@ class InteractiveCallback:
                             "mode")
                         if sum(self.log_history.get(f"{metric_graph_config.output_idx}").get(
                                 "progress_state").get("metrics").get(metric_graph_config.show_metric.name).get(
-                                'overfitting')[-self.log_gap:]) >= self.progress_threashold:
+                            'overfitting')[-self.log_gap:]) >= self.progress_threashold:
                             progress_state = 'overfitting'
                         elif sum(self.log_history.get(f"{metric_graph_config.output_idx}").get(
                                 "progress_state").get("metrics").get(metric_graph_config.show_metric.name).get(
-                                'underfitting')[-self.log_gap:]) >= self.progress_threashold:
+                            'underfitting')[-self.log_gap:]) >= self.progress_threashold:
                             progress_state = 'underfitting'
                         else:
                             progress_state = 'normal'
@@ -1184,7 +1187,7 @@ class InteractiveCallback:
                             "mode")
                         if sum(self.log_history.get("output").get("progress_state").get(
                                 "metrics").get(metric_graph_config.show_metric.name).get(
-                                'overfitting')[-self.log_gap:]) >= self.progress_threashold:
+                            'overfitting')[-self.log_gap:]) >= self.progress_threashold:
                             progress_state = 'overfitting'
                         else:
                             progress_state = 'normal'

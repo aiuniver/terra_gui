@@ -566,7 +566,7 @@ class GUINN:
             train_data_idxs = []
             urgent_predict = False
             for epoch in range(current_epoch, params.get('epochs')):
-                print(epoch)
+                callback._time_first_step = time.time()
                 new_batch = True
                 # Iterate over the batches of the dataset.
                 train_steps = 0
@@ -1862,13 +1862,15 @@ class FitCallback(tf.keras.callbacks.Callback):
             # interactive_logs['epoch'] = self.last_epoch
             # current_epoch_time = time.time() - self._time_first_step
             # self._sum_epoch_time += current_epoch_time
-            # train_epoch_data = interactive.update_state(
-            #     fit_logs=interactive_logs,
-            #     y_pred=y_pred,
-            #     y_true=y_true,
-            #     current_epoch_time=current_epoch_time,
-            #     on_epoch_end_flag=True
-            # )
+
+            train_epoch_data = interactive.update_state(
+                fit_logs=self.log_history,
+                arrays={'train_true': train_true, 'train_pred': train_pred, 'val_true': val_true, 'val_pred': val_pred},
+                current_epoch_time=time.time() - self._time_first_step,
+                on_epoch_end_flag=True,
+                train_idx=train_data_idxs
+            )
+
             # self._set_result_data({'train_data': train_epoch_data})
             # progress.pool(
             #     self.progress_name,
