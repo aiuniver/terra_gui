@@ -110,7 +110,8 @@ class CascadeBlock(Cascade):
             cascade(*cascade_input)
 
         self.out = cascade.out
-        return cascade.out
+
+        return self.out
 
 
 class CompleteCascade(Cascade):
