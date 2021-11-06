@@ -22,7 +22,7 @@ class BaseClassificationCallback:
         self.name = 'BaseClassificationCallback'
 
     @staticmethod
-    def get_y_true(options, dataset_path):
+    def get_y_true(options, dataset_path=""):
         method_name = 'get_y_true'
         try:
             y_true = {"train": {}, "val": {}}
