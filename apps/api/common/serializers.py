@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
-from ..datasets import serializers as datasets_serializers
-from ..modeling import serializers as modeling_serializers
+from apps.api.datasets import serializers as datasets_serializers
+from apps.api.modeling import serializers as modeling_serializers
 
 
 class ValidateDatasetModelSerializer(serializers.Serializer):

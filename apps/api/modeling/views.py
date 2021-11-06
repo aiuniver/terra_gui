@@ -1,45 +1,23 @@
-import base64
 import re
-from collections.abc import MutableMapping
-from tempfile import NamedTemporaryFile
+import base64
 
+from tempfile import NamedTemporaryFile
 from transliterate import slugify
 
-from apps.plugins.project import data_path
 from terra_ai.agent import agent_exchange
 from terra_ai.data.modeling.extra import LayerGroupChoice
 from terra_ai.data.modeling.model import ModelDetailsData
-from .serializers import (
-    ModelGetSerializer,
-    UpdateSerializer,
-    PreviewSerializer,
-    CreateSerializer,
-    DatatypeSerializer,
-)
-from .utils import autocrop_image_square
-from ..base import (
-    BaseAPIView,
-    BaseResponseSuccess,
-    BaseResponseErrorFields,
-)
 
+from apps.plugins.project import data_path
 
-def flatten_dict(
-    d: MutableMapping, parent_key: str = "[", sep: str = "]["
-) -> MutableMapping:
-    items = []
-    for k, v in d.items():
-        new_key = f"{parent_key}{k}{sep}" if parent_key else k
-        if isinstance(v, MutableMapping):
-            items.extend(flatten_dict(v, new_key, sep=sep).items())
-        else:
-            items.append((new_key, v))
-    return dict(items)
+from apps.api.base import BaseAPIView, BaseResponseSuccess, BaseResponseErrorFields
+
+from . import serializers, utils
 
 
 class GetAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        serializer = ModelGetSerializer(data=request.data)
+        serializer = serializers.ModelGetSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         model = agent_exchange(
@@ -50,19 +28,14 @@ class GetAPIView(BaseAPIView):
 
 class LoadAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        serializer = ModelGetSerializer(data=request.data)
+        serializer = serializers.ModelGetSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         model = agent_exchange(
             "model_get", value=serializer.validated_data.get("value")
         )
-        request.project.clear_training()
-        reset_dataset = serializer.validated_data.get("reset_dataset")
-        if reset_dataset:
-            request.project.set_dataset()
-        else:
-            request.project.set_model(model)
-        return BaseResponseSuccess(request.project.model.native(), save_project=True)
+        request.project.set_model(model, serializer.validated_data.get("reset_dataset"))
+        return BaseResponseSuccess(request.project.model.native())
 
 
 class InfoAPIView(BaseAPIView):
@@ -75,12 +48,12 @@ class InfoAPIView(BaseAPIView):
 class ClearAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         request.project.clear_model()
-        return BaseResponseSuccess(save_project=True)
+        return BaseResponseSuccess()
 
 
 class UpdateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        serializer = UpdateSerializer(data=request.data)
+        serializer = serializers.UpdateSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         model = request.project.model
@@ -107,15 +80,7 @@ class UpdateAPIView(BaseAPIView):
         model_data.update(data)
         model = agent_exchange("model_update", model=model_data)
         request.project.set_model(model)
-        return BaseResponseSuccess(save_project=True)
-        # except ValidationError as error:
-        #     answer = BaseResponseErrorFields(error)
-        #     buff_error = flatten_dict(answer.data["error"])
-        #     error = dict(
-        #         (key[: len(key) - 1], value) for (key, value) in buff_error.items()
-        #     )
-        #     answer.data["error"] = error
-        #     return answer
+        return BaseResponseSuccess()
 
 
 class ValidateAPIView(BaseAPIView):
@@ -132,17 +97,18 @@ class ValidateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         self._reset_layers_shape(request.project.model)
         errors = agent_exchange("model_validate", model=request.project.model)
-        return BaseResponseSuccess(errors, save_project=True)
+        request.project.save()
+        return BaseResponseSuccess(errors)
 
 
 class PreviewAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        serializer = PreviewSerializer(data=request.data)
+        serializer = serializers.PreviewSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         filepath = NamedTemporaryFile(suffix=".png")  # Add for Win ,delete=False
         filepath.write(base64.b64decode(serializer.validated_data.get("preview")))
-        autocrop_image_square(filepath.name, min_size=600)
+        utils.autocrop_image_square(filepath.name, min_size=600)
         with open(filepath.name, "rb") as filepath_ref:
             content = filepath_ref.read()
             return BaseResponseSuccess(base64.b64encode(content))
@@ -150,7 +116,7 @@ class PreviewAPIView(BaseAPIView):
 
 class CreateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        serializer = CreateSerializer(data=request.data)
+        serializer = serializers.CreateSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         model_data = request.project.model.native()
@@ -184,12 +150,14 @@ class DeleteAPIView(BaseAPIView):
 
 class DatatypeAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        serializer = DatatypeSerializer(data=request.data)
+        serializer = serializers.DatatypeSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         source_id = serializer.validated_data.get("source")
         target_id = serializer.validated_data.get("target")
         if source_id != target_id:
-            request.project.model.switch_index(source_id=source_id, target_id=target_id)
-            request.project.update_model_layers()
+            request.project.model.reindex(source_id=source_id, target_id=target_id)
+            if request.project.dataset:
+                request.project.model.update_layers(request.project.dataset)
+            request.project.save()
         return BaseResponseSuccess(request.project.model.native())
