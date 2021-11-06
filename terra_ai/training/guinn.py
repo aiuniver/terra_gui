@@ -797,8 +797,7 @@ class FitCallback(keras.callbacks.Callback):
     def _deploy_predict(self, presets_predict):
         result = CreateArray().postprocess_results(array=presets_predict,
                                                    options=self.dataset,
-                                                   save_path=os.path.join(self.model_path,
-                                                                          "deploy_presets"),
+                                                   save_path=str(self.model_path),
                                                    dataset_path=str(self.dataset_path))
         deploy_presets = []
         if result:
