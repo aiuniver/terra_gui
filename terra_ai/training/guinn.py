@@ -517,7 +517,7 @@ class GUINN:
         method_name = 'train_base_model'
         try:
             @tf.function
-            def train_step(x_batch, y_batch, losses, train_model, set_optimizer):
+            def train_step(x_batch, y_batch, losses: dict, train_model: Model, set_optimizer):
                 """
                 losses = {'2': loss_fn}
                 """
@@ -534,37 +534,39 @@ class GUINN:
                             total_loss = tf.add(loss_fn(y_true_[i], logits_[i]), total_loss)
                 grads = tape.gradient(total_loss, model.trainable_weights)
                 set_optimizer.apply_gradients(zip(grads, model.trainable_weights))
-                return y_true_[0] if not isinstance(logits_, list) else y_true_, logits_
+                return [logits_] if not isinstance(logits_, list) else logits_, y_true_
 
-            def test_step(options: PrepareDataset, parameters: dict, model):
-                test_pred = None
-                test_true = None
+            def test_step(options: PrepareDataset, parameters: dict, train_model: Model, outputs: list):
+                test_pred = {}
+                test_true = {}
                 for x_batch_val, y_batch_val in options.dataset.get('val').batch(
                         parameters.get('batch'), drop_remainder=False):
-                    test_logits = model(x_batch_val, training=False).numpy()
-                    true_array = list(y_batch_val.values())[0].numpy()
-                    if test_true is None:
-                        test_pred = test_logits
-                        test_true = true_array
-                    # elif first_epoch:
-                    #     test_pred = np.concatenate([test_pred, test_logits], axis=0)
-                    #     test_true = np.concatenate([test_true, true_array], axis=0)
+                    test_logits = train_model(x_batch_val, training=False)
+                    true_array = list(y_batch_val.values())
+                    test_logits = test_logits if isinstance(test_logits, list) else [test_logits]
+                    if not test_true:
+                        for j, outp in enumerate(outputs):
+                            test_pred[f"{outp}"] = test_logits[j].numpy()
+                            test_true[f"{outp}"] = true_array[j].numpy()
                     else:
-                        test_pred = np.concatenate([test_pred, test_logits], axis=0)
-                        test_true = np.concatenate([test_true, true_array], axis=0)
+                        for j, outp in enumerate(outputs):
+                            test_pred[f"{outp}"] = np.concatenate(
+                                [test_pred[f"{outp}"], test_logits[j].numpy()], axis=0)
+                            test_true[f"{outp}"] = np.concatenate([test_true[f"{outp}"], true_array[j].numpy()], axis=0)
                 return test_pred, test_true
 
             current_epoch = 0
             # acc_metric = BalancedRecall()
             # model = self.model
-            train_pred = None
-            train_true = None
+            train_pred = {}
+            train_true = {}
             optimizer = self.set_optimizer(params=params)
             loss = self._prepare_loss_dict(params=params)
             first_epoch = True
             train_data_idxs = []
             urgent_predict = False
             for epoch in range(current_epoch, params.get('epochs')):
+                print(epoch)
                 new_batch = True
                 # Iterate over the batches of the dataset.
                 train_steps = 0
@@ -574,28 +576,38 @@ class GUINN:
                         x_batch=x_batch_train, y_batch=y_batch_train, train_model=model,
                         losses=loss, set_optimizer=optimizer
                     )
-                    if train_true is None:
-                        train_pred = logits.numpy()
-                        train_true = y_true.numpy()
-                        train_data_idxs = list(range(y_true.shape[0]))
+                    if not train_true:
+                        # print(11, dataset.data.outputs.keys())
+                        for i, out in enumerate(dataset.data.outputs.keys()):
+                            train_pred[f"{out}"] = logits[i].numpy()
+                            train_true[f"{out}"] = y_true[i].numpy()
+                        train_data_idxs = list(range(y_true[0].shape[0]))
                         # print('train_true is None: data_idxs', data_idxs[-1])
                     elif first_epoch:
-                        train_pred = np.concatenate([train_pred, logits.numpy()], axis=0)
-                        train_true = np.concatenate([train_true, y_true.numpy()], axis=0)
-                        train_data_idxs.extend(list(range(train_data_idxs[-1] + 1,
-                                                          train_data_idxs[-1] + 1 + y_true.shape[0])))
+                        for i, out in enumerate(dataset.data.outputs.keys()):
+                            train_pred[f"{out}"] = np.concatenate([train_pred[f"{out}"], logits[i].numpy()], axis=0)
+                            train_true[f"{out}"] = np.concatenate([train_true[f"{out}"], y_true[i].numpy()], axis=0)
+                        train_data_idxs.extend(list(range(
+                            train_data_idxs[-1] + 1, train_data_idxs[-1] + 1 + y_true[0].shape[0])))
                     else:
-                        train_pred = np.concatenate([train_pred[logits.shape[0]:], logits.numpy()], axis=0)
-                        train_true = np.concatenate([train_true[y_true.shape[0]:], y_true.numpy()], axis=0)
+                        for i, out in enumerate(dataset.data.outputs.keys()):
+                            train_pred[f"{out}"] = np.concatenate(
+                                [train_pred[f"{out}"][logits[i].shape[0]:], logits[i].numpy()], axis=0)
+                            train_true[f"{out}"] = np.concatenate(
+                                [train_true[f"{out}"][y_true[i].shape[0]:], y_true[i].numpy()], axis=0)
+
                         if new_batch:
-                            train_data_idxs = train_data_idxs[y_true.shape[0]:]
-                            train_data_idxs.extend(list(range(y_true.shape[0])))
+                            train_data_idxs = train_data_idxs[y_true[0].shape[0]:]
+                            train_data_idxs.extend(list(range(y_true[0].shape[0])))
                         else:
-                            train_data_idxs = train_data_idxs[y_true.shape[0]:]
-                            train_data_idxs.extend(list(range(train_data_idxs[-1] + 1,
-                                                              train_data_idxs[-1] + 1 + y_true.shape[0])))
+                            train_data_idxs = train_data_idxs[y_true[0].shape[0]:]
+                            train_data_idxs.extend(list(range(
+                                train_data_idxs[-1] + 1, train_data_idxs[-1] + 1 + y_true[0].shape[0])))
                         if urgent_predict:
-                            val_pred, val_true = test_step(dataset, params, model)
+                            val_pred, val_true = test_step(
+                                options=dataset, parameters=params, train_model=model,
+                                outputs=list(dataset.data.outputs.keys())
+                            )
                             # callback.current_basic_logs(
                             #     epoch=epoch + 1, train_y_true=train_true, train_y_pred=train_pred,
                             #     val_y_true=val_true, val_y_pred=val_pred, train_idx=train_data_idxs
@@ -604,28 +616,27 @@ class GUINN:
                     new_batch = False
 
                 # Run a validation loop at the end of each epoch.
-                val_pred, val_true = test_step(dataset, params, model)
+                val_pred, val_true = test_step(options=dataset, parameters=params, train_model=model,
+                                               outputs=list(dataset.data.outputs.keys()))
                 callback.on_epoch_end(
-                    epoch=epoch+1, train_true=train_true, train_pred=train_pred,
+                    epoch=epoch + 1, train_true=train_true, train_pred=train_pred,
                     val_true=val_true, val_pred=val_pred, train_data_idxs=train_data_idxs
                 )
                 # callback._update_log_history()
                 print(f"\nEpoch {callback.current_logs.get('epochs')}:\n"
                       f"\nlog_history: {callback.log_history.get('epochs')} {callback.log_history.get('2').get('metrics')}\n"
-                #       f" \nloss={callback.current_logs.get('2').get('loss')}\n"
-                #       f" \nmetrics={callback.current_logs.get('2').get('metrics')}\n"
-                #       f" \nclass_loss={callback.current_logs.get('2').get('class_loss')}\n"
-                #       f" \nclass_metrics={callback.current_logs.get('2').get('class_metrics')}"
-                )
+                      #       f" \nloss={callback.current_logs.get('2').get('loss')}\n"
+                      #       f" \nmetrics={callback.current_logs.get('2').get('metrics')}\n"
+                      #       f" \nclass_loss={callback.current_logs.get('2').get('class_loss')}\n"
+                      #       f" \nclass_metrics={callback.current_logs.get('2').get('class_metrics')}"
+                      )
                 # print(f"\nEpoch {epoch + 1}: train_acc={train_acc}, val_acc={val_acc}")
                 best_path = callback.save_best_weights()
                 if best_path:
                     model.save_weights(best_path)
-                    print(f"\nEpoch {epoch+1}")
+                    print(f"\nEpoch {epoch + 1}")
                     print(f"Best weights was saved in directory {best_path}")
-
                 first_epoch = False
-
         except Exception as e:
             print_error(GUINN().name, method_name, e)
 
@@ -760,7 +771,7 @@ class FitCallback(tf.keras.callbacks.Callback):
         self.checkpoint_config = params.get('architecture').get('parameters').get('checkpoint')
         self.checkpoint_mode = self._get_checkpoint_mode()  # min max
         self.num_outputs = len(self.dataset.data.outputs.keys())
-        self.metric_checkpoint = self.checkpoint_config.get('metric_name') # "val_mAP50" if self.is_yolo else "loss"
+        self.metric_checkpoint = self.checkpoint_config.get('metric_name')  # "val_mAP50" if self.is_yolo else "loss"
         self.class_outputs = class_metric_list(self.dataset)
         self.y_true, _ = BaseClassificationCallback().get_y_true(self.dataset)
         self.class_idx = BaseClassificationCallback().prepare_class_idx(self.y_true, self.dataset)
@@ -777,7 +788,6 @@ class FitCallback(tf.keras.callbacks.Callback):
         self.samples_val = []
         self.samples_target_train = []
         self.samples_target_val = []
-
 
     @staticmethod
     def _prepare_log_history_template(options: PrepareDataset, params: dict):
@@ -863,7 +873,8 @@ class FitCallback(tf.keras.callbacks.Callback):
         except Exception as e:
             print_error('FitCallback', method_name, e)
 
-    def current_basic_logs(self, epoch, train_y_true, train_y_pred, val_y_true, val_y_pred, train_idx):
+    def current_basic_logs(self, epoch: int, train_y_true: dict, train_y_pred: dict,
+                           val_y_true: dict, val_y_pred: dict, train_idx: list):
         method_name = 'current_basic_logs'
         try:
             self.current_logs = {"epochs": epoch}
@@ -881,8 +892,8 @@ class FitCallback(tf.keras.callbacks.Callback):
                 loss_fn = getattr(
                     importlib.import_module(loss_metric_config.get("loss").get(loss_name, {}).get('module')), loss_name
                 )
-                train_loss = self._get_loss_calculation(loss_fn, out, train_y_true, train_y_pred)
-                val_loss = self._get_loss_calculation(loss_fn, out, val_y_true, val_y_pred)
+                train_loss = self._get_loss_calculation(loss_fn, out, train_y_true.get(out), train_y_pred.get(out))
+                val_loss = self._get_loss_calculation(loss_fn, out, val_y_true.get(out), val_y_pred.get(out))
                 self.current_logs[out]["loss"][output_layer.get("loss")] = {"train": train_loss, "val": val_loss}
                 if self.class_outputs.get(output_layer['id']):
                     self.current_logs[out]["class_loss"][output_layer.get("loss")] = {}
@@ -893,13 +904,13 @@ class FitCallback(tf.keras.callbacks.Callback):
                             # print(train_y_true[update_cls['train'][out][cls], ...])
                             train_class_loss = self._get_loss_calculation(
                                 loss_obj=loss_fn, out=out,
-                                y_true=train_y_true[update_cls['train'][out][cls], ...],
-                                y_pred=train_y_pred[update_cls['train'][out][cls], ...])
+                                y_true=train_y_true.get(out)[update_cls['train'][out][cls], ...],
+                                y_pred=train_y_pred.get(out)[update_cls['train'][out][cls], ...])
                             # print('train_class_loss', train_class_loss)
                             val_class_loss = self._get_loss_calculation(
                                 loss_obj=loss_fn, out=out,
-                                y_true=val_y_true[update_cls['val'][out][cls], ...],
-                                y_pred=val_y_pred[update_cls['val'][out][cls], ...])
+                                y_true=val_y_true.get(out)[update_cls['val'][out][cls], ...],
+                                y_pred=val_y_pred.get(out)[update_cls['val'][out][cls], ...])
                             # print('val_class_loss', val_class_loss)
                             self.current_logs[out]["class_loss"][output_layer.get("loss")][cls] = \
                                 {"train": train_class_loss, "val": val_class_loss}
@@ -907,10 +918,10 @@ class FitCallback(tf.keras.callbacks.Callback):
                         for i, cls in enumerate(name_classes):
                             train_class_loss = self._get_loss_calculation(
                                 loss_obj=loss_fn, out=out, class_idx=i, show_class=True,
-                                y_true=train_y_true, y_pred=train_y_pred)
+                                y_true=train_y_true.get(out), y_pred=train_y_pred.get(out))
                             val_class_loss = self._get_loss_calculation(
                                 loss_obj=loss_fn, out=out, class_idx=i, show_class=True,
-                                y_true=val_y_true, y_pred=val_y_pred)
+                                y_true=val_y_true.get(out), y_pred=val_y_pred.get(out))
                             self.current_logs[out]["class_loss"][output_layer.get("loss")][cls] = \
                                 {"train": train_class_loss, "val": val_class_loss}
 
@@ -920,33 +931,35 @@ class FitCallback(tf.keras.callbacks.Callback):
                         importlib.import_module(loss_metric_config.get("metric").get(metric_name, {}).get('module')),
                         metric_name
                     )
-                    train_metric = self._get_metric_calculation(metric_name, metric_fn, out, train_y_true, train_y_pred)
-                    val_metric = self._get_metric_calculation(metric_name, metric_fn, out, val_y_true, val_y_pred)
+                    train_metric = self._get_metric_calculation(
+                        metric_name, metric_fn, out, train_y_true.get(out), train_y_pred.get(out))
+                    val_metric = self._get_metric_calculation(
+                        metric_name, metric_fn, out, val_y_true.get(out), val_y_pred.get(out))
                     self.current_logs[out]["metrics"][metric_name] = {"train": train_metric, "val": val_metric}
                     self.current_logs[out]["class_metrics"][metric_name] = {}
                     if self.class_outputs.get(output_layer['id']):
                         if self.dataset.data.architecture in CLASSIFICATION_ARCHITECTURE and \
-                            metric_name not in [Metric.BalancedRecall, Metric.BalancedPrecision,
-                                                Metric.BalancedFScore, Metric.FScore]:
+                                metric_name not in [Metric.BalancedRecall, Metric.BalancedPrecision,
+                                                    Metric.BalancedFScore, Metric.FScore]:
                             for i, cls in enumerate(name_classes):
                                 train_class_metric = self._get_metric_calculation(
                                     metric_name=metric_name, metric_obj=metric_fn, out=out,
-                                    y_true=train_y_true[update_cls['train'][out][cls], ...],
-                                    y_pred=train_y_pred[update_cls['train'][out][cls], ...])
+                                    y_true=train_y_true.get(out)[update_cls['train'][out][cls], ...],
+                                    y_pred=train_y_pred.get(out)[update_cls['train'][out][cls], ...])
                                 val_class_metric = self._get_metric_calculation(
                                     metric_name=metric_name, metric_obj=metric_fn, out=out,
-                                    y_true=val_y_true[update_cls['val'][out][cls], ...],
-                                    y_pred=val_y_pred[update_cls['val'][out][cls], ...])
+                                    y_true=val_y_true.get(out)[update_cls['val'][out][cls], ...],
+                                    y_pred=val_y_pred.get(out)[update_cls['val'][out][cls], ...])
                                 self.current_logs[out]["class_metrics"][metric_name][cls] = \
                                     {"train": train_class_metric, "val": val_class_metric}
                         else:
                             for i, cls in enumerate(name_classes):
                                 train_class_metric = self._get_metric_calculation(
                                     metric_name=metric_name, metric_obj=metric_fn, out=out, show_class=True,
-                                    y_true=train_y_true, y_pred=train_y_pred, class_idx=i)
+                                    y_true=train_y_true.get(out), y_pred=train_y_pred.get(out), class_idx=i)
                                 val_class_metric = self._get_metric_calculation(
                                     metric_name=metric_name, metric_obj=metric_fn, out=out, show_class=True,
-                                    y_true=val_y_true, y_pred=val_y_pred, class_idx=i)
+                                    y_true=val_y_true.get(out), y_pred=val_y_pred.get(out), class_idx=i)
                                 self.current_logs[out]["class_metrics"][metric_name][cls] = \
                                     {"train": train_class_metric, "val": val_class_metric}
         except Exception as e:
@@ -1061,11 +1074,11 @@ class FitCallback(tf.keras.callbacks.Callback):
             encoding = self.dataset.data.outputs.get(int(out)).encoding
             num_classes = self.dataset.data.outputs.get(int(out)).num_classes
             if show_class and (encoding == LayerEncodingChoice.ohe or encoding == LayerEncodingChoice.multi):
-                true_array = y_true[..., class_idx:class_idx+1]
-                pred_array = y_pred[..., class_idx:class_idx+1]
+                true_array = y_true[..., class_idx:class_idx + 1]
+                pred_array = y_pred[..., class_idx:class_idx + 1]
             elif show_class:
-                true_array = to_categorical(y_true, num_classes)[..., class_idx:class_idx+1]
-                pred_array = y_pred[..., class_idx:class_idx+1]
+                true_array = to_categorical(y_true, num_classes)[..., class_idx:class_idx + 1]
+                pred_array = y_pred[..., class_idx:class_idx + 1]
             else:
                 true_array = y_true
                 pred_array = y_pred
@@ -1095,15 +1108,15 @@ class FitCallback(tf.keras.callbacks.Callback):
                 #     m.encoding = 'multi' if encoding == 'multi' else None
                 #     m.update_state(y_true, y_pred)
                 else:
-                    m.update_state(y_true[..., class_idx:class_idx+1], y_pred[..., class_idx:class_idx+1])
+                    m.update_state(y_true[..., class_idx:class_idx + 1], y_pred[..., class_idx:class_idx + 1])
             elif show_class:
                 if metric_name == Metric.Accuracy:
                     true_array = y_true[..., class_idx]
                     pred_array = to_categorical(np.argmax(y_pred, axis=-1), num_classes)[..., class_idx]
                     m.update_state(true_array, pred_array)
                 else:
-                    true_array = to_categorical(y_true, num_classes)[..., class_idx:class_idx+1]
-                    pred_array = y_pred[..., class_idx:class_idx+1]
+                    true_array = to_categorical(y_true, num_classes)[..., class_idx:class_idx + 1]
+                    pred_array = y_pred[..., class_idx:class_idx + 1]
                     m.update_state(true_array, pred_array)
             else:
                 m.update_state(y_true, y_pred)
