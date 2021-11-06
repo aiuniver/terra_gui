@@ -133,110 +133,6 @@ class Voc:
     """
 
     @staticmethod
-    def generate(data):
-        def xml_indent(elem, level=0):
-            i = "\n" + level * "\t"
-            if len(elem):
-                if not elem.text or not elem.text.strip():
-                    elem.text = i + "\t"
-                if not elem.tail or not elem.tail.strip():
-                    elem.tail = i
-                for elem in elem:
-                    xml_indent(elem, level + 1)
-                if not elem.tail or not elem.tail.strip():
-                    elem.tail = i
-            else:
-                if level and (not elem.tail or not elem.tail.strip()):
-                    elem.tail = i
-
-        xml_list = {}
-
-        for key in data:
-            element = data[key]
-
-            xml_annotation = Element("annotation")
-
-            xml_size = Element("size")
-            xml_width = Element("width")
-            xml_width.text = element["size"]["width"]
-            xml_size.append(xml_width)
-
-            xml_height = Element("height")
-            xml_height.text = element["size"]["height"]
-            xml_size.append(xml_height)
-
-            xml_depth = Element("depth")
-            xml_depth.text = element["size"]["depth"]
-            xml_size.append(xml_depth)
-
-            xml_annotation.append(xml_size)
-
-            xml_segmented = Element("segmented")
-            xml_segmented.text = "0"
-
-            xml_annotation.append(xml_segmented)
-
-            if int(element["objects"]["num_obj"]) < 1:
-                return False, "number of Object less than 1"
-
-            for i in range(0, int(element["objects"]["num_obj"])):
-                xml_object = Element("object")
-                obj_name = Element("name")
-                obj_name.text = element["objects"][str(i)]["name"]
-                xml_object.append(obj_name)
-
-                obj_pose = Element("pose")
-                obj_pose.text = "Unspecified"
-                xml_object.append(obj_pose)
-
-                obj_truncated = Element("truncated")
-                obj_truncated.text = "0"
-                xml_object.append(obj_truncated)
-
-                obj_difficult = Element("difficult")
-                obj_difficult.text = "0"
-                xml_object.append(obj_difficult)
-
-                xml_bndbox = Element("bndbox")
-
-                obj_xmin = Element("xmin")
-                obj_xmin.text = element["objects"][str(
-                    i)]["bndbox"]["xmin"]
-                xml_bndbox.append(obj_xmin)
-
-                obj_ymin = Element("ymin")
-                obj_ymin.text = element["objects"][str(
-                    i)]["bndbox"]["ymin"]
-                xml_bndbox.append(obj_ymin)
-
-                obj_xmax = Element("xmax")
-                obj_xmax.text = element["objects"][str(
-                    i)]["bndbox"]["xmax"]
-                xml_bndbox.append(obj_xmax)
-
-                obj_ymax = Element("ymax")
-                obj_ymax.text = element["objects"][str(
-                    i)]["bndbox"]["ymax"]
-                xml_bndbox.append(obj_ymax)
-                xml_object.append(xml_bndbox)
-
-                xml_annotation.append(xml_object)
-
-            xml_indent(xml_annotation)
-
-            xml_list[key.split(".")[0]] = xml_annotation
-        return xml_list
-
-    @staticmethod
-    def save(xml_list, path):
-        path = os.path.abspath(path)
-
-        for key in xml_list:
-            xml = xml_list[key]
-            filepath = os.path.join(path, "".join([key, ".xml"]))
-            ElementTree(xml).write(filepath)
-
-    @staticmethod
     def parse(paths_list, tmp_lst):
         data = {}
         for filename in paths_list:
@@ -288,13 +184,10 @@ class Voc:
 
         return data, {}
 
-    @staticmethod
-    def generate_save(data):
-        pass
-
 
 class Coco:
     """ Handler Class for COCO Format """
+
     @staticmethod
     def parse(paths_list, tmp_lst):
         json_path = paths_list[0]
@@ -366,10 +259,6 @@ class Coco:
                 }
         return data, cls_hierarchy
 
-    @staticmethod
-    def generate_save(data):
-        pass
-
 
 class Udacity:
     """
@@ -399,7 +288,6 @@ class Udacity:
                 state = raw_line[7].split('"')[1]
                 cls = cls + state
 
-
             bndbox = {
                 "xmin": xmin,
                 "ymin": ymin,
@@ -424,10 +312,6 @@ class Udacity:
 
                 data[filename] = {"objects": obj}
         return data, {}
-
-    @staticmethod
-    def generate_save(data):
-        pass
 
 
 class Kitti:
@@ -477,10 +361,6 @@ class Kitti:
             data[filename] = {"objects": obj}
         return data, {}
 
-    @staticmethod
-    def generate_save(data):
-        pass
-
 
 class Yolo_terra:
     """
@@ -525,11 +405,6 @@ class Yolo_terra:
 
             result[key] = contents[:-1]
         return result
-
-    def parse(self):
-        data = {}
-        return data
-        pass
 
 
 class Yolov1:
@@ -618,10 +493,6 @@ class Yolov1:
             }
         return data, {}
 
-    @staticmethod
-    def generate_save(data):
-        pass
-
 
 def resize_bboxes(coords, orig_x, orig_y):
     x_scale = orig_x / 416
@@ -703,3 +574,33 @@ def get_od_names(creation_data):
                 names_list = sorted(set(names_list))
 
     return names_list
+
+
+def get_annotation_type_autosearch(path: Path) -> LayerODDatasetTypeChoice:
+    dir_names = []
+    file_names = []
+
+    for filename in os.listdir(path):
+        if os.path.isdir(os.path.join(path, filename)):
+            dir_names.append(filename)
+        elif filename.endswith('.csv'):
+            return LayerODDatasetTypeChoice.Udacity
+        else:
+            file_names.append(filename)
+
+    if len(dir_names) == 1:
+        return LayerODDatasetTypeChoice.Yolov1
+
+    for dir_name in dir_names:
+        if os.listdir(os.path.join(path, dir_name))[0].endswith('.json'):
+            return LayerODDatasetTypeChoice.Coco
+        elif os.listdir(os.path.join(path, dir_name))[0].endswith('.xml'):
+            return LayerODDatasetTypeChoice.Voc
+        elif os.listdir(os.path.join(path, dir_name))[0].endswith('.txt') and 'obj.names' not in file_names:
+            return LayerODDatasetTypeChoice.Kitti
+        elif os.listdir(os.path.join(path, dir_name))[0].endswith('.txt') and 'obj.names' in file_names:
+            return LayerODDatasetTypeChoice.Yolo_terra
+        else:
+            annotation_type = 'Не определено'
+
+    return annotation_type
