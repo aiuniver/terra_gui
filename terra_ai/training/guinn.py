@@ -162,7 +162,7 @@ class GUINN:
         except Exception as e:
             print_error(GUINN().name, method_name, e)
 
-    def _set_callbacks(self, dataset: PrepareDataset, dataset_data: DatasetData,
+    def _set_callbacks(self, dataset: PrepareDataset,
                        batch_size: int, epochs: int, dataset_path: Path,
                        checkpoint: dict, save_model_path: Path,
                        state: StateData, deploy: DeployData, initial_model=None) -> None:
@@ -171,7 +171,7 @@ class GUINN:
             progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков...'})
             retrain_epochs = self.sum_epoch if state.status == "addtrain" else self.epochs
 
-            callback = FitCallback(dataset=dataset, dataset_data=dataset_data, checkpoint_config=checkpoint,
+            callback = FitCallback(dataset=dataset, checkpoint_config=checkpoint,
                                    batch_size=batch_size, epochs=epochs, retrain_epochs=retrain_epochs,
                                    training_path=save_model_path, model_name=self.nn_name,
                                    dataset_path=dataset_path, deploy_type=self.deploy_type,
@@ -422,13 +422,13 @@ class GUINN:
                 model_yolo = CustomModelYolo(yolo, self.dataset, self.dataset.data.outputs.get(2).classes_names,
                                              self.epochs, self.batch_size, warmup_epoch=warmup_epoch,
                                              lr_init=lr_init, lr_end=lr_end, iou_thresh=iou_thresh)
-                model_yolo.compile(optimizer=self.optimizer,
+                model_yolo.compile(optimizer=self.set_optimizer(self.params),
                                    loss=compute_loss)
-            else:
-                self.model.compile(loss=self.loss,
-                                   optimizer=self.optimizer,
-                                   metrics=self.metrics
-                                   )
+            # else:
+            #     self.model.compile(loss=self.loss,
+            #                        optimizer=self.optimizer,
+            #                        metrics=self.metrics
+            #                        )
             progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели выполнена'})
             self._set_callbacks(dataset=dataset, dataset_data=dataset_data, batch_size=params.base.batch,
                                 epochs=params.base.epochs, save_model_path=save_model_path, dataset_path=dataset_path,
@@ -583,7 +583,7 @@ class GUINN:
                 # Run a validation loop at the end of each epoch.
                 val_pred = None
                 val_true = None
-                start = time.time()
+                # start = time.time()
                 # print(4)
                 for x_batch_val, y_batch_val in dataset.dataset.get('val').batch(params.get('batch'),
                                                                                  drop_remainder=False):
