@@ -4,7 +4,7 @@ from terra_ai.data.training.extra import StateStatusChoice
 
 from apps.plugins.frontend import defaults_data
 
-from apps.api.base import BaseAPIView, BaseResponseSuccess
+from apps.api.base import BaseAPIView, BaseResponseSuccess, BaseResponseErrorFields
 
 from . import serializers
 
@@ -91,6 +91,10 @@ class ProgressAPIView(BaseAPIView):
 
 class SaveAPIView(BaseAPIView):
     def post(self, request, **kwargs):
+        serializer = serializers.SaveSerializer(data=request.data)
+        if not serializer.is_valid():
+            return BaseResponseErrorFields(serializer.errors)
+        request.project.training.save(**serializer.validated_data)
         agent_exchange("training_save")
         return BaseResponseSuccess()
 

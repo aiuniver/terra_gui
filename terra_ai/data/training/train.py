@@ -308,6 +308,12 @@ class TrainingDetailsData(BaseMixinData):
         kwargs.update({"exclude": {"model"}})
         return super().dict(**kwargs)
 
+    def save(self, name: str, overwrite: bool = False):
+        if self.name == DEFAULT_TRAINING_PATH_NAME:
+            pass
+        print(self.name)
+        print(name)
+
     def rename(self, value: str):
         source = self.path
         self.name = value
