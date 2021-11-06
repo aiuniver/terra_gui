@@ -1,22 +1,22 @@
-import colorsys
-import copy
-import math
-import string
-from typing import Optional
-
-import matplotlib
-from PIL import Image, UnidentifiedImageError, ImageFont, ImageDraw
-from matplotlib import pyplot as plt
-from pandas import DataFrame
-from tensorflow.python.keras.preprocessing import image
-from tensorflow.python.keras.utils.np_utils import to_categorical
-
-from terra_ai.callbacks.classification_callbacks import ImageClassificationCallback, TextClassificationCallback, \
-    DataframeClassificationCallback, AudioClassificationCallback, VideoClassificationCallback, TimeseriesTrendCallback
-from terra_ai.callbacks.object_detection_callbacks import YoloV3Callback, YoloV4Callback
-from terra_ai.callbacks.regression_callbacks import DataframeRegressionCallback
-from terra_ai.callbacks.segmentation_callbacks import TextSegmentationCallback  #, ImageSegmentationCallback
-from terra_ai.callbacks.time_series_callbacks import TimeseriesCallback
+# import colorsys
+# import copy
+# import math
+# import string
+# from typing import Optional
+#
+# import matplotlib
+# from PIL import Image, UnidentifiedImageError, ImageFont, ImageDraw
+# from matplotlib import pyplot as plt
+# from pandas import DataFrame
+# from tensorflow.python.keras.preprocessing import image
+# from tensorflow.python.keras.utils.np_utils import to_categorical
+#
+# from terra_ai.callbacks.classification_callbacks import ImageClassificationCallback, TextClassificationCallback, \
+#     DataframeClassificationCallback, AudioClassificationCallback, VideoClassificationCallback, TimeseriesTrendCallback
+# from terra_ai.callbacks.object_detection_callbacks import YoloV3Callback, YoloV4Callback
+# from terra_ai.callbacks.regression_callbacks import DataframeRegressionCallback
+# from terra_ai.callbacks.segmentation_callbacks import TextSegmentationCallback  #, ImageSegmentationCallback
+# from terra_ai.callbacks.time_series_callbacks import TimeseriesCallback
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice, ArchitectureChoice
 from terra_ai.datasets.utils import get_yolo_anchors, resize_bboxes, Yolo_terra, Voc, Coco, Udacity, Kitti, Yolov1
 from terra_ai.data.datasets.dataset import DatasetOutputsData, DatasetData
