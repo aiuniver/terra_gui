@@ -166,8 +166,8 @@ class InstanceNormalization(Layer):
 class CustomUNETBlock(Model):
     """Unet block layer """
 
-    def __init__(self, filters=32, activation='relu'):
-        super(CustomUNETBlock, self).__init__(name='')
+    def __init__(self, filters=32, activation='relu', **kwargs):
+        super(CustomUNETBlock, self).__init__(**kwargs)
         self.filters = filters
         self.activation = activation
         self.x_1 = layers.Conv2D(filters=self.filters, kernel_size=(3, 3), strides=(1, 1), padding='same',
@@ -310,7 +310,7 @@ class VAEBlock(Model):
     '''
 
     def __init__(self, latent_size=32, latent_regularizer='vae', beta=5.,
-                 capacity=128., randomSample=True, roll_up=True, **kwargs):
+                 capacity=128., random_sample=True, roll_up=True, **kwargs):
         '''
         args:
         ------
@@ -343,7 +343,7 @@ class VAEBlock(Model):
         self.reg = latent_regularizer
         self.beta = beta
         self.capacity = capacity
-        self.random = randomSample
+        self.random = random_sample
         # variational encoder
         self.latent_size = latent_size
         self.roll_up = roll_up
