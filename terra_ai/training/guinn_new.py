@@ -52,20 +52,10 @@ interactive = InteractiveCallback()
 
 
 class GUINN:
-    """
-    GUINN: class, for train model
-    """
 
     def __init__(self) -> None:
-        """
-        GUINN init method
-        """
         self.callbacks = []
         self.chp_monitor = 'loss'
-
-        """
-        For model settings
-        """
         self.nn_name: str = ''
         self.DTS = None
         self.dataset = None
@@ -85,9 +75,6 @@ class GUINN:
         self.retrain_flag = False
         self.shuffle: bool = True
         self.model_is_trained: bool = False
-        """
-        Logs
-        """
         self.history: dict = {}
         self.progress_name = "training"
 
