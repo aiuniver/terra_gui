@@ -1232,7 +1232,7 @@ class CreateArray(object):
 
         array = resize_frame(image_array=array,
                              target_shape=(options['height'], options['width']),
-                             frame_mode=options['image_mode'])
+                             frame_mode='stretch')  # options['image_mode']
 
         if options['net'] == LayerNetChoice.linear:
             array = array.reshape(np.prod(np.array(array.shape)))
