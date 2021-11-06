@@ -194,7 +194,7 @@ class GUINN:
             if val.task == LayerInputTypeChoice.Dataframe:
                 tmp = []
                 for value in data.columns[key].values():
-                    tmp.append(value.task)
+                    tmp.append(value.get("task"))
                 unique_vals = list(set(tmp))
                 if len(unique_vals) == 1 and unique_vals[0] in LayerInputTypeChoice.__dict__.keys() and unique_vals[0] \
                         in [LayerInputTypeChoice.Image, LayerInputTypeChoice.Text,
