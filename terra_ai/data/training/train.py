@@ -14,7 +14,6 @@ from pydantic.types import conint, confloat, PositiveInt
 from pydantic.errors import EnumMemberError
 
 from terra_ai import settings
-from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.mixins import BaseMixinData, UniqueListMixin, IDMixinData
 from terra_ai.data.training import optimizers, architectures
@@ -320,7 +319,7 @@ class TrainingDetailsData(BaseMixinData):
         shutil.rmtree(self.path, ignore_errors=True)
         shutil.move(source, self.path)
 
-    def set_base(self, data: dict, dataset: DatasetData):
+    def set_base(self, data: dict, dataset):
         base_data = self.base.native()
         data = recursive_update(base_data, data)
         data["model"] = self.model
