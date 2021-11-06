@@ -17,7 +17,6 @@ from typing import Optional
 import numpy as np
 
 import tensorflow as tf
-import tensorflow.keras.callbacks
 from tensorflow.keras.models import Model
 from tensorflow import keras
 from tensorflow.keras.models import load_model
