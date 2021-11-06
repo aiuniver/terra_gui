@@ -12,7 +12,7 @@ from ...extra import (
     LayerAudioParameterChoice,
     LayerAudioModeChoice,
     LayerAudioResampleChoice,
-    LayerAudioFillModeChoice,
+    LayerAudioFillModeChoice, LayerImageFrameModeChoice,
 )
 from ....mixins import BaseMixinData
 from ....types import confilepath
@@ -36,6 +36,7 @@ class ParametersImageData(MinMaxScalerData, SourcesPathsData, ColumnProcessingDa
     height: PositiveInt
     net: LayerNetChoice
     scaler: LayerScalerImageChoice
+    image_mode: LayerImageFrameModeChoice = LayerImageFrameModeChoice.stretch
 
     put: Optional[PositiveInt]
     augmentation: Optional[AugmentationData]
