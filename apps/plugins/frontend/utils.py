@@ -1,4 +1,5 @@
-from enum import Enum
+from enum import Enum, EnumMeta
+from typing import Any
 from pydantic.types import ConstrainedNumberMeta
 
 from terra_ai.data.modeling.layers.extra import (
@@ -67,11 +68,26 @@ class Labels(str, Enum):
     postprocess = "Использовать постобработку"
 
 
+class ChoiceValues(str, Enum):
+    source = "Датасет source"
+    file = "Файл"
+
+
 def __prepare_label(value: str) -> str:
     items = list(filter(None, str(value).split("_"))) or [""]
     if len(items[0]):
         items[0] = f"{items[0][0].title()}{items[0][1:]}"
     return " ".join(items)
+
+
+def __prepare_choice_value(value: Any) -> Any:
+    if issubclass(value.__class__.__class__, EnumMeta):
+        try:
+            return ChoiceValues[value.value].value
+        except KeyError:
+            pass
+        
+    return value
 
 
 def prepare_pydantic_field(field, parse: str) -> Field:
@@ -112,6 +128,6 @@ def prepare_pydantic_field(field, parse: str) -> Field:
         name=field.name,
         label=__label,
         parse=parse,
-        value=__value,
+        value=__prepare_choice_value(field.default),
         list=__list,
     )

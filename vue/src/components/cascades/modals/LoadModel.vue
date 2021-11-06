@@ -1,17 +1,17 @@
 <template>
   <at-modal v-model="dialog" width="680" showClose>
     <div class="t-model__overlay" v-show="modelDownload">
-      <LoadSpiner text="Загрузка модели" />
+      <LoadSpiner text="Загрузка каскада" />
     </div>
     <div slot="header" class="t-model__header">
-      <span>Загрузка модели</span>
+      <span>Загрузка каскада</span>
       <div class="t-model__search">
         <i class="t-icon icon-search"></i>
         <t-field inline label class="t-model__field">
           <t-input-new
             v-model="search"
             ref="search"
-            placeholder="Найти модель"
+            placeholder="Найти"
             type="text"
             small
             style="width: 109px"
@@ -37,7 +37,7 @@
               </div>
             </li>
             <li v-if="!models.length" class="loaded-list__item">
-              <span class="loaded-list__item--empty">Модель "{{ search }}" не найдена</span>
+              <span class="loaded-list__item--empty">Каскад "{{ search }}" не найден</span>
             </li>
           </ul>
         </scrollbar>
@@ -131,7 +131,7 @@ export default {
     async removeModel(name) {
       this.$Modal.confirm({
         title: 'Внимание!',
-        content: 'Уверены, что хотите удалить эту модель?',
+        content: 'Уверены, что хотите удалить этот каскад?',
         width: 300,
         callback: async action => {
           if (action == 'confirm') {

@@ -1,0 +1,36 @@
+
+@import "./variables/default.scss";
+
+* {
+  box-sizing:border-box
+}
+
+:root {
+  --color-bg: #{$color-dark-bg};
+  --color-border: #{$color-dark-border};
+  --color-text: #{$color-dark-text};
+
+  @media screen {
+    &[data-theme="light"] {
+      --color-bg: #{$color-light-bg};
+      --color-border: #{$color-light-border};
+      --color-text: #{$color-light-text};
+    }
+  }
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  font-family: 'Open Sans', sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+ }
+li {
+  list-style-type: none;
+}

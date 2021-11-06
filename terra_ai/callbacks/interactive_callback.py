@@ -4,6 +4,9 @@ import os
 import random
 import re
 import string
+import time
+
+from pathlib import Path
 from typing import Union, Optional
 
 from tensorflow.keras.utils import to_categorical
@@ -93,34 +96,13 @@ class InteractiveCallback:
 
         self.urgent_predict = False
         self.deploy_presets_data = None
-        self.train_states = {
-            "status": "no_train",  # training, trained, stopped, addtrain
-            "buttons": {
-                "train": {
-                    "title": "Обучить",  # Возобновить, Дообучить
-                    "visible": True
-                },
-                "stop": {
-                    "title": "Остановить",
-                    "visible": False
-                },
-                "clear": {
-                    "title": "Сбросить",
-                    "visible": False
-                },
-                "save": {
-                    "title": "Сохранить",
-                    "visible": False
-                }
-            }
-        }
         self.random_key = ''
 
         self.interactive_config: InteractiveData = InteractiveData(**{})
         pass
 
-    def set_attributes(self, dataset: PrepareDataset, metrics: dict, losses: dict, dataset_path: str,
-                       training_path: str, initial_config: InteractiveData):
+    def set_attributes(self, dataset: PrepareDataset, metrics: dict, losses: dict, dataset_path: Path,
+                       training_path: Path, initial_config: InteractiveData):
 
         self.options = dataset
         self._callback_router(dataset)
@@ -150,34 +132,6 @@ class InteractiveCallback:
         self.seed_idx = self._prepare_seed()
         self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
 
-    def set_status(self, status):
-        self.train_states["status"] = status
-        if status in ["training", "addtrain"]:
-            self.train_states["buttons"]["train"]["title"] = "Возобновить"
-            self.train_states["buttons"]["train"]["visible"] = False
-            self.train_states["buttons"]["stop"]["visible"] = True
-            self.train_states["buttons"]["clear"]["visible"] = False
-            self.train_states["buttons"]["save"]["visible"] = False
-        elif status == "trained":
-            self.train_states["buttons"]["train"]["title"] = "Дообучить"
-            self.train_states["buttons"]["train"]["visible"] = True
-            self.train_states["buttons"]["stop"]["visible"] = False
-            self.train_states["buttons"]["clear"]["visible"] = True
-            self.train_states["buttons"]["save"]["visible"] = True
-        elif status == "stopped":
-            self.train_states["buttons"]["train"]["title"] = "Возобновить"
-            self.train_states["buttons"]["train"]["visible"] = True
-            self.train_states["buttons"]["stop"]["visible"] = False
-            self.train_states["buttons"]["clear"]["visible"] = True
-            self.train_states["buttons"]["save"]["visible"] = True
-        else:
-            self.clear_history()
-            self.train_states["buttons"]["train"]["title"] = "Обучить"
-            self.train_states["buttons"]["train"]["visible"] = True
-            self.train_states["buttons"]["stop"]["visible"] = False
-            self.train_states["buttons"]["clear"]["visible"] = False
-            self.train_states["buttons"]["save"]["visible"] = False
-
     def clear_history(self):
         self.log_history = {}
         self.current_logs = {}
@@ -187,9 +141,6 @@ class InteractiveCallback:
         self.train_progress = {}
         self.addtrain_epochs = []
         self.deploy_presets_data = None
-
-    def get_states(self):
-        return self.train_states
 
     def get_presets(self):
         return self.deploy_presets_data
@@ -202,7 +153,10 @@ class InteractiveCallback:
         if self.log_history:
             if y_pred is not None:
                 if self.options.data.architecture in self.basic_architecture:
+                    # print('start')
+                    s = time.time()
                     self.y_pred, self.inverse_y_pred = self.callback.get_y_pred(self.y_true, y_pred, self.options)
+                    # print('y_pred', time.time() - s)
                     out = f"{self.interactive_config.intermediate_result.main_output}"
                     self.example_idx = self.callback.prepare_example_idx_to_show(
                         array=self.y_pred.get(out),
@@ -213,14 +167,20 @@ class InteractiveCallback:
                         choice_type=self.interactive_config.intermediate_result.example_choice_type,
                         seed_idx=self.seed_idx[:self.interactive_config.intermediate_result.num_examples]
                     )
+                    # print('example_idx', time.time() - s)
                 if self.options.data.architecture in self.yolo_architecture:
+                    # print('start')
+                    s = time.time()
                     self.raw_y_pred = y_pred
+                    # print('raw_y_pred', time.time() - s)
                     self.y_pred = self.callback.get_y_pred(
                         y_pred=y_pred, options=self.options,
                         sensitivity=self.interactive_config.intermediate_result.sensitivity,
                         threashold=self.interactive_config.intermediate_result.threashold
                     )
+                    # print('y_pred', time.time() - s)
                     self.raw_y_true = y_true
+                    # print('raw_y_true', time.time() - s)
                     self.example_idx, _ = self.callback.prepare_example_idx_to_show(
                         array=self.y_pred,
                         true_array=self.y_true,
@@ -232,6 +192,7 @@ class InteractiveCallback:
                         seed_idx=self.seed_idx,
                         sensitivity=self.interactive_config.intermediate_result.sensitivity,
                     )
+                    # print('example_idx', time.time() - s)
 
                 if on_epoch_end_flag:
                     self.current_epoch = fit_logs.get('epoch')
@@ -275,6 +236,11 @@ class InteractiveCallback:
                             inverse_y_pred=self.inverse_y_pred,
                             inverse_y_true=self.inverse_y_true
                         )
+                    # print('\n self.intermediate_result', self.intermediate_result)
+                    # print('\n self.statistic_result', self.statistic_result)
+                    # print('\n self.balance_data_request', self.callback.balance_data_request(
+                    #     options=self.options, dataset_balance=self.dataset_balance,
+                    #     interactive_config=self.interactive_config))
                 else:
                     self.intermediate_result = self.callback.intermediate_result_request(
                         options=self.options,
@@ -291,6 +257,7 @@ class InteractiveCallback:
                         class_colors=self.class_colors,
                         # raw_y_pred=self.raw_y_pred
                     )
+                    # print('intermediate_result', time.time() - s)
                     if self.options.data.architecture in self.basic_architecture and \
                             self.interactive_config.statistic_data.output_id:
                         self.statistic_result = self.callback.statistic_data_request(
@@ -301,6 +268,7 @@ class InteractiveCallback:
                             inverse_y_pred=self.inverse_y_pred,
                             inverse_y_true=self.inverse_y_true,
                         )
+
                     if self.options.data.architecture in self.yolo_architecture and \
                             self.interactive_config.statistic_data.box_channel:
                         self.statistic_result = self.callback.statistic_data_request(
@@ -311,6 +279,7 @@ class InteractiveCallback:
                             inverse_y_pred=self.inverse_y_pred,
                             inverse_y_true=self.inverse_y_true,
                         )
+                    # print('statistic_result', time.time() - s)
                 self.urgent_predict = False
                 self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
             return {
