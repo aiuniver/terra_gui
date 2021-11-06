@@ -156,7 +156,7 @@ export default {
       });
       commit('SET_STATUS', { isUpdate: true });
 
-      const res = await dispatch('axios', { url: '/cascades/update/', data: { layers: semdBlocks } }, { root: true });
+      const res = await dispatch('axios', { url: '/cascades/update/', data: { blocks: semdBlocks } }, { root: true });
       if (res) {
         const { data, error, success } = res
         console.log(data, error, success, block)

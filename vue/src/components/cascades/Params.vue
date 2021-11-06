@@ -80,6 +80,7 @@ export default {
       return this.block.group === 'input';
     },
     listWithoutOutputInput() {
+      if (!this.list) return []
       return this.list.filter(item => !(item.value.toLowerCase() === 'input'));
     },
 
