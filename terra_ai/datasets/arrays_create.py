@@ -1,23 +1,32 @@
-import colorsys
-import copy
-import math
-import string
-from typing import Optional
-
-import matplotlib
-from PIL import Image, UnidentifiedImageError, ImageFont, ImageDraw
-from matplotlib import pyplot as plt
-from pandas import DataFrame
-from tensorflow.python.keras.preprocessing import image
-from tensorflow.python.keras.utils.np_utils import to_categorical
-
+# import colorsys
+# import copy
+# import math
+# import string
+# from typing import Optional
+#
+# import matplotlib
+# from PIL import Image, UnidentifiedImageError, ImageFont, ImageDraw
+# from matplotlib import pyplot as plt
+# from pandas import DataFrame
+# from tensorflow.python.keras.preprocessing import image
+# from tensorflow.python.keras.utils.np_utils import to_categorical
+#
+# from terra_ai.callbacks.classification_callbacks import ImageClassificationCallback, TextClassificationCallback, \
+#     DataframeClassificationCallback, AudioClassificationCallback, VideoClassificationCallback, TimeseriesTrendCallback
+# from terra_ai.callbacks.object_detection_callbacks import YoloV3Callback, YoloV4Callback
+# from terra_ai.callbacks.regression_callbacks import DataframeRegressionCallback
+# from terra_ai.callbacks.segmentation_callbacks import TextSegmentationCallback  #, ImageSegmentationCallback
+# from terra_ai.callbacks.time_series_callbacks import TimeseriesCallback
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice, ArchitectureChoice
-from terra_ai.datasets.utils import get_yolo_anchors, resize_bboxes
+from terra_ai.datasets.utils import get_yolo_anchors, resize_bboxes, Yolo_terra, Voc, Coco, Udacity, Kitti, Yolov1
 from terra_ai.data.datasets.dataset import DatasetOutputsData, DatasetData
 from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice, \
     LayerOutputTypeChoice, DatasetGroupChoice, LayerInputTypeChoice, LayerEncodingChoice
 from terra_ai.data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice, \
     LayerTextModeChoice, LayerAudioModeChoice, LayerVideoModeChoice, LayerScalerAudioChoice
+from terra_ai.data.datasets.creations.layers.output.types.ObjectDetection import LayerODDatasetTypeChoice
+from terra_ai.settings import DEPLOY_PRESET_PERCENT, CALLBACK_CLASSIFICATION_TREASHOLD_VALUE, \
+    CALLBACK_REGRESSION_TREASHOLD_VALUE
 
 import os
 import re
@@ -28,6 +37,19 @@ import shutil
 import pymorphy2
 import random
 import librosa.feature as librosa_feature
+import moviepy.editor as moviepy_editor
+import imgaug
+import colorsys
+import copy
+import math
+import string
+import matplotlib
+from typing import Optional
+from PIL import Image, UnidentifiedImageError, ImageFont, ImageDraw
+from matplotlib import pyplot as plt
+from pandas import DataFrame
+from tensorflow.python.keras.preprocessing import image
+from tensorflow.python.keras.utils.np_utils import to_categorical
 from ast import literal_eval
 from sklearn.cluster import KMeans
 from pydub import AudioSegment
@@ -40,10 +62,6 @@ from tensorflow.keras import utils
 from tensorflow import concat as tf_concat
 from tensorflow import maximum as tf_maximum
 from tensorflow import minimum as tf_minimum
-import moviepy.editor as moviepy_editor
-
-from terra_ai.settings import DEPLOY_PRESET_PERCENT, CALLBACK_CLASSIFICATION_TREASHOLD_VALUE, \
-    CALLBACK_REGRESSION_TREASHOLD_VALUE
 
 
 def print_error(class_name: str, method_name: str, message: Exception):
@@ -423,15 +441,23 @@ class CreateArray(object):
     def instructions_object_detection(paths_list: list, **options: dict) -> dict:
 
         coordinates_list = []
-        for path in paths_list:
-            with open(path, 'r') as coordinates:
-                coordinate = coordinates.read()
+        annot_type = options['model_type']
+        if annot_type == LayerODDatasetTypeChoice.Yolo_terra:
+            for path in paths_list:
+                with open(path, 'r') as coordinates:
+                    coordinate = coordinates.read()
+                coordinates_list.append(' '.join([coord for coord in coordinate.split('\n') if coord]))
 
-            coordinates_list.append(' '.join([coord for coord in coordinate.split('\n') if coord]))
+        else:
+            model_type = eval(f'{annot_type}()')
+            data, cls_hierarchy = model_type.parse(paths_list, options['classes_names'])
+            yolo_terra = Yolo_terra(options['classes_names'], cls_hierarchy=cls_hierarchy)
+            data = yolo_terra.generate(data)
+            for key in data:
+                coordinates_list.append(data[key])
 
         instructions = {'instructions': coordinates_list,
-                        'parameters': options
-                        }
+                        'parameters': options}
 
         return instructions
 
@@ -970,7 +996,10 @@ class CreateArray(object):
 
             return 1.0 * inter_area / union_area
 
-        real_boxes = resize_bboxes(coords, options['orig_x'], options['orig_y'])
+        if coords:
+            real_boxes = resize_bboxes(coords, options['orig_x'], options['orig_y'])
+        else:
+            real_boxes = [[0, 0, 0, 0, 0]]
 
         num_classes: int = options['num_classes']
         zero_boxes_flag: bool = False
@@ -1084,9 +1113,127 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def preprocess_image(array: np.ndarray, **options) -> np.ndarray:
+    def preprocess_image(array: np.ndarray, **options):
 
-        array = cv2.resize(array, (options['width'], options['height']))
+        def augmentation_image(image_array, coords, augmentation_dict):
+
+            # КОСТЫЛЬ ИЗ-ЗА .NATIVE()
+            for key, value in augmentation_dict.items():
+                if value:
+                    for name, elem in value.items():
+                        if key != 'ChannelShuffle':
+                            if isinstance(augmentation_dict[key][name], list):
+                                augmentation_dict[key][name] = tuple(augmentation_dict[key][name])
+                            elif isinstance(augmentation_dict[key][name], dict):
+                                for name2, elem2 in augmentation_dict[key][name].items():
+                                    augmentation_dict[key][name][name2] = tuple(augmentation_dict[key][name][name2])
+
+            aug_parameters = []
+            for key, value in augmentation_dict.items():
+                if value:
+                    aug_parameters.append(getattr(imgaug.augmenters, key)(**value))
+            augmentation_object = imgaug.augmenters.Sequential(aug_parameters, random_order=True)
+
+            augmentation_object_data = {'images': np.expand_dims(image_array, axis=0)}
+            if coords:
+                coords = coords.split(' ')
+                for i in range(len(coords)):
+                    coords[i] = [float(x) for x in coords[i].split(',')]
+                bounding_boxes = []
+                for elem in coords:
+                    bounding_boxes.append(imgaug.BoundingBox(*elem))
+                bounding_boxes = imgaug.augmentables.bbs.BoundingBoxesOnImage(bounding_boxes,
+                                                                              shape=(image_array.shape[0],
+                                                                                     image_array.shape[1])
+                                                                              )
+                augmentation_object_data.update([('bounding_boxes', bounding_boxes)])
+
+            image_array_aug = augmentation_object(**augmentation_object_data)
+            if coords:
+                bounding_boxes_aug = image_array_aug[1]
+                image_array_aug = image_array_aug[0][0]
+                bounding_boxes_aug = bounding_boxes_aug.remove_out_of_image().clip_out_of_image()
+                aug_coords = []
+                for elem in bounding_boxes_aug.bounding_boxes:
+                    aug_coords.append(
+                        ','.join(str(x) for x in [elem.x1_int, elem.y1_int, elem.x2_int, elem.y2_int, elem.label]))
+                aug_coords = ' '.join(aug_coords)
+                if not aug_coords:
+                    aug_coords = ''
+                return image_array_aug, aug_coords
+            else:
+                return image_array_aug
+
+        def resize_frame(image_array, target_shape, frame_mode):
+
+            original_shape = (image_array.shape[0], image_array.shape[1])
+            resized = None
+            if frame_mode == 'stretch':
+                resized = cv2.resize(image_array, (target_shape[1], target_shape[0]))
+            elif frame_mode == 'fit':
+                if image_array.shape[1] >= image_array.shape[0]:
+                    resized_shape = list(target_shape).copy()
+                    resized_shape[0] = int(image_array.shape[0] / (image_array.shape[1] / target_shape[1]))
+                    if resized_shape[0] > target_shape[0]:
+                        resized_shape = list(target_shape).copy()
+                        resized_shape[1] = int(image_array.shape[1] / (image_array.shape[0] / target_shape[0]))
+                    image_array = cv2.resize(image_array, (resized_shape[1], resized_shape[0]))
+                elif image_array.shape[0] >= image_array.shape[1]:
+                    resized_shape = list(target_shape).copy()
+                    resized_shape[1] = int(image_array.shape[1] / (image_array.shape[0] / target_shape[0]))
+                    if resized_shape[1] > target_shape[1]:
+                        resized_shape = list(target_shape).copy()
+                        resized_shape[0] = int(image_array.shape[0] / (image_array.shape[1] / target_shape[1]))
+                    image_array = cv2.resize(image_array, (resized_shape[1], resized_shape[0]))
+                resized = image_array
+                if resized.shape[0] < target_shape[0]:
+                    black_bar = np.zeros((int((target_shape[0] - resized.shape[0]) / 2), resized.shape[1], 3),
+                                         dtype='uint8')
+                    resized = np.concatenate((black_bar, resized))
+                    black_bar_2 = np.zeros((int((target_shape[0] - resized.shape[0])), resized.shape[1], 3),
+                                           dtype='uint8')
+                    resized = np.concatenate((resized, black_bar_2))
+                if resized.shape[1] < target_shape[1]:
+                    black_bar = np.zeros((target_shape[0], int((target_shape[1] - resized.shape[1]) / 2), 3),
+                                         dtype='uint8')
+                    resized = np.concatenate((black_bar, resized), axis=1)
+                    black_bar_2 = np.zeros((target_shape[0], int((target_shape[1] - resized.shape[1])), 3),
+                                           dtype='uint8')
+                    resized = np.concatenate((resized, black_bar_2), axis=1)
+            elif frame_mode == 'cut':
+                resized = image_array.copy()
+                if original_shape[0] > target_shape[0]:
+                    resized = resized[int(original_shape[0] / 2 - target_shape[0] / 2):int(
+                        original_shape[0] / 2 - target_shape[0] / 2) + target_shape[0], :]
+                else:
+                    black_bar = np.zeros((int((target_shape[0] - original_shape[0]) / 2), original_shape[1], 3),
+                                         dtype='uint8')
+                    resized = np.concatenate((black_bar, resized))
+                    black_bar_2 = np.zeros((int((target_shape[0] - resized.shape[0])), original_shape[1], 3),
+                                           dtype='uint8')
+                    resized = np.concatenate((resized, black_bar_2))
+                if original_shape[1] > target_shape[1]:
+                    resized = resized[:, int(original_shape[1] / 2 - target_shape[1] / 2):int(
+                        original_shape[1] / 2 - target_shape[1] / 2) + target_shape[1]]
+                else:
+                    black_bar = np.zeros((target_shape[0], int((target_shape[1] - original_shape[1]) / 2), 3),
+                                         dtype='uint8')
+                    resized = np.concatenate((black_bar, resized), axis=1)
+                    black_bar_2 = np.zeros((target_shape[0], int((target_shape[1] - resized.shape[1])), 3),
+                                           dtype='uint8')
+                    resized = np.concatenate((resized, black_bar_2), axis=1)
+            return resized
+
+        augm_data = None
+        if options.get('augmentation') and options.get('augm_data'):
+            array, augm_data = augmentation_image(image_array=array,
+                                                  coords=options['augm_data'],
+                                                  augmentation_dict=options['augmentation'])
+
+        array = resize_frame(image_array=array,
+                             target_shape=(options['height'], options['width']),
+                             frame_mode='stretch')  # options['image_mode']
+
         if options['net'] == LayerNetChoice.linear:
             array = array.reshape(np.prod(np.array(array.shape)))
         if options['scaler'] != LayerScalerImageChoice.no_scaler and options.get('preprocess'):
@@ -1097,7 +1244,11 @@ class CreateArray(object):
             elif options['scaler'] == 'terra_image_scaler':
                 array = options['preprocess'].transform(array)
 
-        return array
+        if isinstance(augm_data, str):
+            return array, augm_data
+        else:
+            return array
+
 
     @staticmethod
     def preprocess_video(array: np.ndarray, **options) -> np.ndarray:

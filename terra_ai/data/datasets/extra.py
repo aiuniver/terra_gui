@@ -123,6 +123,12 @@ class LayerVideoModeChoice(str, Enum):
     length_and_step = "length_and_step"
 
 
+class LayerImageFrameModeChoice(str, Enum):
+    stretch = "stretch"
+    fit = "fit"
+    cut = "cut"
+
+
 class LayerTypeProcessingClassificationChoice(str, Enum):
     categorical = "categorical"
     ranges = "ranges"
@@ -141,12 +147,12 @@ class LayerYoloChoice(str, Enum):
 
 
 class LayerODDatasetTypeChoice(str, Enum):
-    Kitti = "Kitti"
+    Yolo_terra = "Yolo_terra"
     Voc = "Voc"
+    Kitti = "Kitti"
     Coco = "Coco"
+    Yolov1 = "Yolov1"
     Udacity = "Udacity"
-    Yolo = "Yolo"
-
 
 class LayerEncodingChoice(str, Enum):
     none = "none"
