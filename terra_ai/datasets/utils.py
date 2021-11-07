@@ -632,7 +632,8 @@ def resize_bboxes(coords, orig_x, orig_y, target_x=416, target_y=416):
         sample[2] = int(round((sample[2] / orig_x) * target_x, 0))
         sample[3] = int(round((sample[3] / orig_y) * target_y, 0))
 
-        real_boxes.append(sample)
+        if sample[0] < sample[2] and sample[1] < sample[3]:
+            real_boxes.append(sample)
 
     return real_boxes
 
