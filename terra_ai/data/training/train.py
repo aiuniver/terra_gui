@@ -2,16 +2,22 @@
 ## Структура данных обучения
 """
 
+import os
 import json
+import shutil
+
+from pathlib import Path
 from typing import Any, Optional, List
-from pydantic import validator
+from dict_recursive_update import recursive_update
+from pydantic import validator, PrivateAttr
 from pydantic.types import conint, confloat, PositiveInt
 from pydantic.errors import EnumMemberError
 
-from ..mixins import BaseMixinData, UniqueListMixin, IDMixinData
-from . import optimizers
-from . import architectures
-from .extra import (
+from terra_ai import settings
+from terra_ai.data.deploy.tasks import DeployData
+from terra_ai.data.mixins import BaseMixinData, UniqueListMixin, IDMixinData
+from terra_ai.data.training import optimizers, architectures
+from terra_ai.data.training.extra import (
     OptimizerChoice,
     ArchitectureChoice,
     LossGraphShowChoice,
@@ -21,6 +27,10 @@ from .extra import (
     MetricChoice,
     StateStatusChoice,
 )
+
+
+DEFAULT_TRAINING_PATH_NAME = "__current"
+CONFIG_TRAINING_FILENAME = "config.json"
 
 
 class LossGraphData(IDMixinData):
@@ -99,15 +109,48 @@ class StateButtonData(BaseMixinData):
 
 
 class StateButtonsData(BaseMixinData):
-    train: StateButtonData = StateButtonData(title="Обучить", visible=False)
-    stop: StateButtonData = StateButtonData(title="Остановить", visible=False)
-    clear: StateButtonData = StateButtonData(title="Сбросить", visible=False)
-    save: StateButtonData = StateButtonData(title="Сохранить", visible=False)
+    train: StateButtonData
+    stop: StateButtonData
+    clear: StateButtonData
+    save: StateButtonData
 
 
 class StateData(BaseMixinData):
-    status: StateStatusChoice = StateStatusChoice.no_train
-    buttons: StateButtonsData = StateButtonsData()
+    status: StateStatusChoice
+    buttons: Optional[StateButtonsData]
+
+    @staticmethod
+    def get_buttons(status: StateStatusChoice) -> dict:
+        value = {
+            "train": {"title": "Обучить", "visible": True},
+            "stop": {"title": "Остановить", "visible": False},
+            "clear": {"title": "Сбросить", "visible": False},
+            "save": {"title": "Сохранить", "visible": False},
+        }
+        if status in [StateStatusChoice.training, StateStatusChoice.addtrain]:
+            value["train"].update({"visible": False, "title": "Возобновить"})
+            value["stop"].update({"visible": True})
+            value["clear"].update({"visible": False})
+            value["save"].update({"visible": False})
+        elif status == StateStatusChoice.trained:
+            value["train"].update({"visible": True, "title": "Дообучить"})
+            value["stop"].update({"visible": False})
+            value["clear"].update({"visible": True})
+            value["save"].update({"visible": True})
+        elif status == StateStatusChoice.stopped:
+            value["train"].update({"visible": True, "title": "Возобновить"})
+            value["stop"].update({"visible": False})
+            value["clear"].update({"visible": True})
+            value["save"].update({"visible": True})
+        return StateButtonsData(**value)
+
+    @validator("buttons", always=True)
+    def _validate_buttons(cls, value: StateButtonsData, values) -> StateButtonsData:
+        return StateData.get_buttons(values.get("status"))
+
+    def set(self, value: str):
+        self.status = StateStatusChoice[value]
+        self.buttons = StateData.get_buttons(self.status)
 
 
 class OptimizerData(BaseMixinData):
@@ -166,7 +209,7 @@ class ArchitectureData(BaseMixinData):
     @validator("parameters", always=True)
     def _validate_parameters(cls, value: Any, values, field) -> Any:
         if not value:
-            return value
+            value = {}
         _model = values.get("model")
         _outputs = value.get("outputs", [])
         for _index, _output in enumerate(_outputs):
@@ -177,11 +220,189 @@ class ArchitectureData(BaseMixinData):
             )
             _outputs[_index] = _output
         value["outputs"] = _outputs
+        value["model"] = _model
         return field.type_(**(value or {}))
 
 
 class TrainData(BaseMixinData):
+    model: Any
     batch: PositiveInt = 32
     epochs: PositiveInt = 20
     optimizer: OptimizerData = OptimizerData(type=OptimizerChoice.Adam)
     architecture: ArchitectureData = ArchitectureData(type=ArchitectureChoice.Basic)
+
+    @validator("architecture", pre=True, allow_reuse=True)
+    def _validate_architecture(cls, value, values):
+        if not value:
+            value = {}
+        value.update({"model": values.get("model")})
+        return value
+
+    def dict(self, **kwargs):
+        kwargs.update({"exclude": {"model"}})
+        return super().dict(**kwargs)
+
+
+class TrainingDetailsData(BaseMixinData):
+    model: Any
+    name: Optional[str]
+    base: TrainData = TrainData()
+    interactive: InteractiveData = InteractiveData()
+    state: StateData = StateData(status="no_train")
+    result: Optional[dict]
+    deploy: Optional[DeployData]
+    logs: Optional[dict] = {}
+
+    _path: Path = PrivateAttr()
+
+    def __init__(self, **data):
+        self._path = Path(data.get("path"))
+
+        _name = data.get("name", DEFAULT_TRAINING_PATH_NAME)
+        _path = Path(self._path, _name)
+        if _path.is_file():
+            os.remove(_path)
+        os.makedirs(_path, exist_ok=True)
+        data["name"] = _name
+
+        config = Path(_path, CONFIG_TRAINING_FILENAME)
+        if config.is_file():
+            with open(config) as config_ref:
+                config_data = json.load(config_ref)
+                config_data.update(**data)
+                data = config_data
+
+        if data.get("deploy"):
+            data["deploy"].update(
+                {"path": str(Path(self._path, _name, settings.TRAINING_DEPLOY_DIRNAME))}
+            )
+        super().__init__(**data)
+
+        with open(config, "w") as config_ref:
+            json.dump(self.native(), config_ref)
+
+    @property
+    def path(self) -> Path:
+        return Path(self._path, self.name)
+
+    @property
+    def deploy_path(self) -> Path:
+        _path = Path(self.path, settings.TRAINING_DEPLOY_DIRNAME)
+        os.makedirs(_path, exist_ok=True)
+        return _path
+
+    @property
+    def model_path(self) -> Path:
+        _path = Path(self.path, settings.TRAINING_MODEL_DIRNAME)
+        os.makedirs(_path, exist_ok=True)
+        return _path
+
+    @property
+    def intermediate_path(self) -> Path:
+        _path = Path(self.path, settings.TRAINING_INTERMEDIATE_DIRNAME)
+        os.makedirs(_path, exist_ok=True)
+        return _path
+
+    @validator("base", pre=True, allow_reuse=True)
+    def _validate_base(cls, value, values):
+        if not value:
+            value = {}
+        value.update({"model": values.get("model")})
+        return value
+
+    @validator("logs", pre=True)
+    def _validate_logs(cls, value: dict) -> dict:
+        if not value:
+            value = {}
+        return value
+
+    def dict(self, **kwargs):
+        kwargs.update({"exclude": {"model"}})
+        return super().dict(**kwargs)
+
+    def save(self, name: str, overwrite: bool = False):
+        if self.name == DEFAULT_TRAINING_PATH_NAME:
+            pass
+        print(self.name)
+        print(name)
+
+    def rename(self, value: str):
+        source = self.path
+        self.name = value
+        shutil.rmtree(self.path, ignore_errors=True)
+        shutil.move(source, self.path)
+
+    def set_base(self, data: dict, dataset):
+        base_data = self.base.native()
+        data = recursive_update(base_data, data)
+        data["model"] = self.model
+        if not data.get("architecture"):
+            data.update({"architecture": {}})
+        data["architecture"].update(
+            {
+                "type": dataset.architecture.value
+                if dataset
+                else ArchitectureChoice.Basic.value,
+            }
+        )
+        if not data["architecture"].get("parameters"):
+            data["architecture"].update({"parameters": {}})
+        self.base = TrainData(**data)
+        self.set_interactive()
+
+    def set_interactive(self):
+        loss_graphs = []
+        metric_graphs = []
+        progress_table = []
+        _index_m = 0
+        _index_l = 0
+        for layer in self.model.outputs:
+            outputs = self.base.architecture.parameters.outputs.get(layer.id)
+            if not outputs:
+                continue
+            for metric in outputs.metrics:
+                _index_m += 1
+                metric_graphs.append(
+                    {
+                        "id": _index_m,
+                        "output_idx": layer.id,
+                        "show": MetricGraphShowChoice.model,
+                        "show_metric": metric,
+                    }
+                )
+                _index_m += 1
+                metric_graphs.append(
+                    {
+                        "id": _index_m,
+                        "output_idx": layer.id,
+                        "show": MetricGraphShowChoice.classes,
+                        "show_metric": metric,
+                    }
+                )
+            _index_l += 1
+            loss_graphs.append(
+                {
+                    "id": _index_l,
+                    "output_idx": layer.id,
+                    "show": LossGraphShowChoice.model,
+                }
+            )
+            _index_l += 1
+            loss_graphs.append(
+                {
+                    "id": _index_l,
+                    "output_idx": layer.id,
+                    "show": LossGraphShowChoice.classes,
+                }
+            )
+            progress_table.append(
+                {
+                    "output_idx": layer.id,
+                }
+            )
+        self.interactive.loss_graphs = LossGraphsList(loss_graphs)
+        self.interactive.metric_graphs = MetricGraphsList(metric_graphs)
+        self.interactive.progress_table = ProgressTableList(progress_table)
+        self.interactive.intermediate_result.main_output = (
+            self.model.outputs[0].id if len(self.model.outputs) else None
+        )

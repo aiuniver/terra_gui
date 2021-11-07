@@ -110,13 +110,16 @@ def prepare_pydantic_field(field, parse: str) -> Field:
             __list = [{"value": "__null__", "label": ""}] + __list
         if not __value:
             __value = field.default.name if field.default else None
-    else:
+    elif hasattr(field.outer_type_, "__origin__"):
         if field.outer_type_.__origin__ is tuple:
             __type = FieldTypeChoice.text_array
             __value = __value or None
         else:
             __type = FieldTypeChoice.text
             __value = str(__value)
+    else:
+        __type = FieldTypeChoice.text
+        __value = None
 
     try:
         __label = Labels[field.name]

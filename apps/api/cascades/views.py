@@ -51,4 +51,4 @@ class UpdateAPIView(BaseAPIView):
         cascade = agent_exchange("cascade_update", cascade=cascade_data)
         request.project.set_cascade(cascade)
 
-        return BaseResponseSuccess(save_project=True)
+        return BaseResponseSuccess()

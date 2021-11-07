@@ -8,11 +8,7 @@ from rest_framework.status import HTTP_200_OK
 
 
 class BaseAPIView(APIView):
-    def dispatch(self, request, *args, **kwargs):
-        response = super().dispatch(request, *args, **kwargs)
-        if response.save_project:
-            request.project.save()
-        return response
+    pass
 
 
 class BaseResponseData(BaseModel):
@@ -22,12 +18,7 @@ class BaseResponseData(BaseModel):
 
 
 class BaseResponse(Response):
-    save_project: bool = False
-
-    def __init__(
-        self, data=None, error=None, save_project: bool = False, *args, **kwargs
-    ):
-        self.save_project = save_project
+    def __init__(self, data=None, error=None, *args, **kwargs):
         __response = BaseResponseData(
             success=(error is None),
             data=data,
