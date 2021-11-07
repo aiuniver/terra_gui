@@ -2,7 +2,6 @@ import gc
 import importlib
 import json
 import math
-import re
 import copy
 import os
 import threading
@@ -31,7 +30,8 @@ from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice, LayerEncodingChoice
 from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
-from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, ArchitectureChoice
+from terra_ai.data.presets.training import Metric
+from terra_ai.data.training.extra import CheckpointTypeChoice, ArchitectureChoice
 from terra_ai.data.training.train import TrainData, TrainingDetailsData, StateData
 
 from terra_ai.datasets.arrays_create import CreateArray
@@ -40,14 +40,11 @@ from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.exceptions.deploy import MethodNotImplementedException
 from terra_ai.modeling.validator import ModelValidator
 # from terra_ai.training.customcallback import InteractiveCallback
-from terra_ai.training.customlosses import DiceCoef, UnscaledMAE, BalancedRecall, BalancedDiceCoef, \
-    BalancedPrecision, BalancedFScore, FScore
-from terra_ai.training.yolo_utils import create_yolo, CustomModelYolo, compute_loss, get_mAP
-from terra_ai.exceptions import training as exceptions, terra_exception
+from terra_ai.exceptions import training as exceptions
 
 __version__ = 0.02
 
-from terra_ai.utils import camelize, decamelize
+from terra_ai.utils import decamelize
 
 interactive = InteractiveCallback()
 
@@ -64,6 +61,7 @@ class GUINN:
         self.model: Optional[Model] = None
         self.model_path: Path = Path("./")
         self.deploy_path: Path = Path("./")
+        self.dataset_path: Path = Path("./")
         # self.optimizer = None
         self.loss: dict = {}
         self.metrics: dict = {}
@@ -110,11 +108,13 @@ class GUINN:
     #     except Exception as e:
     #         print_error(GUINN().name, method_name, e)
 
-    def _set_training_params(self, dataset: DatasetData, train_params: TrainingDetailsData) -> None:
+    def _set_training_params(self, dataset: DatasetData, train_params: TrainingDetailsData, dataset_path: Path,
+                             training_path: Path) -> None:
         method_name = '_set_training_params'
         try:
             params = train_params.base
             self.params = train_params.base.native()
+            self.dataset_path = dataset_path
             self.model_path = train_params.model_path
             self.deploy_path = train_params.deploy_path
             self.dataset = self._prepare_dataset(dataset=dataset, model_path=self.model_path,
@@ -167,22 +167,18 @@ class GUINN:
         except Exception as e:
             print_error(GUINN().name, method_name, e)
 
-    def _set_callbacks(self, dataset: PrepareDataset,
-                       batch_size: int, epochs: int, dataset_path: Path,
-                       checkpoint: dict, save_model_path: Path,
+    def _set_callbacks(self, dataset: PrepareDataset, dataset_path: Path, save_model_path: Path,
                        state: StateData, deploy: DeployData, initial_model=None) -> None:
         method_name = '_set_callbacks'
         try:
             progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков...'})
             retrain_epochs = self.sum_epoch if state.status == "addtrain" else self.epochs
 
-            callback = FitCallback(dataset=dataset, params=self.params,
-                                   # batch_size=batch_size, epochs=epochs,
-                                   retrain_epochs=retrain_epochs,
-                                   training_path=save_model_path, model_name=self.nn_name,
+            callback = FitCallback(dataset=dataset, params=self.params, retrain_epochs=retrain_epochs,
+                                   model_path=save_model_path, model_name=self.nn_name,
                                    dataset_path=dataset_path, deploy_type=self.deploy_type,
                                    initialed_model=initial_model,
-                                   # state=state, deploy=deploy
+                                   state=state, deploy=deploy, deploy_path=self.deploy_path
                                    )
             self.callbacks = callback
             progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков выполнено'})
@@ -202,9 +198,9 @@ class GUINN:
                     for value in data.columns[key].values():
                         tmp.append(value.get("task"))
                     unique_vals = list(set(tmp))
-                    if len(unique_vals) == 1 and unique_vals[0] in LayerInputTypeChoice.__dict__.keys() and unique_vals[0] \
-                            in [LayerInputTypeChoice.Image, LayerInputTypeChoice.Text,
-                                LayerInputTypeChoice.Audio, LayerInputTypeChoice.Video]:
+                    if len(unique_vals) == 1 and unique_vals[0] in LayerInputTypeChoice.__dict__.keys() and \
+                            unique_vals[0] in [LayerInputTypeChoice.Image, LayerInputTypeChoice.Text,
+                                               LayerInputTypeChoice.Audio, LayerInputTypeChoice.Video]:
                         inp_tasks.append(unique_vals[0])
                     else:
                         inp_tasks.append(val.task)
@@ -234,7 +230,8 @@ class GUINN:
                 deploy_type = ArchitectureChoice.__dict__[dataset.instructions.get(2).parameters.model.title() +
                                                           dataset.instructions.get(2).parameters.yolo.title()]
             else:
-                raise MethodNotImplementedException(__method=inp_task_name + out_task_name, __class="ArchitectureChoice")
+                raise MethodNotImplementedException(__method=inp_task_name + out_task_name,
+                                                    __class="ArchitectureChoice")
             return deploy_type
         except Exception as e:
             print_error(GUINN().name, method_name, e)
@@ -370,7 +367,8 @@ class GUINN:
                 self._save_params_for_deploy(training_path=training.model_path, params=training.base)
 
             self.nn_cleaner(retrain=True if training.state.status == "training" else False)
-            self._set_training_params(dataset=dataset, train_params=training)
+            self._set_training_params(dataset=dataset, train_params=training, dataset_path=self.dataset_path,
+                                      training_path=self.model_path)
 
             self.model = self._set_model(model=gui_model, state=training.state.status)
             if training.state.status == "training":
@@ -703,10 +701,8 @@ class FitCallback(tf.keras.callbacks.Callback):
     """CustomCallback for all task type"""
 
     def __init__(self, dataset: PrepareDataset, params: dict, model_path: Path, deploy_path: Path,
-                 state: StateData, deploy: DeployData, batch_size: int = None, epochs: int = None,
-                 dataset_path: Path = Path(""), retrain_epochs: int = None,
-                 training_path: Path = Path("./"), model_name: str = "model",
-                 deploy_type: str = "", initialed_model=None):
+                 state: StateData, deploy: DeployData, dataset_path: Path = Path(""), retrain_epochs: int = None,
+                 model_name: str = "model", deploy_type: str = "", initialed_model=None):
         """
         Для примера
         "checkpoint": {
@@ -1583,11 +1579,14 @@ class FitCallback(tf.keras.callbacks.Callback):
                 current_predict = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_val)]
                 current_target = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_target_val)]
             else:
-                if self.dataset.data.use_generator:
-                    current_predict = current_model.predict(self.dataset.dataset.get('val').batch(1),
-                                                            batch_size=1)
-                else:
-                    current_predict = current_model.predict(self.dataset.X.get('val'), batch_size=self.batch_size)
+                # TODO: настроить вывод массивов их обучения, выводить словарь
+                #  {'train_true': train_true, 'train_pred': train_pred, 'val_true': val_true, 'val_pred': val_pred}
+                # if self.dataset.data.use_generator:
+                #     current_predict = current_model.predict(self.dataset.dataset.get('val').batch(1),
+                #                                             batch_size=1)
+                # else:
+                #     current_predict = current_model.predict(self.dataset.X.get('val'), batch_size=self.batch_size)
+                current_predict = None
                 current_target = None
             return current_predict, current_target
         except Exception as e:
@@ -1632,7 +1631,7 @@ class FitCallback(tf.keras.callbacks.Callback):
                                 "type": input_type
                             }
                         form_data.append(table_column_data)
-            with open(os.path.join(deploy_path, "form.json"), "w", encoding="utf-8") as form_file:
+            with open(os.path.join(self.deploy_path, "form.json"), "w", encoding="utf-8") as form_file:
                 json.dump(form_data, form_file, ensure_ascii=False)
         except Exception as e:
             print_error('FitCallback', method_name, e)
@@ -1643,7 +1642,7 @@ class FitCallback(tf.keras.callbacks.Callback):
             deploy_path = data.get("deploy_path")
             if self.dataset.data.alias not in ["imdb", "boston_housing", "reuters"]:
                 if "Dataframe" in self.deploy_type:
-                    self._create_form_data_for_dataframe_deploy(deploy_path=deploy_path)
+                    self._create_form_data_for_dataframe_deploy()
                 if self.is_yolo:
                     func_name = "object_detection"
                 else:
@@ -1796,15 +1795,14 @@ class FitCallback(tf.keras.callbacks.Callback):
                                                   self.batch, self._start_time)
                 self.batch += 1
                 if interactive.urgent_predict:
-
                     if self.is_yolo:
                         self.samples_train.append(self._logs_predict_extract(logs, prefix='pred'))
                         self.samples_target_train.append(self._logs_predict_extract(logs, prefix='target'))
 
-                    y_pred, y_true = self._get_predict()
-                    train_batch_data = interactive.update_state(y_pred=y_pred, y_true=y_true)
+                    arrays = self._get_predict()
+                    train_batch_data = interactive.update_state(arrays=arrays)
                 else:
-                    train_batch_data = interactive.update_state(y_pred=None)
+                    train_batch_data = interactive.update_state(arrays=None)
                 if train_batch_data:
                     result_data = {
                         'timings': [estimated_time, elapsed_time, still_time,
