@@ -37,10 +37,9 @@ class ParametersImageData(MinMaxScalerData, SourcesPathsData, ColumnProcessingDa
     net: LayerNetChoice
     scaler: LayerScalerImageChoice
     image_mode: LayerImageFrameModeChoice = LayerImageFrameModeChoice.stretch
+    augmentation: Optional[AugmentationData]
 
     put: Optional[PositiveInt]
-    augmentation: Optional[AugmentationData]
-    deploy: Optional[bool] = False
     object_detection: Optional[bool] = False
 
 

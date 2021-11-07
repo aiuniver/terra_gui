@@ -114,7 +114,7 @@ class LayerVideoFillModeChoice(str, Enum):
 
 
 class LayerVideoFrameModeChoice(str, Enum):
-    keep_proportions = "keep_proportions"
+    keep_proportions = "keep_proportions"  # УДАЛИТЬ ПОСЛЕ ИЗМЕНЕНИЯ НА ФРОНТЕ
     stretch = "stretch"
 
 

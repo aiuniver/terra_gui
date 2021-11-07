@@ -3,6 +3,7 @@ from pydantic import validator
 from pydantic.types import PositiveInt, PositiveFloat
 from pydantic.color import Color
 
+from terra_ai.data.datasets.creations.layers.image_augmentation import AugmentationData
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.datasets.extra import (
     LayerNetChoice,
@@ -22,6 +23,7 @@ from terra_ai.data.datasets.extra import (
     LayerVideoFrameModeChoice,
     LayerVideoModeChoice,
     LayerTypeProcessingClassificationChoice,
+    LayerImageFrameModeChoice,
 )
 from terra_ai.data.datasets.creations.layers.extra import MinMaxScalerData
 
@@ -35,6 +37,8 @@ class ParametersImageData(ParametersBaseData, MinMaxScalerData):
     height: PositiveInt
     net: LayerNetChoice = LayerNetChoice.convolutional
     scaler: LayerScalerImageChoice
+    image_mode: LayerImageFrameModeChoice = LayerImageFrameModeChoice.stretch
+    augmentation: Optional[AugmentationData]
 
 
 class ParametersTextData(ParametersBaseData):
