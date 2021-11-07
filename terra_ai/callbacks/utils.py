@@ -362,6 +362,7 @@ def reformat_fit_array(array: dict, train_idx: list = None, options=None):
     except Exception as e:
         print_error(f"None ({MODULE_NAME})", method_name, e)
 
+
 def class_metric_list(options):
     method_name = '_class_metric_list'
     try:

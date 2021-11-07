@@ -11,6 +11,7 @@ import os
 from terra_ai.callbacks.utils import print_error
 from terra_ai.datasets.utils import resize_bboxes
 
+
 ### DETECTION ###
 
 
@@ -317,7 +318,7 @@ def bbox_ciou(boxes1, boxes2):
         iou = bbox_iou(boxes1, boxes2)
 
         u = (boxes1[..., 0] - boxes2[..., 0]) * (boxes1[..., 0] - boxes2[..., 0]) + (
-                    boxes1[..., 1] - boxes2[..., 1]) * (
+                boxes1[..., 1] - boxes2[..., 1]) * (
                     boxes1[..., 1] - boxes2[..., 1])
         d = u / c
 
@@ -679,6 +680,7 @@ def voc_ap(rec, prec):
     except Exception as e:
         print_error("module yolo_utils", method_name, e)
 
+
 # def resize_bboxes(coords, orig_x, orig_y, out_size = 416):
 #     x_scale = orig_x / out_size
 #     y_scale = orig_y / out_size
@@ -703,7 +705,8 @@ def voc_ap(rec, prec):
 #             real_boxes.append(tmp)
 #     return real_boxes
 
-def get_mAP(Yolo: object, dataset: object, score_threshold: object = 0.25, iou_threshold: object = None, TEST_INPUT_SIZE: object = 416, TRAIN_CLASSES: object = None,
+def get_mAP(Yolo: object, dataset: object, score_threshold: object = 0.25, iou_threshold: object = None,
+            TEST_INPUT_SIZE: object = 416, TRAIN_CLASSES: object = None,
             pred: object = None, dataset_path: object = '') -> object:
     method_name = 'get_mAP'
     tt1 = time.time()
@@ -719,7 +722,7 @@ def get_mAP(Yolo: object, dataset: object, score_threshold: object = 0.25, iou_t
         id_ground_truth = {}
         for index in range(len(dataset.dataframe.get("val"))):
 
-            true_bbox = dataset.dataframe.get("val").iloc[index, 1] #.split(' ')
+            true_bbox = dataset.dataframe.get("val").iloc[index, 1]  # .split(' ')
             tmp_im = load_img(os.path.join(dataset_path, dataset.dataframe.get("val").iloc[index, 0]))
             bbox_data_gt = np.array(resize_bboxes(true_bbox, tmp_im.width, tmp_im.height))
             # bbox_data_gt = np.array([list(map(int, box.split(','))) for box in y_true])
@@ -852,7 +855,7 @@ def get_mAP(Yolo: object, dataset: object, score_threshold: object = 0.25, iou_t
                                 # compute overlap (IoU) = area of intersection / area of union
                                 ua = (bb[2] - bb[0] + 1) * (bb[3] - bb[1] + 1) + (bbgt[2] - bbgt[0]
                                                                                   + 1) * (
-                                                 bbgt[3] - bbgt[1] + 1) - iw * ih
+                                             bbgt[3] - bbgt[1] + 1) - iw * ih
                                 ov = iw * ih / ua
                                 if ov > ovmax:
                                     ovmax = ov
@@ -900,4 +903,3 @@ def get_mAP(Yolo: object, dataset: object, score_threshold: object = 0.25, iou_t
         return ap_dictionary
     except Exception as e:
         print_error("module yolo_utils", method_name, e)
-
