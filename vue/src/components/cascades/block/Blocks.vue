@@ -112,11 +112,11 @@ export default {
     },
     filter() {
       return {
-        input: this.project?.dataset ? ['link'] : ['clone', 'link', 'remove'],
+        InputData: this.blocks.filter(i => i.group === 'InputData').length > 1 ? ['clone', 'link', 'remove'] : ['link'],
         model: ['clone', 'link', 'remove'],
         function: ['clone', 'link', 'remove'],
         custom: ['clone', 'link', 'remove'],
-        output: this.project?.dataset ? ['link'] : ['clone', 'link', 'remove'],
+        OutputData: this.project?.dataset ? ['link'] : ['clone', 'link', 'remove'],
       };
     },
     errors() {

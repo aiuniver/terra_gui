@@ -329,7 +329,7 @@ $circleConnectedColor: #569dcf;
       height: 15px;
     }
 
-    &.input {
+    &.InputData {
       background: #54e346;
       border: $blockBorder solid #54e346;
       &:hover {
@@ -369,7 +369,7 @@ $circleConnectedColor: #569dcf;
         border: $blockBorder solid #ffffff;
       }
     }
-    &.output {
+    &.OutputData {
       background: #ae00fb;
       border: $blockBorder solid #ae00fb;
       &:hover {
