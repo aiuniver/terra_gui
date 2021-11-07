@@ -1,11 +1,7 @@
 <template>
   <div class="t-field">
     <div class="t-field__label">Train / Val / Test</div>
-    <div class="slider"
-    @mouseleave="stopDrag"
-    @mouseup="stopDrag"
-    ref="slider"
-    >
+    <div class="slider" @mouseleave="stopDrag" @mouseup="stopDrag" ref="slider">
       <div class="slider__inputs">
         <input name="[info][part][train]" type="number" :value="btnFirstVal" :data-degree="degree" />
         <input
@@ -16,11 +12,46 @@
         />
         <input name="[info][part][test]" type="number" :value="100 - btnSecondVal" :data-degree="degree" />
       </div>
-      <div class="slider__scales" 
-      >
-        <div class="scales__first" :style="firstScale">{{ btnFirstVal }}</div>
-        <div class="scales__second" :style="secondScale">{{ btnSecondVal - btnFirstVal }}</div>
-        <div class="scales__third" :style="thirdScale">{{ 100 - btnSecondVal }}</div>
+      <div class="slider__scales">
+        <div class="scales__first" :style="firstScale">
+          <input
+            :value="btnFirstVal"
+            v-autowidth
+            type="number"
+            autocomplete="off"
+            :key="key1"
+            ref="key1"
+            @keypress.enter="inter(1, $event)"
+            @blur="clickInput(1, $event)"
+            @focus="focus"
+          />
+        </div>
+        <div class="scales__second" :style="secondScale">
+          <input
+            :value="btnSecondVal - btnFirstVal"
+            v-autowidth
+            type="number"
+            autocomplete="off"
+            :key="key2"
+            ref="key2"
+            @keypress.enter="inter(2, $event)"
+            @blur="clickInput(2, $event)"
+            @focus="focus"
+          />
+        </div>
+        <div class="scales__third" :style="thirdScale">
+          <input
+            :value="100 - btnSecondVal"
+            v-autowidth
+            type="number"
+            autocomplete="off"
+            :key="key3"
+            ref="key3"
+            @keypress.enter="inter(3, $event)"
+            @blur="clickInput(3, $event)"
+            @focus="focus"
+          />
+        </div>
       </div>
       <div class="slider__between" ref="between">
         <button
@@ -44,15 +75,59 @@
 export default {
   name: 'Slider',
   data: () => ({
+    input: 0,
+    select: 0,
     btnFirstVal: 70,
     btnSecondVal: 90,
     firstBtnDrag: false,
     secondBtnDrag: false,
+    key1: 1,
+    key2: 1,
+    key3: 1,
   }),
   props: {
     degree: Number,
   },
   methods: {
+    focus({ target }) {
+      target.select();
+    },
+    inter(i, { target }) {
+      target.blur();
+      const ref = this.$refs[`key${i + 1}`];
+      if (ref) {
+        ref.focus();
+        this.$nextTick(() => {
+          ref.select();
+        });
+      }
+    },
+    clickInput(i, { target }) {
+      const value = +target.value;
+      // console.log(value)
+      // console.log(this.btnFirstVal)
+      // console.log(this.btnSecondVal)
+      if (i === 1) {
+        if (value >= 0 && value <= 90) {
+          this.btnFirstVal = value > 5 ? value : 5;
+          if (value + 5 > this.btnSecondVal) {
+            console.log('value')
+            this.btnSecondVal = value > 5 ? value + 5 : 5;
+          }
+        }
+      }
+      if (i === 2) {
+        if (value >= 0 && value <= 95 - this.btnFirstVal) {
+          this.btnSecondVal = value > 5 ? this.btnFirstVal + value : this.btnFirstVal + 5;
+        }
+      }
+      if (i === 3) {
+        if (value >= 0 && value <= 95 - this.btnFirstVal) {
+          this.btnSecondVal = 100 - value;
+        }
+      }
+      this[`key${i}`] += 1;
+    },
     stopDrag() {
       this.$refs.slider.removeEventListener('mousemove', this.firstBtn);
       this.$refs.slider.removeEventListener('mousemove', this.secondBtn);
@@ -93,31 +168,40 @@ export default {
         if (this.btnSecondVal < this.btnFirstVal + 5) this.btnSecondVal = this.btnFirstVal + 5;
       }
     },
+    diff(value, max = 95, min = 5) {
+      if (value < min) {
+        value = min;
+      }
+      if (value > max) {
+        value = max;
+      }
+      return value;
+    },
   },
   computed: {
     sliderFirstStyle() {
       return {
-        left: this.btnFirstVal + '%',
+        left: this.diff(this.btnFirstVal, this.btnSecondVal - 5) + '%',
       };
     },
     sliderSecondStyle() {
       return {
-        left: this.btnSecondVal + '%',
+        left: this.diff(this.btnSecondVal, 95) + '%',
       };
     },
     firstScale() {
       return {
-        width: this.btnFirstVal + '%',
+        width: this.diff(this.btnFirstVal, 90) + '%',
       };
     },
     secondScale() {
       return {
-        width: this.btnSecondVal - this.btnFirstVal + '%',
+        width: this.diff(this.btnSecondVal - this.btnFirstVal, 90) + '%',
       };
     },
     thirdScale() {
       return {
-        width: 100 - this.btnSecondVal + '%',
+        width: this.diff(100 - this.btnSecondVal, 90) + '%',
       };
     },
   },
@@ -126,7 +210,9 @@ export default {
 
 <style scoped lang="scss">
 .t-field {
+  user-select: none;
   margin-bottom: 20px;
+  position: relative;
   &__label {
     width: 150px;
     max-width: 330px;
@@ -205,6 +291,12 @@ export default {
   &__third {
     font-size: 12px;
     line-height: 24px;
+    input {
+      height: 100%;
+      background-color: #17212b00;
+      border: none;
+      padding: 0;
+    }
   }
 }
 </style>
