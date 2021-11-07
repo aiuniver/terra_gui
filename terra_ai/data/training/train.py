@@ -251,6 +251,7 @@ class TrainingDetailsData(BaseMixinData):
     state: StateData = StateData(status="no_train")
     result: Optional[dict]
     deploy: Optional[DeployData]
+    logs: Optional[dict] = {}
 
     _path: Path = PrivateAttr()
 
@@ -296,11 +297,23 @@ class TrainingDetailsData(BaseMixinData):
         os.makedirs(_path, exist_ok=True)
         return _path
 
+    @property
+    def intermediate_path(self) -> Path:
+        _path = Path(self.path, settings.TRAINING_INTERMEDIATE_DIRNAME)
+        os.makedirs(_path, exist_ok=True)
+        return _path
+
     @validator("base", pre=True, allow_reuse=True)
     def _validate_base(cls, value, values):
         if not value:
             value = {}
         value.update({"model": values.get("model")})
+        return value
+
+    @validator("logs", pre=True)
+    def _validate_logs(cls, value: dict) -> dict:
+        if not value:
+            value = {}
         return value
 
     def dict(self, **kwargs):
