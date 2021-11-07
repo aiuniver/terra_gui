@@ -673,7 +673,7 @@ class FitCallback(keras.callbacks.Callback):
             json.dump({"addtrain_epochs": interactive.addtrain_epochs}, addtraining)
 
     def _load_logs(self):
-        if self.state.status == "addtrain":
+        if self.training_detail.state.status == "addtrain":
             if self.training_detail.logs:
                 logs = self.training_detail.logs.get("fit_log")
                 interactive.log_history = self.training_detail.logs.get("interactive_log")

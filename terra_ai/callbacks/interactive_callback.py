@@ -95,7 +95,7 @@ class InteractiveCallback:
         self.deploy_presets_data = None
         self.random_key = ''
 
-        self.training_details: TrainingDetailsData = TrainingDetailsData(**{})
+        self.training_details: TrainingDetailsData
         pass
 
     def set_attributes(self, dataset: PrepareDataset, metrics: dict, losses: dict, dataset_path: Path,
