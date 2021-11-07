@@ -157,18 +157,16 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
             img = Image.open(initial_file_path)
             img = img.resize(options.data.inputs.get(input_id).shape[0:2][::-1], Image.ANTIALIAS)
             img = img.convert('RGB')
-            source = os.path.join(preset_path, f"initial_data_image_{save_id}_input_{input_id}.webp")
-            img.save(source, 'webp')
             if return_mode == 'deploy':
-                return source
+                source = os.path.join(preset_path, "deploy_presets",
+                                      f"initial_data_image_{save_id}_input_{input_id}.webp")
+                return_source = os.path.join("deploy_presets", f"initial_data_image_{save_id}_input_{input_id}.webp")
+                img.save(source, 'webp')
+                return return_source
             if return_mode == 'callback':
-                data = [
-                    {
-                        "title": "Изображение",
-                        "value": source,
-                        "color_mark": None
-                    }
-                ]
+                source = os.path.join(preset_path, f"initial_data_image_{save_id}_input_{input_id}.webp")
+                img.save(source, 'webp')
+                data = [{"title": "Изображение", "value": source, "color_mark": None }]
                 return data
         except Exception as e:
             print_error(ImageSegmentationCallback().name, method_name, e)
@@ -179,26 +177,22 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                                  colors: list = None, return_mode='deploy', show_stat: bool = False):
         method_name = 'postprocess_segmentation'
         try:
-            data = {
-                "y_true": {},
-                "y_pred": {},
-                "stat": {}
-            }
+            data = {"y_true": {}, "y_pred": {}, "stat": {}}
             if return_mode == 'deploy':
                 array = np.expand_dims(np.argmax(predict_array, axis=-1), axis=-1) * 512
                 for i, color in enumerate(options.classes_colors):
-                    array = np.where(
-                        array == i * 512,
-                        np.array(color.as_rgb_tuple()),
-                        array
-                    )
+                    array = np.where(array == i * 512, np.array(color.as_rgb_tuple()), array)
                 array = array.astype("uint8")
                 img_save_path = os.path.join(
-                    save_path,
+                    save_path, "deploy_presets",
+                    f"image_segmentation_postprocessing_{image_id}_output_{output_id}.webp"
+                )
+                return_path = os.path.join(
+                    "deploy_presets",
                     f"image_segmentation_postprocessing_{image_id}_output_{output_id}.webp"
                 )
                 matplotlib.image.imsave(img_save_path, array)
-                return img_save_path
+                return return_path
 
             if return_mode == 'callback':
                 y_true = np.expand_dims(np.argmax(true_array, axis=-1), axis=-1) * 512

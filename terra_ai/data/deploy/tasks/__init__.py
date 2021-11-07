@@ -26,6 +26,10 @@ class DeployData(BaseMixinData):
 
     @validator("data", always=True)
     def _validate_data(cls, value: Any, values, field) -> Any:
+        if not value:
+            value = {}
+        if not value.get("data"):
+            value["data"] = []
         value.update({"path": values.get("path")})
         return field.type_(**value)
 

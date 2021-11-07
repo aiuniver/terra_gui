@@ -1,26 +1,20 @@
-from apps.plugins.project import project_path, data_path
 from terra_ai.agent import agent_exchange
 from terra_ai.data.projects.project import ProjectPathData
-from .serializers import (
-    NameSerializer,
-    SaveSerializer,
-    LoadSerializer,
-    DeleteSerializer,
-)
-from ..base import (
-    BaseAPIView,
-    BaseResponseSuccess,
-    BaseResponseErrorFields,
-)
+
+from apps.plugins.project import project_path, data_path
+
+from apps.api.base import BaseAPIView, BaseResponseSuccess, BaseResponseErrorFields
+
+from . import serializers
 
 
 class NameAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        serializer = NameSerializer(data=request.data)
+        serializer = serializers.NameSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
-        request.project.name = serializer.validated_data.get("name")
-        return BaseResponseSuccess(save_project=True)
+        request.project.set_name(serializer.validated_data.get("name"))
+        return BaseResponseSuccess()
 
 
 class CreateAPIView(BaseAPIView):
@@ -31,7 +25,7 @@ class CreateAPIView(BaseAPIView):
 
 class SaveAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        serializer = SaveSerializer(data=request.data)
+        serializer = serializers.SaveSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         request.project.name = serializer.validated_data.get("name")
@@ -55,7 +49,7 @@ class InfoAPIView(BaseAPIView):
 
 class LoadAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        serializer = LoadSerializer(data=request.data)
+        serializer = serializers.LoadSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         agent_exchange(
@@ -69,7 +63,7 @@ class LoadAPIView(BaseAPIView):
 
 class DeleteAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        serializer = DeleteSerializer(data=request.data)
+        serializer = serializers.DeleteSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         project = ProjectPathData(path=serializer.validated_data.get("path"))

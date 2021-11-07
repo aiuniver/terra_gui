@@ -9,42 +9,14 @@ export default {
     errorsBlocks: {},
     errorsFields: {},
     links: [],
-    cascades: {
-      list: [
-        {
-          "value": "Input",
-          "label": "Input"
-        },
-        {
-          "value": "Model",
-          "label": "Model"
-        },
-        {
-          "value": "Function",
-          "label": "Function"
-        },
-        {
-          "value": "Custom",
-          "label": "Custom"
-        },
-        {
-          "value": "Dense",
-          "label": "Dense"
-        },
-        {
-          "value": "UNETBlock",
-          "label": "UNETBlock"
-        }
-      ],
-      layers_types: {},
-    },
+    cascades: {},
     status: {
       isUpdate: true,
     },
   }),
   mutations: {
-    SET_MODELING (state, value) {
-      const list = value.layer_form[1]['list'] || []
+    SET_CASCADES (state, value) {
+      const list = value.block_form[1]['list'] || []
       state.cascades = { ...value, list };
     },
     SET_ERRORS_BLOCKS (state, value) {
@@ -184,7 +156,7 @@ export default {
       });
       commit('SET_STATUS', { isUpdate: true });
 
-      const res = await dispatch('axios', { url: '/cascades/update/', data: { layers: semdBlocks } }, { root: true });
+      const res = await dispatch('axios', { url: '/cascades/update/', data: { blocks: semdBlocks } }, { root: true });
       if (res) {
         const { data, error, success } = res
         console.log(data, error, success, block)
@@ -257,8 +229,8 @@ export default {
   },
   getters: {
     getList: ({ cascades: { list } }) => list,
-    getLayersType: ({ cascades: { layers_types } }) => layers_types || {},
-    getLayersForm: ({ cascades: { layer_form } }) => layer_form || [],
+    getLayersType: ({ cascades: { blocks_types } }) => blocks_types || {},
+    getLayersForm: ({ cascades: { block_form } }) => block_form || [],
     getModel: ({ model }) => model,
     getBlocks: ({ blocks }) => blocks,
     getErrorsBlocks: ({ errorsBlocks }) => errorsBlocks,

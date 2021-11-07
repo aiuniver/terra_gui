@@ -263,8 +263,19 @@ class BaseObjectDetectionCallback:
                                 dash_mode=True, show_label=True)
                 del draw
 
-            save_predict_path = os.path.join(
-                save_path, f"{return_mode}_od_{'predict_true' if plot_true else 'predict'}_image_{image_id}.webp")
+            save_predict_path = ''
+            return_predict_path = ""
+            if return_mode == 'deploy':
+                save_predict_path = os.path.join(
+                    save_path, "deploy_presets",
+                    f"{return_mode}_od_{'predict_true' if plot_true else 'predict'}_image_{image_id}.webp")
+                return_predict_path = os.path.join(
+                    "deploy_presets",
+                    f"{return_mode}_od_{'predict_true' if plot_true else 'predict'}_image_{image_id}.webp")
+            if return_mode == 'callback':
+                save_predict_path = os.path.join(
+                    save_path, f"{return_mode}_od_{'predict_true' if plot_true else 'predict'}_image_{image_id}.webp")
+
             image_pred.save(save_predict_path)
 
             save_true_path = ''
@@ -280,11 +291,20 @@ class BaseObjectDetectionCallback:
                                     label=label, label_size=label_size,
                                     dash_mode=False, show_label=True)
                     del draw
-
-                save_true_path = os.path.join(save_path, f"{return_mode}_od_true_image_{image_id}.webp")
+                save_true_path = ''
+                return_true_path = ""
+                if return_mode == 'deploy':
+                    save_true_path = os.path.join(
+                        save_path, "deploy_presets", f"{return_mode}_od_true_image_{image_id}.webp")
+                    return_true_path = os.path.join(
+                        "deploy_presets", f"{return_mode}_od_true_image_{image_id}.webp")
+                if return_mode == 'callback':
+                    save_true_path = os.path.join(save_path, f"{return_mode}_od_true_image_{image_id}.webp")
                 image_true.save(save_true_path)
-
-            return save_predict_path, save_true_path
+            if return_mode == 'deploy':
+                return return_predict_path, return_true_path
+            if return_mode == 'callback':
+                return save_predict_path, save_true_path
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
 
@@ -504,7 +524,7 @@ class BaseObjectDetectionCallback:
                         true_bb=true_array, pred_bb=predict_array, name_classes=name_classes,
                         sensitivity=sensitivity
                     )
-                    print('\nbox_stat', box_stat)
+                    # print('\nbox_stat', box_stat)
                     data["stat"]["Общая точность"] = {
                         "type": "str",
                         "data": [{
@@ -536,9 +556,9 @@ class BaseObjectDetectionCallback:
                     for class_name in name_classes:
                         mean_overlap = box_stat['class_stat'][class_name]['mean_overlap'] \
                             if box_stat['class_stat'][class_name]['mean_overlap'] else 0.
-                        mean_conf = box_stat['class_stat'][class_name]['mean_conf']\
+                        mean_conf = box_stat['class_stat'][class_name]['mean_conf'] \
                             if box_stat['class_stat'][class_name]['mean_conf'] else 0.
-                        mean_class = box_stat['class_stat'][class_name]['mean_class']\
+                        mean_class = box_stat['class_stat'][class_name]['mean_class'] \
                             if box_stat['class_stat'][class_name]['mean_class'] else 0.
                         data["stat"][f'{class_name}'] = {
                             "type": "str",
@@ -597,14 +617,15 @@ class BaseObjectDetectionCallback:
                 img_path = os.path.join(dataset_path, options.dataframe['val'].iat[ex, 0])
                 img = Image.open(img_path)
                 img = img.convert('RGB')
-                source = os.path.join(save_path, f"deploy_od_initial_data_{ex}_box_{bb}.webp")
+                source = os.path.join(save_path, "deploy_presets", f"deploy_od_initial_data_{ex}_box_{bb}.webp")
+                return_source = os.path.join("deploy_presets", f"deploy_od_initial_data_{ex}_box_{bb}.webp")
                 img.save(source, 'webp')
                 save_predict_path, _ = BaseObjectDetectionCallback().plot_boxes(
                     true_bb=y_true[bb][ex], pred_bb=y_pred[bb][ex], img_path=img_path, name_classes=name_classes,
                     colors=colors, image_id=ex, add_only_true=False, plot_true=False, image_size=image_size,
                     save_path=save_path, return_mode='deploy'
                 )
-                return_data[bb].append({"source": source, "predict": save_predict_path})
+                return_data[bb].append({"source": return_source, "predict": save_predict_path})
             return return_data
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
@@ -729,7 +750,7 @@ class BaseObjectDetectionCallback:
                         return_data[f"{idx + 1}"]['statistic_values'] = data.get('stat')
                     else:
                         return_data[f"{idx + 1}"]['statistic_values'] = {}
-            print('\nget_intermediate_result', return_data)
+            # print('\nget_intermediate_result', return_data)
             return return_data
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)

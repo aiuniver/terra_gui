@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-import os
 from tensorflow.keras.utils import load_img
 import pandas as pd
 
@@ -12,6 +11,19 @@ def video(paths):
 
     for path in paths:
         yield path
+
+
+def video_by_frame(path):
+    cap = cv2.VideoCapture(path)
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        yield frame
 
 
 def image(path):

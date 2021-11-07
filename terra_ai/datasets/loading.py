@@ -137,7 +137,11 @@ def __choice_from_keras(name: str, destination: Path, reset_model: bool, **kwarg
         progress.pool(
             progress_name,
             percent=100,
-            data={"dataset": dataset, "reset_model": reset_model},
+            data={
+                "dataset": dataset,
+                "destination": destination,
+                "reset_model": reset_model,
+            },
             finished=True,
         )
     else:
@@ -184,7 +188,11 @@ def __choice_from_custom(
             progress.pool(
                 progress_name,
                 percent=100,
-                data={"dataset": dataset, "reset_model": reset_model},
+                data={
+                    "dataset": dataset,
+                    "destination": destination,
+                    "reset_model": reset_model,
+                },
                 finished=True,
             )
         else:
@@ -252,7 +260,11 @@ def __choice_from_terra(name: str, destination: Path, reset_model: bool, **kwarg
             progress.pool(
                 progress_name,
                 percent=100,
-                data={"dataset": dataset, "reset_model": reset_model},
+                data={
+                    "dataset": dataset,
+                    "destination": destination,
+                    "reset_model": reset_model,
+                },
                 finished=True,
             )
         else:

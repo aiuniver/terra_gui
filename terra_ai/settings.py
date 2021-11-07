@@ -24,8 +24,13 @@ DATASET_ANNOTATION = "labelmap.txt"
 # Modeling
 MODEL_EXT = "model"
 
+# Training
+TRAINING_DEPLOY_DIRNAME = "deploy"
+TRAINING_MODEL_DIRNAME = "model"
+
 # Cascade
 CASCADE_EXT = "cascade"
+CASCADE_CONFIG = "config.json"
 
 # Deploy
 DEPLOY_URL = "https://srv1.demo.neural-university.ru/autodeployterra_upload/"
@@ -40,5 +45,4 @@ MAX_GRAPH_LENGTH = 50
 TRANSLATIONS_DIR = Path(ASSETS_PATH, "translations")
 
 # User settings
-
 LANGUAGE = "ru"
