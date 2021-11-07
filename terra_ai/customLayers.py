@@ -338,7 +338,7 @@ class VAEBlock(Model):
             sample = VAEBlock(latent_regularizer='bvae', beta=16,
                               latent_size=32)(x)
         '''
-        super(VAEBlock, self).__init__(name='vaeblock', **kwargs)
+        super(VAEBlock, self).__init__(**kwargs)
         # sampling
         self.reg = latent_regularizer
         self.beta = beta
