@@ -433,8 +433,8 @@ class GUINN:
                 (training_details.state.status == "trained" and
                  self.callbacks[0].last_epoch - 1 == training_details.base.epochs):
             self.sum_epoch = training_details.base.epochs
-        with open(os.path.join(training_details.path, "test_train_details"), "wb", encoding="utf-8") as ff:
-            json.dump(training_details, ff)
+        # with open(os.path.join(training_details.path, "test_train_details"), "w", encoding="utf-8") as ff:
+        #     json.dump(training_details.native(), ff)
         # training_details.deploy = self.callbacks[0].deploy
 
 
@@ -604,7 +604,7 @@ class FitCallback(keras.callbacks.Callback):
                     self.metric_checkpoint = log
                     break
                 else:
-                    if f"{self.checkpoint_config.get('layer')}" in log and \
+                    if f"{checkpoint_config.get('layer')}" in log and \
                             camelize_log == checkpoint_config.get("metric_name"):
                         self.metric_checkpoint = log
                         break
@@ -774,7 +774,7 @@ class FitCallback(keras.callbacks.Callback):
         result = CreateArray().postprocess_results(array=presets_predict,
                                                    options=self.dataset,
                                                    save_path=str(self.training_detail.model_path),
-                                                   dataset_path=str(self.dataset_path))
+                                                   dataset_path=str(self.dataset_data.path))
         deploy_presets = []
         if result:
             deploy_presets = list(result.values())[0]
@@ -782,7 +782,7 @@ class FitCallback(keras.callbacks.Callback):
 
     def _create_form_data_for_dataframe_deploy(self):
         form_data = []
-        with open(os.path.join(self.dataset_path, "config.json"), "r", encoding="utf-8") as dataset_conf:
+        with open(os.path.join(self.dataset_data.path, "config.json"), "r", encoding="utf-8") as dataset_conf:
             dataset_info = json.load(dataset_conf).get("columns", {})
         for inputs, input_data in dataset_info.items():
             if int(inputs) not in list(self.dataset.data.outputs.keys()):
@@ -992,7 +992,7 @@ class FitCallback(keras.callbacks.Callback):
                                                                            'stopped'] else self.epochs
         if self.is_yolo:
             mAP = get_mAP(self.model, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
-                          TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names, dataset_path=self.dataset_path)
+                          TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names, dataset_path=self.dataset_data.path)
             interactive_logs = self._logs_losses_extract(logs, prefixes=['pred', 'target'])
             # interactive_logs.update({'mAP': mAP})
             interactive_logs.update(mAP)
