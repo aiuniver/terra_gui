@@ -524,6 +524,7 @@ class GUINN:
                 with tf.GradientTape() as tape:
                     logits_ = train_model(x_batch, training=True)
                     y_true_ = list(y_batch.values())
+                    # print(logits_.shape, y_true_[0].shape)
                     if not isinstance(logits_, list):
                         loss_fn = losses.get(list(losses.keys())[0])
                         total_loss = loss_fn(y_true_[0], logits_)
@@ -546,18 +547,17 @@ class GUINN:
                     test_logits = test_logits if isinstance(test_logits, list) else [test_logits]
                     if not test_true:
                         for j, outp in enumerate(outputs):
-                            test_pred[f"{outp}"] = test_logits[j].numpy()
-                            test_true[f"{outp}"] = true_array[j].numpy()
+                            test_pred[f"{outp}"] = test_logits[j].numpy().astype('float')
+                            test_true[f"{outp}"] = true_array[j].numpy().astype('float')
                     else:
                         for j, outp in enumerate(outputs):
                             test_pred[f"{outp}"] = np.concatenate(
-                                [test_pred[f"{outp}"], test_logits[j].numpy()], axis=0)
-                            test_true[f"{outp}"] = np.concatenate([test_true[f"{outp}"], true_array[j].numpy()], axis=0)
+                                [test_pred[f"{outp}"], test_logits[j].numpy().astype('float')], axis=0)
+                            test_true[f"{outp}"] = np.concatenate(
+                                [test_true[f"{outp}"], true_array[j].numpy().astype('float')], axis=0)
                 return test_pred, test_true
 
             current_epoch = 0
-            # acc_metric = BalancedRecall()
-            # model = self.model
             train_pred = {}
             train_true = {}
             optimizer = self.set_optimizer(params=params)
@@ -568,7 +568,6 @@ class GUINN:
             for epoch in range(current_epoch, params.get('epochs')):
                 callback._time_first_step = time.time()
                 new_batch = True
-                # Iterate over the batches of the dataset.
                 train_steps = 0
                 for x_batch_train, y_batch_train in dataset.dataset.get('train').batch(
                         params.get('batch'), drop_remainder=False):
@@ -579,23 +578,24 @@ class GUINN:
                     if not train_true:
                         # print(11, dataset.data.outputs.keys())
                         for i, out in enumerate(dataset.data.outputs.keys()):
-                            train_pred[f"{out}"] = logits[i].numpy()
-                            train_true[f"{out}"] = y_true[i].numpy()
+                            train_pred[f"{out}"] = logits[i].numpy().astype('float')
+                            train_true[f"{out}"] = y_true[i].numpy().astype('float')
                         train_data_idxs = list(range(y_true[0].shape[0]))
                         # print('train_true is None: data_idxs', data_idxs[-1])
                     elif first_epoch:
                         for i, out in enumerate(dataset.data.outputs.keys()):
-                            train_pred[f"{out}"] = np.concatenate([train_pred[f"{out}"], logits[i].numpy()], axis=0)
-                            train_true[f"{out}"] = np.concatenate([train_true[f"{out}"], y_true[i].numpy()], axis=0)
+                            train_pred[f"{out}"] = np.concatenate(
+                                [train_pred[f"{out}"], logits[i].numpy().astype('float')], axis=0)
+                            train_true[f"{out}"] = np.concatenate(
+                                [train_true[f"{out}"], y_true[i].numpy().astype('float')], axis=0)
                         train_data_idxs.extend(list(range(
                             train_data_idxs[-1] + 1, train_data_idxs[-1] + 1 + y_true[0].shape[0])))
                     else:
                         for i, out in enumerate(dataset.data.outputs.keys()):
                             train_pred[f"{out}"] = np.concatenate(
-                                [train_pred[f"{out}"][logits[i].shape[0]:], logits[i].numpy()], axis=0)
+                                [train_pred[f"{out}"][logits[i].shape[0]:], logits[i].numpy().astype('float')], axis=0)
                             train_true[f"{out}"] = np.concatenate(
-                                [train_true[f"{out}"][y_true[i].shape[0]:], y_true[i].numpy()], axis=0)
-
+                                [train_true[f"{out}"][y_true[i].shape[0]:], y_true[i].numpy().astype('float')], axis=0)
                         if new_batch:
                             train_data_idxs = train_data_idxs[y_true[0].shape[0]:]
                             train_data_idxs.extend(list(range(y_true[0].shape[0])))
@@ -623,13 +623,16 @@ class GUINN:
                     val_true=val_true, val_pred=val_pred, train_data_idxs=train_data_idxs
                 )
                 # callback._update_log_history()
-                print(f"\nEpoch {callback.current_logs.get('epochs')}:\n"
-                      f"\nlog_history: {callback.log_history.get('epochs')} {callback.log_history.get('2').get('metrics')}\n"
-                      #       f" \nloss={callback.current_logs.get('2').get('loss')}\n"
-                      #       f" \nmetrics={callback.current_logs.get('2').get('metrics')}\n"
-                      #       f" \nclass_loss={callback.current_logs.get('2').get('class_loss')}\n"
-                      #       f" \nclass_metrics={callback.current_logs.get('2').get('class_metrics')}"
-                      )
+                print(
+                    # f"\nEpoch {callback.current_logs.get('epochs')}:\n"
+                    f"\nlog_history: {callback.log_history.get('epochs')} "
+                    f"\nloss={callback.log_history.get('2').get('loss')}"
+                    f"\nmetrics={callback.log_history.get('2').get('metrics')}"
+                    # f" \nloss={callback.current_logs.get('2').get('loss')}\n"
+                    # f" \nmetrics={callback.current_logs.get('2').get('metrics')}\n"
+                    # f" \nclass_loss={callback.current_logs.get('2').get('class_loss')}\n"
+                    # f" \nclass_metrics={callback.current_logs.get('2').get('class_metrics')}"
+                )
                 # print(f"\nEpoch {epoch + 1}: train_acc={train_acc}, val_acc={val_acc}")
                 best_path = callback.save_best_weights()
                 if best_path:
@@ -892,6 +895,7 @@ class FitCallback(tf.keras.callbacks.Callback):
                 loss_fn = getattr(
                     importlib.import_module(loss_metric_config.get("loss").get(loss_name, {}).get('module')), loss_name
                 )
+                # print('loss_name', loss_name)
                 train_loss = self._get_loss_calculation(loss_fn, out, train_y_true.get(out), train_y_pred.get(out))
                 val_loss = self._get_loss_calculation(loss_fn, out, val_y_true.get(out), val_y_pred.get(out))
                 self.current_logs[out]["loss"][output_layer.get("loss")] = {"train": train_loss, "val": val_loss}
@@ -1528,7 +1532,7 @@ class FitCallback(tf.keras.callbacks.Callback):
             checkpoint_list = self.log_history.get(f"{self.checkpoint_config.get('layer')}").get(
                 self.checkpoint_config.get("type").lower()).get(self.checkpoint_config.get("metric_name")).get(
                 self.checkpoint_config.get("indicator").lower())
-            # print('checkpoint_list', checkpoint_list, self.checkpoint_mode)
+            # print('\ncheckpoint_list', checkpoint_list, self.checkpoint_mode, self.checkpoint_config.get("metric_name"))
             if self.checkpoint_mode == 'min' and checkpoint_list[-1] == min(checkpoint_list):
                 return True
             elif self.checkpoint_mode == "max" and checkpoint_list[-1] == max(checkpoint_list):
