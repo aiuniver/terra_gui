@@ -48,11 +48,11 @@
     // font-weight: bold;
     line-height: 1.5;
     border-bottom: 1px solid $modal-section-border-color;
-
     p, .at-modal__title {
       @include ellipsis();
       vertical-align: middle;
       font-size: $modal-header-font-size !important;
+      width: 100%;
     }
   }
   &__close {

@@ -6,7 +6,7 @@
 
     <input
       v-model="input"
-      :class="['t-field__input', { 'small': small }, { 't-field__error': error }]"
+      :class="['t-field__input', { small: small }, { 't-field__error': error }]"
       :type="type"
       :name="name || parse"
       :value="value"
@@ -15,7 +15,12 @@
       :autocomplete="'off'"
       @blur="change"
       @focus="focus"
+      @mouseover="hover = true"
+      @mouseleave="hover = false"
     />
+    <div v-show="error && hover" :class="['t-field__hint', { 't-inline__hint': inline }]">
+      <span>{{ error }}</span>
+    </div>
   </div>
 </template>
 
@@ -41,14 +46,16 @@ export default {
     small: Boolean,
     error: String,
     degree: Number, // for serialize
+    update: Object,
   },
   data: () => ({
     isChange: false,
+    hover: false,
   }),
   computed: {
     input: {
       set(value) {
-        console.log(value);
+        // console.log(value);
         this.$emit('input', value);
         this.isChange = true;
       },
@@ -59,7 +66,7 @@ export default {
   },
   methods: {
     focus(e) {
-      console.log(e);
+      // console.log(e);
       this.$emit('focus', e);
       if (this.error) {
         this.$emit('cleanError', true);
@@ -69,7 +76,7 @@ export default {
       // if (+e.target.value > 99 && this.name === 'classes') e.target.value = '99'
       let value = e.target.value;
       if (this.isChange && value !== '') {
-        console.log(e);
+        // console.log(e);
         value = this.type === 'number' ? +value : value;
         this.$emit('change', { name: this.name, value });
         this.$emit('parse', { name: this.name, parse: this.parse, value });
@@ -80,12 +87,25 @@ export default {
   created() {
     this.input = this.value;
   },
+  watch: {
+    update(obj) {
+      console.log(obj);
+      if (obj[this.name]) {
+        console.log('ok');
+        this.$el.getElementsByTagName('input')[0].value = obj[this.name];
+        this.$nextTick(() => {
+          this.input = obj[this.name];
+        });
+      }
+    },
+  },
 };
 </script>
 
 <style lang="scss" scoped>
 .t-field {
   margin-bottom: 10px;
+  position: relative;
   &__label {
     text-align: left;
     color: #a7bed3;
@@ -112,7 +132,8 @@ export default {
     }
   }
   &__error {
-    border-color: #b53b3b;
+    border-color: #ca5035;
+    color: #ca5035;
   }
   &__input.small {
     height: 24px;
@@ -120,6 +141,29 @@ export default {
     font-size: 12px;
     line-height: 24px;
     padding: 0 3px;
+  }
+  &__hint {
+    user-select: none;
+    position: absolute;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    padding: 0 5px 0 5px;
+    top: 65px;
+    background-color: #ca5035;
+    color: #fff;
+    border-radius: 4px;
+    z-index: 5;
+    // display: none;
+    span {
+      font-style: normal;
+      font-weight: normal;
+      font-size: 9px;
+      line-height: 12px;
+    }
+    // &--hover {
+    //   display: flex;
+    // }
   }
 }
 .t-inline {
@@ -153,6 +197,9 @@ export default {
       line-height: 24px;
       padding: 0 3px;
     }
+  }
+  &__hint {
+    top: 25px;
   }
 }
 </style>

@@ -1,13 +1,15 @@
 <template>
   <div class="t-mega-select">
     <div class="t-mega-select__header">{{ label }}</div>
-    <div class="t-mega-select__body">
-      <div v-for="({ label, value }, i) of list" :key="'mega_' + i" class="t-mega-select__list" @click="click(value)">
-        <div :class="['t-mega-select__list--switch', { 't-mega-select__list--active': isActive(value) }]">
-          <span></span>
+    <div :class="['t-mega-select__body', { 't-mega-select__body--disabled': disabled }]">
+      <scrollbar :ops="ops">
+        <div v-for="({ label, value }, i) of list" :key="'mega_' + i" class="t-mega-select__list" @click="click(value)">
+          <div :class="['t-mega-select__list--switch', { 't-mega-select__list--active': isActive(value) }]">
+            <span></span>
+          </div>
+          <div class="t-mega-select__list--label">{{ label }}</div>
         </div>
-        <div class="t-mega-select__list--label">{{ label }}</div>
-      </div>
+      </scrollbar>
       <div v-show="!list.length" class="t-mega-select__body--empty">Нет данных</div>
     </div>
   </div>
@@ -25,21 +27,33 @@ export default {
       type: Array,
       default: () => [],
     },
+    disabled: Boolean,
   },
   data: () => ({
     valueTemp: [],
+    ops: {
+      bar: { background: '#17212b' },
+      scrollPanel: {
+        scrollingX: false,
+        scrollingY: true,
+      },
+    },
   }),
   methods: {
     isActive(value) {
       return this.valueTemp.includes(value);
     },
     click(value) {
-      this.valueTemp = this.valueTemp.includes(value)
-        ? this.valueTemp.filter(item => item !== value)
-        : [...this.valueTemp, value];
-      this.$emit('input', this.valueTemp);
-      this.$emit('change', { name: this.name, value });
-      this.$emit('parse', { name: this.name, parse: this.parse, value: this.valueTemp });
+      if (!this.disabled) {
+        if (this.valueTemp.length > 1 || !this.valueTemp.includes(value)) {
+          this.valueTemp = this.valueTemp.includes(value)
+            ? this.valueTemp.filter(item => item !== value)
+            : [...this.valueTemp, value];
+          this.$emit('input', this.valueTemp);
+          this.$emit('change', { name: this.name, value });
+          this.$emit('parse', { name: this.name, parse: this.parse, value: this.valueTemp });
+        }
+      }
     },
   },
   created() {
@@ -58,13 +72,15 @@ export default {
     margin: 0 0 10px 0;
     line-height: 1;
     font-size: 0.75rem;
+    user-select: none;
   }
   &__body {
     border: 1px solid #6c7883;
     border-radius: 4px;
-    padding: 5px;
+    padding: 5px 0 5px 5px;
     overflow: hidden;
-    background: #242F3D;
+    background: #242f3d;
+    height: 200px;
     &--empty {
       color: #a7bed3;
       font-size: 0.7em;
@@ -73,6 +89,9 @@ export default {
       text-decoration: none;
       display: block;
       cursor: default;
+    }
+    &--disabled {
+      opacity: 0.3;
     }
   }
   &__list {

@@ -1,7 +1,7 @@
 <template>
   <div class="text-card">
-    <scrollbar>
-      <slot>TEXT</slot>
+    <scrollbar :ops="ops">
+      <pre><slot>TEXT</slot></pre>
     </scrollbar>
   </div>
 </template>
@@ -15,6 +15,14 @@ export default {
       default: "text"
     }
   },
+  data: () => ({
+    ops: {
+      scrollPanel: {
+        scrollingX: false,
+        scrollingY: true,
+      },
+    },
+  })
 }
 </script>
 
@@ -28,5 +36,10 @@ export default {
   font-size: 14px;
   line-height: 21px;
   color: #65B9F4;
+}
+pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: inherit;
 }
 </style>

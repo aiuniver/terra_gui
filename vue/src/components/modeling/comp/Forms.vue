@@ -40,7 +40,7 @@
       />
       <Select
         v-if="type === 'select'"
-        :value="getValue(valueDef[name], value)"
+        :value="valueDef[name]"
         :label="label"
         :lists="list"
         :parse="parse"
@@ -93,8 +93,8 @@ export default {
     getError(parse) {
       if (!this.id) return;
       const key = parse.replace('parameters', `[${this.id}][parameters]`)
-      console.log(key)
-      console.log(this.id)
+      // console.log(key)
+      // console.log(this.id)
       return this.errors?.[key]?.[0] || ''
     },
     change(e) {

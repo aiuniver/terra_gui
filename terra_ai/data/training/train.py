@@ -3,15 +3,111 @@
 """
 
 import json
-from typing import Any
+from typing import Any, Optional, List
 from pydantic import validator
-from pydantic.types import PositiveInt
+from pydantic.types import conint, confloat, PositiveInt
 from pydantic.errors import EnumMemberError
 
-from ..mixins import BaseMixinData
+from ..mixins import BaseMixinData, UniqueListMixin, IDMixinData
 from . import optimizers
 from . import architectures
-from .extra import OptimizerChoice, ArchitectureChoice
+from .extra import (
+    OptimizerChoice,
+    ArchitectureChoice,
+    LossGraphShowChoice,
+    MetricGraphShowChoice,
+    ExampleChoiceTypeChoice,
+    BalanceSortedChoice,
+    MetricChoice,
+    StateStatusChoice,
+)
+
+
+class LossGraphData(IDMixinData):
+    output_idx: PositiveInt
+    show: LossGraphShowChoice
+
+
+class LossGraphsList(UniqueListMixin):
+    class Meta:
+        source = LossGraphData
+        identifier = "id"
+
+
+class MetricGraphData(IDMixinData):
+    output_idx: PositiveInt
+    show: MetricGraphShowChoice
+    show_metric: Optional[MetricChoice]
+
+
+class MetricGraphsList(UniqueListMixin):
+    class Meta:
+        source = MetricGraphData
+        identifier = "id"
+
+
+class IntermediateResultData(BaseMixinData):
+    show_results: bool = False
+    example_choice_type: ExampleChoiceTypeChoice = ExampleChoiceTypeChoice.seed
+    main_output: Optional[PositiveInt]
+    box_channel: conint(ge=0, le=2) = 1
+    num_examples: conint(ge=1, le=10) = 10
+    sensitivity: confloat(gt=0, le=1) = 0.15
+    threashold: confloat(gt=0, le=1) = 0.1
+    show_statistic: bool = False
+    autoupdate: bool = False
+
+
+class ProgressTableData(BaseMixinData):
+    output_idx: PositiveInt
+    show_loss: bool = True
+    show_metrics: bool = True
+
+
+class ProgressTableList(UniqueListMixin):
+    class Meta:
+        source = ProgressTableData
+        identifier = "output_idx"
+
+
+class StatisticData(BaseMixinData):
+    output_id: List[PositiveInt] = []
+    box_channel: conint(ge=0, le=2) = 1
+    autoupdate: bool = False
+    sensitivity: confloat(gt=0, le=1) = 0.15
+    threashold: confloat(gt=0, le=1) = 0.1
+
+
+class BalanceData(BaseMixinData):
+    show_train: bool = True
+    show_val: bool = True
+    sorted: BalanceSortedChoice = BalanceSortedChoice.descending
+
+
+class InteractiveData(BaseMixinData):
+    loss_graphs: LossGraphsList = LossGraphsList()
+    metric_graphs: MetricGraphsList = MetricGraphsList()
+    intermediate_result: IntermediateResultData = IntermediateResultData()
+    progress_table: ProgressTableList = ProgressTableList()
+    statistic_data: StatisticData = StatisticData()
+    data_balance: BalanceData = BalanceData()
+
+
+class StateButtonData(BaseMixinData):
+    title: str
+    visible: bool
+
+
+class StateButtonsData(BaseMixinData):
+    train: StateButtonData = StateButtonData(title="Обучить", visible=False)
+    stop: StateButtonData = StateButtonData(title="Остановить", visible=False)
+    clear: StateButtonData = StateButtonData(title="Сбросить", visible=False)
+    save: StateButtonData = StateButtonData(title="Сохранить", visible=False)
+
+
+class StateData(BaseMixinData):
+    status: StateStatusChoice = StateStatusChoice.no_train
+    buttons: StateButtonsData = StateButtonsData()
 
 
 class OptimizerData(BaseMixinData):
@@ -37,12 +133,17 @@ class OptimizerData(BaseMixinData):
 
     @validator("parameters", always=True)
     def _validate_parameters(cls, value: Any, values, field) -> Any:
-        return field.type_(**value or {})
+        return field.type_(**(value or {}))
 
 
 class ArchitectureData(BaseMixinData):
+    model: Any
     type: ArchitectureChoice
     parameters: Any
+
+    def dict(self, **kwargs):
+        kwargs.update({"exclude": {"model"}})
+        return super().dict(**kwargs)
 
     @property
     def outputs_dict(self) -> dict:
@@ -64,7 +165,19 @@ class ArchitectureData(BaseMixinData):
 
     @validator("parameters", always=True)
     def _validate_parameters(cls, value: Any, values, field) -> Any:
-        return field.type_(**value or {})
+        if not value:
+            return value
+        _model = values.get("model")
+        _outputs = value.get("outputs", [])
+        for _index, _output in enumerate(_outputs):
+            _output["task"] = (
+                _model.layers.get(_output.get("id")).task.value
+                if _model.layers.get(_output.get("id")).task
+                else None
+            )
+            _outputs[_index] = _output
+        value["outputs"] = _outputs
+        return field.type_(**(value or {}))
 
 
 class TrainData(BaseMixinData):

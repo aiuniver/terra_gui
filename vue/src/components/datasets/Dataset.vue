@@ -49,15 +49,26 @@ export default {
       return this.$store.getters['settings/height']({ deduct: 'filter', padding: 52, clean: true });
     },
   },
+  mounted() {
+    document.addEventListener('click', () => {
+      this.$store.dispatch('datasets/setSelect', 0);
+      this.$store.dispatch('datasets/setSelectedIndex', null);
+    });
+  },
   methods: {
     isLoaded(dataset) {
       // console.log(this.project?.dataset?.alias)
       return this.project?.dataset?.alias === dataset.alias;
     },
     click(dataset, key) {
-      console.log(dataset, key);
-      this.$store.dispatch('datasets/setSelect', dataset);
-      this.$store.dispatch('datasets/setSelectedIndex', key);
+      if (!this.isLoaded(dataset)) {
+        // console.log(dataset, key);
+        this.$store.dispatch('datasets/setSelect', dataset);
+        this.$store.dispatch('datasets/setSelectedIndex', key);
+        return;
+      }
+      this.$store.dispatch('datasets/setSelect', 0);
+      this.$store.dispatch('datasets/setSelectedIndex', null);
       // let card = e.path.filter(element => element.className == "dataset-card")[0]
       // this.$store.dispatch('messages/setMessage', { message: `Выбран датасет «${dataset.name}»`})
     },

@@ -6,7 +6,7 @@
       v-model="search"
       readonly
       :name="name"
-      :disabled="disabled"
+      :disabled="isDisabled"
       :placeholder="placeholder || ''"
       :autocomplete="'off'"
       @click="click"
@@ -29,55 +29,83 @@ export default {
   props: {
     type: String,
     placeholder: String,
-    value: [String, Number],
+    value: {
+      type: [String, Number],
+      default: '',
+    },
     name: String,
     parse: String,
     inputLabel: String,
-    list: [Array, Object],
-    disabled: Boolean,
+    list: {
+      type: Array,
+      default: () => [],
+    },
+    disabled: [Boolean, Array],
     small: Boolean,
     error: String,
+    update: Boolean, //wtf
   },
   data() {
     return {
       selected: {},
       show: false,
-      search: '',
+      input: '',
     };
   },
   created() {
-    this.search = this.value;
-    console.log(this.list);
+    // console.log(this.list)
+    // console.log(this.value)
+    const list = this.list ?? [];
+    this.selected = list.find(item => item.value === this.value) || {};
+    if (this.update) {
+      this.send(this.value); //wtf
+    }
   },
   computed: {
+    isDisabled() {
+      if (Array.isArray(this.disabled)) {
+        return !!this.disabled.includes(this.name);
+      } else {
+        return this.disabled;
+      }
+    },
     filterList() {
-      return this.list || [];
-      // ? this.list.filter(item => {
-      //     const search = this.search;
-      //     return search ? item.label.toLowerCase().includes(search.toLowerCase()) : true;
-      //   })
-      // : [];
+      return this.list ?? [];
+    },
+    search: {
+      set(value) {
+        this.input = value;
+      },
+      get() {
+        const list = this.list ?? [];
+        const label = list.find(item => item.value === this.selected?.value || item.value === this.value)?.label || '';
+        return label || '';
+      },
     },
   },
   methods: {
+    send(value) {
+      this.$emit('input', value);
+      this.$emit('change', { name: this.name, value });
+      this.$emit('parse', { name: this.name, parse: this.parse, value });
+    },
     label() {
       this.show = !this.show;
     },
     outside() {
-      this.show = false
+      this.show = false;
     },
     select(item) {
       if (item) {
         this.selected = item;
-        this.show = false;
-        this.search = item.label;
-        this.$emit('input', this.selected.value);
-        this.$emit('change', { name: this.name, value: item.value });
-        this.$emit('parse', { name: this.name, parse: this.parse, value: item.value });
+        this.send(item.value);
+        this.input = item.value;
       } else {
-        this.search = this.selected.label || this.value;
-        this.show = false;
+        // console.log(this.selected)
+        // console.log(this.selected)
+        this.search = this.selected.label || this.value || '';
       }
+      this.show = false;
     },
     click(e) {
       this.show = !this.show;
@@ -85,12 +113,11 @@ export default {
     },
   },
   watch: {
-    value: {
-      handler(value) {
-        // console.log(value)
-        this.show = false;
-        this.search = value;
-      },
+    search(value) {
+      if (!value) {
+        this.$emit('parse', { name: this.name, parse: this.parse, value });
+      }
+      // console.log(value)
     },
   },
 };
@@ -100,13 +127,13 @@ export default {
 .t-select {
   position: relative;
   height: 42px;
-  label{
+  label {
     position: absolute;
     margin-left: 10px;
     margin-top: 6px;
     font-size: 12px;
     line-height: 12px;
-    color: #A7BED3;
+    color: #a7bed3;
   }
   &__icon {
     position: absolute;
@@ -150,11 +177,12 @@ export default {
     width: 100%;
     border: 1px solid #6c7883;
     box-shadow: 0px -8px 34px 0px rgba(0, 0, 0, 0.05);
-    overflow: hidden;
     border-radius: 0 0 4px 4px;
     z-index: 3;
     color: #a7bed3;
     background-color: #242f3d;
+    max-height: 200px;
+    overflow: auto;
     &--item {
       color: inherit;
       font-size: 14px;

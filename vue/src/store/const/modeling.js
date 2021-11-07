@@ -22,7 +22,7 @@ const typeBlock = [
   },
 ];
 
-const createBlock = function (group, id, typeLayers, list) {
+const createBlock = function (group, id, typeLayers, list, [x, y] = []) {
   if (!group || !id) {
     return null;
   }
@@ -58,7 +58,7 @@ const createBlock = function (group, id, typeLayers, list) {
       input: [],
       output: [],
     },
-    position: [0, 0],
+    position: [x ?? -90, y ?? 0],
     parameters: {
       main,
       extra,
@@ -99,33 +99,36 @@ const changeTypeBlock = function (type, block, typeLayers, list) {
     extra[name] = value === '__null__' ? null : value
   })
   block.type = type,
-  block.typeLabel = labelType[0].label,
-  block.parameters = {
-    main,
-    extra,
-  }
+    block.typeLabel = labelType[0].label,
+    block.parameters = {
+      main,
+      extra,
+    }
   return block
 };
 
+
 const cloneBlock = function (block, id) {
-  return { ...block, ...{ id }, ...{ name: block.name + '(clone)' } };
+  const newBlock = JSON.parse(JSON.stringify(block))
+  console.log(id)
+  return { ...newBlock, ...{ id }, ...{ name: ~newBlock.name.indexOf('(Clone)') ? newBlock.name : newBlock.name + " (Clone)" } };
 };
 
 const prepareBlocks = function (blocks, list) {
   let last = 0;
   const newBlock = blocks.map(block => {
-      let newBlock = addParamsBlock(block, list);
-      if (!newBlock) {
-        console.warn('block not create: ' + block);
-        return;
-      }
-      newBlock = { ...newBlock, ...block };
-      if (!newBlock.position) {
-        newBlock.position = [0, -200 + last];
-        last = last + 60;
-      }
-      return newBlock;
-    }).filter(block => !!block);
+    let newBlock = addParamsBlock(block, list);
+    if (!newBlock) {
+      console.warn('block not create: ' + block);
+      return;
+    }
+    newBlock = { ...newBlock, ...block };
+    if (!newBlock.position) {
+      newBlock.position = [-90, last];
+      last = last + 60;
+    }
+    return newBlock;
+  }).filter(block => !!block);
   return JSON.parse(JSON.stringify(newBlock));
 };
 

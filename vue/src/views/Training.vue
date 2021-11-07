@@ -1,35 +1,41 @@
 <template>
   <main class="page-training">
-    <div class="container">
-      <Toolbar :collabse="collabse"/>
-      <Graphics @collabse="collabse = $event"/>
-      <Params/>
+    <div class="cont">
+      <Toolbar :collabse="collabse" />
+      <Graphics @collabse="collabse = $event" />
+      <Params />
     </div>
   </main>
 </template>
 
 <script>
 // import { mapGetters } from "vuex";
-import Toolbar from "@/components/training/Toolbar.vue";
-import Graphics from "@/components/training/Graphics.vue";
-import Params from "@/components/training/Params.vue";
+import Toolbar from '@/components/training/Toolbar.vue';
+import Graphics from '@/components/training/Graphics.vue';
+import Params from '@/components/training/Params.vue';
 
 export default {
-  name: "Training",
+  name: 'Training',
   components: {
     Toolbar,
     Graphics,
-    Params
+    Params,
   },
   data: () => ({
-    collabse: []
+    collabse: [],
   }),
-  methods: {
-
-  },
+  methods: {},
   created() {
     // console.log(this.$store.dispatch('trainings/data'))
-  }
+  },
 };
 </script>
 
+<style lang="scss" scoped>
+.cont {
+  background: #17212b;
+  padding: 0;
+  display: flex;
+  height: 100%;
+}
+</style>

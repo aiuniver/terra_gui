@@ -3,19 +3,30 @@
     <scrollbar>
       <div class="wrapper">
         <div class="content">
-          <button class="board__reload-all" v-if="Cards[0].type != 'table'" @click="ReloadAll">
-            <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
-            <span>Перезагрузить все</span>
-          </button>
-          <div class="board__data-field" v-if="Cards[0].type != 'table'">
-            <div class="board__title">Исходные данные / Предсказанные данные</div>
-            <div class="board__data">
-              <IndexCard v-for="(card, i) in Cards" :key="'card-' + i" v-bind="card" />
+          <div class="board__data-field">
+            <div>
+              <button v-if="!isTable" class="board__reload-all" @click="ReloadAll">
+                <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
+                <span>Перезагрузить все</span>
+              </button>
+              <div class="board__title">Исходные данные / Предсказанные данные</div>
+              <div v-if="!isTable" class="board__data">
+                <IndexCard
+                  v-for="(card, i) in Cards"
+                  :key="'card-' + i"
+                  v-bind="card"
+                  :card="card"
+                  :color_map="deploy.color_map"
+                  :index="i"
+                  @reload="ReloadCard"
+                />
+              </div>
+              <div v-else class="board__data">
+                <Table v-if="type === 'DataframeRegression'" v-bind="deploy" :key='RandId' @reload="ReloadCard" @reloadAll="ReloadAll" />
+                <TableClass v-if="type === 'DataframeClassification'" v-bind="deploy" :key='RandId' @reload="ReloadCard" @reloadAll="ReloadAll"/>
+              </div>
             </div>
           </div>
-<!--          <div class="board__table">-->
-<!--            <Table @ReloadAll="ReloadAll" />-->
-<!--          </div>-->
         </div>
       </div>
     </scrollbar>
@@ -24,11 +35,12 @@
 
 <script>
 import { mapGetters } from 'vuex';
-import IndexCard from './IndexCard';
-// import Table from './Table';
+
 export default {
   components: {
-    IndexCard,
+    IndexCard: () => import('./IndexCard'),
+    Table: () => import('./Table.vue'),
+    TableClass: () => import('./TableClass.vue')
     // Table,
   },
   data: () => ({}),
@@ -37,29 +49,39 @@ export default {
       dataLoaded: 'deploy/getDataLoaded',
       Cards: 'deploy/getCards',
       height: 'settings/autoHeight',
+      type: 'deploy/getDeployType',
+      deploy: 'deploy/getDeploy',
+      RandId: 'deploy/getRandId',
     }),
+    isTable() {
+      return ['DataframeClassification', 'DataframeRegression'].includes(this.type);
+    },
   },
   methods: {
-    click(dataset) {
-      console.log(dataset);
+    async ReloadCard(data) {
+      await this.$store.dispatch('deploy/ReloadCard', data);
     },
-    ReloadAll() {
-      console.log('RELOAD_DATA');
+    async ReloadAll() {
+      let indexes = [];
+      for (let i = 0; i < this.Cards.length; i++) {
+        indexes.push(i.toString());
+      }
+      await this.$store.dispatch('deploy/ReloadCard', indexes);
     },
   },
+  mounted() {
+    console.log(this.deploy)
+  }
 };
 </script>
 
 <style lang="scss" scoped>
 .board {
-  flex-shrink: 1;
-  width: 100%;
+  flex: 1 1 auto;
+  overflow: hidden;
   &__data {
     display: flex;
     flex-wrap: wrap;
-  }
-  &__data-field {
-    padding-top: 30px;
   }
   &__title {
     font-size: 12px;
@@ -84,6 +106,7 @@ export default {
     display: flex;
     width: 174px;
     padding: 8px 10px 10px 10px;
+    margin-bottom: 30px;
     justify-content: center;
     align-items: center;
     i {
@@ -97,7 +120,7 @@ export default {
   }
 }
 .wrapper {
-  padding: 50px;
+  padding: 20px;
   height: 100%;
 }
 </style>

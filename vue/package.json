@@ -1,23 +1,25 @@
 {
   "name": "vue_neural",
-  "version": "0.9.0",
+  "version": "0.10.25",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
+    "build": "npm version patch && vue-cli-service build",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@dongido/vue-viaudio": "^0.3.5",
     "axios": "^0.21.1",
     "core-js": "^3.6.5",
     "deepmerge": "^4.2.2",
     "package.json": "^2.0.1",
-    "papaparse": "^5.3.1",
     "vue": "^2.6.14",
+    "vue-audio-better": "^3.0.1",
+    "vue-audio-visual": "^2.3.0",
     "vue-axios": "^3.2.4",
-    "vue-papa-parse": "^2.0.0",
     "vue-plotly": "^1.1.0",
     "vue-router": "^3.5.1",
+    "vue-wave-surfer": "^1.0.1",
     "vuex": "^3.6.2"
   },
   "devDependencies": {
@@ -26,7 +28,7 @@
     "@vue/cli-service": "~4.5.0",
     "babel-eslint": "^10.1.0",
     "es6-object-assign": "^1.1.0",
-    "eslint": "^7.32.0",
+    "eslint": "^6.7.2",
     "eslint-plugin-vue": "^7.16.0",
     "fibers": "^5.0.0",
     "node-sass": "^6.0.0",
@@ -48,7 +50,7 @@
       "parser": "babel-eslint"
     },
     "ignorePatterns": [
-      "/src/assets/*.js"
+      "**/src/assets/js/*.js"
     ],
     "rules": {}
   },

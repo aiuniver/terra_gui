@@ -1,46 +1,43 @@
 import os
 import json
 import shutil
-
+import pynvml
 import tensorflow
 
-from typing import Any
 from pathlib import Path
+from typing import Any, NoReturn
 
-
-from ..data.projects.project import ProjectsInfoData, ProjectsList
-
+from . import exceptions as agent_exceptions
+from . import utils as agent_utils
+from .. import settings, progress
+from ..exceptions import tensor_flow as tf_exceptions
+from ..data.datasets.creation import FilePathSourcesList
+from ..data.datasets.creation import SourceData, CreationData
 from ..data.datasets.dataset import (
     DatasetLoadData,
     CustomDatasetConfigData,
     DatasetsGroupsList,
     DatasetData,
 )
-from ..data.datasets.creation import SourceData, CreationData
-from ..data.datasets.creation import FilePathSourcesList
 from ..data.datasets.extra import DatasetGroupChoice
-
-from ..data.modeling.model import ModelsGroupsList, ModelLoadData, ModelDetailsData
-from ..data.modeling.extra import ModelGroupChoice
-
-from ..data.presets.datasets import DatasetsGroups
-from ..data.presets.models import ModelsGroups
 from ..data.extra import (
     HardwareAcceleratorData,
     HardwareAcceleratorChoice,
     FileManagerItem,
 )
-from ..data.training.train import TrainData
-
-from ..datasets import utils as datasets_utils
+from ..data.modeling.extra import ModelGroupChoice
+from ..data.modeling.model import ModelsGroupsList, ModelLoadData, ModelDetailsData
+from ..data.cascades.cascade import CascadesList, CascadeLoadData, CascadeDetailsData
+from ..data.presets.datasets import DatasetsGroups
+from ..data.presets.models import ModelsGroups
+from ..data.projects.project import ProjectsInfoData, ProjectsList
+from ..data.training.train import TrainData, InteractiveData
 from ..datasets import loading as datasets_loading
-from ..datasets.creating import CreateDTS
+from ..datasets import utils as datasets_utils
+from ..datasets.creating import CreateDataset
 from ..deploy import loading as deploy_loading
-
-from .. import settings, progress
-from ..progress import utils as progress_utils
-from . import exceptions
 from ..modeling.validator import ModelValidator
+from ..progress import utils as progress_utils
 from ..training import training_obj
 from ..training.guinn import interactive
 
@@ -51,24 +48,53 @@ class Exchange:
         __method_name = f"_call_{method}"
         __method = getattr(self, __method_name, None)
 
-        # Проверяем существует ли метод
+        # Проверяем, существует ли метод
         if __method is None:
-            raise exceptions.CallMethodNotFoundException(self.__class__, __method_name)
+            raise agent_exceptions.CallMethodNotFoundException(
+                self.__class__, __method_name
+            )
 
-        # Проверяем является ли методом вызываемым
+        # Проверяем, является ли метод вызываемым
         if not callable(__method):
-            raise exceptions.MethodNotCallableException(self.__class__, __method_name)
+            raise agent_exceptions.MethodNotCallableException(
+                __method_name, self.__class__
+            )
 
         # Вызываем метод
-        return __method(**kwargs)
+        try:
+            return __method(**kwargs)
+        except tensorflow.errors.OpError as error:
+            err_msg = str(
+                getattr(
+                    tf_exceptions, error.__class__.__name__, tf_exceptions.UnknownError
+                )(error.message)
+            )
+            raise getattr(
+                agent_utils.ExceptionClasses,
+                method,
+                agent_utils.ExceptionClasses.unknown,
+            ).value(err_msg)
+        except agent_exceptions.ExchangeBaseException as error:
+            raise error
+        except Exception as error:
+            raise getattr(
+                agent_utils.ExceptionClasses,
+                method,
+                agent_utils.ExceptionClasses.unknown,
+            ).value(str(error))
 
     @property
     def is_colab(self) -> bool:
         return "COLAB_GPU" in os.environ.keys()
 
     def _call_hardware_accelerator(self) -> HardwareAcceleratorData:
-        device_name = tensorflow.test.gpu_device_name()
-        if device_name != "/device:GPU:0":
+        try:
+            pynvml.nvmlInit()
+            _is_gpu = True
+        except Exception:
+            _is_gpu = False
+
+        if not _is_gpu:
             if self.is_colab:
                 try:
                     tensorflow.distribute.cluster_resolver.TPUClusterResolver()
@@ -79,6 +105,7 @@ class Exchange:
                 __type = HardwareAcceleratorChoice.CPU
         else:
             __type = HardwareAcceleratorChoice.GPU
+
         return HardwareAcceleratorData(type=__type)
 
     def _call_projects_info(self, path: Path) -> ProjectsInfoData:
@@ -87,10 +114,8 @@ class Exchange:
         """
         projects = ProjectsList()
         for filename in os.listdir(path):
-            try:
+            if filename.endswith("project"):
                 projects.append({"value": Path(path, filename)})
-            except Exception:
-                pass
         projects.sort(key=lambda item: item.label)
         return ProjectsInfoData(projects=projects.native())
 
@@ -102,7 +127,7 @@ class Exchange:
         """
         project_path = Path(target, f"{name}.{settings.PROJECT_EXT}")
         if not overwrite and project_path.is_file():
-            raise exceptions.ProjectAlreadyExistsException(name)
+            raise agent_exceptions.ProjectAlreadyExistsException(name)
         zip_destination = progress_utils.pack(
             "project_save", "Сохранение проекта", source, delete=False
         )
@@ -116,11 +141,22 @@ class Exchange:
         destination = progress_utils.unpack("project_load", "Загрузка проекта", source)
         shutil.move(destination, target)
 
-    def _call_dataset_choice(self, path: str, group: str, alias: str) -> DatasetData:
+    def _call_dataset_choice(
+        self,
+        custom_path: Path,
+        destination: Path,
+        group: str,
+        alias: str,
+        reset_model: bool = False,
+    ) -> NoReturn:
         """
         Выбор датасета
         """
-        datasets_loading.choice(DatasetLoadData(path=path, group=group, alias=alias))
+        datasets_loading.choice(
+            DatasetLoadData(path=custom_path, group=group, alias=alias),
+            destination=destination,
+            reset_model=reset_model,
+        )
 
     def _call_dataset_choice_progress(self) -> progress.ProgressData:
         """
@@ -136,20 +172,24 @@ class Exchange:
             shutil.rmtree(
                 Path(path, f"{alias}.{settings.DATASET_EXT}"), ignore_errors=True
             )
+        else:
+            raise agent_exceptions.DatasetCanNotBeDeletedException(alias, group)
 
-    def _call_datasets_info(self, path: str) -> DatasetsGroupsList:
+    def _call_datasets_info(self, path: Path) -> DatasetsGroupsList:
         """
         Получение данных для страницы датасетов: датасеты и теги
         """
+        raise Exception('Описание ошибки')
         info = DatasetsGroupsList(DatasetsGroups)
-        for dirname in os.listdir(path):
-            try:
-                dataset_config = CustomDatasetConfigData(path=Path(path, dirname))
-                info.get(DatasetGroupChoice.custom.name).datasets.append(
-                    DatasetData(**dataset_config.config)
-                )
-            except Exception:
-                pass
+        for dirname in os.listdir(str(path.absolute())):
+            if dirname.endswith(settings.DATASET_EXT):
+                try:
+                    dataset_config = CustomDatasetConfigData(path=Path(path, dirname))
+                    info.get(DatasetGroupChoice.custom.name).datasets.append(
+                        DatasetData(**dataset_config.config)
+                    )
+                except Exception:
+                    pass
         return info
 
     def _call_dataset_source_load(self, mode: str, value: str):
@@ -174,7 +214,7 @@ class Exchange:
             progress.data = []
         return progress_data
 
-    def _call_dataset_source_segmentation_classes_autosearch(
+    def _call_dataset_source_segmentation_classes_auto_search(
         self, path: Path, num_classes: int, mask_range: int
     ) -> dict:
         """
@@ -190,13 +230,17 @@ class Exchange:
         """
         return datasets_utils.get_classes_annotation(path).native()
 
-    def _call_dataset_create(self, **kwargs) -> DatasetData:
+    def _call_dataset_create(self, creation_data: CreationData):
         """
         Создание датасета из исходников
         """
-        creation = CreateDTS()
-        dataset = creation.create_dataset(CreationData(**kwargs))
-        return dataset
+        CreateDataset(creation_data)
+
+    def _call_dataset_create_progress(self) -> progress.ProgressData:
+        """
+        Прогресс создание датасета из исходников
+        """
+        return progress.pool("create_dataset")
 
     def _call_datasets_sources(self, path: str) -> FilePathSourcesList:
         """
@@ -204,11 +248,9 @@ class Exchange:
         """
         files = FilePathSourcesList()
         for filename in os.listdir(path):
-            filepath = Path(path, filename)
-            try:
+            if filename.endswith(".zip"):
+                filepath = Path(path, filename)
                 files.append({"value": filepath})
-            except Exception:
-                pass
         files.sort(key=lambda item: item.label)
         return files
 
@@ -217,27 +259,18 @@ class Exchange:
         Получение списка моделей
         """
         models = ModelsGroupsList(ModelsGroups)
-        models_path = Path(settings.ASSETS_PATH, "models")
-        for filename in os.listdir(models_path):
-            try:
-                models.get(ModelGroupChoice.preset.name).models.append(
-                    {"value": Path(models_path, filename)}
-                )
-            except Exception:
-                pass
-        models.get(ModelGroupChoice.preset.name).models.sort(
-            key=lambda item: item.label
-        )
-        for filename in os.listdir(path):
-            try:
-                models.get(ModelGroupChoice.custom.name).models.append(
-                    {"value": Path(path, filename)}
-                )
-            except Exception:
-                pass
-        models.get(ModelGroupChoice.custom.name).models.sort(
-            key=lambda item: item.label
-        )
+        preset_models_path = Path(settings.ASSETS_PATH, "models")
+        custom_models_path = path
+        couples = (("preset", preset_models_path), ("custom", custom_models_path))
+        for models_group, models_path in couples:
+            for filename in os.listdir(models_path):
+                if filename.endswith(".model"):
+                    models.get(
+                        getattr(ModelGroupChoice, models_group).name
+                    ).models.append({"value": Path(models_path, filename)})
+            models.get(getattr(ModelGroupChoice, models_group).name).models.sort(
+                key=lambda item: item.label
+            )
         return models
 
     def _call_model_get(self, value: str) -> ModelDetailsData:
@@ -246,29 +279,20 @@ class Exchange:
         """
         data = ModelLoadData(value=value)
         with open(data.value.absolute(), "r") as config_ref:
-            try:
-                config = json.load(config_ref)
-                return ModelDetailsData(**config)
-            except Exception as error:
-                raise exceptions.FailedGetModelException(error.__str__())
+            config = json.load(config_ref)
+            return ModelDetailsData(**config)
 
     def _call_model_update(self, model: dict) -> ModelDetailsData:
         """
         Обновление модели
         """
-        try:
-            return ModelDetailsData(**model)
-        except Exception as error:
-            raise exceptions.FailedUpdateModelException(error.__str__())
+        return ModelDetailsData(**model)
 
     def _call_model_validate(self, model: ModelDetailsData) -> tuple:
         """
         Валидация модели
         """
-        try:
-            return ModelValidator(model).get_validated()
-        except Exception as error:
-            raise exceptions.FailedValidateModelException(error.__str__())
+        return ModelValidator(model).get_validated()
 
     def _call_model_create(self, model: dict, path: Path, overwrite: bool):
         """
@@ -276,70 +300,125 @@ class Exchange:
         """
         model_path = Path(path, f'{model.get("name")}.{settings.MODEL_EXT}')
         if not overwrite and model_path.is_file():
-            raise exceptions.ModelAlreadyExistsException(model.get("name"))
+            raise agent_exceptions.ModelAlreadyExistsException(model.get("name"))
         with open(model_path, "w") as model_ref:
-            try:
-                json.dump(model, model_ref)
-            except Exception as error:
-                raise exceptions.FailedCreateModelException(error.__str__())
+            json.dump(model, model_ref)
 
     def _call_model_delete(self, path: Path):
         """
         Удаление модели
         """
-        try:
-            os.remove(path)
-        except FileNotFoundError as error:
-            raise exceptions.FailedDeleteModelException(error.__str__())
+        os.remove(path)
 
-    def _call_start_training(
+    def _call_training_start(
         self,
         dataset: DatasetData,
         model: ModelDetailsData,
         training_path: Path,
         dataset_path: Path,
         params: TrainData,
+        initial_config: InteractiveData,
     ):
         """
         Старт обучения
         """
-        try:
-            training_obj.terra_fit(
+        if (
+            interactive.get_states().get("status") == "stopped"
+            or interactive.get_states().get("status") == "trained"
+        ):
+            interactive.set_status("addtrain")
+        else:
+            interactive.set_status("training")
+
+        # print("\033[1;33m—————————————————— Training params ——————————————————\033[0m")
+        # print(params.json(indent=2, ensure_ascii=False))
+        # print("\033[1;33m—————————————————— Initial config ———————————————————\033[0m")
+        # print(initial_config.json(indent=2, ensure_ascii=False))
+        # print("\033[1;33m—————————————————————————————————————————————————————\033[0m")
+
+        training_obj.terra_fit(
             dataset=dataset,
             gui_model=model,
             training_path=training_path,
             dataset_path=dataset_path,
             training_params=params,
-            )
-        except Exception as error:
-            raise exceptions.FailedStartTrainException(error.__str__())
+            initial_config=initial_config,
+        )
+        return interactive.train_states
 
-    def _call_set_interactive_config(self, config: dict):
+    def _call_training_stop(self):
+        """
+        Остановить обучение
+        """
+        interactive.set_status("stopped")
+        return interactive.train_states
+
+    def _call_training_clear(self):
+        """
+        Очистить обучение
+        """
+        interactive.set_status("no_train")
+        return interactive.train_states
+
+    def _call_training_interactive(self, config: InteractiveData) -> dict:
         """
         Обновление интерактивных параметров обучения
         """
-        try:
-            interactive.get_train_results(config=config)
-        except Exception as error:
-            raise exceptions.FailedSetInteractiveConfigException(error.__str__())
+        return interactive.get_train_results(config=config)
+
+    def _call_training_progress(self) -> progress.ProgressData:
+        """
+        Прогресс обучения
+        """
+        return progress.pool("training")
+
+    def _call_training_save(self):
+        """
+        Сохранение обучения
+        """
+        pass
+
+    def _call_cascade_get(self, value: str) -> CascadeDetailsData:
+        """
+        Получение каскада
+        """
+        data = CascadeLoadData(value=value)
+        with open(Path(data.value, settings.CASCADE_CONFIG).absolute(), "r") as config_ref:
+            config = json.load(config_ref)
+            return CascadeDetailsData(**config)
+
+    def _call_cascades_info(self, path: str) -> CascadesList:
+        """
+        Получение списка каскадов
+        """
+        return CascadesList(path)
+
+    def _call_cascade_update(self, cascade: dict) -> CascadeDetailsData:
+        """
+        Обновление каскада
+        """
+        return CascadeDetailsData(**cascade)
+
+    def _call_deploy_presets(self):
+        """
+        получение данных для отображения пресетов на странице деплоя
+        """
+        return interactive.deploy_presets_data
+
+    def _call_deploy_cascades_create(self, training_path: str, model_name: str):
+        pass
 
     def _call_deploy_upload(self, source: Path, **kwargs):
         """
         Деплой: загрузка
         """
-        try:
-            deploy_loading.upload(source, kwargs)
-        except Exception as error:
-            raise exceptions.FailedUploadDeployException(error.__str__())
+        deploy_loading.upload(source, kwargs)
 
     def _call_deploy_upload_progress(self) -> progress.ProgressData:
         """
         Деплой: прогресс загрузки
         """
-        try:
-            return progress.pool("deploy_upload")
-        except Exception as error:
-            raise exceptions.FailedGetUploadDeployResultException(error.__str__())
+        return progress.pool("deploy_upload")
 
 
 agent_exchange = Exchange()

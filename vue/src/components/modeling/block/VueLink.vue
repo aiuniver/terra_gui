@@ -2,6 +2,8 @@
   <svg width="100%" height="100%">
     <g v-for="(p,i) in renderedPathes" :key="'k' + i">
       <path v-if="outline" :d="p.data" :style="p.outlineStyle"></path>
+      <circle v-if="!outline" :cx="p.circle[0]" :cy="p.circle[1]" :r="3 * p.scale" :fill="p.style.stroke"/>
+      <circle v-if="!outline" :cx="p.circle[2]" :cy="p.circle[3]" :r="3 * p.scale" :fill="p.style.stroke"/>
       <path :d="p.data" :style="p.style"></path>
     </g>
     <g>
@@ -58,13 +60,17 @@
         this.lines.forEach(l => {
           // console.log(l)
           let dist = this.distance(l.x1, l.y1, l.x2, l.y2) * 0.2
+          const circle = [l.x1, l.y1, l.x2, l.y2]
           const data  = [
-            `M ${l.x1}, ${l.y1} C ${(l.x1)}, ${l.y1 + 50 }, ${(l.x2)}, ${l.y2 - 50}, ${l.x2}, ${l.y2}`,
+            `M ${l.x1}, ${l.y1} C ${(l.x1)}, ${l.y1 + dist }, ${(l.x2)}, ${l.y2 - dist}, ${l.x2}, ${l.y2}`,
             `M ${l.x1}, ${l.y1} C ${(l.x1 + dist)}, ${l.y1}, ${(l.x2 - dist)}, ${l.y2}, ${l.x2}, ${l.y2}`,
             `M ${l.x1}, ${l.y1} C ${(l.x1 - dist)}, ${l.y1}, ${(l.x2 + dist)}, ${l.y2}, ${l.x2}, ${l.y2}`
           ]
+
           pathes.push({
             data: data[l.slot] || data[0],
+            circle,
+            scale: l.scale || 1,
             style: l.style,
             outlineStyle: l.outlineStyle
           })

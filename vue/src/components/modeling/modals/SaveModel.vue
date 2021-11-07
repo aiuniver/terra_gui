@@ -1,11 +1,12 @@
 <template>
-  <at-modal v-model="dialog" width="500" showClose>
+  <at-modal v-model="dialog" width="400" showClose>
     <div slot="header" style="text-align: center">
       <span>Сохранить модель</span>
     </div>
     <div class="model modal-save-model">
-      <div v-if="image" class="model__image">
-        <img alt="" width="auto" height="auto" :src="image || ''" />
+      <div class="model__image">
+        <Loading v-if="!image" class="model__image--loading" />
+        <img v-else alt="" width="auto" height="auto" :src="'data:image/png;base64,' + image || ''" />
       </div>
       <div class="model__config">
         <t-input
@@ -16,6 +17,7 @@
           :name="'name'"
           :key="'name-key'"
           :error="err"
+          @focus="err = ''"
           @change="name = $event.value"
         />
         <t-checkbox
@@ -29,10 +31,9 @@
           @change="overwrite = $event.value"
         />
       </div>
-      <Loading v-if="!image" />
     </div>
     <template slot="footer">
-      <t-button @click.native="save">Сохранить</t-button>
+      <t-button @click.native="save" :disabled="!image">Сохранить</t-button>
       <t-button cancel @click.native="close">Отменить</t-button>
     </template>
   </at-modal>
@@ -70,36 +71,27 @@ export default {
       console.log(e);
     },
     async save() {
-      this.err = null;
+      if (this.image) {
+        const res = await this.$store.dispatch('modeling/createModel', {
+          name: this.name,
+          preview: this.image,
+          overwrite: this.overwrite,
+        });
+        if (res?.error && res?.error?.general) {
+          await this.$store.dispatch('messages/setMessage', { error: `Moдель '${this.name}' уже создана` });
+          this.err = `Moдель '${this.name}' уже создана`;
+        } else if (res?.error?.fields) {
+          this.err = res?.error?.fields?.alias;
+          await this.$store.dispatch('messages/setMessage', { error: res?.error?.fields });
+        } else {
+          await this.$store.dispatch('messages/setMessage', { error: res?.error });
+        }
+        console.log(`this.err ${this.err}`);
 
-      const res = await this.$store.dispatch('modeling/createModel', {
-        name: this.name,
-        preview: this.image.slice(22),
-        overwrite: this.overwrite,
-      });
-
-      console.log(res);
-
-      if (res?.error && res?.error?.general) {
-        await this.$store.dispatch(
-          'messages/setMessage',
-          { error: `Moдель '${this.name}' уже создана` },
-          { root: true }
-        );
-        this.err = `Moдель '${this.name}' уже создана`;
-      } else if (res?.error) {
-        await this.$store.dispatch('messages/setMessage', { error: 'Поле не может быть пустым' }, { root: true });
-        this.err = 'Поле не может быть пустым';
-      }
-      console.log(`this.err ${this.err}`);
-
-      if (!this.err) {
-        this.dialog = false;
-        await this.$store.dispatch(
-          'messages/setMessage',
-          { message: `Moдель '${this.name}' сохранена` },
-          { root: true }
-        );
+        if (!this.err) {
+          this.dialog = false;
+          await this.$store.dispatch('messages/setMessage', { message: `Moдель '${this.name}' сохранена` });
+        }
       }
     },
 
@@ -136,10 +128,19 @@ export default {
 
   &__image {
     height: auto;
-    width: 100%;
+    width: 360px;
+    height: 360px;
     margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    &--loading {
+      margin: 0 auto;
+      display: block;
+    }
     img {
       width: 100%;
+      height: 100%;
     }
   }
 }

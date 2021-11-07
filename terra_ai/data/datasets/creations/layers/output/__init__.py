@@ -21,6 +21,10 @@ class LayerAudioData(LayerBaseData, types.Audio.ParametersData):
     pass
 
 
+class LayerDataframeData(LayerBaseData, types.Dataframe.ParametersData):
+    pass
+
+
 class LayerClassificationData(LayerBaseData, types.Classification.ParametersData):
     pass
 

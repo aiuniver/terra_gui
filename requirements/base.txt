@@ -7,6 +7,7 @@ django-htmlmin==0.11.0
 pymorphy2==0.9.1
 dill>=0.3.4
 pydantic>=1.8.2
+pydantic-i18n==0.2.1
 cairosvg==2.5.2
 PyYAML~=5.4.1
 transliterate==1.10.2
@@ -16,4 +17,8 @@ pydub==0.25.1
 psutil==5.8.0
 pynvml==11.0.0
 moviepy==1.0.3
+numpy==1.19.5
 albumentations==1.0.3
+opencv-python==4.5.3.56
+python-dotenv==0.19.0
+APScheduler==3.8.0

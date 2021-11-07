@@ -4,6 +4,7 @@ import requests
 
 from pathlib import Path
 from subprocess import Popen, PIPE, STDOUT
+from django.conf import settings as django_settings
 
 from .. import progress, settings
 from ..data.deploy.stages import StageUploadData, StageCompleteData, StageResponseData
@@ -16,7 +17,7 @@ DEPLOY_UPLOAD_TITLE = "Загрузка архива"
 
 
 def __run_rsync(progress_name: str, file: str, destination: str):
-    cmd = f'rsync -P -avz -e "ssh -i ./rsa.key -o StrictHostKeyChecking=no" {file} terra@188.124.47.137:{destination}'
+    cmd = f'rsync -P -avz -e "ssh -i {Path(django_settings.BASE_DIR, "rsa.key")} -o StrictHostKeyChecking=no" {file} terra@188.124.47.137:{destination}'
     proc = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
     while True:
         output = proc.stdout.readline().decode("utf-8")
@@ -51,6 +52,12 @@ def upload(source: Path, data: dict):
             upload_response = upload_response.json()
             if upload_response.get("success"):
                 progress.pool(progress_name, message=DEPLOY_UPLOAD_TITLE, percent=0)
+                # import shutil
+                #
+                # print(upload_data.file.path)
+                # shutil.copyfile(
+                #     upload_data.file.path, "/home/bl146u/Virtualenv/test/file.zip"
+                # )
                 __run_rsync(
                     progress_name,
                     upload_data.file.path,

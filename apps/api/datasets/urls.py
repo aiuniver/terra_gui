@@ -13,6 +13,11 @@ urlpatterns = [
         name="choice_progress",
     ),
     path("info/", views.InfoAPIView.as_view(), name="info"),
+    path(
+        "create/progress/",
+        views.CreateProgressAPIView.as_view(),
+        name="create_progress",
+    ),
     path("create/", views.CreateAPIView.as_view(), name="create"),
     path(
         "source/load/progress/",
@@ -22,7 +27,7 @@ urlpatterns = [
     path("source/load/", views.SourceLoadAPIView.as_view(), name="source_load"),
     path(
         "source/segmentation/classes/autosearch/",
-        views.SourceSegmentationClassesAutosearchAPIView.as_view(),
+        views.SourceSegmentationClassesAutoSearchAPIView.as_view(),
         name="source_segmentation_classes_autosearch",
     ),
     path(

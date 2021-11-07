@@ -28,7 +28,7 @@ const router = new Router({
       path: '/marking',
       name: 'Marking',
       meta: { 
-        title: 'Разметка',
+        title: process.env.NODE_ENV === 'development' ? 'Разметка' : null,
         access: true,
         text: `Для перехода на страницу разметки необходимо загрузить датасет.`, 
       },
@@ -73,6 +73,26 @@ const router = new Router({
         text: `Для перехода на страницу деплоя необходимо загрузить датасет.`, 
       },
       component: () => import('@/views/Deploy'),
+    },
+    {
+      path: '/profile',
+      name: 'Profile',
+      meta: { 
+        title: null,
+        access: true,
+        text: ``, 
+      },
+      component: () => import('@/views/Profile'),
+    },
+    {
+      path: '/projects',
+      name: 'Projects',
+      meta: { 
+        title: process.env.NODE_ENV === 'development' ? 'Проекты' : null,
+        access: true,
+        text: ``, 
+      },
+      component: () => import('@/views/Projects'),
     },
     {
       path: '/test',

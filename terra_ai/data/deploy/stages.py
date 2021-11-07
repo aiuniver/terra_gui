@@ -8,11 +8,11 @@ from transliterate import slugify
 
 from ..mixins import BaseMixinData
 from ..types import confilepath
-from .extra import TaskTypeChoice
+from .extra import DeployTypeChoice, EnvVersionChoice
 
 
 class StageUploadUserData(BaseMixinData):
-    login: constr(regex=r"^[a-z]+[a-z0-9\-_]*$")
+    login: constr(regex=r"^[a-z]+[a-z0-9_]*$")
     name: str
     lastname: str
     sec: Optional[str]
@@ -57,9 +57,10 @@ class StageUploadFileData(BaseMixinData):
 class StageUploadData(BaseMixinData):
     stage: PositiveInt
     deploy: constr(regex=r"^[a-z]+[a-z0-9\-_]*$")
+    env: EnvVersionChoice = EnvVersionChoice.v1
     user: StageUploadUserData
     project: StageUploadProjectData
-    task: TaskTypeChoice
+    task: str
     replace: bool = False
     file: StageUploadFileData
 

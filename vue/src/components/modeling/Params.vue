@@ -21,6 +21,11 @@
             :disabled="isBlock || isInput"
             @change="changeType"
           />
+          <template v-for="({ name, label, parse, list }, i) of datatypes">
+            <t-field :label="label" :key="'datatype' + i">
+              <t-select-new :value="block.id"  :list="list" :parse="parse" :name="name" @change="changeId({ ...$event, id: block.id })"/>
+            </t-field>
+          </template>
         </div>
         <at-collapse :value="collapse">
           <at-collapse-item v-show="main.items.length" class="mb-3" title="Параметры слоя">
@@ -53,7 +58,7 @@
 </template>
 
 <script>
-import Input from "@/components/forms/Input.vue";
+import Input from '@/components/forms/Input.vue';
 import Navbar from '@/components/modeling/comp/Navbar.vue';
 import Shape from '@/components/forms/Shape.vue';
 import Autocomplete2 from '@/components/forms/Autocomplete2.vue';
@@ -69,7 +74,7 @@ export default {
     Autocomplete2,
     Forms,
     Navbar,
-    Input
+    Input,
   },
   data: () => ({
     collapse: ['0', '2'],
@@ -79,10 +84,14 @@ export default {
     ...mapGetters({
       list: 'modeling/getList',
       layers: 'modeling/getLayersType',
+      layersForm: 'modeling/getLayersForm',
       buttons: 'modeling/getButtons',
       block: 'modeling/getBlock',
       project: 'projects/getProject',
     }),
+    datatypes() {
+      return this.layersForm.filter(({ name }) => name === `datatype_${this.block.group}`)
+    },
     isBlock() {
       return !this.block.id;
     },
@@ -118,6 +127,9 @@ export default {
     },
   },
   methods: {
+    async changeId(value) {
+      await this.$store.dispatch('modeling/changeId', value);
+    },
     async saveModel() {
       await this.$store.dispatch('modeling/updateModel', this.block);
     },
@@ -125,10 +137,10 @@ export default {
       await this.$store.dispatch('modeling/typeBlock', { type: value, block: this.block });
     },
     async change({ type, name, value }) {
-      console.group();
+      // console.group();
       console.log({ type, name, value });
-      console.log(this.collapse);
-      console.groupEnd();
+      // console.log(this.collapse);
+      // console.groupEnd();
       if (this.block.parameters) {
         this.block.parameters[type][name] = value;
       } else {

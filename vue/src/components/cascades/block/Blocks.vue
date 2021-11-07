@@ -1,18 +1,24 @@
 <template>
-  <div class="board">
-    <VueLink :lines="lines" />
+  <div class="t-block" @contextmenu="contextmenu">
+    <Net class="t-block__center" :x="centerX" :y="centerY" :scale="scale" />
+    <VueLink class="t-block__lines" :lines="lines" />
     <VueBlock
       v-for="block in blocks"
       :key="block.id"
+      :ref="'block_' + block.id"
       v-bind="block"
       :options="optionsForChild"
+      :linkingCheck="tempLink"
+      :icons="icons"
+      :filter="filter"
+      :errors="errors"
       @linkingStart="linkingStart(block, $event)"
       @linkingStop="linkingStop(block, $event)"
       @linkingBreak="linkingBreak(block, $event)"
       @select="blockSelect(block)"
-      @delete="blockDelete(block)"
       @position="position(block, $event)"
       @moveBlock="moveBlock"
+      @clickIcons="clickIcons($event, block)"
     />
     <div class="btn-zoom">
       <div class="btn-zoom__item">
@@ -32,16 +38,18 @@
 
 <script>
 import domtoimage from '@/assets/js/dom-to-image.min.js';
-import { createBlock, mouseHelper } from '@/store/const/cascades';
-
+import { mouseHelper } from '@/store/const/cascades';
+import { mapGetters } from 'vuex';
 import VueBlock from './VueBlock';
 import VueLink from './VueLink';
+import Net from './Net';
 
 export default {
   name: 'VueBlockContainer',
   components: {
     VueBlock,
     VueLink,
+    Net,
   },
   props: {
     blocksContent: {
@@ -55,6 +63,11 @@ export default {
     },
   },
   data: () => ({
+    icons: [
+      { icon: 'icon-modeling-copy-white', event: 'clone' },
+      { icon: 'icon-modeling-link-remove', event: 'link' },
+      { icon: 'icon-modeling-remove', event: 'remove' },
+    ],
     dragging: false,
     //
     centerX: 0,
@@ -86,6 +99,29 @@ export default {
   }),
 
   computed: {
+    ...mapGetters({
+      project: 'projects/getProject',
+    }),
+    scaleCenter() {
+      return {
+        top: this.centerY + 'px',
+        left: this.centerX + 'px',
+        transform: 'scale(' + (this.scale + '') + ')',
+        transformOrigin: 'top left',
+      };
+    },
+    filter() {
+      return {
+        input: this.project?.dataset ? ['link'] : ['clone', 'link', 'remove'],
+        model: ['clone', 'link', 'remove'],
+        function: ['clone', 'link', 'remove'],
+        custom: ['clone', 'link', 'remove'],
+        output: this.project?.dataset ? ['link'] : ['clone', 'link', 'remove'],
+      };
+    },
+    errors() {
+      return this.$store.getters['cascades/getErrorsBlocks'];
+    },
     blocks: {
       set(value) {
         this.$store.dispatch('cascades/setBlocks', value);
@@ -96,7 +132,7 @@ export default {
     },
     links: {
       set(value) {
-        console.log(value)
+        console.log(value);
         this.$store.dispatch('cascades/setLinks', value);
       },
       get() {
@@ -104,10 +140,10 @@ export default {
       },
     },
     optionsForChild() {
-      console.log(this.centerX, this.centerY)
+      // console.log(this.centerX, this.centerY);
       return {
-        width: 200,
-        titleHeight: 48,
+        width: 180,
+        titleHeight: 42,
         scale: this.scale,
         inputSlotClassName: this.inputSlotClassName,
         center: {
@@ -138,13 +174,13 @@ export default {
 
         if (!originBlock || !targetBlock) {
           console.log('Remove invalid link', link);
-          this.removeLink(link.id);
+          this.$store.dispatch('cascades/removeLink', link.id);
           continue;
         }
 
         if (originBlock.id === targetBlock.id) {
           console.log('Loop detected, remove link', link);
-          this.removeLink(link.id);
+          this.$store.dispatch('cascades/removeLink', link.id);
           continue;
         }
 
@@ -153,7 +189,7 @@ export default {
 
         if (!originLinkPos || !targetLinkPos) {
           console.log('Remove invalid link (slot not exist)', link);
-          this.removeLink(link.id);
+          this.$store.dispatch('cascades/removeLink', link.id);
           continue;
         }
 
@@ -169,24 +205,29 @@ export default {
           x2: x2,
           y2: y2,
           slot: link.originSlot,
+          scale: this.scale,
           style: {
             stroke: 'rgb(101, 185, 244)',
-            strokeWidth: 3 * this.scale,
+            strokeWidth: 2 * this.scale,
             fill: 'none',
+            zIndex: 999,
           },
           outlineStyle: {
             stroke: '#666',
-            strokeWidth: 6 * this.scale,
+            strokeWidth: 2 * this.scale,
             strokeOpacity: 0.6,
             fill: 'none',
+            zIndex: 999,
           },
         });
       }
 
       if (this.tempLink) {
-        this.tempLink.style = {          // eslint-disable-line
+        // eslint-disable-next-line vue/no-side-effects-in-computed-properties
+        this.tempLink.style = {
+          // eslint-disable-line
           stroke: '#8f8f8f',
-          strokeWidth: 3 * this.scale,
+          strokeWidth: 2 * this.scale,
           fill: 'none',
         };
 
@@ -197,6 +238,37 @@ export default {
     },
   },
   methods: {
+    contextmenu(e) {
+      if (!this.$config.isDev) {
+        e.preventDefault();
+      }
+    },
+    getCenter() {
+      if (this.scale > 1.5) {
+        this.scale = 1.5;
+      }
+      const x = this.$el.clientWidth / 2 - this.optionsForChild.width / 2 - this.centerX;
+      const y = this.$el.clientHeight / 2 - this.centerY;
+      console.log(this.centerX);
+      console.log(this.centerY);
+
+      return [x, y];
+    },
+    getError(id) {
+      return this.errorsBlocks?.[id] || '';
+    },
+    clickIcons({ event }, block) {
+      console.log(event);
+      if (event === 'remove') {
+        this.$store.dispatch('cascades/removeBlock', block);
+      }
+      if (event === 'clone') {
+        this.$store.dispatch('cascades/cloneBlock', block);
+      }
+      if (event === 'link') {
+        this.$store.dispatch('cascades/removeLinkToBlock', block);
+      }
+    },
     handleMauseOver(e) {
       this.mouseIsOver = e.type === 'mouseenter';
     },
@@ -206,12 +278,12 @@ export default {
       console.log(mouseIsOver, code);
       if (mouseIsOver && code === 'Delete') {
         if (this.selectedBlock) {
-          this.blockDelete(this.selectedBlock);
+          // this.blockDelete(this.selectedBlock);
         }
       }
       if (mouseIsOver && code === 'KeyC' && ctrlKey) {
         if (this.selectedBlock) {
-          this.blockDelete(this.selectedBlock);
+          // this.blockDelete(this.selectedBlock);
         }
       }
       // console.log(event)
@@ -219,8 +291,11 @@ export default {
     zoom(value) {
       if (value === 0) {
         this.scale = 1;
+        this.centerX = this.$el.clientWidth / 2;
+        this.centerY = this.$el.clientHeight / 2;
         return;
       }
+
       let deltaScale = value === 1 ? 1.1 : 0.9090909090909091;
       this.scale *= deltaScale;
       // this.scale = (value === 1) ? this.scale + 0.1 : this.scale - 0.1;
@@ -231,13 +306,8 @@ export default {
         this.scale = this.maxScale;
         return;
       }
-      let zoomingCenter = {
-        x: this.mouseX,
-        y: this.mouseY,
-      };
-
-      let deltaOffsetX = (zoomingCenter.x - this.centerX) * (deltaScale - 1);
-      let deltaOffsetY = (zoomingCenter.y - this.centerY) * (deltaScale - 1);
+      let deltaOffsetX = (this.$el.clientWidth / 2 - this.centerX) * (deltaScale - 1);
+      let deltaOffsetY = (this.$el.clientHeight / 2 - this.centerY) * (deltaScale - 1);
 
       this.centerX -= deltaOffsetX;
       this.centerY -= deltaOffsetY;
@@ -245,12 +315,12 @@ export default {
       // this.updateScene();
     },
     handleMove(e) {
-      // console.log('handleMove')
       let mouse = mouseHelper(this.$el, e);
       this.mouseX = mouse.x;
       this.mouseY = mouse.y;
 
       if (this.dragging) {
+        console.log('handleMove');
         let diffX = this.mouseX - this.lastMouseX;
         let diffY = this.mouseY - this.lastMouseY;
 
@@ -287,7 +357,7 @@ export default {
         this.lastMouseX = this.mouseX;
         this.lastMouseY = this.mouseY;
 
-        this.deselectAll();
+        this.$store.dispatch('cascades/deselectBlocks');
         if (e.preventDefault) e.preventDefault();
       }
     },
@@ -301,12 +371,13 @@ export default {
         if (this.hasDragged) {
           // this.updateScene();
           this.hasDragged = false;
+          // console.log('вввввввввввввввв');
         }
       }
 
       if (
         this.$el.contains(target) &&
-        (typeof target.className !== 'string' || target.className.indexOf(this.inputSlotClassName) === -1)
+        (typeof target.className !== 'string' || !target.className.includes(this.inputSlotClassName))
       ) {
         this.linking = false;
         this.tempLink = null;
@@ -318,8 +389,10 @@ export default {
       if (this.$el.contains(target)) {
         // if (e.preventDefault) e.preventDefault()
 
+        // console.log(e.deltaY);
+
         let deltaScale = Math.pow(1.1, e.deltaY * -0.01);
-        // console.log(deltaScale)
+        // console.log(deltaScale);
         this.scale *= deltaScale;
 
         if (this.scale < this.minScale) {
@@ -330,6 +403,7 @@ export default {
           return;
         }
 
+        // console.log(this.mouseX);
         let zoomingCenter = {
           x: this.mouseX,
           y: this.mouseY,
@@ -341,6 +415,7 @@ export default {
         this.centerX -= deltaOffsetX;
         this.centerY -= deltaOffsetY;
 
+        // console.log(this.centerX, this.centerY);
         // this.updateScene();
       }
     },
@@ -355,14 +430,11 @@ export default {
 
       x += block.position[0];
       y += block.position[1];
-      // console.log(this.optionsForChild)
-      // console.log(isInput)
-
-      // y += this.optionsForChild.titleHeight
 
       if (isInput && block.inputs.length > slotNumber) {
         if (block.inputs.length === 1) {
           x += this.optionsForChild.width / 2;
+          y += -3;
         } else {
           x += this.optionsForChild.width / 2 - (block.inputs.length * 10) / 2;
           x += 20 * slotNumber;
@@ -370,7 +442,9 @@ export default {
       } else if (!isInput && block.outputs.length > slotNumber) {
         if (slotNumber === 0) {
           x += this.optionsForChild.width / 2;
-          y += 50;
+          // console.log()
+          // y += this.$refs?.['block_' + block.id]?.[0]?.getHeight();
+          y += 45;
         }
         if (slotNumber === 1) {
           x += this.optionsForChild.width;
@@ -398,8 +472,10 @@ export default {
       return { x, y };
     },
     // Linking
-    findindexBlock (id) {
-      return this.blocks.findIndex((block) => { return block.id === id })
+    findindexBlock(id) {
+      return this.blocks.findIndex(block => {
+        return block.id === id;
+      });
     },
     linkingStart(block, slotNumber) {
       console.log('linkingStart');
@@ -417,11 +493,16 @@ export default {
     },
     linkingStop(targetBlock, slotNumber) {
       console.log('linkingStop');
+      console.log(targetBlock);
+      console.log(this.linkStartData);
+      this.linkStartData.block.id;
       if (this.linkStartData && targetBlock && slotNumber > -1) {
-        const { slotNumber: originSlot, block: { id: originID } } = this.linkStartData;
+        const {
+          slotNumber: originSlot,
+          block: { id: originID },
+        } = this.linkStartData;
         const targetID = targetBlock.id;
         const targetSlot = slotNumber;
-
         this.links = this.links.filter(line => {
           return (
             !(
@@ -429,22 +510,20 @@ export default {
               line.targetSlot === targetSlot &&
               line.originID === originID &&
               line.originSlot === originSlot
-            ) && !(line.originID === originID && line.targetID === targetID)
+            ) &&
+            !(
+              (line.targetID === originID && line.originID === targetID) ||
+              (line.originID === originID && line.targetID === targetID)
+            )
           );
         });
 
-        let maxID = Math.max(
-          0,
-          ...this.links.map(function (o) {
-            return o.id;
-          })
-        );
-
+        let maxID = Math.max(0, ...this.links.map(o => o.id));
         if (this.linkStartData.block.id !== targetBlock.id) {
-            const originID = this.linkStartData.block.id
-            const originSlot = this.linkStartData.slotNumber
-            const targetID = targetBlock.id
-            const targetSlot = slotNumber
+          const originID = this.linkStartData.block.id;
+          const originSlot = this.linkStartData.slotNumber;
+          const targetID = targetBlock.id;
+          const targetSlot = slotNumber;
 
           this.links.push({
             id: maxID + 1,
@@ -463,7 +542,7 @@ export default {
           // if (!this.blocks[indexTargetBlock].bind.up.includes(originID)) {
           //   this.blocks[indexTargetBlock].bind.up.push(+originID)
           // }
-          this.$emit('save', true)
+          this.updateModel();
         }
       }
 
@@ -486,28 +565,28 @@ export default {
           this.links = this.links.filter(value => {
             return !(value.targetID === targetBlock.id && value.targetSlot === slotNumber);
           });
-          
-          this.$emit('save', true)
           targetBlock.inputs[findLink.targetSlot].active = false;
           findBlock.outputs[findLink.originSlot].active = false;
-
           this.linkingStart(findBlock, findLink.originSlot);
 
+          this.updateModel();
           // this.updateScene();
         }
       }
     },
-    removeLink(linkID) {
-      console.log('removeLink');
-      this.links = this.links.filter(value => {
-        return !(value.id === linkID);
-      });
-    },
+    // removeLink(linkID) {
+    //   console.log('removeLink');
+    //   this.links = this.links.filter(value => {
+    //     return !(value.id === linkID);
+    //   });
+    // },
     async getImages() {
+      const tags = ['line', 'circle'];
       try {
         const image = await domtoimage.toPng(this.$el, {
+          bgcolor: '#00000000',
           filter: node => {
-            return node.className !== 'btn-zoom';
+            return !(['btn-zoom'].includes(node.className) || tags.includes(node.tagName));
           },
         });
         return image;
@@ -517,85 +596,108 @@ export default {
       }
     },
     // Blocks
-    addNewBlock(nodeName, x, y) {
-      let maxID = Math.max(
-        0,
-        ...this.blocks.map(function (o) {
-          return o.id;
-        })
-      );
-      let block = createBlock(nodeName, maxID + 1);
-      if (!block) {
-        console.warn('block not create: ' + block);
-        return;
-      }
+    // addCloneBlock(oldBlock, x, y) {
+    //   let maxID = Math.max(0, ...this.blocks.map(o => o.id));
+    //   const block = cloneBlock(oldBlock, maxID + 1);
+    //   if (!block) {
+    //     console.warn('block not create: ' + block);
+    //     return;
+    //   }
+    //   if (x === undefined || y === undefined) {
+    //     x = (this.$el.clientWidth / 2 - this.centerX) / this.scale;
+    //     y = (this.$el.clientHeight / 2 - this.centerY) / this.scale;
+    //   } else {
+    //     x = (x - this.centerX) / this.scale;
+    //     y = (y - this.centerY) / this.scale;
+    //   }
+    //   block.position = [x, y];
+    //   this.blocks.push(block);
+    //   this.blocks = [...this.blocks];
+    // },
 
-      if (x === undefined || y === undefined) {
-        x = (this.$el.clientWidth / 2 - this.centerX) / this.scale;
-        y = (this.$el.clientHeight / 2 - this.centerY) / this.scale;
-      } else {
-        x = (x - this.centerX) / this.scale;
-        y = (y - this.centerY) / this.scale;
-      }
-      block.position = [x, y];
-      this.blocks.push(block);
-      this.blocks = this.blocks; // eslint-disable-line
+    // addNewBlock(nodeName, x, y) {
+    //   let maxID = Math.max(
+    //     0,
+    //     ...this.blocks.map(function (o) {
+    //       return o.id;
+    //     })
+    //   );
+    //   let block = createBlock(nodeName, maxID + 1);
+    //   if (!block) {
+    //     console.warn('block not create: ' + block);
+    //     return;
+    //   }
 
-      // this.updateScene();
-    },
+    //   if (x === undefined || y === undefined) {
+    //     x = (this.$el.clientWidth / 2 - this.centerX) / this.scale;
+    //     y = (this.$el.clientHeight / 2 - this.centerY) / this.scale;
+    //   } else {
+    //     x = (x - this.centerX) / this.scale;
+    //     y = (y - this.centerY) / this.scale;
+    //   }
+    //   block.position = [x, y];
+    //   this.blocks.push(block);
+    //   this.blocks = [...this.blocks];
+
+    //   // this.updateScene();
+    // },
     position(block, event) {
       // console.log(block, event)
       block.position = event;
     },
-    deselectAll(withoutID = null) {
-      this.blocks.forEach(value => {
-        if (value.id !== withoutID && value.selected) {
-          this.blockDeselect(value);
-        }
-      });
-    },
+    // deselectAll(withoutID = null) {
+    //   this.blocks.forEach(value => {
+    //     if (value.id !== withoutID && value.selected) {
+    //       this.blockDeselect(value);
+    //     }
+    //   });
+    // },
     // Events
     blockSelect(block) {
-      block.selected = true;
-      this.selectedBlock = block;
-      this.deselectAll(block.id);
+      this.$store.dispatch('cascades/deselectBlocks', block);
+      this.$nextTick(() => {
+        this.$store.dispatch('cascades/selectBlock', block);
+      });
+
+      // block.selected = true;
+      // this.selectedBlock = block;
+      // this.deselectAll(block.id);
       // this.$emit("nodeClick", block.id);
-      this.$emit('blockSelect', block);
+      // this.$emit('blockSelect', block);
     },
     blockDeselect(block) {
       block.selected = false;
-
       if (block && this.selectedBlock && this.selectedBlock.id === block.id) {
         this.selectedBlock = null;
       }
-
       this.$emit('blockDeselect', block);
     },
-    blockDelete(block) {
-      if (block.selected) {
-        this.blockDeselect(block);
-      }
-      this.links.forEach(l => {
-        if (l.originID === block.id || l.targetID === block.id) {
-          this.removeLink(l.id);
-        }
-      });
-      this.blocks = this.blocks.filter(b => {
-        return b.id !== block.id;
-      });
-      // this.updateScene();
-    },
+    // blockDelete(block) {
+    //   if (block.selected) {
+    //     this.blockDeselect(block);
+    //   }
+    //   this.links.forEach(l => {
+    //     if (l.originID === block.id || l.targetID === block.id) {
+    //       this.removeLink(l.id);
+    //     }
+    //   });
+    //   this.blocks = this.blocks.filter(b => {
+    //     return b.id !== block.id;
+    //   });
+    //   // this.updateScene();
+    // },
     moveBlock() {
-      this.$store.dispatch('cascades/setButtons', {save: true})
+      this.updateModel();
     },
 
-    updateScene() {
-      //   // this.scene = this.exportScene()
-      //   // this.$emit("update:scene", this.exportScene());
+    updateModel() {
+      this.$store.dispatch('cascades/updateModel');
     },
   },
 
   mounted() {
+    // Context menu off
+    // this.$el.addEventListener('contextmenu', event => event.preventDefault());
     this.$el.addEventListener('mouseenter', this.handleMauseOver);
     this.$el.addEventListener('mouseleave', this.handleMauseOver);
     document.documentElement.addEventListener('keyup', this.keyup);
@@ -605,11 +707,12 @@ export default {
     document.documentElement.addEventListener('wheel', this.handleWheel, true);
 
     this.centerX = this.$el.clientWidth / 2;
-    // this.centerY = this.$el.clientHeight / 2;
+    this.centerY = this.$el.clientHeight / 2;
 
     // this.importScene();
   },
   beforeDestroy() {
+    // this.$el.removeEventListener('contextmenu', null);
     document.documentElement.removeEventListener('keyup', this.keyup);
     this.$el.removeEventListener('mouseenter', this.handleMauseOver);
     this.$el.removeEventListener('mouseleave', this.handleMauseOver);
@@ -622,13 +725,20 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.board {
+.t-block {
   flex-shrink: 1;
   width: 100%;
   background-color: #17212b;
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
+
+  &__lines {
+    position: absolute;
+  }
+  &__center {
+    position: absolute;
+  }
 }
 .btn-zoom {
   display: flex;
@@ -645,7 +755,7 @@ export default {
     display: flex;
     justify-content: center;
     align-items: center;
-    cursor: pointer; 
+    cursor: pointer;
     i {
       width: 14px;
       height: 14px;

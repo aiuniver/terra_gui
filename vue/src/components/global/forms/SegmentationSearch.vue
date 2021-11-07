@@ -1,6 +1,19 @@
 <template>
   <div class="t-segmentation-search">
-    <t-input v-model="qty" label="Количество классов" type="number" name="classes" inline @change="change" />
+    <t-input
+      v-model="qty"
+      label="Количество классов"
+      type="number"
+      name="classes"
+      min="1"
+      max="99"
+      size="1"
+      maxlength="2"
+      inline
+      :error="error"
+      @focus="error = ''"
+      @change="change"
+    />
     <div :class="['t-inline']">
       <label class="t-field__label"><slot></slot></label>
       <t-button class="t-field__button" :disabled="disabled" @click.native="getApi" :loading="loading">Найти</t-button>
@@ -50,20 +63,25 @@ export default {
     inline: Boolean,
     disabled: Boolean,
     small: Boolean,
-    error: String,
+    // error: String,
     id: Number,
   },
   data: () => ({
     loading: false,
     isShow: false,
     items: [],
-    qty: 2,
     classes_names: [],
-    classes_colors: []
+    classes_colors: [],
+    qty: 2,
+    error: '',
   }),
-  computed: {},
   methods: {
     async getApi() {
+      const value = +this.qty;
+      if (!value || value < 0 || value > 99) {
+        this.error = 'Значение должно быть от 1 до 99';
+        return;
+      }
       if (this.loading) return;
       const path = this.mixinFiles.find(item => item.id === this.id)?.value;
       const mask_range = document.getElementsByName('mask_range')[0].value;
@@ -98,8 +116,8 @@ export default {
       this.loading = false;
     },
     change({ value }, index) {
-      console.log(value,index)
-      this.classes_names[index] = value
+      console.log(value, index);
+      this.classes_names[index] = value;
       this.$emit('change', { name: 'classes_names', value: this.classes_names });
     },
   },

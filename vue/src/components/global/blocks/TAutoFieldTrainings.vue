@@ -2,6 +2,7 @@
   <div class="forms">
     <t-input
       v-if="type === 'tuple'"
+      v-show="visible"
       :value="getValue"
       :label="label"
       type="text"
@@ -11,7 +12,7 @@
       :disabled="disabled"
       @parse="change"
     />
-    <t-field v-if="type === 'number' || type === 'text'" :label="label" inline>
+    <t-field v-if="type === 'number' || type === 'text'" v-show="visible" :label="label" inline>
       <t-input-new
         small
         :style="{ width: '70px' }"
@@ -23,18 +24,10 @@
         @parse="change"
       />
     </t-field>
-    <t-checkbox
-      v-if="type === 'checkbox'"
-      :value="getValue"
-      :label="label"
-      type="checkbox"
-      :parse="parse"
-      :name="name"
-      :inline="inline"
-      :disabled="disabled"
-      @parse="change"
-    />
-    <t-field v-if="type === 'select'" :label="label" inline>
+    <t-field v-if="type === 'checkbox'" :label="label" v-show="visible" inline>
+      <t-checkbox-new :value="getValue" :parse="parse" :name="name" :disabled="disabled" @parse="change" />
+    </t-field>
+    <t-field v-if="type === 'select'" :label="label" v-show="visible" inline>
       <t-select-new
         :value="getValue"
         :list="list"
@@ -47,19 +40,20 @@
       />
     </t-field>
 
-    <t-auto-complete
-      v-if="type === 'auto_complete'"
-      :value="getValue"
-      :label="label"
-      :list="list"
-      :parse="parse"
-      :name="name"
-      :inline="inline"
-      :disabled="disabled"
-      @parse="change"
-    />
+    <t-field v-if="type === 'auto_complete'" :label="label" v-show="visible">
+      <t-auto-complete-new
+        :value="getValue"
+        :list="list"
+        :parse="parse"
+        :name="name"
+        :disabled="disabled"
+        all
+        @parse="change"
+      />
+    </t-field>
     <MegaMultiSelect
       v-if="type === 'multiselect'"
+      v-show="visible"
       :value="getValue"
       :label="label"
       :list="list"
@@ -90,7 +84,9 @@ export default {
     id: Number,
     state: Object,
     inline: Boolean,
-    disabled: Boolean,
+    changeable: Boolean,
+    visible: Boolean,
+    disabled: [Boolean, Array],
   },
   data: () => ({
     valueIn: null,
@@ -111,7 +107,7 @@ export default {
     change({ parse, name, value }) {
       // console.log(parse, value)
       // this.valueIn = null;
-      this.$emit('parse', { parse, name, value });
+      this.$emit('parse', { parse, name, value, changeable: this.changeable });
       // this.$nextTick(() => {
       //   this.valueIn = value;
       // });
@@ -121,7 +117,7 @@ export default {
     // console.log(this.disabled);
   },
   mounted() {
-    this.$emit('parse', { name: this.name, value: this.getValue, parse: this.parse });
+    this.$emit('parse', { name: this.name, value: this.getValue, parse: this.parse, changeable: this.changeable, mounted: true });
     // console.log(this.name, this.parameters, this.getValue)
     this.$nextTick(() => {
       this.valueIn = this.getValue;

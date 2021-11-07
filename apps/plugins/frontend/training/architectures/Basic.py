@@ -27,6 +27,7 @@ class CheckpointData(BaseModel):
     indicator: Field
     type: Field
     mode: Field
+    metric_name: Field
     save_best: Field
     save_weights: Field
 

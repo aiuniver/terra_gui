@@ -5,7 +5,7 @@
         <t-input-new
           class="block-footer__input-custom"
           v-model="nameProject"
-          :style="{ width: '100%'}"
+          :style="{ width: '150px'}"
           parse="[name]"
           small
           :error="nameError"
@@ -19,11 +19,9 @@
     <div class="block-footer__item">
       <Slider :degree="degree" />
     </div>
-    <div class="block-footer__item">
-      <t-checkbox parse="[info][shuffle]" reverse>Сохранить последовательность</t-checkbox>
-    </div>
-    <div class="block-footer__item">
-      <t-checkbox parse="use_generator">Использовать генератор</t-checkbox>
+    <div class="block-footer__item block-footer__item--checkbox">
+      <t-checkbox parse="[info][shuffle]" reverse inline>Сохранить последовательность</t-checkbox>
+      <t-checkbox parse="use_generator" inline>Использовать генератор</t-checkbox>
     </div>
     <div class="action">
       <t-button :disabled="!!disabled" @click.native="getObj">Сформировать</t-button>
@@ -73,6 +71,10 @@ export default {
   &__item {
     flex: 0 0 150px;
     margin-right: 36px;
+    &--checkbox{
+      flex: 0 0 250px;
+      margin: 5px 0 0 0
+    }
   }
   input {
     width: 100%;

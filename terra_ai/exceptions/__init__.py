@@ -1,99 +1,33 @@
-"""
-# Исключения
+import tensorflow
+import pydantic
 
-## Примеры создания исключения
+from . import tensor_flow as tf_exceptions
+from .data import PydanticException
 
-### Базовое создание исключения без передачи параметров
-```
-In [1]: from enum import Enum
+from .base import TerraBaseException
 
-In [2]: from terra_ai.exceptions.base import TerraBaseException
 
-In [3]: class MyMessage(str, Enum):
-   ...:     Value = "Моя базовая ошибка без параметров"
-   ...:
+def terra_exception(exception: Exception) -> TerraBaseException:
+    """Принимает на вход любой тип исключения Exception и возвращает исключение, унаследованное от TerraBaseException"""
 
-In [4]: class MyException(TerraBaseException):
-   ...:     class Meta:
-   ...:         message: str = MyMessage.Value
-   ...:
+    if not isinstance(exception, Exception):
+        raise TypeError(
+            f"Функция ожидала на вход объект исключения, но получила '{type(exception).__name__}'"
+        )
 
-In [5]: MyException()
-Out[5]: __main__.MyException('Моя базовая ошибка без параметров')
+    if isinstance(
+        exception, pydantic.ValidationError
+    ):  # нативные исключения от Pydantic
+        raise PydanticException(exception)
 
-In [6]: print(MyException())
-Моя базовая ошибка без параметров
-```
+    if isinstance(
+        exception, tensorflow.errors.OpError
+    ):  # нативные исключения от TensorFlow
+        return getattr(
+            tf_exceptions, exception.__class__.__name__, tf_exceptions.UnknownError
+        )(exception.message)
 
-### Базовое создание исключения с передачей параметров
-```
-In [1]: from enum import Enum
+    if isinstance(exception, TerraBaseException):  # исключения от TerraAI
+        return exception
 
-In [2]: from terra_ai.exceptions.base import TerraBaseException
-
-In [3]: class MyMessage(str, Enum):
-   ...:     Value = "Моя базовая ошибка с параметром '%s'"
-   ...:
-
-In [4]: class MyException(TerraBaseException):
-   ...:     class Meta:
-   ...:         message: str = MyMessage.Value
-   ...:
-   ...:     def __init__(self, param:str, *args):
-   ...:         super().__init__(self.Meta.message % str(param), *args)
-   ...:
-
-In [5]: MyException("Мой параметр")
-Out[5]: __main__.MyException("Моя базовая ошибка с параметром 'Мой параметр'")
-
-In [6]: print(MyException("Мой параметр"))
-Моя базовая ошибка с параметром 'Мой параметр'
-```
-
-### Создание типового исключения без передачи параметров на примере датасетов
-```
-In [1]: from enum import Enum
-
-In [2]: from terra_ai.exceptions.datasets import DatasetsException
-
-In [3]: class MyMessage(str, Enum):
-   ...:     Value = "Типовая ошибка без параметров на основе датасетов"
-   ...:
-
-In [4]: class MyException(DatasetsException):
-   ...:     class Meta:
-   ...:         message: str = MyMessage.Value
-   ...:
-
-In [5]: MyException()
-Out[5]: __main__.MyException('Типовая ошибка без параметров на основе датасетов')
-
-In [6]: print(MyException())
-Типовая ошибка без параметров на основе датасетов
-```
-
-### Создание типового исключения с передачей параметров на примере датасетов
-```
-In [1]: from enum import Enum
-
-In [2]: from terra_ai.exceptions.datasets import DatasetsException
-
-In [3]: class MyMessage(str, Enum):
-   ...:     Value = "Типовая ошибка с параметром '%s' на основе датасетов"
-   ...:
-
-In [4]: class MyException(DatasetsException):
-   ...:     class Meta:
-   ...:         message: str = MyMessage.Value
-   ...:
-   ...:     def __init__(self, param:str, *args):
-   ...:         super().__init__(self.Meta.message % str(param), *args)
-   ...:
-
-In [5]: MyException("Мой параметр")
-Out[5]: __main__.MyException("Типовая ошибка с параметром 'Мой параметр' на основе датасетов")
-
-In [6]: print(MyException("Мой параметр"))
-Типовая ошибка с параметром 'Мой параметр' на основе датасетов
-```
-"""
+    return TerraBaseException(str(exception))  # неопределенные исключения

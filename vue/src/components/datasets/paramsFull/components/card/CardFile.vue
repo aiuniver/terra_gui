@@ -13,7 +13,7 @@
         v-for="({ icon, event }, i) of items"
         :key="'icon' + i"
         class="t-card-file__dropdown--item"
-        @click="$emit('event', { label, event }), show = false"
+        @click="$emit('event', { label, event }), (show = false)"
       >
         <i :class="['t-icon', icon]"></i>
       </div>
@@ -79,6 +79,7 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  overflow: hidden;
   &__footer,
   &__header {
     position: relative;
@@ -93,6 +94,7 @@ export default {
     line-height: 16px;
   }
   &__header {
+    position: absolute;
     top: 0;
     border-radius: 3px 3px 0 0;
     padding: 2px 6px 4px 6px;
@@ -115,6 +117,7 @@ export default {
       padding: 4px 2px 2px 6px;
       text-overflow: ellipsis;
       overflow: hidden;
+      white-space: nowrap;
     }
     &--btn {
       padding: 0 6px 0 0;

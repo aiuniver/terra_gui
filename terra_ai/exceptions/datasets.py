@@ -3,39 +3,43 @@ from enum import Enum
 from .base import TerraBaseException
 
 
-class DatasetsMessages(str, Enum):
-    DatasetKeras = "Unknown keras dataset `%s`"
-    DatasetSourceLoadUndefinedMethod = (
-        "Undefined method for loading dataset sources in mode `%s`"
-    )
-    DatasetChoiceUndefinedMethod = "Undefined method for choice dataset from group `%s`"
-    UnknownDataset = "Unknown `%s` dataset `%s`"
+class DatasetsMessages(dict, Enum):
+    Undefined = {"ru": "Неопределенная ошибка датасетов",
+                 "eng": "Undefined error of datasets"}
+    DatasetKeras = {"ru": "Неизвестный Keras-у датасет `%s`",
+                    "eng": "Unknown keras dataset `%s`"}
+    DatasetSourceLoadUndefinedMethod = {"ru": "Метод загрузки источников датасета в режиме `%s` еще не определен",
+                                        "eng": "Undefined method for loading dataset sources in mode `%s`"}
+    DatasetChoiceUndefinedMethod = {"ru": "Метод выбора датасета из группы `%s` еще не определен",
+                                    "eng": "Undefined method for choice dataset from group `%s`"}
+    UnknownDataset = {"ru": "Группа `%s` не имеет датасет с именем `%s`",
+                      "eng": "Unknown `%s` dataset `%s`"}
 
 
 class DatasetsException(TerraBaseException):
     class Meta:
-        message: str = "Undefined error of datasets"
+        message: dict = DatasetsMessages.Undefined
 
 
 class DatasetSourceLoadUndefinedMethodException(DatasetsException):
     class Meta:
-        message: str = DatasetsMessages.DatasetSourceLoadUndefinedMethod
+        message: dict = DatasetsMessages.DatasetSourceLoadUndefinedMethod
 
-    def __init__(self, __mode: str, *args):
-        super().__init__(self.Meta.message % str(__mode), *args)
+    def __init__(self, __mode: str, **kwargs):
+        super().__init__(str(__mode), **kwargs)
 
 
 class DatasetChoiceUndefinedMethodException(DatasetsException):
     class Meta:
-        message: str = DatasetsMessages.DatasetChoiceUndefinedMethod
+        message: dict = DatasetsMessages.DatasetChoiceUndefinedMethod
 
-    def __init__(self, __group: str, *args):
-        super().__init__(self.Meta.message % str(__group), *args)
+    def __init__(self, __group: str, **kwargs):
+        super().__init__(str(__group), **kwargs)
 
 
 class UnknownDatasetException(DatasetsException):
     class Meta:
-        message: str = DatasetsMessages.UnknownDataset
+        message: dict = DatasetsMessages.UnknownDataset
 
-    def __init__(self, __group: str, __name: str, *args):
-        super().__init__(self.Meta.message % (str(__group), str(__name)), *args)
+    def __init__(self, __group: str, __name: str, **kwargs):
+        super().__init__(str(__group), str(__name), **kwargs)

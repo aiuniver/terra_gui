@@ -15,8 +15,10 @@ def camelize(snake_case_string: str):
         return "AUC"
     if snake_case_string == "kullback_leibler_divergence":
         return "KLDivergence"
-    if snake_case_string == "dice_coef":
-        return "DiceCoefficient"
+    # if snake_case_string == "dice_coef":
+    #     return "DiceCoefficient"
+    if snake_case_string == 'unscaled_mae':
+        return "UnscaledMAE"
     if snake_case_string == "logcosh":
         return "LogCoshError"
     return re.sub("_.", lambda x: x.group()[1].upper(), snake_case_string.title())

@@ -193,7 +193,21 @@ class ModuleChoice(str, Enum):
     inception_v3 = "tensorflow.keras.applications.inception_v3"
     xception = "tensorflow.keras.applications.xception"
     vgg16 = "tensorflow.keras.applications.vgg16"
+    vgg19 = "tensorflow.keras.applications.vgg19"
     resnet50 = "tensorflow.keras.applications.resnet50"
+    resnet101 = "tensorflow.keras.applications.resnet"
+    resnet152 = "tensorflow.keras.applications.resnet"
+    resnet50v2 = "tensorflow.keras.applications.resnet_v2"
+    resnet101v2 = "tensorflow.keras.applications.resnet_v2"
+    resnet152v2 = "tensorflow.keras.applications.resnet_v2"
+    densenet121 = "tensorflow.keras.applications.densenet"
+    densenet169 = "tensorflow.keras.applications.densenet"
+    densenet201 = "tensorflow.keras.applications.densenet"
+    nasnetmobile = "tensorflow.keras.applications.nasnet"
+    nasnetlarge = "tensorflow.keras.applications.nasnet"
+    mobilenetv3small = "tensorflow.keras.applications"
+    mobilenetv2 = "tensorflow.keras.applications.mobilenet_v2"
+    efficientnetb0 = "tensorflow.keras.applications.efficientnet"
 
 
 class ModuleTypeChoice(str, Enum):
@@ -246,3 +260,12 @@ class LayerConfigData(BaseMixinData):
     input_dimension: LayerValueConfig
     module: Optional[ModuleChoice]
     module_type: ModuleTypeChoice
+
+
+class CONVBlockConfigChoice(str, Enum):
+    conv_conv_bn_lrelu_drop = "conv_conv_bn_lrelu_drop"
+    conv_bn_lrelu_drop_conv_bn_lrelu_drop = "conv_bn_lrelu_drop_conv_bn_lrelu_drop"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, CONVBlockConfigChoice))

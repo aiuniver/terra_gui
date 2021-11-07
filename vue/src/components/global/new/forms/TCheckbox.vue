@@ -1,5 +1,5 @@
 <template>
-  <div class="t-checkbox">
+  <div class="t-checkbox" :class="{ 't-checkbox--disabled': isDisabled }">
     <input
       v-model="checked"
       class="t-checkbox__input"
@@ -7,6 +7,7 @@
       type="checkbox"
       :name="parse"
       :data-reverse="reverse"
+      :disabled="isDisabled"
       @change="change"
     />
     <span class="t-checkbox__switch"></span>
@@ -21,21 +22,36 @@ export default {
     name: String,
     parse: String,
     reverse: Boolean,
+    disabled: [Boolean, Array],
   },
   data: () => ({
     checked: false,
   }),
-  methods: {
-    label() {
-      this.checked = !this.checked
+  computed: {
+    isDisabled() {
+      if (Array.isArray(this.disabled)) {
+        return !!this.disabled.includes(this.name);
+      } else {
+        return this.disabled;
+      }
     },
-    change(e) {
-      console.log(e);
-      const value = e.target.checked;
+  },
+  methods: {
+    send(value) {
+      this.$emit('input', value);
       this.$emit('change', { name: this.name, value });
       this.$emit('parse', { parse: this.parse, value });
+    },
+    label() {
+      if (!this.isDisabled) {
+        this.checked = !this.checked;
+        this.send(this.checked);
+      }
+    },
+    change(e) {
+      this.send(e.target.checked);
       if (this.error) {
-      this.$emit('cleanError', true);
+        this.$emit('cleanError', true);
       }
     },
   },
@@ -50,6 +66,9 @@ export default {
   width: 26px;
   height: 14px;
   position: relative;
+  &--disabled {
+    opacity: 0.3;
+  }
   &__input {
     width: 100%;
     height: 100%;

@@ -45,6 +45,12 @@ class LayerAudioParameterChoice(str, Enum):
     zero_crossing_rate = "zero_crossing_rate"
 
 
+class LayerAudioResampleChoice(str, Enum):
+    kaiser_best = "kaiser_best"
+    kaiser_fast = "kaiser_fast"
+    scipy = "scipy"
+
+
 class LayerTextModeChoice(str, Enum):
     completely = "completely"
     length_and_step = "length_and_step"
@@ -53,6 +59,17 @@ class LayerTextModeChoice(str, Enum):
 class LayerAudioModeChoice(str, Enum):
     completely = "completely"
     length_and_step = "length_and_step"
+
+
+class LayerAudioFillModeChoice(str, Enum):
+    last_millisecond = "last_millisecond"
+    loop = "loop"
+
+
+class LayerScalerDefaultChoice(str, Enum):
+    no_scaler = "no_scaler"
+    min_max_scaler = "min_max_scaler"
+    standard_scaler = "standard_scaler"
 
 
 class LayerScalerDataframeChoice(str, Enum):
@@ -82,6 +99,7 @@ class LayerScalerImageChoice(str, Enum):
 class LayerScalerAudioChoice(str, Enum):
     no_scaler = "no_scaler"
     min_max_scaler = "min_max_scaler"
+    standard_scaler = "standard_scaler"
 
 
 class LayerScalerVideoChoice(str, Enum):
@@ -90,14 +108,9 @@ class LayerScalerVideoChoice(str, Enum):
 
 
 class LayerVideoFillModeChoice(str, Enum):
-    black_frames = "black_frames"
-    average_value = "average_value"
     last_frames = "last_frames"
-
-
-class LayerVideoFrameModeChoice(str, Enum):
-    keep_proportions = "keep_proportions"
-    stretch = "stretch"
+    loop = "loop"
+    average_value = "average_value"
 
 
 class LayerVideoModeChoice(str, Enum):
@@ -105,14 +118,50 @@ class LayerVideoModeChoice(str, Enum):
     length_and_step = "length_and_step"
 
 
+class LayerVideoFrameModeChoice(str, Enum):
+    keep_proportions = "keep_proportions"
+    stretch = "stretch"
+    # stretch = "stretch"
+    fit = "fit"
+    cut = "cut"
+
+
+class LayerImageFrameModeChoice(str, Enum):
+    stretch = "stretch"
+    fit = "fit"
+    cut = "cut"
+
+
 class LayerTypeProcessingClassificationChoice(str, Enum):
     categorical = "categorical"
     ranges = "ranges"
 
 
+class LayerObjectDetectionModelChoice(str, Enum):
+    yolo = "yolo"
+    ssd = "ssd"
+    fast_r_cnn = "fast_r_cnn"
+    mask_r_cnn = "mask_r_cnn"
+
+
 class LayerYoloChoice(str, Enum):
     v3 = "v3"
     v4 = "v4"
+
+
+class LayerODDatasetTypeChoice(str, Enum):
+    Yolo_terra = "Yolo_terra"
+    Voc = "Voc"
+    Kitti = "Kitti"
+    Coco = "Coco"
+    Yolov1 = "Yolov1"
+    Udacity = "Udacity"
+
+
+class LayerEncodingChoice(str, Enum):
+    none = "none"
+    ohe = "ohe"
+    multi = "multi"
 
 
 class DatasetGroupChoice(str, Enum):
@@ -125,6 +174,22 @@ class DatasetGroupChoice(str, Enum):
         return list(map(lambda item: item.value, DatasetGroupChoice))
 
 
+class ColumnProcessingTypeChoice(str, Enum):
+    """
+    Типы обработчиков для колонок таблиц
+    """
+
+    Image = "Image"
+    Text = "Text"
+    Audio = "Audio"
+    Video = "Video"
+    Scaler = "Scaler"
+    Classification = "Classification"
+    Regression = "Regression"
+    Segmentation = "Segmentation"
+    Timeseries = "Timeseries"
+
+
 class LayerInputTypeChoice(str, Enum):
     """
     Типы данных для `input`-слоев
@@ -135,6 +200,9 @@ class LayerInputTypeChoice(str, Enum):
     Audio = "Audio"
     Dataframe = "Dataframe"
     Video = "Video"
+    Classification = "Classification"
+    Scaler = "Scaler"
+    Raw = "Raw"
 
 
 class LayerOutputTypeChoice(str, Enum):
@@ -145,9 +213,12 @@ class LayerOutputTypeChoice(str, Enum):
     Image = "Image"
     Text = "Text"
     Audio = "Audio"
+    Dataframe = "Dataframe"
     Classification = "Classification"
     Segmentation = "Segmentation"
     TextSegmentation = "TextSegmentation"
     Regression = "Regression"
     Timeseries = "Timeseries"
+    TimeseriesTrend = "TimeseriesTrend"
     ObjectDetection = "ObjectDetection"
+    Raw = "Raw"

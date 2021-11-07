@@ -1,6 +1,6 @@
 <template>
   <div class="t-field">
-    <label class="t-field__label">{{ label }}</label>
+    <label class="t-field__label" :style="'max-width: ' + maxLabel + 'px'">{{ label }}</label>
     <input style="display: none" :name="parse" :value="select" />
     <at-select
       v-model="select"
@@ -10,11 +10,16 @@
       @on-change="change"
       @click="cleanError"
       :disabled="disabled"
+      @mouseover="hover = true"
+      @mouseleave="hover = false"
     >
       <at-option v-for="({ label, value }, key) in items" :key="'item_' + key" :value="value" :title="label">
         {{ label }}
       </at-option>
     </at-select>
+    <div v-if="error && hover" class="t-field__hint">
+      <span>{{ error }}</span>
+    </div>
   </div>
 </template>
 
@@ -43,15 +48,25 @@ export default {
     lists: {
       type: [Array, Object],
     },
+
     disabled: Boolean,
     error: String,
+    maxLabel: {
+      type: Number,
+      default: 130,
+    },
   },
   data: () => ({
+    hover: false,
     select: '',
   }),
   computed: {
     items() {
-       return this.lists ? (Array.isArray(this.lists) ? this.lists.map(item => item || '') : Object.keys(this.lists)) : []
+      return this.lists
+        ? Array.isArray(this.lists)
+          ? this.lists.map(item => item || '')
+          : Object.keys(this.lists)
+        : [];
     },
   },
   methods: {
@@ -83,7 +98,6 @@ export default {
 };
 </script>
 
-
 <style lang="scss" scoped>
 .t-field {
   display: flex;
@@ -92,6 +106,7 @@ export default {
   -webkit-box-pack: end;
   margin-bottom: 10px;
   align-items: center;
+  position: relative;
   &__label {
     width: 150px;
     max-width: 130px;
@@ -117,6 +132,30 @@ export default {
   }
   &__error {
     border-color: #b53b3b;
+    color: #ca5035;
+  }
+  &__hint {
+    user-select: none;
+    position: absolute;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    padding: 0 5px 0 5px;
+    top: 25px;
+    background-color: #ca5035;
+    color: #fff;
+    border-radius: 4px;
+    z-index: 5;
+    // display: none;
+    span {
+      font-style: normal;
+      font-weight: normal;
+      font-size: 9px;
+      line-height: 12px;
+    }
+    // &--hover {
+    //   display: flex;
+    // }
   }
 }
 </style>

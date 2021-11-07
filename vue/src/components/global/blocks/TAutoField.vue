@@ -5,13 +5,13 @@
       :id="id"
       name="sources_paths"
       label="Выберите путь"
+      @multiselect="$emit('multiselect', $event)"
       :errors="error"
       inline
     />
     <t-segmentation-manual
       v-if="type === 'segmentation_manual'"
       :id="id"
-      :value="getValue"
       :label="label"
       type="text"
       :parse="parse"
@@ -72,6 +72,7 @@
       :name="name"
       :key="name + idKey"
       :error="error"
+      :update="update"
       inline
       @change="change"
       @cleanError="cleanError"
@@ -102,6 +103,18 @@
       @cleanError="cleanError"
       @change="change"
     />
+    <t-select-tasks
+      v-if="type === 'select_creation_tasks'"
+      :value="getValue"
+      :label="label"
+      :lists="list"
+      :parse="parse"
+      :name="name"
+      :key="name + idKey"
+      :error="error"
+      @cleanError="cleanError"
+      @change="change"
+    />
     <template v-for="(data, i) of dataFields">
       <t-auto-field
         v-bind="data"
@@ -109,6 +122,8 @@
         :key="idKey + i"
         :id="id"
         :parameters="parameters"
+        :update="update"
+        @multiselect="$emit('multiselect', $event)"
         @change="$emit('change', $event)"
       />
     </template>
@@ -131,9 +146,57 @@ export default {
     id: Number,
     root: Boolean,
     parameters: Object,
+    update: Object,
+    isAudio: Number,
   },
   data: () => ({
     valueIn: null,
+    audio: [
+      {
+        type: 'select',
+        name: 'parameter',
+        label: 'Параметр',
+        parse: 'parameter',
+        value: 'audio_signal',
+        disabled: false,
+        list: [
+          {
+            value: 'audio_signal',
+            label: 'Audio signal',
+          },
+          {
+            value: 'chroma_stft',
+            label: 'Chroma STFT',
+          },
+          {
+            value: 'mfcc',
+            label: 'MFCC',
+          },
+          {
+            value: 'rms',
+            label: 'RMS',
+          },
+          {
+            value: 'spectral_centroid',
+            label: 'Spectral centroid',
+          },
+          {
+            value: 'spectral_bandwidth',
+            label: 'Spectral bandwidth',
+          },
+          {
+            value: 'spectral_rolloff',
+            label: 'Spectral roll-off',
+          },
+          {
+            value: 'zero_crossing_rate',
+            label: 'Zero-crossing rate',
+          },
+        ],
+        fields: null,
+        api: null,
+      },
+    ],
   }),
   computed: {
     getValue() {
@@ -147,10 +210,14 @@ export default {
       return this.errors?.[key]?.[0] || this.errors?.parameters?.[key]?.[0] || '';
     },
     dataFields() {
-      if (!!this.fields && !!this.fields[this.valueIn]) {
-        return this.fields[this.valueIn];
+      if (this.name === 'type' && this.valueIn === 'Audio' && this.isAudio !== this.id) {
+        return this.audio;
       } else {
-        return [];
+        if (!!this.fields && !!this.fields[this.valueIn]) {
+          return this.fields[this.valueIn];
+        } else {
+          return [];
+        }
       }
     },
   },
@@ -167,7 +234,7 @@ export default {
     },
   },
   created() {
-    console.log(this.type)
+    // console.log(this.type)
   },
   mounted() {
     this.$emit('change', { id: this.id, value: this.getValue, name: this.name, root: this.root });

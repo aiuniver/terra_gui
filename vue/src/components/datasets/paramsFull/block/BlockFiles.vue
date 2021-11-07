@@ -7,7 +7,7 @@
       {{ text }}
     </div>
     <div v-show="toggle" class="block-file__body">
-      <button @click="moveAll" class="block-file__body--btn">Перенести всё</button>
+      <button v-if="isDir" class="block-file__body--btn" @click="moveAll" >Перенести всё</button>
       <scrollbar>
       <files-menu v-model="filesSource" />
       </scrollbar>
@@ -51,6 +51,9 @@ export default {
     text() {
       return this.toggle ? "Выбор папки/файла" : "";
     },
+    isDir() {
+      return this.filesSource.filter(item => item.type !== 'table').length
+    },
     filesSource: {
       set(value) {
         this.$store.dispatch('datasets/setFilesSource', value)
@@ -64,7 +67,7 @@ export default {
   methods: {
     moveAll() {
       const files = this.$store.getters['datasets/getFilesSource'].flatMap(this.getFiles)
-      const drop = files.filter(item => item.dragndrop).map(item => ({
+      const drop = files.filter(item => (item.dragndrop && item.type === 'folder')).map(item => ({
         value: item.path,
         label: item.title,
         type: item.type,

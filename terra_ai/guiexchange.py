@@ -228,7 +228,7 @@ class Exchange:
         )
         if "metrics" in available_metrics:
             available_metrics.remove("metrics")
-        print(available_metrics)
+        # print(available_metrics)
         # dict with known metrics
         metrics_dict = {
             "classification": [
@@ -398,7 +398,7 @@ class Exchange:
             data (tuple):       data[0] string with explanation, data[1] float, data[3] str usually time & etc,
             stop_flag (bool):   added for django
         """
-        print(f"{data[0]}: {data[1]} : {data[2]}")
+        # print(f"{data[0]}: {data[1]} : {data[2]}")
         pass
 
     def print_2status_bar(self, data: tuple, stop_flag=False) -> None:
@@ -409,7 +409,7 @@ class Exchange:
             data (tuple):       data[0] string with Method, Class name etc, data[1] string with message
             stop_flag (bool):   added for django
         """
-        print(f"{data[0]}: {data[1]}")
+        # print(f"{data[0]}: {data[1]}")
         pass
 
     def print_error(self, data: tuple, stop_flag=False) -> None:
@@ -423,7 +423,7 @@ class Exchange:
         Example:
             data = ('Error', 'Project directory not found')
         """
-        print(f"{data[0]}: {data[1]}")
+        # print(f"{data[0]}: {data[1]}")
         pass
 
     def print_epoch_monitor(self, one_string, stop_flag=False) -> None:
@@ -437,7 +437,7 @@ class Exchange:
         Returns:
             None
         """
-        print(one_string)
+        # print(one_string)
         pass
 
     def print_training_status(self, data, stop_flag=False) -> None:
@@ -448,7 +448,7 @@ class Exchange:
             data (tuple):       data[0] string with Method, Class name etc, data[1] string with message
             stop_flag (bool):   added for django
         """
-        print(f"{data[0]}: {data[1]}")
+        # print(f"{data[0]}: {data[1]}")
         pass
 
     def set_nn_init_fail(self):
@@ -559,7 +559,7 @@ class Exchange:
         Returns:
             None
         """
-        print(data)
+        # print(data)
         pass
 
     @staticmethod

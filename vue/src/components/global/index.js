@@ -1,5 +1,6 @@
 import FilesMenu from './blocks/FilesMenu';
 import TAutoField from './blocks/TAutoField';
+import TAutoFieldHeandler from './blocks/TAutoFieldHeandler';
 import TAutoFieldTrainings from './blocks/TAutoFieldTrainings';
 
 import Button from './forms/Button';
@@ -11,15 +12,20 @@ import MultiSelect from './forms/MultiSelect';
 import Checkbox from './forms/Checkbox';
 import Input from './forms/Input';
 import Select from './forms/Select';
+import SelectTasks from './forms/SelectTasks';
 
+
+// _______________NEW____________________//
 import TInput from './new/forms/TInput';
 import TCheckbox from './new/forms/TCheckbox';
 import TSelect from './new/forms/TSelect';
 import TField from './forms/TField';
+import TAutoComplete from './new/forms/TAutoComplete';
 
 export default [
   FilesMenu,
   TAutoField,
+  TAutoFieldHeandler,
   TAutoFieldTrainings,
   Button,
   Checkbox,
@@ -30,9 +36,11 @@ export default [
   SegmentationAnnotation,
   Autocomplete,
   MultiSelect,
+  SelectTasks,
 
   TInput,
   TCheckbox,
   TSelect,
+  TAutoComplete,
   TField
 ];

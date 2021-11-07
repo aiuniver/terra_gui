@@ -1,0 +1,23 @@
+{
+  "Number of expected outputs, {}, does not match the number of actual outputs, {}, from loop_fn": "Number of expected outputs, {}, does not match the number of actual outputs, {}, from loop_fn",
+  "Expected list for 'a' argument to 'attr_bool_list' Op, not {}.": "Expected list for 'a' argument to 'attr_bool_list' Op, not {}.",
+  "Expected float for argument '{}' not {}.": "Expected float for argument '{}' not {}.",
+  "CompositeTensor instance {} returned from parallel_for or vectorized_map loop body must provide a `BatchableTypeSpec` (saw: {}).": "CompositeTensor instance {} returned from parallel_for or vectorized_map loop body must provide a `BatchableTypeSpec` (saw: {}).",
+  "group_assignment must be a list of list. Got {}": "group_assignment must be a list of list. Got {}",
+  "loop_fn object did not have a __call__ method": "loop_fn object did not have a __call__ method",
+  "debug_ops must not be empty or None.": "debug_ops must not be empty or None.",
+  "learning_rate_power {} needs to be negative or zero": "learning_rate_power {} needs to be negative or zero",
+  "Expected list for 'OutT' argument to 'trt_engine_op' Op, not {}.": "Expected list for 'OutT' argument to 'trt_engine_op' Op, not {}.",
+  "Expected list for 'input_shapes' argument to 'trt_engine_op' Op, not {}.": "Expected list for 'input_shapes' argument to 'trt_engine_op' Op, not {}.",
+  "inconsistent nodes: {} ({}) and {} ({})": "inconsistent nodes: {} ({}) and {} ({})",
+  "Method not implemented!": "Method not implemented!",
+  "Expected list for 'cached_engine_batches' argument to 'trt_engine_op' Op, not {}.": "Expected list for 'cached_engine_batches' argument to 'trt_engine_op' Op, not {}.",
+  "parallel_iterations must be None or a positive integer": "parallel_iterations must be None or a positive integer",
+  "converter objects cannot be reused": "converter objects cannot be reused",
+  "Found parallel_iterations == 1. Use for_loop instead.": "Found parallel_iterations == 1. Use for_loop instead.",
+  "TPU cores on each device is not the same. This should never happen. Devices: {}": "TPU cores on each device is not the same. This should never happen. Devices: {}",
+  "Expected list for 'output_shapes' argument to 'trt_engine_op' Op, not {}.": "Expected list for 'output_shapes' argument to 'trt_engine_op' Op, not {}.",
+  "subclasses must override": "subclasses must override",
+  "Setting parallel_iterations currently unsupported if reductions across iterations are performed.": "Setting parallel_iterations currently unsupported if reductions across iterations are performed.",
+  "Expected int for argument '{}' not {}.": "Expected int for argument '{}' not {}."
+}

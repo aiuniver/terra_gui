@@ -7,22 +7,27 @@
       <div :class="['params-full__files', { toggle: !toggle }]">
         <BlockFiles @toggle="change" />
       </div>
-      <div class="params-full__main">
-        <div class="main__header">
-          <BlockHeader />
-        </div>
-        <div class="main__center" :style="height">
-          <div class="main__center--left">
-            <BlockMainLeft />
+      <scrollbar class="params-full__scroll" :ops="ops">
+        <div class="params-full__main">
+          <div class="main__header">
+            <BlockHeader />
           </div>
-          <div class="main__center--right">
-            <BlockMainRight />
+          <div v-if="isTable" class="main__handlers">
+            <BlockHandlers />
+          </div>
+          <div class="main__center" :style="height">
+            <div class="main__center--left">
+              <BlockMainLeft />
+            </div>
+            <div class="main__center--right">
+              <BlockMainRight />
+            </div>
+          </div>
+          <div class="main__footer">
+            <BlockFooter @create="createObject" />
           </div>
         </div>
-        <div class="main__footer">
-          <BlockFooter @create="createObject" />
-        </div>
-      </div>
+      </scrollbar>
     </div>
   </div>
 </template>
@@ -33,7 +38,8 @@ import BlockFooter from './block/BlockFooter.vue';
 import BlockHeader from './block/BlockHeader.vue';
 import BlockMainLeft from './block/BlockMainLeft.vue';
 import BlockMainRight from './block/BlockMainRight.vue';
-
+import BlockHandlers from './block/BlockHandlers.vue';
+import { debounce } from '@/utils/core/utils';
 export default {
   name: 'ParamsFull',
   components: {
@@ -42,9 +48,17 @@ export default {
     BlockHeader,
     BlockMainLeft,
     BlockMainRight,
+    BlockHandlers,
   },
   data: () => ({
     toggle: true,
+    debounce: null,
+    ops: {
+      scrollPanel: {
+        scrollingX: false,
+        scrollingY: true,
+      },
+    },
   }),
   computed: {
     // ...mapGetters({
@@ -61,30 +75,53 @@ export default {
     height() {
       let height = this.$store.getters['settings/height']({ style: false, clean: true });
       height = height - 172 - 96;
-      console.log(height);
+      // console.log(height);
       return { flex: '0 0 ' + height + 'px', height: height + 'px' };
+    },
+    isTable() {
+      return this.$store.getters['datasets/getFilesDrop'].some(val => val.type === 'table');
     },
   },
   methods: {
     async createObject(obj) {
       this.$store.dispatch('messages/setMessage', { info: `Создается датасет "${obj.name}"` });
       const res = await this.$store.dispatch('datasets/createDataset', obj);
+      console.log(res);
       if (res) {
-        const { data, error, success } = res;
-        if (data && success && !error) {
-          this.full = false;
-          this.$store.dispatch('messages/setMessage', { message: `Датасет "${obj.name}" создан` });
-        } else {
-          this.$store.dispatch('messages/setMessage', { error: `Ошибка создания датасета` });
+        const { success } = res;
+        if (success) {
+          this.debounce(true);
         }
-        console.log(data);
+      }
+    },
+    async progress() {
+      const res = await this.$store.dispatch('datasets/createProgress', {});
+      if (res) {
+        const { finished } = res.data;
+        if (!finished) {
+          this.debounce(true);
+        } else {
+          this.full = false;
+        }
       }
     },
     change(value) {
       this.toggle = value;
     },
   },
-  mounted() {},
+  created() {
+    this.debounce = debounce(status => {
+      console.log(status);
+      if (status) {
+        this.progress();
+      }
+    }, 1000);
+
+    // this.debounce(this.isLearning);
+  },
+  beforeDestroy() {
+    this.debounce(false);
+  },
 };
 </script>
 
@@ -144,8 +181,10 @@ export default {
     flex-direction: column;
     width: 100%;
     overflow: hidden;
+    padding: 0 10px 0 0;
     & .main__header {
       flex: 0 0 172px;
+      display: flex;
       // border-bottom: #0e1621 solid 1px;
     }
     & .main__center {

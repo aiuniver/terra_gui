@@ -13,7 +13,51 @@ class ArchitectureBasicData(ArchitectureBaseData, types.Basic.ParametersData):
     pass
 
 
-class ArchitectureYoloData(ArchitectureBaseData, types.Yolo.ParametersData):
+class ArchitectureImageClassificationData(ArchitectureBasicData):
+    pass
+
+
+class ArchitectureImageSegmentationData(ArchitectureBasicData):
+    pass
+
+
+class ArchitectureTextClassificationData(ArchitectureBasicData):
+    pass
+
+
+class ArchitectureTextSegmentationData(ArchitectureBasicData):
+    pass
+
+
+class ArchitectureDataframeClassificationData(ArchitectureBasicData):
+    pass
+
+
+class ArchitectureDataframeRegressionData(ArchitectureBasicData):
+    pass
+
+
+class ArchitectureTimeseriesData(ArchitectureBasicData):
+    pass
+
+
+class ArchitectureTimeseriesTrendData(ArchitectureBasicData):
+    pass
+
+
+class ArchitectureAudioClassificationData(ArchitectureBasicData):
+    pass
+
+
+class ArchitectureVideoClassificationData(ArchitectureBasicData):
+    pass
+
+
+class ArchitectureYoloV3Data(ArchitectureBasicData, types.YoloV3.ParametersData):
+    pass
+
+
+class ArchitectureYoloV4Data(ArchitectureBasicData, types.YoloV4.ParametersData):
     pass
 
 

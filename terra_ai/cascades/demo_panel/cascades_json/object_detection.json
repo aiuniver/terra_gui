@@ -1,0 +1,67 @@
+{
+  "cascades": {
+    "input": {
+      "tag": "input",
+      "type": "image"
+    },
+    "model": {
+      "tag": "model",
+      "task": "ObjectDetection",
+      "model": "/home/evgeniy/terra_gui/TerraProject/models/chess_test"
+    },
+    "normalize bboxes": {
+      "tag": "function",
+      "task": "ObjectDetection",
+      "name": "postprocess_boxes",
+      "params": {
+        "input_size": 416,
+        "score_threshold": 0.3,
+        "iou_threshold": 0.45,
+        "method": "nms",
+        "sigma": 0.3
+      }
+    },
+    "plot bboxes": {
+      "tag": "function",
+      "task": "ObjectDetection",
+      "name": "plot_bboxes",
+      "params": {
+        "classes": [
+          "black-knight",
+          "white-rook",
+          "white-pawn",
+          "white-king",
+          "white-bishop",
+          "black-rook",
+          "black-pawn",
+          "black-king",
+          "black-bishop",
+          "black-queen",
+          "white-queen",
+          "white-knight",
+          "bishop"
+        ]
+      }
+    },
+    "saving": {
+      "tag": "output",
+      "type": "image"
+    }
+  },
+  "adjacency_map": {
+    "model": [
+      "INPUT"
+    ],
+    "normalize bboxes": [
+      "model",
+      "INPUT"
+    ],
+    "plot bboxes": [
+      "normalize bboxes",
+      "INPUT"
+    ],
+    "saving": [
+      "plot bboxes"
+    ]
+  }
+}

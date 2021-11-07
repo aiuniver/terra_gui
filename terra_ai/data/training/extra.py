@@ -3,14 +3,57 @@
 """
 
 from enum import Enum
-from typing import List
+from typing import List, Tuple
 
 from ..mixins import BaseMixinData, UniqueListMixin
+from ..presets.training import TasksGroups
+
+
+class StateStatusChoice(str, Enum):
+    no_train = "no_train"  # Сетка в начальном состоянии (без обучений)
+    training = "training"  # Сетка в обучении
+    trained = "trained"  # Сетка обучена
+    stopped = "stopped"  # Обучение Остановлена
+    addtrain = "addtrain"  # Дообучение или возобновление после остановки
+
+
+class LossGraphShowChoice(str, Enum):
+    model = "model"
+    classes = "classes"
+
+
+class MetricGraphShowChoice(str, Enum):
+    model = "model"
+    classes = "classes"
+
+
+class ExampleChoiceTypeChoice(str, Enum):
+    best = "best"
+    worst = "worst"
+    seed = "seed"
+    random = "random"
+
+
+class BalanceSortedChoice(str, Enum):
+    descending = "descending"
+    ascending = "ascending"
+    alphabetic = "alphabetic"
 
 
 class ArchitectureChoice(str, Enum):
     Basic = "Basic"
-    Yolo = "Yolo"
+    ImageClassification = "ImageClassification"
+    ImageSegmentation = "ImageSegmentation"
+    TextClassification = "TextClassification"
+    TextSegmentation = "TextSegmentation"
+    DataframeClassification = "DataframeClassification"
+    DataframeRegression = "DataframeRegression"
+    Timeseries = "Timeseries"
+    TimeseriesTrend = "TimeseriesTrend"
+    AudioClassification = "AudioClassification"
+    VideoClassification = "VideoClassification"
+    YoloV3 = "YoloV3"
+    YoloV4 = "YoloV4"
 
 
 class CheckpointIndicatorChoice(str, Enum):
@@ -18,9 +61,9 @@ class CheckpointIndicatorChoice(str, Enum):
     Train = "Train"
 
 
-class CheckpointModeChoice(str, Enum):
-    Min = "min"
-    Max = "max"
+# class CheckpointModeChoice(str, Enum):
+#     Min = "Min"
+#     Max = "Max"
 
 
 class CheckpointTypeChoice(str, Enum):
@@ -38,6 +81,14 @@ class OptimizerChoice(str, Enum):
     Nadam = "Nadam"
     Ftrl = "Ftrl"
 
+    @staticmethod
+    def names() -> list:
+        return list(map(lambda item: item.name, OptimizerChoice))
+
+    @staticmethod
+    def options() -> List[Tuple[str, str]]:
+        return list(map(lambda item: (item.name, item.value), OptimizerChoice))
+
 
 class TaskChoice(str, Enum):
     Classification = "Classification"
@@ -45,6 +96,9 @@ class TaskChoice(str, Enum):
     Regression = "Regression"
     Timeseries = "Timeseries"
     ObjectDetection = "ObjectDetection"
+    Dataframe = "Dataframe"
+    TextSegmentation = "TextSegmentation"
+    TimeseriesTrend = "TimeseriesTrend"
 
 
 class LossChoice(str, Enum):
@@ -63,17 +117,22 @@ class LossChoice(str, Enum):
     Poisson = "Poisson"
     SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
     SquaredHinge = "SquaredHinge"
+    YoloLoss = "YoloLoss"
 
 
 class MetricChoice(str, Enum):
     AUC = "AUC"
     Accuracy = "Accuracy"
+    BalancedRecall = "BalancedRecall"
+    BalancedPrecision = "BalancedPrecision"
+    BalancedFScore = "BalancedFScore"
     BinaryAccuracy = "BinaryAccuracy"
     BinaryCrossentropy = "BinaryCrossentropy"
     CategoricalAccuracy = "CategoricalAccuracy"
     CategoricalCrossentropy = "CategoricalCrossentropy"
     CategoricalHinge = "CategoricalHinge"
     CosineSimilarity = "CosineSimilarity"
+    FScore = "FScore"
     FalseNegatives = "FalseNegatives"
     FalsePositives = "FalsePositives"
     Hinge = "Hinge"
@@ -87,6 +146,7 @@ class MetricChoice(str, Enum):
     Poisson = "Poisson"
     Precision = "Precision"
     Recall = "Recall"
+    # RecallPercent = "RecallPercent"
     RootMeanSquaredError = "RootMeanSquaredError"
     SquaredHinge = "SquaredHinge"
     TopKCategoricalAccuracy = "TopKCategoricalAccuracy"
@@ -95,8 +155,11 @@ class MetricChoice(str, Enum):
     SparseCategoricalAccuracy = "SparseCategoricalAccuracy"
     SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
     SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
-
+    UnscaledMAE = "UnscaledMAE"
     DiceCoef = "DiceCoef"
+    BalancedDiceCoef = "BalancedDiceCoef"
+    mAP50 = "mAP50"
+    mAP95 = "mAP95"
 
 
 class TaskGroupData(BaseMixinData):
@@ -109,3 +172,6 @@ class TasksGroupsList(UniqueListMixin):
     class Meta:
         source = TaskGroupData
         identifier = "task"
+
+
+TasksRelations = TasksGroupsList(TasksGroups)

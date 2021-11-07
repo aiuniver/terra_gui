@@ -1,41 +1,50 @@
 <template>
-  <div :class="['t-multi-select', { 't-inline': inline }]" v-click-outside="outside">
-    <label class="t-multi-select__label">
-      <slot>{{ label }}</slot>
-    </label>
-    <div :class="['t-multi-select__input', { 't-multi-select__error': error }, { 't-multi-select__input--show': show }]">
-      <!-- <i v-show="input" class="icon icon-chevron-left" @click="next(-1)"></i> -->
-      <span
-        :class="['t-multi-select__input--text', { 't-multi-select__input--active': input }]"
-        :title="input"
-        @click="click"
+  <div>
+    <div :class="['t-multi-select', { 't-inline': inline }]" v-click-outside="outside">
+      <label class="t-multi-select__label">
+        <slot>{{ label }}</slot>
+      </label>
+      <div
+        :class="['t-multi-select__input', { 't-multi-select__error': error }, { 't-multi-select__input--show': show }]"
       >
-        {{ input || placeholder }}
-      </span>
-      <!-- <i v-show="input" class="icon icon-chevron-right" @click="next(1)"></i> -->
-    </div>
-    <div class="t-multi-select__content" v-show="show">
-      <div v-if="filterList.length" class="t-multi__item" @click="select(checkAll)">
-        <span :class="['t-multi__item--check', { 't-multi__item--active': checkAll }]" />
-        <span class="t-multi__item--title">Выбрать все</span>
+        <!-- <i v-show="input" class="icon icon-chevron-left" @click="next(-1)"></i> -->
+        <span
+          :class="['t-multi-select__input--text', { 't-multi-select__input--active': input }]"
+          :title="input"
+          @click="click"
+        >
+          {{ input || placeholder }}
+        </span>
+        <!-- <i v-show="input" class="icon icon-chevron-right" @click="next(1)"></i> -->
       </div>
-      <template v-for="(item, i) in filterList">
-        <div class="t-multi__item" :key="i" :title="item.label" @click="select(item)">
-          <span :class="['t-multi__item--check', { 't-multi__item--active': active(item) }]"></span>
-          <span class="t-multi__item--title">{{ item.label }}</span>
+      <div class="t-multi-select__content" v-show="show">
+        <div v-if="filterList.length" class="t-multi__item" @click="select(checkAll)">
+          <span :class="['t-multi__item--check', { 't-multi__item--active': checkAll }]" />
+          <span class="t-multi__item--title">Выбрать все</span>
         </div>
-      </template>
-      <div v-if="!filterList.length" class="t-multi__item t-multi__item--empty">
-        <span class="t-multi__item--title">Нет данных</span>
+        <template v-for="(item, i) in filterList">
+          <div class="t-multi__item" :key="i" :title="item.label" @click="select(item)">
+            <span :class="['t-multi__item--check', { 't-multi__item--active': active(item) }]"></span>
+            <span class="t-multi__item--title">{{ item.label }}</span>
+          </div>
+        </template>
+        <div v-if="!filterList.length" class="t-multi__item t-multi__item--empty">
+          <span class="t-multi__item--title">Нет данных</span>
+        </div>
       </div>
     </div>
+    <MultiSelectTable v-if="selectedTable.length" :id="id" :table="selectedTable" label="Таблица" inline @change="$emit('change', $event)"/>
   </div>
 </template>
 
 <script>
+import MultiSelectTable from './MultiSelectTable';
 import blockMain from '@/mixins/datasets/blockMain';
 export default {
   name: 't-multi-select',
+  components: {
+    MultiSelectTable
+  },
   mixins: [blockMain],
   props: {
     name: String,
@@ -63,6 +72,9 @@ export default {
     pagination: 0,
   }),
   computed: {
+    selectedTable() {
+      return this.selected.filter(item => item.type === 'table')
+    },
     lists() {
       return this.mixinFiles;
     },
@@ -80,7 +92,15 @@ export default {
       return this.filterList.length === this.selected.length;
     },
     filterList() {
-      return this.lists.filter(item => !item.id || item.id === this.id);
+      const { type } = this.$store.getters['datasets/getInputDataByID'](this.id);
+      const filter = this.mixinFilter?.[type || ''] || [];
+      // console.log(type, filter);
+      return (
+        this.lists
+          // .filter(item => (!item.id || item.id === this.id) || item.type === 'table' )
+          // .filter(item => item.type !== 'table')
+          .filter(item => filter.includes(item.type))
+      );
     },
   },
   methods: {
@@ -109,7 +129,8 @@ export default {
           this.selected = [...this.selected, list];
         }
       }
-      // this.$emit('change', this.selected);
+      // console.log(this.id)
+      this.$emit('multiselect', { value: this.selected, id: this.id });
       this.mixinCheck(this.selected, this.id);
     },
   },
@@ -123,7 +144,8 @@ export default {
   },
   watch: {
     filterList() {
-      this.selected = this.selected.filter(element => this.lists.find(item => item.value === element.value))},
+      this.selected = this.selected.filter(element => this.lists.find(item => item.value === element.value));
+    },
   },
 };
 </script>

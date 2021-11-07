@@ -24,7 +24,9 @@
                     :key="inputData.color + index"
                     :idKey="'key_' + index"
                     :id="inputData.id"
+                    :update="mixinUpdateDate"
                     root
+                    @multiselect="mixinUpdate"
                     @change="mixinChange"
                   />
                 </template>
@@ -107,7 +109,7 @@ export default {
     },
   },
   mounted() {
-    console.log(this.output);
+    // console.log(this.output);
   },
 };
 </script>
@@ -135,6 +137,7 @@ export default {
     text-align: center;
     color: #ffffff;
     padding: 4px 40px;
+    user-select: none;
   }
   &__body {
     width: 100%;

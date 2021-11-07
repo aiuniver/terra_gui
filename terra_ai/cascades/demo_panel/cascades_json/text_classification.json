@@ -1,0 +1,19 @@
+{
+  "cascades": {
+    "input": {
+      "tag": "input",
+      "type": "text"
+    },
+    "model": {
+      "tag": "model",
+      "task": "Text",
+      "model": "TerraProjects/models/simptomi_new"
+    }
+  },
+
+  "adjacency_map": {
+    "model": [
+      "INPUT"
+    ]
+  }
+}

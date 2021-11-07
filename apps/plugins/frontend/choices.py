@@ -17,11 +17,10 @@ class LayerOutputTypeChoice(str, Enum):
     Image = "Изображения"
     Text = "Текст"
     Audio = "Аудио"
+    Dataframe = "Таблицы"
     Classification = "Классификация"
-    Segmentation = "Сегментация"
+    Segmentation = "Сегментация изображений"
     TextSegmentation = "Сегментация текстов"
-    Regression = "Регрессия"
-    Timeseries = "Временные ряды"
     ObjectDetection = "Обнаружение объектов"
 
     @staticmethod
@@ -47,10 +46,20 @@ class LayerScalerChoice(str, Enum):
         return list(map(lambda item: (item.name, item.value), LayerScalerChoice))
 
 
-class LayerScalerImageChoice(str, Enum):
+class LayerScalerDefaultChoice(str, Enum):
+    min_max_scaler = "MinMaxScaler"
+    standard_scaler = "StandardScaler"
     no_scaler = "Не применять"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerScalerDefaultChoice))
+
+
+class LayerScalerImageChoice(str, Enum):
     min_max_scaler = "MinMaxScaler"
     terra_image_scaler = "TerraImageScaler"
+    no_scaler = "Не применять"
 
     @staticmethod
     def items_tuple() -> list:
@@ -58,8 +67,8 @@ class LayerScalerImageChoice(str, Enum):
 
 
 class LayerScalerVideoChoice(str, Enum):
-    no_scaler = "Не применять"
     min_max_scaler = "MinMaxScaler"
+    no_scaler = "Не применять"
 
     @staticmethod
     def items_tuple() -> list:
@@ -67,8 +76,9 @@ class LayerScalerVideoChoice(str, Enum):
 
 
 class LayerScalerAudioChoice(str, Enum):
-    no_scaler = "Не применять"
     min_max_scaler = "MinMaxScaler"
+    standard_scaler = "StandardScaler"
+    no_scaler = "Не применять"
 
     @staticmethod
     def items_tuple() -> list:
@@ -76,9 +86,9 @@ class LayerScalerAudioChoice(str, Enum):
 
 
 class LayerScalerRegressionChoice(str, Enum):
-    no_scaler = "Не применять"
     min_max_scaler = "MinMaxScaler"
     standard_scaler = "StandardScaler"
+    no_scaler = "Не применять"
 
     @staticmethod
     def items_tuple() -> list:
@@ -88,9 +98,9 @@ class LayerScalerRegressionChoice(str, Enum):
 
 
 class LayerScalerTimeseriesChoice(str, Enum):
-    no_scaler = "Не применять"
     min_max_scaler = "MinMaxScaler"
     standard_scaler = "StandardScaler"
+    no_scaler = "Не применять"
 
     @staticmethod
     def items_tuple() -> list:
@@ -106,6 +116,15 @@ class LayerAudioModeChoice(str, Enum):
     @staticmethod
     def items_tuple() -> list:
         return list(map(lambda item: (item.name, item.value), LayerAudioModeChoice))
+
+
+class LayerAudioFillModeChoice(str, Enum):
+    last_millisecond = "Последней миллисекундой"
+    loop = "Зациклить"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerAudioFillModeChoice))
 
 
 class LayerAudioParameterChoice(str, Enum):
@@ -125,6 +144,16 @@ class LayerAudioParameterChoice(str, Enum):
         )
 
 
+class LayerAudioResampleChoice(str, Enum):
+    kaiser_best = "Kaiser best"
+    kaiser_fast = "Kaiser fast"
+    scipy = "Scipy"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerAudioResampleChoice))
+
+
 class LayerTextModeChoice(str, Enum):
     completely = "Целиком"
     length_and_step = "По длине и шагу"
@@ -135,9 +164,9 @@ class LayerTextModeChoice(str, Enum):
 
 
 class LayerVideoFillModeChoice(str, Enum):
-    black_frames = "Черными кадрами"
+    last_frames = "Последним кадром"
+    loop = "Зациклить"
     average_value = "Средним значением"
-    last_frames = "Последними кадрами"
 
     @staticmethod
     def items_tuple() -> list:
@@ -207,6 +236,18 @@ class LayerYoloVersionChoice(str, Enum):
         return list(map(lambda item: (item.name, item.value), LayerYoloVersionChoice))
 
 
+class LayerODDatasetTypeChoice(str, Enum):
+    Kitti = "Kitti"
+    Voc = "Voc"
+    Coco = "Coco"
+    Udacity = "Udacity"
+    Yolo = "Yolo"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerODDatasetTypeChoice))
+
+
 class LayerTypeProcessingClassificationChoice(str, Enum):
     categorical = "По категориям"
     ranges = "По диапазонам"
@@ -218,4 +259,32 @@ class LayerTypeProcessingClassificationChoice(str, Enum):
                 lambda item: (item.name, item.value),
                 LayerTypeProcessingClassificationChoice,
             )
+        )
+
+
+class ColumnProcessingInputTypeChoice(str, Enum):
+    Image = "Изображения"
+    Text = "Текст"
+    Audio = "Аудио"
+    Video = "Видео"
+    Classification = "Уникальные"
+    Scaler = "Скейлер"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(
+            map(lambda item: (item.name, item.value), ColumnProcessingInputTypeChoice)
+        )
+
+
+class ColumnProcessingOutputTypeChoice(str, Enum):
+    Classification = "Классификация"
+    Regression = "Регрессия"
+    Segmentation = "Сегментация"
+    Timeseries = "Временные ряды"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(
+            map(lambda item: (item.name, item.value), ColumnProcessingOutputTypeChoice)
         )

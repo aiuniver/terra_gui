@@ -1,8 +1,13 @@
 <template>
   <div class="footer">
     <div class="footer__message">
-      <div :class="['footer__message--text', color]" @click="click(color)">
-        {{ message }}
+      <div class="footer__message--icon" @click="dialogErrors = true">
+        <span v-if="errors.length"></span>
+      </div>
+      <div :class="['footer__message--text', showMsg.color]" @click="click(showMsg.color)">
+        <transition name="error-slide" mode="out-in">
+          <span :key="key">{{ showMsg.msg }}</span>
+        </transition>
       </div>
     </div>
     <div class="footer__progress">
@@ -23,20 +28,26 @@
     </div>
     <div class="footer__copyright">
       {{ `Copyright © «Университет искусственного интеллекта», ${new Date().getFullYear()}` }}
+      <span v-if="version" class="footer__version">{{ version }}</span>
     </div>
-    <CopyModal v-model="dialogError" :title="'Ошибка!'">{{ message }}</CopyModal>
+    <LoggingModal v-if="errors.length" v-model="dialogErrors" :errors="errors" :title="'Логи'" @error="clickError" />
+    <CopyModal v-model="dialogError" :title="'Ошибка!'">{{ text }}</CopyModal>
   </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex';
-import CopyModal from '../global/modals/CopyModal';
 export default {
   components: {
-    CopyModal,
+    CopyModal: () => import('../global/modals/CopyModal'),
+    LoggingModal: () => import('../global/modals/LoggingModal'),
   },
   data: () => ({
     dialogError: false,
+    dialogErrors: false,
+    text: '',
+    key: 0,
+    msgList: []
   }),
   computed: {
     ...mapGetters({
@@ -45,6 +56,7 @@ export default {
       progress: 'messages/getProgress',
       project: 'projects/getProject',
       progressMessage: 'messages/getProgressMessage',
+      errors: 'logging/getErrors',
     }),
     protsessor() {
       return this.project?.hardware || '';
@@ -52,14 +64,37 @@ export default {
     style() {
       return { backgroundColor: '#' + this.protsessor.color };
     },
+    version() {
+      return this.$config.isDev ? `ver. ${this.$config.version}` : '';
+    },
+    showMsg() {
+      if (!this.msgList.length) return ''
+      return this.msgList[0]
+    }
   },
   methods: {
     click(color) {
       if (color === 'error') {
+        this.text = this.msgList[0].msg;
         this.dialogError = true;
       }
     },
+    clickError({ error }) {
+      this.color === 'error';
+      this.text = error;
+      this.dialogError = true;
+    }
   },
+  watch: {
+    message(newVal) {
+      if (!newVal) return
+      this.msgList.push({ msg: newVal, color: this.color })
+      setTimeout(() => {
+        this.msgList.shift()
+        this.key++
+      }, this.msgList.length > 1 ? 1000 : 5000)
+    }
+  }
 };
 </script>
 
@@ -100,6 +135,9 @@ export default {
   justify-content: flex-start;
   align-content: stretch;
   align-items: stretch;
+  &__version {
+    color: ivory;
+  }
   &__copy-buffer {
     display: flex;
     align-items: center;
@@ -113,10 +151,31 @@ export default {
     order: 0;
     flex: 1 1 auto;
     align-self: auto;
+    display: flex;
     &--text {
       overflow: hidden;
       text-overflow: ellipsis;
-      padding: 0 20px;
+      padding: 0 10px;
+      span {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        transition-duration: 500ms;
+      }
+    }
+    &--icon {
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex: 0 0 40px;
+      span {
+        display: flex;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #ffb054;
+      }
     }
   }
   &__state {
@@ -193,12 +252,15 @@ export default {
     background-color: #0e1621;
   }
 }
-.t-pre {
-  height: 400px;
-  padding-bottom: 10px;
-  p {
-    white-space: break-spaces;
-    font-family: monospace;
-  }
+
+.error-slide-leave-active {
+  transform: translateY(0);
+}
+.error-slide-leave-to {
+  transform: translateY(-100%);
+  opacity: 0;
+}
+.error-slide-enter {
+  transform: translateY(100%);
 }
 </style>

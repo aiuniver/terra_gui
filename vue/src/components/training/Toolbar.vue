@@ -6,8 +6,9 @@
         :key="'items_' + index"
         :class="['toolbar__menu--item']"
         :disabled="disabled"
+        @click="click(index)"
       >
-        <i :title="title" :class="['t-icon', icon, { active: active(index) }]" />
+        <i :title="title" :class="['t-icon', icon, { active: collapse.includes(index.toString()) }]" />
       </li>
     </ul>
   </div>
@@ -17,24 +18,31 @@
 import { mapGetters } from 'vuex';
 export default {
   name: 'Toolbar',
-  props: {
-    collabse: Array,
-  },
   data: () => ({}),
   computed: {
     ...mapGetters({
       items: 'trainings/getToolbar',
     }),
+    collapse: {
+      set(value) {
+        this.$store.dispatch('trainings/setСollapse', value);
+      },
+      get() {
+        return this.$store.getters['trainings/getСollapse'];
+      },
+    },
+  },
+  created() {
+    console.log(this.$store.getters['trainings/getСollapse']);
   },
   methods: {
-    active(index) {
-      console.log(this.collabse)
-      return this.collabse.includes(index.toString());
-    },
-    click() {
-      // if (!this.items[index].disabled) {
-      //   this.items[index].active = !active;
-      // }
+    click(value) {
+      const index = value.toString();
+      if (this.collapse.includes(index)) {
+        this.collapse = this.collapse.filter(item => item !== index);
+      } else {
+        this.collapse.push(index);
+      }
     },
   },
 };

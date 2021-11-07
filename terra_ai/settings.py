@@ -24,5 +24,22 @@ DATASET_ANNOTATION = "labelmap.txt"
 # Modeling
 MODEL_EXT = "model"
 
+# Cascade
+CASCADE_EXT = "cascade"
+CASCADE_CONFIG = "config.json"
+
 # Deploy
-DEPLOY_URL = "https://dev.demo.neural-university.ru/autodeployterra_upload/"
+DEPLOY_URL = "https://srv1.demo.neural-university.ru/autodeployterra_upload/"
+DEPLOY_PRESET_COUNT = 10
+DEPLOY_PRESET_PERCENT = 20
+
+CALLBACK_CLASSIFICATION_TREASHOLD_VALUE = 90
+CALLBACK_REGRESSION_TREASHOLD_VALUE = 2
+MAX_GRAPH_LENGTH = 50
+
+# Exceptions
+TRANSLATIONS_DIR = Path(ASSETS_PATH, "translations")
+
+# User settings
+
+LANGUAGE = "ru"

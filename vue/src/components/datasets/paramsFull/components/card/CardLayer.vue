@@ -104,6 +104,7 @@ export default {
     }
   }
   &__header {
+    user-select: none;
     position: absolute;
     top: 0;
     height: 24px;

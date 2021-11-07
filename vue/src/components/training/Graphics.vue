@@ -1,76 +1,89 @@
 <template>
   <div class="board">
-    <scrollbar>
+    <scrollbar :ops="{ scrollPanel: { scrollingX: false } }">
       <div class="wrapper">
-        <at-collapse @on-change="change">
-          <at-collapse-item class="mt-3" title="Лоссы" center>
-            <LoadSpiner v-show="loading" />
-            <LossGraphs v-if="show" @isLoad="loading = false" />
+        <at-collapse :value="collapse" @on-change="change" class="mt-3">
+          <at-collapse-item class="mt-3" title="Прогресс обучения" center>
+            <Progress :outputs="outputs" :interactive="interactive" />
           </at-collapse-item>
           <at-collapse-item class="mt-3" title="Метрики" center>
-            <MetricGraphs @isLoad="loading = false" />
+            <Graphs metric="metric_graphs" :outputs="outputs" :interactive="interactive" />
           </at-collapse-item>
+          <at-collapse-item class="mt-3" title="Лоссы" center>
+            <Graphs metric="loss_graphs" :outputs="outputs" :interactive="interactive" />
+          </at-collapse-item>
+
           <at-collapse-item class="mt-3" title="Промежуточные результаты" center>
-            <Images />
-          </at-collapse-item>
-          <at-collapse-item class="mt-3" title="Прогресс обучения" center>
-            <Progress />
+            <!-- <PrePesults/> -->
+            <!-- <Images /> -->
+            <Prediction :outputs="outputs" :interactive="interactive" />
           </at-collapse-item>
           <at-collapse-item class="mt-3" title="Таблица прогресса обучения" center>
-            <Texts />
+            <Texts :outputs="outputs" :interactive="interactive" />
           </at-collapse-item>
           <at-collapse-item class="mt-3" title="Статистические данные" center>
-            <Stats />
+            <Stats :outputs="outputs" :interactive="interactive" />
           </at-collapse-item>
-          <at-collapse-item class="mt-3" title="Баланс данных" center>
-            <Balance />
+          <at-collapse-item class="mt-3" title="Баланс данных" center style="position: relative;">
+            <Balance :outputs="outputs" :interactive="interactive" />
           </at-collapse-item>
         </at-collapse>
       </div>
     </scrollbar>
+    <LargeImage v-show="largeImg" />
   </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex';
-import Images from './main/images/index.vue';
 import Texts from './main/texts/index.vue';
 import Progress from './main/progress/';
-import LoadSpiner from '../forms/LoadSpiner.vue';
 import Stats from './main/stats';
 import Balance from './main/balance';
+import Prediction from './main/prediction';
+import Graphs from './main/chars/index';
 
 export default {
   name: 'Graphics',
   components: {
-    Images,
+    Prediction,
     Texts,
+    // Images,
     Progress,
-    LoadSpiner,
     Stats,
     Balance,
-    LossGraphs: () => import('./main/chars/LossGraphs.vue'),
-    MetricGraphs: () => import('./main/chars/MetricGraphs.vue'),
+    Graphs,
+    LargeImage: () => import('./main/prediction/components/LargeImage.vue'),
   },
   data: () => ({
-    collabse: [],
-    loading: true,
+    // collabse: [],
   }),
   computed: {
     ...mapGetters({
-      chars: 'trainings/getToolbarChars',
-      scatters: 'trainings/getToolbarScatters',
-      images: 'trainings/getToolbarImages',
-      texts: 'trainings/getToolbarTexts',
-      // height: "settings/autoHeight",
+      // status: "trainings/getStatus",
+      largeImg: 'trainings/getLargeImg'
     }),
+    collapse: {
+      set(value) {
+        this.$store.dispatch('trainings/setСollapse', value);
+      },
+      get() {
+        return this.$store.getters['trainings/getСollapse'];
+      },
+    },
     show() {
       return this.collabse.includes('0');
+    },
+    outputs() {
+      return this.$store.getters['trainings/getOutputs'];
+    },
+    interactive() {
+      return this.$store.getters['trainings/getInteractive'];
     },
   },
   methods: {
     change(e) {
-      this.$emit('collabse', this.collabse)
+      // this.$emit('collabse', this.collabse);
       this.collabse = e;
       console.log(e);
     },
@@ -80,12 +93,16 @@ export default {
 
 <style scoped>
 .board {
-  height: 85%;
+  flex: 1 1 auto;
+  overflow: hidden;
 }
 .wrapper {
   padding: 20px;
   display: flex;
   flex-direction: column;
   flex-wrap: wrap;
+}
+.mt-3 {
+  width: 100%;
 }
 </style>

@@ -144,12 +144,13 @@ In [7]: print(data.json(indent=2, ensure_ascii=False))
 
 from math import fsum
 from pathlib import Path
-from typing import Union, Optional, Any
+from typing import Union, Optional, Any, Dict
 from pydantic import validator
 from pydantic.types import DirectoryPath
 from pydantic.networks import HttpUrl
 from pydantic.errors import EnumMemberError
 
+from ... import settings as terra_ai_settings
 from ..mixins import BaseMixinData, UniqueListMixin, AliasMixinData, IDMixinData
 from ..types import (
     confilepath,
@@ -164,7 +165,13 @@ from ..exceptions import (
     ListEmptyException,
     ObjectDetectionQuantityLayersException,
 )
-from .extra import SourceModeChoice, LayerInputTypeChoice, LayerOutputTypeChoice
+from .extra import (
+    SourceModeChoice,
+    LayerInputTypeChoice,
+    LayerOutputTypeChoice,
+    ColumnProcessingTypeChoice,
+)
+from .creations import column_processing
 from .tags import TagsList
 from . import creations
 
@@ -342,6 +349,31 @@ class CreationOutputsList(UniqueListMixin):
         identifier = "id"
 
 
+class ColumnsProcessingData(BaseMixinData):
+    type: ColumnProcessingTypeChoice
+    parameters: Any
+
+    @validator("type", pre=True)
+    def _validate_type(
+        cls, value: ColumnProcessingTypeChoice
+    ) -> ColumnProcessingTypeChoice:
+        if not value:
+            return value
+        name = (
+            value
+            if isinstance(value, ColumnProcessingTypeChoice)
+            else ColumnProcessingTypeChoice(value)
+        ).name
+        cls.__fields__["parameters"].type_ = getattr(
+            column_processing, column_processing.ColumnProcessing[name].value
+        )
+        return value
+
+    @validator("parameters", always=True)
+    def _validate_parameters(cls, value: Any, values, field) -> Any:
+        return field.type_(**(value or {}))
+
+
 class CreationData(AliasMixinData):
     """
     Полная информация о создании датасета
@@ -359,10 +391,16 @@ class CreationData(AliasMixinData):
     "Список тегов"
     use_generator: bool = False
     "Использовать генераторы"
+    columns_processing: Dict[str, ColumnsProcessingData] = {}
+    "Обработчики колонок"
     inputs: CreationInputsList = CreationInputsList()
     "`input`-слои"
     outputs: CreationOutputsList = CreationOutputsList()
     "`output`-слои"
+
+    @property
+    def path(self) -> Path:
+        return Path(self.datasets_path, f"{self.alias}.{terra_ai_settings.DATASET_EXT}")
 
     @validator("inputs", "outputs")
     def _validate_required(cls, value: UniqueListMixin) -> UniqueListMixin:

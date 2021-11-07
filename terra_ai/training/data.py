@@ -2,9 +2,9 @@ from tensorflow import keras
 
 # from terra_ai.training.customcallback import ClassificationCallback, SegmentationCallback, RegressionCallback, \
 #     TimeseriesCallback, ObjectdetectionCallback
-from terra_ai.training.customlosses import DiceCoefficient
+from terra_ai.training.customlosses import DiceCoef
 
-custom_losses_dict = {"dice_coef": DiceCoefficient, "mean_io_u": keras.metrics.MeanIoU}
+custom_losses_dict = {"dice_coef": DiceCoef, "mean_io_u": keras.metrics.MeanIoU}
 
 # task_type_defaults_dict = {
 #             "classification": {

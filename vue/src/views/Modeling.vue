@@ -41,43 +41,40 @@ export default {
     },
   },
   methods: {
+    async isTraining() {
+      this.dialogLoadModel = await this.$store.dispatch('dialogs/trining', { ctx: this, page: 'модели' });
+    },
     addBlock(type) {
-      console.log(type);
+      const position = this.$refs.container.getCenter();
       this.create = false;
-      this.$store.dispatch('modeling/addBlock', type);
+      this.$store.dispatch('modeling/addBlock', { type, position });
     },
     async saveModel() {
       this.imageModel = null;
       this.dialogSaveModel = true;
-      this.imageModel = await this.$refs.container.getImages();
+      let image = await this.$refs.container.getImages();
+      const { data = null } = await this.$store.dispatch('modeling/getImageModel', image.slice(22));
+      if (data) this.imageModel = data;
     },
     async validateModel() {
       await this.$store.dispatch('modeling/validateModel', {});
     },
     async clearModel() {
-      try {
-        const action = await this.$Modal.confirm({
-          title: 'Внимание!',
-          content: 'Очистить модель?',
-          width: 300,
-        });
-        if (action == 'confirm') {
-          console.log('DELETE MODEL');
-          this.$store.dispatch('modeling/clearModel');
-        }
-      } catch (error) {
-        console.log(error);
+      const action = await this.$store.dispatch('dialogs/confirm', { ctx: this, content: 'Очистить модель?' });
+      if (action == 'confirm') {
+        await this.$store.dispatch('modeling/clearModel');
       }
     },
     actions(btn) {
       if (btn === 'load') {
-        this.dialogLoadModel = true;
+        this.isTraining();
       }
       if (btn === 'input' || btn === 'middle' || btn === 'output') {
         this.addBlock(btn);
       }
       if (btn === 'save') {
         this.saveModel();
+        this.$store.dispatch('modeling/selectBlock', {});
       }
       if (btn === 'validation') {
         this.validateModel();

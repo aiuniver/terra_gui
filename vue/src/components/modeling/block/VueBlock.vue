@@ -1,7 +1,7 @@
 <template>
   <div class="t-block-modeling" :style="style" @mouseover="hover = true" @mouseleave="hover = false">
     <div :class="['t-block-modeling__header', group, { selected: selected }, { error: !!error }]">
-      <div class="t-block-modeling__header--title" :title="name">{{ typeLabel }}: {{ name }}</div>
+      <div class="t-block-modeling__header--title" :title="name">{{ `${id}) ${typeLabel}: ${name}` }}</div>
       <div class="t-block-modeling__header--parametr" :title="parametr">{{ parametr }}</div>
     </div>
     <div class="t-block-modeling__base"></div>
@@ -28,7 +28,7 @@
       <div
         v-for="(slot, index) in outputs"
         class="output"
-        :class="[{ active: slot.active }, typeLink[index]]"
+        :class="[{ active: hover && !linkingCheck }, typeLink[index]]"
         :key="'output' + index"
         @mousedown="slotMouseDown($event, index)"
       ></div>
@@ -85,6 +85,7 @@ export default {
       default: () => {},
     },
     shape: Object,
+    bind: Object
   },
   data: () => ({
     hover: false,
@@ -100,7 +101,6 @@ export default {
     },
     parametr() {
       const parametr = Object.values(this.parameters?.main || {}).filter(item => item);
-      console.log(parametr);
       return this.group === 'input' ? this.shape?.input?.join(' ') || '' : parametr.join(' ');
     },
     styleHover() {
@@ -114,7 +114,7 @@ export default {
         width: this.options.width + 'px',
         transform: 'scale(' + (this.options.scale + '') + ')',
         transformOrigin: 'top left',
-        zIndex: this.selected ? 10 : 1,
+        zIndex: this.selected || this.hover ? 10 : 1,
       };
     },
   },
@@ -129,7 +129,6 @@ export default {
     this.dragging = false;
   },
   mounted() {
-    console.log(this.$el.clientHeight);
     document.documentElement.addEventListener('mousemove', this.handleMove, true);
     document.documentElement.addEventListener('mousedown', this.handleDown, true);
     document.documentElement.addEventListener('mouseup', this.handleUp, true);
@@ -226,10 +225,10 @@ $ioHeight: 16px;
 $ioFontSize: 14px;
 
 $circleBorder: 3px;
-$circleSize: 3px;
+$circleSize: 10px;
 $circleMargin: 2px; // left/right
 
-$circleNewColor: #00ff00;
+$circleNewColor: #00ff003b;
 $circleRemoveColor: #ff0000;
 $circleConnectedColor: #569dcf;
 
@@ -384,8 +383,8 @@ $circleConnectedColor: #569dcf;
       box-sizing: border-box;
       width: $circleSize;
       height: $circleSize;
-      border: $circleBorder solid rgba(0, 0, 0, 0.178);
-      background: #65b9f4;
+      // border: $circleBorder solid rgba(0, 0, 0, 0.178);
+      // background: #65b9f4;
       border-radius: 100%;
       cursor: crosshair;
       z-index: 999;
@@ -418,10 +417,9 @@ $circleConnectedColor: #569dcf;
       }
       &:hover {
         background: $circleNewColor;
-
-        &.active {
-          background: $circleRemoveColor;
-        }
+      }
+      &.active {
+        background: $circleNewColor;
       }
     }
   }

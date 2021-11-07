@@ -1,17 +1,39 @@
 from enum import Enum
 
 
-class TaskTypeChoice(str, Enum):
-    text_classification = "text_classification"
-    regression = "regression"
-    image_classification = "image_classification"
-    object_detection = "object_detection"
-    audio_classification = "audio_classification"
-    text_segmentation = "text_segmentation"
-    video_classification = "video_classification"
-    video_segmentation = "video_segmentation"
-    table_data_classification = "table_data_classification"
-    time_series = "time_series"
-    time_series_trend = "time_series_trend"
-    time_series_classification = "time_series_classification"
-    object_detection_tracking = "object_detection_tracking"
+class EnvVersionChoice(str, Enum):
+    v1 = "v1"
+
+
+class DeployTypeChoice(str, Enum):
+    ImageSegmentation = "ImageSegmentation"
+    ImageClassification = "ImageClassification"
+    TextSegmentation = "TextSegmentation"
+    TextClassification = "TextClassification"
+    AudioClassification = "AudioClassification"
+    VideoClassification = "VideoClassification"
+    DataframeRegression = "DataframeRegression"
+    DataframeClassification = "DataframeClassification"
+    Timeseries = "Timeseries"
+    TimeseriesTrend = "TimeseriesTrend"
+    YoloV3 = "YoloV3"
+    YoloV4 = "YoloV4"
+
+    @property
+    def demo(self) -> str:
+        return DeployTypeDemoChoice[self.value].value
+
+
+class DeployTypeDemoChoice(str, Enum):
+    ImageSegmentation = "image_segmentation"
+    ImageClassification = "image_classification"
+    TextSegmentation = "text_segmentation"
+    TextClassification = "text_classification"
+    AudioClassification = "audio_classification"
+    VideoClassification = "video_classification"
+    DataframeRegression = "table_data_regression"
+    DataframeClassification = "table_data_classification"
+    Timeseries = "time_series"
+    TimeseriesTrend = "time_series_trend"
+    YoloV3 = "object_detection"
+    YoloV4 = "object_detection"

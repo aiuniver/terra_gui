@@ -1,159 +1,205 @@
 <template>
   <div class="params">
+    <div v-if="statusTrain === 'start'" class="params__overlay" key="fdgtr">
+      <LoadSpiner :text="'Запуск обучения...'" />
+    </div>
     <scrollbar>
-      <div class="params__items">
-        <at-collapse :value="collapse">
-          <at-collapse-item class="mt-3" :title="''">
-            <template v-for="(data, i) of main.fields">
-              <t-auto-field-trainings v-bind="data" :key="'main_' + i" :state="state" :inline="false" @parse="parse" />
-            </template>
-          </at-collapse-item>
-          <at-collapse-item class="mt-3" :title="''">
-            <div class="fit">
-              <template v-for="(data, i) of fit.fields">
-                <t-auto-field-trainings
-                  v-bind="data"
-                  :key="'fit_' + i"
-                  class="fit__item"
-                  :state="state"
-                  :inline="true"
-                  @parse="parse"
-                />
-              </template>
-            </div>
-          </at-collapse-item>
-          <at-collapse-item class="mt-3" :title="optimizer.name">
-            <div class="optimizer">
-              <template v-for="(data, i) of optimizerFields">
-                <t-auto-field-trainings v-bind="data" :key="'optimizer_' + i" class="optimizer__item" :state="state" inline @parse="parse" />
-              </template>
-            </div>
-          </at-collapse-item>
-          <at-collapse-item class="mt-3" :title="outputs.name">
-            <div class="blocks-layers">
-              <template v-for="(field, i) of outputs.fields">
-                <div class="block-layers" :key="'block_layers_' + i">
-                  <div class="block-layers__header">
-                    {{ field.name }}
+      <div class="params__body">
+        <div class="params__items">
+          <at-collapse :value="collapse" @on-change="onchange" :key="key">
+            <at-collapse-item
+              v-show="visible"
+              v-for="({ visible, name, fields }, key) of params"
+              :key="key"
+              class="mt-3"
+              :name="key"
+              :title="name || ''"
+            >
+              <div v-if="key !== 'outputs'" class="params__fields">
+                <template v-for="(data, i) of fields">
+                  <t-auto-field-trainings
+                    v-bind="data"
+                    :class="`params__fields--${key}`"
+                    :key="key + i"
+                    :state="state"
+                    :inline="false"
+                    @parse="parse"
+                  />
+                </template>
+              </div>
+              <div v-else class="blocks-layers">
+                <template v-for="(field, i) of fields">
+                  <div class="block-layers" :key="'block_layers_' + i">
+                    <div class="block-layers__header">
+                      {{ field.name }}
+                    </div>
+                    <div class="block-layers__body">
+                      <template v-for="(data, i) of field.fields">
+                        <t-auto-field-trainings
+                          v-bind="data"
+                          :key="'checkpoint_' + i + data.parse"
+                          :state="state"
+                          :inline="true"
+                          @parse="parse"
+                        />
+                      </template>
+                    </div>
                   </div>
-                  <div class="block-layers__body">
-                    <template v-for="(data, i) of field.fields">
-                      <t-auto-field-trainings
-                        v-bind="data"
-                        :key="'checkpoints_' + i"
-                        :state="state"
-                        :inline="true"
-                        @parse="parse"
-                      />
-                    </template>
-                  </div>
-                </div>
-              </template>
-            </div>
-          </at-collapse-item>
-          <at-collapse-item class="mt-3" :title="checkpoints.name">
-            <div class="checkpoints">
-              <template v-for="(data, i) of checkpoints.fields">
-                <t-auto-field-trainings
-                  v-bind="data"
-                  :key="'outputs_' + i"
-                  class="checkpoints__item"
-                  :state="state"
-                  :inline="true"
-                  @parse="parse"
-                />
-              </template>
-            </div>
-          </at-collapse-item>
-        </at-collapse>
-      </div>
-      <!-- <div class="params__items">
-        <div class="params__items--item">
-          <t-field label="Мониторинг" inline>
-              <TCheckbox small @focus="click" />
-          </t-field>
-        </div>
-      </div> -->
-      <div class="params__items">
-        <div class="params__items--item">
-          <div class="item d-flex mb-3" style="gap: 10px">
-            <button @click="start">Обучить</button>
-            <button>Остановить</button>
-          </div>
-          <div class="item d-flex" style="gap: 10px">
-            <button>Сохранить</button>
-            <button>Сбросить</button>
-          </div>
+                </template>
+              </div>
+            </at-collapse-item>
+          </at-collapse>
         </div>
       </div>
     </scrollbar>
+    <div class="params__footer">
+      <div v-if="stopLearning" class="params__overlay">
+        <LoadSpiner :text="'Остановка...'" />
+      </div>
+      <div
+        v-for="({ title, visible }, key) of button"
+        :key="key"
+        class="params__btn"
+      >
+        <t-button :disabled="!visible" @click="btnEvent(key)">{{ title }}</t-button>
+      </div>
+      <!-- <div class="params__btn">
+        <t-button :disabled="false" @click="btnEvent('save')">{{ 'Сохранить' }}</t-button>
+      </div> -->
+    </div>
+    <SaveTrainings v-model="dialogSave" />
   </div>
 </template>
 
 <script>
+import { debounce } from '@/utils/core/utils';
 import ser from '../../assets/js/myserialize';
 import { mapGetters } from 'vuex';
-// import TCheckbox from '../global/new/forms/TCheckbox.vue';
-// import Checkbox from '@/components/forms/Checkbox.vue';
-
+import LoadSpiner from '@/components/forms/LoadSpiner';
+import SaveTrainings from '@/components/app/modal/SaveTrainings';
 export default {
   name: 'params-traning',
   components: {
-    // TCheckbox,
-    // Checkbox,
+    LoadSpiner,
+    SaveTrainings,
   },
   data: () => ({
-    obj: {},
-    collapse: [0, 1, 2, 3, 4],
+    collapse: ['main', 'fit', 'outputs', 'checkpoint', 'yolo'],
     optimizerValue: '',
+    metricData: '',
+    debounce: null,
+    stopLearning: false,
+    dialogSave: false,
+    trainSettings: {},
+    key: '1212',
+    doNotSave: ['architecture[parameters][checkpoint][metric_name]'],
   }),
   computed: {
     ...mapGetters({
       params: 'trainings/getParams',
+      button: 'trainings/getButtons',
+      status: 'trainings/getStatus',
     }),
+    isLearning() {
+      return ['addtrain', 'training'].includes(this.status);
+    },
+    statusTrain() {
+      return this.$store.getters['trainings/getStatusTrain'];
+    },
     state: {
       set(value) {
         this.$store.dispatch('trainings/setStateParams', value);
       },
       get() {
-        // console.log(this.$store.getters['trainings/getStateParams']);
         return this.$store.getters['trainings/getStateParams'];
       },
     },
-    main() {
-      return this.params?.main || {};
-    },
-    fit() {
-      return this.params?.fit || {};
-    },
-    outputs() {
-      console.log(this.params?.outputs || {});
-      return this.params?.outputs || {};
-    },
-    optimizerFields() {
-      return this.params?.optimizer?.fields?.[this.optimizerValue] || [];
-    },
-    optimizer() {
-      return this.params?.optimizer || {};
-    },
-    checkpoints() {
-      return this.params?.checkpoints || {};
-    },
   },
   methods: {
-    click(e) {
+    onchange(e) {
       console.log(e);
+      // console.log(this.collapse);
     },
-    start() {
-      console.log(JSON.stringify(this.obj, null, 2));
-    },
-    parse({ parse, value, name }) {
-      // console.log(this.state);
-      this.state = { [`${parse}`]: value };
-      ser(this.obj, parse, value);
-      if (name === 'optimizer') {
-        this.optimizerValue = value;
+    btnEvent(key) {
+      if (key === 'train') {
+        this.start();
       }
+      if (key === 'stop') {
+        this.stop();
+      }
+      if (key === 'clear') {
+        this.clear();
+      }
+      if (key === 'save') {
+        this.save();
+      }
+    },
+    async start() {
+      const res = await this.$store.dispatch('trainings/start', this.trainSettings);
+      if (res) {
+        const { data } = res;
+        if (data) {
+          if (data?.state?.status) {
+            this.debounce(true);
+          }
+        }
+      }
+    },
+    async stop() {
+      this.stopLearning = true;
+      await this.$store.dispatch('trainings/stop', {});
+    },
+    async clear() {
+      await this.$store.dispatch('trainings/clear', {});
+    },
+    save() {
+      this.dialogSave = true;
+      // await this.$store.dispatch('trainings/save', {});
+    },
+    async progress() {
+      const res = await this.$store.dispatch('trainings/progress', {});
+      if (res) {
+        const { finished, message, percent } = res.data;
+        this.$store.dispatch('messages/setProgressMessage', message);
+        this.$store.dispatch('messages/setProgress', percent);
+        this.stopLearning = !this.isLearning;
+        if (!finished) {
+          this.debounce(true);
+        } else {
+          this.$store.dispatch('projects/get');
+          this.stopLearning = false;
+        }
+      }
+    },
+    parse({ parse, value, changeable, mounted }) {
+      // parse({ parse, value, name, changeable, mounted }) {
+      // console.log({ parse, value, name, changeable, mounted });
+      ser(this.trainSettings, parse, value);
+      this.trainSettings = { ...this.trainSettings };
+      if (!mounted && changeable) {
+        this.$store.dispatch('trainings/update', this.trainSettings);
+        this.state = { [`architecture[parameters][checkpoint][metric_name]`]: null };
+      } else {
+        if (value) {
+          this.state = { [`${parse}`]: value };
+        }
+      }
+    },
+  },
+  created() {
+    this.debounce = debounce(status => {
+      if (status) {
+        this.progress();
+      }
+    }, 1000);
+    this.debounce(this.isLearning);
+  },
+  beforeDestroy() {
+    this.debounce(false);
+  },
+  watch: {
+    params() {
+      this.key = 'dsdsdsd';
     },
   },
 };
@@ -177,26 +223,61 @@ export default {
 }
 
 .params {
-  width: 400px;
-  flex-shrink: 0;
+  height: 100%;
+  flex: 0 0 400px;
   border-left: #0e1621 solid 1px;
-  overflow: hidden;
-  height: 85%;
-  // border-left: #0e1621  1px solid;
-  &__items {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  &__body {
+    overflow: hidden;
+    flex: 0 1 auto;
+  }
+  &__overlay {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
     height: 100%;
+    background-color: rgb(14 22 33 / 30%);
+    z-index: 5;
+  }
+  &__footer {
+    position: relative;
+    // width: 100%;
+    margin: 0 20px;
+    padding: 10px 0;
+    display: flex;
+    flex-wrap: wrap;
+    // flex-direction: column;
+    gap: 2%;
+  }
+  &__btn {
+    width: 49%;
+    margin: 0 0 10px 0;
+  }
+  &__save {
+    width: 100%;
+    margin: 0 0 10px 0;
+  }
+  &__items {
     padding-bottom: 20px;
-    &--item {
-      padding: 20px;
+  }
+  &__fields {
+    display: flex;
+    flex-wrap: wrap;
+    div {
+      width: 50%;
+    }
+    &--main {
+      width: 100% !important;
     }
   }
 }
 
-.fit, .optimizer, .checkpoints {
-  display: flex;
-  flex-wrap: wrap;
-  &__item {
-    width: 50%;
-  }
+.btn-spiner {
+  margin-top: 10px;
 }
 </style>

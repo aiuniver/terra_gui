@@ -3,327 +3,249 @@ import numpy as np
 import joblib
 import json
 import pandas as pd
-from ..utils import decamelize
+import tensorflow as tf
 
-from tensorflow.keras.datasets import mnist, fashion_mnist, cifar10, cifar100, imdb, reuters, boston_housing
 from tensorflow.keras import utils
+from tensorflow.keras import datasets as load_keras_datasets
 from tensorflow.python.data.ops.dataset_ops import DatasetV2 as Dataset
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
 
-# from . import array_creator
-from .data import Preprocesses
-from ..data.datasets.dataset import DatasetData
-from ..data.datasets.extra import DatasetGroupChoice
+from terra_ai.utils import decamelize
+from terra_ai.datasets.preprocessing import CreatePreprocessing
 from terra_ai.datasets.arrays_create import CreateArray
+from terra_ai.datasets.utils import PATH_TYPE_LIST
+from terra_ai.data.datasets.dataset import DatasetData, DatasetPathsData
+from terra_ai.data.datasets.extra import LayerOutputTypeChoice, DatasetGroupChoice
+from terra_ai.data.presets.datasets import KerasInstructions
 
-class PrepareDTS(object):
+
+class PrepareDataset(object):
 
     def __init__(self, data: DatasetData, datasets_path=None):
 
         self.data = data
         self.language = None
-        self.instructions: dict = {'inputs': {}, 'outputs': {}}
         self.dts_prepared: bool = False
         self.dataframe: dict = {}
-        self.datasets_path = datasets_path
+        self.instructions: dict = {}
+        if self.data.group != 'keras':
+            self.paths = DatasetPathsData(basepath=datasets_path)
+            self.preprocessing = CreatePreprocessing(dataset_path=self.paths.basepath)
 
-        self.createarray = CreateArray(datasets_path=datasets_path)
+            for put_id in list(self.data.inputs.keys()) + list(self.data.outputs.keys()):
+                self.instructions[put_id] = {}
+                for instr_json in os.listdir(os.path.join(self.paths.instructions, 'parameters')):
+                    idx, *name = os.path.splitext(instr_json)[0].split('_')
+                    name = '_'.join(name)
+                    if put_id == int(idx):
+                        with open(os.path.join(self.paths.instructions, 'parameters', instr_json),
+                                  'r') as instr:
+                            self.instructions[put_id].update([(f'{idx}_{name}', json.load(instr))])
+        else:
+            self.preprocessing = CreatePreprocessing()
+
         self.X: dict = {'train': {}, 'val': {}, 'test': {}}
         self.Y: dict = {'train': {}, 'val': {}, 'test': {}}
+        self.service: dict = {'train': {}, 'val': {}, 'test': {}}
+
         self.dataset: dict = {}
 
-        pass
-
-    @staticmethod
-    def _set_datatype(shape) -> str:
-
-        datatype = {0: 'DIM',
-                    1: 'DIM',
-                    2: 'DIM',
-                    3: '1D',
-                    4: '2D',
-                    5: '3D'
-                    }
-
-        return datatype[len(shape)]
-
-    @staticmethod
-    def _set_language(name: str):
-
-        language = {'imdb': 'English',
-                    'boston_housing': 'English',
-                    'reuters': 'English',
-                    'заболевания': 'Russian',
-                    'договоры': 'Russian',
-                    'умный_дом': 'Russian',
-                    'квартиры': 'Russian'
-                    }
-
-        if name in language.keys():
-            return language[name]
-        else:
-            return None
-
-    def train_generator(self):
+    def generator_common(self, split_name):
 
         inputs = {}
         outputs = {}
-        for idx in range(len(self.dataframe['train'])):
-            for key, value in self.data.inputs.items():
-                inputs[str(key)] = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.data.paths.dataset_sources, self.dataframe['train'].loc[idx, f'{key}_{decamelize(value.task)}'], **self.instructions['inputs'][key])
-            for key, value in self.data.outputs.items():
-                if self.data.tags[1].alias == 'object_detection':
-                    arrays = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.data.paths.dataset_sources, self.dataframe['train'].loc[idx, f'2_{decamelize(value.task)}'], **self.instructions['outputs'][2])
-                    outputs[str(key)] = np.array(arrays[key-2])
-                else:
-                    outputs[str(key)] = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.data.paths.dataset_sources, self.dataframe['train'].loc[idx, f'{key}_{decamelize(value.task)}'], **self.instructions['outputs'][key])
+        for idx in range(len(self.dataframe[split_name])):
+            for inp_id in self.data.inputs.keys():
+                tmp = []
+                for col_name, data in self.instructions[inp_id].items():
+                    if data['put_type'] in PATH_TYPE_LIST:
+                        sample = os.path.join(self.paths.basepath, self.dataframe[split_name].loc[idx, col_name])
+                    else:
+                        sample = self.dataframe[split_name].loc[idx, col_name]
+                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
+                        'preprocess': self.preprocessing.preprocessing[inp_id][col_name]}, **data)
+                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
+                                                                                     **array['parameters'])
+                    tmp.append(array)
+                inputs[str(inp_id)] = np.concatenate(tmp, axis=0)
+
+            for out_id in self.data.outputs.keys():
+                tmp = []
+                for col_name, data in self.instructions[out_id].items():
+                    if data['put_type'] in PATH_TYPE_LIST:
+                        sample = os.path.join(self.paths.basepath, self.dataframe[split_name].loc[idx, col_name])
+                    else:
+                        sample = self.dataframe[split_name].loc[idx, col_name]
+                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
+                        'preprocess': self.preprocessing.preprocessing[out_id][col_name]}, **data)
+                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
+                                                                                     **array['parameters'])
+                    tmp.append(array)
+                outputs[str(out_id)] = np.concatenate(tmp, axis=0)
 
             yield inputs, outputs
 
-    def val_generator(self):
+    def generator_object_detection(self, split_name):
 
         inputs = {}
         outputs = {}
-        for idx in range(len(self.dataframe['val'])):
-            for key, value in self.data.inputs.items():
-                inputs[str(key)] = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.data.paths.dataset_sources, self.dataframe['val'].loc[idx, f'{key}_{decamelize(value.task)}'], **self.instructions['inputs'][key])
-            for key, value in self.data.outputs.items():
-                if self.data.tags[1].alias == 'object_detection':
-                    arrays = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.data.paths.dataset_sources, self.dataframe['val'].loc[idx, f'2_{decamelize(value.task)}'], **self.instructions['outputs'][2])
-                    outputs[str(key)] = np.array(arrays[key-2])
-                else:
-                    outputs[str(key)] = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.data.paths.dataset_sources, self.dataframe['val'].loc[idx, f'{key}_{decamelize(value.task)}'], **self.instructions['outputs'][key])
+        service = {}
 
-            yield inputs, outputs
+        for idx in range(len(self.dataframe[split_name])):
+            for inp_id in self.data.inputs.keys():
+                tmp = []
+                for col_name, data in self.instructions[inp_id].items():
+                    sample = os.path.join(self.paths.basepath, self.dataframe[split_name].loc[idx, col_name])
+                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
+                        'preprocess': self.preprocessing.preprocessing[inp_id][col_name]}, **data)
+                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
+                                                                                     **array['parameters'])
+                    tmp.append(array)
+                inputs[str(inp_id)] = np.concatenate(tmp, axis=0)
 
-    def test_generator(self):
+            for out_id in self.data.outputs.keys():
+                for col_name, data in self.instructions[out_id].items():
+                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(self.dataframe[split_name]
+                                                                                 .loc[idx, col_name], **{
+                        'preprocess': self.preprocessing.preprocessing[out_id][col_name]}, **data)
+                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
+                                                                                     **array['parameters'])
+                    for n in range(3):
+                        outputs[str(out_id + n)] = np.array(array[n])
+                        service[str(out_id + n)] = np.array(array[n+3])
+            yield inputs, outputs, service
 
-        inputs = {}
-        outputs = {}
-        for idx in range(len(self.dataframe['test'])):
-            for key, value in self.data.inputs.items():
-                inputs[str(key)] = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.data.paths.dataset_sources, self.dataframe['test'].loc[idx, f'{key}_{decamelize(value.task)}'], **self.instructions['inputs'][key])
-            for key, value in self.data.outputs.items():
-                if self.data.tags[1].alias == 'object_detection':
-                    arrays = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.data.paths.dataset_sources, self.dataframe['test'].loc[idx, f'2_{decamelize(value.task)}'], **self.instructions['outputs'][2])
-                    outputs[str(key)] = np.array(arrays[key-2])
-                else:
-                    outputs[str(key)] = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.data.paths.dataset_sources, self.dataframe['test'].loc[idx, f'{key}_{decamelize(value.task)}'], **self.instructions['outputs'][key])
+    def keras_datasets(self):
 
-            yield inputs, outputs
+        (x_train, y_train), (x_val, y_val) = getattr(load_keras_datasets, self.data.alias).load_data()
 
-    def keras_datasets(self, dataset: str, **options):
-
-        self.name = dataset.lower()
-        tags = {'mnist': {'input_1': 'images', 'output_1': 'classification'},
-                'fashion_mnist': {'input_1': 'images', 'output_1': 'classification'},
-                'cifar10': {'input_1': 'images', 'output_1': 'classification'},
-                'cifar100': {'input_1': 'images', 'output_1': 'classification'},
-                'imdb': {'input_1': 'text', 'output_1': 'classification'},
-                'boston_housing': {'input_1': 'text', 'output_1': 'regression'},
-                'reuters': {'input_1': 'text', 'output_1': 'classification'}}
-        self.tags = tags[self.name]
-        self.source = 'tensorflow.keras'
-        data = {
-            'mnist': mnist,
-            'fashion_mnist': fashion_mnist,
-            'cifar10': cifar10,
-            'cifar100': cifar100,
-            'imdb': imdb,
-            'reuters': reuters,
-            'boston_housing': boston_housing
-        }
-        (x_train, y_train), (x_val, y_val) = data[self.name].load_data()
-
-        self.language = self._set_language(self.name)
-        if 'classification' in self.tags['output_1']:
-            self.num_classes['output_1'] = len(np.unique(y_train, axis=0))
-            if self.name == 'fashion_mnist':
-                self.classes_names['output_1'] = ['T - shirt / top', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandal',
-                                                  'Shirt',
-                                                  'Sneaker', 'Bag', 'Ankle boot']
-            elif self.name == 'cifar10':
-                self.classes_names['output_1'] = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog',
-                                                  'horse', 'ship',
-                                                  'truck']
-            else:
-                self.classes_names['output_1'] = [str(i) for i in range(len(np.unique(y_train, axis=0)))]
-        else:
-            self.num_classes['output_1'] = 1
-
-        if 'net' in options.keys() and self.name in list(data.keys())[:4]:
-            if options['net'].lower() == 'linear':
-                x_train = x_train.reshape((-1, np.prod(np.array(x_train.shape)[1:])))
-                x_val = x_val.reshape((-1, np.prod(np.array(x_val.shape)[1:])))
-            elif options['net'].lower() == 'conv':
-                if len(x_train.shape) == 3:
-                    x_train = x_train[..., None]
-                    x_val = x_val[..., None]
-
-        if 'scaler' in options.keys() and options['scaler'] in ['MinMaxScaler', 'StandardScaler']:
-
-            shape_xt = x_train.shape
-            shape_xv = x_val.shape
-            x_train = x_train.reshape(-1, 1)
-            x_val = x_val.reshape(-1, 1)
-
-            if options['scaler'] == 'MinMaxScaler':
-                self.createarray.scaler['input_1'] = MinMaxScaler()
-                if 'classification' not in self.tags['output_1']:
-                    self.createarray.scaler['output_1'] = MinMaxScaler()
-
-            elif options['scaler'] == 'StandardScaler':
-                self.createarray.scaler['input_1'] = StandardScaler()
-                if 'classification' not in self.tags['output_1']:
-                    self.createarray.scaler['output_1'] = StandardScaler()
-
-            self.createarray.scaler['input_1'].fit(x_train)
-            x_train = self.createarray.scaler['input_1'].transform(x_train)
-            x_val = self.createarray.scaler['input_1'].transform(x_val)
-            x_train = x_train.reshape(shape_xt)
-            x_val = x_val.reshape(shape_xv)
-
-            if 'classification' not in self.tags['output_1']:
-                shape_yt = y_train.shape
-                shape_yv = y_val.shape
-                y_train = y_train.reshape(-1, 1)
-                y_val = y_val.reshape(-1, 1)
-                self.createarray.scaler['output_1'].fit(y_train)
-                y_train = self.createarray.scaler['output_1'].transform(y_train)
-                y_val = self.createarray.scaler['output_1'].transform(y_val)
-                y_train = y_train.reshape(shape_yt)
-                y_val = y_val.reshape(shape_yv)
-        else:
-            self.createarray.scaler['output_1'] = None
-
-        self.one_hot_encoding['output_1'] = False
-        if 'one_hot_encoding' in options.keys() and options['one_hot_encoding'] is True:
-            if 'classification' in self.tags['output_1']:
+        if self.data.alias in ['mnist', 'fashion_mnist']:
+            x_train = x_train[..., None]
+            x_val = x_val[..., None]
+        for out in self.data.outputs.keys():
+            if self.data.outputs[out].task == LayerOutputTypeChoice.Classification:
                 y_train = utils.to_categorical(y_train, len(np.unique(y_train, axis=0)))
                 y_val = utils.to_categorical(y_val, len(np.unique(y_val, axis=0)))
-                self.one_hot_encoding['output_1'] = True
-
-        self.input_shape['input_1'] = x_train.shape if len(x_train.shape) < 2 else x_train.shape[1:]
-        self.input_datatype = self._set_datatype(shape=x_train.shape)
-        self.input_names['input_1'] = 'Вход'
-        self.output_shape['output_1'] = y_train.shape[1:]
-        self.output_datatype['output_1'] = self._set_datatype(shape=y_train.shape)
-        self.output_names['input_1'] = 'Выход'
 
         x_val, x_test, y_val, y_test = train_test_split(x_val, y_val, test_size=0.5, shuffle=True)
-        self.X['train']['input_1'] = x_train
-        self.X['val']['input_1'] = x_val
-        self.X['test']['input_1'] = x_test
-        self.Y['train']['output_1'] = y_train
-        self.Y['val']['output_1'] = y_val
-        self.Y['test']['output_1'] = y_test
 
-        self.dataset['train'] = Dataset.from_tensor_slices((self.X['train'], self.Y['train']))
-        self.dataset['val'] = Dataset.from_tensor_slices((self.X['val'], self.Y['val']))
-        self.dataset['test'] = Dataset.from_tensor_slices((self.X['test'], self.Y['test']))
-
-        return self
+        # for split in ['train', 'val', 'test']:
+        #     for key in self.data.inputs.keys():
+        #         self.X[split][str(key)] = globals()[f'x_{split}']
+        #     for key in self.data.outputs.keys():
+        #         self.Y[split][str(key)] = globals()[f'y_{split}']
+        for key in self.data.inputs.keys():
+            self.X['train'][str(key)] = x_train
+            self.X['val'][str(key)] = x_val
+            self.X['test'][str(key)] = x_test
+        for key in self.data.outputs.keys():
+            self.Y['train'][str(key)] = y_train
+            self.Y['val'][str(key)] = y_val
+            self.Y['test'][str(key)] = y_test
 
     def prepare_dataset(self):
 
-        def load_arrays():
+        if self.data.group == DatasetGroupChoice.keras:
 
-            for sample in os.listdir(os.path.join(self.datasets_path, self.data.paths.arrays)):
-                for index in self.data.inputs.keys():
-                    put_name = f"{index}"
-                    self.X[sample][put_name] = joblib.load(os.path.join(self.datasets_path, self.data.paths.arrays, sample, f'{index}.gz'))
-                for index, data in self.data.outputs.items():
-                    put_name = f"{index}"
-                    if data.task == 'ObjectDetection':
-                        for i in range(6):
-                            self.Y[sample][put_name] = joblib.load(os.path.join(self.datasets_path, self.data.paths.arrays, sample, f'{index}.gz'))
-                    else:
-                        self.Y[sample][put_name] = joblib.load(os.path.join(self.datasets_path, self.data.paths.arrays, sample, f'{index}.gz'))
+            self.keras_datasets()
 
-            pass
+            for put_id, data in KerasInstructions[self.data.alias].items():
+                self.instructions[put_id] = data
 
-        # def load_preprocess(parameter):
-        #
-        #     sample_list = []
-        #     folder_path = os.path.join(self.data.paths.datasets, parameter)
-        #     if os.path.exists(folder_path):
-        #         for sample in os.listdir(folder_path):
-        #             sample_list.append(int(os.path.splitext(sample)[0]))
-        #
-        #     for key in self.data.inputs.keys():
-        #         if key in sample_list:
-        #             self.createarray.__dict__[parameter][key] = joblib.load(os.path.join(folder_path, f'{key}.gz'))
-        #         else:
-        #             self.createarray.__dict__[parameter][key] = None
-        #
-        #     pass
+            self.preprocessing.create_scaler(**{'put': 1, 'scaler': 'min_max_scaler',
+                                                'min_scaler': 0, 'max_scaler': 1,
+                                                'cols_names': f'1_{self.data.alias}'})
+            self.preprocessing.preprocessing[1][f'1_{self.data.alias}'].fit(self.X['train']['1'].reshape(-1, 1))
+            for key in self.X.keys():
+                for inp in self.X[key]:
+                    self.X[key][inp] = self.preprocessing.preprocessing[1][f'1_{self.data.alias}']\
+                        .transform(self.X[key][inp].reshape(-1, 1)).reshape(self.X[key][inp].shape)
 
-        if self.data.group == DatasetGroupChoice.keras and self.data.alias in \
-                ['mnist', 'fashion_mnist', 'cifar10', 'cifar100', 'imdb', 'boston_housing', 'reuters']:
-            if self.data.alias in ['mnist', 'fashion_mnist', 'cifar10', 'cifar100']:
-                self.keras_datasets(self.data.alias, one_hot_encoding=True, scaler='MinMaxScaler', net='conv')
-                # self.task_type['output_1'] = 'classification'
-            elif self.data.alias == 'imdb':
-                self.keras_datasets(self.data.alias, one_hot_encoding=True)
-                # self.task_type['output_1'] = 'classification'
-            elif self.data.alias == 'reuters':
-                self.keras_datasets(self.data.alias)
-                # self.task_type['output_1'] = 'classification'
-            elif self.data.alias == 'boston_housing':
-                self.keras_datasets(self.data.alias, scaler='StandardScaler')
-                # self.task_type['output_1'] = 'regression'
-        elif self.data.group == DatasetGroupChoice.custom:
-            for put in ['train', 'val', 'test']:
-                self.dataframe[put] = pd.read_csv(os.path.join(self.datasets_path, self.data.paths.instructions, 'tables', f'{put}.csv'), index_col=0)
-            self.createarray.load_preprocess(f'{self.data.alias}.trds', list(self.data.inputs.keys()) + list(self.data.outputs.keys()))
+            for split in ['train', 'val', 'test']:
+                if self.service[split]:
+                    self.dataset[split] = Dataset.from_tensor_slices((self.X[split],
+                                                                      self.Y[split],
+                                                                      self.service[split]))
+                else:
+                    self.dataset[split] = Dataset.from_tensor_slices((self.X[split],
+                                                                      self.Y[split]))
+
+        elif self.data.group in [DatasetGroupChoice.terra, DatasetGroupChoice.custom]:
+
+            for split in ['train', 'val', 'test']:
+                self.dataframe[split] = pd.read_csv(os.path.join(self.paths.instructions, 'tables', f'{split}.csv'),
+                                                    index_col=0)
+
+            self.preprocessing.load_preprocesses(self.data.columns)
+
             if self.data.use_generator:
-                for instr in os.listdir(os.path.join(self.datasets_path, self.data.paths.instructions, 'parameters')):
-                    with open(os.path.join(self.datasets_path, self.data.paths.instructions, 'parameters', instr), 'r') as instruction:
-                        ins = json.load(instruction)
-                    instr = instr[:instr.rfind('.')]
-                    idx, put = instr.split('_')
-                    self.instructions[put][int(idx)] = ins
-
                 num_inputs = len(self.data.inputs)
                 num_outputs = len(self.data.outputs)
-                self.dataset['train'] = Dataset.from_generator(self.train_generator,
-                                                               output_shapes=({str(x): self.data.inputs[x].shape for x in
-                                                                               range(1, num_inputs+1)},
-                                                                              {str(x): self.data.outputs[x].shape for x in
-                                                                               range(num_inputs + 1, num_outputs + 2)}),
-                                                               output_types=({str(x): self.data.inputs[x].dtype for x in
-                                                                              range(1, num_inputs + 1)},
-                                                                             {str(x): self.data.outputs[x].dtype for x in
-                                                                              range(num_inputs + 1, num_outputs + 2)})
-                                                               )
-                self.dataset['val'] = Dataset.from_generator(self.val_generator,
-                                                             output_shapes=({str(x): self.data.inputs[x].shape for x in
-                                                                             range(1, num_inputs + 1)},
-                                                                            {str(x): self.data.outputs[x].shape for x in
-                                                                             range(num_inputs + 1, num_outputs + 2)}),
-                                                             output_types=({str(x): self.data.inputs[x].dtype for x in
-                                                                            range(1, num_inputs + 1)},
-                                                                           {str(x): self.data.outputs[x].dtype for x in
-                                                                            range(num_inputs + 1, num_outputs + 2)})
-                                                             )
-                self.dataset['test'] = Dataset.from_generator(self.test_generator,
-                                                              output_shapes=({str(x): self.data.inputs[x].shape for x in
-                                                                              range(1, num_inputs + 1)},
-                                                                             {str(x): self.data.outputs[x].shape for x in
-                                                                              range(num_inputs + 1, num_outputs + 2)}),
-                                                              output_types=({str(x): self.data.inputs[x].dtype for x in
-                                                                             range(1, num_inputs + 1)},
-                                                                            {str(x): self.data.outputs[x].dtype for x in
-                                                                             range(num_inputs + 1, num_outputs + 2)})
-                                                              )
-            else:
-                load_arrays()
+                if self.data.tags[num_inputs].alias == decamelize(LayerOutputTypeChoice.ObjectDetection):
+                    gen = self.generator_object_detection
+                    out_signature = (
+                        {str(x): tf.TensorSpec(shape=self.data.inputs[x].shape, dtype=self.data.inputs[x].dtype)
+                         for x in range(1, num_inputs + 1)},
+                        {str(x): tf.TensorSpec(shape=self.data.outputs[x].shape, dtype=self.data.outputs[x].dtype)
+                         for x in range(num_inputs + 1, num_inputs + num_outputs + 1)},
+                        {str(x): tf.TensorSpec(shape=self.data.service[x].shape, dtype=self.data.service[x].dtype)
+                         for x in range(num_inputs + 1, num_inputs + num_outputs + 1)})
+                else:
+                    gen = self.generator_common
+                    out_signature = (
+                        {str(x): tf.TensorSpec(shape=self.data.inputs[x].shape, dtype=self.data.inputs[x].dtype)
+                         for x in range(1, num_inputs + 1)},
+                        {str(x): tf.TensorSpec(shape=self.data.outputs[x].shape, dtype=self.data.outputs[x].dtype)
+                         for x in range(num_inputs + 1, num_outputs + num_inputs + 1)})
 
-                self.dataset['train'] = Dataset.from_tensor_slices((self.X['train'], self.Y['train']))
-                self.dataset['val'] = Dataset.from_tensor_slices((self.X['val'], self.Y['val']))
-                self.dataset['test'] = Dataset.from_tensor_slices((self.X['test'], self.Y['test']))
+                self.dataset['train'] = Dataset.from_generator(lambda: gen(split_name='train'),
+                                                               output_signature=out_signature)
+                self.dataset['val'] = Dataset.from_generator(lambda: gen(split_name='val'),
+                                                             output_signature=out_signature)
+                self.dataset['test'] = Dataset.from_generator(lambda: gen(split_name='test'),
+                                                              output_signature=out_signature)
+            else:
+
+                for split in os.listdir(self.paths.arrays):
+                    for index in self.data.inputs.keys():
+                        self.X[split][str(index)] = joblib.load(os.path.join(self.paths.arrays, split, f'{index}.gz'))
+                    for index in self.data.outputs.keys():
+                        self.Y[split][str(index)] = joblib.load(os.path.join(self.paths.arrays, split, f'{index}.gz'))
+                    for index in self.data.service.keys():
+                        if self.data.service[index]:
+                            self.service[split][str(index)] = joblib.load(os.path.join(self.paths.arrays,
+                                                                                       split, f'{index}_service.gz'))
+
+                for split in ['train', 'val', 'test']:
+                    if self.service[split]:
+                        self.dataset[split] = Dataset.from_tensor_slices((self.X[split],
+                                                                          self.Y[split],
+                                                                          self.service[split]))
+                    else:
+                        self.dataset[split] = Dataset.from_tensor_slices((self.X[split],
+                                                                          self.Y[split]))
 
         self.dts_prepared = True
 
         pass
+
+    def deploy_export(self, folder_path: str):
+
+        parameters_path = os.path.join(folder_path, 'instructions', 'parameters')
+        os.makedirs(parameters_path, exist_ok=True)
+        for put in self.instructions.keys():
+            for col_name, data in self.instructions[put].items():
+                with open(os.path.join(parameters_path, f'{col_name}.json'), 'w') as instr:
+                    json.dump(data, instr)
+
+        preprocessing_path = os.path.join(folder_path, 'preprocessing')
+        os.makedirs(preprocessing_path, exist_ok=True)
+        for put, proc in self.preprocessing.preprocessing.items():
+            for col_name, obj in proc.items():
+                if obj:
+                    folder_dir = os.path.join(preprocessing_path, str(put))
+                    os.makedirs(folder_dir, exist_ok=True)
+                    joblib.dump(obj, os.path.join(folder_dir, f'{col_name}.gz'))
+
+        with open(os.path.join(folder_path, 'config.json'), 'w') as cfg:
+            json.dump(self.data.native(), cfg)

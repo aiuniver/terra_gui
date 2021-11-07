@@ -1,52 +1,90 @@
 <template>
-  <div class="content">
-    <div class="item">
-      <div class="item__header">
-        <div class="item__header-roll">
-          <i
-            :class="['t-icon', 'icon-training-roll-down']"
-            :title="'roll down'"
-            @click="graphicShow = !graphicShow"
-          ></i>
-        </div>
-        <div class="item__header-title">{{ char.graph_name || '' }}</div>
-        <div class="item__header-condition normal">
-          <span>{{ char.progress_state || '' }}</span>
-          <div class="indicator"></div>
-        </div>
-        <div class="item__header-additionally">
-          <i
-            :class="['t-icon', 'icon-training-additionally']"
-            :title="'roll down'"
-            @click="popMenuShow = !popMenuShow"
-          ></i>
-          <PopUpMenu v-if="popMenuShow" />
-        </div>
+  <div class="t-char" :style="order">
+    <div class="t-char__header" v-click-outside="outside">
+      <div class="t-char__header--roll">
+        <i :class="['t-icon', 'icon-training-roll-down']" :title="'roll down'" @click="show"></i>
       </div>
-      <div class="item__main" v-if="graphicShow">
-        <Plotly :data="data" :layout="layout" :display-mode-bar="false"></Plotly>
+      <div class="t-char__header--title">{{ graph_name }}</div>
+      <div v-if="progress_state" :class="['t-char__header--condition', progress_state]">
+        <span>{{ progress_state }}</span>
+        <div class="indicator"></div>
+      </div>
+      <div class="t-char__header--additionally">
+        <i
+          :class="['t-icon', 'icon-training-additionally']"
+          :title="'roll down'"
+          @click="popMenuShow = !popMenuShow"
+        ></i>
+        <PopUpMenu v-if="popMenuShow" :settings="settings" :menus="menus" :show="graphicShow" @event="event" />
       </div>
     </div>
+    <div class="t-char__main" v-if="graphicShow">
+      <Plotly :data="data" :layout="layout" :display-mode-bar="false"></Plotly>
+      <div v-if="!data.length" class="t-char__empty">
+        <LoadSpiner v-if="start" text="Загрузка данных..." />
+      </div>
+    </div>
+    <div></div>
   </div>
 </template>
 
 <script>
 import { Plotly } from 'vue-plotly';
 import PopUpMenu from './menu/PopUpMenu';
+import LoadSpiner from '@/components/forms/LoadSpiner';
 export default {
-  name: 'Tchar',
+  name: 't-char',
   props: {
-    char: {
+    id: Number,
+    progress_state: {
+      type: String,
+      default: '',
+    },
+    graph_name: {
+      type: String,
+      default: '',
+    },
+    x_label: {
+      type: String,
+      default: '',
+    },
+    y_label: {
+      type: String,
+      default: '',
+    },
+    best: {
+      type: Array,
+      default: () => [],
+    },
+    plot_data: {
+      type: Array,
+      default: () => [],
+    },
+    epochs: {
+      type: Array,
+      default: () => [],
+    },
+    type: {
+      type: String,
+      default: 'lines',
+    },
+    settings: {
       type: Object,
       default: () => {},
     },
+    menus: {
+      type: Object,
+      default: () => {},
+    },
+    start: Boolean,
   },
   components: {
     Plotly,
     PopUpMenu,
+    LoadSpiner,
   },
   data: () => ({
-    graphicShow: false,
+    graphicShow: true,
     popMenuShow: false,
     defLayout: {
       autosize: true,
@@ -95,34 +133,103 @@ export default {
     },
   }),
   computed: {
+    order() {
+      return { order: !this.graphicShow ? 998 : this.settings.id };
+    },
     layout() {
       const layout = this.defLayout;
-      if (this.char) {
-        layout.title.text = this.char?.title || '';
-        layout.xaxis.title = this.char?.x_label || '';
-        layout.yaxis.title = this.char?.y_label || '';
+      if (this.plot_data) {
+        // layout.title.text = this.graph_name;
+        layout.xaxis.title = this.x_label;
+        layout.yaxis.title = this.y_label;
       }
       return layout;
     },
-    data() {
-      const data = this.char.plot_data || [];
-      const arr = data.map(({ epochs: x, values: y, mode = 'lines', label: name }) => {
-        return { x, y, mode, name };
+    minValue() {
+      return Math.min(...[].concat(...this.plot_data.map(item => item.y)));
+    },
+    maxValue() {
+      return Math.max(...[].concat(...this.plot_data.map(item => item.y)));
+    },
+    endpointX() {
+      return this.epochs.map(item => {
+        return [item, item, null];
       });
-      return arr;
+    },
+    endpointY() {
+      return this.epochs.map(() => {
+        return [this.maxValue, this.minValue, null];
+      });
+    },
+    changeEpochs() {
+      return [
+        {
+          type: 'scatter',
+          x: [].concat(...this.endpointX),
+          y: [].concat(...this.endpointY),
+          mode: 'line',
+          name: 'Остановка обучения',
+          // showlegend: false,
+          hoverinfo: 'name',
+          line: {
+            color: 'grey',
+            width: 2,
+            dash: 'dash',
+          },
+        },
+      ];
+    },
+    changeBest() {
+      return !this.best
+        ? []
+        : this.best.map(({ x, y, mode = 'markers', label }, i) => {
+            return {
+              x,
+              y,
+              mode,
+              name: `${label} ${y[0]}`,
+              marker: {
+                color: ['#1f77b4', '#ff7f0e'][i],
+                symbol: 'circle',
+                size: 10,
+              },
+            };
+          });
+    },
+    changePlotData() {
+      return this.plot_data.map(({ x, y, mode = 'lines', label }) => {
+        return { x, y, mode, name: label.replace(/[<>]/g, '') };
+      });
+    },
+    data() {
+      return [...this.changePlotData, ...this.changeBest, ...this.changeEpochs];
     },
   },
   mounted() {
-    console.log(this.char);
+    // console.log(this.menus);
+  },
+  methods: {
+    event({ name, data }) {
+      if (data === 'hide') {
+        this.show();
+      }
+      this.$emit('event', { name, data });
+      this.popMenuShow = false;
+    },
+    show() {
+      if (this.graphicShow) {
+        this.popMenuShow = false;
+      }
+      this.graphicShow = !this.graphicShow;
+    },
+    outside() {
+      this.popMenuShow = false;
+    },
   },
 };
 </script>
 
 <style lang="scss" scoped>
-.content {
-  width: 50%;
-  padding: 0 10px 20px 10px;
-}
 .normal {
   span {
     color: #65ca35;
@@ -131,7 +238,7 @@ export default {
     background: #65ca35;
   }
 }
-.undertraining {
+.underfitting {
   span {
     color: #f3d11d;
   }
@@ -139,28 +246,51 @@ export default {
     background: #f3d11d;
   }
 }
-.retraining {
+.overfitting {
   span {
-    color: #ca5035;
+    color: #d42e22;
   }
   .indicator {
-    background: #ca5035;
+    background: #d42e22;
   }
 }
-.item {
+.t-char {
   width: 100%;
   height: 100%;
   background: #242f3d;
   border-radius: 4px;
   box-shadow: 0 2px 10px 0 rgb(0 0 0 / 25%);
-  overflow: hidden;
+  position: relative;
+  &--order {
+    order: 100;
+  }
+  &__main {
+    position: relative;
+  }
+  &__empty {
+    user-select: none;
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+    opacity: 0.7;
+  }
   &__header {
     padding: 12px;
     display: flex;
-    &-title {
+    justify-content: space-between;
+
+    &--title {
+      overflow: hidden;
+      text-overflow: ellipsis;
       padding-left: 12px;
+      white-space: nowrap;
     }
-    &-condition {
+    &--condition {
       border: 1px solid #6c7883;
       box-sizing: border-box;
       border-radius: 4px;
@@ -178,7 +308,8 @@ export default {
         margin: 6px;
       }
     }
-    &-additionally {
+    &--additionally {
+      position: relative;
       padding-left: 10px;
     }
   }

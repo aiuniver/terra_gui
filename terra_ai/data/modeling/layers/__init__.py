@@ -430,9 +430,79 @@ class LayerVGG16Data(LayerMixinData):
     extra: types.VGG16.ParametersExtraData = types.VGG16.ParametersExtraData()
 
 
+class LayerVGG19Data(LayerMixinData):
+    main: types.VGG19.ParametersMainData = types.VGG19.ParametersMainData()
+    extra: types.VGG19.ParametersExtraData = types.VGG19.ParametersExtraData()
+
+
 class LayerResNet50Data(LayerMixinData):
     main: types.ResNet50.ParametersMainData = types.ResNet50.ParametersMainData()
     extra: types.ResNet50.ParametersExtraData = types.ResNet50.ParametersExtraData()
+
+
+class LayerResNet101Data(LayerMixinData):
+    main: types.ResNet101.ParametersMainData = types.ResNet101.ParametersMainData()
+    extra: types.ResNet101.ParametersExtraData = types.ResNet101.ParametersExtraData()
+
+
+class LayerResNet152Data(LayerMixinData):
+    main: types.ResNet152.ParametersMainData = types.ResNet152.ParametersMainData()
+    extra: types.ResNet152.ParametersExtraData = types.ResNet152.ParametersExtraData()
+
+
+class LayerResNet50V2Data(LayerMixinData):
+    main: types.ResNet50V2.ParametersMainData = types.ResNet50V2.ParametersMainData()
+    extra: types.ResNet50V2.ParametersExtraData = types.ResNet50V2.ParametersExtraData()
+
+
+class LayerResNet101V2Data(LayerMixinData):
+    main: types.ResNet101V2.ParametersMainData = types.ResNet101V2.ParametersMainData()
+    extra: types.ResNet101V2.ParametersExtraData = types.ResNet101V2.ParametersExtraData()
+
+
+class LayerResNet152V2Data(LayerMixinData):
+    main: types.ResNet152V2.ParametersMainData = types.ResNet152V2.ParametersMainData()
+    extra: types.ResNet152V2.ParametersExtraData = types.ResNet152V2.ParametersExtraData()
+
+
+class LayerDenseNet121Data(LayerMixinData):
+    main: types.DenseNet121.ParametersMainData = types.DenseNet121.ParametersMainData()
+    extra: types.DenseNet121.ParametersExtraData = types.DenseNet121.ParametersExtraData()
+
+
+class LayerDenseNet169Data(LayerMixinData):
+    main: types.DenseNet169.ParametersMainData = types.DenseNet169.ParametersMainData()
+    extra: types.DenseNet169.ParametersExtraData = types.DenseNet169.ParametersExtraData()
+
+
+class LayerDenseNet201Data(LayerMixinData):
+    main: types.DenseNet201.ParametersMainData = types.DenseNet201.ParametersMainData()
+    extra: types.DenseNet201.ParametersExtraData = types.DenseNet201.ParametersExtraData()
+
+
+class LayerNASNetMobileData(LayerMixinData):
+    main: types.NASNetMobile.ParametersMainData = types.NASNetMobile.ParametersMainData()
+    extra: types.NASNetMobile.ParametersExtraData = types.NASNetMobile.ParametersExtraData()
+
+
+class LayerNASNetLargeData(LayerMixinData):
+    main: types.NASNetLarge.ParametersMainData = types.NASNetLarge.ParametersMainData()
+    extra: types.NASNetLarge.ParametersExtraData = types.NASNetLarge.ParametersExtraData()
+
+
+class LayerMobileNetV3SmallData(LayerMixinData):
+    main: types.MobileNetV3Small.ParametersMainData = types.MobileNetV3Small.ParametersMainData()
+    extra: types.MobileNetV3Small.ParametersExtraData = types.MobileNetV3Small.ParametersExtraData()
+
+
+class LayerMobileNetV2Data(LayerMixinData):
+    main: types.MobileNetV2.ParametersMainData = types.MobileNetV2.ParametersMainData()
+    extra: types.MobileNetV2.ParametersExtraData = types.MobileNetV2.ParametersExtraData()
+
+
+class LayerEfficientNetB0Data(LayerMixinData):
+    main: types.EfficientNetB0.ParametersMainData = types.EfficientNetB0.ParametersMainData()
+    extra: types.EfficientNetB0.ParametersExtraData = types.EfficientNetB0.ParametersExtraData()
 
 
 class LayerCustomUNETBlockData(LayerMixinData):
@@ -450,6 +520,15 @@ class LayerYOLOResBlockData(LayerMixinData):
     )
     extra: types.YOLOResBlock.ParametersExtraData = (
         types.YOLOResBlock.ParametersExtraData()
+    )
+
+
+class LayerYOLOv3ResBlockData(LayerMixinData):
+    main: types.YOLOv3ResBlock.ParametersMainData = (
+        types.YOLOv3ResBlock.ParametersMainData()
+    )
+    extra: types.YOLOv3ResBlock.ParametersExtraData = (
+        types.YOLOv3ResBlock.ParametersExtraData()
     )
 
 
@@ -480,6 +559,69 @@ class LayerSpaceToDepthData(LayerMixinData):
     )
     extra: types.SpaceToDepth.ParametersExtraData = (
         types.SpaceToDepth.ParametersExtraData()
+    )
+
+
+class LayerDarkNetConvolutionalData(LayerMixinData):
+    main: types.DarkNetConvolutional.ParametersMainData = (
+        types.DarkNetConvolutional.ParametersMainData()
+    )
+    extra: types.DarkNetConvolutional.ParametersExtraData = (
+        types.DarkNetConvolutional.ParametersExtraData()
+    )
+
+
+class LayerDarkNetUpsampleData(LayerMixinData):
+    main: types.DarkNetUpsample.ParametersMainData = (
+        types.DarkNetUpsample.ParametersMainData()
+    )
+    extra: types.DarkNetUpsample.ParametersExtraData = (
+        types.DarkNetUpsample.ParametersExtraData()
+    )
+
+
+class LayerDarkNetResBlockData(LayerMixinData):
+    main: types.DarkNetResBlock.ParametersMainData = (
+        types.DarkNetResBlock.ParametersMainData()
+    )
+    extra: types.DarkNetResBlock.ParametersExtraData = (
+        types.DarkNetResBlock.ParametersExtraData()
+    )
+
+
+class LayerDarkNetBatchNormalizationData(LayerMixinData):
+    main: types.DarkNetBatchNormalization.ParametersMainData = (
+        types.DarkNetBatchNormalization.ParametersMainData()
+    )
+    extra: types.DarkNetBatchNormalization.ParametersExtraData = (
+        types.DarkNetBatchNormalization.ParametersExtraData()
+    )
+
+
+class LayerCONVBlockData(LayerMixinData):
+    main: types.CONVBlock.ParametersMainData = (
+        types.CONVBlock.ParametersMainData()
+    )
+    extra: types.CONVBlock.ParametersExtraData = (
+        types.CONVBlock.ParametersExtraData()
+    )
+
+
+class LayerPSPBlockData(LayerMixinData):
+    main: types.PSPBlock.ParametersMainData = (
+        types.PSPBlock.ParametersMainData()
+    )
+    extra: types.PSPBlock.ParametersExtraData = (
+        types.PSPBlock.ParametersExtraData()
+    )
+
+
+class LayerUNETBlockData(LayerMixinData):
+    main: types.UNETBlock.ParametersMainData = (
+        types.UNETBlock.ParametersMainData()
+    )
+    extra: types.UNETBlock.ParametersExtraData = (
+        types.UNETBlock.ParametersExtraData()
     )
 
 

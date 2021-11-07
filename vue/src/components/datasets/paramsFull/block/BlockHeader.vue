@@ -37,6 +37,16 @@ export default {
     },
     onDrop({ dataTransfer }) {
       const data = JSON.parse(dataTransfer.getData('CardDataType'));
+      if (this.mixinFiles.length) {
+        if (this.mixinFiles.find(item => item.type !== data.type)) {
+          this.$Notify.warning({ title: 'Внимание!', message: 'Выбрать можно только одинаковый тип данных' });
+          return;
+        }
+        if (this.mixinFiles.find(item => item.type === 'table')) {
+          this.$Notify.warning({ title: 'Внимание!', message: 'Выбрать можно только одину таблицу' });
+          return;
+        }
+      }
       if (!this.mixinFiles.find(item => item.value === data.value)) {
         this.mixinFiles = [...this.mixinFiles, data];
       } else {
@@ -61,7 +71,7 @@ export default {
 }
 .block-header {
   width: 100%;
-  height: 100%;
+  // height: 100%;
   &__main {
     display: flex;
     flex-direction: row;
@@ -71,6 +81,7 @@ export default {
     position: relative;
   }
   &__overlay {
+    user-select: none;
     background: #242f3d;
     border: 1px dashed #2b5278;
     border-radius: 4px;

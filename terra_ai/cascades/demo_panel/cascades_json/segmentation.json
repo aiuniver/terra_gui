@@ -1,0 +1,42 @@
+{
+  "cascades": {
+    "0": {
+      "tag": "input",
+      "type": "image"
+    },
+    "model": {
+      "tag": "model",
+      "task": "Image",
+      "model": "/home/evgeniy/terra_gui/TerraProjects/models/samolet"
+    },
+    "2": {
+      "tag": "function",
+      "task": "Segmentation",
+      "name": "plot_mask_segmentation",
+      "params": {
+        "num_class": 2,
+        "classes_colors": [
+          [0, 0, 0],
+          [255, 0, 0]
+        ]
+      }
+    },
+    "4": {
+      "tag": "output",
+      "type": "image"
+    }
+  },
+
+  "adjacency_map": {
+      "model": [
+        "INPUT"
+      ],
+      "2": [
+        "INPUT",
+        "model"
+      ],
+      "4": [
+        "2"
+      ]
+    }
+}

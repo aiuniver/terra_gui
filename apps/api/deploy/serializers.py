@@ -1,7 +1,13 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from terra_ai.settings import DEPLOY_PRESET_COUNT
+
 from apps.api.validators import validate_slug
+
+
+class ReloadSerializer(serializers.ListSerializer):
+    child = serializers.IntegerField(min_value=0, max_value=DEPLOY_PRESET_COUNT - 1)
 
 
 class UploadSerializer(serializers.Serializer):

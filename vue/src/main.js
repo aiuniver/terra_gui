@@ -97,6 +97,12 @@ Vue.use(vuescroll, {
   name: 'scrollbar'
 });
 
+import pkg from '../package.json'
+Vue.prototype.$config = {
+  isDev: process.env.NODE_ENV === 'development',
+  version: pkg.version
+}
+
 // import all directivs
 import directives from '@/utils/directives'
 directives.forEach(directive=>Vue.directive(directive.name, directive))
@@ -105,8 +111,8 @@ directives.forEach(directive=>Vue.directive(directive.name, directive))
 import components from '@/components/global'
 components.forEach(component=>Vue.component(component.name, component))
 
-import VuePapaParse from "vue-papa-parse";
-Vue.use(VuePapaParse)
+import AudioVisual from 'vue-audio-visual'
+Vue.use(AudioVisual)
 
 Vue.config.productionTip = false;
 Vue.use(Vuex);
@@ -115,6 +121,7 @@ Vue.use(VueAxios, axios);
 export const bus = new Vue();
 
 import '@/assets/scss/main.scss'
+import '@/assets/css/coolicons.css'
 
 new Vue({
   router,

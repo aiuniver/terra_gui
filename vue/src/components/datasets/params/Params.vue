@@ -67,10 +67,10 @@ export default {
   methods: {
     async createInterval(label = null) {
       this.interval = setTimeout(async () => {
-        const { data } = await this.$store.dispatch('datasets/loadProgress', {});
-        console.log(data);
-        if (data) {
-          const { finished, message, percent, error } = data;
+        const res = await this.$store.dispatch('datasets/loadProgress', {});
+        console.log(res);
+        if (res) {
+          const { finished, message, percent, error } = res.data;
           console.log(percent);
           this.$store.dispatch('messages/setProgressMessage', message);
           this.$store.dispatch('messages/setProgress', percent);
@@ -82,7 +82,7 @@ export default {
           if (finished) {
             const {
               data: { file_manager, source_path },
-            } = data;
+            } = res.data;
             this.$store.dispatch('datasets/setFilesSource', file_manager);
             this.$store.dispatch('datasets/setSourcePath', source_path);
             this.$store.dispatch('datasets/setFilesDrop', []);
@@ -97,6 +97,9 @@ export default {
           } else {
             this.createInterval(label);
           }
+        } else {
+          this.loading = false;
+          this.$store.dispatch('settings/setOverlay', false);
         }
         // console.log(data);
       }, 1000);
@@ -118,14 +121,17 @@ export default {
         this.$Modal.alert({
           width: 250,
           title: 'Внимание!',
-          content: 'Загрузите датасет',
+          maskClosable: true,
+          content: 'Загрузите исходник датасета',
         });
       }
     },
     async download() {
       if (this.loading) return;
-      const { mode, value, label } = this.dataset;
+      const { mode, value } = this.dataset;
       if (mode && value) {
+        const index = ~value.lastIndexOf('\\') ? '\\' : '/'
+        const label = value.slice(value.lastIndexOf(index) + 1, value.length - 4)
         this.loading = true;
         this.$store.dispatch('settings/setOverlay', true);
         this.$store.dispatch('messages/setMessage', { message: `Загружаю датасет ${label}` });

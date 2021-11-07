@@ -9,52 +9,20 @@
           </button>
         </td>
         <td>Предсказанные данные</td>
-        <td>Комнат</td>
-        <td>Метро / ЖД станции</td>
-        <td>От станции</td>
-        <td>Дом</td>
-        <td>Балкон</td>
-        <td>Санузел</td>
-        <td>Площадь</td>
-        <td>Цена, руб.</td>
-        <td>ГРМ</td>
-        <td>Бонус агенству</td>
+        <td v-for="(name, i) of columns" :key="'col_' + i">{{ name }}</td>
       </tr>
-      <tr>
+      <tr v-for="({ preset, label }, index) of data" :key="'row_' + index">
         <td class="table__td-reload">
-          <button class="td-reload__btn-reload" @click="ReloadRow">
+          <button class="td-reload__btn-reload" @click="ReloadRow(index)">
             <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
           </button>
         </td>
-        <td class="table__result-data">Мастер и Маргарита, Михаил Афанасьевич Булгаков </td>
-        <td>1</td>
-        <td>Шелепиха м.</td>
-        <td>12п</td>
-        <td>35/37 М</td>
-        <td>NaN</td>
-        <td>2</td>
-        <td>64.1/23/20</td>
-        <td>19500000.0</td>
-        <td>NaN</td>
-        <td>NaN</td>
-      </tr>
-       <tr>
-        <td class="table__td-reload">
-          <button class="td-reload__btn-reload" @click="ReloadRow">
-            <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
-          </button>
+        <td class="table__result-data">{{ label }}</td>
+        <td v-for="(data, i) of preset" :key="'data_' + index + i">
+          <TableText v-bind="{value: data}" :style="{width: '100%'}"/>
+<!--          {{ data }}-->
         </td>
-        <td class="table__result-data">Мастер и Маргарита, Михаил Афанасьевич Булгаков </td>
-        <td>1</td>
-        <td>Шелепиха м.</td>
-        <td>12п</td>
-        <td>35/37 М</td>
-        <td>NaN</td>
-        <td>2</td>
-        <td>64.1/23/20</td>
-        <td>19500000.0</td>
-        <td>NaN</td>
-        <td>NaN</td>
+        <td class="table__result-data">{{ label }}</td>
       </tr>
     </table>
   </div>
@@ -62,78 +30,97 @@
 
 <script>
 export default {
-  name: "Table",
-  methods: {
-    ReloadRow(){
-      console.log("RELOAD_ROW")
-    },
-    ReloadAll(){
-      this.$emit("ReloadAll")
-    }
+  name: 'Table',
+  components: {
+    TableText: () => import('../training/main/prediction/components/TableText')
   },
-}
+  props: {
+    data: Array,
+    columns: Array,
+  },
+  // computed: {
+  //   columns() {
+  //     return this.extra?.columns ?? [];
+  //   },
+  // },
+  methods: {
+    ReloadRow(index) {
+      this.$emit('reload', [index.toString()]);
+    },
+    ReloadAll() {
+      this.$emit('reloadAll');
+    },
+  },
+  mounted() {
+    console.log(12312312);
+    console.log(this.data);
+    console.log(this.columns);
+  },
+};
 </script>
 
 <style scoped lang="scss">
-.table{
+.table {
   width: 100%;
-  background: #242F3D;
-  border: 1px solid #6C7883;
+  background: #242f3d;
+  border: 1px solid #6c7883;
   box-sizing: border-box;
   border-radius: 4px;
-  tr:nth-child(even){
-    background: #17212B;
+  tr:nth-child(even) {
+    background: #17212b;
   }
-  td{
+  td {
     padding: 5px;
-    &:nth-child(1){
+    text-align: center;
+    &:nth-child(1) {
       padding-left: 74px;
     }
   }
 }
-.table__title-row{
-  color: #FFFFFF;
+.table__title-row {
+  color: #ffffff;
   font-weight: bold;
   font-size: 14px;
   line-height: 24px;
-  td{
+  td {
     text-align: left;
-    &:nth-child(1){
+    text-align: center;
+    &:nth-child(1) {
       padding-left: 8px;
     }
   }
 }
-.table__result-data{
+.table__result-data {
   width: 200px;
-  color: #65B9F4;
+  color: #65b9f4;
 }
-.table__reload-all{
+.table__reload-all {
   display: flex;
   width: 174px;
   padding: 8px 10px 10px 10px;
   justify-content: center;
   align-items: center;
-  i{
+  i {
     width: 16px;
   }
-  span{
+  span {
     font-weight: normal;
     font-size: 14px;
     line-height: 24px;
     padding-left: 8px;
   }
 }
-.table__td-reload{
+.table__td-reload {
   text-align: center;
 }
-.td-reload__btn-reload{
+.td-reload__btn-reload {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 32px;
   height: 32px;
   padding-bottom: 2px;
-  i{
+  i {
     width: 16px;
   }
 }

@@ -1,5 +1,5 @@
 <template>
-  <div :class="['dataset-card-item', { active: dataset.active, selected: loaded }]">
+  <div :class="['dataset-card-item', { active: dataset.active && !loaded, selected: loaded }]" :title="dataset.name">
     <div class="dataset-card" @click.stop="$emit('click', dataset, cardIndex)">
       <div class="card-title">{{ dataset.name }}</div>
       <div class="card-body" @click="click">

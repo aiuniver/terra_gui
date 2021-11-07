@@ -9,22 +9,23 @@ from apps.plugins.frontend.choices import (
     LayerInputTypeChoice,
     LayerOutputTypeChoice,
     LayerNetChoice,
-    LayerScalerChoice,
     LayerScalerImageChoice,
     LayerScalerAudioChoice,
     LayerScalerVideoChoice,
     LayerScalerRegressionChoice,
     LayerScalerTimeseriesChoice,
-    LayerTypeProcessingClassificationChoice,
     LayerTextModeChoice,
     LayerPrepareMethodChoice,
     LayerAudioModeChoice,
+    LayerAudioFillModeChoice,
     LayerAudioParameterChoice,
+    LayerAudioResampleChoice,
     LayerVideoFillModeChoice,
     LayerVideoFrameModeChoice,
     LayerVideoModeChoice,
-    LayerDataframeAlignBaseMethodChoice,
     LayerYoloVersionChoice,
+    ColumnProcessingInputTypeChoice,
+    ColumnProcessingOutputTypeChoice,
 )
 
 from ..fields import DirectoryPathField, DirectoryOrFilePathField
@@ -38,6 +39,7 @@ class MinMaxScalerSerializer(serializers.Serializer):
 class ChoiceSerializer(serializers.Serializer):
     group = serializers.CharField()
     alias = serializers.CharField()
+    reset_model = serializers.BooleanField(default=False)
 
 
 class SourceLoadSerializer(serializers.Serializer):
@@ -49,6 +51,8 @@ class LayerParametersSerializer(serializers.Serializer):
     sources_paths = serializers.ListSerializer(child=DirectoryOrFilePathField())
 
     def validate_sources_paths(self, value):
+        if self.__class__ == LayerParametersClassificationSerializer:
+            return value
         if not len(value):
             raise serializers.ValidationError("Этот список не может быть пустым.")
         return value
@@ -104,19 +108,24 @@ class LayerParametersTextSerializer(LayerParametersSerializer):
 class LayerParametersAudioSerializer(MinMaxScalerSerializer, LayerParametersSerializer):
     sample_rate = serializers.IntegerField(min_value=1)
     audio_mode = serializers.ChoiceField(choices=LayerAudioModeChoice.items_tuple())
-    max_seconds = serializers.IntegerField(required=False, min_value=1)
-    length = serializers.IntegerField(required=False, min_value=1)
-    step = serializers.IntegerField(required=False, min_value=1)
+    max_seconds = serializers.FloatField(required=False, min_value=0, allow_null=True)
+    length = serializers.FloatField(required=False, min_value=0, allow_null=True)
+    step = serializers.FloatField(required=False, min_value=0, allow_null=True)
+    fill_mode = serializers.ChoiceField(choices=LayerAudioFillModeChoice.items_tuple())
     parameter = serializers.ChoiceField(choices=LayerAudioParameterChoice.items_tuple())
+    resample = serializers.ChoiceField(choices=LayerAudioResampleChoice.items_tuple())
     scaler = serializers.ChoiceField(choices=LayerScalerAudioChoice.items_tuple())
 
     def __init__(self, instance=None, data=None, **kwargs):
         _audio_mode = data.get("audio_mode")
         if _audio_mode == LayerAudioModeChoice.completely.name:
             self.fields.get("max_seconds").required = True
+            data.pop("length", None)
+            data.pop("step", None)
         elif _audio_mode == LayerAudioModeChoice.length_and_step.name:
             self.fields.get("length").required = True
             self.fields.get("step").required = True
+            data.pop("max_seconds", None)
 
         super().__init__(instance=instance, data=data, **kwargs)
 
@@ -138,50 +147,24 @@ class LayerParametersVideoSerializer(MinMaxScalerSerializer, LayerParametersSeri
         _video_mode = data.get("video_mode")
         if _video_mode == LayerAudioModeChoice.completely.name:
             self.fields.get("max_frames").required = True
+            data.pop("length", None)
+            data.pop("step", None)
         elif _video_mode == LayerAudioModeChoice.length_and_step.name:
             self.fields.get("length").required = True
             self.fields.get("step").required = True
+            data.pop("max_frames", None)
 
         super().__init__(instance=instance, data=data, **kwargs)
 
 
-class LayerParametersDataframeSerializer(
-    MinMaxScalerSerializer, LayerParametersSerializer
-):
-    separator = serializers.CharField()
-    transpose = serializers.BooleanField(default=False)
-    align_base = serializers.BooleanField(default=False)
-    align_base_method = serializers.ChoiceField(
-        required=False, choices=LayerDataframeAlignBaseMethodChoice.items_tuple()
+class LayerParametersDataframeSerializer(LayerParametersSerializer):
+    cols_names = serializers.DictField(
+        child=serializers.ListField(child=serializers.IntegerField()), default=dict
     )
-    example_length = serializers.IntegerField(required=False, min_value=1)
-    length = serializers.IntegerField(required=False, min_value=1)
-    step = serializers.IntegerField(required=False, min_value=1)
-    scaler = serializers.ChoiceField(
-        required=False, choices=LayerScalerChoice.items_tuple()
-    )
-
-    def __init__(self, instance=None, data=None, **kwargs):
-        if data.get("align_base"):
-            self.fields.get("align_base_method").required = True
-            self.fields.get("scaler").required = True
-
-        super().__init__(instance=instance, data=data, **kwargs)
 
 
 class LayerParametersClassificationSerializer(LayerParametersSerializer):
-    one_hot_encoding = serializers.BooleanField(default=True)
-    type_processing = serializers.ChoiceField(
-        choices=LayerTypeProcessingClassificationChoice.items_tuple()
-    )
-    ranges = serializers.CharField(required=False)
-
-    def __init__(self, instance=None, data=None, **kwargs):
-        _type_processing = data.get("type_processing")
-        if _type_processing == LayerTypeProcessingClassificationChoice.ranges:
-            self.fields.get("ranges").required = True
-
-        super().__init__(instance=instance, data=data, **kwargs)
+    pass
 
 
 class LayerParametersSegmentationSerializer(LayerParametersSerializer):
@@ -272,6 +255,14 @@ class CreateInfoSerializer(serializers.Serializer):
         return super().validate(attrs)
 
 
+class CreateColumnProcessingSerializer(serializers.Serializer):
+    type = serializers.ChoiceField(
+        choices=ColumnProcessingInputTypeChoice.items_tuple()
+        + ColumnProcessingOutputTypeChoice.items_tuple()
+    )
+    parameters = serializers.DictField()
+
+
 class CreateSerializer(serializers.Serializer):
     alias = serializers.SerializerMethodField()
     name = serializers.CharField()
@@ -280,6 +271,9 @@ class CreateSerializer(serializers.Serializer):
     info = CreateInfoSerializer()
     tags = serializers.ListSerializer(child=CreateTagSerializer(), default=[])
     use_generator = serializers.BooleanField(default=False)
+    columns_processing = serializers.DictField(
+        child=CreateColumnProcessingSerializer(), default=dict
+    )
     inputs = serializers.ListSerializer(child=serializers.DictField())
     outputs = serializers.ListSerializer(child=serializers.DictField())
 
@@ -341,5 +335,5 @@ class DeleteSerializer(serializers.Serializer):
 
 
 class SourceSegmentationClassesAutosearchSerializer(serializers.Serializer):
-    num_classes = serializers.IntegerField(min_value=1, max_value=10)
+    num_classes = serializers.IntegerField(min_value=1)
     mask_range = serializers.IntegerField(min_value=1)

@@ -3,12 +3,14 @@
 """
 
 import os
+import cv2
 import pandas
 import base64
 
+from PIL import Image
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union, Dict, Any
 from pydantic import validator
 from pydantic.types import FilePath, DirectoryPath
 from pydantic.color import Color
@@ -47,6 +49,7 @@ class FileManagerTypeChoice(str, Enum):
     jpg = FileManagerTypeBaseChoice.image.value
     jpeg = FileManagerTypeBaseChoice.image.value
     png = FileManagerTypeBaseChoice.image.value
+    avi = FileManagerTypeBaseChoice.video.value
     csv = FileManagerTypeBaseChoice.table.value
     undefined = FileManagerTypeBaseChoice.unknown.value
 
@@ -115,6 +118,7 @@ class FileManagerItem(BaseMixinData):
     type: Optional[FileManagerTypeChoice]
     children: list = []
     dragndrop: bool = False
+    extra: Dict[str, Any] = {}
 
     @property
     def csv2data(self) -> Optional[dict]:
@@ -178,6 +182,7 @@ class FileManagerItem(BaseMixinData):
     @validator("children", always=True)
     def _validate_children(cls, value: list, values) -> list:
         fullpath = values.get("path")
+        _extra = {}
         __items = []
         if fullpath and os.path.isdir(fullpath):
             files_grouped = {}
@@ -187,10 +192,27 @@ class FileManagerItem(BaseMixinData):
                     __items.append(FileManagerItem(**{"path": item_path}))
                 else:
                     _ext = str(item_path).split(".")[-1].lower()
-                    _count = files_grouped.get(_ext, 0)
+                    _count = files_grouped.get(_ext, {}).get("count", 0)
                     _count += 1
-                    files_grouped.update({_ext: _count})
-            for _ext, _count in files_grouped.items():
+                    if not len(_extra.keys()):
+                        try:
+                            _type = FileManagerTypeChoice[_ext]
+                        except KeyError:
+                            _type = FileManagerTypeChoice.undefined
+                        if _type == FileManagerTypeBaseChoice.image:
+                            _im = Image.open(str(item_path.absolute()))
+                            _extra = {
+                                "width": _im.size[0],
+                                "height": _im.size[1],
+                            }
+                        elif _type == FileManagerTypeBaseChoice.video:
+                            _vid = cv2.VideoCapture(str(item_path.absolute()))
+                            _extra = {
+                                "width": _vid.get(cv2.CAP_PROP_FRAME_WIDTH),
+                                "height": _vid.get(cv2.CAP_PROP_FRAME_HEIGHT),
+                            }
+                    files_grouped.update({_ext: {"count": _count, "extra": _extra}})
+            for _ext, _group_data in files_grouped.items():
                 try:
                     _type = FileManagerTypeChoice[_ext]
                 except KeyError:
@@ -198,12 +220,23 @@ class FileManagerItem(BaseMixinData):
                 __items.append(
                     FileManagerItem(
                         **{
-                            "title": f"[{_count}] {_ext}",
+                            "title": f'[{_group_data.get("count")}] {_ext}',
                             "type": _type,
+                            "extra": _group_data.get("extra"),
                         }
                     )
                 )
         return __items
+
+    @validator("extra", always=True)
+    def _validate_extra(cls, value: dict, values) -> list:
+        if not value:
+            value = {}
+        if values.get("type") == FileManagerTypeBaseChoice.folder:
+            for children in values.get("children"):
+                if len(children.extra.keys()):
+                    value.update(children.extra)
+        return value
 
     def dict(self, **kwargs):
         __exclude = []
