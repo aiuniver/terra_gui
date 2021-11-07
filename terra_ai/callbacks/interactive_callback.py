@@ -1,6 +1,7 @@
 import os
 import random
 import string
+from pathlib import Path
 from typing import Union, Optional
 import numpy as np
 
@@ -98,8 +99,8 @@ class InteractiveCallback:
         self.interactive_config: InteractiveData = InteractiveData(**{})
         pass
 
-    def set_attributes(self, dataset: PrepareDataset, dataset_path: str,
-                       training_path: str, initial_config: InteractiveData):
+    def set_attributes(self, dataset: PrepareDataset, dataset_path: Path,
+                       training_path: Path, initial_config: InteractiveData):
 
         self.options = dataset
         self._callback_router(dataset)

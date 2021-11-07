@@ -57,7 +57,7 @@ class GUINN:
 
     def __init__(self) -> None:
         self.name = "GUINN"
-        self.callbacks = []
+        self.callbacks = None
         self.params: dict = {}
         self.nn_name: str = ''
         self.dataset: Optional[PrepareDataset] = None
@@ -78,43 +78,44 @@ class GUINN:
         self.model_is_trained: bool = False
         self.progress_name = "training"
 
-    @staticmethod
-    def _check_metrics(metrics: list, options: DatasetOutputsData, num_classes: int = 2, ) -> list:
-        method_name = '_check_metrics'
-        try:
-            output = []
-            for metric in metrics:
-                if metric == MetricChoice.MeanIoU.value:
-                    output.append(getattr(importlib.import_module("tensorflow.keras.metrics"), metric)(num_classes))
-                elif metric == MetricChoice.DiceCoef:
-                    output.append(DiceCoef())
-                # elif metric == MetricChoice.RecallPercent:
-                #     output.append(RecallPercent())
-                elif metric == MetricChoice.BalancedPrecision:
-                    output.append(BalancedPrecision())
-                elif metric == MetricChoice.BalancedFScore:
-                    output.append(BalancedFScore())
-                elif metric == MetricChoice.FScore:
-                    output.append(FScore())
-                elif metric == MetricChoice.BalancedRecall:
-                    output.append(BalancedRecall())
-                elif metric == MetricChoice.BalancedDiceCoef:
-                    output.append(BalancedDiceCoef(encoding=options.encoding.value))
-                elif metric == MetricChoice.UnscaledMAE:
-                    output.append(UnscaledMAE())
-                elif metric == MetricChoice.mAP50 or metric == MetricChoice.mAP95:
-                    pass
-                else:
-                    output.append(getattr(importlib.import_module("tensorflow.keras.metrics"), metric)())
-            return output
-        except Exception as e:
-            print_error(GUINN().name, method_name, e)
+    # @staticmethod
+    # def _check_metrics(metrics: list, options: DatasetOutputsData, num_classes: int = 2, ) -> list:
+    #     method_name = '_check_metrics'
+    #     try:
+    #         output = []
+    #         for metric in metrics:
+    #             if metric == MetricChoice.MeanIoU.value:
+    #                 output.append(getattr(importlib.import_module("tensorflow.keras.metrics"), metric)(num_classes))
+    #             elif metric == MetricChoice.DiceCoef:
+    #                 output.append(DiceCoef())
+    #             # elif metric == MetricChoice.RecallPercent:
+    #             #     output.append(RecallPercent())
+    #             elif metric == MetricChoice.BalancedPrecision:
+    #                 output.append(BalancedPrecision())
+    #             elif metric == MetricChoice.BalancedFScore:
+    #                 output.append(BalancedFScore())
+    #             elif metric == MetricChoice.FScore:
+    #                 output.append(FScore())
+    #             elif metric == MetricChoice.BalancedRecall:
+    #                 output.append(BalancedRecall())
+    #             elif metric == MetricChoice.BalancedDiceCoef:
+    #                 output.append(BalancedDiceCoef(encoding=options.encoding.value))
+    #             elif metric == MetricChoice.UnscaledMAE:
+    #                 output.append(UnscaledMAE())
+    #             elif metric == MetricChoice.mAP50 or metric == MetricChoice.mAP95:
+    #                 pass
+    #             else:
+    #                 output.append(getattr(importlib.import_module("tensorflow.keras.metrics"), metric)())
+    #         return output
+    #     except Exception as e:
+    #         print_error(GUINN().name, method_name, e)
 
     def _set_training_params(self, dataset: DatasetData, train_params: TrainingDetailsData,
-                             training_path: str, dataset_path: str) -> None:
+                             training_path: Path, dataset_path: Path) -> None:
         method_name = '_set_training_params'
         try:
             params = train_params.base
+            self.params = train_params.base.native()
             self.dataset = self._prepare_dataset(dataset, dataset_path, training_path, state=train_params.state.status)
             if not self.dataset.data.architecture or self.dataset.data.architecture == ArchitectureChoice.Basic:
                 self.deploy_type = self._set_deploy_type(self.dataset)
@@ -157,8 +158,7 @@ class GUINN:
             #     })
             #     self.loss.update({str(output_layer["id"]): output_layer["loss"]})
 
-            interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss,
-                                       dataset_path=dataset_path, training_path=training_path,
+            interactive.set_attributes(dataset=self.dataset, dataset_path=dataset_path, training_path=training_path,
                                        initial_config=train_params.interactive)
         except Exception as e:
             print_error(GUINN().name, method_name, e)
@@ -178,9 +178,9 @@ class GUINN:
                                    training_path=save_model_path, model_name=self.nn_name,
                                    dataset_path=dataset_path, deploy_type=self.deploy_type,
                                    initialed_model=initial_model,
-                                   state=state, deploy=deploy
+                                   # state=state, deploy=deploy
                                    )
-            self.callbacks = [callback]
+            self.callbacks = callback
             progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков выполнено'})
         except Exception as e:
             print_error(GUINN().name, method_name, e)
@@ -237,7 +237,7 @@ class GUINN:
             print_error(GUINN().name, method_name, e)
 
     @staticmethod
-    def _prepare_dataset(dataset: DatasetData, dataset_path: str, model_path: str, state: str) -> PrepareDataset:
+    def _prepare_dataset(dataset: DatasetData, dataset_path: Path, model_path: Path, state: str) -> PrepareDataset:
         method_name = '_prepare_dataset'
         try:
             prepared_dataset = PrepareDataset(data=dataset, datasets_path=dataset_path)
@@ -248,7 +248,7 @@ class GUINN:
         except Exception as e:
             print_error(GUINN().name, method_name, e)
 
-    def _set_model(self, model: ModelDetailsData) -> ModelData:
+    def _set_model(self, model: ModelDetailsData) -> Model:
         method_name = '_set_model'
         try:
             if interactive.get_states().get("status") == "training":
@@ -309,40 +309,40 @@ class GUINN:
         except Exception as e:
             print_error(GUINN().name, method_name, e)
 
-    @staticmethod
-    def _get_val_batch_size(batch_size, len_val):
-        method_name = '_get_val_batch_size'
-        try:
-            def issimple(a):
-                lst = []
-                for n in range(2, a):
-                    if a % n == 0:
-                        if not issimple(n):
-                            lst.append(n)
-                return lst
-
-            min_step = 0
-            for i in range(3):
-                r = issimple(len_val - i)
-                if len(r):
-                    try:
-                        min_step = min(r)
-                        if len_val // min_step > batch_size:
-                            for k in r:
-                                if len_val // k <= batch_size:
-                                    min_step = k
-                                    break
-                                else:
-                                    min_step = len_val
-                        break
-                    except ValueError:
-                        pass
-                else:
-                    min_step = len_val
-            val_batch_size = len_val // min_step
-            return val_batch_size
-        except Exception as e:
-            print_error(GUINN().name, method_name, e)
+    # @staticmethod
+    # def _get_val_batch_size(batch_size, len_val):
+    #     method_name = '_get_val_batch_size'
+    #     try:
+    #         def issimple(a):
+    #             lst = []
+    #             for n in range(2, a):
+    #                 if a % n == 0:
+    #                     if not issimple(n):
+    #                         lst.append(n)
+    #             return lst
+    #
+    #         min_step = 0
+    #         for i in range(3):
+    #             r = issimple(len_val - i)
+    #             if len(r):
+    #                 try:
+    #                     min_step = min(r)
+    #                     if len_val // min_step > batch_size:
+    #                         for k in r:
+    #                             if len_val // k <= batch_size:
+    #                                 min_step = k
+    #                                 break
+    #                             else:
+    #                                 min_step = len_val
+    #                     break
+    #                 except ValueError:
+    #                     pass
+    #             else:
+    #                 min_step = len_val
+    #         val_batch_size = len_val // min_step
+    #         return val_batch_size
+    #     except Exception as e:
+    #         print_error(GUINN().name, method_name, e)
 
     def terra_fit(self, dataset: DatasetData, gui_model: ModelDetailsData, training: TrainingDetailsData,
                   training_path: Path = "", dataset_path: Path = "",  # training_params: TrainData = None,
@@ -377,8 +377,9 @@ class GUINN:
             if training.state.status == "training":
                 self.save_model()
 
-            self.base_model_fit(params=training, dataset=self.dataset, dataset_data=dataset,
-                                verbose=0, save_model_path=training_path, dataset_path=dataset_path)
+            # self.base_model_fit(params=training, dataset=self.dataset, dataset_data=dataset,
+            #                     verbose=0, save_model_path=training_path, dataset_path=dataset_path)
+            self.train_base_model(params=self.params, dataset=self.dataset, model=self.model, callback=self.callbacks)
             return {"dataset": self.dataset, "metrics": self.metrics, "losses": self.loss}
         except Exception as e:
             print_error(GUINN().name, method_name, e)
@@ -403,87 +404,87 @@ class GUINN:
         self.nn_cleaner(retrain=True)
         return self
 
-    @progress.threading
-    def base_model_fit(self, params: TrainingDetailsData, dataset: PrepareDataset, dataset_path: Path,
-                       dataset_data: DatasetData, save_model_path: Path, verbose=0) -> None:
-        method_name = 'base_model_fit'
-        try:
-
-            yolo_arch = True if self.deploy_type in YOLO_ARCHITECTURE else False
-            model_yolo = None
-
-            threading.enumerate()[-1].setName("current_train")
-            progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели ...'})
-            if yolo_arch:
-                warmup_epoch = params.base.architecture.parameters.yolo.train_warmup_epochs
-                lr_init = params.base.architecture.parameters.yolo.train_lr_init
-                lr_end = params.base.architecture.parameters.yolo.train_lr_end
-                iou_thresh = params.base.architecture.parameters.yolo.yolo_iou_loss_thresh
-
-                yolo = create_yolo(self.model, input_size=416, channels=3, training=True,
-                                   classes=self.dataset.data.outputs.get(2).classes_names,
-                                   version=self.dataset.instructions.get(2).get('2_object_detection').get('yolo'))
-                model_yolo = CustomModelYolo(yolo, self.dataset, self.dataset.data.outputs.get(2).classes_names,
-                                             self.epochs, self.batch_size, warmup_epoch=warmup_epoch,
-                                             lr_init=lr_init, lr_end=lr_end, iou_thresh=iou_thresh)
-                model_yolo.compile(optimizer=self.set_optimizer(self.params),
-                                   loss=compute_loss)
-            # else:
-            #     self.model.compile(loss=self.loss,
-            #                        optimizer=self.optimizer,
-            #                        metrics=self.metrics
-            #                        )
-            progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели выполнена'})
-            self._set_callbacks(dataset=dataset, batch_size=params.base.batch,
-                                epochs=params.base.epochs, save_model_path=save_model_path, dataset_path=dataset_path,
-                                checkpoint=params.base.architecture.parameters.checkpoint.native(),
-                                initial_model=self.model if yolo_arch else None, state=params.state,
-                                deploy=params.deploy)
-            progress.pool(self.progress_name, finished=False, data={'status': 'Начало обучения ...'})
-            if self.dataset.data.use_generator:
-                print('use generator')
-                critical_val_size = len(self.dataset.dataframe.get("val"))
-                buffer_size = 100
-            else:
-                print('dont use generator')
-                critical_val_size = len(self.dataset.dataset.get('val'))
-                buffer_size = 1000
-            # print('critical_val_size', critical_val_size)
-            if (critical_val_size == self.batch_size) or ((critical_val_size % self.batch_size) == 0):
-                self.val_batch_size = self.batch_size
-            elif critical_val_size < self.batch_size:
-                self.val_batch_size = critical_val_size
-            else:
-                self.val_batch_size = self._get_val_batch_size(self.batch_size, critical_val_size)
-            # print('self.batch_size', self.batch_size)
-            # print('self.val_batch_size', self.val_batch_size)
-            trained_model = model_yolo if model_yolo else self.model
-
-            try:
-                trained_model.fit(
-                    self.dataset.dataset.get('train').shuffle(buffer_size).batch(
-                        self.batch_size, drop_remainder=True).prefetch(buffer_size=tf.data.AUTOTUNE).take(-1),
-                    batch_size=self.batch_size,
-                    shuffle=self.shuffle,
-                    validation_data=self.dataset.dataset.get('val').batch(
-                        self.val_batch_size,
-                        drop_remainder=True).prefetch(buffer_size=tf.data.AUTOTUNE).take(-1),
-                    validation_batch_size=self.val_batch_size,
-                    epochs=self.epochs,
-                    verbose=verbose,
-                    callbacks=self.callbacks
-                )
-                if yolo_arch:
-                    self.model.save_weights(os.path.join(self.training_path, 'yolo_last.h5'))
-            except Exception as error:
-                params.state.set("stopped") if params.state.status == "addtrain" else params.state.set("no_train")
-                progress.pool(self.progress_name, error=terra_exception(error).__str__(), finished=True)
-
-            if (params.state.status == "stopped" and self.callbacks[0].last_epoch < params.base.epochs) or \
-                    (params.state.status == "trained" and self.callbacks[0].last_epoch - 1 == params.base.epochs):
-                self.sum_epoch = params.base.epochs
-        except Exception as e:
-            print_error(GUINN().name, method_name, e)
+    # @progress.threading
+    # def base_model_fit(self, params: TrainingDetailsData, dataset: PrepareDataset, dataset_path: Path,
+    #                    dataset_data: DatasetData, save_model_path: Path, verbose=0) -> None:
+    #     method_name = 'base_model_fit'
+    #     try:
+    #
+    #         yolo_arch = True if self.deploy_type in YOLO_ARCHITECTURE else False
+    #         model_yolo = None
+    #
+    #         threading.enumerate()[-1].setName("current_train")
+    #         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели ...'})
+    #         if yolo_arch:
+    #             warmup_epoch = params.base.architecture.parameters.yolo.train_warmup_epochs
+    #             lr_init = params.base.architecture.parameters.yolo.train_lr_init
+    #             lr_end = params.base.architecture.parameters.yolo.train_lr_end
+    #             iou_thresh = params.base.architecture.parameters.yolo.yolo_iou_loss_thresh
+    #
+    #             yolo = create_yolo(self.model, input_size=416, channels=3, training=True,
+    #                                classes=self.dataset.data.outputs.get(2).classes_names,
+    #                                version=self.dataset.instructions.get(2).get('2_object_detection').get('yolo'))
+    #             model_yolo = CustomModelYolo(yolo, self.dataset, self.dataset.data.outputs.get(2).classes_names,
+    #                                          self.epochs, self.batch_size, warmup_epoch=warmup_epoch,
+    #                                          lr_init=lr_init, lr_end=lr_end, iou_thresh=iou_thresh)
+    #             model_yolo.compile(optimizer=self.set_optimizer(self.params),
+    #                                loss=compute_loss)
+    #         # else:
+    #         #     self.model.compile(loss=self.loss,
+    #         #                        optimizer=self.optimizer,
+    #         #                        metrics=self.metrics
+    #         #                        )
+    #         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели выполнена'})
+    #         self._set_callbacks(dataset=dataset, batch_size=params.base.batch,
+    #                             epochs=params.base.epochs, save_model_path=save_model_path, dataset_path=dataset_path,
+    #                             checkpoint=params.base.architecture.parameters.checkpoint.native(),
+    #                             initial_model=self.model if yolo_arch else None, state=params.state,
+    #                             deploy=params.deploy)
+    #         progress.pool(self.progress_name, finished=False, data={'status': 'Начало обучения ...'})
+    #         if self.dataset.data.use_generator:
+    #             print('use generator')
+    #             critical_val_size = len(self.dataset.dataframe.get("val"))
+    #             buffer_size = 100
+    #         else:
+    #             print('dont use generator')
+    #             critical_val_size = len(self.dataset.dataset.get('val'))
+    #             buffer_size = 1000
+    #         # print('critical_val_size', critical_val_size)
+    #         if (critical_val_size == self.batch_size) or ((critical_val_size % self.batch_size) == 0):
+    #             self.val_batch_size = self.batch_size
+    #         elif critical_val_size < self.batch_size:
+    #             self.val_batch_size = critical_val_size
+    #         else:
+    #             self.val_batch_size = self._get_val_batch_size(self.batch_size, critical_val_size)
+    #         # print('self.batch_size', self.batch_size)
+    #         # print('self.val_batch_size', self.val_batch_size)
+    #         trained_model = model_yolo if model_yolo else self.model
+    #
+    #         try:
+    #             trained_model.fit(
+    #                 self.dataset.dataset.get('train').shuffle(buffer_size).batch(
+    #                     self.batch_size, drop_remainder=True).prefetch(buffer_size=tf.data.AUTOTUNE).take(-1),
+    #                 batch_size=self.batch_size,
+    #                 shuffle=self.shuffle,
+    #                 validation_data=self.dataset.dataset.get('val').batch(
+    #                     self.val_batch_size,
+    #                     drop_remainder=True).prefetch(buffer_size=tf.data.AUTOTUNE).take(-1),
+    #                 validation_batch_size=self.val_batch_size,
+    #                 epochs=self.epochs,
+    #                 verbose=verbose,
+    #                 callbacks=self.callbacks
+    #             )
+    #             if yolo_arch:
+    #                 self.model.save_weights(os.path.join(self.training_path, 'yolo_last.h5'))
+    #         except Exception as error:
+    #             params.state.set("stopped") if params.state.status == "addtrain" else params.state.set("no_train")
+    #             progress.pool(self.progress_name, error=terra_exception(error).__str__(), finished=True)
+    #
+    #         if (params.state.status == "stopped" and self.callbacks[0].last_epoch < params.base.epochs) or \
+    #                 (params.state.status == "trained" and self.callbacks[0].last_epoch - 1 == params.base.epochs):
+    #             self.sum_epoch = params.base.epochs
+    #     except Exception as e:
+    #         print_error(GUINN().name, method_name, e)
 
     @staticmethod
     def _prepare_loss_dict(params: dict):
@@ -513,6 +514,7 @@ class GUINN:
             print_error(GUINN().name, method_name, e)
             return None
 
+    @progress.threading
     def train_base_model(self, params: dict, dataset: PrepareDataset, model: Model, callback):
         method_name = 'train_base_model'
         try:
@@ -624,8 +626,9 @@ class GUINN:
                 )
                 # callback._update_log_history()
                 print(
-                    # f"\nEpoch {callback.current_logs.get('epochs')}:\n"
-                    f"\nlog_history: {callback.log_history.get('epochs')} "
+                    f"\nEpoch {callback.current_logs.get('epochs')}:\n"
+                    f"\nlog_history: {callback.log_history.get('epochs')}, "
+                    f"epoch_time={round(time.time() - callback._time_first_step, 3)}"
                     f"\nloss={callback.log_history.get('2').get('loss')}"
                     f"\nmetrics={callback.log_history.get('2').get('metrics')}"
                     # f" \nloss={callback.current_logs.get('2').get('loss')}\n"
@@ -776,8 +779,9 @@ class FitCallback(tf.keras.callbacks.Callback):
         self.num_outputs = len(self.dataset.data.outputs.keys())
         self.metric_checkpoint = self.checkpoint_config.get('metric_name')  # "val_mAP50" if self.is_yolo else "loss"
         self.class_outputs = class_metric_list(self.dataset)
-        self.y_true, _ = BaseClassificationCallback().get_y_true(self.dataset)
-        self.class_idx = BaseClassificationCallback().prepare_class_idx(self.y_true, self.dataset)
+        if self.dataset.data.architecture in CLASSIFICATION_ARCHITECTURE:
+            self.y_true, _ = BaseClassificationCallback().get_y_true(self.dataset)
+            self.class_idx = BaseClassificationCallback().prepare_class_idx(self.y_true, self.dataset)
         print("self.class_outputs", self.class_outputs)
         # print(self.class_idx.get('train').get('2').keys())
 
@@ -940,8 +944,8 @@ class FitCallback(tf.keras.callbacks.Callback):
                     val_metric = self._get_metric_calculation(
                         metric_name, metric_fn, out, val_y_true.get(out), val_y_pred.get(out))
                     self.current_logs[out]["metrics"][metric_name] = {"train": train_metric, "val": val_metric}
-                    self.current_logs[out]["class_metrics"][metric_name] = {}
                     if self.class_outputs.get(output_layer['id']):
+                        self.current_logs[out]["class_metrics"][metric_name] = {}
                         if self.dataset.data.architecture in CLASSIFICATION_ARCHITECTURE and \
                                 metric_name not in [Metric.BalancedRecall, Metric.BalancedPrecision,
                                                     Metric.BalancedFScore, Metric.FScore]:
@@ -1108,9 +1112,6 @@ class FitCallback(tf.keras.callbacks.Callback):
                 elif metric_name in [Metric.BalancedRecall, Metric.BalancedPrecision, Metric.BalancedFScore,
                                      Metric.FScore]:
                     m.update_state(y_true, y_pred, show_class=show_class, class_idx=class_idx)
-                # elif metric_name == Metric.BalancedDiceCoef:
-                #     m.encoding = 'multi' if encoding == 'multi' else None
-                #     m.update_state(y_true, y_pred)
                 else:
                     m.update_state(y_true[..., class_idx:class_idx + 1], y_pred[..., class_idx:class_idx + 1])
             elif show_class:
@@ -1123,7 +1124,10 @@ class FitCallback(tf.keras.callbacks.Callback):
                     pred_array = y_pred[..., class_idx:class_idx + 1]
                     m.update_state(true_array, pred_array)
             else:
-                m.update_state(y_true, y_pred)
+                if metric_name == Metric.UnscaledMAE:
+                    m.update_state(y_true, y_pred, output=int(out), preprocess=self.dataset.preprocessing)
+                else:
+                    m.update_state(y_true, y_pred)
             metric_value = float(m.result().numpy())
             return metric_value if not math.isnan(metric_value) else None
         except Exception as e:
@@ -1183,6 +1187,7 @@ class FitCallback(tf.keras.callbacks.Callback):
                             )
 
                     for metric_name in output_layer.get("metrics", []):
+                        # print(metric_name)
                         for data_type in ['train', 'val']:
                             self.log_history[out]['metrics'][metric_name][data_type].append(
                                 round_loss_metric(
@@ -1200,6 +1205,7 @@ class FitCallback(tf.keras.callbacks.Callback):
                             mean_log=self.log_history[out]['progress_state']['metrics']
                             [metric_name]['mean_log_history']
                         )
+                        # print(metric_underfittng, metric_overfitting)
                         if metric_underfittng or metric_overfitting:
                             normal_state = False
                         else:
@@ -1210,8 +1216,9 @@ class FitCallback(tf.keras.callbacks.Callback):
                             'overfitting'].append(metric_overfitting)
                         self.log_history[out]['progress_state']['metrics'][metric_name][
                             'normal_state'].append(normal_state)
-                        # print('progress_state', self.log_history[out]['progress_state']['metrics'])
+                        # print('metric progress_state', metric_name, self.log_history[out]['progress_state']['metrics'])
                         if self.current_logs.get(out).get("class_metrics"):
+                            # print('if self.current_logs.get(out).get("class_metrics"):', self.current_logs.get(out))
                             for cls in classes_names:
                                 self.log_history[out]['class_metrics'][cls][metric_name]["train"].append(
                                     round_loss_metric(

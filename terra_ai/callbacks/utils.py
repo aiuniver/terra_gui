@@ -366,9 +366,11 @@ def class_metric_list(options):
     method_name = '_class_metric_list'
     try:
         class_graphics = {}
-        if options.data.architecture in CLASS_ARCHITECTURE:
-            for out in options.data.outputs.keys():
+        for out in options.data.outputs.keys():
+            if options.data.architecture in CLASS_ARCHITECTURE:
                 class_graphics[out] = True
+            else:
+                class_graphics[out] = False
         return class_graphics
     except Exception as e:
         print_error(f"None ({MODULE_NAME})", method_name, e)

@@ -291,13 +291,24 @@ class BalancedFScore(tf.keras.metrics.Metric):
         # pass
 
 
-class UnscaledMAE(tf.keras.metrics.MeanAbsoluteError):
+class UnscaledMAE(tf.keras.metrics.Metric):
     def __init__(self, name='unscaled_mae', **kwargs):
         super(UnscaledMAE, self).__init__(name=name, **kwargs)
+        self.mae_result: float = 0.
+
+    def update_state(self, y_true, y_pred, output: int, preprocess: CreatePreprocessing, sample_weight=None):
+        """Работает с numpy, не с тензорами"""
+        m = tf.keras.metrics.MeanAbsoluteError()
+        m.update_state(y_true, y_pred)
+        delta = m.result().numpy()
+        # print('delta', np.array([delta]))
+        m.reset_state()
+        self.mae_result = self.unscale_result(np.array([delta]), output=output, preprocess=preprocess)
+        # print('self.mae_result', self.mae_result)
 
     @staticmethod
-    def unscale_result(mae_result, output: int, dataset: CreatePreprocessing):
-        preprocess_dict = dataset.preprocessing.get(output)
+    def unscale_result(mae_result, output: int, preprocess: CreatePreprocessing):
+        preprocess_dict = preprocess.preprocessing.get(output)
         target_key = None
         for i, column in enumerate(preprocess_dict.keys()):
             if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
@@ -308,13 +319,28 @@ class UnscaledMAE(tf.keras.metrics.MeanAbsoluteError):
         if target_key:
             result = np.expand_dims(mae_result, axis=-1)
             preset = {output: {target_key: result}}
-            unscale = np.array(list(dataset.inverse_data(preset)[output].values()))
+            unscale = np.array(list(preprocess.inverse_data(preset)[output].values()))
             try:
                 return unscale.item()
             except ValueError:
                 return unscale.squeeze().tolist()
         else:
             return mae_result
+
+    def get_config(self):
+        config = super(UnscaledMAE, self).get_config()
+        return config
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+    def result(self):
+        return self.mae_result
+
+    def reset_state(self):
+        self.mae_result: float = 0.
+        # pass
 
 
 def YoloLoss(inputs, num_anchors,):
