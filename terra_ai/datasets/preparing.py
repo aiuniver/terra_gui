@@ -97,7 +97,7 @@ class PrepareDataset(object):
             for inp_id in self.data.inputs.keys():
                 tmp = []
                 for col_name, data in self.instructions[inp_id].items():
-                    if data['augmentation']:
+                    if data['augmentation'] and split_name == 'train':
                         data.update([('augm_data', self.dataframe[split_name].iloc[idx, 1])])
                     sample = os.path.join(self.paths.basepath, self.dataframe[split_name].loc[idx, col_name])
                     array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
@@ -117,7 +117,7 @@ class PrepareDataset(object):
                     tmp_im = Image.open(os.path.join(self.paths.basepath, self.dataframe[split_name].iloc[idx, 0]))
                     data.update([('orig_x', tmp_im.width),
                                  ('orig_y', tmp_im.height)])
-                    if augm_data:
+                    if augm_data and split_name == 'train':
                         data_to_pass = augm_data
                     else:
                         data_to_pass = self.dataframe[split_name].loc[idx, col_name]
