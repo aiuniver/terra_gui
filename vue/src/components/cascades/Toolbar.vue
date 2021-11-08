@@ -15,7 +15,7 @@
         <i class="t-icon icon-model-clear"></i>
       </li>
       <hr />
-      <li class="toolbar__menu--item" @click.prevent="click($event, 'input')" title="Входящий слой">
+      <li :class="['toolbar__menu--item', { disabled: false }]" @click.prevent="click($event, 'InputData')" title="Входящий слой">
         <i class="t-icon icon-layer-input-casc"></i>
       </li>
       <li class="toolbar__menu--item" @click.prevent="click($event, 'model')" title="Model">
@@ -27,7 +27,7 @@
       <li class="toolbar__menu--item" @click.prevent="click($event, 'custom')" title="Custom">
         <i class="t-icon icon-layer-custom"></i>
       </li>
-      <li class="toolbar__menu--item" @click.prevent="click($event, 'output')" title="Исходящий слой">
+      <li :class="['toolbar__menu--item', { disabled: isOutput }]" @click.prevent="click($event, 'OutputData')" title="Исходящий слой">
         <i class="t-icon icon-layer-output"></i>
       </li>
       <hr />
@@ -72,10 +72,10 @@ export default {
       return !(blocks.includes('input') && blocks.includes('output'));
     },
     isInput() {
-      return !!this.blocks.find(item => item.group === 'input') && !!this.project?.dataset;
+      return !!this.blocks.find(item => item.group === 'InputData') && !!this.project?.dataset;
     },
     isOutput() {
-      return !!this.blocks.find(item => item.group === 'output') && !!this.project?.dataset;
+      return !!this.blocks.find(item => item.group === 'OutputData') && !!this.project?.dataset;
     },
   },
   methods: {

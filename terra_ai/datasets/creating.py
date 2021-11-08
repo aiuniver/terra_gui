@@ -179,6 +179,9 @@ class CreateDataset(object):
                         inp.parameters.open_tags = out.parameters.open_tags
                         inp.parameters.close_tags = out.parameters.close_tags
             elif out.type == LayerOutputTypeChoice.ObjectDetection:
+                for inp in creation_data.inputs:
+                    if inp.type == LayerInputTypeChoice.Image:
+                        out.parameters.frame_mode = inp.parameters.image_mode
                 names_list = get_od_names(creation_data)
                 out.parameters.classes_names = names_list
                 out.parameters.num_classes = len(names_list)
@@ -663,7 +666,7 @@ class CreateDataset(object):
                                                                                    data.parameters['depth']]
                 elif decamelize(creation_data.outputs.get(key).type) == decamelize(
                         LayerOutputTypeChoice.ObjectDetection):
-                    data_to_pass = data.instructions[0]
+                    data_to_pass = self.dataframe['train'].iloc[0, 1]
                     tmp_im = Image.open(os.path.join(self.paths.basepath,
                                                      self.dataframe['train'].iloc[0, 0]))
                     data.parameters.update([('orig_x', tmp_im.width),
