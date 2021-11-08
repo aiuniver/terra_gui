@@ -97,11 +97,12 @@ class PrepareDataset(object):
             for inp_id in self.data.inputs.keys():
                 tmp = []
                 for col_name, data in self.instructions[inp_id].items():
+                    dict_to_pass = data.copy()
                     if data['augmentation'] and split_name == 'train':
-                        data.update([('augm_data', self.dataframe[split_name].iloc[idx, 1])])
+                        dict_to_pass.update([('augm_data', self.dataframe[split_name].iloc[idx, 1])])
                     sample = os.path.join(self.paths.basepath, self.dataframe[split_name].loc[idx, col_name])
                     array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
-                        'preprocess': self.preprocessing.preprocessing[inp_id][col_name]}, **data)
+                        'preprocess': self.preprocessing.preprocessing[inp_id][col_name]}, **dict_to_pass)
                     array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
                                                                                      **array['parameters'])
                     if isinstance(array, tuple):
