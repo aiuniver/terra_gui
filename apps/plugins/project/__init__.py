@@ -195,6 +195,7 @@ class Project(BaseMixinData):
         defaults_data.training = DefaultsTrainingData(
             project=self, architecture=self.training.base.architecture.type
         )
+        self.training.save(self.training.name)
         self.save()
 
     def clear_dataset(self):

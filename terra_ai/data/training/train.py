@@ -13,7 +13,8 @@ from pydantic import validator, PrivateAttr
 from pydantic.types import conint, confloat, PositiveInt
 from pydantic.errors import EnumMemberError
 
-from terra_ai import settings
+from terra_ai import settings, progress
+from terra_ai.agent import agent_exchange
 from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.mixins import BaseMixinData, UniqueListMixin, IDMixinData
 from terra_ai.data.training import optimizers, architectures
@@ -258,6 +259,8 @@ class TrainingDetailsData(BaseMixinData):
     def __init__(self, **data):
         self._path = Path(data.get("path"))
 
+        agent_exchange("set_training_progress", data.get("progress", {}))
+
         _name = data.get("name", DEFAULT_TRAINING_PATH_NAME)
         _path = Path(self._path, _name)
         if _path.is_file():
@@ -303,6 +306,10 @@ class TrainingDetailsData(BaseMixinData):
         os.makedirs(_path, exist_ok=True)
         return _path
 
+    @property
+    def progress(self) -> progress.ProgressData:
+        return agent_exchange("training_progress")
+
     @validator("base", pre=True, allow_reuse=True)
     def _validate_base(cls, value, values):
         if not value:
@@ -318,13 +325,15 @@ class TrainingDetailsData(BaseMixinData):
 
     def dict(self, **kwargs):
         kwargs.update({"exclude": {"model"}})
-        return super().dict(**kwargs)
+        data = super().dict(**kwargs)
+        data.update({"progress": self.progress.native()})
+        return data
 
     def save(self, name: str, overwrite: bool = False):
         if self.name == DEFAULT_TRAINING_PATH_NAME:
             pass
-        print(self.name)
-        print(name)
+        # print(self.name)
+        # print(name)
 
     def rename(self, value: str):
         source = self.path
@@ -350,59 +359,80 @@ class TrainingDetailsData(BaseMixinData):
         self.base = TrainData(**data)
         self.set_interactive()
 
-    def set_interactive(self):
-        loss_graphs = []
-        metric_graphs = []
-        progress_table = []
-        _index_m = 0
-        _index_l = 0
-        for layer in self.model.outputs:
-            outputs = self.base.architecture.parameters.outputs.get(layer.id)
-            if not outputs:
-                continue
-            for metric in outputs.metrics:
-                _index_m += 1
-                metric_graphs.append(
+    def set_interactive(self, data: dict = None):
+        if not data:
+            loss_graphs = []
+            metric_graphs = []
+            progress_table = []
+            statistic_data = {}
+            data_balance = {}
+            intermediate_result = {
+                "main_output": self.model.outputs[0].id
+                if len(self.model.outputs)
+                else None
+            }
+
+            _index_m = 0
+            _index_l = 0
+            for layer in self.model.outputs:
+                outputs = self.base.architecture.parameters.outputs.get(layer.id)
+                if not outputs:
+                    continue
+                for metric in outputs.metrics:
+                    _index_m += 1
+                    metric_graphs.append(
+                        {
+                            "id": _index_m,
+                            "output_idx": layer.id,
+                            "show": MetricGraphShowChoice.model,
+                            "show_metric": metric,
+                        }
+                    )
+                    _index_m += 1
+                    metric_graphs.append(
+                        {
+                            "id": _index_m,
+                            "output_idx": layer.id,
+                            "show": MetricGraphShowChoice.classes,
+                            "show_metric": metric,
+                        }
+                    )
+                _index_l += 1
+                loss_graphs.append(
                     {
-                        "id": _index_m,
+                        "id": _index_l,
                         "output_idx": layer.id,
-                        "show": MetricGraphShowChoice.model,
-                        "show_metric": metric,
+                        "show": LossGraphShowChoice.model,
                     }
                 )
-                _index_m += 1
-                metric_graphs.append(
+                _index_l += 1
+                loss_graphs.append(
                     {
-                        "id": _index_m,
+                        "id": _index_l,
                         "output_idx": layer.id,
-                        "show": MetricGraphShowChoice.classes,
-                        "show_metric": metric,
+                        "show": LossGraphShowChoice.classes,
                     }
                 )
-            _index_l += 1
-            loss_graphs.append(
-                {
-                    "id": _index_l,
-                    "output_idx": layer.id,
-                    "show": LossGraphShowChoice.model,
-                }
-            )
-            _index_l += 1
-            loss_graphs.append(
-                {
-                    "id": _index_l,
-                    "output_idx": layer.id,
-                    "show": LossGraphShowChoice.classes,
-                }
-            )
-            progress_table.append(
-                {
-                    "output_idx": layer.id,
-                }
-            )
-        self.interactive.loss_graphs = LossGraphsList(loss_graphs)
-        self.interactive.metric_graphs = MetricGraphsList(metric_graphs)
-        self.interactive.progress_table = ProgressTableList(progress_table)
-        self.interactive.intermediate_result.main_output = (
-            self.model.outputs[0].id if len(self.model.outputs) else None
+                progress_table.append(
+                    {
+                        "output_idx": layer.id,
+                    }
+                )
+            data = {
+                "loss_graphs": loss_graphs,
+                "metric_graphs": metric_graphs,
+                "progress_table": progress_table,
+                "intermediate_result": intermediate_result,
+                "statistic_data": statistic_data,
+                "data_balance": data_balance,
+            }
+
+        self.interactive.loss_graphs = LossGraphsList(data.get("loss_graphs"))
+        self.interactive.metric_graphs = MetricGraphsList(data.get("metric_graphs"))
+        self.interactive.progress_table = ProgressTableList(data.get("progress_table"))
+        self.interactive.statistic_data = StatisticData(**data.get("statistic_data"))
+        self.interactive.data_balance = BalanceData(**data.get("data_balance"))
+        self.interactive.intermediate_result = IntermediateResultData(
+            **data.get("intermediate_result")
         )
+        self.save(self.name)

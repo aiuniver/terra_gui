@@ -1,5 +1,6 @@
+from pydantic import BaseModel
+
 from terra_ai.agent import agent_exchange
-from terra_ai.data.training.train import InteractiveData
 from terra_ai.data.training.extra import StateStatusChoice
 
 from apps.plugins.frontend import defaults_data
@@ -7,6 +8,24 @@ from apps.plugins.frontend import defaults_data
 from apps.api.base import BaseAPIView, BaseResponseSuccess, BaseResponseErrorFields
 
 from . import serializers
+
+
+class TrainingResponseData(BaseModel):
+    form: dict
+    state: dict
+    interactive: dict
+    result: dict
+
+    def __init__(self, project, defaults, **kwargs):
+        kwargs.update(
+            {
+                "form": defaults.training.native(),
+                "state": project.training.state.native(),
+                "interactive": project.training.interactive.native(),
+                "result": project.training.result,
+            }
+        )
+        super().__init__(**kwargs)
 
 
 class StartAPIView(BaseAPIView):
@@ -28,11 +47,7 @@ class StartAPIView(BaseAPIView):
             }
         )
         return BaseResponseSuccess(
-            {
-                "form": defaults_data.training.native(),
-                "interactive": request.project.training.interactive.native(),
-                "state": request.project.training.state.native(),
-            }
+            TrainingResponseData(request.project, defaults_data).dict()
         )
 
 
@@ -42,10 +57,7 @@ class StopAPIView(BaseAPIView):
         agent_exchange("training_stop", training=request.project.training)
         request.project.set_training_base(training_base)
         return BaseResponseSuccess(
-            {
-                "form": defaults_data.training.native(),
-                "state": request.project.training.state.native(),
-            }
+            TrainingResponseData(request.project, defaults_data).dict()
         )
 
 
@@ -55,24 +67,17 @@ class ClearAPIView(BaseAPIView):
         agent_exchange("training_clear", training=request.project.training)
         request.project.clear_training(name)
         return BaseResponseSuccess(
-            {
-                "form": defaults_data.training.native(),
-                "state": request.project.training.state.native(),
-            }
+            TrainingResponseData(request.project, defaults_data).dict()
         )
 
 
 class InteractiveAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        config = InteractiveData(**request.data)
-        request.project.training.interactive = config
-        training_data: dict = None
-        if request.project.training.state.status != StateStatusChoice.no_train:
-            training_data = agent_exchange("training_interactive", config=config)
-            request.project.training.result = (
-                training_data.get("train_data") if training_data else None
-            )
-        return BaseResponseSuccess(training_data)
+        request.project.training.set_interactive(request.data)
+        agent_exchange("training_interactive", request.project.training)
+        return BaseResponseSuccess(
+            TrainingResponseData(request.project, defaults_data).dict()
+        )
 
 
 class ProgressAPIView(BaseAPIView):
@@ -95,7 +100,7 @@ class SaveAPIView(BaseAPIView):
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         request.project.training.save(**serializer.validated_data)
-        agent_exchange("training_save")
+        # agent_exchange("training_save")
         return BaseResponseSuccess()
 
 
@@ -103,8 +108,5 @@ class UpdateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         request.project.set_training_base(request.data)
         return BaseResponseSuccess(
-            {
-                "form": defaults_data.training.native(),
-                "data": request.project.training.native(),
-            }
+            TrainingResponseData(request.project, defaults_data).dict()
         )

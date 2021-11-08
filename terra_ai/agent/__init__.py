@@ -333,17 +333,27 @@ class Exchange:
         """
         training.state.set(StateStatusChoice.no_train)
 
-    def _call_training_interactive(self, config: InteractiveData) -> dict:
+    def _call_training_interactive(self, training: TrainingDetailsData):
         """
         Обновление интерактивных параметров обучения
         """
-        return interactive.get_train_results(config=config)
+        if training.state.status in [
+            StateStatusChoice.stopped,
+            StateStatusChoice.trained,
+        ]:
+            interactive.get_train_results()
 
     def _call_training_progress(self) -> progress.ProgressData:
         """
         Прогресс обучения
         """
         return progress.pool("training")
+
+    def _call_set_training_progress(self, data: dict) -> progress.ProgressData:
+        """
+        Установить текущий прогресс обучения
+        """
+        progress.pool("training", **data)
 
     def _call_training_save(self):
         """
