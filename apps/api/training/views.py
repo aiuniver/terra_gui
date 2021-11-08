@@ -11,6 +11,7 @@ from . import serializers
 
 
 class TrainingResponseData(BaseModel):
+    base: dict
     form: dict
     state: dict
     interactive: dict
@@ -20,6 +21,7 @@ class TrainingResponseData(BaseModel):
     def __init__(self, project, defaults, **kwargs):
         kwargs.update(
             {
+                "base": project.training.base.native(),
                 "form": defaults.training.native(),
                 "state": project.training.state.native(),
                 "interactive": project.training.interactive.native(),
