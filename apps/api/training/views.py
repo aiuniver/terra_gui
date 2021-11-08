@@ -15,6 +15,7 @@ class TrainingResponseData(BaseModel):
     state: dict
     interactive: dict
     result: dict
+    progress: dict
 
     def __init__(self, project, defaults, **kwargs):
         kwargs.update(
@@ -23,6 +24,7 @@ class TrainingResponseData(BaseModel):
                 "state": project.training.state.native(),
                 "interactive": project.training.interactive.native(),
                 "result": project.training.result,
+                "progress": project.training.progress.native(),
             }
         )
         super().__init__(**kwargs)
@@ -56,6 +58,8 @@ class StopAPIView(BaseAPIView):
         training_base = request.project.training.base.native()
         agent_exchange("training_stop", training=request.project.training)
         request.project.set_training_base(training_base)
+        request.project.training.save(request.project.training.name)
+        request.project.save()
         return BaseResponseSuccess(
             TrainingResponseData(request.project, defaults_data).dict()
         )
@@ -66,6 +70,8 @@ class ClearAPIView(BaseAPIView):
         name = request.project.training.name
         agent_exchange("training_clear", training=request.project.training)
         request.project.clear_training(name)
+        request.project.training.save(request.project.training.name)
+        request.project.save()
         return BaseResponseSuccess(
             TrainingResponseData(request.project, defaults_data).dict()
         )
@@ -75,6 +81,8 @@ class InteractiveAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         request.project.training.set_interactive(request.data)
         agent_exchange("training_interactive", request.project.training)
+        request.project.training.save(request.project.training.name)
+        request.project.save()
         return BaseResponseSuccess(
             TrainingResponseData(request.project, defaults_data).dict()
         )
@@ -82,16 +90,13 @@ class InteractiveAPIView(BaseAPIView):
 
 class ProgressAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        current_state = request.project.training.state.status
-        data = agent_exchange("training_progress").native()
-        data.update({"state": request.project.training.state.native()})
-        if current_state != request.project.training.state.status:
-            request.project.set_training_base(request.project.training.base.native())
-            data.update({"form": defaults_data.training.native()})
-        _finished = data.get("finished")
-        if _finished:
+        progress = agent_exchange("training_progress")
+        if progress.finished:
+            request.project.training.save(request.project.training.name)
             request.project.save()
-        return BaseResponseSuccess(data)
+        return BaseResponseSuccess(
+            TrainingResponseData(request.project, defaults_data).dict()
+        )
 
 
 class SaveAPIView(BaseAPIView):
@@ -107,6 +112,8 @@ class SaveAPIView(BaseAPIView):
 class UpdateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         request.project.set_training_base(request.data)
+        request.project.training.save(request.project.training.name)
+        request.project.save()
         return BaseResponseSuccess(
             TrainingResponseData(request.project, defaults_data).dict()
         )
