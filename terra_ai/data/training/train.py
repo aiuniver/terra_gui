@@ -14,7 +14,6 @@ from pydantic.types import conint, confloat, PositiveInt
 from pydantic.errors import EnumMemberError
 
 from terra_ai import settings, progress
-from terra_ai.agent import agent_exchange
 from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.mixins import BaseMixinData, UniqueListMixin, IDMixinData
 from terra_ai.data.training import optimizers, architectures
@@ -250,7 +249,7 @@ class TrainingDetailsData(BaseMixinData):
     base: TrainData = TrainData()
     interactive: InteractiveData = InteractiveData()
     state: StateData = StateData(status="no_train")
-    result: Optional[dict]
+    result: Optional[dict] = {}
     deploy: Optional[DeployData]
     logs: Optional[dict] = {}
 
@@ -259,7 +258,7 @@ class TrainingDetailsData(BaseMixinData):
     def __init__(self, **data):
         self._path = Path(data.get("path"))
 
-        agent_exchange("set_training_progress", data.get("progress", {}))
+        progress.pool("training", **data.get("progress", {}))
 
         _name = data.get("name", DEFAULT_TRAINING_PATH_NAME)
         _path = Path(self._path, _name)
@@ -308,13 +307,19 @@ class TrainingDetailsData(BaseMixinData):
 
     @property
     def progress(self) -> progress.ProgressData:
-        return agent_exchange("training_progress")
+        return progress.pool("training")
 
     @validator("base", pre=True, allow_reuse=True)
     def _validate_base(cls, value, values):
         if not value:
             value = {}
         value.update({"model": values.get("model")})
+        return value
+
+    @validator("result", pre=True)
+    def _validate_result(cls, value: dict) -> dict:
+        if not value:
+            value = {}
         return value
 
     @validator("logs", pre=True)
