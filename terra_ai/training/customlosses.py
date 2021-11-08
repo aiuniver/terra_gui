@@ -376,7 +376,57 @@ class UnscaledMAE(tf.keras.metrics.MeanAbsoluteError):
             return mae_result
 
 
-def YoloLoss(inputs, num_anchors,):
+class PercentMAE(tf.keras.metrics.Metric):
+    def __init__(self, name='percent_mae', **kwargs):
+        super(PercentMAE, self).__init__(name=name, **kwargs)
+        self.score: float = 0
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        y_true = tf.cast(y_true, tf.float32)
+        y_pred = tf.cast(y_pred, tf.float32)
+        self.score = K.mean(tf.abs(y_true - y_pred) * 100 / K.mean(y_true))
+
+    def get_config(self):
+        """
+        Returns the serializable config of the metric.
+        """
+        config = super(PercentMAE, self).get_config()
+        return config
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+    def result(self):
+        return self.score
+
+    def reset_state(self):
+        self.score: float = 0
+        # pass
+
+    @staticmethod
+    def unscale_result(mae_result, output: int, dataset: CreatePreprocessing):
+        preprocess_dict = dataset.preprocessing.get(output)
+        target_key = None
+        for i, column in enumerate(preprocess_dict.keys()):
+            if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
+                target_key = column
+            else:
+                target_key = None
+                break
+        if target_key:
+            result = np.expand_dims(mae_result, axis=-1)
+            preset = {output: {target_key: result}}
+            unscale = np.array(list(dataset.inverse_data(preset)[output].values()))
+            try:
+                return unscale.item()
+            except ValueError:
+                return unscale.squeeze().tolist()
+        else:
+            return mae_result
+
+
+def YoloLoss(inputs, num_anchors, ):
     """
     Функция подсчета ошибки.
         Входные параметры:

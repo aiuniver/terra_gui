@@ -216,6 +216,11 @@ loss_metric_config = {
             "mode": "min",
             "module": "tensorflow.keras.metrics"
         },
+        "PercentMAE": {
+            "log_name": "percent_mae",
+            "mode": "min",
+            "module": "terra_ai.training.customlosses"
+        },
         "Poisson": {
             "log_name": "poisson",
             "mode": "min",

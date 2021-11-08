@@ -75,6 +75,7 @@ class Metric(str, Enum):
     UnscaledMAE = "UnscaledMAE"
     mAP50 = "mAP50"
     mAP95 = "mAP95"
+    PercentMAE = "PercentMAE"
 
 
 TasksGroups = [
@@ -228,7 +229,8 @@ TasksGroups = [
             # Loss.SquaredHinge,
         ],
         "metrics": [
-            Metric.UnscaledMAE,
+            Metric.PercentMAE,
+            # Metric.UnscaledMAE,
             # Metric.MeanAbsoluteError,
             # Metric.MeanAbsolutePercentageError,
             # Metric.MeanSquaredError,

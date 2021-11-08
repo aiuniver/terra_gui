@@ -37,7 +37,7 @@ from terra_ai.exceptions.deploy import MethodNotImplementedException
 from terra_ai.modeling.validator import ModelValidator
 # from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.training.customlosses import DiceCoef, UnscaledMAE, BalancedRecall, BalancedDiceCoef, \
-    BalancedPrecision, BalancedFScore, FScore
+    BalancedPrecision, BalancedFScore, FScore, PercentMAE
 from terra_ai.training.yolo_utils import create_yolo, CustomModelYolo, compute_loss, get_mAP
 from terra_ai.exceptions import training as exceptions, terra_exception
 
@@ -107,6 +107,8 @@ class GUINN:
                 output.append(BalancedDiceCoef(encoding=options.encoding.value))
             elif metric == MetricChoice.UnscaledMAE:
                 output.append(UnscaledMAE())
+            elif metric == MetricChoice.PercentMAE:
+                output.append(PercentMAE())
             elif metric == MetricChoice.mAP50 or metric == MetricChoice.mAP95:
                 pass
             else:

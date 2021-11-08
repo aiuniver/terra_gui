@@ -160,6 +160,7 @@ class MetricChoice(str, Enum):
     BalancedDiceCoef = "BalancedDiceCoef"
     mAP50 = "mAP50"
     mAP95 = "mAP95"
+    PercentMAE = "PercentMAE"
 
 
 class TaskGroupData(BaseMixinData):
