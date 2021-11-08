@@ -13,7 +13,8 @@ from pydantic import validator, PrivateAttr
 from pydantic.types import conint, confloat, PositiveInt
 from pydantic.errors import EnumMemberError
 
-from terra_ai import settings
+from terra_ai import settings, progress
+from terra_ai.agent import agent_exchange
 from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.mixins import BaseMixinData, UniqueListMixin, IDMixinData
 from terra_ai.data.training import optimizers, architectures
@@ -258,6 +259,8 @@ class TrainingDetailsData(BaseMixinData):
     def __init__(self, **data):
         self._path = Path(data.get("path"))
 
+        agent_exchange("set_training_progress", data.get("progress", {}))
+
         _name = data.get("name", DEFAULT_TRAINING_PATH_NAME)
         _path = Path(self._path, _name)
         if _path.is_file():
@@ -303,6 +306,10 @@ class TrainingDetailsData(BaseMixinData):
         os.makedirs(_path, exist_ok=True)
         return _path
 
+    @property
+    def progress(self) -> progress.ProgressData:
+        return agent_exchange("training_progress")
+
     @validator("base", pre=True, allow_reuse=True)
     def _validate_base(cls, value, values):
         if not value:
@@ -318,7 +325,9 @@ class TrainingDetailsData(BaseMixinData):
 
     def dict(self, **kwargs):
         kwargs.update({"exclude": {"model"}})
-        return super().dict(**kwargs)
+        data = super().dict(**kwargs)
+        data.update({"progress": self.progress.native()})
+        return data
 
     def save(self, name: str, overwrite: bool = False):
         if self.name == DEFAULT_TRAINING_PATH_NAME:

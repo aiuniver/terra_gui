@@ -349,6 +349,12 @@ class Exchange:
         """
         return progress.pool("training")
 
+    def _call_set_training_progress(self, data: dict) -> progress.ProgressData:
+        """
+        Установить текущий прогресс обучения
+        """
+        progress.pool("training", **data)
+
     def _call_training_save(self):
         """
         Сохранение обучения
