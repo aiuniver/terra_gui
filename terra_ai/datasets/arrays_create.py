@@ -1235,9 +1235,11 @@ class CreateArray(object):
                                                   coords=options['augm_data'],
                                                   augmentation_dict=options['augmentation'])
 
+        frame_mode = options['image_mode'] if 'image_mode' in options.keys() else 'stretch' # Временное решение
+
         array = resize_frame(image_array=array,
                              target_shape=(options['height'], options['width']),
-                             frame_mode=options['image_mode'])
+                             frame_mode=frame_mode)
 
         if options['net'] == LayerNetChoice.linear:
             array = array.reshape(np.prod(np.array(array.shape)))
