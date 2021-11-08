@@ -275,7 +275,14 @@ class TrainingDetailsData(BaseMixinData):
 
         if data.get("deploy"):
             data["deploy"].update(
-                {"path": str(Path(self._path, _name, settings.TRAINING_DEPLOY_DIRNAME))}
+                {
+                    "path": str(
+                        Path(self._path, _name, settings.TRAINING_DEPLOY_DIRNAME)
+                    ),
+                    "path_model": str(
+                        Path(self._path, _name, settings.TRAINING_MODEL_DIRNAME)
+                    ),
+                }
             )
         super().__init__(**data)
 
