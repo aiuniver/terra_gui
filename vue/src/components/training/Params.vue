@@ -148,7 +148,14 @@ export default {
     },
     async stop() {
       this.stopLearning = true;
-      await this.$store.dispatch('trainings/stop', {});
+      const res = await this.$store.dispatch('trainings/stop', {});
+      if (res && res?.data?.progress) {
+        const { finished } = res.data.progress;
+        if (finished) {
+          this.debounce(false);
+          this.stopLearning = false;
+        }
+      }
     },
     async clear() {
       await this.$store.dispatch('trainings/clear', {});
@@ -159,7 +166,7 @@ export default {
     },
     async progress() {
       const res = await this.$store.dispatch('trainings/progress', {});
-      console.log(res?.data?.progress)
+      // console.log(res?.data?.progress)
       if (res && res?.data?.progress) {
         const { finished, message, percent } = res.data.progress;
         this.$store.dispatch('messages/setProgressMessage', message);

@@ -66,7 +66,7 @@ export default {
   },
   actions: {
     parseStruct ({ commit }, { form, interactive, progress, state, result, base }) {
-      console.log(form, interactive, progress, state)
+      // console.log(form, interactive, progress, state)
       if (base) commit("SET_BASE", base)
       if (form) commit("SET_FORM", form)
       if (state) commit("SET_STATE", state)
@@ -145,11 +145,9 @@ export default {
     },
     async progress ({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/progress/', data }, { root: true });
-      console.log(res)
       if (res) {
         const { data, error } = res;
         if (data) {
-          console.log(data)
           dispatch('parseStruct', data || {});
         }
         if (error) {
