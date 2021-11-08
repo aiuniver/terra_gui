@@ -93,15 +93,23 @@ class PrepareDataset(object):
         service = {}
 
         for idx in range(len(self.dataframe[split_name])):
+            augm_data = ''
             for inp_id in self.data.inputs.keys():
                 tmp = []
                 for col_name, data in self.instructions[inp_id].items():
+                    if data['augmentation']:
+                        data.update([('augm_data', self.dataframe[split_name].iloc[idx, 1])])
                     sample = os.path.join(self.paths.basepath, self.dataframe[split_name].loc[idx, col_name])
                     array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
                         'preprocess': self.preprocessing.preprocessing[inp_id][col_name]}, **data)
                     array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
                                                                                      **array['parameters'])
-                    tmp.append(array)
+                    if isinstance(array, tuple):
+                        tmp.append(array[0])
+                        augm_data += array[1]
+                    else:
+                        tmp.append(array)
+
                 inputs[str(inp_id)] = np.concatenate(tmp, axis=0)
 
             for out_id in self.data.outputs.keys():
@@ -109,8 +117,11 @@ class PrepareDataset(object):
                     tmp_im = Image.open(os.path.join(self.paths.basepath, self.dataframe[split_name].iloc[idx, 0]))
                     data.update([('orig_x', tmp_im.width),
                                  ('orig_y', tmp_im.height)])
-                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(self.dataframe[split_name]
-                                                                                 .loc[idx, col_name], **{
+                    if augm_data:
+                        data_to_pass = augm_data
+                    else:
+                        data_to_pass = self.dataframe[split_name].loc[idx, col_name]
+                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(data_to_pass, **{
                         'preprocess': self.preprocessing.preprocessing[out_id][col_name]}, **data)
                     array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
                                                                                      **array['parameters'])
