@@ -1,6 +1,6 @@
 const typeBlock = [
     {
-      group: "input",
+      group: "InputData",
       name: 'Вход ',
       type: 'InputData',
       inputs: [],
@@ -28,7 +28,7 @@ const typeBlock = [
       outputs: [{}],
     },
     {
-      group: "output",
+      group: "OutputData",
       name: 'Выход ',
       type: 'OutputData',
       inputs: [{}],

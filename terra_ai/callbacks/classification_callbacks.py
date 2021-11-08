@@ -368,11 +368,16 @@ class ImageClassificationCallback(BaseClassificationCallback):
             else:
                 img = image.array_to_img(x_array[example_id])
             img = img.convert('RGB')
-            source = os.path.join(preset_path, f"initial_data_image_{save_id}_input_{input_id}.webp")
-            img.save(source, 'webp')
+
             if return_mode == 'deploy':
-                return source
+                source = os.path.join(preset_path, "deploy_presets",
+                                      f"initial_data_image_{save_id}_input_{input_id}.webp")
+                return_source = os.path.join("deploy_presets", f"initial_data_image_{save_id}_input_{input_id}.webp")
+                img.save(source, 'webp')
+                return return_source
             if return_mode == 'callback':
+                source = os.path.join(preset_path, f"initial_data_image_{save_id}_input_{input_id}.webp")
+                img.save(source, 'webp')
                 data = [
                     {
                         "title": "Изображение",
@@ -409,6 +414,7 @@ class ImageClassificationCallback(BaseClassificationCallback):
                 _id = 1
                 for idx in example_idx:
                     input_id = list(options.data.inputs.keys())[0]
+                    # preset_path = os.path.join(save_path, "deploy_presets")
                     source = ImageClassificationCallback.postprocess_initial_source(
                         options=options,
                         input_id=input_id,
@@ -425,7 +431,6 @@ class ImageClassificationCallback(BaseClassificationCallback):
                         options=options.data.outputs[output_id],
                         return_mode='deploy'
                     )
-
                     return_data[output_id].append(
                         {
                             "source": source,
@@ -805,11 +810,10 @@ class AudioClassificationCallback(BaseClassificationCallback):
             if not save_id:
                 return str(os.path.abspath(initial_file_path))
 
-            data = []
-            source = os.path.join(preset_path, f"initial_data_audio_{save_id}_input_{input_id}.webm")
-            AudioSegment.from_file(initial_file_path).export(source, format="webm")
             if return_mode == 'callback':
-                data_type = LayerInputTypeChoice.Audio.name
+                data = []
+                source = os.path.join(preset_path, f"initial_data_audio_{save_id}_input_{input_id}.webm")
+                AudioSegment.from_file(initial_file_path).export(source, format="webm")
                 data = [
                     {
                         "title": "Аудио",
@@ -817,10 +821,13 @@ class AudioClassificationCallback(BaseClassificationCallback):
                         "color_mark": None
                     }
                 ]
-            if return_mode == 'deploy':
-                return source
-            if return_mode == 'callback':
                 return data
+            if return_mode == 'deploy':
+                source = os.path.join(preset_path, "deploy_presets",
+                                      f"initial_data_audio_{save_id}_input_{input_id}.webm")
+                return_source = os.path.join("deploy_presets", f"initial_data_audio_{save_id}_input_{input_id}.webm")
+                AudioSegment.from_file(initial_file_path).export(source, format="webm")
+                return return_source
         except Exception as e:
             print_error(AudioClassificationCallback().name, method_name, e)
 
@@ -958,12 +965,16 @@ class VideoClassificationCallback(BaseClassificationCallback):
                 return str(os.path.abspath(initial_file_path))
 
             clip = moviepy_editor.VideoFileClip(initial_file_path)
-            source = os.path.join(preset_path, f"initial_data_video_{save_id}_input_{input_id}.webm")
-            clip.write_videofile(source)
 
             if return_mode == 'deploy':
-                return source
+                source = os.path.join(preset_path, "deploy_presets",
+                                      f"initial_data_video_{save_id}_input_{input_id}.webm")
+                return_source = os.path.join("deploy_presets", f"initial_data_video_{save_id}_input_{input_id}.webm")
+                clip.write_videofile(source)
+                return return_source
             if return_mode == 'callback':
+                source = os.path.join(preset_path, f"initial_data_video_{save_id}_input_{input_id}.webm")
+                clip.write_videofile(source)
                 data = [
                     {
                         "title": "Видео",

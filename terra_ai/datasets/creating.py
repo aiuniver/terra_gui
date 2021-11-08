@@ -663,7 +663,7 @@ class CreateDataset(object):
                                                                                    data.parameters['depth']]
                 elif decamelize(creation_data.outputs.get(key).type) == decamelize(
                         LayerOutputTypeChoice.ObjectDetection):
-                    data_to_pass = data.instructions[0]
+                    data_to_pass = self.dataframe['train'].iloc[0, 1]
                     tmp_im = Image.open(os.path.join(self.paths.basepath,
                                                      self.dataframe['train'].iloc[0, 0]))
                     data.parameters.update([('orig_x', tmp_im.width),

@@ -9,6 +9,7 @@ from tensorflow.keras import utils
 from tensorflow.keras import datasets as load_keras_datasets
 from tensorflow.python.data.ops.dataset_ops import DatasetV2 as Dataset
 from sklearn.model_selection import train_test_split
+from PIL import Image
 
 from terra_ai.utils import decamelize
 from terra_ai.datasets.preprocessing import CreatePreprocessing
@@ -105,6 +106,9 @@ class PrepareDataset(object):
 
             for out_id in self.data.outputs.keys():
                 for col_name, data in self.instructions[out_id].items():
+                    tmp_im = Image.open(os.path.join(self.paths.basepath, self.dataframe[split_name].iloc[idx, 0]))
+                    data.update([('orig_x', tmp_im.width),
+                                 ('orig_y', tmp_im.height)])
                     array = getattr(CreateArray(), f'create_{data["put_type"]}')(self.dataframe[split_name]
                                                                                  .loc[idx, col_name], **{
                         'preprocess': self.preprocessing.preprocessing[out_id][col_name]}, **data)
