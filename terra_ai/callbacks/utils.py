@@ -367,13 +367,21 @@ def get_autocorrelation_graphic(y_true, y_pred, depth=10) -> (list, list, list):
 
         auto_corr_true = []
         for i in range(depth):
-            auto_corr_true.append(get_auto_corr(y_true[:-(i + 1)], y_true[(i + 1):]))
+            if i == 0:
+                auto_corr_true.append(get_auto_corr(y_true, y_true))
+            else:
+                auto_corr_true.append(get_auto_corr(y_true[:-i], y_true[i:]))
 
         auto_corr_pred = []
         for i in range(depth):
-            auto_corr_pred.append(get_auto_corr(y_true[:-(i + 1)], y_pred[(i + 1):]))
+            if i == 0:
+                auto_corr_pred.append(get_auto_corr(y_true, y_pred))
+            else:
+                auto_corr_pred.append(get_auto_corr(y_true[:-i], y_pred[i:]))
+            # print(i, auto_corr_pred[-1])
 
         x_axis = np.arange(depth).astype('int').tolist()
+        # print('\nauto_corr_true, auto_corr_pred', auto_corr_true, auto_corr_pred)
         return x_axis, auto_corr_true, auto_corr_pred
     except Exception as e:
         print_error(f"None ({MODULE_NAME})", method_name, e)
