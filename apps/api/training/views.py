@@ -80,7 +80,7 @@ class ClearAPIView(BaseAPIView):
 class InteractiveAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         request.project.training.set_interactive(request.data)
-        agent_exchange("training_interactive", request.project.training)
+        agent_exchange("training_interactive", training=request.project.training)
         request.project.training.save(request.project.training.name)
         request.project.save()
         return BaseResponseSuccess(
