@@ -69,7 +69,7 @@ export default {
       if (btn === 'load') {
         this.isTraining();
       }
-      if (['input', 'model', 'function', 'custom', 'output'].includes(btn)) {
+      if (['InputData', 'model', 'function', 'custom', 'OutputData'].includes(btn)) {
         this.addBlock(btn);
       }
       if (btn === 'save') {

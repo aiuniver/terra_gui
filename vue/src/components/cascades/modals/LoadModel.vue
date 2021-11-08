@@ -25,7 +25,7 @@
           <ul class="loaded-list">
             <li
               :class="['loaded-list__item', { 'loaded-list__item--active': selected === list.label }]"
-              v-for="(list, i) in models"
+              v-for="(list, i) in lists"
               :key="`model_${i}`"
               @click="getModel(list), (selected = list.label)"
             >
@@ -36,7 +36,7 @@
                 <i class="t-icon"></i>
               </div>
             </li>
-            <li v-if="!models.length" class="loaded-list__item">
+            <li v-if="!lists.length" class="loaded-list__item">
               <span class="loaded-list__item--empty">Каскад "{{ search }}" не найден</span>
             </li>
           </ul>
@@ -50,12 +50,12 @@
                 <span>Name:</span>
                 <span>{{ info.alias ? ` ${info.name}` : '' }}</span>
               </div>
-              <div class="model-arch-info-param input_shape">
+              <!-- <div class="model-arch-info-param input_shape">
                 <span>Input shape:</span>
                 <span>{{ info.input_shape ? ` ${info.input_shape}` : '' }}</span>
-              </div>
+              </div> -->
               <!-- <div class="model-arch-info-param datatype">
-                Datatype:
+                <span>Datatype: </span>
                 <span>{{ info.name }}</span>
               </div> -->
             </div>

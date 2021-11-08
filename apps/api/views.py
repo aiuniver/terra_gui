@@ -4,19 +4,19 @@ from django.conf import settings
 
 from apps.plugins.frontend import defaults_data
 
-from .base import BaseAPIView, BaseResponseSuccess
+from . import base
 
 
-class NotFoundAPIView(BaseAPIView):
+class NotFoundAPIView(base.BaseAPIView):
     pass
 
 
-class ConfigAPIView(BaseAPIView):
+class ConfigAPIView(base.BaseAPIView):
     def post(self, request, **kwargs):
-        return BaseResponseSuccess(
+        return base.BaseResponseSuccess(
             {
                 "defaults": json.loads(defaults_data.json()),
-                "project": json.loads(request.project.front()),
+                "project": json.loads(request.project.frontend()),
                 "user": {
                     "login": settings.USER_LOGIN,
                     "first_name": settings.USER_NAME,

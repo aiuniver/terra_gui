@@ -1,39 +1,42 @@
 import hashlib
 
+from pathlib import Path
+
 from django.conf import settings
 
-from apps.plugins.project import project_path
 from terra_ai.agent import agent_exchange
-from .serializers import UploadSerializer, ReloadSerializer
-from ..base import (
+
+from apps.api.base import (
     BaseAPIView,
     BaseResponseSuccess,
     BaseResponseErrorFields,
     BaseResponseErrorGeneral,
 )
 
+from . import serializers
+
 
 class ReloadAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        serializer = ReloadSerializer(data=request.data)
+        serializer = serializers.ReloadSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
-        if request.project.deploy:
-            request.project.deploy.data.reload(serializer.validated_data)
+        if request.project.training.deploy:
+            request.project.training.deploy.data.reload(serializer.validated_data)
         request.project.save()
-        return BaseResponseSuccess(request.project.deploy.presets)
+        return BaseResponseSuccess(request.project.training.deploy.presets)
 
 
 class UploadAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        serializer = UploadSerializer(data=request.data)
+        serializer = serializers.UploadSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         sec = serializer.validated_data.get("sec")
         agent_exchange(
             "deploy_upload",
             **{
-                "source": project_path.deploy,
+                "source": Path(request.project.training.path, "deploy"),
                 "stage": 1,
                 "deploy": serializer.validated_data.get("deploy"),
                 "env": "v1",
@@ -41,14 +44,12 @@ class UploadAPIView(BaseAPIView):
                     "login": settings.USER_LOGIN,
                     "name": settings.USER_NAME,
                     "lastname": settings.USER_LASTNAME,
-                    "sec": hashlib.md5(sec.encode("utf-8")).hexdigest()
-                    if sec
-                    else "",
+                    "sec": hashlib.md5(sec.encode("utf-8")).hexdigest() if sec else "",
                 },
                 "project": {
                     "name": request.project.name,
                 },
-                "task": request.project.deploy.type.demo,
+                "task": request.project.training.deploy.type.demo,
                 "replace": serializer.validated_data.get("replace"),
             }
         )

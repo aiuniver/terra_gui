@@ -10,12 +10,10 @@ def main(**params):
         acc = np.array(acc)
         acc = acc.astype(np.int)
 
-        out = []
+        while len(acc) == 1:
+            acc = acc[0]
 
-        if len(acc.shape) == 2:
-            for i in acc:
-                out.append(list(zip(classes_names, i)))
-
+        out = list(zip(classes_names, acc))
         return sorted(out, key=lambda x: x[-1], reverse=True)
 
     return fun
