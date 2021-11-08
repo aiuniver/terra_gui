@@ -180,7 +180,6 @@ class Exchange:
         """
         Получение данных для страницы датасетов: датасеты и теги
         """
-        raise Exception('Описание ошибки')
         info = DatasetsGroupsList(DatasetsGroups)
         for dirname in os.listdir(str(path.absolute())):
             if dirname.endswith(settings.DATASET_EXT):
