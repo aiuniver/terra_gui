@@ -494,44 +494,102 @@ class Yolov1:
         return data, {}
 
 
-# def resize_bboxes(coords, orig_x, orig_y):
-#     x_scale = orig_x / 416
-#     y_scale = orig_y / 416
-#     real_boxes = []
-#     if x_scale == 1 and y_scale == 1:
-#         for coord in coords.split(' '):
-#             real_boxes.append([literal_eval(num) for num in coord.split(',')])
-#     else:
-#         for coord in coords.split(' '):
-#             tmp = []
-#             for i, num in enumerate(coord.split(',')):
-#                 if i in [0, 2]:
-#                     tmp_value = int(literal_eval(num) / x_scale) - 1
-#                     scale_value = orig_x if tmp_value > orig_x else tmp_value
-#                     tmp.append(scale_value)
-#                 elif i in [1, 3]:
-#                     tmp_value = int(literal_eval(num) / y_scale) - 1
-#                     scale_value = orig_y if tmp_value > orig_y else tmp_value
-#                     tmp.append(scale_value)
-#                 else:
-#                     tmp.append(literal_eval(num))
-#             real_boxes.append(tmp)
-#     return real_boxes
-
-def resize_bboxes(coords, orig_x, orig_y, target_x=416, target_y=416):
-
+def resize_bboxes(frame_mode, coords, orig_x, orig_y, target_x=416, target_y=416):
     real_boxes = []
-    for coord in coords.split(' '):
-        sample = [literal_eval(x) for x in coord.split(',')]
-        sample[0] = int(round((sample[0] / orig_x) * target_x, 0))
-        sample[1] = int(round((sample[1] / orig_y) * target_y, 0))
-        sample[2] = int(round((sample[2] / orig_x) * target_x, 0))
-        sample[3] = int(round((sample[3] / orig_y) * target_y, 0))
+    if frame_mode == 'stretch':
+        for coord in coords.split(' '):
+            sample = [literal_eval(x) for x in coord.split(',')]
+            sample[0] = int(round((sample[0] / orig_x) * target_x, 0))
+            sample[1] = int(round((sample[1] / orig_y) * target_y, 0))
+            sample[2] = int(round((sample[2] / orig_x) * target_x, 0))
+            sample[3] = int(round((sample[3] / orig_y) * target_y, 0))
 
-        if sample[0] < sample[2] and sample[1] < sample[3]:
             real_boxes.append(sample)
 
+    elif frame_mode == 'fit':
+        for coord in coords.split(' '):
+            sample = [literal_eval(x) for x in coord.split(',')]
+            if orig_x >= orig_y:
+                new_y = int(orig_y / (orig_x / target_x))
+                sample[0] = int(round((sample[0] / orig_x) * target_x, 0))
+                sample[2] = int(round((sample[2] / orig_x) * target_x, 0))
+                sample[1] = int(round((sample[1] / orig_y) * new_y, 0) + (target_y - new_y) / 2)
+                sample[3] = int(round((sample[3] / orig_y) * new_y, 0) + (target_y - new_y) / 2)
+                if new_y > target_y:
+                    new_x = int(orig_x / (orig_y / target_y))
+                    sample[0] = int(round((sample[0] / orig_x) * new_x, 0) + (target_x - new_x) / 2)
+                    sample[2] = int(round((sample[2] / orig_x) * new_x, 0) + (target_x - new_x) / 2)
+                    sample[1] = int(round((sample[1] / orig_y) * target_y, 0))
+                    sample[3] = int(round((sample[3] / orig_y) * target_y, 0))
+
+            elif orig_y >= orig_x:
+                new_x = int(orig_x / (orig_y / target_y))
+                sample[0] = int(round((sample[0] / orig_x) * new_x, 0) + (target_x - new_x) / 2)
+                sample[2] = int(round((sample[2] / orig_x) * new_x, 0) + (target_x - new_x) / 2)
+                sample[1] = int(round((sample[1] / orig_y) * target_y, 0))
+                sample[3] = int(round((sample[3] / orig_y) * target_y, 0))
+                if new_x > target_x:
+                    new_y = int(orig_y / (orig_x / target_x))
+                    sample[0] = int(round((sample[0] / orig_x) * target_x, 0))
+                    sample[2] = int(round((sample[2] / orig_x) * target_x, 0))
+                    sample[1] = int(round((sample[1] / orig_y) * new_y, 0) + (target_y - new_y) / 2)
+                    sample[3] = int(round((sample[3] / orig_y) * new_y, 0) + (target_y - new_y) / 2)
+
+            real_boxes.append(sample)
+
+    elif frame_mode == 'cut':
+        for coord in coords.split(' '):
+            sample = [literal_eval(x) for x in coord.split(',')]
+            if orig_x <= target_x:
+                sample[0] = int(sample[0] + (target_x - orig_x) / 2)
+                sample[2] = int(sample[2] + (target_x - orig_x) / 2)
+            else:
+                sample[0] = int(sample[0] - (orig_x - target_x) / 2)
+                sample[2] = int(sample[2] - (orig_x - target_x) / 2)
+            if orig_y <= target_y:
+                sample[1] = int(sample[1] + (target_y - orig_y) / 2)
+                sample[3] = int(sample[3] + (target_y - orig_y) / 2)
+            else:
+                sample[1] = int(sample[1] - (orig_y - target_y) / 2)
+                sample[3] = int(sample[3] - (orig_y - target_y) / 2)
+
+            real_boxes.append(sample)
+
+    pop_idxs = []
+    for idx, bbox in enumerate(real_boxes):
+        for i in range(4):
+            if i in [0, 2]:
+                if bbox[i] > target_x:
+                    bbox[i] = target_x
+            elif i in [1, 3]:
+                if bbox[i] > target_y:
+                    bbox[i] = target_y
+            if bbox[i] < 0:
+                bbox[i] = 0
+
+        if bbox[0] >= bbox[2] or bbox[1] >= bbox[3]:
+            pop_idxs.append(idx)
+
+    for i in reversed(pop_idxs):
+        real_boxes.pop(i)
+
     return real_boxes
+
+
+# def resize_bboxes(coords, orig_x, orig_y, target_x=416, target_y=416):
+#
+#     real_boxes = []
+#     for coord in coords.split(' '):
+#         sample = [literal_eval(x) for x in coord.split(',')]
+#         sample[0] = int(round((sample[0] / orig_x) * target_x, 0))
+#         sample[1] = int(round((sample[1] / orig_y) * target_y, 0))
+#         sample[2] = int(round((sample[2] / orig_x) * target_x, 0))
+#         sample[3] = int(round((sample[3] / orig_y) * target_y, 0))
+#
+#         if sample[0] < sample[2] and sample[1] < sample[3]:
+#             real_boxes.append(sample)
+#
+#     return real_boxes
 
 
 def get_od_names(creation_data):
