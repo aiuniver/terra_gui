@@ -586,10 +586,10 @@ def round_loss_metric(x: float):
             return x
         elif math.isnan(float(x)):
             return None
-        elif x > 1000:
+        elif x > 10:
             return np.round(x, 1).item()
         elif x > 1:
-            return np.round(x, -int(math.floor(math.log10(abs(x))) - 3)).item()
+            return np.round(x, -int(math.floor(math.log10(abs(x))) - 2)).item()
         else:
             return np.round(x, -int(math.floor(math.log10(abs(x))) - 2)).item()
     except Exception as e:

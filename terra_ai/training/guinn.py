@@ -114,6 +114,7 @@ class GUINN:
         return output
 
     def _set_training_params(self, dataset: DatasetData, params: TrainingDetailsData) -> None:
+        print('\nTrainingData', params.base.native(), '\n')
         self.dataset = self._prepare_dataset(dataset=dataset, model_path=params.model_path,
                                              state=params.state.status)
         if not self.dataset.data.architecture or self.dataset.data.architecture == ArchitectureChoice.Basic:
