@@ -742,7 +742,8 @@ class CreateArray(object):
                         'parameters': {'yolo': options['yolo'],
                                        'num_classes': options['num_classes'],
                                        'classes_names': options['classes_names'],
-                                       'put': options['put']}
+                                       'put': options['put'],
+                                       'frame_mode': options['frame_mode']}
                         }
 
         return instructions
