@@ -742,7 +742,8 @@ class CreateArray(object):
                         'parameters': {'yolo': options['yolo'],
                                        'num_classes': options['num_classes'],
                                        'classes_names': options['classes_names'],
-                                       'put': options['put']}
+                                       'put': options['put'],
+                                       'frame_mode': options['frame_mode']}
                         }
 
         return instructions
@@ -1001,7 +1002,7 @@ class CreateArray(object):
             return 1.0 * inter_area / union_area
 
         if coords:
-            real_boxes = resize_bboxes(coords, options['orig_x'], options['orig_y'])
+            real_boxes = resize_bboxes(options['frame_mode'], coords, options['orig_x'], options['orig_y'])
         else:
             real_boxes = [[0, 0, 0, 0, 0]]
 
