@@ -26,7 +26,7 @@ class TrainingResponseData(BaseModel):
                 "state": project.training.state.native(),
                 "interactive": project.training.interactive.native(),
                 "result": project.training.result,
-                "progress": project.training.progress.native(),
+                "progress": project.training.progress,
             }
         )
         super().__init__(**kwargs)
@@ -92,8 +92,8 @@ class InteractiveAPIView(BaseAPIView):
 
 class ProgressAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        progress = agent_exchange("training_progress")
-        if progress.finished:
+        request.project.training.progress = agent_exchange("training_progress").native()
+        if request.project.training.progress.get("finished"):
             request.project.training.save(request.project.training.name)
             request.project.save()
         return BaseResponseSuccess(
