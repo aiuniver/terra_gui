@@ -1,42 +1,32 @@
 // import { data } from "../temp/training";
 import { toolbar } from "../const/trainings";
-// import { predict } from "../temp/predict-training";
-// import { predict_video } from "../temp/predict-training-video-audio";
-// import { predict_text } from "../temp/predict-training-text";
-// import { predict_audio } from "../temp/predict-training-audio";
 
-// console.warn(data)
 export default {
   namespaced: true,
   state: () => ({
     collapse: ['0', '1'],
-    // params: {},
+
     toolbar,
     stateParams: {},
     predict: {},
     info: '',
     states: {},
     trainSettings: {},
-    // trainData: {},
-    // trainData: process.env.NODE_ENV === 'development' ? data : {},
-    // trainUsage: {},
     statusTrain: 'no_train',
-    // training: {
-    //   base: {},
-    //   interactive: {},
-    //   state: {}
-    // },
 
+    base: {},
     form: {},
     state: {},
     result: {},
     progress: {},
     interactive: {},
 
-    // architecture: '',
     largeImgSrc: null
   }),
   mutations: {
+    SET_BASE (state, value) {
+      state.base = value;
+    },
     SET_FORM (state, value) {
       state.form = value;
     },
@@ -52,30 +42,8 @@ export default {
     SET_RESULT (state, value) {
       state.result = value;
     },
-
-
-
-
-
-
-
-
-
-
-
-    // SET_ARCHITECTURE (state, value) {
-    //   state.architecture = value;
-    // },
-
     SET_TRAIN_SETTINGS (state, value) {
       state.trainSettings = { ...value };
-    },
-    // SET_PARAMS (state, value) {
-    //   state.params = { ...value };
-    // },
-    SET_CONFIG (state, value) {
-      // state.training = { ...value };
-      state.interactive = JSON.parse(JSON.stringify(value.interactive))
     },
     SET_STATE_PARAMS (state, value) {
       state.stateParams = { ...value };
@@ -83,16 +51,9 @@ export default {
     SET_INFO (state, value) {
       state.info = value;
     },
-
     SET_PREDICT (state, value) {
       state.predict = { ...value };
     },
-    // SET_TRAIN (state, value) {
-    //   state.trainData = { ...value };
-    // },
-    // SET_TRAIN_USAGE (state, value) {
-    //   state.trainUsage = { ...value };
-    // },
     SET_COLLAPSE (state, value) {
       state.collapse = [...value];
     },
@@ -104,43 +65,23 @@ export default {
     },
   },
   actions: {
-    parseStruct ({ commit }, { form, interactive, progress, state, result, test }) {
+    parseStruct ({ commit }, { form, interactive, progress, state, result, base }) {
       console.log(form, interactive, progress, state)
+      if (base) commit("SET_BASE", base)
       if (form) commit("SET_FORM", form)
       if (state) commit("SET_STATE", state)
       if (state?.status) commit("SET_STATUS_TRAIN", state.status)
       if (interactive) commit("SET_INTERACTIV", interactive)
       if (progress) commit("SET_PROGRESS", state)
       if (result) commit("SET_RESULT", result)
-      if (test) {
-        commit('sdsdd', 1)
-      }
     },
-    // setState ({ dispatch, commit }, res) {
-    //   // console.log(res)
-    //   if (res && res?.data) {
-    //     const state = res?.data?.data?.state || res?.data.state
-    //     const base = res?.data?.form?.base
-    //     if (state) {
-    //       commit("SET_STATE", state);
-    //       if (base) {
-    //         console.log(base)
-    //         commit("SET_PARAMS", base);
-    //       }
-    //       dispatch('setStatusTrain', state.status);
-    //     }
-    //   }
-    // },
     async start ({ state: { state: { status } }, dispatch }, parse) {
-      console.log('1')
       let isValid = true
       if (status === 'no_train') {
-        console.log('2')
         const valid = await dispatch('modeling/validateModel', {}, { root: true })
         isValid = !Object.values(valid || {}).filter(item => item).length
         dispatch('setTrainData', {});
       }
-      console.log('3')
       if (isValid) {
         dispatch('setStatusTrain', 'start');
         let data = JSON.parse(JSON.stringify(parse))
@@ -173,22 +114,13 @@ export default {
       // dispatch('parseStruct', res?.data || {});
       return res
     },
-    async update ({ commit, dispatch }, parse) {
+    async update ({ dispatch }, parse) {
       let data = JSON.parse(JSON.stringify(parse))
-      // console.log(data)
       const arht = data.architecture.parameters.outputs || []
       data.architecture.parameters.outputs = arht.map((item, index) => {
         return item ? { id: index, ...item } : null
       }).filter(item => item)
-      // console.log(JSON.stringify(data, null, 2))
       const res = await dispatch('axios', { url: '/training/update/', data }, { root: true });
-      if (res) {
-        const { data, error } = res
-        if (data && !error) {
-          // commit("SET_PARAMS", data.form.base);
-          commit("SET_CONFIG", data.data);
-        }
-      }
       dispatch('parseStruct', res?.data || {});
       return res
     },
@@ -219,11 +151,6 @@ export default {
         if (data) {
           console.log(data)
           dispatch('parseStruct', data || {});
-          // const { info, train_data, train_usage } = data;
-          // if (info) dispatch('setInfo', info);
-          // dispatch('setState', res);
-          // if (train_data) dispatch('setTrainData', train_data);
-          // if (train_usage) dispatch('setTrainUsage', train_usage);
         }
         if (error) {
           dispatch('messages/setMessage', { error: error }, { root: true });
@@ -254,18 +181,9 @@ export default {
     setInfo ({ commit }, info) {
       commit("SET_INFO", info);
     },
-    // setStates({ commit }, data) {
-    //   commit("SET_STATES", data);
-    // },
-    // setTrainData ({ commit }, data) {
-    //   commit("SET_TRAIN", data);
-    // },
     setPredict ({ commit }, data) {
       commit("SET_PREDICT", data);
     },
-    // setTrainUsage ({ commit }, data) {
-    //   commit("SET_TRAIN_USAGE", data);
-    // },
     setTrainDisplay ({ commit }, data) {
       commit("SET_TRAIN_DISPLAY", data);
     },
@@ -317,7 +235,7 @@ export default {
     getButtons ({ state: { buttons } }) {
       return buttons
     },
-    getOutputs ({ form: { base } }) {
+    getOutputs ({ base }) {
       return base?.architecture?.parameters?.outputs || []
     },
     getParams ({ form }) {
