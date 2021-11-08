@@ -58,6 +58,8 @@ class StopAPIView(BaseAPIView):
         training_base = request.project.training.base.native()
         agent_exchange("training_stop", training=request.project.training)
         request.project.set_training_base(training_base)
+        request.project.training.save(request.project.training.name)
+        request.project.save()
         return BaseResponseSuccess(
             TrainingResponseData(request.project, defaults_data).dict()
         )
@@ -68,6 +70,8 @@ class ClearAPIView(BaseAPIView):
         name = request.project.training.name
         agent_exchange("training_clear", training=request.project.training)
         request.project.clear_training(name)
+        request.project.training.save(request.project.training.name)
+        request.project.save()
         return BaseResponseSuccess(
             TrainingResponseData(request.project, defaults_data).dict()
         )
@@ -77,6 +81,8 @@ class InteractiveAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         request.project.training.set_interactive(request.data)
         agent_exchange("training_interactive", request.project.training)
+        request.project.training.save(request.project.training.name)
+        request.project.save()
         return BaseResponseSuccess(
             TrainingResponseData(request.project, defaults_data).dict()
         )
@@ -84,14 +90,9 @@ class InteractiveAPIView(BaseAPIView):
 
 class ProgressAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        # current_state = request.project.training.state.status
         progress = agent_exchange("training_progress")
-        # progress.update({"state": request.project.training.state.native()})
-        # if current_state == request.project.training.state.status:
-        #     request.project.set_training_base(request.project.training.base.native())
-        #     progress.update({"form": defaults_data.training.native()})
         if progress.finished:
-            request.project.training.save()
+            request.project.training.save(request.project.training.name)
             request.project.save()
         return BaseResponseSuccess(
             TrainingResponseData(request.project, defaults_data).dict()
@@ -111,6 +112,8 @@ class SaveAPIView(BaseAPIView):
 class UpdateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         request.project.set_training_base(request.data)
+        request.project.training.save(request.project.training.name)
+        request.project.save()
         return BaseResponseSuccess(
             TrainingResponseData(request.project, defaults_data).dict()
         )

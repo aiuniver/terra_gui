@@ -339,6 +339,8 @@ class TrainingDetailsData(BaseMixinData):
             pass
         # print(self.name)
         # print(name)
+        with open(Path(self.path, CONFIG_TRAINING_FILENAME), "w") as config_ref:
+            json.dump(self.native(), config_ref)
 
     def rename(self, value: str):
         source = self.path
