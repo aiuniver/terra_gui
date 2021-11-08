@@ -161,14 +161,14 @@ class GUINN:
 
     def _set_callbacks(self, dataset: PrepareDataset, dataset_data: DatasetData,
                        train_details: TrainingDetailsData, initial_model=None) -> None:
-        progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков...'})
+        progress.pool(self.progress_name, finished=False, message="Добавление колбэков...")
         retrain_epochs = self.sum_epoch if train_details.state.status == "addtrain" else self.epochs
 
         callback = FitCallback(dataset=dataset, dataset_data=dataset_data, retrain_epochs=retrain_epochs,
                                training_details=train_details, model_name=self.nn_name,
                                deploy_type=self.deploy_type, initialed_model=initial_model)
         self.callbacks = [callback]
-        progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков выполнено'})
+        progress.pool(self.progress_name, finished=False, message="Добавление колбэков выполнено")
 
     @staticmethod
     def _set_deploy_type(dataset: PrepareDataset) -> str:
@@ -364,7 +364,7 @@ class GUINN:
         model_yolo = None
 
         threading.enumerate()[-1].setName("current_train")
-        progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели ...'})
+        progress.pool(self.progress_name, finished=False, message="Компиляция модели ...")
         if yolo_arch:
             warmup_epoch = training_details.base.architecture.parameters.yolo.train_warmup_epochs
             lr_init = training_details.base.architecture.parameters.yolo.train_lr_init
@@ -385,12 +385,12 @@ class GUINN:
                                optimizer=self.optimizer,
                                metrics=self.metrics
                                )
-        progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели выполнена'})
+        progress.pool(self.progress_name, finished=False, message="Компиляция модели выполнена")
         self._set_callbacks(
             dataset=dataset, dataset_data=dataset_data, train_details=training_details,
             initial_model=self.model if yolo_arch else None
         )
-        progress.pool(self.progress_name, finished=False, data={'status': 'Начало обучения ...'})
+        progress.pool(self.progress_name, finished=False, message="Начало обучения ...")
         if self.dataset.data.use_generator:
             print('use generator')
             critical_val_size = len(self.dataset.dataframe.get("val"))
@@ -750,7 +750,6 @@ class FitCallback(keras.callbacks.Callback):
         self.result["train_usage"]["hard_usage"] = self.usage_info.get_usage()
 
     def _get_result_data(self):
-        self.result["states"] = self.training_detail.state.native()
         return self.result
 
     def _get_train_status(self) -> str:
@@ -928,9 +927,14 @@ class FitCallback(keras.callbacks.Callback):
     def on_train_batch_end(self, batch, logs=None):
         if self._get_train_status() == "stopped":
             self.model.stop_training = True
-            msg = f'ожидайте остановку...'
-            # self.batch += 1
-            self._set_result_data({'info': f"'Обучение остановлено пользователем, '{msg}"})
+            progress.pool(
+                self.progress_name,
+                percent=(self.last_epoch - 1) / (
+                    self.retrain_epochs if self._get_train_status() == "addtrain" else self.epochs
+                ) * 100,
+                message="Обучение остановлено пользователем, ожидайте остановку...",
+                finished=False,
+            )
         else:
             msg_batch = {"current": batch + 1, "total": self.num_batches}
             msg_epoch = {"current": self.last_epoch,
@@ -973,7 +977,6 @@ class FitCallback(keras.callbacks.Callback):
                 ) * 100,
                 message=f"Обучение. Эпоха {self.last_epoch} из "
                         f"{self.retrain_epochs if self._get_train_status() in ['addtrain', 'stopped'] else self.epochs}",
-                data=self._get_result_data(),
                 finished=False,
             )
 
@@ -1025,7 +1028,6 @@ class FitCallback(keras.callbacks.Callback):
             ) * 100,
             message=f"Обучение. Эпоха {self.last_epoch} из "
                     f"{self.retrain_epochs if self._get_train_status() in ['addtrain', 'stopped'] else self.epochs}",
-            data=self._get_result_data(),
             finished=False,
         )
 
@@ -1070,31 +1072,20 @@ class FitCallback(keras.callbacks.Callback):
         total_epochs = self.retrain_epochs if self._get_train_status() in ['addtrain',
                                                                            'trained'] else self.epochs
         if self.model.stop_training:
-            self._set_result_data({'info': f"Обучение остановлено. Модель сохранена."})
             progress.pool(
                 self.progress_name,
                 message=f"Обучение остановлено. Эпоха {self.last_epoch - 1} из "
-                        f"{total_epochs}",
+                        f"{total_epochs}. Модель сохранена.",
                 data=self._get_result_data(),
                 finished=True,
             )
         else:
-            if self._get_train_status() == "retrain":
-                msg = f'Затрачено времени на обучение: ' \
-                      f'{self.eta_format(time_end)} '
-            else:
-                msg = f'Затрачено времени на обучение: ' \
-                      f'{self.eta_format(self._sum_time)} '
-            self._set_result_data({'info': f"Обучение закончено. {msg}"})
             percent = (self.last_epoch - 1) / (
                 self.retrain_epochs if self._get_train_status() ==
                                        "addtrain" or self._get_train_status() == "stopped"
                 else self.epochs
             ) * 100
 
-            # if os.path.exists(self.save_model_path) and interactive.deploy_presets_data:
-            #     with open(os.path.join(self.save_model_path, "config.presets"), "w", encoding="utf-8") as presets:
-            #         presets.write(str(interactive.deploy_presets_data))
             self.training_detail.state.set("trained")
             self.training_detail.result = self._get_result_data()
             progress.pool(
@@ -1102,6 +1093,5 @@ class FitCallback(keras.callbacks.Callback):
                 percent=percent,
                 message=f"Обучение завершено. Эпоха {self.last_epoch - 1} из "
                         f"{total_epochs}",
-                data=self._get_result_data(),
                 finished=True,
             )
