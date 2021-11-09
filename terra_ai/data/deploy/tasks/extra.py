@@ -1,4 +1,5 @@
-from pathlib import Path
+import random
+from pathlib import Path, PosixPath
 from typing import List, Any
 from pydantic import validator, DirectoryPath
 
@@ -25,6 +26,13 @@ class DataBaseList(List):
         )
 
     def preset_update(self, data):
+        item = random.choice(self)
+        if item:
+            data.update(
+                {key: str(Path(self.path_model, data.get(key))) for key in (
+                    _field for _field, _class in item.__fields__.items() if _class.type_ is PosixPath
+                )}
+            )
         return data
 
     @property

@@ -1,10 +1,9 @@
 import os
 import random
-from pathlib import Path, PurePath
+from pathlib import Path, PurePath, PosixPath
 from typing import List
 
 from PIL import Image
-from pydantic import FilePath
 
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.settings import DEPLOY_PRESET_COUNT
@@ -12,8 +11,8 @@ from ..extra import DataBaseList, DataBase
 
 
 class Item(BaseMixinData):
-    source: FilePath
-    predict: FilePath
+    source: PosixPath
+    predict: PosixPath
 
 
 class DataList(DataBaseList):

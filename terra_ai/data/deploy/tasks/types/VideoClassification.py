@@ -1,14 +1,15 @@
 import random
 
 from typing import List, Tuple
-from pydantic import FilePath, PositiveFloat
+from pathlib import PosixPath
+from pydantic import PositiveFloat
 
 from terra_ai.data.mixins import BaseMixinData
 from ..extra import DataBaseList, DataBase
 
 
 class Item(BaseMixinData):
-    source: FilePath
+    source: PosixPath
     actual: str
     data: List[Tuple[str, PositiveFloat]]
 

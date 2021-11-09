@@ -1,10 +1,9 @@
 import json
 import random
-from pathlib import Path
+from pathlib import Path, PosixPath
 from typing import List, Tuple
 
 from PIL import Image
-from pydantic import FilePath
 
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.settings import DEPLOY_PRESET_COUNT
@@ -12,7 +11,7 @@ from ..extra import DataBaseList, DataBase
 
 
 class Item(BaseMixinData):
-    source: str
+    source: PosixPath
     actual: str
     data: List[Tuple[str, float]]
 
@@ -20,10 +19,6 @@ class Item(BaseMixinData):
 class DataList(DataBaseList):
     class Meta:
         source = Item
-
-    def preset_update(self, data):
-        data.update({"source": str(Path(self.path_model, data.get("source")))})
-        return data
 
     def reload(self, indexes: List[int] = None):
         if indexes is None:

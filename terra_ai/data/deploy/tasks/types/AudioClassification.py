@@ -1,10 +1,9 @@
 import json
 import random
 import shutil
-from pathlib import Path
+from pathlib import Path, PosixPath
 from typing import List, Tuple
 
-from pydantic import FilePath
 
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.settings import DEPLOY_PRESET_COUNT
@@ -12,7 +11,7 @@ from ..extra import DataBaseList, DataBase
 
 
 class Item(BaseMixinData):
-    source: FilePath
+    source: PosixPath
     actual: str
     data: List[Tuple[str, float]]
 
