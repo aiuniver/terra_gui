@@ -446,7 +446,7 @@ class MemoryUsage:
         self.debug = debug
         try:
             N.nvmlInit()
-            self.gpu = True
+            self.gpu = False
         except:
             self.gpu = False
 

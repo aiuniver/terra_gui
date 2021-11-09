@@ -24,6 +24,10 @@ class DataList(DataBaseList):
     class Meta:
         source = Item
 
+    def preset_update(self, data):
+        data.update({k: str(Path(self.path_model, data.get(k)))} for k in ('source', 'segment'))
+        return data
+
     def reload(self, indexes: List[int] = None):
         if indexes is None:
             indexes = list(range(DEPLOY_PRESET_COUNT))
