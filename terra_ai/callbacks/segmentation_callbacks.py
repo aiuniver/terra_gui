@@ -737,6 +737,7 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                     class_percent = {}
                     phrase_length = {}
                     phrase_count = {}
+                    total_mean_length = []
                     for cl in classes:
                         class_count[classes_names[cl]] =  np.sum(y_true.get(data_type).get(f"{out}")[..., cl]).item()
                         class_percent[classes_names[cl]] = np.round(
@@ -748,7 +749,9 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                             rows = sequence_length_calculator(y_true.get(data_type).get(f"{out}")[ex, :, cl])
                             phrase_length[classes_names[cl]].extend(rows)
                             phrase_count[classes_names[cl]] += len(rows)
+                            total_mean_length.extend(rows)
                         phrase_length[classes_names[cl]] = int(np.mean(phrase_length[classes_names[cl]]))
+                    phrase_length['Все сегменты'] = int(np.mean(total_mean_length))
                     dataset_balance[f"{out}"]["presence_balance"][data_type] = class_count
                     dataset_balance[f"{out}"]["percent_balance"][data_type] = class_percent
                     dataset_balance[f"{out}"]["phrase_class_length"][data_type] = phrase_length
