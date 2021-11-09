@@ -13,8 +13,9 @@ export default {
         return null
       }
     },
-    async trining ({ dispatch }, { ctx, page }) {
-      const res = await dispatch('projects/get', {}, { root: true });
+    async trining ({ dispatch, rootGetters }, { ctx, page }) {
+      // const res = await dispatch('projects/get', {}, { root: true });
+      const res = { project: rootGetters['projects/getProject'] }
       if (res) {
         const { project: { training: { state: { status } } } } = res
         // console.log(status)
