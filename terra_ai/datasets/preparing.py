@@ -215,7 +215,7 @@ class PrepareDataset(object):
                                                              output_signature=out_signature)
             else:
 
-                for split in os.listdir(self.paths.arrays):
+                for split in ['train', 'val']:
                     for index in self.data.inputs.keys():
                         self.X[split][str(index)] = joblib.load(os.path.join(self.paths.arrays, split, f'{index}.gz'))
                     for index in self.data.outputs.keys():

@@ -174,8 +174,9 @@ class LayerVideoFillModeChoice(str, Enum):
 
 
 class LayerVideoFrameModeChoice(str, Enum):
-    keep_proportions = "Сохранить пропорции"
     stretch = "Растянуть"
+    fit = "Вписать"
+    cut = "Обрезать"
 
     @staticmethod
     def items_tuple() -> list:

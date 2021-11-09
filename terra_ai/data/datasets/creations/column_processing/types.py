@@ -94,7 +94,7 @@ class ParametersVideoData(ParametersBaseData, MinMaxScalerData):
     width: PositiveInt
     height: PositiveInt
     fill_mode: LayerVideoFillModeChoice = LayerVideoFillModeChoice.last_frames
-    frame_mode: LayerVideoFrameModeChoice = LayerVideoFrameModeChoice.keep_proportions
+    frame_mode: LayerVideoFrameModeChoice = LayerVideoFrameModeChoice.fit
     video_mode: LayerVideoModeChoice = LayerVideoModeChoice.completely
     max_frames: Optional[PositiveInt]
     length: Optional[PositiveInt]
