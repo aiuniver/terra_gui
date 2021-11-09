@@ -19,6 +19,8 @@ def camelize(snake_case_string: str):
     #     return "DiceCoefficient"
     if snake_case_string == 'unscaled_mae':
         return "UnscaledMAE"
+    if snake_case_string == 'percent_mae':
+        return "PercentMAE"
     if snake_case_string == "logcosh":
         return "LogCoshError"
     return re.sub("_.", lambda x: x.group()[1].upper(), snake_case_string.title())

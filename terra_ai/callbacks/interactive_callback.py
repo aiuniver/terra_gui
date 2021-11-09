@@ -106,6 +106,7 @@ class InteractiveCallback:
         self._class_metric_list()
         print('\nself._class_metric_list()', self.class_graphics)
         print('set_attributes', dataset.data.architecture)
+        print('\ndataset_config', dataset.data, '\n')
         self.training_details = params
         if dataset.data.architecture in self.basic_architecture:
             self.losses = losses

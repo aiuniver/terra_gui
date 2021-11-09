@@ -119,9 +119,7 @@ class LayerVideoModeChoice(str, Enum):
 
 
 class LayerVideoFrameModeChoice(str, Enum):
-    keep_proportions = "keep_proportions"
     stretch = "stretch"
-    # stretch = "stretch"
     fit = "fit"
     cut = "cut"
 

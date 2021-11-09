@@ -133,110 +133,6 @@ class Voc:
     """
 
     @staticmethod
-    def generate(data):
-        def xml_indent(elem, level=0):
-            i = "\n" + level * "\t"
-            if len(elem):
-                if not elem.text or not elem.text.strip():
-                    elem.text = i + "\t"
-                if not elem.tail or not elem.tail.strip():
-                    elem.tail = i
-                for elem in elem:
-                    xml_indent(elem, level + 1)
-                if not elem.tail or not elem.tail.strip():
-                    elem.tail = i
-            else:
-                if level and (not elem.tail or not elem.tail.strip()):
-                    elem.tail = i
-
-        xml_list = {}
-
-        for key in data:
-            element = data[key]
-
-            xml_annotation = Element("annotation")
-
-            xml_size = Element("size")
-            xml_width = Element("width")
-            xml_width.text = element["size"]["width"]
-            xml_size.append(xml_width)
-
-            xml_height = Element("height")
-            xml_height.text = element["size"]["height"]
-            xml_size.append(xml_height)
-
-            xml_depth = Element("depth")
-            xml_depth.text = element["size"]["depth"]
-            xml_size.append(xml_depth)
-
-            xml_annotation.append(xml_size)
-
-            xml_segmented = Element("segmented")
-            xml_segmented.text = "0"
-
-            xml_annotation.append(xml_segmented)
-
-            if int(element["objects"]["num_obj"]) < 1:
-                return False, "number of Object less than 1"
-
-            for i in range(0, int(element["objects"]["num_obj"])):
-                xml_object = Element("object")
-                obj_name = Element("name")
-                obj_name.text = element["objects"][str(i)]["name"]
-                xml_object.append(obj_name)
-
-                obj_pose = Element("pose")
-                obj_pose.text = "Unspecified"
-                xml_object.append(obj_pose)
-
-                obj_truncated = Element("truncated")
-                obj_truncated.text = "0"
-                xml_object.append(obj_truncated)
-
-                obj_difficult = Element("difficult")
-                obj_difficult.text = "0"
-                xml_object.append(obj_difficult)
-
-                xml_bndbox = Element("bndbox")
-
-                obj_xmin = Element("xmin")
-                obj_xmin.text = element["objects"][str(
-                    i)]["bndbox"]["xmin"]
-                xml_bndbox.append(obj_xmin)
-
-                obj_ymin = Element("ymin")
-                obj_ymin.text = element["objects"][str(
-                    i)]["bndbox"]["ymin"]
-                xml_bndbox.append(obj_ymin)
-
-                obj_xmax = Element("xmax")
-                obj_xmax.text = element["objects"][str(
-                    i)]["bndbox"]["xmax"]
-                xml_bndbox.append(obj_xmax)
-
-                obj_ymax = Element("ymax")
-                obj_ymax.text = element["objects"][str(
-                    i)]["bndbox"]["ymax"]
-                xml_bndbox.append(obj_ymax)
-                xml_object.append(xml_bndbox)
-
-                xml_annotation.append(xml_object)
-
-            xml_indent(xml_annotation)
-
-            xml_list[key.split(".")[0]] = xml_annotation
-        return xml_list
-
-    @staticmethod
-    def save(xml_list, path):
-        path = os.path.abspath(path)
-
-        for key in xml_list:
-            xml = xml_list[key]
-            filepath = os.path.join(path, "".join([key, ".xml"]))
-            ElementTree(xml).write(filepath)
-
-    @staticmethod
     def parse(paths_list, tmp_lst):
         data = {}
         for filename in paths_list:
@@ -291,6 +187,7 @@ class Voc:
 
 class Coco:
     """ Handler Class for COCO Format """
+
     @staticmethod
     def parse(paths_list, tmp_lst):
         json_path = paths_list[0]
@@ -390,7 +287,6 @@ class Udacity:
             if raw_line_length == 8:
                 state = raw_line[7].split('"')[1]
                 cls = cls + state
-
 
             bndbox = {
                 "xmin": xmin,
@@ -598,44 +494,102 @@ class Yolov1:
         return data, {}
 
 
-# def resize_bboxes(coords, orig_x, orig_y):
-#     x_scale = orig_x / 416
-#     y_scale = orig_y / 416
-#     real_boxes = []
-#     if x_scale == 1 and y_scale == 1:
-#         for coord in coords.split(' '):
-#             real_boxes.append([literal_eval(num) for num in coord.split(',')])
-#     else:
-#         for coord in coords.split(' '):
-#             tmp = []
-#             for i, num in enumerate(coord.split(',')):
-#                 if i in [0, 2]:
-#                     tmp_value = int(literal_eval(num) / x_scale) - 1
-#                     scale_value = orig_x if tmp_value > orig_x else tmp_value
-#                     tmp.append(scale_value)
-#                 elif i in [1, 3]:
-#                     tmp_value = int(literal_eval(num) / y_scale) - 1
-#                     scale_value = orig_y if tmp_value > orig_y else tmp_value
-#                     tmp.append(scale_value)
-#                 else:
-#                     tmp.append(literal_eval(num))
-#             real_boxes.append(tmp)
-#     return real_boxes
-
-def resize_bboxes(coords, orig_x, orig_y, target_x=416, target_y=416):
-
+def resize_bboxes(frame_mode, coords, orig_x, orig_y, target_x=416, target_y=416):
     real_boxes = []
-    for coord in coords.split(' '):
-        sample = [literal_eval(x) for x in coord.split(',')]
-        sample[0] = int(round((sample[0] / orig_x) * target_x, 0))
-        sample[1] = int(round((sample[1] / orig_y) * target_y, 0))
-        sample[2] = int(round((sample[2] / orig_x) * target_x, 0))
-        sample[3] = int(round((sample[3] / orig_y) * target_y, 0))
+    if frame_mode == 'stretch':
+        for coord in coords.split(' '):
+            sample = [literal_eval(x) for x in coord.split(',')]
+            sample[0] = int(round((sample[0] / orig_x) * target_x, 0))
+            sample[1] = int(round((sample[1] / orig_y) * target_y, 0))
+            sample[2] = int(round((sample[2] / orig_x) * target_x, 0))
+            sample[3] = int(round((sample[3] / orig_y) * target_y, 0))
 
-        if sample[0] < sample[2] and sample[1] < sample[3]:
             real_boxes.append(sample)
 
+    elif frame_mode == 'fit':
+        for coord in coords.split(' '):
+            sample = [literal_eval(x) for x in coord.split(',')]
+            if orig_x >= orig_y:
+                new_y = int(orig_y / (orig_x / target_x))
+                sample[0] = int(round((sample[0] / orig_x) * target_x, 0))
+                sample[2] = int(round((sample[2] / orig_x) * target_x, 0))
+                sample[1] = int(round((sample[1] / orig_y) * new_y, 0) + (target_y - new_y) / 2)
+                sample[3] = int(round((sample[3] / orig_y) * new_y, 0) + (target_y - new_y) / 2)
+                if new_y > target_y:
+                    new_x = int(orig_x / (orig_y / target_y))
+                    sample[0] = int(round((sample[0] / orig_x) * new_x, 0) + (target_x - new_x) / 2)
+                    sample[2] = int(round((sample[2] / orig_x) * new_x, 0) + (target_x - new_x) / 2)
+                    sample[1] = int(round((sample[1] / orig_y) * target_y, 0))
+                    sample[3] = int(round((sample[3] / orig_y) * target_y, 0))
+
+            elif orig_y >= orig_x:
+                new_x = int(orig_x / (orig_y / target_y))
+                sample[0] = int(round((sample[0] / orig_x) * new_x, 0) + (target_x - new_x) / 2)
+                sample[2] = int(round((sample[2] / orig_x) * new_x, 0) + (target_x - new_x) / 2)
+                sample[1] = int(round((sample[1] / orig_y) * target_y, 0))
+                sample[3] = int(round((sample[3] / orig_y) * target_y, 0))
+                if new_x > target_x:
+                    new_y = int(orig_y / (orig_x / target_x))
+                    sample[0] = int(round((sample[0] / orig_x) * target_x, 0))
+                    sample[2] = int(round((sample[2] / orig_x) * target_x, 0))
+                    sample[1] = int(round((sample[1] / orig_y) * new_y, 0) + (target_y - new_y) / 2)
+                    sample[3] = int(round((sample[3] / orig_y) * new_y, 0) + (target_y - new_y) / 2)
+
+            real_boxes.append(sample)
+
+    elif frame_mode == 'cut':
+        for coord in coords.split(' '):
+            sample = [literal_eval(x) for x in coord.split(',')]
+            if orig_x <= target_x:
+                sample[0] = int(sample[0] + (target_x - orig_x) / 2)
+                sample[2] = int(sample[2] + (target_x - orig_x) / 2)
+            else:
+                sample[0] = int(sample[0] - (orig_x - target_x) / 2)
+                sample[2] = int(sample[2] - (orig_x - target_x) / 2)
+            if orig_y <= target_y:
+                sample[1] = int(sample[1] + (target_y - orig_y) / 2)
+                sample[3] = int(sample[3] + (target_y - orig_y) / 2)
+            else:
+                sample[1] = int(sample[1] - (orig_y - target_y) / 2)
+                sample[3] = int(sample[3] - (orig_y - target_y) / 2)
+
+            real_boxes.append(sample)
+
+    pop_idxs = []
+    for idx, bbox in enumerate(real_boxes):
+        for i in range(4):
+            if i in [0, 2]:
+                if bbox[i] > target_x:
+                    bbox[i] = target_x
+            elif i in [1, 3]:
+                if bbox[i] > target_y:
+                    bbox[i] = target_y
+            if bbox[i] < 0:
+                bbox[i] = 0
+
+        if bbox[0] >= bbox[2] or bbox[1] >= bbox[3]:
+            pop_idxs.append(idx)
+
+    for i in reversed(pop_idxs):
+        real_boxes.pop(i)
+
     return real_boxes
+
+
+# def resize_bboxes(coords, orig_x, orig_y, target_x=416, target_y=416):
+#
+#     real_boxes = []
+#     for coord in coords.split(' '):
+#         sample = [literal_eval(x) for x in coord.split(',')]
+#         sample[0] = int(round((sample[0] / orig_x) * target_x, 0))
+#         sample[1] = int(round((sample[1] / orig_y) * target_y, 0))
+#         sample[2] = int(round((sample[2] / orig_x) * target_x, 0))
+#         sample[3] = int(round((sample[3] / orig_y) * target_y, 0))
+#
+#         if sample[0] < sample[2] and sample[1] < sample[3]:
+#             real_boxes.append(sample)
+#
+#     return real_boxes
 
 
 def get_od_names(creation_data):
@@ -693,3 +647,33 @@ def get_od_names(creation_data):
                 names_list = sorted(set(names_list))
 
     return names_list
+
+
+def get_annotation_type_autosearch(path: Path) -> LayerODDatasetTypeChoice:
+    dir_names = []
+    file_names = []
+
+    for filename in os.listdir(path):
+        if os.path.isdir(os.path.join(path, filename)):
+            dir_names.append(filename)
+        elif filename.endswith('.csv'):
+            return LayerODDatasetTypeChoice.Udacity
+        else:
+            file_names.append(filename)
+
+    if len(dir_names) == 1:
+        return LayerODDatasetTypeChoice.Yolov1
+
+    for dir_name in dir_names:
+        if os.listdir(os.path.join(path, dir_name))[0].endswith('.json'):
+            return LayerODDatasetTypeChoice.Coco
+        elif os.listdir(os.path.join(path, dir_name))[0].endswith('.xml'):
+            return LayerODDatasetTypeChoice.Voc
+        elif os.listdir(os.path.join(path, dir_name))[0].endswith('.txt') and 'obj.names' not in file_names:
+            return LayerODDatasetTypeChoice.Kitti
+        elif os.listdir(os.path.join(path, dir_name))[0].endswith('.txt') and 'obj.names' in file_names:
+            return LayerODDatasetTypeChoice.Yolo_terra
+        else:
+            annotation_type = 'Не определено'
+
+    return annotation_type

@@ -179,6 +179,9 @@ class CreateDataset(object):
                         inp.parameters.open_tags = out.parameters.open_tags
                         inp.parameters.close_tags = out.parameters.close_tags
             elif out.type == LayerOutputTypeChoice.ObjectDetection:
+                for inp in creation_data.inputs:
+                    if inp.type == LayerInputTypeChoice.Image:
+                        out.parameters.frame_mode = inp.parameters.image_mode
                 names_list = get_od_names(creation_data)
                 out.parameters.classes_names = names_list
                 out.parameters.num_classes = len(names_list)
@@ -421,7 +424,7 @@ class CreateDataset(object):
                     elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
                         self.preprocessing.create_word2vec(text_list=data.instructions, **data.parameters)
                 # if 'augmentation' in data.parameters.keys() and data.parameters['augmentation']:
-                    # self.augmentation[data.parameters['cols_names']] = {'train': [], 'val': [], 'test': []}
+                    # self.augmentation[data.parameters['cols_names']] = {'train': [], 'val': []}
                     # {'object': self.preprocessing.create_image_augmentation(data.parameters['augmentation']),
                     # 'data': []}
 
@@ -479,19 +482,16 @@ class CreateDataset(object):
             for key in classes_dict.keys():
                 random.shuffle(classes_dict[key])
 
-        split_sequence = {"train": [], "val": [], "test": []}
+        split_sequence = {"train": [], "val": []}
         for key, value in classes_dict.items():
             train_len = int(creation_data.info.part.train * len(classes_dict[key]))
-            val_len = int(creation_data.info.part.validation * len(classes_dict[key]))
 
             split_sequence['train'].extend(value[:train_len])
-            split_sequence['val'].extend(value[train_len: train_len + val_len])
-            split_sequence['test'].extend(value[train_len + val_len:])
+            split_sequence['val'].extend(value[train_len:])
 
         if creation_data.info.shuffle:
             random.shuffle(split_sequence['train'])
             random.shuffle(split_sequence['val'])
-            random.shuffle(split_sequence['test'])
 
         build_dataframe = {}
         for inp in self.instructions.inputs.keys():
@@ -868,8 +868,8 @@ class CreateDataset(object):
 
             return full_array, augm_data
 
-        out_array = {'train': {}, 'val': {}, 'test': {}}
-        service = {'train': {}, 'val': {}, 'test': {}}
+        out_array = {'train': {}, 'val': {}}
+        service = {'train': {}, 'val': {}}
 
         for split in list(out_array.keys()):
             for key in put_data.keys():

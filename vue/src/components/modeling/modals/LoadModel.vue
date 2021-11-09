@@ -37,8 +37,9 @@
               </div>
             </li>
             <li v-if="!models.length" class="loaded-list__item">
-              <span class="loaded-list__item--empty">Модель "{{ search }}" не найдена</span>
+              <span v-show="showError" class="loaded-list__item--empty">Модель "{{ search }}" не найдена</span>
             </li>
+            <LoadSpiner v-show="showSpinner" text="Получение моделей" />
           </ul>
         </scrollbar>
       </div>
@@ -97,9 +98,6 @@ export default {
   mounted() {
     this.$el.getElementsByClassName('at-modal__footer')[0].remove();
   },
-  created() {
-    this.load();
-  },
   computed: {
     models() {
       // console.log(this.lists);
@@ -126,6 +124,12 @@ export default {
         return this.value;
       },
     },
+    showSpinner() {
+      return !this.models.length && !this.search.length
+    },
+    showError() {
+      return this.search.length && !this.models.length
+    }
   },
   methods: {
     async removeModel(name) {

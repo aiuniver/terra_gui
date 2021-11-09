@@ -6,7 +6,7 @@ from .....extra import (
     LayerODDatasetTypeChoice,
     LayerObjectDetectionModelChoice,
 )
-from ...extra import SourcesPathsData
+from ...extra import SourcesPathsData, LayerImageFrameModeChoice
 
 
 class ParametersData(SourcesPathsData):
@@ -17,6 +17,7 @@ class ParametersData(SourcesPathsData):
     put: Optional[PositiveInt]
     cols_names: Optional[str]
     model_type: LayerODDatasetTypeChoice = LayerODDatasetTypeChoice.Yolo_terra
+    frame_mode: LayerImageFrameModeChoice = LayerImageFrameModeChoice.stretch
 
     def __init__(self, **data):
         data.update({"cols_names": None})

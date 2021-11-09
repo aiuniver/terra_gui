@@ -112,11 +112,11 @@ export default {
     },
     filter() {
       return {
-        input: this.project?.dataset ? ['link'] : ['clone', 'link', 'remove'],
+        InputData: this.blocks.filter(i => i.group === 'InputData').length > 1 ? ['clone', 'link', 'remove'] : ['link'],
         model: ['clone', 'link', 'remove'],
         function: ['clone', 'link', 'remove'],
         custom: ['clone', 'link', 'remove'],
-        output: this.project?.dataset ? ['link'] : ['clone', 'link', 'remove'],
+        OutputData: this.project?.dataset ? ['link'] : ['clone', 'link', 'remove'],
       };
     },
     errors() {
@@ -129,6 +129,9 @@ export default {
       get() {
         return this.$store.getters['cascades/getBlocks'];
       },
+    },
+    block() {
+      return this.$store.getters['cascades/getBlock'];
     },
     links: {
       set(value) {
@@ -198,7 +201,7 @@ export default {
 
         let x2 = targetLinkPos.x;
         let y2 = targetLinkPos.y;
-
+        const select = originBlock.id === (this.block?.id || -1) || targetBlock.id === (this.block?.id || -1);
         lines.push({
           x1: x1,
           y1: y1,
@@ -207,7 +210,7 @@ export default {
           slot: link.originSlot,
           scale: this.scale,
           style: {
-            stroke: 'rgb(101, 185, 244)',
+            stroke: !select ? '#467ca1' : '#a0d5f9',
             strokeWidth: 2 * this.scale,
             fill: 'none',
             zIndex: 999,
