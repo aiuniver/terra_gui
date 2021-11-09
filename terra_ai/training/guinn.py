@@ -116,6 +116,7 @@ class GUINN:
     def _set_training_params(self, dataset: DatasetData, params: TrainingDetailsData) -> None:
         self.dataset = self._prepare_dataset(dataset=dataset, model_path=params.model_path,
                                              state=params.state.status)
+
         if not self.dataset.data.architecture or self.dataset.data.architecture == ArchitectureChoice.Basic:
             self.deploy_type = self._set_deploy_type(self.dataset)
         else:
@@ -125,7 +126,6 @@ class GUINN:
 
         train_size = len(self.dataset.dataframe.get("train")) if self.dataset.data.use_generator \
             else len(self.dataset.dataset.get('train'))
-
         if params.base.batch > train_size:
             if params.state.status == "addtrain":
                 params.state.set("stopped")
@@ -134,15 +134,17 @@ class GUINN:
             raise exceptions.TooBigBatchSize(params.base.batch, train_size)
 
         if params.state.status == "addtrain":
-            if self.callbacks[0].last_epoch - 1 >= self.sum_epoch:
+            if params.logs.get("addtrain_epochs")[-1] >= self.sum_epoch:
                 self.sum_epoch += params.base.epochs
-            if (self.callbacks[0].last_epoch - 1) < self.sum_epoch:
-                self.epochs = self.sum_epoch - self.callbacks[0].last_epoch + 1
+            if params.logs.get("addtrain_epochs")[-1] < self.sum_epoch:
+                self.epochs = self.sum_epoch - params.logs.get("addtrain_epochs")[-1]
             else:
                 self.epochs = params.base.epochs
         else:
             self.epochs = params.base.epochs
+
         self.batch_size = params.base.batch
+
         self.set_optimizer(params)
 
         for output_layer in params.base.architecture.outputs_dict:
@@ -326,6 +328,7 @@ class GUINN:
             self._save_params_for_deploy(params=training)
 
         self.nn_cleaner(retrain=True if training.state.status == "training" else False)
+
         self._set_training_params(dataset=dataset, params=training)
 
         self.model = self._set_model(model=gui_model, train_details=training)
