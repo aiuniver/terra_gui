@@ -252,13 +252,12 @@ class TrainingDetailsData(BaseMixinData):
     result: Optional[dict] = {}
     deploy: Optional[DeployData]
     logs: Optional[dict] = {}
+    progress: Optional[dict] = {}
 
     _path: Path = PrivateAttr()
 
     def __init__(self, **data):
         self._path = Path(data.get("path"))
-
-        progress.pool("training", **data.get("progress", {}))
 
         _name = data.get("name", DEFAULT_TRAINING_PATH_NAME)
         _path = Path(self._path, _name)
@@ -276,7 +275,14 @@ class TrainingDetailsData(BaseMixinData):
 
         if data.get("deploy"):
             data["deploy"].update(
-                {"path": str(Path(self._path, _name, settings.TRAINING_DEPLOY_DIRNAME))}
+                {
+                    "path": str(
+                        Path(self._path, _name, settings.TRAINING_DEPLOY_DIRNAME)
+                    ),
+                    "path_model": str(
+                        Path(self._path, _name, settings.TRAINING_MODEL_DIRNAME)
+                    ),
+                }
             )
         super().__init__(**data)
 
@@ -305,10 +311,6 @@ class TrainingDetailsData(BaseMixinData):
         os.makedirs(_path, exist_ok=True)
         return _path
 
-    @property
-    def progress(self) -> progress.ProgressData:
-        return progress.pool("training")
-
     @validator("base", pre=True, allow_reuse=True)
     def _validate_base(cls, value, values):
         if not value:
@@ -328,10 +330,15 @@ class TrainingDetailsData(BaseMixinData):
             value = {}
         return value
 
+    @validator("progress", pre=True)
+    def _validate_progress(cls, value: dict) -> dict:
+        if not value:
+            value = {}
+        return value
+
     def dict(self, **kwargs):
         kwargs.update({"exclude": {"model"}})
         data = super().dict(**kwargs)
-        data.update({"progress": self.progress.native()})
         return data
 
     def save(self, name: str, overwrite: bool = False):

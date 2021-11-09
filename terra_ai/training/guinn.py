@@ -870,6 +870,7 @@ class FitCallback(keras.callbacks.Callback):
 
         out_deploy_data = dict([
             ("path", self.training_detail.deploy_path),
+            ("path_model", self.training_detail.model_path),
             ("type", self.deploy_type),
             ("data", out_deploy_presets_data)
         ])

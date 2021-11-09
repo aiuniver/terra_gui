@@ -11,6 +11,7 @@ from . import serializers
 
 
 class TrainingResponseData(BaseModel):
+    base: dict
     form: dict
     state: dict
     interactive: dict
@@ -20,11 +21,12 @@ class TrainingResponseData(BaseModel):
     def __init__(self, project, defaults, **kwargs):
         kwargs.update(
             {
+                "base": project.training.base.native(),
                 "form": defaults.training.native(),
                 "state": project.training.state.native(),
                 "interactive": project.training.interactive.native(),
                 "result": project.training.result,
-                "progress": project.training.progress.native(),
+                "progress": project.training.progress,
             }
         )
         super().__init__(**kwargs)
@@ -80,7 +82,7 @@ class ClearAPIView(BaseAPIView):
 class InteractiveAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         request.project.training.set_interactive(request.data)
-        agent_exchange("training_interactive", request.project.training)
+        agent_exchange("training_interactive", training=request.project.training)
         request.project.training.save(request.project.training.name)
         request.project.save()
         return BaseResponseSuccess(
@@ -90,8 +92,8 @@ class InteractiveAPIView(BaseAPIView):
 
 class ProgressAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        progress = agent_exchange("training_progress")
-        if progress.finished:
+        request.project.training.progress = agent_exchange("training_progress").native()
+        if request.project.training.progress.get("finished"):
             request.project.training.save(request.project.training.name)
             request.project.save()
         return BaseResponseSuccess(

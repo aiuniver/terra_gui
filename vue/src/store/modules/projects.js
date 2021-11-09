@@ -31,19 +31,11 @@ export default {
       commit("modeling/SET_MODEL", model, { root: true });
       commit("cascades/SET_CASCADES", cascades, { root: true });
       commit("datasets/SET_CREATION", creation, { root: true });
-
       dispatch("trainings/parseStruct", {...training, form} , { root: true });
-
-      // commit("trainings/SET_PARAMS", base, { root: true });
-      // commit("trainings/SET_ARCHITECTURE", architecture, { root: true });
-      // commit("trainings/SET_CONFIG", training, { root: true });
       if (training?.deploy) {
         commit("deploy/SET_DEPLOY", training.deploy.data, { root: true });
         commit("deploy/SET_CARDS", training.deploy.data.data, { root: true });
         commit("deploy/SET_DEPLOY_TYPE", training.deploy.type, { root: true });
-      }
-      if (training?.result) {
-        // commit("trainings/SET_TRAIN", training.result, { root: true });
       }
       return data
     },
