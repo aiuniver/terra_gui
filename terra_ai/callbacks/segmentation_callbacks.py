@@ -923,3 +923,4 @@ class TextSegmentationCallback(BaseSegmentationCallback):
             return return_data
         except Exception as e:
             print_error(TextSegmentationCallback().name, method_name, e)
+
