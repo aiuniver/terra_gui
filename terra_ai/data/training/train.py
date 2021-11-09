@@ -13,7 +13,11 @@ from pydantic import validator, PrivateAttr
 from pydantic.types import conint, confloat, PositiveInt
 from pydantic.errors import EnumMemberError
 
-from terra_ai import settings, progress
+from terra_ai import settings
+from terra_ai.exceptions.training import (
+    TrainingAlreadyExistsException,
+    TrainingDefaultNameException,
+)
 from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.mixins import BaseMixinData, UniqueListMixin, IDMixinData
 from terra_ai.data.training import optimizers, architectures
@@ -342,12 +346,19 @@ class TrainingDetailsData(BaseMixinData):
         return data
 
     def save(self, name: str, overwrite: bool = False):
-        if self.name == DEFAULT_TRAINING_PATH_NAME:
-            pass
-        # print(self.name)
-        # print(name)
         with open(Path(self.path, CONFIG_TRAINING_FILENAME), "w") as config_ref:
             json.dump(self.native(), config_ref)
+        if self.name == name:
+            return
+        if name == DEFAULT_TRAINING_PATH_NAME:
+            raise TrainingDefaultNameException(DEFAULT_TRAINING_PATH_NAME)
+        if Path(self._path, name).is_dir():
+            if overwrite:
+                shutil.rmtree(Path(self._path, name), ignore_errors=True)
+            else:
+                raise TrainingAlreadyExistsException(DEFAULT_TRAINING_PATH_NAME)
+        shutil.move(self.path, Path(self._path, name))
+        self.name = name
 
     def rename(self, value: str):
         source = self.path

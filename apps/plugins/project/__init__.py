@@ -198,6 +198,10 @@ class Project(BaseMixinData):
         self.training.save(self.training.name)
         self.save()
 
+    def set_cascade(self, cascade: CascadeDetailsData):
+        self.cascade = cascade
+        self.save()
+
     def clear_dataset(self):
         self.dataset = None
         shutil.rmtree(project_path.datasets, ignore_errors=True)
@@ -221,10 +225,6 @@ class Project(BaseMixinData):
 
     def clear_cascade(self):
         self.cascade = CascadeDetailsData(**EmptyCascadeDetailsData)
-
-    def set_cascade(self, cascade: CascadeDetailsData):
-        self.cascade = cascade
-        self.save()
 
     def _set_data(
         self,
