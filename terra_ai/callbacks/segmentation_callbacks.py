@@ -11,7 +11,7 @@ from tensorflow.python.keras.utils.np_utils import to_categorical
 
 from terra_ai.callbacks.utils import dice_coef, sort_dict, get_y_true, get_image_class_colormap, get_confusion_matrix, \
     fill_heatmap_front_structure, get_classification_report, fill_table_front_structure, fill_graph_front_structure, \
-    fill_graph_plot_data, print_error, segmentation_metric
+    fill_graph_plot_data, print_error, segmentation_metric, sequence_length_calculator
 from terra_ai.data.datasets.dataset import DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerEncodingChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
@@ -726,21 +726,33 @@ class TextSegmentationCallback(BaseSegmentationCallback):
             for out in options.data.outputs.keys():
                 dataset_balance[f"{out}"] = {
                     "presence_balance": {},
-                    "percent_balance": {}
+                    "percent_balance": {},
+                    "phrase_class_length": {},
+                    "phrase_class_count": {}
                 }
                 for data_type in ['train', 'val']:
                     classes_names = options.data.outputs.get(out).classes_names
                     classes = np.arange(options.data.outputs.get(out).num_classes)
                     class_count = {}
                     class_percent = {}
+                    phrase_length = {}
+                    phrase_count = {}
                     for cl in classes:
-                        class_count[classes_names[cl]] = \
-                            np.sum(y_true.get(data_type).get(f"{out}")[..., cl]).item()
-                        class_percent[options.data.outputs.get(out).classes_names[cl]] = np.round(
+                        class_count[classes_names[cl]] =  np.sum(y_true.get(data_type).get(f"{out}")[..., cl]).item()
+                        class_percent[classes_names[cl]] = np.round(
                             np.sum(y_true.get(data_type).get(f"{out}")[..., cl]) * 100
                             / np.prod(y_true.get(data_type).get(f"{out}")[..., cl].shape)).item()
+                        phrase_length[classes_names[cl]] = []
+                        phrase_count[classes_names[cl]] = 0
+                        for ex in range(len(y_true.get(data_type).get(f"{out}"))):
+                            rows = sequence_length_calculator(y_true.get(data_type).get(f"{out}")[ex, :, cl])
+                            phrase_length[classes_names[cl]].extend(rows)
+                            phrase_count[classes_names[cl]] += len(rows)
+                        phrase_length[classes_names[cl]] = int(np.mean(phrase_length[classes_names[cl]]))
                     dataset_balance[f"{out}"]["presence_balance"][data_type] = class_count
                     dataset_balance[f"{out}"]["percent_balance"][data_type] = class_percent
+                    dataset_balance[f"{out}"]["phrase_class_length"][data_type] = phrase_length
+                    dataset_balance[f"{out}"]["phrase_class_count"][data_type] = phrase_count
             return dataset_balance
         except Exception as e:
             print_error(TextSegmentationCallback().name, method_name, e)
@@ -867,22 +879,43 @@ class TextSegmentationCallback(BaseSegmentationCallback):
             for out in options.data.outputs.keys():
                 for class_type in dataset_balance.get(f"{out}").keys():
                     preset = {}
-                    if class_type in ["presence_balance", "percent_balance"]:
+                    if class_type in ["presence_balance", "percent_balance",
+                                      "phrase_class_length", "phrase_class_count"]:
                         for data_type in ['train', 'val']:
                             names, count = sort_dict(
                                 dict_to_sort=dataset_balance.get(f"{out}").get(class_type).get(data_type),
                                 mode=interactive_config.data_balance.sorted.name
                             )
+                            if class_type == 'presence_balance':
+                                y_label = 'Количество слов'
+                                class_label = 'баланс присутсвия'
+                                short_name = 'присутсвие'
+                            elif class_type == 'percent_balance':
+                                y_label = 'Процент слов'
+                                class_label = 'процент присутсвия'
+                                short_name = 'процент'
+                            elif class_type == 'phrase_class_length':
+                                y_label = 'Средняя длина фразы'
+                                class_label = 'средняя длина фразы'
+                                short_name = 'длина'
+                            elif class_type == 'phrase_class_count':
+                                y_label = 'Количество фраз'
+                                class_label = 'количество фраз'
+                                short_name = 'количество'
+                            else:
+                                y_label = ''
+                                class_label = ''
+                                short_name = ''
+
+                            data_label = 'Тренировочная' if data_type == 'train' else 'Проверочная'
                             preset[data_type] = fill_graph_front_structure(
                                 _id=_id,
                                 _type='histogram',
                                 type_data=data_type,
-                                graph_name=f"Выход {out} - {'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка - "
-                                           f"{'баланс присутсвия' if class_type == 'presence_balance' else 'процент пространства'}",
-                                short_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} - "
-                                           f"{'присутсвие' if class_type == 'presence_balance' else 'процент'}",
+                                graph_name=f"Выход {out} - {data_label} выборка - {class_label}",
+                                short_name=f"{data_label} - {short_name}",
                                 x_label="Название класса",
-                                y_label="Значение",
+                                y_label=y_label,
                                 plot_data=[fill_graph_plot_data(x=names, y=count)],
                             )
                             _id += 1
