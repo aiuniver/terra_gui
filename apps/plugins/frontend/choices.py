@@ -238,11 +238,12 @@ class LayerYoloVersionChoice(str, Enum):
 
 
 class LayerODDatasetTypeChoice(str, Enum):
-    Kitti = "Kitti"
+    Yolo_terra = "Yolo_terra"
     Voc = "Voc"
+    Kitti = "Kitti"
     Coco = "Coco"
+    Yolov1 = "Yolov1"
     Udacity = "Udacity"
-    Yolo = "Yolo"
 
     @staticmethod
     def items_tuple() -> list:

@@ -6,6 +6,7 @@
 $color-black: #0E1621;
 $color-dark: #17212B;
 $color-dark-gray: #242F3D;
+$color-dark-gray2: #1E2734;
 $color-light-blue: #65B9F4;
 $color-blue: #2B5278;
 $color-light-gray: #F2F5FA;
@@ -31,11 +32,16 @@ $color-dark-bg: $color-dark;
 $color-dark-border: $color-black;
 $color-dark-text: $color-white;
 
+$color-dark-bg-dropdown: $color-dark-gray;
+$color-dark-bg-dropdown-iterm-active: $color-dark-gray2;
+
+
 // Theme light
 $color-light-bg: $color-white;
 $color-light-border: #E1E1E1;
 $color-light-text: #ADADAD;
 
+$color-ligth-bg-dropdown: $color-gray-blue;
 
 /* Color */
 $color-normal: #6190e8;

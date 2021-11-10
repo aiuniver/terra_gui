@@ -2,9 +2,7 @@ import json
 import os
 import random
 from pathlib import Path, PurePath
-
 from typing import List, Tuple
-from pydantic import PositiveFloat
 
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.settings import DEPLOY_PRESET_COUNT

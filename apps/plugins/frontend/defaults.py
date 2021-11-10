@@ -109,7 +109,7 @@ StatesTrainingYoloParamsDisabled = {
 
 StatesTrainingBasicParamsDisabled = {
     StateStatusChoice.no_train: [
-        "architecture_parameters_outputs_%s_classes_quantity"
+        "architecture_parameters_outputs_%s_classes_quantity",
     ],
     StateStatusChoice.training: [
         "batch",
@@ -744,7 +744,7 @@ class DefaultsTrainingData(BaseMixinData):
             architecture=self.architecture,
         )
 
-    
+
 class DefaultsCascadesData(BaseMixinData):
     block_form: List[Field]
     blocks_types: dict

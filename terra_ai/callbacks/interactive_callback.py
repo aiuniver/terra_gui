@@ -53,6 +53,7 @@ class InteractiveCallback:
         self.raw_y_true = None
         self.inverse_y_pred = {}
         self.current_epoch = None
+        self.training_details: TrainingDetailsData = None
 
         # overfitting params
         self.log_gap = 5
@@ -70,7 +71,6 @@ class InteractiveCallback:
         self.example_idx = []
         self.intermediate_result = {}
         self.statistic_result = {}
-        self.train_progress = {}
         self.addtrain_epochs = []
         self.progress_name = "training"
         self.basic_architecture = [ArchitectureChoice.Basic, ArchitectureChoice.ImageClassification,
@@ -95,7 +95,7 @@ class InteractiveCallback:
         self.deploy_presets_data = None
         self.random_key = ''
 
-        self.training_details: TrainingDetailsData
+        # self.training_details: TrainingDetailsData
         pass
 
     def set_attributes(self, dataset: PrepareDataset, metrics: dict, losses: dict, dataset_path: Path,
@@ -104,9 +104,9 @@ class InteractiveCallback:
         self.options = dataset
         self._callback_router(dataset)
         self._class_metric_list()
-        print('\nself._class_metric_list()', self.class_graphics)
         print('set_attributes', dataset.data.architecture)
-        print('\ndataset_config', dataset.data, '\n')
+        print('\ndataset_config', dataset.data)
+        print('\nparams', params.native(), '\n')
         self.training_details = params
         if dataset.data.architecture in self.basic_architecture:
             self.losses = losses
@@ -135,15 +135,11 @@ class InteractiveCallback:
         self.progress_table = {}
         self.intermediate_result = {}
         self.statistic_result = {}
-        self.train_progress = {}
         self.addtrain_epochs = []
         self.deploy_presets_data = None
 
     def get_presets(self):
         return self.deploy_presets_data
-
-    def update_train_progress(self, data: dict):
-        self.train_progress = data
 
     def update_state(self, y_pred, y_true=None, fit_logs=None, current_epoch_time=None,
                      on_epoch_end_flag=False) -> dict:
@@ -152,12 +148,15 @@ class InteractiveCallback:
                 if self.options.data.architecture in self.basic_architecture:
                     self.y_pred, self.inverse_y_pred = self.callback.get_y_pred(self.y_true, y_pred, self.options)
                     out = f"{self.training_details.interactive.intermediate_result.main_output}"
+                    count = self.training_details.interactive.intermediate_result.num_examples
+                    count = count if count > len(self.y_true.get('val').get(out)) \
+                        else len(self.y_true.get('val').get(out))
                     self.example_idx = self.callback.prepare_example_idx_to_show(
                         array=self.y_pred.get(out),
                         true_array=self.y_true.get("val").get(out),
                         options=self.options,
                         output=int(out),
-                        count=self.training_details.interactive.intermediate_result.num_examples,
+                        count=count,
                         choice_type=self.training_details.interactive.intermediate_result.example_choice_type,
                         seed_idx=self.seed_idx[:self.training_details.interactive.intermediate_result.num_examples]
                     )
@@ -168,6 +167,9 @@ class InteractiveCallback:
                         sensitivity=self.training_details.interactive.intermediate_result.sensitivity,
                         threashold=self.training_details.interactive.intermediate_result.threashold
                     )
+                    count = self.training_details.interactive.intermediate_result.num_examples
+                    count = count if count > len(self.options.dataframe.get('val')) \
+                        else len(self.options.dataframe.get('val'))
                     self.raw_y_true = y_true
                     self.example_idx, _ = self.callback.prepare_example_idx_to_show(
                         array=self.y_pred,
@@ -175,7 +177,7 @@ class InteractiveCallback:
                         name_classes=self.options.data.outputs.get(
                             list(self.options.data.outputs.keys())[0]).classes_names,
                         box_channel=self.training_details.interactive.intermediate_result.box_channel,
-                        count=self.training_details.interactive.intermediate_result.num_examples,
+                        count=count,
                         choice_type=self.training_details.interactive.intermediate_result.example_choice_type,
                         seed_idx=self.seed_idx,
                         sensitivity=self.training_details.interactive.intermediate_result.sensitivity,
@@ -279,23 +281,26 @@ class InteractiveCallback:
         else:
             return {}
 
-    def get_train_results(self, config) -> Union[dict, None]:
+    def get_train_results(self):
         """Return dict with data for current interactive request"""
-        self.training_details.interactive = config if config else self.training_details.interactive
         if self.log_history and self.log_history.get("epochs", {}):
             if self.options.data.architecture in self.basic_architecture:
                 if self.training_details.interactive.intermediate_result.show_results:
                     out = f"{self.training_details.interactive.intermediate_result.main_output}"
+                    count = self.training_details.interactive.intermediate_result.num_examples
+                    count = count if count > len(self.y_true.get('val').get(out)) \
+                        else len(self.y_true.get('val').get(out))
                     self.example_idx = self.callback.prepare_example_idx_to_show(
                         array=self.y_true.get("val").get(out),
                         true_array=self.y_true.get("val").get(out),
                         options=self.options,
                         output=int(out),
-                        count=self.training_details.interactive.intermediate_result.num_examples,
+                        count=count,
                         choice_type=self.training_details.interactive.intermediate_result.example_choice_type,
                         seed_idx=self.seed_idx[:self.training_details.interactive.intermediate_result.num_examples]
                     )
-                if config.intermediate_result.show_results or config.statistic_data.output_id:
+                if self.training_details.interactive.intermediate_result.show_results or \
+                        self.training_details.interactive.statistic_data.output_id:
                     self.urgent_predict = True
                     self.intermediate_result = self.callback.intermediate_result_request(
                         options=self.options,
@@ -329,13 +334,16 @@ class InteractiveCallback:
                         sensitivity=self.training_details.interactive.intermediate_result.sensitivity,
                         threashold=self.training_details.interactive.intermediate_result.threashold
                     )
+                    count = self.training_details.interactive.intermediate_result.num_examples
+                    count = count if count > len(self.options.dataframe.get('val')) \
+                        else len(self.options.dataframe.get('val'))
                     self.example_idx, _ = self.callback.prepare_example_idx_to_show(
                         array=self.y_pred,
                         true_array=self.y_true,
                         name_classes=self.options.data.outputs.get(
                             list(self.options.data.outputs.keys())[0]).classes_names,
                         box_channel=self.training_details.interactive.intermediate_result.box_channel,
-                        count=self.training_details.interactive.intermediate_result.num_examples,
+                        count=count,
                         choice_type=self.training_details.interactive.intermediate_result.example_choice_type,
                         seed_idx=self.seed_idx,
                         sensitivity=self.training_details.interactive.intermediate_result.sensitivity,
@@ -364,7 +372,7 @@ class InteractiveCallback:
                     )
 
             self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
-            self.train_progress['train_data'] = {
+            result = {
                 'update': self.random_key,
                 "class_graphics": self.class_graphics,
                 'loss_graphs': self._get_loss_graph_data_request(),
@@ -381,10 +389,9 @@ class InteractiveCallback:
             }
             progress.pool(
                 self.progress_name,
-                data=self.train_progress,
                 finished=False,
             )
-            return self.train_progress
+            self.training_details.result = result
 
     def _callback_router(self, dataset: PrepareDataset):
         method_name = '_callback_router'
@@ -552,6 +559,7 @@ class InteractiveCallback:
                 example_idx = []
                 if self.options.data.architecture in self.classification_architecture:
                     y_true = np.argmax(self.y_true.get('val').get(f"{output}"), axis=-1)
+                    # print('y_true', y_true)
                     class_idx = {}
                     for _id in range(self.options.data.outputs.get(output).num_classes):
                         class_idx[_id] = []
@@ -559,7 +567,8 @@ class InteractiveCallback:
                         class_idx[_id].append(i)
                     for key in class_idx.keys():
                         np.random.shuffle(class_idx[key])
-                    num_ex = 25
+                    # print('class_idx', class_idx)
+                    num_ex = 25 if len(y_true) > 25 else len(y_true)
                     while num_ex:
                         key = np.random.choice(list(class_idx.keys()))
                         if not class_idx.get(key):
@@ -568,6 +577,7 @@ class InteractiveCallback:
                         example_idx.append(class_idx[key][0])
                         class_idx[key].pop(0)
                         num_ex -= 1
+                    # print('example_idx', example_idx)
                 else:
                     if self.options.data.group == DatasetGroupChoice.keras or self.x_val:
                         example_idx = np.arange(len(self.y_true.get("val").get(list(self.y_true.get("val").keys())[0])))

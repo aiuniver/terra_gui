@@ -22,6 +22,7 @@ from tensorflow.keras.models import load_model
 
 from terra_ai import progress
 from terra_ai.callbacks.interactive_callback import InteractiveCallback
+# from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.callbacks.utils import loss_metric_config
 from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice
@@ -35,7 +36,6 @@ from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.exceptions.deploy import MethodNotImplementedException
 from terra_ai.modeling.validator import ModelValidator
-# from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.training.customlosses import DiceCoef, UnscaledMAE, BalancedRecall, BalancedDiceCoef, \
     BalancedPrecision, BalancedFScore, FScore, PercentMAE
 from terra_ai.training.yolo_utils import create_yolo, CustomModelYolo, compute_loss, get_mAP
@@ -119,6 +119,7 @@ class GUINN:
         print('\nTrainingData', params.base.native(), '\n')
         self.dataset = self._prepare_dataset(dataset=dataset, model_path=params.model_path,
                                              state=params.state.status)
+
         if not self.dataset.data.architecture or self.dataset.data.architecture == ArchitectureChoice.Basic:
             self.deploy_type = self._set_deploy_type(self.dataset)
         else:
@@ -128,7 +129,6 @@ class GUINN:
 
         train_size = len(self.dataset.dataframe.get("train")) if self.dataset.data.use_generator \
             else len(self.dataset.dataset.get('train'))
-
         if params.base.batch > train_size:
             if params.state.status == "addtrain":
                 params.state.set("stopped")
@@ -137,15 +137,17 @@ class GUINN:
             raise exceptions.TooBigBatchSize(params.base.batch, train_size)
 
         if params.state.status == "addtrain":
-            if self.callbacks[0].last_epoch - 1 >= self.sum_epoch:
+            if params.logs.get("addtrain_epochs")[-1] >= self.sum_epoch:
                 self.sum_epoch += params.base.epochs
-            if (self.callbacks[0].last_epoch - 1) < self.sum_epoch:
-                self.epochs = self.sum_epoch - self.callbacks[0].last_epoch + 1
+            if params.logs.get("addtrain_epochs")[-1] < self.sum_epoch:
+                self.epochs = self.sum_epoch - params.logs.get("addtrain_epochs")[-1]
             else:
                 self.epochs = params.base.epochs
         else:
             self.epochs = params.base.epochs
+
         self.batch_size = params.base.batch
+
         self.set_optimizer(params)
 
         for output_layer in params.base.architecture.outputs_dict:
@@ -164,14 +166,14 @@ class GUINN:
 
     def _set_callbacks(self, dataset: PrepareDataset, dataset_data: DatasetData,
                        train_details: TrainingDetailsData, initial_model=None) -> None:
-        progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков...'})
+        progress.pool(self.progress_name, finished=False, message="Добавление колбэков...")
         retrain_epochs = self.sum_epoch if train_details.state.status == "addtrain" else self.epochs
 
         callback = FitCallback(dataset=dataset, dataset_data=dataset_data, retrain_epochs=retrain_epochs,
                                training_details=train_details, model_name=self.nn_name,
                                deploy_type=self.deploy_type, initialed_model=initial_model)
         self.callbacks = [callback]
-        progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков выполнено'})
+        progress.pool(self.progress_name, finished=False, message="Добавление колбэков выполнено")
 
     @staticmethod
     def _set_deploy_type(dataset: PrepareDataset) -> str:
@@ -329,6 +331,7 @@ class GUINN:
             self._save_params_for_deploy(params=training)
 
         self.nn_cleaner(retrain=True if training.state.status == "training" else False)
+
         self._set_training_params(dataset=dataset, params=training)
 
         self.model = self._set_model(model=gui_model, train_details=training)
@@ -367,7 +370,7 @@ class GUINN:
         model_yolo = None
 
         threading.enumerate()[-1].setName("current_train")
-        progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели ...'})
+        progress.pool(self.progress_name, finished=False, message="Компиляция модели ...")
         if yolo_arch:
             warmup_epoch = training_details.base.architecture.parameters.yolo.train_warmup_epochs
             lr_init = training_details.base.architecture.parameters.yolo.train_lr_init
@@ -388,12 +391,12 @@ class GUINN:
                                optimizer=self.optimizer,
                                metrics=self.metrics
                                )
-        progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели выполнена'})
+        progress.pool(self.progress_name, finished=False, message="Компиляция модели выполнена")
         self._set_callbacks(
             dataset=dataset, dataset_data=dataset_data, train_details=training_details,
             initial_model=self.model if yolo_arch else None
         )
-        progress.pool(self.progress_name, finished=False, data={'status': 'Начало обучения ...'})
+        progress.pool(self.progress_name, finished=False, message="Начало обучения ...")
         if self.dataset.data.use_generator:
             print('use generator')
             critical_val_size = len(self.dataset.dataframe.get("val"))
@@ -446,7 +449,7 @@ class MemoryUsage:
         self.debug = debug
         try:
             N.nvmlInit()
-            self.gpu = True
+            self.gpu = False
         except:
             self.gpu = False
 
@@ -753,7 +756,6 @@ class FitCallback(keras.callbacks.Callback):
         self.result["train_usage"]["hard_usage"] = self.usage_info.get_usage()
 
     def _get_result_data(self):
-        self.result["states"] = self.training_detail.state.native()
         return self.result
 
     def _get_train_status(self) -> str:
@@ -874,6 +876,7 @@ class FitCallback(keras.callbacks.Callback):
 
         out_deploy_data = dict([
             ("path", self.training_detail.deploy_path),
+            ("path_model", self.training_detail.model_path),
             ("type", self.deploy_type),
             ("data", out_deploy_presets_data)
         ])
@@ -931,9 +934,14 @@ class FitCallback(keras.callbacks.Callback):
     def on_train_batch_end(self, batch, logs=None):
         if self._get_train_status() == "stopped":
             self.model.stop_training = True
-            msg = f'ожидайте остановку...'
-            # self.batch += 1
-            self._set_result_data({'info': f"'Обучение остановлено пользователем, '{msg}"})
+            progress.pool(
+                self.progress_name,
+                percent=(self.last_epoch - 1) / (
+                    self.retrain_epochs if self._get_train_status() == "addtrain" else self.epochs
+                ) * 100,
+                message="Обучение остановлено пользователем, ожидайте остановку...",
+                finished=False,
+            )
         else:
             msg_batch = {"current": batch + 1, "total": self.num_batches}
             msg_epoch = {"current": self.last_epoch,
@@ -976,7 +984,6 @@ class FitCallback(keras.callbacks.Callback):
                 ) * 100,
                 message=f"Обучение. Эпоха {self.last_epoch} из "
                         f"{self.retrain_epochs if self._get_train_status() in ['addtrain', 'stopped'] else self.epochs}",
-                data=self._get_result_data(),
                 finished=False,
             )
 
@@ -1028,7 +1035,6 @@ class FitCallback(keras.callbacks.Callback):
             ) * 100,
             message=f"Обучение. Эпоха {self.last_epoch} из "
                     f"{self.retrain_epochs if self._get_train_status() in ['addtrain', 'stopped'] else self.epochs}",
-            data=self._get_result_data(),
             finished=False,
         )
 
@@ -1073,31 +1079,20 @@ class FitCallback(keras.callbacks.Callback):
         total_epochs = self.retrain_epochs if self._get_train_status() in ['addtrain',
                                                                            'trained'] else self.epochs
         if self.model.stop_training:
-            self._set_result_data({'info': f"Обучение остановлено. Модель сохранена."})
             progress.pool(
                 self.progress_name,
                 message=f"Обучение остановлено. Эпоха {self.last_epoch - 1} из "
-                        f"{total_epochs}",
+                        f"{total_epochs}. Модель сохранена.",
                 data=self._get_result_data(),
                 finished=True,
             )
         else:
-            if self._get_train_status() == "retrain":
-                msg = f'Затрачено времени на обучение: ' \
-                      f'{self.eta_format(time_end)} '
-            else:
-                msg = f'Затрачено времени на обучение: ' \
-                      f'{self.eta_format(self._sum_time)} '
-            self._set_result_data({'info': f"Обучение закончено. {msg}"})
             percent = (self.last_epoch - 1) / (
                 self.retrain_epochs if self._get_train_status() ==
                                        "addtrain" or self._get_train_status() == "stopped"
                 else self.epochs
             ) * 100
 
-            # if os.path.exists(self.save_model_path) and interactive.deploy_presets_data:
-            #     with open(os.path.join(self.save_model_path, "config.presets"), "w", encoding="utf-8") as presets:
-            #         presets.write(str(interactive.deploy_presets_data))
             self.training_detail.state.set("trained")
             self.training_detail.result = self._get_result_data()
             progress.pool(
@@ -1105,6 +1100,5 @@ class FitCallback(keras.callbacks.Callback):
                 percent=percent,
                 message=f"Обучение завершено. Эпоха {self.last_epoch - 1} из "
                         f"{total_epochs}",
-                data=self._get_result_data(),
                 finished=True,
             )
