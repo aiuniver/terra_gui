@@ -1,7 +1,7 @@
 <template>
   <div>
     <svg
-      v-if="name === 'arrow-right-outline'"
+      v-if="all || name === 'arrow-right-outline'"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -11,7 +11,7 @@
       <path d="M14.5 12L9.5 7V17L14.5 12Z" stroke="#6C7883" />
     </svg>
     <svg
-      v-if="name === 'arrow-right-fill'"
+      v-if="all || name === 'arrow-right-fill'"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -21,12 +21,12 @@
       <path d="M14.5 12L9.5 7V17L14.5 12Z" fill="#6C7883" />
     </svg>
 
-    <svg v-if="name === 'arrow-right-active-fill'" width="24" height="24" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg v-if="all || name === 'arrow-right-active-fill'" width="24" height="24" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M18.768 18.7677V11.6966L11.6969 18.7677H18.768Z" fill="#65B9F4"/>
 </svg>
 
     <svg
-      v-if="name === 'notification-outline'"
+      v-if="all || name === 'notification-outline'"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -40,7 +40,7 @@
     </svg>
 
     <svg
-      v-if="name === 'help-circle'"
+      v-if="all || name === 'help-circle'"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -54,7 +54,7 @@
     </svg>
 
     <svg
-      v-if="name === 'google-drive'"
+      v-if="all || name === 'google-drive'"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -68,7 +68,7 @@
     </svg>
 
     <svg
-      v-if="name === 'file-outline'"
+      v-if="all || name === 'file-outline'"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -82,7 +82,7 @@
     </svg>
 
     <svg
-      v-if="name === 'folder'"
+      v-if="all || name === 'folder'"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -96,7 +96,7 @@
     </svg>
 
     <svg
-      v-if="name === 'folder-add'"
+      v-if="all || name === 'folder-add'"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -110,7 +110,7 @@
     </svg>
 
     <svg
-      v-if="name === 'folder-save'"
+      v-if="all || name === 'folder-save'"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -124,7 +124,7 @@
     </svg>
 
     <svg
-      v-if="name === 'folder-validate'"
+      v-if="all || name === 'folder-validate'"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -141,7 +141,7 @@
       />
     </svg>
     <svg
-      v-if="name === 'folder-remove'"
+      v-if="all || name === 'folder-remove'"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -155,7 +155,7 @@
     </svg>
 
     <svg
-      v-if="name === 'sloy-start-add'"
+      v-if="all || name === 'sloy-start-add'"
       width="30"
       height="30"
       viewBox="0 0 30 30"
@@ -208,7 +208,7 @@
     </svg>
 
     <svg
-      v-if="name === 'sloy-middle-add'"
+      v-if="all || name === 'sloy-middle-add'"
       width="30"
       height="30"
       viewBox="0 0 30 30"
@@ -261,7 +261,7 @@
     </svg>
 
     <svg
-      v-if="name === 'sloy-end-add'"
+      v-if="all || name === 'sloy-end-add'"
       width="30"
       height="30"
       viewBox="0 0 30 30"
@@ -321,8 +321,12 @@ export default {
   props: {
     name: {
       type: String,
-      required: true,
+      default: "folder",
     },
+    all: {
+      type: Boolean,
+      default: false
+    }
   },
 };
 </script>
