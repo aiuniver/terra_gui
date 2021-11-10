@@ -24,7 +24,7 @@ Defaults = {
     "cascades": {
         "block_form": CascadesBlockForm,
         "blocks_types": CascadesBlocksTypes,
-    }
+    },
 }
 
 
@@ -49,4 +49,3 @@ for layer in Layer:
             }
         }
     )
-    
