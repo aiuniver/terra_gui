@@ -147,12 +147,15 @@ class InteractiveCallback:
                 if self.options.data.architecture in self.basic_architecture:
                     self.y_pred, self.inverse_y_pred = self.callback.get_y_pred(self.y_true, y_pred, self.options)
                     out = f"{self.training_details.interactive.intermediate_result.main_output}"
+                    count = self.training_details.interactive.intermediate_result.num_examples
+                    count = count if count > len(self.y_true.get('val').get(out)) \
+                        else len(self.y_true.get('val').get(out))
                     self.example_idx = self.callback.prepare_example_idx_to_show(
                         array=self.y_pred.get(out),
                         true_array=self.y_true.get("val").get(out),
                         options=self.options,
                         output=int(out),
-                        count=self.training_details.interactive.intermediate_result.num_examples,
+                        count=count,
                         choice_type=self.training_details.interactive.intermediate_result.example_choice_type,
                         seed_idx=self.seed_idx[:self.training_details.interactive.intermediate_result.num_examples]
                     )
@@ -163,6 +166,9 @@ class InteractiveCallback:
                         sensitivity=self.training_details.interactive.intermediate_result.sensitivity,
                         threashold=self.training_details.interactive.intermediate_result.threashold
                     )
+                    count = self.training_details.interactive.intermediate_result.num_examples
+                    count = count if count > len(self.options.dataframe.get('val')) \
+                        else len(self.options.dataframe.get('val'))
                     self.raw_y_true = y_true
                     self.example_idx, _ = self.callback.prepare_example_idx_to_show(
                         array=self.y_pred,
@@ -170,7 +176,7 @@ class InteractiveCallback:
                         name_classes=self.options.data.outputs.get(
                             list(self.options.data.outputs.keys())[0]).classes_names,
                         box_channel=self.training_details.interactive.intermediate_result.box_channel,
-                        count=self.training_details.interactive.intermediate_result.num_examples,
+                        count=count,
                         choice_type=self.training_details.interactive.intermediate_result.example_choice_type,
                         seed_idx=self.seed_idx,
                         sensitivity=self.training_details.interactive.intermediate_result.sensitivity,
@@ -280,12 +286,15 @@ class InteractiveCallback:
             if self.options.data.architecture in self.basic_architecture:
                 if self.training_details.interactive.intermediate_result.show_results:
                     out = f"{self.training_details.interactive.intermediate_result.main_output}"
+                    count = self.training_details.interactive.intermediate_result.num_examples
+                    count = count if count > len(self.y_true.get('val').get(out)) \
+                        else len(self.y_true.get('val').get(out))
                     self.example_idx = self.callback.prepare_example_idx_to_show(
                         array=self.y_true.get("val").get(out),
                         true_array=self.y_true.get("val").get(out),
                         options=self.options,
                         output=int(out),
-                        count=self.training_details.interactive.intermediate_result.num_examples,
+                        count=count,
                         choice_type=self.training_details.interactive.intermediate_result.example_choice_type,
                         seed_idx=self.seed_idx[:self.training_details.interactive.intermediate_result.num_examples]
                     )
@@ -324,13 +333,16 @@ class InteractiveCallback:
                         sensitivity=self.training_details.interactive.intermediate_result.sensitivity,
                         threashold=self.training_details.interactive.intermediate_result.threashold
                     )
+                    count = self.training_details.interactive.intermediate_result.num_examples
+                    count = count if count > len(self.options.dataframe.get('val')) \
+                        else len(self.options.dataframe.get('val'))
                     self.example_idx, _ = self.callback.prepare_example_idx_to_show(
                         array=self.y_pred,
                         true_array=self.y_true,
                         name_classes=self.options.data.outputs.get(
                             list(self.options.data.outputs.keys())[0]).classes_names,
                         box_channel=self.training_details.interactive.intermediate_result.box_channel,
-                        count=self.training_details.interactive.intermediate_result.num_examples,
+                        count=count,
                         choice_type=self.training_details.interactive.intermediate_result.example_choice_type,
                         seed_idx=self.seed_idx,
                         sensitivity=self.training_details.interactive.intermediate_result.sensitivity,
@@ -546,6 +558,7 @@ class InteractiveCallback:
                 example_idx = []
                 if self.options.data.architecture in self.classification_architecture:
                     y_true = np.argmax(self.y_true.get('val').get(f"{output}"), axis=-1)
+                    # print('y_true', y_true)
                     class_idx = {}
                     for _id in range(self.options.data.outputs.get(output).num_classes):
                         class_idx[_id] = []
@@ -553,7 +566,8 @@ class InteractiveCallback:
                         class_idx[_id].append(i)
                     for key in class_idx.keys():
                         np.random.shuffle(class_idx[key])
-                    num_ex = 25
+                    # print('class_idx', class_idx)
+                    num_ex = 25 if len(y_true) > 25 else len(y_true)
                     while num_ex:
                         key = np.random.choice(list(class_idx.keys()))
                         if not class_idx.get(key):
@@ -562,6 +576,7 @@ class InteractiveCallback:
                         example_idx.append(class_idx[key][0])
                         class_idx[key].pop(0)
                         num_ex -= 1
+                    # print('example_idx', example_idx)
                 else:
                     if self.options.data.group == DatasetGroupChoice.keras or self.x_val:
                         example_idx = np.arange(len(self.y_true.get("val").get(list(self.y_true.get("val").keys())[0])))
