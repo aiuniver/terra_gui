@@ -1,7 +1,7 @@
 import random
 
 from typing import List, Tuple
-from pathlib import PosixPath
+from pathlib import PosixPath, Path
 from pydantic import PositiveFloat
 
 from terra_ai.data.mixins import BaseMixinData
@@ -17,6 +17,10 @@ class Item(BaseMixinData):
 class DataList(DataBaseList):
     class Meta:
         source = Item
+
+    def preset_update(self, data):
+        data.update({"source": str(Path(self.path_model, data.get("source")))})
+        return data
 
     def update(self, index: int):
         value = random.choice(self)
