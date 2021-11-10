@@ -350,6 +350,24 @@ def class_counter(y_array, classes_names: list, ohe=True):
         print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
+def sequence_length_calculator(array):
+    """ run length encoding. Partial credit to R rle function.
+        Multi datatype arrays catered for including non Numpy
+        returns: tuple (runlengths, startpositions, values) """
+    array = np.asarray(array)  # force numpy
+    n = len(array)
+    if n == 0:
+        return None
+    else:
+        y = array[1:] != array[:-1]
+        i = np.append(np.where(y), n - 1)
+        z = np.diff(np.append(-1, i))
+        sequence = z * array[i]
+        while 0 in sequence:
+            sequence = np.delete(sequence, list(sequence).index(0))
+        return list(sequence)
+
+
 def get_autocorrelation_graphic(y_true, y_pred, depth=10) -> (list, list, list):
     method_name = 'get_autocorrelation_graphic'
     try:

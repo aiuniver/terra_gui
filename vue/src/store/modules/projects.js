@@ -23,7 +23,7 @@ export default {
       if (!data) {
         return;
       }
-      const { project, user, defaults: { modeling: { layers_types, layer_form }, datasets: { creation }, training: { base, architecture }, cascades } } = data;
+      const { project, user, defaults: { modeling: { layers_types, layer_form }, datasets: { creation }, training: form, cascades } } = data;
       const { model, training } = project;
       commit("SET_PROJECT", project);
       commit("SET_USER", user);
@@ -31,16 +31,11 @@ export default {
       commit("modeling/SET_MODEL", model, { root: true });
       commit("cascades/SET_CASCADES", cascades, { root: true });
       commit("datasets/SET_CREATION", creation, { root: true });
-      commit("trainings/SET_PARAMS", base, { root: true });
-      commit("trainings/SET_ARCHITECTURE", architecture, { root: true });
-      commit("trainings/SET_CONFIG", training, { root: true });
+      dispatch("trainings/parseStruct", {...training, form} , { root: true });
       if (training?.deploy) {
         commit("deploy/SET_DEPLOY", training.deploy.data, { root: true });
         commit("deploy/SET_CARDS", training.deploy.data.data, { root: true });
         commit("deploy/SET_DEPLOY_TYPE", training.deploy.type, { root: true });
-      }
-      if (training?.result) {
-        commit("trainings/SET_TRAIN", training.result, { root: true });
       }
       return data
     },

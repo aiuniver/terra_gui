@@ -1,16 +1,10 @@
 <template>
   <div class="t-field">
-    <div class="t-field__label">Train / Val / Test</div>
+    <div class="t-field__label">Train / Val</div>
     <div class="slider" @mouseleave="stopDrag" @mouseup="stopDrag" ref="slider">
       <div class="slider__inputs">
         <input name="[info][part][train]" type="number" :value="btnFirstVal" :data-degree="degree" />
-        <input
-          name="[info][part][validation]"
-          type="number"
-          :value="btnSecondVal - btnFirstVal"
-          :data-degree="degree"
-        />
-        <input name="[info][part][test]" type="number" :value="100 - btnSecondVal" :data-degree="degree" />
+        <input name="[info][part][validation]" type="number" :value="100 - btnFirstVal" :data-degree="degree" />
       </div>
       <div class="slider__scales">
         <div class="scales__first" :style="firstScale">
@@ -28,7 +22,7 @@
         </div>
         <div class="scales__second" :style="secondScale">
           <input
-            :value="btnSecondVal - btnFirstVal"
+            :value="100 - btnFirstVal"
             v-autowidth
             type="number"
             autocomplete="off"
@@ -39,19 +33,6 @@
             @focus="focus"
           />
         </div>
-        <div class="scales__third" :style="thirdScale">
-          <input
-            :value="100 - btnSecondVal"
-            v-autowidth
-            type="number"
-            autocomplete="off"
-            :key="key3"
-            ref="key3"
-            @keypress.enter="inter(3, $event)"
-            @blur="clickInput(3, $event)"
-            @focus="focus"
-          />
-        </div>
       </div>
       <div class="slider__between" ref="between">
         <button
@@ -59,12 +40,6 @@
           :style="sliderFirstStyle"
           @mousedown="startDragFirst"
           @mouseup="stopDragFirst"
-        ></button>
-        <button
-          class="slider__btn-2"
-          :style="sliderSecondStyle"
-          @mousedown="startDragSecond"
-          @mouseup="stopDragSecond"
         ></button>
       </div>
     </div>
@@ -78,12 +53,9 @@ export default {
     input: 0,
     select: 0,
     btnFirstVal: 70,
-    btnSecondVal: 90,
     firstBtnDrag: false,
-    secondBtnDrag: false,
     key1: 1,
     key2: 1,
-    key3: 1,
   }),
   props: {
     degree: Number,
@@ -104,33 +76,20 @@ export default {
     },
     clickInput(i, { target }) {
       const value = +target.value;
-      // console.log(value)
-      // console.log(this.btnFirstVal)
-      // console.log(this.btnSecondVal)
       if (i === 1) {
-        if (value >= 0 && value <= 90) {
+        if (value >= 0 && value <= 95) {
           this.btnFirstVal = value > 5 ? value : 5;
-          if (value + 5 > this.btnSecondVal) {
-            console.log('value')
-            this.btnSecondVal = value > 5 ? value + 5 : 5;
-          }
         }
       }
       if (i === 2) {
-        if (value >= 0 && value <= 95 - this.btnFirstVal) {
-          this.btnSecondVal = value > 5 ? this.btnFirstVal + value : this.btnFirstVal + 5;
-        }
-      }
-      if (i === 3) {
-        if (value >= 0 && value <= 95 - this.btnFirstVal) {
-          this.btnSecondVal = 100 - value;
+        if (value >= 0 && value <= 95) {
+          this.btnFirstVal = value > 5 ? 100 - value : 5;
         }
       }
       this[`key${i}`] += 1;
     },
     stopDrag() {
       this.$refs.slider.removeEventListener('mousemove', this.firstBtn);
-      this.$refs.slider.removeEventListener('mousemove', this.secondBtn);
     },
     startDragFirst() {
       this.firstBtnDrag = true;
@@ -140,14 +99,14 @@ export default {
       this.$refs.slider.removeEventListener('mousemove', this.firstBtn);
       this.firstBtnDrag = false;
     },
-    startDragSecond() {
-      this.secondBtnDrag = true;
-      this.$refs.slider.addEventListener('mousemove', this.secondBtn);
-    },
-    stopDragSecond() {
-      this.$refs.slider.removeEventListener('mousemove', this.secondBtn);
-      this.secondBtnDrag = false;
-    },
+    // startDragSecond() {
+    //   this.secondBtnDrag = true;
+    //   this.$refs.slider.addEventListener('mousemove', this.secondBtn);
+    // },
+    // stopDragSecond() {
+    //   this.$refs.slider.removeEventListener('mousemove', this.secondBtn);
+    //   this.secondBtnDrag = false;
+    // },
     firstBtn(e) {
       if (this.firstBtnDrag) {
         var btn = document.querySelector('.slider__btn-1');
@@ -155,17 +114,6 @@ export default {
         this.btnFirstVal = Math.round((pos / 231) * 100);
         if (this.btnFirstVal < 5) this.btnFirstVal = 5;
         if (this.btnFirstVal > 95) this.btnFirstVal = 95;
-        if (this.btnFirstVal > this.btnSecondVal - 5) this.btnFirstVal = this.btnSecondVal - 5;
-      }
-    },
-    secondBtn(e) {
-      if (this.secondBtnDrag) {
-        var btn = document.querySelector('.slider__btn-2');
-        let pos = e.pageX - btn.parentNode.getBoundingClientRect().x;
-        this.btnSecondVal = Math.round((pos / 231) * 100);
-        if (this.btnSecondVal < 5) this.btnSecondVal = 5;
-        if (this.btnSecondVal > 95) this.btnSecondVal = 95;
-        if (this.btnSecondVal < this.btnFirstVal + 5) this.btnSecondVal = this.btnFirstVal + 5;
       }
     },
     diff(value, max = 95, min = 5) {
@@ -181,27 +129,22 @@ export default {
   computed: {
     sliderFirstStyle() {
       return {
-        left: this.diff(this.btnFirstVal, this.btnSecondVal - 5) + '%',
+        left: this.diff(this.btnFirstVal, 95) + '%',
       };
     },
     sliderSecondStyle() {
       return {
-        left: this.diff(this.btnSecondVal, 95) + '%',
+        left: this.diff(this.btnFirstVal, 95) + '%',
       };
     },
     firstScale() {
       return {
-        width: this.diff(this.btnFirstVal, 90) + '%',
+        width: this.diff(this.btnFirstVal, 95) + '%',
       };
     },
     secondScale() {
       return {
-        width: this.diff(this.btnSecondVal - this.btnFirstVal, 90) + '%',
-      };
-    },
-    thirdScale() {
-      return {
-        width: this.diff(100 - this.btnSecondVal, 90) + '%',
+        width: this.diff(100 - this.btnFirstVal, 95) + '%',
       };
     },
   },
@@ -279,16 +222,11 @@ export default {
   }
   &__second {
     background: #609e42;
+    border-radius: 0 4px 4px 0;
     width: 27%;
   }
-  &__third {
-    background: #5191f2;
-    border-radius: 0 4px 4px 0;
-    width: 23%;
-  }
   &__first,
-  &__second,
-  &__third {
+  &__second {
     font-size: 12px;
     line-height: 24px;
     input {

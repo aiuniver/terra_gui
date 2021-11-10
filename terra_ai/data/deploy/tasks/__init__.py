@@ -10,6 +10,7 @@ from terra_ai.data.deploy.tasks import types
 
 class DeployData(BaseMixinData):
     path: DirectoryPath
+    path_model: DirectoryPath
     type: DeployTypeChoice
     data: Any = {}
 
@@ -30,7 +31,12 @@ class DeployData(BaseMixinData):
             value = {}
         if not value.get("data"):
             value["data"] = []
-        value.update({"path": values.get("path")})
+        value.update(
+            {
+                "path": values.get("path"),
+                "path_model": values.get("path_model"),
+            }
+        )
         return field.type_(**value)
 
     @property
@@ -40,5 +46,5 @@ class DeployData(BaseMixinData):
         return data
 
     def dict(self, **kwargs):
-        kwargs.update({"exclude": {"path"}})
+        kwargs.update({"exclude": {"path", "path_model"}})
         return super().dict(**kwargs)

@@ -242,7 +242,6 @@ class CreateTagSerializer(serializers.Serializer):
 
 
 class CreateInfoPartSerializer(serializers.Serializer):
-    test = serializers.FloatField(min_value=0.05, max_value=0.9)
     train = serializers.FloatField(min_value=0.05, max_value=0.9)
     validation = serializers.FloatField(min_value=0.05, max_value=0.9)
 
@@ -253,10 +252,9 @@ class CreateInfoSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         _part = attrs.get("part")
-        _test = _part.get("test")
         _train = _part.get("train")
         _validation = _part.get("validation")
-        if _test + _train + _validation != 1.0:
+        if _train + _validation != 1.0:
             raise serializers.ValidationError(
                 {"part": "Сумма значений должна быть равной 1"}
             )
