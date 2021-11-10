@@ -66,6 +66,7 @@ export default {
       return await this.$store.dispatch('dialogs/trining', { ctx: this, page: 'датасета' });
     },
     async handleClick() {
+      this.$store.dispatch('settings/setOverlay', true);
       const dataset = this.selected;
       const isTrain = await this.isTraining();
       if (isTrain) {
@@ -73,6 +74,7 @@ export default {
           dataset,
         });
         if (success && data) {
+          this.$store.dispatch('settings/setOverlay', false);
           const answer = await this.$store.dispatch('dialogs/confirm', { ctx: this, content: data });
           if (answer == 'confirm') await this.onChoice({ ...dataset, reset_model: true });
         } else {
