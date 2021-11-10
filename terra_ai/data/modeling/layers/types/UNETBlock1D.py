@@ -22,7 +22,7 @@ LayerConfig = LayerConfigData(
             "validation": LayerValidationMethodChoice.fixed,
         },
         "input_dimension": {
-            "value": 4,
+            "value": 3,
             "validation": LayerValidationMethodChoice.minimal,
         },
         "module": ModuleChoice.terra_custom_layers,
@@ -32,10 +32,11 @@ LayerConfig = LayerConfigData(
 
 
 class ParametersMainData(BaseMixinData):
+    filters_base: PositiveInt = 16
     n_pooling_branches: PositiveInt = 2
-    filters_coef: PositiveInt = 2
+    filters_coef: PositiveInt = 1
     n_conv_layers: PositiveInt = 2
-    kernel_size: Tuple[PositiveInt, PositiveInt] = (3, 3)
+    kernel_size: PositiveInt = 5
     padding: PaddingChoice = PaddingChoice.same
     activation: Optional[ActivationChoice] = ActivationChoice.relu
     batch_norm_layer: bool = True
@@ -43,7 +44,7 @@ class ParametersMainData(BaseMixinData):
 
 
 class ParametersExtraData(BaseMixinData):
-    strides: Tuple[PositiveInt, PositiveInt] = (1, 1)
-    dilation: Tuple[PositiveInt, PositiveInt] = (1, 1)
+    strides: PositiveInt = 1
+    dilation: PositiveInt = 1
     dropout_rate: ConstrainedFloatValueGe0Le1 = 0.1
     pass

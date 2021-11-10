@@ -1,5 +1,5 @@
 """
-## Тип слоя `PSPBlock`
+## Тип слоя `UNETBlock`
 """
 from typing import Optional, Tuple
 
@@ -13,7 +13,7 @@ from ..extra import (
     PaddingChoice, ActivationChoice,
 )
 from ....mixins import BaseMixinData
-from ....types import ConstrainedFloatValueGe0Le1, ConstrainedIntValueGe1
+from ....types import ConstrainedFloatValueGe0Le1
 
 LayerConfig = LayerConfigData(
     **{
@@ -33,9 +33,9 @@ LayerConfig = LayerConfigData(
 
 class ParametersMainData(BaseMixinData):
     filters_base: PositiveInt = 16
-    n_pooling_branches: ConstrainedIntValueGe1 = 2
-    filters_coef: ConstrainedIntValueGe1 = 1
-    n_conv_layers: ConstrainedIntValueGe1 = 2
+    n_pooling_branches: PositiveInt = 2
+    filters_coef: PositiveInt = 1
+    n_conv_layers: PositiveInt = 2
     kernel_size: Tuple[PositiveInt, PositiveInt] = (3, 3)
     padding: PaddingChoice = PaddingChoice.same
     activation: Optional[ActivationChoice] = ActivationChoice.relu

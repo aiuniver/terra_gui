@@ -617,11 +617,11 @@ class LayerPSPBlockData(LayerMixinData):
 
 
 class LayerUNETBlockData(LayerMixinData):
-    main: types.UNETBlock.ParametersMainData = (
-        types.UNETBlock.ParametersMainData()
+    main: types.UNETBlock2D.ParametersMainData = (
+        types.UNETBlock2D.ParametersMainData()
     )
-    extra: types.UNETBlock.ParametersExtraData = (
-        types.UNETBlock.ParametersExtraData()
+    extra: types.UNETBlock2D.ParametersExtraData = (
+        types.UNETBlock2D.ParametersExtraData()
     )
 
 

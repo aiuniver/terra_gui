@@ -721,7 +721,7 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
 
             true_bbox = dataset.dataframe.get("val").iloc[index, 1] #.split(' ')
             tmp_im = load_img(os.path.join(dataset_path, dataset.dataframe.get("val").iloc[index, 0]))
-            bbox_data_gt = np.array(resize_bboxes(true_bbox, tmp_im.width, tmp_im.height))
+            bbox_data_gt = np.array(resize_bboxes('stretch', true_bbox, tmp_im.width, tmp_im.height))
             # bbox_data_gt = np.array([list(map(int, box.split(','))) for box in y_true])
 
             if len(bbox_data_gt) == 0:

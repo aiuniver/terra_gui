@@ -143,6 +143,7 @@ from . import (
     DarkNetResBlock,
     DarkNetBatchNormalization,
     PSPBlock,
-    UNETBlock
+    UNETBlock2D,
+    UNETBlock1D
 
 )
