@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import Any
 
 from ...mixins import BaseMixinData
 from ..extra import BlockGroupChoice
@@ -12,23 +11,23 @@ class BlockBaseData(BaseMixinData):
 
 
 class BlockInputDataData(BlockBaseData):
-    main: types.InputData.ParametersMainData = types.InputData.ParametersMainData()
+    main: types.InputData.ParametersMainData
 
 
 class BlockOutputDataData(BlockBaseData):
-    main: types.OutputData.ParametersMainData = types.OutputData.ParametersMainData()
+    main: types.OutputData.ParametersMainData
 
 
 class BlockModelData(BlockBaseData):
-    main: types.Model.ParametersMainData = types.Model.ParametersMainData()
+    main: types.Model.ParametersMainData
 
 
 class BlockFunctionData(BlockBaseData):
-    main: types.Function.ParametersMainData = types.Function.ParametersMainData()
+    main: types.Function.ParametersMainData
 
 
 class BlockCustomData(BlockBaseData):
-    main: types.Custom.ParametersMainData = types.Custom.ParametersMainData()
+    main: types.Custom.ParametersMainData
 
 
 Block = Enum(
