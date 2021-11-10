@@ -9,12 +9,15 @@
   --color-bg: #{$color-dark-bg};
   --color-border: #{$color-dark-border};
   --color-text: #{$color-dark-text};
-
+  --color-bg-dropdown: #{$color-dark-bg-dropdown};
+  --color-bg-dropdown-item-active: #{$color-dark-bg-dropdown-iterm-active};
+  
   @media screen {
     &[data-theme="light"] {
       --color-bg: #{$color-light-bg};
       --color-border: #{$color-light-border};
       --color-text: #{$color-light-text};
+      --color-bg-dropdown: #{$color-ligth-bg-dropdown};
     }
   }
 }
