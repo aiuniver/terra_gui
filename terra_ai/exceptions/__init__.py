@@ -18,7 +18,7 @@ def terra_exception(exception: Exception) -> TerraBaseException:
     if isinstance(
         exception, pydantic.ValidationError
     ):  # нативные исключения от Pydantic
-        raise PydanticException(exception)
+        return PydanticException(exception)
 
     if isinstance(
         exception, tensorflow.errors.OpError

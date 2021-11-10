@@ -16,6 +16,14 @@ class TrainingMessages(dict, Enum):
         "ru": "Файл или директория отсутствует по пути: %s",
         "eng": "No such file or directory: %s",
     }
+    TrainingAlreadyExists = {
+        "ru": "Обучение `%s` уже существует",
+        "eng": "Training `%s` already exists",
+    }
+    TrainingDefaultName = {
+        "ru": "Запрещено использовать название `%s`",
+        "eng": "It is forbidden to use the name `%s`",
+    }
 
 
 class TrainingException(TerraBaseException):
@@ -34,3 +42,13 @@ class TooBigBatchSize(TrainingException):
 class FileNotFoundException(TrainingException):
     class Meta:
         message = TrainingMessages.FileNotFound
+
+
+class TrainingAlreadyExistsException(TrainingException):
+    class Meta:
+        message = TrainingMessages.TrainingAlreadyExists
+
+
+class TrainingDefaultNameException(TrainingException):
+    class Meta:
+        message = TrainingMessages.TrainingDefaultName

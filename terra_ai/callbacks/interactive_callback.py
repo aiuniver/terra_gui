@@ -70,7 +70,6 @@ class InteractiveCallback:
         self.example_idx = []
         self.intermediate_result = {}
         self.statistic_result = {}
-        self.train_progress = {}
         self.addtrain_epochs = []
         self.progress_name = "training"
         self.basic_architecture = [ArchitectureChoice.Basic, ArchitectureChoice.ImageClassification,
@@ -135,15 +134,11 @@ class InteractiveCallback:
         self.progress_table = {}
         self.intermediate_result = {}
         self.statistic_result = {}
-        self.train_progress = {}
         self.addtrain_epochs = []
         self.deploy_presets_data = None
 
     def get_presets(self):
         return self.deploy_presets_data
-
-    def update_train_progress(self, data: dict):
-        self.train_progress = data
 
     def update_state(self, y_pred, y_true=None, fit_logs=None, current_epoch_time=None,
                      on_epoch_end_flag=False) -> dict:
@@ -279,9 +274,8 @@ class InteractiveCallback:
         else:
             return {}
 
-    def get_train_results(self, config) -> Union[dict, None]:
+    def get_train_results(self):
         """Return dict with data for current interactive request"""
-        self.training_details.interactive = config if config else self.training_details.interactive
         if self.log_history and self.log_history.get("epochs", {}):
             if self.options.data.architecture in self.basic_architecture:
                 if self.training_details.interactive.intermediate_result.show_results:
@@ -295,7 +289,8 @@ class InteractiveCallback:
                         choice_type=self.training_details.interactive.intermediate_result.example_choice_type,
                         seed_idx=self.seed_idx[:self.training_details.interactive.intermediate_result.num_examples]
                     )
-                if config.intermediate_result.show_results or config.statistic_data.output_id:
+                if self.training_details.interactive.intermediate_result.show_results or \
+                        self.training_details.interactive.statistic_data.output_id:
                     self.urgent_predict = True
                     self.intermediate_result = self.callback.intermediate_result_request(
                         options=self.options,
@@ -364,7 +359,7 @@ class InteractiveCallback:
                     )
 
             self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
-            self.train_progress['train_data'] = {
+            result = {
                 'update': self.random_key,
                 "class_graphics": self.class_graphics,
                 'loss_graphs': self._get_loss_graph_data_request(),
@@ -381,10 +376,9 @@ class InteractiveCallback:
             }
             progress.pool(
                 self.progress_name,
-                data=self.train_progress,
                 finished=False,
             )
-            return self.train_progress
+            self.training_details.result = result
 
     def _callback_router(self, dataset: PrepareDataset):
         method_name = '_callback_router'

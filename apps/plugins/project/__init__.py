@@ -195,6 +195,11 @@ class Project(BaseMixinData):
         defaults_data.training = DefaultsTrainingData(
             project=self, architecture=self.training.base.architecture.type
         )
+        self.training.save(self.training.name)
+        self.save()
+
+    def set_cascade(self, cascade: CascadeDetailsData):
+        self.cascade = cascade
         self.save()
 
     def clear_dataset(self):
@@ -220,10 +225,6 @@ class Project(BaseMixinData):
 
     def clear_cascade(self):
         self.cascade = CascadeDetailsData(**EmptyCascadeDetailsData)
-
-    def set_cascade(self, cascade: CascadeDetailsData):
-        self.cascade = cascade
-        self.save()
 
     def _set_data(
         self,
