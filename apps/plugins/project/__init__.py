@@ -186,6 +186,8 @@ class Project(BaseMixinData):
                     _config.get("training", {}),
                     ModelDetailsData(**(_model or EmptyModelDetailsData)),
                 )
+                if _dataset:
+                    _dataset["path"] = project_path.datasets
                 _training["path"] = project_path.training
                 self._set_data(
                     name=_config.get("name", UNKNOWN_NAME),
