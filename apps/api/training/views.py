@@ -61,7 +61,7 @@ class StopAPIView(BaseAPIView):
         agent_exchange("training_stop", training=request.project.training)
         request.project.set_training_base(training_base)
         request.project.training.save(request.project.training.name)
-        request.project.save()
+        request.project.save_config()
         return BaseResponseSuccess(
             TrainingResponseData(request.project, defaults_data).dict()
         )
@@ -73,7 +73,7 @@ class ClearAPIView(BaseAPIView):
         agent_exchange("training_clear", training=request.project.training)
         request.project.clear_training(name)
         request.project.training.save(request.project.training.name)
-        request.project.save()
+        request.project.save_config()
         return BaseResponseSuccess(
             TrainingResponseData(request.project, defaults_data).dict()
         )
@@ -84,7 +84,7 @@ class InteractiveAPIView(BaseAPIView):
         request.project.training.set_interactive(request.data)
         agent_exchange("training_interactive", training=request.project.training)
         request.project.training.save(request.project.training.name)
-        request.project.save()
+        request.project.save_config()
         return BaseResponseSuccess(
             TrainingResponseData(request.project, defaults_data).dict()
         )
@@ -95,7 +95,7 @@ class ProgressAPIView(BaseAPIView):
         request.project.training.progress = agent_exchange("training_progress").native()
         if request.project.training.progress.get("finished"):
             request.project.training.save(request.project.training.name)
-            request.project.save()
+            request.project.save_config()
         return BaseResponseSuccess(
             TrainingResponseData(request.project, defaults_data).dict()
         )
@@ -115,7 +115,7 @@ class UpdateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         request.project.set_training_base(request.data)
         request.project.training.save(request.project.training.name)
-        request.project.save()
+        request.project.save_config()
         return BaseResponseSuccess(
             TrainingResponseData(request.project, defaults_data).dict()
         )

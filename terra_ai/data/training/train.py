@@ -263,7 +263,9 @@ class TrainingDetailsData(BaseMixinData):
     def __init__(self, **data):
         self._path = Path(data.get("path"))
 
-        _name = data.get("name", DEFAULT_TRAINING_PATH_NAME)
+        _name = (
+            data.get("name", DEFAULT_TRAINING_PATH_NAME) or DEFAULT_TRAINING_PATH_NAME
+        )
         _path = Path(self._path, _name)
         if _path.is_file():
             os.remove(_path)

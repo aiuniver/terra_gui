@@ -23,7 +23,7 @@ class ReloadAPIView(BaseAPIView):
             return BaseResponseErrorFields(serializer.errors)
         if request.project.training.deploy:
             request.project.training.deploy.data.reload(serializer.validated_data)
-        request.project.save()
+        request.project.save_config()
         return BaseResponseSuccess(request.project.training.deploy.presets)
 
 
