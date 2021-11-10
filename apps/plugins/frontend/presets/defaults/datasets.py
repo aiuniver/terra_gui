@@ -1061,7 +1061,7 @@ DataSetsOutput = [
                     "label": "Тип аннотации",
                     "name": "model_type",
                     "parse": "model_type",
-                    "value": LayerODDatasetTypeChoice.Yolo.name,
+                    "value": LayerODDatasetTypeChoice.Yolo_terra.name,
                     "list": list(
                         map(
                             lambda item: {
