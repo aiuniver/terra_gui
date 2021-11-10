@@ -262,7 +262,6 @@ export default {
   background: #17212b;
   width: 100%;
   height: 52px;
-  margin: 1px 0 0 0;
   padding: 0 10px;
   position: fixed;
   left: 0;
