@@ -23,7 +23,7 @@ from tensorflow.python.keras.utils.np_utils import to_categorical
 
 from terra_ai import progress
 from terra_ai.callbacks.classification_callbacks import BaseClassificationCallback
-from terra_ai.callbacks.interactive_callback import InteractiveCallback
+# from terra_ai.callbacks.interactive_callback import InteractiveCallback
 from terra_ai.callbacks.utils import print_error, loss_metric_config, BASIC_ARCHITECTURE, CLASS_ARCHITECTURE, \
     YOLO_ARCHITECTURE, round_loss_metric, class_metric_list, CLASSIFICATION_ARCHITECTURE
 from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
@@ -39,7 +39,7 @@ from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.exceptions.deploy import MethodNotImplementedException
 from terra_ai.modeling.validator import ModelValidator
-# from terra_ai.training.customcallback import InteractiveCallback
+from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.exceptions import training as exceptions, terra_exception
 
 __version__ = 0.02
@@ -493,6 +493,7 @@ class GUINN:
         try:
             loss_dict = {}
             for output_layer in params.get('architecture').get('parameters').get('outputs'):
+
                 loss_obj = getattr(
                     importlib.import_module(loss_metric_config.get("loss").get(output_layer["loss"], {}).get('module')),
                     output_layer["loss"]
@@ -1500,17 +1501,17 @@ class FitCallback(tf.keras.callbacks.Callback):
         except Exception as e:
             print_error('FitCallback', method_name, e)
 
-    @staticmethod
-    def _logs_predict_extract(logs, prefix):
-        method_name = '_logs_predict_extract'
-        try:
-            pred_on_batch = []
-            for key in logs.keys():
-                if key.startswith(prefix):
-                    pred_on_batch.append(logs[key])
-            return pred_on_batch
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
+    # @staticmethod
+    # def _logs_predict_extract(logs, prefix):
+    #     method_name = '_logs_predict_extract'
+    #     try:
+    #         pred_on_batch = []
+    #         for key in logs.keys():
+    #             if key.startswith(prefix):
+    #                 pred_on_batch.append(logs[key])
+    #         return pred_on_batch
+    #     except Exception as e:
+    #         print_error('FitCallback', method_name, e)
 
     @staticmethod
     def _logs_losses_extract(logs, prefixes: list):
@@ -1869,13 +1870,13 @@ class FitCallback(tf.keras.callbacks.Callback):
             # current_epoch_time = time.time() - self._time_first_step
             # self._sum_epoch_time += current_epoch_time
 
-            train_epoch_data = interactive.update_state(
-                fit_logs=self.log_history,
-                arrays={'train_true': train_true, 'train_pred': train_pred, 'val_true': val_true, 'val_pred': val_pred},
-                current_epoch_time=time.time() - self._time_first_step,
-                on_epoch_end_flag=True,
-                train_idx=train_data_idxs
-            )
+            # train_epoch_data = interactive.update_state(
+            #     fit_logs=self.log_history,
+            #     arrays={'train_true': train_true, 'train_pred': train_pred, 'val_true': val_true, 'val_pred': val_pred},
+            #     current_epoch_time=time.time() - self._time_first_step,
+            #     on_epoch_end_flag=True,
+            #     train_idx=train_data_idxs
+            # )
 
             # self._set_result_data({'train_data': train_epoch_data})
             # progress.pool(
@@ -1918,10 +1919,10 @@ class FitCallback(tf.keras.callbacks.Callback):
         try:
             if self.last_epoch > 1:
                 if self._best_epoch_monitoring():
-                    if not os.path.exists(self.save_model_path):
-                        os.mkdir(self.save_model_path)
-                    if not os.path.exists(os.path.join(self.save_model_path, "deploy_presets")):
-                        os.mkdir(os.path.join(self.save_model_path, "deploy_presets"))
+                    if not os.path.exists(self.model_path):
+                        os.mkdir(self.model_path)
+                    if not os.path.exists(os.path.join(self.model_path, "deploy_presets")):
+                        os.mkdir(os.path.join(self.model_path, "deploy_presets"))
                     file_path_best: str = os.path.join(
                         self.model_path, f"best_weights_{self.metric_checkpoint}.h5"
                     )
