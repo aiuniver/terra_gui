@@ -381,20 +381,20 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                         'tags_color': {},
                         'statistic_values': {}
                     }
-                    if not len(options.data.outputs.keys()) == 1:
-                        for inp in options.data.inputs.keys():
-                            data = ImageSegmentationCallback.postprocess_initial_source(
-                                options=options,
-                                input_id=inp,
-                                save_id=idx + 1,
-                                example_id=example_idx[idx],
-                                dataset_path=dataset_path,
-                                preset_path=preset_path,
-                                return_mode='callback'
-                            )
-                            return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
-                                'type': 'image', 'data': data,
-                            }
+                    # if not len(options.data.outputs.keys()) == 1:
+                    for inp in options.data.inputs.keys():
+                        data = ImageSegmentationCallback.postprocess_initial_source(
+                            options=options,
+                            input_id=inp,
+                            save_id=idx + 1,
+                            example_id=example_idx[idx],
+                            dataset_path=dataset_path,
+                            preset_path=preset_path,
+                            return_mode='callback'
+                        )
+                        return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
+                            'type': 'image', 'data': data,
+                        }
                     for out in options.data.outputs.keys():
                         data = ImageSegmentationCallback().postprocess_segmentation(
                             predict_array=y_pred.get(f'{out}')[example_idx[idx]],

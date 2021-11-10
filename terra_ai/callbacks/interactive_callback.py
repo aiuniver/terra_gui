@@ -53,6 +53,7 @@ class InteractiveCallback:
         self.raw_y_true = None
         self.inverse_y_pred = {}
         self.current_epoch = None
+        self.training_details: TrainingDetailsData = None
 
         # overfitting params
         self.log_gap = 5
@@ -94,7 +95,7 @@ class InteractiveCallback:
         self.deploy_presets_data = None
         self.random_key = ''
 
-        self.training_details: TrainingDetailsData
+        # self.training_details: TrainingDetailsData
         pass
 
     def set_attributes(self, dataset: PrepareDataset, metrics: dict, losses: dict, dataset_path: Path,
@@ -103,9 +104,9 @@ class InteractiveCallback:
         self.options = dataset
         self._callback_router(dataset)
         self._class_metric_list()
-        print('\nself._class_metric_list()', self.class_graphics)
         print('set_attributes', dataset.data.architecture)
-        print('\ndataset_config', dataset.data, '\n')
+        print('\ndataset_config', dataset.data)
+        print('\nparams', params.native(), '\n')
         self.training_details = params
         if dataset.data.architecture in self.basic_architecture:
             self.losses = losses
