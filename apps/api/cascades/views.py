@@ -50,5 +50,10 @@ class UpdateAPIView(BaseAPIView):
         cascade_data.update(data)
         cascade = agent_exchange("cascade_update", cascade=cascade_data)
         request.project.set_cascade(cascade)
-
         return BaseResponseSuccess()
+
+
+class ClearAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        request.project.clear_cascade()
+        return BaseResponseSuccess(request.project.cascade.native())

@@ -308,7 +308,7 @@ class Project(BaseMixinData):
         self.save_config()
 
     def clear_cascade(self):
-        self.cascade = CascadeDetailsData(**EmptyCascadeDetailsData)
+        self.set_cascade(CascadeDetailsData(**EmptyCascadeDetailsData))
 
 
 data_path = DataPathData(**DATA_PATH)

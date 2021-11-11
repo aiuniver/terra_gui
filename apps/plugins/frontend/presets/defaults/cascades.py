@@ -251,20 +251,27 @@ CascadesBlocksTypes = {
                         list(BlockCustomGroupChoice),
                     )
                 ),
-            },
-            {
-                "type": "select",
-                "name": "type",
-                "label": "Выбор типа",
-                "parse": "parameters[main][type]",
-                "value": BlockCustomTypeChoice.Sort,
-                "list": [{"value": "", "label": ""}]
-                + list(
-                    map(
-                        lambda item: {"value": item.name, "label": item.value},
-                        list(BlockCustomTypeChoice),
-                    )
-                ),
+                "fields": {
+                    BlockCustomGroupChoice.Tracking: [
+                        {
+                            "type": "select",
+                            "name": "type",
+                            "label": "Выбор типа",
+                            "parse": "parameters[main][type]",
+                            "value": BlockCustomTypeChoice.Sort,
+                            "list": [{"value": "", "label": ""}]
+                            + list(
+                                map(
+                                    lambda item: {
+                                        "value": item.name,
+                                        "label": item.value,
+                                    },
+                                    list(BlockCustomTypeChoice),
+                                )
+                            ),
+                        },
+                    ]
+                },
             },
             {
                 "type": "number",
