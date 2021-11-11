@@ -5,10 +5,10 @@
         <div class="content">
           <div class="board__data-field">
             <div>
-              <button v-if="!isTable" class="board__reload-all" @click="ReloadAll">
+              <!-- <button v-if="!isTable" class="board__reload-all" @click="ReloadAll">
                 <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
                 <span>Перезагрузить все</span>
-              </button>
+              </button> -->
               <div class="board__title">Исходные данные / Предсказанные данные</div>
               <div v-if="!isTable" class="board__data">
                 <IndexCard
