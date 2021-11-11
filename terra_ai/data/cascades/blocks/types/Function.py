@@ -16,9 +16,9 @@ class ParametersMainData(BaseMixinData):
     group: BlockFunctionGroupChoice
     type: BlockFunctionTypeChoice
     change_type: Optional[ChangeTypeAvailableChoice] = ChangeTypeAvailableChoice.int
-    shape: Optional[List[int]]
-    min_scale: Optional[float] = 0
-    max_scale: Optional[float] = 1
+    shape: Optional[List[PositiveInt]]
+    min_scale: Optional[confloat(ge=0, le=1)] = 0
+    max_scale: Optional[confloat(ge=0, le=1)] = 1
     class_id: Optional[conint(ge=0)] = 0
     classes_colors: Optional[List[Color]]
     open_tag: Optional[List[str]]
@@ -26,12 +26,13 @@ class ParametersMainData(BaseMixinData):
     alpha: Optional[confloat(gt=0, le=1)] = 0.5
     score_threshold: Optional[confloat(gt=0, le=1)] = 0.3
     iou_threshold: Optional[confloat(gt=0, le=1)] = 0.45
-    method: Optional[PostprocessBoxesMethodAvailableChoice] = PostprocessBoxesMethodAvailableChoice.nms
+    method: Optional[
+        PostprocessBoxesMethodAvailableChoice
+    ] = PostprocessBoxesMethodAvailableChoice.nms
     sigma: Optional[confloat(gt=0, le=1)] = 0.3
     classes: Optional[List[str]]
     colors: Optional[List[Color]]
     line_thickness: Optional[PositiveInt]
-
 
     @validator("type")
     def _validate_type(cls, value: BlockFunctionTypeChoice) -> BlockFunctionTypeChoice:
@@ -59,5 +60,5 @@ class ParametersMainData(BaseMixinData):
             cls.__fields__["classes"].required = True
             cls.__fields__["colors"].required = True
             cls.__fields__["line_thickness"].required = True
-     
+
         return value

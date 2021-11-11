@@ -290,3 +290,31 @@ class ColumnProcessingOutputTypeChoice(str, Enum):
         return list(
             map(lambda item: (item.name, item.value), ColumnProcessingOutputTypeChoice)
         )
+
+
+class DeployTypePageChoice(str, Enum):
+    model = "Обучение"
+    cascade = "Каскад"
+
+
+class BlockFunctionGroupChoice(str, Enum):
+    Image = "Image"
+    Text = "Text"
+    Audio = "Audio"
+    Video = "Video"
+    Array = "Array"
+    Segmentation = "Segmentation"
+    TextSegmentation = "TextSegmentation"
+    ObjectDetection = "ObjectDetection"
+
+
+class BlockFunctionTypeChoice(str, Enum):
+    ChangeType = "Изменение типа данных"
+    ChangeSize = "Изменение размера данных"
+    MinMaxScale = "Нормализация (скейлер)"
+    CropImage = "Обрезать изображение"
+    MaskedImage = "Наложение маски по классу на изображение"
+    PlotMaskSegmentation = "Наложение маски всех классов по цветам"
+    PutTag = "Расстановка тегов по вероятностям из модели"
+    PostprocessBoxes = "Постобработка Yolo"
+    PlotBBoxes = "Наложение BBox на изображение"

@@ -364,6 +364,9 @@ class Exchange:
         """
         return CascadeDetailsData(**cascade)
 
+    def _call_deploy_get(self, path = None):
+        pass
+
     def _call_deploy_presets(self):
         """
         получение данных для отображения пресетов на странице деплоя

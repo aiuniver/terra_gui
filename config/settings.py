@@ -34,6 +34,7 @@ SECRET_KEY = env.str("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG", default=False)
+USE_GPU = env.bool("USE_GPU", default=True)
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 
@@ -129,7 +130,7 @@ VUE_ROOT = BASE_DIR("vue/dist")
 VUE_URL = "/"
 
 
-# DRF
+# Django Rest Framework
 
 REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "apps.api.exceptions.handler",

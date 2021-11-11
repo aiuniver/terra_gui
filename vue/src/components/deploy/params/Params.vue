@@ -1,7 +1,68 @@
 <template>
   <div class="params">
-    <scrollbar :ops="ops">
-      <div class="params-container__name">Загрузка в демо-панель</div>
+    <div v-if="false" class="params__overlay" key="fdgtr">
+      <LoadSpiner :text="'Запуск обучения...'" />
+    </div>
+    <scrollbar>
+      <div class="params__body">
+        <div class="params__items">
+          <at-collapse :value="collapse" @on-change="onchange" :key="key">
+            <at-collapse-item
+              v-show="visible"
+              v-for="({ visible, name, fields }, key) of params"
+              :key="key"
+              class="mt-3"
+              :name="key"
+              :title="name || ''"
+            >
+              <div v-if="key !== 'outputs'" class="params__fields">
+                <template v-for="(data, i) of fields">
+                  <t-auto-field-trainings
+                    v-bind="data"
+                    :class="`params__fields--${key}`"
+                    :key="key + i"
+                    :state="state"
+                    :inline="false"
+                    @parse="parse"
+                  />
+                </template>
+              </div>
+              <div v-else class="blocks-layers">
+                <template v-for="(field, i) of fields">
+                  <div class="block-layers" :key="'block_layers_' + i">
+                    <div class="block-layers__header">
+                      {{ field.name }}
+                    </div>
+                    <div class="block-layers__body">
+                      <template v-for="(data, i) of field.fields">
+                        <t-auto-field-trainings
+                          v-bind="data"
+                          :key="'checkpoint_' + i + data.parse"
+                          :state="state"
+                          :inline="true"
+                          @parse="parse"
+                        />
+                      </template>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </at-collapse-item>
+          </at-collapse>
+        </div>
+      </div>
+    </scrollbar>
+    <!-- <div class="params__footer">
+      <div v-if="stopLearning" class="params__overlay">
+        <LoadSpiner :text="'Остановка...'" />
+      </div>
+      <div v-for="({ title, visible }, key) of button" :key="key" class="params__btn">
+        <t-button :disabled="!visible" @click="btnEvent(key)">{{ title }}</t-button>
+      </div>
+    </div> -->
+  </div>
+
+  <!-- <div class="params-container__name">Загрузка в демо-панель</div>
       <div class="params-container pa-5">
         <div class="t-input">
           <label class="label" for="deploy[deploy]">Название папки</label>
@@ -69,24 +130,25 @@
           </div>
         </div>
         <ModuleList v-if="DataSent" :moduleList="moduleList.api_text" />
-      </div>
-    </scrollbar>
-  </div>
+      </div> -->
 </template>
 
 <script>
 import { mapGetters } from 'vuex';
-import Checkbox from '@/components/forms/Checkbox';
-import ModuleList from './ModuleList';
-import LoadSpiner from '../../forms/LoadSpiner';
+// import Checkbox from '@/components/forms/Checkbox';
+// import ModuleList from './ModuleList';
+// import LoadSpiner from '../../forms/LoadSpiner';
 export default {
   name: 'Settings',
   components: {
-    Checkbox,
-    ModuleList,
-    LoadSpiner,
+    // Checkbox,
+    // ModuleList,
+    // LoadSpiner,
   },
   data: () => ({
+    collapse: ['main', 'fit', 'outputs', 'checkpoint', 'yolo'],
+    key: '1212',
+
     deploy: '',
     replace: false,
     use_sec: false,
@@ -104,29 +166,33 @@ export default {
   }),
   computed: {
     ...mapGetters({
+      params: 'deploy/getParams',
+
       height: 'settings/height',
       moduleList: 'deploy/getModuleList',
       projectData: 'projects/getProject',
       userData: 'projects/getUser',
     }),
     checkCorrect() {
-      return this.sec == this.sec_accept
-        ? 'icon-deploy-password-correct'
-        : 'icon-deploy-password-incorrect';
+      return this.sec == this.sec_accept ? 'icon-deploy-password-correct' : 'icon-deploy-password-incorrect';
     },
-    send_disabled(){
-      if(this.DataLoading){
+    send_disabled() {
+      if (this.DataLoading) {
         return true;
       }
-      if(this.use_sec){
-        if(this.sec == this.sec_accept && this.sec.length > 5 && this.deploy.length != 0) return false;
-      } else{
-        if(this.deploy.length != 0) return false;
+      if (this.use_sec) {
+        if (this.sec == this.sec_accept && this.sec.length > 5 && this.deploy.length != 0) return false;
+      } else {
+        if (this.deploy.length != 0) return false;
       }
       return true;
     },
   },
   methods: {
+    onchange(e) {
+      console.log(e);
+      // console.log(this.collapse);
+    },
     click() {
       console.log();
     },
@@ -170,7 +236,7 @@ export default {
       } else {
         this.DataLoading = false;
         this.DataSent = true;
-        this.$emit("overlay", this.DataLoading);
+        this.$emit('overlay', this.DataLoading);
       }
     },
     getProgress() {
@@ -192,7 +258,7 @@ export default {
         console.log(error, success);
         if (!error && success) {
           this.DataLoading = true;
-          this.$emit("overlay", this.DataLoading);
+          this.$emit('overlay', this.DataLoading);
           this.getProgress();
         }
       }
@@ -301,7 +367,6 @@ button {
     padding-top: 15px;
   }
   .answer__url {
-
     font-size: 14px;
     line-height: 24px;
     color: #65b9f4;
@@ -322,7 +387,7 @@ button {
     }
   }
 }
-.password{
+.password {
   &__icon {
     position: absolute;
     width: 345px;
@@ -332,8 +397,8 @@ button {
       margin-top: -34px;
     }
   }
-  &__rule{
-    p{
+  &__rule {
+    p {
       font-size: 12px;
     }
   }
