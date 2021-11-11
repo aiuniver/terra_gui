@@ -29,8 +29,13 @@
 </template>
 
 <script>
+import SvgContainer from '@/components/app/SvgContainer';
+
 export default {
-    name: "WorkspaceAction"
+  components:{
+    SvgContainer,
+  },
+  name: "WorkspaceAction"
 };
 </script>
 

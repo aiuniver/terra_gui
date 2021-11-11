@@ -35,7 +35,6 @@ import BasePanelContent from '@/components/datasets/components/panel/BasePanelCo
 import FileManager from '@/components/datasets/components/FileManager';
 import Preview from '@/components/datasets/components/Preview';
 import Settings from '@/components/datasets/components/Settings';
-import SvgContainer from '@/components/app/SvgContainer';
 import WorkspaceAction from '@/components/datasets/components/WorkspaceAction';
 
 export default {
@@ -45,7 +44,6 @@ export default {
     Preview,
     FileManager,
     Settings,
-    SvgContainer,
     WorkspaceAction,
   },
 
