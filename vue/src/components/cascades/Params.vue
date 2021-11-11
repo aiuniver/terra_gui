@@ -23,7 +23,13 @@
           />
           <template v-for="({ name, label, parse, list }, i) of datatypes">
             <t-field :label="label" :key="'datatype' + i">
-              <t-select-new :value="block.id"  :list="list" :parse="parse" :name="name" @change="changeId({ ...$event, id: block.id })"/>
+              <t-select-new
+                :value="block.id"
+                :list="list"
+                :parse="parse"
+                :name="name"
+                @change="changeId({ ...$event, id: block.id })"
+              />
             </t-field>
           </template>
         </div>
@@ -71,7 +77,7 @@ export default {
       project: 'projects/getProject',
     }),
     datatypes() {
-      return this.layersForm.filter(({ name }) => name === `datatype_${this.block.group}`)
+      return this.layersForm.filter(({ name }) => name === `datatype_${this.block.group}`);
     },
     isBlock() {
       return !this.block.id;
@@ -80,7 +86,7 @@ export default {
       return this.block.group === 'input';
     },
     listWithoutOutputInput() {
-      if (!this.list) return []
+      if (!this.list) return [];
       return this.list.filter(item => !(item.value.toLowerCase() === 'input'));
     },
 
@@ -160,7 +166,6 @@ export default {
     }
   }
 }
-
 .params-actions {
   padding: 20px 10px;
 }

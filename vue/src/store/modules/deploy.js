@@ -3,6 +3,10 @@ import {defLayout, originaltextStyle} from "../const/deploy"
 export default {
     namespaced: true,
     state: () => ({
+      form: {},
+
+
+
       deploy: {},
       graphicData: temp.data,
       defaultLayout: defLayout,
@@ -33,6 +37,10 @@ export default {
       },
     },
     actions: {
+      parseStruct ({ commit }, { form }) {
+        // console.log(form, interactive, progress, state)
+        if (form) commit("SET_BASE", form)
+      },
       async SendDeploy({ dispatch }, data) {
         return await dispatch('axios', { url: '/deploy/upload/', data: data }, { root: true });
       },
@@ -50,6 +58,9 @@ export default {
       },
     },
     getters: {
+      getParams ({ form }) {
+        return form?.main || {}
+      },
       getModuleList: ({ moduleList }) => moduleList,
       getDeploy: ({ deploy }) => deploy,
       getGraphicData: ({ graphicData }) => graphicData,
