@@ -1,7 +1,7 @@
 <template>
-  <main class="page-datasets">
-    <div class="page-datasets__inner">
-      <div>asd</div>
+  <main class="page page-datasets">
+    <div class="page-datasets-inner">
+      <div class="page-datasets-inner__workspace">asd</div>
       <BasePanel>
         <BasePanelContent>
           <template #header>Данные</template>
@@ -24,17 +24,19 @@
         </BasePanelContent>
       </BasePanel>
     </div>
+    <WorkspaceAction />
   </main>
 </template>
 
 <script>
-
 import BasePanel from '@/components/datasets/components/panel/BasePanel';
 import BasePanelContent from '@/components/datasets/components/panel/BasePanelContent';
 
 import FileManager from '@/components/datasets/components/FileManager';
 import Preview from '@/components/datasets/components/Preview';
 import Settings from '@/components/datasets/components/Settings';
+import SvgContainer from '@/components/app/SvgContainer';
+import WorkspaceAction from '@/components/datasets/components/WorkspaceAction';
 
 export default {
   components: {
@@ -43,6 +45,8 @@ export default {
     Preview,
     FileManager,
     Settings,
+    SvgContainer,
+    WorkspaceAction,
   },
 
   name: 'Datasets',
@@ -118,13 +122,13 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.page {
-  &-datasets {
-    &__inner::v-deep {
-      display: flex;
-      height: 100%;
-      justify-content: space-between;
-    }
+.page-datasets {
+  position: relative;
+
+  &-inner::v-deep {
+    display: flex;
+    height: 100%;
+    justify-content: space-between;
   }
 }
 </style>
