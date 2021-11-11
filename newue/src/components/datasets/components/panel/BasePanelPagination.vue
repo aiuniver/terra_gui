@@ -34,10 +34,10 @@ export default {
 <style lang="scss" scoped>
 .panel-pagination {
   justify-content: space-between;
-  &-btn{
+  &-btn {
     background: $color-dark-gray;
     border-radius: 4px;
-    transition: background .3s ease;
+    transition: background 0.3s ease;
     border: none;
     width: 36px;
     height: 36px;
@@ -45,7 +45,7 @@ export default {
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    &:hover{
+    &:hover {
       background: $color-black;
       box-shadow: 0px 0px 4px rgba(101, 185, 244, 0.2);
     }
