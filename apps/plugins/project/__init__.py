@@ -105,6 +105,7 @@ class Project(BaseMixinData):
     dataset: Optional[DatasetData]
     model: ModelDetailsData = ModelDetailsData(**EmptyModelDetailsData)
     training: TrainingDetailsData
+    deploy: Optional[DeployData]
     cascade: CascadeDetailsData = CascadeDetailsData(**EmptyCascadeDetailsData)
 
     def __init__(self, **data):
@@ -215,8 +216,8 @@ class Project(BaseMixinData):
 
     def frontend(self):
         _data = self.native()
-        if _data.get("training", {}).get("deploy") and self.training.deploy:
-            _data["training"].update({"deploy": self.training.deploy.presets})
+        if _data.get("training", {}).get("deploy") and self.deploy:
+            _data["training"].update({"deploy": self.deploy.presets})
         return json.dumps(_data)
 
     def set_name(self, name: str):

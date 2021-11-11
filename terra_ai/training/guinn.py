@@ -880,7 +880,7 @@ class FitCallback(keras.callbacks.Callback):
             ("type", self.deploy_type),
             ("data", out_deploy_presets_data)
         ])
-        self.training_detail.deploy = DeployData(**out_deploy_data)
+        # self.training_detail.deploy = DeployData(**out_deploy_data)
         self._create_cascade(**cascade_data)
 
     @staticmethod

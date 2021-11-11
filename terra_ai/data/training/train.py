@@ -251,7 +251,6 @@ class TrainingDetailsData(BaseMixinData):
     interactive: InteractiveData = InteractiveData()
     state: StateData = StateData(status="no_train")
     result: Optional[dict] = {}
-    deploy: Optional[DeployData]
     logs: Optional[dict] = {}
     progress: Optional[dict] = {}
 
