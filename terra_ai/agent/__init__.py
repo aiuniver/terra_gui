@@ -31,7 +31,7 @@ from ..data.cascades.cascade import CascadesList, CascadeLoadData, CascadeDetail
 from ..data.presets.datasets import DatasetsGroups
 from ..data.presets.models import ModelsGroups
 from ..data.projects.project import ProjectsInfoData, ProjectsList
-from ..data.training.train import TrainingDetailsData, InteractiveData
+from ..data.training.train import TrainingDetailsData
 from ..data.training.extra import StateStatusChoice
 from ..datasets import loading as datasets_loading
 from ..datasets import utils as datasets_utils
@@ -120,26 +120,12 @@ class Exchange:
         projects.sort(key=lambda item: item.label)
         return ProjectsInfoData(projects=projects.native())
 
-    def _call_project_save(
-        self, source: Path, target: Path, name: str, overwrite: bool
-    ):
-        """
-        Сохранение проекта
-        """
-        project_path = Path(target, f"{name}.{settings.PROJECT_EXT}")
-        if not overwrite and project_path.is_file():
-            raise agent_exceptions.ProjectAlreadyExistsException(name)
-        zip_destination = progress_utils.pack(
-            "project_save", "Сохранение проекта", source, delete=False
-        )
-        shutil.move(zip_destination.name, project_path)
-
     def _call_project_load(self, source: Path, target: Path):
         """
         Загрузка проекта
         """
-        shutil.rmtree(target, ignore_errors=True)
         destination = progress_utils.unpack("project_load", "Загрузка проекта", source)
+        shutil.rmtree(target, ignore_errors=True)
         shutil.move(destination, target)
 
     def _call_dataset_choice(

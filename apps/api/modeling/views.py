@@ -97,7 +97,7 @@ class ValidateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         self._reset_layers_shape(request.project.model)
         errors = agent_exchange("model_validate", model=request.project.model)
-        request.project.save()
+        request.project.save_config()
         return BaseResponseSuccess(errors)
 
 
@@ -159,5 +159,5 @@ class DatatypeAPIView(BaseAPIView):
             request.project.model.reindex(source_id=source_id, target_id=target_id)
             if request.project.dataset:
                 request.project.model.update_layers(request.project.dataset)
-            request.project.save()
+            request.project.save_config()
         return BaseResponseSuccess(request.project.model.native())

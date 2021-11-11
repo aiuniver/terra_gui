@@ -19,6 +19,7 @@ CascadesBlockForm = [
                 list(BlockGroupChoice),
             )
         ),
+        "visible": False,
     },
 ]
 
@@ -31,7 +32,7 @@ CascadesBlocksTypes = {
             {
                 "type": "select",
                 "name": "path",
-                "label": "Путь к обученной модели",
+                "label": "Обучение",
                 "parse": "parameters[main][path]",
             },
             {
@@ -50,24 +51,14 @@ CascadesBlocksTypes = {
                 "name": "group",
                 "label": "Группа",
                 "parse": "parameters[main][group]",
-                "list": [
-                    {
-                        "value": "Tracking",
-                        "label": "Tracking"
-                    }
-                ]
+                "list": [{"value": "Tracking", "label": "Tracking"}],
             },
             {
                 "type": "select",
                 "name": "type",
                 "label": "Выбор типа",
                 "parse": "parameters[main][type]",
-                "list": [
-                    {
-                        "value": "Sort",
-                        "label": "Sort"
-                    }
-                ]
+                "list": [{"value": "Sort", "label": "Sort"}],
             },
             {
                 "type": "number",
@@ -93,39 +84,15 @@ CascadesBlocksTypes = {
                 "label": "Группа",
                 "parse": "parameters[main][group]",
                 "list": [
-                    {
-                        "value": "Image",
-                        "label": "Image"
-                    },
-                    {
-                        "value": "Text",
-                        "label": "Text"
-                    },
-                    {
-                        "value": "Audio",
-                        "label": "Audio"
-                    },
-                    {
-                        "value": "Video",
-                        "label": "Video"
-                    },
-                    {
-                        "value": "Array",
-                        "label": "Array"
-                    },
-                    {
-                        "value": "Segmentation",
-                        "label": "Segmentation"
-                    },
-                    {
-                        "value": "TextSegmentation",
-                        "label": "TextSegmentation"
-                    },
-                    {
-                        "value": "ObjectDetection",
-                        "label": "ObjectDetection"
-                    },
-                ]
+                    {"value": "Image", "label": "Image"},
+                    {"value": "Text", "label": "Text"},
+                    {"value": "Audio", "label": "Audio"},
+                    {"value": "Video", "label": "Video"},
+                    {"value": "Array", "label": "Array"},
+                    {"value": "Segmentation", "label": "Segmentation"},
+                    {"value": "TextSegmentation", "label": "TextSegmentation"},
+                    {"value": "ObjectDetection", "label": "ObjectDetection"},
+                ],
             },
             {
                 "type": "select",
@@ -133,39 +100,24 @@ CascadesBlocksTypes = {
                 "label": "Выбор типа",
                 "parse": "parameters[main][type]",
                 "list": [
-                    {
-                        "value": "ChangeType",
-                        "label": "Изменение типа данных"
-                    },
-                    {
-                        "value": "ChangeSize",
-                        "label": "Изменение размера данных"
-                    },
-                    {
-                        "value": "MinMaxScale",
-                        "label": "Нормализация (скелер)"
-                    },
+                    {"value": "ChangeType", "label": "Изменение типа данных"},
+                    {"value": "ChangeSize", "label": "Изменение размера данных"},
+                    {"value": "MinMaxScale", "label": "Нормализация (скелер)"},
                     {
                         "value": "MaskedImage",
-                        "label": "Наложение маски по классу на изображение"
+                        "label": "Наложение маски по классу на изображение",
                     },
                     {
                         "value": "PlotMaskSegmentation",
-                        "label": "Наложение маски всех классов по цветам"
+                        "label": "Наложение маски всех классов по цветам",
                     },
                     {
                         "value": "PutTag",
-                        "label": "Растановка тэгов по вероятностям из модели"
+                        "label": "Растановка тэгов по вероятностям из модели",
                     },
-                    {
-                        "value": "PostprocessBoxes",
-                        "label": "Постобработка yolo"
-                    },
-                    {
-                        "value": "PlotBBoxes",
-                        "label": "Наложение bbox на изображение"
-                    },
-                ]
+                    {"value": "PostprocessBoxes", "label": "Постобработка yolo"},
+                    {"value": "PlotBBoxes", "label": "Наложение bbox на изображение"},
+                ],
             },
             {
                 "type": "select",
@@ -174,75 +126,24 @@ CascadesBlocksTypes = {
                 "parse": "parameters[main][change_type]",
                 "value": "int",
                 "list": [
-                    {
-                        "value": "int",
-                        "label": "int"
-                    },
-                    {
-                        "value": "int8",
-                        "label": "int8"
-                    },
-                    {
-                        "value": "int32",
-                        "label": "int32"
-                    },
-                    {
-                        "value": "int64",
-                        "label": "int64"
-                    },
-                    {
-                        "value": "uint",
-                        "label": "uint"
-                    },
-                    {
-                        "value": "uint8",
-                        "label": "uint8"
-                    },
-                    {
-                        "value": "uint16",
-                        "label": "uint16"
-                    },
-                    {
-                        "value": "uint32",
-                        "label": "uint32"
-                    },
-                    {
-                        "value": "uint64",
-                        "label": "uint64"
-                    },
-                    {
-                        "value": "float",
-                        "label": "float"
-                    },
-                    {
-                        "value": "float16",
-                        "label": "float16"
-                    },
-                    {
-                        "value": "float32",
-                        "label": "float32"
-                    },
-                    {
-                        "value": "float64",
-                        "label": "float64"
-                    },
-                    {
-                        "value": "complex",
-                        "label": "complex"
-                    },
-                    {
-                        "value": "complex64",
-                        "label": "complex64"
-                    },
-                    {
-                        "value": "complex128",
-                        "label": "complex128"
-                    },
-                    {
-                        "value": "bool",
-                        "label": "bool"
-                    }
-                ]
+                    {"value": "int", "label": "int"},
+                    {"value": "int8", "label": "int8"},
+                    {"value": "int32", "label": "int32"},
+                    {"value": "int64", "label": "int64"},
+                    {"value": "uint", "label": "uint"},
+                    {"value": "uint8", "label": "uint8"},
+                    {"value": "uint16", "label": "uint16"},
+                    {"value": "uint32", "label": "uint32"},
+                    {"value": "uint64", "label": "uint64"},
+                    {"value": "float", "label": "float"},
+                    {"value": "float16", "label": "float16"},
+                    {"value": "float32", "label": "float32"},
+                    {"value": "float64", "label": "float64"},
+                    {"value": "complex", "label": "complex"},
+                    {"value": "complex64", "label": "complex64"},
+                    {"value": "complex128", "label": "complex128"},
+                    {"value": "bool", "label": "bool"},
+                ],
             },
             {
                 "type": "text_array",
@@ -316,15 +217,9 @@ CascadesBlocksTypes = {
                 "label": "Метод подавления немаксимумов",
                 "parse": "parameters[main][method]",
                 "list": [
-                    {
-                        "value": "nms",
-                        "label": "nms"
-                    },
-                    {
-                        "value": "soft_nms",
-                        "label": "soft_nms"
-                    }
-                ]
+                    {"value": "nms", "label": "nms"},
+                    {"value": "soft_nms", "label": "soft_nms"},
+                ],
             },
             {
                 "type": "number",
@@ -352,5 +247,5 @@ CascadesBlocksTypes = {
                 "parse": "parameters[main][line_thickness]",
             },
         ]
-    }
+    },
 }

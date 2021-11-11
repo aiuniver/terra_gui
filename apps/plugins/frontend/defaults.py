@@ -1,5 +1,7 @@
+import os
 import sys
 
+from pathlib import Path
 from typing import List, Dict, Optional, Union, Any
 from pydantic import validator
 from pydantic.main import ModelMetaclass
@@ -7,12 +9,14 @@ from pydantic.main import ModelMetaclass
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.modeling.layer import LayersList
+from terra_ai.data.training.train import DEFAULT_TRAINING_PATH_NAME
 from terra_ai.data.training.extra import (
     ArchitectureChoice,
     TasksRelations,
     StateStatusChoice,
 )
 
+# from apps.plugins.project import project_path
 from .presets.defaults.training import (
     TrainingLossSelect,
     TrainingMetricSelect,
@@ -747,7 +751,21 @@ class DefaultsTrainingData(BaseMixinData):
 
 class DefaultsCascadesData(BaseMixinData):
     block_form: List[Field]
-    blocks_types: dict
+    blocks_types: Dict[str, Dict[str, List[Field]]]
+
+    def update_models(self, path: Path):
+        fields = self.blocks_types.get("Model", {}).get("main", [])
+        if not fields:
+            return
+        model_field = fields[0]
+        current_training = Path(path, DEFAULT_TRAINING_PATH_NAME)
+        model_field.value = current_training
+        model_field.list = [{"value": current_training, "label": "Текущее обучение"}]
+        for item in os.listdir(Path(path)):
+            if item == DEFAULT_TRAINING_PATH_NAME:
+                continue
+            model_field.list.append({"value": Path(path, item), "label": item})
+        self.blocks_types["Model"]["main"][0] = model_field
 
 
 class DefaultsDeployData(BaseMixinData):
