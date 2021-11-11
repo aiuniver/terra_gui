@@ -750,8 +750,14 @@ class DefaultsCascadesData(BaseMixinData):
     blocks_types: dict
 
 
+class DefaultsDeployData(BaseMixinData):
+    collapsable: bool = False
+    collapsed: bool = False
+    fields: dict = {}
+
 class DefaultsData(BaseMixinData):
     datasets: DefaultsDatasetsData
     modeling: DefaultsModelingData
     training: DefaultsTrainingData
     cascades: DefaultsCascadesData
+    deploy: DefaultsDeployData
