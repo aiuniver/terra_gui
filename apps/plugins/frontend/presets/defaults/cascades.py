@@ -16,6 +16,19 @@ CascadesBlockForm = [
         "name": "name",
         "parse": "name",
     },
+    {
+        "type": "select",
+        "label": "Тип блока",
+        "name": "group",
+        "parse": "group",
+        "list": list(
+            map(
+                lambda item: {"value": item.name, "label": item.value},
+                list(BlockGroupChoice),
+            )
+        ),
+        "visible": False,
+    },
 ]
 
 
