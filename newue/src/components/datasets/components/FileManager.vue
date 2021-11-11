@@ -59,24 +59,22 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.file {
-  &-manager {
-    &-catalog {
-      &__header {
+.file-manager {
+  &-catalog {
+    &__header {
+      cursor: pointer;
+    }
+    &__list {
+      &-item {
         cursor: pointer;
-      }
-      &__list {
-        &-item {
-          cursor: pointer;
-          tramsition: background 0.3s ease, fill 0.3s ease, color 0.3s ease;
-          border-radius: 4px;
+        tramsition: background 0.3s ease, fill 0.3s ease, color 0.3s ease;
+        border-radius: 4px;
 
-          &:hover {
-            color: $color-light-blue;
-            background: $color-dark-gray;
-            &::v-deep svg {
-              fill: $color-light-blue;
-            }
+        &:hover {
+          color: $color-light-blue;
+          background: $color-dark-gray;
+          &::v-deep svg {
+            fill: $color-light-blue;
           }
         }
       }
