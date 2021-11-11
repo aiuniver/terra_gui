@@ -121,6 +121,7 @@ class Project(BaseMixinData):
         defaults_data.training = DefaultsTrainingData(
             project=self, architecture=self.training.base.architecture.type
         )
+        defaults_data.cascades.update_models(project_path.training)
 
         self.save_config()
 
@@ -165,6 +166,7 @@ class Project(BaseMixinData):
         )
         self.set_training()
         self.save_config()
+        defaults_data.cascades.update_models(project_path.training)
 
     def save(self, overwrite: bool):
         destination_path = Path(data_path.projects, f"{self.name}.{PROJECT_EXT}")
@@ -174,6 +176,7 @@ class Project(BaseMixinData):
             "project_save", "Сохранение проекта", project_path.base, delete=False
         )
         shutil.move(zip_destination.name, destination_path)
+        defaults_data.cascades.update_models(project_path.training)
 
     def load(self):
         try:
@@ -198,6 +201,7 @@ class Project(BaseMixinData):
                 )
                 self.save_config()
                 self.set_training(self.training.name)
+                defaults_data.cascades.update_models(project_path.training)
         except Exception as error:
             print("ERROR PROJECT LOAD:", error)
             self.create()
