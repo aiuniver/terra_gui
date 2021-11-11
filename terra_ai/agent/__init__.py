@@ -365,7 +365,6 @@ class Exchange:
         return CascadeDetailsData(**cascade)
 
     def _call_deploy_get(self, path = None):
-        print(path)
         pass
 
     def _call_deploy_presets(self):

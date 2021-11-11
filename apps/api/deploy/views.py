@@ -21,11 +21,7 @@ class GetAPIView(BaseAPIView):
         serializer = serializers.GetSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
-        if serializer.validated_data.get("type") is "model":
-            source_path = Path(settings.TERRA_AI_PROJECT_PATH, "training").absolute()
-        else:
-            source_path = Path(settings.TERRA_AI_PROJECT_PATH, "cascades").absolute()
-        agent_exchange("deploy_get", Path(source_path, serializer.validated_data.get("name")))
+        agent_exchange("deploy_get", path=serializer.validated_data.get("value"))
         return BaseResponseSuccess()
 
 
