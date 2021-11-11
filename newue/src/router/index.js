@@ -15,6 +15,15 @@ const router = new Router({
       redirect: '/datasets'
     },
     {
+      path: '/datasets',
+      name: 'Datasets',
+      meta: { 
+        access: true,
+        text: '' 
+      },
+      component: () => import('@/views/Datasets'),
+    },
+    {
       path: '/test',
       name: 'Test',
       meta: { 
