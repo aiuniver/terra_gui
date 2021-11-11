@@ -19,7 +19,7 @@
         <BasePanelContent>
           <template #header>Настройки</template>
           <template #content>
-            
+            <Settings />
           </template>
         </BasePanelContent>
       </BasePanel>
@@ -34,6 +34,7 @@ import BasePanelContent from '@/components/datasets/components/panel/BasePanelCo
 
 import FileManager from '@/components/datasets/components/FileManager';
 import Preview from '@/components/datasets/components/Preview';
+import Settings from '@/components/datasets/components/Settings';
 
 export default {
   components: {
@@ -41,6 +42,7 @@ export default {
     BasePanel,
     Preview,
     FileManager,
+    Settings,
   },
 
   name: 'Datasets',
