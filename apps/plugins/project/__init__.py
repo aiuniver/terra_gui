@@ -121,13 +121,27 @@ class Project(BaseMixinData):
         defaults_data.training = DefaultsTrainingData(
             project=self, architecture=self.training.base.architecture.type
         )
-        defaults_data.cascades.update_models(project_path.training)
+        defaults_data.update_models(self.trainings)
 
         self.save_config()
 
     @property
     def hardware(self) -> HardwareAcceleratorData:
         return agent_exchange("hardware_accelerator")
+
+    @property
+    def trainings(self) -> list:
+        items = [
+            (
+                Path(project_path.training, DEFAULT_TRAINING_PATH_NAME),
+                "Текущее обучение",
+            )
+        ]
+        for item in os.listdir(project_path.training):
+            if item == DEFAULT_TRAINING_PATH_NAME:
+                continue
+            items.append((Path(project_path.training, item), item))
+        return items
 
     @validator("training", pre=True, allow_reuse=True)
     def _validate_training(cls, value, values):
@@ -166,7 +180,7 @@ class Project(BaseMixinData):
         )
         self.set_training()
         self.save_config()
-        defaults_data.cascades.update_models(project_path.training)
+        defaults_data.update_models(self.trainings)
 
     def save(self, overwrite: bool):
         destination_path = Path(data_path.projects, f"{self.name}.{PROJECT_EXT}")
@@ -176,7 +190,7 @@ class Project(BaseMixinData):
             "project_save", "Сохранение проекта", project_path.base, delete=False
         )
         shutil.move(zip_destination.name, destination_path)
-        defaults_data.cascades.update_models(project_path.training)
+        defaults_data.update_models(self.trainings)
 
     def load(self):
         try:
@@ -201,7 +215,7 @@ class Project(BaseMixinData):
                 )
                 self.save_config()
                 self.set_training(self.training.name)
-                defaults_data.cascades.update_models(project_path.training)
+                defaults_data.update_models(self.trainings)
         except Exception as error:
             print("ERROR PROJECT LOAD:", error)
             self.create()

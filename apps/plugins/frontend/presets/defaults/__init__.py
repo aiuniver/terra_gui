@@ -6,7 +6,7 @@ from ...utils import prepare_pydantic_field
 from .datasets import DataSetsColumnProcessing, DataSetsInput, DataSetsOutput
 from .modeling import ModelingLayerForm, ModelingLayersTypes
 from .cascades import CascadesBlockForm, CascadesBlocksTypes
-from .deploy import DeployFields
+from .deploy import DeployTypeGroup, DeployServerGroup
 
 
 Defaults = {
@@ -27,8 +27,9 @@ Defaults = {
         "blocks_types": CascadesBlocksTypes,
     },
     "deploy": {
-        "fields": DeployFields
-    }
+        "type": DeployTypeGroup,
+        "server": DeployServerGroup,
+    },
 }
 
 
