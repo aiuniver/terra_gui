@@ -80,7 +80,7 @@ export default {
     padding: 5px 0 5px 5px;
     overflow: hidden;
     background: #242f3d;
-    height: 200px;
+    height: 100px;
     &--empty {
       color: #a7bed3;
       font-size: 0.7em;
