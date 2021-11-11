@@ -477,7 +477,8 @@ def create_yolo(model, input_size=416, channels=3, training=False, classes=None,
         output_tensors = []
         for i, conv_tensor in enumerate(conv_tensors):
             pred_tensor = decode(conv_tensor, num_class, i, version)
-            if training: output_tensors.append(conv_tensor)
+            if training:
+                output_tensors.append(conv_tensor)
             output_tensors.append(pred_tensor)
         # print('output_tensors', output_tensors)
         yolo = tf.keras.Model(input_layer, output_tensors)

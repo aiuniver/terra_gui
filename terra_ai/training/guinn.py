@@ -428,8 +428,8 @@ class GUINN:
                 model_yolo = CustomModelYolo(yolo, self.dataset, self.dataset.data.outputs.get(2).classes_names,
                                              self.epochs, self.batch_size, warmup_epoch=warmup_epoch,
                                              lr_init=lr_init, lr_end=lr_end, iou_thresh=iou_thresh)
-                model_yolo.compile(optimizer=self.set_optimizer(self.params),
-                                   loss=compute_loss)
+                # model_yolo.compile(optimizer=self.set_optimizer(self.params),
+                #                    loss=compute_loss)
             # else:
             #     self.model.compile(loss=self.loss,
             #                        optimizer=self.optimizer,
