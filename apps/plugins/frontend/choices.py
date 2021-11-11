@@ -290,3 +290,8 @@ class ColumnProcessingOutputTypeChoice(str, Enum):
         return list(
             map(lambda item: (item.name, item.value), ColumnProcessingOutputTypeChoice)
         )
+
+
+class DeployTypePageChoice(str, Enum):
+    model = "Обучение"
+    cascade = "Каскад"

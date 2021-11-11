@@ -108,7 +108,7 @@ class SaveAPIView(BaseAPIView):
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         request.project.training.save(**serializer.validated_data)
-        defaults_data.cascades.update_models(project_path.training)
+        defaults_data.update_models(request.project.trainings)
         return BaseResponseSuccess()
 
 
