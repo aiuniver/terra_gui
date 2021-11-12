@@ -876,7 +876,8 @@ DatasetsGroups = [
                 "name": "Автобусы v4 (генератор)",
                 "group": DatasetGroupChoice.terra.value,
                 "tags": [
-                    Tags.timeseries.value,
+                    Tags.image.value,
+                    Tags.object_detection.value,
                     Tags.terra_ai.value,
                 ],
             },
