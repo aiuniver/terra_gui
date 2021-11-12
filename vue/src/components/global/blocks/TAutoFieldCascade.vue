@@ -113,7 +113,7 @@ export default {
     change({ value, name }) {
       console.log(value, name);
       this.valueIn = null;
-      this.$emit('change', { id: this.id, value, name, root: this.root });
+      this.$emit('change', { id: this.id, value, name });
       this.$nextTick(() => {
         this.valueIn = value;
       });
@@ -126,8 +126,8 @@ export default {
     // console.log(this.type)
   },
   mounted() {
-    this.$emit('change', { id: this.id, value: this.getValue, name: this.name, root: this.root });
-    console.log(this.id, this.name, this.getValue, this.root);
+    this.$emit('change', { id: this.id, value: this.getValue, name: this.name, mounted: true });
+    // console.log(this.id, this.name, this.getValue, this.root);
     this.$nextTick(() => {
       this.valueIn = this.getValue;
     });

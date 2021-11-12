@@ -116,18 +116,14 @@ export default {
     async changeType({ value }) {
       await this.$store.dispatch('cascades/typeBlock', { type: value, block: this.block });
     },
-    async change({ id, value, name, root }) {
-      // console.group();
-      console.log(id, value, name, root );
-      // console.log(this.collapse);
-      // console.groupEnd();
+    async change({ id, value, name, mounted }) {
+      console.log(id, value, name, mounted );
       if (this.block.parameters) {
         this.block.parameters['main'][name] = value;
       } else {
         this.oldBlock.parameters['main'][name] = value;
       }
-      // this.$emit('change');
-      this.saveModel();
+      if (!mounted) this.saveModel();
     },
   },
   watch: {
