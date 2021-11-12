@@ -32,7 +32,7 @@ class DataList(DataBaseList):
         if not len(self):
             return
 
-        label_file = Path(self.path, "label.txt")
+        label_file = Path(self.path_deploy, "label.txt")
 
         for _index in indexes:
             self.update(_index)
@@ -47,7 +47,9 @@ class DataList(DataBaseList):
         item = random.choice(self)
         self.preset[index] = item
 
-        shutil.copyfile(item.source, Path(self.path, f"{index + 1}{item.source.suffix}"))
+        shutil.copyfile(
+            item.source, Path(self.path_deploy, f"{index + 1}{item.source.suffix}")
+        )
 
 
 class Data(DataBase):

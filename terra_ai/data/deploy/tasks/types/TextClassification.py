@@ -29,8 +29,8 @@ class DataList(DataBaseList):
         if not len(self):
             return
 
-        self.source_path = Path(self.path, "preset", "in")
-        predict_path = Path(self.path, "preset", "out")
+        self.source_path = Path(self.path_deploy, "preset", "in")
+        predict_path = Path(self.path_deploy, "preset", "out")
         os.makedirs(self.source_path, exist_ok=True)
         os.makedirs(predict_path, exist_ok=True)
         predict_file = Path(predict_path, "predict.txt")
@@ -50,14 +50,9 @@ class DataList(DataBaseList):
 
         destination_source = Path(self.source_path, f"{index + 1}.txt")
         with open(destination_source, "w") as destination_source_ref:
-            destination_source_ref.write(
-                json.dumps(item.source, ensure_ascii=False)
-            )
-
-
+            destination_source_ref.write(json.dumps(item.source, ensure_ascii=False))
 
 
 class Data(DataBase):
     class Meta:
         source = DataList
-

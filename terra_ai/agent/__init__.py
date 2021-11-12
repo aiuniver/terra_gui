@@ -33,6 +33,7 @@ from ..data.presets.models import ModelsGroups
 from ..data.projects.project import ProjectsInfoData, ProjectsList
 from ..data.training.train import TrainingDetailsData
 from ..data.training.extra import StateStatusChoice
+from ..data.deploy.tasks import DeployData
 from ..datasets import loading as datasets_loading
 from ..datasets import utils as datasets_utils
 from ..datasets.creating import CreateDataset
@@ -364,7 +365,9 @@ class Exchange:
         """
         return CascadeDetailsData(**cascade)
 
-    def _call_deploy_get(self, type_: str, name: str):
+    def _call_deploy_get(
+        self, path_model: Path, path_deploy: Path, page: dict
+    ) -> DeployData:
         pass
 
     def _call_deploy_presets(self):

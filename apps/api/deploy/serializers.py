@@ -8,7 +8,7 @@ from terra_ai.settings import DEPLOY_PRESET_COUNT
 
 class GetSerializer(serializers.Serializer):
     type = serializers.ChoiceField(choices=DeployTypePageChoice.values())
-    value = serializers.CharField()
+    name = serializers.CharField()
 
 
 class ReloadSerializer(serializers.ListSerializer):

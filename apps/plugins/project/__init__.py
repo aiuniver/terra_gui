@@ -3,6 +3,7 @@ import json
 import shutil
 
 from pathlib import Path
+from tempfile import mkdtemp
 from typing import Optional, List, Tuple
 from pydantic import validator, DirectoryPath, FilePath
 
@@ -121,7 +122,7 @@ class Project(BaseMixinData):
             data["dataset"]["path"] = project_path.datasets
 
         if data.get("deploy"):
-            data["deploy"]["path"] = project_path.deploy
+            data["deploy"]["path_deploy"] = project_path.deploy
             deploy_page = data.get("deploy", {}).get("page", {}).get("type", "")
             if deploy_page == DeployTypePageChoice.model:
                 data["deploy"]["path_model"] = project_path.training
@@ -135,6 +136,8 @@ class Project(BaseMixinData):
             project=self, architecture=self.training.base.architecture.type
         )
         defaults_data.update_models(self.trainings)
+        if self.deploy:
+            defaults_data.update_deploy(self.deploy.page.type, self.deploy.page.name)
 
         self.save_config()
 
@@ -237,8 +240,8 @@ class Project(BaseMixinData):
 
     def frontend(self):
         _data = self.native()
-        if _data.get("training", {}).get("deploy") and self.deploy:
-            _data["training"].update({"deploy": self.deploy.presets})
+        if _data.get("deploy") and self.deploy:
+            _data.update({"deploy": self.deploy.presets})
         return json.dumps(_data)
 
     def set_name(self, name: str):
@@ -292,6 +295,22 @@ class Project(BaseMixinData):
     def set_cascade(self, cascade: CascadeDetailsData):
         self.cascade = cascade
         self.save_config()
+
+    def set_deploy(self, page: dict):
+        path_deploy = mkdtemp()
+        path_model = ""
+        _type = page.get("type")
+        if _type == DeployTypePageChoice.model:
+            path_model = project_path.training
+        elif _type == DeployTypePageChoice.cascade:
+            path_model = project_path.cascades
+        deploy = agent_exchange(
+            "deploy_get", path_deploy=path_deploy, path_model=path_model, page=page
+        )
+        deploy.path_deploy = project_path.deploy
+        self.deploy = deploy
+        shutil.rmtree(project_path.deploy, ignore_errors=True)
+        shutil.move(path_deploy, project_path.deploy)
 
     def clear_dataset(self):
         self.dataset = None

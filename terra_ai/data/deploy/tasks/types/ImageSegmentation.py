@@ -25,7 +25,9 @@ class DataList(DataBaseList):
         source = Item
 
     def preset_update(self, data):
-        data.update({k: str(Path(self.path_model, data.get(k)))} for k in ('source', 'segment'))
+        data.update(
+            {k: str(Path(self.path_model, data.get(k)))} for k in ("source", "segment")
+        )
         return data
 
     def reload(self, indexes: List[int] = None):
@@ -36,11 +38,11 @@ class DataList(DataBaseList):
         if not len(self):
             return
 
-        self.source_path = Path(self.path, "preset", "in")
-        self.segment_path = Path(self.path, "preset", "out")
+        self.source_path = Path(self.path_deploy, "preset", "in")
+        self.segment_path = Path(self.path_deploy, "preset", "out")
         os.makedirs(self.source_path, exist_ok=True)
         os.makedirs(self.segment_path, exist_ok=True)
-        label_file = Path(self.path, "label.txt")
+        label_file = Path(self.path_deploy, "label.txt")
 
         for _index in indexes:
             self.update(_index)
