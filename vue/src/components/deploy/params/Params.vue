@@ -17,7 +17,7 @@
             >
               <div v-if="key !== 'outputs'" class="params__fields">
                 <template v-for="(data, i) of fields">
-                  <t-auto-field-deploy
+                  <t-auto-field
                     v-bind="data"
                     :class="`params__fields--${key}`"
                     :key="key + i"

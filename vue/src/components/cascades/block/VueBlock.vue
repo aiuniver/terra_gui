@@ -64,7 +64,6 @@ export default {
       },
     },
     selected: Boolean,
-    type: String,
     typeLabel: String,
     title: {
       type: String,

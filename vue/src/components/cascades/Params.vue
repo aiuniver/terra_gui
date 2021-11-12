@@ -12,33 +12,23 @@
             :disabled="isBlock"
             @change="saveModel"
           />
-          <!-- <Autocomplete2
-            :value="block.typeLabel"
-            :list="listWithoutOutputInput"
-            label="Тип слоя"
-            name="type"
-            :disabled="isBlock || isInput"
-            @change="changeType"
-          /> -->
-          <!-- <template v-for="({ name, label, parse, list }, i) of datatypes">
-            <t-field :label="label" :key="'datatype' + i">
-              <t-select-new
-                :value="block.id"
-                :list="list"
-                :parse="parse"
-                :name="name"
-                @change="changeId({ ...$event, id: block.id })"
-              />
-            </t-field>
-          </template> -->
         </div>
         <at-collapse :value="collapse">
-          <at-collapse-item v-show="main.items.length" class="mb-3" title="Параметры слоя">
-            <Forms :data="main" :id="block.id" @change="change" />
+          <at-collapse-item  class="mb-3" title="Параметры слоя">
+            <!-- <Forms :data="main" :id="block.id" @change="change" /> -->
+            <template v-for="data, i of main">
+              <t-auto-field-cascade
+                v-bind="data"
+                :key="i"
+                :parameters="parameters"
+                :inline="false"
+                @change="change"
+              />
+            </template>
           </at-collapse-item>
-          <at-collapse-item v-show="extra.items.length" class="mb-3" title="Дополнительные параметры">
+          <!-- <at-collapse-item v-show="extra.items.length" class="mb-3" title="Дополнительные параметры">
             <Forms :data="extra" :id="block.id" @change="change" />
-          </at-collapse-item>
+          </at-collapse-item> -->
         </at-collapse>
       </div>
     </scrollbar>
@@ -48,7 +38,7 @@
 <script>
 import Input from '@/components/forms/Input.vue';
 // import Autocomplete2 from '@/components/forms/Autocomplete2.vue';
-import Forms from '@/components/cascades/comp/Forms.vue';
+// import Forms from '@/components/cascades/comp/Forms.vue';
 import { mapGetters } from 'vuex';
 // import serialize from "@/assets/js/serialize";
 
@@ -57,7 +47,7 @@ export default {
   name: 'Params',
   components: {
     // Autocomplete2,
-    Forms,
+    // Forms,
     Input,
   },
   data: () => ({
@@ -90,26 +80,31 @@ export default {
     buttonSave() {
       return this.buttons?.save || false;
     },
+    parameters() {
+      return this.block?.parameters?.main || {}
+    },
     main() {
       const blockType = this.block?.group;
       if (Object.keys(this.layers).length && blockType) {
         const items = this.layers[blockType]?.main || [];
-        const value = this.block?.parameters?.main || {};
-        return { type: 'main', items, value, blockType };
+        
+        return items;
+        // const value = this.block?.parameters?.main || {};
+        //   return { type: 'main', items, value, blockType };
       } else {
-        return { type: 'main', items: [], value: {} };
+        return [];
       }
     },
-    extra() {
-      const blockType = this.block?.group;
-      if (Object.keys(this.layers).length && blockType) {
-        const items = this.layers[blockType]?.extra || [];
-        const value = this.block?.parameters?.extra || {};
-        return { type: 'extra', items, value, blockType };
-      } else {
-        return { type: 'extra', items: [], value: {} };
-      }
-    },
+    // extra() {
+    //   const blockType = this.block?.group;
+    //   if (Object.keys(this.layers).length && blockType) {
+    //     const items = this.layers[blockType]?.extra || [];
+    //     const value = this.block?.parameters?.extra || {};
+    //     return { type: 'extra', items, value, blockType };
+    //   } else {
+    //     return { type: 'extra', items: [], value: {} };
+    //   }
+    // },
   },
   methods: {
     async changeId(value) {
@@ -121,17 +116,17 @@ export default {
     async changeType({ value }) {
       await this.$store.dispatch('cascades/typeBlock', { type: value, block: this.block });
     },
-    async change({ type, name, value }) {
+    async change({ id, value, name, root }) {
       // console.group();
-      console.log({ type, name, value });
+      console.log(id, value, name, root );
       // console.log(this.collapse);
       // console.groupEnd();
       if (this.block.parameters) {
-        this.block.parameters[type][name] = value;
+        this.block.parameters['main'][name] = value;
       } else {
-        this.oldBlock.parameters[type][name] = value;
+        this.oldBlock.parameters['main'][name] = value;
       }
-      this.$emit('change');
+      // this.$emit('change');
       this.saveModel();
     },
   },

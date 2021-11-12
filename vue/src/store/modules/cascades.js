@@ -51,6 +51,7 @@ export default {
     SET_MODEL (state, value) {
       state.model = { ...value };
       const { blocks } = value;
+      console.log(blocks)
       state.blocks = [...prepareBlocks(blocks, state.cascades.list)];
       state.links = [...prepareLinks(blocks)];
     },
@@ -179,6 +180,7 @@ export default {
       });
       commit('SET_STATUS', { isUpdate: true });
 
+
       const res = await dispatch('axios', { url: '/cascades/update/', data: { blocks: semdBlocks } }, { root: true });
       if (res) {
         const { data, error, success } = res
@@ -192,6 +194,9 @@ export default {
           // }
           console.log(error)
           // commit('SET_ERRORS_FIELDS', { ...errorsBlocks, ...newError });
+        }
+        if (data) {
+          // commit('SET_MODEL', { blocks: data.blocks });
         }
       }
       return res
