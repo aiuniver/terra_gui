@@ -21,9 +21,11 @@
                     v-bind="data"
                     :key="key + i"
                     :big="key === 'type'"
+                    :parameters="parameters"
                     :inline="false"
                     @change="parse"
                   />
+                  <t-button @click="handleDownload" :key="'key' + i" :disabled="isLoad">Загрузить</t-button>
                 </template>
               </div>
               <!-- <div v-else class="blocks-layers">
@@ -48,9 +50,6 @@
               </div> -->
             </at-collapse-item>
           </at-collapse>
-          <d-button @click="handleDownload" direction="left" color="primary"> 
-            Загрузить
-          </d-button>
         </div>
       </div>
     </scrollbar>
@@ -137,7 +136,6 @@
 
 <script>
 import { mapGetters } from 'vuex';
-import DButton from '@/components/global/design/forms/components/DButton'
 // import Checkbox from '@/components/forms/Checkbox';
 // import ModuleList from './ModuleList';
 // import LoadSpiner from '../../forms/LoadSpiner';
@@ -148,7 +146,6 @@ export default {
     // Checkbox,
     // ModuleList,
     // LoadSpiner,
-    DButton
   },
   data: () => ({
     collapse: ['type', 'server'],
@@ -163,6 +160,7 @@ export default {
     DataSent: false,
     DataLoading: false,
     passwordShow: false,
+    parameters: {},
     ops: {
       scrollPanel: {
         scrollingX: false,
@@ -200,17 +198,24 @@ export default {
       }
       return true;
     },
+    isLoad() {
+      const type = this.parameters?.type || '';
+      const name = this.parameters?.name || '';
+      return !(name && type);
+    },
   },
   methods: {
-    async handleDownload(){
-      console.log(await this.$store.dispatch('deploy/DownloadSettings', this.downloadSettings))
+    async handleDownload() {
+      const type = this.parameters?.type || '';
+      const name = this.parameters?.name || '';
+      if (type && name) {
+        await this.$store.dispatch('deploy/DownloadSettings', { type, name });
+      }
     },
     parse({ id, value, name, root }) {
-      console.log( id, value, name, root);
-      this.downloadSettings = {
-        type: value,
-        name
-      }
+      console.log(id, value, name, root);
+      this.parameters[name] = value;
+      this.parameters = { ...this.parameters };
 
       // ser(this.trainSettings, parse, value);
       // this.trainSettings = { ...this.trainSettings };
@@ -310,6 +315,11 @@ export default {
 .params {
   flex: 0 0 400px;
   border-left: #0e1621 solid 1px;
+  &__fields {
+    button {
+      margin: 30px 0 0 0;
+    }
+  }
 }
 .params-container__name {
   padding: 30px 0 0 20px;
