@@ -1,27 +1,26 @@
 <template>
   <div class="params">
-    <Navbar />
     <scrollbar>
       <div class="params__items">
         <div class="params__items--item">
           <Input
             v-model="block.name"
-            :label="'Название слоя'"
+            :label="'Название блока'"
             :type="'text'"
             :parse="'name'"
             :name="'name'"
             :disabled="isBlock"
             @change="saveModel"
           />
-          <Autocomplete2
+          <!-- <Autocomplete2
             :value="block.typeLabel"
             :list="listWithoutOutputInput"
             label="Тип слоя"
             name="type"
             :disabled="isBlock || isInput"
             @change="changeType"
-          />
-          <template v-for="({ name, label, parse, list }, i) of datatypes">
+          /> -->
+          <!-- <template v-for="({ name, label, parse, list }, i) of datatypes">
             <t-field :label="label" :key="'datatype' + i">
               <t-select-new
                 :value="block.id"
@@ -31,7 +30,7 @@
                 @change="changeId({ ...$event, id: block.id })"
               />
             </t-field>
-          </template>
+          </template> -->
         </div>
         <at-collapse :value="collapse">
           <at-collapse-item v-show="main.items.length" class="mb-3" title="Параметры слоя">
@@ -48,8 +47,7 @@
 
 <script>
 import Input from '@/components/forms/Input.vue';
-import Navbar from '@/components/cascades/comp/Navbar.vue';
-import Autocomplete2 from '@/components/forms/Autocomplete2.vue';
+// import Autocomplete2 from '@/components/forms/Autocomplete2.vue';
 import Forms from '@/components/cascades/comp/Forms.vue';
 import { mapGetters } from 'vuex';
 // import serialize from "@/assets/js/serialize";
@@ -58,9 +56,8 @@ import { mapGetters } from 'vuex';
 export default {
   name: 'Params',
   components: {
-    Autocomplete2,
+    // Autocomplete2,
     Forms,
-    Navbar,
     Input,
   },
   data: () => ({
