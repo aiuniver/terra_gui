@@ -188,6 +188,9 @@ export default {
     },
   },
   methods: {
+    parse(parse, name, value, changeable){
+      console.log(parse, name, value, changeable)
+    },
     onchange(e) {
       console.log(e);
       // console.log(this.collapse);
