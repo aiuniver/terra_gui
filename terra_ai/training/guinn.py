@@ -20,6 +20,7 @@ from tensorflow.keras.models import Model
 from tensorflow import keras
 from tensorflow.keras.models import load_model
 
+from config import settings
 from terra_ai import progress
 from terra_ai.callbacks.interactive_callback import InteractiveCallback
 # from terra_ai.training.customcallback import InteractiveCallback
@@ -449,7 +450,7 @@ class MemoryUsage:
         self.debug = debug
         try:
             N.nvmlInit()
-            self.gpu = False
+            self.gpu = settings.USE_GPU
         except:
             self.gpu = False
 
