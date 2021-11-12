@@ -13,7 +13,7 @@
               :key="key"
               class="mt-3"
               :name="key"
-              :title="name || ''"
+              :title="name || key"
             >
               <div v-if="key !== 'outputs'" class="params__fields">
                 <template v-for="(data, i) of fields">
@@ -167,7 +167,6 @@ export default {
   computed: {
     ...mapGetters({
       params: 'deploy/getParams',
-
       height: 'settings/height',
       moduleList: 'deploy/getModuleList',
       projectData: 'projects/getProject',
@@ -189,6 +188,9 @@ export default {
     },
   },
   methods: {
+    parse(parse, name, value, changeable){
+      console.log(parse, name, value, changeable)
+    },
     onchange(e) {
       console.log(e);
       // console.log(this.collapse);

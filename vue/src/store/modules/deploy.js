@@ -4,9 +4,6 @@ export default {
     namespaced: true,
     state: () => ({
       form: {},
-
-
-
       deploy: {},
       graphicData: temp.data,
       defaultLayout: defLayout,
@@ -27,6 +24,9 @@ export default {
       },
       SET_CARDS(state, value) {
         state.Cards = value;
+      },
+      SET_BASE(state, value) {
+        state.form = value;
       },
       SET_DEPLOY_TYPE(state, value) {
         state.deployType = value;
@@ -59,7 +59,8 @@ export default {
     },
     getters: {
       getParams ({ form }) {
-        return form?.main || {}
+        console.log(form)
+        return form || {}
       },
       getModuleList: ({ moduleList }) => moduleList,
       getDeploy: ({ deploy }) => deploy,
@@ -72,7 +73,6 @@ export default {
         let id = Cards;
         let crypto = require("crypto");
         id = crypto.randomBytes(20).toString('hex');
-        console.log(id)
         return id;
       }
     }
