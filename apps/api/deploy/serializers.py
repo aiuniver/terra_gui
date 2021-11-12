@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -9,18 +7,8 @@ from terra_ai.settings import DEPLOY_PRESET_COUNT
 
 
 class GetSerializer(serializers.Serializer):
-    type = serializers.ChoiceField(choices=[deploy_type.name for deploy_type in DeployTypePageChoice])
+    type = serializers.ChoiceField(choices=DeployTypePageChoice.values())
     value = serializers.CharField()
-
-    @staticmethod
-    def validate_value(value):
-        """
-        Check that the blog post is about Django.
-        """
-        path = Path(value)
-        if not path.is_dir():
-            raise serializers.ValidationError(f'Директория по пути {value} не найдена')
-        return path
 
 
 class ReloadSerializer(serializers.ListSerializer):
