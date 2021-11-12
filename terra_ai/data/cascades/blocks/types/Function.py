@@ -56,7 +56,7 @@ class ParametersMainData(BaseMixinData):
         data = dict(filter(lambda item: item[0] in _keys, data.items()))
         super().__init__(**data)
 
-    @validator("type")
+    @validator("type", pre=True)
     def _validate_type(cls, value: BlockFunctionTypeChoice) -> BlockFunctionTypeChoice:
         if value == BlockFunctionTypeChoice.ChangeType:
             cls.__fields__["change_type"].required = True
