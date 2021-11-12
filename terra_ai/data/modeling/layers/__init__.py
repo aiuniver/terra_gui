@@ -505,13 +505,13 @@ class LayerEfficientNetB0Data(LayerMixinData):
     extra: types.EfficientNetB0.ParametersExtraData = types.EfficientNetB0.ParametersExtraData()
 
 
-class LayerCustomUNETBlockData(LayerMixinData):
-    main: types.CustomUNETBlock.ParametersMainData = (
-        types.CustomUNETBlock.ParametersMainData()
-    )
-    extra: types.CustomUNETBlock.ParametersExtraData = (
-        types.CustomUNETBlock.ParametersExtraData()
-    )
+# class LayerCustomUNETBlockData(LayerMixinData):
+#     main: types.CustomUNETBlock.ParametersMainData = (
+#         types.CustomUNETBlock.ParametersMainData()
+#     )
+#     extra: types.CustomUNETBlock.ParametersExtraData = (
+#         types.CustomUNETBlock.ParametersExtraData()
+#     )
 
 
 class LayerYOLOResBlockData(LayerMixinData):
@@ -606,22 +606,45 @@ class LayerCONVBlockData(LayerMixinData):
         types.CONVBlock.ParametersExtraData()
     )
 
-
-class LayerPSPBlockData(LayerMixinData):
-    main: types.PSPBlock.ParametersMainData = (
-        types.PSPBlock.ParametersMainData()
+class LayerPSPBlock1DData(LayerMixinData):
+    main: types.PSPBlock1D.ParametersMainData = (
+        types.PSPBlock1D.ParametersMainData()
     )
-    extra: types.PSPBlock.ParametersExtraData = (
-        types.PSPBlock.ParametersExtraData()
+    extra: types.PSPBlock1D.ParametersExtraData = (
+        types.PSPBlock1D.ParametersExtraData()
+    )
+
+class LayerPSPBlock2DData(LayerMixinData):
+    main: types.PSPBlock2D.ParametersMainData = (
+        types.PSPBlock2D.ParametersMainData()
+    )
+    extra: types.PSPBlock2D.ParametersExtraData = (
+        types.PSPBlock2D.ParametersExtraData()
     )
 
 
-class LayerUNETBlockData(LayerMixinData):
+class LayerUNETBlock2DData(LayerMixinData):
     main: types.UNETBlock2D.ParametersMainData = (
         types.UNETBlock2D.ParametersMainData()
     )
     extra: types.UNETBlock2D.ParametersExtraData = (
         types.UNETBlock2D.ParametersExtraData()
+    )
+
+class LayerUNETBlock1DData(LayerMixinData):
+    main: types.UNETBlock1D.ParametersMainData = (
+        types.UNETBlock1D.ParametersMainData()
+    )
+    extra: types.UNETBlock1D.ParametersExtraData = (
+        types.UNETBlock1D.ParametersExtraData()
+    )
+
+class LayerUNETBlock3DData(LayerMixinData):
+    main: types.UNETBlock3D.ParametersMainData = (
+        types.UNETBlock3D.ParametersMainData()
+    )
+    extra: types.UNETBlock3D.ParametersExtraData = (
+        types.UNETBlock3D.ParametersExtraData()
     )
 
 

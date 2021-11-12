@@ -131,7 +131,7 @@ from . import (
     Xception,
     VGG16,
     VGG19,
-    CustomUNETBlock,
+    # CustomUNETBlock,
     YOLOResBlock,
     YOLOv3ResBlock,
     YOLOConvBlock,
@@ -142,8 +142,10 @@ from . import (
     DarkNetUpsample,
     DarkNetResBlock,
     DarkNetBatchNormalization,
-    PSPBlock,
+    PSPBlock1D,
+    PSPBlock2D,
     UNETBlock2D,
-    UNETBlock1D
+    UNETBlock1D,
+    UNETBlock3D,
 
 )
