@@ -38,27 +38,21 @@
       @cleanError="cleanError"
       @change="change"
     />
-    <t-select
-      v-if="type === 'select'"
-      :value="getValue"
-      :label="label"
-      :lists="list"
-      :parse="parse"
-      :name="name"
-      :error="error"
-      @cleanError="cleanError"
-      @change="change"
-    />
-    <t-field v-if="type === 'auto_complete'" :label="label">
-      <t-auto-complete-new
+    <t-field v-if="type === 'select'" :label="label">
+      <t-select-new
         :value="getValue"
+        :label="label"
         :list="list"
         :parse="parse"
         :name="name"
-        :disabled="disabled"
-        all
-        @parse="change"
+        inline
+        :error="error"
+        @cleanError="cleanError"
+        @change="change"
       />
+    </t-field>
+    <t-field v-if="type === 'auto_complete'" :label="label">
+      <t-auto-complete-new-two :value="getValue" :list="list" :parse="parse" :name="name" all @parse="change" />
     </t-field>
     <template v-for="(data, i) of dataFields">
       <t-auto-field-cascade
@@ -132,7 +126,7 @@ export default {
   },
   mounted() {
     this.$emit('change', { id: this.id, value: this.getValue, name: this.name, root: this.root });
-    console.log(this.id, this.name, this.getValue,  this.root);
+    console.log(this.id, this.name, this.getValue, this.root);
     this.$nextTick(() => {
       this.valueIn = this.getValue;
     });

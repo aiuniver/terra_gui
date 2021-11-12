@@ -198,16 +198,7 @@ export default {
   methods: {
     parse({ id, value, name, root }) {
       console.log( id, value, name, root);
-      // ser(this.trainSettings, parse, value);
-      // this.trainSettings = { ...this.trainSettings };
-      // if (!mounted && changeable) {
-      //   // this.$store.dispatch('trainings/update', this.trainSettings);
-      //   // this.state = { [`architecture[parameters][checkpoint][metric_name]`]: null };
-      // } else {
-      //   if (value) {
-      //     this.state = { [`${parse}`]: value };
-      //   }
-      // }
+
     },
     onchange(e) {
       console.log(e);

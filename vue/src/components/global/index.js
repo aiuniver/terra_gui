@@ -23,6 +23,7 @@ import TCheckbox from './new/forms/TCheckbox';
 import TSelect from './new/forms/TSelect';
 import TField from './forms/TField';
 import TAutoComplete from './new/forms/TAutoComplete';
+import TAutoCompleteTwo from './new/forms/TAutoCompleteTwo';
 
 export default [
   FilesMenu,
@@ -46,5 +47,6 @@ export default [
   TCheckbox,
   TSelect,
   TAutoComplete,
+  TAutoCompleteTwo,
   TField
 ];
