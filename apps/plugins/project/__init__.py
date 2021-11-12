@@ -3,7 +3,7 @@ import json
 import shutil
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List, Tuple
 from pydantic import validator, DirectoryPath, FilePath
 
 from django.conf import settings
@@ -143,7 +143,7 @@ class Project(BaseMixinData):
         return agent_exchange("hardware_accelerator")
 
     @property
-    def trainings(self) -> list:
+    def trainings(self) -> List[Tuple[str, str]]:
         items = [(DEFAULT_TRAINING_PATH_NAME, "Текущее обучение")]
         for item in os.listdir(project_path.training):
             if item == DEFAULT_TRAINING_PATH_NAME:

@@ -21,7 +21,11 @@ class GetAPIView(BaseAPIView):
         serializer = serializers.GetSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
-        agent_exchange("deploy_get", path=serializer.validated_data.get("value"))
+        agent_exchange(
+            "deploy_get",
+            type_=serializer.validated_data.get("type"),
+            name=serializer.validated_data.get("value")
+        )
         return BaseResponseSuccess()
 
 
