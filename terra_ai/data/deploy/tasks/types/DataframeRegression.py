@@ -28,8 +28,8 @@ class DataList(DataBaseList):
         if not len(self):
             return
 
-        self.preset_file = Path(self.path, "preset.txt")
-        self.label_file = Path(self.path, "label.txt")
+        self.preset_file = Path(self.path_deploy, "preset.txt")
+        self.label_file = Path(self.path_deploy, "label.txt")
 
         for _path in (self.preset_file, self.label_file):
             if _path.exists():

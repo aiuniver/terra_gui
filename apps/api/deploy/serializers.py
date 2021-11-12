@@ -1,14 +1,15 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from terra_ai.settings import DEPLOY_PRESET_COUNT
-
 from apps.api.validators import validate_slug
+from apps.plugins.frontend.choices import DeployTypePageChoice
+from terra_ai.settings import DEPLOY_PRESET_COUNT
 
 
 class GetSerializer(serializers.Serializer):
-    type = serializers.CharField()
-    value = serializers.CharField()
+    type = serializers.ChoiceField(choices=DeployTypePageChoice.values())
+    name = serializers.CharField()
+
 
 class ReloadSerializer(serializers.ListSerializer):
     child = serializers.IntegerField(min_value=0, max_value=DEPLOY_PRESET_COUNT - 1)
