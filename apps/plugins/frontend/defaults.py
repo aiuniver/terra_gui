@@ -780,6 +780,6 @@ class DefaultsData(BaseMixinData):
             if deploy_model_field.value not in values:
                 deploy_model_field.value = values[0]
 
-    def update_deploy(self, type: str, name: str):
+    def update_deploy(self, _type: str, _name: str):
         # print(self.deploy.type)
         pass
