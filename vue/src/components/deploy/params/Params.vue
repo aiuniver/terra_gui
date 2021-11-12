@@ -138,7 +138,7 @@ import { mapGetters } from 'vuex';
 // import Checkbox from '@/components/forms/Checkbox';
 // import ModuleList from './ModuleList';
 // import LoadSpiner from '../../forms/LoadSpiner';
-// import ser from '@/assets/js/myserialize';
+import ser from '@/assets/js/myserialize';
 export default {
   name: 'Settings',
   components: {
@@ -197,11 +197,11 @@ export default {
     },
   },
   methods: {
-    parse(parse, value, changeable, mounted) {
+    parse({ parse, value, changeable, mounted }) {
       console.log(parse);
       console.log(parse, value, changeable, mounted);
-      // ser(this.trainSettings, parse, value);
-      // this.trainSettings = { ...this.trainSettings };
+      ser(this.trainSettings, parse, value);
+      this.trainSettings = { ...this.trainSettings };
       if (!mounted && changeable) {
         // this.$store.dispatch('trainings/update', this.trainSettings);
         // this.state = { [`architecture[parameters][checkpoint][metric_name]`]: null };
