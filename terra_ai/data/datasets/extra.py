@@ -220,3 +220,4 @@ class LayerOutputTypeChoice(str, Enum):
     TimeseriesTrend = "TimeseriesTrend"
     ObjectDetection = "ObjectDetection"
     Raw = "Raw"
+    Tracker = "Tracker"

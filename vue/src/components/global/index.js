@@ -3,6 +3,7 @@ import TAutoField from './blocks/TAutoField';
 import TAutoFieldHeandler from './blocks/TAutoFieldHeandler';
 import TAutoFieldTrainings from './blocks/TAutoFieldTrainings';
 import TAutoFieldDeploy from './blocks/TAutoFieldDeploy';
+import TAutoFieldCascade from './blocks/TAutoFieldCascade';
 
 import Button from './forms/Button';
 import Autocomplete from './forms/Autocomplete';
@@ -29,6 +30,7 @@ export default [
   TAutoFieldHeandler,
   TAutoFieldTrainings,
   TAutoFieldDeploy,
+  TAutoFieldCascade,
   Button,
   Checkbox,
   Input,
