@@ -14,7 +14,7 @@ from terra_ai.data.cascades.blocks.extra import (
 
 class ParametersMainData(BaseMixinData):
     group: BlockFunctionGroupChoice
-    type: BlockFunctionTypeChoice
+    type: Optional[BlockFunctionTypeChoice]
     change_type: Optional[ChangeTypeAvailableChoice] = ChangeTypeAvailableChoice.int
     shape: Optional[List[PositiveInt]]
     min_scale: Optional[confloat(ge=0, le=1)] = 0
