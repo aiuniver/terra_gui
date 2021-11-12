@@ -280,17 +280,17 @@ class InstanceNormalization(Layer):
 #         x_19 = self.x_19(x_18)
 #         return x_19
 
-    # def get_config(self):
-    #     config = {
-    #         'filters': self.filters,
-    #         'activation': self.activation,
-    #     }
-    #     base_config = super(CustomUNETBlock, self).get_config()
-    #     return dict(list(base_config.items()) + list(config.items()))
-    #
-    # @classmethod
-    # def from_config(cls, config):
-    #     return cls(**config)
+# def get_config(self):
+#     config = {
+#         'filters': self.filters,
+#         'activation': self.activation,
+#     }
+#     base_config = super(CustomUNETBlock, self).get_config()
+#     return dict(list(base_config.items()) + list(config.items()))
+#
+# @classmethod
+# def from_config(cls, config):
+#     return cls(**config)
 
 
 class VAEBlock(Model):
@@ -1072,7 +1072,6 @@ class PSPBlock2D(Model):
 
         concat = self.concatenate(conc_list)
         x = self.conv_end(concat)
-
         return x
 
     # def get_config(self):
@@ -1097,8 +1096,6 @@ class PSPBlock2D(Model):
     # def from_config(cls, config):
     #     return cls(**config)
 
-
-# НАШ БЛОК!
 
 class UNETBlock2D(Model):
     """
@@ -1125,16 +1122,16 @@ class UNETBlock2D(Model):
 
         setattr(self, f"start_conv",
                 layers.Conv2D(filters=self.filters * self.filters_coef, kernel_size=self.kernel_size,
-                                        activation=self.activation, data_format='channels_last',
-                                        groups=1, use_bias=True,
-                                        kernel_initializer='glorot_uniform', padding='same',
-                                        bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
-                                        activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
+                              activation=self.activation, data_format='channels_last',
+                              groups=1, use_bias=True,
+                              kernel_initializer='glorot_uniform', padding='same',
+                              bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
+                              activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
 
         for i in range(0, self.n_pooling_branches):
             if i == 0:
                 for j in range(1, self.n_conv_layers):
-                    setattr(self, f"conv_d{i}.{j}",
+                    setattr(self, f"conv_d{i}_{j}",
                             layers.Conv2D(filters=self.filters * (i + 1) * self.filters_coef,
                                           kernel_size=self.kernel_size,
                                           activation=self.activation, data_format='channels_last',
@@ -1144,7 +1141,7 @@ class UNETBlock2D(Model):
                                           activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
             else:
                 for j in range(0, self.n_conv_layers):
-                    setattr(self, f"conv_d{i}.{j}",
+                    setattr(self, f"conv_d{i}_{j}",
                             layers.Conv2D(filters=self.filters * (i + 1) * self.filters_coef,
                                           kernel_size=self.kernel_size,
                                           activation=self.activation, data_format='channels_last',
@@ -1164,7 +1161,7 @@ class UNETBlock2D(Model):
             setattr(self, f"upsample_{i}",
                     layers.UpSampling2D(size=2))
             for j in range(0, self.n_conv_layers):
-                setattr(self, f"conv_u{i}.{j}",
+                setattr(self, f"conv_u{i}_{j}",
                         layers.Conv2D(filters=self.filters * (2 * self.n_pooling_branches - i) * self.filters_coef,
                                       kernel_size=self.kernel_size,
                                       activation=self.activation, data_format='channels_last',
@@ -1196,11 +1193,11 @@ class UNETBlock2D(Model):
             if i == 0:
                 setattr(self, f'x_{i}', getattr(self, f'start_conv')(input_))
                 for j in range(1, self.n_conv_layers):
-                    setattr(self, f'x_{i}', getattr(self, f'conv_d{i}.{j}')(getattr(self, f'x_{i}')))
+                    setattr(self, f'x_{i}', getattr(self, f'conv_d{i}_{j}')(getattr(self, f'x_{i}')))
 
             else:
                 for j in range(0, self.n_conv_layers):
-                    setattr(self, f'x_{i}', getattr(self, f'conv_d{i}.{j}')(getattr(self, f'x_{i}')))
+                    setattr(self, f'x_{i}', getattr(self, f'conv_d{i}_{j}')(getattr(self, f'x_{i}')))
 
             if self.batch_norm_layer:
                 setattr(self, f'x_{i}', getattr(self, f'batchnorm_d{i}')(getattr(self, f'x_{i}')))
@@ -1219,7 +1216,6 @@ class UNETBlock2D(Model):
         for i in range(self.n_pooling_branches, self.n_pooling_branches * 2):
 
             setattr(self, f'x_{i}', getattr(self, f"upsample_{i}")(getattr(self, f'x_{i}')))
-
             # setattr(self, f'x_{i}',
             #         layers.CenterCrop(int(np.ceil(input_.shape[1] / 2 ** (2 * self.n_pooling_branches - i - 1))),
             #                           int(np.ceil(input_.shape[2] / 2 ** (2 * self.n_pooling_branches - i - 1))))(
@@ -1229,14 +1225,14 @@ class UNETBlock2D(Model):
 
             if self.batch_norm_layer:
                 for j in range(0, self.n_conv_layers):
-                    setattr(self, f'x_{i}', getattr(self, f'conv_u{i}.{j}')(getattr(self, f'x_{i}')))
+                    setattr(self, f'x_{i}', getattr(self, f'conv_u{i}_{j}')(getattr(self, f'x_{i}')))
                 setattr(self, f'x_{i + 1}', getattr(self, f'batchnorm_u{i}')(getattr(self, f'x_{i}')))
             else:
                 for j in range(0, self.n_conv_layers):
                     if j != self.n_conv_layers - 1:
-                        setattr(self, f'x_{i}', getattr(self, f'conv_u{i}.{j}')(getattr(self, f'x_{i}')))
+                        setattr(self, f'x_{i}', getattr(self, f'conv_u{i}_{j}')(getattr(self, f'x_{i}')))
                     else:
-                        setattr(self, f'x_{i + 1}', getattr(self, f'conv_u{i}.{j}')(getattr(self, f'x_{i}')))
+                        setattr(self, f'x_{i + 1}', getattr(self, f'conv_u{i}_{j}')(getattr(self, f'x_{i}')))
 
         x = getattr(self, f'x_{i + 1}')
         return x
@@ -1248,9 +1244,6 @@ class UNETBlock2D(Model):
     #         'filters_coef': self.filters_coef,
     #         'activation': self.activation,
     #         'kernel_size': self.kernel_size,
-    #         'strides': self.strides,
-    #         'dilation': self.dilation,
-    #         'padding': self.padding,
     #         'batch_norm_layer': self.batch_norm_layer,
     #         'dropout_layer': self.dropout_layer,
     #         'dropout_rate': self.dropout_rate
@@ -1261,6 +1254,7 @@ class UNETBlock2D(Model):
     # @classmethod
     # def from_config(cls, config):
     #     return cls(**config)
+
 
 class UNETBlock1D(Model):
     """
@@ -1287,16 +1281,16 @@ class UNETBlock1D(Model):
 
         setattr(self, f"start_conv",
                 layers.Conv1D(filters=self.filters * self.filters_coef, kernel_size=self.kernel_size,
-                                        activation=self.activation, data_format='channels_last',
-                                        groups=1, use_bias=True, padding='same',
-                                        kernel_initializer='glorot_uniform',
-                                        bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
-                                        activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
+                              activation=self.activation, data_format='channels_last',
+                              groups=1, use_bias=True, padding='same',
+                              kernel_initializer='glorot_uniform',
+                              bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
+                              activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
 
         for i in range(0, self.n_pooling_branches):
             if i == 0:
                 for j in range(1, self.n_conv_layers):
-                    setattr(self, f"conv_d{i}.{j}",
+                    setattr(self, f"conv_d{i}_{j}",
                             layers.Conv1D(filters=self.filters * (i + 1) * self.filters_coef,
                                           kernel_size=self.kernel_size, padding='same',
                                           activation=self.activation, data_format='channels_last',
@@ -1306,7 +1300,7 @@ class UNETBlock1D(Model):
                                           activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
             else:
                 for j in range(0, self.n_conv_layers):
-                    setattr(self, f"conv_d{i}.{j}",
+                    setattr(self, f"conv_d{i}_{j}",
                             layers.Conv1D(filters=self.filters * (i + 1) * self.filters_coef,
                                           kernel_size=self.kernel_size, padding='same',
                                           activation=self.activation, data_format='channels_last',
@@ -1326,7 +1320,7 @@ class UNETBlock1D(Model):
             setattr(self, f"upsample_{i}",
                     layers.UpSampling1D(size=2))
             for j in range(0, self.n_conv_layers):
-                setattr(self, f"conv_u{i}.{j}",
+                setattr(self, f"conv_u{i}_{j}",
                         layers.Conv1D(filters=self.filters * (2 * self.n_pooling_branches - i) * self.filters_coef,
                                       kernel_size=self.kernel_size, padding='same',
                                       activation=self.activation, data_format='channels_last',
@@ -1358,11 +1352,11 @@ class UNETBlock1D(Model):
                 setattr(self, f'x_{i}', getattr(self, f'start_conv')(input_))
 
                 for j in range(1, self.n_conv_layers):
-                    setattr(self, f'x_{i}', getattr(self, f'conv_d{i}.{j}')(getattr(self, f'x_{i}')))
+                    setattr(self, f'x_{i}', getattr(self, f'conv_d{i}_{j}')(getattr(self, f'x_{i}')))
 
             else:
                 for j in range(0, self.n_conv_layers):
-                    setattr(self, f'x_{i}', getattr(self, f'conv_d{i}.{j}')(getattr(self, f'x_{i}')))
+                    setattr(self, f'x_{i}', getattr(self, f'conv_d{i}_{j}')(getattr(self, f'x_{i}')))
 
             if self.batch_norm_layer:
                 setattr(self, f'x_{i}', getattr(self, f'batchnorm_d{i}')(getattr(self, f'x_{i}')))
@@ -1386,14 +1380,14 @@ class UNETBlock1D(Model):
 
             if self.batch_norm_layer:
                 for j in range(0, self.n_conv_layers):
-                    setattr(self, f'x_{i}', getattr(self, f'conv_u{i}.{j}')(getattr(self, f'x_{i}')))
+                    setattr(self, f'x_{i}', getattr(self, f'conv_u{i}_{j}')(getattr(self, f'x_{i}')))
                 setattr(self, f'x_{i + 1}', getattr(self, f'batchnorm_u{i}')(getattr(self, f'x_{i}')))
             else:
                 for j in range(0, self.n_conv_layers):
                     if j != self.n_conv_layers - 1:
-                        setattr(self, f'x_{i}', getattr(self, f'conv_u{i}.{j}')(getattr(self, f'x_{i}')))
+                        setattr(self, f'x_{i}', getattr(self, f'conv_u{i}_{j}')(getattr(self, f'x_{i}')))
                     else:
-                        setattr(self, f'x_{i + 1}', getattr(self, f'conv_u{i}.{j}')(getattr(self, f'x_{i}')))
+                        setattr(self, f'x_{i + 1}', getattr(self, f'conv_u{i}_{j}')(getattr(self, f'x_{i}')))
 
         x = getattr(self, f'x_{i + 1}')
         return x
@@ -1418,6 +1412,8 @@ class UNETBlock1D(Model):
     # @classmethod
     # def from_config(cls, config):
     #     return cls(**config)
+
+
 class UNETBlock3D(Model):
     """
     UNET Block3D layer
@@ -1427,7 +1423,7 @@ class UNETBlock3D(Model):
     """
 
     def __init__(self, filters_base=16, n_pooling_branches=2, filters_coef=1, n_conv_layers=2, activation='relu',
-                 kernel_size=(3,3,3), batch_norm_layer=True,
+                 kernel_size=(3, 3, 3), batch_norm_layer=True,
                  dropout_layer=True, dropout_rate=0.1, **kwargs):
 
         super(UNETBlock3D, self).__init__(**kwargs)
@@ -1441,19 +1437,18 @@ class UNETBlock3D(Model):
         self.dropout_layer = dropout_layer
         self.dropout_rate = dropout_rate
 
-
         setattr(self, f"start_conv",
                 layers.Conv3D(filters=self.filters * self.filters_coef, kernel_size=self.kernel_size,
-                                        activation=self.activation, data_format='channels_last',
-                                        groups=1, use_bias=True, padding='same',
-                                        kernel_initializer='glorot_uniform',
-                                        bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
-                                        activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
+                              activation=self.activation, data_format='channels_last',
+                              groups=1, use_bias=True, padding='same',
+                              kernel_initializer='glorot_uniform',
+                              bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
+                              activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
 
         for i in range(0, self.n_pooling_branches):
             if i == 0:
                 for j in range(1, self.n_conv_layers):
-                    setattr(self, f"conv_d{i}.{j}",
+                    setattr(self, f"conv_d{i}_{j}",
                             layers.Conv3D(filters=self.filters * (i + 1) * self.filters_coef,
                                           kernel_size=self.kernel_size, padding='same',
                                           activation=self.activation, data_format='channels_last',
@@ -1463,7 +1458,7 @@ class UNETBlock3D(Model):
                                           activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
             else:
                 for j in range(0, self.n_conv_layers):
-                    setattr(self, f"conv_d{i}.{j}",
+                    setattr(self, f"conv_d{i}_{j}",
                             layers.Conv3D(filters=self.filters * (i + 1) * self.filters_coef,
                                           kernel_size=self.kernel_size, padding='same',
                                           activation=self.activation, data_format='channels_last',
@@ -1483,7 +1478,7 @@ class UNETBlock3D(Model):
             setattr(self, f"upsample_{i}",
                     layers.UpSampling3D(size=2))
             for j in range(0, self.n_conv_layers):
-                setattr(self, f"conv_u{i}.{j}",
+                setattr(self, f"conv_u{i}_{j}",
                         layers.Conv3D(filters=self.filters * (2 * self.n_pooling_branches - i) * self.filters_coef,
                                       kernel_size=self.kernel_size, padding='same',
                                       activation=self.activation, data_format='channels_last',
@@ -1505,13 +1500,9 @@ class UNETBlock3D(Model):
                                   bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
                                   activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
 
-
-
     def call(self, input_, training=True):
         if not isinstance(input_, (np.int32, np.float64, np.float32, np.float16)):
             input_ = cast(input_, 'float16')
-    # def build(self, input_shape=(16,16,16,3)):
-    #     input_ = layers.Input(input_shape)
         concList = [[] for i in range(self.n_pooling_branches)]
 
         for i in range(0, self.n_pooling_branches):  # Подумать над конкатенайт и кроп
@@ -1519,11 +1510,11 @@ class UNETBlock3D(Model):
                 setattr(self, f'x_{i}', getattr(self, f'start_conv')(input_))
 
                 for j in range(1, self.n_conv_layers):
-                    setattr(self, f'x_{i}', getattr(self, f'conv_d{i}.{j}')(getattr(self, f'x_{i}')))
+                    setattr(self, f'x_{i}', getattr(self, f'conv_d{i}_{j}')(getattr(self, f'x_{i}')))
 
             else:
                 for j in range(0, self.n_conv_layers):
-                    setattr(self, f'x_{i}', getattr(self, f'conv_d{i}.{j}')(getattr(self, f'x_{i}')))
+                    setattr(self, f'x_{i}', getattr(self, f'conv_d{i}_{j}')(getattr(self, f'x_{i}')))
 
             if self.batch_norm_layer:
                 setattr(self, f'x_{i}', getattr(self, f'batchnorm_d{i}')(getattr(self, f'x_{i}')))
@@ -1547,18 +1538,18 @@ class UNETBlock3D(Model):
 
             if self.batch_norm_layer:
                 for j in range(0, self.n_conv_layers):
-                    setattr(self, f'x_{i}', getattr(self, f'conv_u{i}.{j}')(getattr(self, f'x_{i}')))
+                    setattr(self, f'x_{i}', getattr(self, f'conv_u{i}_{j}')(getattr(self, f'x_{i}')))
                 setattr(self, f'x_{i + 1}', getattr(self, f'batchnorm_u{i}')(getattr(self, f'x_{i}')))
             else:
                 for j in range(0, self.n_conv_layers):
                     if j != self.n_conv_layers - 1:
-                        setattr(self, f'x_{i}', getattr(self, f'conv_u{i}.{j}')(getattr(self, f'x_{i}')))
+                        setattr(self, f'x_{i}', getattr(self, f'conv_u{i}_{j}')(getattr(self, f'x_{i}')))
                     else:
-                        setattr(self, f'x_{i + 1}', getattr(self, f'conv_u{i}.{j}')(getattr(self, f'x_{i}')))
+                        setattr(self, f'x_{i + 1}', getattr(self, f'conv_u{i}_{j}')(getattr(self, f'x_{i}')))
 
         x = getattr(self, f'x_{i + 1}')
-        # x = Model(input_, x)
         return x
+
 
 class PSPBlock1D(Model):
     """
@@ -1644,6 +1635,7 @@ class PSPBlock1D(Model):
         x = self.conv_end(concat)
         return x
 
+
 if __name__ == "__main__":
     # input = tensorflow.keras.layers.Input(shape=(32, 32, 3))
     # x = YOLOResBlock(32, 2)(input)
@@ -1653,20 +1645,25 @@ if __name__ == "__main__":
     #                     "use_bias": False, "include_head": True, "include_add": True,
     #                     "all_narrow": True})
     # x = YOLOConvBlock(**{'mode': "YOLOv5", "filters": 64, "num_conv": 5, 'activation': 'Swish'})
-    # x = UNETBlock2D(filters_base=16, n_pooling_branches=2, filters_coef=1, n_conv_layers=2, activation='relu',
-    #              kernel_size=(3, 3), batch_norm_layer=True,
-    #              dropout_layer=True, dropout_rate=0.1)
-    # x = PSPBlock2D(filters_base=32, n_pooling_branches=4, filters_coef=1, n_conv_layers=2, activation='relu',
+    x = UNETBlock2D(filters_base=16, n_pooling_branches=3, filters_coef=1, n_conv_layers=1, activation='relu',
+                    kernel_size=(3, 3), batch_norm_layer=True,
+                    dropout_layer=True, dropout_rate=0.1)
+    # x = PSPBlock2D(filters_base=32, n_pooling_branches=3, filters_coef=1, n_conv_layers=2, activation='relu',
     #                kernel_size=(3, 3), batch_norm_layer = True, dropout_layer = True, dropout_rate = 0.1)
-    x = PSPBlock1D(filters_base=32, n_pooling_branches=3, filters_coef=1, n_conv_layers=2, activation='relu',
-                   kernel_size=5, batch_norm_layer = True, dropout_layer = True, dropout_rate = 0.1)
+    # x = PSPBlock1D(filters_base=32, n_pooling_branches=3, filters_coef=1, n_conv_layers=2, activation='relu',
+    #                kernel_size=5, batch_norm_layer = True, dropout_layer = True, dropout_rate = 0.1)
     # x = UNETBlock1D(filters_base=16, n_pooling_branches=3, filters_coef=1, n_conv_layers=2, activation='relu',
     #                 kernel_size=5, batch_norm_layer=True,
     #                 dropout_layer=True, dropout_rate=0.1)
     # x = UNETBlock3D(filters_base=16, n_pooling_branches=3, filters_coef=1, n_conv_layers=1, activation='relu',
     #                 kernel_size=(3,3,3), batch_norm_layer=True,
     #                 dropout_layer=True, dropout_rate=0.1)
-    # aa = x.build((64, 104, 120, 3))
-    # aa.summary()
-    print(x.compute_output_shape(input_shape=(None, 64, 1)))
+    aa = x.build((64, 64, 3))
+    aa.summary()
+    tf.keras.utils.plot_model(
+        aa, to_file='C:\PycharmProjects\\terra_gui\\test_example\\model.png', show_shapes=True, show_dtype=False,
+        show_layer_names=True, rankdir='TB', expand_nested=False, dpi=96,
+        layer_range=None, show_layer_activations=False
+    )
+    # print(x.compute_output_shape(input_shape=(None, 64, 1)))
     pass
