@@ -209,8 +209,13 @@ class ArchitectureMixinForm(BaseMixinData):
     def disable_by_state(
         self, field, architecture: str = None, status: str = None, **kwargs
     ):
+        print(111111)
         if not architecture or not status:
             return
+        print(
+            architecture,
+            StatesTrainingBaseParamsDisabled.get(architecture, {}).get(status, []),
+        )
         if field.name in StatesTrainingBaseParamsDisabled.get(architecture, {}).get(
             status, []
         ):
@@ -224,8 +229,13 @@ class ArchitectureMixinForm(BaseMixinData):
         status: str = None,
         **kwargs,
     ):
+        print(222222)
         if not architecture or not status:
             return
+        print(
+            architecture,
+            StatesTrainingBaseParamsDisabled.get(architecture, {}).get(status, []),
+        )
         if field.name in list(
             map(
                 lambda item: item % str(layer_id) if "%s" in item else item,
