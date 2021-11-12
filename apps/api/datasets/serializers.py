@@ -30,7 +30,7 @@ class LayerParametersSerializer(serializers.Serializer):
     sources_paths = serializers.ListSerializer(child=DirectoryOrFilePathField())
 
     def validate_sources_paths(self, value):
-        if self.__class__ == LayerParametersClassificationSerializer:
+        if self.__class__ in [LayerParametersClassificationSerializer, LayerParametersTrackerSerializer]:
             return value
         if not len(value):
             raise serializers.ValidationError("Этот список не может быть пустым.")
@@ -166,6 +166,10 @@ class LayerParametersDataframeSerializer(LayerParametersSerializer):
 
 
 class LayerParametersClassificationSerializer(LayerParametersSerializer):
+    pass
+
+
+class LayerParametersTrackerSerializer(LayerParametersSerializer):
     pass
 
 

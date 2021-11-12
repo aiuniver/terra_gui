@@ -9,4 +9,5 @@ from . import (
     ObjectDetection,
     Regression,
     Timeseries,
+    Tracker
 )
