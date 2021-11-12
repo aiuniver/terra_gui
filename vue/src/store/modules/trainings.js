@@ -21,7 +21,9 @@ export default {
     progress: {},
     interactive: {},
 
-    largeImgSrc: null
+    largeImgSrc: null,
+
+    expandedIdx: []
   }),
   mutations: {
     SET_BASE (state, value) {
@@ -63,6 +65,10 @@ export default {
     SET_LARGE_IMAGE (state, value) {
       state.largeImgSrc = value;
     },
+    SET_EXPANDED (state, { value, idx }) {
+      if (value) return state.expandedIdx.push(idx)
+      state.expandedIdx.splice(state.expandedIdx.indexOf(idx), 1)
+    }
   },
   actions: {
     parseStruct ({ commit }, { form, interactive, progress, state, result, base }) {
@@ -201,6 +207,9 @@ export default {
     setLargeImg ({ commit }, value = null) {
       commit("SET_LARGE_IMAGE", value);
     },
+    setExpandedIdx ({ commit }, data) {
+      commit("SET_EXPANDED", data);
+    }
   },
   getters: {
     getTrainSettings: ({ trainSettings }) => {
@@ -254,5 +263,8 @@ export default {
     getLargeImg ({ largeImgSrc }) {
       return largeImgSrc
     },
+    getExpandedIdx ({ expandedIdx }) {
+      return expandedIdx
+    }
   },
 };
