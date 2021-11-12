@@ -1,7 +1,7 @@
 export default {
   namespaced: true,
   state: () => ({
-    theme: 'light',
+    theme: 'dark',
     list: [
       'light',
       'dark'

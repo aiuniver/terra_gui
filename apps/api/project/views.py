@@ -19,7 +19,7 @@ class NameAPIView(BaseAPIView):
 
 class CreateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        request.project.reset()
+        request.project.create()
         return BaseResponseSuccess()
 
 
@@ -28,15 +28,8 @@ class SaveAPIView(BaseAPIView):
         serializer = serializers.SaveSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
-        request.project.name = serializer.validated_data.get("name")
-        request.project.save()
-        agent_exchange(
-            "project_save",
-            source=project_path.base,
-            target=data_path.projects,
-            name=serializer.validated_data.get("name"),
-            overwrite=serializer.validated_data.get("overwrite"),
-        )
+        request.project.set_name(serializer.validated_data.get("name"))
+        request.project.save(serializer.validated_data.get("overwrite"))
         return BaseResponseSuccess()
 
 

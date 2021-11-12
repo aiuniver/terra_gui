@@ -1,36 +1,76 @@
-
 @import "./variables/default.scss";
 
+@mixin marginGlobal($property, $margin, $quanity, $count) {
+  @for $i from 1 through $count {
+    #{"." + $property + "-" + $i} {
+      #{$margin}: $quanity * $i;
+    }
+  }
+}
+
+$quanityPxMult: 4px;
+
+@include marginGlobal("mt", "margin-top", $quanityPxMult, 15);
+@include marginGlobal("mr", "margin-right", $quanityPxMult, 15);
+@include marginGlobal("ml", "margin-left", $quanityPxMult, 15);
+@include marginGlobal("mb", "margin-bottom", $quanityPxMult, 15);
+
 * {
-  box-sizing:border-box
+  box-sizing: border-box;
 }
 
 :root {
   --color-bg: #{$color-dark-bg};
   --color-border: #{$color-dark-border};
   --color-text: #{$color-dark-text};
+  --color-bg-dropdown: #{$color-dark-bg-dropdown};
+  --color-bg-dropdown-item-active: #{$color-dark-bg-dropdown-iterm-active};
 
   @media screen {
     &[data-theme="light"] {
       --color-bg: #{$color-light-bg};
       --color-border: #{$color-light-border};
       --color-text: #{$color-light-text};
+      --color-bg-dropdown: #{$color-ligth-bg-dropdown};
     }
   }
 }
 
-html, body {
+html,
+body {
   height: 100%;
   width: 100%;
-  font-family: 'Open Sans', sans-serif;
+  font-family: "Open Sans", sans-serif;
   background: var(--color-bg);
   color: var(--color-text);
+  font-size: 14px;
 }
 
 ul {
   margin: 0;
   padding: 0;
- }
+}
 li {
   list-style-type: none;
+}
+
+.flex {
+  display: flex;
+}
+
+.align-center {
+  align-items: center;
+}
+
+.justify-center{
+  justify-content: center;
+}
+
+.app__main {
+  height: 100%;
+}
+
+.page {
+  height: 100%;
+  margin-top: 52px;
 }
