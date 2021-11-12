@@ -52,6 +52,7 @@ class BlockFunctionGroupChoice(str, Enum):
     Segmentation = "Segmentation"
     TextSegmentation = "TextSegmentation"
     ObjectDetection = "ObjectDetection"
+    Tracker = "Tracker"
 
     @staticmethod
     def values() -> list:

@@ -22,6 +22,7 @@ class LayerOutputTypeChoice(str, Enum):
     Segmentation = "Сегментация изображений"
     TextSegmentation = "Сегментация текстов"
     ObjectDetection = "Обнаружение объектов"
+    Tracker = 'Трекер'
 
     @staticmethod
     def items_tuple() -> list:
@@ -306,6 +307,7 @@ class BlockFunctionGroupChoice(str, Enum):
     Segmentation = "Segmentation"
     TextSegmentation = "TextSegmentation"
     ObjectDetection = "ObjectDetection"
+    Tracker = 'Tracker'
 
 
 class BlockFunctionTypeChoice(str, Enum):
