@@ -38,25 +38,30 @@
       @cleanError="cleanError"
       @change="change"
     />
-    <t-select
-      v-if="type === 'select'"
-      :value="getValue"
-      :label="label"
-      :lists="list"
-      :parse="parse"
-      :name="name"
-      :error="error"
-      @cleanError="cleanError"
-      @change="change"
-    />
+    <t-field v-if="type === 'select'" :label="label">
+      <t-select-new
+        :value="getValue"
+        :label="label"
+        :list="list"
+        :parse="parse"
+        :name="name"
+        inline
+        :small="!big"
+        :error="error"
+        @cleanError="cleanError"
+        @change="change"
+      />
+    </t-field>
+    <t-field v-if="type === 'auto_complete'" :label="label">
+      <t-auto-complete-new-two :value="getValue" :list="list" :parse="parse" :name="name" all @parse="change" />
+    </t-field>
     <template v-for="(data, i) of dataFields">
-      <t-auto-field
+      <t-auto-field-cascade
         v-bind="data"
         :key="data.name + i"
         :id="id"
         :parameters="parameters"
         :update="update"
-        @multiselect="$emit('multiselect', $event)"
         @change="$emit('change', $event)"
       />
     </template>
@@ -80,6 +85,7 @@ export default {
     parameters: Object,
     update: Object,
     isAudio: Number,
+    big: Boolean,
   },
   data: () => ({
     valueIn: null,
@@ -105,7 +111,7 @@ export default {
   },
   methods: {
     change({ value, name }) {
-      console.log(value)
+      console.log(value, name);
       this.valueIn = null;
       this.$emit('change', { id: this.id, value, name, root: this.root });
       this.$nextTick(() => {
@@ -121,7 +127,7 @@ export default {
   },
   mounted() {
     this.$emit('change', { id: this.id, value: this.getValue, name: this.name, root: this.root });
-    console.log(this.name, this.parameters, this.getValue)
+    console.log(this.id, this.name, this.getValue, this.root);
     this.$nextTick(() => {
       this.valueIn = this.getValue;
     });

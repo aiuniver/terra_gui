@@ -162,7 +162,7 @@ export default {
     async removeModel ({ dispatch }, data) {
       return await dispatch('axios', { url: '/cascades/delete/', data }, { root: true });
     },
-    async updateModel ({ commit, state: { blocks, links }, dispatch }, block) {
+    async updateModel ({ commit, state: { blocks, links }, dispatch }) {
       const semdBlocks = JSON.parse(JSON.stringify(blocks))
       semdBlocks.forEach(block => {
         // if (block.group !== 'input') block.shape.input = null;
@@ -183,8 +183,8 @@ export default {
 
       const res = await dispatch('axios', { url: '/cascades/update/', data: { blocks: semdBlocks } }, { root: true });
       if (res) {
-        const { data, error, success } = res
-        console.log(data, error, success, block)
+        const { data, error } = res
+        // console.log(data, error, success, block)
         if (error) {
           // const { general, fields } = error
 
@@ -192,7 +192,7 @@ export default {
           // for (const key in error) {
           //   newError[key.replace('fields', block.id)] = error[key]
           // }
-          console.log(error)
+          // console.log(error)
           // commit('SET_ERRORS_FIELDS', { ...errorsBlocks, ...newError });
         }
         if (data) {

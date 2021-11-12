@@ -149,23 +149,26 @@ FunctionGroupTypeRel = {
 
 def get_function_type_field(type_name) -> dict:
     items = list(FunctionGroupTypeRel.get(type_name))
-    return {
-        "type": "select",
-        "name": "type",
-        "label": "Тип",
-        "parse": "parameters[main][type]",
-        "value": "",
-        "list": [{"value": "", "label": ""}]
-        + list(
-            map(
-                lambda item: {"value": item.name, "label": item.value},
-                items,
-            )
-        ),
-        "fields": dict(
-            map(lambda item: (item.name, FunctionTypesFields.get(item, [])), items)
-        ),
-    }
+    if not len(items):
+        return []
+    return [
+        {
+            "type": "select",
+            "name": "type",
+            "label": "Тип",
+            "parse": "parameters[main][type]",
+            "value": items[0].name,
+            "list": list(
+                map(
+                    lambda item: {"value": item.name, "label": item.value},
+                    items,
+                )
+            ),
+            "fields": dict(
+                map(lambda item: (item.name, FunctionTypesFields.get(item, [])), items)
+            ),
+        }
+    ]
 
 
 CascadesBlocksTypes = {
@@ -195,43 +198,38 @@ CascadesBlocksTypes = {
                 "name": "group",
                 "label": "Группа",
                 "parse": "parameters[main][group]",
-                "value": "",
-                "list": [{"value": "", "label": ""}]
-                + list(
+                "value": BlockFunctionGroupChoice.Image,
+                "list": list(
                     map(
                         lambda item: {"value": item.name, "label": item.value},
                         list(BlockFunctionGroupChoice),
                     )
                 ),
                 "fields": {
-                    BlockFunctionGroupChoice.Image: [
-                        get_function_type_field(BlockFunctionGroupChoice.Image)
-                    ],
-                    BlockFunctionGroupChoice.Text: [
-                        get_function_type_field(BlockFunctionGroupChoice.Text)
-                    ],
-                    BlockFunctionGroupChoice.Audio: [
-                        get_function_type_field(BlockFunctionGroupChoice.Audio)
-                    ],
-                    BlockFunctionGroupChoice.Video: [
-                        get_function_type_field(BlockFunctionGroupChoice.Video)
-                    ],
-                    BlockFunctionGroupChoice.Array: [
-                        get_function_type_field(BlockFunctionGroupChoice.Array)
-                    ],
-                    BlockFunctionGroupChoice.ObjectDetection: [
-                        get_function_type_field(
-                            BlockFunctionGroupChoice.ObjectDetection
-                        )
-                    ],
-                    BlockFunctionGroupChoice.Segmentation: [
-                        get_function_type_field(BlockFunctionGroupChoice.Segmentation)
-                    ],
-                    BlockFunctionGroupChoice.TextSegmentation: [
-                        get_function_type_field(
-                            BlockFunctionGroupChoice.TextSegmentation
-                        )
-                    ],
+                    BlockFunctionGroupChoice.Image: get_function_type_field(
+                        BlockFunctionGroupChoice.Image
+                    ),
+                    BlockFunctionGroupChoice.Text: get_function_type_field(
+                        BlockFunctionGroupChoice.Text
+                    ),
+                    BlockFunctionGroupChoice.Audio: get_function_type_field(
+                        BlockFunctionGroupChoice.Audio
+                    ),
+                    BlockFunctionGroupChoice.Video: get_function_type_field(
+                        BlockFunctionGroupChoice.Video
+                    ),
+                    BlockFunctionGroupChoice.Array: get_function_type_field(
+                        BlockFunctionGroupChoice.Array
+                    ),
+                    BlockFunctionGroupChoice.ObjectDetection: get_function_type_field(
+                        BlockFunctionGroupChoice.ObjectDetection
+                    ),
+                    BlockFunctionGroupChoice.Segmentation: get_function_type_field(
+                        BlockFunctionGroupChoice.Segmentation
+                    ),
+                    BlockFunctionGroupChoice.TextSegmentation: get_function_type_field(
+                        BlockFunctionGroupChoice.TextSegmentation
+                    ),
                 },
             },
         ]
@@ -244,8 +242,7 @@ CascadesBlocksTypes = {
                 "label": "Группа",
                 "parse": "parameters[main][group]",
                 "value": BlockCustomGroupChoice.Tracking,
-                "list": [{"value": "", "label": ""}]
-                + list(
+                "list": list(
                     map(
                         lambda item: {"value": item.name, "label": item.value},
                         list(BlockCustomGroupChoice),
@@ -259,8 +256,7 @@ CascadesBlocksTypes = {
                             "label": "Выбор типа",
                             "parse": "parameters[main][type]",
                             "value": BlockCustomTypeChoice.Sort,
-                            "list": [{"value": "", "label": ""}]
-                            + list(
+                            "list": list(
                                 map(
                                     lambda item: {
                                         "value": item.name,
