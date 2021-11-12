@@ -1088,7 +1088,7 @@ class CreateArray(object):
     @staticmethod
     def create_tracker(zero: int, **options):
 
-        instructions = {'instructions': zero,
+        instructions = {'instructions': np.array([zero]),
                         'parameters': options}
 
         return instructions

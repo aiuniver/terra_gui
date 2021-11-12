@@ -151,7 +151,7 @@ class CreateDataset(object):
     def preprocess_creation_data(creation_data):
 
         for out in creation_data.outputs:
-            if out.type == LayerOutputTypeChoice.Classification:
+            if out.type in [LayerOutputTypeChoice.Classification, LayerOutputTypeChoice.Tracker]:
                 if not out.parameters.sources_paths or not out.parameters.sources_paths[0].suffix == '.csv':
                     for inp in creation_data.inputs:
                         if inp.type in [LayerInputTypeChoice.Image, LayerInputTypeChoice.Text,
@@ -371,7 +371,8 @@ class CreateDataset(object):
                                         paths_list.append(os.path.join(file_folder, name))
                 put.parameters.cols_names = f'{put.id}_{decamelize(put.type)}'
                 put.parameters.put = put.id
-                temp_paths_list = [os.path.join(self.source_path, x) for x in paths_list]
+                temp_paths_list = [os.path.join(self.source_path, x) for x in paths_list] \
+                    if put.type != LayerOutputTypeChoice.Tracker else [0 for x in paths_list]
 
                 results_list = []
                 with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -384,7 +385,8 @@ class CreateDataset(object):
                         if put.type not in [LayerOutputTypeChoice.Classification, LayerOutputTypeChoice.Segmentation,
                                             LayerOutputTypeChoice.TextSegmentation,
                                             LayerOutputTypeChoice.ObjectDetection, LayerOutputTypeChoice.Timeseries,
-                                            LayerOutputTypeChoice.TimeseriesTrend, LayerOutputTypeChoice.Regression]:
+                                            LayerOutputTypeChoice.TimeseriesTrend, LayerOutputTypeChoice.Regression,
+                                            LayerOutputTypeChoice.Tracker]:
                             y_classes = result[1] if len(result) > 1 else [os.path.basename(os.path.dirname(dir_name))
                                                                            for dir_name in result[0]['instructions']]
                             self.y_cls += y_classes
@@ -508,7 +510,7 @@ class CreateDataset(object):
             raise
         for key, value in split_sequence.items():
             self.dataframe[key] = dataframe.loc[value, :].reset_index(drop=True)
-        # print(self.dataframe['train'])
+        print(self.dataframe['train'])
 
     def create_input_parameters(self, creation_data: CreationData) -> dict:
 
