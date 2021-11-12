@@ -1,5 +1,13 @@
-from apps.api import cascades
-from .serializers import CascadeGetSerializer, UpdateSerializer
+import base64
+
+from tempfile import NamedTemporaryFile
+
+from apps.api import utils
+from apps.api.cascades.serializers import (
+    CascadeGetSerializer,
+    UpdateSerializer,
+    PreviewSerializer,
+)
 from apps.plugins.project import project_path
 from terra_ai.agent import agent_exchange
 
@@ -57,3 +65,28 @@ class ClearAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         request.project.clear_cascade()
         return BaseResponseSuccess(request.project.cascade.native())
+
+
+class ValidateAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        agent_exchange("cascade_validate", cascade=request.project.cascade)
+        return BaseResponseSuccess()
+
+
+class StartAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        agent_exchange("cascade_start", cascade=request.project.cascade)
+        return BaseResponseSuccess()
+
+
+class PreviewAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        serializer = PreviewSerializer(data=request.data)
+        if not serializer.is_valid():
+            return BaseResponseErrorFields(serializer.errors)
+        filepath = NamedTemporaryFile(suffix=".png")  # Add for Win ,delete=False
+        filepath.write(base64.b64decode(serializer.validated_data.get("preview")))
+        utils.autocrop_image_square(filepath.name, min_size=600)
+        with open(filepath.name, "rb") as filepath_ref:
+            content = filepath_ref.read()
+            return BaseResponseSuccess(base64.b64encode(content))
