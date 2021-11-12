@@ -69,19 +69,26 @@ class ClearAPIView(BaseAPIView):
 
 class ValidateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        agent_exchange("cascade_validate", cascade=request.project.cascade)
+        agent_exchange(
+            "cascade_validate",
+            path=project_path.training,
+            cascade=request.project.cascade,
+        )
         return BaseResponseSuccess()
 
 
 class StartAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        agent_exchange("cascade_start", cascade=request.project.cascade)
+        agent_exchange(
+            "cascade_start",
+            path=project_path.training,
+            cascade=request.project.cascade,
+        )
         return BaseResponseSuccess()
 
 
 class SaveAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        # agent_exchange("cascade_start", cascade=request.project.cascade)
         return BaseResponseSuccess()
 
 

@@ -365,17 +365,19 @@ class Exchange:
         """
         return CascadeDetailsData(**cascade)
 
-    def _call_cascade_validate(self, cascade: CascadeDetailsData):
+    def _call_cascade_validate(self, path: Path, cascade: CascadeDetailsData):
         """
         Валидация каскада
         """
-        pass
+        print(cascade)
+        print(path)
 
-    def _call_cascade_start(self, cascade: CascadeDetailsData):
+    def _call_cascade_start(self, path: Path, cascade: CascadeDetailsData):
         """
         Запуск каскада
         """
-        pass
+        print(cascade)
+        print(path)
 
     def _call_deploy_get(
         self, path_model: Path, path_deploy: Path, page: dict
