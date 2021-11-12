@@ -122,7 +122,7 @@ class Project(BaseMixinData):
             data["dataset"]["path"] = project_path.datasets
 
         if data.get("deploy"):
-            data["deploy"]["path"] = project_path.deploy
+            data["deploy"]["path_deploy"] = project_path.deploy
             deploy_page = data.get("deploy", {}).get("page", {}).get("type", "")
             if deploy_page == DeployTypePageChoice.model:
                 data["deploy"]["path_model"] = project_path.training
@@ -240,8 +240,8 @@ class Project(BaseMixinData):
 
     def frontend(self):
         _data = self.native()
-        if _data.get("training", {}).get("deploy") and self.deploy:
-            _data["training"].update({"deploy": self.deploy.presets})
+        if _data.get("deploy") and self.deploy:
+            _data.update({"deploy": self.deploy.presets})
         return json.dumps(_data)
 
     def set_name(self, name: str):
