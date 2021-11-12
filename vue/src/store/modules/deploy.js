@@ -3,6 +3,7 @@ import {defLayout, originaltextStyle} from "../const/deploy"
 export default {
     namespaced: true,
     state: () => ({
+      stateParams: {},
       form: {},
       deploy: {},
       graphicData: temp.data,
@@ -35,6 +36,9 @@ export default {
         state.Cards[id].data = value;
         state.Cards = { ...state.Cards }
       },
+      SET_STATE_PARAMS (state, value) {
+        state.stateParams = { ...value };
+      },
     },
     actions: {
       parseStruct ({ commit }, { form }) {
@@ -56,11 +60,17 @@ export default {
         commit("SET_CARDS",  data.data.data);
         commit("SET_DEPLOY",  data.data);
       },
+      setStateParams ({ commit, state: { stateParams } }, data) {
+        commit("SET_STATE_PARAMS", { ...stateParams, ...data });
+      },
     },
     getters: {
       getParams ({ form }) {
         console.log(form)
         return form || {}
+      },
+      getStateParams ({ stateParams }) {
+        return stateParams || {}
       },
       getModuleList: ({ moduleList }) => moduleList,
       getDeploy: ({ deploy }) => deploy,

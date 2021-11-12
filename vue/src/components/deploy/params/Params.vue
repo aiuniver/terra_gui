@@ -13,11 +13,11 @@
               :key="key"
               class="mt-3"
               :name="key"
-              :title="name || key"
+              :title="name || ''"
             >
               <div v-if="key !== 'outputs'" class="params__fields">
                 <template v-for="(data, i) of fields">
-                  <t-auto-field-trainings
+                  <t-auto-field-deploy
                     v-bind="data"
                     :class="`params__fields--${key}`"
                     :key="key + i"
@@ -35,7 +35,7 @@
                     </div>
                     <div class="block-layers__body">
                       <template v-for="(data, i) of field.fields">
-                        <t-auto-field-trainings
+                        <t-auto-field-deploy
                           v-bind="data"
                           :key="'checkpoint_' + i + data.parse"
                           :state="state"
@@ -138,6 +138,7 @@ import { mapGetters } from 'vuex';
 // import Checkbox from '@/components/forms/Checkbox';
 // import ModuleList from './ModuleList';
 // import LoadSpiner from '../../forms/LoadSpiner';
+// import ser from '@/assets/js/myserialize';
 export default {
   name: 'Settings',
   components: {
@@ -146,9 +147,9 @@ export default {
     // LoadSpiner,
   },
   data: () => ({
-    collapse: ['main', 'fit', 'outputs', 'checkpoint', 'yolo'],
+    collapse: ['type', 'server'],
     key: '1212',
-
+    trainSettings: {},
     deploy: '',
     replace: false,
     use_sec: false,
@@ -172,6 +173,14 @@ export default {
       projectData: 'projects/getProject',
       userData: 'projects/getUser',
     }),
+    state: {
+      set(value) {
+        this.$store.dispatch('deploy/setStateParams', value);
+      },
+      get() {
+        return this.$store.getters['deploy/getStateParams'];
+      },
+    },
     checkCorrect() {
       return this.sec == this.sec_accept ? 'icon-deploy-password-correct' : 'icon-deploy-password-incorrect';
     },
@@ -188,8 +197,19 @@ export default {
     },
   },
   methods: {
-    parse(parse, name, value, changeable){
-      console.log(parse, name, value, changeable)
+    parse(parse, value, changeable, mounted) {
+      console.log(parse);
+      console.log(parse, value, changeable, mounted);
+      // ser(this.trainSettings, parse, value);
+      // this.trainSettings = { ...this.trainSettings };
+      if (!mounted && changeable) {
+        // this.$store.dispatch('trainings/update', this.trainSettings);
+        // this.state = { [`architecture[parameters][checkpoint][metric_name]`]: null };
+      } else {
+        if (value) {
+          this.state = { [`${parse}`]: value };
+        }
+      }
     },
     onchange(e) {
       console.log(e);
@@ -264,6 +284,11 @@ export default {
           this.getProgress();
         }
       }
+    },
+  },
+  watch: {
+    params() {
+      this.key = 'dsdsdsd';
     },
   },
 };
