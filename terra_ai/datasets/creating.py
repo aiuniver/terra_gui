@@ -221,6 +221,9 @@ class CreateDataset(object):
                 if out.type == LayerOutputTypeChoice.Classification and self.y_cls:
                     for col_name, data in outputs[out.id].items():
                         data.instructions = self.y_cls
+                elif out.type == LayerOutputTypeChoice.Tracker and self.y_cls:
+                    for col_name, data in outputs[out.id].items():
+                        data.instructions = [0 for x in self.y_cls]
 
         instructions = DatasetInstructionsData(inputs=inputs, outputs=outputs)
 
@@ -371,8 +374,7 @@ class CreateDataset(object):
                                         paths_list.append(os.path.join(file_folder, name))
                 put.parameters.cols_names = f'{put.id}_{decamelize(put.type)}'
                 put.parameters.put = put.id
-                temp_paths_list = [os.path.join(self.source_path, x) for x in paths_list] \
-                    if put.type != LayerOutputTypeChoice.Tracker else [0 for x in paths_list]
+                temp_paths_list = [os.path.join(self.source_path, x) for x in paths_list]
 
                 results_list = []
                 with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -510,7 +512,8 @@ class CreateDataset(object):
             raise
         for key, value in split_sequence.items():
             self.dataframe[key] = dataframe.loc[value, :].reset_index(drop=True)
-        print(self.dataframe['train'])
+        # print(self.dataframe['train'])
+        # print(self.dataframe['val'])
 
     def create_input_parameters(self, creation_data: CreationData) -> dict:
 
