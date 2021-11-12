@@ -169,6 +169,10 @@ class LayerParametersClassificationSerializer(LayerParametersSerializer):
     pass
 
 
+class LayerParametersTrackerSerializer(LayerParametersSerializer):
+    pass
+
+
 class LayerParametersSegmentationSerializer(LayerParametersSerializer):
     width: serializers.IntegerField(min_value=1)
     height: serializers.IntegerField(min_value=1)
