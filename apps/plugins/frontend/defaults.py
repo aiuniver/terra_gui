@@ -781,5 +781,5 @@ class DefaultsData(BaseMixinData):
                 deploy_model_field.value = values[0]
 
     def update_deploy(self, _type: str, _name: str):
-        # print(self.deploy.type)
-        pass
+        self.deploy.type.fields[0].value = _type
+        self.deploy.type.fields[0].fields.get(_type)[0].valule = _name
