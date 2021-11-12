@@ -256,8 +256,7 @@ CascadesBlocksTypes = {
                             "label": "Выбор типа",
                             "parse": "parameters[main][type]",
                             "value": BlockCustomTypeChoice.Sort,
-                            "list": [{"value": "", "label": ""}]
-                            + list(
+                            "list": list(
                                 map(
                                     lambda item: {
                                         "value": item.name,
