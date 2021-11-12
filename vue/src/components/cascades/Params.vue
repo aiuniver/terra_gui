@@ -91,7 +91,7 @@ export default {
       return this.buttons?.save || false;
     },
     main() {
-      const blockType = this.block?.type;
+      const blockType = this.block?.group;
       if (Object.keys(this.layers).length && blockType) {
         const items = this.layers[blockType]?.main || [];
         const value = this.block?.parameters?.main || {};
@@ -101,7 +101,7 @@ export default {
       }
     },
     extra() {
-      const blockType = this.block?.type;
+      const blockType = this.block?.group;
       if (Object.keys(this.layers).length && blockType) {
         const items = this.layers[blockType]?.extra || [];
         const value = this.block?.parameters?.extra || {};
