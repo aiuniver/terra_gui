@@ -14,16 +14,10 @@
           />
         </div>
         <at-collapse :value="collapse">
-          <at-collapse-item  class="mb-3" title="Параметры слоя">
+          <at-collapse-item class="mb-3" title="Параметры слоя">
             <!-- <Forms :data="main" :id="block.id" @change="change" /> -->
-            <template v-for="data, i of main">
-              <t-auto-field-cascade
-                v-bind="data"
-                :key="i"
-                :parameters="parameters"
-                :inline="false"
-                @change="change"
-              />
+            <template v-for="(data, i) of main">
+              <t-auto-field-cascade v-bind="data" :key="data.name + i" :id="data.name" :parameters="parameters" :inline="false" @change="change" />
             </template>
           </at-collapse-item>
           <!-- <at-collapse-item v-show="extra.items.length" class="mb-3" title="Дополнительные параметры">
@@ -43,6 +37,7 @@ import { mapGetters } from 'vuex';
 // import serialize from "@/assets/js/serialize";
 
 // import Select from "@/components/forms/Select.vue";
+import { debounce } from '@/utils/core/utils';
 export default {
   name: 'Params',
   components: {
@@ -53,6 +48,7 @@ export default {
   data: () => ({
     collapse: ['0', '2'],
     oldBlock: null,
+    debounce: null,
   }),
   computed: {
     ...mapGetters({
@@ -81,13 +77,13 @@ export default {
       return this.buttons?.save || false;
     },
     parameters() {
-      return this.block?.parameters?.main || {}
+      return this.block?.parameters?.main || {};
     },
     main() {
       const blockType = this.block?.group;
       if (Object.keys(this.layers).length && blockType) {
         const items = this.layers[blockType]?.main || [];
-        
+
         return items;
         // const value = this.block?.parameters?.main || {};
         //   return { type: 'main', items, value, blockType };
@@ -117,14 +113,23 @@ export default {
       await this.$store.dispatch('cascades/typeBlock', { type: value, block: this.block });
     },
     async change({ id, value, name, mounted }) {
-      console.log(id, value, name, mounted );
+      console.log(id, value, name, mounted);
       if (this.block.parameters) {
         this.block.parameters['main'][name] = value;
       } else {
         this.oldBlock.parameters['main'][name] = value;
       }
-      if (!mounted) this.saveModel();
+      this.debounce(mounted);
     },
+  },
+  created() {
+    this.debounce = debounce(status => {
+      console.log(status)
+      this.saveModel()
+    }, 200);
+  },
+  beforeDestroy() {
+    this.debounce(false);
   },
   watch: {
     block: {
