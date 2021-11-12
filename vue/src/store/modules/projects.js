@@ -19,11 +19,10 @@ export default {
         return;
       }
       const { data } = res;
-      // console.log(data);
       if (!data) {
         return;
       }
-      const { project, user, defaults: { modeling: { layers_types, layer_form }, datasets: { creation }, training: form, cascades }, deploy } = data;
+      const { project, user, defaults: { modeling: { layers_types, layer_form }, datasets: { creation }, training: form, cascades, deploy } } = data;
       const { model, training } = project;
       commit("SET_PROJECT", project);
       commit("SET_USER", user);
