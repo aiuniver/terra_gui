@@ -3,10 +3,8 @@ import {defLayout, originaltextStyle} from "../const/deploy"
 export default {
     namespaced: true,
     state: () => ({
+      stateParams: {},
       form: {},
-
-
-
       deploy: {},
       graphicData: temp.data,
       defaultLayout: defLayout,
@@ -28,12 +26,18 @@ export default {
       SET_CARDS(state, value) {
         state.Cards = value;
       },
+      SET_BASE(state, value) {
+        state.form = value;
+      },
       SET_DEPLOY_TYPE(state, value) {
         state.deployType = value;
       },
       SET_BLOCK_CARDS(state, { value, id }) {
         state.Cards[id].data = value;
         state.Cards = { ...state.Cards }
+      },
+      SET_STATE_PARAMS (state, value) {
+        state.stateParams = { ...value };
       },
     },
     actions: {
@@ -56,10 +60,17 @@ export default {
         commit("SET_CARDS",  data.data.data);
         commit("SET_DEPLOY",  data.data);
       },
+      setStateParams ({ commit, state: { stateParams } }, data) {
+        commit("SET_STATE_PARAMS", { ...stateParams, ...data });
+      },
     },
     getters: {
       getParams ({ form }) {
-        return form?.main || {}
+        console.log(form)
+        return form || {}
+      },
+      getStateParams ({ stateParams }) {
+        return stateParams || {}
       },
       getModuleList: ({ moduleList }) => moduleList,
       getDeploy: ({ deploy }) => deploy,
@@ -72,7 +83,6 @@ export default {
         let id = Cards;
         let crypto = require("crypto");
         id = crypto.randomBytes(20).toString('hex');
-        console.log(id)
         return id;
       }
     }

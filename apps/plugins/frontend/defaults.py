@@ -1,18 +1,18 @@
 import sys
+from typing import List, Dict, Optional, Union, Any, Tuple
 
-from typing import List, Dict, Optional, Union, Any
 from pydantic import validator
 from pydantic.main import ModelMetaclass
 
-from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.datasets.dataset import DatasetData
+from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.modeling.layer import LayersList
 from terra_ai.data.training.extra import (
     ArchitectureChoice,
     TasksRelations,
     StateStatusChoice,
 )
-
+from .base import Field
 from .presets.defaults.training import (
     TrainingLossSelect,
     TrainingMetricSelect,
@@ -20,8 +20,6 @@ from .presets.defaults.training import (
     ArchitectureOptimizerExtraFields,
     Architectures,
 )
-
-from .base import Field
 
 
 class DefaultsDatasetsCreationData(BaseMixinData):
@@ -762,7 +760,7 @@ class DefaultsData(BaseMixinData):
     cascades: DefaultsCascadesData
     deploy: DefaultsDeployData
 
-    def update_models(self, items: list = None):
+    def update_models(self, items: List[Tuple[str, str]] = None):
         if not items:
             items = []
         values = list(map(lambda item: item[0], items))
@@ -781,3 +779,7 @@ class DefaultsData(BaseMixinData):
             deploy_model_field.list = options
             if deploy_model_field.value not in values:
                 deploy_model_field.value = values[0]
+
+    def update_deploy(self, _type: str, _name: str):
+        self.deploy.type.fields[0].value = _type
+        self.deploy.type.fields[0].fields.get(_type)[0].valule = _name

@@ -3,7 +3,8 @@ import json
 import shutil
 
 from pathlib import Path
-from typing import Optional
+from tempfile import mkdtemp
+from typing import Optional, List, Tuple
 from pydantic import validator, DirectoryPath, FilePath
 
 from django.conf import settings
@@ -20,6 +21,7 @@ from terra_ai.data.extra import HardwareAcceleratorData
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.deploy.tasks import DeployData
+from terra_ai.data.deploy.extra import DeployTypePageChoice
 from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.training.train import TrainingDetailsData, DEFAULT_TRAINING_PATH_NAME
 from terra_ai.data.cascades.cascade import CascadeDetailsData
@@ -43,6 +45,7 @@ PROJECT_PATH = {
     "modeling": Path(settings.TERRA_AI_PROJECT_PATH, "modeling").absolute(),
     "training": Path(settings.TERRA_AI_PROJECT_PATH, "training").absolute(),
     "cascades": Path(settings.TERRA_AI_PROJECT_PATH, "cascades").absolute(),
+    "deploy": Path(settings.TERRA_AI_PROJECT_PATH, "deploy").absolute(),
 }
 
 
@@ -76,6 +79,7 @@ class ProjectPathData(BaseMixinData):
     modeling: DirectoryPath
     training: DirectoryPath
     cascades: DirectoryPath
+    deploy: DirectoryPath
 
     @validator(
         "base",
@@ -83,6 +87,7 @@ class ProjectPathData(BaseMixinData):
         "modeling",
         "training",
         "cascades",
+        "deploy",
         allow_reuse=True,
         pre=True,
     )
@@ -105,8 +110,8 @@ class Project(BaseMixinData):
     dataset: Optional[DatasetData]
     model: ModelDetailsData = ModelDetailsData(**EmptyModelDetailsData)
     training: TrainingDetailsData
-    deploy: Optional[DeployData]
     cascade: CascadeDetailsData = CascadeDetailsData(**EmptyCascadeDetailsData)
+    deploy: Optional[DeployData]
 
     def __init__(self, **data):
         if not data.get("training"):
@@ -116,6 +121,14 @@ class Project(BaseMixinData):
         if data.get("dataset"):
             data["dataset"]["path"] = project_path.datasets
 
+        if data.get("deploy"):
+            data["deploy"]["path_deploy"] = project_path.deploy
+            deploy_page = data.get("deploy", {}).get("page", {}).get("type", "")
+            if deploy_page == DeployTypePageChoice.model:
+                data["deploy"]["path_model"] = project_path.training
+            elif deploy_page == DeployTypePageChoice.cascade:
+                data["deploy"]["path_model"] = project_path.cascades
+
         super().__init__(**data)
 
         defaults_data.modeling.set_layer_datatype(self.dataset)
@@ -123,6 +136,8 @@ class Project(BaseMixinData):
             project=self, architecture=self.training.base.architecture.type
         )
         defaults_data.update_models(self.trainings)
+        if self.deploy:
+            defaults_data.update_deploy(self.deploy.page.type, self.deploy.page.name)
 
         self.save_config()
 
@@ -131,17 +146,12 @@ class Project(BaseMixinData):
         return agent_exchange("hardware_accelerator")
 
     @property
-    def trainings(self) -> list:
-        items = [
-            (
-                Path(project_path.training, DEFAULT_TRAINING_PATH_NAME),
-                "Текущее обучение",
-            )
-        ]
+    def trainings(self) -> List[Tuple[str, str]]:
+        items = [(DEFAULT_TRAINING_PATH_NAME, "Текущее обучение")]
         for item in os.listdir(project_path.training):
             if item == DEFAULT_TRAINING_PATH_NAME:
                 continue
-            items.append((Path(project_path.training, item), item))
+            items.append((item, item))
         return items
 
     @validator("training", pre=True, allow_reuse=True)
@@ -230,8 +240,8 @@ class Project(BaseMixinData):
 
     def frontend(self):
         _data = self.native()
-        if _data.get("training", {}).get("deploy") and self.deploy:
-            _data["training"].update({"deploy": self.deploy.presets})
+        if _data.get("deploy") and self.deploy:
+            _data.update({"deploy": self.deploy.presets})
         return json.dumps(_data)
 
     def set_name(self, name: str):
@@ -285,6 +295,22 @@ class Project(BaseMixinData):
     def set_cascade(self, cascade: CascadeDetailsData):
         self.cascade = cascade
         self.save_config()
+
+    def set_deploy(self, page: dict):
+        path_deploy = mkdtemp()
+        path_model = ""
+        _type = page.get("type")
+        if _type == DeployTypePageChoice.model:
+            path_model = project_path.training
+        elif _type == DeployTypePageChoice.cascade:
+            path_model = project_path.cascades
+        deploy = agent_exchange(
+            "deploy_get", path_deploy=path_deploy, path_model=path_model, page=page
+        )
+        deploy.path_deploy = project_path.deploy
+        self.deploy = deploy
+        shutil.rmtree(project_path.deploy, ignore_errors=True)
+        shutil.move(path_deploy, project_path.deploy)
 
     def clear_dataset(self):
         self.dataset = None

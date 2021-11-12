@@ -7,21 +7,21 @@ const typeBlock = [
       outputs: [{}],
     },
     {
-      group: "model",
+      group: "Model",
       name: 'Модель ',
       type: 'Model',
       inputs: [{}],
       outputs: [{}],
     },
     {
-      group: "function",
+      group: "Function",
       name: 'Функция ',
       type: 'Function',
       inputs: [{}],
       outputs: [{}],
     },
     {
-      group: "custom",
+      group: "Custom",
       name: 'Кастом ',
       type: 'Custom',
       inputs: [{}],
@@ -36,60 +36,61 @@ const typeBlock = [
     },
   ];
   
-  const createBlock = function (group, id, typeLayers, list, [x, y] = []) {
+  const createBlock = function (group, id, blocks_types, list, [x, y] = []) {
     if (!group || !id) {
       return null;
     }
     const node = typeBlock.find(n => n.group === group);
-    const labelType = list.filter(item => item.value === node.type)
+    // const labelType = list.filter(item => item.value === node.type)
   
-    console.log(labelType)
-    const mainArr = typeLayers?.[node.type]?.main || []
-    const extraArr = typeLayers?.[node.type]?.extra || []
+    console.log(blocks_types, list)
+    const mainArr = blocks_types?.[node.type]?.main || []
+    // const extraArr = typeLayers?.[node.type]?.extra || []
     const main = {}
-    const extra = {}
+    // const extra = {}
     mainArr.forEach(({ name, value }) => {
       main[name] = value === '__null__' ? null : value
     })
-    extraArr.forEach(({ name, value }) => {
-      extra[name] = value === '__null__' ? null : value
-    })
+    // extraArr.forEach(({ name, value }) => {
+    //   extra[name] = value === '__null__' ? null : value
+    // })
   
     if (!node) {
       return null;
     }
-    console.log(labelType)
+    // console.log(labelType)
     return {
       id: id,
       name: node.name + id,
-      type: labelType[0].value,
-      typeLabel: labelType[0].label,
+      type: node.group,
+      // typeLabel: labelType[0].label,
       group: node.group,
       bind: {
         up: [],
         down: [],
       },
-      shape: {
-        input: [],
-        output: [],
-      },
+      // shape: {
+      //   input: [],
+      //   output: [],
+      // },
       position: [x ?? -90, y ?? 0],
       parameters: {
         main,
-        extra,
+        // extra,
       },
-      reference: null,
+      // reference: null,
       selected: false,
       inputs: node.inputs,
       outputs: node.outputs,
     };
   };
   
-  const addParamsBlock = function (block, list) {
+  const addParamsBlock = function (block) {
+    console.log(block)
     const node = typeBlock.find(n => n.group === block.group);
-    const labelType = list.filter(item => item.value === block.type)
+    // const labelType = list.filter(item => item.value === block.type)
     return {
-      typeLabel: labelType[0].label,
+      // typeLabel: labelType[0].label,
       selected: false,
       inputs: node.inputs,
       outputs: node.outputs,

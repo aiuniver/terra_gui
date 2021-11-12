@@ -35,7 +35,7 @@ class DataList(DataBaseList):
         for _index in indexes:
             self.update(_index)
 
-        label_file = Path(self.path, "label.txt")
+        label_file = Path(self.path_deploy, "label.txt")
 
         label = []
         for item in self.preset:
@@ -47,7 +47,7 @@ class DataList(DataBaseList):
         item = random.choice(self)
         self.preset[index] = item
 
-        destination = Path(self.path, f"{index + 1}.jpg")
+        destination = Path(self.path_deploy, f"{index + 1}.jpg")
         Image.open(Path(self.path_model, item.source)).save(destination)
 
 

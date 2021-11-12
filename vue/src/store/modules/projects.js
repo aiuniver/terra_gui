@@ -19,17 +19,19 @@ export default {
         return;
       }
       const { data } = res;
-      // console.log(data);
       if (!data) {
         return;
       }
-      const { project, user, defaults: { modeling: { layers_types, layer_form }, datasets: { creation }, training: form, cascades }, deploy } = data;
-      const { model, training } = project;
+      const { project, user, defaults: { modeling: { layers_types, layer_form }, datasets: { creation }, training: form, cascades: formsCascades, deploy } } = data;
+      const { model, training, cascade } = project;
+
       commit("SET_PROJECT", project);
       commit("SET_USER", user);
       commit("modeling/SET_MODELING", { layers_types, layer_form }, { root: true });
       commit("modeling/SET_MODEL", model, { root: true });
-      commit("cascades/SET_CASCADES", cascades, { root: true });
+      commit("cascades/SET_CASCADES", formsCascades, { root: true });
+      console.log(cascade)
+      commit("cascades/SET_MODEL", cascade, { root: true });
       commit("datasets/SET_CREATION", creation, { root: true });
       dispatch("trainings/parseStruct", { ...training, form }, { root: true });
       dispatch("deploy/parseStruct", { form: deploy }, { root: true });
