@@ -872,6 +872,16 @@ DatasetsGroups = [
                 ],
             },
             {
+                "alias": "bus",
+                "name": "Автобусы v4 (генератор)",
+                "group": DatasetGroupChoice.terra.value,
+                "tags": [
+                    Tags.image.value,
+                    Tags.object_detection.value,
+                    Tags.terra_ai.value,
+                ],
+            },
+            {
                 "alias": "symptoms",
                 "name": "Симптомы",
                 "group": DatasetGroupChoice.terra.value,
