@@ -15,19 +15,18 @@
               :name="key"
               :title="name || ''"
             >
-              <div v-if="key !== 'outputs'" class="params__fields">
+              <div class="params__fields">
                 <template v-for="(data, i) of fields">
-                  <t-auto-field
+                  <t-auto-field-cascade
                     v-bind="data"
-                    :class="`params__fields--${key}`"
                     :key="key + i"
-                    :state="state"
+                    :big="key === 'type'"
                     :inline="false"
-                    @parse="parse"
+                    @change="parse"
                   />
                 </template>
               </div>
-              <div v-else class="blocks-layers">
+              <!-- <div v-else class="blocks-layers">
                 <template v-for="(field, i) of fields">
                   <div class="block-layers" :key="'block_layers_' + i">
                     <div class="block-layers__header">
@@ -46,7 +45,7 @@
                     </div>
                   </div>
                 </template>
-              </div>
+              </div> -->
             </at-collapse-item>
           </at-collapse>
         </div>
@@ -138,7 +137,7 @@ import { mapGetters } from 'vuex';
 // import Checkbox from '@/components/forms/Checkbox';
 // import ModuleList from './ModuleList';
 // import LoadSpiner from '../../forms/LoadSpiner';
-import ser from '@/assets/js/myserialize';
+// import ser from '@/assets/js/myserialize';
 export default {
   name: 'Settings',
   components: {
@@ -197,19 +196,18 @@ export default {
     },
   },
   methods: {
-    parse({ parse, value, changeable, mounted }) {
-      console.log(parse);
-      console.log(parse, value, changeable, mounted);
-      ser(this.trainSettings, parse, value);
-      this.trainSettings = { ...this.trainSettings };
-      if (!mounted && changeable) {
-        // this.$store.dispatch('trainings/update', this.trainSettings);
-        // this.state = { [`architecture[parameters][checkpoint][metric_name]`]: null };
-      } else {
-        if (value) {
-          this.state = { [`${parse}`]: value };
-        }
-      }
+    parse({ id, value, name, root }) {
+      console.log( id, value, name, root);
+      // ser(this.trainSettings, parse, value);
+      // this.trainSettings = { ...this.trainSettings };
+      // if (!mounted && changeable) {
+      //   // this.$store.dispatch('trainings/update', this.trainSettings);
+      //   // this.state = { [`architecture[parameters][checkpoint][metric_name]`]: null };
+      // } else {
+      //   if (value) {
+      //     this.state = { [`${parse}`]: value };
+      //   }
+      // }
     },
     onchange(e) {
       console.log(e);
