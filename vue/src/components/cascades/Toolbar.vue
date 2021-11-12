@@ -34,7 +34,7 @@
       <li :class="['toolbar__menu--item', { disabled: false }]" @click="click($event, 'validation')" title="Валидация">
         <i class="t-icon icon-model-validation"></i>
       </li>
-      <li :class="['toolbar__menu--item', { disabled: false }]" @click="click($event, 'play')" title="Запустить">
+      <li :class="['toolbar__menu--item', { disabled: false }]" @click="click($event, 'start')" title="Запустить">
         <i class="t-icon icon-model-play"></i>
       </li>
       <li :class="['toolbar__menu--item', { disabled: false }]" @click="click($event, 'save')" title="Сохранить каскад">

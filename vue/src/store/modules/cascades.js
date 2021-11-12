@@ -230,16 +230,16 @@ export default {
       }
       return res
     },
-    async validateModel ({ commit, dispatch }) {
+    async start ({ dispatch }) {
+      const { data } = await dispatch('axios', { url: '/cascades/start/' }, { root: true });
+      return data;
+    },
+    async save ({ dispatch }) {
+      const { data } = await dispatch('axios', { url: '/cascades/save/' }, { root: true });
+      return data;
+    },
+    async validate ({ dispatch }) {
       const { data } = await dispatch('axios', { url: '/cascades/validate/' }, { root: true });
-      if (data) {
-        const isValid = !Object.values(data).filter(item => item).length
-        commit('SET_ERRORS_BLOCKS', data)
-        if (isValid) {
-          await dispatch('projects/get', {}, { root: true })
-        }
-        dispatch('messages/setMessage', isValid ? { message: `Валидация прошла успешно` } : { error: `Валидация не прошла` }, { root: true });
-      }
       return data;
     },
     setBlocks ({ commit }, value) {
