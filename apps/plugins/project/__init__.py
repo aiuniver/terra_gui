@@ -144,16 +144,11 @@ class Project(BaseMixinData):
 
     @property
     def trainings(self) -> list:
-        items = [
-            (
-                Path(project_path.training, DEFAULT_TRAINING_PATH_NAME),
-                "Текущее обучение",
-            )
-        ]
+        items = [(DEFAULT_TRAINING_PATH_NAME, "Текущее обучение")]
         for item in os.listdir(project_path.training):
             if item == DEFAULT_TRAINING_PATH_NAME:
                 continue
-            items.append((Path(project_path.training, item), item))
+            items.append((item, item))
         return items
 
     @validator("training", pre=True, allow_reuse=True)
