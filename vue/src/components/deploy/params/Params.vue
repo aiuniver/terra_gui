@@ -48,6 +48,9 @@
               </div> -->
             </at-collapse-item>
           </at-collapse>
+          <d-button @click="handleDownload" direction="left" color="primary"> 
+            Загрузить
+          </d-button>
         </div>
       </div>
     </scrollbar>
@@ -134,6 +137,7 @@
 
 <script>
 import { mapGetters } from 'vuex';
+import DButton from '@/components/global/design/forms/components/DButton'
 // import Checkbox from '@/components/forms/Checkbox';
 // import ModuleList from './ModuleList';
 // import LoadSpiner from '../../forms/LoadSpiner';
@@ -144,10 +148,12 @@ export default {
     // Checkbox,
     // ModuleList,
     // LoadSpiner,
+    DButton
   },
   data: () => ({
     collapse: ['type', 'server'],
     key: '1212',
+    downloadSettings: {},
     trainSettings: {},
     deploy: '',
     replace: false,
@@ -196,8 +202,16 @@ export default {
     },
   },
   methods: {
+    async handleDownload(){
+      console.log(await this.$store.dispatch('deploy/DownloadSettings', this.downloadSettings))
+    },
     parse({ id, value, name, root }) {
       console.log( id, value, name, root);
+      this.downloadSettings = {
+        type: value,
+        name
+      }
+
       // ser(this.trainSettings, parse, value);
       // this.trainSettings = { ...this.trainSettings };
       // if (!mounted && changeable) {
