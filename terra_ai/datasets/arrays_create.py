@@ -435,7 +435,8 @@ class CreateArray(object):
 
     @staticmethod
     def instructions_tracker(paths_list: list, **options: dict) -> dict:
-        instructions = {'instructions': 0,
+
+        instructions = {'instructions': paths_list,
                         'parameters': options}
 
         return instructions
@@ -728,9 +729,9 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_tracker(zero: int, dataset_folder=None, **options: dict) -> dict:
+    def cut_tracker(path_list: int, dataset_folder=None, **options: dict) -> dict:
 
-        instructions = {'instructions': zero,
+        instructions = {'instructions': path_list,
                         'parameters': options}
 
         return instructions
