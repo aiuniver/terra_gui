@@ -46,6 +46,7 @@
         :parse="parse"
         :name="name"
         inline
+        :small="!big"
         :error="error"
         @cleanError="cleanError"
         @change="change"
