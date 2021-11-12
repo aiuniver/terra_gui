@@ -3,7 +3,7 @@
     <TableImage v-if="type === 'image'" v-bind="obj" :key="update" />
     <TableStr v-if="type === 'str' || type === 'number' " v-bind="obj" :key="update" />
     <TableStatisticTable v-if="type === 'table'" v-bind="obj" :key="update" />
-    <TableText v-if="type === 'text'" v-bind="obj" :key="update" />
+    <TableText v-if="type === 'text'" v-bind="obj" :key="update" :idx="idx" />
     <TableTextSegmented v-if="type === 'segmented_text'" v-bind="obj" :key="update" />
     <TableVideo v-if="type === 'video'" v-bind="obj" :key="update" />
     <TableAudio v-if="type === 'audio'" v-bind="obj" :key="update" />
@@ -45,10 +45,13 @@ export default {
       type: String,
       default: '',
     },
+    idx: {
+      default: null
+    }
   },
   computed: {
     obj() {
-      return { ...this.data, update: this.update, tags_color: this.tags_color, layer: this.layer };
+      return { ...this.data, update: this.update, tags_color: this.tags_color, layer: this.layer, idx: this.idx };
     },
   },
 };

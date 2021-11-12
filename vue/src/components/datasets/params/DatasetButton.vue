@@ -66,10 +66,11 @@ export default {
       return await this.$store.dispatch('dialogs/trining', { ctx: this, page: 'датасета' });
     },
     async handleClick() {
-      this.$store.dispatch('settings/setOverlay', true);
+      // this.$store.dispatch('settings/setOverlay', true);
       const dataset = this.selected;
       const isTrain = await this.isTraining();
       if (isTrain) {
+        this.$store.dispatch('settings/setOverlay', true);
         const { success, data } = await this.$store.dispatch('datasets/validateDatasetOrModel', {
           dataset,
         });
