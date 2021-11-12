@@ -9,7 +9,7 @@ from terra_ai.settings import DEPLOY_PRESET_COUNT
 
 
 class DataBaseList(List):
-    path: DirectoryPath
+    path_deploy: DirectoryPath
     path_model: DirectoryPath
     preset: List[Any] = []
 
@@ -18,7 +18,7 @@ class DataBaseList(List):
 
     def __init__(self, *args):
         if len(args) > 2:
-            self.path = args[1]
+            self.path_deploy = args[1]
             self.path_model = args[2]
         self.preset = [None] * DEPLOY_PRESET_COUNT
         super().__init__(
@@ -63,7 +63,7 @@ class DataBaseList(List):
 
 
 class DataBase(BaseMixinData):
-    path: Path
+    path_deploy: Path
     path_model: Path
     data: Any
 
@@ -72,7 +72,9 @@ class DataBase(BaseMixinData):
 
     @validator("data")
     def _validate_data(cls, value: DataBaseList, values) -> DataBaseList:
-        data = cls.Meta.source(value, values.get("path"), values.get("path_model"))
+        data = cls.Meta.source(
+            value, values.get("path_deploy"), values.get("path_model")
+        )
         data.reload()
         return data
 
@@ -83,7 +85,7 @@ class DataBase(BaseMixinData):
         return data
 
     def dict(self, **kwargs):
-        kwargs.update({"exclude": {"path", "path_model"}})
+        kwargs.update({"exclude": {"path_deploy", "path_model"}})
         data = super().dict(**kwargs)
         data.update({"data": self.data.dict()})
         return data

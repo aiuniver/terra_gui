@@ -4,6 +4,7 @@ import shutil
 
 from pathlib import Path
 from typing import Optional
+from tempfile import mkdtemp
 from pydantic import validator, DirectoryPath, FilePath
 
 from django.conf import settings
@@ -135,6 +136,8 @@ class Project(BaseMixinData):
             project=self, architecture=self.training.base.architecture.type
         )
         defaults_data.update_models(self.trainings)
+        if self.deploy:
+            defaults_data.update_deploy(self.deploy.page.type, self.deploy.page.name)
 
         self.save_config()
 
@@ -292,6 +295,22 @@ class Project(BaseMixinData):
     def set_cascade(self, cascade: CascadeDetailsData):
         self.cascade = cascade
         self.save_config()
+
+    def set_deploy(self, page: dict):
+        path_deploy = mkdtemp()
+        path_model = ""
+        _type = page.get("type")
+        if _type == DeployTypePageChoice.model:
+            path_model = project_path.training
+        elif _type == DeployTypePageChoice.cascade:
+            path_model = project_path.cascades
+        deploy = agent_exchange(
+            "deploy_get", path_deploy=path_deploy, path_model=path_model, page=page
+        )
+        deploy.path_deploy = project_path.deploy
+        self.deploy = deploy
+        shutil.rmtree(project_path.deploy, ignore_errors=True)
+        shutil.move(path_deploy, project_path.deploy)
 
     def clear_dataset(self):
         self.dataset = None

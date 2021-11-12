@@ -16,7 +16,7 @@ class DeployPageData(BaseMixinData):
 
 class DeployData(BaseMixinData):
     page: DeployPageData
-    path: DirectoryPath
+    path_deploy: DirectoryPath
     path_model: DirectoryPath
     type: DeployTypeChoice
     data: Any = {}
@@ -46,7 +46,7 @@ class DeployData(BaseMixinData):
             value["data"] = []
         value.update(
             {
-                "path": values.get("path"),
+                "path_deploy": values.get("path_deploy"),
                 "path_model": values.get("path_model"),
             }
         )
@@ -59,5 +59,5 @@ class DeployData(BaseMixinData):
         return data
 
     def dict(self, **kwargs):
-        kwargs.update({"exclude": {"path", "path_model"}})
+        kwargs.update({"exclude": {"path_deploy", "path_model"}})
         return super().dict(**kwargs)

@@ -23,7 +23,9 @@ class DataList(DataBaseList):
         source = Item
 
     def preset_update(self, data):
-        data.update({k: str(Path(self.path_model, data.get(k)))} for k in ('source', 'predict'))
+        data.update(
+            {k: str(Path(self.path_model, data.get(k)))} for k in ("source", "predict")
+        )
         return data
 
     def reload(self, indexes: List[int] = None):
@@ -34,8 +36,8 @@ class DataList(DataBaseList):
         if not len(self):
             return
 
-        self.preset_path = Path(self.path, "preset", "in")
-        self.predict_path = Path(self.path, "preset", "out")
+        self.preset_path = Path(self.path_deploy, "preset", "in")
+        self.predict_path = Path(self.path_deploy, "preset", "out")
         os.makedirs(self.preset_path, exist_ok=True)
         os.makedirs(self.predict_path, exist_ok=True)
 
