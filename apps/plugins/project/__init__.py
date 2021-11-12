@@ -20,6 +20,7 @@ from terra_ai.data.extra import HardwareAcceleratorData
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.deploy.tasks import DeployData
+from terra_ai.data.deploy.extra import DeployTypePageChoice
 from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.training.train import TrainingDetailsData, DEFAULT_TRAINING_PATH_NAME
 from terra_ai.data.cascades.cascade import CascadeDetailsData
@@ -43,6 +44,7 @@ PROJECT_PATH = {
     "modeling": Path(settings.TERRA_AI_PROJECT_PATH, "modeling").absolute(),
     "training": Path(settings.TERRA_AI_PROJECT_PATH, "training").absolute(),
     "cascades": Path(settings.TERRA_AI_PROJECT_PATH, "cascades").absolute(),
+    "deploy": Path(settings.TERRA_AI_PROJECT_PATH, "deploy").absolute(),
 }
 
 
@@ -76,6 +78,7 @@ class ProjectPathData(BaseMixinData):
     modeling: DirectoryPath
     training: DirectoryPath
     cascades: DirectoryPath
+    deploy: DirectoryPath
 
     @validator(
         "base",
@@ -83,6 +86,7 @@ class ProjectPathData(BaseMixinData):
         "modeling",
         "training",
         "cascades",
+        "deploy",
         allow_reuse=True,
         pre=True,
     )
@@ -105,8 +109,8 @@ class Project(BaseMixinData):
     dataset: Optional[DatasetData]
     model: ModelDetailsData = ModelDetailsData(**EmptyModelDetailsData)
     training: TrainingDetailsData
-    deploy: Optional[DeployData]
     cascade: CascadeDetailsData = CascadeDetailsData(**EmptyCascadeDetailsData)
+    deploy: Optional[DeployData]
 
     def __init__(self, **data):
         if not data.get("training"):
@@ -115,6 +119,14 @@ class Project(BaseMixinData):
 
         if data.get("dataset"):
             data["dataset"]["path"] = project_path.datasets
+
+        if data.get("deploy"):
+            data["deploy"]["path"] = project_path.deploy
+            deploy_page = data.get("deploy", {}).get("page", {}).get("type", "")
+            if deploy_page == DeployTypePageChoice.model:
+                data["deploy"]["path_model"] = project_path.training
+            elif deploy_page == DeployTypePageChoice.cascade:
+                data["deploy"]["path_model"] = project_path.cascades
 
         super().__init__(**data)
 

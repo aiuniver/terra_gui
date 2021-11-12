@@ -10,6 +10,7 @@ class GetSerializer(serializers.Serializer):
     type = serializers.CharField()
     value = serializers.CharField()
 
+
 class ReloadSerializer(serializers.ListSerializer):
     child = serializers.IntegerField(min_value=0, max_value=DEPLOY_PRESET_COUNT - 1)
 
