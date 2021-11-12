@@ -296,6 +296,10 @@ class DeployTypePageChoice(str, Enum):
     model = "Обучение"
     cascade = "Каскад"
 
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.name, DeployTypePageChoice))
+
 
 class BlockFunctionGroupChoice(str, Enum):
     Image = "Image"
