@@ -79,6 +79,12 @@ class StartAPIView(BaseAPIView):
         return BaseResponseSuccess()
 
 
+class SaveAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        # agent_exchange("cascade_start", cascade=request.project.cascade)
+        return BaseResponseSuccess()
+
+
 class PreviewAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         serializer = PreviewSerializer(data=request.data)
