@@ -50,7 +50,7 @@ class UpdateAPIView(BaseAPIView):
         cascade_data.update(data)
         cascade = agent_exchange("cascade_update", cascade=cascade_data)
         request.project.set_cascade(cascade)
-        return BaseResponseSuccess()
+        return BaseResponseSuccess(cascade.blocks.native())
 
 
 class ClearAPIView(BaseAPIView):
