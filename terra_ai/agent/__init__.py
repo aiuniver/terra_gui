@@ -1,6 +1,9 @@
 import os
 import json
 import shutil
+import threading
+import time
+
 import pynvml
 import tensorflow
 
@@ -10,6 +13,7 @@ from typing import Any, NoReturn
 from . import exceptions as agent_exceptions
 from . import utils as agent_utils
 from .. import settings, progress
+from ..deploy.prepare_deploy import DeployCreator
 from ..exceptions import tensor_flow as tf_exceptions
 from ..data.datasets.creation import FilePathSourcesList
 from ..data.datasets.creation import SourceData, CreationData
@@ -311,7 +315,15 @@ class Exchange:
         """
         Остановить обучение
         """
-        training.state.set(StateStatusChoice.stopped)
+        training.state.set(StateStatusChoice.kill)
+        if training.state.status == "kill":
+            for one_thread in threading.enumerate():
+                if one_thread.getName() == "current_train":
+                    one_thread.join()
+                    print(time.time())
+                    print("Обучение убито")
+                    print(threading.enumerate())
+                    break
 
     def _call_training_clear(self, training: TrainingDetailsData):
         """
@@ -328,6 +340,13 @@ class Exchange:
             StateStatusChoice.trained,
         ]:
             interactive.get_train_results()
+
+
+    def _call_training_kill(self, training: TrainingDetailsData):
+        """
+        Удаление незавершенного обучения
+        """
+        training.state.set("kill")
 
     def _call_training_progress(self) -> progress.ProgressData:
         """
@@ -364,11 +383,11 @@ class Exchange:
         """
         return CascadeDetailsData(**cascade)
 
-    def _call_deploy_presets(self):
+    def _call_deploy_get(self, training_path: str, deploy_path: str):
         """
         получение данных для отображения пресетов на странице деплоя
         """
-        return interactive.deploy_presets_data
+        return DeployCreator().get_deploy(training_path=training_path, deploy_path=deploy_path)
 
     def _call_deploy_cascades_create(self, training_path: str, model_name: str):
         pass

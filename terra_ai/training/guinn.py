@@ -22,18 +22,14 @@ from tensorflow.keras.models import load_model
 
 from terra_ai import progress
 from terra_ai.callbacks.interactive_callback import InteractiveCallback
-# from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.callbacks.utils import loss_metric_config
 from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice
-from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
-from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, ArchitectureChoice
-from terra_ai.data.training.train import TrainingDetailsData, StateData
-
-from terra_ai.datasets.arrays_create import CreateArray
+from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, \
+    MetricChoice, ArchitectureChoice
+from terra_ai.data.training.train import TrainingDetailsData
 from terra_ai.datasets.preparing import PrepareDataset
-from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.exceptions.deploy import MethodNotImplementedException
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.customlosses import DiceCoef, UnscaledMAE, BalancedRecall, BalancedDiceCoef, \
@@ -43,7 +39,7 @@ from terra_ai.exceptions import training as exceptions, terra_exception
 
 __version__ = 0.02
 
-from terra_ai.utils import camelize, decamelize
+from terra_ai.utils import camelize
 
 interactive = InteractiveCallback()
 
@@ -339,6 +335,7 @@ class GUINN:
             self.save_model(training.model_path)
 
         self.base_model_fit(training_details=training, dataset=self.dataset, dataset_data=dataset, verbose=0)
+
         return {"dataset": self.dataset, "metrics": self.metrics, "losses": self.loss}
 
     def nn_cleaner(self, retrain: bool = False) -> None:
@@ -433,15 +430,13 @@ class GUINN:
             training_details.state.set("stopped") if training_details.state.status == "addtrain" \
                 else training_details.state.set("no_train")
             progress.pool(self.progress_name, error=terra_exception(error).__str__(), finished=True)
-
+        if training_details.state.status == "kill":
+            progress.pool(self.progress_name, finished=True)
         if (training_details.state.status == "stopped" and
             self.callbacks[0].last_epoch < training_details.base.epochs) or \
                 (training_details.state.status == "trained" and
                  self.callbacks[0].last_epoch - 1 == training_details.base.epochs):
             self.sum_epoch = training_details.base.epochs
-        # with open(os.path.join(training_details.path, "test_train_details"), "w", encoding="utf-8") as ff:
-        #     json.dump(training_details.native(), ff)
-        # training_details.deploy = self.callbacks[0].deploy
 
 
 class MemoryUsage:
@@ -775,114 +770,6 @@ class FitCallback(keras.callbacks.Callback):
             current_target = None
         return current_predict, current_target
 
-    def _deploy_predict(self, presets_predict):
-        result = CreateArray().postprocess_results(array=presets_predict,
-                                                   options=self.dataset,
-                                                   save_path=str(self.training_detail.model_path),
-                                                   dataset_path=str(self.dataset_data.path))
-        deploy_presets = []
-        if result:
-            deploy_presets = list(result.values())[0]
-        return deploy_presets
-
-    def _create_form_data_for_dataframe_deploy(self):
-        form_data = []
-        with open(os.path.join(self.dataset_data.path, "config.json"), "r", encoding="utf-8") as dataset_conf:
-            dataset_info = json.load(dataset_conf).get("columns", {})
-        for inputs, input_data in dataset_info.items():
-            if int(inputs) not in list(self.dataset.data.outputs.keys()):
-                for column, column_data in input_data.items():
-                    label = column
-                    available = column_data.get("classes_names") if column_data.get("classes_names") else None
-                    widget = "select" if available else "input"
-                    input_type = "text"
-                    if widget == "select":
-                        table_column_data = {
-                            "label": label,
-                            "widget": widget,
-                            "available": available
-                        }
-                    else:
-                        table_column_data = {
-                            "label": label,
-                            "widget": widget,
-                            "type": input_type
-                        }
-                    form_data.append(table_column_data)
-        with open(os.path.join(self.training_detail.deploy_path, "form.json"), "w", encoding="utf-8") as form_file:
-            json.dump(form_data, form_file, ensure_ascii=False)
-
-    def _create_cascade(self, **data):
-        if self.dataset.data.alias not in ["imdb", "boston_housing", "reuters"]:
-            if "Dataframe" in self.deploy_type:
-                self._create_form_data_for_dataframe_deploy()
-            if self.is_yolo:
-                func_name = "object_detection"
-            else:
-                func_name = decamelize(self.deploy_type)
-            config = CascadeCreator()
-            config.create_config(
-                deploy_path=self.training_detail.deploy_path,
-                model_path=self.training_detail.model_path,
-                func_name=func_name
-            )
-            config.copy_package(
-                deploy_path=self.training_detail.deploy_path,
-                model_path=self.training_detail.model_path
-            )
-            config.copy_script(
-                deploy_path=self.training_detail.deploy_path,
-                function_name=func_name
-            )
-            if self.deploy_type == ArchitectureChoice.TextSegmentation:
-                with open(os.path.join(self.training_detail.deploy_path, "format.txt"),
-                          "w", encoding="utf-8") as format_file:
-                    format_file.write(str(data.get("tags_map", "")))
-
-    def _prepare_deploy(self):
-        weight = None
-        cascade_data = {"deploy_path": self.training_detail.deploy_path}
-        for i in os.listdir(self.training_detail.model_path):
-            if i[-3:] == '.h5' and 'best' in i:
-                weight = i
-        if weight:
-            if self.yolo_model:
-                self.yolo_model.load_weights(os.path.join(self.training_detail.model_path, weight))
-            else:
-                self.model.load_weights(os.path.join(self.training_detail.model_path, weight))
-        deploy_predict, y_true = self._get_predict()
-        deploy_presets_data = self._deploy_predict(deploy_predict)
-        out_deploy_presets_data = {"data": deploy_presets_data}
-        if self.deploy_type == ArchitectureChoice.TextSegmentation:
-            cascade_data.update({"tags_map": deploy_presets_data.get("color_map")})
-            out_deploy_presets_data = {
-                "data": deploy_presets_data.get("data", {}),
-                "color_map": deploy_presets_data.get("color_map")
-            }
-        elif "Dataframe" in self.deploy_type:
-            columns = []
-            predict_column = ""
-            for input, input_columns in self.dataset.data.columns.items():
-                for column_name in input_columns.keys():
-                    columns.append(column_name[len(str(input)) + 1:])
-                    if input_columns[column_name].__class__ == DatasetOutputsData:
-                        predict_column = column_name[len(str(input)) + 1:]
-            if self.deploy_type == ArchitectureChoice.DataframeRegression:
-                tmp_data = list(zip(deploy_presets_data.get("preset"), deploy_presets_data.get("label")))
-                tmp_deploy = [{"preset": elem[0], "label": elem[1]} for elem in tmp_data]
-                out_deploy_presets_data = {"data": tmp_deploy}
-            out_deploy_presets_data["columns"] = columns
-            out_deploy_presets_data["predict_column"] = predict_column if predict_column else "Предсказанные значения"
-
-        out_deploy_data = dict([
-            ("path", self.training_detail.deploy_path),
-            ("path_model", self.training_detail.model_path),
-            ("type", self.deploy_type),
-            ("data", out_deploy_presets_data)
-        ])
-        self.training_detail.deploy = DeployData(**out_deploy_data)
-        self._create_cascade(**cascade_data)
-
     @staticmethod
     def _estimate_step(current, start, now):
         if current:
@@ -932,6 +819,10 @@ class FitCallback(keras.callbacks.Callback):
         self._time_first_step = time.time()
 
     def on_train_batch_end(self, batch, logs=None):
+        if self._get_train_status() == "kill":
+            self.model.stop_training = True
+            print(time.time())
+            return
         if self._get_train_status() == "stopped":
             self.model.stop_training = True
             progress.pool(
@@ -997,6 +888,8 @@ class FitCallback(keras.callbacks.Callback):
         Returns:
             {}:
         """
+        if self._get_train_status() == "kill":
+            return
         y_pred, y_true = self._get_predict()
         total_epochs = self.retrain_epochs if self._get_train_status() in ['addtrain',
                                                                            'stopped'] else self.epochs
@@ -1058,6 +951,8 @@ class FitCallback(keras.callbacks.Callback):
         self.last_epoch += 1
 
     def on_train_end(self, logs=None):
+        if self._get_train_status() == "kill":
+            return
         interactive.addtrain_epochs.append(self.last_epoch - 1)
         self._save_logs()
 
@@ -1069,9 +964,6 @@ class FitCallback(keras.callbacks.Callback):
                 self.yolo_model.save_weights(file_path_last)
             else:
                 self.model.save_weights(file_path_last)
-        if not os.path.exists(os.path.join(self.training_detail.model_path, "deploy_presets")):
-            os.mkdir(os.path.join(self.training_detail.model_path, "deploy_presets"))
-        self._prepare_deploy()
 
         time_end = self.update_progress(self.num_batches * self.epochs + 1,
                                         self.batch, self._start_time, finalize=True)
