@@ -958,6 +958,30 @@ DatasetsGroups = [
                 "alias": "video",
                 "name": "Видео",
                 "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "3D",
+                        "dtype": "float64",
+                        "name": "Input 1",
+                        "shape": (64, 100, 120, 3),
+                        "task": LayerInputTypeChoice.Video.value,
+                        "num_classes": 5,
+                        "classes_names": ["Cricket Shot", "Playing Cello", "Punch", "Shaving Beard", "Tennis Swing"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "uint8",
+                        "name": "Output 1",
+                        "shape": (5,),
+                        "task": LayerOutputTypeChoice.Classification.value,
+                        "num_classes": 5,
+                        "classes_names": ["Cricket Shot", "Playing Cello", "Punch", "Shaving Beard", "Tennis Swing"],
+                        "encoding": LayerEncodingChoice.ohe.value,
+                    }
+                },
                 "tags": [
                     Tags.video.value,
                     Tags.classification.value,
@@ -968,6 +992,30 @@ DatasetsGroups = [
                 "alias": "bus_passengers",
                 "name": "Пассажиры автобусов",
                 "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "name": "Input 1",
+                        "shape": (200, 100, 3),
+                        "task": LayerInputTypeChoice.Image.value,
+                        "num_classes": 2,
+                        "classes_names": ["Входящий", "Выходящий"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "uint8",
+                        "name": "Output 1",
+                        "shape": (2,),
+                        "task": LayerOutputTypeChoice.Classification.value,
+                        "num_classes": 2,
+                        "classes_names": ["Входящий", "Выходящий"],
+                        "encoding": LayerEncodingChoice.ohe.value,
+                    }
+                },
                 "tags": [
                     Tags.image.value,
                     Tags.classification.value,
@@ -978,6 +1026,37 @@ DatasetsGroups = [
                 "alias": "heads",
                 "name": "Пассажиры автобусов (попарно)",
                 "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "name": "Input 1",
+                        "shape": (100, 100, 3),
+                        "task": LayerInputTypeChoice.Image.value,
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                    2: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "name": "Input 2",
+                        "shape": (100, 100, 3),
+                        "task": LayerInputTypeChoice.Image.value,
+                        "classes_names": ["Входящий", "Выходящий"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "outputs": {
+                    3: {
+                        "datatype": "DIM",
+                        "dtype": "uint8",
+                        "name": "Output 1",
+                        "shape": (2,),
+                        "task": LayerOutputTypeChoice.Classification.value,
+                        "num_classes": 2,
+                        "classes_names": ["Входящий", "Выходящий"],
+                        "encoding": LayerEncodingChoice.ohe.value,
+                    }
+                },
                 "tags": [
                     Tags.image.value,
                     Tags.classification.value,
@@ -988,6 +1067,30 @@ DatasetsGroups = [
                 "alias": "marki_moloka",
                 "name": "Марки молока",
                 "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "name": "Input 1",
+                        "shape": (200, 100, 3),
+                        "task": LayerInputTypeChoice.Image.value,
+                        "num_classes": 3,
+                        "classes_names": ["Parmalat", "Кубанская буренка", "Семейный формат"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "uint8",
+                        "name": "Output 1",
+                        "shape": (3,),
+                        "task": LayerOutputTypeChoice.Classification.value,
+                        "num_classes": 3,
+                        "classes_names": ["Parmalat", "Кубанская буренка", "Семейный формат"],
+                        "encoding": LayerEncodingChoice.ohe.value,
+                    }
+                },
                 "tags": [
                     Tags.image.value,
                     Tags.classification.value,
