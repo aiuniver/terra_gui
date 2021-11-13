@@ -705,6 +705,30 @@ DatasetsGroups = [
                 "alias": "cars",
                 "name": "Автомобили",
                 "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "name": "Input 1",
+                        "shape": (120, 176, 3),
+                        "task": LayerInputTypeChoice.Image.value,
+                        "num_classes": 3,
+                        "classes_names": ["Мерседес", "Рено", "Феррари"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "uint8",
+                        "name": "Метки классов",
+                        "shape": (3,),
+                        "task": LayerOutputTypeChoice.Classification.value,
+                        "num_classes": 3,
+                        "classes_names": ["Мерседес", "Рено", "Феррари"],
+                        "encoding": LayerEncodingChoice.ohe.value,
+                    }
+                },
                 "tags": [
                     Tags.image.value,
                     Tags.classification.value,
@@ -715,6 +739,40 @@ DatasetsGroups = [
                 "alias": "cars_30",
                 "name": "Автомобили (30 классов)",
                 "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "name": "Input 1",
+                        "shape": (48, 96, 3),
+                        "task": LayerInputTypeChoice.Image.value,
+                        "num_classes": 30,
+                        "classes_names": ["Audi", "BMW", "Bentley", "Cadillac", "Chevrolet",
+                                          "Citroen", "Dodge", "Fiat", "Ford", "GMC",
+                                          "Honda", "Infiniti", "Jaguar", "Jeep", "KIA",
+                                          "Land_Rover", "Lexus", "Mazda", "Mercedes_Benz", "Nissan",
+                                          "Opel", "Peugeot", "Porsche", "Renault", "Rolls_Royce",
+                                          "Skoda", "Subaru", "Toyota", "Volkswagen", "Volvo"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "uint8",
+                        "name": "Метки классов",
+                        "shape": (30,),
+                        "task": LayerOutputTypeChoice.Classification.value,
+                        "num_classes": 3,
+                        "classes_names": ["Audi", "BMW", "Bentley", "Cadillac", "Chevrolet",
+                                          "Citroen", "Dodge", "Fiat", "Ford", "GMC",
+                                          "Honda", "Infiniti", "Jaguar", "Jeep", "KIA",
+                                          "Land_Rover", "Lexus", "Mazda", "Mercedes_Benz", "Nissan",
+                                          "Opel", "Peugeot", "Porsche", "Renault", "Rolls_Royce",
+                                          "Skoda", "Subaru", "Toyota", "Volkswagen", "Volvo"],
+                        "encoding": LayerEncodingChoice.ohe.value,
+                    }
+                },
                 "tags": [
                     Tags.image.value,
                     Tags.classification.value,
@@ -725,6 +783,31 @@ DatasetsGroups = [
                 "alias": "airplane",
                 "name": "Самолеты",
                 "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "name": "Input 1",
+                        "shape": (128, 160, 3),
+                        "task": LayerInputTypeChoice.Image.value,
+                        "num_classes": 1,
+                        "classes_names": ["Самолеты"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "2D",
+                        "dtype": "uint8",
+                        "name": "Output 1",
+                        "shape": (128, 160, 2),
+                        "task": LayerOutputTypeChoice.Segmentation.value,
+                        "num_classes": 2,
+                        "classes_names": ["Небо", "Самолет"],
+                        "classes_colors": ["black", "red"],
+                        "encoding": LayerEncodingChoice.ohe.value,
+                    }
+                },
                 "tags": [
                     Tags.image.value,
                     Tags.segmentation.value,
@@ -735,6 +818,31 @@ DatasetsGroups = [
                 "alias": "guby",
                 "name": "Губы",
                 "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "name": "Input 1",
+                        "shape": (128, 160, 3),
+                        "task": LayerInputTypeChoice.Image.value,
+                        "num_classes": 1,
+                        "classes_names": ["Губы"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "2D",
+                        "dtype": "uint8",
+                        "name": "Output 1",
+                        "shape": (128, 160, 2),
+                        "task": LayerOutputTypeChoice.Segmentation.value,
+                        "num_classes": 2,
+                        "classes_names": ["Окружение", "Губы"],
+                        "classes_colors": ["black", "lime"],
+                        "encoding": LayerEncodingChoice.ohe.value,
+                    }
+                },
                 "tags": [
                     Tags.image.value,
                     Tags.segmentation.value,
@@ -745,6 +853,31 @@ DatasetsGroups = [
                 "alias": "ljudi",
                 "name": "Люди",
                 "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "name": "Input 1",
+                        "shape": (160, 128, 3),
+                        "task": LayerInputTypeChoice.Image.value,
+                        "num_classes": 1,
+                        "classes_names": ["Человек"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "2D",
+                        "dtype": "uint8",
+                        "name": "Output 1",
+                        "shape": (160, 128, 2),
+                        "task": LayerOutputTypeChoice.Segmentation.value,
+                        "num_classes": 2,
+                        "classes_names": ["Окружение", "Человек"],
+                        "classes_colors": ["black", "white"],
+                        "encoding": LayerEncodingChoice.ohe.value,
+                    }
+                },
                 "tags": [
                     Tags.image.value,
                     Tags.segmentation.value,
@@ -755,6 +888,31 @@ DatasetsGroups = [
                 "alias": "monety",
                 "name": "Монеты",
                 "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "name": "Input 1",
+                        "shape": (160, 160, 3),
+                        "task": LayerInputTypeChoice.Image.value,
+                        "num_classes": 1,
+                        "classes_names": ["Photo"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "2D",
+                        "dtype": "uint8",
+                        "name": "Output 1",
+                        "shape": (160, 160, 2),
+                        "task": LayerOutputTypeChoice.Segmentation.value,
+                        "num_classes": 2,
+                        "classes_names": ["Фон", "Монета"],
+                        "classes_colors": ["black", "white"],
+                        "encoding": LayerEncodingChoice.ohe.value,
+                    }
+                },
                 "tags": [
                     Tags.image.value,
                     Tags.segmentation.value,
@@ -765,6 +923,31 @@ DatasetsGroups = [
                 "alias": "zapisi_s_videoregistratora",
                 "name": "Записи с видеорегистратора",
                 "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "name": "Input 1",
+                        "shape": (128, 160, 3),
+                        "task": LayerInputTypeChoice.Image.value,
+                        "num_classes": 1,
+                        "classes_names": ["Дорога"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "2D",
+                        "dtype": "uint8",
+                        "name": "Output 1",
+                        "shape": (128, 160, 3),
+                        "task": LayerOutputTypeChoice.Segmentation.value,
+                        "num_classes": 2,
+                        "classes_names": ["Окружение", "Дорога", "Граница"],
+                        "classes_colors": ["black", "#00dc6e", "white"],
+                        "encoding": LayerEncodingChoice.ohe.value,
+                    }
+                },
                 "tags": [
                     Tags.image.value,
                     Tags.segmentation.value,
