@@ -463,7 +463,7 @@ def decode(conv_output, NUM_CLASS, i=0, YOLO_TYPE="v3", STRIDES=None):
 
 
 # @tf.autograph.experimental.do_not_convert
-def create_yolo(model, input_size=416, channels=3, training=False, classes=None, version='v3'):
+def create_yolo(model, input_size=416, channels=3, training=False, classes=None, version='v3') -> tf.keras.Model:
     method_name = 'create_yolo'
     try:
         if classes is None:
@@ -708,7 +708,7 @@ def voc_ap(rec, prec):
 
 def get_mAP(Yolo: object, dataset: object, score_threshold: object = 0.25, iou_threshold: object = None,
             TEST_INPUT_SIZE: object = 416, TRAIN_CLASSES: object = None,
-            pred: object = None, dataset_path: object = '') -> object:
+            pred: object = None, dataset_path: object = '') -> dict:
     method_name = 'get_mAP'
     tt1 = time.time()
     try:

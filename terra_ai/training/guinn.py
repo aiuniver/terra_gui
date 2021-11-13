@@ -329,20 +329,23 @@ class GUINN:
 
     # @progress.threading
     def model_fit(self, params: dict, model: Model, dataset: PrepareDataset, dataset_path: Path, deploy_path: Path,
-                       model_path: Path) -> None:
+                  model_path: Path) -> None:
         method_name = 'base_model_fit'
         try:
             yolo_arch = True if dataset.data.architecture in YOLO_ARCHITECTURE else False
+            # print('yolo_arch', yolo_arch)
             callback = FitCallback(dataset, params, model_path, deploy_path)
             if yolo_arch:
-                version = dataset.instructions.get(list(dataset.data.outputs.keys())[0]).get('2_object_detection').get('yolo')
+                version = dataset.instructions.get(list(dataset.data.outputs.keys())[0]).get('2_object_detection').get(
+                    'yolo')
                 classes = dataset.data.outputs.get(list(dataset.data.outputs.keys())[0]).classes_names
                 yolo = create_yolo(model, input_size=416, channels=3, training=True, classes=classes, version=version)
+                # print(yolo.summary())
                 self.train_yolo_model(yolo, params, dataset, dataset_path, callback)
             else:
                 self.train_base_model(params, dataset, model, callback)
 
-            progress.pool(self.progress_name, finished=False, data={'status': 'Начало обучения ...'})
+            # progress.pool(self.progress_name, finished=False, data={'status': 'Начало обучения ...'})
         except Exception as e:
             print_error(GUINN().name, method_name, e)
 
@@ -352,7 +355,6 @@ class GUINN:
         try:
             loss_dict = {}
             for output_layer in params.get('architecture').get('parameters').get('outputs'):
-
                 loss_obj = getattr(
                     importlib.import_module(loss_metric_config.get("loss").get(output_layer["loss"], {}).get('module')),
                     output_layer["loss"]
@@ -377,23 +379,25 @@ class GUINN:
 
     @progress.threading
     def train_yolo_model(self, yolo_model: Model, params: dict, dataset: PrepareDataset, dataset_path: Path, callback):
-        method_name = 'train_base_model'
+        method_name = 'train_yolo_model'
         try:
-            YOLO_IOU_LOSS_THRESH = params.get('architecture').get('parameters').get('yolo').get('yolo_iou_loss_thresh')
-            TRAIN_WARMUP_EPOCHS = params.get('architecture').get('parameters').get('yolo').get('train_warmup_epochs')
-            TRAIN_LR_INIT = params.get('architecture').get('parameters').get('yolo').get('train_lr_init')
-            TRAIN_LR_END = params.get('architecture').get('parameters').get('yolo').get('train_lr_end')
-            NUM_CLASS = dataset.data.outputs.get(list(dataset.data.outputs.keys())[0]).num_classes
+            yolo_iou_loss_thresh = params.get('architecture').get('parameters').get('yolo').get('yolo_iou_loss_thresh')
+            train_warmup_epochs = params.get('architecture').get('parameters').get('yolo').get('train_warmup_epochs')
+            train_lr_init = params.get('architecture').get('parameters').get('yolo').get('train_lr_init')
+            train_lr_end = params.get('architecture').get('parameters').get('yolo').get('train_lr_end')
+            num_class = dataset.data.outputs.get(list(dataset.data.outputs.keys())[0]).num_classes
             CLASSES = dataset.data.outputs.get(list(dataset.data.outputs.keys())[0]).classes_names
+            # print('CLASSES', CLASSES)
 
-            optimizer_object = getattr(tf.keras.optimizers, params.get('optimizer').get('type'))
-            parameters = params.get('optimizer').get('parameters').get('main')
-            parameters.update(params.get('optimizer').get('parameters').get('extra'))
-            optimizer = optimizer_object(**parameters)
+            # optimizer_object = getattr(tf.keras.optimizers, params.get('optimizer').get('type'))
+            # parameters = params.get('optimizer').get('parameters').get('main')
+            # parameters.update(params.get('optimizer').get('parameters').get('extra'))
+            # optimizer = optimizer_object(**parameters)
+            optimizer = self.set_optimizer(params=params)
 
             global_steps = tf.Variable(1, trainable=False, dtype=tf.int64)
             steps_per_epoch = int(len(dataset.dataset['train']) // params.get('batch'))
-            warmup_steps = TRAIN_WARMUP_EPOCHS * steps_per_epoch
+            warmup_steps = train_warmup_epochs * steps_per_epoch
             total_steps = params.get('epochs') * steps_per_epoch
 
             @tf.function
@@ -402,8 +406,9 @@ class GUINN:
                     pred_result = yolo_model(image_data['1'], training=True)
                     giou_loss = conf_loss = prob_loss = 0
                     prob_loss_cls = {}
-                    for cls in range(NUM_CLASS):
-                        prob_loss_cls[str(CLASSES[cls])] = 0
+                    for cls in range(num_class):
+                        prob_loss_cls[CLASSES[cls]] = 0
+                    # print(prob_loss_cls)
                     for i, elem in enumerate(target1.keys()):
                         conv, pred = pred_result[i * 2], pred_result[i * 2 + 1]
                         loss_items = compute_loss(
@@ -411,69 +416,71 @@ class GUINN:
                             conv=conv,
                             label=target1[elem],
                             bboxes=target2[elem],
-                            YOLO_IOU_LOSS_THRESH=YOLO_IOU_LOSS_THRESH,
+                            YOLO_IOU_LOSS_THRESH=yolo_iou_loss_thresh,
                             i=i, CLASSES=CLASSES)
                         giou_loss += loss_items[0]
                         conf_loss += loss_items[1]
                         prob_loss += loss_items[2]
-                        for cls in range(NUM_CLASS):
-                            prob_loss_cls[str(CLASSES[cls])] += loss_items[3][str(CLASSES[cls])]
+                        for cls in range(num_class):
+                            prob_loss_cls[CLASSES[cls]] += loss_items[3][CLASSES[cls]]
 
                     total_loss = giou_loss + conf_loss + prob_loss
                     gradients = tape.gradient(total_loss, yolo_model.trainable_variables)
                     optimizer.apply_gradients(zip(gradients, yolo_model.trainable_variables))
                     global_steps.assign_add(1)
                     if global_steps < warmup_steps:
-                        lr = global_steps / warmup_steps * TRAIN_LR_INIT
+                        lr = global_steps / warmup_steps * train_lr_init
                     else:
-                        lr = TRAIN_LR_END + 0.5 * (TRAIN_LR_INIT - TRAIN_LR_END) * (
+                        lr = train_lr_end + 0.5 * (train_lr_init - train_lr_end) * (
                             (1 + tf.cos((global_steps - warmup_steps) / (total_steps - warmup_steps) * np.pi)))
                     lr = tf.cast(lr, dtype='float32')
                     optimizer.lr.assign(lr)
                 return global_steps, giou_loss, conf_loss, prob_loss, total_loss, prob_loss_cls, pred_result
 
             def validate_step(image_data, target1, target2):
-                with tf.GradientTape() as tape:
-                    pred_result = yolo_model(image_data['1'], training=False)
-                    giou_loss = conf_loss = prob_loss = 0
-                    prob_loss_cls = {}
-                    for cls in range(NUM_CLASS):
-                        prob_loss_cls[str(CLASSES[cls])] = 0
-                    for i, elem in enumerate(target1.keys()):
-                        conv, pred = pred_result[i * 2], pred_result[i * 2 + 1]
-                        loss_items = compute_loss(
-                            pred=pred,
-                            conv=conv,
-                            label=target1[elem],
-                            bboxes=target2[elem],
-                            YOLO_IOU_LOSS_THRESH=YOLO_IOU_LOSS_THRESH,
-                            i=i, CLASSES=CLASSES
-                        )
-                        giou_loss += loss_items[0].numpy()
-                        conf_loss += loss_items[1].numpy()
-                        prob_loss += loss_items[2].numpy()
-                        for cls in range(NUM_CLASS):
-                            prob_loss_cls[str(CLASSES[cls])] += loss_items[3][str(CLASSES[cls])].numpy()
+                # with tf.GradientTape() as tape:
+                pred_result = yolo_model(image_data['1'], training=False)
+                giou_loss = conf_loss = prob_loss = 0
 
-                    total_loss = giou_loss + conf_loss + prob_loss
+                prob_loss_cls = {}
+                for cls in range(num_class):
+                    prob_loss_cls[CLASSES[cls]] = 0
 
-                return giou_loss, conf_loss, prob_loss, total_loss, pred_result
+                for i, elem in enumerate(target1.keys()):
+                    conv, pred = pred_result[i * 2], pred_result[i * 2 + 1]
+                    loss_items = compute_loss(
+                        pred=pred,
+                        conv=conv,
+                        label=target1[elem],
+                        bboxes=target2[elem],
+                        YOLO_IOU_LOSS_THRESH=yolo_iou_loss_thresh,
+                        i=i, CLASSES=CLASSES
+                    )
+                    giou_loss += loss_items[0].numpy()
+                    conf_loss += loss_items[1].numpy()
+                    prob_loss += loss_items[2].numpy()
+                    # print()
+                    for cls in range(num_class):
+                        # print(CLASSES[cls], loss_items[3][CLASSES[cls]].numpy())
+                        prob_loss_cls[CLASSES[cls]] += loss_items[3][CLASSES[cls]].numpy()
 
-            current_epoch = 0
-            train_pred = {}
-            train_true = {}
+                total_loss = giou_loss + conf_loss + prob_loss
+
+                return giou_loss, conf_loss, prob_loss, total_loss, prob_loss_cls, pred_result
+
             optimizer = self.set_optimizer(params=params)
-            loss = self._prepare_loss_dict(params=params)
             first_epoch = True
             train_data_idxs = []
+            train_true = []
+            train_pred = []
             urgent_predict = False
             for epoch in range(params.get('epochs')):
-                current_logs = {'loss': {}, "metrics": {}, 'class_loss': {}, 'class_metrics': {}}
+                current_logs = {"epochs": epoch + 1, 'loss': {}, "metrics": {}, 'class_loss': {}, 'class_metrics': {}}
                 train_loss_cls = {}
+                for cls in range(num_class):
+                    train_loss_cls[CLASSES[cls]] = 0.
                 st = time.time()
                 cur_step, giou_train, conf_train, prob_train, total_train = 0, 0, 0, 0, 0
-                train_true = []
-                train_pred = []
                 callback._time_first_step = time.time()
                 new_batch = True
                 train_steps = 0
@@ -484,8 +491,10 @@ class GUINN:
                     conf_train += results[2].numpy()
                     prob_train += results[3].numpy()
                     total_train += results[4].numpy()
-                    for cls in range(NUM_CLASS):
-                        train_loss_cls[str(CLASSES[cls])] += results[5][str(CLASSES[cls])].numpy()
+                    # print()
+                    for cls in range(num_class):
+                        # print(CLASSES[cls], results[5][CLASSES[cls]].numpy())
+                        train_loss_cls[CLASSES[cls]] += results[5][CLASSES[cls]].numpy()
                     if not train_true:
                         for i, true_array in enumerate(target1.values()):
                             train_pred.append(results[6][i].numpy().astype('float'))
@@ -502,8 +511,7 @@ class GUINN:
                     else:
                         for i, true_array in enumerate(target1.values()):
                             train_pred[i] = np.concatenate(
-                                [train_pred[i][results[6][i].shape[0]:],
-                                 results[6][i].numpy().astype('float')], axis=0)
+                                [train_pred[i][results[6][i].shape[0]:], results[6][i].numpy().astype('float')], axis=0)
                             train_true[i] = np.concatenate(
                                 [train_true[i][true_array.shape[0]:], true_array.numpy().astype('float')], axis=0)
                         if new_batch:
@@ -514,7 +522,8 @@ class GUINN:
                             train_data_idxs.extend(list(range(
                                 train_data_idxs[-1] + 1, train_data_idxs[-1] + 1 + results[6][0].shape[0])))
                         if urgent_predict:
-                            val_pred = validate_step(image_data, target1, target2)
+                            pass
+                            # _, _, _, _, _, val_pred = validate_step(image_data, target1, target2)
                             # callback.current_basic_logs(
                             #     epoch=epoch + 1, train_y_true=train_true, train_y_pred=train_pred,
                             #     val_y_true=val_true, val_y_pred=val_pred, train_idx=train_data_idxs
@@ -524,36 +533,85 @@ class GUINN:
 
                     print(
                         "epoch:{:2.0f} step:{:5.0f}/{}, giou_loss:{:7.2f}, conf_loss:{:7.2f}, prob_loss:{:7.2f}, total_loss:{:7.2f}"
-                        .format(epoch, cur_step, steps_per_epoch, results[1], results[2], results[3], results[4]))
+                            .format(epoch + 1, cur_step, steps_per_epoch, results[1], results[2], results[3],
+                                    results[4]))
 
-                # prob_loss_cls = {}
-                for cls in range(NUM_CLASS):
+                current_logs['loss']['giou_loss'] = {'train': giou_train / cur_step}
+                current_logs['loss']['conf_loss'] = {'train': conf_train / cur_step}
+                current_logs['loss']['prob_loss'] = {'train': prob_train / cur_step}
+                current_logs['loss']['total_loss'] = {'train': total_train / cur_step}
+                current_logs['class_loss']['prob_loss'] = {}
+                for cls in range(num_class):
+                    current_logs['class_loss']['prob_loss'][str(CLASSES[cls])] = \
+                        {'train': train_loss_cls[str(CLASSES[cls])] / cur_step}
                     train_loss_cls[str(CLASSES[cls])] = train_loss_cls[str(CLASSES[cls])] / cur_step
-
-                # print(
-                #     "\n\nepoch_time:{:7.2f} sec, giou_train_loss:{:7.2f}, conf_train_loss:{:7.2f}, prob_train_loss:{:7.2f}, total_train_loss:{:7.2f}, class_train_loss:{}".
-                #     format(time.time() - st, giou_train / cur_step, conf_train / cur_step, prob_train / cur_step,
-                #            total_train / cur_step, prob_loss_cls))
+                print(
+                    "\n\nepoch_time:{:7.2f} sec, giou_train_loss:{:7.2f}, conf_train_loss:{:7.2f}, prob_train_loss:{:7.2f}, total_train_loss:{:7.2f}, class_train_loss:{}".
+                        format(time.time() - st, giou_train / cur_step, conf_train / cur_step, prob_train / cur_step,
+                               total_train / cur_step, train_loss_cls))
 
                 count, giou_val, conf_val, prob_val, total_val = 0., 0, 0, 0, 0
-                for image_data, target1, target2 in dataset.dataset.get('val').batch(2):
+                val_loss_cls = {}
+                for cls in range(num_class):
+                    val_loss_cls[CLASSES[cls]] = 0.
+                val_true = []
+                val_pred = []
+                for image_data, target1, target2 in dataset.dataset.get('val').batch(params.get('batch')):
                     results = validate_step(image_data, target1, target2)
                     count += 1
                     giou_val += results[0]
                     conf_val += results[1]
                     prob_val += results[2]
                     total_val += results[3]
+                    for cls in range(num_class):
+                        val_loss_cls[str(CLASSES[cls])] += results[4][str(CLASSES[cls])]
+                    if not val_true:
+                        for i, true_array in enumerate(target1.values()):
+                            val_pred.append(results[5][i].numpy().astype('float'))
+                            val_true.append(true_array.numpy().astype('float'))
+                    else:
+                        for i, true_array in enumerate(target1.values()):
+                            val_pred[i] = np.concatenate(
+                                [val_pred[i], results[5][i].numpy().astype('float')], axis=0)
+                            val_true[i] = np.concatenate(
+                                [val_true[i], true_array.numpy().astype('float')], axis=0)
 
+                current_logs['loss']['giou_loss']["val"] = giou_val / count
+                current_logs['loss']['conf_loss']["val"] = conf_val / count
+                current_logs['loss']['prob_loss']["val"] = prob_val / count
+                current_logs['loss']['total_loss']["val"] = total_val / count
+                for cls in range(num_class):
+                    current_logs['class_loss']['prob_loss'][str(CLASSES[cls])]["val"] = \
+                        val_loss_cls[str(CLASSES[cls])] / count
                 print(
                     "\n\nepoch_time:{:7.2f} sec, giou_val_loss:{:7.2f}, conf_val_loss:{:7.2f}, prob_val_loss:{:7.2f}, total_val_loss:{:7.2f}".
-                    format(time.time() - st, giou_val / count, conf_val / count, prob_val / count, total_val / count))
+                        format(time.time() - st, giou_val / count, conf_val / count, prob_val / count, total_val / count))
 
                 mAP50 = get_mAP(yolo_model, dataset, score_threshold=0.05, iou_threshold=[0.50],
-                              TRAIN_CLASSES=dataset.data.outputs.get(2).classes_names,
-                              dataset_path=dataset_path)
-
+                                TRAIN_CLASSES=dataset.data.outputs.get(2).classes_names,
+                                dataset_path=dataset_path)
+                current_logs['metrics']['mAP50'] = {"val": mAP50.get('val_mAP50')}
+                current_logs['class_metrics']['mAP50'] = {}
+                for cls in range(num_class):
+                    current_logs['class_metrics']['mAP50'][str(CLASSES[cls])] = \
+                        {"val": mAP50.get(f"val_mAP50_class_{CLASSES[cls]}")}
                 print("\n\nepoch_time:{:7.2f} sec, mAP50:{}".format(time.time() - st, mAP50))
-
+                callback.on_epoch_end(
+                    epoch=epoch + 1, train_true=train_true, train_pred=train_pred,
+                    val_true=val_true, val_pred=val_pred, train_data_idxs=train_data_idxs, logs=current_logs
+                )
+                print(f"\ncurrent_logs: {callback.current_logs}\n")
+                print(
+                    f"\nEpoch {callback.current_logs.get('epochs')}:\n"
+                    # f"\nlog_history: {callback.log_history.get('epochs')}, "
+                    f"epoch_time={round(time.time() - callback._time_first_step, 3)}"
+                    f"\nloss={callback.log_history.get('output').get('loss')}"
+                    f"\nmetrics={callback.log_history.get('output').get('metrics')}"
+                    # f" \nloss={callback.current_logs.get('2').get('loss')}\n"
+                    # f" \nmetrics={callback.current_logs.get('2').get('metrics')}\n"
+                    # f" \nclass_loss={callback.current_logs.get('2').get('class_loss')}\n"
+                    # f" \nclass_metrics={callback.current_logs.get('2').get('class_metrics')}"
+                )
                 best_path = callback.save_best_weights()
                 if best_path:
                     yolo_model.save_weights(best_path)
@@ -744,7 +802,7 @@ class MemoryUsage:
         return usage_dict
 
 
-class FitCallback(tf.keras.callbacks.Callback):
+class FitCallback:
     """CustomCallback for all task type"""
 
     def __init__(self, dataset: PrepareDataset, params: dict, model_path: Path, deploy_path: Path,
@@ -1149,29 +1207,26 @@ class FitCallback(tf.keras.callbacks.Callback):
                                     round_loss_metric(self.current_logs[out]['class_metrics'][metric_name][cls]["val"]))
 
             if self.dataset.data.architecture in YOLO_ARCHITECTURE:
-                self.log_history['learning_rate'] = self.current_logs.get('learning_rate')
+                # self.log_history['learning_rate'] = self.current_logs.get('learning_rate')
                 out = list(self.dataset.data.outputs.keys())[0]
                 classes_names = self.dataset.data.outputs.get(out).classes_names
                 for key in self.log_history['output']["loss"].keys():
                     for data_type in ['train', 'val']:
                         self.log_history['output']["loss"][key][data_type].append(
-                            round_loss_metric(self.current_logs.get('output').get('loss').get(key).get(data_type)))
+                            round_loss_metric(self.current_logs.get('loss').get(key).get(data_type)))
                 for key in self.log_history['output']["metrics"].keys():
                     self.log_history['output']["metrics"][key]["val"].append(
-                        round_loss_metric(self.current_logs.get('output').get('metrics').get(key).get('val'))
+                        round_loss_metric(self.current_logs.get('metrics').get(key).get('val'))
                     )
                 for name in classes_names:
                     self.log_history['output']["class_loss"]['prob_loss'][name]["val"].append(
-                        round_loss_metric(self.current_logs.get('output').get(
-                            'class_loss').get("prob_loss").get(name).get("val"))
+                        round_loss_metric(self.current_logs.get('class_loss').get("prob_loss").get(name).get("val"))
                     )
                     self.log_history['output']["class_loss"]['prob_loss'][name]["train"].append(
-                        round_loss_metric(self.current_logs.get('output').get(
-                            'class_loss').get("prob_loss").get(name).get("train"))
+                        round_loss_metric(self.current_logs.get('class_loss').get("prob_loss").get(name).get("train"))
                     )
                     self.log_history['output']["class_metrics"]['mAP50'][name]["val"].append(
-                        round_loss_metric(self.current_logs.get('output').get('class_metrics').get(
-                            "mAP50").get(name).get("val"))
+                        round_loss_metric(self.current_logs.get('class_metrics').get("mAP50").get(name).get("val"))
                     )
                 for loss_name in self.log_history['output']["loss"].keys():
                     # fill loss progress state
@@ -1203,7 +1258,7 @@ class FitCallback(tf.keras.callbacks.Callback):
                 for metric_name in self.log_history.get('output').get('metrics').keys():
                     self.log_history['output']['progress_state']['metrics'][metric_name][
                         'mean_log_history'].append(
-                        self._get_mean_log(self.log_history['output']['metrics'][metric_name])
+                        self._get_mean_log(self.log_history['output']['metrics'][metric_name]["val"])
                     )
                     metric_overfitting = self._evaluate_overfitting(
                         metric_name,
@@ -1348,9 +1403,9 @@ class FitCallback(tf.keras.callbacks.Callback):
             #     self.checkpoint_config.get("type").lower()).keys())
             # print(self.log_history.get(f"{self.checkpoint_config.get('layer')}").get(
             #     self.checkpoint_config.get("type").lower()).get(self.checkpoint_config.get("metric_name")).keys())
-            checkpoint_list = self.log_history.get(f"{self.checkpoint_config.get('layer')}").get(
-                self.checkpoint_config.get("type").lower()).get(self.checkpoint_config.get("metric_name")).get(
-                self.checkpoint_config.get("indicator").lower())
+            output = "output" if self.is_yolo else f"{self.checkpoint_config.get('layer')}"
+            checkpoint_list = self.log_history.get(output).get(self.checkpoint_config.get("type").lower()).get(
+                self.checkpoint_config.get("metric_name")).get(self.checkpoint_config.get("indicator").lower())
             if self.checkpoint_mode == 'min' and checkpoint_list[-1] == min(checkpoint_list):
                 return True
             elif self.checkpoint_mode == "max" and checkpoint_list[-1] == max(checkpoint_list):
@@ -1664,7 +1719,12 @@ class FitCallback(tf.keras.callbacks.Callback):
                     val_y_true=val_true, val_y_pred=val_pred, train_idx=train_data_idxs
                 )
             self._update_log_history()
-            self.last_epoch += 1
+            # best_path = self.save_best_weights()
+            # if best_path:
+            #     yolo_model.save_weights(best_path)
+            #     print(f"\nEpoch {epoch + 1}")
+            #     print(f"Best weights was saved in directory {best_path}")
+            # self.last_epoch += 1
         except Exception as e:
             print_error('FitCallback', method_name, e)
 
