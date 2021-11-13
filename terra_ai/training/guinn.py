@@ -545,10 +545,10 @@ class GUINN:
                     current_logs['class_loss']['prob_loss'][str(CLASSES[cls])] = \
                         {'train': train_loss_cls[str(CLASSES[cls])] / cur_step}
                     train_loss_cls[str(CLASSES[cls])] = train_loss_cls[str(CLASSES[cls])] / cur_step
-                print(
-                    "\n\nepoch_time:{:7.2f} sec, giou_train_loss:{:7.2f}, conf_train_loss:{:7.2f}, prob_train_loss:{:7.2f}, total_train_loss:{:7.2f}, class_train_loss:{}".
-                        format(time.time() - st, giou_train / cur_step, conf_train / cur_step, prob_train / cur_step,
-                               total_train / cur_step, train_loss_cls))
+                # print(
+                #     "\n\nepoch_time:{:7.2f} sec, giou_train_loss:{:7.2f}, conf_train_loss:{:7.2f}, prob_train_loss:{:7.2f}, total_train_loss:{:7.2f}, class_train_loss:{}".
+                #         format(time.time() - st, giou_train / cur_step, conf_train / cur_step, prob_train / cur_step,
+                #                total_train / cur_step, train_loss_cls))
 
                 count, giou_val, conf_val, prob_val, total_val = 0., 0, 0, 0, 0
                 val_loss_cls = {}
@@ -583,9 +583,9 @@ class GUINN:
                 for cls in range(num_class):
                     current_logs['class_loss']['prob_loss'][str(CLASSES[cls])]["val"] = \
                         val_loss_cls[str(CLASSES[cls])] / count
-                print(
-                    "\n\nepoch_time:{:7.2f} sec, giou_val_loss:{:7.2f}, conf_val_loss:{:7.2f}, prob_val_loss:{:7.2f}, total_val_loss:{:7.2f}".
-                        format(time.time() - st, giou_val / count, conf_val / count, prob_val / count, total_val / count))
+                # print(
+                #     "\n\nepoch_time:{:7.2f} sec, giou_val_loss:{:7.2f}, conf_val_loss:{:7.2f}, prob_val_loss:{:7.2f}, total_val_loss:{:7.2f}".
+                #         format(time.time() - st, giou_val / count, conf_val / count, prob_val / count, total_val / count))
 
                 mAP50 = get_mAP(yolo_model, dataset, score_threshold=0.05, iou_threshold=[0.50],
                                 TRAIN_CLASSES=dataset.data.outputs.get(2).classes_names,
@@ -595,12 +595,12 @@ class GUINN:
                 for cls in range(num_class):
                     current_logs['class_metrics']['mAP50'][str(CLASSES[cls])] = \
                         {"val": mAP50.get(f"val_mAP50_class_{CLASSES[cls]}")}
-                print("\n\nepoch_time:{:7.2f} sec, mAP50:{}".format(time.time() - st, mAP50))
+                # print("\n\nepoch_time:{:7.2f} sec, mAP50:{}".format(time.time() - st, mAP50))
                 callback.on_epoch_end(
                     epoch=epoch + 1, train_true=train_true, train_pred=train_pred,
                     val_true=val_true, val_pred=val_pred, train_data_idxs=train_data_idxs, logs=current_logs
                 )
-                print(f"\ncurrent_logs: {callback.current_logs}\n")
+                # print(f"\ncurrent_logs: {callback.current_logs}\n")
                 print(
                     f"\nEpoch {callback.current_logs.get('epochs')}:\n"
                     # f"\nlog_history: {callback.log_history.get('epochs')}, "
