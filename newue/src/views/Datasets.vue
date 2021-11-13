@@ -2,26 +2,44 @@
   <main class="page page-datasets">
     <div class="page-datasets-inner">
       <div class="page-datasets-inner__workspace">asd</div>
-      <BasePanel>
-        <BasePanelContent>
-          <template #header>Данные</template>
-          <template #content>
-            <div class="mb-4">Выберите папку/файл</div>
-            <FileManager @chooseFile="chooseFile" :list="list" />
-          </template>
-        </BasePanelContent>
-        <BasePanelContent>
-          <template #header>Предпросмотр</template>
-          <template #content>
-            <Preview @choosePreview="choosePreview" :list="preview" />
-          </template>
-        </BasePanelContent>
-        <BasePanelContent>
-          <template #header>Настройки</template>
-          <template #content>
-            <Settings />
-          </template>
-        </BasePanelContent>
+      <BasePanel @action="handleActionPanel">
+        <template v-if="component === 'DatasetTabsDownload'">
+          <BasePanelContent noMargin>
+            <template #header>Данные</template>
+            <template #content>
+              <DatasetDownloadTabs class="mt-4" />
+            </template>
+          </BasePanelContent>
+        </template>
+        <template v-if="component === 'DatasetHelpers'">
+          <BasePanelContent>
+            <template #header>Данные</template>
+            <template #content>
+              <DatasetHelpers />
+            </template>
+          </BasePanelContent>
+        </template>
+        <template v-if="component === 'DataEnterDataset'">
+          <BasePanelContent>
+            <template #header>Данные</template>
+            <template #content>
+              <div class="mb-4">Выберите папку/файл</div>
+              <FileManager @chooseFile="chooseFile" :list="list" />
+            </template>
+          </BasePanelContent>
+          <BasePanelContent>
+            <template #header>Предпросмотр</template>
+            <template #content>
+              <DatasetPreview @choosePreview="choosePreview" :list="preview" />
+            </template>
+          </BasePanelContent>
+          <BasePanelContent>
+            <template #header>Настройки</template>
+            <template #content>
+              <DatasetSettings />
+            </template>
+          </BasePanelContent>
+        </template>
       </BasePanel>
     </div>
     <WorkspaceActions @action="handleWorkspaceAction" />
@@ -31,20 +49,23 @@
 <script>
 import BasePanel from '@/components/datasets/components/panel/BasePanel';
 import BasePanelContent from '@/components/datasets/components/panel/BasePanelContent';
-
 import FileManager from '@/components/datasets/components/FileManager';
-import Preview from '@/components/datasets/components/Preview';
-import Settings from '@/components/datasets/components/Settings';
+import DatasetPreview from '@/components/datasets/components/DatasetPreview';
+import DatasetSettings from '@/components/datasets/components/DatasetSettings';
 import WorkspaceActions from '@/components/datasets/components/WorkspaceActions';
+import DatasetDownloadTabs from '@/components/datasets/components/DatasetDownloadTabs';
+import DatasetHelpers from '@/components/datasets/components/DatasetHelpers';
 
 export default {
   components: {
     BasePanelContent,
     BasePanel,
-    Preview,
     FileManager,
-    Settings,
     WorkspaceActions,
+    DatasetPreview,
+    DatasetSettings,
+    DatasetDownloadTabs,
+    DatasetHelpers,
   },
 
   name: 'Datasets',
@@ -58,8 +79,26 @@ export default {
     handleWorkspaceAction(action) {
       console.log(action);
     },
+    handleActionPanel(action) {
+      let idx = this.allComponents.findIndex(el => el === this.component);
+      if (action === 'next') {
+        if (+idx < this.allComponents.length - 1) {
+          this.component = this.allComponents[++idx];
+        } else {
+          this.component = this.allComponents[0];
+        }
+      } else if (action === 'prev') {
+        if (+idx !== 0) {
+          this.component = this.allComponents[--idx];
+        } else {
+          this.component = this.allComponents[this.allComponents.length - 1];
+        }
+      }
+    },
   },
   data: () => ({
+    component: 'DatasetHelpers',
+    allComponents: ['DatasetTabsDownload', 'DatasetHelpers', 'DataEnterDataset'],
     preview: [
       {
         id: 1,

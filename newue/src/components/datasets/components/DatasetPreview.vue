@@ -18,7 +18,7 @@
 
 <script>
 export default {
-  name: 'BasePreview',
+  name: 'DatasetPreview',
   props: {
     list: {
       type: Array,
