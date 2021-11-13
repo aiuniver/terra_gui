@@ -2,40 +2,44 @@
  * Default Variables
  */
 
-// Color 
-$color-black: #0E1621;
-$color-dark: #17212B;
-$color-dark-gray: #242F3D;
-$color-light-blue: #65B9F4;
-$color-blue: #2B5278;
-$color-light-gray: #F2F5FA;
-$color-gray: #6C7883;
-$color-gray-blue: #A7BED3;
-$color-white: #FFFFFF;
-$color-error: #CA5035;
+// Color
+$color-black: #0e1621;
+$color-dark: #17212b;
+$color-dark-gray: #242f3d;
+$color-dark-gray2: #1e2734;
+$color-light-blue: #65b9f4;
+$color-blue: #2b5278;
+$color-light-gray: #f2f5fa;
+$color-gray: #6c7883;
+$color-gray-blue: #a7bed3;
+$color-white: #ffffff;
+$color-error: #ca5035;
 
-// Cascades 
-$color-cascades-input: #D5ECC2;
-$color-cascades-model: #98DDCA;
-$color-cascades-function: #FFAAA7;
-$color-cascades-custom: #E4BAD4;
+// Cascades
+$color-cascades-input: #d5ecc2;
+$color-cascades-model: #98ddca;
+$color-cascades-function: #ffaaa7;
+$color-cascades-custom: #e4bad4;
 $color-cascades-output: #17212b;
 $color-cascades-input: #17212b;
 
 // Layers palette
 $color: #17212b;
 
-
 // Theme dark
 $color-dark-bg: $color-dark;
 $color-dark-border: $color-black;
 $color-dark-text: $color-white;
 
+$color-dark-bg-dropdown: $color-dark-gray;
+$color-dark-bg-dropdown-iterm-active: $color-dark-gray2;
+
 // Theme light
 $color-light-bg: $color-white;
-$color-light-border: #E1E1E1;
-$color-light-text: #ADADAD;
+$color-light-border: #e1e1e1;
+$color-light-text: #adadad;
 
+$color-ligth-bg-dropdown: $color-gray-blue;
 
 /* Color */
 $color-normal: #6190e8;

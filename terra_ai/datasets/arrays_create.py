@@ -5,11 +5,12 @@ from terra_ai.callbacks.regression_callbacks import DataframeRegressionCallback
 from terra_ai.callbacks.segmentation_callbacks import ImageSegmentationCallback, TextSegmentationCallback
 from terra_ai.callbacks.time_series_callbacks import TimeseriesCallback
 from terra_ai.data.training.extra import ArchitectureChoice
-from terra_ai.datasets.utils import get_yolo_anchors, resize_bboxes, Yolo_terra
+from terra_ai.datasets.utils import get_yolo_anchors, resize_bboxes, Yolo_terra, Voc, Coco, Udacity, Kitti, Yolov1
 from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice
 from terra_ai.data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice, \
     LayerTextModeChoice, LayerAudioModeChoice, LayerVideoModeChoice, LayerScalerAudioChoice
 from terra_ai.data.datasets.creations.layers.output.types.ObjectDetection import LayerODDatasetTypeChoice
+
 
 import os
 import re
@@ -27,7 +28,6 @@ from sklearn.cluster import KMeans
 from pydub import AudioSegment
 from librosa import load as librosa_load
 from pydantic.color import Color
-from tensorflow.keras.layers.experimental.preprocessing import Resizing
 from tensorflow.keras.preprocessing.text import text_to_word_sequence
 from tensorflow.keras.preprocessing.image import load_img
 from tensorflow.keras import utils
@@ -428,6 +428,14 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
+    def instructions_tracker(paths_list: list, **options: dict) -> dict:
+
+        instructions = {'instructions': paths_list,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
     def cut_image(paths_list: list, dataset_folder=None, **options: dict):
 
         for elem in paths_list:
@@ -708,8 +716,17 @@ class CreateArray(object):
                         'parameters': {'yolo': options['yolo'],
                                        'num_classes': options['num_classes'],
                                        'classes_names': options['classes_names'],
-                                       'put': options['put']}
+                                       'put': options['put'],
+                                       'frame_mode': options['frame_mode']}
                         }
+
+        return instructions
+
+    @staticmethod
+    def cut_tracker(path_list: int, dataset_folder=None, **options: dict) -> dict:
+
+        instructions = {'instructions': path_list,
+                        'parameters': options}
 
         return instructions
 
@@ -967,7 +984,7 @@ class CreateArray(object):
             return 1.0 * inter_area / union_area
 
         if coords:
-            real_boxes = resize_bboxes(coords, options['orig_x'], options['orig_y'])
+            real_boxes = resize_bboxes(options['frame_mode'], coords, options['orig_x'], options['orig_y'])
         else:
             real_boxes = [[0, 0, 0, 0, 0]]
 
@@ -1058,6 +1075,14 @@ class CreateArray(object):
         instructions = {'instructions': [np.array(label_sbbox, dtype='float32'), np.array(label_mbbox, dtype='float32'),
                                          np.array(label_lbbox, dtype='float32'), np.array(sbboxes, dtype='float32'),
                                          np.array(mbboxes, dtype='float32'), np.array(lbboxes, dtype='float32')],
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def create_tracker(zero: int, **options):
+
+        instructions = {'instructions': np.array([zero]),
                         'parameters': options}
 
         return instructions
@@ -1200,9 +1225,11 @@ class CreateArray(object):
                                                   coords=options['augm_data'],
                                                   augmentation_dict=options['augmentation'])
 
+        frame_mode = options['image_mode'] if 'image_mode' in options.keys() else 'stretch' # Временное решение
+
         array = resize_frame(image_array=array,
                              target_shape=(options['height'], options['width']),
-                             frame_mode=options['image_mode'])
+                             frame_mode=frame_mode)
 
         if options['net'] == LayerNetChoice.linear:
             array = array.reshape(np.prod(np.array(array.shape)))
@@ -1222,15 +1249,44 @@ class CreateArray(object):
     @staticmethod
     def preprocess_video(array: np.ndarray, **options) -> np.ndarray:
 
-        def resize_frame(one_frame, original_shape, target_shape, frame_mode):
+        def resize_frame(image_array, target_shape, frame_mode):
 
+            original_shape = (image_array.shape[0], image_array.shape[1])
             resized = None
-            if frame_mode == LayerVideoFrameModeChoice.stretch:
-                resized = resize_layer(one_frame[None, ...])
-                resized = resized.numpy().squeeze().astype('uint8')
-            elif frame_mode == LayerVideoFrameModeChoice.keep_proportions:
-                # height
-                resized = one_frame.copy()
+            if frame_mode == 'stretch':
+                resized = cv2.resize(image_array, (target_shape[1], target_shape[0]))
+            elif frame_mode == 'fit':
+                if image_array.shape[1] >= image_array.shape[0]:
+                    resized_shape = list(target_shape).copy()
+                    resized_shape[0] = int(image_array.shape[0] / (image_array.shape[1] / target_shape[1]))
+                    if resized_shape[0] > target_shape[0]:
+                        resized_shape = list(target_shape).copy()
+                        resized_shape[1] = int(image_array.shape[1] / (image_array.shape[0] / target_shape[0]))
+                    image_array = cv2.resize(image_array, (resized_shape[1], resized_shape[0]))
+                elif image_array.shape[0] >= image_array.shape[1]:
+                    resized_shape = list(target_shape).copy()
+                    resized_shape[1] = int(image_array.shape[1] / (image_array.shape[0] / target_shape[0]))
+                    if resized_shape[1] > target_shape[1]:
+                        resized_shape = list(target_shape).copy()
+                        resized_shape[0] = int(image_array.shape[0] / (image_array.shape[1] / target_shape[1]))
+                    image_array = cv2.resize(image_array, (resized_shape[1], resized_shape[0]))
+                resized = image_array
+                if resized.shape[0] < target_shape[0]:
+                    black_bar = np.zeros((int((target_shape[0] - resized.shape[0]) / 2), resized.shape[1], 3),
+                                         dtype='uint8')
+                    resized = np.concatenate((black_bar, resized))
+                    black_bar_2 = np.zeros((int((target_shape[0] - resized.shape[0])), resized.shape[1], 3),
+                                           dtype='uint8')
+                    resized = np.concatenate((resized, black_bar_2))
+                if resized.shape[1] < target_shape[1]:
+                    black_bar = np.zeros((target_shape[0], int((target_shape[1] - resized.shape[1]) / 2), 3),
+                                         dtype='uint8')
+                    resized = np.concatenate((black_bar, resized), axis=1)
+                    black_bar_2 = np.zeros((target_shape[0], int((target_shape[1] - resized.shape[1])), 3),
+                                           dtype='uint8')
+                    resized = np.concatenate((resized, black_bar_2), axis=1)
+            elif frame_mode == 'cut':
+                resized = image_array.copy()
                 if original_shape[0] > target_shape[0]:
                     resized = resized[int(original_shape[0] / 2 - target_shape[0] / 2):int(
                         original_shape[0] / 2 - target_shape[0] / 2) + target_shape[0], :]
@@ -1238,8 +1294,9 @@ class CreateArray(object):
                     black_bar = np.zeros((int((target_shape[0] - original_shape[0]) / 2), original_shape[1], 3),
                                          dtype='uint8')
                     resized = np.concatenate((black_bar, resized))
-                    resized = np.concatenate((resized, black_bar))
-                # width
+                    black_bar_2 = np.zeros((int((target_shape[0] - resized.shape[0])), original_shape[1], 3),
+                                           dtype='uint8')
+                    resized = np.concatenate((resized, black_bar_2))
                 if original_shape[1] > target_shape[1]:
                     resized = resized[:, int(original_shape[1] / 2 - target_shape[1] / 2):int(
                         original_shape[1] / 2 - target_shape[1] / 2) + target_shape[1]]
@@ -1247,17 +1304,16 @@ class CreateArray(object):
                     black_bar = np.zeros((target_shape[0], int((target_shape[1] - original_shape[1]) / 2), 3),
                                          dtype='uint8')
                     resized = np.concatenate((black_bar, resized), axis=1)
-                    resized = np.concatenate((resized, black_bar), axis=1)
+                    black_bar_2 = np.zeros((target_shape[0], int((target_shape[1] - resized.shape[1])), 3),
+                                           dtype='uint8')
+                    resized = np.concatenate((resized, black_bar_2), axis=1)
             return resized
 
-        orig_shape = array.shape[1:]
         trgt_shape = (options['height'], options['width'])
-        resize_layer = Resizing(*trgt_shape)
         resized_array = []
         for i in range(len(array)):
             if array[i].shape[1:-1] != trgt_shape:
-                resized_array.append(resize_frame(one_frame=array[i],
-                                                  original_shape=orig_shape,
+                resized_array.append(resize_frame(image_array=array[i],
                                                   target_shape=trgt_shape,
                                                   frame_mode=options['frame_mode']))
         array = np.array(resized_array)
@@ -1358,6 +1414,11 @@ class CreateArray(object):
         return array
 
     @staticmethod
+    def preprocess_tracker(zero: int, **options):
+
+        return zero
+
+    @staticmethod
     def preprocess_raw(array: np.ndarray, **options) -> np.ndarray:
 
         return array
@@ -1400,7 +1461,6 @@ class CreateArray(object):
                 array=array, options=options
             )
         elif options.data.architecture == ArchitectureChoice.DataframeRegression:
-            # print('options.data.architecture == ArchitectureChoice.DataframeRegression')
             return_data = DataframeRegressionCallback.postprocess_deploy(
                 array=array, options=options
             )
@@ -1421,3 +1481,4 @@ class CreateArray(object):
         else:
             pass
         return return_data
+

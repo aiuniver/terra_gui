@@ -1,14 +1,12 @@
-from terra_ai.data.cascades.extra import BlockGroupChoice
 from terra_ai.data.modeling.layers import Layer, types as layers_types
-from terra_ai.data.cascades.blocks import Block, types as blocks_types
 from terra_ai.data.modeling.extra import LayerTypeChoice
 from terra_ai.data.training.extra import ArchitectureChoice
 
 from ...utils import prepare_pydantic_field
-from .training import Architectures
 from .datasets import DataSetsColumnProcessing, DataSetsInput, DataSetsOutput
 from .modeling import ModelingLayerForm, ModelingLayersTypes
 from .cascades import CascadesBlockForm, CascadesBlocksTypes
+from .deploy import DeployTypeGroup, DeployServerGroup
 
 
 Defaults = {
@@ -27,7 +25,11 @@ Defaults = {
     "cascades": {
         "block_form": CascadesBlockForm,
         "blocks_types": CascadesBlocksTypes,
-    }
+    },
+    "deploy": {
+        "type": DeployTypeGroup,
+        "server": DeployServerGroup,
+    },
 }
 
 
@@ -52,15 +54,3 @@ for layer in Layer:
             }
         }
     )
-
-
-for block in Block:
-    params = getattr(blocks_types, block.name)
-    Defaults["cascades"]["blocks_types"].update(
-        {
-            BlockGroupChoice[block.name].value: {
-                "main": __get_group_type_params(params.ParametersMainData, "main"),
-            }
-        }
-    )
-    

@@ -27,6 +27,7 @@ MODEL_EXT = "model"
 # Training
 TRAINING_DEPLOY_DIRNAME = "deploy"
 TRAINING_MODEL_DIRNAME = "model"
+TRAINING_INTERMEDIATE_DIRNAME = "intermediate"
 
 # Cascade
 CASCADE_EXT = "cascade"

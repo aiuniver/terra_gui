@@ -8,4 +8,11 @@ module.exports = {
   devServer: {
     proxy: proxy[process.env.USERNAME] || 'http://localhost:8099/',
   },
+  css:{
+    loaderOptions:{
+      scss:{
+        prependData: `@import "~@/assets/scss/variables/default.scss";`
+      }
+    }
+  }
 };

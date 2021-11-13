@@ -1,4 +1,5 @@
-from pathlib import Path
+import random
+from pathlib import Path, PosixPath
 from typing import List, Any
 from pydantic import validator, DirectoryPath
 
@@ -8,23 +9,33 @@ from terra_ai.settings import DEPLOY_PRESET_COUNT
 
 
 class DataBaseList(List):
-    path: DirectoryPath
+    path_deploy: DirectoryPath
+    path_model: DirectoryPath
     preset: List[Any] = []
 
     class Meta:
         source = None
 
     def __init__(self, *args):
-        if len(args) > 1:
-            self.path = args[1]
+        if len(args) > 2:
+            self.path_deploy = args[1]
+            self.path_model = args[2]
         self.preset = [None] * DEPLOY_PRESET_COUNT
         super().__init__(
             list(map(lambda item: self.Meta.source(**item), args[0])) if args else []
         )
 
+    def preset_update(self, data):
+        return data
+
     @property
     def presets(self) -> list:
-        return list(map(lambda item: item.native() if item else None, self.preset))
+        return list(
+            map(
+                lambda item: self.preset_update(item.native()) if item else None,
+                self.preset,
+            )
+        )
 
     @staticmethod
     def _positive_int_filter(value) -> int:
@@ -52,7 +63,8 @@ class DataBaseList(List):
 
 
 class DataBase(BaseMixinData):
-    path: Path
+    path_deploy: Path
+    path_model: Path
     data: Any
 
     class Meta:
@@ -60,7 +72,9 @@ class DataBase(BaseMixinData):
 
     @validator("data")
     def _validate_data(cls, value: DataBaseList, values) -> DataBaseList:
-        data = cls.Meta.source(value, values.get("path"))
+        data = cls.Meta.source(
+            value, values.get("path_deploy"), values.get("path_model")
+        )
         data.reload()
         return data
 
@@ -71,7 +85,7 @@ class DataBase(BaseMixinData):
         return data
 
     def dict(self, **kwargs):
-        kwargs.update({"exclude": {"path"}})
+        kwargs.update({"exclude": {"path_deploy", "path_model"}})
         data = super().dict(**kwargs)
         data.update({"data": self.data.dict()})
         return data

@@ -9,15 +9,38 @@ export default {
     errorsBlocks: {},
     errorsFields: {},
     links: [],
-    cascades: {},
+    cascades: {
+      list: [
+        {
+          "value": "InputData",
+          "label": "InputData"
+        },
+        {
+          "value": "OutputData",
+          "label": "OutputData"
+        },
+        {
+          "value": "Model",
+          "label": "Model"
+        },
+        {
+          "value": "Function",
+          "label": "Function"
+        },
+        {
+          "value": "Custom",
+          "label": "Custom"
+        }
+      ]
+    },
     status: {
       isUpdate: true,
     },
   }),
   mutations: {
     SET_CASCADES (state, value) {
-      const list = value.block_form[1]['list'] || []
-      state.cascades = { ...value, list };
+      // const list = value.block_form[1]['list'] || []
+      state.cascades = { ...value };
     },
     SET_ERRORS_BLOCKS (state, value) {
       state.errorsBlocks = { ...value }
@@ -27,9 +50,10 @@ export default {
     },
     SET_MODEL (state, value) {
       state.model = { ...value };
-      const { layers } = value;
-      state.blocks = [...prepareBlocks(layers, state.cascades.list)];
-      state.links = [...prepareLinks(layers)];
+      const { blocks } = value;
+      console.log(blocks)
+      state.blocks = [...prepareBlocks(blocks, state.cascades.list)];
+      state.links = [...prepareLinks(blocks)];
     },
     SET_BLOCKS (state, value) {
       state.blocks = [...value];
@@ -48,10 +72,10 @@ export default {
     },
   },
   actions: {
-    addBlock ({ dispatch, commit, state: { blocks, cascades: { layers_types, list } } }, { type, position }) {
+    addBlock ({ dispatch, commit, state: { blocks, cascades: { blocks_types, list } } }, { type, position }) {
       let maxID = Math.max(0, ...blocks.map(o => o.id));
-      let block = createBlock(type, maxID + 1, layers_types, list, position);
       console.log(block)
+      let block = createBlock(type, maxID + 1, blocks_types, list, position);
       if (!block) return;
       blocks.push(block);
       // dispatch('updateModel');
@@ -138,7 +162,7 @@ export default {
     async removeModel ({ dispatch }, data) {
       return await dispatch('axios', { url: '/cascades/delete/', data }, { root: true });
     },
-    async updateModel ({ commit, state: { blocks, links }, dispatch }, block) {
+    async updateModel ({ commit, state: { blocks, links }, dispatch }) {
       const semdBlocks = JSON.parse(JSON.stringify(blocks))
       semdBlocks.forEach(block => {
         // if (block.group !== 'input') block.shape.input = null;
@@ -156,10 +180,11 @@ export default {
       });
       commit('SET_STATUS', { isUpdate: true });
 
+
       const res = await dispatch('axios', { url: '/cascades/update/', data: { blocks: semdBlocks } }, { root: true });
       if (res) {
-        const { data, error, success } = res
-        console.log(data, error, success, block)
+        const { data, error } = res
+        // console.log(data, error, success, block)
         if (error) {
           // const { general, fields } = error
 
@@ -167,8 +192,11 @@ export default {
           // for (const key in error) {
           //   newError[key.replace('fields', block.id)] = error[key]
           // }
-          console.log(error)
+          // console.log(error)
           // commit('SET_ERRORS_FIELDS', { ...errorsBlocks, ...newError });
+        }
+        if (data) {
+          // commit('SET_MODEL', { blocks: data.blocks });
         }
       }
       return res
@@ -202,16 +230,16 @@ export default {
       }
       return res
     },
-    async validateModel ({ commit, dispatch }) {
+    async start ({ dispatch }) {
+      const { data } = await dispatch('axios', { url: '/cascades/start/' }, { root: true });
+      return data;
+    },
+    async save ({ dispatch }) {
+      const { data } = await dispatch('axios', { url: '/cascades/save/' }, { root: true });
+      return data;
+    },
+    async validate ({ dispatch }) {
       const { data } = await dispatch('axios', { url: '/cascades/validate/' }, { root: true });
-      if (data) {
-        const isValid = !Object.values(data).filter(item => item).length
-        commit('SET_ERRORS_BLOCKS', data)
-        if (isValid) {
-          await dispatch('projects/get', {}, { root: true })
-        }
-        dispatch('messages/setMessage', isValid ? { message: `Валидация прошла успешно` } : { error: `Валидация не прошла` }, { root: true });
-      }
       return data;
     },
     setBlocks ({ commit }, value) {

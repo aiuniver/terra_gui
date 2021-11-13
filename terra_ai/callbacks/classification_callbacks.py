@@ -32,8 +32,10 @@ class BaseClassificationCallback:
                     if not options.data.use_generator:
                         y_true[data_type][f"{out}"] = options.Y.get(data_type).get(f"{out}")
                     else:
+                        # print('options.dataset', options.dataset)
                         y_true[data_type][f"{out}"] = []
                         for _, y_val in options.dataset[data_type].batch(1):
+                            # print('y_val', y_val.keys())
                             y_true[data_type][f"{out}"].extend(y_val.get(f'{out}').numpy())
                         y_true[data_type][f"{out}"] = np.array(y_true[data_type][f"{out}"])
             return y_true, inverse_y_true

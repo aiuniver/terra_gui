@@ -22,6 +22,7 @@ class LayerOutputTypeChoice(str, Enum):
     Segmentation = "Сегментация изображений"
     TextSegmentation = "Сегментация текстов"
     ObjectDetection = "Обнаружение объектов"
+    Tracker = 'Трекер'
 
     @staticmethod
     def items_tuple() -> list:
@@ -174,8 +175,9 @@ class LayerVideoFillModeChoice(str, Enum):
 
 
 class LayerVideoFrameModeChoice(str, Enum):
-    keep_proportions = "Сохранить пропорции"
     stretch = "Растянуть"
+    fit = "Вписать"
+    cut = "Обрезать"
 
     @staticmethod
     def items_tuple() -> list:
@@ -237,11 +239,12 @@ class LayerYoloVersionChoice(str, Enum):
 
 
 class LayerODDatasetTypeChoice(str, Enum):
-    Kitti = "Kitti"
+    Yolo_terra = "Yolo_terra"
     Voc = "Voc"
+    Kitti = "Kitti"
     Coco = "Coco"
+    Yolov1 = "Yolov1"
     Udacity = "Udacity"
-    Yolo = "Yolo"
 
     @staticmethod
     def items_tuple() -> list:
@@ -288,3 +291,36 @@ class ColumnProcessingOutputTypeChoice(str, Enum):
         return list(
             map(lambda item: (item.name, item.value), ColumnProcessingOutputTypeChoice)
         )
+
+
+class DeployTypePageChoice(str, Enum):
+    model = "Обучение"
+    cascade = "Каскад"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.name, DeployTypePageChoice))
+
+
+class BlockFunctionGroupChoice(str, Enum):
+    Image = "Image"
+    Text = "Text"
+    Audio = "Audio"
+    Video = "Video"
+    Array = "Array"
+    Segmentation = "Segmentation"
+    TextSegmentation = "TextSegmentation"
+    ObjectDetection = "ObjectDetection"
+    Tracker = 'Tracker'
+
+
+class BlockFunctionTypeChoice(str, Enum):
+    ChangeType = "Изменение типа данных"
+    ChangeSize = "Изменение размера данных"
+    MinMaxScale = "Нормализация (скейлер)"
+    CropImage = "Обрезать изображение"
+    MaskedImage = "Наложение маски по классу на изображение"
+    PlotMaskSegmentation = "Наложение маски всех классов по цветам"
+    PutTag = "Расстановка тегов по вероятностям из модели"
+    PostprocessBoxes = "Постобработка Yolo"
+    PlotBBoxes = "Наложение BBox на изображение"

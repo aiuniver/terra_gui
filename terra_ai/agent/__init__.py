@@ -31,8 +31,9 @@ from ..data.cascades.cascade import CascadesList, CascadeLoadData, CascadeDetail
 from ..data.presets.datasets import DatasetsGroups
 from ..data.presets.models import ModelsGroups
 from ..data.projects.project import ProjectsInfoData, ProjectsList
-from ..data.training.train import TrainingDetailsData, InteractiveData
+from ..data.training.train import TrainingDetailsData
 from ..data.training.extra import StateStatusChoice
+from ..data.deploy.tasks import DeployData
 from ..datasets import loading as datasets_loading
 from ..datasets import utils as datasets_utils
 from ..datasets.creating import CreateDataset
@@ -120,26 +121,12 @@ class Exchange:
         projects.sort(key=lambda item: item.label)
         return ProjectsInfoData(projects=projects.native())
 
-    def _call_project_save(
-        self, source: Path, target: Path, name: str, overwrite: bool
-    ):
-        """
-        Сохранение проекта
-        """
-        project_path = Path(target, f"{name}.{settings.PROJECT_EXT}")
-        if not overwrite and project_path.is_file():
-            raise agent_exceptions.ProjectAlreadyExistsException(name)
-        zip_destination = progress_utils.pack(
-            "project_save", "Сохранение проекта", source, delete=False
-        )
-        shutil.move(zip_destination.name, project_path)
-
     def _call_project_load(self, source: Path, target: Path):
         """
         Загрузка проекта
         """
-        shutil.rmtree(target, ignore_errors=True)
         destination = progress_utils.unpack("project_load", "Загрузка проекта", source)
+        shutil.rmtree(target, ignore_errors=True)
         shutil.move(destination, target)
 
     def _call_dataset_choice(
@@ -333,11 +320,15 @@ class Exchange:
         """
         training.state.set(StateStatusChoice.no_train)
 
-    def _call_training_interactive(self, config: InteractiveData) -> dict:
+    def _call_training_interactive(self, training: TrainingDetailsData):
         """
         Обновление интерактивных параметров обучения
         """
-        return interactive.get_train_results(config=config)
+        if training.state.status in [
+            StateStatusChoice.stopped,
+            StateStatusChoice.trained,
+        ]:
+            interactive.get_train_results()
 
     def _call_training_progress(self) -> progress.ProgressData:
         """
@@ -373,6 +364,25 @@ class Exchange:
         Обновление каскада
         """
         return CascadeDetailsData(**cascade)
+
+    def _call_cascade_validate(self, path: Path, cascade: CascadeDetailsData):
+        """
+        Валидация каскада
+        """
+        print(cascade)
+        print(path)
+
+    def _call_cascade_start(self, path: Path, cascade: CascadeDetailsData):
+        """
+        Запуск каскада
+        """
+        print(cascade)
+        print(path)
+
+    def _call_deploy_get(
+        self, path_model: Path, path_deploy: Path, page: dict
+    ) -> DeployData:
+        pass
 
     def _call_deploy_presets(self):
         """

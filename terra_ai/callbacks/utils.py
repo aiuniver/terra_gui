@@ -216,6 +216,11 @@ loss_metric_config = {
             "mode": "min",
             "module": "tensorflow.keras.metrics"
         },
+        "PercentMAE": {
+            "log_name": "percent_mae",
+            "mode": "min",
+            "module": "terra_ai.training.customlosses"
+        },
         "Poisson": {
             "log_name": "poisson",
             "mode": "min",
@@ -396,6 +401,24 @@ def class_counter(y_array, classes_names: list, ohe=True):
         print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
+def sequence_length_calculator(array):
+    """ run length encoding. Partial credit to R rle function.
+        Multi datatype arrays catered for including non Numpy
+        returns: tuple (runlengths, startpositions, values) """
+    array = np.asarray(array)  # force numpy
+    n = len(array)
+    if n == 0:
+        return None
+    else:
+        y = array[1:] != array[:-1]
+        i = np.append(np.where(y), n - 1)
+        z = np.diff(np.append(-1, i))
+        sequence = z * array[i]
+        while 0 in sequence:
+            sequence = np.delete(sequence, list(sequence).index(0))
+        return list(sequence)
+
+
 def get_autocorrelation_graphic(y_true, y_pred, depth=10) -> (list, list, list):
     method_name = 'get_autocorrelation_graphic'
     try:
@@ -413,13 +436,21 @@ def get_autocorrelation_graphic(y_true, y_pred, depth=10) -> (list, list, list):
 
         auto_corr_true = []
         for i in range(depth):
-            auto_corr_true.append(get_auto_corr(y_true[:-(i + 1)], y_true[(i + 1):]))
+            if i == 0:
+                auto_corr_true.append(get_auto_corr(y_true, y_true))
+            else:
+                auto_corr_true.append(get_auto_corr(y_true[:-i], y_true[i:]))
 
         auto_corr_pred = []
         for i in range(depth):
-            auto_corr_pred.append(get_auto_corr(y_true[:-(i + 1)], y_pred[(i + 1):]))
+            if i == 0:
+                auto_corr_pred.append(get_auto_corr(y_true, y_pred))
+            else:
+                auto_corr_pred.append(get_auto_corr(y_true[:-i], y_pred[i:]))
+            # print(i, auto_corr_pred[-1])
 
         x_axis = np.arange(depth).astype('int').tolist()
+        # print('\nauto_corr_true, auto_corr_pred', auto_corr_true, auto_corr_pred)
         return x_axis, auto_corr_true, auto_corr_pred
     except Exception as e:
         print_error(f"None ({MODULE_NAME})", method_name, e)
@@ -637,10 +668,10 @@ def round_loss_metric(x: float):
             return x
         elif math.isnan(float(x)):
             return None
-        elif x > 1000:
+        elif x > 10:
             return np.round(x, 1).item()
         elif x > 1:
-            return np.round(x, -int(math.floor(math.log10(abs(x))) - 3)).item()
+            return np.round(x, -int(math.floor(math.log10(abs(x))) - 2)).item()
         else:
             return np.round(x, -int(math.floor(math.log10(abs(x))) - 2)).item()
     except Exception as e:

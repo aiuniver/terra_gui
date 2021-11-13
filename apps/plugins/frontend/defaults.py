@@ -1,18 +1,18 @@
 import sys
+from typing import List, Dict, Optional, Union, Any, Tuple
 
-from typing import List, Dict, Optional, Union, Any
 from pydantic import validator
 from pydantic.main import ModelMetaclass
 
-from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.datasets.dataset import DatasetData
+from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.modeling.layer import LayersList
 from terra_ai.data.training.extra import (
     ArchitectureChoice,
     TasksRelations,
     StateStatusChoice,
 )
-
+from .base import Field
 from .presets.defaults.training import (
     TrainingLossSelect,
     TrainingMetricSelect,
@@ -20,8 +20,6 @@ from .presets.defaults.training import (
     ArchitectureOptimizerExtraFields,
     Architectures,
 )
-
-from .base import Field
 
 
 class DefaultsDatasetsCreationData(BaseMixinData):
@@ -109,7 +107,7 @@ StatesTrainingYoloParamsDisabled = {
 
 StatesTrainingBasicParamsDisabled = {
     StateStatusChoice.no_train: [
-        "architecture_parameters_outputs_%s_classes_quantity"
+        "architecture_parameters_outputs_%s_classes_quantity",
     ],
     StateStatusChoice.training: [
         "batch",
@@ -744,10 +742,15 @@ class DefaultsTrainingData(BaseMixinData):
             architecture=self.architecture,
         )
 
-    
+
 class DefaultsCascadesData(BaseMixinData):
     block_form: List[Field]
-    blocks_types: dict
+    blocks_types: Dict[str, Dict[str, List[Field]]]
+
+
+class DefaultsDeployData(BaseMixinData):
+    type: DefaultsTrainingBaseGroupData
+    server: DefaultsTrainingBaseGroupData
 
 
 class DefaultsData(BaseMixinData):
@@ -755,3 +758,28 @@ class DefaultsData(BaseMixinData):
     modeling: DefaultsModelingData
     training: DefaultsTrainingData
     cascades: DefaultsCascadesData
+    deploy: DefaultsDeployData
+
+    def update_models(self, items: List[Tuple[str, str]] = None):
+        if not items:
+            items = []
+        values = list(map(lambda item: item[0], items))
+        options = list(map(lambda item: {"value": item[0], "label": item[1]}, items))
+
+        cascade_fields = self.cascades.blocks_types.get("Model", {}).get("main", [])
+        if cascade_fields:
+            cascade_model_field = cascade_fields[0]
+            cascade_model_field.list = options
+            if cascade_model_field.value not in values:
+                cascade_model_field.value = values[0]
+
+        deploy_model_fields = self.deploy.type.fields[0].fields.get("model")
+        if deploy_model_fields:
+            deploy_model_field = deploy_model_fields[0]
+            deploy_model_field.list = options
+            if deploy_model_field.value not in values:
+                deploy_model_field.value = values[0]
+
+    def update_deploy(self, _type: str, _name: str):
+        self.deploy.type.fields[0].value = _type
+        self.deploy.type.fields[0].fields.get(_type)[0].valule = _name

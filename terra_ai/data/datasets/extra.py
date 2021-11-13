@@ -119,9 +119,7 @@ class LayerVideoModeChoice(str, Enum):
 
 
 class LayerVideoFrameModeChoice(str, Enum):
-    keep_proportions = "keep_proportions"
     stretch = "stretch"
-    # stretch = "stretch"
     fit = "fit"
     cut = "cut"
 
@@ -222,3 +220,4 @@ class LayerOutputTypeChoice(str, Enum):
     TimeseriesTrend = "TimeseriesTrend"
     ObjectDetection = "ObjectDetection"
     Raw = "Raw"
+    Tracker = "Tracker"

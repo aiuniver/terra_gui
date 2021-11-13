@@ -16,15 +16,26 @@ from apps.api.base import (
 from . import serializers
 
 
+class GetAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        serializer = serializers.GetSerializer(data=request.data)
+        if not serializer.is_valid():
+            return BaseResponseErrorFields(serializer.errors)
+        request.project.set_deploy(serializer.validated_data)
+        return BaseResponseSuccess(
+            request.project.deploy.presets if request.project.deploy else None
+        )
+
+
 class ReloadAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         serializer = serializers.ReloadSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
-        if request.project.training.deploy:
-            request.project.training.deploy.data.reload(serializer.validated_data)
-        request.project.save()
-        return BaseResponseSuccess(request.project.training.deploy.presets)
+        if request.project.deploy:
+            request.project.deploy.data.reload(serializer.validated_data)
+        request.project.save_config()
+        return BaseResponseSuccess(request.project.deploy.presets)
 
 
 class UploadAPIView(BaseAPIView):
@@ -49,7 +60,7 @@ class UploadAPIView(BaseAPIView):
                 "project": {
                     "name": request.project.name,
                 },
-                "task": request.project.training.deploy.type.demo,
+                "task": request.project.deploy.type.demo,
                 "replace": serializer.validated_data.get("replace"),
             }
         )

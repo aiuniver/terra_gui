@@ -21,9 +21,11 @@ from tensorflow import keras
 from tensorflow.keras.models import load_model
 from tensorflow.python.keras.utils.np_utils import to_categorical
 
+from config import settings
 from terra_ai import progress
 from terra_ai.callbacks.classification_callbacks import BaseClassificationCallback
-# from terra_ai.callbacks.interactive_callback import InteractiveCallback
+from terra_ai.callbacks.interactive_callback import InteractiveCallback
+# from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.callbacks.utils import print_error, loss_metric_config, BASIC_ARCHITECTURE, CLASS_ARCHITECTURE, \
     YOLO_ARCHITECTURE, round_loss_metric, class_metric_list, CLASSIFICATION_ARCHITECTURE
 from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
@@ -32,21 +34,18 @@ from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
 from terra_ai.data.presets.training import Metric
 from terra_ai.data.training.extra import CheckpointTypeChoice, ArchitectureChoice
-from terra_ai.data.training.train import TrainData, TrainingDetailsData, StateData
+from terra_ai.data.training.train import TrainingDetailsData, StateData
 
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.exceptions.deploy import MethodNotImplementedException
 from terra_ai.modeling.validator import ModelValidator
-from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.exceptions import training as exceptions, terra_exception
+from terra_ai.training.yolo_utils import create_yolo, CustomModelYolo, compute_loss, get_mAP
+from terra_ai.utils import decamelize
 
 __version__ = 0.02
-
-from terra_ai.training.yolo_utils import create_yolo, CustomModelYolo, compute_loss, get_mAP
-
-from terra_ai.utils import decamelize
 
 interactive = InteractiveCallback()
 
@@ -64,7 +63,6 @@ class GUINN:
         self.model_path: Path = Path("./")
         self.deploy_path: Path = Path("./")
         self.dataset_path: Path = Path("./")
-        # self.optimizer = None
         self.loss: dict = {}
         self.metrics: dict = {}
         self.yolo_pred = None
@@ -78,17 +76,11 @@ class GUINN:
         self.model_is_trained: bool = False
         self.progress_name = "training"
 
-    def _set_training_params(self, dataset: DatasetData, train_params: TrainingDetailsData, dataset_path: Path,
-                             training_path: Path) -> None:
+    def _set_training_params(self, dataset: DatasetData, params: TrainingDetailsData) -> None:
         method_name = '_set_training_params'
         try:
-            params = train_params.base
-            self.params = train_params.base.native()
-            self.dataset_path = dataset_path
-            self.model_path = train_params.model_path
-            self.deploy_path = train_params.deploy_path
-            self.dataset = self._prepare_dataset(dataset=dataset, model_path=self.model_path,
-                                                 state=train_params.state.status)
+            self.dataset = self._prepare_dataset(dataset=dataset, model_path=params.model_path,
+                                                 state=params.state.status)
 
             if not self.dataset.data.architecture or self.dataset.data.architecture == ArchitectureChoice.Basic:
                 self.deploy_type = self._set_deploy_type(self.dataset)
@@ -97,62 +89,44 @@ class GUINN:
 
             self.nn_name = "trained_model"
 
-            if self.dataset.data.use_generator:
-                train_size = len(self.dataset.dataframe.get("train"))
-            else:
-                train_size = len(self.dataset.dataset.get('train'))
-
-            if params.batch > train_size:
-                if train_params.state.status == "addtrain":
-                    train_params.state.set("stopped")
+            train_size = len(self.dataset.dataframe.get("train")) if self.dataset.data.use_generator \
+                else len(self.dataset.dataset.get('train'))
+            if params.base.batch > train_size:
+                if params.state.status == "addtrain":
+                    params.state.set("stopped")
                 else:
-                    train_params.state.set("no_train")
-                raise exceptions.TooBigBatchSize(params.batch, train_size)
+                    params.state.set("no_train")
+                raise exceptions.TooBigBatchSize(params.base.batch, train_size)
 
-            if train_params.state.status == "addtrain":
-                if self.callbacks[0].last_epoch - 1 >= self.sum_epoch:
-                    self.sum_epoch += params.epochs
-                if (self.callbacks[0].last_epoch - 1) < self.sum_epoch:
-                    self.epochs = self.sum_epoch - self.callbacks[0].last_epoch + 1
+            if params.state.status == "addtrain":
+                if params.logs.get("addtrain_epochs")[-1] >= self.sum_epoch:
+                    self.sum_epoch += params.base.epochs
+                if params.logs.get("addtrain_epochs")[-1] < self.sum_epoch:
+                    self.epochs = self.sum_epoch - params.logs.get("addtrain_epochs")[-1]
                 else:
-                    self.epochs = params.epochs
+                    self.epochs = params.base.epochs
             else:
-                self.epochs = params.epochs
-            self.batch_size = params.batch
-            # self.set_optimizer(params)
+                self.epochs = params.base.epochs
 
-            # for output_layer in params.architecture.outputs_dict:
-            #     self.metrics.update({
-            #         str(output_layer["id"]):
-            #             self._check_metrics(
-            #                 metrics=output_layer.get("metrics", []),
-            #                 num_classes=output_layer.get("classes_quantity"),
-            #                 options=self.dataset.data.outputs.get(output_layer["id"])
-            #             )
-            #     })
-            #     self.loss.update({str(output_layer["id"]): output_layer["loss"]})
+            self.batch_size = params.base.batch
 
-            interactive.set_attributes(dataset=self.dataset, dataset_path=dataset_path, training_path=training_path,
-                                       initial_config=train_params.interactive)
+            interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss,
+                                   dataset_path=dataset.path, params=params)
         except Exception as e:
             print_error(GUINN().name, method_name, e)
 
-    def _set_callbacks(self, dataset: PrepareDataset, dataset_path: Path, save_model_path: Path,
-                       state: StateData, deploy: DeployData, initial_model=None) -> None:
+    def _set_callbacks(self, dataset: PrepareDataset, dataset_data: DatasetData,
+                       train_details: TrainingDetailsData, initial_model=None) -> None:
         method_name = '_set_callbacks'
         try:
-            progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков...'})
-            retrain_epochs = self.sum_epoch if state.status == "addtrain" else self.epochs
+            progress.pool(self.progress_name, finished=False, message="Добавление колбэков...")
+            retrain_epochs = self.sum_epoch if train_details.state.status == "addtrain" else self.epochs
 
-            callback = FitCallback(dataset=dataset, params=self.params, retrain_epochs=retrain_epochs,
-                                   model_path=save_model_path, model_name=self.nn_name,
-                                   dataset_path=dataset_path, deploy_type=self.deploy_type,
-                                   initialed_model=initial_model,
-                                   # state=state, deploy=deploy,
-                                   deploy_path=self.deploy_path
-                                   )
-            self.callbacks = callback
-            progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков выполнено'})
+            callback = FitCallback(dataset=dataset, dataset_data=dataset_data, retrain_epochs=retrain_epochs,
+                                   training_details=train_details, model_name=self.nn_name,
+                                   deploy_type=self.deploy_type, initialed_model=initial_model)
+            self.callbacks = [callback]
+            progress.pool(self.progress_name, finished=False, message="Добавление колбэков выполнено")
         except Exception as e:
             print_error(GUINN().name, method_name, e)
 
@@ -219,34 +193,32 @@ class GUINN:
         except Exception as e:
             print_error(GUINN().name, method_name, e)
 
-    def _set_model(self, model: ModelDetailsData, state: str) -> ModelData:
+    def _set_model(self, model: ModelDetailsData, train_details: TrainingDetailsData) -> ModelData:
         method_name = '_set_model'
         try:
-            if state == "training":
+            if train_details.state.status == "training":
                 validator = ModelValidator(model)
                 train_model = validator.get_keras_model()
             else:
                 model_file = f"{self.nn_name}.trm"
-                train_model = load_model(os.path.join(self.model_path, f"{model_file}"),
+                train_model = load_model(os.path.join(train_details.model_path, f"{model_file}"),
                                          compile=False)
                 weight = None
-                for i in os.listdir(self.model_path):
+                for i in os.listdir(train_details.model_path):
                     if i[-3:] == '.h5' and 'last' in i:
                         weight = i
                 if weight:
-                    train_model.load_weights(os.path.join(self.model_path, weight))
+                    train_model.load_weights(os.path.join(train_details.model_path, weight))
             return train_model
         except Exception as e:
             print_error(GUINN().name, method_name, e)
 
     @staticmethod
-    def _save_params_for_deploy(training_path: Path, params: TrainData):
+    def _save_params_for_deploy(params: TrainingDetailsData):
         method_name = '_save_params_for_deploy'
         try:
-            if not os.path.exists(training_path):
-                os.mkdir(training_path)
-            with open(os.path.join(training_path, "config.train"), "w", encoding="utf-8") as train_config:
-                json.dump(params.native(), train_config)
+            with open(os.path.join(params.model_path, "config.train"), "w", encoding="utf-8") as train_config:
+                json.dump(params.base.native(), train_config)
         except Exception as e:
             print_error(GUINN().name, method_name, e)
 
@@ -260,9 +232,7 @@ class GUINN:
                 None
             """
             model = f"{self.nn_name}.trm"
-            file_path_model: str = os.path.join(
-                self.model_path, f"{model}"
-            )
+            file_path_model: str = os.path.join(model_path, f"{model}")
             self.model.save(file_path_model)
         except Exception as e:
             print_error(GUINN().name, method_name, e)
@@ -272,39 +242,48 @@ class GUINN:
         try:
             for one_thread in threading.enumerate():
                 if one_thread.getName() == "current_train":
-                    current_status = state.status
-                    state.set("stopped")
+                    current_status = state.state.status
+                    state.state.set("stopped")
                     progress.pool(self.progress_name,
                                   message="Найдено незавершенное обучение. Идет очистка. Подождите.")
                     one_thread.join()
-                    state.set(current_status)
+                    state.state.set(current_status)
         except Exception as e:
             print_error(GUINN().name, method_name, e)
 
-    def terra_fit(self, dataset: PrepareDataset, model: Model, params: dict, dataset_path: Path,
-                  model_path: Path, deploy_path: Path) -> dict:
+    def terra_fit(self, dataset: DatasetData, gui_model: ModelDetailsData,
+                  training: TrainingDetailsData) -> dict:
         method_name = 'model_fit'
         try:
-            # self._kill_last_training(state=training.state)
+            """
+                   This method created for using wth externally compiled models
+
+                   Args:
+                       dataset: DatasetData
+                       gui_model: Keras model for fit - ModelDetailsData
+                       training: TrainingDetailsData
+
+                   Return:
+                       dict
+                   """
+            self._kill_last_training(state=training)
             progress.pool.reset(self.progress_name)
-            #
-            # if training.state.status != "addtrain":
-            #     self._save_params_for_deploy(training_path=training.model_path, params=training.base)
-            #
-            # self.nn_cleaner(retrain=True if training.state.status == "training" else False)
-            # self._set_training_params(dataset=dataset, train_params=training, dataset_path=self.dataset_path,
-            #                           training_path=self.model_path)
-            #
-            # self.model = self._set_model(model=gui_model, state=training.state.status)
-            # if training.state.status == "training":
-            #     self.save_model()
-            #
-            # # self.base_model_fit(params=training, dataset=self.dataset, dataset_data=dataset,
-            # #                     verbose=0, save_model_path=training_path, dataset_path=dataset_path)
-            # self.train_base_model(params=self.params, dataset=self.dataset, model=self.model, callback=self.callbacks)
-            # return {"dataset": self.dataset, "metrics": self.metrics, "losses": self.loss}
+
+            if training.state.status != "addtrain":
+                self._save_params_for_deploy(params=training)
+
+            self.nn_cleaner(retrain=True if training.state.status == "training" else False)
+
+            self._set_training_params(dataset=dataset, params=training)
+
+            self.model = self._set_model(model=gui_model, train_details=training)
+            if training.state.status == "training":
+                self.save_model(training.model_path)
+
+            self.base_model_fit(training_details=training, dataset=self.dataset, dataset_data=dataset, verbose=0)
+            return {"dataset": self.dataset, "metrics": self.metrics, "losses": self.loss}
         except Exception as e:
-            print_error(GUINN().name, method_name, e)
+                print_error(GUINN().name, method_name, e)
 
     def nn_cleaner(self, retrain: bool = False) -> None:
         method_name = 'nn_cleaner'
@@ -329,12 +308,13 @@ class GUINN:
 
     # @progress.threading
     def model_fit(self, params: dict, model: Model, dataset: PrepareDataset, dataset_path: Path, deploy_path: Path,
-                  model_path: Path) -> None:
+                  model_path: Path, training_details: TrainingDetailsData) -> None:
         method_name = 'base_model_fit'
         try:
             yolo_arch = True if dataset.data.architecture in YOLO_ARCHITECTURE else False
-            # print('yolo_arch', yolo_arch)
             callback = FitCallback(dataset, params, model_path, deploy_path)
+            threading.enumerate()[-1].setName("current_train")
+            progress.pool(self.progress_name, finished=False, message="Компиляция модели ...")
             if yolo_arch:
                 version = dataset.instructions.get(list(dataset.data.outputs.keys())[0]).get('2_object_detection').get(
                     'yolo')
@@ -345,7 +325,17 @@ class GUINN:
             else:
                 self.train_base_model(params, dataset, model, callback)
 
-            # progress.pool(self.progress_name, finished=False, data={'status': 'Начало обучения ...'})
+            progress.pool(self.progress_name, finished=False, message="Компиляция модели выполнена")
+            self._set_callbacks(
+                dataset=dataset, dataset_data=dataset.data, train_details=training_details,
+                initial_model=self.model if yolo_arch else None
+            )
+            progress.pool(self.progress_name, finished=False, message="Начало обучения ...")
+            if (training_details.state.status == "stopped" and
+                self.callbacks[0].last_epoch < training_details.base.epochs) or \
+                    (training_details.state.status == "trained" and
+                     self.callbacks[0].last_epoch - 1 == training_details.base.epochs):
+                self.sum_epoch = training_details.base.epochs
         except Exception as e:
             print_error(GUINN().name, method_name, e)
 
@@ -755,8 +745,8 @@ class MemoryUsage:
         self.debug = debug
         try:
             N.nvmlInit()
-            self.gpu = True
-        except Exception:
+            self.gpu = settings.USE_GPU
+        except:
             self.gpu = False
 
     def get_usage(self):
@@ -805,33 +795,25 @@ class MemoryUsage:
 class FitCallback:
     """CustomCallback for all task type"""
 
-    def __init__(self, dataset: PrepareDataset, params: dict, model_path: Path, deploy_path: Path,
-                 # state: StateData, deploy: DeployData,
-                 dataset_path: Path = Path(""), retrain_epochs: int = None,
+    def __init__(self, dataset: PrepareDataset, training_details: TrainingDetailsData, model_path: Path,
+                 deploy_path: Path, retrain_epochs: int = None,
                  model_name: str = "model", deploy_type: str = "", initialed_model=None):
-        """
-        Для примера
-        "checkpoint": {
-                "layer": 2,
-                "type": "Metrics",
-                "indicator": "Val",
-                "metric_name": "Accuracy",
-                "save_best": True,
-                "save_weights": False,
-            },
-        """
-
         super().__init__()
         print('\n FitCallback')
         self.name = "FitCallback"
         self.current_logs = {}
         self.usage_info = MemoryUsage(debug=False)
+        self.training_detail = training_details
         self.dataset = dataset
-        self.dataset_path = dataset_path
+        self.dataset_path = dataset.data.path
         self.deploy_type = deploy_type
         self.is_yolo = True if dataset.data.architecture in YOLO_ARCHITECTURE else False
-        self.batch_size = params.get('batch')
-        self.epochs = params.get('epochs')
+        self.batch_size = training_details.base.batch
+        self.epochs = training_details.base.epochs
+        self.retrain_epochs = retrain_epochs
+        self.still_epochs = training_details.base.epochs
+        self.nn_name = model_name
+
         self.batch = 0
         self.num_batches = 0
         self.last_epoch = 1
@@ -840,15 +822,6 @@ class FitCallback:
         self._time_first_step = time.time()
         self._sum_time = 0
         self._sum_epoch_time = 0
-        self.retrain_epochs = retrain_epochs
-        self.still_epochs = params.get('epochs')
-        self.model_path = model_path
-        self.deploy_path = deploy_path
-        self.nn_name = model_name
-        self.log_gap = 5
-        self.progress_threashold = 3
-        # self.state = state
-        # self.deploy = deploy
         self.progress_name = "training"
         self.result = {
             'info': None,
@@ -875,19 +848,15 @@ class FitCallback:
             'states': {}
         }
         # аттрибуты для чекпоинта
-        self.params = params
-        self.checkpoint_config = params.get('architecture').get('parameters').get('checkpoint')
+        self.checkpoint_config = training_details.base.architecture.parameters.checkpoint
         self.checkpoint_mode = self._get_checkpoint_mode()  # min max
         self.num_outputs = len(self.dataset.data.outputs.keys())
-        self.metric_checkpoint = self.checkpoint_config.get('metric_name')  # "val_mAP50" if self.is_yolo else "loss"
+        self.metric_checkpoint = self.checkpoint_config.metric_name  # "val_mAP50" if self.is_yolo else "loss"
         self.class_outputs = class_metric_list(self.dataset)
         if self.dataset.data.architecture in CLASSIFICATION_ARCHITECTURE:
             self.y_true, _ = BaseClassificationCallback().get_y_true(self.dataset)
             self.class_idx = BaseClassificationCallback().prepare_class_idx(self.y_true, self.dataset)
-        print("self.class_outputs", self.class_outputs)
-        # print(self.class_idx.get('train').get('2').keys())
 
-        # self.log_history = self._load_logs()
         self.log_history = self._prepare_log_history_template(self.dataset, self.params)
 
         # yolo params
@@ -898,12 +867,12 @@ class FitCallback:
         self.samples_target_val = []
 
     @staticmethod
-    def _prepare_log_history_template(options: PrepareDataset, params: dict):
+    def _prepare_log_history_template(options: PrepareDataset, params: TrainingDetailsData):
         method_name = '_prepare_log_history_template'
         try:
             log_history = {"epochs": []}
             if options.data.architecture in BASIC_ARCHITECTURE:
-                for output_layer in params.get('architecture').get('parameters').get("outputs"):
+                for output_layer in params.base.architecture.parameters.outputs:
                     out = f"{output_layer['id']}"
                     log_history[out] = {
                         "loss": {}, "metrics": {},
@@ -1342,10 +1311,17 @@ class FitCallback:
     def _save_logs(self):
         method_name = '_save_logs'
         try:
-            interactive_path = os.path.join(self.model_path, "interactive.history")
+            logs = {
+                "fit_log": self.log_history,
+                "interactive_log": interactive.log_history,
+                "progress_table": interactive.progress_table,
+                "addtrain_epochs": interactive.addtrain_epochs
+            }
+            self.training_detail.logs = logs
+            interactive_path = os.path.join(self.training_detail.model_path, "interactive.history")
             if not os.path.exists(interactive_path):
                 os.mkdir(interactive_path)
-            with open(os.path.join(self.model_path, "log.history"), "w", encoding="utf-8") as history:
+            with open(os.path.join(self.training_detail.model_path, "log.history"), "w", encoding="utf-8") as history:
                 json.dump(self.log_history, history)
             with open(os.path.join(interactive_path, "log.int"), "w", encoding="utf-8") as log:
                 json.dump(interactive.log_history, log)
@@ -1354,31 +1330,48 @@ class FitCallback:
             with open(os.path.join(interactive_path, "addtraining.int"), "w", encoding="utf-8") as addtraining:
                 json.dump({"addtrain_epochs": interactive.addtrain_epochs}, addtraining)
         except Exception as e:
-            print_error('FitCallback', method_name, e)
+                print_error('FitCallback', method_name, e)
 
     def _load_logs(self):
         method_name = '_load_logs'
         try:
-            interactive_path = os.path.join(self.model_path, "interactive.history")
-            if self.state.status == "addtrain":
-                with open(os.path.join(self.model_path, "log.history"), "r", encoding="utf-8") as history:
-                    logs = json.load(history)
-                with open(os.path.join(interactive_path, "log.int"), "r", encoding="utf-8") as int_log:
-                    interactive_logs = json.load(int_log)
-                with open(os.path.join(interactive_path, "table.int"), "r", encoding="utf-8") as table_int:
-                    interactive_table = json.load(table_int)
-                with open(os.path.join(interactive_path, "addtraining.int"), "r", encoding="utf-8") as addtraining_int:
-                    interactive.addtrain_epochs = json.load(addtraining_int)["addtrain_epochs"]
+            if self.training_detail.state.status == "addtrain":
+                if self.training_detail.logs:
+                    logs = self.training_detail.logs.get("fit_log")
+                    interactive.log_history = self.training_detail.logs.get("interactive_log")
+                    interactive.progress_table = self.training_detail.logs.get("progress_table")
+                    interactive.addtrain_epochs = self.training_detail.logs.get("addtrain_epochs")
+                else:
+                    interactive_path = os.path.join(self.training_detail.model_path, "interactive.history")
+                    with open(os.path.join(self.training_detail.model_path, "log.history"), "r",
+                              encoding="utf-8") as history:
+                        logs = json.load(history)
+                    with open(os.path.join(interactive_path, "log.int"), "r", encoding="utf-8") as int_log:
+                        interactive.log_history = json.load(int_log)
+                    with open(os.path.join(interactive_path, "table.int"), "r", encoding="utf-8") as table_int:
+                        interactive.progress_table = json.load(table_int)
+                    with open(os.path.join(interactive_path, "addtraining.int"), "r",
+                              encoding="utf-8") as addtraining_int:
+                        interactive.addtrain_epochs = json.load(addtraining_int)["addtrain_epochs"]
                 self.last_epoch = max(logs.get('epoch')) + 1
                 self.still_epochs = self.retrain_epochs - self.last_epoch + 1
                 self._get_metric_name_checkpoint(logs.get('logs'))
-                interactive.log_history = interactive_logs
-                interactive.progress_table = interactive_table
                 return logs
             else:
-                return self._prepare_log_history_template(self.dataset, self.params)
+                return {
+                    'epoch': [],
+                    'logs': {}
+                }
         except Exception as e:
             print_error('FitCallback', method_name, e)
+
+    @staticmethod
+    def _logs_predict_extract(logs, prefix):
+        pred_on_batch = []
+        for key in logs.keys():
+            if key.startswith(prefix):
+                pred_on_batch.append(logs[key])
+        return pred_on_batch
 
     @staticmethod
     def _logs_losses_extract(logs, prefixes: list):
@@ -1436,11 +1429,10 @@ class FitCallback:
             print_error('FitCallback', method_name, e)
 
     def _get_result_data(self):
-        self.result["states"] = self.state.native()
         return self.result
 
     def _get_train_status(self) -> str:
-        return self.state.status
+        return self.training_detail.state.status
 
     def _get_predict(self, deploy_model=None):
         method_name = '_get_predict'
@@ -1452,12 +1444,11 @@ class FitCallback:
             else:
                 # TODO: настроить вывод массивов их обучения, выводить словарь
                 #  {'train_true': train_true, 'train_pred': train_pred, 'val_true': val_true, 'val_pred': val_pred}
-                # if self.dataset.data.use_generator:
-                #     current_predict = current_model.predict(self.dataset.dataset.get('val').batch(1),
-                #                                             batch_size=1)
-                # else:
-                #     current_predict = current_model.predict(self.dataset.X.get('val'), batch_size=self.batch_size)
-                current_predict = None
+                if self.dataset.data.use_generator:
+                    current_predict = current_model.predict(self.dataset.dataset.get('val').batch(1),
+                                                            batch_size=1)
+                else:
+                    current_predict = current_model.predict(self.dataset.X.get('val'), batch_size=self.batch_size)
                 current_target = None
             return current_predict, current_target
         except Exception as e:
@@ -1466,9 +1457,10 @@ class FitCallback:
     def _deploy_predict(self, presets_predict):
         method_name = '_deploy_predict'
         try:
-            result = CreateArray().postprocess_results(
-                array=presets_predict, options=self.dataset, save_path=str(self.model_path),
-                dataset_path=str(self.dataset_path))
+            result = CreateArray().postprocess_results(array=presets_predict,
+                                                       options=self.dataset,
+                                                       save_path=str(self.training_detail.model_path),
+                                                       dataset_path=str(self.dataset_data.path))
             deploy_presets = []
             if result:
                 deploy_presets = list(result.values())[0]
@@ -1480,7 +1472,7 @@ class FitCallback:
         method_name = '_create_form_data_for_dataframe_deploy'
         try:
             form_data = []
-            with open(os.path.join(self.dataset_path, "config.json"), "r", encoding="utf-8") as dataset_conf:
+            with open(os.path.join(self.dataset.data.path, "config.json"), "r", encoding="utf-8") as dataset_conf:
                 dataset_info = json.load(dataset_conf).get("columns", {})
             for inputs, input_data in dataset_info.items():
                 if int(inputs) not in list(self.dataset.data.outputs.keys()):
@@ -1502,7 +1494,7 @@ class FitCallback:
                                 "type": input_type
                             }
                         form_data.append(table_column_data)
-            with open(os.path.join(self.deploy_path, "form.json"), "w", encoding="utf-8") as form_file:
+            with open(os.path.join(self.training_detail.deploy_path, "form.json"), "w", encoding="utf-8") as form_file:
                 json.dump(form_data, form_file, ensure_ascii=False)
         except Exception as e:
             print_error('FitCallback', method_name, e)
@@ -1510,7 +1502,6 @@ class FitCallback:
     def _create_cascade(self, **data):
         method_name = '_create_cascade'
         try:
-            deploy_path = data.get("deploy_path")
             if self.dataset.data.alias not in ["imdb", "boston_housing", "reuters"]:
                 if "Dataframe" in self.deploy_type:
                     self._create_form_data_for_dataframe_deploy()
@@ -1519,14 +1510,22 @@ class FitCallback:
                 else:
                     func_name = decamelize(self.deploy_type)
                 config = CascadeCreator()
-                config.create_config(deploy_path=self.deploy_path, model_path=self.model_path, func_name=func_name)
-                config.copy_package(deploy_path=self.deploy_path, model_path=self.model_path)
+                config.create_config(
+                    deploy_path=self.training_detail.deploy_path,
+                    model_path=self.training_detail.model_path,
+                    func_name=func_name
+                )
+                config.copy_package(
+                    deploy_path=self.training_detail.deploy_path,
+                    model_path=self.training_detail.model_path
+                )
                 config.copy_script(
-                    deploy_path=self.deploy_path,
+                    deploy_path=self.training_detail.deploy_path,
                     function_name=func_name
                 )
                 if self.deploy_type == ArchitectureChoice.TextSegmentation:
-                    with open(os.path.join(deploy_path, "format.txt"), "w", encoding="utf-8") as format_file:
+                    with open(os.path.join(self.training_detail.deploy_path, "format.txt"),
+                              "w", encoding="utf-8") as format_file:
                         format_file.write(str(data.get("tags_map", "")))
         except Exception as e:
             print_error('FitCallback', method_name, e)
@@ -1535,15 +1534,15 @@ class FitCallback:
         method_name = '_prepare_deploy'
         try:
             weight = None
-            cascade_data = {"deploy_path": self.deploy_path}
-            for i in os.listdir(self.model_path):
+            cascade_data = {"deploy_path": self.training_detail.deploy_path}
+            for i in os.listdir(self.training_detail.model_path):
                 if i[-3:] == '.h5' and 'best' in i:
                     weight = i
             if weight:
                 if self.yolo_model:
-                    self.yolo_model.load_weights(os.path.join(self.model_path, weight))
+                    self.yolo_model.load_weights(os.path.join(self.training_detail.model_path, weight))
                 else:
-                    self.model.load_weights(os.path.join(self.model_path, weight))
+                    self.model.load_weights(os.path.join(self.training_detail.model_path, weight))
             deploy_predict, y_true = self._get_predict()
             deploy_presets_data = self._deploy_predict(deploy_predict)
             out_deploy_presets_data = {"data": deploy_presets_data}
@@ -1566,15 +1565,16 @@ class FitCallback:
                     tmp_deploy = [{"preset": elem[0], "label": elem[1]} for elem in tmp_data]
                     out_deploy_presets_data = {"data": tmp_deploy}
                 out_deploy_presets_data["columns"] = columns
-                out_deploy_presets_data["predict_column"] \
-                    = predict_column if predict_column else "Предсказанные значения"
+                out_deploy_presets_data[
+                    "predict_column"] = predict_column if predict_column else "Предсказанные значения"
 
             out_deploy_data = dict([
-                ("path", self.deploy_path),
+                ("path", self.training_detail.deploy_path),
+                ("path_model", self.training_detail.model_path),
                 ("type", self.deploy_type),
                 ("data", out_deploy_presets_data)
             ])
-            self.deploy = DeployData(**out_deploy_data)
+            # self.training_detail.deploy = DeployData(**out_deploy_data)
             self._create_cascade(**cascade_data)
         except Exception as e:
             print_error('FitCallback', method_name, e)
@@ -1648,9 +1648,14 @@ class FitCallback:
         try:
             if self._get_train_status() == "stopped":
                 self.model.stop_training = True
-                msg = f'ожидайте остановку...'
-                # self.batch += 1
-                self._set_result_data({'info': f"'Обучение остановлено пользователем, '{msg}"})
+                progress.pool(
+                    self.progress_name,
+                    percent=(self.last_epoch - 1) / (
+                        self.retrain_epochs if self._get_train_status() == "addtrain" else self.epochs
+                    ) * 100,
+                    message="Обучение остановлено пользователем, ожидайте остановку...",
+                    finished=False,
+                )
             else:
                 msg_batch = {"current": batch + 1, "total": self.num_batches}
                 msg_epoch = {"current": self.last_epoch,
@@ -1666,14 +1671,15 @@ class FitCallback:
                                                   self.batch, self._start_time)
                 self.batch += 1
                 if interactive.urgent_predict:
+
                     if self.is_yolo:
                         self.samples_train.append(self._logs_predict_extract(logs, prefix='pred'))
                         self.samples_target_train.append(self._logs_predict_extract(logs, prefix='target'))
 
-                    arrays = self._get_predict()
-                    train_batch_data = interactive.update_state(arrays=arrays)
+                    y_pred, y_true = self._get_predict()
+                    train_batch_data = interactive.update_state(y_pred=y_pred, y_true=y_true)
                 else:
-                    train_batch_data = interactive.update_state(arrays=None)
+                    train_batch_data = interactive.update_state(y_pred=None)
                 if train_batch_data:
                     result_data = {
                         'timings': [estimated_time, elapsed_time, still_time,
@@ -1684,6 +1690,7 @@ class FitCallback:
                     result_data = {'timings': [estimated_time, elapsed_time, still_time,
                                                elapsed_epoch_time, still_epoch_time, msg_epoch, msg_batch]}
                 self._set_result_data(result_data)
+                self.training_detail.result = self._get_result_data()
                 progress.pool(
                     self.progress_name,
                     percent=(self.last_epoch - 1) / (
@@ -1691,7 +1698,6 @@ class FitCallback:
                     ) * 100,
                     message=f"Обучение. Эпоха {self.last_epoch} из "
                             f"{self.retrain_epochs if self._get_train_status() in ['addtrain', 'stopped'] else self.epochs}",
-                    data=self._get_result_data(),
                     finished=False,
                 )
         except Exception as e:
@@ -1711,20 +1717,41 @@ class FitCallback:
         method_name = 'on_epoch_end'
         try:
             self.last_epoch = epoch
+            total_epochs = self.retrain_epochs if self._get_train_status() in ['addtrain', 'stopped'] else self.epochs
             if self.is_yolo:
                 self.current_logs = logs
+                if self.last_epoch < total_epochs and not self.model.stop_training:
+                    self.samples_train = []
+                    self.samples_val = []
+                    self.samples_target_train = []
+                    self.samples_target_val = []
             else:
                 self.current_basic_logs(
                     epoch=epoch, train_y_true=train_true, train_y_pred=train_pred,
                     val_y_true=val_true, val_y_pred=val_pred, train_idx=train_data_idxs
                 )
             self._update_log_history()
-            # best_path = self.save_best_weights()
-            # if best_path:
-            #     yolo_model.save_weights(best_path)
-            #     print(f"\nEpoch {epoch + 1}")
-            #     print(f"Best weights was saved in directory {best_path}")
-            # self.last_epoch += 1
+
+            current_epoch_time = time.time() - self._time_first_step
+            self._sum_epoch_time += current_epoch_time
+            train_epoch_data = interactive.update_state(
+                fit_logs=self.log_history,
+                # y_pred={y_pred},
+                # y_true=y_true,
+                current_epoch_time=current_epoch_time,
+                on_epoch_end_flag=True
+            )
+            self._set_result_data({'train_data': train_epoch_data})
+            progress.pool(
+                self.progress_name,
+                percent=(self.last_epoch - 1) / (
+                    self.retrain_epochs if self._get_train_status() == "addtrain" or self._get_train_status() == "stopped"
+                    else self.epochs
+                ) * 100,
+                message=f"Обучение. Эпоха {self.last_epoch} из "
+                        f"{self.retrain_epochs if self._get_train_status() in ['addtrain', 'stopped'] else self.epochs}",
+                finished=False,
+            )
         except Exception as e:
             print_error('FitCallback', method_name, e)
 
@@ -1735,10 +1762,10 @@ class FitCallback:
                 if self._best_epoch_monitoring():
                     if not os.path.exists(self.model_path):
                         os.mkdir(self.model_path)
-                    if not os.path.exists(os.path.join(self.model_path, "deploy_presets")):
-                        os.mkdir(os.path.join(self.model_path, "deploy_presets"))
+                    if not os.path.exists(os.path.join(self.training_detail.model_path, "deploy_presets")):
+                        os.mkdir(os.path.join(self.training_detail.model_path, "deploy_presets"))
                     file_path_best: str = os.path.join(
-                        self.model_path, f"best_weights_{self.metric_checkpoint}.h5"
+                        self.training_detail.model_path, f"best_weights_{self.metric_checkpoint}.h5"
                     )
                     return file_path_best
         except Exception as e:
@@ -1753,14 +1780,14 @@ class FitCallback:
 
             if (self.last_epoch - 1) > 1:
                 file_path_last: str = os.path.join(
-                    self.model_path, f"last_weights_{self.metric_checkpoint}.h5"
+                    self.training_detail.model_path, f"last_weights_{self.metric_checkpoint}.h5"
                 )
                 if self.yolo_model:
                     self.yolo_model.save_weights(file_path_last)
                 else:
                     self.model.save_weights(file_path_last)
-            if not os.path.exists(os.path.join(self.model_path, "deploy_presets")):
-                os.mkdir(os.path.join(self.model_path, "deploy_presets"))
+            if not os.path.exists(os.path.join(self.training_detail.model_path, "deploy_presets")):
+                os.mkdir(os.path.join(self.training_detail.model_path, "deploy_presets"))
             self._prepare_deploy()
 
             time_end = self.update_progress(self.num_batches * self.epochs + 1,
@@ -1769,34 +1796,27 @@ class FitCallback:
             total_epochs = self.retrain_epochs if self._get_train_status() in ['addtrain',
                                                                                'trained'] else self.epochs
             if self.model.stop_training:
-                self._set_result_data({'info': f"Обучение остановлено. Модель сохранена."})
                 progress.pool(
                     self.progress_name,
                     message=f"Обучение остановлено. Эпоха {self.last_epoch - 1} из "
-                            f"{total_epochs}",
+                            f"{total_epochs}. Модель сохранена.",
                     data=self._get_result_data(),
                     finished=True,
                 )
             else:
-                if self._get_train_status() == "retrain":
-                    msg = f'Затрачено времени на обучение: ' \
-                          f'{self.eta_format(time_end)} '
-                else:
-                    msg = f'Затрачено времени на обучение: ' \
-                          f'{self.eta_format(self._sum_time)} '
-                self._set_result_data({'info': f"Обучение закончено. {msg}"})
                 percent = (self.last_epoch - 1) / (
                     self.retrain_epochs if self._get_train_status() ==
                                            "addtrain" or self._get_train_status() == "stopped"
                     else self.epochs
                 ) * 100
-                self.state.set("trained")
+
+                self.training_detail.state.set("trained")
+                self.training_detail.result = self._get_result_data()
                 progress.pool(
                     self.progress_name,
                     percent=percent,
                     message=f"Обучение завершено. Эпоха {self.last_epoch - 1} из "
                             f"{total_epochs}",
-                    data=self._get_result_data(),
                     finished=True,
                 )
         except Exception as e:

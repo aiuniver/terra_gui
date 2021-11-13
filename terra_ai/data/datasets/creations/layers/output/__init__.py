@@ -49,6 +49,10 @@ class LayerTimeseriesData(LayerBaseData, types.Timeseries.ParametersData):
     pass
 
 
+class LayerTrackerData(LayerBaseData, types.Tracker.ParametersData):
+    pass
+
+
 Layer = Enum(
     "Layer",
     dict(

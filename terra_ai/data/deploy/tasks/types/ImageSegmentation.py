@@ -1,11 +1,10 @@
 import json
 import os
 import random
-from pathlib import Path, PurePath
+from pathlib import Path, PurePath, PosixPath
 from typing import List, Tuple
 
 from PIL import Image
-from pydantic import FilePath
 
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.settings import DEPLOY_PRESET_COUNT
@@ -13,8 +12,8 @@ from ..extra import DataBaseList, DataBase
 
 
 class Item(BaseMixinData):
-    source: FilePath
-    segment: FilePath
+    source: PosixPath
+    segment: PosixPath
     data: List[Tuple[str, Tuple[int, int, int]]]
 
 
@@ -25,6 +24,12 @@ class DataList(DataBaseList):
     class Meta:
         source = Item
 
+    def preset_update(self, data):
+        data.update(
+            {k: str(Path(self.path_model, data.get(k)))} for k in ("source", "segment")
+        )
+        return data
+
     def reload(self, indexes: List[int] = None):
         if indexes is None:
             indexes = list(range(DEPLOY_PRESET_COUNT))
@@ -33,11 +38,11 @@ class DataList(DataBaseList):
         if not len(self):
             return
 
-        self.source_path = Path(self.path, "preset", "in")
-        self.segment_path = Path(self.path, "preset", "out")
+        self.source_path = Path(self.path_deploy, "preset", "in")
+        self.segment_path = Path(self.path_deploy, "preset", "out")
         os.makedirs(self.source_path, exist_ok=True)
         os.makedirs(self.segment_path, exist_ok=True)
-        label_file = Path(self.path, "label.txt")
+        label_file = Path(self.path_deploy, "label.txt")
 
         for _index in indexes:
             self.update(_index)

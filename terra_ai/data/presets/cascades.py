@@ -1,6 +1,3 @@
-from apps.plugins.frontend.presets.defaults import datasets
-
-
 EmptyCascadeDetailsData = {
     "alias": "no_name",
     "name": "NoName",
@@ -10,6 +7,7 @@ EmptyCascadeDetailsData = {
             "name": "Input block",
             "group": "InputData",
             "position": [0, 0],
+            "parameters": {"main": {}},
         }
     ]
 }
