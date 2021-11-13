@@ -13,7 +13,7 @@
         <BasePanelContent>
           <template #header>Предпросмотр</template>
           <template #content>
-            <Preview :list="preview" />
+            <Preview @choosePreview="choosePreview" :list="preview" />
           </template>
         </BasePanelContent>
         <BasePanelContent>
@@ -24,7 +24,7 @@
         </BasePanelContent>
       </BasePanel>
     </div>
-    <WorkspaceAction />
+    <WorkspaceActions @action="handleWorkspaceAction" />
   </main>
 </template>
 
@@ -35,7 +35,7 @@ import BasePanelContent from '@/components/datasets/components/panel/BasePanelCo
 import FileManager from '@/components/datasets/components/FileManager';
 import Preview from '@/components/datasets/components/Preview';
 import Settings from '@/components/datasets/components/Settings';
-import WorkspaceAction from '@/components/datasets/components/WorkspaceAction';
+import WorkspaceActions from '@/components/datasets/components/WorkspaceActions';
 
 export default {
   components: {
@@ -44,7 +44,7 @@ export default {
     Preview,
     FileManager,
     Settings,
-    WorkspaceAction,
+    WorkspaceActions,
   },
 
   name: 'Datasets',
@@ -52,18 +52,27 @@ export default {
     chooseFile(item) {
       console.log(item);
     },
+    choosePreview(id) {
+      console.log(id);
+    },
+    handleWorkspaceAction(action) {
+      console.log(action);
+    },
   },
   data: () => ({
     preview: [
       {
+        id: 1,
         path: 'http://u01.appmifile.com/images/2017/04/15/c9b37bf4-2bed-466f-b2a1-e3bee2e54d7c.jpg',
         label: 'Мерседес 1',
       },
       {
+        id: 2,
         path: 'https://i.pinimg.com/originals/b3/cf/82/b3cf8221bf35baf3d4faa68473811fc9.jpg',
         label: 'Мерседес 2',
       },
       {
+        id: 3,
         path: 'https://storge.pic2.me/c/1360x800/510/029.jpg',
         label: 'Мерседес 3',
       },
