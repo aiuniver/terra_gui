@@ -224,6 +224,7 @@ class GUINN:
         prepared_dataset.prepare_dataset()
         if state != "addtrain":
             prepared_dataset.deploy_export(os.path.join(model_path, "dataset"))
+
         return prepared_dataset
 
     def _set_model(self, model: ModelDetailsData, train_details: TrainingDetailsData) -> ModelData:
@@ -675,7 +676,8 @@ class FitCallback(keras.callbacks.Callback):
                 interactive.addtrain_epochs = self.training_detail.logs.get("addtrain_epochs")
             else:
                 interactive_path = os.path.join(self.training_detail.model_path, "interactive.history")
-                with open(os.path.join(self.training_detail.model_path, "log.history"), "r", encoding="utf-8") as history:
+                with open(os.path.join(self.training_detail.model_path, "log.history"), "r",
+                          encoding="utf-8") as history:
                     logs = json.load(history)
                 with open(os.path.join(interactive_path, "log.int"), "r", encoding="utf-8") as int_log:
                     interactive.log_history = json.load(int_log)
@@ -716,10 +718,12 @@ class FitCallback(keras.callbacks.Callback):
         try:
             if logs.get(self.metric_checkpoint):
                 if self.checkpoint_mode == 'min' and \
-                        logs.get(self.metric_checkpoint) < min(self.log_history.get("logs").get(self.metric_checkpoint)):
+                        logs.get(self.metric_checkpoint) < min(
+                    self.log_history.get("logs").get(self.metric_checkpoint)):
                     return True
                 elif self.checkpoint_mode == 'max' and \
-                        logs.get(self.metric_checkpoint) > max(self.log_history.get("logs").get(self.metric_checkpoint)):
+                        logs.get(self.metric_checkpoint) > max(
+                    self.log_history.get("logs").get(self.metric_checkpoint)):
                     return True
                 else:
                     return False
@@ -887,7 +891,8 @@ class FitCallback(keras.callbacks.Callback):
                                                                            'stopped'] else self.epochs
         if self.is_yolo:
             mAP = get_mAP(self.model, self.dataset, score_threshold=0.05, iou_threshold=[0.50],
-                          TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names, dataset_path=self.dataset_data.path)
+                          TRAIN_CLASSES=self.dataset.data.outputs.get(2).classes_names,
+                          dataset_path=self.dataset_data.path)
             interactive_logs = self._logs_losses_extract(logs, prefixes=['pred', 'target'])
             # interactive_logs.update({'mAP': mAP})
             interactive_logs.update(mAP)

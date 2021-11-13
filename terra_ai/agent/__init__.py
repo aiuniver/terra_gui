@@ -393,7 +393,7 @@ class Exchange:
         """
         получение данных для отображения пресетов на странице деплоя
         """
-        return DeployCreator().get_deploy(training_path=path_model, deploy_path=path_deploy)
+        return DeployCreator().get_deploy(training_path=path_model, deploy_path=path_deploy, page=page)
 
     def _call_deploy_cascades_create(self, training_path: str, model_name: str):
         pass
