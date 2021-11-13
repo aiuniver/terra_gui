@@ -1,5 +1,5 @@
 """
-## Тип слоя `PSPBlock1D`
+## Тип слоя `PSPBlock3D`
 """
 from typing import Optional, Tuple
 
@@ -22,7 +22,7 @@ LayerConfig = LayerConfigData(
             "validation": LayerValidationMethodChoice.fixed,
         },
         "input_dimension": {
-            "value": 3,
+            "value": 5,
             "validation": LayerValidationMethodChoice.minimal,
         },
         "module": ModuleChoice.terra_custom_layers,
@@ -42,6 +42,6 @@ class ParametersMainData(BaseMixinData):
 
 
 class ParametersExtraData(BaseMixinData):
-    kernel_size: PositiveInt = 5
+    kernel_size: Tuple[PositiveInt, PositiveInt, PositiveInt] = (3, 3, 3)
     dropout_rate: ConstrainedFloatValueGe0Le1 = 0.1
     pass

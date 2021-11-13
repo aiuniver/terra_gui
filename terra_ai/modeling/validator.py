@@ -1141,15 +1141,6 @@ class LayerValidation:
             else:
                 pass
 
-        # # CustomUNETBlock exceptions
-        # if self.layer_type == LayerTypeChoice.CustomUNETBlock:
-        #     if self.inp_shape[0][1] < 32 or self.inp_shape[0][2] < 32 or self.inp_shape[0][3] < 3:
-        #         return str(exceptions.InputShapeMustBeInEchDimException(
-        #             "greater or equal", (32, 32, 3), self.inp_shape[0][1:]
-        #         ))
-        #     if self.inp_shape[0][1] % 4 != 0 or self.inp_shape[0][2] % 4 != 0:
-        #         return str(exceptions.InputShapeMustBeWholeDividedByException(self.inp_shape[0], 4))
-
         # UNETBlock2D and PSPBlock2D exceptions
         if self.layer_type == LayerTypeChoice.UNETBlock2D or self.layer_type == LayerTypeChoice.PSPBlock2D:
             if self.inp_shape[0][1] % 4 != 0 or self.inp_shape[0][2] % 4 != 0:
@@ -1171,6 +1162,22 @@ class LayerValidation:
 
             if ((self.inp_shape[0][1] // (2 ** self.layer_parameters.get("n_pooling_branches"))) % 2 != 0 or
                     (self.inp_shape[0][1] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 1):
+                return str(exceptions.InputShapeMustBeInEchDimException(
+                    "equal multiple of 4", f"or decrease n_pooling_branches <"
+                                           f"{self.layer_parameters.get('n_pooling_branches')}", self.inp_shape[0][1:]
+                ))
+
+        # UNETBlock3D and PSPBlock3D exceptions
+        if self.layer_type == LayerTypeChoice.UNETBlock3D or self.layer_type == LayerTypeChoice.PSPBlock3D:
+            if self.inp_shape[0][1] % 4 != 0 or self.inp_shape[0][2] % 4 != 0 or self.inp_shape[0][3] % 4 != 0:
+                return str(exceptions.InputShapeMustBeWholeDividedByException(self.inp_shape[0], 4))
+
+            if ((self.inp_shape[0][1] // (2 ** self.layer_parameters.get("n_pooling_branches"))) % 2 != 0 or
+                    (self.inp_shape[0][1] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 1) and \
+                    ((self.inp_shape[0][2] // (2 ** self.layer_parameters.get("n_pooling_branches"))) % 2 != 0 or
+                (self.inp_shape[0][2] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 1) and \
+                    ((self.inp_shape[0][3] // (2 ** self.layer_parameters.get("n_pooling_branches"))) % 2 != 0 or
+                (self.inp_shape[0][3] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 1):
                 return str(exceptions.InputShapeMustBeInEchDimException(
                     "equal multiple of 4", f"or decrease n_pooling_branches <"
                                            f"{self.layer_parameters.get('n_pooling_branches')}", self.inp_shape[0][1:]

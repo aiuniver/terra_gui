@@ -1,5 +1,5 @@
 """
-## Тип слоя `PSPBlock`
+## Тип слоя `PSPBlock2D`
 """
 from typing import Optional, Tuple
 
