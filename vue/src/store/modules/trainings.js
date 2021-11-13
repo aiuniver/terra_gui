@@ -21,7 +21,9 @@ export default {
     progress: {},
     interactive: {},
 
-    largeImgSrc: null
+    largeImgSrc: null,
+
+    expandedIdx: []
   }),
   mutations: {
     SET_BASE (state, value) {
@@ -63,12 +65,16 @@ export default {
     SET_LARGE_IMAGE (state, value) {
       state.largeImgSrc = value;
     },
+    SET_EXPANDED (state, { value, idx }) {
+      if (value) return state.expandedIdx.push(idx)
+      state.expandedIdx.splice(state.expandedIdx.indexOf(idx), 1)
+    }
   },
   actions: {
     parseStruct ({ commit }, { form, interactive, progress, state, result, base }) {
       // console.log(form, interactive, progress, state)
       if (base) commit("SET_BASE", base)
-      if (form) commit("SET_FORM", form)
+      if (form) commit("SET_FORM", { ...form })
       if (state) commit("SET_STATE", state)
       if (state?.status) commit("SET_STATUS_TRAIN", state.status)
       if (interactive) commit("SET_INTERACTIV", interactive)
@@ -126,8 +132,7 @@ export default {
     },
     async clear ({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/clear/', data }, { root: true });
-      // dispatch('setState', res);
-      dispatch('resetTraining', {});
+      dispatch('resetAllTraining', {});
       dispatch('parseStruct', res?.data || {});
       return res
     },
@@ -160,14 +165,10 @@ export default {
     async resetTraining ({ dispatch }) {
       localStorage.removeItem('settingsTrainings');
       dispatch('messages/resetProgress', {}, { root: true });
-      // dispatch('setTrainData', {});
-      // dispatch('setTrainUsage', {});
       await dispatch('projects/get', {}, { root: true })
     },
     async resetAllTraining ({ commit, dispatch }) {
       dispatch('resetTraining', {});
-      // dispatch('setTrainSettings', {});
-      // dispatch('setTrainSettings', {});
       commit("SET_STATE_PARAMS", {});
     },
     setDrawer ({ commit }, data) {
@@ -201,6 +202,9 @@ export default {
     setLargeImg ({ commit }, value = null) {
       commit("SET_LARGE_IMAGE", value);
     },
+    setExpandedIdx ({ commit }, data) {
+      commit("SET_EXPANDED", data);
+    }
   },
   getters: {
     getTrainSettings: ({ trainSettings }) => {
@@ -254,5 +258,8 @@ export default {
     getLargeImg ({ largeImgSrc }) {
       return largeImgSrc
     },
+    getExpandedIdx ({ expandedIdx }) {
+      return expandedIdx
+    }
   },
 };

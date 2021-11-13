@@ -18,13 +18,13 @@
       <li :class="['toolbar__menu--item', { disabled: false }]" @click.prevent="click($event, 'InputData')" title="Входящий слой">
         <i class="t-icon icon-layer-input-casc"></i>
       </li>
-      <li class="toolbar__menu--item" @click.prevent="click($event, 'model')" title="Model">
+      <li class="toolbar__menu--item" @click.prevent="click($event, 'Model')" title="Model">
         <i class="t-icon icon-layer-model"></i>
       </li>
-      <li class="toolbar__menu--item" @click.prevent="click($event, 'function')" title="Function">
+      <li class="toolbar__menu--item" @click.prevent="click($event, 'Function')" title="Function">
         <i class="t-icon icon-layer-function"></i>
       </li>
-      <li class="toolbar__menu--item" @click.prevent="click($event, 'custom')" title="Custom">
+      <li class="toolbar__menu--item" @click.prevent="click($event, 'Custom')" title="Custom">
         <i class="t-icon icon-layer-custom"></i>
       </li>
       <li :class="['toolbar__menu--item', { disabled: isOutput }]" @click.prevent="click($event, 'OutputData')" title="Исходящий слой">
@@ -34,7 +34,7 @@
       <li :class="['toolbar__menu--item', { disabled: false }]" @click="click($event, 'validation')" title="Валидация">
         <i class="t-icon icon-model-validation"></i>
       </li>
-      <li :class="['toolbar__menu--item', { disabled: false }]" @click="click($event, 'play')" title="Запустить">
+      <li :class="['toolbar__menu--item', { disabled: false }]" @click="click($event, 'start')" title="Запустить">
         <i class="t-icon icon-model-play"></i>
       </li>
       <li :class="['toolbar__menu--item', { disabled: false }]" @click="click($event, 'save')" title="Сохранить каскад">

@@ -37,3 +37,8 @@ class DeployTypeDemoChoice(str, Enum):
     TimeseriesTrend = "time_series_trend"
     YoloV3 = "object_detection"
     YoloV4 = "object_detection"
+
+
+class DeployTypePageChoice(str, Enum):
+    cascade = "cascade"
+    model = "model"

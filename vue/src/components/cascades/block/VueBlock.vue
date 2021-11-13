@@ -1,8 +1,8 @@
 <template>
   <div class="t-block-cascades" :style="style" @mouseover="hover = true" @mouseleave="hover = false">
     <div :class="['t-block-cascades__header', group, { selected: selected }, { error: !!error }]">
-      <div class="t-block-cascades__header--title" :title="name">{{ `${id}) ${typeLabel}: ${name}` }}</div>
-      <div class="t-block-cascades__header--parametr" :title="parametr">{{ parametr }}</div>
+      <div class="t-block-cascades__header--title" :title="name">{{ `${id}) ${group}: ${name}` }}</div>
+      <div class="t-block-cascades__header--parametr" :title="parametr">{{ }}</div>
     </div>
     <div class="t-block-cascades__base"></div>
     <div v-if="error" v-show="hover || selected" class="t-block-cascades__error">
@@ -64,7 +64,6 @@ export default {
       },
     },
     selected: Boolean,
-    type: String,
     typeLabel: String,
     title: {
       type: String,
@@ -339,7 +338,7 @@ $circleConnectedColor: #569dcf;
         border: $blockBorder solid #ffffff;
       }
     }
-    &.model {
+    &.Model {
       background: #64c9cf;
       border: $blockBorder solid #64c9cf;
       &:hover {
@@ -349,7 +348,7 @@ $circleConnectedColor: #569dcf;
         border: $blockBorder solid #ffffff;
       }
     }
-    &.function {
+    &.Function {
       background: #ff4c29;
       border: $blockBorder solid #ff4c29;
       &:hover {
@@ -359,7 +358,7 @@ $circleConnectedColor: #569dcf;
         border: $blockBorder solid #ffffff;
       }
     }
-    &.custom {
+    &.Custom {
       background: #ffb740;
       border: $blockBorder solid #ffb740;
       &:hover {

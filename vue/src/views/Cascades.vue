@@ -56,8 +56,14 @@ export default {
       const { data = null } = await this.$store.dispatch('cascades/getImageModel', image.slice(22));
       if (data) this.imageModel = data;
     },
-    async validateModel() {
-      await this.$store.dispatch('cascades/validateModel', {});
+    async save() {
+      await this.$store.dispatch('cascades/save', {});
+    },
+    async start() {
+      await this.$store.dispatch('cascades/start', {});
+    },
+    async validation() {
+      await this.$store.dispatch('cascades/validate', {});
     },
     async clearModel() {
       const action = await this.$store.dispatch('dialogs/confirm', { ctx: this, content: 'Очистить модель?' });
@@ -69,15 +75,18 @@ export default {
       if (btn === 'load') {
         this.isTraining();
       }
-      if (['InputData', 'model', 'function', 'custom', 'OutputData'].includes(btn)) {
+      if (['InputData', 'Model', 'Function', 'Custom', 'OutputData'].includes(btn)) {
+        console.log(btn);
         this.addBlock(btn);
       }
+      if (btn === 'start') {
+        this.start();
+      }
       if (btn === 'save') {
-        this.saveModel();
-        this.$store.dispatch('cascades/selectBlock', {});
+        this.save();
       }
       if (btn === 'validation') {
-        this.validateModel();
+        this.validation();
       }
       if (btn === 'clear') {
         this.clearModel();

@@ -113,9 +113,9 @@ export default {
     filter() {
       return {
         InputData: this.blocks.filter(i => i.group === 'InputData').length > 1 ? ['clone', 'link', 'remove'] : ['link'],
-        model: ['clone', 'link', 'remove'],
-        function: ['clone', 'link', 'remove'],
-        custom: ['clone', 'link', 'remove'],
+        Model: ['clone', 'link', 'remove'],
+        Function: ['clone', 'link', 'remove'],
+        Custom: ['clone', 'link', 'remove'],
         OutputData: this.project?.dataset ? ['link'] : ['clone', 'link', 'remove'],
       };
     },
@@ -447,7 +447,7 @@ export default {
           x += this.optionsForChild.width / 2;
           // console.log()
           // y += this.$refs?.['block_' + block.id]?.[0]?.getHeight();
-          y += 45;
+          y += 55;
         }
         if (slotNumber === 1) {
           x += this.optionsForChild.width;

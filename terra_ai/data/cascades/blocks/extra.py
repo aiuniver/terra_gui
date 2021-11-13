@@ -12,7 +12,7 @@ class BlockOutputDataSaveAsChoice(str, Enum):
 
 class PostprocessBoxesMethodAvailableChoice(str, Enum):
     nms = "nms"
-    soft_nms = "soft_nums"
+    soft_nms = "soft_nms"
 
     @staticmethod
     def values() -> list:
@@ -52,6 +52,7 @@ class BlockFunctionGroupChoice(str, Enum):
     Segmentation = "Segmentation"
     TextSegmentation = "TextSegmentation"
     ObjectDetection = "ObjectDetection"
+    Tracker = "Tracker"
 
     @staticmethod
     def values() -> list:
@@ -62,6 +63,7 @@ class BlockFunctionTypeChoice(str, Enum):
     ChangeType = "ChangeType"
     ChangeSize = "ChangeSize"
     MinMaxScale = "MinMaxScale"
+    CropImage = "CropImage"
     MaskedImage = "MaskedImage"
     PlotMaskSegmentation = "PlotMaskSegmentation"
     PutTag = "PutTag"
@@ -80,7 +82,7 @@ class BlockCustomGroupChoice(str, Enum):
     def values() -> list:
         return list(map(lambda item: item.value, BlockCustomGroupChoice))
 
-    
+
 class BlockCustomTypeChoice(str, Enum):
     Sort = "Sort"
 

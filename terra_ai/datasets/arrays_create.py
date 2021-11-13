@@ -434,6 +434,14 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
+    def instructions_tracker(paths_list: list, **options: dict) -> dict:
+
+        instructions = {'instructions': paths_list,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
     def cut_image(paths_list: list, dataset_folder=None, **options: dict):
 
         for elem in paths_list:
@@ -717,6 +725,14 @@ class CreateArray(object):
                                        'put': options['put'],
                                        'frame_mode': options['frame_mode']}
                         }
+
+        return instructions
+
+    @staticmethod
+    def cut_tracker(path_list: int, dataset_folder=None, **options: dict) -> dict:
+
+        instructions = {'instructions': path_list,
+                        'parameters': options}
 
         return instructions
 
@@ -1070,6 +1086,14 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
+    def create_tracker(zero: int, **options):
+
+        instructions = {'instructions': np.array([zero]),
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
     def create_raw(item, **options) -> dict:
         if isinstance(item, str):
             try:
@@ -1394,6 +1418,11 @@ class CreateArray(object):
     def preprocess_object_detection(array: list, **options):
 
         return array
+
+    @staticmethod
+    def preprocess_tracker(zero: int, **options):
+
+        return zero
 
     @staticmethod
     def preprocess_raw(array: np.ndarray, **options) -> np.ndarray:

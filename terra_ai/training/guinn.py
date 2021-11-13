@@ -20,6 +20,7 @@ from tensorflow.keras.models import Model
 from tensorflow import keras
 from tensorflow.keras.models import load_model
 
+from config import settings
 from terra_ai import progress
 from terra_ai.callbacks.interactive_callback import InteractiveCallback
 from terra_ai.callbacks.utils import loss_metric_config
@@ -283,25 +284,19 @@ class GUINN:
                         lst.append(i)
             return lst
 
-        min_step = 0
-        for i in range(3):
+        batch_list = []
+        for i in range(4):
             r = issimple(len_val - i)
             if len(r):
                 try:
-                    min_step = min(r)
-                    if len_val // min_step > batch_size:
-                        for k in r:
-                            if len_val // k <= batch_size:
-                                min_step = k
-                                break
-                            else:
-                                min_step = len_val
-                    break
+                    for k in r:
+                        if len_val // k < batch_size:
+                            batch_list.append(k)
+                        else:
+                            batch_list.append(len_val)
                 except ValueError:
                     pass
-            else:
-                min_step = len_val
-        val_batch_size = len_val // min_step
+        val_batch_size = len_val // min(batch_list)
         return val_batch_size
 
     def terra_fit(self,
@@ -395,11 +390,9 @@ class GUINN:
         )
         progress.pool(self.progress_name, finished=False, message="Начало обучения ...")
         if self.dataset.data.use_generator:
-            print('use generator')
             critical_val_size = len(self.dataset.dataframe.get("val"))
             buffer_size = 100
         else:
-            print('dont use generator')
             critical_val_size = len(self.dataset.dataset.get('val'))
             buffer_size = 1000
 
@@ -444,7 +437,7 @@ class MemoryUsage:
         self.debug = debug
         try:
             N.nvmlInit()
-            self.gpu = False
+            self.gpu = settings.USE_GPU
         except:
             self.gpu = False
 
@@ -821,7 +814,6 @@ class FitCallback(keras.callbacks.Callback):
     def on_train_batch_end(self, batch, logs=None):
         if self._get_train_status() == "kill":
             self.model.stop_training = True
-            print(time.time())
             return
         if self._get_train_status() == "stopped":
             self.model.stop_training = True

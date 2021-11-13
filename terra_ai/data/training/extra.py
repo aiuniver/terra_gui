@@ -55,6 +55,7 @@ class ArchitectureChoice(str, Enum):
     VideoClassification = "VideoClassification"
     YoloV3 = "YoloV3"
     YoloV4 = "YoloV4"
+    Tracker = "Tracker"
 
 
 class CheckpointIndicatorChoice(str, Enum):

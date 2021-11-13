@@ -1,6 +1,6 @@
 {
   "name": "vue_neural",
-  "version": "0.10.33",
+  "version": "0.10.49",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",

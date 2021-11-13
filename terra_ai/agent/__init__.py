@@ -1,9 +1,6 @@
 import os
 import json
 import shutil
-import threading
-import time
-
 import pynvml
 import tensorflow
 
@@ -37,6 +34,7 @@ from ..data.presets.models import ModelsGroups
 from ..data.projects.project import ProjectsInfoData, ProjectsList
 from ..data.training.train import TrainingDetailsData
 from ..data.training.extra import StateStatusChoice
+from ..data.deploy.tasks import DeployData
 from ..datasets import loading as datasets_loading
 from ..datasets import utils as datasets_utils
 from ..datasets.creating import CreateDataset
@@ -315,15 +313,7 @@ class Exchange:
         """
         Остановить обучение
         """
-        training.state.set(StateStatusChoice.kill)
-        if training.state.status == "kill":
-            for one_thread in threading.enumerate():
-                if one_thread.getName() == "current_train":
-                    one_thread.join()
-                    print(time.time())
-                    print("Обучение убито")
-                    print(threading.enumerate())
-                    break
+        training.state.set(StateStatusChoice.stopped)
 
     def _call_training_clear(self, training: TrainingDetailsData):
         """
@@ -383,11 +373,27 @@ class Exchange:
         """
         return CascadeDetailsData(**cascade)
 
-    def _call_deploy_get(self, training_path: str, deploy_path: str):
+    def _call_cascade_validate(self, path: Path, cascade: CascadeDetailsData):
+        """
+        Валидация каскада
+        """
+        print(cascade)
+        print(path)
+
+    def _call_cascade_start(self, path: Path, cascade: CascadeDetailsData):
+        """
+        Запуск каскада
+        """
+        print(cascade)
+        print(path)
+
+    def _call_deploy_get(
+        self, path_model: Path, path_deploy: Path, page: dict
+    ) -> DeployData:
         """
         получение данных для отображения пресетов на странице деплоя
         """
-        return DeployCreator().get_deploy(training_path=training_path, deploy_path=deploy_path)
+        return DeployCreator().get_deploy(training_path=path_model, deploy_path=path_deploy)
 
     def _call_deploy_cascades_create(self, training_path: str, model_name: str):
         pass

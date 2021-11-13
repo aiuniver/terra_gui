@@ -22,6 +22,7 @@ class LayerOutputTypeChoice(str, Enum):
     Segmentation = "Сегментация изображений"
     TextSegmentation = "Сегментация текстов"
     ObjectDetection = "Обнаружение объектов"
+    Tracker = 'Трекер'
 
     @staticmethod
     def items_tuple() -> list:
@@ -290,3 +291,36 @@ class ColumnProcessingOutputTypeChoice(str, Enum):
         return list(
             map(lambda item: (item.name, item.value), ColumnProcessingOutputTypeChoice)
         )
+
+
+class DeployTypePageChoice(str, Enum):
+    model = "Обучение"
+    cascade = "Каскад"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.name, DeployTypePageChoice))
+
+
+class BlockFunctionGroupChoice(str, Enum):
+    Image = "Image"
+    Text = "Text"
+    Audio = "Audio"
+    Video = "Video"
+    Array = "Array"
+    Segmentation = "Segmentation"
+    TextSegmentation = "TextSegmentation"
+    ObjectDetection = "ObjectDetection"
+    Tracker = 'Tracker'
+
+
+class BlockFunctionTypeChoice(str, Enum):
+    ChangeType = "Изменение типа данных"
+    ChangeSize = "Изменение размера данных"
+    MinMaxScale = "Нормализация (скейлер)"
+    CropImage = "Обрезать изображение"
+    MaskedImage = "Наложение маски по классу на изображение"
+    PlotMaskSegmentation = "Наложение маски всех классов по цветам"
+    PutTag = "Расстановка тегов по вероятностям из модели"
+    PostprocessBoxes = "Постобработка Yolo"
+    PlotBBoxes = "Наложение BBox на изображение"
