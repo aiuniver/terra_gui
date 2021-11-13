@@ -38,9 +38,9 @@
         <t-field inline label="Показать статистику">
           <t-checkbox-new v-model="show_statistic" small @change="show" />
         </t-field>
-        <t-field inline label="Фиксация колонок">
+        <!-- <t-field inline label="Фиксация колонок">
           <t-checkbox-new v-model="fixation" small />
-        </t-field>
+        </t-field> -->
       </div>
       <div class="predictions__param"></div>
       <div class="predictions__param">
