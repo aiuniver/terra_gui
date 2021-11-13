@@ -55,6 +55,9 @@ export default {
         }
         return data.finished;
       },
+      async DownloadSettings({dispatch}, data){
+        return await dispatch('axios', { url: '/deploy/get/', data }, { root: true });
+      },
       async ReloadCard({ commit, dispatch }, values) {
         const { data } = await dispatch('axios', { url: '/deploy/reload/', data: values }, { root: true });
         commit("SET_CARDS",  data.data.data);

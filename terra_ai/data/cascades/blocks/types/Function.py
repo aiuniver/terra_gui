@@ -14,7 +14,7 @@ from terra_ai.data.cascades.blocks.extra import (
 
 class ParametersMainData(BaseMixinData):
     group: BlockFunctionGroupChoice
-    type: BlockFunctionTypeChoice
+    type: Optional[BlockFunctionTypeChoice]
     change_type: Optional[ChangeTypeAvailableChoice] = ChangeTypeAvailableChoice.int
     shape: Optional[List[PositiveInt]]
     min_scale: Optional[confloat(ge=0, le=1)] = 0
@@ -34,7 +34,29 @@ class ParametersMainData(BaseMixinData):
     colors: Optional[List[Color]]
     line_thickness: Optional[PositiveInt]
 
-    @validator("type")
+    def __init__(self, **data):
+        _type = data.get("type")
+        _keys = ["group", "type"]
+        if _type == BlockFunctionTypeChoice.ChangeType:
+            _keys += ["change_type"]
+        elif _type == BlockFunctionTypeChoice.ChangeSize:
+            _keys += ["shape"]
+        elif _type == BlockFunctionTypeChoice.MinMaxScale:
+            _keys += ["min_scale", "max_scale"]
+        elif _type == BlockFunctionTypeChoice.MaskedImage:
+            _keys += ["class_id"]
+        elif _type == BlockFunctionTypeChoice.PlotMaskSegmentation:
+            _keys += ["classes_colors"]
+        elif _type == BlockFunctionTypeChoice.PutTag:
+            _keys += ["open_tag", "close_tag", "alpha"]
+        elif _type == BlockFunctionTypeChoice.PostprocessBoxes:
+            _keys += ["score_threshold", "iou_threshold", "method", "sigma"]
+        elif _type == BlockFunctionTypeChoice.PlotBBoxes:
+            _keys += ["classes", "colors", "line_thickness"]
+        data = dict(filter(lambda item: item[0] in _keys, data.items()))
+        super().__init__(**data)
+
+    @validator("type", pre=True)
     def _validate_type(cls, value: BlockFunctionTypeChoice) -> BlockFunctionTypeChoice:
         if value == BlockFunctionTypeChoice.ChangeType:
             cls.__fields__["change_type"].required = True
@@ -60,5 +82,4 @@ class ParametersMainData(BaseMixinData):
             cls.__fields__["classes"].required = True
             cls.__fields__["colors"].required = True
             cls.__fields__["line_thickness"].required = True
-
         return value

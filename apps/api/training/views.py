@@ -95,6 +95,7 @@ class ProgressAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         request.project.training.progress = agent_exchange("training_progress").native()
         if request.project.training.progress.get("finished"):
+            request.project.set_training_base(request.project.training.base.native())
             request.project.training.save(request.project.training.name)
             request.project.save_config()
         return BaseResponseSuccess(

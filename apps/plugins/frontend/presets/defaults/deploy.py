@@ -10,9 +10,8 @@ DeployTypeGroup = {
             "label": "Тип",
             "name": "type",
             "parse": "type",
-            "value": "",
-            "list": [{"value": "", "label": "Выберите тип"}]
-            + list(
+            "value": DeployTypePageChoice.model.name,
+            "list": list(
                 map(
                     lambda item: {"value": item.name, "label": item.value},
                     list(DeployTypePageChoice),

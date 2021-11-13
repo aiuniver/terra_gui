@@ -173,7 +173,7 @@ class ModelValidator:
         print('\nvalidated model', model.layers, '\n')
         self.validator: LayerValidation = LayerValidation()
         self.model: ModelDetailsData = model
-        self.filled_model = model   # .native()
+        self.filled_model = model  # .native()
         self.output_shape = {}
         self.all_indexes: List[int] = []
         self.start_row: List[int] = []
@@ -685,7 +685,6 @@ class LayerValidation:
                 except Exception:
                     return output_shape, self.parameters_validation()
 
-
             if self.module_type == ModuleTypeChoice.tensorflow:
                 try:
                     inp_shape = (
@@ -876,7 +875,7 @@ class LayerValidation:
                         return str(exceptions.InputShapesAreDifferentException()) % self.inp_shape
         else:
             if isinstance(self.input_dimension[0], int) and \
-                self.input_dimension[1] == LayerValidationMethodChoice.fixed and \
+                    self.input_dimension[1] == LayerValidationMethodChoice.fixed and \
                     len(self.inp_shape[0]) != self.input_dimension[0]:
                 return str(exceptions.IncorrectQuantityInputDimensionsException(
                     self.input_dimension[0], len(self.inp_shape[0])
@@ -1093,7 +1092,7 @@ class LayerValidation:
                         (224, 224, 3),
                         self.inp_shape[0][1:]
                     ))
-                elif  self.inp_shape[0][1] < 32 or self.inp_shape[0][2] < 32 or self.inp_shape[0][3] < 3:
+                elif self.inp_shape[0][1] < 32 or self.inp_shape[0][2] < 32 or self.inp_shape[0][3] < 3:
                     return str(exceptions.InputShapeMustBeInEchDimException(
                         "greater or equal", (32, 32, 3), self.inp_shape[0][1:]
                     ))
@@ -1117,7 +1116,7 @@ class LayerValidation:
                         (224, 224, 3),
                         self.inp_shape[0][1:]
                     ))
-                elif  self.inp_shape[0][1] < 32 or self.inp_shape[0][2] < 32 or self.inp_shape[0][3] < 3:
+                elif self.inp_shape[0][1] < 32 or self.inp_shape[0][2] < 32 or self.inp_shape[0][3] < 3:
                     return str(exceptions.InputShapeMustBeInEchDimException(
                         "greater or equal", (32, 32, 3), self.inp_shape[0][1:]
                     ))
@@ -1142,19 +1141,45 @@ class LayerValidation:
             else:
                 pass
 
-        # CustomUNETBlock exceptions
-        if self.layer_type == LayerTypeChoice.CustomUNETBlock:
-            if self.inp_shape[0][1] < 32 or self.inp_shape[0][2] < 32 or self.inp_shape[0][3] < 3:
-                return str(exceptions.InputShapeMustBeInEchDimException(
-                    "greater or equal", (32, 32, 3), self.inp_shape[0][1:]
-                ))
+        # # CustomUNETBlock exceptions
+        # if self.layer_type == LayerTypeChoice.CustomUNETBlock:
+        #     if self.inp_shape[0][1] < 32 or self.inp_shape[0][2] < 32 or self.inp_shape[0][3] < 3:
+        #         return str(exceptions.InputShapeMustBeInEchDimException(
+        #             "greater or equal", (32, 32, 3), self.inp_shape[0][1:]
+        #         ))
+        #     if self.inp_shape[0][1] % 4 != 0 or self.inp_shape[0][2] % 4 != 0:
+        #         return str(exceptions.InputShapeMustBeWholeDividedByException(self.inp_shape[0], 4))
+
+        # UNETBlock2D and PSPBlock2D exceptions
+        if self.layer_type == LayerTypeChoice.UNETBlock2D or self.layer_type == LayerTypeChoice.PSPBlock2D:
             if self.inp_shape[0][1] % 4 != 0 or self.inp_shape[0][2] % 4 != 0:
                 return str(exceptions.InputShapeMustBeWholeDividedByException(self.inp_shape[0], 4))
+
+            if ((self.inp_shape[0][1] // (2 ** self.layer_parameters.get("n_pooling_branches"))) % 2 != 0 or
+                    (self.inp_shape[0][1] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 1) and \
+                    ((self.inp_shape[0][2] // (2 ** self.layer_parameters.get("n_pooling_branches"))) % 2 != 0 or
+                (self.inp_shape[0][2] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 1):
+                return str(exceptions.InputShapeMustBeInEchDimException(
+                    "equal multiple of 4", f"or decrease n_pooling_branches <"
+                                           f"{self.layer_parameters.get('n_pooling_branches')}", self.inp_shape[0][1:]
+                ))
+
+        # UNETBlock1D and PSPBlock1D exceptions
+        if self.layer_type == LayerTypeChoice.UNETBlock1D or self.layer_type == LayerTypeChoice.PSPBlock1D:
+            if self.inp_shape[0][1] % 4 != 0:
+                return str(exceptions.InputShapeMustBeWholeDividedByException(self.inp_shape[0], 4))
+
+            if ((self.inp_shape[0][1] // (2 ** self.layer_parameters.get("n_pooling_branches"))) % 2 != 0 or
+                    (self.inp_shape[0][1] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 1):
+                return str(exceptions.InputShapeMustBeInEchDimException(
+                    "equal multiple of 4", f"or decrease n_pooling_branches <"
+                                           f"{self.layer_parameters.get('n_pooling_branches')}", self.inp_shape[0][1:]
+                ))
 
         # space_to_depth dimensions
         if self.layer_type == LayerTypeChoice.SpaceToDepth:
             if self.layer_parameters.get("data_format") == SpaceToDepthDataFormatChoice.NCHW \
-                    or self.layer_parameters.get("data_format") == SpaceToDepthDataFormatChoice.NHWC\
+                    or self.layer_parameters.get("data_format") == SpaceToDepthDataFormatChoice.NHWC \
                     and len(self.inp_shape[0]) != 4:
                 return str(exceptions.ExpectedOtherInputShapeDimException(
                     4, "`data_format`=`NHWC` or `NCHW`", len(self.inp_shape[0]), self.inp_shape[0]
@@ -1179,7 +1204,7 @@ class LayerValidation:
                     f"block_size = {self.layer_parameters.get('block_size')}"
                 ))
 
-        # CustomUNETBlock exceptions
+        # DarkNetResBlock exceptions
         if self.layer_type == LayerTypeChoice.DarkNetResBlock and \
                 self.layer_parameters.get("filter_num2") != self.inp_shape[0][-1]:
             return f"Incorrect parameters: Parameter 'filter_num2'={self.layer_parameters.get('filter_num2')} " \

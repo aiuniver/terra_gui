@@ -307,10 +307,11 @@ class Project(BaseMixinData):
         deploy = agent_exchange(
             "deploy_get", path_deploy=path_deploy, path_model=path_model, page=page
         )
-        deploy.path_deploy = project_path.deploy
-        self.deploy = deploy
+        if deploy:
+            deploy.path_deploy = project_path.deploy
         shutil.rmtree(project_path.deploy, ignore_errors=True)
         shutil.move(path_deploy, project_path.deploy)
+        self.deploy = deploy
 
     def clear_dataset(self):
         self.dataset = None

@@ -15,19 +15,20 @@
               :name="key"
               :title="name || ''"
             >
-              <div v-if="key !== 'outputs'" class="params__fields">
+              <div class="params__fields">
                 <template v-for="(data, i) of fields">
-                  <t-auto-field-deploy
+                  <t-auto-field-cascade
                     v-bind="data"
-                    :class="`params__fields--${key}`"
                     :key="key + i"
-                    :state="state"
+                    :big="key === 'type'"
+                    :parameters="parameters"
                     :inline="false"
-                    @parse="parse"
+                    @change="parse"
                   />
+                  <t-button @click="handleDownload" :key="'key' + i" :disabled="isLoad">Загрузить</t-button>
                 </template>
               </div>
-              <div v-else class="blocks-layers">
+              <!-- <div v-else class="blocks-layers">
                 <template v-for="(field, i) of fields">
                   <div class="block-layers" :key="'block_layers_' + i">
                     <div class="block-layers__header">
@@ -46,7 +47,7 @@
                     </div>
                   </div>
                 </template>
-              </div>
+              </div> -->
             </at-collapse-item>
           </at-collapse>
         </div>
@@ -138,7 +139,7 @@ import { mapGetters } from 'vuex';
 // import Checkbox from '@/components/forms/Checkbox';
 // import ModuleList from './ModuleList';
 // import LoadSpiner from '../../forms/LoadSpiner';
-import ser from '@/assets/js/myserialize';
+// import ser from '@/assets/js/myserialize';
 export default {
   name: 'Settings',
   components: {
@@ -149,6 +150,7 @@ export default {
   data: () => ({
     collapse: ['type', 'server'],
     key: '1212',
+    downloadSettings: {},
     trainSettings: {},
     deploy: '',
     replace: false,
@@ -158,6 +160,7 @@ export default {
     DataSent: false,
     DataLoading: false,
     passwordShow: false,
+    parameters: {},
     ops: {
       scrollPanel: {
         scrollingX: false,
@@ -195,21 +198,35 @@ export default {
       }
       return true;
     },
+    isLoad() {
+      const type = this.parameters?.type || '';
+      const name = this.parameters?.name || '';
+      return !(name && type);
+    },
   },
   methods: {
-    parse({ parse, value, changeable, mounted }) {
-      console.log(parse);
-      console.log(parse, value, changeable, mounted);
-      ser(this.trainSettings, parse, value);
-      this.trainSettings = { ...this.trainSettings };
-      if (!mounted && changeable) {
-        // this.$store.dispatch('trainings/update', this.trainSettings);
-        // this.state = { [`architecture[parameters][checkpoint][metric_name]`]: null };
-      } else {
-        if (value) {
-          this.state = { [`${parse}`]: value };
-        }
+    async handleDownload() {
+      const type = this.parameters?.type || '';
+      const name = this.parameters?.name || '';
+      if (type && name) {
+        await this.$store.dispatch('deploy/DownloadSettings', { type, name });
       }
+    },
+    parse({ id, value, name, root }) {
+      console.log(id, value, name, root);
+      this.parameters[name] = value;
+      this.parameters = { ...this.parameters };
+
+      // ser(this.trainSettings, parse, value);
+      // this.trainSettings = { ...this.trainSettings };
+      // if (!mounted && changeable) {
+      //   // this.$store.dispatch('trainings/update', this.trainSettings);
+      //   // this.state = { [`architecture[parameters][checkpoint][metric_name]`]: null };
+      // } else {
+      //   if (value) {
+      //     this.state = { [`${parse}`]: value };
+      //   }
+      // }
     },
     onchange(e) {
       console.log(e);
@@ -298,6 +315,11 @@ export default {
 .params {
   flex: 0 0 400px;
   border-left: #0e1621 solid 1px;
+  &__fields {
+    button {
+      margin: 30px 0 0 0;
+    }
+  }
 }
 .params-container__name {
   padding: 30px 0 0 20px;

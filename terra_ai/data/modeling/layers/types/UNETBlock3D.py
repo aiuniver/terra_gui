@@ -1,5 +1,5 @@
 """
-## Тип слоя `UNETBlock`
+## Тип слоя `UNETBlock2D`
 """
 from typing import Optional, Tuple
 
@@ -22,7 +22,7 @@ LayerConfig = LayerConfigData(
             "validation": LayerValidationMethodChoice.fixed,
         },
         "input_dimension": {
-            "value": 4,
+            "value": 5,
             "validation": LayerValidationMethodChoice.minimal,
         },
         "module": ModuleChoice.terra_custom_layers,
@@ -32,18 +32,16 @@ LayerConfig = LayerConfigData(
 
 
 class ParametersMainData(BaseMixinData):
-    n_pooling_branches: PositiveInt = 2
-    filters_coef: PositiveInt = 2
-    n_conv_layers: PositiveInt = 2
-    kernel_size: Tuple[PositiveInt, PositiveInt] = (3, 3)
-    padding: PaddingChoice = PaddingChoice.same
+    filters_base: PositiveInt = 16
+    n_pooling_branches: PositiveInt = 3
+    filters_coef: PositiveInt = 1
+    n_conv_layers: PositiveInt = 1
     activation: Optional[ActivationChoice] = ActivationChoice.relu
     batch_norm_layer: bool = True
     dropout_layer: bool = True
 
 
 class ParametersExtraData(BaseMixinData):
-    strides: Tuple[PositiveInt, PositiveInt] = (1, 1)
-    dilation: Tuple[PositiveInt, PositiveInt] = (1, 1)
+    kernel_size: Tuple[PositiveInt, PositiveInt, PositiveInt] = (3, 3, 3)
     dropout_rate: ConstrainedFloatValueGe0Le1 = 0.1
     pass

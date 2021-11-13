@@ -115,7 +115,7 @@ class LayerTypeChoice(str, Enum):
     MobileNetV3Small = "MobileNetV3Small"
     MobileNetV2 = "MobileNetV2"
     EfficientNetB0 = "EfficientNetB0"
-    CustomUNETBlock = "CustomUNETBlock"
+    # CustomUNETBlock = "CustomUNETBlock"
     YOLOResBlock = "YOLOResBlock"
     YOLOv3ResBlock = "YOLOv3ResBlock"
     YOLOConvBlock = "YOLOConvBlock"
@@ -127,8 +127,11 @@ class LayerTypeChoice(str, Enum):
     DarkNetResBlock = "DarkNetResBlock"
     DarkNetBatchNormalization = "DarkNetBatchNormalization"
     CONVBlock = "CONVBlock"
-    PSPBlock = "PSPBlock"
-    UNETBlock = "UNETBlock"
+    PSPBlock1D = "PSPBlock1D"
+    PSPBlock2D = "PSPBlock2D"
+    UNETBlock1D = "UNETBlock1D"
+    UNETBlock2D = "UNETBlock2D"
+    UNETBlock3D = "UNETBlock3D"
 
     @staticmethod
     def values() -> list:

@@ -12,7 +12,7 @@ class BlockOutputDataSaveAsChoice(str, Enum):
 
 class PostprocessBoxesMethodAvailableChoice(str, Enum):
     nms = "nms"
-    soft_nms = "soft_nums"
+    soft_nms = "soft_nms"
 
     @staticmethod
     def values() -> list:

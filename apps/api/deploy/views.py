@@ -22,7 +22,9 @@ class GetAPIView(BaseAPIView):
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         request.project.set_deploy(serializer.validated_data)
-        return BaseResponseSuccess(request.project.deploy.presets)
+        return BaseResponseSuccess(
+            request.project.deploy.presets if request.project.deploy else None
+        )
 
 
 class ReloadAPIView(BaseAPIView):

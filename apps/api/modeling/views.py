@@ -10,9 +10,10 @@ from terra_ai.data.modeling.model import ModelDetailsData
 
 from apps.plugins.project import data_path
 
+from apps.api import utils
 from apps.api.base import BaseAPIView, BaseResponseSuccess, BaseResponseErrorFields
 
-from . import serializers, utils
+from . import serializers
 
 
 class GetAPIView(BaseAPIView):
