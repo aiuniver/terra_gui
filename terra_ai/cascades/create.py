@@ -1,7 +1,7 @@
 from . import cascade_input, cascade_output, general_fucntions
 from .cascade import CascadeElement, CascadeOutput, BuildModelCascade, CompleteCascade, CascadeBlock
 
-from .common import decamelize, yolo_decode
+from .common import decamelize, yolo_decode, type2str
 import json
 import os
 from tensorflow.keras import Model
@@ -9,6 +9,7 @@ from tensorflow.keras.layers import Input
 from tensorflow.keras.models import load_model
 from collections import OrderedDict
 import sys
+from inspect import signature
 
 
 def make_processing(preprocess_list):
@@ -51,6 +52,8 @@ def json2model_cascade(path: str):
 
     object_detection = False
 
+    input_types, output_types = [], []
+
     if config['tags'][-1]['alias'] == 'object_detection':
         object_detection = True
         model = create_yolo(model, config)
@@ -77,11 +80,12 @@ def json2model_cascade(path: str):
             preprocess.append(getattr(type_module, 'main')(**param))
 
     preprocess = make_processing(preprocess)
-
     postprocessing = []
     if object_detection:
         type_module = getattr(general_fucntions, "object_detection")
         postprocessing = getattr(type_module, 'main')()
+        output_types.append(type2str(signature(postprocessing).return_annotation))
+
     else:
         for inp in config['outputs'].keys():
             if config['outputs'][inp]['task'] not in ['Timeseries', 'TimeseriesTrend']:
@@ -91,8 +95,11 @@ def json2model_cascade(path: str):
 
                     param.update(spec_config)
                     try:
-                        type_module = getattr(general_fucntions, decamelize(param['task']))
+                        task = decamelize(param['task'])
+                        print(task)
+                        type_module = getattr(general_fucntions, task)
                         postprocessing.append(getattr(type_module, 'main')(**param, dataset_path=dataset_path, key=inp))
+                        output_types.append(task)
                     except:
                         postprocessing.append(None)
             else:
@@ -102,15 +109,17 @@ def json2model_cascade(path: str):
                     with open(os.path.join(dataset_path, "instructions", "parameters", key + '.json')) as cfg:
                         param[key].update(json.load(cfg))
                 param = {'columns': param, 'dataset_path': dataset_path, 'shape': config['outputs'][inp]['shape']}
-                type_module = getattr(general_fucntions, decamelize(config['outputs'][inp]['task']))
+                task = decamelize(config['outputs'][inp]['task'])
+                type_module = getattr(general_fucntions, task)
                 postprocessing.append(getattr(type_module, 'main')(**param))
+                output_types.append(task)
 
         if any(postprocessing):
             postprocessing = make_processing(postprocessing)
         else:
             postprocessing = None
 
-    model = BuildModelCascade(preprocess, model, postprocessing)
+    model = BuildModelCascade(preprocess, model, postprocessing, output=output_types, input=input_types)
 
     return model
 
