@@ -22,7 +22,7 @@ import DInputText from '@/components/global/forms/components/DInputText';
 import TField from '@/components/global/forms/components/TField';
 export default {
   components: { TField, DInputNumber, DInputText },
-  name: 'Settings',
+  name: 'DatasetSettings',
   data: () => ({
     height: 128,
     width: 128,

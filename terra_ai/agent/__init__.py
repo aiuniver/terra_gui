@@ -10,6 +10,7 @@ from typing import Any, NoReturn
 from . import exceptions as agent_exceptions
 from . import utils as agent_utils
 from .. import settings, progress
+from ..deploy.prepare_deploy import DeployCreator
 from ..exceptions import tensor_flow as tf_exceptions
 from ..data.datasets.creation import FilePathSourcesList
 from ..data.datasets.creation import SourceData, CreationData
@@ -330,6 +331,12 @@ class Exchange:
         ]:
             interactive.get_train_results()
 
+    def _call_training_kill(self, training: TrainingDetailsData):
+        """
+        Удаление незавершенного обучения
+        """
+        training.state.set("kill")
+
     def _call_training_progress(self) -> progress.ProgressData:
         """
         Прогресс обучения
@@ -382,13 +389,14 @@ class Exchange:
     def _call_deploy_get(
         self, path_model: Path, path_deploy: Path, page: dict
     ) -> DeployData:
-        pass
-
-    def _call_deploy_presets(self):
         """
         получение данных для отображения пресетов на странице деплоя
         """
-        return interactive.deploy_presets_data
+        outdata = DeployCreator().get_deploy(
+            training_path=path_model, deploy_path=path_deploy, page=page
+        )
+
+        return outdata
 
     def _call_deploy_cascades_create(self, training_path: str, model_name: str):
         pass

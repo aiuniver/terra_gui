@@ -15,6 +15,7 @@ class StateStatusChoice(str, Enum):
     trained = "trained"  # Сетка обучена
     stopped = "stopped"  # Обучение Остановлена
     addtrain = "addtrain"  # Дообучение или возобновление после остановки
+    kill = "kill"  # Завершение без действий и удаление
 
 
 class LossGraphShowChoice(str, Enum):

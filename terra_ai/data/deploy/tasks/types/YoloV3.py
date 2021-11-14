@@ -24,7 +24,7 @@ class DataList(DataBaseList):
 
     def preset_update(self, data):
         data.update(
-            {k: str(Path(self.path_model, data.get(k)))} for k in ("source", "predict")
+            {k: str(Path(self.path_deploy, data.get(k)))} for k in ("source", "predict")
         )
         return data
 

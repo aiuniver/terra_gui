@@ -58,6 +58,10 @@ class ParametersMainData(BaseMixinData):
 
     @validator("type", pre=True)
     def _validate_type(cls, value: BlockFunctionTypeChoice) -> BlockFunctionTypeChoice:
+        for name, item in cls.__fields__.items():
+            if name in ["group", "type"]:
+                continue
+            cls.__fields__[name].required = False
         if value == BlockFunctionTypeChoice.ChangeType:
             cls.__fields__["change_type"].required = True
         elif value == BlockFunctionTypeChoice.ChangeSize:

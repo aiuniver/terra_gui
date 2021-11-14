@@ -19,7 +19,7 @@ class DataList(DataBaseList):
         source = Item
 
     def preset_update(self, data):
-        data.update({"source": str(Path(self.path_model, data.get("source")))})
+        data.update({"source": str(Path(self.path_deploy, data.get("source")))})
         return data
 
     def update(self, index: int):

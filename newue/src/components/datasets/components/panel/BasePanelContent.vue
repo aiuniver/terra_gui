@@ -3,7 +3,13 @@
     <div class="panel-content__header">
       <h3><slot name="header"></slot></h3>
     </div>
-    <div class="panel-content__inner">
+    <div
+      :class="[
+        'panel-content__inner',
+        { 'panel-content__inner--no-padding': noPadding },
+        { 'panel-content__inner--no-margin': noMargin },
+      ]"
+    >
       <slot name="content"></slot>
     </div>
   </div>
@@ -12,6 +18,16 @@
 <script>
 export default {
   name: 'BasePanelContent',
+  props: {
+    noPadding: {
+      type: Boolean,
+      default: false,
+    },
+    noMargin: {
+      type: Boolean,
+      default: false,
+    },
+  },
 };
 </script>
 
@@ -31,10 +47,18 @@ export default {
         font-size: 14px;
       }
     }
-    &__inner::v-deep {
+    &__inner {
       margin-top: 30px;
       padding-left: 20px;
       padding-right: 20px;
+      &--no-padding {
+        padding: 0;
+      }
+      &--no-margin {
+        margin: 0;
+      }
+    }
+    &__inner::v-deep {
       .panel-text-gray {
         color: $color-gray-blue;
       }

@@ -1,8 +1,10 @@
 <template>
   <div class="panel">
-    <slot></slot>
+    <scrollbar>
+      <slot></slot>
+    </scrollbar>
     <div class="panel-footer">
-      <BasePanelPagination />
+      <BasePanelPagination class="mt-5" @action="$emit('action', $event)" />
     </div>
   </div>
 </template>
@@ -27,7 +29,7 @@ export default {
   background: transparent;
   border-left: 1px solid $color-black;
 
-  &-footer{
+  &-footer {
     margin-top: auto;
     margin-bottom: 40px;
     padding: 0 20px;
