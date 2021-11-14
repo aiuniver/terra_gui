@@ -81,8 +81,7 @@ class InteractiveCallback:
         # self.training_details: TrainingDetailsData
         pass
 
-    def set_attributes(self, dataset: PrepareDataset, metrics: dict, losses: dict, dataset_path: Path,
-                       params: TrainingDetailsData):
+    def set_attributes(self, dataset: PrepareDataset, params: TrainingDetailsData):
 
         self.options = dataset
         self._callback_router(dataset)
@@ -91,10 +90,10 @@ class InteractiveCallback:
         print('\ndataset_config', dataset.data)
         print('\nparams', params.native(), '\n')
         self.training_details = params
-        self.dataset_path = dataset_path
+        self.dataset_path = dataset.data.path
         self.class_colors = get_classes_colors(dataset)
         self.x_val, self.inverse_x_val = self.callback.get_x_array(dataset)
-        self.y_true, self.inverse_y_true = self.callback.get_y_true(dataset, dataset_path)
+        self.y_true, self.inverse_y_true = self.callback.get_y_true(dataset, dataset.data.path)
         self.dataset_balance = self.callback.dataset_balance(
             options=self.options, y_true=self.y_true,
             preset_path=self.training_details.intermediate_path,
@@ -130,7 +129,7 @@ class InteractiveCallback:
                         array={"train": arrays.get("train_pred"), "val": arrays.get("val_pred")},
                         options=self.options, train_idx=train_idx)
                     self.inverse_y_pred = self.callback.get_inverse_array(self.y_pred, self.options)
-                    out = f"{self.interactive_config.intermediate_result.main_output}"
+                    out = f"{self.training_details.interactive.intermediate_result.main_output}"
                     count = self.training_details.interactive.intermediate_result.num_examples
                     count = count if count > len(self.y_true.get('val').get(out)) \
                         else len(self.y_true.get('val').get(out))
@@ -144,16 +143,16 @@ class InteractiveCallback:
                         seed_idx=self.seed_idx[:self.training_details.interactive.intermediate_result.num_examples]
                     )
                 if self.options.data.architecture in YOLO_ARCHITECTURE:
-                    self.raw_y_pred = y_pred
+                    self.raw_y_pred = arrays.get("val_pred")
                     self.y_pred = self.callback.get_y_pred(
-                        y_pred=y_pred, options=self.options,
+                        y_pred=arrays.get("val_pred"), options=self.options,
                         sensitivity=self.training_details.interactive.intermediate_result.sensitivity,
                         threashold=self.training_details.interactive.intermediate_result.threashold
                     )
                     count = self.training_details.interactive.intermediate_result.num_examples
                     count = count if count > len(self.options.dataframe.get('val')) \
                         else len(self.options.dataframe.get('val'))
-                    self.raw_y_true = y_true
+                    self.raw_y_true = arrays.get("val_true")
                     self.example_idx, _ = self.callback.prepare_example_idx_to_show(
                         array=self.y_pred,
                         true_array=self.y_true,
