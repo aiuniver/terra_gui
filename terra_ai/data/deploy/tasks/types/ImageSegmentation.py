@@ -26,7 +26,7 @@ class DataList(DataBaseList):
 
     def preset_update(self, data):
         data.update(
-            {k: str(Path(self.path_model, data.get(k)))} for k in ("source", "segment")
+            {k: str(Path(self.path_deploy, data.get(k)))} for k in ("source", "segment")
         )
         return data
 
