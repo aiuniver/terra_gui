@@ -404,6 +404,8 @@ class ImageClassificationCallback(BaseClassificationCallback):
         try:
             x_array, inverse_x_array = ImageClassificationCallback.get_x_array(options)
             return_data = {}
+            if not array:
+                print("postprocess_deploy: array is None")
 
             for i, output_id in enumerate(options.data.outputs.keys()):
                 true_array = get_y_true(options, output_id)

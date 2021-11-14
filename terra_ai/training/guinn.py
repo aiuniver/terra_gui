@@ -317,7 +317,8 @@ class GUINN:
         try:
             print(method_name)
             yolo_arch = True if dataset.data.architecture in YOLO_ARCHITECTURE else False
-            callback = FitCallback(dataset, params)
+            self._set_callbacks(dataset=dataset, train_details=params)
+            # callback = FitCallback(dataset, params)
             threading.enumerate()[-1].setName("current_train")
             progress.pool(self.progress_name, finished=False, message="Компиляция модели ...")
             if yolo_arch:
@@ -325,16 +326,12 @@ class GUINN:
                     'yolo')
                 classes = dataset.data.outputs.get(list(dataset.data.outputs.keys())[0]).classes_names
                 yolo = create_yolo(model, input_size=416, channels=3, training=True, classes=classes, version=version)
-                self.train_yolo_model(yolo, params, dataset, dataset.data.path, callback)
+                self.train_yolo_model(yolo, params, dataset, dataset.data.path, self.callback)
             else:
-                self.train_base_model(params, dataset, model, callback)
+                self.train_base_model(params, dataset, model, self.callback)
 
-            progress.pool(self.progress_name, finished=False, message="Компиляция модели выполнена")
-            # self._set_callbacks(
-            #     dataset=dataset, train_details=params,
-            #     initial_model=self.model if yolo_arch else None
-            # )
-            progress.pool(self.progress_name, finished=False, message="Начало обучения ...")
+            progress.pool(self.progress_name, finished=False, message="\n Компиляция модели выполнена")
+            progress.pool(self.progress_name, finished=False, message="\n Начало обучения ...")
             if (params.state.status == "stopped" and self.callbacks[0].last_epoch < params.base.epochs) or \
                     (params.state.status == "trained" and self.callbacks[0].last_epoch - 1 == params.base.epochs):
                 self.sum_epoch = params.base.epochs
@@ -349,10 +346,11 @@ class GUINN:
             loss_dict = {}
             for output_layer in params.base.architecture.parameters.outputs:
                 loss_obj = getattr(
-                    importlib.import_module(loss_metric_config.get("loss").get(output_layer["loss"], {}).get('module')),
-                    output_layer["loss"]
+                    importlib.import_module(
+                        loss_metric_config.get("loss").get(output_layer.loss.name, {}).get('module')),
+                    output_layer.loss.name
                 )()
-                loss_dict.update({str(output_layer["id"]): loss_obj})
+                loss_dict.update({str(output_layer.id): loss_obj})
             return loss_dict
         except Exception as e:
             print_error(GUINN().name, method_name, e)
@@ -656,7 +654,7 @@ class GUINN:
             loss = self._prepare_loss_dict(params=params)
             first_epoch = True
             train_data_idxs = []
-            urgent_predict = False
+            # urgent_predict = False
             callback.on_train_begin()
             for epoch in range(current_epoch, params.base.epochs):
                 callback.on_epoch_begin()
@@ -664,6 +662,7 @@ class GUINN:
                 train_steps = 1
                 for x_batch_train, y_batch_train in dataset.dataset.get('train').batch(
                         params.base.batch, drop_remainder=False):
+                    # print('epoch', epoch, 'train_steps', train_steps)
                     y_true, logits = train_step(
                         x_batch=x_batch_train, y_batch=y_batch_train, train_model=model,
                         losses=loss, set_optimizer=optimizer
@@ -694,18 +693,17 @@ class GUINN:
                             train_data_idxs = train_data_idxs[y_true[0].shape[0]:]
                             train_data_idxs.extend(list(range(
                                 train_data_idxs[-1] + 1, train_data_idxs[-1] + 1 + y_true[0].shape[0])))
-                        callback.on_train_batch_end(batch=train_step)
-                        if interactive.urgent_predict:
-                            val_pred, val_true = test_step(
-                                options=dataset, parameters=params, train_model=model,
-                                outputs=list(dataset.data.outputs.keys())
-                            )
-                            callback.on_train_batch_end(batch=train_step, arrays={
-                                "train_true": train_true, "val_true": val_true, "train_pred": train_pred,
-                                "val_pred": val_pred}, train_data_idxs=train_data_idxs
-                                                        )
-                        else:
-                            callback.on_train_batch_end(batch=train_step)
+                    # callback.on_train_batch_end(batch=train_step)
+                    if interactive.urgent_predict:
+                        val_pred, val_true = test_step(
+                            options=dataset, parameters=params, train_model=model,
+                            outputs=list(dataset.data.outputs.keys())
+                        )
+                        callback.on_train_batch_end(batch=train_steps, arrays={
+                            "train_true": train_true, "val_true": val_true, "train_pred": train_pred,
+                            "val_pred": val_pred}, train_data_idxs=train_data_idxs)
+                    else:
+                        callback.on_train_batch_end(batch=train_steps)
                     train_steps += 1
                     new_batch = False
                     if callback.stop_training:
@@ -718,7 +716,8 @@ class GUINN:
                 val_pred, val_true = test_step(options=dataset, parameters=params, train_model=model,
                                                outputs=list(dataset.data.outputs.keys()))
                 callback.on_epoch_end(
-                    epoch=epoch + 1, arrays={
+                    epoch=epoch + 1,
+                    arrays={
                         "train_pred": train_pred, "val_pred": val_pred, "train_true": train_true, "val_true": val_true},
                     train_data_idxs=train_data_idxs
                 )
@@ -882,19 +881,19 @@ class FitCallback:
             log_history = {"epochs": []}
             if options.data.architecture in BASIC_ARCHITECTURE:
                 for output_layer in params.base.architecture.parameters.outputs:
-                    out = f"{output_layer['id']}"
+                    out = f"{output_layer.id}"
                     log_history[out] = {
                         "loss": {}, "metrics": {},
                         "class_loss": {}, "class_metrics": {},
                         "progress_state": {"loss": {}, "metrics": {}}
                     }
-                    log_history[out]["loss"][output_layer.get("loss")] = {"train": [], "val": []}
-                    log_history[out]["progress_state"]["loss"][output_layer.get("loss")] = {
+                    log_history[out]["loss"][output_layer.loss.name] = {"train": [], "val": []}
+                    log_history[out]["progress_state"]["loss"][output_layer.loss.name] = {
                         "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
                     }
-                    for metric in output_layer.get("metrics", []):
-                        log_history[out]["metrics"][metric] = {"train": [], "val": []}
-                        log_history[out]["progress_state"]["metrics"][metric] = {
+                    for metric in output_layer.metrics:
+                        log_history[out]["metrics"][metric.name] = {"train": [], "val": []}
+                        log_history[out]["progress_state"]["metrics"][metric.name] = {
                             "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
                         }
 
@@ -904,12 +903,12 @@ class FitCallback:
                         for class_name in options.data.outputs.get(int(out)).classes_names:
                             log_history[out]["class_metrics"][class_name] = {}
                             log_history[out]["class_loss"][class_name] = \
-                                {output_layer.get("loss"): {"train": [], "val": []}}
-                            for metric in output_layer.get("metrics", []):
-                                log_history[out]["class_metrics"][class_name][metric] = {"train": [], "val": []}
+                                {output_layer.loss.name: {"train": [], "val": []}}
+                            for metric in output_layer.metrics:
+                                log_history[out]["class_metrics"][class_name][metric.name] = {"train": [], "val": []}
 
             if options.data.architecture in YOLO_ARCHITECTURE:
-                log_history['learning_rate'] = []
+                # log_history['learning_rate'] = []
                 log_history['output'] = {
                     "loss": {
                         'giou_loss': {"train": [], "val": []},
@@ -968,12 +967,12 @@ class FitCallback:
             if self.dataset.data.architecture in CLASSIFICATION_ARCHITECTURE:
                 update_cls = self.update_class_idx(self.class_idx, train_idx)
             for output_layer in self.training_detail.base.architecture.parameters.outputs:
-                out = f"{output_layer['id']}"
-                name_classes = self.dataset.data.outputs.get(output_layer['id']).classes_names
+                out = f"{output_layer.id}"
+                name_classes = self.dataset.data.outputs.get(output_layer.id).classes_names
                 self.current_logs[out] = {"loss": {}, "metrics": {}, "class_loss": {}, "class_metrics": {}}
 
                 # calculate loss
-                loss_name = output_layer.get("loss")
+                loss_name = output_layer.loss.name
                 loss_fn = getattr(
                     importlib.import_module(loss_metric_config.get("loss").get(loss_name, {}).get('module')), loss_name
                 )
@@ -981,9 +980,9 @@ class FitCallback:
                     loss_fn, out, arrays.get("train_true").get(out), arrays.get("train_pred").get(out))
                 val_loss = self._get_loss_calculation(
                     loss_fn, out, arrays.get("val_true").get(out), arrays.get("val_pred").get(out))
-                self.current_logs[out]["loss"][output_layer.get("loss")] = {"train": train_loss, "val": val_loss}
-                if self.class_outputs.get(output_layer['id']):
-                    self.current_logs[out]["class_loss"][output_layer.get("loss")] = {}
+                self.current_logs[out]["loss"][output_layer.loss.name] = {"train": train_loss, "val": val_loss}
+                if self.class_outputs.get(output_layer.id):
+                    self.current_logs[out]["class_loss"][output_layer.loss.name] = {}
                     if self.dataset.data.architecture in CLASSIFICATION_ARCHITECTURE:
                         for i, cls in enumerate(name_classes):
                             train_class_loss = self._get_loss_calculation(
@@ -994,7 +993,7 @@ class FitCallback:
                                 loss_obj=loss_fn, out=out,
                                 y_true=arrays.get("val_true").get(out)[update_cls['val'][out][cls], ...],
                                 y_pred=arrays.get("val_pred").get(out)[update_cls['val'][out][cls], ...])
-                            self.current_logs[out]["class_loss"][output_layer.get("loss")][cls] = \
+                            self.current_logs[out]["class_loss"][output_layer.loss.name][cls] = \
                                 {"train": train_class_loss, "val": val_class_loss}
                     else:
                         for i, cls in enumerate(name_classes):
@@ -1004,11 +1003,12 @@ class FitCallback:
                             val_class_loss = self._get_loss_calculation(
                                 loss_obj=loss_fn, out=out, class_idx=i, show_class=True,
                                 y_true=arrays.get("val_true").get(out), y_pred=arrays.get("val_pred").get(out))
-                            self.current_logs[out]["class_loss"][output_layer.get("loss")][cls] = \
+                            self.current_logs[out]["class_loss"][output_layer.loss.name][cls] = \
                                 {"train": train_class_loss, "val": val_class_loss}
 
                 # calculate metrics
-                for metric_name in output_layer.get("metrics", []):
+                for metric_name in output_layer.metrics:
+                    metric_name = metric_name.name
                     metric_fn = getattr(
                         importlib.import_module(loss_metric_config.get("metric").get(metric_name, {}).get('module')),
                         metric_name
@@ -1019,7 +1019,7 @@ class FitCallback:
                     val_metric = self._get_metric_calculation(
                         metric_name, metric_fn, out, arrays.get("val_true").get(out), arrays.get("val_pred").get(out))
                     self.current_logs[out]["metrics"][metric_name] = {"train": train_metric, "val": val_metric}
-                    if self.class_outputs.get(output_layer['id']):
+                    if self.class_outputs.get(output_layer.id):
                         self.current_logs[out]["class_metrics"][metric_name] = {}
                         if self.dataset.data.architecture in CLASSIFICATION_ARCHITECTURE and \
                                 metric_name not in [Metric.BalancedRecall, Metric.BalancedPrecision,
@@ -1053,7 +1053,7 @@ class FitCallback:
     def _get_loss_calculation(self, loss_obj, out: str, y_true, y_pred, show_class=False, class_idx=0):
         method_name = '_get_loss_calculation'
         try:
-            print(method_name)
+            # print(method_name)
             encoding = self.dataset.data.outputs.get(int(out)).encoding
             num_classes = self.dataset.data.outputs.get(int(out)).num_classes
             if show_class and (encoding == LayerEncodingChoice.ohe or encoding == LayerEncodingChoice.multi):
@@ -1073,7 +1073,7 @@ class FitCallback:
     def _get_metric_calculation(self, metric_name, metric_obj, out: str, y_true, y_pred, show_class=False, class_idx=0):
         method_name = '_get_metric_calculation'
         try:
-            print(method_name)
+            # print(method_name)
             encoding = self.dataset.data.outputs.get(int(out)).encoding
             num_classes = self.dataset.data.outputs.get(int(out)).num_classes
             if metric_name == Metric.MeanIoU:
@@ -1118,9 +1118,9 @@ class FitCallback:
             self.log_history['epochs'].append(self.current_logs['epochs'])
             if self.dataset.data.architecture in BASIC_ARCHITECTURE:
                 for output_layer in self.training_detail.base.architecture.parameters.outputs:
-                    out = f"{output_layer['id']}"
-                    classes_names = self.dataset.data.outputs.get(output_layer['id']).classes_names
-                    loss_name = output_layer.get('loss')
+                    out = f"{output_layer.id}"
+                    classes_names = self.dataset.data.outputs.get(output_layer.id).classes_names
+                    loss_name = output_layer.loss.name
                     for data_type in ['train', 'val']:
                         self.log_history[out]['loss'][loss_name][data_type].append(
                             round_loss_metric(self.current_logs.get(out).get('loss').get(loss_name).get(data_type))
@@ -1157,7 +1157,8 @@ class FitCallback:
                                 round_loss_metric(self.current_logs[out]['class_loss'][loss_name][cls]["val"])
                             )
 
-                    for metric_name in output_layer.get("metrics", []):
+                    for metric_name in output_layer.metrics:
+                        metric_name = metric_name.name
                         for data_type in ['train', 'val']:
                             self.log_history[out]['metrics'][metric_name][data_type].append(
                                 round_loss_metric(
@@ -1267,7 +1268,7 @@ class FitCallback:
     def _get_mean_log(logs):
         method_name = '_get_mean_log'
         try:
-            print(method_name)
+            # print(method_name)
             copy_logs = copy.deepcopy(logs)
             while None in copy_logs:
                 copy_logs.pop(copy_logs.index(None))
@@ -1283,7 +1284,7 @@ class FitCallback:
     def _evaluate_overfitting(metric_name: str, mean_log: list, metric_type: str):
         method_name = '_evaluate_overfitting'
         try:
-            print(method_name)
+            # print(method_name)
             mode = loss_metric_config.get(metric_type).get(metric_name).get("mode")
             overfitting = False
             if mode == 'min':
@@ -1302,7 +1303,7 @@ class FitCallback:
     def _evaluate_underfitting(metric_name: str, train_log: float, val_log: float, metric_type: str):
         method_name = '_evaluate_underfitting'
         try:
-            print(method_name)
+            # print(method_name)
             mode = loss_metric_config.get(metric_type).get(metric_name).get("mode")
             underfitting = False
             if mode == 'min' and train_log and val_log:
@@ -1409,9 +1410,9 @@ class FitCallback:
             #     self.checkpoint_config.get("type").lower()).keys())
             # print(self.log_history.get(f"{self.checkpoint_config.get('layer')}").get(
             #     self.checkpoint_config.get("type").lower()).get(self.checkpoint_config.get("metric_name")).keys())
-            output = "output" if self.is_yolo else f"{self.checkpoint_config.get('layer')}"
-            checkpoint_list = self.log_history.get(output).get(self.checkpoint_config.get("type").lower()).get(
-                self.checkpoint_config.get("metric_name")).get(self.checkpoint_config.get("indicator").lower())
+            output = "output" if self.is_yolo else f"{self.checkpoint_config.layer}"
+            checkpoint_list = self.log_history.get(output).get(self.checkpoint_config.type.name.lower()).get(
+                self.checkpoint_config.metric_name.name).get(self.checkpoint_config.indicator.name.lower())
             if self.checkpoint_mode == 'min' and checkpoint_list[-1] == min(checkpoint_list):
                 return True
             elif self.checkpoint_mode == "max" and checkpoint_list[-1] == max(checkpoint_list):
@@ -1424,7 +1425,7 @@ class FitCallback:
     def _set_result_data(self, param: dict) -> None:
         method_name = '_set_result_data'
         try:
-            print(method_name)
+            # print(method_name)
             for key in param.keys():
                 if key in self.result.keys():
                     self.result[key] = param[key]
@@ -1599,7 +1600,7 @@ class FitCallback:
     def _estimate_step(current, start, now):
         method_name = '_estimate_step'
         try:
-            print(method_name)
+            # print(method_name)
             if current:
                 _time_per_unit = (now - start) / current
             else:
@@ -1627,7 +1628,7 @@ class FitCallback:
     def update_progress(self, target, current, start_time, finalize=False, stop_current=0, stop_flag=False):
         method_name = 'update_progress'
         try:
-            print(method_name)
+            # print(method_name)
             """
             Updates the progress bar.
             """
@@ -1667,30 +1668,32 @@ class FitCallback:
     def on_train_batch_end(self, batch, arrays=None, train_data_idxs=None):
         method_name = 'on_train_batch_end'
         try:
-            print(method_name)
+            # print(method_name)
             if self._get_train_status() == "stopped":
+                print('_get_train_status() == "stopped"')
                 self.stop_training = True
                 progress.pool(
                     self.progress_name,
                     percent=(self.last_epoch - 1) / (
-                        self.retrain_epochs if self._get_train_status() == "addtrain" else self.epochs
-                    ) * 100,
+                        self.retrain_epochs if self._get_train_status() == "addtrain" else self.epochs) * 100,
                     message="Обучение остановлено пользователем, ожидайте остановку...",
                     finished=False,
                 )
             else:
+                # print('current', batch, self.num_batches)
                 msg_batch = {"current": batch + 1, "total": self.num_batches}
+                # print('msg_batch', msg_batch)
                 msg_epoch = {"current": self.last_epoch,
                              "total": self.retrain_epochs if self._get_train_status() == "addtrain"
                              else self.epochs}
                 still_epoch_time = self.update_progress(self.num_batches, batch, self._time_first_step)
                 elapsed_epoch_time = time.time() - self._time_first_step
                 elapsed_time = time.time() - self._start_time
-                estimated_time = self.update_progress(self.num_batches * self.still_epochs,
-                                                      self.batch, self._start_time, finalize=True)
+                estimated_time = self.update_progress(
+                    self.num_batches * self.still_epochs, self.batch, self._start_time, finalize=True)
 
-                still_time = self.update_progress(self.num_batches * self.still_epochs,
-                                                  self.batch, self._start_time)
+                still_time = self.update_progress(
+                    self.num_batches * self.still_epochs, self.batch, self._start_time)
                 self.batch += 1
                 if interactive.urgent_predict:
                     # if self.is_yolo:
@@ -1701,6 +1704,7 @@ class FitCallback:
                     train_batch_data = interactive.update_state(arrays=arrays, train_idx=train_data_idxs)
                 else:
                     train_batch_data = interactive.update_state(arrays=None, train_idx=None)
+                    # print("train_batch_data", train_batch_data)
                 if train_batch_data:
                     result_data = {
                         'timings': [estimated_time, elapsed_time, still_time,
@@ -1710,6 +1714,7 @@ class FitCallback:
                 else:
                     result_data = {'timings': [estimated_time, elapsed_time, still_time,
                                                elapsed_epoch_time, still_epoch_time, msg_epoch, msg_batch]}
+                # print('batch', self.batch, result_data)
                 self._set_result_data(result_data)
                 self.training_detail.result = self._get_result_data()
                 progress.pool(
@@ -1761,6 +1766,7 @@ class FitCallback:
                 on_epoch_end_flag=True,
                 train_idx=train_data_idxs
             )
+            print(method_name, 'train_epoch_data', train_epoch_data)
             self._set_result_data({'train_data': train_epoch_data})
             progress.pool(
                 self.progress_name,
@@ -1809,8 +1815,8 @@ class FitCallback:
                 os.mkdir(os.path.join(self.training_detail.model_path, "deploy_presets"))
             self._prepare_deploy()
 
-            time_end = self.update_progress(self.num_batches * self.epochs + 1,
-                                            self.batch, self._start_time, finalize=True)
+            time_end = self.update_progress(
+                self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)
             self._sum_time += time_end
             total_epochs = self.retrain_epochs if self._get_train_status() in ['addtrain',
                                                                                'trained'] else self.epochs

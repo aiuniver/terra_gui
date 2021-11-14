@@ -82,7 +82,6 @@ class InteractiveCallback:
         pass
 
     def set_attributes(self, dataset: PrepareDataset, params: TrainingDetailsData):
-
         self.options = dataset
         self._callback_router(dataset)
         self._class_metric_list()
@@ -118,6 +117,7 @@ class InteractiveCallback:
 
     def update_state(self, arrays: dict = None, fit_logs=None, current_epoch_time=None,
                      on_epoch_end_flag=False, train_idx: list = None) -> dict:
+        print('InteractiveCallback.update_state')
         if self.log_history:
             if arrays:
                 if self.options.data.architecture in BASIC_ARCHITECTURE:
@@ -264,6 +264,7 @@ class InteractiveCallback:
             return {}
 
     def get_train_results(self):
+        print('InteractiveCallback.get_train_results')
         """Return dict with data for current interactive request"""
         if self.log_history and self.log_history.get("epochs", {}):
             if self.options.data.architecture in BASIC_ARCHITECTURE:
@@ -378,6 +379,7 @@ class InteractiveCallback:
     def _callback_router(self, dataset: PrepareDataset):
         method_name = '_callback_router'
         try:
+            print(method_name)
             if dataset.data.architecture == ArchitectureChoice.Basic:
                 for out in dataset.data.outputs.keys():
                     if dataset.data.outputs.get(out).task == LayerOutputTypeChoice.Classification:
@@ -448,6 +450,7 @@ class InteractiveCallback:
     def _class_metric_list(self):
         method_name = '_class_metric_list'
         try:
+            print(method_name)
             return class_metric_list(self.options)
         except Exception as e:
             print_error(InteractiveCallback().name, method_name, e)
@@ -455,6 +458,7 @@ class InteractiveCallback:
     def _prepare_seed(self):
         method_name = '_prepare_seed'
         try:
+            print(method_name)
             if self.options.data.architecture in YOLO_ARCHITECTURE:
                 example_idx = np.arange(len(self.options.dataframe.get("val")))
                 np.random.shuffle(example_idx)
@@ -495,6 +499,7 @@ class InteractiveCallback:
     def _update_progress_table(self, epoch_time: float):
         method_name = '_update_progress_table'
         try:
+            print(method_name)
             if self.options.data.architecture in BASIC_ARCHITECTURE:
                 self.progress_table[self.current_epoch] = {
                     "time": epoch_time,
@@ -536,6 +541,7 @@ class InteractiveCallback:
     def _get_loss_graph_data_request(self) -> list:
         method_name = '_get_loss_graph_data_request'
         try:
+            print(method_name)
             data_return = []
             if self.options.data.architecture in BASIC_ARCHITECTURE:
                 if not self.training_details.interactive.loss_graphs or not self.log_history.get("epochs"):
@@ -728,6 +734,7 @@ class InteractiveCallback:
     def _get_metric_graph_data_request(self) -> list:
         method_name = '_get_metric_graph_data_request'
         try:
+            print(method_name)
             data_return = []
             if self.options.data.architecture in BASIC_ARCHITECTURE:
                 if not self.training_details.interactive.metric_graphs or not self.log_history.get("epochs"):
