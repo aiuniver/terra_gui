@@ -1633,9 +1633,9 @@ class FitCallback(keras.callbacks.Callback):
                 # self.batch += 1
                 self._set_result_data({'info': f"'Обучение остановлено пользователем, '{msg}"})
             else:
-                msg_batch = {"current": batch + 1, "total": self.num_batches}
+                msg_batch = {"current": batch, "total": self.num_batches}
                 msg_epoch = {"current": self.last_epoch,
-                             "total": self.retrain_epochs if interactive.get_states().get("status") == "addtrain"
+                             "total": self.retrain_epochs if self._get_train_status() == "addtrain"
                              else self.epochs}
                 still_epoch_time = self.update_progress(self.num_batches, batch, self._time_first_step)
                 elapsed_epoch_time = time.time() - self._time_first_step
@@ -1645,9 +1645,8 @@ class FitCallback(keras.callbacks.Callback):
 
                 still_time = self.update_progress(self.num_batches * self.still_epochs,
                                                   self.batch, self._start_time)
-                self.batch += 1
+                self.batch = batch
                 if interactive.urgent_predict:
-
                     if self.is_yolo:
                         self.samples_train.append(self._logs_predict_extract(logs, prefix='pred'))
                         self.samples_target_train.append(self._logs_predict_extract(logs, prefix='target'))
@@ -1655,7 +1654,7 @@ class FitCallback(keras.callbacks.Callback):
                     y_pred, y_true = self._get_predict()
                     train_batch_data = interactive.update_state(y_pred=y_pred, y_true=y_true)
                 else:
-                    train_batch_data = interactive.update_state(y_pred=None)
+                    train_batch_data = interactive.update_state()
                 if train_batch_data:
                     result_data = {
                         'timings': [estimated_time, elapsed_time, still_time,

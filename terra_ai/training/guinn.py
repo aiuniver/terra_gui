@@ -16,6 +16,7 @@ from typing import Optional
 import numpy as np
 
 import tensorflow as tf
+import tensorflow.keras.losses
 from tensorflow.keras.models import Model
 from tensorflow import keras
 from tensorflow.keras.models import load_model
@@ -663,10 +664,13 @@ class GUINN:
                 for x_batch_train, y_batch_train in dataset.dataset.get('train').batch(
                         params.base.batch, drop_remainder=False):
                     # print('epoch', epoch, 'train_steps', train_steps)
-                    y_true, logits = train_step(
+                    logits, y_true = train_step(
                         x_batch=x_batch_train, y_batch=y_batch_train, train_model=model,
                         losses=loss, set_optimizer=optimizer
                     )
+                    # train_loss = tf.keras.losses.CategoricalCrossentropy()(y_true[0], logits[0]).numpy()
+                    # val_loss = tf.keras.losses.CategoricalCrossentropy()(val_true.get('2'), val_pred.get('2')).numpy()
+                    # print('train_loss', train_steps, train_loss, total_loss.numpy(), isinstance(logits, list), logits[0].shape)
                     if not train_true:
                         for i, out in enumerate(dataset.data.outputs.keys()):
                             train_pred[f"{out}"] = logits[i].numpy().astype('float')
@@ -695,6 +699,7 @@ class GUINN:
                                 train_data_idxs[-1] + 1, train_data_idxs[-1] + 1 + y_true[0].shape[0])))
                     # callback.on_train_batch_end(batch=train_step)
                     if interactive.urgent_predict:
+                        print('\nGUINN interactive.urgent_predict\n')
                         val_pred, val_true = test_step(
                             options=dataset, parameters=params, train_model=model,
                             outputs=list(dataset.data.outputs.keys())
@@ -710,24 +715,32 @@ class GUINN:
                         break
                 self.save_model()
                 if callback.stop_training:
-                    callback.on_train_end()
+                    callback.on_train_end(model)
                     break
+
                 # Run a validation loop at the end of each epoch.
                 val_pred, val_true = test_step(options=dataset, parameters=params, train_model=model,
                                                outputs=list(dataset.data.outputs.keys()))
+                # train_loss = tf.keras.losses.CategoricalCrossentropy()(train_true.get('2'), train_pred.get('2')).numpy()
+                # val_loss = tf.keras.losses.CategoricalCrossentropy()(val_true.get('2'), val_pred.get('2')).numpy()
+                # print('\ntrain_loss, val_loss', train_loss, val_loss)
+
                 callback.on_epoch_end(
                     epoch=epoch + 1,
                     arrays={
-                        "train_pred": train_pred, "val_pred": val_pred, "train_true": train_true, "val_true": val_true},
+                        "train_pred": train_pred,
+                        "val_pred": val_pred,
+                        "train_true": train_true,
+                        "val_true": val_true
+                    },
                     train_data_idxs=train_data_idxs
                 )
-
                 print(
-                    f"\nEpoch {callback.current_logs.get('epochs')}:\n"
-                    f"\nlog_history: {callback.log_history.get('epochs')}, "
-                    f"epoch_time={round(time.time() - callback._time_first_step, 3)}"
-                    f"\nloss={callback.log_history.get('2').get('loss')}"
-                    f"\nmetrics={callback.log_history.get('2').get('metrics')}"
+                    # f"\nEpoch {callback.current_logs.get('epochs')}:"
+                    #     f"\nlog_history: {callback.log_history.get('epochs')}, "
+                    #     f"epoch_time={round(time.time() - callback._time_first_step, 3)}"
+                    # f"\nloss={callback.log_history.get('2').get('loss')}"
+                    # f"\nmetrics={callback.log_history.get('2').get('metrics')}\n"
                     # f" \n loss={callback.current_logs.get('2').get('loss')}\n"
                     # f" \n metrics={callback.current_logs.get('2').get('metrics')}\n"
                     # f" \n class_loss={callback.current_logs.get('2').get('class_loss')}\n"
@@ -740,7 +753,7 @@ class GUINN:
                     print(f"\nEpoch {epoch + 1}")
                     print(f"Best weights was saved in directory {best_path}")
                 first_epoch = False
-            callback.on_train_end()
+            callback.on_train_end(model)
         except Exception as e:
             print_error(GUINN().name, method_name, e)
 
@@ -980,6 +993,7 @@ class FitCallback:
                     loss_fn, out, arrays.get("train_true").get(out), arrays.get("train_pred").get(out))
                 val_loss = self._get_loss_calculation(
                     loss_fn, out, arrays.get("val_true").get(out), arrays.get("val_pred").get(out))
+                print('train_loss, val_loss', train_loss, val_loss)
                 self.current_logs[out]["loss"][output_layer.loss.name] = {"train": train_loss, "val": val_loss}
                 if self.class_outputs.get(output_layer.id):
                     self.current_logs[out]["class_loss"][output_layer.loss.name] = {}
@@ -1380,8 +1394,8 @@ class FitCallback:
                     with open(os.path.join(interactive_path, "addtraining.int"), "r",
                               encoding="utf-8") as addtraining_int:
                         interactive.addtrain_epochs = json.load(addtraining_int)["addtrain_epochs"]
-                self.last_epoch = max(logs.get('epoch')) + 1
-                self.still_epochs = self.retrain_epochs - self.last_epoch + 1
+                self.last_epoch = max(logs.get('epoch'))
+                self.still_epochs = self.retrain_epochs - self.last_epoch
                 # self._get_metric_name_checkpoint(logs.get('logs'))
                 return logs
             else:
@@ -1649,15 +1663,21 @@ class FitCallback:
     def on_train_begin(self):
         method_name = 'on_train_begin'
         try:
-            print(method_name)
+            print(method_name, self.dataset.dataframe.keys())
             status = self._get_train_status()
             self._start_time = time.time()
             if status != "addtrain":
-                self.batch = 0
+                self.batch = 1
             if not self.dataset.data.use_generator:
-                self.num_batches = len(list(self.dataset.X.get('train').values())[0]) // self.batch_size
+                if len(list(self.dataset.X['train'].values())[0]) % self.batch_size:
+                    self.num_batches = len(list(self.dataset.X['train'].values())[0]) // self.batch_size + 1
+                else:
+                    self.num_batches = len(list(self.dataset.X['train'].values())[0]) // self.batch_size
             else:
-                self.num_batches = len(self.dataset.dataframe['train']) // self.batch_size
+                if len(self.dataset.dataframe['train']) % self.batch_size:
+                    self.num_batches = len(self.dataset.dataframe['train']) // self.batch_size + 1
+                else:
+                    self.num_batches = len(self.dataset.dataframe['train']) // self.batch_size
         except Exception as e:
             print_error('FitCallback', method_name, e)
 
@@ -1674,14 +1694,14 @@ class FitCallback:
                 self.stop_training = True
                 progress.pool(
                     self.progress_name,
-                    percent=(self.last_epoch - 1) / (
+                    percent=self.last_epoch / (
                         self.retrain_epochs if self._get_train_status() == "addtrain" else self.epochs) * 100,
                     message="Обучение остановлено пользователем, ожидайте остановку...",
                     finished=False,
                 )
             else:
                 # print('current', batch, self.num_batches)
-                msg_batch = {"current": batch + 1, "total": self.num_batches}
+                msg_batch = {"current": batch, "total": self.num_batches}
                 # print('msg_batch', msg_batch)
                 msg_epoch = {"current": self.last_epoch,
                              "total": self.retrain_epochs if self._get_train_status() == "addtrain"
@@ -1694,8 +1714,9 @@ class FitCallback:
 
                 still_time = self.update_progress(
                     self.num_batches * self.still_epochs, self.batch, self._start_time)
-                self.batch += 1
+                self.batch = batch
                 if interactive.urgent_predict:
+                    print('\ninteractive.urgent_predict\n')
                     # if self.is_yolo:
                     # self.samples_train.append(self._logs_predict_extract(logs, prefix='pred'))
                     # self.samples_target_train.append(self._logs_predict_extract(logs, prefix='target'))
@@ -1719,7 +1740,7 @@ class FitCallback:
                 self.training_detail.result = self._get_result_data()
                 progress.pool(
                     self.progress_name,
-                    percent=(self.last_epoch - 1) / (
+                    percent=self.last_epoch / (
                         self.retrain_epochs if self._get_train_status() == "addtrain" else self.epochs
                     ) * 100,
                     message=f"Обучение. Эпоха {self.last_epoch} из "
@@ -1729,19 +1750,10 @@ class FitCallback:
         except Exception as e:
             print_error('FitCallback', method_name, e)
 
-    # def on_test_batch_end(self, logs=None):
-    #     method_name = 'on_test_batch_end'
-    #     try:
-    #         if self.is_yolo:
-    #             self.samples_val.append(self._logs_predict_extract(logs, prefix='pred'))
-    #             self.samples_target_val.append(self._logs_predict_extract(logs, prefix='target'))
-    #     except Exception as e:
-    #         print_error('FitCallback', method_name, e)
-
     def on_epoch_end(self, epoch, arrays=None, logs=None, train_data_idxs=None):
         method_name = 'on_epoch_end'
         try:
-            print(method_name)
+            print(method_name, epoch)
             self.last_epoch = epoch
             # total_epochs = self.retrain_epochs if self._get_train_status() in ['addtrain', 'stopped'] else self.epochs
             if self.is_yolo:
@@ -1756,7 +1768,8 @@ class FitCallback:
                     epoch=epoch, arrays=arrays, train_idx=train_data_idxs
                 )
             self._update_log_history()
-
+            if epoch == 1:
+                interactive.log_history = self.log_history
             current_epoch_time = time.time() - self._time_first_step
             self._sum_epoch_time += current_epoch_time
             train_epoch_data = interactive.update_state(
@@ -1766,11 +1779,11 @@ class FitCallback:
                 on_epoch_end_flag=True,
                 train_idx=train_data_idxs
             )
-            print(method_name, 'train_epoch_data', train_epoch_data)
+            # print(method_name, 'train_epoch_data', train_epoch_data)
             self._set_result_data({'train_data': train_epoch_data})
             progress.pool(
                 self.progress_name,
-                percent=(self.last_epoch - 1) / (
+                percent=self.last_epoch / (
                     self.retrain_epochs if self._get_train_status() == "addtrain" or self._get_train_status() == "stopped"
                     else self.epochs
                 ) * 100,
@@ -1799,18 +1812,18 @@ class FitCallback:
             print_error('FitCallback', method_name, e)
             print('\nself.model.save_weights failed', e)
 
-    def on_train_end(self):
+    def on_train_end(self, model):
         method_name = 'on_train_end'
         try:
-            print(method_name)
-            interactive.addtrain_epochs.append(self.last_epoch - 1)
+            print(method_name, self.last_epoch)
+            interactive.addtrain_epochs.append(self.last_epoch)
             self._save_logs()
 
-            if (self.last_epoch - 1) > 1:
+            if self.last_epoch > 1:
                 file_path_last: str = os.path.join(
                     self.training_detail.model_path, f"last_weights_{self.metric_checkpoint}.h5"
                 )
-                self.model.save_weights(file_path_last)
+                model.save_weights(file_path_last)
             if not os.path.exists(os.path.join(self.training_detail.model_path, "deploy_presets")):
                 os.mkdir(os.path.join(self.training_detail.model_path, "deploy_presets"))
             self._prepare_deploy()
@@ -1823,13 +1836,12 @@ class FitCallback:
             if self.stop_training:
                 progress.pool(
                     self.progress_name,
-                    message=f"Обучение остановлено. Эпоха {self.last_epoch - 1} из "
-                            f"{total_epochs}. Модель сохранена.",
+                    message=f"Обучение остановлено. Эпоха {self.last_epoch} из {total_epochs}. Модель сохранена.",
                     data=self._get_result_data(),
                     finished=True,
                 )
             else:
-                percent = (self.last_epoch - 1) / (
+                percent = self.last_epoch / (
                     self.retrain_epochs
                     if self._get_train_status() == "addtrain" or self._get_train_status() == "stopped"
                     else self.epochs
@@ -1840,8 +1852,7 @@ class FitCallback:
                 progress.pool(
                     self.progress_name,
                     percent=percent,
-                    message=f"Обучение завершено. Эпоха {self.last_epoch - 1} из "
-                            f"{total_epochs}",
+                    message=f"Обучение завершено. Эпоха {self.last_epoch} из {total_epochs}",
                     finished=True,
                 )
         except Exception as e:

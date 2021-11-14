@@ -77,14 +77,12 @@ class InteractiveCallback:
         self.urgent_predict = False
         self.deploy_presets_data = None
         self.random_key = ''
-
-        # self.training_details: TrainingDetailsData
         pass
 
     def set_attributes(self, dataset: PrepareDataset, params: TrainingDetailsData):
         self.options = dataset
         self._callback_router(dataset)
-        self._class_metric_list()
+        self.class_graphics = self._class_metric_list()
         print('set_attributes', dataset.data.architecture)
         print('\ndataset_config', dataset.data)
         print('\nparams', params.native(), '\n')
@@ -117,7 +115,7 @@ class InteractiveCallback:
 
     def update_state(self, arrays: dict = None, fit_logs=None, current_epoch_time=None,
                      on_epoch_end_flag=False, train_idx: list = None) -> dict:
-        print('InteractiveCallback.update_state')
+        # print('InteractiveCallback.update_state')
         if self.log_history:
             if arrays:
                 if self.options.data.architecture in BASIC_ARCHITECTURE:
@@ -541,27 +539,30 @@ class InteractiveCallback:
     def _get_loss_graph_data_request(self) -> list:
         method_name = '_get_loss_graph_data_request'
         try:
-            print(method_name)
+            # print(method_name)
             data_return = []
             if self.options.data.architecture in BASIC_ARCHITECTURE:
                 if not self.training_details.interactive.loss_graphs or not self.log_history.get("epochs"):
                     return data_return
                 for loss_graph_config in self.training_details.interactive.loss_graphs:
-                    loss = self.losses.get(f"{loss_graph_config.output_idx}")
+                    # print('self.training_details.interactive.loss_graphs',
+                    #       self.training_details.interactive.loss_graphs)
+                    loss_name = self.training_details.base.architecture.parameters.outputs[0].loss.name
+                    # print(loss_name, self.log_history)
                     if self.options.data.architecture in YOLO_ARCHITECTURE:
                         loss_graph_config.output_idx = 'output'
                     if loss_graph_config.show == LossGraphShowChoice.model:
                         if sum(self.log_history.get(f"{loss_graph_config.output_idx}").get("progress_state").get(
-                                "loss").get(loss).get('overfitting')[-self.log_gap:]) >= self.progress_threashold:
+                                "loss").get(loss_name).get('overfitting')[-self.log_gap:]) >= self.progress_threashold:
                             progress_state = "overfitting"
                         elif sum(self.log_history.get(f"{loss_graph_config.output_idx}").get("progress_state").get(
-                                "loss").get(loss).get('underfitting')[-self.log_gap:]) >= self.progress_threashold:
+                                "loss").get(loss_name).get('underfitting')[-self.log_gap:]) >= self.progress_threashold:
                             progress_state = "underfitting"
                         else:
                             progress_state = "normal"
 
                         train_list = self.log_history.get(f"{loss_graph_config.output_idx}").get('loss').get(
-                            self.losses.get(f"{loss_graph_config.output_idx}")).get('train')
+                            loss_name).get('train')
                         no_none_train = []
                         for x in train_list:
                             if x is not None:
@@ -580,7 +581,7 @@ class InteractiveCallback:
                         )
 
                         val_list = self.log_history.get(f"{loss_graph_config.output_idx}").get('loss').get(
-                            self.losses.get(f"{loss_graph_config.output_idx}")).get("val")
+                            loss_name).get("val")
                         no_none_val = []
                         for x in val_list:
                             if x is not None:
@@ -596,7 +597,7 @@ class InteractiveCallback:
                         val_plot = fill_graph_plot_data(
                             x=self.log_history.get("epochs"),
                             y=self.log_history.get(f"{loss_graph_config.output_idx}").get('loss').get(
-                                self.losses.get(f"{loss_graph_config.output_idx}")).get("val"),
+                                loss_name).get("val"),
                             label="Проверочная выборка"
                         )
 
@@ -604,8 +605,7 @@ class InteractiveCallback:
                             fill_graph_front_structure(
                                 _id=loss_graph_config.id,
                                 _type='graphic',
-                                graph_name=f"Выходной слой «{loss_graph_config.output_idx}» - "
-                                           f"График ошибки обучения - Эпоха №{self.log_history.get('epochs')[-1]}",
+                                graph_name=f"Выходной слой «{loss_graph_config.output_idx}» - График ошибки обучения",
                                 short_name=f"{loss_graph_config.output_idx} - График ошибки обучения",
                                 x_label="Эпоха",
                                 y_label="Значение",
@@ -621,8 +621,7 @@ class InteractiveCallback:
                                 _id=loss_graph_config.id,
                                 _type='graphic',
                                 graph_name=f"Выходной слой «{loss_graph_config.output_idx}» - "
-                                           f"График ошибки обучения по классам"
-                                           f" - Эпоха №{self.log_history.get('epochs')[-1]}",
+                                           f"График ошибки обучения по классам",
                                 short_name=f"{loss_graph_config.output_idx} - График ошибки обучения по классам",
                                 x_label="Эпоха",
                                 y_label="Значение",
@@ -630,7 +629,7 @@ class InteractiveCallback:
                                     fill_graph_plot_data(
                                         x=self.log_history.get("epochs"),
                                         y=self.log_history.get(f"{loss_graph_config.output_idx}").get('class_loss').get(
-                                            class_name).get(self.losses.get(f"{loss_graph_config.output_idx}")),
+                                            class_name).get(loss_name).get("val"),
                                         label=f"Класс {class_name}"
                                     ) for class_name in
                                     self.options.data.outputs.get(int(loss_graph_config.output_idx)).classes_names
@@ -691,8 +690,7 @@ class InteractiveCallback:
                                 fill_graph_front_structure(
                                     _id=_id,
                                     _type='graphic',
-                                    graph_name=f"График ошибки обучения «{loss}» - "
-                                               f"Эпоха №{self.log_history.get('epochs')[-1]}",
+                                    graph_name=f"График ошибки обучения «{loss}»",
                                     short_name=f"График «{loss}»",
                                     x_label="Эпоха",
                                     y_label="Значение",
@@ -708,8 +706,7 @@ class InteractiveCallback:
                             fill_graph_front_structure(
                                 _id=_id,
                                 _type='graphic',
-                                graph_name=f"График ошибки обучения «prob_loss» по классам"
-                                           f" - Эпоха №{self.log_history.get('epochs')[-1]}",
+                                graph_name=f"График ошибки обучения «prob_loss» по классам",
                                 short_name=f"График ошибки обучения по классам",
                                 x_label="Эпоха",
                                 y_label="Значение",
@@ -734,7 +731,7 @@ class InteractiveCallback:
     def _get_metric_graph_data_request(self) -> list:
         method_name = '_get_metric_graph_data_request'
         try:
-            print(method_name)
+            # print(method_name)
             data_return = []
             if self.options.data.architecture in BASIC_ARCHITECTURE:
                 if not self.training_details.interactive.metric_graphs or not self.log_history.get("epochs"):
@@ -786,8 +783,7 @@ class InteractiveCallback:
                                 _id=metric_graph_config.id,
                                 _type='graphic',
                                 graph_name=f"Выходной слой «{metric_graph_config.output_idx}» - График метрики "
-                                           f"{metric_graph_config.show_metric.name} - "
-                                           f"Эпоха №{self.log_history.get('epochs')[-1]}",
+                                           f"{metric_graph_config.show_metric.name}",
                                 short_name=f"{metric_graph_config.output_idx} - {metric_graph_config.show_metric.name}",
                                 x_label="Эпоха",
                                 y_label="Значение",
@@ -803,8 +799,7 @@ class InteractiveCallback:
                                 _id=metric_graph_config.id,
                                 _type='graphic',
                                 graph_name=f"Выходной слой «{metric_graph_config.output_idx}» - График метрики "
-                                           f"{metric_graph_config.show_metric.name} по классам - "
-                                           f"Эпоха №{self.log_history.get('epochs')[-1]}",
+                                           f"{metric_graph_config.show_metric.name} по классам",
                                 short_name=f"{metric_graph_config.output_idx} - "
                                            f"{metric_graph_config.show_metric.name} по классам",
                                 x_label="Эпоха",
@@ -814,7 +809,7 @@ class InteractiveCallback:
                                         x=self.log_history.get("epochs"),
                                         y=self.log_history.get(f"{metric_graph_config.output_idx}").get(
                                             'class_metrics').get(
-                                            class_name).get(metric_graph_config.show_metric),
+                                            class_name).get(metric_graph_config.show_metric).get('val'),
                                         label=f"Класс {class_name}"
                                     ) for class_name in
                                     self.options.data.outputs.get(metric_graph_config.output_idx).classes_names
