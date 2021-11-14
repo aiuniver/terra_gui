@@ -1,4 +1,4 @@
-from . import cascade_input, cascade_output, general_fucntions
+from . import cascade_input, cascade_output, general_fucntions, service
 from .cascade import CascadeElement, CascadeOutput, BuildModelCascade, CompleteCascade, CascadeBlock
 
 from .common import decamelize, yolo_decode, type2str
@@ -56,7 +56,7 @@ def json2model_cascade(path: str):
 
     if config['tags'][-1]['alias'] == 'object_detection':
         object_detection = True
-        model = create_yolo(model, config)
+        model = make_yolo(model, config)
     preprocess = []
 
     for inp in config['inputs'].keys():
@@ -176,7 +176,21 @@ def create_function(**params):
     return function
 
 
-def create_yolo(model, config):
+def create_service(**params):
+    function = getattr(service, decamelize(params['task']))
+
+    if 'params' not in params.keys():
+        params['params'] = {}
+
+    function = CascadeElement(
+        getattr(function, params['name'])(**params['params']),
+        f"сервис {params['name']}"
+    )
+
+    return function
+
+
+def make_yolo(model, config):
     od = None
     img_conf = None
     for _, i in config['outputs'].items():
