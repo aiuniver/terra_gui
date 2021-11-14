@@ -63,8 +63,8 @@ class DeployCreator:
                                            deploy_path=deploy_path, model_path=model_path,
                                            deploy_type=deploy_type)
 
-        deploy_data.update({"page": page})
-        print(deploy_data)
+        deploy_data.update({"page": page, "path_model": training_path})
+
         return DeployData(**deploy_data)
 
     @staticmethod
@@ -193,7 +193,6 @@ class DeployCreator:
 
         return dict([
             ("path_deploy", deploy_path),
-            ("path_model", model_path),
             ("type", deploy_type),
             ("data", out_presets_data)
         ])
