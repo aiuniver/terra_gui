@@ -2,7 +2,12 @@
   <div class="preview">
     <scrollbar :ops="ops">
       <div class="preview-list flex align-center">
-        <div class="preview-list__item mr-4" v-for="item in list" :key="JSON.stringify(item)">
+        <div
+          class="preview-list__item mr-4"
+          @click="$emit('choosePreview', item.id)"
+          v-for="item in list"
+          :key="JSON.stringify(item)"
+        >
           <img :src="item.path" :alt="item.label" />
           <p>{{ item.label }}</p>
         </div>
@@ -13,7 +18,7 @@
 
 <script>
 export default {
-  name: 'BasePreview',
+  name: 'DatasetPreview',
   props: {
     list: {
       type: Array,

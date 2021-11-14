@@ -4,7 +4,7 @@
     :class="[{ 'd-input--error': error }, { 'd-input--small': small }, { 'd-input--disabled': isDisabled }]"
   >
     <div v-if="icon" class="d-input__icon">
-      <i :class="`ci-icon ci-${icon}`" />
+      <SvgContainer :name="icon" />
     </div>
     <input
       v-model="input"
@@ -36,7 +36,9 @@
 
 <script>
 import fields from '@/mixins/forms/fields';
+import SvgContainer from '@/components/app/SvgContainer';
 export default {
+  components: { SvgContainer },
   name: 'd-select',
   mixins: [fields],
   props: {

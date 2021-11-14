@@ -1,27 +1,27 @@
 <template>
   <div class="page-datasets-action">
     <div class="page-datasets-action__dataset">
-      <div class="page-datasets-action__item">
+      <div class="page-datasets-action__item" @click="handleAction('add-dataset')">
         <SvgContainer name="folder-add" />
       </div>
-      <div class="page-datasets-action__item">
+      <div class="page-datasets-action__item" @click="handleAction('save')">
         <SvgContainer name="folder-save" />
       </div>
-      <div class="page-datasets-action__item">
+      <div class="page-datasets-action__item" @click="handleAction('validate')">
         <SvgContainer name="folder-validate" />
       </div>
-      <div class="page-datasets-action__item">
+      <div class="page-datasets-action__item" @click="handleAction('delete-dataset')">
         <SvgContainer name="folder-remove" />
       </div>
     </div>
     <div class="page-datasets-action__workspace mt-10">
-      <div class="page-datasets-action__item page-datasets-action__item--no-hover">
+      <div class="page-datasets-action__item page-datasets-action__item--no-hover" @click="handleAction('add-input')">
         <SvgContainer name="sloy-start-add" />
       </div>
       <div class="page-datasets-action__item page-datasets-action__item--no-hover">
-        <SvgContainer name="sloy-middle-add" />
+        <SvgContainer name="sloy-middle-add" @click="handleAction('add-middle')" />
       </div>
-      <div class="page-datasets-action__item page-datasets-action__item--no-hover">
+      <div class="page-datasets-action__item page-datasets-action__item--no-hover" @click="handleAction('add-end')">
         <SvgContainer name="sloy-end-add" />
       </div>
     </div>
@@ -32,10 +32,15 @@
 import SvgContainer from '@/components/app/SvgContainer';
 
 export default {
-  components:{
+  components: {
     SvgContainer,
   },
-  name: "WorkspaceAction"
+  name: 'WorkspaceActions',
+  methods: {
+    handleAction(action) {
+      this.$emit('action', action);
+    },
+  },
 };
 </script>
 

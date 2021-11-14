@@ -10,6 +10,8 @@ ROOT_PATH = str(Path(__file__).parent.parent.parent)
 
 make_path = lambda path: os.path.join(ROOT_PATH, path)
 
+type2str = lambda type: repr(type)[8:-2]
+
 
 def decamelize(camel_case_string: str):
     string = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", camel_case_string)

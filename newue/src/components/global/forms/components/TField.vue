@@ -1,7 +1,12 @@
 <template>
   <div :class="['t-field', { 't-field--inline': inline }]">
-    <div class="t-field__label" @click="click">
-      <slot name="label">{{ label }}</slot>
+    <div class="t-field__label flex align-center" @click="click">
+      <template v-if="icon">
+        <SvgContainer :name="icon" class="mr-1" />
+      </template>
+      <span>
+        <slot name="label">{{ label }}</slot>
+      </span>
     </div>
     <div class="t-field__input">
       <slot></slot>
@@ -11,12 +16,18 @@
 </template>
 
 <script>
+import SvgContainer from '@/components/app/SvgContainer.vue';
 export default {
+  components: { SvgContainer },
   name: 't-field',
   props: {
     label: {
       type: String,
       default: 'Label',
+    },
+    icon: {
+      type: String,
+      default: '',
     },
     inline: Boolean,
   },
@@ -47,6 +58,10 @@ export default {
     user-select: none;
     text-overflow: ellipsis;
     line-height: 1;
+    &::v-deep svg {
+      width: 16px;
+      height: 16px;
+    }
   }
   &--inline {
     flex-direction: row-reverse;

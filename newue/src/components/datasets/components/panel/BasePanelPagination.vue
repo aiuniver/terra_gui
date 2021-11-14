@@ -1,6 +1,6 @@
 <template>
   <div class="panel-pagination flex align-center">
-    <button class="btn panel-pagination-btn">
+    <button @click="$emit('action', 'prev')" class="btn panel-pagination-btn">
       <SvgContainer name="arrow-left-longer-big" />
     </button>
     <div class="panel-pagination-container">
@@ -14,7 +14,7 @@
         <span>Входные данные</span>
       </div>
     </div>
-    <DButton style="width: 40%" color="secondary" direction="left" text="Далее" />
+    <DButton @click="$emit('action', 'next')" style="width: 40%" color="secondary" direction="left" text="Далее" />
   </div>
 </template>
 

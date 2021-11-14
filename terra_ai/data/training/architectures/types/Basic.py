@@ -87,8 +87,11 @@ class ParametersData(BaseMixinData):
         _layer = (
             _model.outputs.get(_layer_id)
             if _layer_id in _model.outputs.ids
-            else _model.outputs[0]
+            else (_model.outputs[0] if _model.outputs else None)
         )
+        if not _layer:
+            return None
+
         data["layer"] = _layer.id
 
         _task = TasksRelations.get(_layer.task.value if _layer.task else None)
