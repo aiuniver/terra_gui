@@ -1,5 +1,17 @@
 <template>
   <div class="forms">
+    <t-tuple-cascade
+      v-if="type === 'text_array'"
+      :value="getValue"
+      :label="label"
+      type="text"
+      :parse="parse"
+      :name="name"
+      :error="error"
+      inline
+      @change="change"
+      @cleanError="cleanError"
+    />
     <t-input
       v-if="type === 'tuple'"
       :value="getValue"
@@ -80,7 +92,7 @@ export default {
     parse: String,
     name: String,
     fields: Object,
-    id: Number,
+    id: String,
     root: Boolean,
     parameters: Object,
     update: Object,

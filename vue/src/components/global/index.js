@@ -15,6 +15,7 @@ import Checkbox from './forms/Checkbox';
 import Input from './forms/Input';
 import Select from './forms/Select';
 import SelectTasks from './forms/SelectTasks';
+import TupleCascade from './forms/TupleCascade';
 
 
 // _______________NEW____________________//
@@ -42,6 +43,7 @@ export default [
   Autocomplete,
   MultiSelect,
   SelectTasks,
+  TupleCascade,
 
   TInput,
   TCheckbox,
