@@ -21,7 +21,7 @@ class DataList(DataBaseList):
         source = Item
 
     def preset_update(self, data):
-        data.update({"source": str(Path(self.path_model, data.get("source")))})
+        data.update({"source": str(Path(self.path_deploy, data.get("source")))})
         return data
 
     def reload(self, indexes: List[int] = None):
@@ -48,7 +48,7 @@ class DataList(DataBaseList):
         self.preset[index] = item
 
         destination = Path(self.path_deploy, f"{index + 1}.jpg")
-        Image.open(Path(self.path_model, item.source)).save(destination)
+        Image.open(Path(self.path_deploy, item.source)).save(destination)
 
 
 class Data(DataBase):

@@ -51,18 +51,20 @@ class DeployCreator:
 
         presets = self._get_presets(predict=predict, dataset_data=dataset_data,
                                     dataset=dataset, deploy_path=deploy_path)
-        print(presets)
-        if "Dataframe" in training_details.base.architecture.type.value:
+
+        if "Dataframe" in deploy_type:
             self._create_form_data_for_dataframe_deploy(deploy_path=deploy_path,
                                                         dataset=dataset, dataset_data=dataset_data)
 
         self._create_cascade(presets=presets, dataset=dataset, dataset_data=dataset_data,
                              deploy_path=deploy_path, model_path=model_path, deploy_type=deploy_type)
+
         deploy_data = self._prepare_deploy(presets=presets, dataset=dataset,
                                            deploy_path=deploy_path, model_path=model_path,
                                            deploy_type=deploy_type)
-        print(deploy_data)
+
         deploy_data.update({"page": page})
+        print(deploy_data)
         return DeployData(**deploy_data)
 
     @staticmethod
@@ -190,7 +192,7 @@ class DeployCreator:
             out_presets_data["predict_column"] = predict_column if predict_column else "Предсказанные значения"
 
         return dict([
-            ("path", deploy_path),
+            ("path_deploy", deploy_path),
             ("path_model", model_path),
             ("type", deploy_type),
             ("data", out_presets_data)
@@ -240,6 +242,6 @@ class DeployCreator:
                 dataset.get("instructions").get(2).get("parameters").get("yolo").title()]
         else:
             raise MethodNotImplementedException(__method=inp_task_name + out_task_name, __class="ArchitectureChoice")
-        print("DATASET ", dataset)
+
         dataset["architecture"] = deploy_type
         return dataset
