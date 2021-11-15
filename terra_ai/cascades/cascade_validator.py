@@ -15,6 +15,7 @@ class CascadeValidator:
         models = configs.get("models_config_data")
         model_data_type = list(set([val.get("task") for key, val in models[0].get("inputs").items()]))[0]
         result = self._check_bind_and_data(cascade_data=cascade_data, model_data_type=model_data_type)
+        print(result)
         return result
 
     @staticmethod

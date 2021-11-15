@@ -124,9 +124,12 @@ def json2model_cascade(path: str):
     return model
 
 
-def json2cascade(path: str):
-    with open(path) as cfg:
-        config = json.load(cfg)
+def json2cascade(path: str, cascade_config=None, mode="deploy"):
+    if cascade_config:
+        config = cascade_config
+    else:
+        with open(path) as cfg:
+            config = json.load(cfg)
     cascades = {}
     input_cascade = None
 
@@ -135,7 +138,11 @@ def json2cascade(path: str):
             input_cascade = getattr(sys.modules.get(__name__), "create_" + params['tag'])(**params)
         else:
             if params['tag'] == 'model':
-                params['model_path'] = os.path.split(path)[0]
+                if mode == "run":
+                    params["model"] = "model"
+                    params['model_path'] = path
+                else:
+                    params['model_path'] = os.path.split(path)[0]
             cascades[i] = getattr(sys.modules.get(__name__), "create_" + params['tag'])(**params)
 
     adjacency_map = OrderedDict()
