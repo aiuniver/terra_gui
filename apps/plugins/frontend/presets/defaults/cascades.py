@@ -193,16 +193,10 @@ CascadesBlocksTypes = {
                 "fields": {
                     "Video": [
                         {
-                            "type": "number",
-                            "name": "width",
-                            "label": "Ширина",
-                            "parse": "parameters[main][width]",
-                        },
-                        {
-                            "type": "number",
-                            "name": "height",
-                            "label": "Высота",
-                            "parse": "parameters[main][height]",
+                            "type": "checkbox",
+                            "name": "switch_on_frame",
+                            "label": "Switch on frame",
+                            "parse": "parameters[main][switch_on_frame]",
                         },
                     ]
                 },

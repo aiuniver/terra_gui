@@ -8,14 +8,13 @@ from terra_ai.data.datasets.extra import LayerInputTypeChoice
 
 class ParametersMainData(BaseMixinData):
     type: LayerInputTypeChoice = LayerInputTypeChoice.Image
-    width: Optional[PositiveInt]
-    height: Optional[PositiveInt]
+    switch_on_frame: bool = True
 
     def __init__(self, **data):
         _type = data.get("type")
         _keys = ["type"]
         if _type == LayerInputTypeChoice.Video:
-            _keys += ["width", "height"]
+            _keys += ["switch_on_frame"]
         data = dict(filter(lambda item: item[0] in _keys, data.items()))
         super().__init__(**data)
 
@@ -26,6 +25,5 @@ class ParametersMainData(BaseMixinData):
                 continue
             cls.__fields__[name].required = False
         if value == LayerInputTypeChoice.Video:
-            cls.__fields__["width"].required = True
-            cls.__fields__["height"].required = True
+            cls.__fields__["switch_on_frame"].required = True
         return value
