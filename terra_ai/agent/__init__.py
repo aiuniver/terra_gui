@@ -10,6 +10,7 @@ from typing import Any, NoReturn
 from . import exceptions as agent_exceptions
 from . import utils as agent_utils
 from .. import settings, progress
+from ..cascades.cascade_validator import CascadeValidator
 from ..deploy.prepare_deploy import DeployCreator
 from ..exceptions import tensor_flow as tf_exceptions
 from ..data.datasets.creation import FilePathSourcesList
@@ -378,6 +379,7 @@ class Exchange:
         """
         print(cascade)
         print(path)
+        data = CascadeValidator().get_validate(cascade_data=cascade, training_path=path)
 
     def _call_cascade_start(self, path: Path, cascade: CascadeDetailsData):
         """
