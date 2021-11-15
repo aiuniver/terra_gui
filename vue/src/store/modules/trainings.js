@@ -86,7 +86,6 @@ export default {
       if (status === 'no_train') {
         const valid = await dispatch('modeling/validateModel', {}, { root: true })
         isValid = !Object.values(valid || {}).filter(item => item).length
-        dispatch('setTrainData', {});
       }
       if (isValid) {
         dispatch('setStatusTrain', 'start');
@@ -139,13 +138,10 @@ export default {
     async interactive ({ state: { interactive }, dispatch }, part) {
       const data = { ...interactive, ...part }
       const res = await dispatch('axios', { url: '/training/interactive/', data }, { root: true });
-      if (res) {
-        dispatch('setObjectInteractive', data);
-      }
-      if (res?.data?.train_data) {
-        const { data: { train_data } } = res
-        dispatch('setTrainData', train_data);
-      }
+      dispatch('parseStruct', res?.data || {});
+      // if (res) {
+      //   dispatch('setObjectInteractive', data);
+      // }
       return res
     },
     async progress ({ dispatch }, data) {
@@ -189,10 +185,10 @@ export default {
     setСollapse ({ commit }, data) {
       commit("SET_COLLAPSE", data);
     },
-    setObjectInteractive ({ state, commit }, charts) {
-      const data = { ...state.interactive, ...charts }
-      commit("SET_INTERACTIV", data);
-    },
+    // setObjectInteractive ({ state, commit }, charts) {
+    //   const data = { ...state.interactive, ...charts }
+    //   commit("SET_INTERACTIV", data);
+    // },
     setStatusTrain ({ commit }, value) {
       commit("SET_STATUS_TRAIN", value);
     },
