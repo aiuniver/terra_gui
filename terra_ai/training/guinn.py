@@ -380,25 +380,19 @@ class GUINN:
                         lst.append(i)
             return lst
 
-        min_step = 0
-        for i in range(3):
+        batch_list = []
+        for i in range(4):
             r = issimple(len_val - i)
             if len(r):
                 try:
-                    min_step = min(r)
-                    if len_val // min_step > batch_size:
-                        for k in r:
-                            if len_val // k <= batch_size:
-                                min_step = k
-                                break
-                            else:
-                                min_step = len_val
-                    break
+                    for k in r:
+                        if len_val // k < batch_size:
+                            batch_list.append(k)
+                        else:
+                            batch_list.append(len_val)
                 except ValueError:
                     pass
-            else:
-                min_step = len_val
-        val_batch_size = len_val // min_step
+        val_batch_size = len_val // min(batch_list)
         return val_batch_size
 
     def terra_fit(self,
