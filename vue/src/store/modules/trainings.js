@@ -150,6 +150,11 @@ export default {
         const { data, error } = res;
         if (data) {
           dispatch('parseStruct', data || {});
+          const err = data?.progress?.error || ''
+          if (err) {
+            dispatch('messages/setMessage', { error: err }, { root: true });
+            dispatch('logging/setError', JSON.stringify(err, null, 2), { root: true });
+          } 
         }
         if (error) {
           dispatch('messages/setMessage', { error: error }, { root: true });
