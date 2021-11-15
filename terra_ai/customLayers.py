@@ -1175,7 +1175,7 @@ class UNETBlock(Model):
 
         for i in range(0, self.n_pooling_branches):
             for j in range(0, self.n_conv_layers):
-                setattr(self, f"conv_d{i}.{j}",
+                setattr(self, f"conv_d{i}_{j}",
                         layers.Conv2D(filters=16 * (i + 1) * (2 ** self.filters_coef), kernel_size=self.kernel_size,
                                       strides=self.strides,
                                       padding=self.padding, activation=self.activation, data_format='channels_last',
@@ -1195,7 +1195,7 @@ class UNETBlock(Model):
             setattr(self, f"upsample_{i}",
                     layers.UpSampling2D(size=2))
             for j in range(0, self.n_conv_layers):
-                setattr(self, f"conv_u{i}.{j}",
+                setattr(self, f"conv_u{i}_{j}",
                         layers.Conv2D(filters=16 * (2 * self.n_pooling_branches - i) * (2 ** self.filters_coef),
                                       kernel_size=self.kernel_size, strides=self.strides,
                                       padding=self.padding, activation=self.activation, data_format='channels_last',
@@ -1228,11 +1228,11 @@ class UNETBlock(Model):
                 setattr(self, f'x_{i}', getattr(self, f'start_conv')(input_))
 
                 for j in range(1, self.n_conv_layers):
-                    setattr(self, f'x_{i}', getattr(self, f'conv_d{i}.{j}')(getattr(self, f'x_{i}')))
+                    setattr(self, f'x_{i}', getattr(self, f'conv_d{i}_{j}')(getattr(self, f'x_{i}')))
 
             else:
                 for j in range(0, self.n_conv_layers):
-                    setattr(self, f'x_{i}', getattr(self, f'conv_d{i}.{j}')(getattr(self, f'x_{i}')))
+                    setattr(self, f'x_{i}', getattr(self, f'conv_d{i}_{j}')(getattr(self, f'x_{i}')))
 
             if self.batch_norm_layer:
                 setattr(self, f'x_{i}', getattr(self, f'batchnorm_d{i}')(getattr(self, f'x_{i}')))
@@ -1261,14 +1261,14 @@ class UNETBlock(Model):
 
             if self.batch_norm_layer:
                 for j in range(0, self.n_conv_layers):
-                    setattr(self, f'x_{i}', getattr(self, f'conv_u{i}.{j}')(getattr(self, f'x_{i}')))
+                    setattr(self, f'x_{i}', getattr(self, f'conv_u{i}_{j}')(getattr(self, f'x_{i}')))
                 setattr(self, f'x_{i + 1}', getattr(self, f'batchnorm_u{i}')(getattr(self, f'x_{i}')))
             else:
                 for j in range(0, self.n_conv_layers):
                     if j != self.n_conv_layers - 1:
-                        setattr(self, f'x_{i}', getattr(self, f'conv_u{i}.{j}')(getattr(self, f'x_{i}')))
+                        setattr(self, f'x_{i}', getattr(self, f'conv_u{i}_{j}')(getattr(self, f'x_{i}')))
                     else:
-                        setattr(self, f'x_{i + 1}', getattr(self, f'conv_u{i}.{j}')(getattr(self, f'x_{i}')))
+                        setattr(self, f'x_{i + 1}', getattr(self, f'conv_u{i}_{j}')(getattr(self, f'x_{i}')))
 
         x = getattr(self, f'x_{i + 1}')
 
