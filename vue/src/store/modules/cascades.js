@@ -34,7 +34,10 @@ export default {
       ]
     },
     status: {
-      isUpdate: true,
+      update: false,
+      validate: true,
+      start: true,
+      save: true,
     },
   }),
   mutations: {
@@ -147,7 +150,7 @@ export default {
       return data
     },
     async createModel ({ dispatch, commit }, data) {
-      commit('SET_STATUS', { isUpdate: false });
+      commit('SET_STATUS', { update: false });
       return await dispatch('axios', { url: '/cascades/create/', data }, { root: true });
     },
     async getImageModel ({ dispatch }, preview) {
@@ -176,7 +179,7 @@ export default {
           })
           .filter(link => link);
       });
-      commit('SET_STATUS', { isUpdate: true });
+      commit('SET_STATUS', { update: true });
 
 
       const res = await dispatch('axios', { url: '/cascades/update/', data: { blocks: semdBlocks } }, { root: true });
@@ -228,17 +231,20 @@ export default {
       }
       return res
     },
-    async start ({ dispatch }) {
-      const { data } = await dispatch('axios', { url: '/cascades/start/' }, { root: true });
-      return data;
+    async start ({ commit, dispatch }) {
+      const res = await dispatch('axios', { url: '/cascades/start/' }, { root: true });
+      commit('SET_STATUS', { start: Boolean(res?.error) });
+      return res;
     },
-    async save ({ dispatch }) {
-      const { data } = await dispatch('axios', { url: '/cascades/save/' }, { root: true });
-      return data;
+    async save ({ commit, dispatch }) {
+      const res = await dispatch('axios', { url: '/cascades/save/' }, { root: true });
+      commit('SET_STATUS', { save: Boolean(res?.error) });
+      return res;
     },
-    async validate ({ dispatch }) {
-      const { data } = await dispatch('axios', { url: '/cascades/validate/' }, { root: true });
-      return data;
+    async validate ({ commit, dispatch }) {
+      const res = await dispatch('axios', { url: '/cascades/validate/' }, { root: true });
+      commit('SET_STATUS', { validate: Boolean(res?.error) });
+      return res;
     },
     setBlocks ({ commit }, value) {
       commit('SET_BLOCKS', value);
