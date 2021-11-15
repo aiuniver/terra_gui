@@ -431,6 +431,8 @@ class GUINN:
                 (training_details.state.status == "trained" and
                  self.callbacks[0].last_epoch - 1 == training_details.base.epochs):
             self.sum_epoch = training_details.base.epochs
+        if training_details.state.status == "stopped" and self.callbacks[0].last_epoch - 1 <= 1:
+            training_details.state.set("no_train")
 
 
 class MemoryUsage:

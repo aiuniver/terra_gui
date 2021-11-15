@@ -325,9 +325,9 @@ class Exchange:
         """
         Обновление интерактивных параметров обучения
         """
-        if training.state.status in [
-            StateStatusChoice.stopped,
-            StateStatusChoice.trained,
+        if training.state.status not in [
+            # StateStatusChoice.stopped,
+            StateStatusChoice.no_train,
         ]:
             interactive.get_train_results()
 
