@@ -391,7 +391,7 @@ class InteractiveCallback:
                 self.progress_name,
                 finished=False,
             )
-            self.training_details.result = result
+            self.training_details.result = {"train_data": result}
 
     def _callback_router(self, dataset: PrepareDataset):
         method_name = '_callback_router'

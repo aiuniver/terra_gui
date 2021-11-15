@@ -270,7 +270,7 @@ class GUINN:
         for one_thread in threading.enumerate():
             if one_thread.getName() == "current_train":
                 current_status = state.state.status
-                state.state.set("stopped")
+                state.state.set("kill")
                 progress.pool(self.progress_name, message="Найдено незавершенное обучение. Идет очистка. Подождите.")
                 one_thread.join()
                 state.state.set(current_status)
