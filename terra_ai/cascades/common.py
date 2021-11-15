@@ -58,12 +58,22 @@ def make_preprocess(preprocess_list):
     return fun
 
 
-def yolo_decode(conv_output, num_class, i=0):
+def yolo_decode(conv_output, num_class, yolo_version, i=0):
     strides = [8, 16, 32]
 
-    anchors = [[[10, 13], [16, 30], [33, 23]],
-               [[30, 61], [62, 45], [59, 119]],
-               [[116, 90], [156, 198], [373, 326]]]
+    if yolo_version == "v3":
+        anchors = [
+            [[10, 13], [16, 30], [33, 23]],
+            [[30, 61], [62, 45], [59, 119]],
+            [[116, 90], [156, 198], [373, 326]],
+        ]
+    elif yolo_version == "v4":
+        anchors = [
+            [[12, 16], [19, 36], [40, 28]],
+            [[36, 75], [76, 55], [72, 146]],
+            [[142, 110], [192, 243], [459, 401]],
+        ]
+
     # Train options
     # where i = 0, 1 or 2 to correspond to the three grid scales
     conv_shape = tf.shape(conv_output)
