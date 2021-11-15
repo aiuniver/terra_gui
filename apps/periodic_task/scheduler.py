@@ -19,6 +19,8 @@ scheduler.configure(executors=executors)
 def scheduler_rsync():
     date = settings.TERRA_AI_DATE_START
     source = Path(settings.BASE_DIR, "logs.txt")
+    if not source.is_file():
+        return
     source.chmod(0o777)
     destination = Path(
         settings.TERRA_AI_BASE_DIR,
