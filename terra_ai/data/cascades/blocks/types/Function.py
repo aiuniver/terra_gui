@@ -54,6 +54,7 @@ class ParametersMainData(BaseMixinData):
         elif _type == BlockFunctionTypeChoice.PlotBBoxes:
             _keys += ["classes", "colors", "line_thickness"]
         data = dict(filter(lambda item: item[0] in _keys, data.items()))
+        print(data)
         super().__init__(**data)
 
     @validator("type", pre=True)
@@ -86,4 +87,19 @@ class ParametersMainData(BaseMixinData):
             cls.__fields__["classes"].required = True
             cls.__fields__["colors"].required = True
             cls.__fields__["line_thickness"].required = True
+        print(cls.__fields__)
+        return value
+
+    @validator(
+        "shape",
+        "classes_colors",
+        "open_tag",
+        "close_tag",
+        "classes",
+        "colors",
+        pre=True,
+    )
+    def _validate_empty_list(cls, value):
+        if not value:
+            value = None
         return value
