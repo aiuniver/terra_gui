@@ -1,10 +1,14 @@
 <template>
   <div class="app" data-theme="light">
-    <Header />
-    <div class="app__main">
-      <router-view />
+    <div class="app__header">
+      <Header />
     </div>
-    <Footer />
+    <div class="app__main">
+      <!-- <router-view /> -->
+    </div>
+    <div class="app_footer">
+      <Footer />
+    </div>
   </div>
 </template>
 
@@ -12,14 +16,11 @@
 .app {
   height: 100%;
   width: 100%;
-  &__header{
-
+  &__header {
   }
   &__main {
-
   }
-  &__footer{
-
+  &__footer {
   }
 }
 </style>
