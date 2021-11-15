@@ -6,7 +6,11 @@ from terra_ai.data.cascades.blocks.extra import (
     BlockCustomTypeChoice,
 )
 
-from ...choices import BlockFunctionGroupChoice, BlockFunctionTypeChoice
+from ...choices import (
+    BlockFunctionGroupChoice,
+    BlockFunctionTypeChoice,
+    LayerInputTypeChoice,
+)
 
 
 CascadesBlockForm = [
@@ -172,8 +176,72 @@ def get_function_type_field(type_name) -> dict:
 
 
 CascadesBlocksTypes = {
-    BlockGroupChoice.InputData: {},
-    BlockGroupChoice.OutputData: {},
+    BlockGroupChoice.InputData: {
+        "main": [
+            {
+                "type": "select",
+                "label": "Тип данных",
+                "name": "type",
+                "parse": "parameters[main][type]",
+                "value": LayerInputTypeChoice.Image.name,
+                "list": list(
+                    map(
+                        lambda item: {"value": item.name, "label": item.value},
+                        list(LayerInputTypeChoice),
+                    )
+                ),
+                "fields": {
+                    "Video": [
+                        {
+                            "type": "number",
+                            "name": "width",
+                            "label": "Ширина",
+                            "parse": "parameters[main][width]",
+                        },
+                        {
+                            "type": "number",
+                            "name": "height",
+                            "label": "Высота",
+                            "parse": "parameters[main][height]",
+                        },
+                    ]
+                },
+            },
+        ]
+    },
+    BlockGroupChoice.OutputData: {
+        "main": [
+            {
+                "type": "select",
+                "label": "Тип данных",
+                "name": "type",
+                "parse": "parameters[main][type]",
+                "value": LayerInputTypeChoice.Image.name,
+                "list": list(
+                    map(
+                        lambda item: {"value": item.name, "label": item.value},
+                        list(LayerInputTypeChoice),
+                    )
+                ),
+                "fields": {
+                    "Video": [
+                        {
+                            "type": "number",
+                            "name": "width",
+                            "label": "Ширина",
+                            "parse": "parameters[main][width]",
+                        },
+                        {
+                            "type": "number",
+                            "name": "height",
+                            "label": "Высота",
+                            "parse": "parameters[main][height]",
+                        },
+                    ]
+                },
+            },
+        ]
+    },
     BlockGroupChoice.Model: {
         "main": [
             {

@@ -8,8 +8,8 @@
         <div class="params__items">
           <at-collapse :value="collapse" @on-change="onchange" :key="key">
             <at-collapse-item
-              v-show="visible"
               v-for="({ visible, name, fields }, key) of params"
+              v-show="visible && key !== 'server'"
               :key="key"
               class="mt-3"
               :name="key"
@@ -28,39 +28,11 @@
                   <t-button @click="handleDownload" :key="'key' + i" :disabled="isLoad">Загрузить</t-button>
                 </template>
               </div>
-              <!-- <div v-else class="blocks-layers">
-                <template v-for="(field, i) of fields">
-                  <div class="block-layers" :key="'block_layers_' + i">
-                    <div class="block-layers__header">
-                      {{ field.name }}
-                    </div>
-                    <div class="block-layers__body">
-                      <template v-for="(data, i) of field.fields">
-                        <t-auto-field-deploy
-                          v-bind="data"
-                          :key="'checkpoint_' + i + data.parse"
-                          :state="state"
-                          :inline="true"
-                          @parse="parse"
-                        />
-                      </template>
-                    </div>
-                  </div>
-                </template>
-              </div> -->
             </at-collapse-item>
           </at-collapse>
         </div>
       </div>
     </scrollbar>
-    <!-- <div class="params__footer">
-      <div v-if="stopLearning" class="params__overlay">
-        <LoadSpiner :text="'Остановка...'" />
-      </div>
-      <div v-for="({ title, visible }, key) of button" :key="key" class="params__btn">
-        <t-button :disabled="!visible" @click="btnEvent(key)">{{ title }}</t-button>
-      </div>
-    </div> -->
   </div>
 
   <!-- <div class="params-container__name">Загрузка в демо-панель</div>

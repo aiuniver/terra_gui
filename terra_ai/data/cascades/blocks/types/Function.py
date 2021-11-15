@@ -87,3 +87,17 @@ class ParametersMainData(BaseMixinData):
             cls.__fields__["colors"].required = True
             cls.__fields__["line_thickness"].required = True
         return value
+
+    @validator(
+        "shape",
+        "classes_colors",
+        "open_tag",
+        "close_tag",
+        "classes",
+        "colors",
+        pre=True,
+    )
+    def _validate_empty_list(cls, value):
+        if not value:
+            value = None
+        return value

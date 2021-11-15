@@ -709,7 +709,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
-                        "name": "Input 1",
+                        "name": "Изображения автомобилей",
                         "shape": (120, 176, 3),
                         "task": LayerInputTypeChoice.Image.value,
                         "num_classes": 3,
@@ -743,7 +743,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
-                        "name": "Input 1",
+                        "name": "Изображения автомобилей",
                         "shape": (48, 96, 3),
                         "task": LayerInputTypeChoice.Image.value,
                         "num_classes": 30,
@@ -839,7 +839,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
-                        "name": "Input 1",
+                        "name": "Изображения самолетов",
                         "shape": (128, 160, 3),
                         "task": LayerInputTypeChoice.Image.value,
                         "num_classes": 1,
@@ -851,7 +851,7 @@ DatasetsGroups = [
                     2: {
                         "datatype": "2D",
                         "dtype": "uint8",
-                        "name": "Output 1",
+                        "name": "Маски сегментации",
                         "shape": (128, 160, 2),
                         "task": LayerOutputTypeChoice.Segmentation.value,
                         "num_classes": 2,
@@ -874,11 +874,11 @@ DatasetsGroups = [
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
-                        "name": "Input 1",
+                        "name": "Изображения",
                         "shape": (128, 160, 3),
                         "task": LayerInputTypeChoice.Image.value,
                         "num_classes": 1,
-                        "classes_names": ["Губы"],
+                        "classes_names": ["Оригинальные изображения"],
                         "encoding": LayerEncodingChoice.none.value,
                     }
                 },
@@ -886,11 +886,11 @@ DatasetsGroups = [
                     2: {
                         "datatype": "2D",
                         "dtype": "uint8",
-                        "name": "Output 1",
+                        "name": "Маски сегментации",
                         "shape": (128, 160, 2),
                         "task": LayerOutputTypeChoice.Segmentation.value,
                         "num_classes": 2,
-                        "classes_names": ["Окружение", "Губы"],
+                        "classes_names": ["Фон", "Губы"],
                         "classes_colors": ["black", "lime"],
                         "encoding": LayerEncodingChoice.ohe.value,
                     }
@@ -909,11 +909,11 @@ DatasetsGroups = [
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
-                        "name": "Input 1",
+                        "name": "Вход 1",
                         "shape": (160, 128, 3),
                         "task": LayerInputTypeChoice.Image.value,
                         "num_classes": 1,
-                        "classes_names": ["Человек"],
+                        "classes_names": ["Оригинальные"],
                         "encoding": LayerEncodingChoice.none.value,
                     }
                 },
@@ -921,7 +921,7 @@ DatasetsGroups = [
                     2: {
                         "datatype": "2D",
                         "dtype": "uint8",
-                        "name": "Output 1",
+                        "name": "Выход 2",
                         "shape": (160, 128, 2),
                         "task": LayerOutputTypeChoice.Segmentation.value,
                         "num_classes": 2,
@@ -944,7 +944,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
-                        "name": "Input 1",
+                        "name": "Вход 1",
                         "shape": (160, 160, 3),
                         "task": LayerInputTypeChoice.Image.value,
                         "num_classes": 1,
@@ -956,12 +956,12 @@ DatasetsGroups = [
                     2: {
                         "datatype": "2D",
                         "dtype": "uint8",
-                        "name": "Output 1",
+                        "name": "Выход 2",
                         "shape": (160, 160, 2),
                         "task": LayerOutputTypeChoice.Segmentation.value,
                         "num_classes": 2,
                         "classes_names": ["Фон", "Монета"],
-                        "classes_colors": ["black", "white"],
+                        "classes_colors": ["#3e371a", "#47d535"],
                         "encoding": LayerEncodingChoice.ohe.value,
                     }
                 },
@@ -979,11 +979,11 @@ DatasetsGroups = [
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
-                        "name": "Input 1",
+                        "name": "Вход 1",
                         "shape": (128, 160, 3),
                         "task": LayerInputTypeChoice.Image.value,
                         "num_classes": 1,
-                        "classes_names": ["Дорога"],
+                        "classes_names": ["Изображения"],
                         "encoding": LayerEncodingChoice.none.value,
                     }
                 },
@@ -991,7 +991,7 @@ DatasetsGroups = [
                     2: {
                         "datatype": "2D",
                         "dtype": "uint8",
-                        "name": "Output 1",
+                        "name": "Выход 2",
                         "shape": (128, 160, 3),
                         "task": LayerOutputTypeChoice.Segmentation.value,
                         "num_classes": 2,
@@ -1032,7 +1032,7 @@ DatasetsGroups = [
                     2: {
                         "datatype": "DIM",
                         "dtype": "uint8",
-                        "name": "Output 1",
+                        "name": "Метки классов",
                         "shape": (5,),
                         "task": LayerOutputTypeChoice.Classification.value,
                         "num_classes": 5,
@@ -1060,7 +1060,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
-                        "name": "Input 1",
+                        "name": "Изображения автомобилей",
                         "shape": (200, 100, 3),
                         "task": LayerInputTypeChoice.Image.value,
                         "num_classes": 2,
@@ -1072,7 +1072,7 @@ DatasetsGroups = [
                     2: {
                         "datatype": "DIM",
                         "dtype": "uint8",
-                        "name": "Output 1",
+                        "name": "Метки классов",
                         "shape": (2,),
                         "task": LayerOutputTypeChoice.Classification.value,
                         "num_classes": 2,
@@ -1094,7 +1094,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
-                        "name": "Input 1",
+                        "name": "Пассажир 1",
                         "shape": (100, 100, 3),
                         "task": LayerInputTypeChoice.Image.value,
                         "encoding": LayerEncodingChoice.none.value,
@@ -1102,7 +1102,7 @@ DatasetsGroups = [
                     2: {
                         "datatype": "2D",
                         "dtype": "float32",
-                        "name": "Input 2",
+                        "name": "Пассажир 2",
                         "shape": (100, 100, 3),
                         "task": LayerInputTypeChoice.Image.value,
                         "classes_names": ["Входящий", "Выходящий"],
@@ -1113,11 +1113,11 @@ DatasetsGroups = [
                     3: {
                         "datatype": "DIM",
                         "dtype": "uint8",
-                        "name": "Output 1",
+                        "name": "Метка класса",
                         "shape": (2,),
                         "task": LayerOutputTypeChoice.Classification.value,
                         "num_classes": 2,
-                        "classes_names": ["Входящий", "Выходящий"],
+                        "classes_names": ["Не совпадают", "Совпадают"],
                         "encoding": LayerEncodingChoice.ohe.value,
                     }
                 },
@@ -1135,15 +1135,11 @@ DatasetsGroups = [
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
-                        "name": "Input 1",
+                        "name": "Молоко",
                         "shape": (200, 100, 3),
                         "task": LayerInputTypeChoice.Image.value,
                         "num_classes": 3,
-                        "classes_names": [
-                            "Parmalat",
-                            "Кубанская буренка",
-                            "Семейный формат",
-                        ],
+                        "classes_names": ["Parmalat", "Кубанская бурёнка", "Семейный формат"],
                         "encoding": LayerEncodingChoice.none.value,
                     }
                 },
@@ -1151,15 +1147,11 @@ DatasetsGroups = [
                     2: {
                         "datatype": "DIM",
                         "dtype": "uint8",
-                        "name": "Output 1",
+                        "name": "Метки классов",
                         "shape": (3,),
                         "task": LayerOutputTypeChoice.Classification.value,
                         "num_classes": 3,
-                        "classes_names": [
-                            "Parmalat",
-                            "Кубанская буренка",
-                            "Семейный формат",
-                        ],
+                        "classes_names": ["Parmalat", "Кубанская бурёнка", "Семейный формат"],
                         "encoding": LayerEncodingChoice.ohe.value,
                     }
                 },
@@ -1177,11 +1169,11 @@ DatasetsGroups = [
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
-                        "name": "Input 1",
+                        "name": "Изображения",
                         "shape": (416, 416, 3),
                         "task": LayerInputTypeChoice.Image.value,
                         "num_classes": 1,
-                        "classes_names": ["Шахматы"],
+                        "classes_names": ["Изображения"],
                         "encoding": LayerEncodingChoice.none.value,
                     }
                 },
@@ -1273,11 +1265,11 @@ DatasetsGroups = [
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
-                        "name": "Input 1",
+                        "name": "Изображения",
                         "shape": (416, 416, 3),
                         "task": LayerInputTypeChoice.Image.value,
                         "num_classes": 1,
-                        "classes_names": ["Шахматы"],
+                        "classes_names": ["Изображения"],
                         "encoding": LayerEncodingChoice.none.value,
                     }
                 },
@@ -1369,7 +1361,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
-                        "name": "Input 1",
+                        "name": "Изображения",
                         "shape": (416, 416, 3),
                         "task": LayerInputTypeChoice.Image.value,
                         "num_classes": 1,
@@ -1456,7 +1448,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
-                        "name": "Input 1",
+                        "name": "Изображения",
                         "shape": (416, 416, 3),
                         "task": LayerInputTypeChoice.Image.value,
                         "num_classes": 1,
@@ -1531,7 +1523,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
-                        "name": "Input 1",
+                        "name": "Изображения",
                         "shape": (416, 416, 3),
                         "task": LayerInputTypeChoice.Image.value,
                         "num_classes": 1,
@@ -1585,7 +1577,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
-                        "name": "Input 1",
+                        "name": "Изображения",
                         "shape": (416, 416, 3),
                         "task": LayerInputTypeChoice.Image.value,
                         "num_classes": 1,
@@ -1681,7 +1673,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
-                        "name": "Input 1",
+                        "name": "Изображения",
                         "shape": (416, 416, 3),
                         "task": LayerInputTypeChoice.Image.value,
                         "num_classes": 1,
@@ -1735,7 +1727,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "DIM",
                         "dtype": "int64",
-                        "name": "Input 1",
+                        "name": "Симптомы",
                         "shape": (100,),
                         "task": LayerInputTypeChoice.Text.value,
                         "num_classes": 10,
@@ -1792,7 +1784,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "DIM",
                         "dtype": "int64",
-                        "name": "Input 1",
+                        "name": "Тексты писателей",
                         "shape": (1000,),
                         "task": LayerInputTypeChoice.Text.value,
                         "num_classes": 6,
@@ -1841,11 +1833,11 @@ DatasetsGroups = [
                     1: {
                         "datatype": "DIM",
                         "dtype": "int64",
-                        "name": "Input 1",
+                        "name": "Отзывы",
                         "shape": (100,),
                         "task": LayerInputTypeChoice.Text.value,
                         "num_classes": 2,
-                        "classes_names": ["Положительные", "Отрицательные"],
+                        "classes_names": ["Негативные", "Позитивные"],
                         "encoding": LayerEncodingChoice.none.value,
                     }
                 },
@@ -1857,7 +1849,7 @@ DatasetsGroups = [
                         "shape": (2,),
                         "task": LayerOutputTypeChoice.Classification.value,
                         "num_classes": 2,
-                        "classes_names": ["Положительные", "Отрицательные"],
+                        "classes_names": ["Негативные", "Позитивные"],
                         "encoding": LayerEncodingChoice.ohe.value,
                     }
                 },
@@ -1876,7 +1868,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "DIM",
                         "dtype": "float64",
-                        "name": "Input 1",
+                        "name": "Симптомы",
                         "shape": (1200,),
                         "task": LayerInputTypeChoice.Text.value,
                         "num_classes": 10,
@@ -1933,7 +1925,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "DIM",
                         "dtype": "float64",
-                        "name": "Input 1",
+                        "name": "Тексты писателей",
                         "shape": (20000,),
                         "task": LayerInputTypeChoice.Text.value,
                         "num_classes": 6,
@@ -1982,11 +1974,11 @@ DatasetsGroups = [
                     1: {
                         "datatype": "DIM",
                         "dtype": "float64",
-                        "name": "Input 1",
+                        "name": "Отзывы",
                         "shape": (20000,),
                         "task": LayerInputTypeChoice.Text.value,
                         "num_classes": 2,
-                        "classes_names": ["Положительные", "Отрицательные"],
+                        "classes_names": ["Негативные", "Позитивные"],
                         "encoding": LayerEncodingChoice.none.value,
                     }
                 },
@@ -1998,7 +1990,7 @@ DatasetsGroups = [
                         "shape": (2,),
                         "task": LayerOutputTypeChoice.Classification.value,
                         "num_classes": 2,
-                        "classes_names": ["Положительные", "Отрицательные"],
+                        "classes_names": ["Негативные", "Позитивные"],
                         "encoding": LayerEncodingChoice.ohe.value,
                     }
                 },
@@ -2017,7 +2009,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "1D",
                         "dtype": "float32",
-                        "name": "Input 1",
+                        "name": "Симптомы",
                         "shape": (100, 200),
                         "task": LayerInputTypeChoice.Text.value,
                         "num_classes": 10,
@@ -2074,7 +2066,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "1D",
                         "dtype": "float32",
-                        "name": "Input 1",
+                        "name": "Тексты писателей",
                         "shape": (1000, 200),
                         "task": LayerInputTypeChoice.Text.value,
                         "num_classes": 6,
@@ -2123,11 +2115,11 @@ DatasetsGroups = [
                     1: {
                         "datatype": "1D",
                         "dtype": "float32",
-                        "name": "Input 1",
+                        "name": "Отзывы",
                         "shape": (100, 200),
                         "task": LayerInputTypeChoice.Text.value,
                         "num_classes": 2,
-                        "classes_names": ["Положительные", "Отрицательные"],
+                        "classes_names": ["Негативные", "Позитивные"],
                         "encoding": LayerEncodingChoice.none.value,
                     }
                 },
@@ -2139,7 +2131,7 @@ DatasetsGroups = [
                         "shape": (2,),
                         "task": LayerOutputTypeChoice.Classification.value,
                         "num_classes": 2,
-                        "classes_names": ["Положительные", "Отрицательные"],
+                        "classes_names": ["Негативные", "Позитивные"],
                         "encoding": LayerEncodingChoice.ohe.value,
                     }
                 },
@@ -2158,11 +2150,11 @@ DatasetsGroups = [
                     1: {
                         "datatype": "DIM",
                         "dtype": "int64",
-                        "name": "Input 1",
+                        "name": "Вход 1",
                         "shape": (80,),
                         "task": LayerInputTypeChoice.Text.value,
                         "num_classes": 1,
-                        "classes_names": ["Договоры"],
+                        "classes_names": ["Договора432"],
                         "encoding": LayerEncodingChoice.none.value,
                     }
                 },
@@ -2170,7 +2162,7 @@ DatasetsGroups = [
                     2: {
                         "datatype": "1D",
                         "dtype": "uint8",
-                        "name": "Метки классов",
+                        "name": "Выход 2",
                         "shape": (80, 6),
                         "task": LayerOutputTypeChoice.TextSegmentation.value,
                         "num_classes": 6,
@@ -2630,7 +2622,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "DIM",
                         "dtype": "float64",
-                        "name": "Input 1",
+                        "name": "Параметры",
                         "shape": (284,),
                         "task": LayerInputTypeChoice.Dataframe.value,
                         "num_classes": 275,
@@ -2926,7 +2918,7 @@ DatasetsGroups = [
                     3: {
                         "datatype": "DIM",
                         "dtype": "float64",
-                        "name": "Цена квартиры",
+                        "name": "Стоимость",
                         "shape": (1,),
                         "task": LayerOutputTypeChoice.Regression.value,
                         "num_classes": 1,
@@ -3024,7 +3016,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "DIM",
                         "dtype": "float64",
-                        "name": "Цена автомобилей",
+                        "name": "Вход 1",
                         "shape": (195,),
                         "task": LayerInputTypeChoice.Dataframe.value,
                         "num_classes": 190,
@@ -3249,7 +3241,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "DIM",
                         "dtype": "float64",
-                        "name": "Спам",
+                        "name": "Сообщение (bow)",
                         "shape": (2000,),
                         "task": LayerInputTypeChoice.Text.value,
                         "encoding": LayerEncodingChoice.none.value,
@@ -3259,7 +3251,7 @@ DatasetsGroups = [
                     2: {
                         "datatype": "DIM",
                         "dtype": "uint8",
-                        "name": "Выход 2",
+                        "name": "Метки классов",
                         "shape": (2,),
                         "task": LayerOutputTypeChoice.Classification.value,
                         "num_classes": 2,
@@ -3281,7 +3273,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "DIM",
                         "dtype": "float64",
-                        "name": "Спам",
+                        "name": "Параметры",
                         "shape": (300,),
                         "task": LayerInputTypeChoice.Dataframe.value,
                         "classes_names": [
@@ -3513,7 +3505,8 @@ DatasetsGroups = [
                             "Английский Русский",
                             "Арабский Английский Французский Русский Испанский",
                             "Хинди Английский Тамильский",
-                            "Хинди Английский Испанский Итальянский Немецкий Панджаби Русский Санскрит Урду Французский Японский",
+                            "Хинди Английский Испанский Итальянский Немецкий Панджаби Русский Санскрит \
+                             Урду Французский Японский",
                             "Арабский Английский Французский",
                             "Испанский Английский Русский",
                             "Русский Французский",
@@ -3631,7 +3624,7 @@ DatasetsGroups = [
                     2: {
                         "datatype": "DIM",
                         "dtype": "float64",
-                        "name": "Акции",
+                        "name": "Выход 2",
                         "shape": (5, 2),
                         "task": LayerOutputTypeChoice.Timeseries.value,
                         "num_classes": 2,
@@ -3652,7 +3645,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "1D",
                         "dtype": "float64",
-                        "name": "Вход 1",
+                        "name": "Input 1",
                         "shape": (300, 4),
                         "task": LayerInputTypeChoice.Dataframe.value,
                         "encoding": LayerEncodingChoice.none.value,
@@ -3662,7 +3655,7 @@ DatasetsGroups = [
                     2: {
                         "datatype": "DIM",
                         "dtype": "uint8",
-                        "name": "Тренд",
+                        "name": "Output 1",
                         "shape": (3,),
                         "task": LayerOutputTypeChoice.TimeseriesTrend.value,
                         "num_classes": 3,
@@ -3693,7 +3686,7 @@ DatasetsGroups = [
                     2: {
                         "datatype": "DIM",
                         "dtype": "float64",
-                        "name": "Полиметалл",
+                        "name": "Выход 2",
                         "shape": (5, 2),
                         "task": LayerOutputTypeChoice.Timeseries.value,
                         "num_classes": 2,
@@ -3724,7 +3717,7 @@ DatasetsGroups = [
                     2: {
                         "datatype": "DIM",
                         "dtype": "float64",
-                        "name": "Трафик",
+                        "name": "Выход 2",
                         "shape": (2, 1),
                         "task": LayerOutputTypeChoice.Timeseries.value,
                         "num_classes": 1,
