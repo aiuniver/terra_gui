@@ -1,0 +1,29 @@
+{
+  "cascades": {
+    "0": {
+      "tag": "input",
+      "type": "text"
+    },
+    "model": {
+      "tag": "service",
+      "task": "text_to_speech",
+      "name": "google_woman_voice",
+      "params": {
+        "language": "ru"
+      }
+    },
+    "out": {
+      "tag": "output",
+      "type": "google_tts"
+    }
+  },
+
+  "adjacency_map": {
+    "model": [
+      "INPUT"
+    ],
+    "out": [
+      "model"
+    ]
+  }
+}
