@@ -377,9 +377,7 @@ class Exchange:
         """
         Валидация каскада
         """
-        print(cascade)
-        print(path)
-        data = CascadeValidator().get_validate(cascade_data=cascade, training_path=path)
+        return CascadeValidator().get_validate(cascade_data=cascade, training_path=path)
 
     def _call_cascade_start(self, path: Path, cascade: CascadeDetailsData):
         """
