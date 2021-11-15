@@ -87,51 +87,55 @@ class BaseClassificationCallback:
                                y_pred, inverse_y_pred, raw_y_pred=None) -> list:
         method_name = 'statistic_data_request'
         try:
+            print(method_name)
             return_data = []
             _id = 1
             for out in interactive_config.statistic_data.output_id:
                 encoding = options.data.outputs.get(out).encoding
-                if encoding != LayerEncodingChoice.multi:
-                    cm, cm_percent = get_confusion_matrix(
-                        np.argmax(y_true.get("val").get(f'{out}'), axis=-1) if encoding == LayerEncodingChoice.ohe
-                        else y_true.get("val").get(f'{out}'),
-                        np.argmax(y_pred.get(f'{out}'), axis=-1),
-                        get_percent=True
-                    )
-                    return_data.append(
-                        fill_heatmap_front_structure(
-                            _id=_id,
-                            _type="heatmap",
-                            graph_name=f"Выходной слой «{out}» - Confusion matrix",
-                            short_name=f"{out} - Confusion matrix",
-                            x_label="Предсказание",
-                            y_label="Истинное значение",
-                            labels=options.data.outputs.get(out).classes_names,
-                            data_array=cm,
-                            data_percent_array=cm_percent,
+                for data_type in y_true.keys():
+                    type_name = "Тренировочная" if data_type == 'train' else "Проверочная"
+                    if encoding != LayerEncodingChoice.multi:
+                        cm, cm_percent = get_confusion_matrix(
+                            y_true=np.argmax(y_true.get(data_type).get(f'{out}'), axis=-1)
+                            if encoding == LayerEncodingChoice.ohe else y_true.get("val").get(f'{out}'),
+                            y_pred=np.argmax(y_pred.get(data_type).get(f'{out}'), axis=-1),
+                            get_percent=True
                         )
-                    )
-                    _id += 1
+                        return_data.append(
+                            fill_heatmap_front_structure(
+                                _id=_id,
+                                _type="heatmap",
+                                graph_name=f"Выход «{out}» - Confusion matrix - {type_name} выборка",
+                                short_name=f"{out} - Confusion matrix - {type_name}",
+                                x_label="Предсказание",
+                                y_label="Истинное значение",
+                                labels=options.data.outputs.get(out).classes_names,
+                                data_array=cm,
+                                data_percent_array=cm_percent,
+                            )
+                        )
+                        _id += 1
 
-                else:
-                    report = get_classification_report(
-                        y_true=y_true.get("val").get(f"{out}").reshape(
-                            (np.prod(y_true.get("val").get(f"{out}").shape[:-1]),
-                             y_true.get("val").get(f"{out}").shape[-1])
-                        ),
-                        y_pred=np.where(y_pred.get(f"{out}") >= 0.9, 1, 0).reshape(
-                            (np.prod(y_pred.get(f"{out}").shape[:-1]), y_pred.get(f"{out}").shape[-1])
-                        ),
-                        labels=options.data.outputs.get(out).classes_names
-                    )
-                    return_data.append(
-                        fill_table_front_structure(
-                            _id=_id,
-                            graph_name=f"Выходной слой «{out}» - Отчет по классам",
-                            plot_data=report
+                    else:
+                        report = get_classification_report(
+                            y_true=y_true.get(data_type).get(f"{out}").reshape(
+                                (np.prod(y_true.get(data_type).get(f"{out}").shape[:-1]),
+                                 y_true.get(data_type).get(f"{out}").shape[-1])
+                            ),
+                            y_pred=np.where(y_pred.get(data_type).get(f"{out}") >= 0.9, 1, 0).reshape(
+                                (np.prod(y_pred.get(data_type).get(f"{out}").shape[:-1]),
+                                 y_pred.get(data_type).get(f"{out}").shape[-1])
+                            ),
+                            labels=options.data.outputs.get(out).classes_names
                         )
-                    )
-                    _id += 1
+                        return_data.append(
+                            fill_table_front_structure(
+                                _id=_id,
+                                graph_name=f"Выход «{out}» - Отчет по классам - {type_name} выборка",
+                                plot_data=report
+                            )
+                        )
+                        _id += 1
             return return_data
         except Exception as e:
             print_error(BaseClassificationCallback().name, method_name, e)
@@ -461,6 +465,7 @@ class ImageClassificationCallback(BaseClassificationCallback):
                                     y_true, inverse_y_true, class_colors, raw_y_pred=None):
         method_name = 'intermediate_result_request'
         try:
+            print(method_name)
             return_data = {}
             if interactive_config.intermediate_result.show_results:
                 for idx in range(interactive_config.intermediate_result.num_examples):
@@ -489,7 +494,7 @@ class ImageClassificationCallback(BaseClassificationCallback):
 
                     for out in options.data.outputs.keys():
                         data = ImageClassificationCallback.postprocess_classification(
-                            predict_array=y_pred.get(f'{out}')[example_idx[idx]],
+                            predict_array=y_pred.get('val').get(f'{out}')[example_idx[idx]],
                             true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
                             options=options.data.outputs.get(out),
                             show_stat=interactive_config.intermediate_result.show_statistic,
@@ -627,7 +632,7 @@ class TextClassificationCallback(BaseClassificationCallback):
                         }
                     for out in options.data.outputs.keys():
                         data = ImageClassificationCallback.postprocess_classification(
-                            predict_array=y_pred.get(f'{out}')[example_idx[idx]],
+                            predict_array=y_pred.get('val').get(f'{out}')[example_idx[idx]],
                             true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
                             options=options.data.outputs.get(out),
                             show_stat=interactive_config.intermediate_result.show_statistic,
@@ -770,7 +775,7 @@ class DataframeClassificationCallback(BaseClassificationCallback):
 
                     for out in options.data.outputs.keys():
                         data = ImageClassificationCallback.postprocess_classification(
-                            predict_array=y_pred.get(f'{out}')[example_idx[idx]],
+                            predict_array=y_pred.get('val').get(f'{out}')[example_idx[idx]],
                             true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
                             options=options.data.outputs.get(out),
                             show_stat=interactive_config.intermediate_result.show_statistic,
@@ -924,7 +929,7 @@ class AudioClassificationCallback(BaseClassificationCallback):
 
                     for out in options.data.outputs.keys():
                         data = ImageClassificationCallback.postprocess_classification(
-                            predict_array=y_pred.get(f'{out}')[example_idx[idx]],
+                            predict_array=y_pred.get('val').get(f'{out}')[example_idx[idx]],
                             true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
                             options=options.data.outputs.get(out),
                             show_stat=interactive_config.intermediate_result.show_statistic,
@@ -1078,7 +1083,7 @@ class VideoClassificationCallback(BaseClassificationCallback):
                         }
                     for out in options.data.outputs.keys():
                         data = ImageClassificationCallback.postprocess_classification(
-                            predict_array=y_pred.get(f'{out}')[example_idx[idx]],
+                            predict_array=y_pred.get('val').get(f'{out}')[example_idx[idx]],
                             true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
                             options=options.data.outputs.get(out),
                             show_stat=interactive_config.intermediate_result.show_statistic,
@@ -1264,7 +1269,7 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
                         }
                     for out in options.data.outputs.keys():
                         data = ImageClassificationCallback.postprocess_classification(
-                            predict_array=y_pred.get(f'{out}')[example_idx[idx]],
+                            predict_array=y_pred.get('val').get(f'{out}')[example_idx[idx]],
                             true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
                             options=options.data.outputs.get(out),
                             show_stat=interactive_config.intermediate_result.show_statistic,

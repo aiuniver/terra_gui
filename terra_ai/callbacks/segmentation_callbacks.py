@@ -67,6 +67,13 @@ class BaseSegmentationCallback:
             print_error(BaseSegmentationCallback().name, method_name, e)
 
     @staticmethod
+    def get_inverse_array(array: dict, options, type="output"):
+        inverse_array = {"train": {}, "val": {}}
+        # for data_type in inverse_array.keys():
+        #     for out in options.data.outputs.keys():
+        return inverse_array
+
+    @staticmethod
     def prepare_example_idx_to_show(array: np.ndarray, true_array: np.ndarray, options, output: int, count: int,
                                     choice_type: ExampleChoiceTypeChoice = ExampleChoiceTypeChoice.best,
                                     seed_idx: list = None) -> dict:
@@ -397,7 +404,7 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                         }
                     for out in options.data.outputs.keys():
                         data = ImageSegmentationCallback().postprocess_segmentation(
-                            predict_array=y_pred.get(f'{out}')[example_idx[idx]],
+                            predict_array=y_pred.get('val').get(f'{out}')[example_idx[idx]],
                             true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
                             options=options.data.outputs.get(out),
                             colors=class_colors,
@@ -422,34 +429,41 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
             print_error(ImageSegmentationCallback().name, method_name, e)
 
     @staticmethod
-    def statistic_data_request(interactive_config, options, y_true, inverse_y_true,
-                               y_pred, inverse_y_pred, raw_y_pred=None) -> list:
+    def statistic_data_request(interactive_config, options, y_true: dict, inverse_y_true: dict,
+                               y_pred: dict, inverse_y_pred: dict, raw_y_pred=None) -> list:
         method_name = 'statistic_data_request'
         try:
+            # print(method_name, y_pred.get('train').keys())
+            # print(interactive_config)
             return_data = []
             _id = 1
             for out in interactive_config.statistic_data.output_id:
-                cm, cm_percent = get_confusion_matrix(
-                    np.argmax(y_true.get("val").get(f"{out}"), axis=-1).reshape(
-                        np.prod(np.argmax(y_true.get("val").get(f"{out}"), axis=-1).shape)).astype('int'),
-                    np.argmax(y_pred.get(f'{out}'), axis=-1).reshape(
-                        np.prod(np.argmax(y_pred.get(f'{out}'), axis=-1).shape)).astype('int'),
-                    get_percent=True
-                )
-                return_data.append(
-                    fill_heatmap_front_structure(
-                        _id=_id,
-                        _type="heatmap",
-                        graph_name=f"Выходной слой «{out}» - Confusion matrix",
-                        short_name=f"{out} - Confusion matrix",
-                        x_label="Предсказание",
-                        y_label="Истинное значение",
-                        labels=options.data.outputs.get(out).classes_names,
-                        data_array=cm,
-                        data_percent_array=cm_percent,
+                for data_type in y_true.keys():
+                    type_name = "Тренировочная" if data_type == 'train' else "Проверочная"
+                    # print(out, y_true.get(data_type).keys())
+                    # print(out, y_pred.get(data_type).keys())
+                    cm, cm_percent = get_confusion_matrix(
+                        y_true=np.argmax(y_true.get(data_type).get(f"{out}"), axis=-1).reshape(
+                            np.prod(np.argmax(y_true.get(data_type).get(f"{out}"), axis=-1).shape)).astype('int'),
+                        y_pred=np.argmax(y_pred.get(data_type).get(f'{out}'), axis=-1).reshape(
+                            np.prod(np.argmax(y_pred.get(data_type).get(f'{out}'), axis=-1).shape)).astype('int'),
+                        get_percent=True
                     )
-                )
-                _id += 1
+                    print(cm)
+                    return_data.append(
+                        fill_heatmap_front_structure(
+                            _id=_id,
+                            _type="heatmap",
+                            graph_name=f"Выход «{out}» - Confusion matrix - {type_name} выборка",
+                            short_name=f"{out} - Confusion matrix - {type_name}",
+                            x_label="Предсказание",
+                            y_label="Истинное значение",
+                            labels=options.data.outputs.get(out).classes_names,
+                            data_array=cm,
+                            data_percent_array=cm_percent,
+                        )
+                    )
+                    _id += 1
             return return_data
         except Exception as e:
             print_error(ImageSegmentationCallback().name, method_name, e)
@@ -509,7 +523,7 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
 class TextSegmentationCallback(BaseSegmentationCallback):
     def __init__(self):
         super().__init__()
-        self.name = 'ImageSegmentationCallback'
+        self.name = 'TextSegmentationCallback'
         # print(f'Callback {self.name} is called')
 
     @staticmethod
@@ -793,7 +807,7 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                     for out in options.data.outputs.keys():
                         output_col = list(options.instructions.get(out).keys())[0]
                         data = TextSegmentationCallback().postprocess_text_segmentation(
-                            pred_array=y_pred.get(f'{out}')[example_idx[idx]],
+                            pred_array=y_pred.get('val').get(f'{out}')[example_idx[idx]],
                             true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
                             options=options.data.outputs.get(out),
                             dataframe=options.dataframe.get('val'),
@@ -826,49 +840,52 @@ class TextSegmentationCallback(BaseSegmentationCallback):
             _id = 1
             for out in interactive_config.statistic_data.output_id:
                 encoding = options.data.outputs.get(out).encoding
-                if encoding == LayerEncodingChoice.ohe:
-                    cm, cm_percent = get_confusion_matrix(
-                        np.argmax(y_true.get("val").get(f"{out}"), axis=-1).reshape(
-                            np.prod(np.argmax(y_true.get("val").get(f"{out}"), axis=-1).shape)).astype('int'),
-                        np.argmax(y_pred.get(f'{out}'), axis=-1).reshape(
-                            np.prod(np.argmax(y_pred.get(f'{out}'), axis=-1).shape)).astype('int'),
-                        get_percent=True
-                    )
-                    return_data.append(
-                        fill_heatmap_front_structure(
-                            _id=_id,
-                            _type="heatmap",
-                            graph_name=f"Выходной слой «{out}» - Confusion matrix",
-                            short_name=f"{out} - Confusion matrix",
-                            x_label="Предсказание",
-                            y_label="Истинное значение",
-                            labels=options.data.outputs.get(out).classes_names,
-                            data_array=cm,
-                            data_percent_array=cm_percent,
+                for data_type in y_true.keys():
+                    type_name = "Тренировочная" if data_type == 'train' else "Проверочная"
+                    if encoding == LayerEncodingChoice.ohe:
+                        cm, cm_percent = get_confusion_matrix(
+                            np.argmax(y_true.get(data_type).get(f"{out}"), axis=-1).reshape(
+                                np.prod(np.argmax(y_true.get(data_type).get(f"{out}"), axis=-1).shape)).astype('int'),
+                            np.argmax(y_pred.get(data_type).get(f'{out}'), axis=-1).reshape(
+                                np.prod(np.argmax(y_pred.get(data_type).get(f'{out}'), axis=-1).shape)).astype('int'),
+                            get_percent=True
                         )
-                    )
-                    _id += 1
-                elif encoding == LayerEncodingChoice.multi:
-                    report = get_classification_report(
-                        y_true=y_true.get("val").get(f"{out}").reshape(
-                            (np.prod(y_true.get("val").get(f"{out}").shape[:-1]),
-                             y_true.get("val").get(f"{out}").shape[-1])
-                        ),
-                        y_pred=np.where(y_pred.get(f"{out}") >= 0.9, 1, 0).reshape(
-                            (np.prod(y_pred.get(f"{out}").shape[:-1]), y_pred.get(f"{out}").shape[-1])
-                        ),
-                        labels=options.data.outputs.get(out).classes_names
-                    )
-                    return_data.append(
-                        fill_table_front_structure(
-                            _id=_id,
-                            graph_name=f"Выходной слой «{out}» - Отчет по классам",
-                            plot_data=report
+                        return_data.append(
+                            fill_heatmap_front_structure(
+                                _id=_id,
+                                _type="heatmap",
+                                graph_name=f"Выход «{out}» - Confusion matrix - {type_name} выборка",
+                                short_name=f"{out} - Confusion matrix - {type_name}",
+                                x_label="Предсказание",
+                                y_label="Истинное значение",
+                                labels=options.data.outputs.get(out).classes_names,
+                                data_array=cm,
+                                data_percent_array=cm_percent,
+                            )
                         )
-                    )
-                    _id += 1
-                else:
-                    pass
+                        _id += 1
+                    elif encoding == LayerEncodingChoice.multi:
+                        report = get_classification_report(
+                            y_true=y_true.get(data_type).get(f"{out}").reshape(
+                                (np.prod(y_true.get(data_type).get(f"{out}").shape[:-1]),
+                                 y_true.get(data_type).get(f"{out}").shape[-1])
+                            ),
+                            y_pred=np.where(y_pred.get(data_type).get(f"{out}") >= 0.9, 1, 0).reshape(
+                                (np.prod(y_pred.get(data_type).get(f"{out}").shape[:-1]),
+                                 y_pred.get(data_type).get(f"{out}").shape[-1])
+                            ),
+                            labels=options.data.outputs.get(out).classes_names
+                        )
+                        return_data.append(
+                            fill_table_front_structure(
+                                _id=_id,
+                                graph_name=f"Выход «{out}» - Отчет по классам - {type_name} выборка",
+                                plot_data=report
+                            )
+                        )
+                        _id += 1
+                    else:
+                        pass
             return return_data
         except Exception as e:
             print_error(TextSegmentationCallback().name, method_name, e)

@@ -102,6 +102,29 @@ class TimeseriesCallback:
             print_error(TimeseriesCallback().name, method_name, e)
 
     @staticmethod
+    def get_inverse_array(array: dict, options):
+        method_name = 'get_inverse_array'
+        try:
+            inverse_array = {}
+            for data_type in array.keys():
+                inverse_array[data_type] = {}
+                for idx, out in enumerate(array.get(data_type).keys()):
+                    preprocess_dict = options.preprocessing.preprocessing.get(int(out))
+                    inverse_y = np.zeros_like(array.get(data_type).get(out)[:, :, 0:1])
+                    for i, column in enumerate(preprocess_dict.keys()):
+                        if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
+                            _options = {int(out): {column: array.get(data_type).get(out)[:, :, i]}}
+                            inverse_col = np.expand_dims(
+                                options.preprocessing.inverse_data(_options).get(int(out)).get(column), axis=-1)
+                        else:
+                            inverse_col = array.get(data_type).get(out)[:, :, i:i + 1]
+                        inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
+                    inverse_array[data_type][out] = inverse_y[:, :, 1:]
+            return inverse_array
+        except Exception as e:
+            print_error(TimeseriesCallback().name, method_name, e)
+
+    @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, inverse_x_array=None,
                                    return_mode='deploy'):
         method_name = 'postprocess_initial_source'
@@ -269,7 +292,7 @@ class TimeseriesCallback:
                             options=options.data,
                             real_x=inverse_x_val.get(f"{input}")[example_idx[idx]],
                             inverse_y_true=inverse_y_true.get("val").get(f"{out}")[example_idx[idx]],
-                            inverse_y_pred=inverse_y_pred.get(f"{out}")[example_idx[idx]],
+                            inverse_y_pred=inverse_y_pred.get("val").get(f"{out}")[example_idx[idx]],
                             output_id=out,
                             depth=inverse_y_true.get("val").get(f"{out}")[example_idx[idx]].shape[-2],
                             show_stat=interactive_config.intermediate_result.show_statistic,
@@ -298,80 +321,100 @@ class TimeseriesCallback:
             for out in interactive_config.statistic_data.output_id:
                 for i, channel_name in enumerate(options.data.columns.get(out).keys()):
                     for step in range(inverse_y_true.get("val").get(f'{out}').shape[-2]):
-                        y_true = inverse_y_true.get("val").get(f"{out}")[:, step, i].astype('float')
-                        y_pred = inverse_y_pred.get(f"{out}")[:, step, i].astype('float')
-                        x_tr, y_tr = get_time_series_graphic(y_true, make_short=True)
-                        x_pr, y_pr = get_time_series_graphic(y_pred, make_short=True)
-                        return_data.append(
-                            fill_graph_front_structure(
-                                _id=_id,
-                                _type='graphic',
-                                graph_name=f"Выходной слой «{out}» - Предсказание канала "
-                                           f"«{channel_name.split('_', 1)[-1]}» на {step + 1} "
-                                           f"шаг{'ов' if step + 1 > 1 else ''} вперед",
-                                short_name=f"{out} - «{channel_name.split('_', 1)[-1]}» на {step + 1} "
-                                           f"шаг{'ов' if step + 1 > 1 else ''}",
-                                x_label="Время",
-                                y_label="Значение",
-                                plot_data=[
-                                    fill_graph_plot_data(x=x_tr, y=y_tr, label="Истинное значение"),
-                                    fill_graph_plot_data(x=x_pr, y=y_pr, label="Предсказанное значение")
-                                ],
+                        for data_type in inverse_y_true.keys():
+                            type_name = "Тренировочная" if data_type == 'train' else "Проверочная"
+                            y_true = inverse_y_true.get(data_type).get(f"{out}")[:, step, i].astype('float')
+                            y_pred = inverse_y_pred.get(data_type).get(f"{out}")[:, step, i].astype('float')
+                            x_tr, y_tr = get_time_series_graphic(y_true, make_short=True)
+                            x_pr, y_pr = get_time_series_graphic(y_pred, make_short=True)
+                            return_data.append(
+                                fill_graph_front_structure(
+                                    _id=_id,
+                                    _type='graphic',
+                                    graph_name=f"Выход «{out}» - Предсказание канала "
+                                               f"«{channel_name.split('_', 1)[-1]}» на {step + 1} "
+                                               f"шаг{'ов' if step + 1 > 1 else ''} вперед - {type_name} выборка",
+                                    short_name=f"{out} - «{channel_name.split('_', 1)[-1]}» на {step + 1} "
+                                               f"шаг{'ов' if step + 1 > 1 else ''} - {type_name}",
+                                    x_label="Время",
+                                    y_label="Значение",
+                                    plot_data=[
+                                        fill_graph_plot_data(x=x_tr, y=y_tr, label="Истинное значение"),
+                                        fill_graph_plot_data(x=x_pr, y=y_pr, label="Предсказанное значение")
+                                    ],
+                                )
                             )
-                        )
-                        _id += 1
+                            _id += 1
 
-                        x_axis, auto_corr_true, auto_corr_pred = get_autocorrelation_graphic(
-                            y_true, y_pred, depth=10
-                        )
-                        return_data.append(
-                            fill_graph_front_structure(
-                                _id=_id,
-                                _type='graphic',
-                                graph_name=f"Выходной слой «{out}» - Автокорреляция канала "
-                                           f"«{channel_name.split('_', 1)[-1]}» на {step + 1} шаг"
-                                           f"{'а' if step else ''} вперед",
-                                short_name=f"{out} - Автокорреляция канала «{channel_name.split('_', 1)[-1]}»",
-                                x_label="Время",
-                                y_label="Значение",
-                                plot_data=[
-                                    fill_graph_plot_data(x=x_axis, y=auto_corr_true, label="Истинное значение"),
-                                    fill_graph_plot_data(x=x_axis, y=auto_corr_pred, label="Предсказанное значение")
-                                ],
+                        for data_type in inverse_y_true.keys():
+                            type_name = "Тренировочная" if data_type == 'train' else "Проверочная"
+                            y_true = inverse_y_true.get(data_type).get(f"{out}")[:, step, i].astype('float')
+                            y_pred = inverse_y_pred.get(data_type).get(f"{out}")[:, step, i].astype('float')
+                            x_axis, auto_corr_true, auto_corr_pred = get_autocorrelation_graphic(
+                                y_true, y_pred, depth=10
                             )
-                        )
-                        _id += 1
-                        deviation = (y_pred - y_true) * 100 / y_true
-                        x_mae, y_mae = get_distribution_histogram(np.abs(deviation), categorical=False)
-                        return_data.append(
-                            fill_graph_front_structure(
-                                _id=_id,
-                                _type='bar',
-                                graph_name=f"Выходной слой «{out}» - Распределение абсолютной ошибки канала "
-                                           f"«{channel_name.split('_', 1)[-1]}» на {step + 1} шаг"
-                                           f"{'ов' if step + 1 == 1 else ''} вперед",
-                                short_name=f"{out} - Распределение MAE канала «{channel_name.split('_', 1)[-1]}»",
-                                x_label="Абсолютная ошибка",
-                                y_label="Значение",
-                                plot_data=[fill_graph_plot_data(x=x_mae, y=y_mae)],
+                            return_data.append(
+                                fill_graph_front_structure(
+                                    _id=_id,
+                                    _type='graphic',
+                                    graph_name=f"Выход «{out}» - Автокорреляция канала "
+                                               f"«{channel_name.split('_', 1)[-1]}» на {step + 1} шаг"
+                                               f"{'а' if step else ''} вперед - {type_name} выборка",
+                                    short_name=f"{out} - Автокорреляция канала «{channel_name.split('_', 1)[-1]}» - "
+                                               f"{type_name}",
+                                    x_label="Время",
+                                    y_label="Значение",
+                                    plot_data=[
+                                        fill_graph_plot_data(x=x_axis, y=auto_corr_true, label="Истинное значение"),
+                                        fill_graph_plot_data(x=x_axis, y=auto_corr_pred, label="Предсказанное значение")
+                                    ],
+                                )
                             )
-                        )
-                        _id += 1
-                        x_me, y_me = get_distribution_histogram(deviation, categorical=False)
-                        return_data.append(
-                            fill_graph_front_structure(
-                                _id=_id,
-                                _type='bar',
-                                graph_name=f"Выходной слой «{out}» - Распределение ошибки канала "
-                                           f"«{channel_name.split('_', 1)[-1]}» на {step + 1} шаг"
-                                           f"{'ов' if step + 1 == 1 else ''} вперед",
-                                short_name=f"{out} - Распределение ME канала «{channel_name.split('_', 1)[-1]}»",
-                                x_label="Ошибка",
-                                y_label="Значение",
-                                plot_data=[fill_graph_plot_data(x=x_me, y=y_me)],
+                            _id += 1
+
+                        for data_type in inverse_y_true.keys():
+                            type_name = "Тренировочная" if data_type == 'train' else "Проверочная"
+                            y_true = inverse_y_true.get(data_type).get(f"{out}")[:, step, i].astype('float')
+                            y_pred = inverse_y_pred.get(data_type).get(f"{out}")[:, step, i].astype('float')
+                            deviation = (y_pred - y_true) * 100 / y_true
+                            x_mae, y_mae = get_distribution_histogram(np.abs(deviation), categorical=False)
+                            return_data.append(
+                                fill_graph_front_structure(
+                                    _id=_id,
+                                    _type='bar',
+                                    graph_name=f"Выходной слой «{out}» - Распределение абсолютной ошибки канала "
+                                               f"«{channel_name.split('_', 1)[-1]}» на {step + 1} шаг"
+                                               f"{'ов' if step + 1 == 1 else ''} вперед - {type_name} выборка",
+                                    short_name=f"{out} - Распределение MAE канала «{channel_name.split('_', 1)[-1]}»"
+                                               f" - {type_name}",
+                                    x_label="Абсолютная ошибка",
+                                    y_label="Значение",
+                                    plot_data=[fill_graph_plot_data(x=x_mae, y=y_mae)],
+                                )
                             )
-                        )
-                        _id += 1
+                            _id += 1
+
+                        for data_type in inverse_y_true.keys():
+                            type_name = "Тренировочная" if data_type == 'train' else "Проверочная"
+                            y_true = inverse_y_true.get(data_type).get(f"{out}")[:, step, i].astype('float')
+                            y_pred = inverse_y_pred.get(data_type).get(f"{out}")[:, step, i].astype('float')
+                            deviation = (y_pred - y_true) * 100 / y_true
+                            x_me, y_me = get_distribution_histogram(deviation, categorical=False)
+                            return_data.append(
+                                fill_graph_front_structure(
+                                    _id=_id,
+                                    _type='bar',
+                                    graph_name=f"Выходной слой «{out}» - Распределение ошибки канала "
+                                               f"«{channel_name.split('_', 1)[-1]}» на {step + 1} шаг"
+                                               f"{'ов' if step + 1 == 1 else ''} вперед - {type_name} выборка",
+                                    short_name=f"{out} - Распределение ME канала «{channel_name.split('_', 1)[-1]}» - "
+                                               f"{type_name}",
+                                    x_label="Ошибка",
+                                    y_label="Значение",
+                                    plot_data=[fill_graph_plot_data(x=x_me, y=y_me)],
+                                )
+                            )
+                            _id += 1
             return return_data
         except Exception as e:
             print_error(TimeseriesCallback().name, method_name, e)

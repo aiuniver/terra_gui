@@ -53,7 +53,8 @@ class InteractiveCallback:
         self.raw_y_true = None
         self.inverse_y_pred = {}
         self.current_epoch = None
-        self.training_details: TrainingDetailsData = None
+        self.training_details: Optional[TrainingDetailsData] = None
+        self.last_training_details: Optional[TrainingDetailsData] = None
 
         # overfitting params
         self.log_gap = 5
@@ -87,6 +88,7 @@ class InteractiveCallback:
         print('\ndataset_config', dataset.data)
         print('\nparams', params.native(), '\n')
         self.training_details = params
+        self.last_training_details = copy.deepcopy(params)
         self.dataset_path = dataset.data.path
         self.class_colors = get_classes_colors(dataset)
         self.x_val, self.inverse_x_val = self.callback.get_x_array(dataset)
@@ -115,7 +117,6 @@ class InteractiveCallback:
 
     def update_state(self, arrays: dict = None, fit_logs=None, current_epoch_time=None,
                      on_epoch_end_flag=False, train_idx: list = None) -> dict:
-        # print('InteractiveCallback.update_state')
         if self.log_history:
             if arrays:
                 if self.options.data.architecture in BASIC_ARCHITECTURE:
@@ -127,12 +128,13 @@ class InteractiveCallback:
                         array={"train": arrays.get("train_pred"), "val": arrays.get("val_pred")},
                         options=self.options, train_idx=train_idx)
                     self.inverse_y_pred = self.callback.get_inverse_array(self.y_pred, self.options)
+
                     out = f"{self.training_details.interactive.intermediate_result.main_output}"
                     count = self.training_details.interactive.intermediate_result.num_examples
                     count = count if count > len(self.y_true.get('val').get(out)) \
                         else len(self.y_true.get('val').get(out))
                     self.example_idx = self.callback.prepare_example_idx_to_show(
-                        array=self.y_pred.get(out),
+                        array=self.y_pred.get("val").get(out),
                         true_array=self.y_true.get("val").get(out),
                         options=self.options,
                         output=int(out),
@@ -197,6 +199,7 @@ class InteractiveCallback:
                     if self.options.data.architecture in YOLO_ARCHITECTURE and \
                             self.training_details.interactive.statistic_data.box_channel \
                             and self.training_details.interactive.statistic_data.autoupdate:
+                        print('self.statistic_result', self.y_true.keys(), self.y_pred.keys())
                         self.statistic_result = self.callback.statistic_data_request(
                             interactive_config=self.training_details.interactive,
                             options=self.options,
@@ -242,6 +245,7 @@ class InteractiveCallback:
                             inverse_y_true=self.inverse_y_true,
                         )
                 self.urgent_predict = False
+
                 self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
             return {
                 'update': self.random_key,
@@ -282,6 +286,7 @@ class InteractiveCallback:
                     )
                 if self.training_details.interactive.intermediate_result.show_results or \
                         self.training_details.interactive.statistic_data.output_id:
+                    print('\nstatistic_data', self.training_details.interactive.statistic_data)
                     self.urgent_predict = True
                     self.intermediate_result = self.callback.intermediate_result_request(
                         options=self.options,
@@ -298,15 +303,14 @@ class InteractiveCallback:
                         class_colors=self.class_colors,
                         raw_y_pred=self.raw_y_pred
                     )
-                    if self.training_details.interactive.statistic_data.output_id:
-                        self.statistic_result = self.callback.statistic_data_request(
-                            interactive_config=self.training_details.interactive,
-                            options=self.options,
-                            y_true=self.y_true,
-                            y_pred=self.y_pred,
-                            inverse_y_pred=self.inverse_y_pred,
-                            inverse_y_true=self.inverse_y_true,
-                        )
+                    self.statistic_result = self.callback.statistic_data_request(
+                        interactive_config=self.training_details.interactive,
+                        options=self.options,
+                        y_true=self.y_true,
+                        y_pred=self.y_pred,
+                        inverse_y_pred=self.inverse_y_pred,
+                        inverse_y_true=self.inverse_y_true,
+                    )
 
             if self.options.data.architecture in YOLO_ARCHITECTURE:
                 if self.training_details.interactive.intermediate_result.show_results:

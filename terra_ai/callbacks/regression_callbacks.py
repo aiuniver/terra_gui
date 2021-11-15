@@ -89,6 +89,28 @@ class DataframeRegressionCallback:
             print_error(DataframeRegressionCallback().name, method_name, e)
 
     @staticmethod
+    def get_inverse_array(array: dict, options):
+        method_name = 'get_inverse_array'
+        try:
+            inverse_array = {}
+            for data_type in array.keys():
+                inverse_array[data_type] = {}
+                for idx, out in enumerate(array.get(data_type).keys()):
+                    preprocess_dict = options.preprocessing.preprocessing.get(int(out))
+                    inverse_y = np.zeros_like(array.get(data_type).get(out)[:, 0:1])
+                    for i, column in enumerate(preprocess_dict.keys()):
+                        if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
+                            _options = {int(out): {column: array.get(data_type).get(out)[:, i:i + 1]}}
+                            inverse_col = options.preprocessing.inverse_data(_options).get(int(out)).get(column)
+                        else:
+                            inverse_col = array.get(data_type).get(out)[:, i:i + 1]
+                        inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
+                    inverse_array[data_type][out] = inverse_y[:, 1:]
+            return inverse_array
+        except Exception as e:
+            print_error(DataframeRegressionCallback().name, method_name, e)
+
+    @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, return_mode='deploy'):
         method_name = 'postprocess_initial_source'
         try:
@@ -228,7 +250,7 @@ class DataframeRegressionCallback:
                         data = DataframeRegressionCallback().postprocess_regression(
                             column_names=list(options.data.columns.get(out).keys()),
                             inverse_y_true=inverse_y_true.get('val').get(f"{out}")[example_idx[idx]],
-                            inverse_y_pred=inverse_y_pred.get(f"{out}")[example_idx[idx]],
+                            inverse_y_pred=inverse_y_pred.get('val').get(f"{out}")[example_idx[idx]],
                             show_stat=interactive_config.intermediate_result.show_statistic,
                             return_mode='callback'
                         )
@@ -252,48 +274,61 @@ class DataframeRegressionCallback:
             return_data = []
             _id = 1
             for out in interactive_config.statistic_data.output_id:
-                y_true = inverse_y_true.get("val").get(f'{out}').squeeze()
-                y_pred = inverse_y_pred.get(f'{out}').squeeze()
-                x_scatter, y_scatter = get_scatter(y_true, y_pred)
-                return_data.append(
-                    fill_graph_front_structure(
-                        _id=_id,
-                        _type='scatter',
-                        graph_name=f"Выходной слой «{out}» - Скаттер",
-                        short_name=f"{out} - Скаттер",
-                        x_label="Истинные значения",
-                        y_label="Предсказанные значения",
-                        plot_data=[fill_graph_plot_data(x=x_scatter, y=y_scatter)],
+                for data_type in inverse_y_true.keys():
+                    type_name = "Тренировочная" if data_type == 'train' else "Проверочная"
+                    y_true = inverse_y_true.get(data_type).get(f'{out}').squeeze()
+                    y_pred = inverse_y_pred.get(data_type).get(f'{out}').squeeze()
+                    x_scatter, y_scatter = get_scatter(y_true, y_pred)
+                    return_data.append(
+                        fill_graph_front_structure(
+                            _id=_id,
+                            _type='scatter',
+                            graph_name=f"Выход «{out}» - Скаттер - {type_name} выборка",
+                            short_name=f"{out} - Скаттер - {type_name}",
+                            x_label="Истинные значения",
+                            y_label="Предсказанные значения",
+                            plot_data=[fill_graph_plot_data(x=x_scatter, y=y_scatter)],
+                        )
                     )
-                )
-                _id += 1
-                deviation = (y_pred - y_true) * 100 / y_true
-                x_mae, y_mae = get_distribution_histogram(np.abs(deviation), categorical=False)
-                return_data.append(
-                    fill_graph_front_structure(
-                        _id=_id,
-                        _type='bar',
-                        graph_name=f'Выходной слой «{out}» - Распределение абсолютной ошибки',
-                        short_name=f"{out} - Распределение MAE",
-                        x_label="Абсолютная ошибка",
-                        y_label="Значение",
-                        plot_data=[fill_graph_plot_data(x=x_mae, y=y_mae)],
+                    _id += 1
+
+                for data_type in inverse_y_true.keys():
+                    type_name = "Тренировочная" if data_type == 'train' else "Проверочная"
+                    y_true = inverse_y_true.get(data_type).get(f'{out}').squeeze()
+                    y_pred = inverse_y_pred.get(data_type).get(f'{out}').squeeze()
+                    deviation = (y_pred - y_true) * 100 / y_true
+                    x_mae, y_mae = get_distribution_histogram(np.abs(deviation), categorical=False)
+                    return_data.append(
+                        fill_graph_front_structure(
+                            _id=_id,
+                            _type='bar',
+                            graph_name=f'Выход «{out}» - Распределение абсолютной ошибки - {type_name} выборка',
+                            short_name=f"{out} - Распределение MAE - {type_name}",
+                            x_label="Абсолютная ошибка",
+                            y_label="Значение",
+                            plot_data=[fill_graph_plot_data(x=x_mae, y=y_mae)],
+                        )
                     )
-                )
-                _id += 1
-                x_me, y_me = get_distribution_histogram(deviation, categorical=False)
-                return_data.append(
-                    fill_graph_front_structure(
-                        _id=_id,
-                        _type='bar',
-                        graph_name=f'Выходной слой «{out}» - Распределение ошибки',
-                        short_name=f"{out} - Распределение ME",
-                        x_label="Ошибка",
-                        y_label="Значение",
-                        plot_data=[fill_graph_plot_data(x=x_me, y=y_me)],
+                    _id += 1
+
+                for data_type in inverse_y_true.keys():
+                    type_name = "Тренировочная" if data_type == 'train' else "Проверочная"
+                    y_true = inverse_y_true.get(data_type).get(f'{out}').squeeze()
+                    y_pred = inverse_y_pred.get(data_type).get(f'{out}').squeeze()
+                    deviation = (y_pred - y_true) * 100 / y_true
+                    x_me, y_me = get_distribution_histogram(deviation, categorical=False)
+                    return_data.append(
+                        fill_graph_front_structure(
+                            _id=_id,
+                            _type='bar',
+                            graph_name=f'Выход «{out}» - Распределение ошибки - {type_name} выборка',
+                            short_name=f"{out} - Распределение ME - {type_name}",
+                            x_label="Ошибка",
+                            y_label="Значение",
+                            plot_data=[fill_graph_plot_data(x=x_me, y=y_me)],
+                        )
                     )
-                )
-                _id += 1
+                    _id += 1
             return return_data
         except Exception as e:
             print_error(DataframeRegressionCallback().name, method_name, e)

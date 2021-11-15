@@ -28,7 +28,7 @@ from terra_ai.callbacks.classification_callbacks import BaseClassificationCallba
 from terra_ai.callbacks.interactive_callback import InteractiveCallback
 # from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.callbacks.utils import print_error, loss_metric_config, BASIC_ARCHITECTURE, CLASS_ARCHITECTURE, \
-    YOLO_ARCHITECTURE, round_loss_metric, class_metric_list, CLASSIFICATION_ARCHITECTURE
+    YOLO_ARCHITECTURE, round_loss_metric, class_metric_list, CLASSIFICATION_ARCHITECTURE, reformat_fit_array
 from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice, LayerEncodingChoice
 from terra_ai.data.modeling.model import ModelDetailsData
@@ -42,6 +42,7 @@ from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.exceptions.deploy import MethodNotImplementedException
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.exceptions import training as exceptions
+from terra_ai.training.customlosses import PercentMAE
 from terra_ai.training.yolo_utils import create_yolo, compute_loss, get_mAP
 from terra_ai.utils import decamelize
 
@@ -661,8 +662,11 @@ class GUINN:
                 callback.on_epoch_begin()
                 new_batch = True
                 train_steps = 1
+                st = time.time()
+                print(f'\n New epoch {epoch+1}, batch {params.base.batch}\n')
                 for x_batch_train, y_batch_train in dataset.dataset.get('train').batch(
                         params.base.batch, drop_remainder=False):
+                    bt = time.time()
                     # print('epoch', epoch, 'train_steps', train_steps)
                     logits, y_true = train_step(
                         x_batch=x_batch_train, y_batch=y_batch_train, train_model=model,
@@ -671,6 +675,7 @@ class GUINN:
                     # train_loss = tf.keras.losses.CategoricalCrossentropy()(y_true[0], logits[0]).numpy()
                     # val_loss = tf.keras.losses.CategoricalCrossentropy()(val_true.get('2'), val_pred.get('2')).numpy()
                     # print('train_loss', train_steps, train_loss, total_loss.numpy(), isinstance(logits, list), logits[0].shape)
+                    bend = time.time()
                     if not train_true:
                         for i, out in enumerate(dataset.data.outputs.keys()):
                             train_pred[f"{out}"] = logits[i].numpy().astype('float')
@@ -699,7 +704,7 @@ class GUINN:
                                 train_data_idxs[-1] + 1, train_data_idxs[-1] + 1 + y_true[0].shape[0])))
                     # callback.on_train_batch_end(batch=train_step)
                     if interactive.urgent_predict:
-                        print('\nGUINN interactive.urgent_predict\n')
+                        # print('\nGUINN interactive.urgent_predict\n')
                         val_pred, val_true = test_step(
                             options=dataset, parameters=params, train_model=model,
                             outputs=list(dataset.data.outputs.keys())
@@ -707,24 +712,33 @@ class GUINN:
                         callback.on_train_batch_end(batch=train_steps, arrays={
                             "train_true": train_true, "val_true": val_true, "train_pred": train_pred,
                             "val_pred": val_pred}, train_data_idxs=train_data_idxs)
+                        # interactive.urgent_predict = False
                     else:
                         callback.on_train_batch_end(batch=train_steps)
+                    print(f'\n -- batch {train_steps} - {round(bend - bt, 6)}, concatenate time {round(time.time() - bend, 6)}')
                     train_steps += 1
                     new_batch = False
                     if callback.stop_training:
                         break
+                print(f'\n train epoch time: {round(time.time() - st, 2)}\n')
                 self.save_model()
                 if callback.stop_training:
                     callback.on_train_end(model)
                     break
-
+                st = time.time()
                 # Run a validation loop at the end of each epoch.
                 val_pred, val_true = test_step(options=dataset, parameters=params, train_model=model,
                                                outputs=list(dataset.data.outputs.keys()))
-                # train_loss = tf.keras.losses.CategoricalCrossentropy()(train_true.get('2'), train_pred.get('2')).numpy()
-                # val_loss = tf.keras.losses.CategoricalCrossentropy()(val_true.get('2'), val_pred.get('2')).numpy()
-                # print('\ntrain_loss, val_loss', train_loss, val_loss)
-
+                print(f'\n val epoch time: {round(time.time() - st, 2)}\n')
+                # m = PercentMAE()
+                # m.update_state(train_true.get('2'), train_pred.get('2'))
+                # train_loss = m.result().numpy()
+                # m.reset_state()
+                # m.update_state(val_true.get('2'), val_pred.get('2'))
+                # val_loss = m.result().numpy()
+                # m.reset_state()
+                # print('\nPercentMAE train, val', train_loss, val_loss)
+                st = time.time()
                 callback.on_epoch_end(
                     epoch=epoch + 1,
                     arrays={
@@ -735,6 +749,7 @@ class GUINN:
                     },
                     train_data_idxs=train_data_idxs
                 )
+                print(f'\n callback.on_epoch_end epoch time: {round(time.time() - st, 2)}')
                 print(
                     # f"\nEpoch {callback.current_logs.get('epochs')}:"
                     #     f"\nlog_history: {callback.log_history.get('epochs')}, "
@@ -993,7 +1008,6 @@ class FitCallback:
                     loss_fn, out, arrays.get("train_true").get(out), arrays.get("train_pred").get(out))
                 val_loss = self._get_loss_calculation(
                     loss_fn, out, arrays.get("val_true").get(out), arrays.get("val_pred").get(out))
-                print('train_loss, val_loss', train_loss, val_loss)
                 self.current_logs[out]["loss"][output_layer.loss.name] = {"train": train_loss, "val": val_loss}
                 if self.class_outputs.get(output_layer.id):
                     self.current_logs[out]["class_loss"][output_layer.loss.name] = {}
@@ -1049,6 +1063,18 @@ class FitCallback:
                                     y_pred=arrays.get("val_pred").get(out)[update_cls['val'][out][cls], ...])
                                 self.current_logs[out]["class_metrics"][metric_name][cls] = \
                                     {"train": train_class_metric, "val": val_class_metric}
+                        # elif metric_name == Metric.BalancedDiceCoef:
+                        #     for i, cls in enumerate(name_classes):
+                        #         train_class_metric = self._get_metric_calculation(
+                        #             metric_name=metric_name, metric_obj=metric_fn, out=out, show_class=True,
+                        #             y_true=arrays.get("train_true").get(out), class_idx=i,
+                        #             y_pred=arrays.get("train_pred").get(out))
+                        #         val_class_metric = self._get_metric_calculation(
+                        #             metric_name=metric_name, metric_obj=metric_fn, out=out, show_class=True,
+                        #             y_true=arrays.get("val_true").get(out), class_idx=i,
+                        #             y_pred=arrays.get("val_pred").get(out))
+                        #         self.current_logs[out]["class_metrics"][metric_name][cls] = \
+                        #             {"train": train_class_metric, "val": val_class_metric}
                         else:
                             for i, cls in enumerate(name_classes):
                                 train_class_metric = self._get_metric_calculation(
@@ -1092,6 +1118,8 @@ class FitCallback:
             num_classes = self.dataset.data.outputs.get(int(out)).num_classes
             if metric_name == Metric.MeanIoU:
                 m = metric_obj(num_classes)
+            elif metric_name == Metric.BalancedDiceCoef:
+                m = metric_obj(encoding=encoding.name)
             else:
                 m = metric_obj()
             if show_class and (encoding == LayerEncodingChoice.ohe or encoding == LayerEncodingChoice.multi):
@@ -1100,8 +1128,10 @@ class FitCallback:
                     pred_array = to_categorical(np.argmax(y_pred, axis=-1), num_classes)[..., class_idx]
                     m.update_state(true_array, pred_array)
                 elif metric_name in [Metric.BalancedRecall, Metric.BalancedPrecision, Metric.BalancedFScore,
-                                     Metric.FScore]:
+                                     Metric.FScore, Metric.BalancedDiceCoef]:
                     m.update_state(y_true, y_pred, show_class=show_class, class_idx=class_idx)
+                # elif metric_name == Metric.BalancedDiceCoef:
+                #     m.update_state(y_true, y_pred, show_class=show_class, class_idx=class_idx)
                 else:
                     m.update_state(y_true[..., class_idx:class_idx + 1], y_pred[..., class_idx:class_idx + 1])
             elif show_class:
@@ -1114,7 +1144,7 @@ class FitCallback:
                     pred_array = y_pred[..., class_idx:class_idx + 1]
                     m.update_state(true_array, pred_array)
             else:
-                if metric_name == Metric.UnscaledMAE:
+                if metric_name in [Metric.UnscaledMAE, Metric.PercentMAE]:
                     m.update_state(y_true, y_pred, output=int(out), preprocess=self.dataset.preprocessing)
                 else:
                     m.update_state(y_true, y_pred)
@@ -1716,7 +1746,7 @@ class FitCallback:
                     self.num_batches * self.still_epochs, self.batch, self._start_time)
                 self.batch = batch
                 if interactive.urgent_predict:
-                    print('\ninteractive.urgent_predict\n')
+                    # print('\ninteractive.urgent_predict\n')
                     # if self.is_yolo:
                     # self.samples_train.append(self._logs_predict_extract(logs, prefix='pred'))
                     # self.samples_target_train.append(self._logs_predict_extract(logs, prefix='target'))

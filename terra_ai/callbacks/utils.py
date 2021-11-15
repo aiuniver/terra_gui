@@ -353,6 +353,7 @@ def print_error(class_name: str, method_name: str, message: Exception):
 def reformat_fit_array(array: dict, train_idx: list = None, options=None):
     method_name = 'reformat_fit_array'
     try:
+        print(method_name)
         reformat_true = {}
         for data_type in array.keys():
             reformat_true[data_type] = {}
@@ -362,6 +363,7 @@ def reformat_fit_array(array: dict, train_idx: list = None, options=None):
                     reformat_true[data_type][out] = np.concatenate(
                         [array[data_type][out][separator:], array[data_type][out][:separator]], axis=0)
                 else:
+                    # print(method_name, array[data_type][out].shape)
                     reformat_true[data_type][out] = array[data_type][out]
         return reformat_true
     except Exception as e:
@@ -822,16 +824,4 @@ def segmentation_metric(true_array, pred_array):
         print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
-def get_time_series_graphic(data, make_short=False):
-    method_name = 'get_time_series_graphic'
-    try:
-        if make_short and len(data) > MAX_TS_GRAPH_COUNT:
-            union = int(len(data) // MAX_TS_GRAPH_COUNT)
-            short_data = []
-            for i in range(int(len(data) / union)):
-                short_data.append(round_loss_metric(np.mean(data[union * i:union * i + union]).item()))
-            return np.arange(len(short_data)).astype('int').tolist(), np.array(short_data).astype('float').tolist()
-        else:
-            return np.arange(len(data)).astype('int').tolist(), np.array(data).astype('float').tolist()
-    except Exception as e:
-        print_error(f"None ({MODULE_NAME})", method_name, e)
+

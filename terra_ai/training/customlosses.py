@@ -56,26 +56,33 @@ class BalancedDiceCoef(tf.keras.metrics.Metric):
         super(BalancedDiceCoef, self).__init__(name=name, **kwargs)
         self.dice: float = 0
         self.encoding = encoding
-        # pass
+        pass
 
-    def update_state(self, y_true, y_pred, smooth=1, sample_weight=None):
-        y_true = tf.cast(y_true, tf.float32)
-        y_pred = tf.cast(y_pred, tf.float32)
+    def update_state(self, y_true, y_pred, smooth=1, show_class=False, class_idx=0):
+        # print('BalancedDiceCoef', show_classes, class_idx, self.encoding)
+        true = tf.cast(y_true, tf.float32)
+        pred = tf.cast(y_pred, tf.float32)
 
         if self.encoding == 'ohe':
-            y_pred = K.one_hot(K.argmax(y_pred, axis=-1), num_classes=y_true.shape[-1])
+            pred = K.one_hot(K.argmax(pred, axis=-1), num_classes=true.shape[-1])
         elif self.encoding == 'multi':
-            y_pred = tf.where(y_pred > 0.9, 1., 0.)
+            pred = tf.where(pred > 0.9, 1., 0.)
         else:
-            y_pred = tf.where(y_pred > 0.5, 1., 0.)
+            pred = tf.where(pred > 0.5, 1., 0.)
 
-        balanced_dice = tf.convert_to_tensor(0., dtype=tf.float32)
-        for i in range(y_true.shape[-1]):
-            intersection = K.sum(y_true[..., i:i + 1] * y_pred[..., i:i + 1])
-            union = K.sum(y_true[..., i:i + 1]) + K.sum(y_pred[..., i:i + 1])
-            balanced_dice = tf.add(balanced_dice, tf.convert_to_tensor((2. * intersection + smooth) / (union + smooth)))
-        self.dice = tf.convert_to_tensor(balanced_dice / y_true.shape[-1])
-        # print(self.dice, intersection, union)
+        if show_class:
+            intersection = K.sum(true[..., class_idx:class_idx+1] * pred[..., class_idx:class_idx+1])
+            union = K.sum(true[..., class_idx:class_idx+1]) + K.sum(pred[..., class_idx:class_idx+1])
+            self.dice = tf.convert_to_tensor((2. * intersection + smooth) / (union + smooth))
+            print('BalancedDiceCoef', show_class, class_idx, self.dice)
+        else:
+            balanced_dice = tf.convert_to_tensor(0., dtype=tf.float32)
+            for i in range(true.shape[-1]):
+                intersection = K.sum(y_true[..., i:i + 1] * pred[..., i:i + 1])
+                union = K.sum(true[..., i:i + 1]) + K.sum(pred[..., i:i + 1])
+                balanced_dice = tf.add(balanced_dice, tf.convert_to_tensor((2. * intersection + smooth) / (union + smooth)))
+            self.dice = tf.convert_to_tensor(balanced_dice / true.shape[-1])
+            # print(self.dice, intersection, union)
 
     def get_config(self):
         """
@@ -348,10 +355,51 @@ class PercentMAE(tf.keras.metrics.Metric):
         super(PercentMAE, self).__init__(name=name, **kwargs)
         self.score: float = 0
 
-    def update_state(self, y_true, y_pred, sample_weight=None):
-        y_true = tf.cast(y_true, tf.float32)
-        y_pred = tf.cast(y_pred, tf.float32)
-        self.score = K.mean(tf.abs(y_true - y_pred) * 100 / K.mean(y_true))
+    def update_state(self, y_true, y_pred, output: int, preprocess: CreatePreprocessing, sample_weight=None):
+        true_array = tf.convert_to_tensor(self.unscale_array(y_true, output, preprocess), dtype='float32')
+        pred_array = tf.convert_to_tensor(self.unscale_array(y_pred, output, preprocess), dtype='float32')
+        self.score = K.mean(tf.abs(true_array - pred_array) * 100 / K.mean(true_array))
+
+    @staticmethod
+    def unscale_array(array, output: int, preprocess: CreatePreprocessing):
+        # preprocess_dict = preprocess.preprocessing.get(output)
+        # target_key = None
+        # for i, column in enumerate(preprocess_dict.keys()):
+        #     if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
+        #         target_key = column
+        #     else:
+        #         target_key = None
+        #         break
+        # if target_key:
+        #     result = np.expand_dims(mae_result, axis=-1)
+        #     preset = {output: {target_key: result}}
+        #     unscale = np.array(list(preprocess.inverse_data(preset)[output].values()))
+        #     try:
+        #         return unscale.item()
+        #     except ValueError:
+        #         return unscale.squeeze().tolist()
+        # else:
+        #     return mae_result
+        preprocess_dict = preprocess.preprocessing.get(output)
+        inverse_y = np.zeros_like(array[..., 0:1])
+        if len(array.shape) == 3:
+            for i, column in enumerate(preprocess_dict.keys()):
+                if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
+                    _options = {output: {column: array[:, :, i]}}
+                    inverse_col = np.expand_dims(
+                        preprocess.inverse_data(_options).get(output).get(column), axis=-1)
+                else:
+                    inverse_col = array[:, :, i:i + 1]
+                inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
+        if len(array.shape) == 2:
+            for i, column in enumerate(preprocess_dict.keys()):
+                if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
+                    _options = {output: {column: array[:, i:i + 1]}}
+                    inverse_col = preprocess.inverse_data(_options).get(output).get(column)
+                else:
+                    inverse_col = array[:, i:i + 1]
+                inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
+        return inverse_y[..., 1:]
 
     def get_config(self):
         """
