@@ -3,6 +3,7 @@ import Vuex from "vuex";
 import axios from 'axios';
 
 import messages from './modules/messages';
+import datasets from './modules/datasets';
 import logging from './modules/logging';
 import projects from './modules/projects';
 import themes from './modules/themes';
@@ -13,6 +14,7 @@ export default new Vuex.Store({
   modules: {
     logging,
     messages,
+    datasets,
     projects,
     themes
   },

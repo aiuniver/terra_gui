@@ -4,7 +4,7 @@
       <Header />
     </div>
     <div class="app__main">
-      <!-- <router-view /> -->
+      <router-view />
     </div>
     <div class="app_footer">
       <Footer />

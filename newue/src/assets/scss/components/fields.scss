@@ -20,6 +20,9 @@ $text-color-error: #ca5035;
   color: $text-color;
   transition: all 0.2s ease-in-out;
   // overflow: hidden;
+  :focus-visible {
+    outline: none;
+  }
   &:not(.d-input--error):focus-within,
   &:not(.d-input--disabled):not(.d-input--error):hover {
     background-color: $color-bg-hover;
@@ -41,6 +44,7 @@ $text-color-error: #ca5035;
   }
   &__input {
     height: 100%;
+    width: 100%;
     padding: 8px 10px;
     font-size: 14px;
     line-height: 24px;
