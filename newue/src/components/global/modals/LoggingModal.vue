@@ -29,7 +29,7 @@
 
 <script>
 export default {
-  name: 'CopyModal',
+  name: 'copy-modal-two',
   props: {
     errors: {
       type: Array,

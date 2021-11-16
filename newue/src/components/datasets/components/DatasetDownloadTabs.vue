@@ -22,9 +22,9 @@
 </template>
 
 <script>
-import TField from '@/components/global/forms/components/TField';
-import DSelect from '@/components/global/forms/components/DSelect';
-import DInputText from '@/components/global/forms/components/DInputText';
+import TField from '@/components/global/forms/TField';
+import DSelect from '@/components/global/forms/DSelect';
+import DInputText from '@/components/global/forms/DInputText';
 
 export default {
   components: { TField, DSelect, DInputText },

@@ -14,20 +14,17 @@
         <span>Входные данные</span>
       </div>
     </div>
-    <DButton @click="$emit('action', 'next')" style="width: 40%" color="secondary" direction="left" text="Далее" />
+    <d-button @click="$emit('action', 'next')" style="width: 40%" color="secondary" direction="left" text="Далее" />
   </div>
 </template>
 
 <script>
 import SvgContainer from '@/components/app/SvgContainer';
-import DButton from '@/components/global/forms/components/DButton';
 
 export default {
   components: {
-    DButton,
     SvgContainer,
   },
-  name: 'BasePanelPagination',
 };
 </script>
 

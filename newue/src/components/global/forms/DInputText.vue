@@ -22,10 +22,6 @@
       <div v-show="input && !isDisabled" class="d-input__btn--cleener">
         <i class="ci-icon ci-close_big" @click="clear" />
       </div>
-      <div v-if="type === 'number'" :class="['d-input__btn--number', { 'd-input__btn--disabled': isDisabled }]">
-        <i class="ci-icon ci-caret_up" @click="+input++" />
-        <i class="ci-icon ci-caret_down" @click="+input--" />
-      </div>
     </div>
   </div>
 </template>
@@ -33,18 +29,18 @@
 <script>
 import fields from '@/mixins/forms/fields';
 export default {
-  name: 'd-input-number',
+  name: 'd-input-text',
   mixins: [fields],
   props: {
     type: {
       type: String,
-      default: 'number',
+      default: 'text',
     },
     placeholder: {
       type: String,
-      default: 'Введите число',
+      default: 'Введите текст',
     },
-    value: [Number],
+    value: [String],
   },
   data: () => ({
     input: '',
@@ -78,8 +74,8 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import '../scss/fields.scss';
-.d-input {
+@import '@/assets/scss/components/fields.scss';
 
+.d-input {
 }
 </style>

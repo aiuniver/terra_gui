@@ -782,4 +782,4 @@ class DefaultsData(BaseMixinData):
 
     def update_deploy(self, _type: str, _name: str):
         self.deploy.type.fields[0].value = _type
-        self.deploy.type.fields[0].fields.get(_type)[0].valule = _name
+        self.deploy.type.fields[0].fields.get(_type)[0].value = _name
