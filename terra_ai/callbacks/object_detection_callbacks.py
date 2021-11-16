@@ -77,7 +77,7 @@ class BaseObjectDetectionCallback:
                         sensitivity=sensitivity,
                         threashold=threashold
                     )
-                    print(f'\nBaseObjectDetectionCallback get_yolo_y_pred: {count} {round(time.time() - t, 3)}')
+                    print(f'BaseObjectDetectionCallback get_yolo_y_pred: {count} {round(time.time() - t, 3)}\n')
                     count += 1
                     channel_boxes.append(boxes)
                 y_pred[i] = channel_boxes
@@ -125,8 +125,10 @@ class BaseObjectDetectionCallback:
             classes = np.argmax(scores, axis=-1)
             idxs = np.argsort(classes)[..., ::-1]
             mean_iou = []
-            print('--', method_name, 'len(idxs)', len(idxs), boxes.shape)
+            # print('--', method_name, 'len(idxs)', len(idxs), boxes.shape)
+            count = 0
             while len(idxs) > 0:
+                count += 1
                 last = len(idxs) - 1
                 i = idxs[last]
                 pick.append(i)
@@ -139,6 +141,7 @@ class BaseObjectDetectionCallback:
                 overlap = (w * h) / area[idxs[:last]]
                 mean_iou.append(overlap)
                 idxs = np.delete(idxs, np.concatenate(([last], np.where(overlap > sensitivity)[0])))
+            print('\n-- non_max_suppression_fast', count, boxes.shape, sensitivity, len(pick))
             return pick, mean_iou
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
@@ -192,7 +195,7 @@ class BaseObjectDetectionCallback:
             _conf_param = (_scores_out / _class_param_out)[:, :1]
             t = time.time()
             pick, _ = BaseObjectDetectionCallback().non_max_suppression_fast(_boxes_out, _scores_out, sensitivity)
-            print('\n- BaseObjectDetectionCallback non_max_suppression_fast', round(time.time() - t, 3))
+            print('- BaseObjectDetectionCallback non_max_suppression_fast', round(time.time() - t, 3))
             return np.concatenate([_boxes_out[pick], _conf_param[pick], _scores_out[pick]], axis=-1)
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)

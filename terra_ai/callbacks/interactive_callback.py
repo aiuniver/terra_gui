@@ -146,12 +146,16 @@ class InteractiveCallback:
                     print('\nInteractiveCallback get_y_pred: start')
                     t = time.time()
                     self.raw_y_pred = arrays.get("val_pred")
+                    sensitivity = self.training_details.interactive.intermediate_result.sensitivity \
+                        if self.training_details.interactive.intermediate_result.sensitivity else 0.3
+                    threashold = self.training_details.interactive.intermediate_result.threashold \
+                        if self.training_details.interactive.intermediate_result.threashold else 0.5
                     self.y_pred = self.callback.get_y_pred(
                         y_pred=arrays.get("val_pred"), options=self.options,
-                        sensitivity=self.training_details.interactive.intermediate_result.sensitivity,
-                        threashold=self.training_details.interactive.intermediate_result.threashold
+                        sensitivity=sensitivity,
+                        threashold=threashold
                     )
-                    print('\nInteractiveCallback get_y_pred', round(time.time() - t, 3))
+                    print('\nInteractiveCallback get_y_pred', round(time.time() - t, 3), sensitivity, threashold)
                     count = self.training_details.interactive.intermediate_result.num_examples
                     count = count if count > len(self.options.dataframe.get('val')) \
                         else len(self.options.dataframe.get('val'))
