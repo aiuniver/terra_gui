@@ -1,4 +1,13 @@
-@import './var.scss';
+
+$color-bg: #242f3d50;
+$color-bg-hover: #65b9f426;
+$color-border: #242f3d;
+$color-border-active: #65b9f4;
+$color-border-error: #ca5035;
+
+$text-color: #ffffff;
+$text-color-error: #ca5035;
+
 .d-input {
   position: relative;
   border-color: #242f3d;
