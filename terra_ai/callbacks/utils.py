@@ -824,4 +824,11 @@ def segmentation_metric(true_array, pred_array):
         print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
-
+def get_dataset_length(options):
+    train_length = 0
+    for x, _ in options.dataset.get('train').batch(2**10):
+        train_length += list(x.values())[0].shape[0]
+    val_length = 0
+    for x, _ in options.dataset.get('val').batch(2 ** 10):
+        val_length += list(x.values())[0].shape[0]
+    return train_length, val_length

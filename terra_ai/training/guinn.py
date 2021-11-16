@@ -28,7 +28,9 @@ from terra_ai.callbacks.classification_callbacks import BaseClassificationCallba
 from terra_ai.callbacks.interactive_callback import InteractiveCallback
 # from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.callbacks.utils import print_error, loss_metric_config, BASIC_ARCHITECTURE, CLASS_ARCHITECTURE, \
-    YOLO_ARCHITECTURE, round_loss_metric, class_metric_list, CLASSIFICATION_ARCHITECTURE, reformat_fit_array
+    YOLO_ARCHITECTURE, round_loss_metric, class_metric_list, CLASSIFICATION_ARCHITECTURE, reformat_fit_array, \
+    get_dataset_length
+from terra_ai.customLayers import terra_custom_layers
 from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice, LayerEncodingChoice
 from terra_ai.data.modeling.model import ModelDetailsData
@@ -76,6 +78,7 @@ class GUINN:
         self.shuffle: bool = True
         self.model_is_trained: bool = False
         self.progress_name = "training"
+        self.train_length, self.val_length = 0, 0
 
     def _set_training_params(self, dataset: DatasetData, params: TrainingDetailsData) -> None:
         method_name = '_set_training_params'
@@ -84,6 +87,7 @@ class GUINN:
             self.params = params
             self.dataset = self._prepare_dataset(
                 dataset=dataset, model_path=params.model_path, state=params.state.status)
+            self.train_length, self.val_length = get_dataset_length(self.dataset)
 
             if not self.dataset.data.architecture or self.dataset.data.architecture == ArchitectureChoice.Basic:
                 self.deploy_type = self._set_deploy_type(self.dataset)
@@ -204,8 +208,9 @@ class GUINN:
                 validator = ModelValidator(model)
                 train_model = validator.get_keras_model()
             else:
-                model_file = f"{self.nn_name}.trm"
-                train_model = load_model(os.path.join(train_details.model_path, f"{model_file}"), compile=False)
+                # model_file = f"{self.nn_name}.trm"
+                # train_model = load_model(os.path.join(train_details.model_path, f"{model_file}"), compile=False)
+                train_model = self.load_model_from_json()
                 weight = None
                 for i in os.listdir(train_details.model_path):
                     if i[-3:] == '.h5' and 'last' in i:
@@ -236,11 +241,46 @@ class GUINN:
                 None
             """
             print(method_name)
-            model = f"{self.nn_name}.trm"
-            file_path_model: str = os.path.join(self.params.model_path, f"{model}")
-            self.model.save(file_path_model)
+
+            model_json = f"{self.nn_name}_json.trm"
+            file_path_model_json: str = os.path.join(self.params.model_path, f"{model_json}")
+            with open(file_path_model_json, "w") as json_file:
+                json_file.write(self.model.to_json())
+
+            custom_obj_json = f"{self.nn_name}_custom_obj_json.trm"
+            file_path_custom_obj_json = os.path.join(self.params.model_path, f"{custom_obj_json}")
+            with open(file_path_custom_obj_json, "w") as json_file:
+                json.dump(terra_custom_layers, json_file)
+
+            model_weights = f"{self.nn_name}_weights.h5"
+            file_path_model_weights: str = os.path.join(self.params.model_path, f"{model_weights}")
+            self.model.save_weights(file_path_model_weights)
         except Exception as e:
             print_error(GUINN().name, method_name, e)
+
+    def load_model_from_json(self):
+        model_json = f"{self.nn_name}_json.trm"
+        file_path_model_json: str = os.path.join(self.params.model_path, f"{model_json}")
+        with open(file_path_model_json) as json_file:
+            data = json.load(json_file)
+
+        custom_obj_json = f"{self.nn_name}_custom_obj_json.trm"
+        file_path_custom_obj_json = os.path.join(self.params.model_path, f"{custom_obj_json}")
+        with open(file_path_custom_obj_json) as json_file:
+            custom_dict = json.load(json_file)
+        custom_object = {}
+        for k, v in custom_dict.items():
+            try:
+                custom_object[k] = getattr(importlib.import_module(v), k)
+            except:
+                continue
+        model = tf.keras.models.model_from_json(json.dumps(data), custom_objects=custom_object)
+
+        # model_weights = f"{self.nn_name}_weights.h5"
+        # file_path_model_weights: str = os.path.join(self.params.model_path, f"{model_weights}")
+        # model.load_weights(file_path_model_weights)
+        return model
+
 
     def _kill_last_training(self, state):
         method_name = '_kill_last_training'
@@ -283,8 +323,8 @@ class GUINN:
             self._set_training_params(dataset=dataset, params=training)
 
             self.model = self._set_model(model=gui_model, train_details=training)
-            # if training.state.status == "training":
-            #     self.save_model()
+            if training.state.status == "training":
+                self.save_model()
 
             self.model_fit(params=training, dataset=self.dataset, model=self.model)
             return {"dataset": self.dataset}
@@ -681,116 +721,151 @@ class GUINN:
                 set_optimizer.apply_gradients(zip(grads, model.trainable_weights))
                 return [logits_] if not isinstance(logits_, list) else logits_, y_true_
 
-            def test_step(options: PrepareDataset, parameters: TrainingDetailsData, train_model: Model, outputs: list):
-                test_pred = {}
-                test_true = {}
-                for x_batch_val, y_batch_val in options.dataset.get('val').batch(
-                        parameters.base.batch, drop_remainder=False):
-                    test_logits = train_model(x_batch_val, training=False)
-                    true_array = list(y_batch_val.values())
+            @tf.function
+            def test_step(train_model: Model, x_batch, y_batch):
+                with tf.GradientTape() as tape:
+                    test_logits = train_model(x_batch, training=False)
+                    true_array = list(y_batch.values())
                     test_logits = test_logits if isinstance(test_logits, list) else [test_logits]
-                    if not test_true:
-                        for j, outp in enumerate(outputs):
-                            test_pred[f"{outp}"] = test_logits[j].numpy().astype('float')
-                            test_true[f"{outp}"] = true_array[j].numpy().astype('float')
-                    else:
-                        for j, outp in enumerate(outputs):
-                            test_pred[f"{outp}"] = np.concatenate(
-                                [test_pred[f"{outp}"], test_logits[j].numpy().astype('float')], axis=0)
-                            test_true[f"{outp}"] = np.concatenate(
-                                [test_true[f"{outp}"], true_array[j].numpy().astype('float')], axis=0)
-                return test_pred, test_true
+                    # dict_pred = {}
+                    # dict_true = {}
+                    # if not test_true:
+                    #     for j, outp in enumerate(outputs):
+                    #         dict_pred[f"{outp}"] = tf.cast(test_logits[j], dtype='float32')
+                    #         dict_true[f"{outp}"] = tf.cast(true_array[j], dtype='float32')
+                    # else:
+                    #     for j, outp in enumerate(outputs):
+                    #         dict_pred[f"{outp}"] = tf.concat([test_pred[f"{outp}"], test_logits[j]], axis=0)
+                    #         dict_true[f"{outp}"] = tf.concat([test_true[f"{outp}"], true_array[j]], axis=0)
+                # print(true_array[0].shape, test_logits[0].shape)
+                return test_logits, true_array
 
             current_epoch = 0
-            train_pred = {}
-            train_true = {}
+            train_pred, train_true, val_pred, val_true = {}, {}, {}, {}
             optimizer = self.set_optimizer(params=params)
             loss = self._prepare_loss_dict(params=params)
-            first_epoch = True
-            train_data_idxs = []
+            output_list = list(dataset.data.outputs.keys())
+            for out in output_list:
+                train_target_shape, val_target_shape = [self.train_length], [self.val_length]
+                train_target_shape.extend(list(self.dataset.data.outputs.get(out).shape))
+                val_target_shape.extend(list(self.dataset.data.outputs.get(out).shape))
+                train_pred[f"{out}"] = np.zeros(train_target_shape)
+                train_true[f"{out}"] = np.zeros(train_target_shape)
+                val_pred[f"{out}"] = np.zeros(val_target_shape)
+                val_true[f"{out}"] = np.zeros(val_target_shape)
+
+            # first_epoch = True
+            train_data_idxs = np.arange(self.train_length).tolist()
             # urgent_predict = False
             callback.on_train_begin()
             for epoch in range(current_epoch, params.base.epochs):
                 callback.on_epoch_begin()
-                new_batch = True
-                train_steps = 1
+                first_batch = True
+                train_steps = 0
                 st = time.time()
                 print(f'\n New epoch {epoch + 1}, batch {params.base.batch}\n')
-                for x_batch_train, y_batch_train in dataset.dataset.get('train').batch(
-                        params.base.batch, drop_remainder=False):
-                    bt = time.time()
-                    # print('epoch', epoch, 'train_steps', train_steps)
+                for x_batch_train, y_batch_train in dataset.dataset.get('train').batch(params.base.batch):
+                    st1 = time.time()
                     logits, y_true = train_step(
                         x_batch=x_batch_train, y_batch=y_batch_train, train_model=model,
                         losses=loss, set_optimizer=optimizer
                     )
-                    # train_loss = tf.keras.losses.CategoricalCrossentropy()(y_true[0], logits[0]).numpy()
-                    # val_loss = tf.keras.losses.CategoricalCrossentropy()(val_true.get('2'), val_pred.get('2')).numpy()
-                    # print('train_loss', train_steps, train_loss, total_loss.numpy(), isinstance(logits, list), logits[0].shape)
-                    bend = time.time()
-                    if not train_true:
-                        for i, out in enumerate(dataset.data.outputs.keys()):
-                            train_pred[f"{out}"] = logits[i].numpy().astype('float')
-                            train_true[f"{out}"] = y_true[i].numpy().astype('float')
-                        train_data_idxs = list(range(y_true[0].shape[0]))
-                    elif first_epoch:
-                        for i, out in enumerate(dataset.data.outputs.keys()):
-                            train_pred[f"{out}"] = np.concatenate(
-                                [train_pred[f"{out}"], logits[i].numpy().astype('float')], axis=0)
-                            train_true[f"{out}"] = np.concatenate(
-                                [train_true[f"{out}"], y_true[i].numpy().astype('float')], axis=0)
-                        train_data_idxs.extend(list(range(
-                            train_data_idxs[-1] + 1, train_data_idxs[-1] + 1 + y_true[0].shape[0])))
-                    else:
-                        for i, out in enumerate(dataset.data.outputs.keys()):
-                            train_pred[f"{out}"] = np.concatenate(
-                                [train_pred[f"{out}"][logits[i].shape[0]:], logits[i].numpy().astype('float')], axis=0)
-                            train_true[f"{out}"] = np.concatenate(
-                                [train_true[f"{out}"][y_true[i].shape[0]:], y_true[i].numpy().astype('float')], axis=0)
-                        if new_batch:
-                            train_data_idxs = train_data_idxs[y_true[0].shape[0]:]
-                            train_data_idxs.extend(list(range(y_true[0].shape[0])))
-                        else:
-                            train_data_idxs = train_data_idxs[y_true[0].shape[0]:]
-                            train_data_idxs.extend(list(range(
-                                train_data_idxs[-1] + 1, train_data_idxs[-1] + 1 + y_true[0].shape[0])))
-                    # callback.on_train_batch_end(batch=train_step)
+                    for i, out in enumerate(output_list):
+                        length = logits[i].shape[0]
+                        train_pred[f"{out}"][length * train_steps: length * (train_steps + 1)] = logits[i].numpy()
+                        train_true[f"{out}"][length * train_steps: length * (train_steps + 1)] = y_true[i].numpy()
+
+                    # if first_batch:
+                    #     for i, out in enumerate(output_list):
+                    #         train_pred[f"{out}"] = logits[i].numpy().astype('float')
+                    #         train_true[f"{out}"] = y_true[i].numpy().astype('float')
+                    #     train_data_idxs = list(range(y_true[0].shape[0]))
+                    # elif first_epoch:
+                    #     for i, out in enumerate(output_list):
+                    #         train_pred[f"{out}"] = np.concatenate(
+                    #             [train_pred[f"{out}"], logits[i].numpy().astype('float')], axis=0)
+                    #         train_true[f"{out}"] = np.concatenate(
+                    #             [train_true[f"{out}"], y_true[i].numpy().astype('float')], axis=0)
+                    #     train_data_idxs.extend(list(range(
+                    #         train_data_idxs[-1] + 1, train_data_idxs[-1] + 1 + y_true[0].shape[0])))
+                    # else:
+                    #     for i, out in enumerate(output_list):
+                    #         train_pred[f"{out}"] = np.concatenate(
+                    #             [train_pred[f"{out}"][logits[i].shape[0]:], logits[i].numpy().astype('float')], axis=0)
+                    #         train_true[f"{out}"] = np.concatenate(
+                    #             [train_true[f"{out}"][y_true[i].shape[0]:], y_true[i].numpy().astype('float')], axis=0)
+                    #     if new_batch:
+                    #         train_data_idxs = train_data_idxs[y_true[0].shape[0]:]
+                    #         train_data_idxs.extend(list(range(y_true[0].shape[0])))
+                    #     else:
+                    #         train_data_idxs = train_data_idxs[y_true[0].shape[0]:]
+                    #         train_data_idxs.extend(list(range(
+                    #             train_data_idxs[-1] + 1, train_data_idxs[-1] + 1 + y_true[0].shape[0])))
+                    train_steps += 1
                     if interactive.urgent_predict:
-                        # print('\nGUINN interactive.urgent_predict\n')
-                        val_pred, val_true = test_step(
-                            options=dataset, parameters=params, train_model=model,
-                            outputs=list(dataset.data.outputs.keys())
-                        )
+                        val_steps = 0
+                        for x_batch_val, y_batch_val in dataset.dataset.get('val').batch(params.base.batch):
+                            val_pred_array, val_true_array = test_step(
+                                train_model=model, x_batch=x_batch_val, y_batch=y_batch_val)
+                            for i, out in enumerate(output_list):
+                                length = val_true_array[i].shape[0]
+                                val_pred[f"{out}"][length * val_steps: length * (val_steps + 1)] = \
+                                    val_pred_array[i].numpy()
+                                val_true[f"{out}"][length * val_steps: length * (val_steps + 1)] = \
+                                    val_true_array[i].numpy()
+                            val_steps += 1
                         callback.on_train_batch_end(batch=train_steps, arrays={
                             "train_true": train_true, "val_true": val_true, "train_pred": train_pred,
                             "val_pred": val_pred}, train_data_idxs=train_data_idxs)
                         # interactive.urgent_predict = False
                     else:
                         callback.on_train_batch_end(batch=train_steps)
-                    print(
-                        f'\n -- batch {train_steps} - {round(bend - bt, 6)}, concatenate time {round(time.time() - bend, 6)}')
-                    train_steps += 1
-                    new_batch = False
+                    print('- train batch', train_steps, round(time.time() - st1, 3))
                     if callback.stop_training:
                         break
-                print(f'\n train epoch time: {round(time.time() - st, 2)}\n')
+                print(f'- train epoch time: {round(time.time() - st, 3)}\n')
+                # file_path_last: str = os.path.join(
+                #     callback.training_detail.model_path, f"last_weights_{callback.metric_checkpoint}.h5"
+                # )
+                # model.save_weights(file_path_last)
+                st = time.time()
                 self.save_model()
                 if callback.stop_training:
                     callback.on_train_end(model)
                     break
+                print(f'\n- save_model time: {round(time.time() - st, 3)}\n')
                 st = time.time()
                 # Run a validation loop at the end of each epoch.
-                val_pred, val_true = test_step(options=dataset, parameters=params, train_model=model,
-                                               outputs=list(dataset.data.outputs.keys()))
-                print(f'\n val epoch time: {round(time.time() - st, 2)}\n')
-                # m = PercentMAE()
-                # m.update_state(train_true.get('2'), train_pred.get('2'))
-                # train_loss = m.result().numpy()
-                # m.reset_state()
-                # m.update_state(val_true.get('2'), val_pred.get('2'))
-                # val_loss = m.result().numpy()
-                # m.reset_state()
-                # print('\nPercentMAE train, val', train_loss, val_loss)
+                print(f'\n Run a validation loop')
+                # val_pred = {}
+                # val_true = {}
+                val_steps = 0
+                for x_batch_val, y_batch_val in dataset.dataset.get('val').batch(params.base.batch):
+                    # y_val = list(y_batch_val.values())
+                    st1 = time.time()
+                    val_pred_array, val_true_array = test_step(
+                        train_model=model, x_batch=x_batch_val, y_batch=y_batch_val)
+                    # dict_pred = {}
+                    # dict_true = {}
+                    # if not test_true:
+                    #     for j, outp in enumerate(outputs):
+                    #         dict_pred[f"{outp}"] = tf.cast(test_logits[j], dtype='float32')
+                    #         dict_true[f"{outp}"] = tf.cast(true_array[j], dtype='float32')
+                    # else:
+                    #     for j, outp in enumerate(outputs):
+                    #         dict_pred[f"{outp}"] = tf.concat([test_pred[f"{outp}"], test_logits[j]], axis=0)
+                    #         dict_true[f"{outp}"] = tf.concat([test_true[f"{outp}"], true_array[j]], axis=0)
+                    for i, out in enumerate(output_list):
+                        length = val_true_array[i].shape[0]
+                        val_pred[f"{out}"][length * val_steps: length * (val_steps + 1)] = val_pred_array[i].numpy()
+                        val_true[f"{out}"][length * val_steps: length * (val_steps + 1)] = val_true_array[i].numpy()
+                    val_steps += 1
+                    print('- val batch', train_steps, round(time.time() - st1, 3))
+                # for output in output_list:
+                #     val_pred[f"{output}"] = val_pred[f"{output}"].numpy().astype('float')
+                #     val_true[f"{output}"] = val_true[f"{output}"].numpy().astype('float')
+                print(f'- val epoch time: {round(time.time() - st, 3)}\n', val_pred['2'].shape, val_true['2'].shape)
+
                 st = time.time()
                 callback.on_epoch_end(
                     epoch=epoch + 1,

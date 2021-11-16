@@ -1,22 +1,31 @@
-import copy
-from typing import Optional, Dict, Any, Union, Tuple
-
 import numpy as np
 import tensorflow as tf
 import tensorflow
 from tensorflow.keras.layers import Layer, InputSpec
 from tensorflow.keras import initializers, regularizers, constraints
 from tensorflow.keras import backend as K
-from tensorflow.keras import layers
 from tensorflow import cast
-from tensorflow.keras import layers, Model
-
-__version__ = 0.03
-
-from tensorflow.keras.models import Model
+from tensorflow.keras import layers
 from tensorflow.python.keras.layers import BatchNormalization
 
-from terra_ai.data.modeling.layers.extra import CONVBlockConfigChoice
+terra_custom_layers = {
+    "InstanceNormalization": "terra_ai.customLayers",
+    "VAEBlock": "terra_ai.customLayers",
+    "YOLOResBlock": "terra_ai.customLayers",
+    "YOLOv3ResBlock": "terra_ai.customLayers",
+    "YOLOConvBlock": "terra_ai.customLayers",
+    "Mish": "terra_ai.customLayers",
+    "DarkNetBatchNormalization": "terra_ai.customLayers",
+    "DarkNetConvolutional": "terra_ai.customLayers",
+    "DarkNetResBlock": "terra_ai.customLayers",
+    "DarkNetUpsample": "terra_ai.customLayers",
+    "CONVBlock": "terra_ai.customLayers",
+    "PSPBlock2D": "terra_ai.customLayers",
+    "UNETBlock2D": "terra_ai.customLayers",
+    "UNETBlock1D": "terra_ai.customLayers",
+    "UNETBlock3D": "terra_ai.customLayers",
+    "PSPBlock1D": "terra_ai.customLayers",
+}
 
 
 class InstanceNormalization(Layer):
@@ -163,137 +172,7 @@ class InstanceNormalization(Layer):
         return cls(**config)
 
 
-# class CustomUNETBlock(Model):
-#     """Unet block layer """
-##     def __init__(self, filters=32, activation='relu', **kwargs):
-#         super(CustomUNETBlock, self).__init__(**kwargs)
-#         self.filters = filters
-#         self.activation = activation
-#         self.x_1 = layers.Conv2D(filters=self.filters, kernel_size=(3, 3), strides=(1, 1), padding='same',
-#                                  activation=self.activation,
-#                                  data_format='channels_last', dilation_rate=(1, 1), groups=1, use_bias=True,
-#                                  kernel_initializer='glorot_uniform', bias_initializer='zeros', kernel_regularizer=None,
-#                                  bias_regularizer=None, activity_regularizer=None, kernel_constraint=None,
-#                                  bias_constraint=None)
-#         self.x_2 = layers.BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True,
-#                                              beta_initializer='zeros', gamma_initializer='ones',
-#                                              moving_mean_initializer='zeros', moving_variance_initializer='ones',
-#                                              beta_regularizer=None, gamma_regularizer=None, beta_constraint=None,
-#                                              gamma_constraint=None)
-#         self.x_3 = layers.MaxPooling2D(pool_size=(2, 2), strides=None, padding='same', data_format='channels_last')
-#         self.x_4 = layers.Conv2D(filters=self.filters * 2, kernel_size=(3, 3), strides=(1, 1), padding='same',
-#                                  activation=self.activation,
-#                                  data_format='channels_last', dilation_rate=(1, 1), groups=1, use_bias=True,
-#                                  kernel_initializer='glorot_uniform', bias_initializer='zeros', kernel_regularizer=None,
-#                                  bias_regularizer=None, activity_regularizer=None, kernel_constraint=None,
-#                                  bias_constraint=None)
-#         self.x_5 = layers.BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True,
-#                                              beta_initializer='zeros', gamma_initializer='ones',
-#                                              moving_mean_initializer='zeros', moving_variance_initializer='ones',
-#                                              beta_regularizer=None, gamma_regularizer=None, beta_constraint=None,
-#                                              gamma_constraint=None)
-#         self.x_6 = layers.MaxPooling2D(pool_size=(2, 2), strides=None, padding='same', data_format='channels_last')
-#         self.x_7 = layers.Conv2D(filters=self.filters * 4, kernel_size=(3, 3), strides=(1, 1), padding='same',
-#                                  activation=self.activation,
-#                                  data_format='channels_last', dilation_rate=(1, 1), groups=1, use_bias=True,
-#                                  kernel_initializer='glorot_uniform', bias_initializer='zeros', kernel_regularizer=None,
-#                                  bias_regularizer=None, activity_regularizer=None, kernel_constraint=None,
-#                                  bias_constraint=None)
-#         self.x_8 = layers.BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True,
-#                                              beta_initializer='zeros', gamma_initializer='ones',
-#                                              moving_mean_initializer='zeros', moving_variance_initializer='ones',
-#                                              beta_regularizer=None, gamma_regularizer=None, beta_constraint=None,
-#                                              gamma_constraint=None)
-#         self.x_9 = layers.Conv2D(filters=self.filters * 4, kernel_size=(3, 3), strides=(1, 1), padding='same',
-#                                  activation=self.activation,
-#                                  data_format='channels_last', dilation_rate=(1, 1), groups=1, use_bias=True,
-#                                  kernel_initializer='glorot_uniform', bias_initializer='zeros', kernel_regularizer=None,
-#                                  bias_regularizer=None, activity_regularizer=None, kernel_constraint=None,
-#                                  bias_constraint=None)
-#         self.x_10 = layers.BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True,
-#                                               beta_initializer='zeros', gamma_initializer='ones',
-#                                               moving_mean_initializer='zeros', moving_variance_initializer='ones',
-#                                               beta_regularizer=None, gamma_regularizer=None, beta_constraint=None,
-#                                               gamma_constraint=None)
-#         self.x_11 = layers.Conv2DTranspose(filters=self.filters * 2, kernel_size=(2, 2), strides=(2, 2), padding='same',
-#                                            activation=self.activation, output_padding=None, data_format='channels_last',
-#                                            dilation_rate=(1, 1), use_bias=True, kernel_initializer='glorot_uniform',
-#                                            bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
-#                                            activity_regularizer=None, kernel_constraint=None, bias_constraint=None)
-#         self.x_12 = layers.BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True,
-#                                               beta_initializer='zeros', gamma_initializer='ones',
-#                                               moving_mean_initializer='zeros', moving_variance_initializer='ones',
-#                                               beta_regularizer=None, gamma_regularizer=None, beta_constraint=None,
-#                                               gamma_constraint=None)
-#         self.x_13 = layers.Concatenate(axis=-1)
-#         self.x_14 = layers.Conv2D(filters=self.filters * 2, kernel_size=(3, 3), strides=(1, 1), padding='same',
-#                                   activation=self.activation,
-#                                   data_format='channels_last', dilation_rate=(1, 1), groups=1, use_bias=True,
-#                                   kernel_initializer='glorot_uniform', bias_initializer='zeros',
-#                                   kernel_regularizer=None,
-#                                   bias_regularizer=None, activity_regularizer=None, kernel_constraint=None,
-#                                   bias_constraint=None)
-#         self.x_15 = layers.BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True,
-#                                               beta_initializer='zeros', gamma_initializer='ones',
-#                                               moving_mean_initializer='zeros', moving_variance_initializer='ones',
-#                                               beta_regularizer=None, gamma_regularizer=None, beta_constraint=None,
-#                                               gamma_constraint=None)
-#         self.x_16 = layers.Conv2DTranspose(filters=self.filters, kernel_size=(2, 2), strides=(2, 2), padding='same',
-#                                            activation=self.activation,
-#                                            output_padding=None, data_format='channels_last', dilation_rate=(1, 1),
-#                                            use_bias=True, kernel_initializer='glorot_uniform', bias_initializer='zeros',
-#                                            kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None,
-#                                            kernel_constraint=None, bias_constraint=None)
-#         self.x_17 = layers.BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True,
-#                                               beta_initializer='zeros', gamma_initializer='ones',
-#                                               moving_mean_initializer='zeros', moving_variance_initializer='ones',
-#                                               beta_regularizer=None, gamma_regularizer=None, beta_constraint=None,
-#                                               gamma_constraint=None)
-#         self.x_18 = layers.Concatenate(axis=-1)
-#         self.x_19 = layers.Conv2D(filters=self.filters, kernel_size=(3, 3), strides=(1, 1), padding='same',
-#                                   activation=self.activation,
-#                                   data_format='channels_last', dilation_rate=(1, 1), groups=1, use_bias=True,
-#                                   kernel_initializer='glorot_uniform', bias_initializer='zeros',
-#                                   kernel_regularizer=None,
-#                                   bias_regularizer=None, activity_regularizer=None, kernel_constraint=None,
-#                                   bias_constraint=None)
-#
-#     def call(self, inputs, training=True):
-#         x_1 = self.x_1(inputs)
-#         x_2 = self.x_2(x_1)
-#         x_3 = self.x_3(x_2)
-#         x_4 = self.x_4(x_3)
-#         x_5 = self.x_5(x_4)
-#         x_6 = self.x_6(x_5)
-#         x_7 = self.x_7(x_6)
-#         x_8 = self.x_8(x_7)
-#         x_9 = self.x_9(x_8)
-#         x_10 = self.x_10(x_9)
-#         x_11 = self.x_11(x_10)
-#         x_12 = self.x_12(x_11)
-#         x_13 = self.x_13([x_12, x_5])
-#         x_14 = self.x_14(x_13)
-#         x_15 = self.x_15(x_14)
-#         x_16 = self.x_16(x_15)
-#         x_17 = self.x_17(x_16)
-#         x_18 = self.x_18([x_17, x_2])
-#         x_19 = self.x_19(x_18)
-#         return x_19
-
-# def get_config(self):
-#     config = {
-#         'filters': self.filters,
-#         'activation': self.activation,
-#     }
-#     base_config = super(CustomUNETBlock, self).get_config()
-#     return dict(list(base_config.items()) + list(config.items()))
-#
-# @classmethod
-# def from_config(cls, config):
-#     return cls(**config)
-
-
-class VAEBlock(Model):
+class VAEBlock(Layer):
     '''
     Custom Layer VAEBlock
     Keras Layer to grab a random sample from a distribution (by multiplication)
@@ -411,34 +290,26 @@ class VAEBlock(Model):
     # def compute_output_shape(self, input_shape):
     #     return tf.shape(input_shape)[0]
 
-    # def get_config(self):
-    #     config = {
-    #         'latent_regularizer': self.reg,
-    #         'beta': self.beta,
-    #         'capacity': self.capacity,
-    #         'randomSample': self.random,
-    #         'latent_size': self.latent_size,
-    #         'roll_up': self.roll_up,
-    #     }
-    #     base_config = super(VAEBlock, self).get_config()
-    #     return dict(list(base_config.items()) + list(config.items()))
-    #
-    # @classmethod
-    # def from_config(cls, config):
-    #     return cls(**config)
+    def get_config(self):
+        config = {
+            'latent_regularizer': self.reg,
+            'beta': self.beta,
+            'capacity': self.capacity,
+            'randomSample': self.random,
+            'latent_size': self.latent_size,
+            'roll_up': self.roll_up,
+        }
+        base_config = super(VAEBlock, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
 
 
-class YOLOResBlock(Model):
-    def __init__(self,
-                 mode="YOLOv3",
-                 filters=32,
-                 num_resblocks=1,
-                 activation='LeakyReLU',
-                 use_bias=False,
-                 include_head=True,
-                 include_add=True,
-                 all_narrow=False,
-                 **kwargs):
+class YOLOResBlock(Layer):
+    def __init__(self, mode="YOLOv3", filters=32, num_resblocks=1, activation='LeakyReLU', use_bias=False,
+                 include_head=True, include_add=True, all_narrow=False, **kwargs):
         super(YOLOResBlock, self).__init__(**kwargs)
         self.mode = mode
         self.all_narrow = all_narrow
@@ -554,32 +425,27 @@ class YOLOResBlock(Model):
             x = self.postactivation_2(x)
         return x
 
-    # def get_config(self):
-    #     config = {
-    #         'mode': self.mode,
-    #         'filters': self.filters,
-    #         'num_resblocks': self.num_resblocks,
-    #         'activation': self.activation,
-    #         'use_bias': self.use_bias,
-    #         'include_head': self.include_head,
-    #         'include_add': self.include_add,
-    #         'all_narrow': self.all_narrow
-    #     }
-    #     base_config = super(YOLOResBlock, self).get_config()
-    #     return dict(list(base_config.items()) + list(config.items()))
-    #
-    # @classmethod
-    # def from_config(cls, config):
-    #     return cls(**config)
+    def get_config(self):
+        config = {
+            'mode': self.mode,
+            'filters': self.filters,
+            'num_resblocks': self.num_resblocks,
+            'activation': self.activation,
+            'use_bias': self.use_bias,
+            'include_head': self.include_head,
+            'include_add': self.include_add,
+            'all_narrow': self.all_narrow
+        }
+        base_config = super(YOLOResBlock, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
 
 
-class YOLOv3ResBlock(Model):
-    def __init__(self,
-                 filters=32,
-                 num_resblocks=1,
-                 use_bias=False,
-                 include_head=True,
-                 **kwargs):
+class YOLOv3ResBlock(Layer):
+    def __init__(self, filters=32, num_resblocks=1, use_bias=False, include_head=True, **kwargs):
         super(YOLOv3ResBlock, self).__init__(**kwargs)
         self.filters = filters
         self.num_resblocks = num_resblocks
@@ -626,35 +492,27 @@ class YOLOv3ResBlock(Model):
             x = getattr(self, f"add_{i}")([y, x])
         return x
 
-    # def get_config(self):
-    #     config = {
-    #         'filters': self.filters,
-    #         'num_resblocks': self.num_resblocks,
-    #         'use_bias': self.use_bias,
-    #         'include_head': self.include_head,
-    #     }
-    #     base_config = super(YOLOv3ResBlock, self).get_config()
-    #     return dict(list(base_config.items()) + list(config.items()))
+    def get_config(self):
+        config = {
+            'filters': self.filters,
+            'num_resblocks': self.num_resblocks,
+            'use_bias': self.use_bias,
+            'include_head': self.include_head,
+        }
+        base_config = super(YOLOv3ResBlock, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
 
-    # @classmethod
-    # def from_config(cls, config):
-    #     return cls(**config)
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
 
 
-class YOLOConvBlock(Model):
+class YOLOConvBlock(Layer):
     """Unet block layer """
 
-    def __init__(self,
-                 mode="YOLOv3",
-                 filters=32,
-                 num_conv=1,
-                 activation='LeakyReLU',
-                 use_bias=False,
-                 first_conv_kernel=(1, 1),
-                 first_conv_strides=(1, 1),
-                 first_conv_padding='same',
-                 include_bn_activation=True,
-                 **kwargs):
+    def __init__(self, mode="YOLOv3", filters=32, num_conv=1, activation='LeakyReLU', use_bias=False,
+                 first_conv_kernel=(1, 1), first_conv_strides=(1, 1), first_conv_padding='same',
+                 include_bn_activation=True, **kwargs):
         super(YOLOConvBlock, self).__init__(**kwargs)
         self.mode = mode
         self.use_bias = use_bias
@@ -711,26 +569,26 @@ class YOLOConvBlock(Model):
                 x = getattr(self, f"act_{i}")(x)
         return x
 
-    # def get_config(self):
-    #     config = {
-    #         'mode': self.mode,
-    #         'filters': self.filters,
-    #         'num_conv': self.num_conv,
-    #         'activation': self.activation,
-    #         'use_bias': self.use_bias,
-    #         'first_conv_strides': self.strides,
-    #         'first_conv_kernel': self.kernel,
-    #         'first_conv_padding': self.padding
-    #     }
-    #     base_config = super(YOLOConvBlock, self).get_config()
-    #     return dict(list(base_config.items()) + list(config.items()))
-    #
-    # @classmethod
-    # def from_config(cls, config):
-    #     return cls(**config)
+    def get_config(self):
+        config = {
+            'mode': self.mode,
+            'filters': self.filters,
+            'num_conv': self.num_conv,
+            'activation': self.activation,
+            'use_bias': self.use_bias,
+            'first_conv_strides': self.strides,
+            'first_conv_kernel': self.kernel,
+            'first_conv_padding': self.padding
+        }
+        base_config = super(YOLOConvBlock, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
 
 
-class Mish(Model):
+class Mish(Layer):
     """
     Mish Activation Function.
     .. math::
@@ -756,6 +614,10 @@ class Mish(Model):
         config = super(Mish, self).get_config()
         return config
 
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
     def compute_output_shape(self, input_shape):
         return input_shape
 
@@ -777,16 +639,10 @@ class DarkNetBatchNormalization(BatchNormalization):
         return config
 
 
-class DarkNetConvolutional(Model):
+class DarkNetConvolutional(Layer):
 
-    def __init__(self,
-                 filters=32,
-                 kernel_size=(3, 3),
-                 downsample=False,
-                 activate=True,
-                 bn=True,
-                 activate_type='LeakyReLU',
-                 **kwargs):
+    def __init__(self, filters=32, kernel_size=(3, 3), downsample=False, activate=True, bn=True,
+                 activate_type='LeakyReLU', **kwargs):
         super(DarkNetConvolutional, self).__init__(**kwargs)
         self.filters = filters
         self.kernel_size = kernel_size
@@ -831,11 +687,23 @@ class DarkNetConvolutional(Model):
         return conv
 
     def get_config(self):
-        config = super(DarkNetConvolutional, self).get_config()
-        return config
+        config = {
+            'filters': self.filters,
+            'kernel_size': self.kernel_size,
+            'downsample': self.downsample,
+            'activate': self.activate,
+            'bn': self.bn,
+            'activate_type': self.activate_type,
+        }
+        base_config = super(DarkNetConvolutional, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
 
 
-class DarkNetResBlock(Model):
+class DarkNetResBlock(Layer):
 
     def __init__(self, filter_num1=32, filter_num2=32, activate_type='LeakyReLU', **kwargs):
         super(DarkNetResBlock, self).__init__(**kwargs)
@@ -862,11 +730,20 @@ class DarkNetResBlock(Model):
         return residual_output
 
     def get_config(self):
-        config = super(DarkNetResBlock, self).get_config()
-        return config
+        config = {
+            'filter_num1': self.filter_num1,
+            'filter_num2': self.filter_num2,
+            'activate_type': self.activate_type,
+        }
+        base_config = super(DarkNetResBlock, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
 
 
-class DarkNetUpsample(Model):
+class DarkNetUpsample(Layer):
 
     def __init__(self, **kwargs):
         super(DarkNetUpsample, self).__init__(**kwargs)
@@ -879,8 +756,12 @@ class DarkNetUpsample(Model):
         config = super(DarkNetUpsample, self).get_config()
         return config
 
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
 
-class CONVBlock(Model):
+
+class CONVBlock(Layer):
     """Conv block layer """
 
     def __init__(self, n_conv_layers=2, filters=16, activation='relu', kernel_size=(3, 3), strides=(1, 1),
@@ -990,7 +871,7 @@ class CONVBlock(Model):
         return cls(**config)
 
 
-class PSPBlock2D(Model):
+class PSPBlock2D(Layer):
     """
     PSP Block2D layer
     n_pooling_branches - defines amt of pooling/upsampling operations
@@ -1074,30 +955,30 @@ class PSPBlock2D(Model):
         x = self.conv_end(concat)
         return x
 
-    # def get_config(self):
-    #     config = {
-    #         'filters': self.filters,
-    #         'n_pooling_branches': self.n_pooling_branches,
-    #         'filters_coef': self.filters_coef,
-    #         'n_conv_layers': self.n_conv_layers,
-    #         'activation': self.activation,
-    #         'kernel_size': self.kernel_size,
-    #         'strides': self.strides,
-    #         'dilation': self.dilation,
-    #         'padding': self.padding,
-    #         'batch_norm_layer': self.batch_norm_layer,
-    #         'dropout_layer': self.dropout_layer,
-    #         'dropout_rate': self.dropout_rate
-    #     }
-    #     base_config = super(PSPBlock2D, self).get_config()
-    #     return dict(list(base_config.items()) + list(config.items()))
-    #
-    # @classmethod
-    # def from_config(cls, config):
-    #     return cls(**config)
+    def get_config(self):
+        config = {
+            'filters': self.filters,
+            'n_pooling_branches': self.n_pooling_branches,
+            'filters_coef': self.filters_coef,
+            'n_conv_layers': self.n_conv_layers,
+            'activation': self.activation,
+            'kernel_size': self.kernel_size,
+            'strides': self.strides,
+            'dilation': self.dilation,
+            'padding': self.padding,
+            'batch_norm_layer': self.batch_norm_layer,
+            'dropout_layer': self.dropout_layer,
+            'dropout_rate': self.dropout_rate
+        }
+        base_config = super(PSPBlock2D, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
 
 
-class UNETBlock2D(Model):
+class UNETBlock2D(Layer):
     """
     UNET Block2D layer
     n_pooling_branches - defines amt of downsampling/upsampling operations
@@ -1237,26 +1118,26 @@ class UNETBlock2D(Model):
         x = getattr(self, f'x_{i + 1}')
         return x
 
-    # def get_config(self):
-    #     config = {
-    #         'filters': self.filters,
-    #         'n_pooling_branches': self.n_pooling_branches,
-    #         'filters_coef': self.filters_coef,
-    #         'activation': self.activation,
-    #         'kernel_size': self.kernel_size,
-    #         'batch_norm_layer': self.batch_norm_layer,
-    #         'dropout_layer': self.dropout_layer,
-    #         'dropout_rate': self.dropout_rate
-    #     }
-    #     base_config = super(UNETBlock2D, self).get_config()
-    #     return dict(list(base_config.items()) + list(config.items()))
-    #
-    # @classmethod
-    # def from_config(cls, config):
-    #     return cls(**config)
+    def get_config(self):
+        config = {
+            'filters': self.filters,
+            'n_pooling_branches': self.n_pooling_branches,
+            'filters_coef': self.filters_coef,
+            'activation': self.activation,
+            'kernel_size': self.kernel_size,
+            'batch_norm_layer': self.batch_norm_layer,
+            'dropout_layer': self.dropout_layer,
+            'dropout_rate': self.dropout_rate
+        }
+        base_config = super(UNETBlock2D, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
 
 
-class UNETBlock1D(Model):
+class UNETBlock1D(Layer):
     """
     UNET Block1D layer
     n_pooling_branches - defines amt of downsampling/upsampling operations
@@ -1391,30 +1272,30 @@ class UNETBlock1D(Model):
 
         x = getattr(self, f'x_{i + 1}')
         return x
-    #
-    # def get_config(self):
-    #     config = {
-    #         'filters': self.filters,
-    #         'n_pooling_branches': self.n_pooling_branches,
-    #         'filters_coef': self.filters_coef,
-    #         'activation': self.activation,
-    #         'kernel_size': self.kernel_size,
-    #         'strides': self.strides,
-    #         'dilation': self.dilation,
-    #         'padding': self.padding,
-    #         'batch_norm_layer': self.batch_norm_layer,
-    #         'dropout_layer': self.dropout_layer,
-    #         'dropout_rate': self.dropout_rate
-    #     }
-    #     base_config = super(UNETBlock1D, self).get_config()
-    #     return dict(list(base_config.items()) + list(config.items()))
-    #
-    # @classmethod
-    # def from_config(cls, config):
-    #     return cls(**config)
+
+    def get_config(self):
+        config = {
+            'filters': self.filters,
+            'n_pooling_branches': self.n_pooling_branches,
+            'filters_coef': self.filters_coef,
+            'activation': self.activation,
+            'kernel_size': self.kernel_size,
+            'strides': self.strides,
+            'dilation': self.dilation,
+            'padding': self.padding,
+            'batch_norm_layer': self.batch_norm_layer,
+            'dropout_layer': self.dropout_layer,
+            'dropout_rate': self.dropout_rate
+        }
+        base_config = super(UNETBlock1D, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
 
 
-class UNETBlock3D(Model):
+class UNETBlock3D(Layer):
     """
     UNET Block3D layer
     n_pooling_branches - defines amt of downsampling/upsampling operations
@@ -1550,8 +1431,27 @@ class UNETBlock3D(Model):
         x = getattr(self, f'x_{i + 1}')
         return x
 
+    def get_config(self):
+        config = {
+            'filters_base': self.filters_base,
+            'n_pooling_branches': self.n_pooling_branches,
+            'filters_coef': self.filters_coef,
+            'activation': self.activation,
+            'kernel_size': self.kernel_size,
+            'dropout_rate': self.dropout_rate,
+            'batch_norm_layer': self.batch_norm_layer,
+            'dropout_layer': self.dropout_layer,
+            'n_conv_layers': self.n_conv_layers
+        }
+        base_config = super(UNETBlock3D, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
 
-class PSPBlock1D(Model):
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+
+class PSPBlock1D(Layer):
     """
     PSP Block1D layer
     n_pooling_branches - defines amt of pooling/upsampling operations
@@ -1634,6 +1534,25 @@ class PSPBlock1D(Model):
         concat = self.concatenate(conc_list)
         x = self.conv_end(concat)
         return x
+
+    def get_config(self):
+        config = {
+            'filters_base': self.filters_base,
+            'n_pooling_branches': self.n_pooling_branches,
+            'filters_coef': self.filters_coef,
+            'activation': self.activation,
+            'kernel_size': self.kernel_size,
+            'dropout_rate': self.dropout_rate,
+            'batch_norm_layer': self.batch_norm_layer,
+            'dropout_layer': self.dropout_layer,
+            'n_conv_layers': self.n_conv_layers
+        }
+        base_config = super(PSPBlock1D, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
 
 
 if __name__ == "__main__":

@@ -62,23 +62,22 @@ class BaseObjectDetectionCallback:
     def get_yolo_y_pred(array, options, sensitivity: float = 0.15, threashold: float = 0.1):
         method_name = 'get_yolo_y_pred'
         try:
-            print(method_name, array[0].shape, array[1].shape, array[2].shape)
             count = 0
             y_pred = {}
             name_classes = options.data.outputs.get(list(options.data.outputs.keys())[0]).classes_names
             for i, box_array in enumerate(array):
                 channel_boxes = []
                 for ex in box_array:
+                    count += 1
                     t = time.time()
                     boxes = BaseObjectDetectionCallback().get_predict_boxes(
                         array=np.expand_dims(ex, axis=0),
                         name_classes=name_classes,
-                        bb_size=i,
+                        # bb_size=i,
                         sensitivity=sensitivity,
                         threashold=threashold
                     )
                     print(f'BaseObjectDetectionCallback get_yolo_y_pred: {count} {round(time.time() - t, 3)}\n')
-                    count += 1
                     channel_boxes.append(boxes)
                 y_pred[i] = channel_boxes
             return y_pred
@@ -125,7 +124,6 @@ class BaseObjectDetectionCallback:
             classes = np.argmax(scores, axis=-1)
             idxs = np.argsort(classes)[..., ::-1]
             mean_iou = []
-            # print('--', method_name, 'len(idxs)', len(idxs), boxes.shape)
             count = 0
             while len(idxs) > 0:
                 count += 1
@@ -141,14 +139,13 @@ class BaseObjectDetectionCallback:
                 overlap = (w * h) / area[idxs[:last]]
                 mean_iou.append(overlap)
                 idxs = np.delete(idxs, np.concatenate(([last], np.where(overlap > sensitivity)[0])))
-            print('\n-- non_max_suppression_fast', count, boxes.shape, sensitivity, len(pick))
+            print('\n-- non_max_suppression_fast', count, boxes.shape, boxes[0], scores[0])
             return pick, mean_iou
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
 
     @staticmethod
-    def get_predict_boxes(array, name_classes: list, bb_size: int = 1, sensitivity: float = 0.15,
-                          threashold: float = 0.1):
+    def get_predict_boxes(array, name_classes: list, sensitivity: float = 0.15, threashold: float = 0.1):
         """
         Boxes for 1 example
         """
@@ -158,7 +155,7 @@ class BaseObjectDetectionCallback:
             # anchors = np.array([[10, 13], [16, 30], [33, 23],
             #                     [30, 61], [62, 45], [59, 119],
             #                     [116, 90], [156, 198], [373, 326]])
-            anchor_mask = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
+            # anchor_mask = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
             num_anchors = 3
             # grid_shape = array.shape[1:3]
             feats = np.reshape(array, (-1, array.shape[1], array.shape[2], num_anchors, num_classes + 5))
@@ -195,7 +192,8 @@ class BaseObjectDetectionCallback:
             _conf_param = (_scores_out / _class_param_out)[:, :1]
             t = time.time()
             pick, _ = BaseObjectDetectionCallback().non_max_suppression_fast(_boxes_out, _scores_out, sensitivity)
-            print('- BaseObjectDetectionCallback non_max_suppression_fast', round(time.time() - t, 3))
+            print('- BaseObjectDetectionCallback non_max_suppression_fast',
+                  round(time.time() - t, 3), _boxes_reshape.shape, _boxes_out.shape)
             return np.concatenate([_boxes_out[pick], _conf_param[pick], _scores_out[pick]], axis=-1)
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
