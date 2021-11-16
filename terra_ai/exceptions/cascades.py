@@ -37,6 +37,21 @@ class CascadesMessages(dict, Enum):
         "eng": "Block data type: %s does not match the type of data used in the cascade: %s"
     }
 
+    BindCountNotEnough = {
+        "ru": "Недостаточно входящих связей: необходимо %s. Возможны связи с блоками: %s",
+        "eng": "Not enough incoming connections: %s is needed. Connections with blocks are possible: %s"
+    }
+
+    BindCountExceeding = {
+        "ru": "Превышение количества входящих связей: необходимо %s. Возможны связи с блоками: %s",
+        "eng": "Exceeding the number of incoming links: %s is needed. Connections with blocks are possible: %s"
+    }
+
+    ForbiddenBindExceeding = {
+        "ru": "Не разрешенная связь с блоком %s. Возможны связи с блоками: %s",
+        "eng": "Not allowed communication with the block %s. Connections with blocks are possible: %s"
+    }
+
 
 class CascadesException(TerraBaseException):
     class Meta:
@@ -91,6 +106,30 @@ class InputDataDoesNotMatchModelDataException(CascadesException):
 class UsedDataDoesNotMatchBlockDataException(CascadesException):
     class Meta:
         message = CascadesMessages.UsedDataDoesNotMatchBlockData
+
+    def __init__(self, __expected, __got, **kwargs):
+        super().__init__(str(__expected), str(__got), **kwargs)
+
+
+class BindCountNotEnoughException(CascadesException):
+    class Meta:
+        message = CascadesMessages.BindCountNotEnough
+
+    def __init__(self, __expected, __got, **kwargs):
+        super().__init__(str(__expected), str(__got), **kwargs)
+
+
+class BindCountExceedingException(CascadesException):
+    class Meta:
+        message = CascadesMessages.BindCountExceeding
+
+    def __init__(self, __expected, __got, **kwargs):
+        super().__init__(str(__expected), str(__got), **kwargs)
+
+
+class ForbiddenBindException(CascadesException):
+    class Meta:
+        message = CascadesMessages.ForbiddenBindExceeding
 
     def __init__(self, __expected, __got, **kwargs):
         super().__init__(str(__expected), str(__got), **kwargs)
