@@ -1,8 +1,8 @@
 import json
 import os
+
 import pandas as pd
 from pathlib import Path
-from importlib import import_module
 
 from terra_ai.cascades.common import decamelize
 from terra_ai.cascades.create import json2cascade
@@ -20,12 +20,13 @@ class CascadeRunner:
             dataset_config_data = json.load(dataset_config)
 
         model_task = list(set([val.get("task") for key, val in dataset_config_data.get("outputs").items()]))[0]
-        cascade_config = self._create_config(cascade_data=cascade_data, model_task=model_task, path=path)
+        cascade_config = self._create_config(cascade_data=cascade_data, model_task=model_task)
         script_name, model = self._get_task_type(cascade_data=cascade_data, training_path=path)
 
         main_block = json2cascade(path=os.path.join(path, model), cascade_config=cascade_config, mode="run")
         sources = self._get_sources(dataset_path=dataset_path)
         i = 0
+        print(sources)
         for source in sources:
             if "text" in script_name:
                 with open("test.txt", "w", encoding="utf-8") as f:
@@ -56,10 +57,10 @@ class CascadeRunner:
         deploy_type = training_details.get("base").get("architecture").get("type")
         return decamelize(deploy_type), model
 
-    def _create_config(self, cascade_data: CascadeDetailsData, path: Path, model_task: str):
-        print(cascade_data)
+    def _create_config(self, cascade_data: CascadeDetailsData, model_task: str):
         config = {"cascades": {}}
         adjacency_map = {}
+        block_description = {}
         for block in cascade_data.blocks:
             if block.group == BlockGroupChoice.InputData:
                 block_description = {
@@ -127,7 +128,8 @@ class CascadeRunner:
     def _get_sources(dataset_path: str) -> list:
         out = []
         sources = pd.read_csv(os.path.join(dataset_path, "instructions", "tables", "val.csv"))
+        print(sources)
         for column in sources.columns:
-            if column.split("_")[-1].title() in ["Image", "Text", "Audio", "Dataframe", "Video"]:
+            if column.split("_")[-1].title() in ["Image", "Text", "Audio", "Video"]:
                 out = sources[column].to_list()
         return out
