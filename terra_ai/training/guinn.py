@@ -283,8 +283,8 @@ class GUINN:
             self._set_training_params(dataset=dataset, params=training)
 
             self.model = self._set_model(model=gui_model, train_details=training)
-            if training.state.status == "training":
-                self.save_model()
+            # if training.state.status == "training":
+            #     self.save_model()
 
             self.model_fit(params=training, dataset=self.dataset, model=self.model)
             return {"dataset": self.dataset}
@@ -328,7 +328,7 @@ class GUINN:
                     'yolo')
                 classes = dataset.data.outputs.get(list(dataset.data.outputs.keys())[0]).classes_names
                 yolo = create_yolo(model, input_size=416, channels=3, training=True, classes=classes, version=version)
-                self.train_yolo_model(yolo, params, dataset, dataset.data.path, self.callback)
+                self.train_yolo_model(yolo_model=yolo, params=params, dataset=dataset, callback=self.callback)
             else:
                 self.train_base_model(params, dataset, model, self.callback)
 
@@ -385,7 +385,7 @@ class GUINN:
             optimizer = self.set_optimizer(params=params)
 
             global_steps = tf.Variable(1, trainable=False, dtype=tf.int64)
-            steps_per_epoch = int(len(dataset.dataset['train']) // params.base.batch)
+            steps_per_epoch = int(len(dataset.dataframe['train']) // params.base.batch)
             warmup_steps = train_warmup_epochs * steps_per_epoch
             total_steps = params.base.epochs * steps_per_epoch
 
@@ -425,13 +425,14 @@ class GUINN:
                     optimizer.lr.assign(lr)
                 return global_steps, giou_loss, conf_loss, prob_loss, total_loss, prob_loss_cls, pred_result
 
+            @tf.function
             def validate_step(image_array, conv_target, serv_target):
                 pred_result = yolo_model(image_array['1'], training=False)
-                giou_loss = conf_loss = prob_loss = 0
+                giou_loss = conf_loss = prob_loss = tf.convert_to_tensor(0., dtype='float32')
 
                 prob_loss_cls = {}
                 for idx in range(num_class):
-                    prob_loss_cls[classes[idx]] = 0
+                    prob_loss_cls[classes[idx]] = tf.convert_to_tensor(0., dtype='float32')
 
                 for n, elem in enumerate(conv_target.keys()):
                     conv, pred = pred_result[n * 2], pred_result[n * 2 + 1]
@@ -443,18 +444,17 @@ class GUINN:
                         YOLO_IOU_LOSS_THRESH=yolo_iou_loss_thresh,
                         i=n, CLASSES=classes
                     )
-                    giou_loss += loss_items[0].numpy()
-                    conf_loss += loss_items[1].numpy()
-                    prob_loss += loss_items[2].numpy()
+                    giou_loss = tf.add(giou_loss, loss_items[0])
+                    conf_loss = tf.add(conf_loss, loss_items[1])
+                    prob_loss = tf.add(prob_loss, loss_items[2])
                     for idx in range(num_class):
-                        prob_loss_cls[classes[idx]] += loss_items[3][classes[idx]].numpy()
+                        prob_loss_cls[classes[idx]] = tf.add(prob_loss_cls[classes[idx]], loss_items[3][classes[idx]])
 
-                total_loss = giou_loss + conf_loss + prob_loss
+                total_loss = tf.add(giou_loss, conf_loss)
+                total_loss = tf.add(total_loss, prob_loss)
 
                 return giou_loss, conf_loss, prob_loss, total_loss, prob_loss_cls, pred_result
 
-            current_epoch = 0
-            # urgent_predict = False
             callback.on_train_begin()
             optimizer = self.set_optimizer(params=params)
             first_epoch = True
@@ -509,25 +509,26 @@ class GUINN:
                             train_data_idxs = train_data_idxs[results[6][0].shape[0]:]
                             train_data_idxs.extend(list(range(
                                 train_data_idxs[-1] + 1, train_data_idxs[-1] + 1 + results[6][0].shape[0])))
+                    del results
                     if interactive.urgent_predict:
-                        # print('\nGUINN interactive.urgent_predict\n')
-                        val_true = []
-                        val_pred = []
-                        for image_data, target1, target2 in dataset.dataset.get('val').batch(params.base.batch):
-                            results = yolo_model(image_data['1'], training=False)
-                            if not val_true:
-                                for i, true_array in enumerate(target1.values()):
-                                    val_pred.append(results[i].numpy().astype('float'))
-                                    val_true.append(true_array.numpy().astype('float'))
-                            else:
-                                for i, true_array in enumerate(target1.values()):
-                                    val_pred[i] = np.concatenate(
-                                        [val_pred[i], results[i].numpy().astype('float')], axis=0)
-                                    val_true[i] = np.concatenate(
-                                        [val_true[i], true_array.numpy().astype('float')], axis=0)
-                        callback.on_train_batch_end(batch=train_steps, arrays={
-                            "train_true": train_true, "val_true": val_true, "train_pred": train_pred,
-                            "val_pred": val_pred}, train_data_idxs=train_data_idxs)
+                        print('\nGUINN interactive.urgent_predict\n')
+                    #     val_true = []
+                    #     val_pred = []
+                    #     for image_data, target1, target2 in dataset.dataset.get('val').batch(params.base.batch):
+                    #         results = yolo_model(image_data['1'], training=False)
+                    #         if not val_true:
+                    #             for i, true_array in enumerate(target1.values()):
+                    #                 val_pred.append(results[i].numpy().astype('float'))
+                    #                 val_true.append(true_array.numpy().astype('float'))
+                    #         else:
+                    #             for i, true_array in enumerate(target1.values()):
+                    #                 val_pred[i] = np.concatenate(
+                    #                     [val_pred[i], results[i].numpy().astype('float')], axis=0)
+                    #                 val_true[i] = np.concatenate(
+                    #                     [val_true[i], true_array.numpy().astype('float')], axis=0)
+                    #     callback.on_train_batch_end(batch=train_steps, arrays={
+                    #         "train_true": train_true, "val_true": val_true, "train_pred": train_pred,
+                    #         "val_pred": val_pred}, train_data_idxs=train_data_idxs)
                     else:
                         callback.on_train_batch_end(batch=train_steps)
                     print(f' -- batch {train_steps} - {round(bend - bt, 3)}, '
@@ -536,11 +537,17 @@ class GUINN:
                     new_batch = False
                     if callback.stop_training:
                         break
-                print(f'\n train epoch time: {round(time.time() - st, 2)}\n')
-                self.save_model()
+                print(f'\n train epoch time: {round(time.time() - st, 3)}\n')
+
+                st = time.time()
+                file_path_last: str = os.path.join(
+                    callback.training_detail.model_path, f"last_weights_{callback.metric_checkpoint}.h5"
+                )
+                yolo_model.save_weights(file_path_last)
                 if callback.stop_training:
                     callback.on_train_end(yolo_model)
                     break
+                print(f'\n save_model time: {round(time.time() - st, 3)}, {file_path_last}\n')
                 # print(
                 #     "epoch:{:2.0f} step:{:5.0f}/{}, giou_loss:{:7.2f}, conf_loss:{:7.2f}, prob_loss:{:7.2f}, total_loss:{:7.2f}"
                 #         .format(epoch + 1, cur_step, steps_per_epoch, results[1], results[2], results[3],
@@ -554,7 +561,7 @@ class GUINN:
                 for cls in range(num_class):
                     current_logs['class_loss']['prob_loss'][str(classes[cls])] = \
                         {'train': train_loss_cls[str(classes[cls])] / cur_step}
-                    train_loss_cls[str(classes[cls])] = train_loss_cls[str(classes[cls])] / cur_step
+                    # train_loss_cls[str(classes[cls])] = train_loss_cls[str(classes[cls])] / cur_step
                 # print(
                 #     "\n\n epoch_time:{:7.2f} sec, giou_train_loss:{:7.2f}, conf_train_loss:{:7.2f}, prob_train_loss:{:7.2f}, total_train_loss:{:7.2f}, class_train_loss:{}".
                 #         format(time.time() - st, giou_train / cur_step, conf_train / cur_step, prob_train / cur_step,
@@ -567,14 +574,15 @@ class GUINN:
                 val_true = []
                 val_pred = []
                 for image_data, target1, target2 in dataset.dataset.get('val').batch(params.base.batch):
+                    bt = time.time()
                     results = validate_step(image_data, target1, target2)
                     count += 1
-                    giou_val += results[0]
-                    conf_val += results[1]
-                    prob_val += results[2]
-                    total_val += results[3]
+                    giou_val += results[0].numpy()
+                    conf_val += results[1].numpy()
+                    prob_val += results[2].numpy()
+                    total_val += results[3].numpy()
                     for cls in range(num_class):
-                        val_loss_cls[str(classes[cls])] += results[4][str(classes[cls])]
+                        val_loss_cls[str(classes[cls])] += results[4][str(classes[cls])].numpy()
                     if not val_true:
                         for i, true_array in enumerate(target1.values()):
                             val_pred.append(results[5][i].numpy().astype('float'))
@@ -585,6 +593,7 @@ class GUINN:
                                 [val_pred[i], results[5][i].numpy().astype('float')], axis=0)
                             val_true[i] = np.concatenate(
                                 [val_true[i], true_array.numpy().astype('float')], axis=0)
+                    print(f' -- val_batch {count} - {round(time.time() - bt, 3)}')
                 print(f'\n val epoch time: {round(time.time() - st, 3)}\n')
 
                 current_logs['loss']['giou_loss']["val"] = giou_val / count
@@ -597,7 +606,7 @@ class GUINN:
                 # print(
                 #     "\n\n epoch_time:{:7.2f} sec, giou_val_loss:{:7.2f}, conf_val_loss:{:7.2f}, prob_val_loss:{:7.2f}, total_val_loss:{:7.2f}".
                 #         format(time.time() - st, giou_val / count, conf_val / count, prob_val / count, total_val / count))
-
+                st = time.time()
                 map50 = get_mAP(yolo_model, dataset, score_threshold=0.05, iou_threshold=[0.50],
                                 TRAIN_CLASSES=dataset.data.outputs.get(2).classes_names, dataset_path=dataset.data.path)
                 current_logs['metrics']['mAP50'] = {"val": map50.get('val_mAP50')}
@@ -605,6 +614,7 @@ class GUINN:
                 for cls in range(num_class):
                     current_logs['class_metrics']['mAP50'][str(classes[cls])] = \
                         {"val": map50.get(f"val_mAP50_class_{classes[cls]}")}
+                print(f'\n get_mAP time: {round(time.time() - st, 3)}')
                 # print("\n\n epoch_time:{:7.2f} sec, mAP50:{}".format(time.time() - st, mAP50))
                 # callback.on_epoch_end(
                 #     epoch=epoch + 1, train_true=train_true, train_pred=train_pred,
@@ -618,6 +628,7 @@ class GUINN:
                     train_data_idxs=train_data_idxs,
                     logs=current_logs
                 )
+                del val_true, val_pred
                 print(f'\n callback.on_epoch_end epoch time: {round(time.time() - st, 3)}')
                 print(
                     f"\nEpoch {callback.current_logs.get('epochs')}:\n"
@@ -625,16 +636,20 @@ class GUINN:
                     f"epoch_time={round(time.time() - callback._time_first_step, 3)}"
                     f"\nloss={callback.log_history.get('output').get('loss')}"
                     f"\nmetrics={callback.log_history.get('output').get('metrics')}"
+                    f"\nloss={callback.log_history.get('output').get('class_loss')}"
+                    f"\nmetrics={callback.log_history.get('output').get('class_metrics')}"
                     # f" \n loss={callback.current_logs.get('2').get('loss')}\n"
                     # f" \n metrics={callback.current_logs.get('2').get('metrics')}\n"
                     # f" \n class_loss={callback.current_logs.get('2').get('class_loss')}\n"
                     # f" \n class_metrics={callback.current_logs.get('2').get('class_metrics')}"
                 )
+                st = time.time()
                 best_path = callback.save_best_weights()
                 if best_path:
                     yolo_model.save_weights(best_path)
                     print(f"\nEpoch {epoch + 1}")
                     print(f"Best weights was saved in directory {best_path}")
+                print(f'\n save_best_weights time: {round(time.time() - st, 3)}')
                 first_epoch = False
             callback.on_train_end(yolo_model)
         except Exception as e:
@@ -1835,11 +1850,16 @@ class FitCallback:
                 self.current_basic_logs(
                     epoch=epoch, arrays=arrays, train_idx=train_data_idxs
                 )
+            print('\nFitCallback _update_log_history: start')
+            t = time.time()
             self._update_log_history()
+            print('\nFitCallback _update_log_history', round(time.time() - t, 3))
             if epoch == 1:
                 interactive.log_history = self.log_history
             current_epoch_time = time.time() - self._time_first_step
             self._sum_epoch_time += current_epoch_time
+            print('\nFitCallback interactive.update_state: start')
+            t = time.time()
             train_epoch_data = interactive.update_state(
                 fit_logs=self.log_history,
                 arrays=arrays,
@@ -1847,6 +1867,7 @@ class FitCallback:
                 on_epoch_end_flag=True,
                 train_idx=train_data_idxs
             )
+            print('\nFitCallback interactive.update_state', round(time.time() - t, 3))
             # print(method_name, 'train_epoch_data', train_epoch_data)
             self._set_result_data({'train_data': train_epoch_data})
             progress.pool(

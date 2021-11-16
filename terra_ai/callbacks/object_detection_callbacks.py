@@ -1,5 +1,6 @@
 import colorsys
 import os
+import time
 
 import matplotlib
 import numpy as np
@@ -61,11 +62,14 @@ class BaseObjectDetectionCallback:
     def get_yolo_y_pred(array, options, sensitivity: float = 0.15, threashold: float = 0.1):
         method_name = 'get_yolo_y_pred'
         try:
+            print(method_name, array[0].shape, array[1].shape, array[2].shape)
+            count = 0
             y_pred = {}
             name_classes = options.data.outputs.get(list(options.data.outputs.keys())[0]).classes_names
             for i, box_array in enumerate(array):
                 channel_boxes = []
                 for ex in box_array:
+                    t = time.time()
                     boxes = BaseObjectDetectionCallback().get_predict_boxes(
                         array=np.expand_dims(ex, axis=0),
                         name_classes=name_classes,
@@ -73,11 +77,20 @@ class BaseObjectDetectionCallback:
                         sensitivity=sensitivity,
                         threashold=threashold
                     )
+                    print(f'\nBaseObjectDetectionCallback get_yolo_y_pred: {count} {round(time.time() - t, 3)}')
+                    count += 1
                     channel_boxes.append(boxes)
                 y_pred[i] = channel_boxes
             return y_pred
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
+
+    @staticmethod
+    def get_inverse_array(array: dict, options, type="output"):
+        inverse_array = {"train": {}, "val": {}}
+        # for data_type in inverse_array.keys():
+        #     for out in options.data.outputs.keys():
+        return inverse_array
 
     @staticmethod
     def bboxes_iou(boxes1, boxes2):
@@ -112,6 +125,7 @@ class BaseObjectDetectionCallback:
             classes = np.argmax(scores, axis=-1)
             idxs = np.argsort(classes)[..., ::-1]
             mean_iou = []
+            print('--', method_name, 'len(idxs)', len(idxs), boxes.shape)
             while len(idxs) > 0:
                 last = len(idxs) - 1
                 i = idxs[last]
@@ -138,14 +152,13 @@ class BaseObjectDetectionCallback:
         method_name = 'get_predict_boxes'
         try:
             num_classes = len(name_classes)
-            anchors = np.array([[10, 13], [16, 30], [33, 23],
-                                [30, 61], [62, 45], [59, 119],
-                                [116, 90], [156, 198], [373, 326]])
+            # anchors = np.array([[10, 13], [16, 30], [33, 23],
+            #                     [30, 61], [62, 45], [59, 119],
+            #                     [116, 90], [156, 198], [373, 326]])
             anchor_mask = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
-            level_anchor = bb_size
-            num_anchors = len(anchors[anchor_mask[level_anchor]])
-            grid_shape = array.shape[1:3]
-            feats = np.reshape(array, (-1, grid_shape[0], grid_shape[1], num_anchors, num_classes + 5))
+            num_anchors = 3
+            # grid_shape = array.shape[1:3]
+            feats = np.reshape(array, (-1, array.shape[1], array.shape[2], num_anchors, num_classes + 5))
             xy_param = feats[..., :2]
             wh_param = feats[..., 2:4]
             conf_param = feats[..., 4:5]
@@ -177,7 +190,9 @@ class BaseObjectDetectionCallback:
             _scores_out = _scores_out[1:]
             _class_param_out = _class_param_out[1:]
             _conf_param = (_scores_out / _class_param_out)[:, :1]
+            t = time.time()
             pick, _ = BaseObjectDetectionCallback().non_max_suppression_fast(_boxes_out, _scores_out, sensitivity)
+            print('\n- BaseObjectDetectionCallback non_max_suppression_fast', round(time.time() - t, 3))
             return np.concatenate([_boxes_out[pick], _conf_param[pick], _scores_out[pick]], axis=-1)
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)

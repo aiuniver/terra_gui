@@ -143,16 +143,21 @@ class InteractiveCallback:
                         seed_idx=self.seed_idx[:self.training_details.interactive.intermediate_result.num_examples]
                     )
                 if self.options.data.architecture in YOLO_ARCHITECTURE:
+                    print('\nInteractiveCallback get_y_pred: start')
+                    t = time.time()
                     self.raw_y_pred = arrays.get("val_pred")
                     self.y_pred = self.callback.get_y_pred(
                         y_pred=arrays.get("val_pred"), options=self.options,
                         sensitivity=self.training_details.interactive.intermediate_result.sensitivity,
                         threashold=self.training_details.interactive.intermediate_result.threashold
                     )
+                    print('\nInteractiveCallback get_y_pred', round(time.time() - t, 3))
                     count = self.training_details.interactive.intermediate_result.num_examples
                     count = count if count > len(self.options.dataframe.get('val')) \
                         else len(self.options.dataframe.get('val'))
                     self.raw_y_true = arrays.get("val_true")
+                    print('\nInteractiveCallback prepare_example_idx_to_show: start')
+                    t = time.time()
                     self.example_idx, _ = self.callback.prepare_example_idx_to_show(
                         array=self.y_pred,
                         true_array=self.y_true,
@@ -164,6 +169,7 @@ class InteractiveCallback:
                         seed_idx=self.seed_idx,
                         sensitivity=self.training_details.interactive.intermediate_result.sensitivity,
                     )
+                    print('\nInteractiveCallback example_idx', round(time.time() - t, 3))
 
                 if on_epoch_end_flag:
                     self.current_epoch = fit_logs.get('epochs')[-1]
@@ -171,6 +177,8 @@ class InteractiveCallback:
                     # self._update_log_history()
                     self._update_progress_table(current_epoch_time)
                     if self.training_details.interactive.intermediate_result.autoupdate:
+                        print('\nInteractiveCallback intermediate_result_request: start')
+                        t = time.time()
                         self.intermediate_result = self.callback.intermediate_result_request(
                             options=self.options,
                             interactive_config=self.training_details.interactive,
@@ -185,6 +193,7 @@ class InteractiveCallback:
                             inverse_y_true=self.inverse_y_true,
                             class_colors=self.class_colors,
                         )
+                        print('\nInteractiveCallback intermediate_result_request', round(time.time() - t, 3))
                     if self.options.data.architecture in BASIC_ARCHITECTURE and \
                             self.training_details.interactive.statistic_data.output_id \
                             and self.training_details.interactive.statistic_data.autoupdate:
@@ -199,7 +208,8 @@ class InteractiveCallback:
                     if self.options.data.architecture in YOLO_ARCHITECTURE and \
                             self.training_details.interactive.statistic_data.box_channel \
                             and self.training_details.interactive.statistic_data.autoupdate:
-                        print('self.statistic_result', self.y_true.keys(), self.y_pred.keys())
+                        print('\nInteractiveCallback statistic_data_request: start')
+                        t = time.time()
                         self.statistic_result = self.callback.statistic_data_request(
                             interactive_config=self.training_details.interactive,
                             options=self.options,
@@ -208,6 +218,7 @@ class InteractiveCallback:
                             inverse_y_pred=self.inverse_y_pred,
                             inverse_y_true=self.inverse_y_true
                         )
+                        print('\nInteractiveCallback statistic_data_request', round(time.time() - t, 3))
                 else:
                     self.intermediate_result = self.callback.intermediate_result_request(
                         options=self.options,
@@ -245,7 +256,6 @@ class InteractiveCallback:
                             inverse_y_true=self.inverse_y_true,
                         )
                 self.urgent_predict = False
-
                 self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
             return {
                 'update': self.random_key,
@@ -526,7 +536,7 @@ class InteractiveCallback:
             if self.options.data.architecture in YOLO_ARCHITECTURE:
                 self.progress_table[self.current_epoch] = {
                     "time": epoch_time,
-                    "learning_rate": self.current_logs.get("learning_rate"),
+                    # "learning_rate": self.current_logs.get("learning_rate"),
                     "data": {f"Прогресс обучения": {'loss': {}, 'metrics': {}}}
                 }
                 for loss in self.log_history['output']["loss"].keys():
@@ -536,7 +546,7 @@ class InteractiveCallback:
                         f"{self.log_history.get('output').get('loss').get(loss).get('val')[-1]}"
                 for metric in self.log_history['output']["metrics"].keys():
                     self.progress_table[self.current_epoch]["data"]["Прогресс обучения"]["metrics"][f"{metric}"] = \
-                        f"{self.log_history.get('output').get('metrics').get(metric)[-1]}"
+                        f"{self.log_history.get('output').get('metrics').get(metric).get('val')[-1]}"
         except Exception as e:
             print_error(InteractiveCallback().name, method_name, e)
 
@@ -706,19 +716,37 @@ class InteractiveCallback:
                             _id += 1
                     if loss_graph_config.show == LossGraphShowChoice.classes:
                         output_idx = list(self.options.data.outputs.keys())[0]
+                        # data_return.append(
+                        #     fill_graph_front_structure(
+                        #         _id=_id,
+                        #         _type='graphic',
+                        #         graph_name=f"График ошибки обучения «prob_loss» по классам - Тренировочная выборка",
+                        #         short_name=f"График ошибки обучения по классам - Тренировочная",
+                        #         x_label="Эпоха",
+                        #         y_label="Значение",
+                        #         plot_data=[
+                        #             fill_graph_plot_data(
+                        #                 x=self.log_history.get("epochs"),
+                        #                 y=self.log_history.get("output").get('class_loss').get('prob_loss').get(
+                        #                     class_name).get("train"),
+                        #                 label=f"Класс {class_name}"
+                        #             ) for class_name in self.options.data.outputs.get(output_idx).classes_names
+                        #         ],
+                        #     )
+                        # )
                         data_return.append(
                             fill_graph_front_structure(
                                 _id=_id,
                                 _type='graphic',
-                                graph_name=f"График ошибки обучения «prob_loss» по классам",
-                                short_name=f"График ошибки обучения по классам",
+                                graph_name=f"График ошибки обучения «prob_loss» по классам - Проверочная выборка",
+                                short_name=f"График ошибки обучения по классам - Проверочная",
                                 x_label="Эпоха",
                                 y_label="Значение",
                                 plot_data=[
                                     fill_graph_plot_data(
                                         x=self.log_history.get("epochs"),
                                         y=self.log_history.get("output").get('class_loss').get('prob_loss').get(
-                                            class_name),
+                                            class_name).get("val"),
                                         label=f"Класс {class_name}"
                                     ) for class_name in self.options.data.outputs.get(output_idx).classes_names
                                 ],
@@ -836,7 +864,7 @@ class InteractiveCallback:
                         else:
                             progress_state = 'normal'
                         val_list = self.log_history.get("output").get('metrics').get(
-                            metric_graph_config.show_metric.name)
+                            metric_graph_config.show_metric.name).get("val")
                         best_val_value = min(val_list) if min_max_mode == 'min' else max(val_list)
                         best_val = fill_graph_plot_data(
                             x=[self.log_history.get("epochs")[val_list.index(best_val_value)]],
@@ -846,7 +874,7 @@ class InteractiveCallback:
                         val_plot = fill_graph_plot_data(
                             x=self.log_history.get("epochs"),
                             y=self.log_history.get("output").get('metrics').get(
-                                metric_graph_config.show_metric.name),
+                                metric_graph_config.show_metric.name).get("val"),
                             label="Проверочная выборка"
                         )
                         data_return.append(
@@ -879,7 +907,7 @@ class InteractiveCallback:
                                     fill_graph_plot_data(
                                         x=self.log_history.get("epochs"),
                                         y=self.log_history.get("output").get('class_metrics').get(
-                                            metric_graph_config.show_metric.name).get(class_name),
+                                            metric_graph_config.show_metric.name).get(class_name).get("val"),
                                         label=f"Класс {class_name}"
                                     ) for class_name in self.options.data.outputs.get(output_idx).classes_names
                                 ],
