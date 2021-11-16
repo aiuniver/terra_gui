@@ -121,7 +121,15 @@ FunctionTypesFields = {
             },
         },
     ],
-    BlockFunctionTypeChoice.PlotBBoxes: [],
+    BlockFunctionTypeChoice.PlotBBoxes: [
+        {
+            "type": "number",
+            "name": "line_thickness",
+            "parse": "parameters[main][line_thickness]",
+            "label": "Толщина линии рамки",
+            "value": 1,
+        },
+    ],
 }
 
 
