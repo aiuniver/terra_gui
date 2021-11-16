@@ -112,7 +112,9 @@ class BaseObjectDetectionCallback:
             classes = np.argmax(scores, axis=-1)
             idxs = np.argsort(classes)[..., ::-1]
             mean_iou = []
+            count = 0
             while len(idxs) > 0:
+                count += 1
                 last = len(idxs) - 1
                 i = idxs[last]
                 pick.append(i)
@@ -125,6 +127,7 @@ class BaseObjectDetectionCallback:
                 overlap = (w * h) / area[idxs[:last]]
                 mean_iou.append(overlap)
                 idxs = np.delete(idxs, np.concatenate(([last], np.where(overlap > sensitivity)[0])))
+            print('\n-- non_max_suppression_fast', count, boxes.shape, boxes[0], scores[0])
             return pick, mean_iou
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
