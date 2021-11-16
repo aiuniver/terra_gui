@@ -19,10 +19,6 @@ class ParametersMainData(BaseMixinData):
     shape: Optional[List[PositiveInt]]
     min_scale: Optional[confloat(ge=0, le=1)] = 0
     max_scale: Optional[confloat(ge=0, le=1)] = 1
-    class_id: Optional[conint(ge=0)] = 0
-    classes_colors: Optional[List[Color]]
-    open_tag: Optional[List[str]]
-    close_tag: Optional[List[str]]
     alpha: Optional[confloat(gt=0, le=1)] = 0.5
     score_threshold: Optional[confloat(gt=0, le=1)] = 0.3
     iou_threshold: Optional[confloat(gt=0, le=1)] = 0.45
@@ -30,9 +26,14 @@ class ParametersMainData(BaseMixinData):
         PostprocessBoxesMethodAvailableChoice
     ] = PostprocessBoxesMethodAvailableChoice.nms
     sigma: Optional[confloat(gt=0, le=1)] = 0.3
+    line_thickness: Optional[conint(ge=1, le=5)] = 1
+
+    class_id: Optional[conint(ge=0)] = 0
+    classes_colors: Optional[List[Color]]
+    open_tag: Optional[List[str]]
+    close_tag: Optional[List[str]]
     classes: Optional[List[str]]
     colors: Optional[List[Color]]
-    line_thickness: Optional[PositiveInt]
 
     def __init__(self, **data):
         _type = data.get("type")
@@ -69,22 +70,15 @@ class ParametersMainData(BaseMixinData):
         elif value == BlockFunctionTypeChoice.MinMaxScale:
             cls.__fields__["min_scale"].required = True
             cls.__fields__["max_scale"].required = True
-        elif value == BlockFunctionTypeChoice.MaskedImage:
-            cls.__fields__["class_id"].required = True
-        elif value == BlockFunctionTypeChoice.PlotMaskSegmentation:
-            cls.__fields__["classes_colors"].required = True
         elif value == BlockFunctionTypeChoice.PutTag:
-            cls.__fields__["open_tag"].required = True
-            cls.__fields__["close_tag"].required = True
             cls.__fields__["alpha"].required = True
         elif value == BlockFunctionTypeChoice.PostprocessBoxes:
             cls.__fields__["score_threshold"].required = True
             cls.__fields__["iou_threshold"].required = True
             cls.__fields__["method"].required = True
-            cls.__fields__["sigma"].required = True
+            if cls.__fields__["method"] == PostprocessBoxesMethodAvailableChoice.soft_nms:
+                cls.__fields__["sigma"].required = True
         elif value == BlockFunctionTypeChoice.PlotBBoxes:
-            cls.__fields__["classes"].required = True
-            cls.__fields__["colors"].required = True
             cls.__fields__["line_thickness"].required = True
         return value
 

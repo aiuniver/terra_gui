@@ -10,6 +10,7 @@ from typing import Any, NoReturn
 from . import exceptions as agent_exceptions
 from . import utils as agent_utils
 from .. import settings, progress
+from ..cascades.cascade_runner import CascadeRunner
 from ..cascades.cascade_validator import CascadeValidator
 from ..deploy.prepare_deploy import DeployCreator
 from ..exceptions import tensor_flow as tf_exceptions
@@ -383,8 +384,7 @@ class Exchange:
         """
         Запуск каскада
         """
-        print(cascade)
-        print(path)
+        return CascadeRunner().start_cascade(cascade_data=cascade, path=path)
 
     def _call_deploy_get(
         self, path_model: Path, path_deploy: Path, page: dict

@@ -1,7 +1,7 @@
 <template>
   <main class="page page-datasets">
     <div class="page-datasets-inner">
-      <div class="page-datasets-inner__workspace">asd</div>
+      <div class="page-datasets-inner__workspace"> <router-view></router-view></div>
       <BasePanel @action="handleActionPanel">
         <template v-if="component === 'DatasetTabsDownload'">
           <BasePanelContent noMargin>

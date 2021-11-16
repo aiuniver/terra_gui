@@ -88,7 +88,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import '../scss/fields.scss';
+@import '@/assets/scss/components/fields.scss';
 .d-input {
   &__btn {
     &--down {

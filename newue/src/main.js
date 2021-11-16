@@ -8,7 +8,7 @@ Vue.use(vuescroll, settings);
 
 import '@/assets/style/normalize.css'
 import '@/assets/style/coolicons.css'
-import '@/assets/scss/main.scss'
+import '@/assets/scss/index.scss'
 
 
 import pkg from '../package.json'
@@ -17,21 +17,12 @@ Vue.prototype.$config = {
   version: pkg.version
 }
 
-// const files = require.context('./components/global', true, /\.vue$/i, 'lazy').keys();
-
-// files.forEach(file => {
-    // Vue.component(file.split('/').pop().split('.')[0], () => import(`${file}`));
-// });
-// console.log(files)
-// // import all directivs
-// import directives from '@/utils/directives'
-// directives.forEach(directive=>Vue.directive(directive.name, directive))
-
 // import global components
-import { components } from './components/global'
-console.log(components)
-// components.forEach(component=>Vue.component(component.name, component))
+import './components/global'
 
+// import all directivs
+import directives from '@/utils/directives'
+directives.forEach(directive=>Vue.directive(directive.name, directive))
 
 Vue.config.productionTip = false;
 

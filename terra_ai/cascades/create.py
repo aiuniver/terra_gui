@@ -56,7 +56,14 @@ def json2model_cascade(path: str):
 
     if config['tags'][-1]['alias'] == 'object_detection':
         object_detection = True
-        model = create_yolo(model, config)
+        for inp in config['outputs'].keys():
+            for inp, param in config['columns'][inp].items():
+                with open(os.path.join(dataset_path, "instructions", "parameters", inp + '.json')) as cfg:
+                    spec_config = json.load(cfg)
+                if 'yolo' in spec_config.keys():
+                    version = spec_config['yolo']
+                    break
+        model = create_yolo(model, config, version)
     preprocess = []
 
     for inp in config['inputs'].keys():
@@ -96,7 +103,6 @@ def json2model_cascade(path: str):
                     param.update(spec_config)
                     try:
                         task = decamelize(param['task'])
-                        print(task)
                         type_module = getattr(general_fucntions, task)
                         postprocessing.append(getattr(type_module, 'main')(**param, dataset_path=dataset_path, key=inp))
                         output_types.append(task)
@@ -124,9 +130,12 @@ def json2model_cascade(path: str):
     return model
 
 
-def json2cascade(path: str):
-    with open(path) as cfg:
-        config = json.load(cfg)
+def json2cascade(path: str, cascade_config=None, mode="deploy"):
+    if cascade_config:
+        config = cascade_config
+    else:
+        with open(path) as cfg:
+            config = json.load(cfg)
     cascades = {}
     input_cascade = None
 
@@ -135,7 +144,11 @@ def json2cascade(path: str):
             input_cascade = getattr(sys.modules.get(__name__), "create_" + params['tag'])(**params)
         else:
             if params['tag'] == 'model':
-                params['model_path'] = os.path.split(path)[0]
+                if mode == "run":
+                    params["model"] = "model"
+                    params['model_path'] = path
+                else:
+                    params['model_path'] = os.path.split(path)[0]
             cascades[i] = getattr(sys.modules.get(__name__), "create_" + params['tag'])(**params)
 
     adjacency_map = OrderedDict()
@@ -176,7 +189,7 @@ def create_function(**params):
     return function
 
 
-def create_yolo(model, config):
+def create_yolo(model, config, version):
     od = None
     img_conf = None
     for _, i in config['outputs'].items():
@@ -200,7 +213,7 @@ def create_yolo(model, config):
     output_tensors = []
 
     for i, conv_tensor in enumerate(conv_tensors):
-        pred_tensor = yolo_decode(conv_tensor, num_class, i)
+        pred_tensor = yolo_decode(conv_tensor, num_class, version, i)
         output_tensors.append(pred_tensor)
     yolo = Model(input_layer, output_tensors)
 
