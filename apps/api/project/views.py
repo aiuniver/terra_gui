@@ -3,7 +3,12 @@ from terra_ai.data.projects.project import ProjectPathData
 
 from apps.plugins.project import project_path, data_path
 
-from apps.api.base import BaseAPIView, BaseResponseSuccess, BaseResponseErrorFields
+from apps.api.base import (
+    BaseAPIView,
+    BaseResponseSuccess,
+    BaseResponseErrorFields,
+    BaseResponseErrorGeneral,
+)
 
 from . import serializers
 
@@ -47,11 +52,22 @@ class LoadAPIView(BaseAPIView):
             return BaseResponseErrorFields(serializer.errors)
         agent_exchange(
             "project_load",
+            dataset_path=data_path.datasets,
             source=serializer.validated_data.get("value"),
             target=project_path.base,
         )
-        request.project.load()
         return BaseResponseSuccess()
+
+
+class LoadProgressAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        progress = agent_exchange("project_load_progress")
+        if progress.finished:
+            request.project.load()
+        if progress.success:
+            return BaseResponseSuccess(data=progress.native())
+        else:
+            return BaseResponseErrorGeneral(progress.error, data=progress.native())
 
 
 class DeleteAPIView(BaseAPIView):

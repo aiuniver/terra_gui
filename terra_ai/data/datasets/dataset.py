@@ -416,3 +416,35 @@ class DatasetsGroupsList(UniqueListMixin):
     class Meta:
         source = DatasetsGroupData
         identifier = "alias"
+
+
+class DatasetInfo(BaseMixinData):
+    alias: str
+    group: DatasetGroupChoice
+
+    __dataset__: Optional[DatasetData] = PrivateAttr()
+
+    def __init__(self, **data):
+        self.__dataset__ = None
+        super().__init__(**data)
+
+    @property
+    def dataset(self) -> Optional[DatasetData]:
+        if not self.__dataset__:
+            with open(
+                Path(
+                    settings.DATASETS_LOADED_DIR,
+                    self.group.name,
+                    self.alias,
+                    settings.DATASET_CONFIG,
+                )
+            ) as config_ref:
+                self.__dataset__ = DatasetData(
+                    path=Path(
+                        settings.DATASETS_LOADED_DIR,
+                        self.group.name,
+                        self.alias,
+                    ),
+                    **json.load(config_ref)
+                )
+        return self.__dataset__
