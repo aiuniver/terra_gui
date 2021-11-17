@@ -16,10 +16,8 @@ from typing import Optional
 import numpy as np
 
 import tensorflow as tf
-import tensorflow.keras.losses
 from tensorflow.keras.models import Model
 from tensorflow import keras
-from tensorflow.keras.models import load_model
 from tensorflow.python.keras.utils.np_utils import to_categorical
 
 from config import settings
@@ -28,8 +26,7 @@ from terra_ai.callbacks.classification_callbacks import BaseClassificationCallba
 from terra_ai.callbacks.interactive_callback import InteractiveCallback
 # from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.callbacks.utils import print_error, loss_metric_config, BASIC_ARCHITECTURE, CLASS_ARCHITECTURE, \
-    YOLO_ARCHITECTURE, round_loss_metric, class_metric_list, CLASSIFICATION_ARCHITECTURE, reformat_fit_array, \
-    get_dataset_length
+    YOLO_ARCHITECTURE, round_loss_metric, class_metric_list, CLASSIFICATION_ARCHITECTURE, get_dataset_length
 from terra_ai.customLayers import terra_custom_layers
 from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice, LayerEncodingChoice
@@ -44,7 +41,6 @@ from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.exceptions.deploy import MethodNotImplementedException
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.exceptions import training as exceptions
-from terra_ai.training.customlosses import PercentMAE
 from terra_ai.training.yolo_utils import create_yolo, compute_loss, get_mAP
 from terra_ai.utils import decamelize
 
@@ -576,7 +572,7 @@ class GUINN:
                 current_logs['class_loss']['prob_loss'] = {}
                 for cls in range(num_class):
                     current_logs['class_loss']['prob_loss'][str(classes[cls])] = \
-                        {'train': train_loss_cls[str(classes[cls])] / cur_step}
+                        {'train': train_loss_cls[str(classes[cls])] * 100 / cur_step}
                     # train_loss_cls[str(classes[cls])] = train_loss_cls[str(classes[cls])] / cur_step
                 # print(
                 #     "\n\n epoch_time:{:7.2f} sec, giou_train_loss:{:7.2f}, conf_train_loss:{:7.2f}, prob_train_loss:{:7.2f}, total_train_loss:{:7.2f}, class_train_loss:{}".
@@ -612,7 +608,7 @@ class GUINN:
                 current_logs['loss']['total_loss']["val"] = total_val / val_steps
                 for cls in range(num_class):
                     current_logs['class_loss']['prob_loss'][str(classes[cls])]["val"] = \
-                        val_loss_cls[str(classes[cls])] / val_steps
+                        val_loss_cls[str(classes[cls])] * 100 / val_steps
                 # print(
                 #     "\n\n epoch_time:{:7.2f} sec, giou_val_loss:{:7.2f}, conf_val_loss:{:7.2f}, prob_val_loss:{:7.2f}, total_val_loss:{:7.2f}".
                 #         format(time.time() - st, giou_val / count, conf_val / count, prob_val / count, total_val / count))
@@ -626,10 +622,6 @@ class GUINN:
                         {"val": map50.get(f"val_mAP50_class_{classes[cls]}")}
                 print(f'\n get_mAP time: {round(time.time() - st, 3)}')
                 # print("\n\n epoch_time:{:7.2f} sec, mAP50:{}".format(time.time() - st, mAP50))
-                # callback.on_epoch_end(
-                #     epoch=epoch + 1, train_true=train_true, train_pred=train_pred,
-                #     val_true=val_true, val_pred=val_pred, train_data_idxs=train_data_idxs, logs=current_logs
-                # )
                 st = time.time()
                 callback.on_epoch_end(
                     epoch=epoch + 1,

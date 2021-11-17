@@ -1,11 +1,8 @@
-import os
 import copy
-import math
 import random
 import string
-from pathlib import Path
 import time
-from typing import Union, Optional
+from typing import Optional
 import numpy as np
 
 from terra_ai import progress
@@ -15,18 +12,13 @@ from terra_ai.callbacks.object_detection_callbacks import YoloV3Callback, YoloV4
 from terra_ai.callbacks.regression_callbacks import DataframeRegressionCallback
 from terra_ai.callbacks.segmentation_callbacks import ImageSegmentationCallback, TextSegmentationCallback
 from terra_ai.callbacks.time_series_callbacks import TimeseriesCallback
-from terra_ai.callbacks.utils import loss_metric_config, round_loss_metric, fill_graph_plot_data, \
-    fill_graph_front_structure, reformat_metrics, prepare_loss_obj, prepare_metric_obj, get_classes_colors, \
-    print_error, BASIC_ARCHITECTURE, CLASSIFICATION_ARCHITECTURE, YOLO_ARCHITECTURE, CLASS_ARCHITECTURE, \
+from terra_ai.callbacks.utils import loss_metric_config, fill_graph_plot_data, fill_graph_front_structure,\
+    get_classes_colors, print_error, BASIC_ARCHITECTURE, CLASSIFICATION_ARCHITECTURE, YOLO_ARCHITECTURE,\
     class_metric_list, reformat_fit_array
-from terra_ai.data.datasets.extra import LayerOutputTypeChoice, DatasetGroupChoice, LayerEncodingChoice, \
-    LayerInputTypeChoice
-from terra_ai.data.presets.training import Metric
-from terra_ai.data.training.extra import LossGraphShowChoice, MetricGraphShowChoice, MetricChoice, ArchitectureChoice
+from terra_ai.data.datasets.extra import LayerOutputTypeChoice, DatasetGroupChoice, LayerInputTypeChoice
+from terra_ai.data.training.extra import LossGraphShowChoice, MetricGraphShowChoice, ArchitectureChoice
 from terra_ai.data.training.train import TrainingDetailsData
 from terra_ai.datasets.preparing import PrepareDataset
-from terra_ai.training.customlosses import UnscaledMAE, FScore, BalancedFScore, BalancedRecall, BalancedPrecision
-from terra_ai.utils import decamelize
 
 __version__ = 0.085
 
