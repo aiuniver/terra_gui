@@ -71,7 +71,9 @@ export default {
       return await dispatch("axios", { url: "/project/info/", data }, { root: true });
     },
     async saveProject ({ dispatch }, data) {
-      return await dispatch("axios", { url: "/project/save/", data }, { root: true });
+      const res = await dispatch("axios", { url: "/project/save/", data }, { root: true });
+      if (!res?.error) await dispatch("get", {});
+      return res
     },
   },
   getters: {
