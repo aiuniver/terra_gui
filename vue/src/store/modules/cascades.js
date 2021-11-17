@@ -179,7 +179,7 @@ export default {
           })
           .filter(link => link);
       });
-      commit('SET_STATUS', { update: true });
+      commit('SET_STATUS', { validate: true });
 
 
       const res = await dispatch('axios', { url: '/cascades/update/', data: { blocks: semdBlocks } }, { root: true });
@@ -243,7 +243,16 @@ export default {
     },
     async validate ({ commit, dispatch }) {
       const res = await dispatch('axios', { url: '/cascades/validate/' }, { root: true });
-      commit('SET_STATUS', { validate: Boolean(res?.error) });
+      if (res) {
+        const { data } = res
+        const isValid = !Object.values(data).filter(item => item).length
+        commit('SET_ERRORS_BLOCKS', data)
+        commit('SET_STATUS', { validate: Boolean(res?.error || !isValid) });
+        if (isValid) {
+          await dispatch('projects/get', {}, { root: true })
+        }
+        dispatch('messages/setMessage', isValid ? { message: `Валидация прошла успешно` } : { error: `Валидация не прошла` }, { root: true });
+      }
       return res;
     },
     setBlocks ({ commit }, value) {
