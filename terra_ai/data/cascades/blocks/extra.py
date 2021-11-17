@@ -1,6 +1,7 @@
 from enum import Enum
 
 from terra_ai.data.cascades.extra import BlockGroupChoice
+from terra_ai.data.datasets.extra import LayerInputTypeChoice
 
 
 class BlockOutputDataSaveAsChoice(str, Enum):
@@ -54,6 +55,7 @@ class BlockFunctionGroupChoice(str, Enum):
     Segmentation = "Segmentation"
     TextSegmentation = "TextSegmentation"
     ObjectDetection = "ObjectDetection"
+
     # Tracker = "Tracker"
 
     @staticmethod
@@ -111,29 +113,38 @@ class BlockServiceTypeChoice(str, Enum):
 
 
 class BlocksBindChoice(Enum):
-    Model = ("Model", tuple(), 1)
+    Model = ("Model", tuple(), 1, tuple())
     OutputData = ("OutputData", (BlockGroupChoice.Model,
                                  BlockFunctionTypeChoice.PlotBBoxes,
                                  BlockFunctionTypeChoice.PlotMaskSegmentation,
-                                 BlockFunctionTypeChoice.PutTag), 1)
+                                 BlockFunctionTypeChoice.PutTag), 1, tuple())
 
-    Sort = ("Sort", (BlockFunctionTypeChoice.PostprocessBoxes, ), 1)
-    ChangeType = ("ChangeType", tuple(), 1)
-    ChangeSize = ("ChangeSize", tuple(), 1)
-    MinMaxScale = ("MinMaxScale", tuple(), 1)
-    CropImage = ("CropImage", tuple(), 1)
-    MaskedImage = ("MaskedImage", tuple(), 1)
-    PlotMaskSegmentation = ("PlotMaskSegmentation", tuple(), 1)
-    PutTag = ("PutTag", tuple(), 1)
-    PostprocessBoxes = ("PostprocessBoxes", (BlockGroupChoice.Model, BlockGroupChoice.InputData), 2)
+    Sort = ("Sort", (BlockFunctionTypeChoice.PostprocessBoxes,), (LayerInputTypeChoice.Image,))
+    DeepSort = ("DeepSort", (BlockFunctionTypeChoice.PostprocessBoxes,), (LayerInputTypeChoice.Image,))
+    ChangeType = ("ChangeType", tuple(), 1, (LayerInputTypeChoice.Image,
+                                             LayerInputTypeChoice.Audio,
+                                             LayerInputTypeChoice.Video,
+                                             LayerInputTypeChoice.Text))
+    ChangeSize = ("ChangeSize", tuple(), 1, (LayerInputTypeChoice.Image,))
+    MinMaxScale = ("MinMaxScale", tuple(), 1, (LayerInputTypeChoice.Image,
+                                               LayerInputTypeChoice.Audio,
+                                               LayerInputTypeChoice.Video,
+                                               LayerInputTypeChoice.Text))
+    CropImage = ("CropImage", tuple(), 1, tuple())
+    MaskedImage = ("MaskedImage", tuple(), 1, (LayerInputTypeChoice.Image,))
+    PlotMaskSegmentation = ("PlotMaskSegmentation", tuple(), 1, (LayerInputTypeChoice.Image,))
+    PutTag = ("PutTag", tuple(), 1, (LayerInputTypeChoice.Text,))
+    PostprocessBoxes = ("PostprocessBoxes", (BlockGroupChoice.Model,
+                                             BlockGroupChoice.InputData), 2, (LayerInputTypeChoice.Image,))
     PlotBBoxes = ("PlotBBoxes", (BlockFunctionTypeChoice.PostprocessBoxes,
                                  BlockCustomTypeChoice.Sort,
-                                 BlockGroupChoice.InputData), 2)
+                                 BlockGroupChoice.InputData), 2, (LayerInputTypeChoice.Image,))
 
-    def __init__(self, name, binds, bind_count):
+    def __init__(self, name, binds, bind_count, data_type):
         self._name = name
         self._binds = binds
         self._bind_count = bind_count
+        self._data_type = data_type
 
     @property
     def name(self):
@@ -146,6 +157,10 @@ class BlocksBindChoice(Enum):
     @property
     def bind_count(self):
         return self._bind_count
+
+    @property
+    def data_type(self):
+        return self._data_type
 
     @staticmethod
     def checked_block(input_block):
