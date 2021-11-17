@@ -30,6 +30,10 @@ class BlockCustomData(BlockBaseData):
     main: types.Custom.ParametersMainData
 
 
+class BlockServiceData(BlockBaseData):
+    main: types.Service.ParametersMainData
+
+
 Block = Enum(
     "Block",
     dict(map(lambda item: (item.name, f"Block{item.name}Data"), list(BlockGroupChoice))),
