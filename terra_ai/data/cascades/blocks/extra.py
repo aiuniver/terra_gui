@@ -113,14 +113,14 @@ class BlockServiceTypeChoice(str, Enum):
 
 
 class BlocksBindChoice(Enum):
-    Model = ("Model", tuple(), 1, tuple())
+    Model = ("Model", ("Любой блок, совместимый с типом данных выбранной модели: ", ), 1, tuple())
     OutputData = ("OutputData", (BlockGroupChoice.Model,
                                  BlockFunctionTypeChoice.PlotBBoxes,
                                  BlockFunctionTypeChoice.PlotMaskSegmentation,
                                  BlockFunctionTypeChoice.PutTag), 1, tuple())
 
-    Sort = ("Sort", (BlockFunctionTypeChoice.PostprocessBoxes,), (LayerInputTypeChoice.Image,))
-    DeepSort = ("DeepSort", (BlockFunctionTypeChoice.PostprocessBoxes,), (LayerInputTypeChoice.Image,))
+    Sort = ("Sort", (BlockFunctionTypeChoice.PostprocessBoxes,), 1, (LayerInputTypeChoice.Image,))
+    DeepSort = ("DeepSort", (BlockFunctionTypeChoice.PostprocessBoxes,), 1, (LayerInputTypeChoice.Image,))
     ChangeType = ("ChangeType", tuple(), 1, (LayerInputTypeChoice.Image,
                                              LayerInputTypeChoice.Audio,
                                              LayerInputTypeChoice.Video,
@@ -167,3 +167,36 @@ class BlocksBindChoice(Enum):
         for block in BlocksBindChoice:
             if block.name == input_block:
                 return block
+
+
+class FunctionParamsChoice(Enum):
+    ChangeType = (BlockFunctionTypeChoice.ChangeType, ("change_type", ))
+    ChangeSize = (BlockFunctionTypeChoice.ChangeSize, ("shape", ))
+    MinMaxScale = (BlockFunctionTypeChoice.MinMaxScale, ("min_scale", "max_scale"))
+    CropImage = (BlockFunctionTypeChoice.CropImage, tuple())
+    MaskedImage = (BlockFunctionTypeChoice.MaskedImage, ("class_id", ))
+    PlotMaskSegmentation = (BlockFunctionTypeChoice.PlotMaskSegmentation, ("classes_color", ))
+    PutTag = (BlockFunctionTypeChoice.PutTag, ("open_tag", "close_tag", "alpha"))
+    PostprocessBoxes = (BlockFunctionTypeChoice.PostprocessBoxes, (
+        "input_size", "score_threshold", "iou_threshold", "method", "sigma"
+    ))
+    PlotBBoxes = (BlockFunctionTypeChoice.PlotBBoxes, ("classes", ))
+
+    def __init__(self, name, parameters):
+        self._name = name
+        self._parameters = parameters
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def parameters(self):
+        return self._parameters
+
+    @staticmethod
+    def get_parameters(input_block):
+        for block in FunctionParamsChoice:
+            if block.name == input_block:
+                return block.parameters
+

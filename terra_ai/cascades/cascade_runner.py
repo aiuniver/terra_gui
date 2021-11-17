@@ -6,7 +6,7 @@ from pathlib import Path
 
 from terra_ai.cascades.common import decamelize
 from terra_ai.cascades.create import json2cascade
-from terra_ai.data.cascades.blocks.extra import BlockFunctionGroupChoice
+from terra_ai.data.cascades.blocks.extra import BlockFunctionGroupChoice, FunctionParamsChoice
 from terra_ai.data.cascades.cascade import CascadeDetailsData
 from terra_ai.data.cascades.extra import BlockGroupChoice
 
@@ -20,7 +20,9 @@ class CascadeRunner:
             dataset_config_data = json.load(dataset_config)
 
         model_task = list(set([val.get("task") for key, val in dataset_config_data.get("outputs").items()]))[0]
-        cascade_config = self._create_config(cascade_data=cascade_data, model_task=model_task)
+        cascade_config = self._create_config(cascade_data=cascade_data, model_task=model_task,
+                                             dataset_data=dataset_config_data)
+        print(cascade_config)
         script_name, model = self._get_task_type(cascade_data=cascade_data, training_path=path)
 
         main_block = json2cascade(path=os.path.join(path, model), cascade_config=cascade_config, mode="run")
@@ -57,7 +59,10 @@ class CascadeRunner:
         deploy_type = training_details.get("base").get("architecture").get("type")
         return decamelize(deploy_type), model
 
-    def _create_config(self, cascade_data: CascadeDetailsData, model_task: str):
+    def _create_config(self, cascade_data: CascadeDetailsData, model_task: str, dataset_data: dict):
+
+        classes = list(dataset_data.get("outputs").values())[0].get("classes_names")
+
         config = {"cascades": {}}
         adjacency_map = {}
         block_description = {}
@@ -93,15 +98,25 @@ class CascadeRunner:
                 adjacency_map.update({"model": self._get_bind_names(cascade_data=cascade_data,
                                                                     blocks_ids=block.bind.up)})
             else:
-                block_description = {
-                    block.name: {
-                        "tag": block.parameters.main.type.value.lower(),
-                        "task": block.parameters.main.group.value,
-                        "name": decamelize(block.parameters.main.type.value),
-                        "params": {
+                if block.group == BlockGroupChoice.Function:
+                    block_parameters = FunctionParamsChoice.get_parameters(input_block=block.parameters.main.type)
+                    parameters = {
+                        key: val for key, val in block.parameters.main.native().items()
+                        if key in block_parameters
+                    }
+                    if "classes" in parameters.keys() and not parameters.get("classes"):
+                        parameters["classes"] = classes
+                else:
+                    parameters = {
                             key: val for key, val in block.parameters.main.native().items()
                             if key not in ["type", "group"]
                         }
+                block_description = {
+                    block.name: {
+                        "tag": block.group.value.lower(),
+                        "task": block.parameters.main.group.value,
+                        "name": decamelize(block.parameters.main.type.value),
+                        "params": parameters
                     }
                 }
                 adjacency_map.update({block.name: self._get_bind_names(cascade_data=cascade_data,

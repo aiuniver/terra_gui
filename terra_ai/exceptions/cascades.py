@@ -52,6 +52,11 @@ class CascadesMessages(dict, Enum):
         "eng": "Not allowed communication with the block %s. Connections with blocks are possible: %s"
     }
 
+    BindInappropriateDataType = {
+        "ru": "Тип данных блока %s не совпадает с типом данных каскада %s",
+        "eng": "The data type of the %s block does not match the data type of the cascade %s"
+    }
+
 
 class CascadesException(TerraBaseException):
     class Meta:
@@ -130,6 +135,14 @@ class BindCountExceedingException(CascadesException):
 class ForbiddenBindException(CascadesException):
     class Meta:
         message = CascadesMessages.ForbiddenBindExceeding
+
+    def __init__(self, __expected, __got, **kwargs):
+        super().__init__(str(__expected), str(__got), **kwargs)
+
+
+class BindInappropriateDataTypeException(CascadesException):
+    class Meta:
+        message = CascadesMessages.BindInappropriateDataType
 
     def __init__(self, __expected, __got, **kwargs):
         super().__init__(str(__expected), str(__got), **kwargs)

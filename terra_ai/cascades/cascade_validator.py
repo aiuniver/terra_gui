@@ -5,6 +5,7 @@ from pathlib import Path
 from terra_ai.data.cascades.cascade import CascadeDetailsData
 from terra_ai.data.cascades.extra import BlockGroupChoice
 from terra_ai.data.cascades.blocks.extra import BlocksBindChoice
+from terra_ai.data.datasets.extra import LayerInputTypeChoice
 from terra_ai.exceptions import cascades as exceptions
 
 
@@ -45,10 +46,14 @@ class CascadeValidator:
                 #                                       dataset_data_type, block.parameters.main.type
                 #                                   )))
                 if block.parameters.main.type != model_data_type:
-                    bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
-                                                  error=str(exceptions.InputDataDoesNotMatchModelDataException(
-                                                      block.parameters.main.type.value, model_data_type
-                                                  )))
+                    if block.parameters.main.type == LayerInputTypeChoice.Video and\
+                            block.parameters.main.switch_on_frame and model_data_type == LayerInputTypeChoice.Image:
+                        pass
+                    else:
+                        bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
+                                                      error=str(exceptions.InputDataDoesNotMatchModelDataException(
+                                                          block.parameters.main.type.value, model_data_type
+                                                      )))
             elif block.group == BlockGroupChoice.OutputData:
                 if not block.bind.up or block.bind.down:
                     bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
@@ -69,22 +74,34 @@ class CascadeValidator:
                 #                                   )))
             if block.group != BlockGroupChoice.InputData:
                 input_block, checked_block = self._get_comparison_blocks(block)
+                if block.group == BlockGroupChoice.Model:
+                    error_args = (checked_block.bind_count,
+                                  f'{", ".join(checked_block.binds)}{model_data_type}')
+                else:
+                    error_args = (checked_block.bind_count, ", ".join(checked_block.binds))
 
                 if len(block.bind.up) < checked_block.bind_count:
                     bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
-                                                  error=str(exceptions.BindCountNotEnoughException(
-                                                      checked_block.bind_count,
-                                                      ", ".join(checked_block.binds)
-                                                  )))
+                                                  error=str(
+                                                      exceptions.BindCountNotEnoughException(*error_args)
+                                                  ))
                 if len(block.bind.up) > checked_block.bind_count:
                     bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
-                                                  error=str(exceptions.BindCountExceedingException(
-                                                      checked_block.bind_count,
-                                                      ", ".join(checked_block.binds)
-                                                  )))
+                                                  error=str(
+                                                      exceptions.BindCountExceedingException(*error_args)
+                                                  ))
+
+                if checked_block.data_type and model_data_type not in checked_block.data_type:
+                    bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
+                                                  error=str(
+                                                      exceptions.BindInappropriateDataTypeException(
+                                                          checked_block.data_type,
+                                                          model_data_type
+                                                      )
+                                                  ))
 
                 for block_id in block.bind.up:
-                    if checked_block:
+                    if checked_block and checked_block != BlocksBindChoice.Model:
                         if checked_block.binds and (named_map.get(block_id) not in checked_block.binds):
                             bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
                                                           error=str(exceptions.ForbiddenBindException(
