@@ -28,6 +28,7 @@ export default {
   &__content {
     p {
       font-size: 14px;
+      color: #a7bed3;
     }
   }
 }
