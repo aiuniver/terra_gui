@@ -368,6 +368,16 @@ $circleConnectedColor: #569dcf;
         border: $blockBorder solid #ffffff;
       }
     }
+    &.Service {
+      background: #ef40ff;
+      border: $blockBorder solid #ef40ff;
+      &:hover {
+        border: $blockBorder solid #ffffff;
+      }
+      &.selected {
+        border: $blockBorder solid #ffffff;
+      }
+    }
     &.OutputData {
       background: #ae00fb;
       border: $blockBorder solid #ae00fb;

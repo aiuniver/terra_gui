@@ -75,7 +75,7 @@ export default {
       if (btn === 'load') {
         this.isTraining();
       }
-      if (['InputData', 'Model', 'Function', 'Custom', 'OutputData'].includes(btn)) {
+      if (['InputData', 'Model', 'Function', 'Custom', 'Service', 'OutputData'].includes(btn)) {
         console.log(btn);
         this.addBlock(btn);
       }
