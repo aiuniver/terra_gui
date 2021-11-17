@@ -25,3 +25,4 @@ APScheduler==3.8.0
 keras==2.7.0
 transformers==4.12.3
 gtts==2.2.3
+filterpy==1.4.5
