@@ -281,7 +281,6 @@ class GUINN:
         # model.load_weights(file_path_model_weights)
         return model
 
-
     def _kill_last_training(self, state):
         method_name = '_kill_last_training'
         try:
@@ -435,10 +434,12 @@ class GUINN:
                     pred_result = yolo_model(image_array['1'], training=True)
                     giou_loss = conf_loss = prob_loss = 0
                     prob_loss_cls = {}
+                    predict = []
                     for idx in range(num_class):
                         prob_loss_cls[classes[idx]] = 0
                     for n, elem in enumerate(conv_target.keys()):
                         conv, pred = pred_result[n * 2], pred_result[n * 2 + 1]
+                        predict.append(conv)
                         loss_items = compute_loss(
                             pred=pred,
                             conv=conv,
@@ -463,7 +464,7 @@ class GUINN:
                             (1 + tf.cos((global_steps - warmup_steps) / (total_steps - warmup_steps) * np.pi)))
                     lr = tf.cast(lr, dtype='float32')
                     optimizer.lr.assign(lr)
-                return global_steps, giou_loss, conf_loss, prob_loss, total_loss, prob_loss_cls, pred_result
+                return global_steps, giou_loss, conf_loss, prob_loss, total_loss, prob_loss_cls, predict
 
             @tf.function
             def validate_step(image_array, conv_target, serv_target):
@@ -474,8 +475,10 @@ class GUINN:
                 for idx in range(num_class):
                     prob_loss_cls[classes[idx]] = tf.convert_to_tensor(0., dtype='float32')
 
+                predict = []
                 for n, elem in enumerate(conv_target.keys()):
                     conv, pred = pred_result[n * 2], pred_result[n * 2 + 1]
+                    predict.append(conv)
                     loss_items = compute_loss(
                         pred=pred,
                         conv=conv,
@@ -493,17 +496,26 @@ class GUINN:
                 total_loss = tf.add(giou_loss, conf_loss)
                 total_loss = tf.add(total_loss, prob_loss)
 
-                return giou_loss, conf_loss, prob_loss, total_loss, prob_loss_cls, pred_result
+                return giou_loss, conf_loss, prob_loss, total_loss, prob_loss_cls, predict
 
-            callback.on_train_begin()
+            train_pred, train_true, val_pred, val_true = [], [], [], []
             optimizer = self.set_optimizer(params=params)
-            first_epoch = True
-            train_data_idxs = []
-            train_true = []
-            train_pred = []
+            output_array = None
+            for _, out, _ in self.dataset.dataset['train'].batch(1).take(1):
+                output_array = out
+            for array in output_array.values():
+                train_target_shape, val_target_shape = [self.train_length], [self.val_length]
+                train_target_shape.extend(list(array.shape[1:]))
+                val_target_shape.extend(list(array.shape[1:]))
+                train_pred.append(np.zeros(train_target_shape))
+                train_true.append(np.zeros(train_target_shape))
+                val_pred.append(np.zeros(val_target_shape))
+                val_true.append(np.zeros(val_target_shape))
+
+            train_data_idxs = np.arange(self.train_length).tolist()
+            callback.on_train_begin()
             for epoch in range(params.base.epochs):
                 callback.on_epoch_begin()
-                train_steps = 1
                 st = time.time()
                 print(f'\n New epoch {epoch + 1}, batch {params.base.batch}\n')
                 current_logs = {"epochs": epoch + 1, 'loss': {}, "metrics": {}, 'class_loss': {}, 'class_metrics': {}}
@@ -511,45 +523,50 @@ class GUINN:
                 for cls in range(num_class):
                     train_loss_cls[classes[cls]] = 0.
                 cur_step, giou_train, conf_train, prob_train, total_train = 0, 0, 0, 0, 0
-                new_batch = True
                 for image_data, target1, target2 in dataset.dataset.get('train').batch(params.base.batch):
                     bt = time.time()
                     results = train_step(image_data, target1, target2)
-                    cur_step += 1
+
                     giou_train += results[1].numpy()
                     conf_train += results[2].numpy()
                     prob_train += results[3].numpy()
                     total_train += results[4].numpy()
                     for cls in range(num_class):
                         train_loss_cls[classes[cls]] += results[5][classes[cls]].numpy()
-                    bend = time.time()
-                    if not train_true:
-                        for i, true_array in enumerate(target1.values()):
-                            train_pred.append(results[6][i].numpy().astype('float'))
-                            train_true.append(true_array.numpy().astype('float'))
-                        train_data_idxs = list(range(results[6][0].shape[0]))
-                    elif first_epoch:
-                        for i, true_array in enumerate(target1.values()):
-                            train_pred[i] = np.concatenate(
-                                [train_pred[i], results[6][i].numpy().astype('float')], axis=0)
-                            train_true[i] = np.concatenate(
-                                [train_true[i], true_array.numpy().astype('float')], axis=0)
-                        train_data_idxs.extend(list(range(
-                            train_data_idxs[-1] + 1, train_data_idxs[-1] + 1 + results[6][0].shape[0])))
-                    else:
-                        for i, true_array in enumerate(target1.values()):
-                            train_pred[i] = np.concatenate(
-                                [train_pred[i][results[6][i].shape[0]:], results[6][i].numpy().astype('float')], axis=0)
-                            train_true[i] = np.concatenate(
-                                [train_true[i][true_array.shape[0]:], true_array.numpy().astype('float')], axis=0)
-                        if new_batch:
-                            train_data_idxs = train_data_idxs[results[6][0].shape[0]:]
-                            train_data_idxs.extend(list(range(results[6][0].shape[0])))
-                        else:
-                            train_data_idxs = train_data_idxs[results[6][0].shape[0]:]
-                            train_data_idxs.extend(list(range(
-                                train_data_idxs[-1] + 1, train_data_idxs[-1] + 1 + results[6][0].shape[0])))
-                    del results
+
+                    true_array = list(target1.values())
+                    for i in range(len(train_pred)):
+                        length = results[6][i].shape[0]
+                        train_pred[i][length * cur_step: length * (cur_step + 1)] = results[6][i].numpy()
+                        train_true[i][length * cur_step: length * (cur_step + 1)] = true_array[i].numpy()
+                    cur_step += 1
+                    # bend = time.time()
+                    # if not train_true:
+                    #     for i, true_array in enumerate(target1.values()):
+                    #         train_pred.append(results[6][i].numpy().astype('float'))
+                    #         train_true.append(true_array.numpy().astype('float'))
+                    #     train_data_idxs = list(range(results[6][0].shape[0]))
+                    # elif first_epoch:
+                    #     for i, true_array in enumerate(target1.values()):
+                    #         train_pred[i] = np.concatenate(
+                    #             [train_pred[i], results[6][i].numpy().astype('float')], axis=0)
+                    #         train_true[i] = np.concatenate(
+                    #             [train_true[i], true_array.numpy().astype('float')], axis=0)
+                    #     train_data_idxs.extend(list(range(
+                    #         train_data_idxs[-1] + 1, train_data_idxs[-1] + 1 + results[6][0].shape[0])))
+                    # else:
+                    #     for i, true_array in enumerate(target1.values()):
+                    #         train_pred[i] = np.concatenate(
+                    #             [train_pred[i][results[6][i].shape[0]:], results[6][i].numpy().astype('float')], axis=0)
+                    #         train_true[i] = np.concatenate(
+                    #             [train_true[i][true_array.shape[0]:], true_array.numpy().astype('float')], axis=0)
+                    #     if new_batch:
+                    #         train_data_idxs = train_data_idxs[results[6][0].shape[0]:]
+                    #         train_data_idxs.extend(list(range(results[6][0].shape[0])))
+                    #     else:
+                    #         train_data_idxs = train_data_idxs[results[6][0].shape[0]:]
+                    #         train_data_idxs.extend(list(range(
+                    #             train_data_idxs[-1] + 1, train_data_idxs[-1] + 1 + results[6][0].shape[0])))
                     if interactive.urgent_predict:
                         print('\nGUINN interactive.urgent_predict\n')
                     #     val_true = []
@@ -570,28 +587,18 @@ class GUINN:
                     #         "train_true": train_true, "val_true": val_true, "train_pred": train_pred,
                     #         "val_pred": val_pred}, train_data_idxs=train_data_idxs)
                     else:
-                        callback.on_train_batch_end(batch=train_steps)
-                    print(f' -- batch {train_steps} - {round(bend - bt, 3)}, '
-                          f'concatenate time {round(time.time() - bend, 3)}')
-                    train_steps += 1
-                    new_batch = False
+                        callback.on_train_batch_end(batch=cur_step)
+                    print(f' -- batch {cur_step} - {round(time.time() - bt, 3)}')
                     if callback.stop_training:
                         break
                 print(f'\n train epoch time: {round(time.time() - st, 3)}\n')
 
                 st = time.time()
-                file_path_last: str = os.path.join(
-                    callback.training_detail.model_path, f"last_weights_{callback.metric_checkpoint}.h5"
-                )
-                yolo_model.save_weights(file_path_last)
+                self.save_model()
                 if callback.stop_training:
                     callback.on_train_end(yolo_model)
                     break
-                print(f'\n save_model time: {round(time.time() - st, 3)}, {file_path_last}\n')
-                # print(
-                #     "epoch:{:2.0f} step:{:5.0f}/{}, giou_loss:{:7.2f}, conf_loss:{:7.2f}, prob_loss:{:7.2f}, total_loss:{:7.2f}"
-                #         .format(epoch + 1, cur_step, steps_per_epoch, results[1], results[2], results[3],
-                #                 results[4]))
+                print(f'\n save_model time: {round(time.time() - st, 3)},\n')
 
                 current_logs['loss']['giou_loss'] = {'train': giou_train / cur_step}
                 current_logs['loss']['conf_loss'] = {'train': conf_train / cur_step}
@@ -607,42 +614,46 @@ class GUINN:
                 #         format(time.time() - st, giou_train / cur_step, conf_train / cur_step, prob_train / cur_step,
                 #                total_train / cur_step, train_loss_cls))
                 st = time.time()
-                count, giou_val, conf_val, prob_val, total_val = 0., 0, 0, 0, 0
+                val_steps, giou_val, conf_val, prob_val, total_val = 0, 0, 0, 0, 0
                 val_loss_cls = {}
                 for cls in range(num_class):
                     val_loss_cls[classes[cls]] = 0.
-                val_true = []
-                val_pred = []
                 for image_data, target1, target2 in dataset.dataset.get('val').batch(params.base.batch):
                     bt = time.time()
                     results = validate_step(image_data, target1, target2)
-                    count += 1
                     giou_val += results[0].numpy()
                     conf_val += results[1].numpy()
                     prob_val += results[2].numpy()
                     total_val += results[3].numpy()
                     for cls in range(num_class):
                         val_loss_cls[str(classes[cls])] += results[4][str(classes[cls])].numpy()
-                    if not val_true:
-                        for i, true_array in enumerate(target1.values()):
-                            val_pred.append(results[5][i].numpy().astype('float'))
-                            val_true.append(true_array.numpy().astype('float'))
-                    else:
-                        for i, true_array in enumerate(target1.values()):
-                            val_pred[i] = np.concatenate(
-                                [val_pred[i], results[5][i].numpy().astype('float')], axis=0)
-                            val_true[i] = np.concatenate(
-                                [val_true[i], true_array.numpy().astype('float')], axis=0)
-                    print(f' -- val_batch {count} - {round(time.time() - bt, 3)}')
+
+                    val_true_array = list(target1.values())
+                    for i in range(len(val_true_array)):
+                        length = val_true_array[i].shape[0]
+                        val_pred[i][length * val_steps: length * (val_steps + 1)] = results[5][i].numpy()
+                        val_true[i][length * val_steps: length * (val_steps + 1)] = val_true_array[i].numpy()
+                    val_steps += 1
+                    # if not val_true:
+                    #     for i, true_array in enumerate(target1.values()):
+                    #         val_pred.append(results[5][i].numpy().astype('float'))
+                    #         val_true.append(true_array.numpy().astype('float'))
+                    # else:
+                    #     for i, true_array in enumerate(target1.values()):
+                    #         val_pred[i] = np.concatenate(
+                    #             [val_pred[i], results[5][i].numpy().astype('float')], axis=0)
+                    #         val_true[i] = np.concatenate(
+                    #             [val_true[i], true_array.numpy().astype('float')], axis=0)
+                    print(f' -- val_batch {val_steps} - {round(time.time() - bt, 3)}')
                 print(f'\n val epoch time: {round(time.time() - st, 3)}\n')
 
-                current_logs['loss']['giou_loss']["val"] = giou_val / count
-                current_logs['loss']['conf_loss']["val"] = conf_val / count
-                current_logs['loss']['prob_loss']["val"] = prob_val / count
-                current_logs['loss']['total_loss']["val"] = total_val / count
+                current_logs['loss']['giou_loss']["val"] = giou_val / val_steps
+                current_logs['loss']['conf_loss']["val"] = conf_val / val_steps
+                current_logs['loss']['prob_loss']["val"] = prob_val / val_steps
+                current_logs['loss']['total_loss']["val"] = total_val / val_steps
                 for cls in range(num_class):
                     current_logs['class_loss']['prob_loss'][str(classes[cls])]["val"] = \
-                        val_loss_cls[str(classes[cls])] / count
+                        val_loss_cls[str(classes[cls])] / val_steps
                 # print(
                 #     "\n\n epoch_time:{:7.2f} sec, giou_val_loss:{:7.2f}, conf_val_loss:{:7.2f}, prob_val_loss:{:7.2f}, total_val_loss:{:7.2f}".
                 #         format(time.time() - st, giou_val / count, conf_val / count, prob_val / count, total_val / count))
@@ -668,7 +679,6 @@ class GUINN:
                     train_data_idxs=train_data_idxs,
                     logs=current_logs
                 )
-                del val_true, val_pred
                 print(f'\n callback.on_epoch_end epoch time: {round(time.time() - st, 3)}')
                 print(
                     f"\nEpoch {callback.current_logs.get('epochs')}:\n"
@@ -689,8 +699,7 @@ class GUINN:
                     yolo_model.save_weights(best_path)
                     print(f"\nEpoch {epoch + 1}")
                     print(f"Best weights was saved in directory {best_path}")
-                print(f'\n save_best_weights time: {round(time.time() - st, 3)}')
-                first_epoch = False
+                print(f'\n save_best_weights time: {round(time.time() - st, 3)}\n')
             callback.on_train_end(yolo_model)
         except Exception as e:
             print_error(GUINN().name, method_name, e)
@@ -727,17 +736,6 @@ class GUINN:
                     test_logits = train_model(x_batch, training=False)
                     true_array = list(y_batch.values())
                     test_logits = test_logits if isinstance(test_logits, list) else [test_logits]
-                    # dict_pred = {}
-                    # dict_true = {}
-                    # if not test_true:
-                    #     for j, outp in enumerate(outputs):
-                    #         dict_pred[f"{outp}"] = tf.cast(test_logits[j], dtype='float32')
-                    #         dict_true[f"{outp}"] = tf.cast(true_array[j], dtype='float32')
-                    # else:
-                    #     for j, outp in enumerate(outputs):
-                    #         dict_pred[f"{outp}"] = tf.concat([test_pred[f"{outp}"], test_logits[j]], axis=0)
-                    #         dict_true[f"{outp}"] = tf.concat([test_true[f"{outp}"], true_array[j]], axis=0)
-                # print(true_array[0].shape, test_logits[0].shape)
                 return test_logits, true_array
 
             current_epoch = 0
@@ -754,13 +752,10 @@ class GUINN:
                 val_pred[f"{out}"] = np.zeros(val_target_shape)
                 val_true[f"{out}"] = np.zeros(val_target_shape)
 
-            # first_epoch = True
             train_data_idxs = np.arange(self.train_length).tolist()
-            # urgent_predict = False
             callback.on_train_begin()
             for epoch in range(current_epoch, params.base.epochs):
                 callback.on_epoch_begin()
-                first_batch = True
                 train_steps = 0
                 st = time.time()
                 print(f'\n New epoch {epoch + 1}, batch {params.base.batch}\n')
@@ -774,33 +769,6 @@ class GUINN:
                         length = logits[i].shape[0]
                         train_pred[f"{out}"][length * train_steps: length * (train_steps + 1)] = logits[i].numpy()
                         train_true[f"{out}"][length * train_steps: length * (train_steps + 1)] = y_true[i].numpy()
-
-                    # if first_batch:
-                    #     for i, out in enumerate(output_list):
-                    #         train_pred[f"{out}"] = logits[i].numpy().astype('float')
-                    #         train_true[f"{out}"] = y_true[i].numpy().astype('float')
-                    #     train_data_idxs = list(range(y_true[0].shape[0]))
-                    # elif first_epoch:
-                    #     for i, out in enumerate(output_list):
-                    #         train_pred[f"{out}"] = np.concatenate(
-                    #             [train_pred[f"{out}"], logits[i].numpy().astype('float')], axis=0)
-                    #         train_true[f"{out}"] = np.concatenate(
-                    #             [train_true[f"{out}"], y_true[i].numpy().astype('float')], axis=0)
-                    #     train_data_idxs.extend(list(range(
-                    #         train_data_idxs[-1] + 1, train_data_idxs[-1] + 1 + y_true[0].shape[0])))
-                    # else:
-                    #     for i, out in enumerate(output_list):
-                    #         train_pred[f"{out}"] = np.concatenate(
-                    #             [train_pred[f"{out}"][logits[i].shape[0]:], logits[i].numpy().astype('float')], axis=0)
-                    #         train_true[f"{out}"] = np.concatenate(
-                    #             [train_true[f"{out}"][y_true[i].shape[0]:], y_true[i].numpy().astype('float')], axis=0)
-                    #     if new_batch:
-                    #         train_data_idxs = train_data_idxs[y_true[0].shape[0]:]
-                    #         train_data_idxs.extend(list(range(y_true[0].shape[0])))
-                    #     else:
-                    #         train_data_idxs = train_data_idxs[y_true[0].shape[0]:]
-                    #         train_data_idxs.extend(list(range(
-                    #             train_data_idxs[-1] + 1, train_data_idxs[-1] + 1 + y_true[0].shape[0])))
                     train_steps += 1
                     if interactive.urgent_predict:
                         val_steps = 0
@@ -824,10 +792,7 @@ class GUINN:
                     if callback.stop_training:
                         break
                 print(f'- train epoch time: {round(time.time() - st, 3)}\n')
-                # file_path_last: str = os.path.join(
-                #     callback.training_detail.model_path, f"last_weights_{callback.metric_checkpoint}.h5"
-                # )
-                # model.save_weights(file_path_last)
+
                 st = time.time()
                 self.save_model()
                 if callback.stop_training:
@@ -837,33 +802,17 @@ class GUINN:
                 st = time.time()
                 # Run a validation loop at the end of each epoch.
                 print(f'\n Run a validation loop')
-                # val_pred = {}
-                # val_true = {}
                 val_steps = 0
                 for x_batch_val, y_batch_val in dataset.dataset.get('val').batch(params.base.batch):
-                    # y_val = list(y_batch_val.values())
                     st1 = time.time()
                     val_pred_array, val_true_array = test_step(
                         train_model=model, x_batch=x_batch_val, y_batch=y_batch_val)
-                    # dict_pred = {}
-                    # dict_true = {}
-                    # if not test_true:
-                    #     for j, outp in enumerate(outputs):
-                    #         dict_pred[f"{outp}"] = tf.cast(test_logits[j], dtype='float32')
-                    #         dict_true[f"{outp}"] = tf.cast(true_array[j], dtype='float32')
-                    # else:
-                    #     for j, outp in enumerate(outputs):
-                    #         dict_pred[f"{outp}"] = tf.concat([test_pred[f"{outp}"], test_logits[j]], axis=0)
-                    #         dict_true[f"{outp}"] = tf.concat([test_true[f"{outp}"], true_array[j]], axis=0)
                     for i, out in enumerate(output_list):
                         length = val_true_array[i].shape[0]
                         val_pred[f"{out}"][length * val_steps: length * (val_steps + 1)] = val_pred_array[i].numpy()
                         val_true[f"{out}"][length * val_steps: length * (val_steps + 1)] = val_true_array[i].numpy()
                     val_steps += 1
                     print('- val batch', train_steps, round(time.time() - st1, 3))
-                # for output in output_list:
-                #     val_pred[f"{output}"] = val_pred[f"{output}"].numpy().astype('float')
-                #     val_true[f"{output}"] = val_true[f"{output}"].numpy().astype('float')
                 print(f'- val epoch time: {round(time.time() - st, 3)}\n', val_pred['2'].shape, val_true['2'].shape)
 
                 st = time.time()
@@ -895,7 +844,6 @@ class GUINN:
                     model.save_weights(best_path)
                     print(f"\nEpoch {epoch + 1}")
                     print(f"Best weights was saved in directory {best_path}")
-                first_epoch = False
             callback.on_train_end(model)
         except Exception as e:
             print_error(GUINN().name, method_name, e)

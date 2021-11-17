@@ -115,7 +115,17 @@ class BaseObjectDetectionCallback:
         try:
             if len(boxes) == 0:
                 return [], []
-            pick = []
+            # classes = np.argmax(scores, axis=-1)
+            # idxs_ = np.argsort(classes)[..., ::-1]
+
+            # clean zero-coordinates
+            # none_zero_idx = np.where(np.sum(boxes, axis=tuple(range(1, len(boxes.shape)))) != 0)[0]
+            # zero_idx = np.where(np.sum(boxes, axis=tuple(range(1, len(boxes.shape)))) == 0)[0]
+            # print(method_name, f'none_zero_idx={len(none_zero_idx)}, zero_idx={len(zero_idx)}')
+            # clean_boxes = boxes[none_zero_idx]
+            # idxs = np.array()
+            # clean_scores = scores[none_zero_idx]
+
             x1 = boxes[:, 0]
             y1 = boxes[:, 1]
             x2 = boxes[:, 2]
@@ -123,7 +133,9 @@ class BaseObjectDetectionCallback:
             area = (x2 - x1 + 1) * (y2 - y1 + 1)
             classes = np.argmax(scores, axis=-1)
             idxs = np.argsort(classes)[..., ::-1]
-            mean_iou = []
+            # idxs = np.delete(all_idxs, np.where(np.sum(boxes[all_idxs], axis=tuple(range(1, len(boxes.shape)))) == 0))
+            # print('\n--', method_name, f'none_zero_idx={len(none_zero_idx)}, zero_idx={len(zero_idx)}, len_idxs={len(all_idxs), len(idxs)}')
+            mean_iou, pick = [], []
             count = 0
             while len(idxs) > 0:
                 count += 1
@@ -137,9 +149,19 @@ class BaseObjectDetectionCallback:
                 w = np.maximum(0, xx2 - xx1 + 1)
                 h = np.maximum(0, yy2 - yy1 + 1)
                 overlap = (w * h) / area[idxs[:last]]
+
+                # i = idxs[0]
+                # pick.append(i)
+                # xx1 = np.maximum(x1[i], x1[idxs[1:]])
+                # yy1 = np.maximum(y1[i], y1[idxs[1:]])
+                # xx2 = np.minimum(x2[i], x2[idxs[1:]])
+                # yy2 = np.minimum(y2[i], y2[idxs[1:]])
+                # w = np.maximum(0, xx2 - xx1 + 1)
+                # h = np.maximum(0, yy2 - yy1 + 1)
+                # overlap = (w * h) / area[idxs[1:]]
                 mean_iou.append(overlap)
-                idxs = np.delete(idxs, np.concatenate(([last], np.where(overlap > sensitivity)[0])))
-            print('\n-- non_max_suppression_fast', count, boxes.shape, boxes[0], scores[0])
+                idxs = np.delete(idxs, np.concatenate(([i], np.where(overlap > sensitivity)[0])))
+            print('-- non_max_suppression_fast', count, boxes.shape, boxes[pick][0], scores[pick][0])
             return pick, mean_iou
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
