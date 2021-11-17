@@ -3,7 +3,7 @@ import shutil
 from terra_ai.agent import agent_exchange
 from terra_ai.data.datasets.creation import CreationData
 
-from apps.plugins.project import data_path, project_path
+from apps.plugins.project import data_path
 
 from apps.api.base import (
     BaseAPIView,
@@ -23,7 +23,6 @@ class ChoiceAPIView(BaseAPIView):
         agent_exchange(
             "dataset_choice",
             custom_path=data_path.datasets,
-            destination=project_path.datasets,
             **serializer.validated_data,
         )
         return BaseResponseSuccess()
@@ -33,8 +32,9 @@ class ChoiceProgressAPIView(BaseAPIView):
     @staticmethod
     def post(request, **kwargs):
         progress = agent_exchange("dataset_choice_progress")
-        if progress.finished and progress.data and progress.data.get("dataset"):
+        if progress.finished and progress.data and progress.data.get("info"):
             request.project.set_dataset(**progress.data)
+            progress.data = request.project.dataset.native()
         if progress.success:
             return BaseResponseSuccess(data=progress.native())
         else:
