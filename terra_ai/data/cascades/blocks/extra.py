@@ -54,7 +54,7 @@ class BlockFunctionGroupChoice(str, Enum):
     Segmentation = "Segmentation"
     TextSegmentation = "TextSegmentation"
     ObjectDetection = "ObjectDetection"
-    Tracker = "Tracker"
+    # Tracker = "Tracker"
 
     @staticmethod
     def values() -> list:
@@ -87,6 +87,23 @@ class BlockCustomGroupChoice(str, Enum):
 
 class BlockCustomTypeChoice(str, Enum):
     Sort = "Sort"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, BlockCustomTypeChoice))
+
+
+class BlockServiceGroupChoice(str, Enum):
+    Tracking = "Tracking"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, BlockCustomGroupChoice))
+
+
+class BlockServiceTypeChoice(str, Enum):
+    Sort = "Sort"
+    DeepSort = "DeepSort"
 
     @staticmethod
     def values() -> list:

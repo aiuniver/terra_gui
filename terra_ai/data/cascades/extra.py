@@ -7,6 +7,7 @@ class BlockGroupChoice(str, Enum):
     Model = "Model"
     Function = "Function"
     Custom = "Custom"
+    Service = "Service"
 
     @staticmethod
     def values() -> list:
