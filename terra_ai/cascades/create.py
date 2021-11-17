@@ -1,4 +1,4 @@
-from . import cascade_input, cascade_output, general_fucntions
+from . import cascade_input, cascade_output, general_fucntions, service
 from .cascade import CascadeElement, CascadeOutput, BuildModelCascade, CompleteCascade, CascadeBlock
 
 from .common import decamelize, yolo_decode, type2str
@@ -63,7 +63,7 @@ def json2model_cascade(path: str):
                 if 'yolo' in spec_config.keys():
                     version = spec_config['yolo']
                     break
-        model = create_yolo(model, config, version)
+        model = make_yolo(model, config, version)
     preprocess = []
 
     for inp in config['inputs'].keys():
@@ -130,9 +130,12 @@ def json2model_cascade(path: str):
     return model
 
 
-def json2cascade(path: str):
-    with open(path) as cfg:
-        config = json.load(cfg)
+def json2cascade(path: str, cascade_config=None, mode="deploy"):
+    if cascade_config:
+        config = cascade_config
+    else:
+        with open(path) as cfg:
+            config = json.load(cfg)
     cascades = {}
     input_cascade = None
 
@@ -141,7 +144,11 @@ def json2cascade(path: str):
             input_cascade = getattr(sys.modules.get(__name__), "create_" + params['tag'])(**params)
         else:
             if params['tag'] == 'model':
-                params['model_path'] = os.path.split(path)[0]
+                if mode == "run":
+                    params["model"] = "model"
+                    params['model_path'] = path
+                else:
+                    params['model_path'] = os.path.split(path)[0]
             cascades[i] = getattr(sys.modules.get(__name__), "create_" + params['tag'])(**params)
 
     adjacency_map = OrderedDict()
@@ -182,7 +189,21 @@ def create_function(**params):
     return function
 
 
-def create_yolo(model, config, version):
+def create_service(**params):
+    function = getattr(service, decamelize(params['task']))
+
+    if 'params' not in params.keys():
+        params['params'] = {}
+
+    function = CascadeElement(
+        getattr(function, params['name'])(**params['params']),
+        f"сервис {params['name']}"
+    )
+
+    return function
+
+
+def make_yolo(model, config, version):
     od = None
     img_conf = None
     for _, i in config['outputs'].items():
