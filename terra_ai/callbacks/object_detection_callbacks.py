@@ -41,14 +41,12 @@ class BaseObjectDetectionCallback:
                 coord = options.dataframe.get('val').iloc[index, 1].split(' ')
                 bbox_data_gt = np.array([list(map(int, box.split(','))) for box in coord])
                 bboxes_gt, classes_gt = bbox_data_gt[:, :4].astype('float'), bbox_data_gt[:, 4]
-                # print('\n bboxes_gt', bboxes_gt)
                 classes_gt = to_categorical(
                     classes_gt, num_classes=len(options.data.outputs.get(2).classes_names)
                 )
                 bboxes_gt = np.concatenate(
                     [bboxes_gt[:, 1:2] * scale_h, bboxes_gt[:, 0:1] * scale_w,
                      bboxes_gt[:, 3:4] * scale_h, bboxes_gt[:, 2:3] * scale_w], axis=-1).astype('int')
-                # print(bboxes_gt)
                 conf_gt = np.expand_dims(np.ones(len(bboxes_gt)), axis=-1)
                 _bb = np.concatenate([bboxes_gt, conf_gt, classes_gt], axis=-1)
                 bb.append(_bb)
@@ -69,15 +67,12 @@ class BaseObjectDetectionCallback:
                 channel_boxes = []
                 for ex in box_array:
                     count += 1
-                    t = time.time()
                     boxes = BaseObjectDetectionCallback().get_predict_boxes(
                         array=np.expand_dims(ex, axis=0),
                         name_classes=name_classes,
-                        # bb_size=i,
                         sensitivity=sensitivity,
                         threashold=threashold
                     )
-                    print(f'BaseObjectDetectionCallback get_yolo_y_pred: {count} {round(time.time() - t, 3)}\n')
                     channel_boxes.append(boxes)
                 y_pred[i] = channel_boxes
             return y_pred
@@ -115,17 +110,7 @@ class BaseObjectDetectionCallback:
         try:
             if len(boxes) == 0:
                 return [], []
-            # classes = np.argmax(scores, axis=-1)
-            # idxs_ = np.argsort(classes)[..., ::-1]
-
-            # clean zero-coordinates
-            # none_zero_idx = np.where(np.sum(boxes, axis=tuple(range(1, len(boxes.shape)))) != 0)[0]
-            # zero_idx = np.where(np.sum(boxes, axis=tuple(range(1, len(boxes.shape)))) == 0)[0]
-            # print(method_name, f'none_zero_idx={len(none_zero_idx)}, zero_idx={len(zero_idx)}')
-            # clean_boxes = boxes[none_zero_idx]
-            # idxs = np.array()
-            # clean_scores = scores[none_zero_idx]
-
+            pick = []
             x1 = boxes[:, 0]
             y1 = boxes[:, 1]
             x2 = boxes[:, 2]
@@ -133,9 +118,7 @@ class BaseObjectDetectionCallback:
             area = (x2 - x1 + 1) * (y2 - y1 + 1)
             classes = np.argmax(scores, axis=-1)
             idxs = np.argsort(classes)[..., ::-1]
-            # idxs = np.delete(all_idxs, np.where(np.sum(boxes[all_idxs], axis=tuple(range(1, len(boxes.shape)))) == 0))
-            # print('\n--', method_name, f'none_zero_idx={len(none_zero_idx)}, zero_idx={len(zero_idx)}, len_idxs={len(all_idxs), len(idxs)}')
-            mean_iou, pick = [], []
+            mean_iou = []
             count = 0
             while len(idxs) > 0:
                 count += 1
@@ -149,19 +132,8 @@ class BaseObjectDetectionCallback:
                 w = np.maximum(0, xx2 - xx1 + 1)
                 h = np.maximum(0, yy2 - yy1 + 1)
                 overlap = (w * h) / area[idxs[:last]]
-
-                # i = idxs[0]
-                # pick.append(i)
-                # xx1 = np.maximum(x1[i], x1[idxs[1:]])
-                # yy1 = np.maximum(y1[i], y1[idxs[1:]])
-                # xx2 = np.minimum(x2[i], x2[idxs[1:]])
-                # yy2 = np.minimum(y2[i], y2[idxs[1:]])
-                # w = np.maximum(0, xx2 - xx1 + 1)
-                # h = np.maximum(0, yy2 - yy1 + 1)
-                # overlap = (w * h) / area[idxs[1:]]
                 mean_iou.append(overlap)
-                idxs = np.delete(idxs, np.concatenate(([i], np.where(overlap > sensitivity)[0])))
-            print('-- non_max_suppression_fast', count, boxes.shape, boxes[pick][0], scores[pick][0])
+                idxs = np.delete(idxs, np.concatenate(([last], np.where(overlap > sensitivity)[0])))
             return pick, mean_iou
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
@@ -212,10 +184,7 @@ class BaseObjectDetectionCallback:
             _scores_out = _scores_out[1:]
             _class_param_out = _class_param_out[1:]
             _conf_param = (_scores_out / _class_param_out)[:, :1]
-            t = time.time()
             pick, _ = BaseObjectDetectionCallback().non_max_suppression_fast(_boxes_out, _scores_out, sensitivity)
-            print('- BaseObjectDetectionCallback non_max_suppression_fast',
-                  round(time.time() - t, 3), _boxes_reshape.shape, _boxes_out.shape)
             return np.concatenate([_boxes_out[pick], _conf_param[pick], _scores_out[pick]], axis=-1)
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
@@ -562,7 +531,6 @@ class BaseObjectDetectionCallback:
                         true_bb=true_array, pred_bb=predict_array, name_classes=name_classes,
                         sensitivity=sensitivity
                     )
-                    # print('\nbox_stat', box_stat)
                     data["stat"]["Общая точность"] = {
                         "type": "str",
                         "data": [{
@@ -788,7 +756,6 @@ class BaseObjectDetectionCallback:
                         return_data[f"{idx + 1}"]['statistic_values'] = data.get('stat')
                     else:
                         return_data[f"{idx + 1}"]['statistic_values'] = {}
-            # print('\nget_intermediate_result', return_data)
             return return_data
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)

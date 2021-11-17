@@ -439,7 +439,7 @@ class GUINN:
                         prob_loss_cls[classes[idx]] = 0
                     for n, elem in enumerate(conv_target.keys()):
                         conv, pred = pred_result[n * 2], pred_result[n * 2 + 1]
-                        predict.append(conv)
+                        predict.append(pred)
                         loss_items = compute_loss(
                             pred=pred,
                             conv=conv,
@@ -469,6 +469,7 @@ class GUINN:
             @tf.function
             def validate_step(image_array, conv_target, serv_target):
                 pred_result = yolo_model(image_array['1'], training=False)
+                print('pred_result', len(pred_result))
                 giou_loss = conf_loss = prob_loss = tf.convert_to_tensor(0., dtype='float32')
 
                 prob_loss_cls = {}
@@ -478,7 +479,7 @@ class GUINN:
                 predict = []
                 for n, elem in enumerate(conv_target.keys()):
                     conv, pred = pred_result[n * 2], pred_result[n * 2 + 1]
-                    predict.append(conv)
+                    predict.append(pred)
                     loss_items = compute_loss(
                         pred=pred,
                         conv=conv,
@@ -540,52 +541,20 @@ class GUINN:
                         train_pred[i][length * cur_step: length * (cur_step + 1)] = results[6][i].numpy()
                         train_true[i][length * cur_step: length * (cur_step + 1)] = true_array[i].numpy()
                     cur_step += 1
-                    # bend = time.time()
-                    # if not train_true:
-                    #     for i, true_array in enumerate(target1.values()):
-                    #         train_pred.append(results[6][i].numpy().astype('float'))
-                    #         train_true.append(true_array.numpy().astype('float'))
-                    #     train_data_idxs = list(range(results[6][0].shape[0]))
-                    # elif first_epoch:
-                    #     for i, true_array in enumerate(target1.values()):
-                    #         train_pred[i] = np.concatenate(
-                    #             [train_pred[i], results[6][i].numpy().astype('float')], axis=0)
-                    #         train_true[i] = np.concatenate(
-                    #             [train_true[i], true_array.numpy().astype('float')], axis=0)
-                    #     train_data_idxs.extend(list(range(
-                    #         train_data_idxs[-1] + 1, train_data_idxs[-1] + 1 + results[6][0].shape[0])))
-                    # else:
-                    #     for i, true_array in enumerate(target1.values()):
-                    #         train_pred[i] = np.concatenate(
-                    #             [train_pred[i][results[6][i].shape[0]:], results[6][i].numpy().astype('float')], axis=0)
-                    #         train_true[i] = np.concatenate(
-                    #             [train_true[i][true_array.shape[0]:], true_array.numpy().astype('float')], axis=0)
-                    #     if new_batch:
-                    #         train_data_idxs = train_data_idxs[results[6][0].shape[0]:]
-                    #         train_data_idxs.extend(list(range(results[6][0].shape[0])))
-                    #     else:
-                    #         train_data_idxs = train_data_idxs[results[6][0].shape[0]:]
-                    #         train_data_idxs.extend(list(range(
-                    #             train_data_idxs[-1] + 1, train_data_idxs[-1] + 1 + results[6][0].shape[0])))
                     if interactive.urgent_predict:
                         print('\nGUINN interactive.urgent_predict\n')
-                    #     val_true = []
-                    #     val_pred = []
-                    #     for image_data, target1, target2 in dataset.dataset.get('val').batch(params.base.batch):
-                    #         results = yolo_model(image_data['1'], training=False)
-                    #         if not val_true:
-                    #             for i, true_array in enumerate(target1.values()):
-                    #                 val_pred.append(results[i].numpy().astype('float'))
-                    #                 val_true.append(true_array.numpy().astype('float'))
-                    #         else:
-                    #             for i, true_array in enumerate(target1.values()):
-                    #                 val_pred[i] = np.concatenate(
-                    #                     [val_pred[i], results[i].numpy().astype('float')], axis=0)
-                    #                 val_true[i] = np.concatenate(
-                    #                     [val_true[i], true_array.numpy().astype('float')], axis=0)
-                    #     callback.on_train_batch_end(batch=train_steps, arrays={
-                    #         "train_true": train_true, "val_true": val_true, "train_pred": train_pred,
-                    #         "val_pred": val_pred}, train_data_idxs=train_data_idxs)
+                        val_steps = 0
+                        for val_image_data, val_target1, val_target2 in dataset.dataset.get('val').batch(params.base.batch):
+                            results = validate_step(val_image_data, target1, target2)
+                            val_true_array = list(val_target1.values())
+                            for i in range(len(val_true_array)):
+                                length = val_true_array[i].shape[0]
+                                val_pred[i][length * val_steps: length * (val_steps + 1)] = results[5][i].numpy()
+                                val_true[i][length * val_steps: length * (val_steps + 1)] = val_true_array[i].numpy()
+                            val_steps += 1
+                        callback.on_train_batch_end(batch=cur_step, arrays={
+                            "train_true": train_true, "val_true": val_true, "train_pred": train_pred,
+                            "val_pred": val_pred}, train_data_idxs=train_data_idxs)
                     else:
                         callback.on_train_batch_end(batch=cur_step)
                     print(f' -- batch {cur_step} - {round(time.time() - bt, 3)}')
@@ -634,16 +603,6 @@ class GUINN:
                         val_pred[i][length * val_steps: length * (val_steps + 1)] = results[5][i].numpy()
                         val_true[i][length * val_steps: length * (val_steps + 1)] = val_true_array[i].numpy()
                     val_steps += 1
-                    # if not val_true:
-                    #     for i, true_array in enumerate(target1.values()):
-                    #         val_pred.append(results[5][i].numpy().astype('float'))
-                    #         val_true.append(true_array.numpy().astype('float'))
-                    # else:
-                    #     for i, true_array in enumerate(target1.values()):
-                    #         val_pred[i] = np.concatenate(
-                    #             [val_pred[i], results[5][i].numpy().astype('float')], axis=0)
-                    #         val_true[i] = np.concatenate(
-                    #             [val_true[i], true_array.numpy().astype('float')], axis=0)
                     print(f' -- val_batch {val_steps} - {round(time.time() - bt, 3)}')
                 print(f'\n val epoch time: {round(time.time() - st, 3)}\n')
 
