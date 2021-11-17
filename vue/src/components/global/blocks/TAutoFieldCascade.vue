@@ -77,12 +77,17 @@
         @change="$emit('change', $event)"
       />
     </template>
+    <BlockInfo v-if="info" :info="info" />
   </div>
 </template>
 
 <script>
+import BlockInfo from '@/components/cascades/comp/Info.vue'
 export default {
   name: 't-auto-field-cascade',
+  components: {
+    BlockInfo
+  },
   props: {
     type: String,
     value: [String, Boolean, Number, Array],
@@ -92,6 +97,7 @@ export default {
     parse: String,
     name: String,
     fields: Object,
+    manual: Object,
     id: String,
     root: Boolean,
     parameters: Object,
@@ -118,6 +124,13 @@ export default {
         return this.fields[this.valueIn];
       } else {
         return [];
+      }
+    },
+    info() {
+      if (!!this.manual && !!this.manual[this.valueIn]) {
+        return this.manual[this.valueIn];
+      } else {
+        return '';
       }
     },
   },
