@@ -1,9 +1,7 @@
 <template>
   <div v-if="info" class="info">
     <div class="info__title">Информация о блоке</div>
-    <div class="info__content">
-      <p v-html="info"></p>
-    </div>
+    <div class="info__content" v-html="info"></div>
   </div>
 </template>
 
@@ -16,7 +14,7 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .info {
   &__title {
     background-color: #0e1621;
@@ -26,9 +24,27 @@ export default {
     color: #ffffff;
   }
   &__content {
+    h3 {
+      font-weight: normal;
+      font-size: 12px;
+      line-height: 140%;
+      color: #ffffff;
+    }
     p {
-      font-size: 14px;
+      font-size: 12px;
+      line-height: 140%;
       color: #a7bed3;
+    }
+    ol {
+      margin: 10px 0;
+      list-style-type: style;
+      list-style-position:inside;
+      li {
+        font-size: 12px;
+        line-height: 140%;
+        color: #a7bed3;
+        margin-bottom: 10px;
+      }
     }
   }
 }
