@@ -23,3 +23,5 @@ opencv-python==4.5.3.56
 python-dotenv==0.19.0
 APScheduler==3.8.0
 keras==2.7.0
+transformers==4.12.3
+gtts==2.2.3
