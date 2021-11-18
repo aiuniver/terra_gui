@@ -1,37 +1,37 @@
 <template>
   <div class="footer">
-    <div class="footer__message">
-      <div class="footer__message--icon" @click="dialogErrors = true">
-        <span v-if="errors.length"></span>
+    <div class="footer__content">
+      <div class="footer__message">
+        <div class="footer__message--icon" @click="dialogErrors = true">
+          <span v-if="errors.length"></span>
+        </div>
+        <div :class="['footer__message--text', showMsg.color]" @click="click(showMsg.color)">
+          <transition name="error-slide" mode="out-in">
+            <span :key="key">{{ showMsg.msg }}</span>
+          </transition>
+        </div>
       </div>
-      <div :class="['footer__message--text', showMsg.color]" @click="click(showMsg.color)">
-        <transition name="error-slide" mode="out-in">
-          <span :key="key">{{ showMsg.msg }}</span>
-        </transition>
+      <div class="footer__progress">
+        <div class="footer__progress--item">
+          <i :style="{ width: progress + '%' }">
+            <span>
+              {{ progressMessage }}
+            </span>
+          </i>
+          <span>{{ progressMessage }}</span>
+        </div>
       </div>
-    </div>
-    <div class="footer__progress">
-      <div class="footer__progress--item">
-        <i :style="{ width: progress + '%' }">
-          <span>
-            {{ progressMessage }}
-          </span>
-        </i>
-        <span>{{ progressMessage }}</span>
-      </div>
-    </div>
-    <div class="footer__state">
-      <div class="footer__state--text">
-        <span :style="style"></span>
-        {{ protsessor.type }}
+      <div class="footer__state">
+        <div class="footer__state--text">
+          <span :style="style"></span>
+          {{ protsessor.type }}
+        </div>
       </div>
     </div>
     <div class="footer__copyright">
       {{ `Copyright © «Университет искусственного интеллекта», ${new Date().getFullYear()}` }}
       <span v-if="version" class="footer__version">{{ version }}</span>
     </div>
-    <!-- <LoggingModal v-if="errors.length" v-model="dialogErrors" :errors="errors" :title="'Логи'" @error="clickError" /> -->
-    <!-- <CopyModal v-model="dialogError" :title="'Ошибка!'">{{ text }}</CopyModal> -->
   </div>
 </template>
 
@@ -47,7 +47,7 @@ export default {
     dialogErrors: false,
     text: '',
     key: 0,
-    msgList: []
+    msgList: [],
   }),
   computed: {
     ...mapGetters({
@@ -68,9 +68,9 @@ export default {
       return this.$config.isDev ? `ver. ${this.$config.version}` : '';
     },
     showMsg() {
-      if (!this.msgList.length) return ''
-      return this.msgList[0]
-    }
+      if (!this.msgList.length) return '';
+      return this.msgList[0];
+    },
   },
   methods: {
     click(color) {
@@ -83,18 +83,21 @@ export default {
       this.color === 'error';
       this.text = error;
       this.dialogError = true;
-    }
+    },
   },
   watch: {
     message(newVal) {
-      if (!newVal) return
-      this.msgList.push({ msg: newVal, color: this.color })
-      setTimeout(() => {
-        this.msgList.shift()
-        this.key++
-      }, this.msgList.length > 1 ? 1000 : 5000)
-    }
-  }
+      if (!newVal) return;
+      this.msgList.push({ msg: newVal, color: this.color });
+      setTimeout(
+        () => {
+          this.msgList.shift();
+          this.key++;
+        },
+        this.msgList.length > 1 ? 1000 : 5000
+      );
+    },
+  },
 };
 </script>
 
@@ -118,23 +121,30 @@ export default {
 }
 
 .footer {
+  height: 60px;
   color: #a7bed3;
   background: #17212b;
   width: 100%;
-  line-height: 30px;
-  position: fixed;
-  left: 0;
-  bottom: 30px;
   z-index: 900;
   font-size: 0.75rem;
   white-space: nowrap;
   user-select: none;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  justify-content: flex-start;
-  align-content: stretch;
-  align-items: stretch;
+  &__content {
+    height: 29px;
+    display: flex;
+  }
+  &__copyright {
+    width: 100%;
+    height: 30px;
+    line-height: 30px;
+    z-index: 901;
+    padding: 0 10px;
+    color: #a7bed3;
+    font-size: 0.6875rem;
+    text-align: right;
+    background-color: #0e1621;
+  }
+
   &__version {
     color: ivory;
   }
@@ -236,20 +246,6 @@ export default {
         white-space: nowrap;
       }
     }
-  }
-  &__copyright {
-    position: fixed;
-    width: 100%;
-    left: 0;
-    bottom: 0;
-    z-index: 901;
-    user-select: none;
-    line-height: 30px;
-    padding: 0 10px;
-    color: #a7bed3;
-    font-size: 0.6875rem;
-    text-align: right;
-    background-color: #0e1621;
   }
 }
 
