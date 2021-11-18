@@ -112,6 +112,15 @@ class BlockServiceTypeChoice(str, Enum):
         return list(map(lambda item: item.value, BlockCustomTypeChoice))
 
 
+class BlockServiceDeepSortMetricChoice(str, Enum):
+    euclidean = "euclidean"
+    сosine = "сosine"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, BlockServiceDeepSortMetricChoice))
+
+
 class BlocksBindChoice(Enum):
     Model = ("Model", ("Любой блок, совместимый с типом данных выбранной модели: ", ), 1, tuple())
     OutputData = ("OutputData", (BlockGroupChoice.Model,
