@@ -110,7 +110,16 @@ export default {
       }
 
       &:hover {
-        color: $color-light-blue;
+        color: #65b9f4;
+        .ci-world {
+          background-color: #65b9f4;
+        }
+      }
+      &.selected {
+        background-color: var(--color-light-gray);
+      }
+      input {
+        display: none;
       }
     }
   }

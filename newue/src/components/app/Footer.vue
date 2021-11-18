@@ -38,10 +38,6 @@
 <script>
 import { mapGetters } from 'vuex';
 export default {
-  components: {
-    // CopyModal: () => import('../global/modals/CopyModal'),
-    // LoggingModal: () => import('../global/modals/LoggingModal'),
-  },
   data: () => ({
     dialogError: false,
     dialogErrors: false,
@@ -122,8 +118,8 @@ export default {
 
 .footer {
   height: 60px;
-  color: #a7bed3;
-  background: #17212b;
+  color: var(--color-text);
+  // background: #17212b;
   width: 100%;
   z-index: 900;
   font-size: 0.75rem;
@@ -139,10 +135,10 @@ export default {
     line-height: 30px;
     z-index: 901;
     padding: 0 10px;
-    color: #a7bed3;
+    color: inherit;
     font-size: 0.6875rem;
     text-align: right;
-    background-color: #0e1621;
+    background-color: var( --color-bg-dropdown);
   }
 
   &__version {

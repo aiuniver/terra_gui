@@ -1,53 +1,51 @@
 <template>
   <main class="page page-datasets">
-    <div class="cont">
-      <div class="page-datasets-inner">
-        <div class="page-datasets-inner__workspace"><router-view></router-view></div>
-        <BasePanel @action="handleActionPanel">
-          <template v-if="component === 'DatasetTabsDownload'">
-            <BasePanelContent noMargin>
-              <template #header>Данные</template>
-              <template #content>
-                <DatasetDownloadTabs class="mt-4" />
-              </template>
-            </BasePanelContent>
-          </template>
-          <template v-if="component === 'DatasetHelpers'">
-            <BasePanelContent>
-              <template #header>Данные</template>
-              <template #content>
-                <DatasetHelpers />
-              </template>
-            </BasePanelContent>
-          </template>
-          <template v-if="component === 'DataEnterDataset'">
-            <BasePanelContent>
-              <template #header>Данные</template>
-              <template #content>
-                <div class="mb-4">Выберите папку/файл</div>
-                <FileManager @chooseFile="chooseFile" :list="list" />
-              </template>
-            </BasePanelContent>
-            <BasePanelContent>
-              <template #header>Предпросмотр</template>
-              <template #content>
-                <DatasetPreview @choosePreview="choosePreview" :list="preview" />
-              </template>
-            </BasePanelContent>
-            <BasePanelContent>
-              <template #header>Настройки</template>
-              <template #content>
-                <DatasetSettings />
-              </template>
-            </BasePanelContent>
-          </template>
-        </BasePanel>
-      </div>
-      <Layer v-bind="layerData1" style="position: absolute; top:150px; left: 50%;"/>
-      <Layer v-bind="layerData2" style="position: absolute; top:150px; left: 30%;"/>
-      <Layer v-bind="layerData3" style="position: absolute; top:150px; left: 10%;"/>
-      <WorkspaceActions @action="handleWorkspaceAction" />
+    <div class="page-datasets-inner">
+      <div class="page-datasets-inner__workspace"><router-view></router-view></div>
+      <BasePanel @action="handleActionPanel">
+        <template v-if="component === 'DatasetTabsDownload'">
+          <BasePanelContent noMargin>
+            <template #header>Данные</template>
+            <template #content>
+              <DatasetDownloadTabs class="mt-4" />
+            </template>
+          </BasePanelContent>
+        </template>
+        <template v-if="component === 'DatasetHelpers'">
+          <BasePanelContent>
+            <template #header>Данные</template>
+            <template #content>
+              <DatasetHelpers />
+            </template>
+          </BasePanelContent>
+        </template>
+        <template v-if="component === 'DataEnterDataset'">
+          <BasePanelContent>
+            <template #header>Данные</template>
+            <template #content>
+              <div class="mb-4">Выберите папку/файл</div>
+              <FileManager @chooseFile="chooseFile" :list="list" />
+            </template>
+          </BasePanelContent>
+          <BasePanelContent>
+            <template #header>Предпросмотр</template>
+            <template #content>
+              <DatasetPreview @choosePreview="choosePreview" :list="preview" />
+            </template>
+          </BasePanelContent>
+          <BasePanelContent>
+            <template #header>Настройки</template>
+            <template #content>
+              <DatasetSettings />
+            </template>
+          </BasePanelContent>
+        </template>
+      </BasePanel>
     </div>
+    <Layer v-bind="layerData1" style="position: absolute; top: 150px; left: 50%" />
+    <Layer v-bind="layerData2" style="position: absolute; top: 150px; left: 30%" />
+    <Layer v-bind="layerData3" style="position: absolute; top: 150px; left: 10%" />
+    <WorkspaceActions @action="handleWorkspaceAction" />
   </main>
 </template>
 
@@ -72,7 +70,7 @@ export default {
     DatasetSettings,
     DatasetDownloadTabs,
     DatasetHelpers,
-    Layer
+    Layer,
   },
 
   name: 'Datasets',
@@ -107,20 +105,20 @@ export default {
     layerData1: {
       type: 'input',
       title: 'input_Вход 1: ',
-      data: [22,28,1],
-      error: ''
+      data: [22, 28, 1],
+      error: '',
     },
     layerData2: {
       type: 'middle',
       title: 'input_Вход 1: ',
-      data: [22,28,1],
-      error: 'asdsad'
+      data: [22, 28, 1],
+      error: 'asdsad',
     },
     layerData3: {
       type: 'output',
       title: 'input_Вход 1: ',
-      data: [22,28,1],
-      error: ''
+      data: [22, 28, 1],
+      error: '',
     },
     component: 'DatasetHelpers',
     allComponents: ['DatasetTabsDownload', 'DatasetHelpers', 'DataEnterDataset'],
