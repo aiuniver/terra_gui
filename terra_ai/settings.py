@@ -20,6 +20,8 @@ PROJECT_EXT = "project"
 DATASET_EXT = "trds"
 DATASET_CONFIG = "config.json"
 DATASET_ANNOTATION = "labelmap.txt"
+DATASETS_SOURCE_DIR = Path(TMP_DIR, "datasets", "sources")
+DATASETS_LOADED_DIR = Path(TMP_DIR, "datasets", "loaded")
 
 # Modeling
 MODEL_EXT = "model"
