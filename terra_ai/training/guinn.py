@@ -495,6 +495,7 @@ class GUINN:
 
                 return giou_loss, conf_loss, prob_loss, total_loss, prob_loss_cls, predict
 
+            current_epoch = 0
             train_pred, train_true, val_pred, val_true = [], [], [], []
             optimizer = self.set_optimizer(params=params)
             output_array = None
@@ -511,7 +512,7 @@ class GUINN:
 
             train_data_idxs = np.arange(self.train_length).tolist()
             callback.on_train_begin()
-            for epoch in range(params.base.epochs):
+            for epoch in range(current_epoch, params.base.epochs):
                 callback.on_epoch_begin()
                 st = time.time()
                 print(f'\n New epoch {epoch + 1}, batch {params.base.batch}\n')
@@ -572,7 +573,7 @@ class GUINN:
                 current_logs['class_loss']['prob_loss'] = {}
                 for cls in range(num_class):
                     current_logs['class_loss']['prob_loss'][str(classes[cls])] = \
-                        {'train': train_loss_cls[str(classes[cls])] * 100 / cur_step}
+                        {'train': train_loss_cls[str(classes[cls])] / cur_step}
                     # train_loss_cls[str(classes[cls])] = train_loss_cls[str(classes[cls])] / cur_step
                 # print(
                 #     "\n\n epoch_time:{:7.2f} sec, giou_train_loss:{:7.2f}, conf_train_loss:{:7.2f}, prob_train_loss:{:7.2f}, total_train_loss:{:7.2f}, class_train_loss:{}".
@@ -608,7 +609,7 @@ class GUINN:
                 current_logs['loss']['total_loss']["val"] = total_val / val_steps
                 for cls in range(num_class):
                     current_logs['class_loss']['prob_loss'][str(classes[cls])]["val"] = \
-                        val_loss_cls[str(classes[cls])] * 100 / val_steps
+                        val_loss_cls[str(classes[cls])] / val_steps
                 # print(
                 #     "\n\n epoch_time:{:7.2f} sec, giou_val_loss:{:7.2f}, conf_val_loss:{:7.2f}, prob_val_loss:{:7.2f}, total_val_loss:{:7.2f}".
                 #         format(time.time() - st, giou_val / count, conf_val / count, prob_val / count, total_val / count))
@@ -619,7 +620,7 @@ class GUINN:
                 current_logs['class_metrics']['mAP50'] = {}
                 for cls in range(num_class):
                     current_logs['class_metrics']['mAP50'][str(classes[cls])] = \
-                        {"val": map50.get(f"val_mAP50_class_{classes[cls]}")}
+                        {"val": map50.get(f"val_mAP50_class_{classes[cls]}") * 100}
                 print(f'\n get_mAP time: {round(time.time() - st, 3)}')
                 # print("\n\n epoch_time:{:7.2f} sec, mAP50:{}".format(time.time() - st, mAP50))
                 st = time.time()
@@ -698,6 +699,7 @@ class GUINN:
                 train_target_shape, val_target_shape = [self.train_length], [self.val_length]
                 train_target_shape.extend(list(self.dataset.data.outputs.get(out).shape))
                 val_target_shape.extend(list(self.dataset.data.outputs.get(out).shape))
+                print('train_target_shape, val_target_shape', train_target_shape, val_target_shape)
                 train_pred[f"{out}"] = np.zeros(train_target_shape)
                 train_true[f"{out}"] = np.zeros(train_target_shape)
                 val_pred[f"{out}"] = np.zeros(val_target_shape)
@@ -710,16 +712,20 @@ class GUINN:
                 train_steps = 0
                 st = time.time()
                 print(f'\n New epoch {epoch + 1}, batch {params.base.batch}\n')
-                for x_batch_train, y_batch_train in dataset.dataset.get('train').batch(params.base.batch):
-                    st1 = time.time()
+                for x_batch_train, y_batch_train in dataset.dataset.get('train').batch(
+                        params.base.batch, drop_reminder=False):
+                    # st1 = time.time()
                     logits, y_true = train_step(
                         x_batch=x_batch_train, y_batch=y_batch_train, train_model=model,
                         losses=loss, set_optimizer=optimizer
                     )
                     for i, out in enumerate(output_list):
                         length = logits[i].shape[0]
+                        print(length)
                         train_pred[f"{out}"][length * train_steps: length * (train_steps + 1)] = logits[i].numpy()
                         train_true[f"{out}"][length * train_steps: length * (train_steps + 1)] = y_true[i].numpy()
+                        print('- train batch', train_steps, length * train_steps, length * (train_steps + 1),
+                          train_pred[f"{out}"][length * train_steps], train_true[f"{out}"][length * train_steps])
                     train_steps += 1
                     if interactive.urgent_predict:
                         val_steps = 0
@@ -736,10 +742,9 @@ class GUINN:
                         callback.on_train_batch_end(batch=train_steps, arrays={
                             "train_true": train_true, "val_true": val_true, "train_pred": train_pred,
                             "val_pred": val_pred}, train_data_idxs=train_data_idxs)
-                        # interactive.urgent_predict = False
                     else:
                         callback.on_train_batch_end(batch=train_steps)
-                    print('- train batch', train_steps, round(time.time() - st1, 3))
+                    # print('- train batch', train_steps, round(time.time() - st1, 3))
                     if callback.stop_training:
                         break
                 print(f'- train epoch time: {round(time.time() - st, 3)}\n')
@@ -755,7 +760,7 @@ class GUINN:
                 print(f'\n Run a validation loop')
                 val_steps = 0
                 for x_batch_val, y_batch_val in dataset.dataset.get('val').batch(params.base.batch):
-                    st1 = time.time()
+                    # st1 = time.time()
                     val_pred_array, val_true_array = test_step(
                         train_model=model, x_batch=x_batch_val, y_batch=y_batch_val)
                     for i, out in enumerate(output_list):
@@ -763,25 +768,22 @@ class GUINN:
                         val_pred[f"{out}"][length * val_steps: length * (val_steps + 1)] = val_pred_array[i].numpy()
                         val_true[f"{out}"][length * val_steps: length * (val_steps + 1)] = val_true_array[i].numpy()
                     val_steps += 1
-                    print('- val batch', train_steps, round(time.time() - st1, 3))
-                print(f'- val epoch time: {round(time.time() - st, 3)}\n', val_pred['2'].shape, val_true['2'].shape)
+                    # print('- val batch', train_steps, round(time.time() - st1, 3))
+                print(f'- val epoch time: {round(time.time() - st, 3)}\n')
 
                 st = time.time()
                 callback.on_epoch_end(
                     epoch=epoch + 1,
                     arrays={
-                        "train_pred": train_pred,
-                        "val_pred": val_pred,
-                        "train_true": train_true,
-                        "val_true": val_true
+                        "train_pred": train_pred,"val_pred": val_pred,"train_true": train_true,"val_true": val_true
                     },
                     train_data_idxs=train_data_idxs
                 )
                 print(f'\n callback.on_epoch_end epoch time: {round(time.time() - st, 2)}')
                 print(
-                    # f"\nEpoch {callback.current_logs.get('epochs')}:"
-                    #     f"\nlog_history: {callback.log_history.get('epochs')}, "
-                    #     f"epoch_time={round(time.time() - callback._time_first_step, 3)}"
+                    f"\nEpoch {callback.current_logs.get('epochs')}:"
+                    f"\nlog_history: {callback.log_history}, "
+                    f"epoch_time={round(time.time() - callback._time_first_step, 3)}"
                     # f"\nloss={callback.log_history.get('2').get('loss')}"
                     # f"\nmetrics={callback.log_history.get('2').get('metrics')}\n"
                     # f" \n loss={callback.current_logs.get('2').get('loss')}\n"
@@ -878,7 +880,7 @@ class FitCallback:
 
         self.batch = 0
         self.num_batches = 0
-        self.last_epoch = 1
+        self.last_epoch = 0
         self._start_time = time.time()
         self._time_batch_step = time.time()
         self._time_first_step = time.time()
@@ -1031,10 +1033,15 @@ class FitCallback:
                 loss_fn = getattr(
                     importlib.import_module(loss_metric_config.get("loss").get(loss_name, {}).get('module')), loss_name
                 )
+                print('\n', method_name, loss_name, loss_fn, arrays.get("train_true").get(out)[-32:], arrays.get("train_pred").get(out)[-32:])
+                print(loss_fn()(arrays.get("train_true").get(out), arrays.get("train_pred").get(out)))
                 train_loss = self._get_loss_calculation(
-                    loss_fn, out, arrays.get("train_true").get(out), arrays.get("train_pred").get(out))
+                    loss_obj=loss_fn, out=out, y_true=arrays.get("train_true").get(out),
+                    y_pred=arrays.get("train_pred").get(out))
                 val_loss = self._get_loss_calculation(
-                    loss_fn, out, arrays.get("val_true").get(out), arrays.get("val_pred").get(out))
+                    loss_obj=loss_fn, out=out, y_true=arrays.get("val_true").get(out),
+                    y_pred=arrays.get("val_pred").get(out))
+                print(train_loss, val_loss)
                 self.current_logs[out]["loss"][output_layer.loss.name] = {"train": train_loss, "val": val_loss}
                 if self.class_outputs.get(output_layer.id):
                     self.current_logs[out]["class_loss"][output_layer.loss.name] = {}
@@ -1090,18 +1097,6 @@ class FitCallback:
                                     y_pred=arrays.get("val_pred").get(out)[update_cls['val'][out][cls], ...])
                                 self.current_logs[out]["class_metrics"][metric_name][cls] = \
                                     {"train": train_class_metric, "val": val_class_metric}
-                        # elif metric_name == Metric.BalancedDiceCoef:
-                        #     for i, cls in enumerate(name_classes):
-                        #         train_class_metric = self._get_metric_calculation(
-                        #             metric_name=metric_name, metric_obj=metric_fn, out=out, show_class=True,
-                        #             y_true=arrays.get("train_true").get(out), class_idx=i,
-                        #             y_pred=arrays.get("train_pred").get(out))
-                        #         val_class_metric = self._get_metric_calculation(
-                        #             metric_name=metric_name, metric_obj=metric_fn, out=out, show_class=True,
-                        #             y_true=arrays.get("val_true").get(out), class_idx=i,
-                        #             y_pred=arrays.get("val_pred").get(out))
-                        #         self.current_logs[out]["class_metrics"][metric_name][cls] = \
-                        #             {"train": train_class_metric, "val": val_class_metric}
                         else:
                             for i, cls in enumerate(name_classes):
                                 train_class_metric = self._get_metric_calculation(
@@ -1120,7 +1115,6 @@ class FitCallback:
     def _get_loss_calculation(self, loss_obj, out: str, y_true, y_pred, show_class=False, class_idx=0):
         method_name = '_get_loss_calculation'
         try:
-            # print(method_name)
             encoding = self.dataset.data.outputs.get(int(out)).encoding
             num_classes = self.dataset.data.outputs.get(int(out)).num_classes
             if show_class and (encoding == LayerEncodingChoice.ohe or encoding == LayerEncodingChoice.multi):
@@ -1140,7 +1134,6 @@ class FitCallback:
     def _get_metric_calculation(self, metric_name, metric_obj, out: str, y_true, y_pred, show_class=False, class_idx=0):
         method_name = '_get_metric_calculation'
         try:
-            # print(method_name)
             encoding = self.dataset.data.outputs.get(int(out)).encoding
             num_classes = self.dataset.data.outputs.get(int(out)).num_classes
             if metric_name == Metric.MeanIoU:
@@ -1157,8 +1150,6 @@ class FitCallback:
                 elif metric_name in [Metric.BalancedRecall, Metric.BalancedPrecision, Metric.BalancedFScore,
                                      Metric.FScore, Metric.BalancedDiceCoef]:
                     m.update_state(y_true, y_pred, show_class=show_class, class_idx=class_idx)
-                # elif metric_name == Metric.BalancedDiceCoef:
-                #     m.update_state(y_true, y_pred, show_class=show_class, class_idx=class_idx)
                 else:
                     m.update_state(y_true[..., class_idx:class_idx + 1], y_pred[..., class_idx:class_idx + 1])
             elif show_class:
@@ -1197,7 +1188,8 @@ class FitCallback:
                             round_loss_metric(self.current_logs.get(out).get('loss').get(loss_name).get(data_type))
                         )
                     self.log_history[out]['progress_state']['loss'][loss_name]['mean_log_history'].append(
-                        self._get_mean_log(self.log_history.get(out).get('loss').get(loss_name).get('val'))
+                        round_loss_metric(
+                            self._get_mean_log(self.log_history.get(out).get('loss').get(loss_name).get('val')))
                     )
                     loss_underfitting = self._evaluate_underfitting(
                         metric_name=loss_name, train_log=self.log_history[out]['loss'][loss_name]['train'][-1],
@@ -1235,7 +1227,7 @@ class FitCallback:
                                 round_loss_metric(
                                     self.current_logs.get(out).get('metrics').get(metric_name).get(data_type)))
                         self.log_history[out]['progress_state']['metrics'][metric_name]['mean_log_history'].append(
-                            self._get_mean_log(self.log_history[out]['metrics'][metric_name]['val'])
+                            round_loss_metric(self._get_mean_log(self.log_history[out]['metrics'][metric_name]['val']))
                         )
                         metric_underfittng = self._evaluate_underfitting(
                             metric_name=metric_name, metric_type='metric',
@@ -1290,7 +1282,8 @@ class FitCallback:
                 for loss_name in self.log_history['output']["loss"].keys():
                     # fill loss progress state
                     self.log_history['output']['progress_state']['loss'][loss_name]['mean_log_history'].append(
-                        self._get_mean_log(self.log_history.get('output').get('loss').get(loss_name).get('val'))
+                        round_loss_metric(
+                            self._get_mean_log(self.log_history.get('output').get('loss').get(loss_name).get('val')))
                     )
                     # get progress state data
                     loss_underfitting = self._evaluate_underfitting(
@@ -1315,9 +1308,8 @@ class FitCallback:
                     self.log_history['output']['progress_state']['loss'][loss_name]['normal_state'].append(
                         normal_state)
                 for metric_name in self.log_history.get('output').get('metrics').keys():
-                    self.log_history['output']['progress_state']['metrics'][metric_name][
-                        'mean_log_history'].append(
-                        self._get_mean_log(self.log_history['output']['metrics'][metric_name]["val"])
+                    self.log_history['output']['progress_state']['metrics'][metric_name]['mean_log_history'].append(
+                        round_loss_metric(self._get_mean_log(self.log_history['output']['metrics'][metric_name]["val"]))
                     )
                     metric_overfitting = self._evaluate_overfitting(
                         metric_name,
@@ -1339,7 +1331,6 @@ class FitCallback:
     def _get_mean_log(logs):
         method_name = '_get_mean_log'
         try:
-            # print(method_name)
             copy_logs = copy.deepcopy(logs)
             while None in copy_logs:
                 copy_logs.pop(copy_logs.index(None))
@@ -1355,7 +1346,6 @@ class FitCallback:
     def _evaluate_overfitting(metric_name: str, mean_log: list, metric_type: str):
         method_name = '_evaluate_overfitting'
         try:
-            # print(method_name)
             mode = loss_metric_config.get(metric_type).get(metric_name).get("mode")
             overfitting = False
             if mode == 'min':
@@ -1374,7 +1364,6 @@ class FitCallback:
     def _evaluate_underfitting(metric_name: str, train_log: float, val_log: float, metric_type: str):
         method_name = '_evaluate_underfitting'
         try:
-            # print(method_name)
             mode = loss_metric_config.get(metric_type).get(metric_name).get("mode")
             underfitting = False
             if mode == 'min' and train_log and val_log:
@@ -1391,7 +1380,6 @@ class FitCallback:
     def _get_checkpoint_mode(self):
         method_name = '_get_checkpoint_mode'
         try:
-            print(method_name)
             print(method_name, self.checkpoint_config)
             if self.checkpoint_config.type == CheckpointTypeChoice.Loss:
                 return 'min'
@@ -1451,9 +1439,8 @@ class FitCallback:
                     with open(os.path.join(interactive_path, "addtraining.int"), "r",
                               encoding="utf-8") as addtraining_int:
                         interactive.addtrain_epochs = json.load(addtraining_int)["addtrain_epochs"]
-                self.last_epoch = max(logs.get('epoch'))
+                self.last_epoch = max(logs.get('epochs'))
                 self.still_epochs = self.retrain_epochs - self.last_epoch
-                # self._get_metric_name_checkpoint(logs.get('logs'))
                 return logs
             else:
                 return {
@@ -1496,7 +1483,6 @@ class FitCallback:
     def _set_result_data(self, param: dict) -> None:
         method_name = '_set_result_data'
         try:
-            # print(method_name)
             for key in param.keys():
                 if key in self.result.keys():
                     self.result[key] = param[key]
@@ -1740,12 +1726,12 @@ class FitCallback:
 
     def on_epoch_begin(self):
         print('on_epoch_begin')
+        self.last_epoch += 1
         self._time_first_step = time.time()
 
     def on_train_batch_end(self, batch, arrays=None, train_data_idxs=None):
         method_name = 'on_train_batch_end'
         try:
-            # print(method_name)
             if self._get_train_status() == "stopped":
                 print('_get_train_status() == "stopped"')
                 self.stop_training = True
@@ -1757,9 +1743,7 @@ class FitCallback:
                     finished=False,
                 )
             else:
-                # print('current', batch, self.num_batches)
                 msg_batch = {"current": batch, "total": self.num_batches}
-                # print('msg_batch', msg_batch)
                 msg_epoch = {"current": self.last_epoch,
                              "total": self.retrain_epochs if self._get_train_status() == "addtrain"
                              else self.epochs}
@@ -1811,7 +1795,7 @@ class FitCallback:
         method_name = 'on_epoch_end'
         try:
             print(method_name, epoch)
-            self.last_epoch = epoch
+            # self.last_epoch = epoch
             # total_epochs = self.retrain_epochs if self._get_train_status() in ['addtrain', 'stopped'] else self.epochs
             if self.is_yolo:
                 self.current_logs = logs
@@ -1847,13 +1831,14 @@ class FitCallback:
             progress.pool(
                 self.progress_name,
                 percent=self.last_epoch / (
-                    self.retrain_epochs if self._get_train_status() == "addtrain" or self._get_train_status() == "stopped"
-                    else self.epochs
+                    self.retrain_epochs
+                    if self._get_train_status() == "addtrain" or self._get_train_status() == "stopped" else self.epochs
                 ) * 100,
                 message=f"Обучение. Эпоха {self.last_epoch} из "
                         f"{self.retrain_epochs if self._get_train_status() in ['addtrain', 'stopped'] else self.epochs}",
                 finished=False,
             )
+            # self.last_epoch += 1
         except Exception as e:
             print_error('FitCallback', method_name, e)
 
@@ -1889,10 +1874,10 @@ class FitCallback:
                 model.save_weights(file_path_last)
             if not os.path.exists(os.path.join(self.training_detail.model_path, "deploy_presets")):
                 os.mkdir(os.path.join(self.training_detail.model_path, "deploy_presets"))
-            self._prepare_deploy()
+            # self._prepare_deploy()
 
             time_end = self.update_progress(
-                self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)
+                self.num_batches * self.epochs, self.batch, self._start_time, finalize=True)
             self._sum_time += time_end
             total_epochs = self.retrain_epochs if self._get_train_status() in ['addtrain',
                                                                                'trained'] else self.epochs
@@ -1909,6 +1894,7 @@ class FitCallback:
                     if self._get_train_status() == "addtrain" or self._get_train_status() == "stopped"
                     else self.epochs
                 ) * 100
+                print('percent', percent, self.progress_name)
 
                 self.training_detail.state.set("trained")
                 self.training_detail.result = self._get_result_data()
