@@ -75,6 +75,7 @@ export default {
           this.$store.dispatch('projects/get');
           this.$store.dispatch('settings/setOverlay', false);
           this.$emit('message', { message: `Проект загружен` });
+          this.dialog = false;
         }
       }
       if (res?.error) this.$store.dispatch('settings/setOverlay', false);
