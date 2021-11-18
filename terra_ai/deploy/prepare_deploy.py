@@ -26,6 +26,7 @@ class DeployCreator:
 
         model_path = Path(os.path.join(training_path, page.get("name"), "model"))
         dataset_config_data = dataset.native()
+        dataset_config_data.update({"path": dataset.path})
         deploy_type = training_details.get("base").get("architecture").get("type")
 
         if not dataset_config_data.get("architecture") or \
