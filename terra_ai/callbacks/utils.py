@@ -526,6 +526,27 @@ def get_confusion_matrix(y_true, y_pred, get_percent=True) -> tuple:
         print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
+def get_segmentation_confusion_matrix(y_true, y_pred, num_classes: int, get_percent=True):
+    method_name = 'get_segmentation_confusion_matrix'
+    try:
+        cm = []
+        cm_percent = [] if get_percent else None
+        for i in range(num_classes):
+            class_cm = []
+            class_cm_percent = []
+            total_cls_count = np.count_nonzero(y_true[..., i] == 1)
+            for j in range(num_classes):
+                overlap = np.count_nonzero(y_true[..., i] + y_pred[..., j] == 2)
+                class_cm.append(int(overlap))
+                class_cm_percent.append(round(float(overlap * 100 / total_cls_count), 1))
+            cm.append(class_cm)
+            if get_percent:
+                cm_percent.append(class_cm_percent)
+        return cm, cm_percent
+    except Exception as e:
+        print_error(f"None ({MODULE_NAME})", method_name, e)
+
+
 def get_classification_report(y_true, y_pred, labels):
     method_name = 'get_classification_report'
     try:
@@ -702,7 +723,7 @@ def fill_graph_front_structure(_id: int, _type: str, graph_name: str, short_name
 
 
 def fill_heatmap_front_structure(_id: int, _type: str, graph_name: str, short_name: str,
-                                 x_label: str, y_label: str, labels: list, data_array: list,
+                                 x_label: str, y_label: str, labels: list, data_array: list = None,
                                  type_data: str = None, data_percent_array: list = None,
                                  progress_state: str = None):
     return {

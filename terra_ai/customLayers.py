@@ -445,6 +445,7 @@ class YOLOResBlock(Layer):
 
 
 class YOLOv3ResBlock(Layer):
+
     def __init__(self, filters=32, num_resblocks=1, use_bias=False, include_head=True, **kwargs):
         super(YOLOv3ResBlock, self).__init__(**kwargs)
         self.filters = filters
@@ -578,7 +579,8 @@ class YOLOConvBlock(Layer):
             'use_bias': self.use_bias,
             'first_conv_strides': self.strides,
             'first_conv_kernel': self.kernel,
-            'first_conv_padding': self.padding
+            'first_conv_padding': self.padding,
+            'include_bn_activation': self.include_bn_activation
         }
         base_config = super(YOLOConvBlock, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
@@ -987,8 +989,7 @@ class UNETBlock2D(Layer):
     """
 
     def __init__(self, filters_base=16, n_pooling_branches=2, filters_coef=1, n_conv_layers=2, activation='relu',
-                 kernel_size=(3, 3), batch_norm_layer=True,
-                 dropout_layer=True, dropout_rate=0.1, **kwargs):
+                 kernel_size=(3, 3), batch_norm_layer=True, dropout_layer=True, dropout_rate=0.1, **kwargs):
 
         super(UNETBlock2D, self).__init__(**kwargs)
         self.filters = filters_base
@@ -1120,9 +1121,10 @@ class UNETBlock2D(Layer):
 
     def get_config(self):
         config = {
-            'filters': self.filters,
+            'filters_base': self.filters,
             'n_pooling_branches': self.n_pooling_branches,
             'filters_coef': self.filters_coef,
+            'n_conv_layers': self.n_conv_layers,
             'activation': self.activation,
             'kernel_size': self.kernel_size,
             'batch_norm_layer': self.batch_norm_layer,
@@ -1275,7 +1277,7 @@ class UNETBlock1D(Layer):
 
     def get_config(self):
         config = {
-            'filters': self.filters,
+            'filters_base': self.filters,
             'n_pooling_branches': self.n_pooling_branches,
             'filters_coef': self.filters_coef,
             'activation': self.activation,

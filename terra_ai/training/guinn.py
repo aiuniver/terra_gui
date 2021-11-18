@@ -30,6 +30,8 @@ from terra_ai.callbacks.utils import print_error, loss_metric_config, BASIC_ARCH
 from terra_ai.customLayers import terra_custom_layers
 from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice, LayerEncodingChoice
+from terra_ai.data.deploy.extra import DeployTypeChoice
+from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.presets.training import Metric
 from terra_ai.data.training.extra import CheckpointTypeChoice, ArchitectureChoice
@@ -126,7 +128,7 @@ class GUINN:
 
             self.callback = FitCallback(dataset=dataset, retrain_epochs=retrain_epochs,
                                         training_details=train_details, model_name=self.nn_name,
-                                        deploy_type=self.deploy_type, initialed_model=initial_model)
+                                        deploy_type=self.deploy_type.name, initialed_model=initial_model)
             progress.pool(self.progress_name, finished=False, message="Добавление колбэков выполнено")
         except Exception as e:
             print_error(GUINN().name, method_name, e)
@@ -307,7 +309,7 @@ class GUINN:
                    dict
                """
             print(method_name)
-            self._kill_last_training(state=training)
+            # self._kill_last_training(state=training)
             progress.pool.reset(self.progress_name)
 
             if training.state.status != "addtrain":
@@ -520,6 +522,7 @@ class GUINN:
                 train_loss_cls = {}
                 for cls in range(num_class):
                     train_loss_cls[classes[cls]] = 0.
+                current_idx = 0
                 cur_step, giou_train, conf_train, prob_train, total_train = 0, 0, 0, 0, 0
                 for image_data, target1, target2 in dataset.dataset.get('train').batch(params.base.batch):
                     bt = time.time()
@@ -533,28 +536,31 @@ class GUINN:
                         train_loss_cls[classes[cls]] += results[5][classes[cls]].numpy()
 
                     true_array = list(target1.values())
+                    length = results[6][0].shape[0]
                     for i in range(len(train_pred)):
-                        length = results[6][i].shape[0]
-                        train_pred[i][length * cur_step: length * (cur_step + 1)] = results[6][i].numpy()
-                        train_true[i][length * cur_step: length * (cur_step + 1)] = true_array[i].numpy()
+                        train_pred[i][current_idx: current_idx + length] = results[6][i].numpy()
+                        train_true[i][current_idx: current_idx + length] = true_array[i].numpy()
+                    current_idx += length
                     cur_step += 1
                     if interactive.urgent_predict:
                         print('\nGUINN interactive.urgent_predict\n')
                         val_steps = 0
+                        val_current_idx = 0
                         for val_image_data, val_target1, val_target2 in dataset.dataset.get('val').batch(params.base.batch):
                             results = validate_step(val_image_data, target1, target2)
                             val_true_array = list(val_target1.values())
+                            length = val_true_array[0].shape[0]
                             for i in range(len(val_true_array)):
-                                length = val_true_array[i].shape[0]
-                                val_pred[i][length * val_steps: length * (val_steps + 1)] = results[5][i].numpy()
-                                val_true[i][length * val_steps: length * (val_steps + 1)] = val_true_array[i].numpy()
+                                val_pred[i][val_current_idx: val_current_idx + length] = results[5][i].numpy()
+                                val_true[i][val_current_idx: val_current_idx + length] = val_true_array[i].numpy()
+                            val_current_idx += length
                             val_steps += 1
                         callback.on_train_batch_end(batch=cur_step, arrays={
                             "train_true": train_true, "val_true": val_true, "train_pred": train_pred,
                             "val_pred": val_pred}, train_data_idxs=train_data_idxs)
                     else:
                         callback.on_train_batch_end(batch=cur_step)
-                    # print(f' -- batch {cur_step} - {round(time.time() - bt, 3)}')
+                    print(f' -- batch {cur_step} - {round(time.time() - bt, 3)} {current_idx, length}')
                     if callback.stop_training:
                         break
                 print(f'\n train epoch time: {round(time.time() - st, 3)}\n')
@@ -574,16 +580,17 @@ class GUINN:
                 for cls in range(num_class):
                     current_logs['class_loss']['prob_loss'][str(classes[cls])] = \
                         {'train': train_loss_cls[str(classes[cls])] / cur_step}
-                    # train_loss_cls[str(classes[cls])] = train_loss_cls[str(classes[cls])] / cur_step
-                # print(
-                #     "\n\n epoch_time:{:7.2f} sec, giou_train_loss:{:7.2f}, conf_train_loss:{:7.2f}, prob_train_loss:{:7.2f}, total_train_loss:{:7.2f}, class_train_loss:{}".
-                #         format(time.time() - st, giou_train / cur_step, conf_train / cur_step, prob_train / cur_step,
-                #                total_train / cur_step, train_loss_cls))
+                    train_loss_cls[str(classes[cls])] = train_loss_cls[str(classes[cls])] / cur_step
+                print(
+                    "\n epoch_time:{:7.2f} sec, giou_train_loss:{:7.2f}, conf_train_loss:{:7.2f}, prob_train_loss:{:7.2f}, total_train_loss:{:7.2f}\n".
+                        format(time.time() - st, giou_train / cur_step, conf_train / cur_step, prob_train / cur_step,
+                               total_train / cur_step))
                 st = time.time()
                 val_steps, giou_val, conf_val, prob_val, total_val = 0, 0, 0, 0, 0
                 val_loss_cls = {}
                 for cls in range(num_class):
                     val_loss_cls[classes[cls]] = 0.
+                val_current_idx = 0
                 for image_data, target1, target2 in dataset.dataset.get('val').batch(params.base.batch):
                     bt = time.time()
                     results = validate_step(image_data, target1, target2)
@@ -595,12 +602,13 @@ class GUINN:
                         val_loss_cls[str(classes[cls])] += results[4][str(classes[cls])].numpy()
 
                     val_true_array = list(target1.values())
+                    length = val_true_array[0].shape[0]
                     for i in range(len(val_true_array)):
-                        length = val_true_array[i].shape[0]
-                        val_pred[i][length * val_steps: length * (val_steps + 1)] = results[5][i].numpy()
-                        val_true[i][length * val_steps: length * (val_steps + 1)] = val_true_array[i].numpy()
+                        val_pred[i][val_current_idx: val_current_idx + length] = results[5][i].numpy()
+                        val_true[i][val_current_idx: val_current_idx + length] = val_true_array[i].numpy()
+                    val_current_idx += length
                     val_steps += 1
-                    # print(f' -- val_batch {val_steps} - {round(time.time() - bt, 3)}')
+                    print(f' -- val_batch {val_steps} - {round(time.time() - bt, 3)}', val_current_idx)
                 print(f'\n val epoch time: {round(time.time() - st, 3)}\n')
 
                 current_logs['loss']['giou_loss']["val"] = giou_val / val_steps
@@ -610,18 +618,21 @@ class GUINN:
                 for cls in range(num_class):
                     current_logs['class_loss']['prob_loss'][str(classes[cls])]["val"] = \
                         val_loss_cls[str(classes[cls])] / val_steps
-                # print(
-                #     "\n\n epoch_time:{:7.2f} sec, giou_val_loss:{:7.2f}, conf_val_loss:{:7.2f}, prob_val_loss:{:7.2f}, total_val_loss:{:7.2f}".
-                #         format(time.time() - st, giou_val / count, conf_val / count, prob_val / count, total_val / count))
+                print(
+                    "\n epoch_time:{:7.2f} sec, giou_val_loss:{:7.2f}, conf_val_loss:{:7.2f}, prob_val_loss:{:7.2f}, total_val_loss:{:7.2f}\n".
+                        format(time.time() - st, giou_val / val_steps, conf_val / val_steps, prob_val / val_steps, total_val / val_steps))
                 st = time.time()
                 map50 = get_mAP(yolo_model, dataset, score_threshold=0.05, iou_threshold=[0.50],
                                 TRAIN_CLASSES=dataset.data.outputs.get(2).classes_names, dataset_path=dataset.data.path)
                 current_logs['metrics']['mAP50'] = {"val": map50.get('val_mAP50')}
                 current_logs['class_metrics']['mAP50'] = {}
                 for cls in range(num_class):
-                    current_logs['class_metrics']['mAP50'][str(classes[cls])] = \
-                        {"val": map50.get(f"val_mAP50_class_{classes[cls]}") * 100}
-                print(f'\n get_mAP time: {round(time.time() - st, 3)}')
+                    try:
+                        current_logs['class_metrics']['mAP50'][str(classes[cls])] = \
+                            {"val": map50.get(f"val_mAP50_class_{classes[cls]}") * 100}
+                    except:
+                        current_logs['class_metrics']['mAP50'][str(classes[cls])] = {"val": None}
+                print(f'\n get_mAP time: {round(time.time() - st, 3)} \n map50: {map50}\n')
                 # print("\n\n epoch_time:{:7.2f} sec, mAP50:{}".format(time.time() - st, mAP50))
                 st = time.time()
                 callback.on_epoch_end(
@@ -690,7 +701,7 @@ class GUINN:
                     test_logits = test_logits if isinstance(test_logits, list) else [test_logits]
                 return test_logits, true_array
 
-            current_epoch = 0
+            current_epoch = self.callback.last_epoch
             train_pred, train_true, val_pred, val_true = {}, {}, {}, {}
             optimizer = self.set_optimizer(params=params)
             loss = self._prepare_loss_dict(params=params)
@@ -706,14 +717,14 @@ class GUINN:
 
             train_data_idxs = np.arange(self.train_length).tolist()
             callback.on_train_begin()
-            for epoch in range(current_epoch, params.base.epochs):
+            for epoch in range(current_epoch, current_epoch + params.base.epochs):
                 callback.on_epoch_begin()
                 train_steps = 0
                 st = time.time()
                 current_idx = 0
                 print(f'\n New epoch {epoch + 1}, batch {params.base.batch}\n')
                 for x_batch_train, y_batch_train in dataset.dataset.get('train').batch(params.base.batch):
-                    # st1 = time.time()
+                    st1 = time.time()
                     logits, y_true = train_step(
                         x_batch=x_batch_train, y_batch=y_batch_train, train_model=model,
                         losses=loss, set_optimizer=optimizer
@@ -745,7 +756,7 @@ class GUINN:
                             "val_pred": val_pred}, train_data_idxs=train_data_idxs)
                     else:
                         callback.on_train_batch_end(batch=train_steps)
-                    # print('- train batch', train_steps, round(time.time() - st1, 3))
+                    print('- train batch', train_steps, round(time.time() - st1, 3))
                     if callback.stop_training:
                         break
                 print(f'- train epoch time: {round(time.time() - st, 3)}\n')
@@ -870,7 +881,7 @@ class FitCallback:
         self.training_detail = training_details
         self.dataset = dataset
         self.dataset_path = dataset.data.path
-        self.deploy_type = deploy_type
+        self.deploy_type = getattr(DeployTypeChoice, deploy_type)
         self.is_yolo = True if dataset.data.architecture in YOLO_ARCHITECTURE else False
         self.batch_size = training_details.base.batch
         self.epochs = training_details.base.epochs
@@ -924,10 +935,11 @@ class FitCallback:
             self.y_true, _ = BaseClassificationCallback().get_y_true(self.dataset)
             self.class_idx = BaseClassificationCallback().prepare_class_idx(self.y_true, self.dataset)
 
-        self.log_history = self._prepare_log_history_template(self.dataset, self.training_detail)
+        self.log_history = self._load_logs()
+        # self.log_history = self._prepare_log_history_template(self.dataset, self.training_detail)
 
         # yolo params
-        # self.model = initialed_model
+        self.model = initialed_model
         self.samples_train = []
         self.samples_val = []
         self.samples_target_train = []
@@ -1441,13 +1453,11 @@ class FitCallback:
                               encoding="utf-8") as addtraining_int:
                         interactive.addtrain_epochs = json.load(addtraining_int)["addtrain_epochs"]
                 self.last_epoch = max(logs.get('epochs'))
+                self.retrain_epochs = self.last_epoch + self.training_detail.base.epochs
                 self.still_epochs = self.retrain_epochs - self.last_epoch
                 return logs
             else:
-                return {
-                    'epoch': [],
-                    'logs': {}
-                }
+                return self._prepare_log_history_template(self.dataset, self.training_detail)
         except Exception as e:
             print_error('FitCallback', method_name, e)
 
@@ -1511,19 +1521,19 @@ class FitCallback:
         method_name = '_get_predict'
         try:
             print(method_name)
-            # current_model = deploy_model if deploy_model else self.model
+            current_model = deploy_model if deploy_model else self.model
             if self.is_yolo:
                 current_predict = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_val)]
                 current_target = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_target_val)]
             else:
                 # TODO: настроить вывод массивов их обучения, выводить словарь
                 #  {'train_true': train_true, 'train_pred': train_pred, 'val_true': val_true, 'val_pred': val_pred}
-                # if self.dataset.data.use_generator:
-                #     current_predict = current_model.predict(self.dataset.dataset.get('val').batch(1),
-                #                                             batch_size=1)
-                # else:
-                #     current_predict = current_model.predict(self.dataset.X.get('val'), batch_size=self.batch_size)
-                current_predict = None
+                if self.dataset.data.use_generator:
+                    current_predict = current_model.predict(
+                        self.dataset.dataset.get('val').batch(1), batch_size=1)
+                else:
+                    current_predict = current_model.predict(self.dataset.X.get('val'), batch_size=self.batch_size)
+                # current_predict = None
                 current_target = None
             return current_predict, current_target
         except Exception as e:
@@ -1607,18 +1617,18 @@ class FitCallback:
         except Exception as e:
             print_error('FitCallback', method_name, e)
 
-    def _prepare_deploy(self):
+    def _prepare_deploy(self, model):
         method_name = '_prepare_deploy'
         try:
-            print(method_name)
+            print(method_name, self.training_detail.deploy_path)
             weight = None
             cascade_data = {"deploy_path": self.training_detail.deploy_path}
             for i in os.listdir(self.training_detail.model_path):
                 if i[-3:] == '.h5' and 'best' in i:
                     weight = i
             if weight:
-                self.model.load_weights(os.path.join(self.training_detail.model_path, weight))
-            deploy_predict, y_true = self._get_predict()
+                model.load_weights(os.path.join(self.training_detail.model_path, weight))
+            deploy_predict, y_true = self._get_predict(deploy_model=model)
             deploy_presets_data = self._deploy_predict(deploy_predict)
             out_deploy_presets_data = {"data": deploy_presets_data}
             if self.deploy_type == ArchitectureChoice.TextSegmentation:
@@ -1644,12 +1654,13 @@ class FitCallback:
                     "predict_column"] = predict_column if predict_column else "Предсказанные значения"
 
             out_deploy_data = dict([
-                ("path", self.training_detail.deploy_path),
-                ("path_model", self.training_detail.model_path),
+                ("path", Path(self.training_detail.deploy_path)),
+                ("path_model", Path(self.training_detail.model_path)),
                 ("type", self.deploy_type),
                 ("data", out_deploy_presets_data)
             ])
-            # self.training_detail.deploy = DeployData(**out_deploy_data)
+            print(self.deploy_type, type(self.deploy_type))
+            self.training_detail.deploy = DeployData(**out_deploy_data)
             self._create_cascade(**cascade_data)
         except Exception as e:
             print_error('FitCallback', method_name, e)
@@ -1875,13 +1886,13 @@ class FitCallback:
                 model.save_weights(file_path_last)
             if not os.path.exists(os.path.join(self.training_detail.model_path, "deploy_presets")):
                 os.mkdir(os.path.join(self.training_detail.model_path, "deploy_presets"))
-            # self._prepare_deploy()
+            # self._prepare_deploy(model)
 
             time_end = self.update_progress(
                 self.num_batches * self.epochs, self.batch, self._start_time, finalize=True)
             self._sum_time += time_end
-            total_epochs = self.retrain_epochs if self._get_train_status() in ['addtrain',
-                                                                               'trained'] else self.epochs
+            total_epochs = self.retrain_epochs \
+                if self._get_train_status() in ['addtrain', 'trained'] else self.epochs
             if self.stop_training:
                 progress.pool(
                     self.progress_name,

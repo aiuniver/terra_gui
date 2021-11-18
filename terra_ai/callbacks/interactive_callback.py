@@ -113,6 +113,7 @@ class InteractiveCallback:
         if self.log_history:
             if arrays:
                 if self.options.data.architecture in BASIC_ARCHITECTURE:
+                    t = time.time()
                     self.y_true = reformat_fit_array(
                         array={"train": arrays.get("train_true"), "val": arrays.get("val_true")},
                         options=self.options, train_idx=train_idx)
@@ -121,7 +122,9 @@ class InteractiveCallback:
                         array={"train": arrays.get("train_pred"), "val": arrays.get("val_pred")},
                         options=self.options, train_idx=train_idx)
                     self.inverse_y_pred = self.callback.get_inverse_array(self.y_pred, self.options)
+                    print('\nInteractiveCallback y_true, y_pred:', round(time.time() - t, 3))
 
+                    t = time.time()
                     out = f"{self.training_details.interactive.intermediate_result.main_output}"
                     count = self.training_details.interactive.intermediate_result.num_examples
                     count = count if count > len(self.y_true.get('val').get(out)) \
@@ -135,6 +138,7 @@ class InteractiveCallback:
                         choice_type=self.training_details.interactive.intermediate_result.example_choice_type,
                         seed_idx=self.seed_idx[:self.training_details.interactive.intermediate_result.num_examples]
                     )
+                    print('\nInteractiveCallback prepare_example_idx_to_show', round(time.time() - t, 3))
                 if self.options.data.architecture in YOLO_ARCHITECTURE:
                     t = time.time()
                     self.raw_y_pred = arrays.get("val_pred")
@@ -194,6 +198,7 @@ class InteractiveCallback:
                     if self.options.data.architecture in BASIC_ARCHITECTURE and \
                             self.training_details.interactive.statistic_data.output_id \
                             and self.training_details.interactive.statistic_data.autoupdate:
+                        t = time.time()
                         self.statistic_result = self.callback.statistic_data_request(
                             interactive_config=self.training_details.interactive,
                             options=self.options,
@@ -202,6 +207,7 @@ class InteractiveCallback:
                             y_pred=self.y_pred,
                             inverse_y_pred=self.inverse_y_pred,
                         )
+                        print('\nInteractiveCallback statistic_data_request', round(time.time() - t, 3))
                     if self.options.data.architecture in YOLO_ARCHITECTURE and \
                             self.training_details.interactive.statistic_data.box_channel \
                             and self.training_details.interactive.statistic_data.autoupdate:

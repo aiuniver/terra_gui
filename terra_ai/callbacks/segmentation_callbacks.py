@@ -11,7 +11,8 @@ from tensorflow.python.keras.utils.np_utils import to_categorical
 
 from terra_ai.callbacks.utils import dice_coef, sort_dict, get_y_true, get_image_class_colormap, get_confusion_matrix, \
     fill_heatmap_front_structure, get_classification_report, fill_table_front_structure, fill_graph_front_structure, \
-    fill_graph_plot_data, print_error, segmentation_metric, sequence_length_calculator
+    fill_graph_plot_data, print_error, segmentation_metric, sequence_length_calculator, \
+    get_segmentation_confusion_matrix
 from terra_ai.data.datasets.dataset import DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerEncodingChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
@@ -442,14 +443,23 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                     type_name = "Тренировочная" if data_type == 'train' else "Проверочная"
                     # print(out, y_true.get(data_type).keys())
                     # print(out, y_pred.get(data_type).keys())
-                    cm, cm_percent = get_confusion_matrix(
-                        y_true=np.argmax(y_true.get(data_type).get(f"{out}"), axis=-1).reshape(
-                            np.prod(np.argmax(y_true.get(data_type).get(f"{out}"), axis=-1).shape)).astype('int'),
-                        y_pred=np.argmax(y_pred.get(data_type).get(f'{out}'), axis=-1).reshape(
-                            np.prod(np.argmax(y_pred.get(data_type).get(f'{out}'), axis=-1).shape)).astype('int'),
+                    # cm, cm_percent = get_confusion_matrix(
+                    #     y_true=np.argmax(y_true.get(data_type).get(f"{out}"), axis=-1).reshape(
+                    #         np.prod(np.argmax(y_true.get(data_type).get(f"{out}"), axis=-1).shape)).astype('int'),
+                    #     y_pred=np.argmax(y_pred.get(data_type).get(f'{out}'), axis=-1).reshape(
+                    #         np.prod(np.argmax(y_pred.get(data_type).get(f'{out}'), axis=-1).shape)).astype('int'),
+                    #     get_percent=True
+                    # )
+                    num_classes = options.data.outputs.get(out).num_classes
+                    cm, cm_percent = get_segmentation_confusion_matrix(
+                        y_true=to_categorical(np.argmax(y_true.get(data_type).get(f'{out}'), axis=-1),
+                                              num_classes=num_classes).astype('int'),
+                        y_pred=to_categorical(np.argmax(y_pred.get(data_type).get(f'{out}'), axis=-1),
+                                              num_classes=num_classes).astype('int'),
+                        num_classes=num_classes,
                         get_percent=True
                     )
-                    print(cm)
+                    print(cm, cm_percent)
                     return_data.append(
                         fill_heatmap_front_structure(
                             _id=_id,

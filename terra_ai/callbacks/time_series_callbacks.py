@@ -382,7 +382,7 @@ class TimeseriesCallback:
                                 fill_graph_front_structure(
                                     _id=_id,
                                     _type='bar',
-                                    graph_name=f"Выходной слой «{out}» - Распределение абсолютной ошибки канала "
+                                    graph_name=f"Выход «{out}» - Распределение абсолютной ошибки канала "
                                                f"«{channel_name.split('_', 1)[-1]}» на {step + 1} шаг"
                                                f"{'ов' if step + 1 == 1 else ''} вперед - {type_name} выборка",
                                     short_name=f"{out} - Распределение MAE канала «{channel_name.split('_', 1)[-1]}»"
@@ -404,7 +404,7 @@ class TimeseriesCallback:
                                 fill_graph_front_structure(
                                     _id=_id,
                                     _type='bar',
-                                    graph_name=f"Выходной слой «{out}» - Распределение ошибки канала "
+                                    graph_name=f"Выход «{out}» - Распределение ошибки канала "
                                                f"«{channel_name.split('_', 1)[-1]}» на {step + 1} шаг"
                                                f"{'ов' if step + 1 == 1 else ''} вперед - {type_name} выборка",
                                     short_name=f"{out} - Распределение ME канала «{channel_name.split('_', 1)[-1]}» - "

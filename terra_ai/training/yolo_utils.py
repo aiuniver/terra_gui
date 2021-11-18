@@ -712,6 +712,7 @@ def get_mAP(Yolo: object, dataset: object, score_threshold: object = 0.25, iou_t
     method_name = 'get_mAP'
     tt1 = time.time()
     try:
+        print(method_name)
         if TRAIN_CLASSES is None:
             TRAIN_CLASSES = []
         if iou_threshold is None:
@@ -899,8 +900,8 @@ def get_mAP(Yolo: object, dataset: object, score_threshold: object = 0.25, iou_t
 
             ap_dictionary[f"val_mAP{int(i_iou * 100)}"] = mAP * 100
         ap_dictionary["val_fps"] = fps
-        # tt2 = time.time()
-        # print('tt2-tt1', tt2-tt1)
+        tt2 = time.time()
+        print('tt2-tt1', tt2-tt1)
         return ap_dictionary
     except Exception as e:
         print_error("module yolo_utils", method_name, e)
