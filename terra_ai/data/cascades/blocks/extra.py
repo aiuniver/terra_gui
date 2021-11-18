@@ -154,7 +154,7 @@ class BlocksBindChoice(Enum):
         self._binds = self._get_binds(binds)
         self._required_binds = tuple([bind for bind in binds if not isinstance(bind, tuple)])
         self._bind_count = len(binds) if binds else 1
-        self._data_type = data_type
+        self._data_type = ", ".join([type_name.value for type_name in data_type])
 
     @property
     def name(self):
