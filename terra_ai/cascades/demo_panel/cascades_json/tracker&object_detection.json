@@ -22,7 +22,7 @@
       }
     },
     "sort": {
-      "tag": "function",
+      "tag": "service",
       "task": "tracking",
       "name": "Sort",
       "params": {
@@ -33,7 +33,7 @@
     "plot bboxes": {
       "tag": "function",
       "task": "ObjectDetection",
-      "name": "plot_bboxes",
+      "name": "plot_b_boxes",
       "params": {
         "classes": [
           "black-knight",

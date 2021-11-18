@@ -21,6 +21,15 @@
         "sigma": 0.3
       }
     },
+    "self_alg": {
+      "tag": "service",
+      "task": "tracking",
+      "name": "BiTBasedTracker",
+      "params": {
+        "max_age": 10,
+        "distance_threshold": 0.5
+      }
+    },
     "plot bboxes": {
       "tag": "function",
       "task": "ObjectDetection",
@@ -47,10 +56,9 @@
       "tag": "output",
       "type": "video",
       "params": {
-        "width": 1280,
-        "height": 720
-      }
-    }
+        "width": 1980,
+        "height": 1080
+      }    }
   },
   "adjacency_map": {
     "model": [
@@ -60,8 +68,12 @@
       "model",
       "INPUT"
     ],
-    "plot bboxes": [
+    "self_alg": [
       "normalize bboxes",
+      "INPUT"
+    ],
+    "plot bboxes": [
+      "self_alg",
       "INPUT"
     ],
     "saving": [

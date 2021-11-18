@@ -1,5 +1,11 @@
 import numpy as np
 from filterpy.kalman import KalmanFilter
+from scipy.spatial.distance import cosine
+
+from ..general_fucntions.array import change_size
+
+import tensorflow_hub
+from collections import Counter
 
 
 def _convert_bbox_to_z(bbox):
@@ -223,3 +229,71 @@ class Sort:
         if len(ret) > 0:
             return np.concatenate(ret)
         return np.empty((0, 5))
+
+
+class BiTBasedTracker:
+    def __init__(
+            self, distance_threshold: float = 0.15, max_age: int = 5
+    ):
+        self.distance_threshold = distance_threshold
+        self.max_age = max_age
+        self.peoples = {}
+        self.people_count = 0
+        self.module = tensorflow_hub.KerasLayer("https://tfhub.dev/google/bit/m-r50x1/1")
+
+        self.resizer = change_size((128, 128, 3))
+        self.dead_tracks = Counter()
+
+        self.start_flag = True
+
+    def __call__(self, dets: np.ndarray, image: np.ndarray) -> np.ndarray:
+        out = []
+        crops = []
+        dets = dets[:, :4].astype(np.int)
+
+        for b in dets:
+            if b[0] == b[2] or b[1] == b[3]:
+                b[:2] -= 5
+                b[2:] += 5
+                b[b < 0] = 0
+
+            i = image[b[1]: b[3], b[0]: b[2]]
+            crops.append(self.resizer(i))
+        crops = np.array(crops).astype(np.float32)
+        vectors = self.module(crops).numpy()
+
+        ids = list(self.peoples.keys())
+
+        if self.start_flag:
+            self.peoples = {n: i for n, i in enumerate(vectors)}
+            self.people_count = len(vectors)
+            self.start_flag = not self.start_flag
+        else:
+            for new_vec, box in zip(vectors, dets):
+                min_dist = 1
+                min_id = 0
+                for id in ids:
+                    dist = cosine(self.peoples[id], new_vec)
+                    if dist < min_dist:
+                        min_dist = dist
+                        min_id = id
+                if min_dist < self.distance_threshold:
+                    self.peoples[min_id] = np.mean(np.concatenate(
+                        (new_vec[np.newaxis, ...], self.peoples[min_id][np.newaxis, ...]), axis=0
+                    ), axis=0)
+                    current_id = min_id
+                    ids.remove(id)
+                else:
+                    self.peoples[self.people_count] = new_vec
+                    current_id = self.people_count
+                    self.people_count += 1
+
+                out.append(list(box) + [current_id])
+
+        for id in ids:
+            self.dead_tracks[id] += 1
+            if self.dead_tracks[id] >= self.max_age:
+                del self.dead_tracks[id]
+                del self.peoples[id]
+
+        return np.array(out)
