@@ -12,8 +12,8 @@ from ..extra import DataBaseList, DataBase
 
 
 class Item(BaseMixinData):
-    source: PosixPath
-    segment: PosixPath
+    source: str
+    segment: str
     data: List[Tuple[str, Tuple[int, int, int]]]
 
 
@@ -60,8 +60,8 @@ class DataList(DataBaseList):
         destination_source = Path(self.source_path, f"{index + 1}.jpg")
         destination_segment = Path(self.segment_path, f"{index + 1}.jpg")
 
-        Image.open(item.source).save(destination_source)
-        Image.open(item.segment).save(destination_segment)
+        Image.open(Path(self.path_deploy, item.source)).save(destination_source)
+        Image.open(Path(self.path_deploy, item.segment)).save(destination_segment)
 
 
 class Data(DataBase):

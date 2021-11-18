@@ -11,8 +11,8 @@ from ..extra import DataBaseList, DataBase
 
 
 class Item(BaseMixinData):
-    source: PosixPath
-    predict: PosixPath
+    source: str
+    predict: str
 
 
 class DataList(DataBaseList):
