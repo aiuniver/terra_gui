@@ -1,5 +1,7 @@
 from terra_ai.data.cascades.extra import BlockGroupChoice
 from terra_ai.data.cascades.blocks.extra import (
+    BlockServiceGroupChoice,
+    BlockServiceTypeChoice,
     ChangeTypeAvailableChoice,
     PostprocessBoxesMethodAvailableChoice,
     BlockCustomGroupChoice,
@@ -80,7 +82,15 @@ FunctionTypesFields = {
     ],
     BlockFunctionTypeChoice.MaskedImage: [],
     BlockFunctionTypeChoice.PlotMaskSegmentation: [],
-    BlockFunctionTypeChoice.PutTag: [],
+    BlockFunctionTypeChoice.PutTag: [
+        {
+            "type": "number",
+            "name": "alpha",
+            "parse": "parameters[main][alpha]",
+            "label": "Альфа - порог вероятности",
+            "value": 0.5,
+        },
+    ],
     BlockFunctionTypeChoice.PostprocessBoxes: [
         {
             "type": "number",
@@ -208,6 +218,22 @@ CascadesBlocksTypes = {
                         },
                     ]
                 },
+                "manual": {
+                    "Video": """
+                        <p>
+                        <b>Видео</b> - тип данных, который будет <i>использоваться для обработки</i> последующими блоками и каскадом в целом. 
+                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе: 
+                        None
+                        Возможные связи с другими блоками на выходе:
+                        </p>
+                        <ol> 
+                        <li>блок Model модель object detection или сегментации</li>  
+                        <li>блок Function Наложение bbox на изображение</li>
+                        <li>блок Function Постобработка yolo</li>
+                        </ol>
+                        <p>Возвращает на выходе: Фреймы из видео</p>
+                    """
+                }
             },
         ]
     },
@@ -241,6 +267,67 @@ CascadesBlocksTypes = {
                         },
                     ]
                 },
+                "manual": {
+                    "Video": """
+                        <p>
+                        <b>Сохранение</b> результата в видео файл 
+                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
+                        </p>
+                        <ol>
+                        <li>блок Function Наложение bbox на изображение</li>
+                        </ol>
+                        <p>
+                        Возможные <a href="https://google.com" target="_blank">связи</a> с другими блоками на выходе: 
+                        None
+                        </p>
+                        <p>Возвращает на выходе: Сохраняет переданные фреймы исходного видео в видеофайл с выставленными параметрами</p>
+                    """,
+                    "Image": """
+                        <p>
+                        <b>Сохранение</b> результата в файл изображения
+                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
+                        </p>
+                        <ol>
+                        <li>блок Function Наложение bbox на изображение</li>
+                        <li>блок Function Наложение маски по классу на изображение</li>
+                        <li>блок Function Наложение маски всех классов по цветам</li>
+                        </ol>
+                        <p>
+                        Возможные <a href="https://google.com" target="_blank">связи</a> с другими блоками на выходе: 
+                        None
+                        </p>
+                        <p>Возвращает на выходе: Сохраняет переданные обработанные изображения</p>
+                    """,
+                    "Text": """
+                        <p>
+                        <b>Сохранение</b> результата в текстовый файл 
+                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
+                        </p>
+                        <ol>
+                        <li>блок Function Расстановка тэгов по вероятностям из модели</li>
+                        <li>блок Service  speech_to_text</li>
+                        </ol>
+                        <p>
+                        Возможные <a href="https://google.com" target="_blank">связи</a> с другими блоками на выходе: 
+                        None
+                        </p>
+                        <p>Возвращает на выходе: Сохраняет обработанный текст</p>
+                    """,
+                    "Audio": """
+                        <p>
+                        <b>Сохранение</b> результата в текстовый файл 
+                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
+                        </p>
+                        <ol>
+                        <li>блок Service  text_to_speech</li>
+                        </ol>
+                        <p>
+                        Возможные <a href="https://google.com" target="_blank">связи</a> с другими блоками на выходе: 
+                        None
+                        </p>
+                        <p>Возвращает на выходе: Сохраняет переданное аудио</p>
+                    """,
+                }
             },
         ]
     },
@@ -301,6 +388,101 @@ CascadesBlocksTypes = {
                         BlockFunctionGroupChoice.TextSegmentation
                     ),
                 },
+                "manual": {
+                    "ChangeSize": """
+                        <p>
+                        <b>Изменение</b> размера изображения по указанным параметрам. 
+                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
+                        </p>
+                        <ol>
+                        <li>любой блок возвращающий изображение</li>
+                        </ol>
+                        <p>Возможные связи с другими блоками на выходе:</p>
+                        <ol>
+                        <li>блок Output метод Видео или Изображение</li> 
+                        <li>блок Model или Service</li>
+                        <li>блок Function</li>
+                        </ol>
+                        <p>Возвращает на выходе: маскированное изображение</p>
+                    """,
+                    "MaskedImage": """
+                        <p>
+                        <b>Наложение маски по указанному классу</b> на изображение. Необходимо указать Id класса.
+                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
+                        </p>
+                        <ol>
+                        <li>блок Model или Service c моделью сегментации изображений</li>
+                        <li>блок Input исходных изображений или видео (по кадрам)</li>
+                        </ol>
+                        <p>Возможные связи с другими блоками на выходе:</p>
+                        <ol>
+                        <li>блок Output метод Видео или Изображение</li>
+                        <li>блок Function Изменение размера данных</li>
+                        </ol>
+                        <p>Возвращает на выходе: маскированное изображение</p>
+                    """,
+                    "PlotMaskSegmentation": """
+                        <p>
+                        <b>Наложение маски по всем классам</b> на изображение
+                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
+                        </p>
+                        <ol>
+                        <li>блок Model или Service c моделью сегментации изображений</li> 
+                        <li>блок Input исходных изображений или видео (по кадрам)</li>
+                        </ol>
+                        <p>Возможные связи с другими блоками на выходе:</p>
+                        <ol>
+                        <li>блок Output метод Видео или Изображение</li>
+                        <li>блок Function Изменение размера данных</li>
+                        </ol>
+                        <p>Возвращает на выходе: маскированное изображение</p>
+                    """,
+                    "PutTag": """
+                        <p>
+                        <b>Наложение маски по всем классам</b> на изображение
+                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
+                        </p>
+                        <ol>
+                        <li>блок Model c моделью сегментации текста</li>
+                        </ol>
+                        <p>Возможные связи с другими блоками на выходе:</p>
+                        <ol>
+                        <li>блок Output метод Текст</li>
+                        </ol>
+                        <p>Возвращает на выходе: размеченный тегами текст</p>
+                    """,
+                    "PostprocessBoxes": """
+                        <p>
+                        <b>Постобработка</b> для моделей YOLOV3 и V4 
+                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
+                        </p>
+                        <ol>
+                        <li>блок Model c моделью YOLO</li>
+                        <li>блок Input исходных изображений или видео</li>
+                        </ol>
+                        <p>Возможные связи с другими блоками на выходе:</p>
+                        <ol> 
+                        <li>блок Custom Трекер (Sort, DeepSort)</li>
+                        <li>блок Function Наложение bbox на изображение</li>
+                        </ol>
+                        <p>Возвращает на выходе: лучшие bbox по выставленным параметрам</p>
+                    """,
+                    "PlotBBoxes": """
+                        <p>
+                        <b>Наложение bbox</b> на изображение YOLOV3 и V4 
+                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
+                        </p>
+                        <ol>
+                        <li>блок Function Постобработка yolo или блок Custom Трекер (Sort, DeepSort)</li>  
+                        <li>блок Input исходных изображений или видео</li>
+                        </ol>
+                        <p>Возможные связи с другими блоками на выходе:</p>
+                        <ol>
+                        <li>блок Output</li>
+                        </ol>
+                        <p>Возвращает на выходе: исходное изображение (фрейм) с наложенными bbox</p>
+                    """,
+                },
             },
         ]
     },
@@ -355,4 +537,85 @@ CascadesBlocksTypes = {
             },
         ]
     },
+    BlockGroupChoice.Service: {
+        "main": [
+            {
+                "type": "select",
+                "name": "group",
+                "label": "Группа",
+                "parse": "parameters[main][group]",
+                "value": BlockServiceGroupChoice.Tracking,
+                "list": list(
+                    map(
+                        lambda item: {"value": item.name, "label": item.value},
+                        list(BlockServiceGroupChoice),
+                    )
+                ),
+                "fields": {
+                    BlockServiceGroupChoice.Tracking: [
+                        {
+                            "type": "select",
+                            "name": "type",
+                            "label": "Выбор типа",
+                            "parse": "parameters[main][type]",
+                            "value": BlockServiceTypeChoice.Sort,
+                            "list": list(
+                                map(
+                                    lambda item: {
+                                        "value": item.name,
+                                        "label": item.value,
+                                    },
+                                    list(BlockServiceTypeChoice),
+                                )
+                            ),
+                        },
+                    ]
+                },
+                "manual": {
+                    "Sort": """
+                        <p>
+                        <b>Алгоритм трекера Sort</b> для моделей object_detection 
+                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
+                        </p>
+                        <ol>
+                        <li>блок Function Постобработка yolo</li>
+                        </ol>  
+                        <p>Возможные <a href="https://google.com" target="_blank">связи</a> с другими блоками на выходе:</p>
+                        <ol>
+                        <li>блок Function Наложение bbox на изображение</li>
+                        </ol>
+                        <p>Возвращает на выходе: Возвращает аналогичный массив bbox, где последний столбец - это идентификатор объекта.</p>
+                    """,
+                    "DeepSort": """
+                        <p>
+                        <b>Алгоритм трекера DeepSort</b> для моделей object_detection 
+                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
+                        </p>
+                        <ol>
+                        <li>блок Function Постобработка yolo</li>
+                        </ol>
+                        <p>Возможные <a href="https://google.com" target="_blank">связи</a> с другими блоками на выходе:</p>
+                        <ol> 
+                        <li>блок Function Наложение bbox на изображение</li>
+                        </ol>
+                        <p>Возвращает на выходе: Возвращает аналогичный массив bbox, где последний столбец - это идентификатор объекта.</p>
+                    """
+                }
+            },
+            {
+                "type": "number",
+                "name": "max_age",
+                "label": "Количество кадров для остановки слежения",
+                "parse": "parameters[main][max_age]",
+                "value": 4,
+            },
+            {
+                "type": "number",
+                "name": "min_hits",
+                "label": "Количество кадров для возобновления отслеживания",
+                "parse": "parameters[main][min_hits]",
+                "value": 4,
+            },
+        ]
+    }
 }

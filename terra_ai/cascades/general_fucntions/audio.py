@@ -4,6 +4,10 @@ import librosa
 from .array import change_type
 
 
+def load_audio(sample_rate: int):
+    return lambda path: librosa.load(path, sr=sample_rate)[0]
+
+
 def main(**params):
     parameter = params['parameter']
     retype = change_type(np.float32)

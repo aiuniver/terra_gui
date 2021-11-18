@@ -5,7 +5,7 @@ import pynvml
 import tensorflow
 
 from pathlib import Path
-from typing import Any, NoReturn
+from typing import Any
 
 from . import exceptions as agent_exceptions
 from . import utils as agent_utils
@@ -17,10 +17,10 @@ from ..exceptions import tensor_flow as tf_exceptions
 from ..data.datasets.creation import FilePathSourcesList
 from ..data.datasets.creation import SourceData, CreationData
 from ..data.datasets.dataset import (
-    DatasetLoadData,
     CustomDatasetConfigData,
     DatasetsGroupsList,
     DatasetData,
+    DatasetLoadData,
 )
 from ..data.datasets.extra import DatasetGroupChoice
 from ..data.extra import (
@@ -42,9 +42,9 @@ from ..datasets import utils as datasets_utils
 from ..datasets.creating import CreateDataset
 from ..deploy import loading as deploy_loading
 from ..modeling.validator import ModelValidator
-from ..progress import utils as progress_utils
 from ..training import training_obj
 from ..training.guinn import interactive
+from ..project import loading as project_loading
 
 
 class Exchange:
@@ -124,28 +124,27 @@ class Exchange:
         projects.sort(key=lambda item: item.label)
         return ProjectsInfoData(projects=projects.native())
 
-    def _call_project_load(self, source: Path, target: Path):
+    def _call_project_load(self, dataset_path: Path, source: Path, target: Path):
         """
         Загрузка проекта
         """
-        destination = progress_utils.unpack("project_load", "Загрузка проекта", source)
-        shutil.rmtree(target, ignore_errors=True)
-        shutil.move(destination, target)
+        project_loading.load(Path(dataset_path), Path(source), Path(target))
+
+    def _call_project_load_progress(self) -> progress.ProgressData:
+        """
+        Прогресс загрузки проекта
+        """
+        return progress.pool(project_loading.PROJECT_LOAD_NAME)
 
     def _call_dataset_choice(
-        self,
-        custom_path: Path,
-        destination: Path,
-        group: str,
-        alias: str,
-        reset_model: bool = False,
-    ) -> NoReturn:
+        self, custom_path: Path, group: str, alias: str, reset_model: bool = False
+    ):
         """
         Выбор датасета
         """
         datasets_loading.choice(
+            "dataset_choice",
             DatasetLoadData(path=custom_path, group=group, alias=alias),
-            destination=destination,
             reset_model=reset_model,
         )
 

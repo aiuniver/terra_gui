@@ -31,8 +31,11 @@
       <li class="toolbar__menu--item" @click.prevent="click($event, 'Custom')" title="Custom">
         <i class="t-icon icon-layer-custom"></i>
       </li>
+      <li class="toolbar__menu--item" @click.prevent="click($event, 'Service')" title="Service">
+        <i class="t-icon icon-layer-service"></i>
+      </li>
       <li
-        :class="['toolbar__menu--item', { disabled: isOutput }]"
+        :class="['toolbar__menu--item', { disabled: false }]"
         @click.prevent="click($event, 'OutputData')"
         title="Исходящий слой"
       >

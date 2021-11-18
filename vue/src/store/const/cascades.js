@@ -28,6 +28,13 @@ const typeBlock = [
       outputs: [{}],
     },
     {
+      group: "Service",
+      name: 'Сервис ',
+      type: 'Service',
+      inputs: [{}],
+      outputs: [{}],
+    },
+    {
       group: "OutputData",
       name: 'Выход ',
       type: 'OutputData',

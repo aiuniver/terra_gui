@@ -3,5 +3,6 @@ from . import (
     OutputData,
     Model,
     Custom,
-    Function
+    Function,
+    Service
 )

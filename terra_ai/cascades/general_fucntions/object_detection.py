@@ -108,7 +108,7 @@ def postprocess_boxes(input_size=416, score_threshold=.3, iou_threshold=.45, met
     return fun
 
 
-def plot_bboxes(classes, colors=None, line_thickness=None):
+def plot_b_boxes(classes, colors=None, line_thickness=None):
     if colors is None:
         colors = [randrange(1, 256) for _ in range(len(classes))]
 

@@ -14,7 +14,7 @@
           />
         </div>
         <at-collapse :value="collapse">
-          <at-collapse-item class="mb-3" title="Параметры слоя">
+          <at-collapse-item class="mb-3" title="Параметры блока">
             <!-- <Forms :data="main" :id="block.id" @change="change" /> -->
             <template v-for="(data, i) of main">
               <t-auto-field-cascade v-bind="data" :key="data.name + i" :id="data.name" :parameters="parameters" :inline="false" @change="change" />

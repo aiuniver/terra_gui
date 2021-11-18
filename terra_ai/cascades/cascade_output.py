@@ -53,3 +53,9 @@ def text(path):
             f.write(str(string) + '\n')
 
     return fun
+
+
+def google_tts(path):
+    def fun(tts):
+        tts.save(path)
+    return fun
