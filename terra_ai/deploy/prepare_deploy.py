@@ -18,19 +18,15 @@ from terra_ai.training.yolo_utils import create_yolo
 
 class DeployCreator:
 
-    def get_deploy(self, training_path: Path, deploy_path: Path, page: dict):
+    def get_deploy(self, training_path: Path, dataset: DatasetData, deploy_path: Path, page: dict):
 
         with open(os.path.join(training_path, page.get("name"), "config.json"),
                   "r", encoding="utf-8") as training_config:
             training_details = json.load(training_config)
 
         model_path = Path(os.path.join(training_path, page.get("name"), "model"))
-        dataset_path = Path(os.path.join(os.path.split(training_path)[0], "datasets"))
+        dataset_config_data = dataset.dict()
         deploy_type = training_details.get("base").get("architecture").get("type")
-
-        with open(os.path.join(dataset_path, "config.json"), "r", encoding="utf-8") as dataset_config:
-            dataset_config_data = json.load(dataset_config)
-            dataset_config_data.update({"path": dataset_path})
 
         if not dataset_config_data.get("architecture") or \
                 dataset_config_data.get("architecture") == ArchitectureChoice.Basic:

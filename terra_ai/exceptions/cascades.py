@@ -52,6 +52,11 @@ class CascadesMessages(dict, Enum):
         "eng": "Not allowed communication with the block %s. Connections with blocks are possible: %s"
     }
 
+    RequiredBindExceeding = {
+        "ru": "Отсутствует обязательная связь с блоком %s",
+        "eng": "There is no mandatory connection with the block %s"
+    }
+
     BindInappropriateDataType = {
         "ru": "Тип данных блока %s не совпадает с типом данных каскада %s",
         "eng": "The data type of the %s block does not match the data type of the cascade %s"
@@ -138,6 +143,14 @@ class ForbiddenBindException(CascadesException):
 
     def __init__(self, __expected, __got, **kwargs):
         super().__init__(str(__expected), str(__got), **kwargs)
+
+
+class RequiredBindException(CascadesException):
+    class Meta:
+        message = CascadesMessages.RequiredBindExceeding
+
+    def __init__(self, __expected, **kwargs):
+        super().__init__(str(__expected), **kwargs)
 
 
 class BindInappropriateDataTypeException(CascadesException):

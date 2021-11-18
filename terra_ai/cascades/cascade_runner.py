@@ -113,7 +113,8 @@ class CascadeRunner:
                         }
                 block_description = {
                     block.name: {
-                        "tag": block.group.value.lower(),
+                        "tag": block.group.value.lower() if block.group == BlockGroupChoice.Function
+                        else block.group.value,
                         "task": block.parameters.main.group.value,
                         "name": decamelize(block.parameters.main.type.value),
                         "params": parameters
@@ -129,14 +130,17 @@ class CascadeRunner:
     @staticmethod
     def _get_bind_names(blocks_ids: list, cascade_data: CascadeDetailsData):
         mapping = []
+        _input = None
         for block in cascade_data.blocks:
             if block.id in blocks_ids:
                 if block.group == BlockGroupChoice.InputData:
-                    mapping.append("INPUT")
+                    _input = "INPUT"
                 elif block.group == BlockGroupChoice.Model:
                     mapping.append("model")
                 else:
                     mapping.append(block.name)
+        if _input:
+            mapping.append(_input)
         return mapping
 
     @staticmethod

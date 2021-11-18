@@ -85,11 +85,18 @@ class CascadeValidator:
                                                   error=str(
                                                       exceptions.BindCountNotEnoughException(*error_args)
                                                   ))
-                if len(block.bind.up) > checked_block.bind_count:
+                elif len(block.bind.up) > checked_block.bind_count:
                     bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
                                                   error=str(
                                                       exceptions.BindCountExceedingException(*error_args)
                                                   ))
+                else:
+                    for bind in checked_block.required_binds:
+                        print(checked_block)
+                        print(checked_block.required_binds)
+                        if bind not in block.bind.up:
+                            bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
+                                                          error=str(exceptions.RequiredBindException(bind)))
 
                 if checked_block.data_type and model_data_type not in checked_block.data_type:
                     bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
