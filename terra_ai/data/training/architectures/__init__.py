@@ -61,6 +61,10 @@ class ArchitectureYoloV4Data(ArchitectureBasicData, types.YoloV4.ParametersData)
     pass
 
 
+class ArchitectureTrackerData(ArchitectureBasicData):
+    pass
+
+
 Architecture = Enum(
     "Architecture",
     dict(

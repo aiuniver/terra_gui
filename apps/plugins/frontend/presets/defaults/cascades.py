@@ -4,6 +4,7 @@ from terra_ai.data.cascades.blocks.extra import (
     BlockServiceTypeChoice,
     ChangeTypeAvailableChoice,
     PostprocessBoxesMethodAvailableChoice,
+    BlockServiceDeepSortMetricChoice,
     BlockCustomGroupChoice,
     BlockCustomTypeChoice,
 )
@@ -169,8 +170,65 @@ FunctionGroupTypeRel = {
 }
 
 
-def get_function_type_field(type_name) -> dict:
-    items = list(FunctionGroupTypeRel.get(type_name))
+ServiceTypesFields = {
+    BlockServiceTypeChoice.Sort: [
+        {
+            "type": "number",
+            "name": "max_age",
+            "label": "Количество кадров для остановки слежения",
+            "parse": "parameters[main][max_age]",
+            "value": 4,
+        },
+        {
+            "type": "number",
+            "name": "min_hits",
+            "label": "Количество кадров для возобновления отслеживания",
+            "parse": "parameters[main][min_hits]",
+            "value": 4,
+        },
+    ],
+    BlockServiceTypeChoice.DeepSort: [
+        {
+            "type": "number",
+            "name": "max_age",
+            "label": "Количество кадров для остановки слежения",
+            "parse": "parameters[main][max_age]",
+            "value": 4,
+        },
+        {
+            "type": "number",
+            "name": "distance_threshold",
+            "label": "Порог сходства объектов",
+            "parse": "parameters[main][distance_threshold]",
+            "value": 0.4,
+        },
+        {
+            "type": "select",
+            "name": "metric",
+            "parse": "parameters[main][metric]",
+            "label": "Метрика сравнения сходства",
+            "value": BlockServiceDeepSortMetricChoice.euclidean,
+            "list": list(
+                map(
+                    lambda item: {"value": item.name, "label": item.value},
+                    list(BlockServiceDeepSortMetricChoice),
+                )
+            )
+        },
+    ]
+}
+
+
+ServiceGroupTypeRel = {
+    BlockServiceGroupChoice.Tracking: [
+        BlockServiceTypeChoice.Sort,
+        BlockServiceTypeChoice.DeepSort,
+    ],
+}
+
+
+def get_type_field(type_name, group_type_rel, types_fields) -> dict:
+    items = list(group_type_rel.get(type_name))
     if not len(items):
         return []
     return [
@@ -187,7 +245,7 @@ def get_function_type_field(type_name) -> dict:
                 )
             ),
             "fields": dict(
-                map(lambda item: (item.name, FunctionTypesFields.get(item, [])), items)
+                map(lambda item: (item.name, types_fields.get(item, [])), items)
             ),
         }
     ]
@@ -363,29 +421,29 @@ CascadesBlocksTypes = {
                     )
                 ),
                 "fields": {
-                    BlockFunctionGroupChoice.Image: get_function_type_field(
-                        BlockFunctionGroupChoice.Image
+                    BlockFunctionGroupChoice.Image: get_type_field(
+                        BlockFunctionGroupChoice.Image, FunctionGroupTypeRel, FunctionTypesFields
                     ),
-                    BlockFunctionGroupChoice.Text: get_function_type_field(
-                        BlockFunctionGroupChoice.Text
+                    BlockFunctionGroupChoice.Text: get_type_field(
+                        BlockFunctionGroupChoice.Text, FunctionGroupTypeRel, FunctionTypesFields
                     ),
-                    BlockFunctionGroupChoice.Audio: get_function_type_field(
-                        BlockFunctionGroupChoice.Audio
+                    BlockFunctionGroupChoice.Audio: get_type_field(
+                        BlockFunctionGroupChoice.Audio, FunctionGroupTypeRel, FunctionTypesFields
                     ),
-                    BlockFunctionGroupChoice.Video: get_function_type_field(
-                        BlockFunctionGroupChoice.Video
+                    BlockFunctionGroupChoice.Video: get_type_field(
+                        BlockFunctionGroupChoice.Video, FunctionGroupTypeRel, FunctionTypesFields
                     ),
-                    BlockFunctionGroupChoice.Array: get_function_type_field(
-                        BlockFunctionGroupChoice.Array
+                    BlockFunctionGroupChoice.Array: get_type_field(
+                        BlockFunctionGroupChoice.Array, FunctionGroupTypeRel, FunctionTypesFields
                     ),
-                    BlockFunctionGroupChoice.ObjectDetection: get_function_type_field(
-                        BlockFunctionGroupChoice.ObjectDetection
+                    BlockFunctionGroupChoice.ObjectDetection: get_type_field(
+                        BlockFunctionGroupChoice.ObjectDetection, FunctionGroupTypeRel, FunctionTypesFields
                     ),
-                    BlockFunctionGroupChoice.Segmentation: get_function_type_field(
-                        BlockFunctionGroupChoice.Segmentation
+                    BlockFunctionGroupChoice.Segmentation: get_type_field(
+                        BlockFunctionGroupChoice.Segmentation, FunctionGroupTypeRel, FunctionTypesFields
                     ),
-                    BlockFunctionGroupChoice.TextSegmentation: get_function_type_field(
-                        BlockFunctionGroupChoice.TextSegmentation
+                    BlockFunctionGroupChoice.TextSegmentation: get_type_field(
+                        BlockFunctionGroupChoice.TextSegmentation, FunctionGroupTypeRel, FunctionTypesFields
                     ),
                 },
                 "manual": {
@@ -487,55 +545,7 @@ CascadesBlocksTypes = {
         ]
     },
     BlockGroupChoice.Custom: {
-        "main": [
-            {
-                "type": "select",
-                "name": "group",
-                "label": "Группа",
-                "parse": "parameters[main][group]",
-                "value": BlockCustomGroupChoice.Tracking,
-                "list": list(
-                    map(
-                        lambda item: {"value": item.name, "label": item.value},
-                        list(BlockCustomGroupChoice),
-                    )
-                ),
-                "fields": {
-                    BlockCustomGroupChoice.Tracking: [
-                        {
-                            "type": "select",
-                            "name": "type",
-                            "label": "Выбор типа",
-                            "parse": "parameters[main][type]",
-                            "value": BlockCustomTypeChoice.Sort,
-                            "list": list(
-                                map(
-                                    lambda item: {
-                                        "value": item.name,
-                                        "label": item.value,
-                                    },
-                                    list(BlockCustomTypeChoice),
-                                )
-                            ),
-                        },
-                    ]
-                },
-            },
-            {
-                "type": "number",
-                "name": "max_age",
-                "label": "Количество кадров для остановки слежения",
-                "parse": "parameters[main][max_age]",
-                "value": 4,
-            },
-            {
-                "type": "number",
-                "name": "min_hits",
-                "label": "Количество кадров для возобновления отслеживания",
-                "parse": "parameters[main][min_hits]",
-                "value": 4,
-            },
-        ]
+        "main": []
     },
     BlockGroupChoice.Service: {
         "main": [
@@ -552,24 +562,9 @@ CascadesBlocksTypes = {
                     )
                 ),
                 "fields": {
-                    BlockServiceGroupChoice.Tracking: [
-                        {
-                            "type": "select",
-                            "name": "type",
-                            "label": "Выбор типа",
-                            "parse": "parameters[main][type]",
-                            "value": BlockServiceTypeChoice.Sort,
-                            "list": list(
-                                map(
-                                    lambda item: {
-                                        "value": item.name,
-                                        "label": item.value,
-                                    },
-                                    list(BlockServiceTypeChoice),
-                                )
-                            ),
-                        },
-                    ]
+                    BlockServiceGroupChoice.Tracking: get_type_field(
+                        BlockServiceGroupChoice.Tracking, ServiceGroupTypeRel, ServiceTypesFields
+                    ),
                 },
                 "manual": {
                     "Sort": """
@@ -601,20 +596,6 @@ CascadesBlocksTypes = {
                         <p>Возвращает на выходе: Возвращает аналогичный массив bbox, где последний столбец - это идентификатор объекта.</p>
                     """
                 }
-            },
-            {
-                "type": "number",
-                "name": "max_age",
-                "label": "Количество кадров для остановки слежения",
-                "parse": "parameters[main][max_age]",
-                "value": 4,
-            },
-            {
-                "type": "number",
-                "name": "min_hits",
-                "label": "Количество кадров для возобновления отслеживания",
-                "parse": "parameters[main][min_hits]",
-                "value": 4,
             },
         ]
     }
