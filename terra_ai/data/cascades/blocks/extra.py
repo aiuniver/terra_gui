@@ -205,6 +205,7 @@ class FunctionParamsChoice(Enum):
         "input_size", "score_threshold", "iou_threshold", "method", "sigma"
     ))
     PlotBBoxes = (BlockFunctionTypeChoice.PlotBBoxes, ("classes",))
+    Sort = (BlockServiceTypeChoice.Sort, ("max_age", "min_hits"))
 
     def __init__(self, name, parameters):
         self._name = name

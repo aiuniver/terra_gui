@@ -14,7 +14,8 @@ from terra_ai.data.cascades.extra import BlockGroupChoice
 class CascadeRunner:
 
     def start_cascade(self, cascade_data: CascadeDetailsData, path: Path):
-        dataset_path = os.path.join(os.path.split(path)[0], "datasets")
+        script_name, model = self._get_task_type(cascade_data=cascade_data, training_path=path)
+        dataset_path = os.path.join(path, model, "model", "dataset")
 
         with open(os.path.join(dataset_path, "config.json"), "r", encoding="utf-8") as dataset_config:
             dataset_config_data = json.load(dataset_config)
@@ -28,15 +29,19 @@ class CascadeRunner:
         main_block = json2cascade(path=os.path.join(path, model), cascade_config=cascade_config, mode="run")
         sources = self._get_sources(dataset_path=dataset_path)
         i = 0
-        print(sources)
+        if not sources:
+            dataset_path = "F:\\tmp\\terraai\\datasets\\loaded\\terra\\chess_v3"
+            sources = self._get_sources(dataset_path=dataset_path)
         for source in sources:
+            print(source)
             if "text" in script_name:
                 with open("test.txt", "w", encoding="utf-8") as f:
                     f.write(source)
                 input_path = "test.txt"
             else:
                 input_path = os.path.join(dataset_path, source)
-            if "segmentation" in script_name:
+                print(input_path)
+            if "segmentation" in script_name or "object_detection" in script_name:
                 output_path = f"F:\\tmp\\ttt\\source{i}.jpg"
                 print(output_path)
                 main_block(input_path=input_path, output_path=output_path)
@@ -98,7 +103,12 @@ class CascadeRunner:
                 adjacency_map.update({"model": self._get_bind_names(cascade_data=cascade_data,
                                                                     blocks_ids=block.bind.up)})
             else:
+                _tag = block.group.value
+                _task = block.parameters.main.group.value
+                _name = decamelize(block.parameters.main.type.value)
+
                 if block.group == BlockGroupChoice.Function:
+                    _tag = block.group.value.lower()
                     block_parameters = FunctionParamsChoice.get_parameters(input_block=block.parameters.main.type)
                     parameters = {
                         key: val for key, val in block.parameters.main.native().items()
@@ -106,6 +116,15 @@ class CascadeRunner:
                     }
                     if "classes" in parameters.keys() and not parameters.get("classes"):
                         parameters["classes"] = classes
+                elif block.group == BlockGroupChoice.Service:
+                    _tag = block.group.value.lower()
+                    _task = block.parameters.main.group.value.lower()
+                    _name = block.parameters.main.type.value
+                    block_parameters = FunctionParamsChoice.get_parameters(input_block=block.parameters.main.type)
+                    parameters = {
+                        key: val for key, val in block.parameters.main.native().items()
+                        if key in block_parameters
+                    }
                 else:
                     parameters = {
                             key: val for key, val in block.parameters.main.native().items()
@@ -113,10 +132,9 @@ class CascadeRunner:
                         }
                 block_description = {
                     block.name: {
-                        "tag": block.group.value.lower() if block.group == BlockGroupChoice.Function
-                        else block.group.value,
-                        "task": block.parameters.main.group.value,
-                        "name": decamelize(block.parameters.main.type.value),
+                        "tag": _tag,
+                        "task": _task,
+                        "name": _name,
                         "params": parameters
                     }
                 }
@@ -146,8 +164,10 @@ class CascadeRunner:
     @staticmethod
     def _get_sources(dataset_path: str) -> list:
         out = []
-        sources = pd.read_csv(os.path.join(dataset_path, "instructions", "tables", "val.csv"))
-        print(sources)
+        try:
+            sources = pd.read_csv(os.path.join(dataset_path, "instructions", "tables", "val.csv"))
+        except Exception as e:
+            return out
         for column in sources.columns:
             if column.split("_")[-1].title() in ["Image", "Text", "Audio", "Video"]:
                 out = sources[column].to_list()
