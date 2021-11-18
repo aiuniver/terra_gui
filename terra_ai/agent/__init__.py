@@ -386,13 +386,16 @@ class Exchange:
         return CascadeRunner().start_cascade(cascade_data=cascade, path=path)
 
     def _call_deploy_get(
-        self, path_model: Path, path_deploy: Path, page: dict
+        self, dataset: DatasetData, path_model: Path, path_deploy: Path, page: dict
     ) -> DeployData:
         """
         получение данных для отображения пресетов на странице деплоя
         """
         outdata = DeployCreator().get_deploy(
-            training_path=path_model, deploy_path=path_deploy, page=page
+            dataset=dataset,
+            training_path=path_model,
+            deploy_path=path_deploy,
+            page=page,
         )
 
         return outdata
