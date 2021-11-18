@@ -31,15 +31,31 @@
         </li>
       </ul>
     </div>
-    <div class="header__right"></div>
+    <div class="header__right">
+      <ul>
+        <li>
+          <i class="ci-icon ci-pie_chart_50" @click="theme()"/>
+        </li>
+        <li>
+          <i class="ci-icon ci-notification_outline" />
+        </li>
+        <li>
+          <i class="ci-icon ci-user_circle" />
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
 <script>
+import { mapActions } from 'vuex';
 export default {
   name: 'app-header',
   components: {},
   methods: {
+    ...mapActions({
+      theme: 'themes/changeTheme',
+    }),
     to(path, children) {
       children = children?.[0]?.path || '';
       path = children ? path + children : path;
@@ -94,6 +110,35 @@ export default {
   display: flex;
   align-items: center;
   border-bottom: 1px solid var(--color-border);
+  &__right {
+    height: 100%;
+    margin-left: auto;
+    align-items: center;
+    position: relative;
+    &::before {
+      content: '';
+      display: block;
+      position: absolute;
+      top: 11px;
+      height: 30px;
+      width: 1px;
+      background-color: var(--color-dark-gray);
+    }
+    ul {
+      height: 100%;
+      li {
+        cursor: pointer;
+        display: inline-block;
+        height: 100%;
+        // margin: 0 13px;
+        padding: 13px;
+        i {
+          font-size: 20px;
+          color: var(--color-gray-blue);
+        }
+      }
+    }
+  }
 }
 .nav {
   position: relative;

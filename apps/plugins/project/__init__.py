@@ -319,11 +319,15 @@ class Project(BaseMixinData):
         path_model = ""
         _type = page.get("type")
         if _type == DeployTypePageChoice.model:
-            path_model = project_path.training
+            path_model = Path(project_path.training)
         elif _type == DeployTypePageChoice.cascade:
             path_model = project_path.cascades
         deploy = agent_exchange(
-            "deploy_get", path_deploy=path_deploy, path_model=path_model, page=page
+            "deploy_get",
+            dataset=self.dataset,
+            path_deploy=path_deploy,
+            path_model=path_model,
+            page=page,
         )
         if deploy:
             deploy.path_deploy = project_path.deploy
