@@ -699,7 +699,6 @@ class GUINN:
                 train_target_shape, val_target_shape = [self.train_length], [self.val_length]
                 train_target_shape.extend(list(self.dataset.data.outputs.get(out).shape))
                 val_target_shape.extend(list(self.dataset.data.outputs.get(out).shape))
-                print('train_target_shape, val_target_shape', train_target_shape, val_target_shape)
                 train_pred[f"{out}"] = np.zeros(train_target_shape)
                 train_true[f"{out}"] = np.zeros(train_target_shape)
                 val_pred[f"{out}"] = np.zeros(val_target_shape)
@@ -711,33 +710,35 @@ class GUINN:
                 callback.on_epoch_begin()
                 train_steps = 0
                 st = time.time()
+                current_idx = 0
                 print(f'\n New epoch {epoch + 1}, batch {params.base.batch}\n')
-                for x_batch_train, y_batch_train in dataset.dataset.get('train').batch(
-                        params.base.batch, drop_reminder=False):
+                for x_batch_train, y_batch_train in dataset.dataset.get('train').batch(params.base.batch):
                     # st1 = time.time()
                     logits, y_true = train_step(
                         x_batch=x_batch_train, y_batch=y_batch_train, train_model=model,
                         losses=loss, set_optimizer=optimizer
                     )
+                    length = logits[0].shape[0]
                     for i, out in enumerate(output_list):
-                        length = logits[i].shape[0]
-                        print(length)
-                        train_pred[f"{out}"][length * train_steps: length * (train_steps + 1)] = logits[i].numpy()
-                        train_true[f"{out}"][length * train_steps: length * (train_steps + 1)] = y_true[i].numpy()
-                        print('- train batch', train_steps, length * train_steps, length * (train_steps + 1),
-                          train_pred[f"{out}"][length * train_steps], train_true[f"{out}"][length * train_steps])
+                        train_pred[f"{out}"][current_idx: current_idx + length] = logits[i].numpy()
+                        train_true[f"{out}"][current_idx: current_idx + length] = y_true[i].numpy()
+                    current_idx += length
+                    # print('- train batch', train_steps, current_idx, current_idx + length,
+                    #   train_pred[f"{out}"][length * train_steps], train_true[f"{out}"][length * train_steps])
                     train_steps += 1
                     if interactive.urgent_predict:
                         val_steps = 0
+                        current_val_idx = 0
                         for x_batch_val, y_batch_val in dataset.dataset.get('val').batch(params.base.batch):
                             val_pred_array, val_true_array = test_step(
                                 train_model=model, x_batch=x_batch_val, y_batch=y_batch_val)
+                            length = val_true_array[0].shape[0]
                             for i, out in enumerate(output_list):
-                                length = val_true_array[i].shape[0]
-                                val_pred[f"{out}"][length * val_steps: length * (val_steps + 1)] = \
+                                val_pred[f"{out}"][current_val_idx: current_val_idx + length] = \
                                     val_pred_array[i].numpy()
-                                val_true[f"{out}"][length * val_steps: length * (val_steps + 1)] = \
+                                val_true[f"{out}"][current_val_idx: current_val_idx + length] = \
                                     val_true_array[i].numpy()
+                            current_val_idx += length
                             val_steps += 1
                         callback.on_train_batch_end(batch=train_steps, arrays={
                             "train_true": train_true, "val_true": val_true, "train_pred": train_pred,
@@ -759,14 +760,16 @@ class GUINN:
                 # Run a validation loop at the end of each epoch.
                 print(f'\n Run a validation loop')
                 val_steps = 0
+                current_val_idx = 0
                 for x_batch_val, y_batch_val in dataset.dataset.get('val').batch(params.base.batch):
                     # st1 = time.time()
                     val_pred_array, val_true_array = test_step(
                         train_model=model, x_batch=x_batch_val, y_batch=y_batch_val)
+                    length = val_true_array[0].shape[0]
                     for i, out in enumerate(output_list):
-                        length = val_true_array[i].shape[0]
-                        val_pred[f"{out}"][length * val_steps: length * (val_steps + 1)] = val_pred_array[i].numpy()
-                        val_true[f"{out}"][length * val_steps: length * (val_steps + 1)] = val_true_array[i].numpy()
+                        val_pred[f"{out}"][current_val_idx: current_val_idx + length] = val_pred_array[i].numpy()
+                        val_true[f"{out}"][current_val_idx: current_val_idx + length] = val_true_array[i].numpy()
+                    current_val_idx += length
                     val_steps += 1
                     # print('- val batch', train_steps, round(time.time() - st1, 3))
                 print(f'- val epoch time: {round(time.time() - st, 3)}\n')
@@ -924,7 +927,7 @@ class FitCallback:
         self.log_history = self._prepare_log_history_template(self.dataset, self.training_detail)
 
         # yolo params
-        self.model = initialed_model
+        # self.model = initialed_model
         self.samples_train = []
         self.samples_val = []
         self.samples_target_train = []
@@ -1033,8 +1036,6 @@ class FitCallback:
                 loss_fn = getattr(
                     importlib.import_module(loss_metric_config.get("loss").get(loss_name, {}).get('module')), loss_name
                 )
-                print('\n', method_name, loss_name, loss_fn, arrays.get("train_true").get(out)[-32:], arrays.get("train_pred").get(out)[-32:])
-                print(loss_fn()(arrays.get("train_true").get(out), arrays.get("train_pred").get(out)))
                 train_loss = self._get_loss_calculation(
                     loss_obj=loss_fn, out=out, y_true=arrays.get("train_true").get(out),
                     y_pred=arrays.get("train_pred").get(out))
