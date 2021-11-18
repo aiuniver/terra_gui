@@ -93,6 +93,7 @@ class InteractiveCallback:
         if dataset.data.architecture in CLASSIFICATION_ARCHITECTURE:
             self.class_idx = self.callback.prepare_class_idx(self.y_true, self.options)
         self.seed_idx = self._prepare_seed()
+        print('\nseed_idx', self.seed_idx[:10], '\n')
         self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
 
     def clear_history(self):
@@ -135,13 +136,13 @@ class InteractiveCallback:
                         seed_idx=self.seed_idx[:self.training_details.interactive.intermediate_result.num_examples]
                     )
                 if self.options.data.architecture in YOLO_ARCHITECTURE:
-                    print('\nInteractiveCallback get_y_pred: start')
                     t = time.time()
                     self.raw_y_pred = arrays.get("val_pred")
                     sensitivity = self.training_details.interactive.intermediate_result.sensitivity \
                         if self.training_details.interactive.intermediate_result.sensitivity else 0.3
                     threashold = self.training_details.interactive.intermediate_result.threashold \
                         if self.training_details.interactive.intermediate_result.threashold else 0.5
+                    print('\nInteractiveCallback get_y_pred: start', sensitivity, threashold)
                     self.y_pred = self.callback.get_y_pred(
                         y_pred=arrays.get("val_pred"), options=self.options,
                         sensitivity=sensitivity,

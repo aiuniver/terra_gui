@@ -146,12 +146,7 @@ class BaseObjectDetectionCallback:
         method_name = 'get_predict_boxes'
         try:
             num_classes = len(name_classes)
-            # anchors = np.array([[10, 13], [16, 30], [33, 23],
-            #                     [30, 61], [62, 45], [59, 119],
-            #                     [116, 90], [156, 198], [373, 326]])
-            # anchor_mask = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
             num_anchors = 3
-            # grid_shape = array.shape[1:3]
             feats = np.reshape(array, (-1, array.shape[1], array.shape[2], num_anchors, num_classes + 5))
             xy_param = feats[..., :2]
             wh_param = feats[..., 2:4]

@@ -553,7 +553,7 @@ class GUINN:
                             "val_pred": val_pred}, train_data_idxs=train_data_idxs)
                     else:
                         callback.on_train_batch_end(batch=cur_step)
-                    print(f' -- batch {cur_step} - {round(time.time() - bt, 3)}')
+                    # print(f' -- batch {cur_step} - {round(time.time() - bt, 3)}')
                     if callback.stop_training:
                         break
                 print(f'\n train epoch time: {round(time.time() - st, 3)}\n')
@@ -599,7 +599,7 @@ class GUINN:
                         val_pred[i][length * val_steps: length * (val_steps + 1)] = results[5][i].numpy()
                         val_true[i][length * val_steps: length * (val_steps + 1)] = val_true_array[i].numpy()
                     val_steps += 1
-                    print(f' -- val_batch {val_steps} - {round(time.time() - bt, 3)}')
+                    # print(f' -- val_batch {val_steps} - {round(time.time() - bt, 3)}')
                 print(f'\n val epoch time: {round(time.time() - st, 3)}\n')
 
                 current_logs['loss']['giou_loss']["val"] = giou_val / val_steps
@@ -635,10 +635,10 @@ class GUINN:
                     f"\nEpoch {callback.current_logs.get('epochs')}:\n"
                     # f"\nlog_history: {callback.log_history.get('epochs')}, "
                     f"epoch_time={round(time.time() - callback._time_first_step, 3)}"
-                    f"\nloss={callback.log_history.get('output').get('loss')}"
-                    f"\nmetrics={callback.log_history.get('output').get('metrics')}"
-                    f"\nloss={callback.log_history.get('output').get('class_loss')}"
-                    f"\nmetrics={callback.log_history.get('output').get('class_metrics')}"
+                    # f"\nloss={callback.log_history.get('output').get('loss')}"
+                    # f"\nmetrics={callback.log_history.get('output').get('metrics')}"
+                    # f"\nloss={callback.log_history.get('output').get('class_loss')}"
+                    # f"\nmetrics={callback.log_history.get('output').get('class_metrics')}"
                     # f" \n loss={callback.current_logs.get('2').get('loss')}\n"
                     # f" \n metrics={callback.current_logs.get('2').get('metrics')}\n"
                     # f" \n class_loss={callback.current_logs.get('2').get('class_loss')}\n"
