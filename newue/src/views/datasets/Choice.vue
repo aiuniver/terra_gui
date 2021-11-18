@@ -76,7 +76,7 @@ export default {
 
 <style lang="scss" scoped>
 .cont {
-  background-color: $color-dark;
+  // background-color: $color-dark;
   padding: 0;
   display: flex;
   height: 100%;
