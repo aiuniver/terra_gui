@@ -35,8 +35,7 @@ export default {
     Footer,
   },
   async created() {
-    await this.$store.dispatch('themes/setTheme');
-    await this.$store.dispatch('projects/get');
+    await this.$store.dispatch('init');
   },
 };
 </script>
