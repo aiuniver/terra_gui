@@ -12,11 +12,8 @@
       autocomplete="off"
       :class="['d-input__input']"
       :type="type"
-      :name="name"
       :placeholder="placeholder"
       :disabled="isDisabled"
-      @input="debounce"
-      @focus="focus"
     />
     <div class="d-input__btn">
       <div v-show="input && !isDisabled" class="d-input__btn--cleener">
@@ -27,8 +24,10 @@
       </div>
     </div>
     <div class="d-content">
-      <template v-for="({ label, value }, i) of list">
-        <div class="d-content__item" :key="label + i" @change="change({ label, value })">{{ label }}</div>
+      <template v-for="({ label, value }, i) of list" >
+        <div class="d-content__item"  :key="label + i"  v-if="~label.indexOf(input) && input.length" @click="change({ label, value })">
+          {{ label }}
+        </div>
       </template>
     </div>
   </div>
@@ -54,34 +53,20 @@ export default {
       type: String,
       default: 'Введите текст',
     },
-    value: [String],
+    icon: String
   },
   data: () => ({
     input: '',
   }),
-  computed: {},
   methods: {
     clear() {
-      this.input = '';
-      this.send('');
+      this.change({
+        label: '', value: ''
+      })
     },
-    focus(e) {
-      this.$emit('focus', e);
-    },
-    change({ target }) {
-      this.send(target.value);
-    },
-    send(value) {
-      this.$emit('change', { name: this.name, value });
-      this.$emit('input', value);
-    },
-  },
-  created() {
-    this.input = this.value;
-  },
-  watch: {
-    value(value) {
-      this.input = value;
+    change({ label, value }) {
+      this.$emit('change', { label, value });
+      this.input = ''
     },
   },
 };
