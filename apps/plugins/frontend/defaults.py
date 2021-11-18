@@ -712,6 +712,10 @@ class ArchitectureYoloV4Form(ArchitectureYoloBaseForm):
     pass
 
 
+class ArchitectureTrackerForm(ArchitectureBasicForm):
+    pass
+
+
 class DefaultsTrainingData(BaseMixinData):
     architecture: ArchitectureChoice
     base: Optional[ArchitectureBaseForm]

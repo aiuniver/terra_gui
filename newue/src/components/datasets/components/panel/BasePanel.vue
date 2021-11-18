@@ -23,7 +23,7 @@ export default {
 <style lang="scss" scoped>
 .panel {
   width: 600px;
-  height: 94vh;
+  // height: 94vh;
   display: flex;
   flex-direction: column;
   background: transparent;
