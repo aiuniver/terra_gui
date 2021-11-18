@@ -13,8 +13,12 @@ class CascadeValidator:
 
     def get_validate(self, cascade_data: CascadeDetailsData, training_path: Path):
         models = self._load_configs(cascade_data=cascade_data, training_path=training_path)
-        model_data_type = list(set([val.get("task") for key, val in models[0].get("inputs").items()]))[0]
-        result = self._check_bind_and_data(cascade_data=cascade_data, model_data_type=model_data_type)
+        if models:
+            model_data_type = list(set([val.get("task") for key, val in models[0].get("inputs").items()]))[0]
+            result = self._check_bind_and_data(cascade_data=cascade_data, model_data_type=model_data_type)
+        else:
+            result = self._add_error(errors={}, block_id=1,
+                                     error=str(exceptions.RequiredBlockMissingException(BlockGroupChoice.Model)))
         print(result)
         return result
 
@@ -46,7 +50,7 @@ class CascadeValidator:
                 #                                       dataset_data_type, block.parameters.main.type
                 #                                   )))
                 if block.parameters.main.type != model_data_type:
-                    if block.parameters.main.type == LayerInputTypeChoice.Video and\
+                    if block.parameters.main.type == LayerInputTypeChoice.Video and \
                             block.parameters.main.switch_on_frame and model_data_type == LayerInputTypeChoice.Image:
                         pass
                     else:
@@ -153,4 +157,3 @@ class CascadeValidator:
             return input_block, checked_block
         else:
             return None, None
-

@@ -199,7 +199,7 @@ class FunctionParamsChoice(Enum):
     MinMaxScale = (BlockFunctionTypeChoice.MinMaxScale, ("min_scale", "max_scale"))
     CropImage = (BlockFunctionTypeChoice.CropImage, tuple())
     MaskedImage = (BlockFunctionTypeChoice.MaskedImage, ("class_id",))
-    PlotMaskSegmentation = (BlockFunctionTypeChoice.PlotMaskSegmentation, ("classes_color",))
+    PlotMaskSegmentation = (BlockFunctionTypeChoice.PlotMaskSegmentation, ("classes_colors",))
     PutTag = (BlockFunctionTypeChoice.PutTag, ("open_tag", "close_tag", "alpha"))
     PostprocessBoxes = (BlockFunctionTypeChoice.PostprocessBoxes, (
         "input_size", "score_threshold", "iou_threshold", "method", "sigma"

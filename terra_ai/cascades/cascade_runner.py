@@ -67,6 +67,7 @@ class CascadeRunner:
     def _create_config(self, cascade_data: CascadeDetailsData, model_task: str, dataset_data: dict):
 
         classes = list(dataset_data.get("outputs").values())[0].get("classes_names")
+        classes_colors = list(dataset_data.get("outputs").values())[0].get("classes_colors")
 
         config = {"cascades": {}}
         adjacency_map = {}
@@ -116,6 +117,8 @@ class CascadeRunner:
                     }
                     if "classes" in parameters.keys() and not parameters.get("classes"):
                         parameters["classes"] = classes
+                    if "classes_colors" in parameters.keys() and not parameters.get("classes_colors"):
+                        parameters["classes_colors"] = classes_colors
                 elif block.group == BlockGroupChoice.Service:
                     _tag = block.group.value.lower()
                     _task = block.parameters.main.group.value.lower()

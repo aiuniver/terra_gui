@@ -10,6 +10,9 @@ class CascadesMessages(dict, Enum):
     BlockNotConnectedToMainPart = {"ru": "Блок не подключен к основной части каскада или подключен неверно",
                                    "eng": "Block is not connected to main part of cascade"}
 
+    RequiredBlockIsMissing = {"ru": "Отсутствует обязательный блок %s",
+                              "eng": "Required block is missing %s"}
+
     # Parameters
     BadParameters = {"ru": "Проверьте следующие параметры: %s",
                      "eng": "Check the following parameters: %s"}
@@ -159,3 +162,11 @@ class BindInappropriateDataTypeException(CascadesException):
 
     def __init__(self, __expected, __got, **kwargs):
         super().__init__(str(__expected), str(__got), **kwargs)
+
+
+class RequiredBlockMissingException(CascadesException):
+    class Meta:
+        message = CascadesMessages.RequiredBlockIsMissing
+
+    def __init__(self, __expected, **kwargs):
+        super().__init__(str(__expected), **kwargs)
