@@ -15,4 +15,5 @@ urlpatterns = [
     path("start/", views.StartAPIView.as_view(), name="start"),
     path("save/", views.SaveAPIView.as_view(), name="save"),
     path("preview/", views.PreviewAPIView.as_view(), name="preview"),
+    path("datasets/", views.DatasetsAPIView.as_view(), name="datasets"),
 ]
