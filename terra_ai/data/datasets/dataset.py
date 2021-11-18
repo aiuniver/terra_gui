@@ -250,6 +250,23 @@ class DatasetLayerData(BaseMixinData):
 class DatasetPathsData(BaseMixinData):
     basepath: DirectoryPath
 
+    versions: Optional[DirectoryPath]
+    sources: Optional[DirectoryPath]
+
+    @validator(
+        "versions",
+        "sources",
+        always=True,
+    )
+    def _validate_internal_path(cls, value, values, field) -> Path:
+        path = Path(values.get("basepath"), field.name)
+        os.makedirs(path, exist_ok=True)
+        return path
+
+
+class VersionPathsData(BaseMixinData):
+    basepath: DirectoryPath
+
     arrays: Optional[DirectoryPath]
     sources: Optional[DirectoryPath]
     instructions: Optional[DirectoryPath]
@@ -283,15 +300,15 @@ class DatasetData(AliasMixinData):
 
     name: str
     date: Optional[datetime]
-    size: Optional[FileSizeData]
-    group: Optional[DatasetGroupChoice]
-    use_generator: bool = False
     architecture: ArchitectureChoice = ArchitectureChoice.Basic
     tags: Optional[TagsList] = TagsList()
-    inputs: Dict[PositiveInt, DatasetInputsData] = {}
-    outputs: Dict[PositiveInt, DatasetOutputsData] = {}
-    service: Optional[Dict[PositiveInt, DatasetOutputsData]] = {}
-    columns: Optional[Dict[PositiveInt, Dict[str, Any]]] = {}
+#     size: Optional[FileSizeData]
+#     group: Optional[DatasetGroupChoice]
+#     use_generator: bool = False
+#     inputs: Dict[PositiveInt, DatasetInputsData] = {}
+#     outputs: Dict[PositiveInt, DatasetOutputsData] = {}
+#     service: Optional[Dict[PositiveInt, DatasetOutputsData]] = {}
+#     columns: Optional[Dict[PositiveInt, Dict[str, Any]]] = {}
 
     _path: Path = PrivateAttr()
 
@@ -301,70 +318,117 @@ class DatasetData(AliasMixinData):
         if _path:
             self.set_path(_path)
 
-    @property
-    def path(self):
-        return self._path
-
-    @property
-    def model(self) -> ModelDetailsData:
-        data = {**EmptyModelDetailsData}
-        layers = []
-        for _id, layer in self.inputs.items():
-            _data = {
-                "id": _id,
-                "name": layer.name,
-                "type": LayerTypeChoice.Input,
-                "group": LayerGroupChoice.input,
-                "shape": {"input": [layer.shape]},
-                "task": layer.task,
-            }
-            if layer.num_classes:
-                _data.update(
-                    {
-                        "num_classes": layer.num_classes,
-                    }
-                )
-            layers.append(_data)
-        for _id, layer in self.outputs.items():
-            output_layer_defaults = OutputLayersDefaults.get(layer.task, {}).get(
-                layer.datatype, {}
-            )
-            activation = output_layer_defaults.get("activation", ActivationChoice.relu)
-            units = layer.num_classes
-            params = {
-                "activation": activation,
-            }
-            if units:
-                params.update(
-                    {
-                        "units": units,
-                        "filters": units,
-                    }
-                )
-            _data = {
-                "id": _id,
-                "name": layer.name,
-                "type": output_layer_defaults.get("type", LayerTypeChoice.Dense),
-                "group": LayerGroupChoice.output,
-                "shape": {"output": [layer.shape]},
-                "task": layer.task,
-                "parameters": {
-                    "main": params,
-                    "extra": params,
-                },
-            }
-            if layer.num_classes:
-                _data.update(
-                    {
-                        "num_classes": layer.num_classes,
-                    }
-                )
-            layers.append(_data)
-        data.update({"layers": layers})
-        return ModelDetailsData(**data)
-
     def set_path(self, value):
         self._path = Path(value)
+
+
+class VersionData(AliasMixinData):
+    """
+    Информация о версии
+    """
+
+#     name: str
+    date: Optional[datetime]
+#     architecture: ArchitectureChoice = ArchitectureChoice.Basic
+#     tags: Optional[TagsList] = TagsList()
+    size: Optional[FileSizeData]
+#     group: Optional[DatasetGroupChoice]
+    use_generator: bool = False
+    inputs: Dict[PositiveInt, DatasetInputsData] = {}
+    outputs: Dict[PositiveInt, DatasetOutputsData] = {}
+    service: Optional[Dict[PositiveInt, DatasetOutputsData]] = {}
+    columns: Optional[Dict[PositiveInt, Dict[str, Any]]] = {}
+
+
+# class DatasetData(AliasMixinData):
+#     """
+#     Информация о датасете
+#     """
+#
+#     name: str
+#     date: Optional[datetime]
+#     size: Optional[FileSizeData]
+#     group: Optional[DatasetGroupChoice]
+#     use_generator: bool = False
+#     architecture: ArchitectureChoice = ArchitectureChoice.Basic
+#     tags: Optional[TagsList] = TagsList()
+#     inputs: Dict[PositiveInt, DatasetInputsData] = {}
+#     outputs: Dict[PositiveInt, DatasetOutputsData] = {}
+#     service: Optional[Dict[PositiveInt, DatasetOutputsData]] = {}
+#     columns: Optional[Dict[PositiveInt, Dict[str, Any]]] = {}
+#
+#     _path: Path = PrivateAttr()
+#
+#     def __init__(self, **data):
+#         super().__init__(**data)
+#         _path = data.get("path")
+#         if _path:
+#             self.set_path(_path)
+#
+#     @property
+#     def path(self):
+#         return self._path
+#
+#     @property
+#     def model(self) -> ModelDetailsData:
+#         data = {**EmptyModelDetailsData}
+#         layers = []
+#         for _id, layer in self.inputs.items():
+#             _data = {
+#                 "id": _id,
+#                 "name": layer.name,
+#                 "type": LayerTypeChoice.Input,
+#                 "group": LayerGroupChoice.input,
+#                 "shape": {"input": [layer.shape]},
+#                 "task": layer.task,
+#             }
+#             if layer.num_classes:
+#                 _data.update(
+#                     {
+#                         "num_classes": layer.num_classes,
+#                     }
+#                 )
+#             layers.append(_data)
+#         for _id, layer in self.outputs.items():
+#             output_layer_defaults = OutputLayersDefaults.get(layer.task, {}).get(
+#                 layer.datatype, {}
+#             )
+#             activation = output_layer_defaults.get("activation", ActivationChoice.relu)
+#             units = layer.num_classes
+#             params = {
+#                 "activation": activation,
+#             }
+#             if units:
+#                 params.update(
+#                     {
+#                         "units": units,
+#                         "filters": units,
+#                     }
+#                 )
+#             _data = {
+#                 "id": _id,
+#                 "name": layer.name,
+#                 "type": output_layer_defaults.get("type", LayerTypeChoice.Dense),
+#                 "group": LayerGroupChoice.output,
+#                 "shape": {"output": [layer.shape]},
+#                 "task": layer.task,
+#                 "parameters": {
+#                     "main": params,
+#                     "extra": params,
+#                 },
+#             }
+#             if layer.num_classes:
+#                 _data.update(
+#                     {
+#                         "num_classes": layer.num_classes,
+#                     }
+#                 )
+#             layers.append(_data)
+#         data.update({"layers": layers})
+#         return ModelDetailsData(**data)
+#
+#     def set_path(self, value):
+#         self._path = Path(value)
 
 
 class DatasetsList(UniqueListMixin):

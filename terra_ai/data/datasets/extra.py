@@ -24,9 +24,27 @@ class LayerPrepareMethodChoice(str, Enum):
     word_to_vec = "word_to_vec"
 
 
+# class LayerTaskTypeChoice(str, Enum):
+#     timeseries = "timeseries"
+#     regression = "regression"
+
+
 class LayerTaskTypeChoice(str, Enum):
-    timeseries = "timeseries"
-    regression = "regression"
+    ImageClassification = 'ImageClassification'  # 1 вход, 1 выход
+    ImageSegmentation = 'ImageSegmentation'  # 1 вход, 1 выход
+    TextClassification = 'TextClassification'  # 1 вход, 1 выход
+    TextSegmentation = 'TextSegmentation'  # 1 вход, 1 выход
+    VideoClassification = 'VideoClassification'  # 1 вход, 1 выход
+    VideoSegmentation = 'VideoSegmentation'  # 1 вход, 1 выход
+    AudioClassification = 'AudioClassification'  # * вход, 1 выход
+    AudioSegmentation = 'AudioSegmentation'  # * вход, 1 выход
+    DataframeClassification = 'DataframeClassification'  # *вход(ов), * выход(ов)
+    DataframeRegression = 'DataframeRegression'  # *вход(ов), * выход(ов)
+    DataframeTimeseries = 'DataframeTimeseries'  # 1 вход, 1 выход
+    DataframeTimeseriesTrend = 'DataframeTimeseriesTrend'  # 1 вход, 1 выход
+    ObjectDetection = 'ObjectDetection'  # 1 вход, 1(3+3) выход(ов)
+    #  YoloV3 = 'YoloV3'
+    #  YoloV4 = 'YoloV4'
 
 
 class LayerNetChoice(str, Enum):

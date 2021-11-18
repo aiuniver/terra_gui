@@ -436,13 +436,13 @@ class CreateArray(object):
     @staticmethod
     def cut_image(paths_list: list, dataset_folder=None, **options: dict):
 
-        for elem in paths_list:
-            os.makedirs(os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem))), exist_ok=True)
-            shutil.copyfile(elem, os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
-                                               os.path.basename(elem)))
+        # for elem in paths_list:
+        #     os.makedirs(os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem))), exist_ok=True)
+        #     shutil.copyfile(elem, os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
+        #                                        os.path.basename(elem)))
 
-        paths_list = [os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)), os.path.basename(elem))
-                      for elem in paths_list]
+        # paths_list = [os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)), os.path.basename(elem))
+                      # for elem in paths_list]
 
         image_mode = 'stretch' if not options.get('image_mode') else options['image_mode']
 
