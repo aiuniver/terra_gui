@@ -110,7 +110,7 @@ export default {
   }),
   computed: {
     getValue() {
-      return this.parameters?.[this.name] ?? this.value;
+      return this.parameters?.[this.parse] ?? this.value;
     },
     errors() {
       return this.$store.getters['datasets/getErrors'](this.id);
@@ -152,7 +152,8 @@ export default {
   },
   mounted() {
     this.$emit('change', { id: this.id, value: this.getValue, name: this.name, mounted: true });
-    // console.log(this.id, this.name, this.getValue, this.root);
+    console.log(this.name, this.getValue , this.value);
+    // this.valueIn = null;
     this.$nextTick(() => {
       this.valueIn = this.getValue;
     });
