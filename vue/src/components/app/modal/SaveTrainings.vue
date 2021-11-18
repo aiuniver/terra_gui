@@ -54,6 +54,7 @@ export default {
         const res = await this.$store.dispatch('trainings/save', data);
         if (res && !res.error) {
           this.$emit('message', { message: `Проект «${data.name}» сохранен` });
+          await this.$store.dispatch('projects/get', {});
           this.dialog = false;
           this.overwrite = false;
         } else {
