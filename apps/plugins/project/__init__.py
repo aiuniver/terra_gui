@@ -159,7 +159,7 @@ class Project(BaseMixinData):
 
     @property
     def trainings(self) -> List[Tuple[str, str]]:
-        items = [(DEFAULT_TRAINING_PATH_NAME, "Текущее обучение")]
+        items = []
         for item in os.listdir(project_path.training):
             if item == DEFAULT_TRAINING_PATH_NAME:
                 continue
