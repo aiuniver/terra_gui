@@ -292,7 +292,6 @@ class DatasetData(AliasMixinData):
     outputs: Dict[PositiveInt, DatasetOutputsData] = {}
     service: Optional[Dict[PositiveInt, DatasetOutputsData]] = {}
     columns: Optional[Dict[PositiveInt, Dict[str, Any]]] = {}
-    training_available: bool = True
 
     _path: Path = PrivateAttr()
 
@@ -305,6 +304,10 @@ class DatasetData(AliasMixinData):
     @property
     def path(self):
         return self._path
+
+    @property
+    def training_available(self) -> bool:
+        return self.architecture != ArchitectureChoice.Tracker
 
     @property
     def model(self) -> ModelDetailsData:
@@ -363,6 +366,11 @@ class DatasetData(AliasMixinData):
             layers.append(_data)
         data.update({"layers": layers})
         return ModelDetailsData(**data)
+
+    def dict(self, **kwargs):
+        data = super().dict(**kwargs)
+        data.update({"training_available": self.training_available})
+        return data
 
     def set_path(self, value):
         self._path = Path(value)
