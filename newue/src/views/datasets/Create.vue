@@ -50,27 +50,17 @@
 </template>
 
 <script>
-import BasePanel from '@/components/datasets/components/panel/BasePanel';
-import BasePanelContent from '@/components/datasets/components/panel/BasePanelContent';
-import FileManager from '@/components/datasets/components/FileManager';
-import DatasetPreview from '@/components/datasets/components/DatasetPreview';
-import DatasetSettings from '@/components/datasets/components/DatasetSettings';
-import WorkspaceActions from '@/components/datasets/components/WorkspaceActions';
-import DatasetDownloadTabs from '@/components/datasets/components/DatasetDownloadTabs';
-import DatasetHelpers from '@/components/datasets/components/DatasetHelpers';
-import Layer from '@/components/datasets/components/Layer';
-
 export default {
   components: {
-    BasePanelContent,
-    BasePanel,
-    FileManager,
-    WorkspaceActions,
-    DatasetPreview,
-    DatasetSettings,
-    DatasetDownloadTabs,
-    DatasetHelpers,
-    Layer,
+    BasePanelContent: () => import('@/components/datasets/components/panel/BasePanelContent'),
+    BasePanel: () => import('@/components/datasets/components/panel/BasePanel'),
+    FileManager: () => import('@/components/datasets/components/create/FileManager'),
+    WorkspaceActions: () => import('@/components/datasets/components/create/WorkspaceActions'),
+    DatasetPreview: () => import('@/components/datasets/components/create/DatasetPreview'),
+    DatasetSettings: () => import('@/components/datasets/components/create/DatasetSettings'),
+    DatasetDownloadTabs: () => import('@/components/datasets/components/create/DatasetDownloadTabs'),
+    DatasetHelpers: () => import('@/components/datasets/components/create/DatasetHelpers'),
+    Layer: () => import('@/components/datasets/components/Layer'),
   },
 
   name: 'Datasets',
