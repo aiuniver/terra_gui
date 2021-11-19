@@ -5,7 +5,7 @@ import pynvml
 import tensorflow
 
 from pathlib import Path
-from typing import Any, List
+from typing import Any, List, Dict
 
 from . import exceptions as agent_exceptions
 from . import utils as agent_utils
@@ -380,7 +380,7 @@ class Exchange:
         return CascadeValidator().get_validate(cascade_data=cascade, training_path=path)
 
     def _call_cascade_start(
-        self, sources: List[str], trainings_path: Path, cascade: CascadeDetailsData
+        self, sources: Dict[int, List[str]], trainings_path: Path, cascade: CascadeDetailsData
     ):
         """
         Запуск каскада

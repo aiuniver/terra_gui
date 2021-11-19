@@ -141,9 +141,10 @@ class BlocksBindChoice(Enum):
                                             LayerInputTypeChoice.Video,
                                             LayerInputTypeChoice.Text))
     CropImage = ("CropImage", tuple(), tuple())
-    MaskedImage = ("MaskedImage", tuple(), (LayerInputTypeChoice.Image,))
-    PlotMaskSegmentation = ("PlotMaskSegmentation", tuple(), (LayerInputTypeChoice.Image,))
-    PutTag = ("PutTag", tuple(), (LayerInputTypeChoice.Text,))
+    MaskedImage = ("MaskedImage", (BlockGroupChoice.Model, BlockGroupChoice.InputData), (LayerInputTypeChoice.Image,))
+    PlotMaskSegmentation = ("PlotMaskSegmentation", (BlockGroupChoice.Model, BlockGroupChoice.InputData),
+                            (LayerInputTypeChoice.Image,))
+    PutTag = ("PutTag", (BlockGroupChoice.Model, ), (LayerInputTypeChoice.Text,))
     PostprocessBoxes = ("PostprocessBoxes", (BlockGroupChoice.Model,
                                              BlockGroupChoice.InputData), (LayerInputTypeChoice.Image,))
     PlotBBoxes = ("PlotBBoxes", ((BlockFunctionTypeChoice.PostprocessBoxes,
