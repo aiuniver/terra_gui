@@ -905,7 +905,6 @@ DatasetsGroups = [
                 "alias": "ljudi",
                 "name": "Люди",
                 "group": DatasetGroupChoice.terra.value,
-                "training_available": False,
                 "inputs": {
                     1: {
                         "datatype": "2D",
