@@ -178,6 +178,7 @@ import os
 import json
 
 from pathlib import Path
+from pandas import read_csv
 from datetime import datetime
 from typing import Optional, Dict, List, Tuple, Any
 from pydantic import validator, DirectoryPath, PrivateAttr
@@ -308,6 +309,20 @@ class DatasetData(AliasMixinData):
     @property
     def training_available(self) -> bool:
         return self.architecture != ArchitectureChoice.Tracker
+
+    @property
+    def sources(self) -> List[str]:
+        out = []
+        sources = read_csv(Path(self.path, "instructions", "tables", "val.csv"))
+        for column in sources.columns:
+            if column.split("_")[-1].title() in ["Image", "Text", "Audio", "Video"]:
+                out = list(
+                    map(
+                        lambda item: str(Path(self.path, item).absolute()),
+                        sources[column].to_list(),
+                    )
+                )
+        return out
 
     @property
     def model(self) -> ModelDetailsData:
