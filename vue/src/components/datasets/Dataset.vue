@@ -73,8 +73,7 @@ export default {
       // let card = e.path.filter(element => element.className == "dataset-card")[0]
       // this.$store.dispatch('messages/setMessage', { message: `Выбран датасет «${dataset.name}»`})
     },
-    async remove({ name, alias, group, training_available }) {
-      if (!training_available) return;
+    async remove({ name, alias, group }) {
       try {
         await this.$Modal.confirm({
           title: 'Внимание!',
