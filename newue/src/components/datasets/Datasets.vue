@@ -7,6 +7,7 @@
 
     <DatasetsFilters
       :data="sortedDatasets"
+      :selectedType="selectedType"
       :cardsDisplay="cardsDisplay"
       @changeFilter="handleChangeFilter"
       @changeDisplay="cardsDisplay = $event"
