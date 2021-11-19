@@ -214,16 +214,16 @@ class Project(BaseMixinData):
         )
         print("--------------------------------")
         print(str(zip_destination.name))
-        print(str(destination_path.name))
+        print(str(destination_path.absolute()))
         try:
-            shutil.move(str(zip_destination.name), str(destination_path.name))
+            shutil.move(str(zip_destination.name), str(destination_path.absolute()))
         except Exception as error:
             print(1, str(error))
             try:
                 shutil.copyfile(
                     str(zip_destination.name), str(destination_path.absolute())
                 )
-                os.remove(zip_destination)
+                os.remove(zip_destination.name)
             except Exception as error:
                 print(2, str(error))
         print("--------------------------------")
@@ -339,18 +339,18 @@ class Project(BaseMixinData):
         if _type == DeployTypePageChoice.model:
             path_model = Path(project_path.training)
         elif _type == DeployTypePageChoice.cascade:
-            path_model = project_path.cascades
+            path_model = None
         deploy = agent_exchange(
             "deploy_get",
             dataset=dataset,
+            page=page,
             path_deploy=path_deploy,
             path_model=path_model,
-            page=page,
         )
-        if deploy:
-            deploy.path_deploy = project_path.deploy
-        shutil.rmtree(project_path.deploy, ignore_errors=True)
-        shutil.move(path_deploy, project_path.deploy)
+        # if deploy:
+        #     deploy.path_deploy = project_path.deploy
+        # shutil.rmtree(project_path.deploy, ignore_errors=True)
+        # shutil.move(path_deploy, project_path.deploy)
         self.deploy = deploy
 
     def clear_dataset(self):

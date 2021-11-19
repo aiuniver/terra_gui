@@ -433,7 +433,11 @@ class Exchange:
         )
 
     def _call_deploy_get(
-        self, dataset: DatasetData, path_model: Path, path_deploy: Path, page: dict
+        self,
+        dataset: DatasetData,
+        page: dict,
+        path_deploy: Path,
+        path_model: Path = None,
     ) -> DeployData:
         """
         получение данных для отображения пресетов на странице деплоя
