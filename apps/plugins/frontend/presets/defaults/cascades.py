@@ -342,20 +342,20 @@ CascadesBlocksTypes = {
                         <p><b>Возвращает на выходе:</b> Сохраняет переданные фреймы исходного видео в видеофайл с выставленными параметрами</p>
                     """,
                     "Image": """
-                        <p>
-                        <b>Сохранение</b> результата в файл изображения
-                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
-                        </p>
-                        <ol>
-                        <li>блок Function Наложение bbox на изображение</li>
-                        <li>блок Function Наложение маски по классу на изображение</li>
-                        <li>блок Function Наложение маски всех классов по цветам</li>
-                        </ol>
-                        <p>
-                        Возможные <a href="https://google.com" target="_blank">связи</a> с другими блоками на выходе: 
-                        None
-                        </p>
-                        <p><b>Возвращает на выходе:</b> Сохраняет переданные обработанные изображения</p>
+<p>Сохранение результата в файл изображения</p>
+<p>Необходимые связи с другими блоками на входе:</p>
+<ol>
+    <li>блок Function Наложение bbox на изображение;</li>
+    <li>блок Function Наложение маски по классу на изображение;</li>
+    <li>блок Function Наложение маски всех классов по цветам.</li>
+</ol>
+<img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjgiIGhlaWdodD0iMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTIxLjQxOCA4LjA3Yy44MTUgMCAxLjQ4Mi0uNjY2IDEuNDgyLTEuNDgyIDAtLjgxNS0uNjY3LTEuNDgyLTEuNDgyLTEuNDgySDYuNTk0Yy0uODE1IDAtMS40ODIuNjY3LTEuNDgyIDEuNDgyIDAgLjgxNi42NjcgMS40ODMgMS40ODIgMS40ODNoMTQuODIzem0tOC44OTUgMTMuMzQyYzAgLjgxNS42NjggMS40ODIgMS40ODMgMS40ODIuODE1IDAgMS40ODItLjY2NyAxLjQ4Mi0xLjQ4MnYtOC42NDdjMC0uODE2LS42NjctMS40ODMtMS40ODItMS40ODMtLjgxNiAwLTEuNDgzLjY2Ny0xLjQ4MyAxLjQ4M3Y4LjY0N3oiIGZpbGw9IiM2NUI5RjQiLz48cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTI3LjE3Ny44MjRILjgyM3YyNi4zNTJoMjYuMzUyVi44MjV6TTAgMHYyOGgyOFYwSDB6IiBmaWxsPSIjNjVCOUY0Ii8+PC9zdmc+" width="100%" height="100px" alt="" />
+<p>Возможные связи с другими блоками на выходе:<br />
+    <code>None</code>
+</p>
+<p>Возвращает на выходе:<br />
+    <code>Сохраняет переданные обработанные изображения</code>
+</p>
                     """,
                     "Text": """
                         <p>
