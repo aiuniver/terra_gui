@@ -1,6 +1,6 @@
 <template>
   <div :class="['dataset-card-item', { active: dataset.active && !loaded, selected: loaded}]" :title="dataset.name">
-    <div :class="['dataset-card', {'disabled': dataset.training_available ? !dataset.training_available : false }]" @click.stop="$emit('click', dataset, cardIndex)">
+    <div :class="['dataset-card', {'disabled': !dataset.training_available}]" @click.stop="$emit('click', dataset, cardIndex)">
       <div class="card-title">{{ dataset.name }}</div>
       <div class="card-body" @click="click">
         <div v-if="dataset.tags.length <= 4">
