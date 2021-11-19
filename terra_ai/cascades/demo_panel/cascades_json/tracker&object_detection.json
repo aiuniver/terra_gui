@@ -61,19 +61,19 @@
       }    }
   },
   "adjacency_map": {
-    "model": [
-      "INPUT"
-    ],
     "normalize bboxes": [
       "model",
       "INPUT"
     ],
-    "sort": [
-      "normalize bboxes"
+    "model": [
+      "INPUT"
     ],
     "plot bboxes": [
       "sort",
       "INPUT"
+    ],
+    "sort": [
+      "normalize bboxes"
     ],
     "saving": [
       "plot bboxes"
