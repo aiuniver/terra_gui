@@ -4,7 +4,8 @@ from terra_ai.data.cascades.blocks.extra import (
     BlockServiceTypeChoice,
     ChangeTypeAvailableChoice,
     PostprocessBoxesMethodAvailableChoice,
-    BlockServiceDeepSortMetricChoice,
+    BlockServiceBiTBasedTrackerMetricChoice,
+    BlockServiceYoloV5VersionChoice,
 )
 
 from ...choices import (
@@ -185,7 +186,7 @@ ServiceTypesFields = {
             "value": 4,
         },
     ],
-    BlockServiceTypeChoice.DeepSort: [
+    BlockServiceTypeChoice.BiTBasedTracker: [
         {
             "type": "number",
             "name": "max_age",
@@ -205,23 +206,48 @@ ServiceTypesFields = {
             "name": "metric",
             "parse": "parameters[main][metric]",
             "label": "Метрика сравнения сходства",
-            "value": BlockServiceDeepSortMetricChoice.euclidean,
+            "value": BlockServiceBiTBasedTrackerMetricChoice.euclidean,
             "list": list(
                 map(
                     lambda item: {"value": item.name, "label": item.value},
-                    list(BlockServiceDeepSortMetricChoice),
+                    list(BlockServiceBiTBasedTrackerMetricChoice),
                 )
             ),
         },
     ],
+    BlockServiceTypeChoice.YoloV5: [
+        {
+            "type": "select",
+            "name": "version",
+            "parse": "parameters[main][version]",
+            "label": "Версия модели",
+            "value": BlockServiceYoloV5VersionChoice.Small,
+            "list": list(
+                map(
+                    lambda item: {"value": item.name, "label": item.value},
+                    list(BlockServiceYoloV5VersionChoice),
+                )
+            ),
+        },
+        {
+            "type": "checkbox",
+            "name": "render_img",
+            "label": "Выводить изображение",
+            "parse": "parameters[main][render_img]",
+            "value": True,
+        },
+    ]
 }
 
 
 ServiceGroupTypeRel = {
     BlockServiceGroupChoice.Tracking: [
         BlockServiceTypeChoice.Sort,
-        BlockServiceTypeChoice.DeepSort,
+        BlockServiceTypeChoice.BiTBasedTracker,
     ],
+    BlockServiceGroupChoice.ObjectDetection: [
+        BlockServiceTypeChoice.YoloV5,
+    ]
 }
 
 
@@ -565,7 +591,7 @@ CascadesBlocksTypes = {
                         </ol>
                         <p>Возможные связи с другими блоками на выходе:</p>
                         <ol> 
-                            <li>блок Custom Трекер (Sort, DeepSort)</li>
+                            <li>блок Custom Трекер (Sort, BiTBasedTracker)</li>
                             <li>блок Function Наложение bbox на изображение</li>
                         </ol>
                         <p>Возвращает на выходе:<br />
@@ -576,7 +602,7 @@ CascadesBlocksTypes = {
                         <p>Наложение bbox</b> на изображение YOLOV3 и V4</p>
                         <p>Необходимые связи с другими блоками на входе:</p>
                         <ol>
-                            <li>блок Function Постобработка yolo или блок Custom Трекер (Sort, DeepSort)</li>  
+                            <li>блок Function Постобработка yolo или блок Custom Трекер (Sort, BiTBasedTracker)</li>  
                             <li>блок Input исходных изображений или видео</li>
                         </ol>
                         <p>Возможные связи с другими блоками на выходе:</p>
@@ -612,6 +638,11 @@ CascadesBlocksTypes = {
                         ServiceGroupTypeRel,
                         ServiceTypesFields,
                     ),
+                    BlockServiceGroupChoice.ObjectDetection: get_type_field(
+                        BlockServiceGroupChoice.ObjectDetection,
+                        ServiceGroupTypeRel,
+                        ServiceTypesFields,
+                    ),
                 },
                 "manual": {
                     "Sort": """
@@ -628,8 +659,8 @@ CascadesBlocksTypes = {
                             <code>возвращает аналогичный массив bbox, где последний столбец - это идентификатор объекта</code>
                         </p>
                     """,
-                    "DeepSort": """
-                        <p>Алгоритм трекера DeepSort</b> для моделей object_detection</p>
+                    "BiTBasedTracker": """
+                        <p>Алгоритм трекера BiTBasedTracker</b> для моделей object_detection</p>
                         <p>Необходимые связи с другими блоками на входе:</p>
                         <ol>
                             <li>блок Function Постобработка yolo</li>
@@ -641,6 +672,26 @@ CascadesBlocksTypes = {
                         </ol>
                         <p>Возвращает на выходе:<br />
                             <code>возвращает аналогичный массив bbox, где последний столбец - это идентификатор объекта</code>
+                        </p>
+                    """,
+                    "YoloV5": f"""
+                        <li>Предобученная YoloV5 на базе COCO:<li>
+                        <p>“Версия модели” выбирается в зависимости от необходимой точности.</p>
+                        <p>Переключатель “Выводить изображение” при включенном состоянии выводит исходное изображение с наложенными bbox, 
+                        классами и вероятностями. В выключенном положении блок будет возвращать лучшие bbox по всем классам.</p>
+                        <p>Необходимые связи с другими блоками на входе:</p>
+                        <ol>
+                        <li>блок Input исходных изображений (фреймов видео)</li>
+                        </ol>
+                        <p>Возможные связи с другими блоками на выходе:</p>
+                        <ol>
+                        <li>блок Service Наложение bbox на изображение (выключен переключатель “Выводить изображение”)</li>
+                        <li>блок Output сохранение изображений или видео</li>
+                        <li>блок Service Tracking (активирован переключатель “Выводить изображение”)</li>
+                        </ol>
+                        <p>Возвращает на выходе:<br />
+                            <code>если активирован переключатель “Выводить изображение” то исходное изображение (фрейм) 
+                            с наложенными bbox, иначе возвращает массив bbox, где последний столбец - это идентификатор объекта</code>
                         </p>
                     """,
                 },

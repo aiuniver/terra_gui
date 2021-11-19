@@ -97,6 +97,7 @@ class BlockCustomTypeChoice(str, Enum):
 
 class BlockServiceGroupChoice(str, Enum):
     Tracking = "Tracking"
+    ObjectDetection = "ObjectDetection"
 
     @staticmethod
     def values() -> list:
@@ -105,20 +106,32 @@ class BlockServiceGroupChoice(str, Enum):
 
 class BlockServiceTypeChoice(str, Enum):
     Sort = "Sort"
-    DeepSort = "DeepSort"
+    BiTBasedTracker = "BiTBasedTracker"
+    YoloV5 = "YoloV5"
 
     @staticmethod
     def values() -> list:
         return list(map(lambda item: item.value, BlockCustomTypeChoice))
 
 
-class BlockServiceDeepSortMetricChoice(str, Enum):
+class BlockServiceBiTBasedTrackerMetricChoice(str, Enum):
     euclidean = "euclidean"
     сosine = "сosine"
 
     @staticmethod
     def values() -> list:
-        return list(map(lambda item: item.value, BlockServiceDeepSortMetricChoice))
+        return list(map(lambda item: item.value, BlockServiceBiTBasedTrackerMetricChoice))
+
+
+class BlockServiceYoloV5VersionChoice(str, Enum):
+    Small = "Small"
+    Medium = "Medium"
+    Large = "Large"
+    XLarge = "XLarge"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, BlockServiceYoloV5VersionChoice))
 
 
 class BlocksBindChoice(Enum):
@@ -130,7 +143,7 @@ class BlocksBindChoice(Enum):
                                   BlockFunctionTypeChoice.PutTag),), tuple())
 
     Sort = ("Sort", (BlockFunctionTypeChoice.PostprocessBoxes,), (LayerInputTypeChoice.Image,))
-    DeepSort = ("DeepSort", (BlockFunctionTypeChoice.PostprocessBoxes,), (LayerInputTypeChoice.Image,))
+    BiTBasedTracker = ("BiTBasedTracker", (BlockFunctionTypeChoice.PostprocessBoxes,), (LayerInputTypeChoice.Image,))
     ChangeType = ("ChangeType", tuple(), (LayerInputTypeChoice.Image,
                                           LayerInputTypeChoice.Audio,
                                           LayerInputTypeChoice.Video,
