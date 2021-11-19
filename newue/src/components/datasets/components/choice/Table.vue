@@ -16,7 +16,7 @@
           {{ dataset.size ? `${dataset.size.short.toFixed(2)} ${dataset.size.unit}` : 'Предустановленный' }}
         </td>
         <td></td>
-        <td>{{ dataset.date ? dataset.date.toLocaleString() : '' }}</td>
+        <td></td>
       </tr>
     </tbody>
   </table>
@@ -63,7 +63,11 @@ export default {
   }),
   methods: {
     handleSort(idx) {
-      this.sortReverse = this.sortId === idx ? true : false;
+      if(this.sortId === idx){
+          if(this.sortReverse) this.sortReverse = false
+          else this.sortReverse = true
+      }else this.sortReverse = false
+
       this.sortId = idx;
     },
   },
@@ -74,18 +78,6 @@ export default {
         return this.sortReverse
           ? items.sort((a, b) => b.name.localeCompare(a.name))
           : items.sort((a, b) => a.name.localeCompare(b.name));
-      if (this.sortId === 1)
-        return this.sortReverse
-          ? items.sort((a, b) => b.size.value - a.size.value)
-          : items.sort((a, b) => a.size.value - b.size.value);
-      if (this.sortId === 2)
-        return this.sortReverse
-          ? items.sort((a, b) => a.name.localeCompare(b.name))
-          : items.sort((a, b) => b.name.localeCompare(a.name));
-      if (this.sortId === 3)
-        return this.sortReverse ? items.sort((a, b) => a.date - b.date) : items.sort((a, b) => b.date - a.date);
-      if (this.sortId === 4)
-        return this.sortReverse ? items.sort((a, b) => a.date - b.date) : items.sort((a, b) => b.date - a.date);
       return items;
     },
     headers() {
