@@ -4,7 +4,7 @@ import tensorflow
 
 def masked_image(class_id=1):
 
-    def mul_mask(image, mask):
+    def mul_mask(mask, image):
         mask_img = image.copy()
 
         mask_img[:, :, :, 0] = image[:, :, :, 0] * mask
