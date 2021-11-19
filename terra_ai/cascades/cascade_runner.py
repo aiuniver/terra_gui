@@ -17,19 +17,22 @@ class CascadeRunner:
 
     def start_cascade(self, cascade_data: CascadeDetailsData, path: Path, sources: Dict[int, List[str]]):
         script_name, model, inputs_ids = self._get_task_type(cascade_data=cascade_data, training_path=path)
+        print(script_name)
         dataset_path = os.path.join(path, model, "model", "dataset")
 
         with open(os.path.join(dataset_path, "config.json"), "r", encoding="utf-8") as dataset_config:
             dataset_config_data = json.load(dataset_config)
 
         model_task = list(set([val.get("task") for key, val in dataset_config_data.get("outputs").items()]))[0]
+
         cascade_config = self._create_config(cascade_data=cascade_data, model_task=model_task,
                                              dataset_data=dataset_config_data)
         print(cascade_config)
         main_block = json2cascade(path=os.path.join(path, model), cascade_config=cascade_config, mode="run")
 
         i = 0
-        for source in sources.get(inputs_ids[0]):
+        presets_data = []
+        for source in sources.get(inputs_ids[0])[:2]:
             print(source)
             if "text" in script_name:
                 with open("test.txt", "w", encoding="utf-8") as f:
@@ -37,16 +40,18 @@ class CascadeRunner:
                 input_path = "test.txt"
             else:
                 input_path = os.path.join(dataset_path, source)
-                print(input_path)
             if "segmentation" in script_name or "object_detection" in script_name:
-                output_path = f"F:\\tmp\\ttt\\source{i}.jpg"
-                print(output_path)
+                output_path = f"F:\\tmp\\ttt\\source{i}.webm"
                 main_block(input_path=input_path, output_path=output_path)
-                print(main_block)
+                presets_data.append({
+                    "source": source,
+                    "detection": output_path
+                })
             else:
                 main_block(input_path=input_path)
             print(main_block.out)
             i += 1
+        print(presets_data)
         return cascade_config
 
     @staticmethod
@@ -62,26 +67,30 @@ class CascadeRunner:
                   "r", encoding="utf-8") as training_config:
             training_details = json.load(training_config)
         deploy_type = training_details.get("base").get("architecture").get("type")
+        if "Yolo" in deploy_type:
+            deploy_type = "ObjectDetection"
         return decamelize(deploy_type), model, _inputs
 
     def _create_config(self, cascade_data: CascadeDetailsData, model_task: str, dataset_data: dict):
 
         classes = list(dataset_data.get("outputs").values())[0].get("classes_names")
         num_class = list(dataset_data.get("outputs").values())[0].get("num_classes")
-        classes_colors = [list(Color(color).as_rgb_tuple()) for color in
-                          list(dataset_data.get("outputs").values())[0].get("classes_colors")]
+        if list(dataset_data.get("outputs").values())[0].get("classes_colors"):
+            classes_colors = [list(Color(color).as_rgb_tuple()) for color in
+                              list(dataset_data.get("outputs").values())[0].get("classes_colors")]
 
         config = {"cascades": {}}
         adjacency_map = {}
         block_description = {}
+        _type = None
         for block in cascade_data.blocks:
+            if "type" in block.parameters.main.native().keys():
+                _type = block.parameters.main.type.value.lower()
             if block.group == BlockGroupChoice.InputData:
-                if model_task == "Object_Detection" and \
+                if model_task == "ObjectDetection" and \
                         block.parameters.main.type == LayerInputTypeChoice.Video \
                         and block.parameters.main.switch_on_frame:
                     _type = "video_by_frame"
-                else:
-                    _type = block.parameters.main.type.value.lower()
                 block_description = {
                     "input":
                         {
@@ -91,15 +100,14 @@ class CascadeRunner:
                 }
             elif block.group == BlockGroupChoice.OutputData:
                 if model_task in ["ObjectDetection", "Segmentation"]:
-
                     block_description = {
                         "saving": {
                             "tag": "output",
-                            "type": block.parameters.main.type.value.lower()
+                            "type": "Video" if _type == "video_by_frame" else _type
                         }
                     }
                     if block.parameters.main.type == LayerInputTypeChoice.Video:
-                        block_description.update({
+                        block_description["saving"].update({
                             "params": {
                                 key: val for key, val in block.parameters.main.native().items() if key not in ["type"]
                             }

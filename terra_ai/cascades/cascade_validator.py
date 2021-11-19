@@ -39,11 +39,14 @@ class CascadeValidator:
         bind_errors = dict()
         blocks = cascade_data.blocks
         named_map = self._create_bind_named_map(cascade_data=cascade_data)
+        video_by_frame = False
         for block in blocks:
             if block.group == BlockGroupChoice.InputData:
                 if block.bind.up or not block.bind.down:
                     bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
                                                   error=str(exceptions.BlockNotConnectedToMainPartException()))
+                if block.parameters.main.switch_on_frame:
+                    video_by_frame = True
                 # if block.parameters.main.type != dataset_data_type:
                 #     bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
                 #                                   error=str(exceptions.DatasetDataDoesNotMatchInputDataException(
@@ -63,10 +66,12 @@ class CascadeValidator:
                     bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
                                                   error=str(exceptions.BlockNotConnectedToMainPartException()))
                 if block.parameters.main.type != model_data_type:
-                    bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
-                                                  error=str(exceptions.UsedDataDoesNotMatchBlockDataException(
-                                                      block.parameters.main.type.value, model_data_type
-                                                  )))
+                    if block.parameters.main.type == LayerInputTypeChoice.Video and \
+                            not video_by_frame and model_data_type == LayerInputTypeChoice.Image:
+                        bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
+                                                      error=str(exceptions.UsedDataDoesNotMatchBlockDataException(
+                                                          block.parameters.main.type.value, model_data_type
+                                                      )))
             else:
                 if not block.bind.up or not block.bind.down:
                     bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
