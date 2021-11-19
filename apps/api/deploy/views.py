@@ -12,6 +12,7 @@ from apps.api.base import (
     BaseResponseErrorFields,
     BaseResponseErrorGeneral,
 )
+from apps.plugins.project import project_path
 
 from . import serializers
 
@@ -47,7 +48,7 @@ class UploadAPIView(BaseAPIView):
         agent_exchange(
             "deploy_upload",
             **{
-                "source": Path(request.project.training.path, "deploy"),
+                "source": Path(project_path.deploy, "deploy"),
                 "stage": 1,
                 "deploy": serializer.validated_data.get("deploy"),
                 "env": "v1",

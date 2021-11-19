@@ -2,21 +2,16 @@
   <table class="datasets-table">
     <thead>
       <tr>
-        <th v-for="(header, idx) in headers" :key="idx" @click="handleSort(header.idx)">
+        <th v-for="(header, idx) in headers" :key="'table_dataset_th'+idx" @click="handleSort(header.idx)">
           <span>{{ header.title }}</span>
         </th>
       </tr>
     </thead>
     <tbody>
-      <tr v-for="(dataset, idx) in datasets" :key="'table' + idx">
-        <td>
-          <span>{{ dataset.name }}</span>
-        </td>
-        <td>
-          {{ dataset.size ? `${dataset.size.short.toFixed(2)} ${dataset.size.unit}` : 'Предустановленный' }}
-        </td>
-        <td></td>
-        <td></td>
+      <tr v-for="(dataset, idx) in datasets" :key="'table_dataset_tr' + idx">
+          <td v-for="({value}, idx) in headers" :key="'table_dataset_td' + idx">
+              <span>{{ dataset[value] }}</span>
+          </td>
       </tr>
     </tbody>
   </table>
@@ -39,22 +34,27 @@ export default {
     list: [
       {
         title: 'Название',
+        value: 'name',
         idx: 0,
       },
       {
         title: 'Размер',
+        value: 'size',
         idx: 1,
       },
       {
         title: 'Автор',
+        value: 'group',
         idx: 2,
       },
       {
         title: 'Последнее использование',
+        value: 'date',
         idx: 3,
       },
       {
         title: 'Создание',
+        value: 'alias',
         idx: 4,
       },
     ],

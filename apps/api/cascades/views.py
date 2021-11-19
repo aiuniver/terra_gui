@@ -2,15 +2,16 @@ import base64
 
 from tempfile import NamedTemporaryFile
 
+from terra_ai.agent import agent_exchange
+from terra_ai.data.cascades.extra import BlockGroupChoice
+
 from apps.api import utils
 from apps.api.cascades.serializers import (
     CascadeGetSerializer,
     UpdateSerializer,
     PreviewSerializer,
 )
-from apps.plugins.project import project_path
-from terra_ai.agent import agent_exchange
-from apps.plugins.project import data_path
+from apps.plugins.project import project_path, data_path
 
 from ..base import (
     BaseAPIView,
@@ -81,9 +82,16 @@ class ValidateAPIView(BaseAPIView):
 
 class StartAPIView(BaseAPIView):
     def post(self, request, **kwargs):
+        dataset_sources = request.project.dataset.sources
+        sources = {}
+        for block in request.project.cascade.blocks:
+            if block.group != BlockGroupChoice.InputData:
+                continue
+            sources.update({block.id: dataset_sources})
         agent_exchange(
             "cascade_start",
-            path=project_path.training,
+            sources=sources,
+            trainings_path=project_path.training,
             cascade=request.project.cascade,
         )
         return BaseResponseSuccess()
@@ -110,17 +118,19 @@ class PreviewAPIView(BaseAPIView):
 class DatasetsAPIView(BaseAPIView):
     @staticmethod
     def post(request, **kwargs):
-        datasets_list = agent_exchange("datasets_info", path=data_path.datasets).native()
+        datasets_list = agent_exchange(
+            "datasets_info", path=data_path.datasets
+        ).native()
         response = []
 
         for datasets in datasets_list:
             for dataset in datasets.get("datasets", []):
-                response.append({
-                    "label": f'{dataset.get("group", "")}: {dataset.get("name", "")}',
-                    "alias": dataset.get("alias", ""),
-                    "group": dataset.get("group", "")
-                })
+                response.append(
+                    {
+                        "label": f'{dataset.get("group", "")}: {dataset.get("name", "")}',
+                        "alias": dataset.get("alias", ""),
+                        "group": dataset.get("group", ""),
+                    }
+                )
 
-        return BaseResponseSuccess(
-           response
-        )
+        return BaseResponseSuccess(response)

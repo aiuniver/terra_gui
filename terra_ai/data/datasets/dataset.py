@@ -178,6 +178,7 @@ import os
 import json
 
 from pathlib import Path
+from pandas import read_csv
 from datetime import datetime
 from typing import Optional, Dict, List, Tuple, Any
 from pydantic import validator, DirectoryPath, PrivateAttr
@@ -306,6 +307,24 @@ class DatasetData(AliasMixinData):
         return self._path
 
     @property
+    def training_available(self) -> bool:
+        return self.architecture != ArchitectureChoice.Tracker
+
+    @property
+    def sources(self) -> List[str]:
+        out = []
+        sources = read_csv(Path(self.path, "instructions", "tables", "val.csv"))
+        for column in sources.columns:
+            if column.split("_")[-1].title() in ["Image", "Text", "Audio", "Video"]:
+                out = list(
+                    map(
+                        lambda item: str(Path(self.path, item).absolute()),
+                        sources[column].to_list(),
+                    )
+                )
+        return out
+
+    @property
     def model(self) -> ModelDetailsData:
         data = {**EmptyModelDetailsData}
         layers = []
@@ -362,6 +381,11 @@ class DatasetData(AliasMixinData):
             layers.append(_data)
         data.update({"layers": layers})
         return ModelDetailsData(**data)
+
+    def dict(self, **kwargs):
+        data = super().dict(**kwargs)
+        data.update({"training_available": self.training_available})
+        return data
 
     def set_path(self, value):
         self._path = Path(value)

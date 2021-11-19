@@ -13,7 +13,7 @@
       @changeDisplay="cardsDisplay = $event"
     />
 
-    <scrollbar style="justify-self: stretch">
+    <scrollbar style="justify-self: stretch; height: 695px;">
       <div v-if="cardsDisplay" class="datasets-cards">
         <DatasetCard v-for="(item, idx) in sortedList" :key="idx" :dataset="item" />
       </div>
@@ -41,10 +41,22 @@ export default {
     handleChangeFilter(sort){
       this.selectedSort = sort
     },  
+    randomDate(start, end, startHour, endHour) {
+      let date = new Date(+start + Math.random() * (end - start));
+      let hour = startHour + Math.random() * (endHour - startHour) | 0;
+      date.setHours(hour);
+      return date;
+    }
   },
   computed: {
     sortedDatasets() {
-      return this.datasets;
+      return this.datasets.map(el => {
+        return {
+          ...el,
+          size: el.size ? el.size : 'Предустановленный',
+          date: el.date ? el.date : this.randomDate(10, 30, 10, 15),
+        }
+      });
     },
 
     sortedList() {
