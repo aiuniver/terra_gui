@@ -1,6 +1,8 @@
 import numpy as np
 import tensorflow
 
+from tensorflow.python.framework.ops import EagerTensor
+
 
 def masked_image(class_id=1):
 
@@ -13,7 +15,7 @@ def masked_image(class_id=1):
 
         return mask_img
 
-    def fun(img, mask):
+    def fun(mask, img):
 
         if len(img.shape) == 3:
             img = img[np.newaxis, ...]
@@ -32,11 +34,10 @@ def masked_image(class_id=1):
 def plot_mask_segmentation(classes_colors):
     num_class = len(classes_colors)
 
-    def fun(img, mask):
+    def fun(mask, img):
 
         if len(img.shape) == 3:
             img = img[np.newaxis, ...]
-
         mask = tensorflow.image.resize(mask, img.shape[1:-1]).numpy()
         img = img.copy()
 

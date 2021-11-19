@@ -1,20 +1,22 @@
 import json
 import os
-
-import pandas as pd
+from typing import List, Dict
 from pathlib import Path
+
+from pydantic.color import Color
 
 from terra_ai.cascades.common import decamelize
 from terra_ai.cascades.create import json2cascade
 from terra_ai.data.cascades.blocks.extra import BlockFunctionGroupChoice, FunctionParamsChoice
 from terra_ai.data.cascades.cascade import CascadeDetailsData
 from terra_ai.data.cascades.extra import BlockGroupChoice
+from terra_ai.data.datasets.extra import LayerInputTypeChoice
 
 
 class CascadeRunner:
 
-    def start_cascade(self, cascade_data: CascadeDetailsData, path: Path):
-        script_name, model = self._get_task_type(cascade_data=cascade_data, training_path=path)
+    def start_cascade(self, cascade_data: CascadeDetailsData, path: Path, sources: Dict[int, List[str]]):
+        script_name, model, inputs_ids = self._get_task_type(cascade_data=cascade_data, training_path=path)
         dataset_path = os.path.join(path, model, "model", "dataset")
 
         with open(os.path.join(dataset_path, "config.json"), "r", encoding="utf-8") as dataset_config:
@@ -24,15 +26,10 @@ class CascadeRunner:
         cascade_config = self._create_config(cascade_data=cascade_data, model_task=model_task,
                                              dataset_data=dataset_config_data)
         print(cascade_config)
-        script_name, model = self._get_task_type(cascade_data=cascade_data, training_path=path)
-
         main_block = json2cascade(path=os.path.join(path, model), cascade_config=cascade_config, mode="run")
-        sources = self._get_sources(dataset_path=dataset_path)
+
         i = 0
-        if not sources:
-            dataset_path = "F:\\tmp\\terraai\\datasets\\loaded\\terra\\chess_v3"
-            sources = self._get_sources(dataset_path=dataset_path)
-        for source in sources:
+        for source in sources.get(inputs_ids[0]):
             print(source)
             if "text" in script_name:
                 with open("test.txt", "w", encoding="utf-8") as f:
@@ -45,6 +42,7 @@ class CascadeRunner:
                 output_path = f"F:\\tmp\\ttt\\source{i}.jpg"
                 print(output_path)
                 main_block(input_path=input_path, output_path=output_path)
+                print(main_block)
             else:
                 main_block(input_path=input_path)
             print(main_block.out)
@@ -54,43 +52,58 @@ class CascadeRunner:
     @staticmethod
     def _get_task_type(cascade_data: CascadeDetailsData, training_path: Path):
         model = "__current"
+        _inputs = []
         for block in cascade_data.blocks:
             if block.group == BlockGroupChoice.Model:
                 model = block.parameters.main.path
-                break
+            if block.group == BlockGroupChoice.InputData:
+                _inputs.append(block.id)
         with open(os.path.join(training_path, model, "config.json"),
                   "r", encoding="utf-8") as training_config:
             training_details = json.load(training_config)
         deploy_type = training_details.get("base").get("architecture").get("type")
-        return decamelize(deploy_type), model
+        return decamelize(deploy_type), model, _inputs
 
     def _create_config(self, cascade_data: CascadeDetailsData, model_task: str, dataset_data: dict):
 
         classes = list(dataset_data.get("outputs").values())[0].get("classes_names")
-        classes_colors = list(dataset_data.get("outputs").values())[0].get("classes_colors")
+        num_class = list(dataset_data.get("outputs").values())[0].get("num_classes")
+        classes_colors = [list(Color(color).as_rgb_tuple()) for color in
+                          list(dataset_data.get("outputs").values())[0].get("classes_colors")]
 
         config = {"cascades": {}}
         adjacency_map = {}
         block_description = {}
         for block in cascade_data.blocks:
             if block.group == BlockGroupChoice.InputData:
+                if model_task == "Object_Detection" and \
+                        block.parameters.main.type == LayerInputTypeChoice.Video \
+                        and block.parameters.main.switch_on_frame:
+                    _type = "video_by_frame"
+                else:
+                    _type = block.parameters.main.type.value.lower()
                 block_description = {
                     "input":
                         {
                             "tag": "input",
-                            "type": block.parameters.main.type.value.lower()
+                            "type": _type
                         },
                 }
             elif block.group == BlockGroupChoice.OutputData:
-                if block.parameters.main.type == BlockFunctionGroupChoice.ObjectDetection:
+                if model_task in ["ObjectDetection", "Segmentation"]:
+
                     block_description = {
                         "saving": {
                             "tag": "output",
-                            "type": block.parameters.main.type.value.lower(),
-                            "params": {key: val for key, val in block.parameters.main.native().items()
-                                       if key not in ["type"]}
+                            "type": block.parameters.main.type.value.lower()
                         }
                     }
+                    if block.parameters.main.type == LayerInputTypeChoice.Video:
+                        block_description.update({
+                            "params": {
+                                key: val for key, val in block.parameters.main.native().items() if key not in ["type"]
+                            }
+                        })
                     adjacency_map.update({"saving": self._get_bind_names(cascade_data=cascade_data,
                                                                          blocks_ids=block.bind.up)})
             elif block.group == BlockGroupChoice.Model:
@@ -117,6 +130,8 @@ class CascadeRunner:
                     }
                     if "classes" in parameters.keys() and not parameters.get("classes"):
                         parameters["classes"] = classes
+                    # if "num_class" in parameters.keys() and not parameters.get("num_class"):
+                    #     parameters["num_class"] = num_class
                     if "classes_colors" in parameters.keys() and not parameters.get("classes_colors"):
                         parameters["classes_colors"] = classes_colors
                 elif block.group == BlockGroupChoice.Service:
@@ -130,9 +145,9 @@ class CascadeRunner:
                     }
                 else:
                     parameters = {
-                            key: val for key, val in block.parameters.main.native().items()
-                            if key not in ["type", "group"]
-                        }
+                        key: val for key, val in block.parameters.main.native().items()
+                        if key not in ["type", "group"]
+                    }
                 block_description = {
                     block.name: {
                         "tag": _tag,
@@ -163,15 +178,3 @@ class CascadeRunner:
         if _input:
             mapping.append(_input)
         return mapping
-
-    @staticmethod
-    def _get_sources(dataset_path: str) -> list:
-        out = []
-        try:
-            sources = pd.read_csv(os.path.join(dataset_path, "instructions", "tables", "val.csv"))
-        except Exception as e:
-            return out
-        for column in sources.columns:
-            if column.split("_")[-1].title() in ["Image", "Text", "Audio", "Video"]:
-                out = sources[column].to_list()
-        return out

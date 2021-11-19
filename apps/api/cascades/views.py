@@ -3,13 +3,16 @@ import base64
 from tempfile import NamedTemporaryFile
 
 from terra_ai.agent import agent_exchange
+from terra_ai.data.datasets.dataset import DatasetInfo
 from terra_ai.data.cascades.extra import BlockGroupChoice
+from terra_ai.cascades.cascade_runner import CascadeRunner
 
 from apps.api import utils
 from apps.api.cascades.serializers import (
     CascadeGetSerializer,
     UpdateSerializer,
     PreviewSerializer,
+    StartSerializer,
 )
 from apps.plugins.project import project_path, data_path
 
@@ -82,19 +85,58 @@ class ValidateAPIView(BaseAPIView):
 
 class StartAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        dataset_sources = request.project.dataset.sources
-        sources = {}
-        for block in request.project.cascade.blocks:
-            if block.group != BlockGroupChoice.InputData:
-                continue
-            sources.update({block.id: dataset_sources})
+        serializer = StartSerializer(data={"sources": request.data})
+        if not serializer.is_valid():
+            return BaseResponseErrorFields(serializer.errors)
         agent_exchange(
             "cascade_start",
-            sources=sources,
-            trainings_path=project_path.training,
+            training_path=project_path.training,
+            datasets_path=data_path.datasets,
+            sources=serializer.validated_data.get("sources"),
             cascade=request.project.cascade,
         )
         return BaseResponseSuccess()
+
+
+class StartProgressAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        progress = agent_exchange("cascade_start_progress")
+        if progress.finished:
+            sources_data = progress.data.get("kwargs", {}).get("sources", {})
+            dataset_sources = progress.data.get("datasets", [])
+            sources = {}
+            for block in request.project.cascade.blocks:
+                if block.group != BlockGroupChoice.InputData:
+                    continue
+                source_data = sources_data.get(str(block.id))
+                if not source_data:
+                    continue
+                datasets_source = list(
+                    filter(
+                        lambda item: item.alias == source_data.get("alias")
+                        and item.group == source_data.get("group"),
+                        dataset_sources,
+                    )
+                )
+                if not len(datasets_source):
+                    continue
+                sources.update(
+                    {
+                        block.id: DatasetInfo(
+                            alias=datasets_source[0].alias,
+                            group=datasets_source[0].group,
+                        ).dataset.sources
+                    }
+                )
+            CascadeRunner().start_cascade(
+                sources=sources,
+                cascade_data=request.project.cascade,
+                path=project_path.training,
+            )
+            progress.message = ""
+            progress.percent = 0
+            progress.data = None
+        return BaseResponseSuccess(progress.native())
 
 
 class SaveAPIView(BaseAPIView):

@@ -47,7 +47,7 @@ class DeployCreator:
             predict = model.predict(dataset.X.get('val'), batch_size=training_details.get("base").get("batch"))
 
         presets = self._get_presets(predict=predict, dataset_data=dataset_data,
-                                    dataset=dataset, deploy_path=deploy_path)
+                                    dataset=dataset, deploy_path=model_path)
 
         if "Dataframe" in deploy_type:
             self._create_form_data_for_dataframe_deploy(deploy_path=deploy_path,
@@ -59,9 +59,9 @@ class DeployCreator:
         deploy_data = self._prepare_deploy(presets=presets, dataset=dataset,
                                            deploy_path=deploy_path, model_path=model_path,
                                            deploy_type=deploy_type)
-
-        deploy_data.update({"page": page, "path_model": model_path})
-
+        print(deploy_data)
+        deploy_data.update({"page": page, "path_model": training_path})
+        print(DeployData(**deploy_data))
         return DeployData(**deploy_data)
 
     @staticmethod
