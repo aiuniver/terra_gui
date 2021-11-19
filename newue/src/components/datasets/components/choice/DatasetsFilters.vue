@@ -90,7 +90,7 @@ export default {
         idx: 5,
       },
     ],
-    sortIdx: 0,
+    sortIdx: 4,
     showSortOptions: false,
   }),
   methods: {
