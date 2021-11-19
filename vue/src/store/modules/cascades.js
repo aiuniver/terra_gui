@@ -39,6 +39,7 @@ export default {
       start: true,
       save: true,
     },
+    datasets: []
   }),
   mutations: {
     SET_CASCADES (state, value) {
@@ -69,6 +70,9 @@ export default {
     },
     SET_SELECT (state, value) {
       state.select = value;
+    },
+    SET_DATASETS (state, value) {
+      state.datasets = [...value];
     },
     SET_STATUS (state, value) {
       state.status = { ...state.status, ...value };
@@ -231,10 +235,13 @@ export default {
       }
       return res
     },
-    async start ({ commit, dispatch }) {
-      const res = await dispatch('axios', { url: '/cascades/start/' }, { root: true });
+    async start ({ commit, dispatch }, data) {
+      const res = await dispatch('axios', { url: '/cascades/start/', data }, { root: true });
       commit('SET_STATUS', { start: Boolean(res?.error) });
       return res;
+    },
+    async startProgress ({ dispatch }) {
+      return await dispatch('axios', { url: '/cascades/start/progress/' }, { root: true });
     },
     async save ({ commit, dispatch }) {
       const res = await dispatch('axios', { url: '/cascades/save/' }, { root: true });
@@ -267,6 +274,10 @@ export default {
       // console.log(blocks);
       commit('SET_BLOCKS', blocks);
     },
+    async setDatasets ({ commit, dispatch }) {
+      const res = await dispatch('axios', { url: '/cascades/datasets/' }, { root: true });
+      commit('SET_DATASETS', res.data);
+    }
   },
   getters: {
     getList: ({ cascades: { list } }) => list,
@@ -279,6 +290,7 @@ export default {
     getLinks: ({ links }) => links,
     getSelect: ({ select }) => select,
     getStatus: ({ status }) => status,
+    getDatasets: ({ datasets }) => datasets,
     getBlock: ({ select, blocks }) => {
       const id = blocks.findIndex(item => item.id == select);
       return blocks[id] || {};

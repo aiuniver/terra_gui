@@ -55,7 +55,7 @@ export default {
       list: 'cascades/getList',
       layers: 'cascades/getLayersType',
       layersForm: 'cascades/getLayersForm',
-      buttons: 'cascades/getButtons',
+      // buttons: 'cascades/getButtons',
       block: 'cascades/getBlock',
       project: 'projects/getProject',
     }),
