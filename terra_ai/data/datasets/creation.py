@@ -265,7 +265,7 @@ class CreationInputData(IDMixinData):
 
     name: ConstrainedLayerNameValue
     "Название"
-    parameters: Dict[DirectoryPath, Dict[str, list]]
+    parameters: Dict[Path, Dict[str, list]]
     "Параметры"
     # type: #LayerInputTypeChoice
     # "Тип данных"
@@ -299,7 +299,7 @@ class CreationOutputData(IDMixinData):
 
     name: ConstrainedLayerNameValue
     "Название"
-    parameters: Dict[DirectoryPath, Dict[str, list]]
+    parameters: Dict[Path, Dict[str, list]]
     "Параметры"
 
     # type: #LayerOutputTypeChoice
@@ -383,8 +383,8 @@ class ColumnsProcessingData(BaseMixinData):
 
 
 class CreationVersionData(BaseMixinData):
-    datasets_path: DirectoryPath
-    source_path: DirectoryPath
+    # datasets_path: DirectoryPath
+    # source_path: DirectoryPath
     info: CreationInfoData = CreationInfoData()  # Train/Val split, shuffle
     use_generator: bool = False
     processing: Dict[str, ColumnsProcessingData] = {}

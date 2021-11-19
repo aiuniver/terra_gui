@@ -163,8 +163,9 @@ class CreateVersion(object):
         for idx in range(puts[0].id, puts[0].id + len(puts)):
             data = []
             for path, val in puts.get(idx).parameters.items():
+                data_to_pass = []
+                parameters = None
                 if path.is_dir():
-                    data_to_pass = []
                     for direct, folder, file_name in os.walk(path):
                         if file_name:
                             for name in sorted(file_name):
@@ -177,19 +178,20 @@ class CreateVersion(object):
 
                 elif path.is_file():
                     print('ТАБЛИЦА')
-
                 instr = getattr(CreateArray, f'instructions_{decamelize(parameters["type"])}')(data_to_pass,
                                                                                                **parameters[
                                                                                                    'parameters'])
                 cut = getattr(CreateArray, f'cut_{decamelize(parameters["type"])}')(instr['instructions'],
                                                                                     **instr['parameters'], **{
                         'cols_names': decamelize(parameters["type"]), 'put': idx})
+                print(cut['instructions'][0])
+                print(self.dataset_paths_data.sources)
+                print('REPLACING:', cut['instructions'][0].replace(str(self.dataset_paths_data.sources), '')[1:])
                 for i in range(len(cut['instructions'])):
                     if parameters['type'] != LayerOutputTypeChoice.Classification:
                         if decamelize(parameters['type']) in PATH_TYPE_LIST:
                             data.append(os.path.join('sources',
-                                                     cut['instructions'][i].replace(str(self.dataset_paths_data.sources), '')[
-                                                     1:]))
+                                                     cut['instructions'][i].replace(str(self.dataset_paths_data.sources), '')[1:]))
                         else:
                             data.append(cut['instructions'][i])
                         self.y_cls.append(os.path.basename(path))
@@ -310,7 +312,7 @@ class CreateVersion(object):
         #             raise
         for key, value in split_sequence.items():
             self.dataframe[key] = dataframe.loc[value, :].reset_index(drop=True)
-        # print(self.dataframe['train'])
+        print(self.dataframe['train'])
 
     def create_dataset_arrays(self, put_data: dict):
 
