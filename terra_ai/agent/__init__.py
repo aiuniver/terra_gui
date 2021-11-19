@@ -5,7 +5,7 @@ import pynvml
 import tensorflow
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from . import exceptions as agent_exceptions
 from . import utils as agent_utils
@@ -27,6 +27,7 @@ from ..data.extra import (
     HardwareAcceleratorChoice,
     FileManagerItem,
 )
+from ..cascades.cascade_runner import CascadeRunner
 from ..data.modeling.extra import ModelGroupChoice
 from ..data.modeling.model import ModelsGroupsList, ModelLoadData, ModelDetailsData
 from ..data.cascades.cascade import CascadesList, CascadeLoadData, CascadeDetailsData
@@ -420,6 +421,16 @@ class Exchange:
         Процесс запуска каскада
         """
         return progress.pool("cascade_start")
+
+    def _call_cascade_execute(
+        self, sources: Dict[int, List[str]], cascade: CascadeDetailsData, training_path
+    ):
+        """
+        Исполнение каскада
+        """
+        CascadeRunner().start_cascade(
+            sources=sources, cascade_data=cascade, path=training_path
+        )
 
     def _call_deploy_get(
         self, dataset: DatasetData, path_model: Path, path_deploy: Path, page: dict
