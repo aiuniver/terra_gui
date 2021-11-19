@@ -97,6 +97,11 @@ class StartAPIView(BaseAPIView):
         return BaseResponseSuccess()
 
 
+class StartProgressAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        return BaseResponseSuccess()
+
+
 class SaveAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         return BaseResponseSuccess()

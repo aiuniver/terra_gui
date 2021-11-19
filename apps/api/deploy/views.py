@@ -22,7 +22,9 @@ class GetAPIView(BaseAPIView):
         serializer = serializers.GetSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
-        request.project.set_deploy(serializer.validated_data)
+        request.project.set_deploy(
+            dataset=request.project.dataset, page=serializer.validated_data
+        )
         return BaseResponseSuccess(
             request.project.deploy.presets if request.project.deploy else None
         )
