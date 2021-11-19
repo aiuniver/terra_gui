@@ -295,5 +295,13 @@ export default {
       const id = blocks.findIndex(item => item.id == select);
       return blocks[id] || {};
     },
+    getManual(state, getters) {
+      const arr = Object.keys(getters.getLayersType)
+      const obj = {}
+      arr.forEach(item => {
+        obj[item] = getters.getLayersType[item].main[0]?.manual || ''
+      })
+      return obj
+    }
   },
 };

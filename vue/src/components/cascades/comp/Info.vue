@@ -1,6 +1,5 @@
 <template>
   <div v-if="info" class="info">
-    <div class="info__title">Информация о блоке</div>
     <div class="info__content" v-html="info"></div>
   </div>
 </template>
