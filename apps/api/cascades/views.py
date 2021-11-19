@@ -83,7 +83,7 @@ class StartAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         agent_exchange(
             "cascade_start",
-            path=project_path.training,
+            trainings_path=project_path.training,
             cascade=request.project.cascade,
         )
         return BaseResponseSuccess()
@@ -110,17 +110,19 @@ class PreviewAPIView(BaseAPIView):
 class DatasetsAPIView(BaseAPIView):
     @staticmethod
     def post(request, **kwargs):
-        datasets_list = agent_exchange("datasets_info", path=data_path.datasets).native()
+        datasets_list = agent_exchange(
+            "datasets_info", path=data_path.datasets
+        ).native()
         response = []
 
         for datasets in datasets_list:
             for dataset in datasets.get("datasets", []):
-                response.append({
-                    "label": f'{dataset.get("group", "")}: {dataset.get("name", "")}',
-                    "alias": dataset.get("alias", ""),
-                    "group": dataset.get("group", "")
-                })
+                response.append(
+                    {
+                        "label": f'{dataset.get("group", "")}: {dataset.get("name", "")}',
+                        "alias": dataset.get("alias", ""),
+                        "group": dataset.get("group", ""),
+                    }
+                )
 
-        return BaseResponseSuccess(
-           response
-        )
+        return BaseResponseSuccess(response)
