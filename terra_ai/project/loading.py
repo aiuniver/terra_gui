@@ -17,7 +17,7 @@ PROJECT_LOAD_NAME = "dataset_choice"
 @progress.threading
 def load(dataset_path: Path, source: Path, destination: Path):
     try:
-        zip_filepath = tempfile.NamedTemporaryFile(delete=False)
+        zip_filepath = tempfile.NamedTemporaryFile()
         shutil.copy(source, zip_filepath.name)
         unpacked = progress_utils.unpack(
             PROJECT_LOAD_NAME, PROJECT_LOAD_TITLE % source.name, Path(zip_filepath.name)

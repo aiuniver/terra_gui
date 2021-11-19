@@ -3,7 +3,6 @@ import shutil
 import zipfile
 import requests
 
-from stat import S_IWRITE
 from pathlib import Path
 from tempfile import mkdtemp, NamedTemporaryFile
 from pydantic.networks import HttpUrl
@@ -51,7 +50,6 @@ def pack(progress_name: str, title: str, source: Path, delete=True) -> Path:
                     pool(progress_name, percent=__num / quantity * 100)
     except Exception as error:
         raise Exception(error)
-    os.chmod(zip_destination.name, S_IWRITE)
     return zip_destination
 
 
