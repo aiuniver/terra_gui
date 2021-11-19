@@ -8,6 +8,7 @@ import tempfile
 import requests
 
 from pathlib import Path
+from typing import List, Callable
 from pydantic import ValidationError
 from pydantic.networks import HttpUrl
 from pydantic.errors import PathNotExistsError
@@ -119,7 +120,6 @@ def source(strict_object: SourceData):
         raise DatasetSourceLoadUndefinedMethodException(strict_object.mode.value)
 
 
-@progress.threading
 def _choice_from_keras(
     progress_name: str,
     destination: Path,
@@ -154,7 +154,6 @@ def _choice_from_keras(
         )
 
 
-@progress.threading
 def _choice_from_terra(
     progress_name: str,
     destination: Path,
@@ -189,7 +188,13 @@ def _choice_from_terra(
         shutil.rmtree(destination, ignore_errors=True)
         os.rename(zip_dirpath, destination)
         shutil.rmtree(unpacked)
-        if Path(destination, settings.DATASET_CONFIG).is_file():
+        config_path = Path(destination, settings.DATASET_CONFIG)
+        if config_path.is_file():
+            with open(config_path) as config_ref:
+                config_data = json.load(config_ref)
+                config_data["group"] = DatasetGroupChoice.terra.name
+            with open(config_path, "w") as config_ref:
+                json.dump(config_data, config_ref)
             progress.pool(
                 progress_name,
                 percent=100,
@@ -225,7 +230,6 @@ def _choice_from_terra(
         progress.pool(progress_name, finished=True, error=str(error))
 
 
-@progress.threading
 def _choice_from_custom(
     progress_name: str,
     destination: Path,
@@ -287,6 +291,41 @@ def _choice_from_custom(
         progress.pool(progress_name, finished=True, error=str(error))
 
 
+def _run_choice_method(
+    method: Callable,
+    progress_name: str,
+    dataset_choice: DatasetLoadData,
+    reset_model: bool = False,
+    set_finished: bool = True,
+):
+    _destination = Path(
+        settings.DATASETS_LOADED_DIR,
+        dataset_choice.group.name,
+        dataset_choice.alias,
+    )
+    if Path(_destination, settings.DATASET_CONFIG).is_file():
+        progress.pool(
+            progress_name,
+            percent=100,
+            data={
+                "info": DatasetInfo(
+                    group=dataset_choice.group.name, alias=dataset_choice.alias
+                ),
+                "reset_model": reset_model,
+            },
+            finished=set_finished,
+        )
+    else:
+        method(
+            progress_name=progress_name,
+            destination=_destination,
+            name=dataset_choice.alias,
+            source=dataset_choice.path,
+            reset_model=reset_model,
+        )
+
+
+@progress.threading
 def choice(
     progress_name: str, dataset_choice: DatasetLoadData, reset_model: bool = False
 ):
@@ -300,30 +339,44 @@ def choice(
             % (dataset_choice.group.value, dataset_choice.alias),
             finished=False,
         )
-        _destination = Path(
-            settings.DATASETS_LOADED_DIR,
-            dataset_choice.group.name,
-            dataset_choice.alias,
+        _run_choice_method(
+            method=_method,
+            progress_name=progress_name,
+            dataset_choice=dataset_choice,
+            reset_model=reset_model,
+            set_finished=True,
         )
-        if Path(_destination, settings.DATASET_CONFIG).is_file():
-            progress.pool(
-                progress_name,
-                percent=100,
-                data={
-                    "info": DatasetInfo(
-                        group=dataset_choice.group.name, alias=dataset_choice.alias
-                    ),
-                    "reset_model": reset_model,
-                },
-                finished=True,
-            )
-        else:
-            _method(
-                progress_name=progress_name,
-                destination=_destination,
-                name=dataset_choice.alias,
-                source=dataset_choice.path,
-                reset_model=reset_model,
-            )
     else:
         raise DatasetChoiceUndefinedMethodException(dataset_choice.group.value)
+
+
+@progress.threading
+def multiload(progress_name: str, datasets_load_data: List[DatasetLoadData], **kwargs):
+    progress.pool.reset(progress_name, finished=False)
+    for dataset_choice in datasets_load_data:
+        _method = getattr(
+            sys.modules.get(__name__), f"_choice_from_{dataset_choice.group.name}", None
+        )
+        if _method:
+            progress.pool(
+                progress_name,
+                message=DATASET_CHOICE_TITLE
+                % (dataset_choice.group.value, dataset_choice.alias),
+                percent=0,
+            )
+            _run_choice_method(
+                method=_method,
+                progress_name=progress_name,
+                dataset_choice=dataset_choice,
+                reset_model=False,
+                set_finished=False,
+            )
+        else:
+            raise DatasetChoiceUndefinedMethodException(dataset_choice.group.value)
+    progress.pool(
+        progress_name,
+        finished=True,
+        percent=0,
+        message="",
+        data={"datasets": datasets_load_data, "kwargs": kwargs},
+    )

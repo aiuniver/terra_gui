@@ -5,12 +5,11 @@ import pynvml
 import tensorflow
 
 from pathlib import Path
-from typing import Any, List, Dict
+from typing import Any, Dict
 
 from . import exceptions as agent_exceptions
 from . import utils as agent_utils
 from .. import settings, progress
-from ..cascades.cascade_runner import CascadeRunner
 from ..cascades.cascade_validator import CascadeValidator
 from ..deploy.prepare_deploy import DeployCreator
 from ..exceptions import tensor_flow as tf_exceptions
@@ -36,6 +35,7 @@ from ..data.presets.models import ModelsGroups
 from ..data.projects.project import ProjectsInfoData, ProjectsList
 from ..data.training.train import TrainingDetailsData
 from ..data.training.extra import StateStatusChoice
+from ..data.cascades.extra import BlockGroupChoice
 from ..data.deploy.tasks import DeployData
 from ..datasets import loading as datasets_loading
 from ..datasets import utils as datasets_utils
@@ -380,14 +380,46 @@ class Exchange:
         return CascadeValidator().get_validate(cascade_data=cascade, training_path=path)
 
     def _call_cascade_start(
-        self, sources: Dict[int, List[str]], trainings_path: Path, cascade: CascadeDetailsData
+        self,
+        training_path: Path,
+        datasets_path: Path,
+        sources: Dict[int, Dict[str, str]],
+        cascade: CascadeDetailsData,
     ):
         """
         Запуск каскада
         """
-        return CascadeRunner().start_cascade(
-            sources=sources, cascade_data=cascade, path=trainings_path
+        datasets = list(
+            map(
+                lambda item: DatasetLoadData(path=datasets_path, **dict(item)),
+                sources.values(),
+            )
         )
+        for block in cascade.blocks:
+            if block.group == BlockGroupChoice.Model:
+                _path = Path(
+                    training_path,
+                    block.parameters.main.path,
+                    "model",
+                    "dataset",
+                    settings.DATASET_CONFIG,
+                )
+                with open(_path) as config_ref:
+                    data = json.load(config_ref)
+                    datasets.append(
+                        DatasetLoadData(
+                            path=datasets_path,
+                            alias=data.get("alias"),
+                            group=data.get("group"),
+                        )
+                    )
+        datasets_loading.multiload("cascade_start", datasets, sources=sources)
+
+    def _call_cascade_start_progress(self) -> progress.ProgressData:
+        """
+        Процесс запуска каскада
+        """
+        return progress.pool("cascade_start")
 
     def _call_deploy_get(
         self, dataset: DatasetData, path_model: Path, path_deploy: Path, page: dict
