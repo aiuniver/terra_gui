@@ -31,6 +31,7 @@ class Tags(dict, Enum):
     audio = {"alias": "audio", "name": "Audio"}
     smart_home = {"alias": "smart_home", "name": "Smart home"}
     trading = {"alias": "trading", "name": "Trading"}
+    tracker = {"alias": "tracker", "name": "Tracker"}
 
 
 OutputLayersDefaults = {
