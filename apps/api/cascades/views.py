@@ -128,12 +128,11 @@ class StartProgressAPIView(BaseAPIView):
                         ).dataset.sources
                     }
                 )
-            data = CascadeRunner().start_cascade(
+            CascadeRunner().start_cascade(
                 sources=sources,
                 cascade_data=request.project.cascade,
                 path=project_path.training,
             )
-            print(data)
             progress.message = ""
             progress.percent = 0
             progress.data = None
