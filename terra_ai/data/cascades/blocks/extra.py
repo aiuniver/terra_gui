@@ -126,6 +126,7 @@ class BlocksBindChoice(Enum):
     OutputData = ("OutputData", ((BlockGroupChoice.Model,
                                   BlockFunctionTypeChoice.PlotBBoxes,
                                   BlockFunctionTypeChoice.PlotMaskSegmentation,
+                                  BlockFunctionTypeChoice.MaskedImage,
                                   BlockFunctionTypeChoice.PutTag),), tuple())
 
     Sort = ("Sort", (BlockFunctionTypeChoice.PostprocessBoxes,), (LayerInputTypeChoice.Image,))
