@@ -1,6 +1,8 @@
 import numpy as np
 import tensorflow
 
+from tensorflow.python.framework.ops import EagerTensor
+
 
 def masked_image(class_id=1):
 
