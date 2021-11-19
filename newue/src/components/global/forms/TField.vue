@@ -16,9 +16,7 @@
 </template>
 
 <script>
-import SvgContainer from '@/components/app/SvgContainer.vue';
 export default {
-  components: { SvgContainer },
   name: 't-field',
   props: {
     label: {

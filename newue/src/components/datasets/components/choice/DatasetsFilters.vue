@@ -40,9 +40,6 @@
 <script>
 export default {
   name: 'DatasetsFilters',
-  components:{
-    SvgContainer: () => import('@/components/app/SvgContainer.vue'),
-  },
   props: {
     data: {
       type: Array,

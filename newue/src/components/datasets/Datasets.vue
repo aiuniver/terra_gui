@@ -28,7 +28,6 @@ export default {
   props: ['datasets', 'selectedType'],
   components: {
     DatasetCard: () => import('@/components/datasets/components/choice/DatasetCard.vue'),
-    SvgContainer: () => import('@/components/app/SvgContainer.vue'),
     Table: () => import('@/components/datasets/components/choice/Table.vue'),
     DatasetsFilters: () => import('@/components/datasets/components/choice/DatasetsFilters.vue'),
   },

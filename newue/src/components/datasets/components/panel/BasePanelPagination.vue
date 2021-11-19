@@ -19,13 +19,7 @@
 </template>
 
 <script>
-import SvgContainer from '@/components/app/SvgContainer';
-
-export default {
-  components: {
-    SvgContainer,
-  },
-};
+export default {};
 </script>
 
 <style lang="scss" scoped>

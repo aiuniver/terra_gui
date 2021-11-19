@@ -54,7 +54,6 @@ export default {
   components: {
     BasePanelContent: () => import('@/components/datasets/components/panel/BasePanelContent'),
     BasePanel: () => import('@/components/datasets/components/panel/BasePanel'),
-    FileManager: () => import('@/components/datasets/components/create/FileManager'),
     WorkspaceActions: () => import('@/components/datasets/components/create/WorkspaceActions'),
     DatasetPreview: () => import('@/components/datasets/components/create/DatasetPreview'),
     DatasetSettings: () => import('@/components/datasets/components/create/DatasetSettings'),

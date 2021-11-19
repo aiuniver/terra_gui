@@ -29,12 +29,8 @@
 </template>
 
 <script>
-import SvgContainer from '@/components/app/SvgContainer';
 
 export default {
-  components: {
-    SvgContainer,
-  },
   name: 'WorkspaceActions',
   methods: {
     handleAction(action) {
