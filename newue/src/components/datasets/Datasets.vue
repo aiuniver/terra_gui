@@ -13,7 +13,7 @@
       @changeDisplay="cardsDisplay = $event"
     />
 
-    <scrollbar style="justify-self: stretch; height: 695px;">
+    <scrollbar style="justify-self: stretch;">
       <div v-if="cardsDisplay" class="datasets-cards">
         <DatasetCard v-for="(item, idx) in sortedList" :key="idx" :dataset="item" />
       </div>
@@ -73,9 +73,11 @@ export default {
 
 <style lang="scss" scoped>
 .datasets {
-  padding: 30px 0 0 40px;
+  padding: 30px 30px;
+  padding: 30px 30px 0 30px;
   width: 100%;
   height: 100%;
+  max-height: 865px;
   display: flex;
   flex-direction: column;
   gap: 30px;

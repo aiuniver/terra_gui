@@ -4,35 +4,33 @@
       <DSelect small :list="sortedDatasets" />
     </TField>
 
-    <div class="datasets-filter__sort">
-      <div class="datasets-filter__sort-options" v-if="cardsDisplay">
-        <div 
-            class="datasets-filter__sort-options--selected" 
-            @click="showSortOptions = !showSortOptions"
-        >
-          <span>{{ selectedSort.title }}</span>
-          <SvgContainer name="arrow-chevron-down" />
-        </div>
-
-        <div class="datasets-filter__sort-dropdown" v-if="showSortOptions">
-          <div v-for="(item, idx) in sortOptions" :key="idx" @click="selectSort(item.idx)">
-            {{ item.title }}
-          </div>
-        </div>
+    <div class="datasets-filter-sort">
+      <div 
+          class="datasets-filter-header" 
+          @click="showSortOptions = !showSortOptions" 
+          v-if="cardsDisplay"
+      >
+        <span>{{ selectedSort.title }}</span>
+        <SvgContainer name="arrow-chevron-down" />
       </div>
 
-      <template v-if="selectedType !== 2">
+      <div class="datasets-filter-dropdown" v-if="showSortOptions">
+        <div v-for="(item, idx) in sortOptions" :key="idx" @click="selectSort(item.idx)">
+          {{ item.title }}
+        </div>
+      </div>
+      <div class="datasets-filter-display" v-if="selectedType !== 2">
         <SvgContainer
           name="grid-cube-outline"
           @click.native="$emit('changeDisplay', true)"
-          :class="['ci-tile', { 'ci-tile--selected': cardsDisplay }]"
+          :class="['ci-tile mr-4', { 'ci-tile--selected': cardsDisplay }]"
         />
         <SvgContainer
           name="lines-justyfy"
-          @click.native="$emit('changeDisplay', false)"
+          @click.native="$emit('changeDisplay', false), showSortOptions = false"
           :class="['ci-tile', { 'ci-tile--selected': !cardsDisplay }]"
         />
-      </template>
+      </div>
     </div>
   </div>
 </template>
@@ -45,14 +43,14 @@ export default {
       type: Array,
       default: () => [],
     },
-    cardsDisplay:{
-        type: Boolean,
-        default: false,
+    cardsDisplay: {
+      type: Boolean,
+      default: false,
     },
-    selectedType:{
-        type: [String, Number],
-        default: 0,
-    }
+    selectedType: {
+      type: [String, Number],
+      default: 0,
+    },
   },
   data: () => ({
     options: [
@@ -94,7 +92,7 @@ export default {
     selectSort(idx) {
       this.sortIdx = idx;
       this.showSortOptions = false;
-      this.$emit('changeFilter', this.selectedSort)
+      this.$emit('changeFilter', this.selectedSort);
     },
   },
   computed: {
@@ -118,7 +116,7 @@ export default {
   watch: {
     selectedType(idx) {
       if (idx === 2) {
-        this.$emit('changeDisplay', true)
+        this.$emit('changeDisplay', true);
         this.sortIdx = 4;
       } else this.sortIdx = 0;
     },
@@ -131,45 +129,38 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-right: 60px;
-
-  &__sort {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-    &-dropdown {
-      position: absolute;
-      top: calc(100% + 10px);
-      background-color: #242f3d;
-      z-index: 1;
-      border-radius: 4px;
-      overflow: hidden;
-      width: 100%;
-      div {
-        padding: 10px;
-        &:hover {
-          color: #65b9f4;
-          background-color: #1e2734;
-        }
-      }
-    }
-    &-options {
-      color: #a7bed3;
-      font-size: 14px;
-      position: relative;
-      cursor: pointer;
-      min-width: 220px;
-      user-select: none;
-      &--selected {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        justify-content: flex-end;
+  &-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    background-color: #242f3d;
+    z-index: 1;
+    border-radius: 4px;
+    overflow: hidden;
+    width: 200px;
+    cursor: pointer;
+    div {
+      padding: 10px;
+      &:hover {
+        color: #65b9f4;
+        background-color: #1e2734;
       }
     }
   }
-}
 
+  &-header {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    user-select: none;
+  }
+
+  &-sort {
+    display: flex;
+    gap: 20px;
+    position: relative;
+    align-items: center;
+  }
+}
 
 .ci-tile {
   display: inline-block;
