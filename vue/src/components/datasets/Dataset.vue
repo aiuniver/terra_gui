@@ -61,6 +61,7 @@ export default {
       return this.project?.dataset?.alias === dataset.alias;
     },
     click(dataset, key) {
+      if (!dataset.training_available) return;
       if (!this.isLoaded(dataset)) {
         // console.log(dataset, key);
         this.$store.dispatch('datasets/setSelect', dataset);
@@ -72,7 +73,8 @@ export default {
       // let card = e.path.filter(element => element.className == "dataset-card")[0]
       // this.$store.dispatch('messages/setMessage', { message: `Выбран датасет «${dataset.name}»`})
     },
-    async remove({ name, alias, group }) {
+    async remove({ name, alias, group, training_available }) {
+      if (!training_available) return;
       try {
         await this.$Modal.confirm({
           title: 'Внимание!',
