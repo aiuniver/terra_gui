@@ -23,14 +23,14 @@ export default {
       if (!data) {
         return;
       }
-      const { project, user, defaults } = data;
+      const { project, user, defaults, cascades } = data;
 
       commit("SET_PROJECT", project);
       commit("SET_USER", user);
       console.log({ project, user, defaults })
       // commit("modeling/SET_MODELING", { layers_types, layer_form }, { root: true });
       // commit("modeling/SET_MODEL", model, { root: true });
-      // commit("cascades/SET_CASCADES", cascades, { root: true });
+      commit("cascades/SET_CASCADES", cascades, { root: true });
       // commit("datasets/SET_CREATION", creation, { root: true });
       // commit("trainings/SET_PARAMS", base, { root: true });
       // commit("trainings/SET_ARCHITECTURE", architecture, { root: true });
