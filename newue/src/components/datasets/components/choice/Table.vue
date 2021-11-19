@@ -1,17 +1,17 @@
 <template>
-  <table class="datasets-table">
+  <table>
     <thead>
       <tr>
-        <th v-for="(header, idx) in headers" :key="'table_dataset_th'+idx" @click="handleSort(header.idx)">
+        <th v-for="(header, idx) in headers" :key="'table_dataset_th' + idx" @click="handleSort(header.idx)">
           <span>{{ header.title }}</span>
         </th>
       </tr>
     </thead>
     <tbody>
       <tr v-for="(dataset, idx) in datasets" :key="'table_dataset_tr' + idx">
-          <td v-for="({value}, idx) in headers" :key="'table_dataset_td' + idx">
-              <span>{{ dataset[value] }}</span>
-          </td>
+        <td v-for="({ value }, idx) in headers" :key="'table_dataset_td' + idx">
+          <span>{{ dataset[value] }}</span>
+        </td>
       </tr>
     </tbody>
   </table>
@@ -63,10 +63,10 @@ export default {
   }),
   methods: {
     handleSort(idx) {
-      if(this.sortId === idx){
-          if(this.sortReverse) this.sortReverse = false
-          else this.sortReverse = true
-      }else this.sortReverse = false
+      if (this.sortId === idx) {
+        if (this.sortReverse) this.sortReverse = false;
+        else this.sortReverse = true;
+      } else this.sortReverse = false;
 
       this.sortId = idx;
     },
@@ -93,71 +93,55 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.datasets-table {
-  font-size: 14px;
+@mixin cell {
+  width: 25%;
+  height: 35px;
+  cursor: pointer;
+  padding: 0 10px;
   font-weight: 400;
-  width: 100%;
-  &__wrapper {
-    width: calc(100% - 150px);
-    position: relative;
-  }
-  tr > *:nth-child(2) {
+  text-align: left;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 100px;
+  &:nth-child(2) {
     text-align: right;
   }
-  thead {
-    background-color: #17212b;
-    color: #6c7883;
-    position: sticky;
-    top: 0;
-    i {
-      color: #65b9f4;
-      font-size: 20px;
-      vertical-align: middle;
-    }
-    tr {
-      height: 35px;
-    }
-    th {
-      font-weight: inherit;
-      padding: 0 50px;
-      min-width: 150px;
-      user-select: none;
-      &:first-child {
-        padding: 15px 10px;
-      }
-      * {
-        vertical-align: middle;
-        cursor: pointer;
-      }
+  @content;
+}
+
+table {
+  font-size: 14px;
+  width: 100%;
+}
+
+thead {
+  background-color: $color-dark;
+  color: $color-gray;
+  position: sticky;
+  top: 0;
+}
+
+tbody {
+  tr {
+    &:hover {
+      background: $color-black;
     }
   }
-  tbody {
-    tr {
-      height: 55px;
-      cursor: pointer;
-      &:hover {
-        background-color: #0e1621;
-      }
-    }
-    td {
-      color: #f2f5fa;
-      padding: 15px 50px;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      overflow: hidden;
-      max-width: 450px;
-      &:first-child {
-        padding: 15px 10px;
-      }
-      i {
-        font-size: 19px;
-        color: #6c7883;
-        margin-right: 15px;
-      }
-      * {
-        vertical-align: middle;
-      }
+}
+
+tr {
+
+  th,td {
+    @include cell
+  }
+
+  td {
+    height: 55px;
+    &:not(:first-child) {
+      color: $color-gray-blue;
     }
   }
+
 }
 </style>

@@ -61,7 +61,6 @@ export default {
   name: 'Datasets',
   components: {
     Dataset: () => import('@/components/datasets/Datasets.vue'),
-    SvgContainer: () => import('@/components/app/SvgContainer.vue'),
   },
   data: () => ({
     selectedType: 2,

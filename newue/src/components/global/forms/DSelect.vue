@@ -35,9 +35,7 @@
 
 <script>
 import fields from '@/mixins/forms/fields';
-import SvgContainer from '@/components/app/SvgContainer';
 export default {
-  components: { SvgContainer },
   name: 'd-select',
   mixins: [fields],
   props: {

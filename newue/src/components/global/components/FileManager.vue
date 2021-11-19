@@ -28,12 +28,8 @@
 </template>
 
 <script>
-import SvgContainer from '@/components/app/SvgContainer';
 export default {
   name: 'FileManager',
-  components: {
-    SvgContainer,
-  },
   props: {
     list: {
       type: Array,
