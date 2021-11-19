@@ -2,7 +2,7 @@
   <table class="datasets-table">
     <thead>
       <tr>
-        <th v-for="(header, idx) in list" :key="idx" @click="handleSort(header.idx)">
+        <th v-for="(header, idx) in headers" :key="idx" @click="handleSort(header.idx)">
           <span>{{ header.title }}</span>
         </th>
       </tr>
@@ -15,7 +15,7 @@
         <td>
           {{ dataset.size ? `${dataset.size.short.toFixed(2)} ${dataset.size.unit}` : 'Предустановленный' }}
         </td>
-        <td>1 минуту назад</td>
+        <td></td>
         <td>{{ dataset.date ? dataset.date.toLocaleString() : '' }}</td>
       </tr>
     </tbody>

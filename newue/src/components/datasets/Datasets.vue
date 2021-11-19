@@ -43,17 +43,12 @@ export default {
   },
   computed: {
     sortedDatasets() {
-      return this.datasets.filter(item => {
-        if (this.selectedType === 1) return item.group === 'custom';
-        if (this.selectedType === 2) return item.group !== 'custom';
-      });
+      return this.datasets;
     },
 
     sortedList() {
       const sortDatasets = this.datasets;
-      if (Object.keys(this.selectedSort).length === 0) 
-        return sortDatasets.sort((a, b) => b.date - a.date)
-      if (this.selectedSort.value === 'alphabet') 
+      if (this.selectedSort.value === 'alphabet' || Object.keys(this.selectedSort).length === 0) 
         return sortDatasets.sort((a, b) => a.name.localeCompare(b.name));
       if (this.selectedSort.value === 'alphabet_reverse')
         return sortDatasets.sort((a, b) => b.name.localeCompare(a.name));
