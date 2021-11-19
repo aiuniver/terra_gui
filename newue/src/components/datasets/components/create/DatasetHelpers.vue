@@ -23,9 +23,7 @@
 </template>
 
 <script>
-import SvgContainer from '@/components/app/SvgContainer.vue';
 export default {
-  components: { SvgContainer },
   name: 'DatasetHelpers',
 };
 </script>

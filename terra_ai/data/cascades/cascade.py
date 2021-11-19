@@ -11,7 +11,7 @@ from ..types import condirpath, Base64Type
 
 class CascadeLoadData(BaseMixinData):
     value: condirpath(ext=settings.CASCADE_EXT)
-    
+
 
 class CascadeDetailsData(AliasMixinData):
     name: Optional[str]
@@ -32,7 +32,6 @@ class CascadeListData(BaseMixinData):
 
 
 class CascadesList(UniqueListMixin):
-
     class Meta:
         source = CascadeListData
         identifier = "label"
@@ -48,10 +47,10 @@ class CascadesList(UniqueListMixin):
 
         for dir_name in os.listdir(path):
             dir_path = Path(path, dir_name)
-            
+
             if not dir_path.is_dir():
                 continue
-            
+
             if dir_path.suffix != f".{settings.CASCADE_EXT}":
                 continue
 
@@ -59,9 +58,6 @@ class CascadesList(UniqueListMixin):
                 continue
 
             dir_name_split = dir_path.name.split(dir_path.suffix)
-            data.append({
-                "label": "".join(dir_name_split[:-1]),
-                "value": dir_path
-            })
+            data.append({"label": "".join(dir_name_split[:-1]), "value": dir_path})
 
         super().__init__(data)

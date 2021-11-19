@@ -2,41 +2,47 @@
   <main class="page-datasets">
     <div class="cont">
       <div class="datasets-menu">
-        <div class="datasets-menu__items">
-          <label class="datasets-menu__items--item" :class="{ selected: selectedType === 0 }">
-            <input type="radio" name="datasets" v-model="selectedType" :value="0" />
-            <i class="ci-icon ci-clock"></i>
+        <div class="datasets-menu-list">
+          <div
+            @click="selectedType = 0"
+            :class="['datasets-menu-list__item', { 'datasets-menu-list__item--selected': selectedType === 0 }]"
+          >
+            <SvgContainer name="clock" />
             <span>Недавние</span>
-          </label>
-          <label class="datasets-menu__items--item" :class="{ selected: selectedType === 1 }">
-            <input type="radio" name="datasets" v-model="selectedType" :value="1" />
-            <i class="ci-icon ci-file_blank_outline"></i>
+          </div>
+          <div
+            @click="selectedType = 1"
+            :class="['datasets-menu-list__item', { 'datasets-menu-list__item--selected': selectedType === 1 }]"
+          >
+            <SvgContainer name="file-outline" />
             <span>Проектные</span>
-          </label>
-          <label class="datasets-menu__items--item" :class="{ selected: selectedType === 2 }">
-            <input type="radio" name="datasets" v-model="selectedType" :value="2" />
-            <i class="ci-icon ci-world"></i>
+          </div>
+          <div
+            @click="selectedType = 2"
+            :class="['datasets-menu-list__item', { 'datasets-menu-list__item--selected': selectedType === 2 }]"
+          >
+            <SvgContainer name="world" />
             <span>Terra</span>
-          </label>
+          </div>
         </div>
         <hr />
-        <div class="datasets-menu__categories">
-          <ul class="datasets-menu__categories--item">
-            Изображения
+        <div class="datasets-menu-categories">
+          <ul class="datasets-menu-categories__item">
+            <li>Изображения</li>
             <li>Машины</li>
             <li>Круглые</li>
             <li>Самолеты</li>
             <li>Квадраты</li>
           </ul>
-          <ul class="datasets-menu__categories--item">
-            Видео
+          <ul class="datasets-menu-categories__item">
+            <li>Видео</li>
             <li>Машины</li>
             <li>Круглые</li>
             <li>Самолеты</li>
             <li>Квадраты</li>
           </ul>
-          <ul class="datasets-menu__categories--item">
-            Текст
+          <ul class="datasets-menu-categories__item">
+            <li>Текст</li>
             <li>Машины</li>
             <li>Круглые</li>
             <li>Самолеты</li>
@@ -54,10 +60,10 @@ import { mapGetters } from 'vuex';
 export default {
   name: 'Datasets',
   components: {
-    Dataset: () => import('@/components/datasets/Dataset.vue'),
+    Dataset: () => import('@/components/datasets/Datasets.vue'),
   },
   data: () => ({
-    selectedType: 1,
+    selectedType: 2,
   }),
   computed: {
     ...mapGetters({
@@ -68,29 +74,40 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.cont {
+  // background-color: $color-dark;
+  padding: 0;
+  display: flex;
+  height: 100%;
+}
+
 .datasets-menu {
   width: 175px;
-  border-right: 1px solid #0e1621;
+  border-right: 1px solid $color-black;
   padding-top: 18px;
   hr {
     border: none;
-    border-bottom: 1px solid #242f3d;
+    border-bottom: 1px solid $color-dark-gray;
     margin: 20px;
   }
-  &__items {
-    &--item {
-      padding: 10px 0 10px 20px;
-      cursor: pointer;
-      font-size: 14px;
-      color: #a7bed3;
+  &-list {
+    &__item {
       display: flex;
       align-items: center;
-      * {
-        vertical-align: middle;
+
+      padding: 10px 0 10px 20px;
+      color: $color-gray-blue;
+      font-size: 14px;
+      cursor: pointer;
+
+      span{
+        margin-left: 15px;
       }
-      i {
-        margin-right: 20px;
+
+      &--selected {
+        background-color: $color-black;
       }
+
       &:hover {
         color: #65b9f4;
         .ci-world {
@@ -98,45 +115,29 @@ export default {
         }
       }
       &.selected {
-        background-color: #0e1621;
+        background-color: var(--color-light-gray);
       }
       input {
         display: none;
       }
     }
   }
-  &__categories {
+  &-categories {
     font-size: 14px;
     padding-left: 20px;
-    &--item {
+    &__item {
       margin-bottom: 10px;
       li {
-        padding-top: 5px;
-        color: #6c7883;
         &:first-child {
-          padding-top: 10px;
+          padding-bottom: 5px;
+          color: $color-white;
+          cursor: default;
         }
+        color: $color-gray;
+        padding-top: 5px;
+        cursor: pointer;
       }
     }
   }
-}
-
-.cont {
-  background-color: #17212b;
-  padding: 0;
-  display: flex;
-  height: 100%;
-}
-
-.ci-icon {
-  font-size: 20px;
-}
-
-.ci-world {
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  background-color: #a7bed3;
-  mask-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE3LjA3MSAxNy4wNzFDMTguOTU5NyAxNS4xODIzIDIwIDEyLjY3MSAyMCA5Ljk5OTg3QzIwIDcuMzI5IDE4Ljk1OTcgNC44MTc3MSAxNy4wNzEgMi45MjkwMUMxNS4xODIzIDEuMDQwMDUgMTIuNjcxIDAgOS45OTk4NyAwQzcuMzI5IDAgNC44MTc3MSAxLjA0MDA1IDIuOTI5MDEgMi45MjkwMUMxLjA0MDMxIDQuODE3NzEgMCA3LjMyOSAwIDkuOTk5ODdDMCAxMi42NzEgMS4wNDAwNSAxNS4xODIzIDIuOTI5MDEgMTcuMDcxQzQuODE3NzEgMTguOTU5NyA3LjMyODc0IDIwIDkuOTk5ODcgMjBDMTIuNjcxIDIwIDE1LjE4MjMgMTguOTU5NyAxNy4wNzEgMTcuMDcxWk04LjUwNjE0IDE2LjAwNzRDNy45ODkzNCAxNC42NTMxIDcuNjcxNDYgMTIuOTAyNSA3LjU4ODQzIDEwLjk5OThIMTIuNDExM0MxMi4zMjg1IDEyLjkwMjUgMTIuMDEwNyAxNC42NTMxIDExLjQ5MzkgMTYuMDA3NEMxMC45NzE0IDE3LjM3NjUgMTAuMzUzMiAxNy45OTk4IDkuOTk5ODcgMTcuOTk5OEM5LjY0NjU1IDE3Ljk5OTggOS4wMjgzNiAxNy4zNzY1IDguNTA2MTQgMTYuMDA3NFYxNi4wMDc0Wk05Ljk5OTg3IDEuOTk5OTJDMTAuMzUzMiAxLjk5OTkyIDEwLjk3MTQgMi42MjM1NCAxMS40OTM5IDMuOTkyNkMxMi4wMTA0IDUuMzQ2OTIgMTIuMzI4NSA3LjA5NzUgMTIuNDExMyA4Ljk5OTkxSDcuNTg4NDNDNy42NzEyIDcuMDk3NSA3Ljk4OTM0IDUuMzQ2OTIgOC41MDU4OCAzLjk5MjZDOS4wMjgzNiAyLjYyMzU0IDkuNjQ2NTUgMS45OTk5MiA5Ljk5OTg3IDEuOTk5OTJWMS45OTk5MlpNMTUuNjU2NyAxNS42NTY3QzE0LjkwNjggMTYuNDA2NSAxNC4wMzQxIDE2Ljk4OSAxMy4wODQzIDE3LjM4NThDMTMuODY3MyAxNS42OTkzIDE0LjMxNSAxMy4zODIgMTQuNDEzIDEwLjk5OThIMTcuOTM4M0MxNy43MjA1IDEyLjc1ODIgMTYuOTI5NSAxNC4zODQxIDE1LjY1NjcgMTUuNjU2N1YxNS42NTY3Wk0xNy45MzgzIDguOTk5OTFIMTQuNDEzQzE0LjMxNSA2LjYxNzY5IDEzLjg2NzMgNC4zMDA2NiAxMy4wODQzIDIuNjEzOTdDMTQuMDM0MSAzLjAxMDc1IDE0LjkwNjggMy41OTMyNCAxNS42NTY3IDQuMzQzMDhDMTYuOTI5NSA1LjYxNTkyIDE3LjcyMDUgNy4yNDE4MyAxNy45MzgzIDguOTk5OTFaTTQuMzQzMDggNC4zNDMwOEM1LjA5MjkyIDMuNTkzMjQgNS45NjU2MiAzLjAxMDc1IDYuOTE1NjcgMi42MTM5N0M2LjEzMjcyIDQuMzAwNCA1LjY4NDczIDYuNjE3NjkgNS41ODY2OSA4Ljk5OTkxSDIuMDYxNDhDMi4yNzkyNyA3LjI0MTgzIDMuMDcwNSA1LjYxNTkyIDQuMzQzMDggNC4zNDMwOFpNMi4wNjE0OCAxMC45OTk4SDUuNTg2NjlDNS42ODQ3MyAxMy4zODIgNi4xMzI3MiAxNS42OTkzIDYuOTE1NjcgMTcuMzg1OEM1Ljk2NTYyIDE2Ljk4OSA1LjA5MjkyIDE2LjQwNjggNC4zNDMwOCAxNS42NTY3QzMuMDcwNSAxNC4zODQxIDIuMjc5MjcgMTIuNzU4MiAyLjA2MTQ4IDEwLjk5OThWMTAuOTk5OFoiIGZpbGw9IiNBN0JFRDMiLz4KPC9zdmc+Cg==');
 }
 </style>

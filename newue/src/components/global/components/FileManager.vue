@@ -3,7 +3,7 @@
     <div class="file-manager-catalog" v-for="catalog in list" :key="JSON.stringify(catalog)">
       <div class="file-manager-catalog__header flex align-center mb-2" @click="handleClick(catalog.id)">
         <SvgContainer
-          :name="active.includes(catalog.id) ? 'arrow-right-active-fill' : 'arrow-right-outline'"
+          :name="active.includes(catalog.id) ? 'arrow-carret-right-active-fill' : 'arrow-carret-right-outline'"
           class="mr-1"
         />
         <SvgContainer name="folder" class="mr-1" />
@@ -28,12 +28,8 @@
 </template>
 
 <script>
-import SvgContainer from '@/components/app/SvgContainer';
 export default {
   name: 'FileManager',
-  components: {
-    SvgContainer,
-  },
   props: {
     list: {
       type: Array,

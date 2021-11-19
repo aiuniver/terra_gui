@@ -18,10 +18,6 @@
 <script>
 export default {
   name: 'Test',
-  components: {
-      SvgContainer: () => import("@/components/app/SvgContainer"),
-  },
-  
 };
 </script>
 

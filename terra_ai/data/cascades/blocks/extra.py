@@ -122,38 +122,39 @@ class BlockServiceDeepSortMetricChoice(str, Enum):
 
 
 class BlocksBindChoice(Enum):
-    Model = ("Model", ("Любой блок, совместимый с типом данных выбранной модели: ", ), 1, tuple())
-    OutputData = ("OutputData", (BlockGroupChoice.Model,
-                                 BlockFunctionTypeChoice.PlotBBoxes,
-                                 BlockFunctionTypeChoice.PlotMaskSegmentation,
-                                 BlockFunctionTypeChoice.PutTag), 1, tuple())
+    Model = ("Model", ("Любой блок, совместимый с типом данных выбранной модели: ",), tuple())
+    OutputData = ("OutputData", ((BlockGroupChoice.Model,
+                                  BlockFunctionTypeChoice.PlotBBoxes,
+                                  BlockFunctionTypeChoice.PlotMaskSegmentation,
+                                  BlockFunctionTypeChoice.PutTag),), tuple())
 
-    Sort = ("Sort", (BlockFunctionTypeChoice.PostprocessBoxes,), 1, (LayerInputTypeChoice.Image,))
-    DeepSort = ("DeepSort", (BlockFunctionTypeChoice.PostprocessBoxes,), 1, (LayerInputTypeChoice.Image,))
-    ChangeType = ("ChangeType", tuple(), 1, (LayerInputTypeChoice.Image,
-                                             LayerInputTypeChoice.Audio,
-                                             LayerInputTypeChoice.Video,
-                                             LayerInputTypeChoice.Text))
-    ChangeSize = ("ChangeSize", tuple(), 1, (LayerInputTypeChoice.Image,))
-    MinMaxScale = ("MinMaxScale", tuple(), 1, (LayerInputTypeChoice.Image,
-                                               LayerInputTypeChoice.Audio,
-                                               LayerInputTypeChoice.Video,
-                                               LayerInputTypeChoice.Text))
-    CropImage = ("CropImage", tuple(), 1, tuple())
-    MaskedImage = ("MaskedImage", tuple(), 1, (LayerInputTypeChoice.Image,))
-    PlotMaskSegmentation = ("PlotMaskSegmentation", tuple(), 1, (LayerInputTypeChoice.Image,))
-    PutTag = ("PutTag", tuple(), 1, (LayerInputTypeChoice.Text,))
+    Sort = ("Sort", (BlockFunctionTypeChoice.PostprocessBoxes,), (LayerInputTypeChoice.Image,))
+    DeepSort = ("DeepSort", (BlockFunctionTypeChoice.PostprocessBoxes,), (LayerInputTypeChoice.Image,))
+    ChangeType = ("ChangeType", tuple(), (LayerInputTypeChoice.Image,
+                                          LayerInputTypeChoice.Audio,
+                                          LayerInputTypeChoice.Video,
+                                          LayerInputTypeChoice.Text))
+    ChangeSize = ("ChangeSize", tuple(), (LayerInputTypeChoice.Image,))
+    MinMaxScale = ("MinMaxScale", tuple(), (LayerInputTypeChoice.Image,
+                                            LayerInputTypeChoice.Audio,
+                                            LayerInputTypeChoice.Video,
+                                            LayerInputTypeChoice.Text))
+    CropImage = ("CropImage", tuple(), tuple())
+    MaskedImage = ("MaskedImage", tuple(), (LayerInputTypeChoice.Image,))
+    PlotMaskSegmentation = ("PlotMaskSegmentation", tuple(), (LayerInputTypeChoice.Image,))
+    PutTag = ("PutTag", tuple(), (LayerInputTypeChoice.Text,))
     PostprocessBoxes = ("PostprocessBoxes", (BlockGroupChoice.Model,
-                                             BlockGroupChoice.InputData), 2, (LayerInputTypeChoice.Image,))
-    PlotBBoxes = ("PlotBBoxes", (BlockFunctionTypeChoice.PostprocessBoxes,
-                                 BlockCustomTypeChoice.Sort,
-                                 BlockGroupChoice.InputData), 2, (LayerInputTypeChoice.Image,))
+                                             BlockGroupChoice.InputData), (LayerInputTypeChoice.Image,))
+    PlotBBoxes = ("PlotBBoxes", ((BlockFunctionTypeChoice.PostprocessBoxes,
+                                  BlockCustomTypeChoice.Sort),
+                                 BlockGroupChoice.InputData), (LayerInputTypeChoice.Image,))
 
-    def __init__(self, name, binds, bind_count, data_type):
+    def __init__(self, name, binds, data_type):
         self._name = name
-        self._binds = binds
-        self._bind_count = bind_count
-        self._data_type = data_type
+        self._binds = self._get_binds(binds)
+        self._required_binds = tuple([bind for bind in binds if not isinstance(bind, tuple)])
+        self._bind_count = len(binds) if binds else 1
+        self._data_type = ", ".join([type_name.value for type_name in data_type])
 
     @property
     def name(self):
@@ -164,12 +165,26 @@ class BlocksBindChoice(Enum):
         return self._binds
 
     @property
+    def required_binds(self):
+        return self._required_binds
+
+    @property
     def bind_count(self):
         return self._bind_count
 
     @property
     def data_type(self):
         return self._data_type
+
+    @staticmethod
+    def _get_binds(binds):
+        out = []
+        for bind in binds:
+            if isinstance(bind, tuple):
+                out.extend(bind)
+            else:
+                out.append(bind)
+        return tuple(out)
 
     @staticmethod
     def checked_block(input_block):
@@ -179,17 +194,18 @@ class BlocksBindChoice(Enum):
 
 
 class FunctionParamsChoice(Enum):
-    ChangeType = (BlockFunctionTypeChoice.ChangeType, ("change_type", ))
-    ChangeSize = (BlockFunctionTypeChoice.ChangeSize, ("shape", ))
+    ChangeType = (BlockFunctionTypeChoice.ChangeType, ("change_type",))
+    ChangeSize = (BlockFunctionTypeChoice.ChangeSize, ("shape",))
     MinMaxScale = (BlockFunctionTypeChoice.MinMaxScale, ("min_scale", "max_scale"))
     CropImage = (BlockFunctionTypeChoice.CropImage, tuple())
-    MaskedImage = (BlockFunctionTypeChoice.MaskedImage, ("class_id", ))
-    PlotMaskSegmentation = (BlockFunctionTypeChoice.PlotMaskSegmentation, ("classes_color", ))
+    MaskedImage = (BlockFunctionTypeChoice.MaskedImage, ("class_id",))
+    PlotMaskSegmentation = (BlockFunctionTypeChoice.PlotMaskSegmentation, ("classes_colors",))
     PutTag = (BlockFunctionTypeChoice.PutTag, ("open_tag", "close_tag", "alpha"))
     PostprocessBoxes = (BlockFunctionTypeChoice.PostprocessBoxes, (
         "input_size", "score_threshold", "iou_threshold", "method", "sigma"
     ))
-    PlotBBoxes = (BlockFunctionTypeChoice.PlotBBoxes, ("classes", ))
+    PlotBBoxes = (BlockFunctionTypeChoice.PlotBBoxes, ("classes",))
+    Sort = (BlockServiceTypeChoice.Sort, ("max_age", "min_hits"))
 
     def __init__(self, name, parameters):
         self._name = name
@@ -208,4 +224,3 @@ class FunctionParamsChoice(Enum):
         for block in FunctionParamsChoice:
             if block.name == input_block:
                 return block.parameters
-

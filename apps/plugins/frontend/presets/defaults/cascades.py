@@ -5,8 +5,6 @@ from terra_ai.data.cascades.blocks.extra import (
     ChangeTypeAvailableChoice,
     PostprocessBoxesMethodAvailableChoice,
     BlockServiceDeepSortMetricChoice,
-    BlockCustomGroupChoice,
-    BlockCustomTypeChoice,
 )
 
 from ...choices import (
@@ -213,9 +211,9 @@ ServiceTypesFields = {
                     lambda item: {"value": item.name, "label": item.value},
                     list(BlockServiceDeepSortMetricChoice),
                 )
-            )
+            ),
         },
-    ]
+    ],
 }
 
 
@@ -279,19 +277,22 @@ CascadesBlocksTypes = {
                 "manual": {
                     "Video": """
                         <p>
-                        <b>Видео</b> - тип данных, который будет <i>использоваться для обработки</i> последующими блоками и каскадом в целом. 
+                        <b>Видео</b> - тип данных, который будет использоваться для обработки последующими блоками и каскадом в целом.
+                        Включенный переключатель “по кадрам” разделяет видео на кадры, для дальнейшего использования с моделями обученными 
+                        на изображениях (Object Detection,  Cегментации и т.п.)
                         Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе: 
                         None
                         Возможные связи с другими блоками на выходе:
                         </p>
                         <ol> 
-                        <li>блок Model модель object detection или сегментации</li>  
+                        <li>блок Model модель object detection или сегментации</li>
+                        <i>блок Service модель object detection или сегментации</i>
                         <li>блок Function Наложение bbox на изображение</li>
                         <li>блок Function Постобработка yolo</li>
                         </ol>
-                        <p>Возвращает на выходе: Фреймы из видео</p>
+                        <p><b>Возвращает на выходе:</b> Фреймы из видео</p>
                     """
-                }
+                },
             },
         ]
     },
@@ -338,7 +339,7 @@ CascadesBlocksTypes = {
                         Возможные <a href="https://google.com" target="_blank">связи</a> с другими блоками на выходе: 
                         None
                         </p>
-                        <p>Возвращает на выходе: Сохраняет переданные фреймы исходного видео в видеофайл с выставленными параметрами</p>
+                        <p><b>Возвращает на выходе:</b> Сохраняет переданные фреймы исходного видео в видеофайл с выставленными параметрами</p>
                     """,
                     "Image": """
                         <p>
@@ -354,7 +355,7 @@ CascadesBlocksTypes = {
                         Возможные <a href="https://google.com" target="_blank">связи</a> с другими блоками на выходе: 
                         None
                         </p>
-                        <p>Возвращает на выходе: Сохраняет переданные обработанные изображения</p>
+                        <p><b>Возвращает на выходе:</b> Сохраняет переданные обработанные изображения</p>
                     """,
                     "Text": """
                         <p>
@@ -369,7 +370,7 @@ CascadesBlocksTypes = {
                         Возможные <a href="https://google.com" target="_blank">связи</a> с другими блоками на выходе: 
                         None
                         </p>
-                        <p>Возвращает на выходе: Сохраняет обработанный текст</p>
+                        <p><b>Возвращает на выходе:</b> Сохраняет обработанный текст</p>
                     """,
                     "Audio": """
                         <p>
@@ -377,15 +378,15 @@ CascadesBlocksTypes = {
                         Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
                         </p>
                         <ol>
-                        <li>блок Service  text_to_speech</li>
+                        <li>блок Service text_to_speech</li>
                         </ol>
                         <p>
                         Возможные <a href="https://google.com" target="_blank">связи</a> с другими блоками на выходе: 
                         None
                         </p>
-                        <p>Возвращает на выходе: Сохраняет переданное аудио</p>
+                        <p><b>Возвращает на выходе:</b> Сохраняет переданное аудио</p>
                     """,
-                }
+                },
             },
         ]
     },
@@ -422,31 +423,63 @@ CascadesBlocksTypes = {
                 ),
                 "fields": {
                     BlockFunctionGroupChoice.Image: get_type_field(
-                        BlockFunctionGroupChoice.Image, FunctionGroupTypeRel, FunctionTypesFields
+                        BlockFunctionGroupChoice.Image,
+                        FunctionGroupTypeRel,
+                        FunctionTypesFields,
                     ),
                     BlockFunctionGroupChoice.Text: get_type_field(
-                        BlockFunctionGroupChoice.Text, FunctionGroupTypeRel, FunctionTypesFields
+                        BlockFunctionGroupChoice.Text,
+                        FunctionGroupTypeRel,
+                        FunctionTypesFields,
                     ),
                     BlockFunctionGroupChoice.Audio: get_type_field(
-                        BlockFunctionGroupChoice.Audio, FunctionGroupTypeRel, FunctionTypesFields
+                        BlockFunctionGroupChoice.Audio,
+                        FunctionGroupTypeRel,
+                        FunctionTypesFields,
                     ),
                     BlockFunctionGroupChoice.Video: get_type_field(
-                        BlockFunctionGroupChoice.Video, FunctionGroupTypeRel, FunctionTypesFields
+                        BlockFunctionGroupChoice.Video,
+                        FunctionGroupTypeRel,
+                        FunctionTypesFields,
                     ),
                     BlockFunctionGroupChoice.Array: get_type_field(
-                        BlockFunctionGroupChoice.Array, FunctionGroupTypeRel, FunctionTypesFields
+                        BlockFunctionGroupChoice.Array,
+                        FunctionGroupTypeRel,
+                        FunctionTypesFields,
                     ),
                     BlockFunctionGroupChoice.ObjectDetection: get_type_field(
-                        BlockFunctionGroupChoice.ObjectDetection, FunctionGroupTypeRel, FunctionTypesFields
+                        BlockFunctionGroupChoice.ObjectDetection,
+                        FunctionGroupTypeRel,
+                        FunctionTypesFields,
                     ),
                     BlockFunctionGroupChoice.Segmentation: get_type_field(
-                        BlockFunctionGroupChoice.Segmentation, FunctionGroupTypeRel, FunctionTypesFields
+                        BlockFunctionGroupChoice.Segmentation,
+                        FunctionGroupTypeRel,
+                        FunctionTypesFields,
                     ),
                     BlockFunctionGroupChoice.TextSegmentation: get_type_field(
-                        BlockFunctionGroupChoice.TextSegmentation, FunctionGroupTypeRel, FunctionTypesFields
+                        BlockFunctionGroupChoice.TextSegmentation,
+                        FunctionGroupTypeRel,
+                        FunctionTypesFields,
                     ),
                 },
                 "manual": {
+                    "ChangeType": """
+                        <p>
+                        <b>Изменение типа</b> данных массива текстовых данных по указанным параметрам. 
+                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
+                        </p>
+                        <ol>
+                        <i>любой блок (кроме Input с параметром Текст или Таблица)</li>
+                        </ol>
+                        <p>Возможные <a href="https://google.com" target="_blank">связи</a> с другими блоками на выходе:</p> 
+                        <ol>
+                        <li>блок Output</li>
+                        <li>блок Model или Service</li>
+                        <li>блок Function</li>
+                        </ol>
+                        <p><b>Возвращает на выходе:</b> массивы данных указанного типа</p>
+                    """,
                     "ChangeSize": """
                         <p>
                         <b>Изменение</b> размера изображения по указанным параметрам. 
@@ -461,7 +494,23 @@ CascadesBlocksTypes = {
                         <li>блок Model или Service</li>
                         <li>блок Function</li>
                         </ol>
-                        <p>Возвращает на выходе: маскированное изображение</p>
+                        <p><b>Возвращает на выходе:</b> маскированное изображение</p>
+                    """,
+                    "MinMaxScale": """
+                        <p>
+                        <b>Нормализация массива данных</b> по указанным параметрам. 
+                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
+                        </p>
+                        <ol>
+                        <li>любой блок (кроме Input с параметром Текст или Таблица)</li>
+                        </ol>
+                        <p>Возможные <a href="https://google.com" target="_blank">связи</a> с другими блоками на выходе:</p>
+                        <ol>
+                        <li>блок Output</li>
+                        <li>блок Model или Service</li>
+                        <li>блок Function</li>
+                        </ol>
+                        <p><b>Возвращает на выходе:</b> нормализованные массивы данных</p>
                     """,
                     "MaskedImage": """
                         <p>
@@ -477,7 +526,7 @@ CascadesBlocksTypes = {
                         <li>блок Output метод Видео или Изображение</li>
                         <li>блок Function Изменение размера данных</li>
                         </ol>
-                        <p>Возвращает на выходе: маскированное изображение</p>
+                        <p><b>Возвращает на выходе:</b> маскированное изображение</p>
                     """,
                     "PlotMaskSegmentation": """
                         <p>
@@ -493,7 +542,7 @@ CascadesBlocksTypes = {
                         <li>блок Output метод Видео или Изображение</li>
                         <li>блок Function Изменение размера данных</li>
                         </ol>
-                        <p>Возвращает на выходе: маскированное изображение</p>
+                        <p><b>Возвращает на выходе:</b> маскированное изображение</p>
                     """,
                     "PutTag": """
                         <p>
@@ -507,7 +556,7 @@ CascadesBlocksTypes = {
                         <ol>
                         <li>блок Output метод Текст</li>
                         </ol>
-                        <p>Возвращает на выходе: размеченный тегами текст</p>
+                        <p><b>Возвращает на выходе:</b> размеченный тегами текст</p>
                     """,
                     "PostprocessBoxes": """
                         <p>
@@ -523,7 +572,7 @@ CascadesBlocksTypes = {
                         <li>блок Custom Трекер (Sort, DeepSort)</li>
                         <li>блок Function Наложение bbox на изображение</li>
                         </ol>
-                        <p>Возвращает на выходе: лучшие bbox по выставленным параметрам</p>
+                        <p><b>Возвращает на выходе:</b> лучшие bbox по выставленным параметрам</p>
                     """,
                     "PlotBBoxes": """
                         <p>
@@ -538,15 +587,13 @@ CascadesBlocksTypes = {
                         <ol>
                         <li>блок Output</li>
                         </ol>
-                        <p>Возвращает на выходе: исходное изображение (фрейм) с наложенными bbox</p>
+                        <p><b>Возвращает на выходе:</b> исходное изображение (фрейм) с наложенными bbox</p>
                     """,
                 },
             },
         ]
     },
-    BlockGroupChoice.Custom: {
-        "main": []
-    },
+    BlockGroupChoice.Custom: {"main": []},
     BlockGroupChoice.Service: {
         "main": [
             {
@@ -563,7 +610,9 @@ CascadesBlocksTypes = {
                 ),
                 "fields": {
                     BlockServiceGroupChoice.Tracking: get_type_field(
-                        BlockServiceGroupChoice.Tracking, ServiceGroupTypeRel, ServiceTypesFields
+                        BlockServiceGroupChoice.Tracking,
+                        ServiceGroupTypeRel,
+                        ServiceTypesFields,
                     ),
                 },
                 "manual": {
@@ -579,7 +628,7 @@ CascadesBlocksTypes = {
                         <ol>
                         <li>блок Function Наложение bbox на изображение</li>
                         </ol>
-                        <p>Возвращает на выходе: Возвращает аналогичный массив bbox, где последний столбец - это идентификатор объекта.</p>
+                        <p><b>Возвращает на выходе:</b> Возвращает аналогичный массив bbox, где последний столбец - это идентификатор объекта.</p>
                     """,
                     "DeepSort": """
                         <p>
@@ -588,15 +637,16 @@ CascadesBlocksTypes = {
                         </p>
                         <ol>
                         <li>блок Function Постобработка yolo</li>
+                        <li>блок Input исходных изображений</li>
                         </ol>
                         <p>Возможные <a href="https://google.com" target="_blank">связи</a> с другими блоками на выходе:</p>
                         <ol> 
                         <li>блок Function Наложение bbox на изображение</li>
                         </ol>
-                        <p>Возвращает на выходе: Возвращает аналогичный массив bbox, где последний столбец - это идентификатор объекта.</p>
-                    """
-                }
+                        <p><b>Возвращает на выходе:</b> Возвращает аналогичный массив bbox, где последний столбец - это идентификатор объекта.</p>
+                    """,
+                },
             },
         ]
-    }
+    },
 }

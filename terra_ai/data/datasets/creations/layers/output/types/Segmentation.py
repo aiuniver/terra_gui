@@ -1,5 +1,5 @@
-from typing import List
-from typing import Optional
+from typing import List, Optional
+from pydantic import validator
 from pydantic.types import PositiveInt
 from pydantic.color import Color
 
@@ -13,3 +13,9 @@ class ParametersData(SourcesPathsData, ColumnProcessingData):
     width: Optional[PositiveInt]
     height: Optional[PositiveInt]
     put: Optional[PositiveInt]
+
+    @validator("width", "height", "put", pre=True)
+    def _validate_empty_number(cls, value: PositiveInt) -> PositiveInt:
+        if not value:
+            value = None
+        return value

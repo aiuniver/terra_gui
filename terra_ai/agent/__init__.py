@@ -5,7 +5,7 @@ import pynvml
 import tensorflow
 
 from pathlib import Path
-from typing import Any
+from typing import Any, List
 
 from . import exceptions as agent_exceptions
 from . import utils as agent_utils
@@ -379,20 +379,27 @@ class Exchange:
         """
         return CascadeValidator().get_validate(cascade_data=cascade, training_path=path)
 
-    def _call_cascade_start(self, path: Path, cascade: CascadeDetailsData):
+    def _call_cascade_start(
+        self, sources: List[str], trainings_path: Path, cascade: CascadeDetailsData
+    ):
         """
         Запуск каскада
         """
-        return CascadeRunner().start_cascade(cascade_data=cascade, path=path)
+        return CascadeRunner().start_cascade(
+            sources=sources, cascade_data=cascade, path=trainings_path
+        )
 
     def _call_deploy_get(
-        self, path_model: Path, path_deploy: Path, page: dict
+        self, dataset: DatasetData, path_model: Path, path_deploy: Path, page: dict
     ) -> DeployData:
         """
         получение данных для отображения пресетов на странице деплоя
         """
         outdata = DeployCreator().get_deploy(
-            training_path=path_model, deploy_path=path_deploy, page=page
+            dataset=dataset,
+            training_path=path_model,
+            deploy_path=path_deploy,
+            page=page,
         )
 
         return outdata

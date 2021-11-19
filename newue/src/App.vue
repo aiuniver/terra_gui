@@ -16,11 +16,16 @@
 .app {
   height: 100%;
   width: 100%;
+  display: flex;
+  flex-direction: column;
   &__header {
+    flex: 0 0 51px;
   }
   &__main {
+    flex: 1 1 auto;
   }
   &__footer {
+    flex: 0 0 58px;
   }
 }
 </style>
@@ -35,8 +40,7 @@ export default {
     Footer,
   },
   async created() {
-    await this.$store.dispatch('themes/setTheme');
-    await this.$store.dispatch('projects/get');
+    await this.$store.dispatch('init');
   },
 };
 </script>

@@ -63,6 +63,8 @@ class LoadProgressAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         progress = agent_exchange("project_load_progress")
         if progress.finished:
+            progress.percent = 0
+            progress.message = ""
             request.project.load()
         if progress.success:
             return BaseResponseSuccess(data=progress.native())

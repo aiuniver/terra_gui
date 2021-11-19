@@ -29,6 +29,8 @@ $quanityPxMult: 4px;
   --color-bg-dropdown-item-active: #{$color-dark-bg-dropdown-iterm-active};
   --color-light-blue: #{$color-light-blue};
   --color-gray-blue: #{$color-gray-blue};
+  --color-dark-gray: #{$color-dark-gray};
+  --color-light-gray: #{$color-light-gray};
 
   @media screen {
     &[data-theme="light"] {
@@ -76,7 +78,7 @@ li {
 
 .page {
   height: 100%;
-  margin-top: 52px;
+  // margin-top: 52px;
 }
 
 .ci-icon {

@@ -140,12 +140,12 @@ const router = new Router({
         access: true,
         text: `Для перехода на страницу деплоя необходимо загрузить датасет.`,
       },
-      component: () => import('@/views/datasets/index'),
+      component: () => import('@/views/project/index'),
       children: [
         {
           path: 'training',
           name: 'Training',
-          component: () => import('@/views/datasets/Choice'),
+          component: () => import('@/views/project/Projects'),
           meta: {
             title: 'Проекты',
             access: true,
