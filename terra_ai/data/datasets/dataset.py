@@ -292,6 +292,7 @@ class DatasetData(AliasMixinData):
     outputs: Dict[PositiveInt, DatasetOutputsData] = {}
     service: Optional[Dict[PositiveInt, DatasetOutputsData]] = {}
     columns: Optional[Dict[PositiveInt, Dict[str, Any]]] = {}
+    training_available: bool = True
 
     _path: Path = PrivateAttr()
 
