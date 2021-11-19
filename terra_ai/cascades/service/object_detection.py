@@ -7,6 +7,7 @@ def yolo_v5(version: str = "small"):
 
     def fun(frame: np.ndarray):
         out = model(frame)
-        return out.imgs[0]
+        out = out.render()[0]
+        return out
 
     return fun
