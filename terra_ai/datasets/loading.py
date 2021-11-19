@@ -193,8 +193,10 @@ def _choice_from_terra(
             with open(config_path) as config_ref:
                 config_data = json.load(config_ref)
                 config_data["group"] = DatasetGroupChoice.terra.name
+                config_ref.close()
             with open(config_path, "w") as config_ref:
                 json.dump(config_data, config_ref)
+                config_ref.close()
             progress.pool(
                 progress_name,
                 percent=100,
