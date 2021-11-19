@@ -379,11 +379,11 @@ class Exchange:
         """
         return CascadeValidator().get_validate(cascade_data=cascade, training_path=path)
 
-    def _call_cascade_start(self, path: Path, cascade: CascadeDetailsData):
+    def _call_cascade_start(self, trainings_path: Path, cascade: CascadeDetailsData):
         """
         Запуск каскада
         """
-        return CascadeRunner().start_cascade(cascade_data=cascade, path=path)
+        return CascadeRunner().start_cascade(cascade_data=cascade, path=trainings_path)
 
     def _call_deploy_get(
         self, dataset: DatasetData, path_model: Path, path_deploy: Path, page: dict
