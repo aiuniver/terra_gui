@@ -90,15 +90,20 @@ class CascadeRunner:
                         },
                 }
             elif block.group == BlockGroupChoice.OutputData:
-                if block.parameters.main.type == BlockFunctionGroupChoice.ObjectDetection:
+                if model_task in ["ObjectDetection", "Segmentation"]:
+
                     block_description = {
                         "saving": {
                             "tag": "output",
-                            "type": block.parameters.main.type.value.lower(),
-                            "params": {key: val for key, val in block.parameters.main.native().items()
-                                       if key not in ["type"]}
+                            "type": block.parameters.main.type.value.lower()
                         }
                     }
+                    if block.parameters.main.type == LayerInputTypeChoice.Video:
+                        block_description.update({
+                            "params": {
+                                key: val for key, val in block.parameters.main.native().items() if key not in ["type"]
+                            }
+                        })
                     adjacency_map.update({"saving": self._get_bind_names(cascade_data=cascade_data,
                                                                          blocks_ids=block.bind.up)})
             elif block.group == BlockGroupChoice.Model:
@@ -140,9 +145,9 @@ class CascadeRunner:
                     }
                 else:
                     parameters = {
-                            key: val for key, val in block.parameters.main.native().items()
-                            if key not in ["type", "group"]
-                        }
+                        key: val for key, val in block.parameters.main.native().items()
+                        if key not in ["type", "group"]
+                    }
                 block_description = {
                     block.name: {
                         "tag": _tag,
