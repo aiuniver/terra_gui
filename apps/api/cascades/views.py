@@ -2,15 +2,16 @@ import base64
 
 from tempfile import NamedTemporaryFile
 
+from terra_ai.agent import agent_exchange
+from terra_ai.data.cascades.extra import BlockGroupChoice
+
 from apps.api import utils
 from apps.api.cascades.serializers import (
     CascadeGetSerializer,
     UpdateSerializer,
     PreviewSerializer,
 )
-from apps.plugins.project import project_path
-from terra_ai.agent import agent_exchange
-from apps.plugins.project import data_path
+from apps.plugins.project import project_path, data_path
 
 from ..base import (
     BaseAPIView,
@@ -81,8 +82,15 @@ class ValidateAPIView(BaseAPIView):
 
 class StartAPIView(BaseAPIView):
     def post(self, request, **kwargs):
+        dataset_sources = request.project.dataset.sources
+        sources = {}
+        for block in request.project.cascade.blocks:
+            if block.group != BlockGroupChoice.InputData:
+                continue
+            sources.update({block.id: dataset_sources})
         agent_exchange(
             "cascade_start",
+            sources=sources,
             trainings_path=project_path.training,
             cascade=request.project.cascade,
         )
