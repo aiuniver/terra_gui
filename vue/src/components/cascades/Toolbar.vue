@@ -77,7 +77,7 @@ export default {
     }),
     isValidation() {
       const blocks = this.blocks.map(item => item.group);
-      console.log(this.status.update)
+      // console.log(this.status.update)
       return !(blocks.includes('InputData') && blocks.includes('OutputData'));
     },
     isStart() {

@@ -16,6 +16,9 @@ export default {
 
 <style lang="scss">
 .info {
+  font-size: 12px;
+  line-height: 140%;
+  color: #a7bed3;
   &__title {
     background-color: #0e1621;
     margin: 10px -20px;
@@ -24,25 +27,24 @@ export default {
     color: #ffffff;
   }
   &__content {
+    b {
+      color: #ffffff;
+    }
     h3 {
       font-weight: normal;
-      font-size: 12px;
       line-height: 140%;
       color: #ffffff;
     }
     p {
       font-size: 12px;
-      line-height: 140%;
-      color: #a7bed3;
+      color: inherit;
     }
     ol {
       margin: 10px 0;
       list-style-type: style;
-      list-style-position:inside;
+      list-style-position: inside;
       li {
-        font-size: 12px;
-        line-height: 140%;
-        color: #a7bed3;
+        color: inherit;
         margin-bottom: 10px;
       }
     }

@@ -112,8 +112,8 @@ export default {
     async changeType({ value }) {
       await this.$store.dispatch('cascades/typeBlock', { type: value, block: this.block });
     },
-    async change({ id, value, name, mounted }) {
-      console.log(id, value, name, mounted);
+    async change({ value, name, mounted }) {
+      // console.log(id, value, name, mounted);
       if (this.block.parameters) {
         this.block.parameters['main'][name] = value;
       } else {
@@ -123,8 +123,8 @@ export default {
     },
   },
   created() {
-    this.debounce = debounce(status => {
-      console.log(status)
+    this.debounce = debounce(() => {
+      // console.log(status)
       this.saveModel()
     }, 200);
   },

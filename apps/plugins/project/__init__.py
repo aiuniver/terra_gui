@@ -159,7 +159,7 @@ class Project(BaseMixinData):
 
     @property
     def trainings(self) -> List[Tuple[str, str]]:
-        items = [(DEFAULT_TRAINING_PATH_NAME, "Текущее обучение")]
+        items = []
         for item in os.listdir(project_path.training):
             if item == DEFAULT_TRAINING_PATH_NAME:
                 continue
@@ -319,11 +319,15 @@ class Project(BaseMixinData):
         path_model = ""
         _type = page.get("type")
         if _type == DeployTypePageChoice.model:
-            path_model = project_path.training
+            path_model = Path(project_path.training)
         elif _type == DeployTypePageChoice.cascade:
             path_model = project_path.cascades
         deploy = agent_exchange(
-            "deploy_get", path_deploy=path_deploy, path_model=path_model, page=page
+            "deploy_get",
+            dataset=self.dataset,
+            path_deploy=path_deploy,
+            path_model=path_model,
+            page=page,
         )
         if deploy:
             deploy.path_deploy = project_path.deploy

@@ -5,8 +5,6 @@ from terra_ai.data.cascades.blocks.extra import (
     ChangeTypeAvailableChoice,
     PostprocessBoxesMethodAvailableChoice,
     BlockServiceDeepSortMetricChoice,
-    BlockCustomGroupChoice,
-    BlockCustomTypeChoice,
 )
 
 from ...choices import (
@@ -213,9 +211,9 @@ ServiceTypesFields = {
                     lambda item: {"value": item.name, "label": item.value},
                     list(BlockServiceDeepSortMetricChoice),
                 )
-            )
+            ),
         },
-    ]
+    ],
 }
 
 
@@ -294,7 +292,7 @@ CascadesBlocksTypes = {
                         </ol>
                         <p><b>Возвращает на выходе:</b> Фреймы из видео</p>
                     """
-                }
+                },
             },
         ]
     },
@@ -388,7 +386,7 @@ CascadesBlocksTypes = {
                         </p>
                         <p><b>Возвращает на выходе:</b> Сохраняет переданное аудио</p>
                     """,
-                }
+                },
             },
         ]
     },
@@ -425,28 +423,44 @@ CascadesBlocksTypes = {
                 ),
                 "fields": {
                     BlockFunctionGroupChoice.Image: get_type_field(
-                        BlockFunctionGroupChoice.Image, FunctionGroupTypeRel, FunctionTypesFields
+                        BlockFunctionGroupChoice.Image,
+                        FunctionGroupTypeRel,
+                        FunctionTypesFields,
                     ),
                     BlockFunctionGroupChoice.Text: get_type_field(
-                        BlockFunctionGroupChoice.Text, FunctionGroupTypeRel, FunctionTypesFields
+                        BlockFunctionGroupChoice.Text,
+                        FunctionGroupTypeRel,
+                        FunctionTypesFields,
                     ),
                     BlockFunctionGroupChoice.Audio: get_type_field(
-                        BlockFunctionGroupChoice.Audio, FunctionGroupTypeRel, FunctionTypesFields
+                        BlockFunctionGroupChoice.Audio,
+                        FunctionGroupTypeRel,
+                        FunctionTypesFields,
                     ),
                     BlockFunctionGroupChoice.Video: get_type_field(
-                        BlockFunctionGroupChoice.Video, FunctionGroupTypeRel, FunctionTypesFields
+                        BlockFunctionGroupChoice.Video,
+                        FunctionGroupTypeRel,
+                        FunctionTypesFields,
                     ),
                     BlockFunctionGroupChoice.Array: get_type_field(
-                        BlockFunctionGroupChoice.Array, FunctionGroupTypeRel, FunctionTypesFields
+                        BlockFunctionGroupChoice.Array,
+                        FunctionGroupTypeRel,
+                        FunctionTypesFields,
                     ),
                     BlockFunctionGroupChoice.ObjectDetection: get_type_field(
-                        BlockFunctionGroupChoice.ObjectDetection, FunctionGroupTypeRel, FunctionTypesFields
+                        BlockFunctionGroupChoice.ObjectDetection,
+                        FunctionGroupTypeRel,
+                        FunctionTypesFields,
                     ),
                     BlockFunctionGroupChoice.Segmentation: get_type_field(
-                        BlockFunctionGroupChoice.Segmentation, FunctionGroupTypeRel, FunctionTypesFields
+                        BlockFunctionGroupChoice.Segmentation,
+                        FunctionGroupTypeRel,
+                        FunctionTypesFields,
                     ),
                     BlockFunctionGroupChoice.TextSegmentation: get_type_field(
-                        BlockFunctionGroupChoice.TextSegmentation, FunctionGroupTypeRel, FunctionTypesFields
+                        BlockFunctionGroupChoice.TextSegmentation,
+                        FunctionGroupTypeRel,
+                        FunctionTypesFields,
                     ),
                 },
                 "manual": {
@@ -579,9 +593,7 @@ CascadesBlocksTypes = {
             },
         ]
     },
-    BlockGroupChoice.Custom: {
-        "main": []
-    },
+    BlockGroupChoice.Custom: {"main": []},
     BlockGroupChoice.Service: {
         "main": [
             {
@@ -598,7 +610,9 @@ CascadesBlocksTypes = {
                 ),
                 "fields": {
                     BlockServiceGroupChoice.Tracking: get_type_field(
-                        BlockServiceGroupChoice.Tracking, ServiceGroupTypeRel, ServiceTypesFields
+                        BlockServiceGroupChoice.Tracking,
+                        ServiceGroupTypeRel,
+                        ServiceTypesFields,
                     ),
                 },
                 "manual": {
@@ -630,9 +644,9 @@ CascadesBlocksTypes = {
                         <li>блок Function Наложение bbox на изображение</li>
                         </ol>
                         <p><b>Возвращает на выходе:</b> Возвращает аналогичный массив bbox, где последний столбец - это идентификатор объекта.</p>
-                    """
-                }
+                    """,
+                },
             },
         ]
-    }
+    },
 }

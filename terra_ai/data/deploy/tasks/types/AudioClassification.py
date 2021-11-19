@@ -11,7 +11,7 @@ from ..extra import DataBaseList, DataBase
 
 
 class Item(BaseMixinData):
-    source: PosixPath
+    source: str
     actual: str
     data: List[Tuple[str, float]]
 
