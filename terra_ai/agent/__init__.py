@@ -1,6 +1,8 @@
 import os
 import json
 import shutil
+import tempfile
+
 import pynvml
 import tensorflow
 
@@ -429,7 +431,10 @@ class Exchange:
         Исполнение каскада
         """
         CascadeRunner().start_cascade(
-            sources=sources, cascade_data=cascade, path=training_path
+            sources=sources,
+            cascade_data=cascade,
+            training_path=training_path,
+            deply_path=tempfile.mkdtemp(),
         )
 
     def _call_deploy_get(

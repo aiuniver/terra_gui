@@ -212,22 +212,7 @@ class Project(BaseMixinData):
         zip_destination = progress_utils.pack(
             "project_save", "Сохранение проекта", project_path.base, delete=False
         )
-        print("--------------------------------")
-        print(str(zip_destination.name))
-        print(str(destination_path.absolute()))
-        try:
-            shutil.move(str(zip_destination.name), str(destination_path.absolute()))
-        except Exception as error:
-            print(1, str(error))
-            try:
-                shutil.copyfile(
-                    str(zip_destination.name), str(destination_path.absolute())
-                )
-                os.remove(zip_destination.name)
-            except Exception as error:
-                print(2, str(error))
-        print("--------------------------------")
-
+        shutil.move(zip_destination.name, str(destination_path.absolute()))
         defaults_data.update_models(self.trainings)
 
     def load(self):
