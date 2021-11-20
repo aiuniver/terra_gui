@@ -46,12 +46,10 @@ class CascadeRunner:
         main_block = json2cascade(path=os.path.join(training_path, model), cascade_config=cascade_config, mode="run")
 
         sources = sources.get(inputs_ids[0])
-        data_type = cascade_config.get("cascades").get("input").get("type")
-        print(data_type)
 
         presets_data = self._get_presets(sources=sources, type_=type_, cascade=main_block,
                                          source_path=Path(dataset_path),
-                                         predict_path=CASCADE_PATH, data_type=data_type)
+                                         predict_path=CASCADE_PATH)
         print(presets_data)
 
         out_data = dict([
@@ -77,9 +75,11 @@ class CascadeRunner:
         with open(os.path.join(training_path, model, "config.json"),
                   "r", encoding="utf-8") as training_config:
             training_details = json.load(training_config)
-        deploy_type = training_details.get("base").get("architecture").get("type")
+        deploy_type = DeployTypeChoice(training_details.get("base").get("architecture").get("type"))
+        if deploy_type in [DeployTypeChoice.YoloV3, DeployTypeChoice.YoloV4]:
+            deploy_type = DeployTypeChoice.VideoObjectDetection
 
-        return DeployTypeChoice(deploy_type), model, _inputs
+        return deploy_type, model, _inputs
 
     def _create_config(self, cascade_data: CascadeDetailsData, model_task: str,
                        dataset_data: dict, presets_path: str):
@@ -203,21 +203,21 @@ class CascadeRunner:
         return mapping
 
     def _get_presets(self, sources: List[Any], type_: DeployTypeChoice, cascade: Any,
-                     source_path: Path, data_type: str, predict_path: str):
+                     source_path: Path, predict_path: str):
 
         out_data = []
         iter_ = 0
         for source in sources[:3]:
-            if type_ in [DeployTypeChoice.YoloV3, DeployTypeChoice.YoloV4]:
-                input_path = os.path.join(source_path, source)
-                if data_type == "video_by_frame":
+            input_path = os.path.join(source_path, source)
+            if type_ in [DeployTypeChoice.YoloV3, DeployTypeChoice.YoloV4, DeployTypeChoice.VideoObjectDetection]:
+                if type_ == DeployTypeChoice.VideoObjectDetection:
                     data_type = "video"
-                if data_type == "image":
-                    predict_file_name = f"deploy_presets/result_{iter_}.webp"
-                    source_file_name = f"deploy_presets/initial_{iter_}.webp"
-                else:
                     predict_file_name = f"deploy_presets/result_{iter_}.webm"
                     source_file_name = f"deploy_presets/initial_{iter_}.webm"
+                else:
+                    data_type = "image"
+                    predict_file_name = f"deploy_presets/result_{iter_}.webp"
+                    source_file_name = f"deploy_presets/initial_{iter_}.webp"
 
                 output_path = os.path.join(predict_path, predict_file_name)
                 self._save_web_format(initial_path=input_path,
