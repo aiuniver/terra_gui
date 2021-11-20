@@ -318,25 +318,12 @@ class Project(BaseMixinData):
         self.save_config()
 
     def set_deploy(self, dataset: DatasetData, page: dict):
-        path_deploy = mkdtemp()
-        path_model = ""
-        _type = page.get("type")
-        if _type == DeployTypePageChoice.model:
-            path_model = Path(project_path.training)
-        elif _type == DeployTypePageChoice.cascade:
-            path_model = None
-        deploy = agent_exchange(
+        self.deploy = agent_exchange(
             "deploy_get",
             dataset=dataset,
             page=page,
-            path_deploy=path_deploy,
-            path_model=path_model,
+            training_path=Path(project_path.training),
         )
-        # if deploy:
-        #     deploy.path_deploy = project_path.deploy
-        # shutil.rmtree(project_path.deploy, ignore_errors=True)
-        # shutil.move(path_deploy, project_path.deploy)
-        self.deploy = deploy
 
     def clear_dataset(self):
         self._set_data(dataset_info=None)

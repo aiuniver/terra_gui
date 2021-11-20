@@ -17,15 +17,8 @@ class DeployPageData(BaseMixinData):
 class DeployData(BaseMixinData):
     page: DeployPageData
     path_deploy: DirectoryPath
-    path_model: DirectoryPath
     type: DeployTypeChoice
     data: Any = {}
-
-    def __init__(self, **data):
-        page_name = data.get("page", {}).get("name", "")
-        if page_name and data.get("path_model"):
-            data["path_model"] = str(Path(data.get("path_model"), page_name).absolute())
-        super().__init__(**data)
 
     @validator("type", pre=True)
     def _validate_type(cls, value: DeployTypeChoice, values) -> DeployTypeChoice:
@@ -44,12 +37,7 @@ class DeployData(BaseMixinData):
             value = {}
         if not value.get("data"):
             value["data"] = []
-        value.update(
-            {
-                "path_deploy": values.get("path_deploy"),
-                "path_model": values.get("path_model"),
-            }
-        )
+        value.update({"path_deploy": values.get("path_deploy")})
         return field.type_(**value)
 
     @property
@@ -59,5 +47,5 @@ class DeployData(BaseMixinData):
         return data
 
     def dict(self, **kwargs):
-        kwargs.update({"exclude": {"path_deploy", "path_model"}})
+        kwargs.update({"exclude": {"path_deploy"}})
         return super().dict(**kwargs)

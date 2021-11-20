@@ -435,23 +435,19 @@ class Exchange:
         )
 
     def _call_deploy_get(
-        self,
-        dataset: DatasetData,
-        page: dict,
-        path_deploy: Path,
-        path_model: Path = None,
+        self, dataset: DatasetData, page: dict, training_path: Path = None
     ) -> DeployData:
         """
         получение данных для отображения пресетов на странице деплоя
         """
-        outdata = DeployCreator().get_deploy(
+        shutil.rmtree(settings.DEPLOY_PATH, ignore_errors=True)
+        os.makedirs(settings.DEPLOY_PATH, exist_ok=True)
+        return DeployCreator().get_deploy(
             dataset=dataset,
-            training_path=path_model,
-            deploy_path=path_deploy,
+            training_path=training_path,
+            deploy_path=settings.DEPLOY_PATH,
             page=page,
         )
-
-        return outdata
 
     def _call_deploy_cascades_create(self, training_path: str, model_name: str):
         pass
