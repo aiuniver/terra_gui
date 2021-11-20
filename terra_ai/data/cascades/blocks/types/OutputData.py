@@ -8,8 +8,8 @@ from terra_ai.data.datasets.extra import LayerInputTypeChoice
 
 class ParametersMainData(BaseMixinData):
     type: LayerInputTypeChoice = LayerInputTypeChoice.Image
-    width: Optional[PositiveInt]
-    height: Optional[PositiveInt]
+    width: Optional[PositiveInt] = 640
+    height: Optional[PositiveInt] = 480
 
     def __init__(self, **data):
         _type = data.get("type")

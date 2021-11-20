@@ -295,7 +295,7 @@ CascadesBlocksTypes = {
                         {
                             "type": "checkbox",
                             "name": "switch_on_frame",
-                            "label": "Switch on frame",
+                            "label": "Разделить по кадрам",
                             "parse": "parameters[main][switch_on_frame]",
                         },
                     ]
@@ -303,7 +303,7 @@ CascadesBlocksTypes = {
                 "manual": {
                     "Video": """
                         <p>Видео - тип данных, который будет использоваться для обработки последующими блоками и каскадом в целом.
-                        Включенный переключатель “по кадрам” разделяет видео на кадры, для дальнейшего использования с моделями обученными 
+                        Включенный переключатель “Разделить по кадрам” разделяет видео на кадры, для дальнейшего использования с моделями обученными 
                         на изображениях (Object Detection,  Cегментации и т.п.)</p>
                         <p>Возможные связи с другими блоками на входе:<br />
                             <code>None</code>
@@ -358,7 +358,7 @@ CascadesBlocksTypes = {
                         <p>Сохранение результата в видео файл</p>
                         <p>Необходимые связи с другими блоками на входе:</p>
                         <ol>
-                            <li>блок Function Наложение bbox на изображение</li>
+                            <li>блок Function Наложение bbox на изображение или блок Service OD YoloV5 (активирован переключатель “Выводить изображение”)</li>
                         </ol>
                         <p>Возможные связи с другими блоками на выходе:<br />
                             <code>None</code>
@@ -371,8 +371,8 @@ CascadesBlocksTypes = {
                         <p>Сохранение результата в файл изображения</p>
                         <p>Необходимые связи с другими блоками на входе:</p>
                         <ol>
-                            <li>блок Function Наложение bbox на изображение;</li>
-                            <li>блок Function Наложение маски по классу на изображение;</li>
+                            <li>блок Function Наложение bbox на изображение или</li>
+                            <li>блок Function Наложение маски по классу на изображение или</li>
                             <li>блок Function Наложение маски всех классов по цветам.</li>
                         </ol>
                         <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjgiIGhlaWdodD0iMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTIxLjQxOCA4LjA3Yy44MTUgMCAxLjQ4Mi0uNjY2IDEuNDgyLTEuNDgyIDAtLjgxNS0uNjY3LTEuNDgyLTEuNDgyLTEuNDgySDYuNTk0Yy0uODE1IDAtMS40ODIuNjY3LTEuNDgyIDEuNDgyIDAgLjgxNi42NjcgMS40ODMgMS40ODIgMS40ODNoMTQuODIzem0tOC44OTUgMTMuMzQyYzAgLjgxNS42NjggMS40ODIgMS40ODMgMS40ODIuODE1IDAgMS40ODItLjY2NyAxLjQ4Mi0xLjQ4MnYtOC42NDdjMC0uODE2LS42NjctMS40ODMtMS40ODItMS40ODMtLjgxNiAwLTEuNDgzLjY2Ny0xLjQ4MyAxLjQ4M3Y4LjY0N3oiIGZpbGw9IiM2NUI5RjQiLz48cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTI3LjE3Ny44MjRILjgyM3YyNi4zNTJoMjYuMzUyVi44MjV6TTAgMHYyOGgyOFYwSDB6IiBmaWxsPSIjNjVCOUY0Ii8+PC9zdmc+" width="100%" height="100px" alt="" />
@@ -387,7 +387,7 @@ CascadesBlocksTypes = {
                         <p>Сохранение результата в текстовый файл</p>
                         <p>Необходимые связи с другими блоками на входе:</p>
                         <ol>
-                            <li>блок Function Расстановка тэгов по вероятностям из модели</li>
+                            <li>блок Function Расстановка тэгов по вероятностям из модели или</li>
                             <li>блок Service  speech_to_text</li>
                         </ol>
                         <p>Возможные связи с другими блоками на выходе:<br />
@@ -591,7 +591,7 @@ CascadesBlocksTypes = {
                         </ol>
                         <p>Возможные связи с другими блоками на выходе:</p>
                         <ol> 
-                            <li>блок Custom Трекер (Sort, BiTBasedTracker)</li>
+                            <li>блок Service Tracking (Sort, BiTBasedTracker)</li>
                             <li>блок Function Наложение bbox на изображение</li>
                         </ol>
                         <p>Возвращает на выходе:<br />
@@ -602,7 +602,7 @@ CascadesBlocksTypes = {
                         <p>Наложение bbox</b> на изображение YOLOV3 и V4</p>
                         <p>Необходимые связи с другими блоками на входе:</p>
                         <ol>
-                            <li>блок Function Постобработка yolo или блок Custom Трекер (Sort, BiTBasedTracker)</li>  
+                            <li>блок Function Постобработка yolo или блок Service Tracking (Sort, BiTBasedTracker)</li>  
                             <li>блок Input исходных изображений или видео</li>
                         </ol>
                         <p>Возможные связи с другими блоками на выходе:</p>
@@ -649,7 +649,7 @@ CascadesBlocksTypes = {
                         <p>Алгоритм трекера Sort</b> для моделей object_detection</p>
                         <p>Необходимые связи с другими блоками на входе:</p>
                         <ol>
-                            <li>блок Function Постобработка yolo</li>
+                            <li>блок Function Постобработка yolo или блок Service YoloV5 (выключен переключатель “Выводить изображение”)</li>
                         </ol>  
                         <p>Возможные связи с другими блоками на выходе:</p>
                         <ol>
@@ -663,7 +663,7 @@ CascadesBlocksTypes = {
                         <p>Алгоритм трекера BiTBasedTracker</b> для моделей object_detection</p>
                         <p>Необходимые связи с другими блоками на входе:</p>
                         <ol>
-                            <li>блок Function Постобработка yolo</li>
+                            <li>блок Function Постобработка yolo или блок Service YoloV5 (выключен переключатель “Выводить изображение”)</li>
                             <li>блок Input исходных изображений</li>
                         </ol>
                         <p>Возможные связи с другими блоками на выходе:</p>
@@ -685,9 +685,9 @@ CascadesBlocksTypes = {
                         </ol>
                         <p>Возможные связи с другими блоками на выходе:</p>
                         <ol>
-                        <li>блок Service Наложение bbox на изображение (выключен переключатель “Выводить изображение”)</li>
-                        <li>блок Output сохранение изображений или видео</li>
-                        <li>блок Service Tracking (активирован переключатель “Выводить изображение”)</li>
+                        <li>блок Function ObjectDetection Фильтрация классов Service YoloV5 (выключен переключатель “Выводить изображение”)</li>
+                        <li>блок Output сохранение изображений или видео  (активирован переключатель “Выводить изображение”)</li>
+                        <li>блок Service Tracking (Sort, DeepSort)(выключен переключатель “Выводить изображение”)</li>
                         </ol>
                         <p>Возвращает на выходе:<br />
                             <code>если активирован переключатель “Выводить изображение” то исходное изображение (фрейм) 
