@@ -9,116 +9,121 @@
           <at-collapse :value="collapse" @on-change="onchange" :key="key">
             <at-collapse-item
               v-for="({ visible, name, fields }, key) of params"
-              v-show="visible"
+              v-show="visible && key !== 'server'"
               :key="key"
               class="mt-3"
               :name="key"
               :title="name || ''"
             >
-            
               <div class="params__fields">
                 <template v-for="(data, i) of fields">
                   <t-auto-field-cascade
                     v-bind="data"
                     :key="key + i"
-                    big
+                    :big="key === 'type'"
                     :parameters="parameters"
                     :inline="false"
                     @change="parse"
                   />
-                  <t-button v-if="key === 'type' " @click="handleDownload" :key="'key' + i" :disabled="isLoad">Загрузить</t-button>
+                  <t-button @click="handleDownload" :key="'key' + i" :disabled="isLoad">Загрузить</t-button>
                 </template>
               </div>
             </at-collapse-item>
           </at-collapse>
         </div>
+        <div class="params__items">
+          <div class="params-container pa-5">
+            <div class="t-input">
+              <label class="label" for="deploy[deploy]">Название папки</label>
+              <div class="t-input__label">
+                https://srv1.demo.neural-university.ru/{{ userData.login }}/{{ projectData.name_alias }}/{{ deploy }}
+              </div>
+              <input
+                v-model="deploy"
+                class="t-input__input"
+                type="text"
+                id="deploy[deploy]"
+                name="deploy[deploy]"
+                @blur="$emit('blur', $event.target.value)"
+              />
+            </div>
+            <Checkbox
+              :label="'Перезаписать с таким же названием папки'"
+              :type="'checkbox'"
+              parse="deploy[overwrite]"
+              name="deploy[overwrite]"
+              class="pd__top"
+              @change="UseReplace"
+            />
+            <Checkbox
+              :label="'Использовать пароль для просмотра страницы'"
+              parse="deploy[use_password]"
+              name="deploy[use_password]"
+              :type="'checkbox'"
+              @change="UseSec"
+            />
+            <div class="password" v-if="use_sec">
+              <div class="t-input">
+                <input :type="passwordShow ? 'text' : 'password'" placeholder="Введите пароль" v-model="sec" />
+                <div class="password__icon">
+                  <i
+                    :class="['t-icon', passwordShow ? 'icon-deploy-password-open' : 'icon-deploy-password-close']"
+                    :title="'show password'"
+                    @click="passwordShow = !passwordShow"
+                  ></i>
+                </div>
+              </div>
+              <div class="t-input">
+                <input
+                  :type="passwordShow ? 'text' : 'password'"
+                  placeholder="Подтверждение пароля"
+                  v-model="sec_accept"
+                />
+                <div class="password__icon">
+                  <i :class="['t-icon', checkCorrect]" :title="'is correct'"></i>
+                </div>
+              </div>
+              <div class="password__rule">
+                <p>Пароль должен содержать не менее 6 символов</p>
+              </div>
+            </div>
+            <button :disabled="send_disabled" @click="SendData" v-if="!DataSent">Загрузить</button>
+            <div class="loader" v-if="DataLoading">
+              <div class="loader__title">Дождитесь окончания загрузки</div>
+              <div class="loader__progress">
+                <load-spiner></load-spiner>
+              </div>
+            </div>
+            <div class="req-ans" v-if="DataSent">
+              <div class="answer__success">Загрузка завершена!</div>
+              <div class="answer__label">Ссылка на сформированную загрузку</div>
+              <div class="answer__url">
+                <i :class="['t-icon', 'icon-deploy-copy']" :title="'copy'" @click="Copy(moduleList.url)"></i>
+                <a :href="moduleList.url" target="_blank">
+                  {{ moduleList.url }}sdfasadfasdfasgdfhasiofhusduifhasiodcfuisfhoadsifisdhfiosdup
+                </a>
+              </div>
+            </div>
+            <ModuleList v-if="DataSent" :moduleList="moduleList.api_text" />
+          </div>
+        </div>
       </div>
     </scrollbar>
   </div>
-
-  <!-- <div class="params-container__name">Загрузка в демо-панель</div>
-      <div class="params-container pa-5">
-        <div class="t-input">
-          <label class="label" for="deploy[deploy]">Название папки</label>
-          <div class="t-input__label">
-            https://srv1.demo.neural-university.ru/{{ userData.login }}/{{ projectData.name_alias }}/{{ deploy }}
-          </div>
-          <input
-            v-model="deploy"
-            class="t-input__input"
-            type="text"
-            id="deploy[deploy]"
-            name="deploy[deploy]"
-            @blur="$emit('blur', $event.target.value)"
-          />
-        </div>
-        <Checkbox
-          :label="'Перезаписать с таким же названием папки'"
-          :type="'checkbox'"
-          parse="deploy[overwrite]"
-          name="deploy[overwrite]"
-          class="pd__top"
-          @change="UseReplace"
-        />
-        <Checkbox
-          :label="'Использовать пароль для просмотра страницы'"
-          parse="deploy[use_password]"
-          name="deploy[use_password]"
-          :type="'checkbox'"
-          @change="UseSec"
-        />
-        <div class="password" v-if="use_sec">
-          <div class="t-input">
-            <input :type="passwordShow ? 'text' : 'password'" placeholder="Введите пароль" v-model="sec" />
-            <div class="password__icon">
-              <i
-                :class="['t-icon', passwordShow ? 'icon-deploy-password-open' : 'icon-deploy-password-close']"
-                :title="'show password'"
-                @click="passwordShow = !passwordShow"
-              ></i>
-            </div>
-          </div>
-          <div class="t-input">
-            <input :type="passwordShow ? 'text' : 'password'" placeholder="Подтверждение пароля" v-model="sec_accept" />
-            <div class="password__icon">
-              <i :class="['t-icon', checkCorrect]" :title="'is correct'"></i>
-            </div>
-          </div>
-          <div class="password__rule">
-            <p>Пароль должен содержать не менее 6 символов</p>
-          </div>
-        </div>
-        <button :disabled="send_disabled" @click="SendData" v-if="!DataSent">Загрузить</button>
-        <div class="loader" v-if="DataLoading">
-          <div class="loader__title">Дождитесь окончания загрузки</div>
-          <div class="loader__progress">
-            <load-spiner></load-spiner>
-          </div>
-        </div>
-        <div class="req-ans" v-if="DataSent">
-          <div class="answer__success">Загрузка завершена!</div>
-          <div class="answer__label">Ссылка на сформированную загрузку</div>
-          <div class="answer__url">
-            <i :class="['t-icon', 'icon-deploy-copy']" :title="'copy'" @click="Copy(moduleList.url)"></i>
-            <a :href="moduleList.url" target="_blank">{{ moduleList.url }}sdfasadfasdfasgdfhasiofhusduifhasiodcfuisfhoadsifisdhfiosdup</a>
-          </div>
-        </div>
-        <ModuleList v-if="DataSent" :moduleList="moduleList.api_text" />
-      </div> -->
 </template>
 
 <script>
 import { mapGetters } from 'vuex';
-// import Checkbox from '@/components/forms/Checkbox';
-// import ModuleList from './ModuleList';
-// import LoadSpiner from '../../forms/LoadSpiner';
+import Checkbox from '@/components/forms/Checkbox';
+import ModuleList from './ModuleList';
+import LoadSpiner from '../../forms/LoadSpiner';
 // import ser from '@/assets/js/myserialize';
 export default {
   name: 'Settings',
   components: {
-    // Checkbox,
-    // ModuleList,
-    // LoadSpiner,
+    Checkbox,
+    ModuleList,
+    LoadSpiner,
   },
   data: () => ({
     collapse: ['type', 'server'],
@@ -183,6 +188,7 @@ export default {
       const name = this.parameters?.name || '';
       if (type && name) {
         await this.$store.dispatch('deploy/DownloadSettings', { type, name });
+        
       }
     },
     parse({ id, value, name, root }) {

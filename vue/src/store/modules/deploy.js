@@ -63,6 +63,7 @@ export default {
         commit("deploy/SET_CARDS", data?.data?.data || [], { root: true });
         commit("SET_DEPLOY_TYPE", data?.type || []);
       }
+      await dispatch('projects/get', {}, { root: true });
       return res
     },
     async ReloadCard ({ commit, dispatch }, values) {
