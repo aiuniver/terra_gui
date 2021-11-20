@@ -20,6 +20,9 @@
               <t-auto-field-cascade v-bind="data" :key="data.name + i" :id="data.name" :parameters="parameters" :inline="false" @change="change" />
             </template>
           </at-collapse-item>
+          <at-collapse-item v-show="!!info" class="mb-3" title="Информация о блоке">
+            <BlockInfo :info="info" />
+          </at-collapse-item>
           <!-- <at-collapse-item v-show="extra.items.length" class="mb-3" title="Дополнительные параметры">
             <Forms :data="extra" :id="block.id" @change="change" />
           </at-collapse-item> -->
@@ -35,7 +38,7 @@ import Input from '@/components/forms/Input.vue';
 // import Forms from '@/components/cascades/comp/Forms.vue';
 import { mapGetters } from 'vuex';
 // import serialize from "@/assets/js/serialize";
-
+import BlockInfo from '@/components/cascades/comp/Info.vue'
 // import Select from "@/components/forms/Select.vue";
 import { debounce } from '@/utils/core/utils';
 export default {
@@ -44,6 +47,7 @@ export default {
     // Autocomplete2,
     // Forms,
     Input,
+    BlockInfo
   },
   data: () => ({
     collapse: ['0', '2'],
@@ -58,6 +62,7 @@ export default {
       // buttons: 'cascades/getButtons',
       block: 'cascades/getBlock',
       project: 'projects/getProject',
+      manual: 'cascades/getManual'
     }),
     datatypes() {
       return this.layersForm.filter(({ name }) => name === `datatype_${this.block.group}`);
@@ -72,7 +77,6 @@ export default {
       if (!this.list) return [];
       return this.list.filter(item => !(item.value.toLowerCase() === 'input'));
     },
-
     buttonSave() {
       return this.buttons?.save || false;
     },
@@ -91,6 +95,10 @@ export default {
         return [];
       }
     },
+    info() {
+      if (this.manual[this.block.group]) return this.manual[this.block.group][this.parameters.type]
+      return ''
+    }
     // extra() {
     //   const blockType = this.block?.group;
     //   if (Object.keys(this.layers).length && blockType) {
