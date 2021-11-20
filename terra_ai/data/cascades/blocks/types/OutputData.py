@@ -7,7 +7,7 @@ from terra_ai.data.datasets.extra import LayerInputTypeChoice
 
 
 class ParametersMainData(BaseMixinData):
-    type: LayerInputTypeChoice = LayerInputTypeChoice.Image
+    type: LayerInputTypeChoice = LayerInputTypeChoice.Video
     width: Optional[PositiveInt] = 640
     height: Optional[PositiveInt] = 480
 

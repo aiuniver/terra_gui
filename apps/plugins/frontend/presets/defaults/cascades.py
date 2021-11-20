@@ -283,7 +283,7 @@ CascadesBlocksTypes = {
                 "label": "Тип данных",
                 "name": "type",
                 "parse": "parameters[main][type]",
-                "value": LayerInputTypeChoice.Image.name,
+                "value": LayerInputTypeChoice.Video.name,
                 "list": list(
                     map(
                         lambda item: {"value": item.name, "label": item.value},
@@ -330,7 +330,7 @@ CascadesBlocksTypes = {
                 "label": "Тип данных",
                 "name": "type",
                 "parse": "parameters[main][type]",
-                "value": LayerInputTypeChoice.Image.name,
+                "value": LayerInputTypeChoice.Video.name,
                 "list": list(
                     map(
                         lambda item: {"value": item.name, "label": item.value},
@@ -438,7 +438,7 @@ CascadesBlocksTypes = {
                 "name": "group",
                 "label": "Группа",
                 "parse": "parameters[main][group]",
-                "value": BlockFunctionGroupChoice.Image,
+                "value": BlockFunctionGroupChoice.ObjectDetection,
                 "list": list(
                     map(
                         lambda item: {"value": item.name, "label": item.value},
