@@ -1,6 +1,6 @@
 import json
 import os
-from typing import List, Dict
+from typing import List, Dict, Any
 from pathlib import Path
 
 from pydantic.color import Color
@@ -18,8 +18,8 @@ class CascadeRunner:
 
     def start_cascade(self, cascade_data: CascadeDetailsData, training_path: Path,
                       deply_path: Path, sources: Dict[int, List[str]]):
-        script_name, model, inputs_ids = self._get_task_type(cascade_data=cascade_data, training_path=training_path)
-        print(script_name)
+        type_, model, inputs_ids = self._get_task_type(cascade_data=cascade_data, training_path=training_path)
+        print(type_)
         dataset_path = os.path.join(training_path, model, "model", "dataset")
 
         with open(os.path.join(dataset_path, "config.json"), "r", encoding="utf-8") as dataset_config:
@@ -32,27 +32,11 @@ class CascadeRunner:
         print(cascade_config)
         main_block = json2cascade(path=os.path.join(training_path, model), cascade_config=cascade_config, mode="run")
 
-        i = 0
-        presets_data = []
-        for source in sources.get(inputs_ids[0])[:2]:
-            print(source)
-            if "text" in script_name:
-                with open("test.txt", "w", encoding="utf-8") as f:
-                    f.write(source)
-                input_path = "test.txt"
-            else:
-                input_path = os.path.join(dataset_path, source)
-            if "segmentation" in script_name or "object_detection" in script_name:
-                output_path = f"F:\\tmp\\ttt\\source{i}.webm"
-                main_block(input_path=input_path, output_path=output_path)
-                presets_data.append({
-                    "source": source,
-                    "detection": output_path
-                })
-            else:
-                main_block(input_path=input_path)
-            print(main_block.out)
-            i += 1
+        sources = sources.get(inputs_ids[0])
+
+        presets_data = self._get_presets(sources=sources, type_=type_, cascade=main_block,
+                                         source_path=Path(dataset_path),
+                                         predict_path=Path(os.path.join(os.path.split(training_path)[0], "cascades")))
         print(presets_data)
         return cascade_config
 
@@ -69,11 +53,8 @@ class CascadeRunner:
                   "r", encoding="utf-8") as training_config:
             training_details = json.load(training_config)
         deploy_type = training_details.get("base").get("architecture").get("type")
-        print(DeployTypeChoice(deploy_type))
-        if "Yolo" in deploy_type:
-            deploy_type = "ObjectDetection"
 
-        return decamelize(deploy_type), model, _inputs
+        return DeployTypeChoice(deploy_type), model, _inputs
 
     def _create_config(self, cascade_data: CascadeDetailsData, model_task: str, dataset_data: dict):
 
@@ -190,3 +171,22 @@ class CascadeRunner:
         if _input:
             mapping.append(_input)
         return mapping
+
+    @staticmethod
+    def _get_presets(sources: List[Any], type_: DeployTypeChoice, cascade: Any,
+                     source_path: Path, predict_path: Path = ""):
+        out_data = []
+        iter_ = 0
+        for source in sources:
+            if type_ in [DeployTypeChoice.YoloV3, DeployTypeChoice.YoloV4]:
+                input_path = os.path.join(source_path, source)
+                file_name = f"example_{iter_}.webm"
+                output_path = os.path.join(predict_path, file_name)
+                cascade(input_path=input_path, output_path=output_path)
+                out_data.append({
+                    "source": source,
+                    "predict": output_path
+                })
+            iter_ += 1
+
+        return out_data
