@@ -54,8 +54,14 @@ class CascadeRunner:
                                          predict_path=CASCADE_PATH, data_type=data_type)
         print(presets_data)
 
+        out_data = dict([
+            ("path_deploy", os.path.join(CASCADE_PATH, "deploy_presets")),
+            ("type", type_),
+            ("data", presets_data)
+        ])
+
         with open(os.path.join(presets_path, "presets_config.json"), "w", encoding="utf-8") as config:
-            json.dump(presets_data, config)
+            json.dump(out_data, config)
 
         return cascade_config
 
