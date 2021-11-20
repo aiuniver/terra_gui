@@ -1,9 +1,8 @@
 import os
 import random
-from pathlib import Path, PurePath, PosixPath
+import shutil
+from pathlib import Path, PurePath
 from typing import List
-
-from PIL import Image
 
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.settings import DEPLOY_PRESET_COUNT
@@ -51,8 +50,8 @@ class DataList(DataBaseList):
         destination_source = Path(self.preset_path, f"{index + 1}.jpg")
         destination_predict = Path(self.predict_path, f"{index + 1}.jpg")
 
-        Image.open(Path(self.path_deploy, item.source)).save(destination_source)
-        Image.open(Path(self.path_deploy, item.predict)).save(destination_predict)
+        shutil.copyfile(Path(self.path_deploy, item.source), destination_source)
+        shutil.copyfile(Path(self.path_deploy, item.predict), destination_predict)
 
 
 class Data(DataBase):
