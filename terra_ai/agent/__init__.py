@@ -431,10 +431,7 @@ class Exchange:
         Исполнение каскада
         """
         CascadeRunner().start_cascade(
-            sources=sources,
-            cascade_data=cascade,
-            training_path=training_path,
-            deply_path=tempfile.mkdtemp(),
+            sources=sources, cascade_data=cascade, training_path=training_path
         )
 
     def _call_deploy_get(
