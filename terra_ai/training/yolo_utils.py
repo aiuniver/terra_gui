@@ -468,18 +468,15 @@ def create_yolo(model, input_size=416, channels=3, training=False, classes=None,
         if classes is None:
             classes = []
         num_class = len(classes)
-        # input_layer = keras.layers.Input([input_size, input_size, channels])
-        conv_tensors = model.output
+        conv_tensors = model.outputs
         if conv_tensors[0].shape[1] == 13:
             conv_tensors.reverse()
-        # print('conv_tensors', conv_tensors.reverse())
         output_tensors = []
         for i, conv_tensor in enumerate(conv_tensors):
             pred_tensor = decode(conv_tensor, num_class, i, version)
             if training: output_tensors.append(conv_tensor)
             output_tensors.append(pred_tensor)
-        # print('output_tensors', output_tensors)
-        yolo = tf.keras.Model(model.input, output_tensors)
+        yolo = tf.keras.Model(model.inputs, output_tensors)
         return yolo
     except Exception as e:
         print_error("module yolo_utils", method_name, e)
