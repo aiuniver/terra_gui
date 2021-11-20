@@ -55,7 +55,7 @@ class CascadeRunner:
         print(presets_data)
 
         out_data = dict([
-            ("path_deploy", os.path.join(CASCADE_PATH, "deploy_presets")),
+            ("path_deploy", str(CASCADE_PATH)),
             ("type", type_),
             ("data", presets_data)
         ])
@@ -239,7 +239,7 @@ class CascadeRunner:
                 })
             iter_ += 1
 
-        return out_data
+        return {"data": out_data}
 
     @staticmethod
     def _save_web_format(initial_path: str, deploy_path: str, source_type: str):

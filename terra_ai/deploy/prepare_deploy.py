@@ -66,9 +66,9 @@ class DeployCreator:
                                    "presets_config.json"), "r", encoding="utf-8") as presets_config:
                 deploy_data = json.load(presets_config)
 
-        print(deploy_data)
         deploy_data.update({"page": page})
-        print(DeployData(**deploy_data))
+        print(deploy_data)
+        print(DeployData(**deploy_data).json(indent=2))
         return DeployData(**deploy_data)
 
     @staticmethod
