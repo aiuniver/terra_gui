@@ -10,7 +10,7 @@ def video(path, **params):
     shape = (params['width'], params['height'])
 
     writer = cv2.VideoWriter(
-        path, cv2.VideoWriter_fourcc(*"vp80"), 10, shape
+        path, cv2.VideoWriter_fourcc(*"VP80"), 15, shape
     )
 
     def fix(img):
