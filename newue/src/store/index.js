@@ -21,6 +21,11 @@ export default new Vuex.Store({
   state: {},
   mutations: {},
   actions: {
+    async init({dispatch}){
+      await dispatch('themes/setTheme', {}, {root: true});
+      await dispatch('projects/get', {}, {root: true});
+      await dispatch('datasets/init', {}, {root: true});
+    },
     async axios ({ dispatch }, { method = 'post', url, data = {} }) {
       try {
         const response = await axios({ method, url: '/api/v1' + url, data });

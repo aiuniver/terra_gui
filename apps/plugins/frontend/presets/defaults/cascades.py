@@ -4,8 +4,8 @@ from terra_ai.data.cascades.blocks.extra import (
     BlockServiceTypeChoice,
     ChangeTypeAvailableChoice,
     PostprocessBoxesMethodAvailableChoice,
-    BlockCustomGroupChoice,
-    BlockCustomTypeChoice,
+    BlockServiceBiTBasedTrackerMetricChoice,
+    BlockServiceYoloV5VersionChoice,
 )
 
 from ...choices import (
@@ -169,8 +169,90 @@ FunctionGroupTypeRel = {
 }
 
 
-def get_function_type_field(type_name) -> dict:
-    items = list(FunctionGroupTypeRel.get(type_name))
+ServiceTypesFields = {
+    BlockServiceTypeChoice.Sort: [
+        {
+            "type": "number",
+            "name": "max_age",
+            "label": "Количество кадров для остановки слежения",
+            "parse": "parameters[main][max_age]",
+            "value": 4,
+        },
+        {
+            "type": "number",
+            "name": "min_hits",
+            "label": "Количество кадров для возобновления отслеживания",
+            "parse": "parameters[main][min_hits]",
+            "value": 4,
+        },
+    ],
+    BlockServiceTypeChoice.BiTBasedTracker: [
+        {
+            "type": "number",
+            "name": "max_age",
+            "label": "Количество кадров для остановки слежения",
+            "parse": "parameters[main][max_age]",
+            "value": 4,
+        },
+        {
+            "type": "number",
+            "name": "distance_threshold",
+            "label": "Порог сходства объектов",
+            "parse": "parameters[main][distance_threshold]",
+            "value": 0.4,
+        },
+        {
+            "type": "select",
+            "name": "metric",
+            "parse": "parameters[main][metric]",
+            "label": "Метрика сравнения сходства",
+            "value": BlockServiceBiTBasedTrackerMetricChoice.euclidean,
+            "list": list(
+                map(
+                    lambda item: {"value": item.name, "label": item.value},
+                    list(BlockServiceBiTBasedTrackerMetricChoice),
+                )
+            ),
+        },
+    ],
+    BlockServiceTypeChoice.YoloV5: [
+        {
+            "type": "select",
+            "name": "version",
+            "parse": "parameters[main][version]",
+            "label": "Версия модели",
+            "value": BlockServiceYoloV5VersionChoice.Small,
+            "list": list(
+                map(
+                    lambda item: {"value": item.name, "label": item.value},
+                    list(BlockServiceYoloV5VersionChoice),
+                )
+            ),
+        },
+        {
+            "type": "checkbox",
+            "name": "render_img",
+            "label": "Выводить изображение",
+            "parse": "parameters[main][render_img]",
+            "value": True,
+        },
+    ]
+}
+
+
+ServiceGroupTypeRel = {
+    BlockServiceGroupChoice.Tracking: [
+        BlockServiceTypeChoice.Sort,
+        BlockServiceTypeChoice.BiTBasedTracker,
+    ],
+    BlockServiceGroupChoice.ObjectDetection: [
+        BlockServiceTypeChoice.YoloV5,
+    ]
+}
+
+
+def get_type_field(type_name, group_type_rel, types_fields) -> dict:
+    items = list(group_type_rel.get(type_name))
     if not len(items):
         return []
     return [
@@ -187,7 +269,7 @@ def get_function_type_field(type_name) -> dict:
                 )
             ),
             "fields": dict(
-                map(lambda item: (item.name, FunctionTypesFields.get(item, [])), items)
+                map(lambda item: (item.name, types_fields.get(item, [])), items)
             ),
         }
     ]
@@ -220,20 +302,24 @@ CascadesBlocksTypes = {
                 },
                 "manual": {
                     "Video": """
-                        <p>
-                        <b>Видео</b> - тип данных, который будет <i>использоваться для обработки</i> последующими блоками и каскадом в целом. 
-                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе: 
-                        None
-                        Возможные связи с другими блоками на выходе:
+                        <p>Видео - тип данных, который будет использоваться для обработки последующими блоками и каскадом в целом.
+                        Включенный переключатель “по кадрам” разделяет видео на кадры, для дальнейшего использования с моделями обученными 
+                        на изображениях (Object Detection,  Cегментации и т.п.)</p>
+                        <p>Возможные связи с другими блоками на входе:<br />
+                            <code>None</code>
                         </p>
+                        <p>Возможные связи с другими блоками на выходе:</p>
                         <ol> 
-                        <li>блок Model модель object detection или сегментации</li>  
-                        <li>блок Function Наложение bbox на изображение</li>
-                        <li>блок Function Постобработка yolo</li>
+                            <li>блок Model модель object detection или сегментации</li>
+                            <li>блок Service модель object detection или сегментации</li>
+                            <li>блок Function Наложение bbox на изображение</li>
+                            <li>блок Function Постобработка yolo</li>
                         </ol>
-                        <p>Возвращает на выходе: Фреймы из видео</p>
+                        <p>Возвращает на выходе:<br />
+                            <code>Фреймы из видео</code>
+                        </p>
                     """
-                }
+                },
             },
         ]
     },
@@ -269,65 +355,62 @@ CascadesBlocksTypes = {
                 },
                 "manual": {
                     "Video": """
-                        <p>
-                        <b>Сохранение</b> результата в видео файл 
-                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
-                        </p>
+                        <p>Сохранение результата в видео файл</p>
+                        <p>Необходимые связи с другими блоками на входе:</p>
                         <ol>
-                        <li>блок Function Наложение bbox на изображение</li>
+                            <li>блок Function Наложение bbox на изображение</li>
                         </ol>
-                        <p>
-                        Возможные <a href="https://google.com" target="_blank">связи</a> с другими блоками на выходе: 
-                        None
+                        <p>Возможные связи с другими блоками на выходе:<br />
+                            <code>None</code>
                         </p>
-                        <p>Возвращает на выходе: Сохраняет переданные фреймы исходного видео в видеофайл с выставленными параметрами</p>
+                        <p>Возвращает на выходе:<br />
+                            <code>Сохраняет переданные фреймы исходного видео в видеофайл с выставленными параметрами</code>
+                        </p>
                     """,
                     "Image": """
-                        <p>
-                        <b>Сохранение</b> результата в файл изображения
-                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
-                        </p>
+                        <p>Сохранение результата в файл изображения</p>
+                        <p>Необходимые связи с другими блоками на входе:</p>
                         <ol>
-                        <li>блок Function Наложение bbox на изображение</li>
-                        <li>блок Function Наложение маски по классу на изображение</li>
-                        <li>блок Function Наложение маски всех классов по цветам</li>
+                            <li>блок Function Наложение bbox на изображение;</li>
+                            <li>блок Function Наложение маски по классу на изображение;</li>
+                            <li>блок Function Наложение маски всех классов по цветам.</li>
                         </ol>
-                        <p>
-                        Возможные <a href="https://google.com" target="_blank">связи</a> с другими блоками на выходе: 
-                        None
+                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjgiIGhlaWdodD0iMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTIxLjQxOCA4LjA3Yy44MTUgMCAxLjQ4Mi0uNjY2IDEuNDgyLTEuNDgyIDAtLjgxNS0uNjY3LTEuNDgyLTEuNDgyLTEuNDgySDYuNTk0Yy0uODE1IDAtMS40ODIuNjY3LTEuNDgyIDEuNDgyIDAgLjgxNi42NjcgMS40ODMgMS40ODIgMS40ODNoMTQuODIzem0tOC44OTUgMTMuMzQyYzAgLjgxNS42NjggMS40ODIgMS40ODMgMS40ODIuODE1IDAgMS40ODItLjY2NyAxLjQ4Mi0xLjQ4MnYtOC42NDdjMC0uODE2LS42NjctMS40ODMtMS40ODItMS40ODMtLjgxNiAwLTEuNDgzLjY2Ny0xLjQ4MyAxLjQ4M3Y4LjY0N3oiIGZpbGw9IiM2NUI5RjQiLz48cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTI3LjE3Ny44MjRILjgyM3YyNi4zNTJoMjYuMzUyVi44MjV6TTAgMHYyOGgyOFYwSDB6IiBmaWxsPSIjNjVCOUY0Ii8+PC9zdmc+" width="100%" height="100px" alt="" />
+                        <p>Возможные связи с другими блоками на выходе:<br />
+                            <code>None</code>
                         </p>
-                        <p>Возвращает на выходе: Сохраняет переданные обработанные изображения</p>
+                        <p>Возвращает на выходе:<br />
+                            <code>Сохраняет переданные обработанные изображения</code>
+                        </p>
                     """,
                     "Text": """
-                        <p>
-                        <b>Сохранение</b> результата в текстовый файл 
-                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
-                        </p>
+                        <p>Сохранение результата в текстовый файл</p>
+                        <p>Необходимые связи с другими блоками на входе:</p>
                         <ol>
-                        <li>блок Function Расстановка тэгов по вероятностям из модели</li>
-                        <li>блок Service  speech_to_text</li>
+                            <li>блок Function Расстановка тэгов по вероятностям из модели</li>
+                            <li>блок Service  speech_to_text</li>
                         </ol>
-                        <p>
-                        Возможные <a href="https://google.com" target="_blank">связи</a> с другими блоками на выходе: 
-                        None
+                        <p>Возможные связи с другими блоками на выходе:<br />
+                            <code>None</code>
                         </p>
-                        <p>Возвращает на выходе: Сохраняет обработанный текст</p>
+                        <p>Возвращает на выходе:<br />
+                            <code>Сохраняет обработанный текст</code>
+                        </p>
                     """,
                     "Audio": """
-                        <p>
-                        <b>Сохранение</b> результата в текстовый файл 
-                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
-                        </p>
+                        <p>Сохранение результата в текстовый файл</p>
+                        <p>Необходимые связи с другими блоками на входе:</p>
                         <ol>
-                        <li>блок Service  text_to_speech</li>
+                            <li>блок Service text_to_speech</li>
                         </ol>
-                        <p>
-                        Возможные <a href="https://google.com" target="_blank">связи</a> с другими блоками на выходе: 
-                        None
+                        <p>Возможные связи с другими блоками на выходе:<br />
+                            <code>None</code>
                         </p>
-                        <p>Возвращает на выходе: Сохраняет переданное аудио</p>
+                        <p>Возвращает на выходе:<br />
+                            <code>Сохраняет переданное аудио</code>
+                        </p>
                     """,
-                }
+                },
             },
         ]
     },
@@ -363,180 +446,178 @@ CascadesBlocksTypes = {
                     )
                 ),
                 "fields": {
-                    BlockFunctionGroupChoice.Image: get_function_type_field(
-                        BlockFunctionGroupChoice.Image
+                    BlockFunctionGroupChoice.Image: get_type_field(
+                        BlockFunctionGroupChoice.Image,
+                        FunctionGroupTypeRel,
+                        FunctionTypesFields,
                     ),
-                    BlockFunctionGroupChoice.Text: get_function_type_field(
-                        BlockFunctionGroupChoice.Text
+                    BlockFunctionGroupChoice.Text: get_type_field(
+                        BlockFunctionGroupChoice.Text,
+                        FunctionGroupTypeRel,
+                        FunctionTypesFields,
                     ),
-                    BlockFunctionGroupChoice.Audio: get_function_type_field(
-                        BlockFunctionGroupChoice.Audio
+                    BlockFunctionGroupChoice.Audio: get_type_field(
+                        BlockFunctionGroupChoice.Audio,
+                        FunctionGroupTypeRel,
+                        FunctionTypesFields,
                     ),
-                    BlockFunctionGroupChoice.Video: get_function_type_field(
-                        BlockFunctionGroupChoice.Video
+                    BlockFunctionGroupChoice.Video: get_type_field(
+                        BlockFunctionGroupChoice.Video,
+                        FunctionGroupTypeRel,
+                        FunctionTypesFields,
                     ),
-                    BlockFunctionGroupChoice.Array: get_function_type_field(
-                        BlockFunctionGroupChoice.Array
+                    BlockFunctionGroupChoice.Array: get_type_field(
+                        BlockFunctionGroupChoice.Array,
+                        FunctionGroupTypeRel,
+                        FunctionTypesFields,
                     ),
-                    BlockFunctionGroupChoice.ObjectDetection: get_function_type_field(
-                        BlockFunctionGroupChoice.ObjectDetection
+                    BlockFunctionGroupChoice.ObjectDetection: get_type_field(
+                        BlockFunctionGroupChoice.ObjectDetection,
+                        FunctionGroupTypeRel,
+                        FunctionTypesFields,
                     ),
-                    BlockFunctionGroupChoice.Segmentation: get_function_type_field(
-                        BlockFunctionGroupChoice.Segmentation
+                    BlockFunctionGroupChoice.Segmentation: get_type_field(
+                        BlockFunctionGroupChoice.Segmentation,
+                        FunctionGroupTypeRel,
+                        FunctionTypesFields,
                     ),
-                    BlockFunctionGroupChoice.TextSegmentation: get_function_type_field(
-                        BlockFunctionGroupChoice.TextSegmentation
+                    BlockFunctionGroupChoice.TextSegmentation: get_type_field(
+                        BlockFunctionGroupChoice.TextSegmentation,
+                        FunctionGroupTypeRel,
+                        FunctionTypesFields,
                     ),
                 },
                 "manual": {
-                    "ChangeSize": """
-                        <p>
-                        <b>Изменение</b> размера изображения по указанным параметрам. 
-                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
-                        </p>
+                    "ChangeType": """
+                        <p>Изменение типа данных массива текстовых данных по указанным параметрам.</p>
+                        <p>Необходимые связи с другими блоками на входе:</p>
                         <ol>
-                        <li>любой блок возвращающий изображение</li>
+                            <li>любой блок (кроме Input с параметром Текст или Таблица)</li>
+                        </ol>
+                            <p>Возможные связи с другими блоками на выходе:</p> 
+                        <ol>
+                            <li>блок Output</li>
+                            <li>блок Model или Service</li>
+                            <li>блок Function</li>
+                        </ol>
+                        <p>Возвращает на выходе:<br />
+                            <code>массивы данных указанного типа</code>
+                        </p>
+                    """,
+                    "ChangeSize": """
+                        <p>Изменение размера изображения по указанным параметрам.</p>
+                        <p>Необходимые связи с другими блоками на входе:</p>
+                        <ol>
+                            <li>любой блок возвращающий изображение</li>
                         </ol>
                         <p>Возможные связи с другими блоками на выходе:</p>
                         <ol>
-                        <li>блок Output метод Видео или Изображение</li> 
-                        <li>блок Model или Service</li>
-                        <li>блок Function</li>
+                            <li>блок Output метод Видео или Изображение</li> 
+                            <li>блок Model или Service</li>
+                            <li>блок Function</li>
                         </ol>
-                        <p>Возвращает на выходе: маскированное изображение</p>
+                        <p>Возвращает на выходе:<br />
+                            <code>маскированное изображение</code>
+                        </p>
+                    """,
+                    "MinMaxScale": """
+                        <p>Нормализация массива данных по указанным параметрам.</p>
+                        <p>Необходимые связи с другими блоками на входе:</p>
+                        <ol>
+                            <li>любой блок (кроме Input с параметром Текст или Таблица)</li>
+                        </ol>
+                        <p>Возможные связи с другими блоками на выходе:</p>
+                        <ol>
+                            <li>блок Output</li>
+                            <li>блок Model или Service</li>
+                            <li>блок Function</li>
+                        </ol>
+                        <p>Возвращает на выходе:<br />
+                            <code>нормализованные массивы данных</code>
+                        </p>
                     """,
                     "MaskedImage": """
-                        <p>
-                        <b>Наложение маски по указанному классу</b> на изображение. Необходимо указать Id класса.
-                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
-                        </p>
+                        <p>Наложение маски по указанному классу на изображение. Необходимо указать Id класса.</p>
+                        <p>Необходимые связи с другими блоками на входе:</p>
                         <ol>
-                        <li>блок Model или Service c моделью сегментации изображений</li>
-                        <li>блок Input исходных изображений или видео (по кадрам)</li>
+                            <li>блок Model или Service c моделью сегментации изображений</li>
+                            <li>блок Input исходных изображений или видео (по кадрам)</li>
                         </ol>
                         <p>Возможные связи с другими блоками на выходе:</p>
                         <ol>
-                        <li>блок Output метод Видео или Изображение</li>
-                        <li>блок Function Изменение размера данных</li>
+                            <li>блок Output метод Видео или Изображение</li>
+                            <li>блок Function Изменение размера данных</li>
                         </ol>
-                        <p>Возвращает на выходе: маскированное изображение</p>
+                        <p>Возвращает на выходе:<br />
+                            <code>маскированное изображение</code>
+                        </p>
                     """,
                     "PlotMaskSegmentation": """
-                        <p>
-                        <b>Наложение маски по всем классам</b> на изображение
-                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
-                        </p>
+                        <p>Наложение маски по всем классам на изображение</p>
+                        <p>Необходимые связи с другими блоками на входе:</p>
                         <ol>
-                        <li>блок Model или Service c моделью сегментации изображений</li> 
-                        <li>блок Input исходных изображений или видео (по кадрам)</li>
+                            <li>блок Model или Service c моделью сегментации изображений</li> 
+                            <li>блок Input исходных изображений или видео (по кадрам)</li>
                         </ol>
                         <p>Возможные связи с другими блоками на выходе:</p>
                         <ol>
-                        <li>блок Output метод Видео или Изображение</li>
-                        <li>блок Function Изменение размера данных</li>
+                            <li>блок Output метод Видео или Изображение</li>
+                            <li>блок Function Изменение размера данных</li>
                         </ol>
-                        <p>Возвращает на выходе: маскированное изображение</p>
+                        <p>Возвращает на выходе:<br />
+                            <code>маскированное изображение</code>
+                        </p>
                     """,
                     "PutTag": """
-                        <p>
-                        <b>Наложение маски по всем классам</b> на изображение
-                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
-                        </p>
+                        <p>Наложение маски по всем классам на изображение</p>
+                        <p>Необходимые связи с другими блоками на входе:</p>
                         <ol>
-                        <li>блок Model c моделью сегментации текста</li>
+                            <li>блок Model c моделью сегментации текста</li>
                         </ol>
                         <p>Возможные связи с другими блоками на выходе:</p>
                         <ol>
-                        <li>блок Output метод Текст</li>
+                            <li>блок Output метод Текст</li>
                         </ol>
-                        <p>Возвращает на выходе: размеченный тегами текст</p>
+                        <p>Возвращает на выходе:<br />
+                            <code>размеченный тегами текст</code>
+                        </p>
                     """,
                     "PostprocessBoxes": """
-                        <p>
-                        <b>Постобработка</b> для моделей YOLOV3 и V4 
-                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
-                        </p>
+                        <p>Постобработка</b> для моделей YOLOV3 и V4</p>
+                        <p>Необходимые связи с другими блоками на входе:</p>
                         <ol>
-                        <li>блок Model c моделью YOLO</li>
-                        <li>блок Input исходных изображений или видео</li>
+                            <li>блок Model c моделью YOLO</li>
+                            <li>блок Input исходных изображений или видео</li>
                         </ol>
                         <p>Возможные связи с другими блоками на выходе:</p>
                         <ol> 
-                        <li>блок Custom Трекер (Sort, DeepSort)</li>
-                        <li>блок Function Наложение bbox на изображение</li>
+                            <li>блок Custom Трекер (Sort, BiTBasedTracker)</li>
+                            <li>блок Function Наложение bbox на изображение</li>
                         </ol>
-                        <p>Возвращает на выходе: лучшие bbox по выставленным параметрам</p>
+                        <p>Возвращает на выходе:<br />
+                            <code>лучшие bbox по выставленным параметрам</code>
+                        </p>
                     """,
                     "PlotBBoxes": """
-                        <p>
-                        <b>Наложение bbox</b> на изображение YOLOV3 и V4 
-                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
-                        </p>
+                        <p>Наложение bbox</b> на изображение YOLOV3 и V4</p>
+                        <p>Необходимые связи с другими блоками на входе:</p>
                         <ol>
-                        <li>блок Function Постобработка yolo или блок Custom Трекер (Sort, DeepSort)</li>  
-                        <li>блок Input исходных изображений или видео</li>
+                            <li>блок Function Постобработка yolo или блок Custom Трекер (Sort, BiTBasedTracker)</li>  
+                            <li>блок Input исходных изображений или видео</li>
                         </ol>
                         <p>Возможные связи с другими блоками на выходе:</p>
                         <ol>
-                        <li>блок Output</li>
+                            <li>блок Output</li>
                         </ol>
-                        <p>Возвращает на выходе: исходное изображение (фрейм) с наложенными bbox</p>
+                        <p>Возвращает на выходе:<br />
+                            <code>исходное изображение (фрейм) с наложенными bbox</code>
+                        </p>
                     """,
                 },
             },
         ]
     },
-    BlockGroupChoice.Custom: {
-        "main": [
-            {
-                "type": "select",
-                "name": "group",
-                "label": "Группа",
-                "parse": "parameters[main][group]",
-                "value": BlockCustomGroupChoice.Tracking,
-                "list": list(
-                    map(
-                        lambda item: {"value": item.name, "label": item.value},
-                        list(BlockCustomGroupChoice),
-                    )
-                ),
-                "fields": {
-                    BlockCustomGroupChoice.Tracking: [
-                        {
-                            "type": "select",
-                            "name": "type",
-                            "label": "Выбор типа",
-                            "parse": "parameters[main][type]",
-                            "value": BlockCustomTypeChoice.Sort,
-                            "list": list(
-                                map(
-                                    lambda item: {
-                                        "value": item.name,
-                                        "label": item.value,
-                                    },
-                                    list(BlockCustomTypeChoice),
-                                )
-                            ),
-                        },
-                    ]
-                },
-            },
-            {
-                "type": "number",
-                "name": "max_age",
-                "label": "Количество кадров для остановки слежения",
-                "parse": "parameters[main][max_age]",
-                "value": 4,
-            },
-            {
-                "type": "number",
-                "name": "min_hits",
-                "label": "Количество кадров для возобновления отслеживания",
-                "parse": "parameters[main][min_hits]",
-                "value": 4,
-            },
-        ]
-    },
+    BlockGroupChoice.Custom: {"main": []},
     BlockGroupChoice.Service: {
         "main": [
             {
@@ -552,70 +633,69 @@ CascadesBlocksTypes = {
                     )
                 ),
                 "fields": {
-                    BlockServiceGroupChoice.Tracking: [
-                        {
-                            "type": "select",
-                            "name": "type",
-                            "label": "Выбор типа",
-                            "parse": "parameters[main][type]",
-                            "value": BlockServiceTypeChoice.Sort,
-                            "list": list(
-                                map(
-                                    lambda item: {
-                                        "value": item.name,
-                                        "label": item.value,
-                                    },
-                                    list(BlockServiceTypeChoice),
-                                )
-                            ),
-                        },
-                    ]
+                    BlockServiceGroupChoice.Tracking: get_type_field(
+                        BlockServiceGroupChoice.Tracking,
+                        ServiceGroupTypeRel,
+                        ServiceTypesFields,
+                    ),
+                    BlockServiceGroupChoice.ObjectDetection: get_type_field(
+                        BlockServiceGroupChoice.ObjectDetection,
+                        ServiceGroupTypeRel,
+                        ServiceTypesFields,
+                    ),
                 },
                 "manual": {
                     "Sort": """
-                        <p>
-                        <b>Алгоритм трекера Sort</b> для моделей object_detection 
-                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
-                        </p>
+                        <p>Алгоритм трекера Sort</b> для моделей object_detection</p>
+                        <p>Необходимые связи с другими блоками на входе:</p>
                         <ol>
-                        <li>блок Function Постобработка yolo</li>
+                            <li>блок Function Постобработка yolo</li>
                         </ol>  
-                        <p>Возможные <a href="https://google.com" target="_blank">связи</a> с другими блоками на выходе:</p>
+                        <p>Возможные связи с другими блоками на выходе:</p>
                         <ol>
-                        <li>блок Function Наложение bbox на изображение</li>
+                            <li>блок Function Наложение bbox на изображение</li>
                         </ol>
-                        <p>Возвращает на выходе: Возвращает аналогичный массив bbox, где последний столбец - это идентификатор объекта.</p>
-                    """,
-                    "DeepSort": """
-                        <p>
-                        <b>Алгоритм трекера DeepSort</b> для моделей object_detection 
-                        Необходимые <a href="https://google.com" target="_blank">связи</a> с другими блоками на входе:
+                        <p>Возвращает на выходе:<br />
+                            <code>возвращает аналогичный массив bbox, где последний столбец - это идентификатор объекта</code>
                         </p>
+                    """,
+                    "BiTBasedTracker": """
+                        <p>Алгоритм трекера BiTBasedTracker</b> для моделей object_detection</p>
+                        <p>Необходимые связи с другими блоками на входе:</p>
                         <ol>
-                        <li>блок Function Постобработка yolo</li>
+                            <li>блок Function Постобработка yolo</li>
+                            <li>блок Input исходных изображений</li>
                         </ol>
-                        <p>Возможные <a href="https://google.com" target="_blank">связи</a> с другими блоками на выходе:</p>
+                        <p>Возможные связи с другими блоками на выходе:</p>
                         <ol> 
-                        <li>блок Function Наложение bbox на изображение</li>
+                            <li>блок Function Наложение bbox на изображение</li>
                         </ol>
-                        <p>Возвращает на выходе: Возвращает аналогичный массив bbox, где последний столбец - это идентификатор объекта.</p>
-                    """
-                }
-            },
-            {
-                "type": "number",
-                "name": "max_age",
-                "label": "Количество кадров для остановки слежения",
-                "parse": "parameters[main][max_age]",
-                "value": 4,
-            },
-            {
-                "type": "number",
-                "name": "min_hits",
-                "label": "Количество кадров для возобновления отслеживания",
-                "parse": "parameters[main][min_hits]",
-                "value": 4,
+                        <p>Возвращает на выходе:<br />
+                            <code>возвращает аналогичный массив bbox, где последний столбец - это идентификатор объекта</code>
+                        </p>
+                    """,
+                    "YoloV5": f"""
+                        <li>Предобученная YoloV5 на базе COCO:<li>
+                        <p>“Версия модели” выбирается в зависимости от необходимой точности.</p>
+                        <p>Переключатель “Выводить изображение” при включенном состоянии выводит исходное изображение с наложенными bbox, 
+                        классами и вероятностями. В выключенном положении блок будет возвращать лучшие bbox по всем классам.</p>
+                        <p>Необходимые связи с другими блоками на входе:</p>
+                        <ol>
+                        <li>блок Input исходных изображений (фреймов видео)</li>
+                        </ol>
+                        <p>Возможные связи с другими блоками на выходе:</p>
+                        <ol>
+                        <li>блок Service Наложение bbox на изображение (выключен переключатель “Выводить изображение”)</li>
+                        <li>блок Output сохранение изображений или видео</li>
+                        <li>блок Service Tracking (активирован переключатель “Выводить изображение”)</li>
+                        </ol>
+                        <p>Возвращает на выходе:<br />
+                            <code>если активирован переключатель “Выводить изображение” то исходное изображение (фрейм) 
+                            с наложенными bbox, иначе возвращает массив bbox, где последний столбец - это идентификатор объекта</code>
+                        </p>
+                    """,
+                },
             },
         ]
-    }
+    },
 }

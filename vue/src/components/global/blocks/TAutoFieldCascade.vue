@@ -77,17 +77,12 @@
         @change="$emit('change', $event)"
       />
     </template>
-    <BlockInfo v-if="info" :info="info" />
   </div>
 </template>
 
 <script>
-import BlockInfo from '@/components/cascades/comp/Info.vue'
 export default {
   name: 't-auto-field-cascade',
-  components: {
-    BlockInfo
-  },
   props: {
     type: String,
     value: [String, Boolean, Number, Array],
@@ -110,7 +105,13 @@ export default {
   }),
   computed: {
     getValue() {
-      return this.parameters?.[this.name] ?? this.value;
+      let val;
+      if (this.type === 'select') {
+        val = this.list.find(item => item.value === this.parameters?.[this.name])?.value ?? this.value
+      } else {
+        val = this.parameters?.[this.name] ?? this.value
+      }
+      return val;
     },
     errors() {
       return this.$store.getters['datasets/getErrors'](this.id);
@@ -138,7 +139,7 @@ export default {
     change({ value, name }) {
       console.log(value, name);
       this.valueIn = null;
-      this.$emit('change', { id: this.id, value, name });
+      this.$emit('change', { id: this.id, value, name, parse: this.parse });
       this.$nextTick(() => {
         this.valueIn = value;
       });
@@ -151,8 +152,9 @@ export default {
     // console.log(this.type)
   },
   mounted() {
-    this.$emit('change', { id: this.id, value: this.getValue, name: this.name, mounted: true });
-    // console.log(this.id, this.name, this.getValue, this.root);
+    this.$emit('change', { id: this.id, value: this.getValue, name: this.name, mounted: true, parse: this.parse });
+    console.log(this.name, this.getValue , this.value);
+    // this.valueIn = null;
     this.$nextTick(() => {
       this.valueIn = this.getValue;
     });

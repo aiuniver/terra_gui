@@ -27,3 +27,12 @@ class UpdateSerializer(serializers.Serializer):
 
 class PreviewSerializer(serializers.Serializer):
     preview = serializers.CharField()
+
+
+class StartItemSerializer(serializers.Serializer):
+    alias = serializers.CharField()
+    group = serializers.CharField()
+
+
+class StartSerializer(serializers.Serializer):
+    sources = serializers.DictField(child=StartItemSerializer())

@@ -18,19 +18,16 @@ from terra_ai.training.yolo_utils import create_yolo
 
 class DeployCreator:
 
-    def get_deploy(self, training_path: Path, deploy_path: Path, page: dict):
+    def get_deploy(self, training_path: Path, dataset: DatasetData, deploy_path: Path, page: dict):
 
         with open(os.path.join(training_path, page.get("name"), "config.json"),
                   "r", encoding="utf-8") as training_config:
             training_details = json.load(training_config)
 
         model_path = Path(os.path.join(training_path, page.get("name"), "model"))
-        dataset_path = Path(os.path.join(os.path.split(training_path)[0], "datasets"))
+        dataset_config_data = dataset.native()
+        dataset_config_data.update({"path": dataset.path})
         deploy_type = training_details.get("base").get("architecture").get("type")
-
-        with open(os.path.join(dataset_path, "config.json"), "r", encoding="utf-8") as dataset_config:
-            dataset_config_data = json.load(dataset_config)
-            dataset_config_data.update({"path": dataset_path})
 
         if not dataset_config_data.get("architecture") or \
                 dataset_config_data.get("architecture") == ArchitectureChoice.Basic:
@@ -50,7 +47,7 @@ class DeployCreator:
             predict = model.predict(dataset.X.get('val'), batch_size=training_details.get("base").get("batch"))
 
         presets = self._get_presets(predict=predict, dataset_data=dataset_data,
-                                    dataset=dataset, deploy_path=deploy_path)
+                                    dataset=dataset, deploy_path=model_path)
 
         if "Dataframe" in deploy_type:
             self._create_form_data_for_dataframe_deploy(deploy_path=deploy_path,
@@ -62,9 +59,9 @@ class DeployCreator:
         deploy_data = self._prepare_deploy(presets=presets, dataset=dataset,
                                            deploy_path=deploy_path, model_path=model_path,
                                            deploy_type=deploy_type)
-
+        print(deploy_data)
         deploy_data.update({"page": page, "path_model": training_path})
-
+        print(DeployData(**deploy_data))
         return DeployData(**deploy_data)
 
     @staticmethod

@@ -712,6 +712,10 @@ class ArchitectureYoloV4Form(ArchitectureYoloBaseForm):
     pass
 
 
+class ArchitectureTrackerForm(ArchitectureBasicForm):
+    pass
+
+
 class DefaultsTrainingData(BaseMixinData):
     architecture: ArchitectureChoice
     base: Optional[ArchitectureBaseForm]
@@ -771,14 +775,14 @@ class DefaultsData(BaseMixinData):
             cascade_model_field = cascade_fields[0]
             cascade_model_field.list = options
             if cascade_model_field.value not in values:
-                cascade_model_field.value = values[0]
+                cascade_model_field.value = values[0] if len(values) else None
 
         deploy_model_fields = self.deploy.type.fields[0].fields.get("model")
         if deploy_model_fields:
             deploy_model_field = deploy_model_fields[0]
             deploy_model_field.list = options
             if deploy_model_field.value not in values:
-                deploy_model_field.value = values[0]
+                deploy_model_field.value = values[0] if len(values) else None
 
     def update_deploy(self, _type: str, _name: str):
         self.deploy.type.fields[0].value = _type

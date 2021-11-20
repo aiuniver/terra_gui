@@ -109,7 +109,6 @@ class ProjectPathData(BaseMixinData):
 class Project(BaseMixinData):
     name: str = UNKNOWN_NAME
     dataset_info: Optional[DatasetInfo]
-    dataset: Optional[DatasetData]
     model: ModelDetailsData = ModelDetailsData(**EmptyModelDetailsData)
     training: TrainingDetailsData
     cascade: CascadeDetailsData = CascadeDetailsData(**EmptyCascadeDetailsData)
@@ -159,7 +158,7 @@ class Project(BaseMixinData):
 
     @property
     def trainings(self) -> List[Tuple[str, str]]:
-        items = [(DEFAULT_TRAINING_PATH_NAME, "Текущее обучение")]
+        items = []
         for item in os.listdir(project_path.training):
             if item == DEFAULT_TRAINING_PATH_NAME:
                 continue
@@ -200,6 +199,7 @@ class Project(BaseMixinData):
             dataset_info=None,
             model=ModelDetailsData(**EmptyModelDetailsData),
             cascade=CascadeDetailsData(**EmptyCascadeDetailsData),
+            deploy=None,
         )
         self.set_training()
         self.save_config()
@@ -212,7 +212,7 @@ class Project(BaseMixinData):
         zip_destination = progress_utils.pack(
             "project_save", "Сохранение проекта", project_path.base, delete=False
         )
-        shutil.move(zip_destination.name, destination_path)
+        shutil.move(zip_destination.name, str(destination_path.absolute()))
         defaults_data.update_models(self.trainings)
 
     def load(self):
@@ -242,6 +242,7 @@ class Project(BaseMixinData):
                     model=ModelDetailsData(**(_model or EmptyModelDetailsData)),
                     training=TrainingDetailsData(**_training),
                     cascade=CascadeDetailsData(**(_cascade or EmptyCascadeDetailsData)),
+                    deploy=None,
                 )
                 self.save_config()
                 self.set_training(self.training.name)
@@ -254,6 +255,8 @@ class Project(BaseMixinData):
         data = self.native()
         if data.get("hardware"):
             data.pop("hardware")
+        if data.get("deploy"):
+            data.pop("deploy")
         with open(project_path.config, "w") as _config_ref:
             json.dump(data, _config_ref)
 
@@ -314,21 +317,25 @@ class Project(BaseMixinData):
         self.cascade = cascade
         self.save_config()
 
-    def set_deploy(self, page: dict):
+    def set_deploy(self, dataset: DatasetData, page: dict):
         path_deploy = mkdtemp()
         path_model = ""
         _type = page.get("type")
         if _type == DeployTypePageChoice.model:
-            path_model = project_path.training
+            path_model = Path(project_path.training)
         elif _type == DeployTypePageChoice.cascade:
-            path_model = project_path.cascades
+            path_model = None
         deploy = agent_exchange(
-            "deploy_get", path_deploy=path_deploy, path_model=path_model, page=page
+            "deploy_get",
+            dataset=dataset,
+            page=page,
+            path_deploy=path_deploy,
+            path_model=path_model,
         )
-        if deploy:
-            deploy.path_deploy = project_path.deploy
-        shutil.rmtree(project_path.deploy, ignore_errors=True)
-        shutil.move(path_deploy, project_path.deploy)
+        # if deploy:
+        #     deploy.path_deploy = project_path.deploy
+        # shutil.rmtree(project_path.deploy, ignore_errors=True)
+        # shutil.move(path_deploy, project_path.deploy)
         self.deploy = deploy
 
     def clear_dataset(self):

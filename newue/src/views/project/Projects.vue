@@ -14,16 +14,16 @@
         />
       </div>
     </div>
-    <DModal v-model="dialogCreate" title="Мой профиль">
+    <d-modal v-model="dialogCreate" title="Мой профиль">
       <t-field label="Название проекта *">
-        <DInputText placeholder="Введите название проекта" />
+        <d-input-text placeholder="Введите название проекта" />
       </t-field>
-      <DUpload />
+      <d-upload />
       <template slot="footer">
-        <DButton color="secondary" @click="dialogCreate = false"/>
-        <DButton color="primary" direction="left" />
+        <d-button color="secondary" @click="dialogCreate = false"/>
+        <d-button color="primary" direction="left" />
       </template>
-    </DModal>
+    </d-modal>
   </main>
 </template>
 
@@ -35,11 +35,7 @@ export default {
   name: 'Projects',
   components: {
     CardProject,
-    CardCreateProject,
-    DModal: () => import('@/components/global/modals/DModal'),
-    DButton: () => import('@/components/global/design/forms/components/DButton'),
-    DUpload: () => import('@/components/global/design/forms/components/DUpload'),
-    DInputText: () => import('@/components/global/design/forms/components/DInputText'),
+    CardCreateProject
   },
   data: () => ({
     dialogCreate: false,
@@ -109,7 +105,7 @@ export default {
 
 <style lang="scss" scoped>
 .wrapper {
-  background: #17212b;
+  // background: #17212b;
   border-top: 0;
   height: 100%;
   padding: 20px;

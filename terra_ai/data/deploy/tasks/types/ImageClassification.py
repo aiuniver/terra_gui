@@ -1,6 +1,6 @@
 import json
 import random
-from pathlib import Path, PosixPath
+from pathlib import Path
 from typing import List, Tuple
 
 from PIL import Image
@@ -11,7 +11,7 @@ from ..extra import DataBaseList, DataBase
 
 
 class Item(BaseMixinData):
-    source: PosixPath
+    source: str
     actual: str
     data: List[Tuple[str, float]]
 

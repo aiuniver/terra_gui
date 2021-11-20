@@ -31,6 +31,7 @@ class Tags(dict, Enum):
     audio = {"alias": "audio", "name": "Audio"}
     smart_home = {"alias": "smart_home", "name": "Smart home"}
     trading = {"alias": "trading", "name": "Trading"}
+    tracker = {"alias": "tracker", "name": "Tracker"}
 
 
 OutputLayersDefaults = {
@@ -3727,6 +3728,74 @@ DatasetsGroups = [
                 },
                 "tags": [
                     Tags.timeseries.value,
+                    Tags.terra_ai.value,
+                ],
+            },
+            {
+                "alias": "bus_video_tracker",
+                "name": "Видео для трекера",
+                "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "3D",
+                        "dtype": "uint8",
+                        "name": "Input 1",
+                        "shape": (480, 416, 416, 3),
+                        "task": LayerInputTypeChoice.Video.value,
+                        "num_classes": 1,
+                        "classes_names": ["Videos"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "int64",
+                        "name": "Tracker",
+                        "shape": (1,),
+                        "task": LayerOutputTypeChoice.Tracker.value,
+                        "num_classes": 1,
+                        "classes_names": ["Videos"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "tags": [
+                    Tags.video.value,
+                    Tags.tracker.value,
+                    Tags.terra_ai.value,
+                ],
+            },
+            {
+                "alias": "chess_tracker",
+                "name": "Трекер шахматы",
+                "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "3D",
+                        "dtype": "uint8",
+                        "name": "Вход 1",
+                        "shape": (600, 480, 640, 3),
+                        "task": LayerInputTypeChoice.Video.value,
+                        "num_classes": 1,
+                        "classes_names": ["video_chess"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "int32",
+                        "name": "Выход 2",
+                        "shape": (1,),
+                        "task": LayerOutputTypeChoice.Tracker.value,
+                        "num_classes": 1,
+                        "classes_names": ["video_chess"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "tags": [
+                    Tags.video.value,
+                    Tags.tracker.value,
                     Tags.terra_ai.value,
                 ],
             },

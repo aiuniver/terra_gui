@@ -984,7 +984,8 @@ class CreateArray(object):
             return 1.0 * inter_area / union_area
 
         if coords:
-            real_boxes = resize_bboxes(options['frame_mode'], coords, options['orig_x'], options['orig_y'])
+            frame_mode = options['frame_mode'] if 'frame_mode' in options.keys() else 'stretch'  # Временное решение
+            real_boxes = resize_bboxes(frame_mode, coords, options['orig_x'], options['orig_y'])
         else:
             real_boxes = [[0, 0, 0, 0, 0]]
 

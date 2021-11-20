@@ -139,6 +139,29 @@ def json2cascade(path: str, cascade_config=None, mode="deploy"):
     cascades = {}
     input_cascade = None
 
+    old_adjacency_map = {}
+    not_in_adj = list(config['adjacency_map'].keys())
+
+    def search_current(inp, name):
+        if inp == ["INPUT"]:
+            return name
+        for i in inp:
+            if i == "INPUT":
+                continue
+            if i not in old_adjacency_map.keys():
+                current = search_current(config['adjacency_map'][i], i)
+                return current
+        return name
+
+    while len(not_in_adj):
+        block = not_in_adj[0]
+
+        current = search_current(config['adjacency_map'][block], block)
+
+        if current:
+            old_adjacency_map[current] = config['adjacency_map'][current]
+            not_in_adj.remove(current)
+
     for i, params in config['cascades'].items():
         if params['tag'] == 'input':
             input_cascade = getattr(sys.modules.get(__name__), "create_" + params['tag'])(**params)
@@ -153,7 +176,7 @@ def json2cascade(path: str, cascade_config=None, mode="deploy"):
 
     adjacency_map = OrderedDict()
 
-    for i, inp in config['adjacency_map'].items():
+    for i, inp in old_adjacency_map.items():
         adjacency_map[cascades[i]] = [j if j in ["INPUT"] else cascades[j] for j in inp]
 
     if input_cascade is None:

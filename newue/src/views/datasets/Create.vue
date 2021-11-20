@@ -1,7 +1,7 @@
 <template>
   <main class="page page-datasets">
     <div class="page-datasets-inner">
-      <div class="page-datasets-inner__workspace"> <router-view></router-view></div>
+      <div class="page-datasets-inner__workspace"><router-view></router-view></div>
       <BasePanel @action="handleActionPanel">
         <template v-if="component === 'DatasetTabsDownload'">
           <BasePanelContent noMargin>
@@ -42,30 +42,24 @@
         </template>
       </BasePanel>
     </div>
+    <Layer v-bind="layerData1" style="position: absolute; top: 150px; left: 50%" />
+    <Layer v-bind="layerData2" style="position: absolute; top: 150px; left: 30%" />
+    <Layer v-bind="layerData3" style="position: absolute; top: 150px; left: 10%" />
     <WorkspaceActions @action="handleWorkspaceAction" />
   </main>
 </template>
 
 <script>
-import BasePanel from '@/components/datasets/components/panel/BasePanel';
-import BasePanelContent from '@/components/datasets/components/panel/BasePanelContent';
-import FileManager from '@/components/datasets/components/FileManager';
-import DatasetPreview from '@/components/datasets/components/DatasetPreview';
-import DatasetSettings from '@/components/datasets/components/DatasetSettings';
-import WorkspaceActions from '@/components/datasets/components/WorkspaceActions';
-import DatasetDownloadTabs from '@/components/datasets/components/DatasetDownloadTabs';
-import DatasetHelpers from '@/components/datasets/components/DatasetHelpers';
-
 export default {
   components: {
-    BasePanelContent,
-    BasePanel,
-    FileManager,
-    WorkspaceActions,
-    DatasetPreview,
-    DatasetSettings,
-    DatasetDownloadTabs,
-    DatasetHelpers,
+    BasePanelContent: () => import('@/components/datasets/components/panel/BasePanelContent'),
+    BasePanel: () => import('@/components/datasets/components/panel/BasePanel'),
+    WorkspaceActions: () => import('@/components/datasets/components/create/WorkspaceActions'),
+    DatasetPreview: () => import('@/components/datasets/components/create/DatasetPreview'),
+    DatasetSettings: () => import('@/components/datasets/components/create/DatasetSettings'),
+    DatasetDownloadTabs: () => import('@/components/datasets/components/create/DatasetDownloadTabs'),
+    DatasetHelpers: () => import('@/components/datasets/components/create/DatasetHelpers'),
+    Layer: () => import('@/components/datasets/components/Layer'),
   },
 
   name: 'Datasets',
@@ -97,6 +91,24 @@ export default {
     },
   },
   data: () => ({
+    layerData1: {
+      type: 'input',
+      title: 'input_Вход 1: ',
+      data: [22, 28, 1],
+      error: '',
+    },
+    layerData2: {
+      type: 'middle',
+      title: 'input_Вход 1: ',
+      data: [22, 28, 1],
+      error: 'asdsad',
+    },
+    layerData3: {
+      type: 'output',
+      title: 'input_Вход 1: ',
+      data: [22, 28, 1],
+      error: '',
+    },
     component: 'DatasetHelpers',
     allComponents: ['DatasetTabsDownload', 'DatasetHelpers', 'DataEnterDataset'],
     preview: [

@@ -36,11 +36,11 @@ export default {
     },
   },
   methods: {
-    async create(data) {
+    async create() {
       try {
         const res = await this.$store.dispatch('projects/createProject', {});
         if (res && !res.error) {
-          this.$emit('message', { message: `Новый проект «${data.name}» создан` });
+          this.$emit('message', { message: `Новый проект «NoName» создан` });
         }
       } catch (error) {
         console.log(error);

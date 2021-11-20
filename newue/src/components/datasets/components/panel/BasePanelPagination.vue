@@ -1,7 +1,7 @@
 <template>
   <div class="panel-pagination flex align-center">
     <button @click="$emit('action', 'prev')" class="btn panel-pagination-btn">
-      <SvgContainer name="arrow-left-longer-big" />
+      <SvgContainer name="arrow-carret-left-longer-big" />
     </button>
     <div class="panel-pagination-container">
       <div class="panel-pagination-container__list flex align-center">
@@ -19,13 +19,7 @@
 </template>
 
 <script>
-import SvgContainer from '@/components/app/SvgContainer';
-
-export default {
-  components: {
-    SvgContainer,
-  },
-};
+export default {};
 </script>
 
 <style lang="scss" scoped>

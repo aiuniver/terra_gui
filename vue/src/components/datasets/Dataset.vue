@@ -61,6 +61,7 @@ export default {
       return this.project?.dataset?.alias === dataset.alias;
     },
     click(dataset, key) {
+      if (!dataset.training_available) return;
       if (!this.isLoaded(dataset)) {
         // console.log(dataset, key);
         this.$store.dispatch('datasets/setSelect', dataset);
