@@ -148,6 +148,18 @@ def plot_b_boxes(classes, colors=None, line_thickness=None):
     return fun
 
 
+def filter_classes(classes: list):
+    def fun(bboxes: np.ndarray):
+        g = bboxes[bboxes[:, -1] == classes[0]]
+
+        for i in classes[1:]:
+            g = np.concatenate((g, bboxes[bboxes[:, -1] == i]))
+
+        return g
+
+    return fun
+
+
 def main(**params):
     def fun(*predict):
         while len(predict) == 1:
