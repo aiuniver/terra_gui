@@ -61,6 +61,7 @@ class GUINN:
         self.dataset: Optional[PrepareDataset] = None
         self.deploy_type = None
         self.model: Optional[Model] = None
+        self.json_model = None
         self.model_path: Path = Path("./")
         self.deploy_path: Path = Path("./")
         self.dataset_path: Path = Path("./")
@@ -128,7 +129,7 @@ class GUINN:
 
             self.callback = FitCallback(dataset=dataset, retrain_epochs=retrain_epochs,
                                         training_details=train_details, model_name=self.nn_name,
-                                        deploy_type=self.deploy_type.name, initialed_model=initial_model)
+                                        deploy_type=self.deploy_type.name)
             progress.pool(self.progress_name, finished=False, message="Добавление колбэков выполнено")
         except Exception as e:
             print_error(GUINN().name, method_name, e)
@@ -198,17 +199,31 @@ class GUINN:
         except Exception as e:
             print_error(GUINN().name, method_name, e)
 
-    def _set_model(self, model: ModelDetailsData, train_details: TrainingDetailsData) -> Model:
+    def _set_model(self, model: ModelDetailsData, train_details: TrainingDetailsData,
+                   dataset: PrepareDataset) -> Model:
         method_name = '_set_model'
         try:
             print(method_name)
             if train_details.state.status == "training":
                 validator = ModelValidator(model)
                 train_model = validator.get_keras_model()
+                self.json_model = train_model.to_json()
+                if dataset.data.architecture in YOLO_ARCHITECTURE:
+                    version = dataset.instructions.get(list(dataset.data.outputs.keys())[0]).get(
+                        '2_object_detection').get('yolo')
+                    classes = dataset.data.outputs.get(list(dataset.data.outputs.keys())[0]).classes_names
+                    train_model = create_yolo(
+                        train_model, input_size=416, channels=3, training=True, classes=classes, version=version)
             else:
                 # model_file = f"{self.nn_name}.trm"
                 # train_model = load_model(os.path.join(train_details.model_path, f"{model_file}"), compile=False)
                 train_model = self.load_model_from_json()
+                if dataset.data.architecture in YOLO_ARCHITECTURE:
+                    version = dataset.instructions.get(list(dataset.data.outputs.keys())[0]).get(
+                        '2_object_detection').get('yolo')
+                    classes = dataset.data.outputs.get(list(dataset.data.outputs.keys())[0]).classes_names
+                    train_model = create_yolo(
+                        train_model, input_size=416, channels=3, training=True, classes=classes, version=version)
                 weight = None
                 for i in os.listdir(train_details.model_path):
                     if i[-3:] == '.h5' and 'last' in i:
@@ -229,7 +244,7 @@ class GUINN:
         except Exception as e:
             print_error(GUINN().name, method_name, e)
 
-    def save_model(self) -> None:
+    def save_model(self, model) -> None:
         method_name = 'save_model'
         try:
             """
@@ -243,7 +258,7 @@ class GUINN:
             model_json = f"{self.nn_name}_json.trm"
             file_path_model_json: str = os.path.join(self.params.model_path, f"{model_json}")
             with open(file_path_model_json, "w") as json_file:
-                json_file.write(self.model.to_json())
+                json_file.write(self.json_model)
 
             custom_obj_json = f"{self.nn_name}_custom_obj_json.trm"
             file_path_custom_obj_json = os.path.join(self.params.model_path, f"{custom_obj_json}")
@@ -251,12 +266,12 @@ class GUINN:
                 json.dump(terra_custom_layers, json_file)
 
             model_weights = f"{self.nn_name}_weights.h5"
-            file_path_model_weights: str = os.path.join(self.params.model_path, f"{model_weights}")
-            self.model.save_weights(file_path_model_weights)
+            file_path_model_weights: str = os.path.join(self.params.model_path, model_weights)
+            model.save_weights(file_path_model_weights)
         except Exception as e:
             print_error(GUINN().name, method_name, e)
 
-    def load_model_from_json(self):
+    def load_model_from_json(self) -> Model:
         model_json = f"{self.nn_name}_json.trm"
         file_path_model_json: str = os.path.join(self.params.model_path, f"{model_json}")
         with open(file_path_model_json) as json_file:
@@ -273,6 +288,7 @@ class GUINN:
             except:
                 continue
         model = tf.keras.models.model_from_json(json.dumps(data), custom_objects=custom_object)
+        self.json_model = model.to_json()
 
         # model_weights = f"{self.nn_name}_weights.h5"
         # file_path_model_weights: str = os.path.join(self.params.model_path, f"{model_weights}")
@@ -319,11 +335,7 @@ class GUINN:
 
             self._set_training_params(dataset=dataset, params=training)
 
-            self.model = self._set_model(model=gui_model, train_details=training)
-            if training.state.status == "training":
-                self.save_model()
-
-            self.model_fit(params=training, dataset=self.dataset, model=self.model)
+            self.model_fit(params=training, dataset=self.dataset, model=gui_model)
             return {"dataset": self.dataset}
         except Exception as e:
             print_error(GUINN().name, method_name, e)
@@ -351,7 +363,7 @@ class GUINN:
         return self
 
     # @progress.threading
-    def model_fit(self, params: TrainingDetailsData, model: Model, dataset: PrepareDataset) -> None:
+    def model_fit(self, params: TrainingDetailsData, model: ModelDetailsData, dataset: PrepareDataset) -> None:
         method_name = 'base_model_fit'
         try:
             print(method_name)
@@ -360,14 +372,17 @@ class GUINN:
             # callback = FitCallback(dataset, params)
             threading.enumerate()[-1].setName("current_train")
             progress.pool(self.progress_name, finished=False, message="Компиляция модели ...")
+            compiled_model = self._set_model(model=model, train_details=params, dataset=dataset)
+            if params.state.status == "training":
+                self.save_model(compiled_model)
             if yolo_arch:
-                version = dataset.instructions.get(list(dataset.data.outputs.keys())[0]).get('2_object_detection').get(
-                    'yolo')
-                classes = dataset.data.outputs.get(list(dataset.data.outputs.keys())[0]).classes_names
-                yolo = create_yolo(model, input_size=416, channels=3, training=True, classes=classes, version=version)
-                self.train_yolo_model(yolo_model=yolo, params=params, dataset=dataset, callback=self.callback)
+                # version = dataset.instructions.get(list(dataset.data.outputs.keys())[0]).get('2_object_detection').get(
+                #     'yolo')
+                # classes = dataset.data.outputs.get(list(dataset.data.outputs.keys())[0]).classes_names
+                # yolo = create_yolo(model, input_size=416, channels=3, training=True, classes=classes, version=version)
+                self.train_yolo_model(yolo_model=compiled_model, params=params, dataset=dataset, callback=self.callback)
             else:
-                self.train_base_model(params, dataset, model, self.callback)
+                self.train_base_model(params, dataset, compiled_model, self.callback)
 
             progress.pool(self.progress_name, finished=False, message="\n Компиляция модели выполнена")
             progress.pool(self.progress_name, finished=False, message="\n Начало обучения ...")
@@ -424,6 +439,10 @@ class GUINN:
             global_steps = tf.Variable(1, trainable=False, dtype=tf.int64)
             steps_per_epoch = int(len(dataset.dataframe['train']) // params.base.batch)
             warmup_steps = train_warmup_epochs * steps_per_epoch
+            # if params.state.status != "addtrain":
+            #     warmup_steps = train_warmup_epochs * steps_per_epoch
+            # else:
+            #     warmup_steps = 0
             total_steps = params.base.epochs * steps_per_epoch
 
             @tf.function
@@ -462,7 +481,7 @@ class GUINN:
                             (1 + tf.cos((global_steps - warmup_steps) / (total_steps - warmup_steps) * np.pi)))
                     lr = tf.cast(lr, dtype='float32')
                     optimizer.lr.assign(lr)
-                return global_steps, giou_loss, conf_loss, prob_loss, total_loss, prob_loss_cls, predict
+                return global_steps, giou_loss, conf_loss, prob_loss, total_loss, prob_loss_cls, predict, lr
 
             @tf.function
             def validate_step(image_array, conv_target, serv_target):
@@ -497,7 +516,7 @@ class GUINN:
 
                 return giou_loss, conf_loss, prob_loss, total_loss, prob_loss_cls, predict
 
-            current_epoch = 0
+            current_epoch = self.callback.last_epoch
             train_pred, train_true, val_pred, val_true = [], [], [], []
             optimizer = self.set_optimizer(params=params)
             output_array = None
@@ -514,7 +533,7 @@ class GUINN:
 
             train_data_idxs = np.arange(self.train_length).tolist()
             callback.on_train_begin()
-            for epoch in range(current_epoch, params.base.epochs):
+            for epoch in range(current_epoch, current_epoch + params.base.epochs):
                 callback.on_epoch_begin()
                 st = time.time()
                 print(f'\n New epoch {epoch + 1}, batch {params.base.batch}\n')
@@ -560,13 +579,14 @@ class GUINN:
                             "val_pred": val_pred}, train_data_idxs=train_data_idxs)
                     else:
                         callback.on_train_batch_end(batch=cur_step)
-                    print(f' -- batch {cur_step} - {round(time.time() - bt, 3)} {current_idx, length}')
+                    print(f' -- batch {cur_step} - '
+                          f'{round(time.time() - bt, 3)} {current_idx, length, results[7].numpy()}')
                     if callback.stop_training:
                         break
                 print(f'\n train epoch time: {round(time.time() - st, 3)}\n')
 
                 st = time.time()
-                self.save_model()
+                self.save_model(yolo_model)
                 if callback.stop_training:
                     callback.on_train_end(yolo_model)
                     break
@@ -762,7 +782,7 @@ class GUINN:
                 print(f'- train epoch time: {round(time.time() - st, 3)}\n')
 
                 st = time.time()
-                self.save_model()
+                self.save_model(model)
                 if callback.stop_training:
                     callback.on_train_end(model)
                     break
@@ -872,13 +892,14 @@ class FitCallback:
     """CustomCallback for all task type"""
 
     def __init__(self, dataset: PrepareDataset, training_details: TrainingDetailsData, retrain_epochs: int = None,
-                 model_name: str = "model", deploy_type: str = "", initialed_model=None):
+                 model_name: str = "model", deploy_type: str = ""):
         super().__init__()
         print('\n FitCallback')
         self.name = "FitCallback"
         self.current_logs = {}
         self.usage_info = MemoryUsage(debug=False)
         self.training_detail = training_details
+        self.training_detail.logs = None
         self.dataset = dataset
         self.dataset_path = dataset.data.path
         self.deploy_type = getattr(DeployTypeChoice, deploy_type)
@@ -936,10 +957,6 @@ class FitCallback:
             self.class_idx = BaseClassificationCallback().prepare_class_idx(self.y_true, self.dataset)
 
         self.log_history = self._load_logs()
-        # self.log_history = self._prepare_log_history_template(self.dataset, self.training_detail)
-
-        # yolo params
-        self.model = initialed_model
         self.samples_train = []
         self.samples_val = []
         self.samples_target_train = []
@@ -1452,9 +1469,11 @@ class FitCallback:
                     with open(os.path.join(interactive_path, "addtraining.int"), "r",
                               encoding="utf-8") as addtraining_int:
                         interactive.addtrain_epochs = json.load(addtraining_int)["addtrain_epochs"]
+                print("'max(logs.get('epochs'))'", max(logs.get('epochs')))
                 self.last_epoch = max(logs.get('epochs'))
                 self.retrain_epochs = self.last_epoch + self.training_detail.base.epochs
                 self.still_epochs = self.retrain_epochs - self.last_epoch
+                print(method_name, self.last_epoch, self.retrain_epochs, self.still_epochs)
                 return logs
             else:
                 return self._prepare_log_history_template(self.dataset, self.training_detail)
@@ -1517,11 +1536,11 @@ class FitCallback:
     def _get_train_status(self) -> str:
         return self.training_detail.state.status
 
-    def _get_predict(self, deploy_model=None):
+    def _get_predict(self, current_model=None):
         method_name = '_get_predict'
         try:
             print(method_name)
-            current_model = deploy_model if deploy_model else self.model
+            # current_model = deploy_model if deploy_model else self.model
             if self.is_yolo:
                 current_predict = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_val)]
                 current_target = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_target_val)]
@@ -1628,7 +1647,7 @@ class FitCallback:
                     weight = i
             if weight:
                 model.load_weights(os.path.join(self.training_detail.model_path, weight))
-            deploy_predict, y_true = self._get_predict(deploy_model=model)
+            deploy_predict, y_true = self._get_predict(current_model=model)
             deploy_presets_data = self._deploy_predict(deploy_predict)
             out_deploy_presets_data = {"data": deploy_presets_data}
             if self.deploy_type == ArchitectureChoice.TextSegmentation:
@@ -1850,7 +1869,6 @@ class FitCallback:
                         f"{self.retrain_epochs if self._get_train_status() in ['addtrain', 'stopped'] else self.epochs}",
                 finished=False,
             )
-            # self.last_epoch += 1
         except Exception as e:
             print_error('FitCallback', method_name, e)
 
