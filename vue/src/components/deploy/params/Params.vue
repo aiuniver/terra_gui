@@ -9,23 +9,24 @@
           <at-collapse :value="collapse" @on-change="onchange" :key="key">
             <at-collapse-item
               v-for="({ visible, name, fields }, key) of params"
-              v-show="visible && key !== 'server'"
+              v-show="visible"
               :key="key"
               class="mt-3"
               :name="key"
               :title="name || ''"
             >
+            
               <div class="params__fields">
                 <template v-for="(data, i) of fields">
                   <t-auto-field-cascade
                     v-bind="data"
                     :key="key + i"
-                    :big="key === 'type'"
+                    big
                     :parameters="parameters"
                     :inline="false"
                     @change="parse"
                   />
-                  <t-button @click="handleDownload" :key="'key' + i" :disabled="isLoad">Загрузить</t-button>
+                  <t-button v-if="key === 'type' " @click="handleDownload" :key="'key' + i" :disabled="isLoad">Загрузить</t-button>
                 </template>
               </div>
             </at-collapse-item>
