@@ -31,7 +31,7 @@
             </at-collapse-item>
           </at-collapse>
         </div>
-        <div class="params__items">
+        <div class="params__items" v-if="load">
           <div class="params-container pa-5">
             <div class="t-input">
               <label class="label" for="deploy[deploy]">Название папки</label>
@@ -87,7 +87,7 @@
                 <p>Пароль должен содержать не менее 6 символов</p>
               </div>
             </div>
-            <button :disabled="send_disabled" @click="SendData" v-if="!DataSent">Загрузить</button>
+            <t-button :disabled="send_disabled" @click="SendData" v-if="!DataSent">Загрузить</t-button>
             <div class="loader" v-if="DataLoading">
               <div class="loader__title">Дождитесь окончания загрузки</div>
               <div class="loader__progress">
@@ -127,6 +127,7 @@ export default {
   },
   data: () => ({
     collapse: ['type', 'server'],
+    load: false,
     key: '1212',
     downloadSettings: {},
     trainSettings: {},
@@ -187,8 +188,8 @@ export default {
       const type = this.parameters?.type || '';
       const name = this.parameters?.name || '';
       if (type && name) {
-        await this.$store.dispatch('deploy/DownloadSettings', { type, name });
-        
+        const res = await this.$store.dispatch('deploy/DownloadSettings', { type, name });
+        if (res?.data) this.load = true
       }
     },
     parse({ id, value, name, root }) {
