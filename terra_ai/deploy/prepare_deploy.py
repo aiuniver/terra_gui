@@ -7,7 +7,7 @@ from tensorflow.keras.models import load_model
 from terra_ai.cascades.common import decamelize
 from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice
-from terra_ai.data.deploy.tasks import DeployData
+from terra_ai.data.deploy.tasks import DeployData, types
 from terra_ai.data.training.extra import ArchitectureChoice
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
@@ -77,7 +77,6 @@ class DeployCreator:
         out_model = None
 
         model = load_model(os.path.join(model_path, "trained_model.trm"), compile=False)
-
         for i in os.listdir(model_path):
             if i[-3:] == '.h5' and 'best' in i:
                 weight = i

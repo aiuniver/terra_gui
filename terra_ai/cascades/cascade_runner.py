@@ -11,14 +11,16 @@ from terra_ai.data.cascades.blocks.extra import BlockFunctionGroupChoice, Functi
 from terra_ai.data.cascades.cascade import CascadeDetailsData
 from terra_ai.data.cascades.extra import BlockGroupChoice
 from terra_ai.data.datasets.extra import LayerInputTypeChoice
+from terra_ai.data.deploy.extra import DeployTypeChoice
 
 
 class CascadeRunner:
 
-    def start_cascade(self, cascade_data: CascadeDetailsData, path: Path, sources: Dict[int, List[str]]):
-        script_name, model, inputs_ids = self._get_task_type(cascade_data=cascade_data, training_path=path)
+    def start_cascade(self, cascade_data: CascadeDetailsData, training_path: Path,
+                      deply_path: Path, sources: Dict[int, List[str]]):
+        script_name, model, inputs_ids = self._get_task_type(cascade_data=cascade_data, training_path=training_path)
         print(script_name)
-        dataset_path = os.path.join(path, model, "model", "dataset")
+        dataset_path = os.path.join(training_path, model, "model", "dataset")
 
         with open(os.path.join(dataset_path, "config.json"), "r", encoding="utf-8") as dataset_config:
             dataset_config_data = json.load(dataset_config)
@@ -28,7 +30,7 @@ class CascadeRunner:
         cascade_config = self._create_config(cascade_data=cascade_data, model_task=model_task,
                                              dataset_data=dataset_config_data)
         print(cascade_config)
-        main_block = json2cascade(path=os.path.join(path, model), cascade_config=cascade_config, mode="run")
+        main_block = json2cascade(path=os.path.join(training_path, model), cascade_config=cascade_config, mode="run")
 
         i = 0
         presets_data = []
@@ -67,8 +69,10 @@ class CascadeRunner:
                   "r", encoding="utf-8") as training_config:
             training_details = json.load(training_config)
         deploy_type = training_details.get("base").get("architecture").get("type")
+        print(DeployTypeChoice(deploy_type))
         if "Yolo" in deploy_type:
             deploy_type = "ObjectDetection"
+
         return decamelize(deploy_type), model, _inputs
 
     def _create_config(self, cascade_data: CascadeDetailsData, model_task: str, dataset_data: dict):

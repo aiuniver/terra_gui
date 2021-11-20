@@ -140,10 +140,14 @@ class BlocksBindChoice(Enum):
                                   BlockFunctionTypeChoice.PlotBBoxes,
                                   BlockFunctionTypeChoice.PlotMaskSegmentation,
                                   BlockFunctionTypeChoice.MaskedImage,
-                                  BlockFunctionTypeChoice.PutTag),), tuple())
+                                  BlockFunctionTypeChoice.PutTag,
+                                  BlockServiceTypeChoice.YoloV5),), tuple())
 
-    Sort = ("Sort", (BlockFunctionTypeChoice.PostprocessBoxes,), (LayerInputTypeChoice.Image,))
-    BiTBasedTracker = ("BiTBasedTracker", (BlockFunctionTypeChoice.PostprocessBoxes,), (LayerInputTypeChoice.Image,))
+    Sort = ("Sort", (BlockFunctionTypeChoice.PostprocessBoxes,
+                     ), (LayerInputTypeChoice.Image,))
+    BiTBasedTracker = ("BiTBasedTracker", (BlockFunctionTypeChoice.PostprocessBoxes,
+                                           BlockGroupChoice.InputData), (LayerInputTypeChoice.Image,))
+    YoloV5 = ("YoloV5", (BlockGroupChoice.InputData,), (LayerInputTypeChoice.Image, ))
     ChangeType = ("ChangeType", tuple(), (LayerInputTypeChoice.Image,
                                           LayerInputTypeChoice.Audio,
                                           LayerInputTypeChoice.Video,
@@ -221,6 +225,8 @@ class FunctionParamsChoice(Enum):
     ))
     PlotBBoxes = (BlockFunctionTypeChoice.PlotBBoxes, ("classes",))
     Sort = (BlockServiceTypeChoice.Sort, ("max_age", "min_hits"))
+    BiTBasedTracker = (BlockServiceTypeChoice.BiTBasedTracker, ("max_age", "distance_threshold", "metric"))
+    YoloV5 = (BlockServiceTypeChoice.YoloV5, ("version", "render_img"))
 
     def __init__(self, name, parameters):
         self._name = name
