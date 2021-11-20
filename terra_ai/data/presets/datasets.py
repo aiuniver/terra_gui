@@ -11,6 +11,7 @@ from terra_ai.data.datasets.extra import (
 )
 from terra_ai.data.modeling.extra import LayerTypeChoice
 from terra_ai.data.modeling.layers.extra import ActivationChoice
+from terra_ai.data.training.extra import ArchitectureChoice
 
 
 class Tags(dict, Enum):
@@ -1140,7 +1141,11 @@ DatasetsGroups = [
                         "shape": (200, 100, 3),
                         "task": LayerInputTypeChoice.Image.value,
                         "num_classes": 3,
-                        "classes_names": ["Parmalat", "Кубанская бурёнка", "Семейный формат"],
+                        "classes_names": [
+                            "Parmalat",
+                            "Кубанская бурёнка",
+                            "Семейный формат",
+                        ],
                         "encoding": LayerEncodingChoice.none.value,
                     }
                 },
@@ -1152,7 +1157,11 @@ DatasetsGroups = [
                         "shape": (3,),
                         "task": LayerOutputTypeChoice.Classification.value,
                         "num_classes": 3,
-                        "classes_names": ["Parmalat", "Кубанская бурёнка", "Семейный формат"],
+                        "classes_names": [
+                            "Parmalat",
+                            "Кубанская бурёнка",
+                            "Семейный формат",
+                        ],
                         "encoding": LayerEncodingChoice.ohe.value,
                     }
                 },
@@ -3734,6 +3743,7 @@ DatasetsGroups = [
             {
                 "alias": "bus_video_tracker",
                 "name": "Видео для трекера",
+                "architecture": ArchitectureChoice.Tracker.name,
                 "group": DatasetGroupChoice.terra.value,
                 "inputs": {
                     1: {
@@ -3768,6 +3778,7 @@ DatasetsGroups = [
             {
                 "alias": "chess_tracker",
                 "name": "Трекер шахматы",
+                "architecture": ArchitectureChoice.Tracker.name,
                 "group": DatasetGroupChoice.terra.value,
                 "inputs": {
                     1: {
