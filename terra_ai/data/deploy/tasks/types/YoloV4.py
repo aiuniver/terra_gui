@@ -51,8 +51,8 @@ class DataList(DataBaseList):
         destination_source = Path(self.preset_path, f"{index + 1}.jpg")
         destination_predict = Path(self.predict_path, f"{index + 1}.jpg")
 
-        Image.open(item.source).save(destination_source)
-        Image.open(item.predict).save(destination_predict)
+        Image.open(Path(self.path_deploy, item.source)).save(destination_source)
+        Image.open(Path(self.path_deploy, item.predict)).save(destination_predict)
 
 
 class Data(DataBase):
