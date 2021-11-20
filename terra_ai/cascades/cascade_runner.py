@@ -29,6 +29,7 @@ class CascadeRunner:
         if os.path.exists(CASCADE_PATH):
             shutil.rmtree(CASCADE_PATH, ignore_errors=True)
             os.makedirs(CASCADE_PATH, exist_ok=True)
+        if not os.path.exists(presets_path):
             os.makedirs(presets_path, exist_ok=True)
 
         type_, model, inputs_ids = self._get_task_type(cascade_data=cascade_data, training_path=training_path)
@@ -209,6 +210,7 @@ class CascadeRunner:
         iter_ = 0
         for source in sources[:3]:
             input_path = os.path.join(source_path, source)
+            print(type_)
             if type_ in [DeployTypeChoice.YoloV3, DeployTypeChoice.YoloV4, DeployTypeChoice.VideoObjectDetection]:
                 if type_ == DeployTypeChoice.VideoObjectDetection:
                     data_type = "video"
