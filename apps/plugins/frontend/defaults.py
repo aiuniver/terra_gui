@@ -12,6 +12,7 @@ from terra_ai.data.training.extra import (
     TasksRelations,
     StateStatusChoice,
 )
+from terra_ai.settings import CASCADE_PATH
 from .base import Field
 from .presets.defaults.training import (
     TrainingLossSelect,
@@ -783,6 +784,14 @@ class DefaultsData(BaseMixinData):
             deploy_model_field.list = options
             if deploy_model_field.value not in values:
                 deploy_model_field.value = values[0] if len(values) else None
+
+        deploy_cascade_fields = self.deploy.type.fields[0].fields.get("cascade")
+        if deploy_cascade_fields:
+            deploy_cascade_field = deploy_cascade_fields[0]
+            deploy_cascade_field.list = [
+                {"value": str(CASCADE_PATH.absolute()), "label": "Текущий каскад"}
+            ]
+            deploy_cascade_field.value = deploy_cascade_field.list[0].get("value")
 
     def update_deploy(self, _type: str, _name: str):
         self.deploy.type.fields[0].value = _type
