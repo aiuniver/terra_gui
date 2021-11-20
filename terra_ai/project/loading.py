@@ -11,11 +11,12 @@ from ..progress import utils as progress_utils
 
 
 PROJECT_LOAD_TITLE = "Загрузка проекта %s"
-PROJECT_LOAD_NAME = "dataset_choice"
+PROJECT_LOAD_NAME = "project_load"
 
 
 @progress.threading
 def load(dataset_path: Path, source: Path, destination: Path):
+    progress.pool.reset(PROJECT_LOAD_NAME, finished=False)
     try:
         zip_filepath = tempfile.NamedTemporaryFile()
         shutil.copy(source, zip_filepath.name)
