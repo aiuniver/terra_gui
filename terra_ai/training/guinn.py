@@ -327,8 +327,8 @@ class GUINN:
         self._set_training_params(dataset=dataset, params=training)
 
         self.model = self._set_model(model=gui_model, train_details=training)
-        if training.state.status == "training":
-            self.save_model(training.model_path)
+        # if training.state.status == "training":
+        #     self.save_model(training.model_path)
 
         self.base_model_fit(training_details=training, dataset=self.dataset, dataset_data=dataset, verbose=0)
 

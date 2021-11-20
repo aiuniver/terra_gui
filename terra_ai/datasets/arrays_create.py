@@ -36,12 +36,6 @@ from tensorflow import maximum as tf_maximum
 from tensorflow import minimum as tf_minimum
 
 
-def print_error(class_name: str, method_name: str, message: Exception):
-    return print(f'\n_________________________________________________\n'
-                 f'Error in class {class_name} method {method_name}: {message}'
-                 f'\n_________________________________________________\n')
-
-
 class CreateArray(object):
 
     @staticmethod
@@ -1468,7 +1462,6 @@ class CreateArray(object):
                 array=array, options=options
             )
         elif options.data.architecture == ArchitectureChoice.DataframeRegression:
-            # print('options.data.architecture == ArchitectureChoice.DataframeRegression')
             return_data = DataframeRegressionCallback.postprocess_deploy(
                 array=array, options=options
             )
