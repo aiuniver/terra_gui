@@ -5,7 +5,6 @@ from tempfile import NamedTemporaryFile
 from terra_ai.agent import agent_exchange
 from terra_ai.data.datasets.dataset import DatasetInfo
 from terra_ai.data.cascades.extra import BlockGroupChoice
-from terra_ai.cascades.cascade_runner import CascadeRunner
 
 from apps.api import utils
 from apps.api.cascades.serializers import (
@@ -128,10 +127,11 @@ class StartProgressAPIView(BaseAPIView):
                         ).dataset.sources
                     }
                 )
-            CascadeRunner().start_cascade(
+            agent_exchange(
+                "cascade_execute",
                 sources=sources,
-                cascade_data=request.project.cascade,
-                path=project_path.training,
+                cascade=request.project.cascade,
+                training_path=project_path.training,
             )
             progress.message = ""
             progress.percent = 0

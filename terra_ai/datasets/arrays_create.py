@@ -36,12 +36,6 @@ from tensorflow import maximum as tf_maximum
 from tensorflow import minimum as tf_minimum
 
 
-def print_error(class_name: str, method_name: str, message: Exception):
-    return print(f'\n_________________________________________________\n'
-                 f'Error in class {class_name} method {method_name}: {message}'
-                 f'\n_________________________________________________\n')
-
-
 class CreateArray(object):
 
     @staticmethod
@@ -990,7 +984,8 @@ class CreateArray(object):
             return 1.0 * inter_area / union_area
 
         if coords:
-            real_boxes = resize_bboxes(options['frame_mode'], coords, options['orig_x'], options['orig_y'])
+            frame_mode = options['frame_mode'] if 'frame_mode' in options.keys() else 'stretch'  # Временное решение
+            real_boxes = resize_bboxes(frame_mode, coords, options['orig_x'], options['orig_y'])
         else:
             real_boxes = [[0, 0, 0, 0, 0]]
 
@@ -1467,7 +1462,6 @@ class CreateArray(object):
                 array=array, options=options
             )
         elif options.data.architecture == ArchitectureChoice.DataframeRegression:
-            # print('options.data.architecture == ArchitectureChoice.DataframeRegression')
             return_data = DataframeRegressionCallback.postprocess_deploy(
                 array=array, options=options
             )

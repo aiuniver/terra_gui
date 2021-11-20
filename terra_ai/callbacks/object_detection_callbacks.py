@@ -112,7 +112,9 @@ class BaseObjectDetectionCallback:
             classes = np.argmax(scores, axis=-1)
             idxs = np.argsort(classes)[..., ::-1]
             mean_iou = []
+            count = 0
             while len(idxs) > 0:
+                count += 1
                 last = len(idxs) - 1
                 i = idxs[last]
                 pick.append(i)
@@ -125,6 +127,7 @@ class BaseObjectDetectionCallback:
                 overlap = (w * h) / area[idxs[:last]]
                 mean_iou.append(overlap)
                 idxs = np.delete(idxs, np.concatenate(([last], np.where(overlap > sensitivity)[0])))
+            # print('\n-- non_max_suppression_fast', count, boxes.shape, boxes[0], scores[0])
             return pick, mean_iou
         except Exception as e:
             print_error(BaseObjectDetectionCallback().name, method_name, e)
@@ -278,6 +281,7 @@ class BaseObjectDetectionCallback:
 
             image_pred.save(save_predict_path)
 
+            return_true_path = ''
             save_true_path = ''
             if add_only_true:
                 image_true = image.copy()
@@ -291,8 +295,8 @@ class BaseObjectDetectionCallback:
                                     label=label, label_size=label_size,
                                     dash_mode=False, show_label=True)
                     del draw
-                save_true_path = ''
-                return_true_path = ""
+                # save_true_path = ''
+                # return_true_path = ""
                 if return_mode == 'deploy':
                     save_true_path = os.path.join(
                         save_path, "deploy_presets", f"{return_mode}_od_true_image_{image_id}.webp")

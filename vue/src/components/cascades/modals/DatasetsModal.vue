@@ -1,10 +1,9 @@
 <template>
-	<at-modal v-model="dialog" width="400" showClose okText="Выбрать" @on-confirm="confirm">
-		<template v-slot:header>Запуск</template>
+	<at-modal v-model="dialog" width="400" okText="Выбрать" @on-confirm="confirm" title="Запуск" :showConfirmButton="isReady" >
 		<div class="t-modal-datasets">
 			<template v-for="(block, idx) in inputBlocks">
 				<t-field :label="block.name" :key="idx">
-					<t-select-new small :list="datasets" style="width: 239px;" v-model="selected[block.id]"/>
+					<t-select-new small :list="datasets" v-model="selected[block.id]" placeholder="Выберите датасет"/>
 				</t-field>
 			</template>
 		</div>	
@@ -40,17 +39,21 @@ export default {
 			datasets: 'cascades/getDatasets'
 		}),
 		inputBlocks() {
-			return this.getBlocks.filter(item => item.group === 'InputData')
+			return this.getBlocks.filter(item => item.group === 'InputData');
+		},
+		isReady() {
+			return Object.keys(this.selected).length === this.inputBlocks.length;
 		}
 	},
 	methods: {
 		async confirm() {
-			await this.$store.dispatch('cascades/start', this.selected)
-			this.createInterval()
+			if (!this.isReady) return this.$store.dispatch('messages/setMessage', { error: 'Выберите датасеты' });
+			this.$store.dispatch('settings/setOverlay', true);
+			await this.$store.dispatch('cascades/start', this.selected);
+			this.createInterval();
 		},
 		createInterval() {
       this.interval = setTimeout(async () => {
-				this.$store.dispatch('settings/setOverlay', true);
         const res = await this.$store.dispatch('cascades/startProgress');
         if (res) {
           const { data } = res;

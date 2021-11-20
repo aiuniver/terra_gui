@@ -212,7 +212,7 @@ class Project(BaseMixinData):
         zip_destination = progress_utils.pack(
             "project_save", "Сохранение проекта", project_path.base, delete=False
         )
-        shutil.move(zip_destination.name, destination_path)
+        shutil.move(zip_destination.name, str(destination_path.absolute()))
         defaults_data.update_models(self.trainings)
 
     def load(self):
@@ -324,18 +324,18 @@ class Project(BaseMixinData):
         if _type == DeployTypePageChoice.model:
             path_model = Path(project_path.training)
         elif _type == DeployTypePageChoice.cascade:
-            path_model = project_path.cascades
+            path_model = None
         deploy = agent_exchange(
             "deploy_get",
             dataset=dataset,
+            page=page,
             path_deploy=path_deploy,
             path_model=path_model,
-            page=page,
         )
-        if deploy:
-            deploy.path_deploy = project_path.deploy
-        shutil.rmtree(project_path.deploy, ignore_errors=True)
-        shutil.move(path_deploy, project_path.deploy)
+        # if deploy:
+        #     deploy.path_deploy = project_path.deploy
+        # shutil.rmtree(project_path.deploy, ignore_errors=True)
+        # shutil.move(path_deploy, project_path.deploy)
         self.deploy = deploy
 
     def clear_dataset(self):
