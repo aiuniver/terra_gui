@@ -1,9 +1,8 @@
 import hashlib
 
-from pathlib import Path
-
 from django.conf import settings
 
+from terra_ai import settings as terra_ai_settings
 from terra_ai.agent import agent_exchange
 
 from apps.api.base import (
@@ -12,7 +11,6 @@ from apps.api.base import (
     BaseResponseErrorFields,
     BaseResponseErrorGeneral,
 )
-from apps.plugins.project import project_path
 
 from . import serializers
 
@@ -50,7 +48,7 @@ class UploadAPIView(BaseAPIView):
         agent_exchange(
             "deploy_upload",
             **{
-                "source": Path(project_path.deploy, "deploy"),
+                "source": terra_ai_settings.DEPLOY_PATH,
                 "stage": 1,
                 "deploy": serializer.validated_data.get("deploy"),
                 "env": "v1",

@@ -440,8 +440,6 @@ class Exchange:
         """
         получение данных для отображения пресетов на странице деплоя
         """
-        shutil.rmtree(settings.DEPLOY_PATH, ignore_errors=True)
-        os.makedirs(settings.DEPLOY_PATH, exist_ok=True)
         return DeployCreator().get_deploy(
             dataset=dataset,
             training_path=training_path,

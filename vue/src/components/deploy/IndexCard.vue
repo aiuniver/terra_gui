@@ -50,6 +50,14 @@
           <ImgCard :imgUrl="card.segment" />
         </div>
       </div>
+      <div v-if="type == 'VideoObjectDetection'">
+        <div class="card__original">
+          <TableVideo :value="card.source" />
+        </div>
+        <div class="card__result">
+          <TableVideo :value="card.predict" />
+        </div>
+      </div>
       <div v-if="type == 'YoloV3' || type == 'YoloV4'">
         <div class="card__original">
           <TableImage size="large" :value="card.source" />
@@ -68,6 +76,7 @@
 
 <script>
 import ImgCard from './cards/ImgCard';
+import TableVideo from './cards/TableVideo';
 import TextCard from './cards/TextCard';
 import AudioCard from './cards/AudioCard';
 import TableTextSegmented from "../training/main/prediction/components/TableTextSegmented";
@@ -78,6 +87,7 @@ export default {
   name: 'IndexCard',
   components: {
     ImgCard,
+    TableVideo,
     TextCard,
     GraphicCard,
     AudioCard,

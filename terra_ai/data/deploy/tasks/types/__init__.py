@@ -9,6 +9,7 @@ from . import (
     DataframeClassification,
     Timeseries,
     TimeseriesTrend,
+    VideoObjectDetection,
     YoloV3,
     YoloV4,
 )

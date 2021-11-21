@@ -7,7 +7,7 @@ from terra_ai.data.datasets.extra import LayerInputTypeChoice
 
 
 class ParametersMainData(BaseMixinData):
-    type: LayerInputTypeChoice = LayerInputTypeChoice.Image
+    type: LayerInputTypeChoice = LayerInputTypeChoice.Video
     switch_on_frame: bool = True
 
     def __init__(self, **data):

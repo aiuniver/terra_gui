@@ -1,8 +1,13 @@
 import json
 import os
-from typing import List, Dict
+import shutil
+
+import moviepy.editor as moviepy_editor
+
+from typing import List, Dict, Any
 from pathlib import Path
 
+from PIL.Image import Image
 from pydantic.color import Color
 
 from terra_ai.cascades.common import decamelize
@@ -12,48 +17,56 @@ from terra_ai.data.cascades.cascade import CascadeDetailsData
 from terra_ai.data.cascades.extra import BlockGroupChoice
 from terra_ai.data.datasets.extra import LayerInputTypeChoice
 from terra_ai.data.deploy.extra import DeployTypeChoice
+from terra_ai.deploy.create_deploy_package import CascadeCreator
+from terra_ai.settings import DEPLOY_PATH
 
 
 class CascadeRunner:
 
     def start_cascade(self, cascade_data: CascadeDetailsData, training_path: Path,
-                      deply_path: Path, sources: Dict[int, List[str]]):
-        script_name, model, inputs_ids = self._get_task_type(cascade_data=cascade_data, training_path=training_path)
-        print(script_name)
-        dataset_path = os.path.join(training_path, model, "model", "dataset")
+                      sources: Dict[int, List[str]]):
 
+        presets_path = os.path.join(DEPLOY_PATH, "deploy_presets")
+
+        if os.path.exists(DEPLOY_PATH):
+            shutil.rmtree(DEPLOY_PATH, ignore_errors=True)
+            os.makedirs(DEPLOY_PATH, exist_ok=True)
+        if not os.path.exists(presets_path):
+            os.makedirs(presets_path, exist_ok=True)
+
+        type_, model, inputs_ids = self._get_task_type(cascade_data=cascade_data, training_path=training_path)
+        print(type_)
+        dataset_path = os.path.join(training_path, model, "model", "dataset")
         with open(os.path.join(dataset_path, "config.json"), "r", encoding="utf-8") as dataset_config:
             dataset_config_data = json.load(dataset_config)
+
+        model_path = Path(os.path.join(training_path, model, "model"))
+        config = CascadeCreator()
+        config.copy_model(deploy_path=DEPLOY_PATH, model_path=model_path)
 
         model_task = list(set([val.get("task") for key, val in dataset_config_data.get("outputs").items()]))[0]
 
         cascade_config = self._create_config(cascade_data=cascade_data, model_task=model_task,
-                                             dataset_data=dataset_config_data)
+                                             dataset_data=dataset_config_data, presets_path=presets_path)
         print(cascade_config)
         main_block = json2cascade(path=os.path.join(training_path, model), cascade_config=cascade_config, mode="run")
 
-        i = 0
-        presets_data = []
-        for source in sources.get(inputs_ids[0])[:2]:
-            print(source)
-            if "text" in script_name:
-                with open("test.txt", "w", encoding="utf-8") as f:
-                    f.write(source)
-                input_path = "test.txt"
-            else:
-                input_path = os.path.join(dataset_path, source)
-            if "segmentation" in script_name or "object_detection" in script_name:
-                output_path = f"F:\\tmp\\ttt\\source{i}.webm"
-                main_block(input_path=input_path, output_path=output_path)
-                presets_data.append({
-                    "source": source,
-                    "detection": output_path
-                })
-            else:
-                main_block(input_path=input_path)
-            print(main_block.out)
-            i += 1
+        sources = sources.get(inputs_ids[0])
+
+        presets_data = self._get_presets(sources=sources, type_=type_, cascade=main_block,
+                                         source_path=Path(dataset_path),
+                                         predict_path=str(DEPLOY_PATH))
         print(presets_data)
+
+        out_data = dict([
+            ("path_deploy", str(DEPLOY_PATH)),
+            ("type", type_),
+            ("data", presets_data)
+        ])
+
+        with open(os.path.join(presets_path, "presets_config.json"), "w", encoding="utf-8") as config:
+            json.dump(out_data, config)
+
         return cascade_config
 
     @staticmethod
@@ -68,14 +81,14 @@ class CascadeRunner:
         with open(os.path.join(training_path, model, "config.json"),
                   "r", encoding="utf-8") as training_config:
             training_details = json.load(training_config)
-        deploy_type = training_details.get("base").get("architecture").get("type")
-        print(DeployTypeChoice(deploy_type))
-        if "Yolo" in deploy_type:
-            deploy_type = "ObjectDetection"
+        deploy_type = DeployTypeChoice(training_details.get("base").get("architecture").get("type"))
+        if deploy_type in [DeployTypeChoice.YoloV3, DeployTypeChoice.YoloV4]:
+            deploy_type = DeployTypeChoice.VideoObjectDetection
 
-        return decamelize(deploy_type), model, _inputs
+        return deploy_type, model, _inputs
 
-    def _create_config(self, cascade_data: CascadeDetailsData, model_task: str, dataset_data: dict):
+    def _create_config(self, cascade_data: CascadeDetailsData, model_task: str,
+                       dataset_data: dict, presets_path: str):
 
         classes = list(dataset_data.get("outputs").values())[0].get("classes_names")
         num_class = list(dataset_data.get("outputs").values())[0].get("num_classes")
@@ -173,6 +186,10 @@ class CascadeRunner:
 
             config["cascades"].update(block_description)
         config.update({"adjacency_map": adjacency_map})
+
+        with open(os.path.join(presets_path, "cascade_config.json"), "w", encoding="utf-8") as cascade_config:
+            json.dump(config, cascade_config)
+
         return config
 
     @staticmethod
@@ -190,3 +207,52 @@ class CascadeRunner:
         if _input:
             mapping.append(_input)
         return mapping
+
+    def _get_presets(self, sources: List[Any], type_: DeployTypeChoice, cascade: Any,
+                     source_path: Path, predict_path: str):
+
+        out_data = []
+        iter_ = 0
+        for source in sources[:3]:
+            input_path = os.path.join(source_path, source)
+            print(type_)
+            if type_ in [DeployTypeChoice.YoloV3, DeployTypeChoice.YoloV4, DeployTypeChoice.VideoObjectDetection]:
+                if type_ == DeployTypeChoice.VideoObjectDetection:
+                    data_type = "video"
+                    predict_file_name = f"deploy_presets/result_{iter_}.webm"
+                    source_file_name = f"deploy_presets/initial_{iter_}.webm"
+                else:
+                    data_type = "image"
+                    predict_file_name = f"deploy_presets/result_{iter_}.webp"
+                    source_file_name = f"deploy_presets/initial_{iter_}.webp"
+
+                output_path = os.path.join(predict_path, predict_file_name)
+                self._save_web_format(initial_path=input_path,
+                                      deploy_path=os.path.join(predict_path, source_file_name),
+                                      source_type=data_type)
+                cascade(input_path=input_path, output_path=output_path)
+                out_data.append({
+                    "source": source_file_name,
+                    "predict": predict_file_name
+                })
+            if type_ in [DeployTypeChoice.ImageSegmentation]:
+                input_path = os.path.join(source_path, source)
+                file_name = f"example_{iter_}.webm"
+                output_path = os.path.join(predict_path, file_name)
+                cascade(input_path=input_path, output_path=output_path)
+                out_data.append({
+                    "source": source,
+                    "predict": output_path
+                })
+            iter_ += 1
+
+        return {"data": out_data}
+
+    @staticmethod
+    def _save_web_format(initial_path: str, deploy_path: str, source_type: str):
+        if source_type == "image":
+            img = Image.open(initial_path)
+            img.save(deploy_path, 'webp')
+        elif source_type == "video":
+            clip = moviepy_editor.VideoFileClip(initial_path)
+            clip.write_videofile(deploy_path)

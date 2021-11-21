@@ -165,7 +165,7 @@ class BlocksBindChoice(Enum):
     PostprocessBoxes = ("PostprocessBoxes", (BlockGroupChoice.Model,
                                              BlockGroupChoice.InputData), (LayerInputTypeChoice.Image,))
     PlotBBoxes = ("PlotBBoxes", ((BlockFunctionTypeChoice.PostprocessBoxes,
-                                  BlockCustomTypeChoice.Sort),
+                                  BlockCustomTypeChoice.Sort, BlockServiceTypeChoice.BiTBasedTracker),
                                  BlockGroupChoice.InputData), (LayerInputTypeChoice.Image,))
 
     def __init__(self, name, binds, data_type):
