@@ -281,6 +281,7 @@ class BaseObjectDetectionCallback:
             image_pred.save(save_predict_path)
 
             save_true_path = ''
+            return_true_path = ""
             if add_only_true:
                 image_true = image.copy()
                 classes = np.argmax(true_bb[:, 5:], axis=-1)
@@ -293,8 +294,6 @@ class BaseObjectDetectionCallback:
                                     label=label, label_size=label_size,
                                     dash_mode=False, show_label=True)
                     del draw
-                save_true_path = ''
-                return_true_path = ""
                 if return_mode == 'deploy':
                     save_true_path = os.path.join(
                         save_path, "deploy_presets", f"{return_mode}_od_true_image_{image_id}.webp")
