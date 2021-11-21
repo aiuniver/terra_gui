@@ -604,7 +604,8 @@ def get_image_class_colormap(array: np.ndarray, colors: list, class_id: int, sav
             np.array(colors[class_id]) if np.sum(np.array(colors[class_id])) > 50 else np.array((255, 255, 255)),
             np.array((0, 0, 0))
         )
-        array = (np.sum(array, axis=0) / len(array)).astype("uint8")
+        # array = (np.sum(array, axis=0) / len(array)).astype("uint8")
+        array = (np.sum(array, axis=0) * 255 / np.sum(array, axis=0).max()).astype("uint8")
         matplotlib.image.imsave(save_path, array)
     except Exception as e:
         print_error(f"None ({MODULE_NAME})", method_name, e)
