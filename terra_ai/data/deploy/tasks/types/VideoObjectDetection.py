@@ -46,8 +46,8 @@ class DataList(DataBaseList):
         item = random.choice(self)
         self.preset[index] = item
 
-        destination_source = Path(self.preset_path, f"{index + 1}.jpg")
-        destination_predict = Path(self.predict_path, f"{index + 1}.jpg")
+        destination_source = Path(self.preset_path, f"{index + 1}.webm")
+        destination_predict = Path(self.predict_path, f"{index + 1}.webm")
 
         shutil.copyfile(Path(self.path_deploy, item.source), destination_source)
         shutil.copyfile(Path(self.path_deploy, item.predict), destination_predict)
