@@ -240,7 +240,7 @@ class Sort:
 
 class BiTBasedTracker:
     def __init__(
-            self, distance_threshold: float = 0.15, max_age: int = 5
+            self, distance_threshold: float = 0.15, max_age: int = 5, metric: str = ""
     ):
         self.distance_threshold = distance_threshold
         self.max_age = max_age

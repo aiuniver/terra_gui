@@ -99,22 +99,29 @@ class CascadeCreator:
     def copy_package(deploy_path: Path, model_path: Path):
         if os.path.exists(os.path.join(deploy_path, "cascades")):
             shutil.rmtree(os.path.join(deploy_path, "cascades"), ignore_errors=True)
-        if os.path.exists(os.path.join(deploy_path, "model")):
-            shutil.rmtree(os.path.join(deploy_path, "model"), ignore_errors=True)
         shutil.copytree("terra_ai/cascades",
                         os.path.join(deploy_path, "cascades"),
                         ignore=shutil.ignore_patterns("demo_panel", "cascades"))
+        shutil.copyfile("terra_ai/datasets/preprocessing.py",
+                        os.path.join(deploy_path, "cascades", "preprocessing.py"))
+
+    @staticmethod
+    def copy_model(deploy_path: Path, model_path: Path):
+        if os.path.exists(os.path.join(deploy_path, "model")):
+            shutil.rmtree(os.path.join(deploy_path, "model"), ignore_errors=True)
         shutil.copytree(model_path,
                         os.path.join(deploy_path, "model"),
                         ignore=shutil.ignore_patterns("deploy_presets", "interactive.history",
                                                       "config.presets", "config.train", "log.history"))
-        shutil.copyfile("terra_ai/datasets/preprocessing.py",
-                        os.path.join(deploy_path, "cascades", "preprocessing.py"))
 
     @staticmethod
     def copy_script(deploy_path, function_name):
         shutil.copyfile(f"terra_ai/deploy/deploy_scripts/{function_name}.py",
                         os.path.join(deploy_path, "script.py"))
+
+    @staticmethod
+    def copy_config(deploy_path, config_path):
+        shutil.copyfile(config_path, os.path.join(deploy_path, "config.cascade"))
 
 
 if __name__ == "__main__":

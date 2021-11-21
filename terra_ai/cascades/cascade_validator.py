@@ -4,7 +4,7 @@ from pathlib import Path
 
 from terra_ai.data.cascades.cascade import CascadeDetailsData
 from terra_ai.data.cascades.extra import BlockGroupChoice
-from terra_ai.data.cascades.blocks.extra import BlocksBindChoice
+from terra_ai.data.cascades.blocks.extra import BlocksBindChoice, BlockServiceTypeChoice
 from terra_ai.data.datasets.extra import LayerInputTypeChoice
 from terra_ai.exceptions import cascades as exceptions
 
@@ -17,8 +17,12 @@ class CascadeValidator:
             model_data_type = list(set([val.get("task") for key, val in models[0].get("inputs").items()]))[0]
             result = self._check_bind_and_data(cascade_data=cascade_data, model_data_type=model_data_type)
         else:
-            result = self._add_error(errors={}, block_id=1,
-                                     error=str(exceptions.RequiredBlockMissingException(BlockGroupChoice.Model)))
+            instead_block, model_data_type = self._search_block_instead_of_model(cascade_data=cascade_data)
+            if instead_block:
+                result = self._check_bind_and_data(cascade_data=cascade_data, model_data_type=model_data_type)
+            else:
+                result = self._add_error(errors={}, block_id=1,
+                                         error=str(exceptions.RequiredBlockMissingException(BlockGroupChoice.Model)))
         print(result)
         return result
 
@@ -39,11 +43,14 @@ class CascadeValidator:
         bind_errors = dict()
         blocks = cascade_data.blocks
         named_map = self._create_bind_named_map(cascade_data=cascade_data)
+        video_by_frame = False
         for block in blocks:
             if block.group == BlockGroupChoice.InputData:
                 if block.bind.up or not block.bind.down:
                     bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
                                                   error=str(exceptions.BlockNotConnectedToMainPartException()))
+                if block.parameters.main.switch_on_frame:
+                    video_by_frame = True
                 # if block.parameters.main.type != dataset_data_type:
                 #     bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
                 #                                   error=str(exceptions.DatasetDataDoesNotMatchInputDataException(
@@ -63,10 +70,12 @@ class CascadeValidator:
                     bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
                                                   error=str(exceptions.BlockNotConnectedToMainPartException()))
                 if block.parameters.main.type != model_data_type:
-                    bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
-                                                  error=str(exceptions.UsedDataDoesNotMatchBlockDataException(
-                                                      block.parameters.main.type.value, model_data_type
-                                                  )))
+                    if block.parameters.main.type == LayerInputTypeChoice.Video and \
+                            not video_by_frame and model_data_type == LayerInputTypeChoice.Image:
+                        bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
+                                                      error=str(exceptions.UsedDataDoesNotMatchBlockDataException(
+                                                          block.parameters.main.type.value, model_data_type
+                                                      )))
             else:
                 if not block.bind.up or not block.bind.down:
                     bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
@@ -157,3 +166,11 @@ class CascadeValidator:
             return input_block, checked_block
         else:
             return None, None
+
+    @staticmethod
+    def _search_block_instead_of_model(cascade_data: CascadeDetailsData):
+        for block in cascade_data.blocks:
+            if block.parameters.main.type == BlockServiceTypeChoice.YoloV5:
+                type_ = BlocksBindChoice.checked_block(input_block=block.parameters.main.type).data_type
+                return True, type_
+        return False, None

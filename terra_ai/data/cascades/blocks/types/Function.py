@@ -13,8 +13,8 @@ from terra_ai.data.cascades.blocks.extra import (
 
 
 class ParametersMainData(BaseMixinData):
-    group: BlockFunctionGroupChoice
-    type: Optional[BlockFunctionTypeChoice]
+    group: BlockFunctionGroupChoice = BlockFunctionGroupChoice.ObjectDetection
+    type: Optional[BlockFunctionTypeChoice] = BlockFunctionTypeChoice.PostprocessBoxes
     change_type: Optional[ChangeTypeAvailableChoice] = ChangeTypeAvailableChoice.int
     shape: Optional[List[PositiveInt]]
     min_scale: Optional[confloat(ge=0, le=1)] = 0

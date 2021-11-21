@@ -177,7 +177,7 @@ In [7]: print(data.json(indent=2, ensure_ascii=False))
 import os
 import json
 
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from pandas import read_csv
 from datetime import datetime
 from typing import Optional, Dict, List, Tuple, Any
@@ -318,10 +318,13 @@ class DatasetData(AliasMixinData):
             if column.split("_")[-1].title() in ["Image", "Text", "Audio", "Video"]:
                 out = list(
                     map(
-                        lambda item: str(Path(self.path, item).absolute()),
+                        lambda item: str(
+                            Path(self.path, PureWindowsPath(item).as_posix())
+                        ),
                         sources[column].to_list(),
                     )
                 )
+        print(out)
         return out
 
     @property

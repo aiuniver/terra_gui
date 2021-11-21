@@ -325,8 +325,7 @@ def _run_choice_method(
         )
 
 
-@progress.threading
-def choice(
+def choice_no_thread(
     progress_name: str, dataset_choice: DatasetLoadData, reset_model: bool = False
 ):
     _method = getattr(
@@ -348,6 +347,13 @@ def choice(
         )
     else:
         raise DatasetChoiceUndefinedMethodException(dataset_choice.group.value)
+
+
+@progress.threading
+def choice(
+    progress_name: str, dataset_choice: DatasetLoadData, reset_model: bool = False
+):
+    choice_no_thread(progress_name, dataset_choice, reset_model)
 
 
 @progress.threading

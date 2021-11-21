@@ -34,11 +34,13 @@ TRAINING_INTERMEDIATE_DIRNAME = "intermediate"
 # Cascade
 CASCADE_EXT = "cascade"
 CASCADE_CONFIG = "config.json"
+CASCADE_PATH = Path(TMP_DIR, "cascade")
 
 # Deploy
 DEPLOY_URL = "https://srv1.demo.neural-university.ru/autodeployterra_upload/"
 DEPLOY_PRESET_COUNT = 10
 DEPLOY_PRESET_PERCENT = 20
+DEPLOY_PATH = Path(TMP_DIR, "deploy")
 
 CALLBACK_CLASSIFICATION_TREASHOLD_VALUE = 90
 CALLBACK_REGRESSION_TREASHOLD_VALUE = 2
