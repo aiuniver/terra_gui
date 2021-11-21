@@ -17,7 +17,8 @@ from terra_ai.data.cascades.cascade import CascadeDetailsData
 from terra_ai.data.cascades.extra import BlockGroupChoice
 from terra_ai.data.datasets.extra import LayerInputTypeChoice
 from terra_ai.data.deploy.extra import DeployTypeChoice
-from terra_ai.settings import CASCADE_PATH
+from terra_ai.deploy.create_deploy_package import CascadeCreator
+from terra_ai.settings import DEPLOY_PATH
 
 
 class CascadeRunner:
@@ -25,19 +26,23 @@ class CascadeRunner:
     def start_cascade(self, cascade_data: CascadeDetailsData, training_path: Path,
                       sources: Dict[int, List[str]]):
 
-        presets_path = os.path.join(CASCADE_PATH, "deploy_presets")
-        if os.path.exists(CASCADE_PATH):
-            shutil.rmtree(CASCADE_PATH, ignore_errors=True)
-            os.makedirs(CASCADE_PATH, exist_ok=True)
+        presets_path = os.path.join(DEPLOY_PATH, "deploy_presets")
+
+        if os.path.exists(DEPLOY_PATH):
+            shutil.rmtree(DEPLOY_PATH, ignore_errors=True)
+            os.makedirs(DEPLOY_PATH, exist_ok=True)
         if not os.path.exists(presets_path):
             os.makedirs(presets_path, exist_ok=True)
 
         type_, model, inputs_ids = self._get_task_type(cascade_data=cascade_data, training_path=training_path)
         print(type_)
         dataset_path = os.path.join(training_path, model, "model", "dataset")
-
         with open(os.path.join(dataset_path, "config.json"), "r", encoding="utf-8") as dataset_config:
             dataset_config_data = json.load(dataset_config)
+
+        model_path = Path(os.path.join(training_path, model, "model"))
+        config = CascadeCreator()
+        config.copy_model(deploy_path=DEPLOY_PATH, model_path=model_path)
 
         model_task = list(set([val.get("task") for key, val in dataset_config_data.get("outputs").items()]))[0]
 
@@ -50,11 +55,11 @@ class CascadeRunner:
 
         presets_data = self._get_presets(sources=sources, type_=type_, cascade=main_block,
                                          source_path=Path(dataset_path),
-                                         predict_path=CASCADE_PATH)
+                                         predict_path=str(DEPLOY_PATH))
         print(presets_data)
 
         out_data = dict([
-            ("path_deploy", str(CASCADE_PATH)),
+            ("path_deploy", str(DEPLOY_PATH)),
             ("type", type_),
             ("data", presets_data)
         ])

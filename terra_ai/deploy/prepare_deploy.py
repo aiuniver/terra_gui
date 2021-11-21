@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 from pathlib import Path
 
 from tensorflow.keras.models import load_model
@@ -14,18 +15,26 @@ from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.exceptions.deploy import MethodNotImplementedException
 from terra_ai.training.yolo_utils import create_yolo
-from terra_ai.settings import CASCADE_PATH
+from terra_ai.settings import DEPLOY_PATH
 
 
 class DeployCreator:
 
     def get_deploy(self, training_path: Path, dataset: DatasetData, deploy_path: Path, page: dict):
+        model_path = Path(os.path.join(training_path, page.get("name"), "model"))
+        presets_path = os.path.join(DEPLOY_PATH, "deploy_presets")
+
         if page.get("type") == "model":
+            if os.path.exists(DEPLOY_PATH):
+                shutil.rmtree(DEPLOY_PATH, ignore_errors=True)
+                os.makedirs(DEPLOY_PATH, exist_ok=True)
+            if not os.path.exists(presets_path):
+                os.makedirs(presets_path, exist_ok=True)
+
             with open(os.path.join(training_path, page.get("name"), "config.json"),
                       "r", encoding="utf-8") as training_config:
                 training_details = json.load(training_config)
 
-            model_path = Path(os.path.join(training_path, page.get("name"), "model"))
             dataset_config_data = dataset.native()
             dataset_config_data.update({"path": dataset.path})
             deploy_type = training_details.get("base").get("architecture").get("type")
@@ -48,7 +57,7 @@ class DeployCreator:
                 predict = model.predict(dataset.X.get('val'), batch_size=training_details.get("base").get("batch"))
 
             presets = self._get_presets(predict=predict, dataset_data=dataset_data,
-                                        dataset=dataset, deploy_path=model_path)
+                                        dataset=dataset, deploy_path=DEPLOY_PATH)
 
             if "Dataframe" in deploy_type:
                 self._create_form_data_for_dataframe_deploy(deploy_path=deploy_path,
@@ -61,14 +70,29 @@ class DeployCreator:
                                                deploy_path=deploy_path, model_path=model_path,
                                                deploy_type=deploy_type)
         else:
-            with open(os.path.join(CASCADE_PATH,
+            with open(os.path.join(DEPLOY_PATH,
                                    "deploy_presets",
                                    "presets_config.json"), "r", encoding="utf-8") as presets_config:
                 deploy_data = json.load(presets_config)
 
+            cascade = CascadeCreator()
+            cascade.copy_config(
+                deploy_path=Path(deploy_path),
+                config_path=Path(os.path.join(DEPLOY_PATH,
+                                              "deploy_presets",
+                                              "cascade_config.json"))
+            )
+            cascade.copy_package(
+                deploy_path=Path(deploy_path),
+                model_path=model_path
+            )
+            cascade.copy_script(
+                deploy_path=Path(deploy_path),
+                function_name="video_object_detection"
+            )
+
         deploy_data.update({"page": page})
-        print(deploy_data)
-        print(DeployData(**deploy_data).json(indent=2))
+
         return DeployData(**deploy_data)
 
     @staticmethod
@@ -155,6 +179,10 @@ class DeployCreator:
                 func_name=func_name
             )
             config.copy_package(
+                deploy_path=Path(deploy_path),
+                model_path=Path(model_path)
+            )
+            config.copy_model(
                 deploy_path=Path(deploy_path),
                 model_path=Path(model_path)
             )
