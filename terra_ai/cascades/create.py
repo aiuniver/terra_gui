@@ -205,6 +205,8 @@ def create_model(**params):
 
 
 def create_function(**params):
+    if "params" not in params.keys():
+        params['params'] = {}
     function = getattr(general_fucntions, decamelize(params['task']))
     function = CascadeElement(
         getattr(function, params['name'])(**params['params']),
