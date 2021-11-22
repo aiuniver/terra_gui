@@ -19,8 +19,10 @@ def validate_project_path(value) -> Path:
     if value is None:
         return value
     value = Path(value)
-    if not str(value).startswith(f"{project_path.base}/") and not str(value).startswith(
-        f"{terra_ai_settings.CASCADE_PATH}/"
+    if (
+        not str(value).startswith(f"{project_path.base}/")
+        and not str(value).startswith(f"{terra_ai_settings.CASCADE_PATH}/")
+        and not str(value).startswith(f"{terra_ai_settings.DEPLOY_PATH}/")
     ):
         raise ValidationError(f"Файл {value} запрещен для вывода")
     return value
