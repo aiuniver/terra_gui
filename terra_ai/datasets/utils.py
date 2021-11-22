@@ -765,7 +765,6 @@ def make_tracker_dataset(source_path, dst_path, bboxes, frame_mode):
 
     img_path = os.path.join(source_path, 'Images')
     tmp_directory = tempfile.mkdtemp()
-    os.mkdir(tmp_directory)
     ims1 = []
     ims2 = []
     classes = []
@@ -794,6 +793,14 @@ def make_tracker_dataset(source_path, dst_path, bboxes, frame_mode):
             ims1.append(os.path.join(f'frame_{idx}', f'crop_{anns1.index(a1)}.jpeg'))
             ims2.append(os.path.join(f'frame_{idx + 1}', f'crop_{anns2.index(a2)}.jpeg'))
         idx += 1
+
+    for j, ann in enumerate(bboxes[-1]):
+        crop = make_crop(os.path.join(img_path, sorted(os.listdir(img_path))[-1]), ann)
+        cv2.imwrite(os.path.join(tmp_directory, f'frame_{len(bboxes)}', f'crop_{j}.jpeg'), crop)
+        if crop.shape[0] > height:
+            height = crop.shape[0]
+        if crop.shape[1] > width:
+            width = crop.shape[1]
 
     for dir in os.listdir(tmp_directory):
         for im_name in os.listdir(os.path.join(tmp_directory, dir)):
