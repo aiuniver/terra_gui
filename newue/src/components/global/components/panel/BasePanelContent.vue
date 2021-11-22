@@ -36,7 +36,7 @@ export default {
   &-content {
     margin-bottom: 42px;
     &__header {
-      padding: 10px 20px;
+      padding: 18px 20px 14px 20px;
       border-top: 1px solid $color-black;
       border-bottom: 1px solid $color-black;
       h3 {
