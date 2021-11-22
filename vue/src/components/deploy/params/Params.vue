@@ -191,12 +191,15 @@ export default {
       const name = this.parameters?.name || '';
       if (type && name) {
         const res = await this.$store.dispatch('deploy/DownloadSettings', { type, name });
-        if (res?.success) this.debounce(true);
+        if (res?.success) {
+          this.$store.dispatch('settings/setOverlay', true);
+          this.debounce(true);
+        }
       }
     },
     async progressGet() {
       const res = await this.$store.dispatch('deploy/progress', {});
-      console.log(res)
+      console.log(res);
       if (res && res?.data) {
         const { finished, message, percent } = res.data;
         this.$store.dispatch('messages/setProgressMessage', message);
@@ -204,9 +207,13 @@ export default {
         if (!finished) {
           this.debounce(true);
         } else {
+          this.$store.dispatch('settings/setOverlay', false);
           this.$store.dispatch('projects/get');
           this.load = true;
         }
+      }
+      if (res?.error) {
+        this.$store.dispatch('settings/setOverlay', false);
       }
     },
     parse({ id, value, name, root }) {
@@ -310,6 +317,7 @@ export default {
   },
   beforeDestroy() {
     this.debounce(false);
+    this.$store.dispatch('deploy/clear');
   },
   watch: {
     params() {

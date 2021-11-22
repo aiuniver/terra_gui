@@ -85,6 +85,11 @@ export default {
     setStateParams ({ commit, state: { stateParams } }, data) {
       commit("SET_STATE_PARAMS", { ...stateParams, ...data });
     },
+    clear ({ commit }) {
+      commit("SET_DEPLOY", {});
+      commit("SET_CARDS", []);
+      commit("SET_DEPLOY_TYPE", []);
+    },
   },
   getters: {
     getParams ({ form }) {
