@@ -65,10 +65,9 @@ export default {
         const { data, error } = res;
         if (data) {
           if (data?.finished) {
-            const { data } = data
-            commit("SET_DEPLOY", data?.data || {});
-            commit("deploy/SET_CARDS", data?.data?.data || [], { root: true });
-            commit("SET_DEPLOY_TYPE", data?.type || []);
+            commit("SET_DEPLOY", data?.data?.data || {});
+            commit("deploy/SET_CARDS", data?.data?.data?.data || [], { root: true });
+            commit("SET_DEPLOY_TYPE", data?.data?.type || []);
           }
         }
         if (error) {

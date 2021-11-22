@@ -191,8 +191,7 @@ export default {
       const name = this.parameters?.name || '';
       if (type && name) {
         const res = await this.$store.dispatch('deploy/DownloadSettings', { type, name });
-        if (res?.data) this.load = true;
-        this.debounce(true);
+        if (res?.success) this.debounce(true);
       }
     },
     async progressGet() {
@@ -202,12 +201,11 @@ export default {
         const { finished, message, percent } = res.data;
         this.$store.dispatch('messages/setProgressMessage', message);
         this.$store.dispatch('messages/setProgress', percent);
-        // this.stopLearning = !this.isLearning;
         if (!finished) {
           this.debounce(true);
         } else {
-          // this.$store.dispatch('projects/get');
-          // this.stopLearning = false;
+          this.$store.dispatch('projects/get');
+          this.load = true;
         }
       }
     },
