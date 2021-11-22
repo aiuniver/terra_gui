@@ -21,6 +21,7 @@ from terra_ai.settings import DEPLOY_PATH
 class DeployCreator:
 
     def get_deploy(self, training_path: Path, dataset: DatasetData, deploy_path: Path, page: dict):
+
         model_path = Path(os.path.join(training_path, page.get("name"), "model"))
         presets_path = os.path.join(DEPLOY_PATH, "deploy_presets")
 
@@ -111,6 +112,9 @@ class DeployCreator:
         for i in os.listdir(model_path):
             if i[-3:] == '.h5' and 'best' in i:
                 weight = i
+            if not weight:
+                if i[-3:] == '.h5':
+                    weight = i
         if weight:
             model.load_weights(os.path.join(model_path, weight))
             out_model = model

@@ -113,7 +113,7 @@ class GUINN:
         return output
 
     def _set_training_params(self, dataset: DatasetData, params: TrainingDetailsData) -> None:
-        print('\nTrainingData', params.base.native(), '\n')
+        # print('\nTrainingData', params.base.native(), '\n')
         self.dataset = self._prepare_dataset(dataset=dataset, model_path=params.model_path,
                                              state=params.state.status)
 
@@ -223,7 +223,7 @@ class GUINN:
         prepared_dataset = PrepareDataset(data=dataset, datasets_path=dataset.path)
         prepared_dataset.prepare_dataset()
         if state != "addtrain":
-            prepared_dataset.deploy_export(os.path.join(model_path, "dataset"))
+            prepared_dataset.deploy_export(model_path)
 
         return prepared_dataset
 
