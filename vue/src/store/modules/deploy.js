@@ -55,15 +55,27 @@ export default {
       }
       return data.finished;
     },
-    async DownloadSettings ({ dispatch, commit }, data) {
+    async DownloadSettings ({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/deploy/get/', data }, { root: true });
+      return res
+    },
+    async progress ({ dispatch, commit }, data) {
+      const res = await dispatch('axios', { url: '/deploy/get/progress/', data }, { root: true });
       if (res) {
-        const { data } = res
-        commit("SET_DEPLOY", data?.data || {});
-        commit("deploy/SET_CARDS", data?.data?.data || [], { root: true });
-        commit("SET_DEPLOY_TYPE", data?.type || []);
+        const { data, error } = res;
+        if (data) {
+          if (data?.finished) {
+            const { data } = data
+            commit("SET_DEPLOY", data?.data || {});
+            commit("deploy/SET_CARDS", data?.data?.data || [], { root: true });
+            commit("SET_DEPLOY_TYPE", data?.type || []);
+          }
+        }
+        if (error) {
+          dispatch('messages/setMessage', { error: error }, { root: true });
+          dispatch('logging/setError', JSON.stringify(error, null, 2), { root: true });
+        }
       }
-      await dispatch('projects/get', {}, { root: true });
       return res
     },
     async ReloadCard ({ commit, dispatch }, values) {
