@@ -7,7 +7,8 @@ from django.conf import settings
 
 from terra_ai import settings as terra_ai_settings
 from terra_ai.agent import agent_exchange
-from terra_ai.data.datasets.dataset import DatasetLoadData
+from terra_ai.deploy.prepare_deploy import DeployCreator
+from terra_ai.data.datasets.dataset import DatasetInfo, DatasetLoadData
 from terra_ai.data.deploy.tasks import DeployPageData
 from terra_ai.data.deploy.extra import DeployTypePageChoice
 
@@ -45,16 +46,22 @@ class GetAPIView(BaseAPIView):
 
 class GetProgressAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        progress = agent_exchange("deploy_get")
-
-        # request.project.set_deploy(
-        #     dataset=request.project.dataset, page=serializer.validated_data
-        # )
-        # return BaseResponseSuccess(
-        #     request.project.deploy.presets if request.project.deploy else None
-        # )
-
+        progress = agent_exchange("deploy_get_progress")
         if progress.success:
+            if progress.finished:
+                progress.percent = 0
+                progress.message = ""
+                dataset_data = progress.data.get("datasets")[0]
+                progress.data = (
+                    DeployCreator()
+                    .get_deploy(
+                        dataset=DatasetInfo(**dataset_data.native()).dataset,
+                        training_path=project_path.training,
+                        deploy_path=terra_ai_settings.DEPLOY_PATH,
+                        page=progress.data.get("kwargs", {}).get("page").native(),
+                    )
+                    .presets
+                )
             return BaseResponseSuccess(data=progress.native())
         else:
             return BaseResponseErrorGeneral(progress.error, data=progress.native())

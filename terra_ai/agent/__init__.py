@@ -1,7 +1,6 @@
 import os
 import json
 import shutil
-import tempfile
 
 import pynvml
 import tensorflow
@@ -13,7 +12,6 @@ from . import exceptions as agent_exceptions
 from . import utils as agent_utils
 from .. import settings, progress
 from ..cascades.cascade_validator import CascadeValidator
-from ..deploy.prepare_deploy import DeployCreator
 from ..exceptions import tensor_flow as tf_exceptions
 from ..data.datasets.creation import FilePathSourcesList
 from ..data.datasets.creation import SourceData, CreationData
@@ -40,7 +38,6 @@ from ..data.training.train import TrainingDetailsData
 from ..data.training.extra import StateStatusChoice
 from ..data.cascades.extra import BlockGroupChoice
 from ..data.deploy.tasks import DeployData, DeployPageData
-from ..data.deploy.extra import DeployTypePageChoice
 from ..datasets import loading as datasets_loading
 from ..datasets import utils as datasets_utils
 from ..datasets.creating import CreateDataset
@@ -437,21 +434,12 @@ class Exchange:
         """
         Получение данных для отображения пресетов на странице деплоя
         """
-        print(datasets)
-        # datasets = []
-        # print(Path(dataset.path))
         datasets_loading.multiload("deploy_get", datasets, page=page)
 
-    def _call_deploy_get_progress() -> progress.ProgressData:
+    def _call_deploy_get_progress(self) -> progress.ProgressData:
         """
         Прогресс получения данных для отображения пресетов на странице деплоя
         """
-        # return DeployCreator().get_deploy(
-        #     dataset=dataset,
-        #     training_path=training_path,
-        #     deploy_path=settings.DEPLOY_PATH,
-        #     page=page,
-        # )
         return progress.pool("deploy_get")
 
     def _call_deploy_cascades_create(self, training_path: str, model_name: str):

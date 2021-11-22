@@ -112,7 +112,6 @@ class Project(BaseMixinData):
     model: ModelDetailsData = ModelDetailsData(**EmptyModelDetailsData)
     training: TrainingDetailsData
     cascade: CascadeDetailsData = CascadeDetailsData(**EmptyCascadeDetailsData)
-    deploy: Optional[DeployData]
 
     def __init__(self, **data):
         if not data.get("training"):
@@ -126,14 +125,6 @@ class Project(BaseMixinData):
                 "group": _dataset.get("group"),
             }
 
-        if data.get("deploy"):
-            data["deploy"]["path_deploy"] = project_path.deploy
-            deploy_page = data.get("deploy", {}).get("page", {}).get("type", "")
-            if deploy_page == DeployTypePageChoice.model:
-                data["deploy"]["path_model"] = project_path.training
-            elif deploy_page == DeployTypePageChoice.cascade:
-                data["deploy"]["path_model"] = project_path.cascades
-
         super().__init__(**data)
 
         defaults_data.modeling.set_layer_datatype(self.dataset)
@@ -141,8 +132,6 @@ class Project(BaseMixinData):
             project=self, architecture=self.training.base.architecture.type
         )
         defaults_data.update_models(self.trainings)
-        if self.deploy:
-            defaults_data.update_deploy(self.deploy.page.type, self.deploy.page.name)
 
         self.save_config()
 
@@ -199,7 +188,6 @@ class Project(BaseMixinData):
             dataset_info=None,
             model=ModelDetailsData(**EmptyModelDetailsData),
             cascade=CascadeDetailsData(**EmptyCascadeDetailsData),
-            deploy=None,
         )
         self.set_training()
         self.save_config()
@@ -242,7 +230,6 @@ class Project(BaseMixinData):
                     model=ModelDetailsData(**(_model or EmptyModelDetailsData)),
                     training=TrainingDetailsData(**_training),
                     cascade=CascadeDetailsData(**(_cascade or EmptyCascadeDetailsData)),
-                    deploy=None,
                 )
                 self.save_config()
                 self.set_training(self.training.name)
@@ -255,8 +242,6 @@ class Project(BaseMixinData):
         data = self.native()
         if data.get("hardware"):
             data.pop("hardware")
-        if data.get("deploy"):
-            data.pop("deploy")
         with open(project_path.config, "w") as _config_ref:
             json.dump(data, _config_ref)
 
@@ -264,8 +249,6 @@ class Project(BaseMixinData):
         _data = self.native()
         _data.pop("dataset_info")
         _data.update({"dataset": self.dataset.native() if self.dataset else None})
-        if _data.get("deploy") and self.deploy:
-            _data.update({"deploy": self.deploy.presets})
         return json.dumps(_data)
 
     def set_name(self, name: str):
@@ -316,14 +299,6 @@ class Project(BaseMixinData):
     def set_cascade(self, cascade: CascadeDetailsData):
         self.cascade = cascade
         self.save_config()
-
-    def set_deploy(self, dataset: DatasetData, page: dict):
-        self.deploy = agent_exchange(
-            "deploy_get",
-            dataset=dataset,
-            page=page,
-            training_path=Path(project_path.training),
-        )
 
     def clear_dataset(self):
         self._set_data(dataset_info=None)
