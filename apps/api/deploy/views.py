@@ -52,16 +52,13 @@ class GetProgressAPIView(BaseAPIView):
                 progress.percent = 0
                 progress.message = ""
                 dataset_data = progress.data.get("datasets")[0]
-                progress.data = (
-                    DeployCreator()
-                    .get_deploy(
-                        dataset=DatasetInfo(**dataset_data.native()).dataset,
-                        training_path=project_path.training,
-                        deploy_path=terra_ai_settings.DEPLOY_PATH,
-                        page=progress.data.get("kwargs", {}).get("page").native(),
-                    )
-                    .presets
+                request.project.deploy = DeployCreator().get_deploy(
+                    dataset=DatasetInfo(**dataset_data.native()).dataset,
+                    training_path=project_path.training,
+                    deploy_path=terra_ai_settings.DEPLOY_PATH,
+                    page=progress.data.get("kwargs", {}).get("page").native(),
                 )
+                progress.data = request.project.deploy.presets
             return BaseResponseSuccess(data=progress.native())
         else:
             return BaseResponseErrorGeneral(progress.error, data=progress.native())

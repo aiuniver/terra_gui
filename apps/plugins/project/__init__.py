@@ -112,6 +112,7 @@ class Project(BaseMixinData):
     model: ModelDetailsData = ModelDetailsData(**EmptyModelDetailsData)
     training: TrainingDetailsData
     cascade: CascadeDetailsData = CascadeDetailsData(**EmptyCascadeDetailsData)
+    deploy: Optional[DeployData]
 
     def __init__(self, **data):
         if not data.get("training"):
@@ -242,6 +243,8 @@ class Project(BaseMixinData):
         data = self.native()
         if data.get("hardware"):
             data.pop("hardware")
+        if data.get("deploy"):
+            data.pop("deploy")
         with open(project_path.config, "w") as _config_ref:
             json.dump(data, _config_ref)
 
