@@ -815,8 +815,8 @@ def make_tracker_dataset(source_path, dst_path, bboxes, frame_mode):
     crops_list = sorted(set(tracker_table['img_1'].tolist()))
     for crop in crops_list:
         tmp_df = tracker_table[tracker_table['img_1'] == crop]
-        if len(tmp_df[tmp_df['Class'] == 'Одинаковые']) > 1:
-            drop_idxs.append(tmp_df[tmp_df['Class'] == 'Одинаковые'].index.tolist())
+        if len(tmp_df[tmp_df['class'] == 'Одинаковые']) > 1:
+            drop_idxs.append(tmp_df[tmp_df['class'] == 'Одинаковые'].index.tolist())
     for idxs in drop_idxs:
         tracker_table.drop(index=idxs, inplace=True)
     tracker_table.index = range(0, len(tracker_table))
