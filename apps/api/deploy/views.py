@@ -39,7 +39,32 @@ class GetAPIView(BaseAPIView):
                     DatasetLoadData(path=data_path.datasets, **dataset_config)
                 )
         elif page.type == DeployTypePageChoice.cascade:
-            print(page)
+            # datasets += list(
+            #     map(
+            #         lambda item: DatasetLoadData(path=datasets_path, **dict(item)),
+            #         sources.values(),
+            #     )
+            # )
+            # for block in cascade.blocks:
+            #     if block.group == BlockGroupChoice.Model:
+            #         _path = Path(
+            #             training_path,
+            #             block.parameters.main.path,
+            #             "model",
+            #             "dataset.json",
+            #         )
+            #         with open(_path) as config_ref:
+            #             data = json.load(config_ref)
+            #             datasets.append(
+            #                 DatasetLoadData(
+            #                     path=datasets_path,
+            #                     alias=data.get("alias"),
+            #                     group=data.get("group"),
+            #                 )
+            #             )
+            # datasets_loading.multiload("cascade_start", datasets, sources=sources)
+            pass
+
         agent_exchange("deploy_get", datasets=datasets, page=page)
         return BaseResponseSuccess()
 
