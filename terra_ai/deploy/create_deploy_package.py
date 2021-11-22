@@ -11,10 +11,7 @@ from terra_ai.settings import ASSETS_PATH
 class CascadeCreator:
 
     def create_config(self, deploy_path: Path, model_path: Path, func_name: str):
-        if func_name == "text_segmentation":
-            dataset_path = os.path.join(model_path, "dataset", "instructions", "parameters", f"2_{func_name}.json")
-        else:
-            dataset_path = os.path.join(model_path, "dataset", "config.json")
+        dataset_path = os.path.join(model_path, "dataset.json")
         with open(dataset_path) as cfg:
             dataset_config = json.load(cfg)
 
@@ -68,8 +65,8 @@ class CascadeCreator:
     @staticmethod
     def make_text_segmentation(config, dataset_config, model):
         config['cascades']['model']['model'] = model
-        config['cascades']['2']['params']['open_tag'] = dataset_config['open_tags']
-        config['cascades']['2']['params']['close_tag'] = dataset_config['close_tags']
+        config['cascades']['2']['params']['open_tag'] = dataset_config['instructions']['2']['2_text_segmentation']['open_tags']
+        config['cascades']['2']['params']['close_tag'] = dataset_config['instructions']['2']['2_text_segmentation']['close_tags']
 
         return config
 

@@ -223,7 +223,7 @@ class GUINN:
         prepared_dataset = PrepareDataset(data=dataset, datasets_path=dataset.path)
         prepared_dataset.prepare_dataset()
         if state != "addtrain":
-            prepared_dataset.deploy_export(model_path)
+            prepared_dataset.deploy_export(str(model_path))
 
         return prepared_dataset
 

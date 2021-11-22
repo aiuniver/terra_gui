@@ -10,6 +10,7 @@ from tensorflow.keras import datasets as load_keras_datasets
 from tensorflow.python.data.ops.dataset_ops import DatasetV2 as Dataset
 from PIL import Image
 
+from terra_ai.data.training.extra import ArchitectureChoice
 from terra_ai.utils import decamelize
 from terra_ai.datasets.preprocessing import CreatePreprocessing
 from terra_ai.datasets.arrays_create import CreateArray
@@ -240,21 +241,24 @@ class PrepareDataset(object):
 
     def deploy_export(self, folder_path: str):
 
-        # parameters_path = os.path.join(folder_path, 'instructions', 'parameters')
-        # os.makedirs(parameters_path, exist_ok=True)
-        # for put in self.instructions.keys():
-        #     for col_name, data in self.instructions[put].items():
-        #         with open(os.path.join(parameters_path, f'{col_name}.json'), 'w') as instr:
-        #             json.dump(data, instr)
-        #
-        # preprocessing_path = os.path.join(folder_path, 'preprocessing')
-        # os.makedirs(preprocessing_path, exist_ok=True)
-        # for put, proc in self.preprocessing.preprocessing.items():
-        #     for col_name, obj in proc.items():
-        #         if obj:
-        #             folder_dir = os.path.join(preprocessing_path, str(put))
-        #             os.makedirs(folder_dir, exist_ok=True)
-        #             joblib.dump(obj, os.path.join(folder_dir, f'{col_name}.gz'))
+        parameters_path = os.path.join(folder_path, 'instructions', 'parameters')
+        os.makedirs(parameters_path, exist_ok=True)
+        for put in self.instructions.keys():
+            for col_name, data in self.instructions[put].items():
+                with open(os.path.join(parameters_path, f'{col_name}.json'), 'w') as instr:
+                    json.dump(data, instr)
+
+        preprocessing_path = os.path.join(folder_path, 'preprocessing')
+        os.makedirs(preprocessing_path, exist_ok=True)
+        for put, proc in self.preprocessing.preprocessing.items():
+            for col_name, obj in proc.items():
+                if obj:
+                    folder_dir = os.path.join(preprocessing_path, str(put))
+                    os.makedirs(folder_dir, exist_ok=True)
+                    joblib.dump(obj, os.path.join(folder_dir, f'{col_name}.gz'))
+
+        dataset_data = self.data.native()
+        dataset_data.update({"instructions": self.instructions})
 
         with open(os.path.join(folder_path, 'dataset.json'), 'w') as cfg:
-            json.dump(self.data.native(), cfg)
+            json.dump(dataset_data, cfg)

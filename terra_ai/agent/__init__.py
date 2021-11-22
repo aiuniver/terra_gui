@@ -404,8 +404,7 @@ class Exchange:
                     training_path,
                     block.parameters.main.path,
                     "model",
-                    "dataset",
-                    settings.DATASET_CONFIG,
+                    "dataset.json",
                 )
                 with open(_path) as config_ref:
                     data = json.load(config_ref)

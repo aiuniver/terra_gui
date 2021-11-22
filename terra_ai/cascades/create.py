@@ -46,8 +46,8 @@ def json2model_cascade(path: str):
     model = load_model(os.path.join(path, model), compile=False, custom_objects=None)
     model.load_weights(os.path.join(path, weight))
 
-    dataset_path = os.path.join(path, "dataset")
-    with open(os.path.join(dataset_path, "config.json")) as cfg:
+    dataset_path = path
+    with open(os.path.join(path, "dataset.json")) as cfg:
         config = json.load(cfg)
 
     object_detection = False
