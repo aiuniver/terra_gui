@@ -1,7 +1,16 @@
 import os
+import cv2
+import json
+import csv
+import tempfile
+import zipfile
 import numpy as np
 import pandas as pd
+import xml.etree.ElementTree as Et
 
+from PIL import Image
+from ast import literal_eval
+from itertools import product
 from pathlib import Path
 from sklearn.cluster import KMeans
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
@@ -10,15 +19,8 @@ from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeCh
 from terra_ai.settings import DATASET_ANNOTATION
 from terra_ai.datasets.data import AnnotationClassesList
 from terra_ai.utils import decamelize
-from terra_ai.data.datasets.creation import CreationData
 from terra_ai.data.datasets.creations.layers.output.types.ObjectDetection import LayerODDatasetTypeChoice
 
-import xml.etree.ElementTree as Et
-from xml.etree.ElementTree import Element, ElementTree
-import csv
-from PIL import Image
-from ast import literal_eval
-import json
 
 ANNOTATION_SEPARATOR = ":"
 ANNOTATION_LABEL_NAME = "# label"
@@ -677,3 +679,141 @@ def get_annotation_type_autosearch(path: Path) -> LayerODDatasetTypeChoice:
             annotation_type = 'Не определено'
 
     return annotation_type
+
+
+def resize_frame(image_array, target_shape, frame_mode):
+    original_shape = (image_array.shape[0], image_array.shape[1])
+    resized = None
+    if frame_mode == 'stretch':
+        resized = cv2.resize(image_array, (target_shape[1], target_shape[0]))
+
+    elif frame_mode == 'fit':
+        if image_array.shape[1] >= image_array.shape[0]:
+            resized_shape = list(target_shape).copy()
+            resized_shape[0] = int(image_array.shape[0] / (image_array.shape[1] / target_shape[1]))
+            if resized_shape[0] > target_shape[0]:
+                resized_shape = list(target_shape).copy()
+                resized_shape[1] = int(image_array.shape[1] / (image_array.shape[0] / target_shape[0]))
+            image_array = cv2.resize(image_array, (resized_shape[1], resized_shape[0]))
+        elif image_array.shape[0] >= image_array.shape[1]:
+            resized_shape = list(target_shape).copy()
+            resized_shape[1] = int(image_array.shape[1] / (image_array.shape[0] / target_shape[0]))
+            if resized_shape[1] > target_shape[1]:
+                resized_shape = list(target_shape).copy()
+                resized_shape[0] = int(image_array.shape[0] / (image_array.shape[1] / target_shape[1]))
+            image_array = cv2.resize(image_array, (resized_shape[1], resized_shape[0]))
+        resized = image_array
+        if resized.shape[0] < target_shape[0]:
+            black_bar = np.zeros((int((target_shape[0] - resized.shape[0]) / 2), resized.shape[1], 3),
+                                 dtype='uint8')
+            resized = np.concatenate((black_bar, resized))
+            black_bar_2 = np.zeros((int((target_shape[0] - resized.shape[0])), resized.shape[1], 3),
+                                   dtype='uint8')
+            resized = np.concatenate((resized, black_bar_2))
+        if resized.shape[1] < target_shape[1]:
+            black_bar = np.zeros((target_shape[0], int((target_shape[1] - resized.shape[1]) / 2), 3),
+                                 dtype='uint8')
+            resized = np.concatenate((black_bar, resized), axis=1)
+            black_bar_2 = np.zeros((target_shape[0], int((target_shape[1] - resized.shape[1])), 3),
+                                   dtype='uint8')
+            resized = np.concatenate((resized, black_bar_2), axis=1)
+
+    elif frame_mode == 'cut':
+        resized = image_array.copy()
+        if original_shape[0] > target_shape[0]:
+            resized = resized[int(original_shape[0] / 2 - target_shape[0] / 2):int(
+                original_shape[0] / 2 - target_shape[0] / 2) + target_shape[0], :]
+        else:
+            black_bar = np.zeros((int((target_shape[0] - original_shape[0]) / 2), original_shape[1], 3),
+                                 dtype='uint8')
+            resized = np.concatenate((black_bar, resized))
+            black_bar_2 = np.zeros((int((target_shape[0] - resized.shape[0])), original_shape[1], 3),
+                                   dtype='uint8')
+            resized = np.concatenate((resized, black_bar_2))
+        if original_shape[1] > target_shape[1]:
+            resized = resized[:, int(original_shape[1] / 2 - target_shape[1] / 2):int(
+                original_shape[1] / 2 - target_shape[1] / 2) + target_shape[1]]
+        else:
+            black_bar = np.zeros((target_shape[0], int((target_shape[1] - original_shape[1]) / 2), 3),
+                                 dtype='uint8')
+            resized = np.concatenate((black_bar, resized), axis=1)
+            black_bar_2 = np.zeros((target_shape[0], int((target_shape[1] - resized.shape[1])), 3),
+                                   dtype='uint8')
+            resized = np.concatenate((resized, black_bar_2), axis=1)
+    return resized
+
+
+def zip_dataset(src, dst):
+    zf = zipfile.ZipFile("%s.zip" % (dst), "w", zipfile.ZIP_DEFLATED)
+    abs_src = os.path.abspath(src)
+    for dirname, subdirs, files in os.walk(src):
+        for filename in files:
+            absname = os.path.abspath(os.path.join(dirname, filename))
+            arcname = absname[len(abs_src) + 1:]
+            zf.write(absname, arcname)
+    zf.close()
+
+
+def make_tracker_dataset(source_path, dst_path, bboxes, frame_mode):
+
+    def make_crop(image_path, bbox):
+        image = cv2.imread(image_path)
+        coor = np.array(bbox[:4], dtype=np.int32)
+        (x1, y1), (x2, y2) = (coor[0], coor[1]), (coor[2], coor[3])
+        crop = image[y1:y2, x1:x2]
+        return crop
+
+    img_path = os.path.join(source_path, 'Images')
+    tmp_directory = tempfile.mkdtemp()
+    os.mkdir(tmp_directory)
+    ims1 = []
+    ims2 = []
+    classes = []
+    drop_idxs = []
+    border = 30
+    height = 0
+    width = 0
+    idx = 0
+    while idx < len(bboxes) - 1:
+        anns1 = bboxes[idx]
+        anns2 = bboxes[idx + 1]
+        os.makedirs(os.path.join(tmp_directory, f'frame_{idx}'), exist_ok=True)
+        for j, ann in enumerate(anns1):
+            crop = make_crop(os.path.join(img_path, sorted(os.listdir(img_path))[idx]), ann)
+            cv2.imwrite(os.path.join(tmp_directory, f'frame_{idx}', f'crop_{j}.jpeg'), crop)
+            if crop.shape[0] > height:
+                height = crop.shape[0]
+            if crop.shape[1] > width:
+                width = crop.shape[1]
+
+        for a1, a2 in product(anns1, anns2):
+            if abs(a1[0] - a2[0]) <= border and abs(a1[1] - a2[1]) <= border and a1[4] == a2[4]:
+                classes.append('Одинаковые')
+            else:
+                classes.append('Разные')
+            ims1.append(os.path.join(f'frame_{idx}', f'crop_{anns1.index(a1)}.jpeg'))
+            ims2.append(os.path.join(f'frame_{idx + 1}', f'crop_{anns2.index(a2)}.jpeg'))
+        idx += 1
+
+    for dir in os.listdir(tmp_directory):
+        for im_name in os.listdir(os.path.join(tmp_directory, dir)):
+            img = cv2.imread(os.path.join(tmp_directory, dir, im_name), cv2.IMREAD_UNCHANGED)
+            resized_im = resize_frame(img, (height, width), frame_mode)
+            cv2.imwrite(os.path.join(tmp_directory, dir, im_name), resized_im)
+
+    tracker_table = pd.DataFrame({'img_1': ims1,
+                                  'img_2': ims2,
+                                  'class': classes})
+
+    crops_list = sorted(set(tracker_table['img_1'].tolist()))
+    for crop in crops_list:
+        tmp_df = tracker_table[tracker_table['img_1'] == crop]
+        if len(tmp_df[tmp_df['Class'] == 'Одинаковые']) > 1:
+            drop_idxs.append(tmp_df[tmp_df['Class'] == 'Одинаковые'].index.tolist())
+    for idxs in drop_idxs:
+        tracker_table.drop(index=idxs, inplace=True)
+    tracker_table.index = range(0, len(tracker_table))
+
+    tracker_table.to_csv(os.path.join(tmp_directory, 'tracker.csv'), index=False)
+    zip_dataset(tmp_directory, os.path.join(dst_path, 'tracker'))
+

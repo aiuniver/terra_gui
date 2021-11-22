@@ -5,7 +5,7 @@ from terra_ai.callbacks.regression_callbacks import DataframeRegressionCallback
 from terra_ai.callbacks.segmentation_callbacks import ImageSegmentationCallback, TextSegmentationCallback
 from terra_ai.callbacks.time_series_callbacks import TimeseriesCallback
 from terra_ai.data.training.extra import ArchitectureChoice
-from terra_ai.datasets.utils import get_yolo_anchors, resize_bboxes, Yolo_terra, Voc, Coco, Udacity, Kitti, Yolov1
+from terra_ai.datasets.utils import get_yolo_anchors, resize_bboxes, Yolo_terra, Voc, Coco, Udacity, Kitti, Yolov1, resize_frame
 from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice
 from terra_ai.data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice, \
     LayerTextModeChoice, LayerAudioModeChoice, LayerVideoModeChoice, LayerScalerAudioChoice
@@ -1160,66 +1160,6 @@ class CreateArray(object):
             else:
                 return image_array_aug
 
-        def resize_frame(image_array, target_shape, frame_mode):
-
-            original_shape = (image_array.shape[0], image_array.shape[1])
-            resized = None
-            if frame_mode == 'stretch':
-                resized = cv2.resize(image_array, (target_shape[1], target_shape[0]))
-            elif frame_mode == 'fit':
-                if image_array.shape[1] >= image_array.shape[0]:
-                    resized_shape = list(target_shape).copy()
-                    resized_shape[0] = int(image_array.shape[0] / (image_array.shape[1] / target_shape[1]))
-                    if resized_shape[0] > target_shape[0]:
-                        resized_shape = list(target_shape).copy()
-                        resized_shape[1] = int(image_array.shape[1] / (image_array.shape[0] / target_shape[0]))
-                    image_array = cv2.resize(image_array, (resized_shape[1], resized_shape[0]))
-                elif image_array.shape[0] >= image_array.shape[1]:
-                    resized_shape = list(target_shape).copy()
-                    resized_shape[1] = int(image_array.shape[1] / (image_array.shape[0] / target_shape[0]))
-                    if resized_shape[1] > target_shape[1]:
-                        resized_shape = list(target_shape).copy()
-                        resized_shape[0] = int(image_array.shape[0] / (image_array.shape[1] / target_shape[1]))
-                    image_array = cv2.resize(image_array, (resized_shape[1], resized_shape[0]))
-                resized = image_array
-                if resized.shape[0] < target_shape[0]:
-                    black_bar = np.zeros((int((target_shape[0] - resized.shape[0]) / 2), resized.shape[1], 3),
-                                         dtype='uint8')
-                    resized = np.concatenate((black_bar, resized))
-                    black_bar_2 = np.zeros((int((target_shape[0] - resized.shape[0])), resized.shape[1], 3),
-                                           dtype='uint8')
-                    resized = np.concatenate((resized, black_bar_2))
-                if resized.shape[1] < target_shape[1]:
-                    black_bar = np.zeros((target_shape[0], int((target_shape[1] - resized.shape[1]) / 2), 3),
-                                         dtype='uint8')
-                    resized = np.concatenate((black_bar, resized), axis=1)
-                    black_bar_2 = np.zeros((target_shape[0], int((target_shape[1] - resized.shape[1])), 3),
-                                           dtype='uint8')
-                    resized = np.concatenate((resized, black_bar_2), axis=1)
-            elif frame_mode == 'cut':
-                resized = image_array.copy()
-                if original_shape[0] > target_shape[0]:
-                    resized = resized[int(original_shape[0] / 2 - target_shape[0] / 2):int(
-                        original_shape[0] / 2 - target_shape[0] / 2) + target_shape[0], :]
-                else:
-                    black_bar = np.zeros((int((target_shape[0] - original_shape[0]) / 2), original_shape[1], 3),
-                                         dtype='uint8')
-                    resized = np.concatenate((black_bar, resized))
-                    black_bar_2 = np.zeros((int((target_shape[0] - resized.shape[0])), original_shape[1], 3),
-                                           dtype='uint8')
-                    resized = np.concatenate((resized, black_bar_2))
-                if original_shape[1] > target_shape[1]:
-                    resized = resized[:, int(original_shape[1] / 2 - target_shape[1] / 2):int(
-                        original_shape[1] / 2 - target_shape[1] / 2) + target_shape[1]]
-                else:
-                    black_bar = np.zeros((target_shape[0], int((target_shape[1] - original_shape[1]) / 2), 3),
-                                         dtype='uint8')
-                    resized = np.concatenate((black_bar, resized), axis=1)
-                    black_bar_2 = np.zeros((target_shape[0], int((target_shape[1] - resized.shape[1])), 3),
-                                           dtype='uint8')
-                    resized = np.concatenate((resized, black_bar_2), axis=1)
-            return resized
-
         augm_data = None
         if options.get('augmentation') and options.get('augm_data'):
             array, augm_data = augmentation_image(image_array=array,
@@ -1249,66 +1189,6 @@ class CreateArray(object):
 
     @staticmethod
     def preprocess_video(array: np.ndarray, **options) -> np.ndarray:
-
-        def resize_frame(image_array, target_shape, frame_mode):
-
-            original_shape = (image_array.shape[0], image_array.shape[1])
-            resized = None
-            if frame_mode == 'stretch':
-                resized = cv2.resize(image_array, (target_shape[1], target_shape[0]))
-            elif frame_mode == 'fit':
-                if image_array.shape[1] >= image_array.shape[0]:
-                    resized_shape = list(target_shape).copy()
-                    resized_shape[0] = int(image_array.shape[0] / (image_array.shape[1] / target_shape[1]))
-                    if resized_shape[0] > target_shape[0]:
-                        resized_shape = list(target_shape).copy()
-                        resized_shape[1] = int(image_array.shape[1] / (image_array.shape[0] / target_shape[0]))
-                    image_array = cv2.resize(image_array, (resized_shape[1], resized_shape[0]))
-                elif image_array.shape[0] >= image_array.shape[1]:
-                    resized_shape = list(target_shape).copy()
-                    resized_shape[1] = int(image_array.shape[1] / (image_array.shape[0] / target_shape[0]))
-                    if resized_shape[1] > target_shape[1]:
-                        resized_shape = list(target_shape).copy()
-                        resized_shape[0] = int(image_array.shape[0] / (image_array.shape[1] / target_shape[1]))
-                    image_array = cv2.resize(image_array, (resized_shape[1], resized_shape[0]))
-                resized = image_array
-                if resized.shape[0] < target_shape[0]:
-                    black_bar = np.zeros((int((target_shape[0] - resized.shape[0]) / 2), resized.shape[1], 3),
-                                         dtype='uint8')
-                    resized = np.concatenate((black_bar, resized))
-                    black_bar_2 = np.zeros((int((target_shape[0] - resized.shape[0])), resized.shape[1], 3),
-                                           dtype='uint8')
-                    resized = np.concatenate((resized, black_bar_2))
-                if resized.shape[1] < target_shape[1]:
-                    black_bar = np.zeros((target_shape[0], int((target_shape[1] - resized.shape[1]) / 2), 3),
-                                         dtype='uint8')
-                    resized = np.concatenate((black_bar, resized), axis=1)
-                    black_bar_2 = np.zeros((target_shape[0], int((target_shape[1] - resized.shape[1])), 3),
-                                           dtype='uint8')
-                    resized = np.concatenate((resized, black_bar_2), axis=1)
-            elif frame_mode == 'cut':
-                resized = image_array.copy()
-                if original_shape[0] > target_shape[0]:
-                    resized = resized[int(original_shape[0] / 2 - target_shape[0] / 2):int(
-                        original_shape[0] / 2 - target_shape[0] / 2) + target_shape[0], :]
-                else:
-                    black_bar = np.zeros((int((target_shape[0] - original_shape[0]) / 2), original_shape[1], 3),
-                                         dtype='uint8')
-                    resized = np.concatenate((black_bar, resized))
-                    black_bar_2 = np.zeros((int((target_shape[0] - resized.shape[0])), original_shape[1], 3),
-                                           dtype='uint8')
-                    resized = np.concatenate((resized, black_bar_2))
-                if original_shape[1] > target_shape[1]:
-                    resized = resized[:, int(original_shape[1] / 2 - target_shape[1] / 2):int(
-                        original_shape[1] / 2 - target_shape[1] / 2) + target_shape[1]]
-                else:
-                    black_bar = np.zeros((target_shape[0], int((target_shape[1] - original_shape[1]) / 2), 3),
-                                         dtype='uint8')
-                    resized = np.concatenate((black_bar, resized), axis=1)
-                    black_bar_2 = np.zeros((target_shape[0], int((target_shape[1] - resized.shape[1])), 3),
-                                           dtype='uint8')
-                    resized = np.concatenate((resized, black_bar_2), axis=1)
-            return resized
 
         trgt_shape = (options['height'], options['width'])
         resized_array = []
