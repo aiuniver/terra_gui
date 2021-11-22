@@ -1,6 +1,4 @@
-from typing import Optional
 from pydantic import validator
-from pydantic.types import PositiveInt
 
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.datasets.extra import LayerInputTypeChoice
@@ -24,6 +22,4 @@ class ParametersMainData(BaseMixinData):
             if name in ["type"]:
                 continue
             cls.__fields__[name].required = False
-        if value == LayerInputTypeChoice.Video:
-            cls.__fields__["switch_on_frame"].required = True
         return value
