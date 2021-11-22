@@ -35,7 +35,6 @@ class CascadeRunner:
             os.makedirs(presets_path, exist_ok=True)
 
         type_, model, inputs_ids = self._get_task_type(cascade_data=cascade_data, training_path=training_path)
-        print(type_)
         dataset_path = os.path.join(training_path, model, "model", "dataset")
         with open(os.path.join(dataset_path, "config.json"), "r", encoding="utf-8") as dataset_config:
             dataset_config_data = json.load(dataset_config)
