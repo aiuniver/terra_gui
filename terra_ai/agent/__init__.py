@@ -39,7 +39,8 @@ from ..data.projects.project import ProjectsInfoData, ProjectsList
 from ..data.training.train import TrainingDetailsData
 from ..data.training.extra import StateStatusChoice
 from ..data.cascades.extra import BlockGroupChoice
-from ..data.deploy.tasks import DeployData
+from ..data.deploy.tasks import DeployData, DeployPageData
+from ..data.deploy.extra import DeployTypePageChoice
 from ..datasets import loading as datasets_loading
 from ..datasets import utils as datasets_utils
 from ..datasets.creating import CreateDataset
@@ -401,10 +402,7 @@ class Exchange:
         for block in cascade.blocks:
             if block.group == BlockGroupChoice.Model:
                 _path = Path(
-                    training_path,
-                    block.parameters.main.path,
-                    "model",
-                    "dataset.json",
+                    training_path, block.parameters.main.path, "model", "dataset.json"
                 )
                 with open(_path) as config_ref:
                     data = json.load(config_ref)
@@ -434,17 +432,27 @@ class Exchange:
         )
 
     def _call_deploy_get(
-        self, dataset: DatasetData, page: dict, training_path: Path = None
+        self, datasets: List[DatasetLoadData], page: DeployPageData
     ) -> DeployData:
         """
-        получение данных для отображения пресетов на странице деплоя
+        Получение данных для отображения пресетов на странице деплоя
         """
-        return DeployCreator().get_deploy(
-            dataset=dataset,
-            training_path=training_path,
-            deploy_path=settings.DEPLOY_PATH,
-            page=page,
-        )
+        print(datasets)
+        # datasets = []
+        # print(Path(dataset.path))
+        datasets_loading.multiload("deploy_get", datasets, page=page)
+
+    def _call_deploy_get_progress() -> progress.ProgressData:
+        """
+        Прогресс получения данных для отображения пресетов на странице деплоя
+        """
+        # return DeployCreator().get_deploy(
+        #     dataset=dataset,
+        #     training_path=training_path,
+        #     deploy_path=settings.DEPLOY_PATH,
+        #     page=page,
+        # )
+        return progress.pool("deploy_get")
 
     def _call_deploy_cascades_create(self, training_path: str, model_name: str):
         pass
