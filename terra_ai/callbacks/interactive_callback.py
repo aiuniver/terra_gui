@@ -104,9 +104,9 @@ class InteractiveCallback:
         self.options = dataset
         self._callback_router(dataset)
         self._class_metric_list()
-        print('set_attributes', dataset.data.architecture)
-        print('\ndataset_config', dataset.data)
-        print('\nparams', params.native(), '\n')
+        # print('set_attributes', dataset.data.architecture)
+        # print('\ndataset_config', dataset.data)
+        # print('\nparams', params.native(), '\n')
         self.training_details = params
         if dataset.data.architecture in self.basic_architecture:
             self.losses = losses
