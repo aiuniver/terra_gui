@@ -165,18 +165,19 @@ class CreateVersion(object):
             for path, val in puts.get(idx).parameters.items():
                 data_to_pass = []
                 parameters = None
-                if path.is_dir():
-                    for direct, folder, file_name in os.walk(path):
+                current_path = self.dataset_paths_data.sources.joinpath(path)
+                if current_path.is_dir():
+                    for direct, folder, file_name in os.walk(current_path):
                         if file_name:
                             for name in sorted(file_name):
-                                data_to_pass.append(os.path.join(path, name))
+                                data_to_pass.append(os.path.join(current_path, name))
                     parameters = processing[str(val[os.path.basename(path)][0])].native()  # Аккуратно с [0]
                     self.tags[idx] = {
                         f'{puts.get(idx).id}_{decamelize(parameters["type"])}': decamelize(parameters['type'])}
                     if parameters['type'] == LayerOutputTypeChoice.Classification:
                         data_to_pass = self.y_cls
 
-                elif path.is_file():
+                elif current_path.is_file():
                     print('ТАБЛИЦА')
                 instr = getattr(CreateArray, f'instructions_{decamelize(parameters["type"])}')(data_to_pass,
                                                                                                **parameters[
@@ -184,9 +185,6 @@ class CreateVersion(object):
                 cut = getattr(CreateArray, f'cut_{decamelize(parameters["type"])}')(instr['instructions'],
                                                                                     **instr['parameters'], **{
                         'cols_names': decamelize(parameters["type"]), 'put': idx})
-                print(cut['instructions'][0])
-                print(self.dataset_paths_data.sources)
-                print('REPLACING:', cut['instructions'][0].replace(str(self.dataset_paths_data.sources), '')[1:])
                 for i in range(len(cut['instructions'])):
                     if parameters['type'] != LayerOutputTypeChoice.Classification:
                         if decamelize(parameters['type']) in PATH_TYPE_LIST:
@@ -483,8 +481,6 @@ class CreateVersion(object):
         os.makedirs(tables_path, exist_ok=True)
         for key in self.dataframe.keys():
             self.dataframe[key].to_csv(os.path.join(self.version_paths_data.instructions, 'tables', f'{key}.csv'))
-
-        pass
 
     def write_version_configure(self):
         """
