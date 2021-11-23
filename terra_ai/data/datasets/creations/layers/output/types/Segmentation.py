@@ -3,11 +3,12 @@ from pydantic import validator
 from pydantic.types import PositiveInt
 from pydantic.color import Color
 
+from ......types import ConstrainedIntValueGe0
 from ...extra import SourcesPathsData, ColumnProcessingData
 
 
 class ParametersData(SourcesPathsData, ColumnProcessingData):
-    mask_range: PositiveInt
+    mask_range: ConstrainedIntValueGe0
     classes_names: List[str]
     classes_colors: List[Color]
     width: Optional[PositiveInt]
