@@ -100,10 +100,10 @@ class CreateVersion(object):
         self.y_cls: list = []
         self.tags = {}
         self.dataframe: dict = {}
+        self.columns: dict = {}
         self.preprocessing = CreatePreprocessing()
 
         self.dataset_paths_data = DatasetPathsData(basepath=dataset_basepath)
-        print('self.dataset_paths_data:', self.dataset_paths_data)
         if os.listdir(self.dataset_paths_data.versions):
             self.version_id = max([int(x) for x in os.listdir(self.dataset_paths_data.versions)]) + 1
         else:
@@ -111,7 +111,6 @@ class CreateVersion(object):
         os.makedirs(self.dataset_paths_data.versions.joinpath(str(self.version_id)), exist_ok=True)
         self.version_paths_data = VersionPathsData(
             basepath=self.dataset_paths_data.versions.joinpath(str(self.version_id)))
-        print('self.version_paths_data', self.version_paths_data)
         self.instructions: DatasetInstructionsData = self.create_instructions(version_data)
         self.create_preprocessing(self.instructions)
         self.fit_preprocessing(put_data=self.instructions.inputs)
@@ -125,15 +124,16 @@ class CreateVersion(object):
                 self.write_arrays(x_array, y_array[0], y_array[1])
             else:
                 self.write_arrays(x_array, y_array)
+        self.create_put_parameters(self.instructions.inputs, version_data, 'inputs')
+        self.create_put_parameters(self.instructions.outputs, version_data, 'outputs')
+        # self.create_put_parameters(self.instructions.service, version_data, 'service')
 
         self.write_instructions_to_files()
-        self.zip_dataset(self.version_paths_data.basepath,
-                         os.path.join(self.dataset_paths_data.versions, str(self.version_id), 'version'))
+        self.zip_dataset(self.version_paths_data.basepath, os.path.join(self.dataset_paths_data.versions, 'version'))
         for key, value in self.version_paths_data.__dict__.items():
             if not key == 'basepath':
                 shutil.rmtree(value)
-        #         shutil.move(os.path.join(self.dataset_paths_data.versions, str(self.version_id), 'version.zip'),
-        #                     self.version_paths_data.basepath)
+        shutil.move(os.path.join(self.dataset_paths_data.versions, 'version.zip'), self.version_paths_data.basepath)
         self.write_version_configure()
 
     @staticmethod
@@ -311,6 +311,50 @@ class CreateVersion(object):
         for key, value in split_sequence.items():
             self.dataframe[key] = dataframe.loc[value, :].reset_index(drop=True)
         print(self.dataframe['train'])
+
+    def create_put_parameters(self, put_instructions, version_data: VersionData, put: str):  # -> dict:
+
+        creating_puts_data = {}
+        for key in put_instructions.keys():
+            put_array = []
+            self.columns[key] = {}
+            for col_name, data in put_instructions[key].items():
+                data_to_pass = data.instructions[0]
+                if self.tags[key][col_name] in PATH_TYPE_LIST:
+                    data_to_pass = str(self.dataset_paths_data.basepath.joinpath(data_to_pass))
+                arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(data_to_pass, **data.parameters,)
+                                                                                   # **{'preprocess': prep})
+                array = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(arr['instructions'],
+                                                                                         **arr['parameters'])
+
+                # array = array[0] if isinstance(array, tuple) else array
+                # if not array.shape:
+                #     array = np.expand_dims(array, 0)
+                put_array.append(array)
+                #
+                # classes_names = sorted([os.path.basename(x) for x in put_instructions.get(key).parameters.sources_paths.keys()]) if not os.path.isfile(creation_data.inputs.get(key).parameters.sources_paths[0]) else arr['parameters'].get('classes_names')
+
+                if self.dataset_paths_data.basepath.joinpath(list(data.parameters.keys())[0]).is_file():
+                    classes_names = arr['parameters'].get('classes_names')
+                else:
+                    classes_names = sorted([os.path.basename(x) for x in version_data.__dict__[put].get(key).parameters.keys()])
+
+                #
+                # num_classes = len(classes_names) if classes_names else None
+
+                # Прописываем параметры для колонки
+                current_column = DatasetInputsData(datatype=DataType.get(len(array.shape), 'DIM'),
+                                                   dtype=str(array.dtype),
+                                                   shape=array.shape,
+                                                   name=version_data.inputs.get(key).name,
+                                                   task=camelize(data.parameters.get('put_type')),
+                                                   classes_names=classes_names,
+                                                   num_classes=len(classes_names) if classes_names else None,
+                                                   encoding='none'  # data.parameters.get('encoding')
+                                                   )
+                self.columns[key].update([(col_name, current_column.native())])
+
+        pass
 
     def create_dataset_arrays(self, put_data: dict):
 
