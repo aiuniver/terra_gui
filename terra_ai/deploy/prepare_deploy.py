@@ -21,7 +21,7 @@ from terra_ai.settings import DEPLOY_PATH
 class DeployCreator:
 
     def get_deploy(self, training_path: Path, dataset: DatasetData, deploy_path: Path, page: dict):
-
+        print(page)
         model_path = Path(os.path.join(training_path, page.get("name"), "model"))
         presets_path = os.path.join(DEPLOY_PATH, "deploy_presets")
 
@@ -75,7 +75,7 @@ class DeployCreator:
                                    "deploy_presets",
                                    "presets_config.json"), "r", encoding="utf-8") as presets_config:
                 deploy_data = json.load(presets_config)
-
+            print(deploy_data)
             cascade = CascadeCreator()
             cascade.copy_config(
                 deploy_path=Path(deploy_path),
@@ -93,7 +93,8 @@ class DeployCreator:
             )
 
         deploy_data.update({"page": page})
-
+        print(deploy_data)
+        print(DeployData(**deploy_data))
         return DeployData(**deploy_data)
 
     @staticmethod

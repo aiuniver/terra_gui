@@ -1,13 +1,15 @@
 import json
 import os
 import shutil
+import numpy as np
 
 import moviepy.editor as moviepy_editor
+from pydub import AudioSegment
 
 from typing import List, Dict, Any
 from pathlib import Path
 
-from PIL.Image import Image
+from PIL import Image
 from pydantic.color import Color
 
 from terra_ai.cascades.common import decamelize
@@ -45,16 +47,17 @@ class CascadeRunner:
 
         model_task = list(set([val.get("task") for key, val in dataset_config_data.get("outputs").items()]))[0]
 
-        cascade_config = self._create_config(cascade_data=cascade_data, model_task=model_task,
+        cascade_config, classes, classes_colors = self._create_config(cascade_data=cascade_data, model_task=model_task,
                                              dataset_data=dataset_config_data, presets_path=presets_path)
-        print(cascade_config)
+
         main_block = json2cascade(path=os.path.join(training_path, model), cascade_config=cascade_config, mode="run")
-        print(main_block)
+
         sources = sources.get(inputs_ids[0])
 
         presets_data = self._get_presets(sources=sources, type_=type_, cascade=main_block,
                                          source_path=Path(dataset_path),
-                                         predict_path=str(DEPLOY_PATH))
+                                         predict_path=str(DEPLOY_PATH), classes=classes,
+                                         classes_colors=classes_colors)
         print(presets_data)
 
         out_data = dict([
@@ -91,6 +94,7 @@ class CascadeRunner:
 
         classes = list(dataset_data.get("outputs").values())[0].get("classes_names")
         num_class = list(dataset_data.get("outputs").values())[0].get("num_classes")
+        classes_colors = []
         if list(dataset_data.get("outputs").values())[0].get("classes_colors"):
             classes_colors = [list(Color(color).as_rgb_tuple()) for color in
                               list(dataset_data.get("outputs").values())[0].get("classes_colors")]
@@ -189,7 +193,7 @@ class CascadeRunner:
         with open(os.path.join(presets_path, "cascade_config.json"), "w", encoding="utf-8") as cascade_config:
             json.dump(config, cascade_config)
 
-        return config
+        return config, classes, classes_colors
 
     @staticmethod
     def _get_bind_names(blocks_ids: list, cascade_data: CascadeDetailsData):
@@ -208,13 +212,12 @@ class CascadeRunner:
         return mapping
 
     def _get_presets(self, sources: List[Any], type_: DeployTypeChoice, cascade: Any,
-                     source_path: Path, predict_path: str):
+                     source_path: Path, predict_path: str, classes: list, classes_colors: list):
 
         out_data = []
         iter_ = 0
         for source in sources[:3]:
             input_path = os.path.join(source_path, source)
-            print(type_)
             if type_ in [DeployTypeChoice.YoloV3, DeployTypeChoice.YoloV4, DeployTypeChoice.VideoObjectDetection]:
                 if type_ == DeployTypeChoice.VideoObjectDetection:
                     data_type = "video"
@@ -234,14 +237,47 @@ class CascadeRunner:
                     "source": source_file_name,
                     "predict": predict_file_name
                 })
-            if type_ in [DeployTypeChoice.ImageSegmentation]:
-                input_path = os.path.join(source_path, source)
-                file_name = f"example_{iter_}.webm"
-                output_path = os.path.join(predict_path, file_name)
+            elif type_ in [DeployTypeChoice.ImageClassification, DeployTypeChoice.AudioClassification,
+                           DeployTypeChoice.TextClassification, DeployTypeChoice.VideoClassification,
+                           DeployTypeChoice.DataframeClassification]:
+                # if type_ == DeployTypeChoice.ImageClassification:
+                #     data_type = "image"
+                #     source_file_name = f"deploy_presets/initial_{iter_}.webp"
+                # elif type_ == DeployTypeChoice.AudioClassification:
+                #     data_type = "audio"
+                #     source_file_name = f"deploy_presets/initial_{iter_}.webm"
+                # elif type_ == DeployTypeChoice.VideoClassification:
+                #     data_type = "video"
+                #     source_file_name = f"deploy_presets/initial_{iter_}.webm"
+                # self._save_web_format(initial_path=input_path,
+                #                       deploy_path=os.path.join(predict_path, source_file_name),
+                #                       source_type=data_type)
+                # cascade(input_path=input_path)
+                # print(source)
+                # out_data.append({
+                #     "source": source_file_name,
+                #     "actual": cascade.out,
+                #     "data": cascade.out
+                # })
+                # print(out_data)
+                pass
+            elif type_ in [DeployTypeChoice.ImageSegmentation]:
+                data_type = "image"
+                predict_file_name = f"deploy_presets/result_{iter_}.webp"
+                source_file_name = f"deploy_presets/initial_{iter_}.webp"
+                output_path = os.path.join(predict_path, predict_file_name)
+
+                self._save_web_format(initial_path=input_path,
+                                      deploy_path=os.path.join(predict_path, source_file_name),
+                                      source_type=data_type)
                 cascade(input_path=input_path, output_path=output_path)
+                mask = cascade[0][1].out
+                sum_list = [np.sum(mask[:, :, :, i]) for i in range(mask.shape[-1])]
+                example_data = [(classes[i], classes_colors[i]) for i, count in enumerate(sum_list) if count > 0]
                 out_data.append({
-                    "source": source,
-                    "predict": output_path
+                    "source": source_file_name,
+                    "segment": output_path,
+                    "data": example_data
                 })
             iter_ += 1
 
@@ -255,3 +291,5 @@ class CascadeRunner:
         elif source_type == "video":
             clip = moviepy_editor.VideoFileClip(initial_path)
             clip.write_videofile(deploy_path)
+        elif source_type == "audio":
+            AudioSegment.from_file(initial_path).export(deploy_path, format="webm")
