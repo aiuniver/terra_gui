@@ -1,7 +1,7 @@
 import json
 import random
 import shutil
-from pathlib import Path, PosixPath
+from pathlib import Path
 from typing import List, Tuple
 
 
