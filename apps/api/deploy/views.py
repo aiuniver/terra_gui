@@ -7,6 +7,7 @@ from django.conf import settings
 
 from terra_ai import settings as terra_ai_settings
 from terra_ai.agent import agent_exchange
+from terra_ai.progress import pool as progress_pool
 from terra_ai.deploy.prepare_deploy import DeployCreator
 from terra_ai.data.datasets.dataset import DatasetInfo, DatasetLoadData
 from terra_ai.data.deploy.tasks import DeployPageData
@@ -38,34 +39,9 @@ class GetAPIView(BaseAPIView):
                 datasets.append(
                     DatasetLoadData(path=data_path.datasets, **dataset_config)
                 )
+            agent_exchange("deploy_get", datasets=datasets, page=page)
         elif page.type == DeployTypePageChoice.cascade:
-            # datasets += list(
-            #     map(
-            #         lambda item: DatasetLoadData(path=datasets_path, **dict(item)),
-            #         sources.values(),
-            #     )
-            # )
-            # for block in cascade.blocks:
-            #     if block.group == BlockGroupChoice.Model:
-            #         _path = Path(
-            #             training_path,
-            #             block.parameters.main.path,
-            #             "model",
-            #             "dataset.json",
-            #         )
-            #         with open(_path) as config_ref:
-            #             data = json.load(config_ref)
-            #             datasets.append(
-            #                 DatasetLoadData(
-            #                     path=datasets_path,
-            #                     alias=data.get("alias"),
-            #                     group=data.get("group"),
-            #                 )
-            #             )
-            # datasets_loading.multiload("cascade_start", datasets, sources=sources)
-            pass
-
-        agent_exchange("deploy_get", datasets=datasets, page=page)
+            progress_pool("deploy_get", percent=0, message=0, finished=True)
         return BaseResponseSuccess()
 
 
