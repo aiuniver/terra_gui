@@ -25,9 +25,8 @@ class DataList(DataBaseList):
         source = Item
 
     def preset_update(self, data):
-        data.update(
-            {k: str(Path(self.path_deploy, data.get(k)))} for k in ("source", "segment")
-        )
+        for _param in ("source", "segment"):
+            data.update({_param: str(Path(self.path_deploy, data.get(_param)))})
         return data
 
     def reload(self, indexes: List[int] = None):
