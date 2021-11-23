@@ -1,7 +1,7 @@
 import json
 import random
 import shutil
-from pathlib import Path, PosixPath
+from pathlib import Path
 from typing import List, Tuple
 
 
@@ -48,7 +48,8 @@ class DataList(DataBaseList):
         self.preset[index] = item
 
         shutil.copyfile(
-            item.source, Path(self.path_deploy, f"{index + 1}{item.source.suffix}")
+            item.source,
+            Path(self.path_deploy, f"{index + 1}{Path(item.source).suffix}"),
         )
 
 

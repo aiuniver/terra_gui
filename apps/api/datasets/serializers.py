@@ -179,7 +179,7 @@ class LayerParametersTrackerSerializer(LayerParametersSerializer):
 class LayerParametersSegmentationSerializer(LayerParametersSerializer):
     width: serializers.IntegerField(min_value=1)
     height: serializers.IntegerField(min_value=1)
-    mask_range = serializers.IntegerField(min_value=1)
+    mask_range = serializers.IntegerField(min_value=0)
     classes_names: serializers.ListSerializer(child=serializers.CharField())
     classes_colors: serializers.ListSerializer(child=serializers.CharField())
 
@@ -349,4 +349,4 @@ class DeleteSerializer(serializers.Serializer):
 
 class SourceSegmentationClassesAutosearchSerializer(serializers.Serializer):
     num_classes = serializers.IntegerField(min_value=1)
-    mask_range = serializers.IntegerField(min_value=1)
+    mask_range = serializers.IntegerField(min_value=0)

@@ -3,6 +3,7 @@ from pydantic import validator
 from pydantic.types import PositiveInt, PositiveFloat
 from pydantic.color import Color
 
+from terra_ai.data.types import ConstrainedIntValueGe0
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.datasets.extra import (
     LayerNetChoice,
@@ -151,7 +152,7 @@ class ParametersRegressionData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersSegmentationData(ParametersBaseData):
-    mask_range: PositiveInt
+    mask_range: ConstrainedIntValueGe0
     classes_names: List[str]
     classes_colors: List[Color]
     height: Optional[PositiveInt]
