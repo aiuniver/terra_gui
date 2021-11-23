@@ -70,6 +70,7 @@ class InteractiveCallback:
         self.urgent_predict = False
         self.deploy_presets_data = None
         self.random_key = ''
+        self.get_balance = True
         pass
 
     def set_attributes(self, dataset: PrepareDataset, params: TrainingDetailsData):
@@ -84,16 +85,16 @@ class InteractiveCallback:
         self.dataset_path = dataset.data.path
         self.class_colors = get_classes_colors(dataset)
         self.x_val, self.inverse_x_val = self.callback.get_x_array(dataset)
-        self.y_true, self.inverse_y_true = self.callback.get_y_true(dataset, dataset.data.path)
-        self.dataset_balance = self.callback.dataset_balance(
-            options=self.options, y_true=self.y_true,
-            preset_path=self.training_details.intermediate_path,
-            class_colors=self.class_colors
-        )
-        if dataset.data.architecture in CLASSIFICATION_ARCHITECTURE:
-            self.class_idx = self.callback.prepare_class_idx(self.y_true, self.options)
-        self.seed_idx = self._prepare_seed()
-        print('\nseed_idx', self.seed_idx[:10], '\n')
+        # self.y_true, self.inverse_y_true = self.callback.get_y_true(dataset, dataset.data.path)
+        # self.dataset_balance = self.callback.dataset_balance(
+        #     options=self.options, y_true=self.y_true,
+        #     preset_path=self.training_details.intermediate_path,
+        #     class_colors=self.class_colors
+        # )
+        # if dataset.data.architecture in CLASSIFICATION_ARCHITECTURE:
+        #     self.class_idx = self.callback.prepare_class_idx(self.y_true, self.options)
+        # self.seed_idx = self._prepare_seed()
+        # print('\nseed_idx', self.seed_idx[:10], '\n')
         self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
 
     def clear_history(self):
@@ -123,7 +124,16 @@ class InteractiveCallback:
                         options=self.options, train_idx=train_idx)
                     self.inverse_y_pred = self.callback.get_inverse_array(self.y_pred, self.options)
                     print('\nInteractiveCallback y_true, y_pred:', round(time.time() - t, 3))
-
+                    if self.get_balance:
+                        self.dataset_balance = self.callback.dataset_balance(
+                            options=self.options, y_true=self.y_true,
+                            preset_path=self.training_details.intermediate_path,
+                            class_colors=self.class_colors
+                        )
+                        if self.options.data.architecture in CLASSIFICATION_ARCHITECTURE:
+                            self.class_idx = self.callback.prepare_class_idx(self.y_true, self.options)
+                        self.seed_idx = self._prepare_seed()
+                        self.get_balance = False
                     t = time.time()
                     out = f"{self.training_details.interactive.intermediate_result.main_output}"
                     count = self.training_details.interactive.intermediate_result.num_examples
@@ -152,6 +162,17 @@ class InteractiveCallback:
                         sensitivity=sensitivity,
                         threashold=threashold
                     )
+                    if self.get_balance:
+                        self.y_true, self.inverse_y_true = \
+                            self.callback.get_y_true(self.options, self.options.data.path)
+                        self.dataset_balance = self.callback.dataset_balance(
+                            options=self.options, y_true=self.y_true,
+                            preset_path=self.training_details.intermediate_path,
+                            class_colors=self.class_colors
+                        )
+                        self.seed_idx = self._prepare_seed()
+                        print('\nseed_idx', self.seed_idx[:10], '\n')
+                        self.get_balance = False
                     print('\nInteractiveCallback get_y_pred', round(time.time() - t, 3), sensitivity, threashold)
                     count = self.training_details.interactive.intermediate_result.num_examples
                     count = count if count > len(self.options.dataframe.get('val')) \

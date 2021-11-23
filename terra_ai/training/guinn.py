@@ -816,7 +816,7 @@ class GUINN:
                 print(f'\n callback.on_epoch_end epoch time: {round(time.time() - st, 2)}')
                 print(
                     f"\nEpoch {callback.current_logs.get('epochs')}:"
-                    f"\nlog_history: {callback.log_history}, "
+                    # f"\nlog_history: {callback.log_history}, "
                     f"epoch_time={round(time.time() - callback._time_first_step, 3)}"
                     # f"\nloss={callback.log_history.get('2').get('loss')}"
                     # f"\nmetrics={callback.log_history.get('2').get('metrics')}\n"
