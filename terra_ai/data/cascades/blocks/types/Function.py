@@ -27,6 +27,7 @@ class ParametersMainData(BaseMixinData):
     ] = PostprocessBoxesMethodAvailableChoice.nms
     sigma: Optional[confloat(gt=0, le=1)] = 0.3
     line_thickness: Optional[conint(ge=1, le=5)] = 1
+    filter_classes: Optional[List[str]]
 
     class_id: Optional[conint(ge=0)] = 0
     classes_colors: Optional[List[Color]]
@@ -54,6 +55,8 @@ class ParametersMainData(BaseMixinData):
             _keys += ["score_threshold", "iou_threshold", "method", "sigma"]
         elif _type == BlockFunctionTypeChoice.PlotBBoxes:
             _keys += ["classes", "colors", "line_thickness"]
+        elif _type == BlockFunctionTypeChoice.FilterClasses:
+            _keys += ["filter_classes"]
         data = dict(filter(lambda item: item[0] in _keys, data.items()))
         super().__init__(**data)
 
@@ -76,7 +79,10 @@ class ParametersMainData(BaseMixinData):
             cls.__fields__["score_threshold"].required = True
             cls.__fields__["iou_threshold"].required = True
             cls.__fields__["method"].required = True
-            if cls.__fields__["method"] == PostprocessBoxesMethodAvailableChoice.soft_nms:
+            if (
+                cls.__fields__["method"]
+                == PostprocessBoxesMethodAvailableChoice.soft_nms
+            ):
                 cls.__fields__["sigma"].required = True
         elif value == BlockFunctionTypeChoice.PlotBBoxes:
             cls.__fields__["line_thickness"].required = True
@@ -89,6 +95,7 @@ class ParametersMainData(BaseMixinData):
         "close_tag",
         "classes",
         "colors",
+        "filter_classes",
         pre=True,
     )
     def _validate_empty_list(cls, value):

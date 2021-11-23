@@ -323,3 +323,4 @@ class BlockFunctionTypeChoice(str, Enum):
     PutTag = "Расстановка тегов по вероятностям из модели"
     PostprocessBoxes = "Постобработка Yolo"
     PlotBBoxes = "Наложение BBox на изображение"
+    FilterClasses = "Фильтрация классов Service YoloV5"

@@ -22,6 +22,90 @@ class PostprocessBoxesMethodAvailableChoice(str, Enum):
         return list(map(lambda item: item.value, BlockFunctionGroupChoice))
 
 
+ObjectDetectionFilterClassesList = [
+    "person",
+    "bicycle",
+    "car",
+    "motorcycle",
+    "airplane",
+    "bus",
+    "train",
+    "truck",
+    "boat",
+    "traffic light",
+    "fire hydrant",
+    "stop sign",
+    "parking meter",
+    "bench",
+    "bird",
+    "cat",
+    "dog",
+    "horse",
+    "sheep",
+    "cow",
+    "elephant",
+    "bear",
+    "zebra",
+    "giraffe",
+    "backpack",
+    "umbrella",
+    "handbag",
+    "tie",
+    "suitcase",
+    "frisbee",
+    "skis",
+    "snowboard",
+    "sports ball",
+    "kite",
+    "baseball bat",
+    "baseball glove",
+    "skateboard",
+    "surfboard",
+    "tennis racket",
+    "bottle",
+    "wine glass",
+    "cup",
+    "fork",
+    "knife",
+    "spoon",
+    "bowl",
+    "banana",
+    "apple",
+    "sandwich",
+    "orange",
+    "broccoli",
+    "carrot",
+    "hot dog",
+    "pizza",
+    "donut",
+    "cake",
+    "chair",
+    "couch",
+    "potted plant",
+    "bed",
+    "dining table",
+    "toilet",
+    "tv",
+    "laptop",
+    "mouse",
+    "remote",
+    "keyboard",
+    "cell phone",
+    "microwave",
+    "oven",
+    "toaster",
+    "sink",
+    "refrigerator",
+    "book",
+    "clock",
+    "vase",
+    "scissors",
+    "teddy bear",
+    "hair drier",
+    "toothbrush",
+]
+
+
 class ChangeTypeAvailableChoice(str, Enum):
     int = "int"
     int8 = "int8"
@@ -73,6 +157,7 @@ class BlockFunctionTypeChoice(str, Enum):
     PutTag = "PutTag"
     PostprocessBoxes = "PostprocessBoxes"
     PlotBBoxes = "PlotBBoxes"
+    FilterClasses = "FilterClasses"
 
     @staticmethod
     def values() -> list:
@@ -116,11 +201,13 @@ class BlockServiceTypeChoice(str, Enum):
 
 class BlockServiceBiTBasedTrackerMetricChoice(str, Enum):
     euclidean = "euclidean"
-    сosine = "сosine"
+    cosine = "cosine"
 
     @staticmethod
     def values() -> list:
-        return list(map(lambda item: item.value, BlockServiceBiTBasedTrackerMetricChoice))
+        return list(
+            map(lambda item: item.value, BlockServiceBiTBasedTrackerMetricChoice)
+        )
 
 
 class BlockServiceYoloV5VersionChoice(str, Enum):
@@ -135,43 +222,94 @@ class BlockServiceYoloV5VersionChoice(str, Enum):
 
 
 class BlocksBindChoice(Enum):
-    Model = ("Model", ("Любой блок, совместимый с типом данных выбранной модели: ",), tuple())
-    OutputData = ("OutputData", ((BlockGroupChoice.Model,
-                                  BlockFunctionTypeChoice.PlotBBoxes,
-                                  BlockFunctionTypeChoice.PlotMaskSegmentation,
-                                  BlockFunctionTypeChoice.MaskedImage,
-                                  BlockFunctionTypeChoice.PutTag,
-                                  BlockServiceTypeChoice.YoloV5),), tuple())
+    Model = (
+        "Model",
+        ("Любой блок, совместимый с типом данных выбранной модели: ",),
+        tuple(),
+    )
+    OutputData = (
+        "OutputData",
+        (
+            (
+                BlockGroupChoice.Model,
+                BlockFunctionTypeChoice.PlotBBoxes,
+                BlockFunctionTypeChoice.PlotMaskSegmentation,
+                BlockFunctionTypeChoice.MaskedImage,
+                BlockFunctionTypeChoice.PutTag,
+                BlockServiceTypeChoice.YoloV5,
+            ),
+        ),
+        tuple(),
+    )
 
-    Sort = ("Sort", (BlockFunctionTypeChoice.PostprocessBoxes,
-                     ), (LayerInputTypeChoice.Image,))
-    BiTBasedTracker = ("BiTBasedTracker", (BlockFunctionTypeChoice.PostprocessBoxes,
-                                           BlockGroupChoice.InputData), (LayerInputTypeChoice.Image,))
-    YoloV5 = ("YoloV5", (BlockGroupChoice.InputData,), (LayerInputTypeChoice.Image, ))
-    ChangeType = ("ChangeType", tuple(), (LayerInputTypeChoice.Image,
-                                          LayerInputTypeChoice.Audio,
-                                          LayerInputTypeChoice.Video,
-                                          LayerInputTypeChoice.Text))
+    Sort = (
+        "Sort",
+        (BlockFunctionTypeChoice.PostprocessBoxes,),
+        (LayerInputTypeChoice.Image,),
+    )
+    BiTBasedTracker = (
+        "BiTBasedTracker",
+        (BlockFunctionTypeChoice.PostprocessBoxes, BlockGroupChoice.InputData),
+        (LayerInputTypeChoice.Image,),
+    )
+    YoloV5 = ("YoloV5", (BlockGroupChoice.InputData,), (LayerInputTypeChoice.Image,))
+    ChangeType = (
+        "ChangeType",
+        tuple(),
+        (
+            LayerInputTypeChoice.Image,
+            LayerInputTypeChoice.Audio,
+            LayerInputTypeChoice.Video,
+            LayerInputTypeChoice.Text,
+        ),
+    )
     ChangeSize = ("ChangeSize", tuple(), (LayerInputTypeChoice.Image,))
-    MinMaxScale = ("MinMaxScale", tuple(), (LayerInputTypeChoice.Image,
-                                            LayerInputTypeChoice.Audio,
-                                            LayerInputTypeChoice.Video,
-                                            LayerInputTypeChoice.Text))
+    MinMaxScale = (
+        "MinMaxScale",
+        tuple(),
+        (
+            LayerInputTypeChoice.Image,
+            LayerInputTypeChoice.Audio,
+            LayerInputTypeChoice.Video,
+            LayerInputTypeChoice.Text,
+        ),
+    )
     CropImage = ("CropImage", tuple(), tuple())
-    MaskedImage = ("MaskedImage", (BlockGroupChoice.Model, BlockGroupChoice.InputData), (LayerInputTypeChoice.Image,))
-    PlotMaskSegmentation = ("PlotMaskSegmentation", (BlockGroupChoice.Model, BlockGroupChoice.InputData),
-                            (LayerInputTypeChoice.Image,))
-    PutTag = ("PutTag", (BlockGroupChoice.Model, ), (LayerInputTypeChoice.Text,))
-    PostprocessBoxes = ("PostprocessBoxes", (BlockGroupChoice.Model,
-                                             BlockGroupChoice.InputData), (LayerInputTypeChoice.Image,))
-    PlotBBoxes = ("PlotBBoxes", ((BlockFunctionTypeChoice.PostprocessBoxes,
-                                  BlockCustomTypeChoice.Sort, BlockServiceTypeChoice.BiTBasedTracker),
-                                 BlockGroupChoice.InputData), (LayerInputTypeChoice.Image,))
+    MaskedImage = (
+        "MaskedImage",
+        (BlockGroupChoice.Model, BlockGroupChoice.InputData),
+        (LayerInputTypeChoice.Image,),
+    )
+    PlotMaskSegmentation = (
+        "PlotMaskSegmentation",
+        (BlockGroupChoice.Model, BlockGroupChoice.InputData),
+        (LayerInputTypeChoice.Image,),
+    )
+    PutTag = ("PutTag", (BlockGroupChoice.Model,), (LayerInputTypeChoice.Text,))
+    PostprocessBoxes = (
+        "PostprocessBoxes",
+        (BlockGroupChoice.Model, BlockGroupChoice.InputData),
+        (LayerInputTypeChoice.Image,),
+    )
+    PlotBBoxes = (
+        "PlotBBoxes",
+        (
+            (
+                BlockFunctionTypeChoice.PostprocessBoxes,
+                BlockCustomTypeChoice.Sort,
+                BlockServiceTypeChoice.BiTBasedTracker,
+            ),
+            BlockGroupChoice.InputData,
+        ),
+        (LayerInputTypeChoice.Image,),
+    )
 
     def __init__(self, name, binds, data_type):
         self._name = name
         self._binds = self._get_binds(binds)
-        self._required_binds = tuple([bind for bind in binds if not isinstance(bind, tuple)])
+        self._required_binds = tuple(
+            [bind for bind in binds if not isinstance(bind, tuple)]
+        )
         self._bind_count = len(binds) if binds else 1
         self._data_type = ", ".join([type_name.value for type_name in data_type])
 
@@ -218,14 +356,21 @@ class FunctionParamsChoice(Enum):
     MinMaxScale = (BlockFunctionTypeChoice.MinMaxScale, ("min_scale", "max_scale"))
     CropImage = (BlockFunctionTypeChoice.CropImage, tuple())
     MaskedImage = (BlockFunctionTypeChoice.MaskedImage, ("class_id",))
-    PlotMaskSegmentation = (BlockFunctionTypeChoice.PlotMaskSegmentation, ("classes_colors",))
+    PlotMaskSegmentation = (
+        BlockFunctionTypeChoice.PlotMaskSegmentation,
+        ("classes_colors",),
+    )
     PutTag = (BlockFunctionTypeChoice.PutTag, ("open_tag", "close_tag", "alpha"))
-    PostprocessBoxes = (BlockFunctionTypeChoice.PostprocessBoxes, (
-        "input_size", "score_threshold", "iou_threshold", "method", "sigma"
-    ))
+    PostprocessBoxes = (
+        BlockFunctionTypeChoice.PostprocessBoxes,
+        ("input_size", "score_threshold", "iou_threshold", "method", "sigma"),
+    )
     PlotBBoxes = (BlockFunctionTypeChoice.PlotBBoxes, ("classes",))
     Sort = (BlockServiceTypeChoice.Sort, ("max_age", "min_hits"))
-    BiTBasedTracker = (BlockServiceTypeChoice.BiTBasedTracker, ("max_age", "distance_threshold", "metric"))
+    BiTBasedTracker = (
+        BlockServiceTypeChoice.BiTBasedTracker,
+        ("max_age", "distance_threshold", "metric"),
+    )
     YoloV5 = (BlockServiceTypeChoice.YoloV5, ("version", "render_img"))
 
     def __init__(self, name, parameters):
