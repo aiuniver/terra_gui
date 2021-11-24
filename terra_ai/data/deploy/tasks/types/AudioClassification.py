@@ -4,7 +4,6 @@ import shutil
 from pathlib import Path
 from typing import List, Tuple
 
-
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.settings import DEPLOY_PRESET_COUNT
 from ..extra import DataBaseList, DataBase
@@ -48,7 +47,7 @@ class DataList(DataBaseList):
         self.preset[index] = item
 
         shutil.copyfile(
-            item.source,
+            Path(self.path_deploy, item.source),
             Path(self.path_deploy, f"{index + 1}{Path(item.source).suffix}"),
         )
 
