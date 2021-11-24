@@ -219,7 +219,6 @@ class CreateVersion(object):
                 parameters = None
                 current_path = self.dataset_paths_data.sources.joinpath(path)
                 if current_path.is_file():
-                    print('ТАБЛИЦА')
                     for col_name, worker in val.items():
                         table_data = []
                         dataframe = pd.read_csv(current_path, usecols=[col_name], sep=None, engine='python')
@@ -250,7 +249,6 @@ class CreateVersion(object):
                         put_parameters[idx].update({f'{idx}_{col_name}': instructions_data})
 
                 else:
-                    print("DIR")
                     for direct, folder, file_name in os.walk(current_path):
                         if file_name:
                             for name in sorted(file_name):
