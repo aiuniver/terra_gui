@@ -78,8 +78,8 @@ export default {
       },
       get() {
         const list = this.list ?? [];
-        const label = list.find(item => item.value === this.selected?.value || item.value === this.value)?.label || '';
-        return label || '';
+        const label = list.find(el => el.value === this.selected.value) || null;
+        return label ? label.label : '';
       },
     },
   },
