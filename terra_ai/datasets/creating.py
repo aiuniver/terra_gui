@@ -42,7 +42,7 @@ class CreateDataset(object):
 
     def __init__(self, cr_data: CreationData):
 
-        creation_data = cr_data  # ВРЕМЕННО!!!
+        creation_data = self.preprocess_creation_data(cr_data)
         self.temp_directory: str = tempfile.mkdtemp()
         os.makedirs(Path(self.temp_directory, f'{creation_data.alias}.{DATASET_EXT}_NEW'), exist_ok=True)
         self.dataset_paths_data = DatasetPathsData(
@@ -64,6 +64,30 @@ class CreateDataset(object):
             shutil.rmtree(Path(creation_data.datasets_path, f'{creation_data.alias}.{DATASET_EXT}_NEW'))
         shutil.move(str(self.dataset_paths_data.basepath), creation_data.datasets_path)
         shutil.rmtree(self.temp_directory)
+
+    @staticmethod
+    def preprocess_creation_data(creation_data):
+        for worker_name, worker_params in creation_data.version.processing.items():
+            if creation_data.version.processing[worker_name].type == 'Segmentation':
+                for w_name, w_params in creation_data.version.processing.items():
+                    if creation_data.version.processing[w_name].type == 'Image':
+                        creation_data.version.processing[worker_name].parameters.height = \
+                            creation_data.version.processing[w_name].parameters.height
+                        creation_data.version.processing[worker_name].parameters.width = \
+                            creation_data.version.processing[w_name].parameters.width
+            elif creation_data.version.processing[worker_name].type == 'Timeseries':
+                if creation_data.version.processing[worker_name].parameters.trend:
+                    creation_data.version.processing[worker_name].parameters.depth = 1
+                for w_name, w_params in creation_data.version.processing.items():
+                    if creation_data.version.processing[w_name].type in ['Classification', 'Scaler']:
+                        creation_data.version.processing[w_name].parameters.length = \
+                            creation_data.version.processing[worker_name].parameters.length
+                        creation_data.version.processing[w_name].parameters.depth = \
+                            creation_data.version.processing[worker_name].parameters.depth
+                        creation_data.version.processing[w_name].parameters.step = \
+                            creation_data.version.processing[worker_name].parameters.step
+
+        return creation_data
 
     @staticmethod
     def zip_dataset(src, dst):
@@ -137,6 +161,33 @@ class CreateVersion(object):
         self.write_version_configure()
 
     @staticmethod
+    def postprocess_timeseries(full_array):
+        try:
+            new_array = np.array(full_array).transpose()
+        except:
+            new_array = []
+            array = []
+            for el in full_array:
+                if type(el[0]) == np.ndarray:
+                    tmp = []
+                    for j in range(len(el)):
+                        tmp.append(list(el[j]))
+                    array.append(tmp)
+                else:
+                    array.append(el.tolist())
+            array = np.array(array).transpose().tolist()
+            for i in array:
+                tmp = []
+                for j in i:
+                    if type(j) == list:
+                        tmp.extend(j)
+                    else:
+                        tmp.append(j)
+                new_array.append(tmp)
+            new_array = np.array(new_array)
+        return new_array
+
+    @staticmethod
     def zip_dataset(src, dst):
         zf = zipfile.ZipFile("%s.zip" % (dst), "w", zipfile.ZIP_DEFLATED)
         abs_src = os.path.abspath(src)
@@ -159,14 +210,47 @@ class CreateVersion(object):
     def create_put_instructions(self, puts, processing):
 
         put_parameters = {}
-
         for idx in range(puts[0].id, puts[0].id + len(puts)):
             data = []
+            self.tags[idx] = {}
+            put_parameters[idx] = {}
             for path, val in puts.get(idx).parameters.items():
                 data_to_pass = []
                 parameters = None
                 current_path = self.dataset_paths_data.sources.joinpath(path)
-                if current_path.is_dir():
+                if current_path.is_file():
+                    print('ТАБЛИЦА')
+                    for col_name, worker in val.items():
+                        table_data = []
+                        dataframe = pd.read_csv(current_path, usecols=[col_name], sep=None, engine='python')
+                        data_to_pass = dataframe.loc[:, col_name].to_numpy().tolist()
+                        parameters = processing[str(worker[0])].native()
+
+                        instr = getattr(CreateArray, f'instructions_{decamelize(parameters["type"])}')(data_to_pass,
+                                                                                                       **parameters[
+                                                                                                           'parameters'])
+                        cut = getattr(CreateArray, f'cut_{decamelize(parameters["type"])}')(instr['instructions'],
+                                                                                            **instr['parameters'], **{
+                                'cols_names': f'{idx}_{col_name}', 'put': idx})
+
+                        self.tags[idx].update({f'{puts.get(idx).id}_{col_name}':
+                                                   decamelize(parameters['type'])})
+
+                        for i in range(len(cut['instructions'])):
+                            if decamelize(parameters['type']) in PATH_TYPE_LIST:
+                                table_data.append(os.path.join('sources',
+                                                               cut['instructions'][i].replace(
+                                                                   str(self.dataset_paths_data.sources), '')[1:]))
+                            else:
+                                table_data.append(cut['instructions'][i])
+                            self.y_cls.append(os.path.basename(path))
+
+                        instructions_data = InstructionsData(instructions=table_data, parameters=cut['parameters'])
+                        instructions_data.parameters.update([('put_type', decamelize(parameters['type']))])
+                        put_parameters[idx].update({f'{idx}_{col_name}': instructions_data})
+
+                else:
+                    print("DIR")
                     for direct, folder, file_name in os.walk(current_path):
                         if file_name:
                             for name in sorted(file_name):
@@ -177,29 +261,28 @@ class CreateVersion(object):
                     if parameters['type'] == LayerOutputTypeChoice.Classification:
                         data_to_pass = self.y_cls
 
-                elif current_path.is_file():
-                    print('ТАБЛИЦА')
-                instr = getattr(CreateArray, f'instructions_{decamelize(parameters["type"])}')(data_to_pass,
-                                                                                               **parameters[
-                                                                                                   'parameters'])
-                cut = getattr(CreateArray, f'cut_{decamelize(parameters["type"])}')(instr['instructions'],
-                                                                                    **instr['parameters'], **{
-                        'cols_names': decamelize(parameters["type"]), 'put': idx})
-                for i in range(len(cut['instructions'])):
-                    if parameters['type'] != LayerOutputTypeChoice.Classification:
-                        if decamelize(parameters['type']) in PATH_TYPE_LIST:
-                            data.append(os.path.join('sources',
-                                                     cut['instructions'][i].replace(str(self.dataset_paths_data.sources), '')[1:]))
-                        else:
-                            data.append(cut['instructions'][i])
-                        self.y_cls.append(os.path.basename(path))
+                    instr = getattr(CreateArray, f'instructions_{decamelize(parameters["type"])}')(data_to_pass,
+                                                                                                   **parameters[
+                                                                                                       'parameters'])
+                    cut = getattr(CreateArray, f'cut_{decamelize(parameters["type"])}')(instr['instructions'],
+                                                                                        **instr['parameters'], **{
+                            'cols_names': decamelize(parameters["type"]), 'put': idx})
+                    for i in range(len(cut['instructions'])):
+                        if parameters['type'] != LayerOutputTypeChoice.Classification:
+                            if decamelize(parameters['type']) in PATH_TYPE_LIST:
+                                data.append(os.path.join('sources',
+                                                         cut['instructions'][i].replace(
+                                                             str(self.dataset_paths_data.sources), '')[1:]))
+                            else:
+                                data.append(cut['instructions'][i])
+                            self.y_cls.append(os.path.basename(path))
 
-            if parameters['type'] != LayerOutputTypeChoice.Classification:
-                instructions_data = InstructionsData(instructions=data, parameters=cut['parameters'])
-            else:
-                instructions_data = InstructionsData(instructions=self.y_cls, parameters=cut['parameters'])
-            instructions_data.parameters.update([('put_type', decamelize(parameters['type']))])
-            put_parameters[idx] = {f'{idx}_{decamelize(parameters["type"])}': instructions_data}
+                    if parameters['type'] != LayerOutputTypeChoice.Classification:
+                        instructions_data = InstructionsData(instructions=data, parameters=cut['parameters'])
+                    else:
+                        instructions_data = InstructionsData(instructions=self.y_cls, parameters=cut['parameters'])
+                    instructions_data.parameters.update([('put_type', decamelize(parameters['type']))])
+                    put_parameters[idx] = {f'{idx}_{decamelize(parameters["type"])}': instructions_data}
 
         return put_parameters
 

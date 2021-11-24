@@ -174,11 +174,13 @@ class ParametersTimeseriesData(ParametersBaseData, MinMaxScalerData):
 
     def __init__(self, **data):
         try:
-            if data.get("trend"):
-                data.pop("depth")
-                data.pop("scaler")
+            if data.get("trend"): # TODO
+                pass
+                # data.pop("depth")
+                # data.pop("scaler")
             else:
-                data.pop("trend_limit")
+                pass
+                # data.pop("trend_limit")
         except KeyError:
             pass
         super().__init__(**data)
