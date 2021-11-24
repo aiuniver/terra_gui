@@ -46,7 +46,7 @@ if settings.TERRA_AI_SYNC_LOGS:
             destination_error = destination_log.with_suffix('.error')
             data.append((source_error, destination_error))
         for source, destination in data:
-            cmd = f'rsync -avzqP -e "ssh -i {Path(settings.BASE_DIR, "rsa.key")} -o StrictHostKeyChecking=no" {source} ' \
+            cmd = f'rsync -avzqP -e "ssh -i {Path(settings.BASE_DIR, "rsa.key")} -o StrictHostKeyChecking=no" {source} '\
                   f'terra_log@81.90.181.251:{destination}'
             subprocess.call(cmd, shell=True)
         source_error.unlink(missing_ok=True)
