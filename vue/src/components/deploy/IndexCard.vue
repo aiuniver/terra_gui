@@ -72,7 +72,8 @@
       <div class="card__graphic" v-if="type == 'TimeseriesTrend'">
         
         <div class="card__original">
-          <GraphicCard v-bind="card" :key="'grapрhic_' + index"/>
+          <!-- <GraphicCard v-bind="card" :key="'grapрhic_' + index"/> -->
+          <GraphicCardPredict :data="card.predict" :key="'grapрhic_' + index"/>
         </div>
         <div class="card__result">
           <GraphicCardSource :data="card.source" :key="'grвыaphic_' + index"/>
@@ -92,6 +93,7 @@ import TableTextSegmented from "../training/main/prediction/components/TableText
 import SegmentationTags from "./cards/SegmentationTags";
 import GraphicCard from "./cards/GraphicCard";
 import GraphicCardSource from "./cards/GraphicCardSource";
+import GraphicCardPredict from "./cards/GraphicCardPredict";
 import { mapGetters } from 'vuex';
 export default {
   name: 'IndexCard',
@@ -101,6 +103,7 @@ export default {
     TextCard,
     GraphicCard,
     GraphicCardSource,
+    GraphicCardPredict,
     AudioCard,
     TableTextSegmented,
     SegmentationTags,
