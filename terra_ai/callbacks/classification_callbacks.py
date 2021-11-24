@@ -1207,7 +1207,7 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
                             return_mode='deploy'
                         )
                         data['predict'][channel.split('_', 1)[-1]] = \
-                            [data['source'][channel.split('_', 1)[-1]], predict_values[0][0][0]]
+                            [data['source'][channel.split('_', 1)[-1]], [predict_values[0][0][0]]]
                         # data['predict'][channel.split('_', 1)[-1]] = \
                         #     [data['source'][channel.split('_', 1)[-1]], predict_values[0]]
                     return_data[output_id].append(data)
