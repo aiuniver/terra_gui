@@ -33,7 +33,7 @@ class DataList(DataBaseList):
         for preset in self.preset:
             _presets.append(preset.native())
 
-        with open(Path(self.path, "presets.json"), "w") as preset_file_ref:
+        with open(Path(self.path_deploy, "presets.json"), "w") as preset_file_ref:
             preset_file_ref.write(json.dumps(_presets, ensure_ascii=False))
 
 

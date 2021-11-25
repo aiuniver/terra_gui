@@ -2,7 +2,7 @@ from terra_ai.data.training.extra import (
     OptimizerChoice,
     CheckpointIndicatorChoice,
     CheckpointTypeChoice,
-    CheckpointModeChoice,
+    # CheckpointModeChoice,
     ArchitectureChoice,
 )
 
@@ -421,19 +421,19 @@ ArchitectureBasicForm = {
                     )
                 ),
             },
-            {
-                "type": "select",
-                "label": "Режим",
-                "name": "architecture_parameters_checkpoint_mode",
-                "parse": "architecture[parameters][checkpoint][mode]",
-                "value": CheckpointModeChoice.Max.name,
-                "list": list(
-                    map(
-                        lambda item: {"value": item.name, "label": item.value},
-                        list(CheckpointModeChoice),
-                    )
-                ),
-            },
+            # {
+            #     "type": "select",
+            #     "label": "Режим",
+            #     "name": "architecture_parameters_checkpoint_mode",
+            #     "parse": "architecture[parameters][checkpoint][mode]",
+            #     "value": CheckpointModeChoice.Max.name,
+            #     "list": list(
+            #         map(
+            #             lambda item: {"value": item.name, "label": item.value},
+            #             list(CheckpointModeChoice),
+            #         )
+            #     ),
+            # },
         ],
     },
 }
@@ -508,19 +508,19 @@ Architectures = {
                         )
                     ),
                 },
-                {
-                    "type": "select",
-                    "label": "Режим",
-                    "name": "architecture_parameters_checkpoint_mode",
-                    "parse": "architecture[parameters][checkpoint][mode]",
-                    "value": CheckpointModeChoice.Max.name,
-                    "list": list(
-                        map(
-                            lambda item: {"value": item.name, "label": item.value},
-                            list(CheckpointModeChoice),
-                        )
-                    ),
-                },
+                # {
+                #     "type": "select",
+                #     "label": "Режим",
+                #     "name": "architecture_parameters_checkpoint_mode",
+                #     "parse": "architecture[parameters][checkpoint][mode]",
+                #     "value": CheckpointModeChoice.Max.name,
+                #     "list": list(
+                #         map(
+                #             lambda item: {"value": item.name, "label": item.value},
+                #             list(CheckpointModeChoice),
+                #         )
+                #     ),
+                # },
             ],
         },
         "yolo": ArchitectureGroupYoloV3,
@@ -582,21 +582,22 @@ Architectures = {
                         )
                     ),
                 },
-                {
-                    "type": "select",
-                    "label": "Режим",
-                    "name": "architecture_parameters_checkpoint_mode",
-                    "parse": "architecture[parameters][checkpoint][mode]",
-                    "value": CheckpointModeChoice.Max.name,
-                    "list": list(
-                        map(
-                            lambda item: {"value": item.name, "label": item.value},
-                            list(CheckpointModeChoice),
-                        )
-                    ),
-                },
+                # {
+                #     "type": "select",
+                #     "label": "Режим",
+                #     "name": "architecture_parameters_checkpoint_mode",
+                #     "parse": "architecture[parameters][checkpoint][mode]",
+                #     "value": CheckpointModeChoice.Max.name,
+                #     "list": list(
+                #         map(
+                #             lambda item: {"value": item.name, "label": item.value},
+                #             list(CheckpointModeChoice),
+                #         )
+                #     ),
+                # },
             ],
         },
         "yolo": ArchitectureGroupYoloV4,
     },
+    ArchitectureChoice.Tracker: {**ArchitectureBasicForm},
 }

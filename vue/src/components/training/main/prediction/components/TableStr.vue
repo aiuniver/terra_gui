@@ -1,5 +1,5 @@
 <template>
-  <div class="t-predict-text">
+  <div :class="['t-predict-text', { 't-predict-text--large': length }]">
     <p :class="['t-predict-text__text', color]" :style="{marginTop: length ? '10px' : '' }">{{ text }}</p>
     <span v-if="length" class="t-predict-text__more" @click="show">{{ textBtn[Number(isShow)] }}</span>
   </div>
@@ -55,6 +55,12 @@ export default {
   align-items: center;
   flex-direction: column;
   padding: 5px;
+  &--large {
+    width: 500px;
+    p {
+      text-align: justify;
+    }
+  }
 
   &__text {
     text-align: center;

@@ -1,6 +1,6 @@
 <template>
   <div :class="['t-field', { 't-inline': inline }]">
-    <label class="t-field__label" @click="clickLabel" :for="name">
+    <label class="t-field__label" @click="clickLabel">
       <slot>{{ label }}</slot>
     </label>
     <div class="t-field__switch">

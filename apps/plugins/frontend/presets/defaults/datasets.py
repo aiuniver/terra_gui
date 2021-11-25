@@ -344,7 +344,7 @@ DataSetsColumnProcessing = [
                                 "label": "Обработка кадров",
                                 "name": "frame_mode",
                                 "parse": "frame_mode",
-                                "value": LayerVideoFrameModeChoice.keep_proportions.name,
+                                "value": LayerVideoFrameModeChoice.fit.name,
                                 "list": list(
                                     map(
                                         lambda item: {
@@ -746,7 +746,7 @@ DataSetsInput = [
                     "label": "Обработка кадров",
                     "name": "frame_mode",
                     "parse": "frame_mode",
-                    "value": LayerVideoFrameModeChoice.keep_proportions.name,
+                    "value": LayerVideoFrameModeChoice.fit.name,
                     "list": list(
                         map(
                             lambda item: {

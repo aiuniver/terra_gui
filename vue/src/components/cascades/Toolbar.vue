@@ -1,35 +1,64 @@
 <template>
   <div class="toolbar">
     <ul class="toolbar__menu">
-      <li class="toolbar__menu--item" @click.prevent="click('load')" title="Загрузить модель">
+      <li :class="['toolbar__menu--item', { disabled: false }]" @click="click($event, 'load')" title="Загрузить каскад">
         <i class="t-icon icon-model-load"></i>
       </li>
-      <li class="toolbar__menu--item" @click.prevent="click('save')" title="Сохранить модель">
+      <!-- <li
+        :class="['toolbar__menu--item', { disabled: isSave }]"
+        @click="click($event, 'save')"
+        title="Сохранить каскад"
+      >
         <i class="t-icon icon-model-save"></i>
-      </li>
-      <li class="toolbar__menu--item" @click.prevent="click('validation')" title="Валидация">
-        <i class="t-icon icon-model-validation"></i>
-      </li>
-      <li class="toolbar__menu--item" @click.prevent="click('clear')" title="Очистить">
+      </li> -->
+      <li :class="['toolbar__menu--item', { disabled: false }]" @click="click($event, 'clear')" title="Очистить">
         <i class="t-icon icon-model-clear"></i>
       </li>
       <hr />
-      <li class="toolbar__menu--item" @click.prevent="click('input')" title="Входящий слой">
+      <li
+        :class="['toolbar__menu--item', { disabled: false }]"
+        @click.prevent="click($event, 'InputData')"
+        title="Входящий слой"
+      >
         <i class="t-icon icon-layer-input-casc"></i>
       </li>
-      <li class="toolbar__menu--item" @click.prevent="click('model')" title="Model">
+      <li class="toolbar__menu--item" @click.prevent="click($event, 'Model')" title="Model">
         <i class="t-icon icon-layer-model"></i>
       </li>
-      <li class="toolbar__menu--item" @click.prevent="click('function')" title="Function">
+      <li class="toolbar__menu--item" @click.prevent="click($event, 'Function')" title="Function">
         <i class="t-icon icon-layer-function"></i>
       </li>
-      <li class="toolbar__menu--item" @click.prevent="click('custom')" title="Custom">
+      <li class="toolbar__menu--item" @click.prevent="click($event, 'Custom')" title="Custom">
         <i class="t-icon icon-layer-custom"></i>
       </li>
-      <li class="toolbar__menu--item" @click.prevent="click('output')" title="Исходящий слой">
+      <li class="toolbar__menu--item" @click.prevent="click($event, 'Service')" title="Service">
+        <i class="t-icon icon-layer-service"></i>
+      </li>
+      <li
+        :class="['toolbar__menu--item', { disabled: false }]"
+        @click.prevent="click($event, 'OutputData')"
+        title="Исходящий слой"
+      >
         <i class="t-icon icon-layer-output"></i>
       </li>
       <hr />
+      <li
+        :class="['toolbar__menu--item', { disabled: isValidation }]"
+        @click="click($event, 'validation')"
+        title="Валидация"
+      >
+        <i class="t-icon icon-model-validation"></i>
+      </li>
+      <li :class="['toolbar__menu--item', { disabled: isStart }]" @click="click($event, 'start')" title="Запустить">
+        <i class="t-icon icon-model-play"></i>
+      </li>
+      <li
+        :class="['toolbar__menu--item', { disabled: isSave }]"
+        @click="click($event, 'save')"
+        title="Сохранить каскад"
+      >
+        <i class="t-icon icon-model-save"></i>
+      </li>
     </ul>
   </div>
 </template>
@@ -42,13 +71,34 @@ export default {
   computed: {
     ...mapGetters({
       blocks: 'cascades/getBlocks',
+      errors: 'cascades/getErrorsBlocks',
       project: 'projects/getProject',
+      status: 'cascades/getStatus',
     }),
+    isValidation() {
+      const blocks = this.blocks.map(item => item.group);
+      // console.log(this.status.update)
+      return !(blocks.includes('InputData') && blocks.includes('OutputData'));
+    },
+    isStart() {
+      return this.isValidation || this.status.validate;
+    },
+    isSave() {
+      return this.isStart || this.status.start;
+    },
+    isInput() {
+      return !!this.blocks.find(item => item.group === 'InputData') && !!this.project?.dataset;
+    },
+    isOutput() {
+      return !!this.blocks.find(item => item.group === 'OutputData') && !!this.project?.dataset;
+    },
   },
   methods: {
-    click(event, idDisebled) {
-      if (!idDisebled) {
-        this.$emit('actions', event);
+    click({ currentTarget }, comm) {
+      const classList = [...currentTarget?.classList] || [];
+      // console.log(classList);
+      if (!classList.includes('disabled')) {
+        this.$emit('actions', comm);
       }
     },
   },
@@ -74,14 +124,13 @@ export default {
       justify-content: center;
       align-items: center;
       cursor: pointer;
-      &[disabled='disabled'] {
+      &.disabled {
         opacity: 0.1;
         cursor: default;
       }
     }
   }
 }
-
 hr {
   border: none;
   color: #0e1621;

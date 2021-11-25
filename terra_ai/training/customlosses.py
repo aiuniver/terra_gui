@@ -16,7 +16,7 @@ class DiceCoef(tf.keras.metrics.Metric):
         self.dice: float = 0
         # pass
 
-    def update_state(self, y_true, y_pred, smooth=1, sample_weight=None):
+    def update_state(self, y_true, y_pred, smooth=1, show_class=False, sample_weight=None):
         y_true = tf.cast(y_true, tf.float32)
         y_pred = tf.cast(y_pred, tf.float32)
         # по размеру тензора определяем пришли маски по изображениям или по тексту
@@ -61,12 +61,13 @@ class BalancedDiceCoef(tf.keras.metrics.Metric):
     def update_state(self, y_true, y_pred, smooth=1, sample_weight=None):
         y_true = tf.cast(y_true, tf.float32)
         y_pred = tf.cast(y_pred, tf.float32)
+
         if self.encoding == 'ohe':
             y_pred = K.one_hot(K.argmax(y_pred, axis=-1), num_classes=y_true.shape[-1])
         elif self.encoding == 'multi':
-            y_pred = tf.where(y_pred > CALLBACK_CLASSIFICATION_TREASHOLD_VALUE / 100, 1., 0.)
+            y_pred = tf.where(y_pred > 0.9, 1., 0.)
         else:
-            pass
+            y_pred = tf.where(y_pred > 0.5, 1., 0.)
 
         balanced_dice = tf.convert_to_tensor(0., dtype=tf.float32)
         for i in range(y_true.shape[-1]):
@@ -74,6 +75,7 @@ class BalancedDiceCoef(tf.keras.metrics.Metric):
             union = K.sum(y_true[..., i:i + 1]) + K.sum(y_pred[..., i:i + 1])
             balanced_dice = tf.add(balanced_dice, tf.convert_to_tensor((2. * intersection + smooth) / (union + smooth)))
         self.dice = tf.convert_to_tensor(balanced_dice / y_true.shape[-1])
+        # print(self.dice, intersection, union)
 
     def get_config(self):
         """
@@ -91,7 +93,6 @@ class BalancedDiceCoef(tf.keras.metrics.Metric):
 
     def reset_state(self):
         self.dice: float = 0
-        # pass
 
 
 # class RecallPercent(tf.keras.metrics.Metric):
@@ -375,7 +376,57 @@ class UnscaledMAE(tf.keras.metrics.MeanAbsoluteError):
             return mae_result
 
 
-def YoloLoss(inputs, num_anchors,):
+class PercentMAE(tf.keras.metrics.Metric):
+    def __init__(self, name='percent_mae', **kwargs):
+        super(PercentMAE, self).__init__(name=name, **kwargs)
+        self.score: float = 0
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        y_true = tf.cast(y_true, tf.float32)
+        y_pred = tf.cast(y_pred, tf.float32)
+        self.score = K.mean(tf.abs(y_true - y_pred) * 100 / K.mean(y_true))
+
+    def get_config(self):
+        """
+        Returns the serializable config of the metric.
+        """
+        config = super(PercentMAE, self).get_config()
+        return config
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+    def result(self):
+        return self.score
+
+    def reset_state(self):
+        self.score: float = 0
+        # pass
+
+    @staticmethod
+    def unscale_result(mae_result, output: int, dataset: CreatePreprocessing):
+        preprocess_dict = dataset.preprocessing.get(output)
+        target_key = None
+        for i, column in enumerate(preprocess_dict.keys()):
+            if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
+                target_key = column
+            else:
+                target_key = None
+                break
+        if target_key:
+            result = np.expand_dims(mae_result, axis=-1)
+            preset = {output: {target_key: result}}
+            unscale = np.array(list(dataset.inverse_data(preset)[output].values()))
+            try:
+                return unscale.item()
+            except ValueError:
+                return unscale.squeeze().tolist()
+        else:
+            return mae_result
+
+
+def YoloLoss(inputs, num_anchors, ):
     """
     Функция подсчета ошибки.
         Входные параметры:

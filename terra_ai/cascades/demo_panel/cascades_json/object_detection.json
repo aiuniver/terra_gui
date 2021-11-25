@@ -7,7 +7,7 @@
     "model": {
       "tag": "model",
       "task": "ObjectDetection",
-      "model": "C:\\Users\\Nill\\Documents\\terra_gui\\TerraProject\\models\\chess_test"
+      "model": "/home/evgeniy/terra_gui/TerraProject/models/chess_test"
     },
     "normalize bboxes": {
       "tag": "function",
@@ -24,7 +24,7 @@
     "plot bboxes": {
       "tag": "function",
       "task": "ObjectDetection",
-      "name": "plot_bboxes",
+      "name": "plot_b_boxes",
       "params": {
         "classes": [
           "black-knight",

@@ -128,6 +128,9 @@ export default {
         return this.$store.getters['modeling/getBlocks'];
       },
     },
+    block() {
+      return this.$store.getters['modeling/getBlock'];
+    },
     links: {
       set(value) {
         console.log(value);
@@ -196,7 +199,7 @@ export default {
 
         let x2 = targetLinkPos.x;
         let y2 = targetLinkPos.y;
-
+        const select = (originBlock.id === (this.block?.id || -1)) || (targetBlock.id === (this.block?.id || -1)) 
         lines.push({
           x1: x1,
           y1: y1,
@@ -205,7 +208,7 @@ export default {
           slot: link.originSlot,
           scale: this.scale,
           style: {
-            stroke: 'rgb(101, 185, 244)',
+            stroke: !select ? '#467ca1' : '#a0d5f9',
             strokeWidth: 2 * this.scale,
             fill: 'none',
             zIndex: 999,

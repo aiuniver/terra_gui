@@ -30,6 +30,7 @@
         </at-collapse>
       </div>
     </scrollbar>
+    <LargeImage v-show="largeImg" />
   </div>
 </template>
 
@@ -52,6 +53,7 @@ export default {
     Stats,
     Balance,
     Graphs,
+    LargeImage: () => import('./main/prediction/components/LargeImage.vue'),
   },
   data: () => ({
     // collabse: [],
@@ -59,6 +61,7 @@ export default {
   computed: {
     ...mapGetters({
       // status: "trainings/getStatus",
+      largeImg: 'trainings/getLargeImg'
     }),
     collapse: {
       set(value) {

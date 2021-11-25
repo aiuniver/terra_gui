@@ -1,18 +1,19 @@
 import sys
+from typing import List, Dict, Optional, Union, Any, Tuple
 
-from typing import List, Dict, Optional, Union, Any
 from pydantic import validator
 from pydantic.main import ModelMetaclass
 
-from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.datasets.dataset import DatasetData
+from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.modeling.layer import LayersList
 from terra_ai.data.training.extra import (
     ArchitectureChoice,
     TasksRelations,
     StateStatusChoice,
 )
-
+from terra_ai.settings import CASCADE_PATH
+from .base import Field
 from .presets.defaults.training import (
     TrainingLossSelect,
     TrainingMetricSelect,
@@ -20,8 +21,6 @@ from .presets.defaults.training import (
     ArchitectureOptimizerExtraFields,
     Architectures,
 )
-
-from .base import Field
 
 
 class DefaultsDatasetsCreationData(BaseMixinData):
@@ -104,6 +103,69 @@ StatesTrainingYoloParamsDisabled = {
         "architecture_parameters_yolo_train_lr_end",
         "architecture_parameters_yolo_yolo_iou_loss_thresh",
         "architecture_parameters_yolo_train_warmup_epochs",
+    ],
+}
+
+StatesTrainingBasicParamsDisabled = {
+    StateStatusChoice.no_train: [
+        "architecture_parameters_outputs_%s_classes_quantity",
+    ],
+    StateStatusChoice.training: [
+        "batch",
+        "epochs",
+        "optimizer",
+        "optimizer_main_learning_rate",
+        "optimizer_extra_beta_1",
+        "optimizer_extra_beta_2",
+        "optimizer_extra_epsilon",
+        "optimizer_extra_amsgrad",
+        "architecture_parameters_outputs_%s_loss",
+        "architecture_parameters_outputs_%s_metrics",
+        "architecture_parameters_outputs_%s_classes_quantity",
+        "architecture_parameters_checkpoint_layer",
+        "architecture_parameters_checkpoint_metric_name",
+        "architecture_parameters_checkpoint_type",
+        "architecture_parameters_checkpoint_indicator",
+        "architecture_parameters_checkpoint_mode",
+    ],
+    StateStatusChoice.trained: [
+        "architecture_parameters_outputs_%s_loss",
+        "architecture_parameters_outputs_%s_metrics",
+        "architecture_parameters_outputs_%s_classes_quantity",
+        "architecture_parameters_checkpoint_layer",
+        "architecture_parameters_checkpoint_metric_name",
+        "architecture_parameters_checkpoint_type",
+        "architecture_parameters_checkpoint_indicator",
+        "architecture_parameters_checkpoint_mode",
+    ],
+    StateStatusChoice.stopped: [
+        "epochs",
+        "architecture_parameters_outputs_%s_loss",
+        "architecture_parameters_outputs_%s_metrics",
+        "architecture_parameters_outputs_%s_classes_quantity",
+        "architecture_parameters_checkpoint_layer",
+        "architecture_parameters_checkpoint_metric_name",
+        "architecture_parameters_checkpoint_type",
+        "architecture_parameters_checkpoint_indicator",
+        "architecture_parameters_checkpoint_mode",
+    ],
+    StateStatusChoice.addtrain: [
+        "batch",
+        "epochs",
+        "optimizer",
+        "optimizer_main_learning_rate",
+        "optimizer_extra_beta_1",
+        "optimizer_extra_beta_2",
+        "optimizer_extra_epsilon",
+        "optimizer_extra_amsgrad",
+        "architecture_parameters_outputs_%s_loss",
+        "architecture_parameters_outputs_%s_metrics",
+        "architecture_parameters_outputs_%s_classes_quantity",
+        "architecture_parameters_checkpoint_layer",
+        "architecture_parameters_checkpoint_metric_name",
+        "architecture_parameters_checkpoint_type",
+        "architecture_parameters_checkpoint_indicator",
+        "architecture_parameters_checkpoint_mode",
     ],
 }
 
@@ -713,6 +775,10 @@ class ArchitectureYoloV4Form(ArchitectureYoloBaseForm):
     pass
 
 
+class ArchitectureTrackerForm(ArchitectureBasicForm):
+    pass
+
+
 class DefaultsTrainingData(BaseMixinData):
     architecture: ArchitectureChoice
     base: Optional[ArchitectureBaseForm]
@@ -744,7 +810,47 @@ class DefaultsTrainingData(BaseMixinData):
         )
 
 
+class DefaultsCascadesData(BaseMixinData):
+    block_form: List[Field]
+    blocks_types: Dict[str, Dict[str, List[Field]]]
+
+
+class DefaultsDeployData(BaseMixinData):
+    type: DefaultsTrainingBaseGroupData
+    server: DefaultsTrainingBaseGroupData
+
+
 class DefaultsData(BaseMixinData):
     datasets: DefaultsDatasetsData
     modeling: DefaultsModelingData
     training: DefaultsTrainingData
+    cascades: DefaultsCascadesData
+    deploy: DefaultsDeployData
+
+    def update_models(self, items: List[Tuple[str, str]] = None):
+        if not items:
+            items = []
+        values = list(map(lambda item: item[0], items))
+        options = list(map(lambda item: {"value": item[0], "label": item[1]}, items))
+
+        cascade_fields = self.cascades.blocks_types.get("Model", {}).get("main", [])
+        if cascade_fields:
+            cascade_model_field = cascade_fields[0]
+            cascade_model_field.list = options
+            if cascade_model_field.value not in values:
+                cascade_model_field.value = values[0] if len(values) else None
+
+        deploy_model_fields = self.deploy.type.fields[0].fields.get("model")
+        if deploy_model_fields:
+            deploy_model_field = deploy_model_fields[0]
+            deploy_model_field.list = options
+            if deploy_model_field.value not in values:
+                deploy_model_field.value = values[0] if len(values) else None
+
+        deploy_cascade_fields = self.deploy.type.fields[0].fields.get("cascade")
+        if deploy_cascade_fields:
+            deploy_cascade_field = deploy_cascade_fields[0]
+            deploy_cascade_field.list = [
+                {"value": str(CASCADE_PATH.absolute()), "label": "Текущий каскад"}
+            ]
+            deploy_cascade_field.value = deploy_cascade_field.list[0].get("value")

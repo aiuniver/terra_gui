@@ -93,16 +93,14 @@ export default {
       if (block.selected) {
         block.selected = false;
       }
-      dispatch('removeLinkToBlock', block);
       commit('SET_BLOCKS', blocks.filter(b => b.id !== block.id));
-      dispatch('updateModel');
+      dispatch('removeLinkToBlock', block);
+      // dispatch('updateModel');
     },
     removeLink ({ commit, state: { links } }, id) {
-      console.log(id)
       commit('SET_LINKS', links.filter(value => value.id !== id));
     },
     removeLinkToBlock ({ dispatch, commit, state: { links } }, block) {
-      console.log(block)
       commit('SET_LINKS', links.filter(link => (link.originID !== block.id && link.targetID !== block.id)));
       dispatch('updateModel');
     },

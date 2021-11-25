@@ -2,7 +2,6 @@ from typing import Optional, List, Union, Dict
 from pydantic import validator
 from pydantic.types import DirectoryPath, PositiveInt, PositiveFloat
 
-from .image_augmentation import AugmentationData
 from ...extra import (
     LayerNetChoice,
     LayerScalerImageChoice,
@@ -12,7 +11,8 @@ from ...extra import (
     LayerAudioParameterChoice,
     LayerAudioModeChoice,
     LayerAudioResampleChoice,
-    LayerAudioFillModeChoice, LayerImageFrameModeChoice,
+    LayerAudioFillModeChoice,
+    LayerImageFrameModeChoice,
 )
 from ....mixins import BaseMixinData
 from ....types import confilepath
@@ -37,7 +37,6 @@ class ParametersImageData(MinMaxScalerData, SourcesPathsData, ColumnProcessingDa
     net: LayerNetChoice
     scaler: LayerScalerImageChoice
     image_mode: LayerImageFrameModeChoice = LayerImageFrameModeChoice.stretch
-    augmentation: Optional[AugmentationData]
 
     put: Optional[PositiveInt]
     object_detection: Optional[bool] = False

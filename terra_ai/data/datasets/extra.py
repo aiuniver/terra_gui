@@ -113,14 +113,15 @@ class LayerVideoFillModeChoice(str, Enum):
     average_value = "average_value"
 
 
-class LayerVideoFrameModeChoice(str, Enum):
-    keep_proportions = "keep_proportions"  # УДАЛИТЬ ПОСЛЕ ИЗМЕНЕНИЯ НА ФРОНТЕ
-    stretch = "stretch"
-
-
 class LayerVideoModeChoice(str, Enum):
     completely = "completely"
     length_and_step = "length_and_step"
+
+
+class LayerVideoFrameModeChoice(str, Enum):
+    stretch = "stretch"
+    fit = "fit"
+    cut = "cut"
 
 
 class LayerImageFrameModeChoice(str, Enum):
@@ -153,6 +154,7 @@ class LayerODDatasetTypeChoice(str, Enum):
     Coco = "Coco"
     Yolov1 = "Yolov1"
     Udacity = "Udacity"
+
 
 class LayerEncodingChoice(str, Enum):
     none = "none"
@@ -218,3 +220,4 @@ class LayerOutputTypeChoice(str, Enum):
     TimeseriesTrend = "TimeseriesTrend"
     ObjectDetection = "ObjectDetection"
     Raw = "Raw"
+    Tracker = "Tracker"

@@ -4,6 +4,7 @@ from pydantic.types import PositiveInt, PositiveFloat
 from pydantic.color import Color
 
 from terra_ai.data.datasets.creations.layers.image_augmentation import AugmentationData
+from terra_ai.data.types import ConstrainedIntValueGe0
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.datasets.extra import (
     LayerNetChoice,
@@ -98,7 +99,7 @@ class ParametersVideoData(ParametersBaseData, MinMaxScalerData):
     width: PositiveInt
     height: PositiveInt
     fill_mode: LayerVideoFillModeChoice = LayerVideoFillModeChoice.last_frames
-    frame_mode: LayerVideoFrameModeChoice = LayerVideoFrameModeChoice.keep_proportions
+    frame_mode: LayerVideoFrameModeChoice = LayerVideoFrameModeChoice.fit
     video_mode: LayerVideoModeChoice = LayerVideoModeChoice.completely
     max_frames: Optional[PositiveInt]
     length: Optional[PositiveInt]
@@ -155,7 +156,7 @@ class ParametersRegressionData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersSegmentationData(ParametersBaseData):
-    mask_range: PositiveInt
+    mask_range: ConstrainedIntValueGe0
     classes_names: List[str]
     classes_colors: List[Color]
     height: Optional[PositiveInt]

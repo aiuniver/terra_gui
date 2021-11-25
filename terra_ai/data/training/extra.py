@@ -15,6 +15,7 @@ class StateStatusChoice(str, Enum):
     trained = "trained"  # Сетка обучена
     stopped = "stopped"  # Обучение Остановлена
     addtrain = "addtrain"  # Дообучение или возобновление после остановки
+    kill = "kill"  # Завершение без действий и удаление
 
 
 class LossGraphShowChoice(str, Enum):
@@ -54,6 +55,7 @@ class ArchitectureChoice(str, Enum):
     VideoClassification = "VideoClassification"
     YoloV3 = "YoloV3"
     YoloV4 = "YoloV4"
+    Tracker = "Tracker"
 
 
 class CheckpointIndicatorChoice(str, Enum):
@@ -61,9 +63,9 @@ class CheckpointIndicatorChoice(str, Enum):
     Train = "Train"
 
 
-class CheckpointModeChoice(str, Enum):
-    Min = "Min"
-    Max = "Max"
+# class CheckpointModeChoice(str, Enum):
+#     Min = "Min"
+#     Max = "Max"
 
 
 class CheckpointTypeChoice(str, Enum):
@@ -160,6 +162,7 @@ class MetricChoice(str, Enum):
     BalancedDiceCoef = "BalancedDiceCoef"
     mAP50 = "mAP50"
     mAP95 = "mAP95"
+    PercentMAE = "PercentMAE"
 
 
 class TaskGroupData(BaseMixinData):

@@ -32,13 +32,14 @@
               <i class="loaded-list__item--icon"></i>
               <span class="loaded-list__item--text">{{ list.label }}</span>
               <!-- <div class="loaded-list__item--empty"></div> -->
-              <div class="loaded-list__item--remove" v-if="list.uid === 'custom'" @click="removeModel(list.value)">
+              <div class="loaded-list__item--remove" v-if="list.uid === 'custom'" @click.stop="removeModel(list.value)">
                 <i class="t-icon"></i>
               </div>
             </li>
             <li v-if="!models.length" class="loaded-list__item">
-              <span class="loaded-list__item--empty">Модель "{{ search }}" не найдена</span>
+              <span v-show="showError" class="loaded-list__item--empty">Модель "{{ search }}" не найдена</span>
             </li>
+            <LoadSpiner v-show="showSpinner" text="Получение моделей" />
           </ul>
         </scrollbar>
       </div>
@@ -97,9 +98,6 @@ export default {
   mounted() {
     this.$el.getElementsByClassName('at-modal__footer')[0].remove();
   },
-  created() {
-    this.load();
-  },
   computed: {
     models() {
       // console.log(this.lists);
@@ -126,6 +124,12 @@ export default {
         return this.value;
       },
     },
+    showSpinner() {
+      return !this.models.length && !this.search.length
+    },
+    showError() {
+      return this.search.length && !this.models.length
+    }
   },
   methods: {
     async removeModel(name) {

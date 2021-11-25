@@ -1,48 +1,40 @@
-from apps.plugins.project import project_path, data_path
 from terra_ai.agent import agent_exchange
 from terra_ai.data.projects.project import ProjectPathData
-from .serializers import (
-    NameSerializer,
-    SaveSerializer,
-    LoadSerializer,
-    DeleteSerializer,
-)
-from ..base import (
+
+from apps.plugins.project import project_path, data_path
+
+from apps.api.base import (
     BaseAPIView,
     BaseResponseSuccess,
     BaseResponseErrorFields,
+    BaseResponseErrorGeneral,
 )
+
+from . import serializers
 
 
 class NameAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        serializer = NameSerializer(data=request.data)
+        serializer = serializers.NameSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
-        request.project.name = serializer.validated_data.get("name")
-        return BaseResponseSuccess(save_project=True)
+        request.project.set_name(serializer.validated_data.get("name"))
+        return BaseResponseSuccess()
 
 
 class CreateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        request.project.reset()
+        request.project.create()
         return BaseResponseSuccess()
 
 
 class SaveAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        serializer = SaveSerializer(data=request.data)
+        serializer = serializers.SaveSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
-        request.project.name = serializer.validated_data.get("name")
-        request.project.save()
-        agent_exchange(
-            "project_save",
-            source=project_path.base,
-            target=data_path.projects,
-            name=serializer.validated_data.get("name"),
-            overwrite=serializer.validated_data.get("overwrite"),
-        )
+        request.project.set_name(serializer.validated_data.get("name"))
+        request.project.save(serializer.validated_data.get("overwrite"))
         return BaseResponseSuccess()
 
 
@@ -55,21 +47,34 @@ class InfoAPIView(BaseAPIView):
 
 class LoadAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        serializer = LoadSerializer(data=request.data)
+        serializer = serializers.LoadSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         agent_exchange(
             "project_load",
+            dataset_path=data_path.datasets,
             source=serializer.validated_data.get("value"),
             target=project_path.base,
         )
-        request.project.load()
         return BaseResponseSuccess()
+
+
+class LoadProgressAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        progress = agent_exchange("project_load_progress")
+        if progress.finished:
+            progress.percent = 0
+            progress.message = ""
+            request.project.load()
+        if progress.success:
+            return BaseResponseSuccess(data=progress.native())
+        else:
+            return BaseResponseErrorGeneral(progress.error, data=progress.native())
 
 
 class DeleteAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        serializer = DeleteSerializer(data=request.data)
+        serializer = serializers.DeleteSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         project = ProjectPathData(path=serializer.validated_data.get("path"))

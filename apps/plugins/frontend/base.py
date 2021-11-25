@@ -28,6 +28,7 @@ class Field(BaseMixinData):
     changeable: bool = False
     list: Optional[List[Union[ListOptionData, ListOptgroupData]]]
     fields: Optional[Dict[str, List]]
+    manual: Optional[Dict[str, str]]
     api: Optional[str]
 
     @validator("fields", always=True)

@@ -1,5 +1,6 @@
 <template>
   <main class="page-test">
+    <NewHeader/>
     <scrollbar>
       <div class="cont">
         <div class="row">
@@ -106,11 +107,12 @@
 export default {
   name: 'page-not-found',
   components: {
-    DInputText: () => import('@/components/global/design/forms/components/DInputText'),
-    DInputNumber: () => import('@/components/global/design/forms/components/DInputNumber'),
-    DSelect: () => import('@/components/global/design/forms/components/DSelect'),
-    DButton: () => import('@/components/global/design/forms/components/DButton'),
-  },
+    DInputText: () => import("@/components/global/design/forms/components/DInputText"),
+    DInputNumber: () => import("@/components/global/design/forms/components/DInputNumber"),
+    DSelect: () => import("@/components/global/design/forms/components/DSelect"),
+    DButton: () => import("@/components/global/design/forms/components/DButton"),
+    NewHeader: () => import("@/components/app/NewHeader"),
+},
   data: () => ({
     inputNumber: 0,
     inputString: 'Текст',

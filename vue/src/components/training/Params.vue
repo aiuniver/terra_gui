@@ -60,11 +60,14 @@
         v-for="({ title, visible }, key) of button"
         :key="key"
         class="params__btn"
-        :class="{ params__save: key === 'clear' }"
       >
-        <t-button v-if="key !== 'save'" :disabled="!visible" @click="btnEvent(key)">{{ title }}</t-button>
+        <t-button :disabled="!visible" @click="btnEvent(key)">{{ title }}</t-button>
       </div>
+      <!-- <div class="params__btn">
+        <t-button :disabled="false" @click="btnEvent('save')">{{ 'Сохранить' }}</t-button>
+      </div> -->
     </div>
+    <SaveTrainings v-model="dialogSave" />
   </div>
 </template>
 
@@ -73,10 +76,12 @@ import { debounce } from '@/utils/core/utils';
 import ser from '../../assets/js/myserialize';
 import { mapGetters } from 'vuex';
 import LoadSpiner from '@/components/forms/LoadSpiner';
+import SaveTrainings from '@/components/app/modal/SaveTrainings';
 export default {
   name: 'params-traning',
   components: {
     LoadSpiner,
+    SaveTrainings,
   },
   data: () => ({
     collapse: ['main', 'fit', 'outputs', 'checkpoint', 'yolo'],
@@ -84,11 +89,10 @@ export default {
     metricData: '',
     debounce: null,
     stopLearning: false,
+    dialogSave: false,
     trainSettings: {},
     key: '1212',
-    doNotSave: [
-      'architecture[parameters][checkpoint][metric_name]'
-    ]
+    doNotSave: ['architecture[parameters][checkpoint][metric_name]'],
   }),
   computed: {
     ...mapGetters({
@@ -131,6 +135,7 @@ export default {
       }
     },
     async start() {
+      console.log(this.trainSettings)
       const res = await this.$store.dispatch('trainings/start', this.trainSettings);
       if (res) {
         const { data } = res;
@@ -143,18 +148,27 @@ export default {
     },
     async stop() {
       this.stopLearning = true;
-      await this.$store.dispatch('trainings/stop', {});
+      const res = await this.$store.dispatch('trainings/stop', {});
+      if (res && res?.data?.progress) {
+        const { finished } = res.data.progress;
+        if (finished) {
+          this.debounce(false);
+          this.stopLearning = false;
+        }
+      }
     },
     async clear() {
       await this.$store.dispatch('trainings/clear', {});
     },
-    async save() {
-      await this.$store.dispatch('trainings/save', {});
+    save() {
+      this.dialogSave = true;
+      // await this.$store.dispatch('trainings/save', {});
     },
     async progress() {
       const res = await this.$store.dispatch('trainings/progress', {});
-      if (res) {
-        const { finished, message, percent } = res.data;
+      // console.log(res?.data?.progress)
+      if (res && res?.data?.progress) {
+        const { finished, message, percent } = res.data.progress;
         this.$store.dispatch('messages/setProgressMessage', message);
         this.$store.dispatch('messages/setProgress', percent);
         this.stopLearning = !this.isLearning;
@@ -165,9 +179,12 @@ export default {
           this.stopLearning = false;
         }
       }
+      if (res?.error) {
+        this.stopLearning = false;
+      }
     },
     parse({ parse, value, changeable, mounted }) {
-    // parse({ parse, value, name, changeable, mounted }) {
+      // parse({ parse, value, name, changeable, mounted }) {
       // console.log({ parse, value, name, changeable, mounted });
       ser(this.trainSettings, parse, value);
       this.trainSettings = { ...this.trainSettings };
