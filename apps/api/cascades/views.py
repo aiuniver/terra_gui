@@ -84,9 +84,19 @@ class ValidateAPIView(BaseAPIView):
 
 class StartAPIView(BaseAPIView):
     def post(self, request, **kwargs):
+        print(1)
+        print(request.data)
         serializer = StartSerializer(data={"sources": request.data})
+        print(2)
         if not serializer.is_valid():
+            print(3)
             return BaseResponseErrorFields(serializer.errors)
+        print("---")
+        print(project_path.training)
+        print(data_path.datasets)
+        print(serializer.validated_data.get("sources"))
+        print(request.project.cascade)
+        print("---")
         agent_exchange(
             "cascade_start",
             training_path=project_path.training,
