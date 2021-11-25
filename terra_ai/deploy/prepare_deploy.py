@@ -21,10 +21,9 @@ from terra_ai.settings import DEPLOY_PATH
 class DeployCreator:
 
     def get_deploy(self, training_path: Path, dataset: DatasetData, deploy_path: Path, page: dict):
-        print(page)
         model_path = Path(os.path.join(training_path, page.get("name"), "model"))
         presets_path = os.path.join(DEPLOY_PATH, "deploy_presets")
-
+        print(model_path, presets_path, page)
         if page.get("type") == "model":
             if os.path.exists(DEPLOY_PATH):
                 shutil.rmtree(DEPLOY_PATH, ignore_errors=True)
@@ -93,8 +92,6 @@ class DeployCreator:
             )
 
         deploy_data.update({"page": page})
-        print(deploy_data)
-        print(DeployData(**deploy_data))
         return DeployData(**deploy_data)
 
     @staticmethod

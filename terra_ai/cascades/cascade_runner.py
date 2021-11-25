@@ -58,7 +58,7 @@ class CascadeRunner:
                                          source_path=Path(dataset_path),
                                          predict_path=str(DEPLOY_PATH), classes=classes,
                                          classes_colors=classes_colors)
-        print(presets_data)
+        # print(presets_data)
 
         out_data = dict([
             ("path_deploy", str(DEPLOY_PATH)),
@@ -276,7 +276,7 @@ class CascadeRunner:
                 example_data = [(classes[i], classes_colors[i]) for i, count in enumerate(sum_list) if count > 0]
                 out_data.append({
                     "source": source_file_name,
-                    "segment": output_path,
+                    "segment": predict_file_name,
                     "data": example_data
                 })
             iter_ += 1
