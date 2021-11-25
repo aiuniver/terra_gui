@@ -28,7 +28,7 @@
         </div>
         <div class="card__result">
           <SegmentationTags
-            :style="{ width: '600px', height: '80px' }"
+            :style="{ width: '600px', height: '50px' }"
             :tags="segmentationLayer"
           />
         </div>

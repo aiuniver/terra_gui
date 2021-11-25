@@ -1,7 +1,7 @@
 import json
 import os
 import random
-from pathlib import Path, PurePath, PosixPath
+from pathlib import Path, PurePath
 from typing import List, Tuple
 
 from PIL import Image
