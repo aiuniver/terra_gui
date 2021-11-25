@@ -401,6 +401,14 @@ class Exchange:
                 _path = Path(
                     training_path, block.parameters.main.path, "model", "dataset.json"
                 )
+                if not _path.is_file():
+                    _path = Path(
+                        training_path,
+                        block.parameters.main.path,
+                        "model",
+                        "dataset",
+                        "config.json",
+                    )
                 with open(_path) as config_ref:
                     data = json.load(config_ref)
                     datasets.append(
