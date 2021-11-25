@@ -60,8 +60,7 @@ class CreateDataset(object):
         shutil.move(str(self.dataset_paths_data.basepath), creation_data.datasets_path)
         shutil.rmtree(self.temp_directory)
         if creation_data.version:  # Больше сделано для дебаггинга
-            self.version = CreateVersion(version_data=creation_data.version,
-                                         dataset_basepath=self.dataset_paths_data.basepath)
+            self.version = CreateVersion(version_data=creation_data.version)
 
     @staticmethod
     def zip_dataset(src, dst):
@@ -103,6 +102,7 @@ class CreateVersion(object):
         self.preprocessing = CreatePreprocessing()
 
         self.temp_directory: Path = Path(tempfile.mkdtemp())
+        self.sources_temp_directory: Path = Path(tempfile.mkdtemp())
         self.dataset_paths_data = DatasetPathsData(basepath=self.temp_directory)
         self.parent_dataset_paths_data = DatasetPathsData(
             basepath=version_data.datasets_path.joinpath(f'{version_data.parent_alias}.{DATASET_EXT}_NEW')
@@ -116,7 +116,8 @@ class CreateVersion(object):
         self.version_paths_data = VersionPathsData(basepath=current_version)
 
         with zipfile.ZipFile(self.dataset_paths_data.basepath.joinpath('sources.zip'), 'r') as z_file:
-            z_file.extractall(self.version_paths_data.sources)
+            # z_file.extractall(self.version_paths_data.sources)
+            z_file.extractall(self.sources_temp_directory)
 
         self.instructions: DatasetInstructionsData = self.create_instructions(version_data)
         self.create_preprocessing(self.instructions)
@@ -142,6 +143,7 @@ class CreateVersion(object):
                     self.parent_dataset_paths_data.versions.joinpath(f'{version_data.alias}.{VERSION_EXT}')
                         .joinpath('version.zip'))
         self.write_version_configure(version_data)
+        shutil.rmtree(self.sources_temp_directory)
         shutil.rmtree(self.temp_directory)
 
     @staticmethod
@@ -173,7 +175,7 @@ class CreateVersion(object):
             for path, val in puts.get(idx).parameters.items():
                 data_to_pass = []
                 parameters = None
-                current_path = self.version_paths_data.sources.joinpath(path)
+                current_path = self.sources_temp_directory.joinpath(path)
                 if current_path.is_dir():
                     for direct, folder, file_name in os.walk(current_path):
                         if file_name:
@@ -198,7 +200,7 @@ class CreateVersion(object):
                 for i in range(len(cut['instructions'])):
                     if parameters['type'] != LayerOutputTypeChoice.Classification:
                         if decamelize(parameters['type']) in PATH_TYPE_LIST:
-                            data.append(os.path.join(cut['instructions'][i].replace(str(self.version_paths_data.sources), '')[1:]))
+                            data.append(os.path.join(cut['instructions'][i].replace(str(self.sources_temp_directory), '')[1:]))
                         else:
                             data.append(cut['instructions'][i])
                         self.y_cls.append(os.path.basename(path))
@@ -253,7 +255,7 @@ class CreateVersion(object):
                             #                                           percent=ceil(i / len(data.instructions) * 100))
 
                             arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(
-                                self.version_paths_data.sources.joinpath(data.instructions[i]),
+                                self.sources_temp_directory.joinpath(data.instructions[i]),
                                 **data.parameters
                             )
 
@@ -331,7 +333,7 @@ class CreateVersion(object):
             for col_name, data in put_instructions[key].items():
                 data_to_pass = data.instructions[0]
                 if self.tags[key][col_name] in PATH_TYPE_LIST:
-                    data_to_pass = str(self.version_paths_data.sources.joinpath(data_to_pass))
+                    data_to_pass = str(self.sources_temp_directory.joinpath(data_to_pass))
                 create = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(data_to_pass, **data.parameters,)
                                                                                       #**{'preprocess': prep})
                 array = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(create['instructions'],
@@ -443,7 +445,7 @@ class CreateVersion(object):
                             parameters_to_pass.update([('preprocess', prep)])
 
                         if self.tags[key][col_name] in PATH_TYPE_LIST:
-                            tmp_data.append(os.path.join(self.version_paths_data.sources,
+                            tmp_data.append(os.path.join(self.sources_temp_directory,
                                                          self.dataframe[split].loc[i, col_name]))
                         elif 'depth' in data.parameters.keys() and data.parameters['depth']:
                             if 'trend' in data.parameters.keys() and data.parameters['trend']:
