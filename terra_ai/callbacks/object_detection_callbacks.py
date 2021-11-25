@@ -60,13 +60,11 @@ class BaseObjectDetectionCallback:
     def get_yolo_y_pred(array, options, sensitivity: float = 0.15, threashold: float = 0.1):
         method_name = 'get_yolo_y_pred'
         try:
-            count = 0
             y_pred = {}
             name_classes = options.data.outputs.get(list(options.data.outputs.keys())[0]).classes_names
             for i, box_array in enumerate(array):
                 channel_boxes = []
                 for ex in box_array:
-                    count += 1
                     boxes = BaseObjectDetectionCallback().get_predict_boxes(
                         array=np.expand_dims(ex, axis=0),
                         name_classes=name_classes,
@@ -119,9 +117,7 @@ class BaseObjectDetectionCallback:
             classes = np.argmax(scores, axis=-1)
             idxs = np.argsort(classes)[..., ::-1]
             mean_iou = []
-            count = 0
             while len(idxs) > 0:
-                count += 1
                 last = len(idxs) - 1
                 i = idxs[last]
                 pick.append(i)
@@ -280,8 +276,8 @@ class BaseObjectDetectionCallback:
 
             image_pred.save(save_predict_path)
 
+            return_true_path = ''
             save_true_path = ''
-            return_true_path = ""
             if add_only_true:
                 image_true = image.copy()
                 classes = np.argmax(true_bb[:, 5:], axis=-1)

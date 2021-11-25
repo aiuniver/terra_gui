@@ -42,6 +42,24 @@ export default {
       }
       return data
     },
+    async progress ({ dispatch }, data) {
+      const res = await dispatch('axios', { url: '/project/load/progress/', data }, { root: true });
+      if (res) {
+        const { data, error } = res;
+        if (data) {
+          const err = data?.error || ''
+          if (err) {
+            dispatch('messages/setMessage', { error: err }, { root: true });
+            dispatch('logging/setError', JSON.stringify(err, null, 2), { root: true });
+          } 
+        }
+        if (error) {
+          dispatch('messages/setMessage', { error: error }, { root: true });
+          dispatch('logging/setError', JSON.stringify(error, null, 2), { root: true });
+        }
+      }
+      return res
+    },
     async saveNameProject ({ dispatch }, name) {
       const res = { url: "/project/name/", data: name };
       const { data } = await dispatch("axios", res, { root: true });
@@ -59,19 +77,21 @@ export default {
       document.location.href = "/"; // "Миша, все хня, давай по новой" 
       return res
     },
-    async loadProject ({ dispatch }, data) {
+    async load ({ dispatch }, data) {
       const res = await dispatch("axios", { url: "/project/load/", data }, { root: true });
-      document.location.href = "/"; // "Миша, все хня, давай по новой, снова" 
+      // document.location.href = "/"; // "Миша, все хня, давай по новой, снова" 
       return res
     },
-    async removeProject ({ dispatch }, data) {
+    async remove ({ dispatch }, data) {
       return await dispatch("axios", { url: "/project/delete/", data }, { root: true });
     },
     async infoProject ({ dispatch }, data) {
       return await dispatch("axios", { url: "/project/info/", data }, { root: true });
     },
     async saveProject ({ dispatch }, data) {
-      return await dispatch("axios", { url: "/project/save/", data }, { root: true });
+      const res = await dispatch("axios", { url: "/project/save/", data }, { root: true });
+      if (!res?.error) await dispatch("get", {});
+      return res
     },
   },
   getters: {

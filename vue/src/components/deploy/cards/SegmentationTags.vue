@@ -1,34 +1,32 @@
 <template>
   <div class="card">
-    <scrollbar :ops="ops">
-      <div class="card__text">
-        <div class="card__text--line" v-for="(color, tag, index) in tags" :key="'tag-line_'+index">
-          <p :style="{'background-color': rgb(color) }">{{ tag }}</p> - Название {{ index }}
-        </div>
+    <div class="card__text">
+      <div class="card__text--line" v-for="(color, tag, index) in tags" :key="'tag-line_' + index">
+        <span :style="{ 'background-color': rgb(color) }">{{ tag }}</span>
       </div>
-    </scrollbar>
+    </div>
   </div>
 </template>
 
 <script>
 export default {
-  name: "SegmentationTags",
+  name: 'SegmentationTags',
   props: {
     tags: {
       type: Object,
-      default: () => ({})
-    }
+      default: () => ({}),
+    },
   },
   methods: {
-    rgb(arr){
-      let rgbString = "#";
-      for(let i in arr){
+    rgb(arr) {
+      let rgbString = '#';
+      for (let i in arr) {
         let hex = arr[i].toString(16);
-        rgbString += hex.length == 1 ? "0" + hex : hex;
+        rgbString += hex.length == 1 ? '0' + hex : hex;
       }
 
       return rgbString;
-    }
+    },
   },
   data: () => ({
     ops: {
@@ -37,34 +35,34 @@ export default {
         scrollingY: true,
       },
     },
-  })
-}
+  }),
+};
 </script>
 
 <style lang="scss" scoped>
-.card{
-  border: 1px solid #6C7883;
+.card {
+  border: 1px solid #6c7883;
   box-sizing: border-box;
   border-radius: 4px;
-  min-height: 74px;
+  min-height: 54px;
   padding: 6px;
   font-size: 14px;
   line-height: 21px;
-  color: #65B9F4;
-  &__text{
+  color: #65b9f4;
+  &__text {
     display: flex;
-    flex-direction: column;
     padding: 0 10px;
-    &--line{
+    &--line {
       margin-top: 2px;
-      p{
+      span {
         width: 30px;
         text-align: center;
         display: inline-block;
         padding: 0 3px;
         border-radius: 4px;
+        margin: 0 10px 0 0;
       }
     }
-   }
+  }
 }
 </style>

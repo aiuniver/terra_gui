@@ -1,9 +1,8 @@
 import json
 import random
 import shutil
-from pathlib import Path, PosixPath
+from pathlib import Path
 from typing import List, Tuple
-
 
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.settings import DEPLOY_PRESET_COUNT
@@ -11,7 +10,7 @@ from ..extra import DataBaseList, DataBase
 
 
 class Item(BaseMixinData):
-    source: PosixPath
+    source: str
     actual: str
     data: List[Tuple[str, float]]
 
@@ -21,7 +20,7 @@ class DataList(DataBaseList):
         source = Item
 
     def preset_update(self, data):
-        data.update({"source": str(Path(self.path_model, data.get("source")))})
+        data.update({"source": str(Path(self.path_deploy, data.get("source")))})
         return data
 
     def reload(self, indexes: List[int] = None):
@@ -48,7 +47,8 @@ class DataList(DataBaseList):
         self.preset[index] = item
 
         shutil.copyfile(
-            item.source, Path(self.path_deploy, f"{index + 1}{item.source.suffix}")
+            Path(self.path_deploy, item.source),
+            Path(self.path_deploy, f"{index + 1}{Path(item.source).suffix}"),
         )
 
 

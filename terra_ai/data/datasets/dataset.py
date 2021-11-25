@@ -177,7 +177,8 @@ In [7]: print(data.json(indent=2, ensure_ascii=False))
 import os
 import json
 
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
+from pandas import read_csv
 from datetime import datetime
 from typing import Optional, Dict, List, Tuple, Any
 from pydantic import validator, DirectoryPath, PrivateAttr
@@ -306,6 +307,27 @@ class DatasetData(AliasMixinData):
         return self._path
 
     @property
+    def training_available(self) -> bool:
+        return self.architecture != ArchitectureChoice.Tracker
+
+    @property
+    def sources(self) -> List[str]:
+        out = []
+        sources = read_csv(Path(self.path, "instructions", "tables", "val.csv"))
+        for column in sources.columns:
+            if column.split("_")[-1].title() in ["Image", "Text", "Audio", "Video"]:
+                out = list(
+                    map(
+                        lambda item: str(
+                            Path(self.path, PureWindowsPath(item).as_posix())
+                        ),
+                        sources[column].to_list(),
+                    )
+                )
+        print(out)
+        return out
+
+    @property
     def model(self) -> ModelDetailsData:
         data = {**EmptyModelDetailsData}
         layers = []
@@ -363,6 +385,11 @@ class DatasetData(AliasMixinData):
         data.update({"layers": layers})
         return ModelDetailsData(**data)
 
+    def dict(self, **kwargs):
+        data = super().dict(**kwargs)
+        data.update({"training_available": self.training_available})
+        return data
+
     def set_path(self, value):
         self._path = Path(value)
 
@@ -416,3 +443,35 @@ class DatasetsGroupsList(UniqueListMixin):
     class Meta:
         source = DatasetsGroupData
         identifier = "alias"
+
+
+class DatasetInfo(BaseMixinData):
+    alias: str
+    group: DatasetGroupChoice
+
+    __dataset__: Optional[DatasetData] = PrivateAttr()
+
+    def __init__(self, **data):
+        self.__dataset__ = None
+        super().__init__(**data)
+
+    @property
+    def dataset(self) -> Optional[DatasetData]:
+        if not self.__dataset__:
+            with open(
+                Path(
+                    settings.DATASETS_LOADED_DIR,
+                    self.group.name,
+                    self.alias,
+                    settings.DATASET_CONFIG,
+                )
+            ) as config_ref:
+                self.__dataset__ = DatasetData(
+                    path=Path(
+                        settings.DATASETS_LOADED_DIR,
+                        self.group.name,
+                        self.alias,
+                    ),
+                    **json.load(config_ref)
+                )
+        return self.__dataset__

@@ -2,14 +2,18 @@ import base64
 
 from tempfile import NamedTemporaryFile
 
+from terra_ai.agent import agent_exchange
+from terra_ai.data.datasets.dataset import DatasetInfo
+from terra_ai.data.cascades.extra import BlockGroupChoice
+
 from apps.api import utils
 from apps.api.cascades.serializers import (
     CascadeGetSerializer,
     UpdateSerializer,
     PreviewSerializer,
+    StartSerializer,
 )
-from apps.plugins.project import project_path
-from terra_ai.agent import agent_exchange
+from apps.plugins.project import project_path, data_path
 
 from ..base import (
     BaseAPIView,
@@ -69,22 +73,70 @@ class ClearAPIView(BaseAPIView):
 
 class ValidateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        agent_exchange(
-            "cascade_validate",
-            path=project_path.training,
-            cascade=request.project.cascade,
+        return BaseResponseSuccess(
+            agent_exchange(
+                "cascade_validate",
+                path=project_path.training,
+                cascade=request.project.cascade,
+            )
         )
-        return BaseResponseSuccess()
 
 
 class StartAPIView(BaseAPIView):
     def post(self, request, **kwargs):
+        serializer = StartSerializer(data={"sources": request.data})
+        if not serializer.is_valid():
+            return BaseResponseErrorFields(serializer.errors)
         agent_exchange(
             "cascade_start",
-            path=project_path.training,
+            training_path=project_path.training,
+            datasets_path=data_path.datasets,
+            sources=serializer.validated_data.get("sources"),
             cascade=request.project.cascade,
         )
         return BaseResponseSuccess()
+
+
+class StartProgressAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        progress = agent_exchange("cascade_start_progress")
+        if progress.finished:
+            sources_data = progress.data.get("kwargs", {}).get("sources", {})
+            dataset_sources = progress.data.get("datasets", [])
+            sources = {}
+            for block in request.project.cascade.blocks:
+                if block.group != BlockGroupChoice.InputData:
+                    continue
+                source_data = sources_data.get(str(block.id))
+                if not source_data:
+                    continue
+                datasets_source = list(
+                    filter(
+                        lambda item: item.alias == source_data.get("alias")
+                        and item.group == source_data.get("group"),
+                        dataset_sources,
+                    )
+                )
+                if not len(datasets_source):
+                    continue
+                sources.update(
+                    {
+                        block.id: DatasetInfo(
+                            alias=datasets_source[0].alias,
+                            group=datasets_source[0].group,
+                        ).dataset.sources
+                    }
+                )
+            agent_exchange(
+                "cascade_execute",
+                sources=sources,
+                cascade=request.project.cascade,
+                training_path=project_path.training,
+            )
+            progress.message = ""
+            progress.percent = 0
+            progress.data = None
+        return BaseResponseSuccess(progress.native())
 
 
 class SaveAPIView(BaseAPIView):
@@ -103,3 +155,24 @@ class PreviewAPIView(BaseAPIView):
         with open(filepath.name, "rb") as filepath_ref:
             content = filepath_ref.read()
             return BaseResponseSuccess(base64.b64encode(content))
+
+
+class DatasetsAPIView(BaseAPIView):
+    @staticmethod
+    def post(request, **kwargs):
+        datasets_list = agent_exchange(
+            "datasets_info", path=data_path.datasets
+        ).native()
+        response = []
+
+        for datasets in datasets_list:
+            for dataset in datasets.get("datasets", []):
+                response.append(
+                    {
+                        "label": f'{dataset.get("group", "")}: {dataset.get("name", "")}',
+                        "alias": dataset.get("alias", ""),
+                        "group": dataset.get("group", ""),
+                    }
+                )
+
+        return BaseResponseSuccess(response)

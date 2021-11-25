@@ -77,13 +77,13 @@ export default {
     clickInput(i, { target }) {
       const value = +target.value;
       if (i === 1) {
-        if (value >= 0 && value <= 95) {
-          this.btnFirstVal = value > 5 ? value : 5;
+        if (value >= 0 && value <= 90) {
+          this.btnFirstVal = value > 10 ? value : 10;
         }
       }
       if (i === 2) {
-        if (value >= 0 && value <= 95) {
-          this.btnFirstVal = value > 5 ? 100 - value : 5;
+        if (value >= 0 && value <= 90) {
+          this.btnFirstVal = value > 10 ? 100 - value : 10;
         }
       }
       this[`key${i}`] += 1;
@@ -112,11 +112,11 @@ export default {
         var btn = document.querySelector('.slider__btn-1');
         let pos = e.pageX - btn.parentNode.getBoundingClientRect().x;
         this.btnFirstVal = Math.round((pos / 231) * 100);
-        if (this.btnFirstVal < 5) this.btnFirstVal = 5;
-        if (this.btnFirstVal > 95) this.btnFirstVal = 95;
+        if (this.btnFirstVal < 10) this.btnFirstVal = 10;
+        if (this.btnFirstVal > 90) this.btnFirstVal = 90;
       }
     },
-    diff(value, max = 95, min = 5) {
+    diff(value, max = 90, min = 10) {
       if (value < min) {
         value = min;
       }
@@ -129,22 +129,22 @@ export default {
   computed: {
     sliderFirstStyle() {
       return {
-        left: this.diff(this.btnFirstVal, 95) + '%',
+        left: this.diff(this.btnFirstVal, 90) + '%',
       };
     },
     sliderSecondStyle() {
       return {
-        left: this.diff(this.btnFirstVal, 95) + '%',
+        left: this.diff(this.btnFirstVal, 90) + '%',
       };
     },
     firstScale() {
       return {
-        width: this.diff(this.btnFirstVal, 95) + '%',
+        width: this.diff(this.btnFirstVal, 90) + '%',
       };
     },
     secondScale() {
       return {
-        width: this.diff(100 - this.btnFirstVal, 95) + '%',
+        width: this.diff(100 - this.btnFirstVal, 90) + '%',
       };
     },
   },

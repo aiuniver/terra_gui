@@ -34,8 +34,12 @@ export default {
       ]
     },
     status: {
-      isUpdate: true,
+      update: false,
+      validate: true,
+      start: true,
+      save: true,
     },
+    datasets: []
   }),
   mutations: {
     SET_CASCADES (state, value) {
@@ -67,6 +71,9 @@ export default {
     SET_SELECT (state, value) {
       state.select = value;
     },
+    SET_DATASETS (state, value) {
+      state.datasets = [...value];
+    },
     SET_STATUS (state, value) {
       state.status = { ...state.status, ...value };
     },
@@ -80,7 +87,10 @@ export default {
       blocks.push(block);
       // dispatch('updateModel');
       commit('SET_BLOCKS', blocks);
-      dispatch('selectBlock', block)
+      dispatch('selectBlock', block);
+      setTimeout(() => {
+        dispatch('selectBlock', block);
+      }, 1);
     },
     typeBlock ({ dispatch, commit, state: { blocks, cascades: { layers_types, list } } }, { type, block }) {
       let newBlock = changeTypeBlock(type, block, layers_types, list);
@@ -115,16 +125,14 @@ export default {
       if (block.selected) {
         block.selected = false;
       }
-      dispatch('removeLinkToBlock', block);
       commit('SET_BLOCKS', blocks.filter(b => b.id !== block.id));
-      dispatch('updateModel');
+      dispatch('removeLinkToBlock', block);
+      // dispatch('updateModel');
     },
     removeLink ({ commit, state: { links } }, id) {
-      console.log(id)
       commit('SET_LINKS', links.filter(value => value.id !== id));
     },
     removeLinkToBlock ({ dispatch, commit, state: { links } }, block) {
-      console.log(block)
       commit('SET_LINKS', links.filter(link => (link.originID !== block.id && link.targetID !== block.id)));
       dispatch('updateModel');
     },
@@ -149,7 +157,7 @@ export default {
       return data
     },
     async createModel ({ dispatch, commit }, data) {
-      commit('SET_STATUS', { isUpdate: false });
+      commit('SET_STATUS', { update: false });
       return await dispatch('axios', { url: '/cascades/create/', data }, { root: true });
     },
     async getImageModel ({ dispatch }, preview) {
@@ -178,7 +186,7 @@ export default {
           })
           .filter(link => link);
       });
-      commit('SET_STATUS', { isUpdate: true });
+      commit('SET_STATUS', { validate: true });
 
 
       const res = await dispatch('axios', { url: '/cascades/update/', data: { blocks: semdBlocks } }, { root: true });
@@ -230,17 +238,32 @@ export default {
       }
       return res
     },
-    async start ({ dispatch }) {
-      const { data } = await dispatch('axios', { url: '/cascades/start/' }, { root: true });
-      return data;
+    async start ({ commit, dispatch }, data) {
+      const res = await dispatch('axios', { url: '/cascades/start/', data }, { root: true });
+      commit('SET_STATUS', { start: Boolean(res?.error) });
+      return res;
     },
-    async save ({ dispatch }) {
-      const { data } = await dispatch('axios', { url: '/cascades/save/' }, { root: true });
-      return data;
+    async startProgress ({ dispatch }) {
+      return await dispatch('axios', { url: '/cascades/start/progress/' }, { root: true });
     },
-    async validate ({ dispatch }) {
-      const { data } = await dispatch('axios', { url: '/cascades/validate/' }, { root: true });
-      return data;
+    async save ({ commit, dispatch }) {
+      const res = await dispatch('axios', { url: '/cascades/save/' }, { root: true });
+      commit('SET_STATUS', { save: Boolean(res?.error) });
+      return res;
+    },
+    async validate ({ commit, dispatch }) {
+      const res = await dispatch('axios', { url: '/cascades/validate/' }, { root: true });
+      if (res) {
+        const { data } = res
+        const isValid = !Object.values(data).filter(item => item).length
+        commit('SET_ERRORS_BLOCKS', data)
+        commit('SET_STATUS', { validate: Boolean(res?.error || !isValid) });
+        if (isValid) {
+          await dispatch('projects/get', {}, { root: true })
+        }
+        dispatch('messages/setMessage', isValid ? { message: `Валидация прошла успешно` } : { error: `Валидация не прошла` }, { root: true });
+      }
+      return res;
     },
     setBlocks ({ commit }, value) {
       commit('SET_BLOCKS', value);
@@ -254,6 +277,10 @@ export default {
       // console.log(blocks);
       commit('SET_BLOCKS', blocks);
     },
+    async setDatasets ({ commit, dispatch }) {
+      const res = await dispatch('axios', { url: '/cascades/datasets/' }, { root: true });
+      commit('SET_DATASETS', res.data);
+    }
   },
   getters: {
     getList: ({ cascades: { list } }) => list,
@@ -266,9 +293,18 @@ export default {
     getLinks: ({ links }) => links,
     getSelect: ({ select }) => select,
     getStatus: ({ status }) => status,
+    getDatasets: ({ datasets }) => datasets,
     getBlock: ({ select, blocks }) => {
       const id = blocks.findIndex(item => item.id == select);
       return blocks[id] || {};
     },
-  },
+    getManual(state, getters) {
+      const arr = Object.keys(getters.getLayersType)
+      const obj = {}
+      arr.forEach(item => {
+        obj[item] = getters.getLayersType[item].main[0]?.manual || ''
+      })
+      return obj
+    }
+  }
 };

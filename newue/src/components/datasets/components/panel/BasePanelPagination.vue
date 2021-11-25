@@ -1,7 +1,7 @@
 <template>
   <div class="panel-pagination flex align-center">
-    <button class="btn panel-pagination-btn">
-      <SvgContainer name="arrow-left-longer-big" />
+    <button @click="$emit('action', 'prev')" class="btn panel-pagination-btn">
+      <SvgContainer name="arrow-carret-left-longer-big" />
     </button>
     <div class="panel-pagination-container">
       <div class="panel-pagination-container__list flex align-center">
@@ -14,21 +14,12 @@
         <span>Входные данные</span>
       </div>
     </div>
-    <DButton style="width: 40%" color="secondary" direction="left" text="Далее" />
+    <d-button @click="$emit('action', 'next')" style="width: 40%" color="secondary" direction="left" text="Далее" />
   </div>
 </template>
 
 <script>
-import SvgContainer from '@/components/app/SvgContainer';
-import DButton from '@/components/global/forms/components/DButton';
-
-export default {
-  components: {
-    DButton,
-    SvgContainer,
-  },
-  name: 'BasePanelPagination',
-};
+export default {};
 </script>
 
 <style lang="scss" scoped>

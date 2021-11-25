@@ -53,8 +53,10 @@ class CascadeElement(Cascade):
             self.out = self.fun(*agr)
 
         if self.output is None:
-            self.output = [type(x) for x in self.out]
-
+            if isinstance(self.out, (tuple, list)):
+                self.output = [type(x) for x in self.out]
+            else:
+                self.output = [type(self.out)]
         return self.out
 
 

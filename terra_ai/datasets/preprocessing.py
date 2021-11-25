@@ -104,7 +104,11 @@ class CreatePreprocessing(object):
             for col_name in put_data[put].keys():
                 prep_path = os.path.join(self.dataset_path, 'preprocessing', str(put), f'{col_name}.gz')
                 if os.path.isfile(prep_path):
-                    self.preprocessing[put].update([(col_name, joblib.load(prep_path))])
+                    preprocess_object = joblib.load(prep_path)
+                    # if repr(preprocess_object) in ['MinMaxScaler()', 'StandardScaler()']:
+                    if 'clip' not in preprocess_object.__dict__.keys():
+                        preprocess_object.clip = False
+                    self.preprocessing[put].update([(col_name, preprocess_object)])
                 else:
                     self.preprocessing[put].update([(col_name, None)])
 

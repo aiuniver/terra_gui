@@ -22,7 +22,7 @@ class LayerOutputTypeChoice(str, Enum):
     Segmentation = "Сегментация изображений"
     TextSegmentation = "Сегментация текстов"
     ObjectDetection = "Обнаружение объектов"
-    Tracker = 'Трекер'
+    Tracker = "Трекер"
 
     @staticmethod
     def items_tuple() -> list:
@@ -311,7 +311,6 @@ class BlockFunctionGroupChoice(str, Enum):
     Segmentation = "Segmentation"
     TextSegmentation = "TextSegmentation"
     ObjectDetection = "ObjectDetection"
-    Tracker = 'Tracker'
 
 
 class BlockFunctionTypeChoice(str, Enum):
@@ -324,3 +323,4 @@ class BlockFunctionTypeChoice(str, Enum):
     PutTag = "Расстановка тегов по вероятностям из модели"
     PostprocessBoxes = "Постобработка Yolo"
     PlotBBoxes = "Наложение BBox на изображение"
+    FilterClasses = "Фильтрация классов Service YoloV5"

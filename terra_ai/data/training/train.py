@@ -15,7 +15,6 @@ from pydantic.errors import EnumMemberError
 
 from terra_ai import settings
 from terra_ai.exceptions.training import TrainingAlreadyExistsException
-from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.mixins import BaseMixinData, UniqueListMixin, IDMixinData
 from terra_ai.data.training import optimizers, architectures
 from terra_ai.data.training.extra import (

@@ -1,9 +1,8 @@
 import os
 import random
-from pathlib import Path, PurePath, PosixPath
+import shutil
+from pathlib import Path, PurePath
 from typing import List
-
-from PIL import Image
 
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.settings import DEPLOY_PRESET_COUNT
@@ -11,8 +10,8 @@ from ..extra import DataBaseList, DataBase
 
 
 class Item(BaseMixinData):
-    source: PosixPath
-    predict: PosixPath
+    source: str
+    predict: str
 
 
 class DataList(DataBaseList):
@@ -23,9 +22,8 @@ class DataList(DataBaseList):
         source = Item
 
     def preset_update(self, data):
-        data.update(
-            {k: str(Path(self.path_model, data.get(k)))} for k in ("source", "predict")
-        )
+        for _key in ("source", "predict"):
+            data.update({_key: str(Path(self.path_deploy, data.get(_key)))})
         return data
 
     def reload(self, indexes: List[int] = None):
@@ -51,8 +49,8 @@ class DataList(DataBaseList):
         destination_source = Path(self.preset_path, f"{index + 1}.jpg")
         destination_predict = Path(self.predict_path, f"{index + 1}.jpg")
 
-        Image.open(item.source).save(destination_source)
-        Image.open(item.predict).save(destination_predict)
+        shutil.copyfile(Path(self.path_deploy, item.source), destination_source)
+        shutil.copyfile(Path(self.path_deploy, item.predict), destination_predict)
 
 
 class Data(DataBase):

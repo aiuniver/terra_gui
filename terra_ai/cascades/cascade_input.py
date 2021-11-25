@@ -27,10 +27,13 @@ def video_by_frame(path):
 
 
 def image(path):
-    img = load_img(path)
-    out_img = np.array(img)
-    out_img = out_img[np.newaxis, ...]
-    return out_img
+    if isinstance(path, str):
+        path = [path]
+    for i in path:
+        img = load_img(i)
+        out_img = np.array(img)
+        out_img = out_img[np.newaxis, ...]
+        yield out_img
 
 
 # def folder(path):

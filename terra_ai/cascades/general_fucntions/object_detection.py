@@ -108,16 +108,25 @@ def postprocess_boxes(input_size=416, score_threshold=.3, iou_threshold=.45, met
     return fun
 
 
-def plot_bboxes(classes, colors=None, line_thickness=None):
+def plot_b_boxes(classes, colors=None, line_thickness=None):
     if colors is None:
         colors = [randrange(1, 256) for _ in range(len(classes))]
 
     def fun(bboxes, img):
+        brawl_color = True
+
+        if bboxes.shape[-1] == 5:
+            brawl_color = False
+
         # Plots one bounding box on image img
         tl = line_thickness or round(0.002 * (img.shape[0] + img.shape[1]) / 2) + 1  # line/font thickness
+
         for x in bboxes:
             cl = int(x[-1])
-            color = colors[cl]
+            if brawl_color:
+                color = colors[cl]
+            else:
+                color = colors[0]
             c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
             cv2.rectangle(img, c1, c2, color, thickness=tl, lineType=cv2.LINE_AA)
 
@@ -129,9 +138,25 @@ def plot_bboxes(classes, colors=None, line_thickness=None):
             pil_img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
             d = ImageDraw.Draw(pil_img)
 
-            d.text((c1[0] + 5, c1[1] - 17), classes[cl], fill=(225, 255, 255, 0))
+            if brawl_color:
+                d.text((c1[0] + 5, c1[1] - 17), classes[cl], fill=(225, 255, 255, 0))
+            else:
+                d.text((c1[0] + 5, c1[1] - 17), str(cl), fill=(225, 255, 255, 0))
+
             img = cv2.cvtColor(np.asarray(pil_img), cv2.COLOR_RGB2BGR)
         return img
+    return fun
+
+
+def filter_classes(classes: list):
+    def fun(bboxes: np.ndarray):
+        g = bboxes[bboxes[:, -1] == classes[0]]
+
+        for i in classes[1:]:
+            g = np.concatenate((g, bboxes[bboxes[:, -1] == i]))
+
+        return g
+
     return fun
 
 

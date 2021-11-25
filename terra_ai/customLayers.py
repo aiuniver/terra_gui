@@ -938,9 +938,7 @@ class PSPBlock2D(Layer):
             input_ = cast(input_, 'float16')
 
         x = self.conv_start(input_)
-
         conc_list = []
-
         for i in range(0, self.n_pooling_branches):
             setattr(self, f'x_{i}', getattr(self, f'maxpool_{i}')(x))
             for j in range(self.n_conv_layers):
@@ -1557,6 +1555,90 @@ class PSPBlock1D(Layer):
         return cls(**config)
 
 
+class PSPBlock3D(Model):
+    """
+    PSP Block3D layer
+    n_pooling_branches - defines amt of pooling/upsampling operations
+    filters_coef - defines the multiplication factor for amt of filters in pooling branches
+    n_conv_layers - number of conv layers in one downsampling/upsampling segment
+    """
+
+    def __init__(self, filters_base=16, n_pooling_branches=2, filters_coef=1, n_conv_layers=1, activation='relu',
+                 kernel_size=(3, 3, 3), batch_norm_layer=True, dropout_layer=True,
+                 dropout_rate=0.1, **kwargs):
+
+        super(PSPBlock3D, self).__init__(**kwargs)
+        self.filters = filters_base
+        self.n_pooling_branches = n_pooling_branches
+        self.filters_coef = filters_coef
+        self.n_conv_layers = n_conv_layers
+        self.activation = activation
+        self.kernel_size = kernel_size
+        self.batch_norm_layer = batch_norm_layer
+        self.dropout_layer = dropout_layer
+        self.dropout_rate = dropout_rate
+
+        self.conv_start = layers.Conv3D(filters=self.filters_coef * self.filters, kernel_size=self.kernel_size,
+                                        padding='same', activation=self.activation, data_format='channels_last',
+                                        groups=1, use_bias=True,
+                                        kernel_initializer='glorot_uniform',
+                                        bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
+                                        activity_regularizer=None, kernel_constraint=None, bias_constraint=None)
+
+        for i in range(0, self.n_pooling_branches):
+            setattr(self, f"maxpool_{i}",
+                    layers.MaxPool3D(pool_size=2 ** i, padding='same'))
+            for j in range(self.n_conv_layers):
+                setattr(self, f"conv_{i, j}",
+                        layers.Conv3D(filters=self.filters_coef * self.filters * (i + 1), kernel_size=self.kernel_size,
+                                      padding='same', activation=self.activation, data_format='channels_last',
+                                      groups=1, use_bias=True,
+                                      kernel_initializer='glorot_uniform',
+                                      bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
+                                      activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
+            setattr(self, f"convtranspose_{i}",
+                    layers.Conv3DTranspose(filters=self.filters_coef * self.filters * (i + 1),
+                                           kernel_size=(1, 1, 1), strides=2 ** i, padding='same',
+                                           activation=self.activation, data_format='channels_last'))
+            if self.batch_norm_layer:
+                setattr(self, f"batchnorm_{i}", layers.BatchNormalization())
+            if self.dropout_layer:
+                setattr(self, f"dropout_{i}", layers.Dropout(rate=self.dropout_rate))
+
+        self.concatenate = layers.Concatenate()
+
+        self.conv_end = layers.Conv3D(filters=self.filters_coef * self.filters, kernel_size=self.kernel_size,
+                                      padding='same', activation=self.activation, data_format='channels_last',
+                                      groups=1, use_bias=True,
+                                      kernel_initializer='glorot_uniform',
+                                      bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
+                                      activity_regularizer=None, kernel_constraint=None, bias_constraint=None)
+
+    def call(self, input_, training=True):
+
+        if not isinstance(input_, (np.int32, np.float64, np.float32, np.float16)):
+            input_ = cast(input_, 'float16')
+
+        x = self.conv_start(input_)
+
+        conc_list = []
+
+        for i in range(0, self.n_pooling_branches):
+            setattr(self, f'x_{i}', getattr(self, f'maxpool_{i}')(x))
+            for j in range(self.n_conv_layers):
+                setattr(self, f'x_{i}', getattr(self, f'conv_{i, j}')(getattr(self, f'x_{i}')))
+            if self.batch_norm_layer:
+                setattr(self, f'x_{i}', getattr(self, f'batchnorm_{i}')(getattr(self, f'x_{i}')))
+            if self.dropout_layer:
+                setattr(self, f'x_{i}', getattr(self, f'dropout_{i}')(getattr(self, f'x_{i}')))
+            setattr(self, f'x_{i}', getattr(self, f'convtranspose_{i}')(getattr(self, f'x_{i}')))
+            # setattr(self, f'x_{i}', layers.CenterCrop(input_.shape[1], input_.shape[2])(getattr(self, f'x_{i}')))
+            conc_list.append(getattr(self, f'x_{i}'))
+
+        concat = self.concatenate(conc_list)
+        x = self.conv_end(concat)
+        return x
+
 if __name__ == "__main__":
     # input = tensorflow.keras.layers.Input(shape=(32, 32, 3))
     # x = YOLOResBlock(32, 2)(input)
@@ -1566,11 +1648,13 @@ if __name__ == "__main__":
     #                     "use_bias": False, "include_head": True, "include_add": True,
     #                     "all_narrow": True})
     # x = YOLOConvBlock(**{'mode': "YOLOv5", "filters": 64, "num_conv": 5, 'activation': 'Swish'})
-    x = UNETBlock2D(filters_base=16, n_pooling_branches=3, filters_coef=1, n_conv_layers=1, activation='relu',
-                    kernel_size=(3, 3), batch_norm_layer=True,
-                    dropout_layer=True, dropout_rate=0.1)
+    # x = UNETBlock2D(filters_base=16, n_pooling_branches=3, filters_coef=1, n_conv_layers=1, activation='relu',
+    #                 kernel_size=(3, 3), batch_norm_layer=True,
+    #                 dropout_layer=True, dropout_rate=0.1)
     # x = PSPBlock2D(filters_base=32, n_pooling_branches=3, filters_coef=1, n_conv_layers=2, activation='relu',
     #                kernel_size=(3, 3), batch_norm_layer = True, dropout_layer = True, dropout_rate = 0.1)
+    x = PSPBlock3D(filters_base=32, n_pooling_branches=3, filters_coef=1, n_conv_layers=1, activation='relu',
+                   kernel_size=(3, 3, 3), batch_norm_layer = True, dropout_layer = True, dropout_rate = 0.1)
     # x = PSPBlock1D(filters_base=32, n_pooling_branches=3, filters_coef=1, n_conv_layers=2, activation='relu',
     #                kernel_size=5, batch_norm_layer = True, dropout_layer = True, dropout_rate = 0.1)
     # x = UNETBlock1D(filters_base=16, n_pooling_branches=3, filters_coef=1, n_conv_layers=2, activation='relu',
@@ -1579,12 +1663,11 @@ if __name__ == "__main__":
     # x = UNETBlock3D(filters_base=16, n_pooling_branches=3, filters_coef=1, n_conv_layers=1, activation='relu',
     #                 kernel_size=(3,3,3), batch_norm_layer=True,
     #                 dropout_layer=True, dropout_rate=0.1)
-    aa = x.build((64, 64, 3))
-    aa.summary()
-    tf.keras.utils.plot_model(
-        aa, to_file='C:\PycharmProjects\\terra_gui\\test_example\\model.png', show_shapes=True, show_dtype=False,
-        show_layer_names=True, rankdir='TB', expand_nested=False, dpi=96,
-        layer_range=None, show_layer_activations=False
-    )
-    # print(x.compute_output_shape(input_shape=(None, 64, 1)))
+    # aa = x.build((64, 64, 3))
+    # aa.summary()
+    # tf.keras.utils.plot_model(
+    #     aa, to_file='C:\PycharmProjects\\terra_gui\\test_example\\model.png', show_shapes=True, show_dtype=False,
+    #     show_layer_names=True, rankdir='TB', expand_nested=False, dpi=96,
+    #     layer_range=None, show_layer_activations=False)
+    print(x.compute_output_shape(input_shape=(None, 12, 32, 32, 3)))
     pass

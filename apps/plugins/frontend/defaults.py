@@ -12,6 +12,7 @@ from terra_ai.data.training.extra import (
     TasksRelations,
     StateStatusChoice,
 )
+from terra_ai.settings import CASCADE_PATH
 from .base import Field
 from .presets.defaults.training import (
     TrainingLossSelect,
@@ -712,6 +713,10 @@ class ArchitectureYoloV4Form(ArchitectureYoloBaseForm):
     pass
 
 
+class ArchitectureTrackerForm(ArchitectureBasicForm):
+    pass
+
+
 class DefaultsTrainingData(BaseMixinData):
     architecture: ArchitectureChoice
     base: Optional[ArchitectureBaseForm]
@@ -771,15 +776,19 @@ class DefaultsData(BaseMixinData):
             cascade_model_field = cascade_fields[0]
             cascade_model_field.list = options
             if cascade_model_field.value not in values:
-                cascade_model_field.value = values[0]
+                cascade_model_field.value = values[0] if len(values) else None
 
         deploy_model_fields = self.deploy.type.fields[0].fields.get("model")
         if deploy_model_fields:
             deploy_model_field = deploy_model_fields[0]
             deploy_model_field.list = options
             if deploy_model_field.value not in values:
-                deploy_model_field.value = values[0]
+                deploy_model_field.value = values[0] if len(values) else None
 
-    def update_deploy(self, _type: str, _name: str):
-        self.deploy.type.fields[0].value = _type
-        self.deploy.type.fields[0].fields.get(_type)[0].valule = _name
+        deploy_cascade_fields = self.deploy.type.fields[0].fields.get("cascade")
+        if deploy_cascade_fields:
+            deploy_cascade_field = deploy_cascade_fields[0]
+            deploy_cascade_field.list = [
+                {"value": str(CASCADE_PATH.absolute()), "label": "Текущий каскад"}
+            ]
+            deploy_cascade_field.value = deploy_cascade_field.list[0].get("value")

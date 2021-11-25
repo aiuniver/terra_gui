@@ -1,10 +1,14 @@
 <template>
   <div class="app" data-theme="light">
-    <Header />
+    <div class="app__header">
+      <Header />
+    </div>
     <div class="app__main">
       <router-view />
     </div>
-    <Footer />
+    <div class="app_footer">
+      <Footer />
+    </div>
   </div>
 </template>
 
@@ -12,14 +16,16 @@
 .app {
   height: 100%;
   width: 100%;
-  &__header{
-
+  display: flex;
+  flex-direction: column;
+  &__header {
+    flex: 0 0 51px;
   }
   &__main {
-
+    flex: 1 1 auto;
   }
-  &__footer{
-
+  &__footer {
+    flex: 0 0 58px;
   }
 }
 </style>
@@ -34,8 +40,7 @@ export default {
     Footer,
   },
   async created() {
-    await this.$store.dispatch('themes/setTheme');
-    await this.$store.dispatch('projects/get');
+    await this.$store.dispatch('init');
   },
 };
 </script>

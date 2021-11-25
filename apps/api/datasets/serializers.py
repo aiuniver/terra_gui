@@ -30,7 +30,10 @@ class LayerParametersSerializer(serializers.Serializer):
     sources_paths = serializers.ListSerializer(child=DirectoryOrFilePathField())
 
     def validate_sources_paths(self, value):
-        if self.__class__ in [LayerParametersClassificationSerializer, LayerParametersTrackerSerializer]:
+        if self.__class__ in [
+            LayerParametersClassificationSerializer,
+            LayerParametersTrackerSerializer,
+        ]:
             return value
         if not len(value):
             raise serializers.ValidationError("Этот список не может быть пустым.")
@@ -176,7 +179,7 @@ class LayerParametersTrackerSerializer(LayerParametersSerializer):
 class LayerParametersSegmentationSerializer(LayerParametersSerializer):
     width: serializers.IntegerField(min_value=1)
     height: serializers.IntegerField(min_value=1)
-    mask_range = serializers.IntegerField(min_value=1)
+    mask_range = serializers.IntegerField(min_value=0)
     classes_names: serializers.ListSerializer(child=serializers.CharField())
     classes_colors: serializers.ListSerializer(child=serializers.CharField())
 
@@ -246,8 +249,8 @@ class CreateTagSerializer(serializers.Serializer):
 
 
 class CreateInfoPartSerializer(serializers.Serializer):
-    train = serializers.FloatField(min_value=0.05, max_value=0.9)
-    validation = serializers.FloatField(min_value=0.05, max_value=0.9)
+    train = serializers.FloatField(min_value=0.1, max_value=0.9)
+    validation = serializers.FloatField(min_value=0.1, max_value=0.9)
 
 
 class CreateInfoSerializer(serializers.Serializer):
@@ -346,4 +349,4 @@ class DeleteSerializer(serializers.Serializer):
 
 class SourceSegmentationClassesAutosearchSerializer(serializers.Serializer):
     num_classes = serializers.IntegerField(min_value=1)
-    mask_range = serializers.IntegerField(min_value=1)
+    mask_range = serializers.IntegerField(min_value=0)

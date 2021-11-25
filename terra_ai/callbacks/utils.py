@@ -343,12 +343,10 @@ CLASSIFICATION_ARCHITECTURE = [
     ArchitectureChoice.VideoClassification, ArchitectureChoice.DataframeClassification,
 ]
 
-
 def print_error(class_name: str, method_name: str, message: Exception):
     return print(f'\n_________________________________________________\n'
                  f'Error in class {class_name} method {method_name}: {message}'
                  f'\n_________________________________________________\n')
-
 
 def reformat_fit_array(array: dict, train_idx: list = None, options=None):
     method_name = 'reformat_fit_array'
@@ -368,21 +366,6 @@ def reformat_fit_array(array: dict, train_idx: list = None, options=None):
         return reformat_true
     except Exception as e:
         print_error(f"None ({MODULE_NAME})", method_name, e)
-
-
-def class_metric_list(options):
-    method_name = '_class_metric_list'
-    try:
-        class_graphics = {}
-        for out in options.data.outputs.keys():
-            if options.data.architecture in CLASS_ARCHITECTURE:
-                class_graphics[out] = True
-            else:
-                class_graphics[out] = False
-        return class_graphics
-    except Exception as e:
-        print_error(f"None ({MODULE_NAME})", method_name, e)
-
 
 def class_counter(y_array, classes_names: list, ohe=True):
     """
@@ -472,22 +455,22 @@ def round_list(x: list) -> list:
         print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
-def sort_dict(dict_to_sort: dict, mode: BalanceSortedChoice = BalanceSortedChoice.alphabetic):
+def sort_dict(dict_to_sort: dict, mode: str = 'alphabetic'):
     method_name = 'sort_dict'
     try:
-        if mode == BalanceSortedChoice.alphabetic:
+        if mode == 'alphabetic':
             sorted_keys = sorted(dict_to_sort)
             sorted_values = []
             for w in sorted_keys:
                 sorted_values.append(dict_to_sort[w])
             return tuple(sorted_keys), tuple(sorted_values)
-        elif mode == BalanceSortedChoice.ascending:
+        elif mode == 'ascending':
             sorted_keys = sorted(dict_to_sort, key=dict_to_sort.get)
             sorted_values = []
             for w in sorted_keys:
                 sorted_values.append(dict_to_sort[w])
             return tuple(sorted_keys), tuple(sorted_values)
-        elif mode == BalanceSortedChoice.descending:
+        elif mode == 'descending':
             sorted_keys = sorted(dict_to_sort, key=dict_to_sort.get, reverse=True)
             sorted_values = []
             for w in sorted_keys:

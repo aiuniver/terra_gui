@@ -2,7 +2,11 @@ import copy
 import random
 import string
 import time
+
+from pathlib import Path
 from typing import Optional
+
+from tensorflow.keras.utils import to_categorical
 import numpy as np
 
 from terra_ai import progress
@@ -420,7 +424,7 @@ class InteractiveCallback:
                 self.progress_name,
                 finished=False,
             )
-            self.training_details.result = result
+            self.training_details.result = {"train_data": result}
 
     def _callback_router(self, dataset: PrepareDataset):
         method_name = '_callback_router'

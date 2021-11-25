@@ -2,6 +2,7 @@ import os
 import json
 import shutil
 
+from time import sleep
 from pathlib import Path
 from tempfile import mkdtemp
 from typing import Optional, List, Tuple
@@ -19,7 +20,7 @@ from terra_ai.progress import utils as progress_utils
 from terra_ai.data.types import confilepath
 from terra_ai.data.extra import HardwareAcceleratorData
 from terra_ai.data.mixins import BaseMixinData
-from terra_ai.data.datasets.dataset import DatasetData
+from terra_ai.data.datasets.dataset import DatasetData, DatasetInfo
 from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.deploy.extra import DeployTypePageChoice
 from terra_ai.data.modeling.model import ModelDetailsData
@@ -107,7 +108,7 @@ class ProjectPathData(BaseMixinData):
 
 class Project(BaseMixinData):
     name: str = UNKNOWN_NAME
-    dataset: Optional[DatasetData]
+    dataset_info: Optional[DatasetInfo]
     model: ModelDetailsData = ModelDetailsData(**EmptyModelDetailsData)
     training: TrainingDetailsData
     cascade: CascadeDetailsData = CascadeDetailsData(**EmptyCascadeDetailsData)
@@ -118,16 +119,12 @@ class Project(BaseMixinData):
             data["training"] = {}
         data["training"]["path"] = project_path.training
 
-        if data.get("dataset"):
-            data["dataset"]["path"] = project_path.datasets
-
-        if data.get("deploy"):
-            data["deploy"]["path_deploy"] = project_path.deploy
-            deploy_page = data.get("deploy", {}).get("page", {}).get("type", "")
-            if deploy_page == DeployTypePageChoice.model:
-                data["deploy"]["path_model"] = project_path.training
-            elif deploy_page == DeployTypePageChoice.cascade:
-                data["deploy"]["path_model"] = project_path.cascades
+        _dataset = data.get("dataset")
+        if _dataset:
+            data["dataset_info"] = {
+                "alias": _dataset.get("alias"),
+                "group": _dataset.get("group"),
+            }
 
         super().__init__(**data)
 
@@ -136,10 +133,14 @@ class Project(BaseMixinData):
             project=self, architecture=self.training.base.architecture.type
         )
         defaults_data.update_models(self.trainings)
-        if self.deploy:
-            defaults_data.update_deploy(self.deploy.page.type, self.deploy.page.name)
 
         self.save_config()
+
+    @property
+    def dataset(self) -> Optional[DatasetData]:
+        if self.dataset_info:
+            return self.dataset_info.dataset
+        return None
 
     @property
     def hardware(self) -> HardwareAcceleratorData:
@@ -147,7 +148,7 @@ class Project(BaseMixinData):
 
     @property
     def trainings(self) -> List[Tuple[str, str]]:
-        items = [(DEFAULT_TRAINING_PATH_NAME, "Текущее обучение")]
+        items = []
         for item in os.listdir(project_path.training):
             if item == DEFAULT_TRAINING_PATH_NAME:
                 continue
@@ -165,8 +166,8 @@ class Project(BaseMixinData):
         kwargs_keys = kwargs.keys()
         if "name" in kwargs_keys:
             self.name = kwargs.get("name")
-        if "dataset" in kwargs_keys:
-            self.dataset = kwargs.get("dataset")
+        if "dataset_info" in kwargs_keys:
+            self.dataset_info = kwargs.get("dataset_info")
         if "model" in kwargs_keys:
             self.model = kwargs.get("model")
         if "training" in kwargs_keys:
@@ -185,7 +186,7 @@ class Project(BaseMixinData):
         ProjectPathData(**PROJECT_PATH)
         self._set_data(
             name=UNKNOWN_NAME,
-            dataset=None,
+            dataset_info=None,
             model=ModelDetailsData(**EmptyModelDetailsData),
             cascade=CascadeDetailsData(**EmptyCascadeDetailsData),
         )
@@ -200,7 +201,7 @@ class Project(BaseMixinData):
         zip_destination = progress_utils.pack(
             "project_save", "Сохранение проекта", project_path.base, delete=False
         )
-        shutil.move(zip_destination.name, destination_path)
+        shutil.move(zip_destination.name, str(destination_path.absolute()))
         defaults_data.update_models(self.trainings)
 
     def load(self):
@@ -208,18 +209,25 @@ class Project(BaseMixinData):
             with open(project_path.config, "r") as _config_ref:
                 _config = json.load(_config_ref)
                 _dataset = _config.get("dataset", None)
+                if _dataset:
+                    _dataset_info = {
+                        "alias": _dataset.get("alias"),
+                        "group": _dataset.get("group"),
+                    }
+                else:
+                    _dataset_info = _config.get("dataset_info", None)
                 _model = _config.get("model", None)
                 _cascade = _config.get("cascade", None)
                 _training = utils.correct_training(
                     _config.get("training", {}),
                     ModelDetailsData(**(_model or EmptyModelDetailsData)),
                 )
-                if _dataset:
-                    _dataset["path"] = project_path.datasets
                 _training["path"] = project_path.training
                 self._set_data(
                     name=_config.get("name", UNKNOWN_NAME),
-                    dataset=DatasetData(**_dataset) if _dataset else None,
+                    dataset_info=DatasetInfo(**_dataset_info)
+                    if _dataset_info
+                    else None,
                     model=ModelDetailsData(**(_model or EmptyModelDetailsData)),
                     training=TrainingDetailsData(**_training),
                     cascade=CascadeDetailsData(**(_cascade or EmptyCascadeDetailsData)),
@@ -235,24 +243,23 @@ class Project(BaseMixinData):
         data = self.native()
         if data.get("hardware"):
             data.pop("hardware")
+        if data.get("deploy"):
+            data.pop("deploy")
         with open(project_path.config, "w") as _config_ref:
             json.dump(data, _config_ref)
 
     def frontend(self):
         _data = self.native()
-        if _data.get("deploy") and self.deploy:
-            _data.update({"deploy": self.deploy.presets})
+        _data.pop("dataset_info")
+        _data.update({"dataset": self.dataset.native() if self.dataset else None})
         return json.dumps(_data)
 
     def set_name(self, name: str):
         self._set_data(name=name)
         self.save_config()
 
-    def set_dataset(
-        self, dataset: DatasetData, destination: Path, reset_model: bool = False
-    ):
-        dataset.set_path(destination)
-        self.dataset = dataset
+    def set_dataset(self, info: DatasetInfo, reset_model: bool = False):
+        self._set_data(dataset_info=info)
 
         if not self.model.inputs or not self.model.outputs or reset_model:
             self.model = self.dataset.model
@@ -296,25 +303,8 @@ class Project(BaseMixinData):
         self.cascade = cascade
         self.save_config()
 
-    def set_deploy(self, page: dict):
-        path_deploy = mkdtemp()
-        path_model = ""
-        _type = page.get("type")
-        if _type == DeployTypePageChoice.model:
-            path_model = project_path.training
-        elif _type == DeployTypePageChoice.cascade:
-            path_model = project_path.cascades
-        deploy = agent_exchange(
-            "deploy_get", path_deploy=path_deploy, path_model=path_model, page=page
-        )
-        if deploy:
-            deploy.path_deploy = project_path.deploy
-        shutil.rmtree(project_path.deploy, ignore_errors=True)
-        shutil.move(path_deploy, project_path.deploy)
-        self.deploy = deploy
-
     def clear_dataset(self):
-        self.dataset = None
+        self._set_data(dataset_info=None)
         shutil.rmtree(project_path.datasets, ignore_errors=True)
         os.makedirs(project_path.datasets, exist_ok=True)
         defaults_data.modeling.set_layer_datatype(self.dataset)

@@ -1,23 +1,25 @@
 import os
 import json
 import shutil
+
 import pynvml
 import tensorflow
 
 from pathlib import Path
-from typing import Any, NoReturn
+from typing import Any, Dict, List
 
 from . import exceptions as agent_exceptions
 from . import utils as agent_utils
 from .. import settings, progress
+from ..cascades.cascade_validator import CascadeValidator
 from ..exceptions import tensor_flow as tf_exceptions
 from ..data.datasets.creation import FilePathSourcesList
 from ..data.datasets.creation import SourceData, CreationData
 from ..data.datasets.dataset import (
-    DatasetLoadData,
     CustomDatasetConfigData,
     DatasetsGroupsList,
     DatasetData,
+    DatasetLoadData,
 )
 from ..data.datasets.extra import DatasetGroupChoice
 from ..data.extra import (
@@ -25,6 +27,7 @@ from ..data.extra import (
     HardwareAcceleratorChoice,
     FileManagerItem,
 )
+from ..cascades.cascade_runner import CascadeRunner
 from ..data.modeling.extra import ModelGroupChoice
 from ..data.modeling.model import ModelsGroupsList, ModelLoadData, ModelDetailsData
 from ..data.cascades.cascade import CascadesList, CascadeLoadData, CascadeDetailsData
@@ -33,15 +36,16 @@ from ..data.presets.models import ModelsGroups
 from ..data.projects.project import ProjectsInfoData, ProjectsList
 from ..data.training.train import TrainingDetailsData
 from ..data.training.extra import StateStatusChoice
-from ..data.deploy.tasks import DeployData
+from ..data.cascades.extra import BlockGroupChoice
+from ..data.deploy.tasks import DeployData, DeployPageData
 from ..datasets import loading as datasets_loading
 from ..datasets import utils as datasets_utils
 from ..datasets.creating import CreateDataset
 from ..deploy import loading as deploy_loading
 from ..modeling.validator import ModelValidator
-from ..progress import utils as progress_utils
 from ..training import training_obj
 from ..training.guinn import interactive
+from ..project import loading as project_loading
 
 
 class Exchange:
@@ -121,28 +125,27 @@ class Exchange:
         projects.sort(key=lambda item: item.label)
         return ProjectsInfoData(projects=projects.native())
 
-    def _call_project_load(self, source: Path, target: Path):
+    def _call_project_load(self, dataset_path: Path, source: Path, target: Path):
         """
         Загрузка проекта
         """
-        destination = progress_utils.unpack("project_load", "Загрузка проекта", source)
-        shutil.rmtree(target, ignore_errors=True)
-        shutil.move(destination, target)
+        project_loading.load(Path(dataset_path), Path(source), Path(target))
+
+    def _call_project_load_progress(self) -> progress.ProgressData:
+        """
+        Прогресс загрузки проекта
+        """
+        return progress.pool(project_loading.PROJECT_LOAD_NAME)
 
     def _call_dataset_choice(
-        self,
-        custom_path: Path,
-        destination: Path,
-        group: str,
-        alias: str,
-        reset_model: bool = False,
-    ) -> NoReturn:
+        self, custom_path: Path, group: str, alias: str, reset_model: bool = False
+    ):
         """
         Выбор датасета
         """
         datasets_loading.choice(
+            "dataset_choice",
             DatasetLoadData(path=custom_path, group=group, alias=alias),
-            destination=destination,
             reset_model=reset_model,
         )
 
@@ -324,11 +327,17 @@ class Exchange:
         """
         Обновление интерактивных параметров обучения
         """
-        if training.state.status in [
-            StateStatusChoice.stopped,
-            StateStatusChoice.trained,
+        if training.state.status not in [
+            # StateStatusChoice.stopped,
+            StateStatusChoice.no_train,
         ]:
             interactive.get_train_results()
+
+    def _call_training_kill(self, training: TrainingDetailsData):
+        """
+        Удаление незавершенного обучения
+        """
+        training.state.set("kill")
 
     def _call_training_progress(self) -> progress.ProgressData:
         """
@@ -369,26 +378,77 @@ class Exchange:
         """
         Валидация каскада
         """
-        print(cascade)
-        print(path)
+        return CascadeValidator().get_validate(cascade_data=cascade, training_path=path)
 
-    def _call_cascade_start(self, path: Path, cascade: CascadeDetailsData):
+    def _call_cascade_start(
+        self,
+        training_path: Path,
+        datasets_path: Path,
+        sources: Dict[int, Dict[str, str]],
+        cascade: CascadeDetailsData,
+    ):
         """
         Запуск каскада
         """
-        print(cascade)
-        print(path)
+        datasets = list(
+            map(
+                lambda item: DatasetLoadData(path=datasets_path, **dict(item)),
+                sources.values(),
+            )
+        )
+        for block in cascade.blocks:
+            if block.group == BlockGroupChoice.Model:
+                _path = Path(
+                    training_path, block.parameters.main.path, "model", "dataset.json"
+                )
+                if not _path.is_file():
+                    _path = Path(
+                        training_path,
+                        block.parameters.main.path,
+                        "model",
+                        "dataset",
+                        "config.json",
+                    )
+                with open(_path) as config_ref:
+                    data = json.load(config_ref)
+                    datasets.append(
+                        DatasetLoadData(
+                            path=datasets_path,
+                            alias=data.get("alias"),
+                            group=data.get("group"),
+                        )
+                    )
+        datasets_loading.multiload("cascade_start", datasets, sources=sources)
+
+    def _call_cascade_start_progress(self) -> progress.ProgressData:
+        """
+        Процесс запуска каскада
+        """
+        return progress.pool("cascade_start")
+
+    def _call_cascade_execute(
+        self, sources: Dict[int, List[str]], cascade: CascadeDetailsData, training_path
+    ):
+        """
+        Исполнение каскада
+        """
+        CascadeRunner().start_cascade(
+            sources=sources, cascade_data=cascade, training_path=training_path
+        )
 
     def _call_deploy_get(
-        self, path_model: Path, path_deploy: Path, page: dict
+        self, datasets: List[DatasetLoadData], page: DeployPageData
     ) -> DeployData:
-        pass
+        """
+        Получение данных для отображения пресетов на странице деплоя
+        """
+        datasets_loading.multiload("deploy_get", datasets, page=page)
 
-    def _call_deploy_presets(self):
+    def _call_deploy_get_progress(self) -> progress.ProgressData:
         """
-        получение данных для отображения пресетов на странице деплоя
+        Прогресс получения данных для отображения пресетов на странице деплоя
         """
-        return interactive.deploy_presets_data
+        return progress.pool("deploy_get")
 
     def _call_deploy_cascades_create(self, training_path: str, model_name: str):
         pass

@@ -1,10 +1,8 @@
-const requireComponent = require.context('@/components/global', true, /\.vue$/i, 'lazy');
+import Vue from 'vue';
+const requireComponent = require.context('@/components/global', true, /\.vue$/);
 
-
-console.log(requireComponent)
-const components = []
 requireComponent.keys().forEach(fileName => {
-  console.log(requireComponent(fileName))
-})
-
-export { components }
+  const componentConfig = requireComponent(fileName);
+  const componentName = fileName.replace(/^.*[\\/]/, '').replace(/\.\w+$/, '');
+  Vue.component(componentName, componentConfig.default || componentConfig);
+});

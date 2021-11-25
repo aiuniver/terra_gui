@@ -7,6 +7,7 @@
       <Blocks ref="container" />
       <Params />
       <CopyModal v-model="kerasModal" :title="'Код на keras'">{{ keras }}</CopyModal>
+      <DatasetsModal v-model="dialogDatasets" />
     </div>
   </main>
 </template>
@@ -18,6 +19,7 @@ import Params from '@/components/cascades/Params';
 import LoadModel from '@/components/cascades/modals/LoadModel';
 import SaveModel from '@/components/cascades/modals/SaveModel';
 import CopyModal from '../components/global/modals/CopyModal';
+import DatasetsModal from '../components/cascades/modals/DatasetsModal.vue'
 
 export default {
   name: 'cascades',
@@ -28,10 +30,12 @@ export default {
     LoadModel,
     SaveModel,
     CopyModal,
+    DatasetsModal
   },
   data: () => ({
     dialogLoadModel: false,
     dialogSaveModel: false,
+    dialogDatasets: false,
     imageModel: null,
     kerasModal: false,
   }),
@@ -60,7 +64,9 @@ export default {
       await this.$store.dispatch('cascades/save', {});
     },
     async start() {
-      await this.$store.dispatch('cascades/start', {});
+      this.dialogDatasets = true
+      await this.$store.dispatch('cascades/setDatasets')
+      // await this.$store.dispatch('cascades/start', {});
     },
     async validation() {
       await this.$store.dispatch('cascades/validate', {});
@@ -75,7 +81,7 @@ export default {
       if (btn === 'load') {
         this.isTraining();
       }
-      if (['InputData', 'Model', 'Function', 'Custom', 'OutputData'].includes(btn)) {
+      if (['InputData', 'Model', 'Function', 'Custom', 'Service', 'OutputData'].includes(btn)) {
         console.log(btn);
         this.addBlock(btn);
       }
@@ -94,7 +100,6 @@ export default {
       if (btn === 'keras') {
         this.kerasModal = true;
       }
-      console.log(btn);
     },
   },
 };

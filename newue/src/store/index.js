@@ -3,6 +3,7 @@ import Vuex from "vuex";
 import axios from 'axios';
 
 import messages from './modules/messages';
+import datasets from './modules/datasets';
 import logging from './modules/logging';
 import projects from './modules/projects';
 import themes from './modules/themes';
@@ -13,12 +14,18 @@ export default new Vuex.Store({
   modules: {
     logging,
     messages,
+    datasets,
     projects,
     themes
   },
   state: {},
   mutations: {},
   actions: {
+    async init({dispatch}){
+      await dispatch('themes/setTheme', {}, {root: true});
+      await dispatch('projects/get', {}, {root: true});
+      await dispatch('datasets/init', {}, {root: true});
+    },
     async axios ({ dispatch }, { method = 'post', url, data = {} }) {
       try {
         const response = await axios({ method, url: '/api/v1' + url, data });
