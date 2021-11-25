@@ -113,6 +113,7 @@ class InteractiveCallback:
                      on_epoch_end_flag=False, train_idx: list = None) -> dict:
         if self.log_history:
             if arrays:
+                t = time.time()
                 if self.options.data.architecture in BASIC_ARCHITECTURE:
                     t = time.time()
                     self.y_true = reformat_fit_array(
@@ -124,16 +125,19 @@ class InteractiveCallback:
                         options=self.options, train_idx=train_idx)
                     self.inverse_y_pred = self.callback.get_inverse_array(self.y_pred, self.options)
                     print('\nInteractiveCallback y_true, y_pred:', round(time.time() - t, 3))
+                    t = time.time()
                     if self.get_balance:
                         self.dataset_balance = self.callback.dataset_balance(
                             options=self.options, y_true=self.y_true,
                             preset_path=self.training_details.intermediate_path,
                             class_colors=self.class_colors
                         )
+                        print('\n self.dataset_balance', self.dataset_balance)
                         if self.options.data.architecture in CLASSIFICATION_ARCHITECTURE:
                             self.class_idx = self.callback.prepare_class_idx(self.y_true, self.options)
                         self.seed_idx = self._prepare_seed()
                         self.get_balance = False
+                    print('\nInteractiveCallback dataset_balance:', round(time.time() - t, 3))
                     t = time.time()
                     out = f"{self.training_details.interactive.intermediate_result.main_output}"
                     count = self.training_details.interactive.intermediate_result.num_examples
@@ -192,7 +196,8 @@ class InteractiveCallback:
                         sensitivity=self.training_details.interactive.intermediate_result.sensitivity,
                     )
                     print('\nInteractiveCallback example_idx', round(time.time() - t, 3))
-
+                print('\nInteractiveCallback if self.options.data.architecture in BASIC_ARCHITECTURE:', round(time.time() - t, 3))
+                t = time.time()
                 if on_epoch_end_flag:
                     self.current_epoch = fit_logs.get('epochs')[-1]
                     self.log_history = fit_logs
@@ -244,6 +249,7 @@ class InteractiveCallback:
                         )
                         print('\nInteractiveCallback statistic_data_request', round(time.time() - t, 3))
                 else:
+                    t = time.time()
                     self.intermediate_result = self.callback.intermediate_result_request(
                         options=self.options,
                         interactive_config=self.training_details.interactive,
@@ -259,8 +265,10 @@ class InteractiveCallback:
                         class_colors=self.class_colors,
                         # raw_y_pred=self.raw_y_pred
                     )
+                    print('\nInteractiveCallback intermediate_result_request', round(time.time() - t, 3))
                     if self.options.data.architecture in BASIC_ARCHITECTURE and \
                             self.training_details.interactive.statistic_data.output_id:
+                        t = time.time()
                         self.statistic_result = self.callback.statistic_data_request(
                             interactive_config=self.training_details.interactive,
                             options=self.options,
@@ -269,6 +277,7 @@ class InteractiveCallback:
                             inverse_y_pred=self.inverse_y_pred,
                             inverse_y_true=self.inverse_y_true,
                         )
+                        print('\nInteractiveCallback statistic_data_request', round(time.time() - t, 3))
                     if self.options.data.architecture in YOLO_ARCHITECTURE and \
                             self.training_details.interactive.statistic_data.box_channel:
                         self.statistic_result = self.callback.statistic_data_request(
@@ -281,6 +290,7 @@ class InteractiveCallback:
                         )
                 self.urgent_predict = False
                 self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
+                print('\nInteractiveCallback if on_epoch_end_flag:', round(time.time() - t, 3))
             return {
                 'update': self.random_key,
                 "class_graphics": self.class_graphics,

@@ -231,29 +231,42 @@ class TimeseriesCallback:
             print_error(TimeseriesCallback().name, method_name, e)
 
     @staticmethod
-    def dataset_balance(options, y_true, preset_path: str, class_colors) -> dict:
+    def dataset_balance(options, y_true, preset_path: str, class_colors) -> list:
         method_name = 'dataset_balance'
         try:
-            dataset_balance = {}
+            dataset_balance = []
+            _id = 0
             for out in options.data.outputs.keys():
-                dataset_balance[f"{out}"] = {'graphic': {}, 'dense_histogram': {}}
-                for output_channel in options.data.columns.get(out).keys():
-                    dataset_balance[f"{out}"]['graphic'][output_channel] = {}
-                    dataset_balance[f"{out}"]['dense_histogram'][output_channel] = {}
-                    for data_type in ['train', 'val']:
-                        dataset_balance[f"{out}"]['graphic'][output_channel][data_type] = {
-                            "type": "graphic",
-                            "x": np.array(options.dataframe.get(data_type).index).astype('float').tolist(),
-                            "y": np.array(options.dataframe.get(data_type)[output_channel]).astype(
-                                'float').tolist()
-                        }
-                        x, y = get_distribution_histogram(
-                            list(options.dataframe.get(data_type)[output_channel]),
-                            categorical=False
-                        )
-                        dataset_balance[f"{out}"]['dense_histogram'][output_channel][data_type] = {
-                            "type": "bar", "x": x, "y": y
-                        }
+                for class_type in ['graphic', 'dense_histogram']:
+                    for output_channel in options.data.columns.get(out).keys():
+                        preset = {}
+                        for data_type in ['train', 'val']:
+                            data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
+                            y_true = options.dataframe.get(data_type)[output_channel].to_list()
+                            if class_type == 'graphic':
+                                x, y = get_time_series_graphic(y_true, make_short=True)
+                                plot_data = [fill_graph_plot_data(x=x, y=y)]
+                                graph_name = f'Выход {out} - {data_type_name} выборка - ' \
+                                             f'График канала «{output_channel.split("_", 1)[-1]}»'
+                                short_name = f'{data_type_name} - «{output_channel.split("_", 1)[-1]}»'
+                                x_label = "Время"
+                                y_label = "Величина"
+                                graph_type = "graphic"
+                            else:
+                                x_hist, y_hist = get_distribution_histogram(y_true, categorical=False)
+                                plot_data = [fill_graph_plot_data(x=x_hist, y=y_hist)]
+                                graph_name = f'Выход {out} - {data_type_name} выборка - ' \
+                                             f'Гистограмма плотности канала «{output_channel.split("_", 1)[-1]}»'
+                                short_name = f'{data_type_name} - Гистограмма «{output_channel.split("_", 1)[-1]}»'
+                                x_label = "Значение"
+                                y_label = "Количество"
+                                graph_type = "bar"
+                            preset[data_type] = fill_graph_front_structure(
+                                _id=_id, _type=graph_type, type_data=data_type, graph_name=graph_name,
+                                short_name=short_name, x_label=x_label, y_label=y_label, plot_data=plot_data,
+                            )
+                            _id += 1
+                        dataset_balance.append(preset)
             return dataset_balance
         except Exception as e:
             print_error(TimeseriesCallback().name, method_name, e)
@@ -423,40 +436,7 @@ class TimeseriesCallback:
     def balance_data_request(options, dataset_balance, interactive_config) -> list:
         method_name = 'balance_data_request'
         try:
-            return_data = []
-            _id = 0
-            for out in options.data.outputs.keys():
-                for class_type in dataset_balance[f"{out}"].keys():
-                    for channel_name in dataset_balance[f"{out}"][class_type].keys():
-                        preset = {}
-                        for data_type in ["train", "val"]:
-                            graph_type = dataset_balance[f"{out}"][class_type][channel_name][data_type][
-                                'type']
-                            data_type_name = "Тренировочная" if data_type == "train" else "Проверочная"
-                            y_true = options.dataframe.get(data_type)[channel_name].to_list()
-                            if class_type == 'graphic':
-                                x, y = get_time_series_graphic(y_true, make_short=True)
-                                plot_data = [fill_graph_plot_data(x=x, y=y)]
-                                graph_name = f'Выход {out} - {data_type_name} выборка - ' \
-                                             f'График канала «{channel_name.split("_", 1)[-1]}»'
-                                short_name = f'{data_type_name} - «{channel_name.split("_", 1)[-1]}»'
-                                x_label = "Время"
-                                y_label = "Величина"
-                            else:
-                                x_hist, y_hist = get_distribution_histogram(y_true, categorical=False)
-                                plot_data = [fill_graph_plot_data(x=x_hist, y=y_hist)]
-                                graph_name = f'Выход {out} - {data_type_name} выборка - ' \
-                                             f'Гистограмма плотности канала «{channel_name.split("_", 1)[-1]}»'
-                                short_name = f'{data_type_name} - Гистограмма «{channel_name.split("_", 1)[-1]}»'
-                                x_label = "Значение"
-                                y_label = "Количество"
-                            preset[data_type] = fill_graph_front_structure(
-                                _id=_id, _type=graph_type, type_data=data_type, graph_name=graph_name,
-                                short_name=short_name, x_label=x_label, y_label=y_label, plot_data=plot_data,
-                            )
-                            _id += 1
-                        return_data.append(preset)
-            return return_data
+            return dataset_balance
         except Exception as e:
             print_error(TimeseriesCallback().name, method_name, e)
 
@@ -478,10 +458,8 @@ class TimeseriesCallback:
                 if choice_type == ExampleChoiceTypeChoice.worst:
                     example_idx, _ = sort_dict(delta_dict, mode=BalanceSortedChoice.descending)
                     example_idx = example_idx[:count]
-
             elif choice_type == ExampleChoiceTypeChoice.seed and len(seed_idx):
                 example_idx = seed_idx[:count]
-
             elif choice_type == ExampleChoiceTypeChoice.random:
                 delta = np.abs(true_array - array + 0.000001) * 100 / (true_array + 0.000001)
                 while len(delta.shape) != 1:
@@ -506,7 +484,6 @@ class TimeseriesCallback:
                     example_idx.append(true_false_dict.get(key)[0])
                     true_false_dict.get(key).pop(0)
                 np.random.shuffle(example_idx)
-
             else:
                 example_idx = np.random.randint(0, len(true_array), count)
             return example_idx

@@ -754,9 +754,8 @@ class GUINN:
                         train_pred[f"{out}"][current_idx: current_idx + length] = logits[i].numpy()
                         train_true[f"{out}"][current_idx: current_idx + length] = y_true[i].numpy()
                     current_idx += length
-                    # print('- train batch', train_steps, current_idx, current_idx + length,
-                    #   train_pred[f"{out}"][length * train_steps], train_true[f"{out}"][length * train_steps])
                     train_steps += 1
+                    # print('- train_step', train_steps, round(time.time() - st1, 3))
                     if interactive.urgent_predict:
                         val_steps = 0
                         current_val_idx = 0
@@ -809,14 +808,14 @@ class GUINN:
                 callback.on_epoch_end(
                     epoch=epoch + 1,
                     arrays={
-                        "train_pred": train_pred,"val_pred": val_pred,"train_true": train_true,"val_true": val_true
+                        "train_pred": train_pred, "val_pred": val_pred, "train_true": train_true, "val_true": val_true
                     },
                     train_data_idxs=train_data_idxs
                 )
                 print(f'\n callback.on_epoch_end epoch time: {round(time.time() - st, 2)}')
                 print(
                     f"\nEpoch {callback.current_logs.get('epochs')}:"
-                    # f"\nlog_history: {callback.log_history}, "
+                    f"\nlog_history: {callback.log_history}, "
                     f"epoch_time={round(time.time() - callback._time_first_step, 3)}"
                     # f"\nloss={callback.log_history.get('2').get('loss')}"
                     # f"\nmetrics={callback.log_history.get('2').get('metrics')}\n"
@@ -1071,7 +1070,7 @@ class FitCallback:
                 val_loss = self._get_loss_calculation(
                     loss_obj=loss_fn, out=out, y_true=arrays.get("val_true").get(out),
                     y_pred=arrays.get("val_pred").get(out))
-                print(train_loss, val_loss)
+                # print(train_loss, val_loss)
                 self.current_logs[out]["loss"][output_layer.loss.name] = {"train": train_loss, "val": val_loss}
                 if self.class_outputs.get(output_layer.id):
                     self.current_logs[out]["class_loss"][output_layer.loss.name] = {}
@@ -1774,6 +1773,7 @@ class FitCallback:
                     finished=False,
                 )
             else:
+                # bt = time.time()
                 msg_batch = {"current": batch, "total": self.num_batches}
                 msg_epoch = {"current": self.last_epoch,
                              "total": self.retrain_epochs if self._get_train_status() == "addtrain"
@@ -1783,7 +1783,7 @@ class FitCallback:
                 elapsed_time = time.time() - self._start_time
                 estimated_time = self.update_progress(
                     self.num_batches * self.still_epochs, self.batch, self._start_time, finalize=True)
-
+                # print('-- 1', method_name, round(time.time()-bt, 3))
                 still_time = self.update_progress(
                     self.num_batches * self.still_epochs, self.batch, self._start_time)
                 self.batch = batch
@@ -1798,6 +1798,7 @@ class FitCallback:
                 else:
                     train_batch_data = interactive.update_state(arrays=None, train_idx=None)
                     # print("train_batch_data", train_batch_data)
+                # print('-- 2', method_name, round(time.time() - bt, 3))
                 if train_batch_data:
                     result_data = {
                         'timings': [estimated_time, elapsed_time, still_time,
@@ -1807,6 +1808,8 @@ class FitCallback:
                 else:
                     result_data = {'timings': [estimated_time, elapsed_time, still_time,
                                                elapsed_epoch_time, still_epoch_time, msg_epoch, msg_batch]}
+
+                # print('-- 3', method_name, round(time.time()-bt, 3))
                 # print('batch', self.batch, result_data)
                 self._set_result_data(result_data)
                 self.training_detail.result = self._get_result_data()
@@ -1819,6 +1822,7 @@ class FitCallback:
                             f"{self.retrain_epochs if self._get_train_status() in ['addtrain', 'stopped'] else self.epochs}",
                     finished=False,
                 )
+                # print('-- 4', method_name, round(time.time() - bt, 3))
         except Exception as e:
             print_error('FitCallback', method_name, e)
 
