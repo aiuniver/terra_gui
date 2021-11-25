@@ -39,9 +39,7 @@ class GetAPIView(BaseAPIView):
                 datasets.append(
                     DatasetLoadData(path=data_path.datasets, **dataset_config)
                 )
-            agent_exchange("deploy_get", datasets=datasets, page=page)
-        elif page.type == DeployTypePageChoice.cascade:
-            progress_pool("deploy_get", percent=0, message=0, finished=True)
+        agent_exchange("deploy_get", datasets=datasets, page=page)
         return BaseResponseSuccess()
 
 
@@ -52,9 +50,11 @@ class GetProgressAPIView(BaseAPIView):
             if progress.finished:
                 progress.percent = 0
                 progress.message = ""
-                dataset_data = progress.data.get("datasets")[0]
+                datasets = progress.data.get("datasets")
+                dataset_data = datasets[0].native() if len(datasets) else None
+                dataset = DatasetInfo(**dataset_data).dataset if dataset_data else None
                 request.project.deploy = DeployCreator().get_deploy(
-                    dataset=DatasetInfo(**dataset_data.native()).dataset,
+                    dataset=dataset,
                     training_path=project_path.training,
                     deploy_path=terra_ai_settings.DEPLOY_PATH,
                     page=progress.data.get("kwargs", {}).get("page").native(),
