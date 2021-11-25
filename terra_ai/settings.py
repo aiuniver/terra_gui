@@ -20,6 +20,8 @@ PROJECT_EXT = "project"
 DATASET_EXT = "trds"
 DATASET_CONFIG = "config.json"
 DATASET_ANNOTATION = "labelmap.txt"
+VERSION_EXT = "vrs"
+VERSION_CONFIG = "version.json"
 
 # Modeling
 MODEL_EXT = "model"

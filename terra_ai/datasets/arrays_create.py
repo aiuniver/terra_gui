@@ -626,7 +626,7 @@ class CreateArray(object):
 
         instructions = {'instructions': paths_list,
                         'parameters': {'classes_names': options['classes_names'],
-                                       'one_hot_encoding': True,
+                                       'encoding': 'ohe',
                                        'num_classes': options['num_classes'],
                                        'cols_names': options['cols_names'],
                                        'put': options['put'],
@@ -666,7 +666,8 @@ class CreateArray(object):
                                        'classes_colors': options['classes_colors'],
                                        'classes_names': options['classes_names'],
                                        'cols_names': options['cols_names'],
-                                       'put': options['put']
+                                       'put': options['put'],
+                                       'encoding': 'ohe'
                                        }
                         }
 
@@ -685,7 +686,8 @@ class CreateArray(object):
                                        'put': options['put'],
                                        'num_classes': options['num_classes'],
                                        'classes_names': options['classes_names'],
-                                       'length': options['length']
+                                       'length': options['length'],
+                                       'encoding': 'multi'
                                        }
                         }
 
