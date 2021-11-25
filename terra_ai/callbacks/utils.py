@@ -9,7 +9,7 @@ import pandas as pd
 from pandas import DataFrame
 from sklearn.metrics import classification_report, confusion_matrix
 
-from terra_ai.data.training.extra import BalanceSortedChoice, ArchitectureChoice
+from terra_ai.data.training.extra import ArchitectureChoice
 from terra_ai.utils import camelize
 
 loss_metric_config = {
@@ -343,10 +343,12 @@ CLASSIFICATION_ARCHITECTURE = [
     ArchitectureChoice.VideoClassification, ArchitectureChoice.DataframeClassification,
 ]
 
+
 def print_error(class_name: str, method_name: str, message: Exception):
     return print(f'\n_________________________________________________\n'
                  f'Error in class {class_name} method {method_name}: {message}'
                  f'\n_________________________________________________\n')
+
 
 def reformat_fit_array(array: dict, train_idx: list = None, options=None):
     method_name = 'reformat_fit_array'
@@ -366,6 +368,21 @@ def reformat_fit_array(array: dict, train_idx: list = None, options=None):
         return reformat_true
     except Exception as e:
         print_error(f"None ({MODULE_NAME})", method_name, e)
+
+
+def class_metric_list(options):
+    method_name = '_class_metric_list'
+    try:
+        class_graphics = {}
+        for out in options.data.outputs.keys():
+            if options.data.architecture in CLASS_ARCHITECTURE:
+                class_graphics[out] = True
+            else:
+                class_graphics[out] = False
+        return class_graphics
+    except Exception as e:
+        print_error(f"None ({MODULE_NAME})", method_name, e)
+
 
 def class_counter(y_array, classes_names: list, ohe=True):
     """
@@ -832,7 +849,7 @@ def get_dataset_length(options):
     method_name = 'get_dataset_length'
     try:
         train_length, val_length = 0, 0
-        for x in options.dataset.get('train').batch(2**10):
+        for x in options.dataset.get('train').batch(2 ** 10):
             train_length += list(x[0].values())[0].shape[0]
         val_length = 0
         for x in options.dataset.get('val').batch(2 ** 10):

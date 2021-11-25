@@ -89,16 +89,6 @@ class InteractiveCallback:
         self.dataset_path = dataset.data.path
         self.class_colors = get_classes_colors(dataset)
         self.x_val, self.inverse_x_val = self.callback.get_x_array(dataset)
-        # self.y_true, self.inverse_y_true = self.callback.get_y_true(dataset, dataset.data.path)
-        # self.dataset_balance = self.callback.dataset_balance(
-        #     options=self.options, y_true=self.y_true,
-        #     preset_path=self.training_details.intermediate_path,
-        #     class_colors=self.class_colors
-        # )
-        # if dataset.data.architecture in CLASSIFICATION_ARCHITECTURE:
-        #     self.class_idx = self.callback.prepare_class_idx(self.y_true, self.options)
-        # self.seed_idx = self._prepare_seed()
-        # print('\nseed_idx', self.seed_idx[:10], '\n')
         self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
 
     def clear_history(self):
@@ -205,7 +195,6 @@ class InteractiveCallback:
                 if on_epoch_end_flag:
                     self.current_epoch = fit_logs.get('epochs')[-1]
                     self.log_history = fit_logs
-                    # self._update_log_history()
                     self._update_progress_table(current_epoch_time)
                     if self.training_details.interactive.intermediate_result.autoupdate:
                         print('\nInteractiveCallback intermediate_result_request: start')
@@ -267,7 +256,6 @@ class InteractiveCallback:
                         y_true=self.y_true,
                         inverse_y_true=self.inverse_y_true,
                         class_colors=self.class_colors,
-                        # raw_y_pred=self.raw_y_pred
                     )
                     print('\nInteractiveCallback intermediate_result_request', round(time.time() - t, 3))
                     if self.options.data.architecture in BASIC_ARCHITECTURE and \
@@ -591,16 +579,12 @@ class InteractiveCallback:
     def _get_loss_graph_data_request(self) -> list:
         method_name = '_get_loss_graph_data_request'
         try:
-            # print(method_name)
             data_return = []
             if self.options.data.architecture in BASIC_ARCHITECTURE:
                 if not self.training_details.interactive.loss_graphs or not self.log_history.get("epochs"):
                     return data_return
                 for loss_graph_config in self.training_details.interactive.loss_graphs:
-                    # print('self.training_details.interactive.loss_graphs',
-                    #       self.training_details.interactive.loss_graphs)
                     loss_name = self.training_details.base.architecture.parameters.outputs[0].loss.name
-                    # print(loss_name, self.log_history)
                     if self.options.data.architecture in YOLO_ARCHITECTURE:
                         loss_graph_config.output_idx = 'output'
                     if loss_graph_config.show == LossGraphShowChoice.model:
@@ -639,7 +623,6 @@ class InteractiveCallback:
                             if x is not None:
                                 no_none_val.append(x)
                         best_val_value = min(no_none_val) if no_none_val else None
-                        # best_val_value = min(val_list)
                         best_val = fill_graph_plot_data(
                             x=[self.log_history.get("epochs")[val_list.index(best_val_value)]
                                if best_val_value is not None else None],
@@ -754,24 +737,6 @@ class InteractiveCallback:
                             _id += 1
                     if loss_graph_config.show == LossGraphShowChoice.classes:
                         output_idx = list(self.options.data.outputs.keys())[0]
-                        # data_return.append(
-                        #     fill_graph_front_structure(
-                        #         _id=_id,
-                        #         _type='graphic',
-                        #         graph_name=f"График ошибки обучения «prob_loss» по классам - Тренировочная выборка",
-                        #         short_name=f"График ошибки обучения по классам - Тренировочная",
-                        #         x_label="Эпоха",
-                        #         y_label="Значение",
-                        #         plot_data=[
-                        #             fill_graph_plot_data(
-                        #                 x=self.log_history.get("epochs"),
-                        #                 y=self.log_history.get("output").get('class_loss').get('prob_loss').get(
-                        #                     class_name).get("train"),
-                        #                 label=f"Класс {class_name}"
-                        #             ) for class_name in self.options.data.outputs.get(output_idx).classes_names
-                        #         ],
-                        #     )
-                        # )
                         data_return.append(
                             fill_graph_front_structure(
                                 _id=_id,
@@ -801,7 +766,6 @@ class InteractiveCallback:
     def _get_metric_graph_data_request(self) -> list:
         method_name = '_get_metric_graph_data_request'
         try:
-            # print(method_name)
             data_return = []
             if self.options.data.architecture in BASIC_ARCHITECTURE:
                 if not self.training_details.interactive.metric_graphs or not self.log_history.get("epochs"):
