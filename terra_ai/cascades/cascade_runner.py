@@ -38,6 +38,8 @@ class CascadeRunner:
 
         type_, model, inputs_ids = self._get_task_type(cascade_data=cascade_data, training_path=training_path)
         dataset_path = os.path.join(training_path, model, "model", "dataset.json")
+        if not os.path.exists(dataset_path):
+            dataset_path = os.path.join(training_path, model, "model", "dataset", "config.json")
         with open(dataset_path, "r", encoding="utf-8") as dataset_config:
             dataset_config_data = json.load(dataset_config)
 
