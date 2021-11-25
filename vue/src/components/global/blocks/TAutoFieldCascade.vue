@@ -50,7 +50,7 @@
       @cleanError="cleanError"
       @change="change"
     />
-    <t-field v-if="type === 'select'" :label="label">
+    <t-field v-if="type === 'select'" :inline="true" :label="label">
       <t-select-new
         :value="getValue"
         :label="label"
@@ -137,6 +137,10 @@ export default {
   },
   methods: {
     change({ value, name }) {
+      const block = this.$store.getters['cascades/getBlock']
+      setTimeout(() => {
+        this.$store.dispatch('cascades/selectBlock', block);
+      }, 10);
       console.log(value, name);
       this.valueIn = null;
       this.$emit('change', { id: this.id, value, name, parse: this.parse });
