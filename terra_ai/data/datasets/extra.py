@@ -204,6 +204,8 @@ class ColumnProcessingTypeChoice(str, Enum):
     Regression = "Regression"
     Segmentation = "Segmentation"
     Timeseries = "Timeseries"
+    TextSegmentation = "TextSegmentation"
+    ObjectDetection = "ObjectDetection"
 
 
 class LayerInputTypeChoice(str, Enum):

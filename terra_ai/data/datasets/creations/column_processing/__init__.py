@@ -41,6 +41,14 @@ class ColumnProcessingTimeseriesData(types.ParametersTimeseriesData):
     pass
 
 
+class ColumnProcessingTextSegmentationData(types.ParametersTextSegmentationData):
+    pass
+
+
+class ColumnProcessingObjectDetectionData(types.ParametersObjectDetectionData):
+    pass
+
+
 ColumnProcessing = Enum(
     "ColumnProcessing",
     dict(

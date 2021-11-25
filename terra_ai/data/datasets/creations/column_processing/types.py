@@ -23,8 +23,8 @@ from terra_ai.data.datasets.extra import (
     LayerVideoModeChoice,
     LayerTypeProcessingClassificationChoice,
 )
-from terra_ai.data.datasets.creations.layers.extra import MinMaxScalerData
-
+from terra_ai.data.datasets.extra import LayerYoloChoice, LayerODDatasetTypeChoice, LayerObjectDetectionModelChoice
+from terra_ai.data.datasets.creations.layers.extra import MinMaxScalerData, LayerImageFrameModeChoice
 
 class ParametersBaseData(BaseMixinData):
     pass
@@ -35,6 +35,7 @@ class ParametersImageData(ParametersBaseData, MinMaxScalerData):
     height: PositiveInt
     net: LayerNetChoice = LayerNetChoice.convolutional
     scaler: LayerScalerImageChoice
+    image_mode: LayerImageFrameModeChoice = LayerImageFrameModeChoice.stretch
 
 
 class ParametersTextData(ParametersBaseData):
@@ -47,6 +48,8 @@ class ParametersTextData(ParametersBaseData):
     prepare_method: LayerPrepareMethodChoice
     max_words_count: Optional[PositiveInt]
     word_to_vec_size: Optional[PositiveInt]
+    open_tags: Optional[str]
+    close_tags: Optional[str]
 
     @validator("text_mode")
     def _validate_text_mode(cls, value: LayerTextModeChoice) -> LayerTextModeChoice:
@@ -144,6 +147,27 @@ class ParametersClassificationData(ParametersBaseData):
         if value == LayerTypeProcessingClassificationChoice.ranges:
             cls.__fields__["ranges"].required = True
         return value
+
+
+class ParametersTextSegmentationData(ParametersBaseData):
+    open_tags: Optional[str]
+    close_tags: Optional[str]
+
+    sources_paths: Optional[list]
+    filters: Optional[str]
+    text_mode: Optional[LayerTextModeChoice]
+    max_words: Optional[PositiveInt]
+    length: Optional[PositiveInt]
+    step: Optional[PositiveInt]
+
+
+class ParametersObjectDetectionData(ParametersBaseData):
+    model: LayerObjectDetectionModelChoice = LayerObjectDetectionModelChoice.yolo
+    yolo: LayerYoloChoice = LayerYoloChoice.v4
+    classes_names: Optional[list]
+    num_classes: Optional[PositiveInt]
+    model_type: LayerODDatasetTypeChoice = LayerODDatasetTypeChoice.Yolo_terra
+    frame_mode: LayerImageFrameModeChoice = LayerImageFrameModeChoice.stretch
 
 
 class ParametersRegressionData(ParametersBaseData, MinMaxScalerData):
