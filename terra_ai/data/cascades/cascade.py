@@ -1,8 +1,13 @@
 import os
+import re
+import json
+
 from pathlib import Path
 from typing import Optional
 from pydantic import validator
+from transliterate import slugify
 
+from terra_ai.exceptions.cascades import CascadeAlreadyExistsException
 from terra_ai.data.cascades.block import BlocksList
 from ... import settings
 from ..mixins import BaseMixinData, AliasMixinData, UniqueListMixin
@@ -17,6 +22,19 @@ class CascadeDetailsData(AliasMixinData):
     name: Optional[str]
     image: Optional[Base64Type]
     blocks: BlocksList = []
+
+    def save(self, path: Path, name: str, image: Base64Type, overwrite: bool = False):
+        path = Path(path, f"{name}.{settings.CASCADE_EXT}")
+        if path.is_file():
+            if overwrite:
+                os.remove(path)
+            else:
+                raise CascadeAlreadyExistsException(name)
+        self.name = name
+        self.image = image
+        self.alias = re.sub(r"([\-]+)", "_", slugify(name, language_code="ru"))
+        with open(path, "w") as path_ref:
+            json.dump(self.native(), path_ref)
 
 
 class CascadeListData(BaseMixinData):
