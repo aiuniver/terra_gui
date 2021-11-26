@@ -303,12 +303,7 @@ class DatasetData(AliasMixinData):
     architecture: ArchitectureChoice = ArchitectureChoice.Basic
     tags: Optional[TagsList] = TagsList()
 #     size: Optional[FileSizeData]
-#     group: Optional[DatasetGroupChoice]
-#     use_generator: bool = False
-#     inputs: Dict[PositiveInt, DatasetInputsData] = {}
-#     outputs: Dict[PositiveInt, DatasetOutputsData] = {}
-#     service: Optional[Dict[PositiveInt, DatasetOutputsData]] = {}
-#     columns: Optional[Dict[PositiveInt, Dict[str, Any]]] = {}
+    group: Optional[DatasetGroupChoice]
 
     _path: Path = PrivateAttr()
 
@@ -327,12 +322,9 @@ class VersionData(AliasMixinData):
     Информация о версии
     """
 
-#     name: str
+    name: str
     date: Optional[datetime]
-#     architecture: ArchitectureChoice = ArchitectureChoice.Basic
-#     tags: Optional[TagsList] = TagsList()
     size: Optional[FileSizeData]
-#     group: Optional[DatasetGroupChoice]
     use_generator: bool = False
     inputs: Dict[PositiveInt, DatasetInputsData] = {}
     outputs: Dict[PositiveInt, DatasetOutputsData] = {}

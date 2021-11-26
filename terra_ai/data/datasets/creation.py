@@ -382,14 +382,27 @@ class ColumnsProcessingData(BaseMixinData):
         return field.type_(**(value or {}))
 
 
-class CreationVersionData(BaseMixinData):
-    # datasets_path: DirectoryPath
-    # source_path: DirectoryPath
+class CreationVersionData(AliasMixinData):
+    """
+    Полная информация о создании версии датасета
+    """
+
+    name: str
+    "Название"
+    datasets_path: DirectoryPath
+    "Путь к директории датасетов проекта"
+    parent_alias: str
+    "Алиас родительского датасета"
     info: CreationInfoData = CreationInfoData()  # Train/Val split, shuffle
+    "Информация о данных"
     use_generator: bool = False
+    "Использовать генератор"
     processing: Dict[str, ColumnsProcessingData] = {}
+    "Обработчики"
     inputs: CreationInputsList = CreationInputsList()
+    "Входные слои"
     outputs: CreationOutputsList = CreationOutputsList()
+    "Выходные слои"
 
 
 class CreationData(AliasMixinData):
@@ -403,21 +416,11 @@ class CreationData(AliasMixinData):
     "Путь к директории датасетов проекта"
     source_path: DirectoryPath
     "Путь к директории с исходниками, полученный после их загрузки"
-    # info: CreationInfoData = CreationInfoData()
-    # "Информация о данных"
     task_type: LayerTaskTypeChoice
     "Тип задачи создаваемого датасета"
     tags: TagsList = TagsList()
     "Список тегов"
-    version: CreationVersionData
-    # use_generator: bool = False
-    # "Использовать генераторы"
-    # columns_processing: Dict[str, ColumnsProcessingData] = {}
-    # "Обработчики колонок"
-    # inputs: CreationInputsList = CreationInputsList()
-    # "`input`-слои"
-    # outputs: CreationOutputsList = CreationOutputsList()
-    # "`output`-слои"
+    version: Optional[CreationVersionData]  # Optional больше сделано для дебаггинга
 
     # @property
     # def path(self) -> Path:

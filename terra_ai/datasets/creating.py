@@ -12,7 +12,7 @@ from terra_ai.data.datasets.dataset import DatasetData, DatasetInputsData, Datas
 from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice, \
     LayerPrepareMethodChoice, LayerScalerImageChoice, ColumnProcessingTypeChoice, \
     LayerTypeProcessingClassificationChoice, LayerEncodingChoice
-from terra_ai.settings import DATASET_EXT, DATASET_CONFIG
+from terra_ai.settings import DATASET_EXT, DATASET_CONFIG, VERSION_EXT, VERSION_CONFIG
 from terra_ai.data.datasets.creations.layers.output.types.ObjectDetection import LayerODDatasetTypeChoice
 from terra_ai import progress
 
@@ -42,52 +42,25 @@ class CreateDataset(object):
 
     def __init__(self, cr_data: CreationData):
 
-        creation_data = self.preprocess_creation_data(cr_data)
-        self.temp_directory: str = tempfile.mkdtemp()
-        os.makedirs(Path(self.temp_directory, f'{creation_data.alias}.{DATASET_EXT}_NEW'), exist_ok=True)
-        self.dataset_paths_data = DatasetPathsData(
-            basepath=Path(self.temp_directory, f'{creation_data.alias}.{DATASET_EXT}_NEW'))
+        creation_data: CreationData = cr_data  # ВРЕМЕННО!!!
+        self.temp_directory: Path = Path(tempfile.mkdtemp())
+        os.makedirs(self.temp_directory.joinpath(f'{creation_data.alias}.{DATASET_EXT}_NEW'), exist_ok=True)
+        self.dataset_paths_data: DatasetPathsData = DatasetPathsData(
+            basepath=self.temp_directory.joinpath(f'{creation_data.alias}.{DATASET_EXT}_NEW'))
         copy_tree(str(creation_data.source_path), str(self.dataset_paths_data.sources))
-        self.version = CreateVersion(version_data=creation_data.version,
-                                     dataset_basepath=self.dataset_paths_data.basepath)
-
-        self.zip_dataset(self.dataset_paths_data.sources, os.path.join(self.temp_directory, 'sources'))
-        shutil.move(os.path.join(self.temp_directory, 'sources.zip'), self.dataset_paths_data.basepath)
+        self.zip_dataset(self.dataset_paths_data.sources, self.temp_directory.joinpath('sources'))
+        shutil.move(str(self.temp_directory.joinpath('sources.zip')), self.dataset_paths_data.basepath)
         #         for key, value in self.dataset_paths_data.__dict__.items():
         #             if not key == 'basepath':
         #                 shutil.rmtree(value)
         shutil.rmtree(self.dataset_paths_data.sources)
         self.write_dataset_configure(creation_data)
-        #         self.datasetdata = DatasetData(**self.write_dataset_configure(creation_data=creation_data))
-
-        if Path(creation_data.datasets_path, f'{creation_data.alias}.{DATASET_EXT}_NEW').is_dir():
-            shutil.rmtree(Path(creation_data.datasets_path, f'{creation_data.alias}.{DATASET_EXT}_NEW'))
+        if creation_data.datasets_path.joinpath(f'{creation_data.alias}.{DATASET_EXT}_NEW').is_dir():
+            shutil.rmtree(creation_data.datasets_path.joinpath(f'{creation_data.alias}.{DATASET_EXT}_NEW'))
         shutil.move(str(self.dataset_paths_data.basepath), creation_data.datasets_path)
         shutil.rmtree(self.temp_directory)
-
-    @staticmethod
-    def preprocess_creation_data(creation_data):
-        for worker_name, worker_params in creation_data.version.processing.items():
-            if creation_data.version.processing[worker_name].type == 'Segmentation':
-                for w_name, w_params in creation_data.version.processing.items():
-                    if creation_data.version.processing[w_name].type == 'Image':
-                        creation_data.version.processing[worker_name].parameters.height = \
-                            creation_data.version.processing[w_name].parameters.height
-                        creation_data.version.processing[worker_name].parameters.width = \
-                            creation_data.version.processing[w_name].parameters.width
-            elif creation_data.version.processing[worker_name].type == 'Timeseries':
-                if creation_data.version.processing[worker_name].parameters.trend:
-                    creation_data.version.processing[worker_name].parameters.depth = 1
-                for w_name, w_params in creation_data.version.processing.items():
-                    if creation_data.version.processing[w_name].type in ['Classification', 'Scaler']:
-                        creation_data.version.processing[w_name].parameters.length = \
-                            creation_data.version.processing[worker_name].parameters.length
-                        creation_data.version.processing[w_name].parameters.depth = \
-                            creation_data.version.processing[worker_name].parameters.depth
-                        creation_data.version.processing[w_name].parameters.step = \
-                            creation_data.version.processing[worker_name].parameters.step
-
-        return creation_data
+        if creation_data.version:  # Больше сделано для дебаггинга
+            self.version = CreateVersion(version_data=creation_data.version)
 
     @staticmethod
     def zip_dataset(src, dst):
@@ -101,6 +74,7 @@ class CreateDataset(object):
         zf.close()
 
     def write_dataset_configure(self, creation_data):
+
         tags_list = [{'alias': x, 'name': x.capitalize()} for x in decamelize(creation_data.task_type).split('_')]
         for tag in creation_data.tags:
             tags_list.append(tag.native())
@@ -119,23 +93,32 @@ class CreateDataset(object):
 
 class CreateVersion(object):
 
-    def __init__(self, version_data, dataset_basepath):
+    def __init__(self, version_data: CreationVersionData):
 
         self.y_cls: list = []
         self.tags = {}
         self.dataframe: dict = {}
+        self.columns: dict = {}
         self.preprocessing = CreatePreprocessing()
 
-        self.dataset_paths_data = DatasetPathsData(basepath=dataset_basepath)
-        print('self.dataset_paths_data:', self.dataset_paths_data)
-        if os.listdir(self.dataset_paths_data.versions):
-            self.version_id = max([int(x) for x in os.listdir(self.dataset_paths_data.versions)]) + 1
-        else:
-            self.version_id = 1
-        os.makedirs(self.dataset_paths_data.versions.joinpath(str(self.version_id)), exist_ok=True)
-        self.version_paths_data = VersionPathsData(
-            basepath=self.dataset_paths_data.versions.joinpath(str(self.version_id)))
-        print('self.version_paths_data', self.version_paths_data)
+        self.temp_directory: Path = Path(tempfile.mkdtemp())
+        self.sources_temp_directory: Path = Path(tempfile.mkdtemp())
+        self.dataset_paths_data = DatasetPathsData(basepath=self.temp_directory)
+        self.parent_dataset_paths_data = DatasetPathsData(
+            basepath=version_data.datasets_path.joinpath(f'{version_data.parent_alias}.{DATASET_EXT}_NEW')
+        )
+        shutil.copyfile(
+            self.parent_dataset_paths_data.basepath.joinpath('sources.zip'),
+            self.dataset_paths_data.basepath.joinpath('sources.zip')
+        )
+        current_version = self.dataset_paths_data.versions.joinpath(f'{version_data.alias}.{VERSION_EXT}')
+        os.makedirs(current_version)
+        self.version_paths_data = VersionPathsData(basepath=current_version)
+
+        with zipfile.ZipFile(self.dataset_paths_data.basepath.joinpath('sources.zip'), 'r') as z_file:
+            # z_file.extractall(self.version_paths_data.sources)
+            z_file.extractall(self.sources_temp_directory)
+
         self.instructions: DatasetInstructionsData = self.create_instructions(version_data)
         self.create_preprocessing(self.instructions)
         self.fit_preprocessing(put_data=self.instructions.inputs)
@@ -149,43 +132,19 @@ class CreateVersion(object):
                 self.write_arrays(x_array, y_array[0], y_array[1])
             else:
                 self.write_arrays(x_array, y_array)
+        self.inputs = self.create_put_parameters(self.instructions.inputs, version_data, 'inputs')
+        self.outputs = self.create_put_parameters(self.instructions.outputs, version_data, 'outputs')
+        # self.service = self.create_put_parameters(self.instructions.service, version_data, 'service')
 
         self.write_instructions_to_files()
-        self.zip_dataset(self.version_paths_data.basepath,
-                         os.path.join(self.dataset_paths_data.versions, str(self.version_id), 'version'))
-        for key, value in self.version_paths_data.__dict__.items():
-            if not key == 'basepath':
-                shutil.rmtree(value)
-        #         shutil.move(os.path.join(self.dataset_paths_data.versions, str(self.version_id), 'version.zip'),
-        #                     self.version_paths_data.basepath)
-        self.write_version_configure()
-
-    @staticmethod
-    def postprocess_timeseries(full_array):
-        try:
-            new_array = np.array(full_array).transpose()
-        except:
-            new_array = []
-            array = []
-            for el in full_array:
-                if type(el[0]) == np.ndarray:
-                    tmp = []
-                    for j in range(len(el)):
-                        tmp.append(list(el[j]))
-                    array.append(tmp)
-                else:
-                    array.append(el.tolist())
-            array = np.array(array).transpose().tolist()
-            for i in array:
-                tmp = []
-                for j in i:
-                    if type(j) == list:
-                        tmp.extend(j)
-                    else:
-                        tmp.append(j)
-                new_array.append(tmp)
-            new_array = np.array(new_array)
-        return new_array
+        self.zip_dataset(self.version_paths_data.basepath, os.path.join(self.dataset_paths_data.versions, 'version'))
+        os.makedirs(self.parent_dataset_paths_data.versions.joinpath(f'{version_data.alias}.{VERSION_EXT}'))
+        shutil.move(self.dataset_paths_data.versions.joinpath('version.zip'),
+                    self.parent_dataset_paths_data.versions.joinpath(f'{version_data.alias}.{VERSION_EXT}')
+                        .joinpath('version.zip'))
+        self.write_version_configure(version_data)
+        shutil.rmtree(self.sources_temp_directory)
+        shutil.rmtree(self.temp_directory)
 
     @staticmethod
     def zip_dataset(src, dst):
@@ -210,45 +169,14 @@ class CreateVersion(object):
     def create_put_instructions(self, puts, processing):
 
         put_parameters = {}
+
         for idx in range(puts[0].id, puts[0].id + len(puts)):
             data = []
-            self.tags[idx] = {}
-            put_parameters[idx] = {}
             for path, val in puts.get(idx).parameters.items():
                 data_to_pass = []
                 parameters = None
-                current_path = self.dataset_paths_data.sources.joinpath(path)
-                if current_path.is_file():
-                    for col_name, worker in val.items():
-                        table_data = []
-                        dataframe = pd.read_csv(current_path, usecols=[col_name], sep=None, engine='python')
-                        data_to_pass = dataframe.loc[:, col_name].to_numpy().tolist()
-                        parameters = processing[str(worker[0])].native()
-
-                        instr = getattr(CreateArray, f'instructions_{decamelize(parameters["type"])}')(data_to_pass,
-                                                                                                       **parameters[
-                                                                                                           'parameters'])
-                        cut = getattr(CreateArray, f'cut_{decamelize(parameters["type"])}')(instr['instructions'],
-                                                                                            **instr['parameters'], **{
-                                'cols_names': f'{idx}_{col_name}', 'put': idx})
-
-                        self.tags[idx].update({f'{puts.get(idx).id}_{col_name}':
-                                                   decamelize(parameters['type'])})
-
-                        for i in range(len(cut['instructions'])):
-                            if decamelize(parameters['type']) in PATH_TYPE_LIST:
-                                table_data.append(os.path.join('sources',
-                                                               cut['instructions'][i].replace(
-                                                                   str(self.dataset_paths_data.sources), '')[1:]))
-                            else:
-                                table_data.append(cut['instructions'][i])
-                            self.y_cls.append(os.path.basename(path))
-
-                        instructions_data = InstructionsData(instructions=table_data, parameters=cut['parameters'])
-                        instructions_data.parameters.update([('put_type', decamelize(parameters['type']))])
-                        put_parameters[idx].update({f'{idx}_{col_name}': instructions_data})
-
-                else:
+                current_path = self.sources_temp_directory.joinpath(path)
+                if current_path.is_dir():
                     for direct, folder, file_name in os.walk(current_path):
                         if file_name:
                             for name in sorted(file_name):
@@ -259,28 +187,30 @@ class CreateVersion(object):
                     if parameters['type'] == LayerOutputTypeChoice.Classification:
                         data_to_pass = self.y_cls
 
-                    instr = getattr(CreateArray, f'instructions_{decamelize(parameters["type"])}')(data_to_pass,
-                                                                                                   **parameters[
-                                                                                                       'parameters'])
-                    cut = getattr(CreateArray, f'cut_{decamelize(parameters["type"])}')(instr['instructions'],
-                                                                                        **instr['parameters'], **{
-                            'cols_names': decamelize(parameters["type"]), 'put': idx})
-                    for i in range(len(cut['instructions'])):
-                        if parameters['type'] != LayerOutputTypeChoice.Classification:
-                            if decamelize(parameters['type']) in PATH_TYPE_LIST:
-                                data.append(os.path.join('sources',
-                                                         cut['instructions'][i].replace(
-                                                             str(self.dataset_paths_data.sources), '')[1:]))
-                            else:
-                                data.append(cut['instructions'][i])
-                            self.y_cls.append(os.path.basename(path))
-
+                elif current_path.is_file():
+                    print('ТАБЛИЦА')
+                print(data_to_pass[0])
+                print(parameters)
+                instr = getattr(CreateArray, f'instructions_{decamelize(parameters["type"])}')(data_to_pass,
+                                                                                               **parameters[
+                                                                                                   'parameters'])
+                cut = getattr(CreateArray, f'cut_{decamelize(parameters["type"])}')(instr['instructions'],
+                                                                                    **instr['parameters'], **{
+                        'cols_names': decamelize(parameters["type"]), 'put': idx})
+                for i in range(len(cut['instructions'])):
                     if parameters['type'] != LayerOutputTypeChoice.Classification:
-                        instructions_data = InstructionsData(instructions=data, parameters=cut['parameters'])
-                    else:
-                        instructions_data = InstructionsData(instructions=self.y_cls, parameters=cut['parameters'])
-                    instructions_data.parameters.update([('put_type', decamelize(parameters['type']))])
-                    put_parameters[idx] = {f'{idx}_{decamelize(parameters["type"])}': instructions_data}
+                        if decamelize(parameters['type']) in PATH_TYPE_LIST:
+                            data.append(os.path.join(cut['instructions'][i].replace(str(self.sources_temp_directory), '')[1:]))
+                        else:
+                            data.append(cut['instructions'][i])
+                        self.y_cls.append(os.path.basename(path))
+
+            if parameters['type'] != LayerOutputTypeChoice.Classification:
+                instructions_data = InstructionsData(instructions=data, parameters=cut['parameters'])
+            else:
+                instructions_data = InstructionsData(instructions=self.y_cls, parameters=cut['parameters'])
+            instructions_data.parameters.update([('put_type', decamelize(parameters['type']))])
+            put_parameters[idx] = {f'{idx}_{decamelize(parameters["type"])}': instructions_data}
 
         return put_parameters
 
@@ -325,8 +255,9 @@ class CreateVersion(object):
                             #                                           percent=ceil(i / len(data.instructions) * 100))
 
                             arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(
-                                os.path.join(self.dataset_paths_data.basepath, data.instructions[i]),
-                                **data.parameters)
+                                self.sources_temp_directory.joinpath(data.instructions[i]),
+                                **data.parameters
+                            )
 
                             if data.parameters['put_type'] in [decamelize(LayerInputTypeChoice.Image),
                                                                decamelize(LayerOutputTypeChoice.Image)]:
@@ -393,6 +324,75 @@ class CreateVersion(object):
             self.dataframe[key] = dataframe.loc[value, :].reset_index(drop=True)
         print(self.dataframe['train'])
 
+    def create_put_parameters(self, put_instructions, version_data: CreationVersionData, put: str):  # -> dict:
+
+        creating_puts_data = {}
+        for key in put_instructions.keys():
+            put_array = []
+            self.columns[key] = {}
+            for col_name, data in put_instructions[key].items():
+                data_to_pass = data.instructions[0]
+                if self.tags[key][col_name] in PATH_TYPE_LIST:
+                    data_to_pass = str(self.sources_temp_directory.joinpath(data_to_pass))
+                create = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(data_to_pass, **data.parameters,)
+                                                                                      #**{'preprocess': prep})
+                array = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(create['instructions'],
+                                                                                         **create['parameters'])
+
+                # array = array[0] if isinstance(array, tuple) else array
+                # if not array.shape:
+                #     array = np.expand_dims(array, 0)
+                put_array.append(array)
+                #
+                # classes_names = sorted([os.path.basename(x) for x in put_instructions.get(key).parameters.sources_paths.keys()]) if not os.path.isfile(creation_data.inputs.get(key).parameters.sources_paths[0]) else arr['parameters'].get('classes_names')
+                # if self.dataset_paths_data.basepath.joinpath(list(data.parameters.keys())[0]).is_file():
+                #     classes_names = arr['parameters'].get('classes_names')
+                if create['parameters'].get('classes_names'):
+                    classes_names = create['parameters'].get('classes_names')
+                else:
+                    classes_names = sorted([os.path.basename(x) for x in version_data.__dict__[put].get(key).parameters.keys()])
+
+                # num_classes = len(classes_names) if classes_names else None
+
+                # Прописываем параметры для колонки
+                col_parameters = {'datatype': DataType.get(len(array.shape), 'DIM'),
+                                  'dtype': str(array.dtype),
+                                  'shape': array.shape,
+                                  'name': version_data.__dict__[put].get(key).name,
+                                  'task': camelize(data.parameters.get('put_type')),
+                                  'classes_names': classes_names,
+                                  'classes_colors': data.parameters.get('classes_colors'),
+                                  'num_classes': len(classes_names) if classes_names else 0,
+                                  'encoding': 'none' if not data.parameters.get('encoding') else data.parameters.get('encoding')}
+                current_column = DatasetInputsData(**col_parameters) if put == 'inputs' else DatasetOutputsData(**col_parameters)
+                self.columns[key].update([(col_name, current_column.native())])
+
+            put_array = np.concatenate(put_array, axis=0)
+            # classes_colors_list = []
+            # classes_names_list = []
+            # encoding_list = []
+            # task_list = []
+            classes_colors_list, classes_names_list, encoding_list, task_list = [], [], [], []
+            for value in self.columns[key].values():
+                classes_colors_list.append(*value['classes_colors']) if value.get('classes_colors') else None  # возможны баги
+                for c_name in value.get('classes_names'):
+                    classes_names_list.append(c_name)
+                encoding_list.append(value.get('encoding'))
+                task_list.append(value.get('task'))
+            put_parameters = {'datatype': DataType.get(len(put_array.shape), 'DIM'),
+                              'dtype': str(put_array.dtype),
+                              'shape': put_array.shape,
+                              'name': version_data.__dict__[put].get(key).name,
+                              'task': task_list[0] if len(task_list) == 1 else 'Dataframe',
+                              'classes_names': classes_names_list if classes_names_list else None,
+                              'num_classes': len(classes_names_list) if classes_names_list else None,
+                              'encoding': 'none' if len(encoding_list) > 1 or not encoding_list else encoding_list[0]}
+
+            creating_puts_data[key] = DatasetInputsData(**put_parameters).native() if put == 'inputs'\
+                else DatasetOutputsData(**put_parameters).native()
+
+        return creating_puts_data
+
     def create_dataset_arrays(self, put_data: dict):
 
         def array_creation(row, instructions):
@@ -445,7 +445,7 @@ class CreateVersion(object):
                             parameters_to_pass.update([('preprocess', prep)])
 
                         if self.tags[key][col_name] in PATH_TYPE_LIST:
-                            tmp_data.append(os.path.join(self.dataset_paths_data.basepath,
+                            tmp_data.append(os.path.join(self.sources_temp_directory,
                                                          self.dataframe[split].loc[i, col_name]))
                         elif 'depth' in data.parameters.keys() and data.parameters['depth']:
                             if 'trend' in data.parameters.keys() and data.parameters['trend']:
@@ -563,7 +563,7 @@ class CreateVersion(object):
         for key in self.dataframe.keys():
             self.dataframe[key].to_csv(os.path.join(self.version_paths_data.instructions, 'tables', f'{key}.csv'))
 
-    def write_version_configure(self):
+    def write_version_configure(self, version_data):
         """
         inputs, outputs, service, size, use_generator, columns, date
         """
@@ -573,11 +573,17 @@ class CreateVersion(object):
             for file in files:
                 size_bytes += os.path.getsize(os.path.join(path, file))
 
-        data = {'name': f"Вариант {self.version_id}",
-                'alias': f"variant_{self.version_id}",
+        data = {'alias': version_data.alias,
+                'name': version_data.name,
                 'date': datetime.now().astimezone(timezone("Europe/Moscow")).isoformat(),
-                'size': {'value': size_bytes}
+                'size': {'value': size_bytes},
+                'use_generator': version_data.use_generator,
+                'inputs': self.inputs,
+                'outputs': self.outputs,
+                # 'service': self.service,
+                'columns': self.columns
                 }
 
-        with open(os.path.join(self.version_paths_data.basepath, DATASET_CONFIG), 'w') as fp:
+        with open(self.parent_dataset_paths_data.versions.joinpath(f'{version_data.alias}.{VERSION_EXT}')
+                      .joinpath(VERSION_CONFIG), 'w') as fp:
             json.dump(VersionData(**data).native(), fp)
