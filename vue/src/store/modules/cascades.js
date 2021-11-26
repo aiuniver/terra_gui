@@ -87,7 +87,10 @@ export default {
       blocks.push(block);
       // dispatch('updateModel');
       commit('SET_BLOCKS', blocks);
-      dispatch('selectBlock', block)
+      dispatch('selectBlock', block);
+      setTimeout(() => {
+        dispatch('selectBlock', block);
+      }, 1);
     },
     typeBlock ({ dispatch, commit, state: { blocks, cascades: { layers_types, list } } }, { type, block }) {
       let newBlock = changeTypeBlock(type, block, layers_types, list);
@@ -303,5 +306,5 @@ export default {
       })
       return obj
     }
-  },
+  }
 };

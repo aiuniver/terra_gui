@@ -1,7 +1,7 @@
 import random
 
 from typing import List, Tuple
-from pathlib import PosixPath, Path
+from pathlib import Path
 from pydantic import PositiveFloat
 
 from terra_ai.data.mixins import BaseMixinData

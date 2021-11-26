@@ -1,7 +1,6 @@
 import os
 import json
 import shutil
-import tempfile
 
 import pynvml
 import tensorflow
@@ -13,7 +12,6 @@ from . import exceptions as agent_exceptions
 from . import utils as agent_utils
 from .. import settings, progress
 from ..cascades.cascade_validator import CascadeValidator
-from ..deploy.prepare_deploy import DeployCreator
 from ..exceptions import tensor_flow as tf_exceptions
 from ..data.datasets.creation import FilePathSourcesList
 from ..data.datasets.creation import SourceData, CreationData
@@ -39,7 +37,7 @@ from ..data.projects.project import ProjectsInfoData, ProjectsList
 from ..data.training.train import TrainingDetailsData
 from ..data.training.extra import StateStatusChoice
 from ..data.cascades.extra import BlockGroupChoice
-from ..data.deploy.tasks import DeployData
+from ..data.deploy.tasks import DeployData, DeployPageData
 from ..datasets import loading as datasets_loading
 from ..datasets import utils as datasets_utils
 from ..datasets.creating import CreateDataset
@@ -401,12 +399,16 @@ class Exchange:
         for block in cascade.blocks:
             if block.group == BlockGroupChoice.Model:
                 _path = Path(
-                    training_path,
-                    block.parameters.main.path,
-                    "model",
-                    "dataset",
-                    settings.DATASET_CONFIG,
+                    training_path, block.parameters.main.path, "model", "dataset.json"
                 )
+                if not _path.is_file():
+                    _path = Path(
+                        training_path,
+                        block.parameters.main.path,
+                        "model",
+                        "dataset",
+                        "config.json",
+                    )
                 with open(_path) as config_ref:
                     data = json.load(config_ref)
                     datasets.append(
@@ -435,17 +437,18 @@ class Exchange:
         )
 
     def _call_deploy_get(
-        self, dataset: DatasetData, page: dict, training_path: Path = None
+        self, datasets: List[DatasetLoadData], page: DeployPageData
     ) -> DeployData:
         """
-        получение данных для отображения пресетов на странице деплоя
+        Получение данных для отображения пресетов на странице деплоя
         """
-        return DeployCreator().get_deploy(
-            dataset=dataset,
-            training_path=training_path,
-            deploy_path=settings.DEPLOY_PATH,
-            page=page,
-        )
+        datasets_loading.multiload("deploy_get", datasets, page=page)
+
+    def _call_deploy_get_progress(self) -> progress.ProgressData:
+        """
+        Прогресс получения данных для отображения пресетов на странице деплоя
+        """
+        return progress.pool("deploy_get")
 
     def _call_deploy_cascades_create(self, training_path: str, model_name: str):
         pass

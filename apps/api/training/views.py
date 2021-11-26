@@ -93,8 +93,11 @@ class InteractiveAPIView(BaseAPIView):
 
 class ProgressAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        request.project.training.progress = agent_exchange("training_progress").native()
-        if request.project.training.progress.get("finished"):
+        progress = agent_exchange("training_progress")
+        if progress.finished and progress.percent == 100:
+            progress.percent = 0
+        request.project.training.progress = progress.native()
+        if progress.finished:
             request.project.set_training_base(request.project.training.base.native())
             request.project.training.save(request.project.training.name)
             request.project.save_config()

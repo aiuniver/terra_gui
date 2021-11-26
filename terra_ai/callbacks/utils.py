@@ -9,7 +9,7 @@ import pandas as pd
 from pandas import DataFrame
 from sklearn.metrics import classification_report, confusion_matrix
 
-from terra_ai.data.training.extra import BalanceSortedChoice
+# from terra_ai.data.training.extra import BalanceSortedChoice
 from terra_ai.utils import camelize
 
 loss_metric_config = {
@@ -419,22 +419,22 @@ def round_list(x: list) -> list:
         print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
-def sort_dict(dict_to_sort: dict, mode: BalanceSortedChoice = BalanceSortedChoice.alphabetic):
+def sort_dict(dict_to_sort: dict, mode: str = 'alphabetic'):
     method_name = 'sort_dict'
     try:
-        if mode == BalanceSortedChoice.alphabetic:
+        if mode == 'alphabetic':
             sorted_keys = sorted(dict_to_sort)
             sorted_values = []
             for w in sorted_keys:
                 sorted_values.append(dict_to_sort[w])
             return tuple(sorted_keys), tuple(sorted_values)
-        elif mode == BalanceSortedChoice.ascending:
+        elif mode == 'ascending':
             sorted_keys = sorted(dict_to_sort, key=dict_to_sort.get)
             sorted_values = []
             for w in sorted_keys:
                 sorted_values.append(dict_to_sort[w])
             return tuple(sorted_keys), tuple(sorted_values)
-        elif mode == BalanceSortedChoice.descending:
+        elif mode == 'descending':
             sorted_keys = sorted(dict_to_sort, key=dict_to_sort.get, reverse=True)
             sorted_values = []
             for w in sorted_keys:
@@ -604,7 +604,8 @@ def get_image_class_colormap(array: np.ndarray, colors: list, class_id: int, sav
             np.array(colors[class_id]) if np.sum(np.array(colors[class_id])) > 50 else np.array((255, 255, 255)),
             np.array((0, 0, 0))
         )
-        array = (np.sum(array, axis=0) / len(array)).astype("uint8")
+        # array = (np.sum(array, axis=0) / len(array)).astype("uint8")
+        array = (np.sum(array, axis=0) * 255 / np.sum(array, axis=0).max()).astype("uint8")
         matplotlib.image.imsave(save_path, array)
     except Exception as e:
         print_error(f"None ({MODULE_NAME})", method_name, e)

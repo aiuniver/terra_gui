@@ -117,6 +117,7 @@ import { mapGetters } from 'vuex';
 import Checkbox from '@/components/forms/Checkbox';
 import ModuleList from './ModuleList';
 import LoadSpiner from '../../forms/LoadSpiner';
+import { debounce } from '@/utils/core/utils';
 // import ser from '@/assets/js/myserialize';
 export default {
   name: 'Settings',
@@ -126,6 +127,7 @@ export default {
     LoadSpiner,
   },
   data: () => ({
+    debounce: null,
     collapse: ['type', 'server'],
     load: false,
     key: '1212',
@@ -189,7 +191,29 @@ export default {
       const name = this.parameters?.name || '';
       if (type && name) {
         const res = await this.$store.dispatch('deploy/DownloadSettings', { type, name });
-        if (res?.data) this.load = true
+        if (res?.success) {
+          this.$store.dispatch('settings/setOverlay', true);
+          this.debounce(true);
+        }
+      }
+    },
+    async progressGet() {
+      const res = await this.$store.dispatch('deploy/progress', {});
+      console.log(res);
+      if (res && res?.data) {
+        const { finished, message, percent } = res.data;
+        this.$store.dispatch('messages/setProgressMessage', message);
+        this.$store.dispatch('messages/setProgress', percent);
+        if (!finished) {
+          this.debounce(true);
+        } else {
+          this.$store.dispatch('settings/setOverlay', false);
+          this.$store.dispatch('projects/get');
+          this.load = true;
+        }
+      }
+      if (res?.error) {
+        this.$store.dispatch('settings/setOverlay', false);
       }
     },
     parse({ id, value, name, root }) {
@@ -282,6 +306,18 @@ export default {
         }
       }
     },
+  },
+  created() {
+    this.debounce = debounce(status => {
+      if (status) {
+        this.progressGet();
+      }
+    }, 1000);
+    // this.debounce(this.isLearning);
+  },
+  beforeDestroy() {
+    this.debounce(false);
+    this.$store.dispatch('deploy/clear');
   },
   watch: {
     params() {
