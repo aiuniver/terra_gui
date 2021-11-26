@@ -68,18 +68,9 @@ class InstanceNormalization(Layer):
         https://arxiv.org/abs/1607.08022)
     """
 
-    def __init__(self,
-                 axis=None,
-                 epsilon=1e-3,
-                 center=True,
-                 scale=True,
-                 beta_initializer='zeros',
-                 gamma_initializer='ones',
-                 beta_regularizer=None,
-                 gamma_regularizer=None,
-                 beta_constraint=None,
-                 gamma_constraint=None,
-                 **kwargs):
+    def __init__(self, axis=None, epsilon=1e-3, center=True, scale=True, beta_initializer='zeros',
+                 gamma_initializer='ones', beta_regularizer=None, gamma_regularizer=None, beta_constraint=None,
+                 gamma_constraint=None, **kwargs):
         super(InstanceNormalization, self).__init__(**kwargs)
         self.supports_masking = True
         self.axis = axis
@@ -92,6 +83,8 @@ class InstanceNormalization(Layer):
         self.gamma_regularizer = regularizers.get(gamma_regularizer)
         self.beta_constraint = constraints.get(beta_constraint)
         self.gamma_constraint = constraints.get(gamma_constraint)
+        self.gamma = None
+        self.beta = None
 
     def build(self, input_shape):
         ndim = len(input_shape)
@@ -114,19 +107,15 @@ class InstanceNormalization(Layer):
                                          initializer=self.gamma_initializer,
                                          regularizer=self.gamma_regularizer,
                                          constraint=self.gamma_constraint)
-        else:
-            self.gamma = None
         if self.center:
             self.beta = self.add_weight(shape=shape,
                                         name='beta',
                                         initializer=self.beta_initializer,
                                         regularizer=self.beta_regularizer,
                                         constraint=self.beta_constraint)
-        else:
-            self.beta = None
         self.built = True
 
-    def call(self, inputs, training=None):
+    def call(self, inputs, training=True, **kwargs):
         input_shape = K.int_shape(inputs)
         reduction_axes = list(range(0, len(input_shape)))
 
@@ -165,7 +154,7 @@ class InstanceNormalization(Layer):
             'gamma_constraint': constraints.serialize(self.gamma_constraint)
         }
         base_config = super(InstanceNormalization, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))
+        return dict(tuple(base_config.items()) + tuple(config.items()))
 
     @classmethod
     def from_config(cls, config):
@@ -173,7 +162,7 @@ class InstanceNormalization(Layer):
 
 
 class VAEBlock(Layer):
-    '''
+    """
     Custom Layer VAEBlock
     Keras Layer to grab a random sample from a distribution (by multiplication)
     Computes "(normal)*stddev + mean" for the vae sampling operation
@@ -185,11 +174,11 @@ class VAEBlock(Layer):
         pass in mean then stddev layers to sample from the distribution
         ex.
             sample = SampleLayer('bvae', 16)([mean, stddev])
-    '''
+    """
 
     def __init__(self, latent_size=32, latent_regularizer='vae', beta=5.,
                  capacity=128., random_sample=True, roll_up=True, **kwargs):
-        '''
+        """
         args:
         ------
         latent_regularizer : str
@@ -215,7 +204,7 @@ class VAEBlock(Layer):
         ex.
             sample = VAEBlock(latent_regularizer='bvae', beta=16,
                               latent_size=32)(x)
-        '''
+        """
         super(VAEBlock, self).__init__(**kwargs)
         # sampling
         self.reg = latent_regularizer
@@ -243,7 +232,7 @@ class VAEBlock(Layer):
         self.dense_mean = layers.Dense(self.latent_size)
         self.dense_stddev = layers.Dense(self.latent_size)
 
-    def call(self, inputs):
+    def call(self, inputs, training=True, **kwargs):
         # variational encoder output (distributions)
         if K.ndim(inputs) == 4:
             mean = self.conv_mean(inputs)
@@ -285,7 +274,7 @@ class VAEBlock(Layer):
             # 'reparameterization trick':
             return mean + K.exp(stddev / 2) * epsilon
         else:  # do not perform random sampling, simply grab the impulse value
-            return mean + 0 * stddev  # Keras needs the *0 so the gradinent is not None
+            return mean + 0 * stddev  # Keras needs the *0 so the gradient is not None
 
     # def compute_output_shape(self, input_shape):
     #     return tf.shape(input_shape)[0]
@@ -300,7 +289,7 @@ class VAEBlock(Layer):
             'roll_up': self.roll_up,
         }
         base_config = super(VAEBlock, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))
+        return dict(tuple(base_config.items()) + tuple(config.items()))
 
     @classmethod
     def from_config(cls, config):
@@ -437,7 +426,7 @@ class YOLOResBlock(Layer):
             'all_narrow': self.all_narrow
         }
         base_config = super(YOLOResBlock, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))
+        return dict(tuple(base_config.items()) + tuple(config.items()))
 
     @classmethod
     def from_config(cls, config):
@@ -501,7 +490,7 @@ class YOLOv3ResBlock(Layer):
             'include_head': self.include_head,
         }
         base_config = super(YOLOv3ResBlock, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))
+        return dict(tuple(base_config.items()) + tuple(config.items()))
 
     @classmethod
     def from_config(cls, config):
@@ -583,7 +572,7 @@ class YOLOConvBlock(Layer):
             'include_bn_activation': self.include_bn_activation
         }
         base_config = super(YOLOConvBlock, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))
+        return dict(tuple(base_config.items()) + tuple(config.items()))
 
     @classmethod
     def from_config(cls, config):
@@ -698,7 +687,7 @@ class DarkNetConvolutional(Layer):
             'activate_type': self.activate_type,
         }
         base_config = super(DarkNetConvolutional, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))
+        return dict(tuple(base_config.items()) + tuple(config.items()))
 
     @classmethod
     def from_config(cls, config):
@@ -738,7 +727,7 @@ class DarkNetResBlock(Layer):
             'activate_type': self.activate_type,
         }
         base_config = super(DarkNetResBlock, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))
+        return dict(tuple(base_config.items()) + tuple(config.items()))
 
     @classmethod
     def from_config(cls, config):
@@ -806,7 +795,7 @@ class CONVBlock(Layer):
                 setattr(self, f'drop_{i}',
                         layers.Dropout(rate=self.dropout_rate))
 
-    def call(self, input_, training=True):
+    def call(self, input_, training=True, **kwargs):
 
         if not isinstance(input_, (np.int32, np.float64, np.float32, np.float16)):
             input_ = cast(input_, 'float16')
@@ -820,14 +809,14 @@ class CONVBlock(Layer):
                     x = getattr(self, f'conv_{i}')(x)
                     x = getattr(self, f'activ_{i}')(x)
 
-            if self.batch_norm_layer:
-                x = getattr(self, f'bn_{i}')(x)
+                if self.batch_norm_layer:
+                    x = getattr(self, f'bn_{i}')(x)
 
-            if self.leaky_relu_layer:
-                x = getattr(self, f'leaky_relu{i}')(x)
+                if self.leaky_relu_layer:
+                    x = getattr(self, f'leaky_relu{i}')(x)
 
-            if self.dropout_layer:
-                x = getattr(self, f'drop_{i}')(x)
+                if self.dropout_layer:
+                    x = getattr(self, f'drop_{i}')(x)
 
         else:
             for i in range(0, self.n_conv_layers):
@@ -932,7 +921,7 @@ class PSPBlock2D(Layer):
                                       bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
                                       activity_regularizer=None, kernel_constraint=None, bias_constraint=None)
 
-    def call(self, input_, training=True):
+    def call(self, input_, training=True, **kwargs):
 
         if not isinstance(input_, (np.int32, np.float64, np.float32, np.float16)):
             input_ = cast(input_, 'float16')
@@ -1063,7 +1052,7 @@ class UNETBlock2D(Layer):
                                   bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
                                   activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
 
-    def call(self, input_, training=True):
+    def call(self, input_, training=True, **kwargs):
 
         if not isinstance(input_, (np.int32, np.float64, np.float32, np.float16)):
             input_ = cast(input_, 'float16')
@@ -1130,7 +1119,7 @@ class UNETBlock2D(Layer):
             'dropout_rate': self.dropout_rate
         }
         base_config = super(UNETBlock2D, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))
+        return dict(tuple(base_config.items()) + tuple(config.items()))
 
     @classmethod
     def from_config(cls, config):
@@ -1223,7 +1212,7 @@ class UNETBlock1D(Layer):
                                   bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
                                   activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
 
-    def call(self, input_, training=True):
+    def call(self, input_, training=True, **kwargs):
         if not isinstance(input_, (np.int32, np.float64, np.float32, np.float16)):
             input_ = cast(input_, 'float16')
         concList = [[] for i in range(self.n_pooling_branches)]
@@ -1288,7 +1277,7 @@ class UNETBlock1D(Layer):
             'dropout_rate': self.dropout_rate
         }
         base_config = super(UNETBlock1D, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))
+        return dict(tuple(base_config.items()) + tuple(config.items()))
 
     @classmethod
     def from_config(cls, config):
@@ -1381,7 +1370,7 @@ class UNETBlock3D(Layer):
                                   bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
                                   activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
 
-    def call(self, input_, training=True):
+    def call(self, input_, training=True, **kwargs):
         if not isinstance(input_, (np.int32, np.float64, np.float32, np.float16)):
             input_ = cast(input_, 'float16')
         concList = [[] for i in range(self.n_pooling_branches)]
@@ -1444,7 +1433,7 @@ class UNETBlock3D(Layer):
             'n_conv_layers': self.n_conv_layers
         }
         base_config = super(UNETBlock3D, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))
+        return dict(tuple(base_config.items()) + tuple(config.items()))
 
     @classmethod
     def from_config(cls, config):
@@ -1510,7 +1499,7 @@ class PSPBlock1D(Layer):
                                       bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
                                       activity_regularizer=None, kernel_constraint=None, bias_constraint=None)
 
-    def call(self, input_, training=True):
+    def call(self, input_, training=True, **kwargs):
 
         if not isinstance(input_, (np.int32, np.float64, np.float32, np.float16)):
             input_ = cast(input_, 'float16')
@@ -1548,14 +1537,14 @@ class PSPBlock1D(Layer):
             'n_conv_layers': self.n_conv_layers
         }
         base_config = super(PSPBlock1D, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))
+        return dict(tuple(base_config.items()) + tuple(config.items()))
 
     @classmethod
     def from_config(cls, config):
         return cls(**config)
 
 
-class PSPBlock3D(Model):
+class PSPBlock3D(Layer):
     """
     PSP Block3D layer
     n_pooling_branches - defines amt of pooling/upsampling operations
@@ -1614,7 +1603,7 @@ class PSPBlock3D(Model):
                                       bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
                                       activity_regularizer=None, kernel_constraint=None, bias_constraint=None)
 
-    def call(self, input_, training=True):
+    def call(self, input_, training=True, **kwargs):
 
         if not isinstance(input_, (np.int32, np.float64, np.float32, np.float16)):
             input_ = cast(input_, 'float16')
@@ -1639,6 +1628,26 @@ class PSPBlock3D(Model):
         x = self.conv_end(concat)
         return x
 
+    def get_config(self):
+        config = {
+            'filters_base': self.filters_base,
+            'n_pooling_branches': self.n_pooling_branches,
+            'filters_coef': self.filters_coef,
+            'n_conv_layers': self.n_conv_layers,
+            'activation': self.activation,
+            'kernel_size': self.kernel_size,
+            'dropout_rate': self.dropout_rate,
+            'batch_norm_layer': self.batch_norm_layer,
+            'dropout_layer': self.dropout_layer,
+        }
+        base_config = super(PSPBlock3D, self).get_config()
+        return dict(tuple(base_config.items()) + tuple(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+
 if __name__ == "__main__":
     # input = tensorflow.keras.layers.Input(shape=(32, 32, 3))
     # x = YOLOResBlock(32, 2)(input)
@@ -1654,7 +1663,7 @@ if __name__ == "__main__":
     # x = PSPBlock2D(filters_base=32, n_pooling_branches=3, filters_coef=1, n_conv_layers=2, activation='relu',
     #                kernel_size=(3, 3), batch_norm_layer = True, dropout_layer = True, dropout_rate = 0.1)
     x = PSPBlock3D(filters_base=32, n_pooling_branches=3, filters_coef=1, n_conv_layers=1, activation='relu',
-                   kernel_size=(3, 3, 3), batch_norm_layer = True, dropout_layer = True, dropout_rate = 0.1)
+                   kernel_size=(3, 3, 3), batch_norm_layer=True, dropout_layer=True, dropout_rate=0.1)
     # x = PSPBlock1D(filters_base=32, n_pooling_branches=3, filters_coef=1, n_conv_layers=2, activation='relu',
     #                kernel_size=5, batch_norm_layer = True, dropout_layer = True, dropout_rate = 0.1)
     # x = UNETBlock1D(filters_base=16, n_pooling_branches=3, filters_coef=1, n_conv_layers=2, activation='relu',

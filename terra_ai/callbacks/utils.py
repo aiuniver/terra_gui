@@ -350,7 +350,7 @@ def print_error(class_name: str, method_name: str, message: Exception):
                  f'\n_________________________________________________\n')
 
 
-def reformat_fit_array(array: dict, train_idx: list = None, options=None):
+def reformat_fit_array(array: dict, train_idx: list = None):
     method_name = 'reformat_fit_array'
     try:
         print(method_name)
@@ -452,7 +452,7 @@ def get_autocorrelation_graphic(y_true, y_pred, depth=10) -> (list, list, list):
             # print(i, auto_corr_pred[-1])
 
         x_axis = np.arange(depth).astype('int').tolist()
-        # print('\nauto_corr_true, auto_corr_pred', auto_corr_true, auto_corr_pred)
+        # print('\n auto_corr_true, auto_corr_pred', auto_corr_true, auto_corr_pred)
         return x_axis, auto_corr_true, auto_corr_pred
     except Exception as e:
         print_error(f"None ({MODULE_NAME})", method_name, e)
@@ -669,6 +669,7 @@ def clean_data_series(data_series: list, mode="mono"):
         print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
+# noinspection PyUnresolvedReferences
 def get_image_class_colormap(array: np.ndarray, colors: list, class_id: int, save_path: str):
     method_name = 'get_image_class_colormap'
     try:
@@ -701,7 +702,7 @@ def round_loss_metric(x: float):
         print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
-def fill_graph_plot_data(x: list, y: list, label=None):
+def fill_graph_plot_data(x, y, label=None):
     return {'label': label, 'x': x, 'y': y}
 
 

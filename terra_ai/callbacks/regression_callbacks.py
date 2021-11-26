@@ -175,7 +175,7 @@ class DataframeRegressionCallback:
                             inverse_col = array[idx, ch:ch + 1].astype('float').tolist()
                         # print('inverse_col', inverse_col)
                         channel_inverse_col.append(round_loss_metric(inverse_col))
-                    return_data[output_id]['label'].append(channel_inverse_col)  #[0]
+                    return_data[output_id]['label'].append(channel_inverse_col)  # [0]
             # print('return_data', return_data)
             return return_data
         except Exception as e:

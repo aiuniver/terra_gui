@@ -10,7 +10,6 @@ import numpy as np
 import tensorflow
 from tensorflow import TensorShape
 from tensorflow.python.keras.backend import clear_session
-from tensorflow.python.keras.models import Model
 
 from terra_ai.data.modeling import layers
 from terra_ai.data.modeling.extra import LayerGroupChoice, LayerTypeChoice
@@ -499,9 +498,8 @@ class ModelValidator:
                         self.valid = False
                         self.val_dictionary[layer[0]] = str(exceptions.UnexpectedOutputShapeException(
                             self.output_shape[layer[0]][0],
-                            self.layer_output_shapes[layer[0]][0][1:] if len(self.layer_output_shapes[layer[0]]) == 1 \
-                                else [self.layer_output_shapes[layer[0]][i][1:] for i in
-                                      self.layer_output_shapes[layer[0]]]
+                            self.layer_output_shapes[layer[0]][0][1:] if len(self.layer_output_shapes[layer[0]]) == 1
+                            else [self.layer_output_shapes[layer[0]][i][1:] for i in self.layer_output_shapes[layer[0]]]
                         ))
             # check unspecified output layers
             for idx in self.end_row:
@@ -613,6 +611,7 @@ class ModelValidator:
         return block_output, block_comment
 
 
+# noinspection PyBroadException
 class LayerValidation:
     """Validate input shape, number uplinks and parameters compatibility"""
 
@@ -682,7 +681,7 @@ class LayerValidation:
                     return output_shape, None
                 except ValueError:
                     return output_shape, self.parameters_validation()
-                except Exception:
+                except:
                     return output_shape, self.parameters_validation()
 
             if self.module_type == ModuleTypeChoice.tensorflow:
@@ -1147,9 +1146,9 @@ class LayerValidation:
                 return str(exceptions.InputShapeMustBeWholeDividedByException(self.inp_shape[0], 4))
 
             if ((self.inp_shape[0][1] // (2 ** self.layer_parameters.get("n_pooling_branches"))) % 2 != 0 or
-                    (self.inp_shape[0][1] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 1) and \
+                (self.inp_shape[0][1] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 1) and \
                     ((self.inp_shape[0][2] // (2 ** self.layer_parameters.get("n_pooling_branches"))) % 2 != 0 or
-                (self.inp_shape[0][2] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 1):
+                     (self.inp_shape[0][2] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 1):
                 return str(exceptions.InputShapeMustBeInEchDimException(
                     "equal multiple of 4", f"or decrease n_pooling_branches <"
                                            f"{self.layer_parameters.get('n_pooling_branches')}", self.inp_shape[0][1:]
@@ -1173,11 +1172,11 @@ class LayerValidation:
                 return str(exceptions.InputShapeMustBeWholeDividedByException(self.inp_shape[0], 4))
 
             if ((self.inp_shape[0][1] // (2 ** self.layer_parameters.get("n_pooling_branches"))) % 2 != 0 or
-                    (self.inp_shape[0][1] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 1) and \
+                (self.inp_shape[0][1] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 1) and \
                     ((self.inp_shape[0][2] // (2 ** self.layer_parameters.get("n_pooling_branches"))) % 2 != 0 or
-                (self.inp_shape[0][2] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 1) and \
+                     (self.inp_shape[0][2] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 1) and \
                     ((self.inp_shape[0][3] // (2 ** self.layer_parameters.get("n_pooling_branches"))) % 2 != 0 or
-                (self.inp_shape[0][3] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 1):
+                     (self.inp_shape[0][3] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 1):
                 return str(exceptions.InputShapeMustBeInEchDimException(
                     "equal multiple of 4", f"or decrease n_pooling_branches <"
                                            f"{self.layer_parameters.get('n_pooling_branches')}", self.inp_shape[0][1:]

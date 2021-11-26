@@ -1,6 +1,6 @@
 import colorsys
 import os
-import time
+# import time
 
 import matplotlib
 import numpy as np
@@ -13,6 +13,7 @@ from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedC
 from terra_ai.settings import DEPLOY_PRESET_PERCENT
 
 
+# noinspection PyTypeChecker,PyUnresolvedReferences
 class BaseObjectDetectionCallback:
     def __init__(self):
         self.name = 'BaseObjectDetectionCallback'
@@ -894,13 +895,14 @@ class BaseObjectDetectionCallback:
                             dict_to_sort=dataset_balance.get("output").get(class_type).get(data_type),
                             mode=interactive_config.data_balance.sorted.name
                         )
+                        type_name = 'Тренировочная' if data_type == 'train' else 'Проверочная'
+                        cls_name = 'баланс присутсвия' if class_type == 'class_count' else 'процент пространства'
                         preset[data_type] = fill_graph_front_structure(
                             _id=_id,
                             _type='histogram',
                             type_data=data_type,
-                            graph_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка - "
-                                       f"{'баланс присутсвия' if class_type == 'class_count' else 'процент пространства'}",
-                            short_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} - "
+                            graph_name=f"{type_name} выборка - {cls_name}",
+                            short_name=f"{type_name} - "
                                        f"{'присутсвие' if class_type == 'class_count' else 'пространство'}",
                             x_label="Название класса",
                             y_label="Значение",

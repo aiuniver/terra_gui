@@ -1,12 +1,9 @@
 import tensorflow as tf
 from tensorflow.keras import backend as K
 import numpy as np
+from terra_ai.datasets.preprocessing import CreatePreprocessing
 
 __version__ = 0.08
-
-from terra_ai.datasets.preparing import PrepareDataset
-from terra_ai.datasets.preprocessing import CreatePreprocessing
-from terra_ai.settings import CALLBACK_CLASSIFICATION_TREASHOLD_VALUE
 
 
 class DiceCoef(tf.keras.metrics.Metric):
@@ -71,8 +68,8 @@ class BalancedDiceCoef(tf.keras.metrics.Metric):
             pred = tf.where(pred > 0.5, 1., 0.)
 
         if show_class:
-            intersection = K.sum(true[..., class_idx:class_idx+1] * pred[..., class_idx:class_idx+1])
-            union = K.sum(true[..., class_idx:class_idx+1]) + K.sum(pred[..., class_idx:class_idx+1])
+            intersection = K.sum(true[..., class_idx:class_idx + 1] * pred[..., class_idx:class_idx + 1])
+            union = K.sum(true[..., class_idx:class_idx + 1]) + K.sum(pred[..., class_idx:class_idx + 1])
             self.dice = tf.convert_to_tensor((2. * intersection + smooth) / (union + smooth))
             print('BalancedDiceCoef', show_class, class_idx, self.dice)
         else:
@@ -80,7 +77,8 @@ class BalancedDiceCoef(tf.keras.metrics.Metric):
             for i in range(true.shape[-1]):
                 intersection = K.sum(y_true[..., i:i + 1] * pred[..., i:i + 1])
                 union = K.sum(true[..., i:i + 1]) + K.sum(pred[..., i:i + 1])
-                balanced_dice = tf.add(balanced_dice, tf.convert_to_tensor((2. * intersection + smooth) / (union + smooth)))
+                balanced_dice = tf.add(balanced_dice,
+                                       tf.convert_to_tensor((2. * intersection + smooth) / (union + smooth)))
             self.dice = tf.convert_to_tensor(balanced_dice / true.shape[-1])
             # print(self.dice, intersection, union)
 
@@ -115,8 +113,8 @@ class BalancedRecall(tf.keras.metrics.Metric):
         y_pred = K.one_hot(K.argmax(y_pred, axis=-1), num_classes=y_true.shape[-1])
 
         if show_class:
-            recall = K.sum(y_true[..., class_idx:class_idx+1] * y_pred[..., class_idx:class_idx+1])
-            total = K.sum(y_true[..., class_idx:class_idx+1])
+            recall = K.sum(y_true[..., class_idx:class_idx + 1] * y_pred[..., class_idx:class_idx + 1])
+            total = K.sum(y_true[..., class_idx:class_idx + 1])
             self.recall = tf.convert_to_tensor(recall * 100 / total)
         else:
             balanced_recall = tf.convert_to_tensor(0., dtype=tf.float32)
@@ -161,9 +159,9 @@ class BalancedPrecision(tf.keras.metrics.Metric):
         y_pred = K.one_hot(K.argmax(y_pred, axis=-1), num_classes=y_true.shape[-1])
 
         if show_class:
-            true_guess = K.sum(y_true[..., class_idx:class_idx+1] * y_pred[..., class_idx:class_idx+1])
+            true_guess = K.sum(y_true[..., class_idx:class_idx + 1] * y_pred[..., class_idx:class_idx + 1])
             # total_true = K.sum(y_true)
-            total_pred = K.sum(y_pred[..., class_idx:class_idx+1])
+            total_pred = K.sum(y_pred[..., class_idx:class_idx + 1])
             self.precision = tf.convert_to_tensor(true_guess * 100 / total_pred)
         else:
             balanced_precision = tf.convert_to_tensor(0., dtype=tf.float32)
@@ -492,7 +490,7 @@ def YoloLoss(inputs, num_anchors, ):
     input_shape = K.cast(K.shape(y_pred[0])[1:3] * 32, K.dtype(y_true[0]))
 
     # Получаем двумерный массив, соответствующий размерностям сеток ((13, 13), (26, 26), (52, 52))
-    grid_shapes = [K.cast(K.shape(y_pred[l])[1:3], K.dtype(y_true[0])) for l in range(num_layers)]
+    grid_shapes = [K.cast(K.shape(y_pred[num])[1:3], K.dtype(y_true[0])) for num in range(num_layers)]
 
     loss = 0  # Значение ошибки
 
@@ -500,44 +498,44 @@ def YoloLoss(inputs, num_anchors, ):
     m = K.shape(y_pred[0])[0]  # Размер пакета
     batch_size = K.cast(m, K.dtype(y_pred[0]))  # Преобразуем к типу y_pred[0]
 
-    for l in range(num_layers):  # Пробегаем по всем трем уровням сеток
+    for num in range(num_layers):  # Пробегаем по всем трем уровням сеток
         # Получаем маску для сетки l-го уровня по вероятности определения объекта (5-ый параметр в списке общих
         # параметров). В массиве object_mask будут значения, которые соответствуют только вероятности обнаружения
         # объекта
-        object_mask = y_true[l][..., 4:5]  # Вернется набор данных вида: ([0][0][0][0]...[1]...[0])
+        object_mask = y_true[num][..., 4:5]  # Вернется набор данных вида: ([0][0][0][0]...[1]...[0])
 
         # Получаем аналогичную выборку для сетки l-го уровня с OHE (где записана позиция нашего класса) В массиве
         # true_class будут значения, которые соответсвуют только OHE представлению класса ядля данного уровня анкоров
-        true_class = y_true[l][..., 5:]  # Вернется набор данных вида: ([0][0][0][0]...[1]...[0])
+        true_class = y_true[num][..., 5:]  # Вернется набор данных вида: ([0][0][0][0]...[1]...[0])
 
-        num_sub_anchors = len(anchors[anchor_mask[l]])  # Получаем количество анкоров для отдельного уровян сетки (3)
+        num_sub_anchors = len(anchors[anchor_mask[num]])  # Получаем количество анкоров для отдельного уровян сетки (3)
 
         # Решейпим анкоры отдельного уровня сетки и записываем в переменную anchors_tensor
-        anchors_tensor = K.reshape(K.constant(anchors[anchor_mask[l]]), [1, 1, 1, num_sub_anchors, 2])
+        anchors_tensor = K.reshape(K.constant(anchors[anchor_mask[num]]), [1, 1, 1, num_sub_anchors, 2])
 
         # Создаем двумерный массив grid со значениями [[[0, 0] , [0, 1] , [0, 2] , ... , [0, k]],
         #                                             [[1, 0] , [1, 1] , [1, 2] , ... , [1 ,k]],
         #                                             ...
         #                                             [[k, 0] , [k, 1] , [k, 2] , ... , [k, k]]]
         # где k - размерность сетки. Массив хранит индексы ячеек сетки
-        grid_shape = K.shape(y_pred[l])[1:3]  # Получаем ширину и высоту сетки
+        grid_shape = K.shape(y_pred[num])[1:3]  # Получаем ширину и высоту сетки
         grid_y = K.tile(K.reshape(K.arange(0, stop=grid_shape[0]), [-1, 1, 1, 1]),
                         [1, grid_shape[1], 1, 1])  # Создаем вертикальную линию
         grid_x = K.tile(K.reshape(K.arange(0, stop=grid_shape[1]), [1, -1, 1, 1]),
                         [grid_shape[0], 1, 1, 1])  # Создаем горизонтальную линию
         grid = K.concatenate([grid_x, grid_y])  # Объединяем
-        grid = K.cast(grid, K.dtype(y_pred[l]))  # Приводим к типу y_pred[l]
+        grid = K.cast(grid, K.dtype(y_pred[num]))  # Приводим к типу y_pred[l]
 
         # Решейпим y_pred[l]
         # feats = K.reshape(y_pred[l], [-1, grid_shape[0], grid_shape[1], num_sub_anchors, num_classes + 5])
-        feats = y_pred[l]
+        feats = y_pred[num]
 
         # Считаем ошибку в определении координат центра объекта
         # Получаем координаты центра объекта из спредиктенного значения
         pred_xy = (K.sigmoid(feats[..., :2]) + grid) / K.cast(grid_shape[..., ::-1], K.dtype(feats))
         # Производим обратные вычесления для оригинальных значений из y_true для координат центра объекта
-        true_xy = y_true[l][..., :2] * grid_shapes[l][::-1] - grid  # Реальные координаты центра bounding_box
-        box_loss_scale = 2 - y_true[l][..., 2:3] * y_true[l][..., 3:4]  # чем больше бокс, тем меньше ошибка
+        true_xy = y_true[num][..., :2] * grid_shapes[num][::-1] - grid  # Реальные координаты центра bounding_box
+        box_loss_scale = 2 - y_true[num][..., 2:3] * y_true[num][..., 3:4]  # чем больше бокс, тем меньше ошибка
         # binary_crossentropy для истинного значения и спредиктенного (object_mask для подсчета только требуемого
         # значения)
         xy_loss = object_mask * box_loss_scale * K.binary_crossentropy(true_xy, feats[..., 0:2], from_logits=True)
@@ -546,7 +544,7 @@ def YoloLoss(inputs, num_anchors, ):
         # Получаем значения ширины и высоты изображения из спредиктенного значения
         pred_wh = K.exp(feats[..., 2:4]) * anchors_tensor / K.cast(input_shape[..., ::-1], K.dtype(feats))
         # Производим обратные вычесления для оригинальных значений из y_true для ширины и высоты объекта
-        true_wh = K.log(y_true[l][..., 2:4] / anchors[anchor_mask[l]] * input_shape[::-1])
+        true_wh = K.log(y_true[num][..., 2:4] / anchors[anchor_mask[num]] * input_shape[::-1])
         # Оставляем значение высоты и ширины только у тех элементов, где object_mask = 1
         true_wh = K.switch(object_mask, true_wh, K.zeros_like(true_wh))
         # Считаем значение ошибки в определении высоты и ширины
@@ -567,20 +565,17 @@ def YoloLoss(inputs, num_anchors, ):
         # Получаем параметры реального bounding_box для текущей ячейки
         # Считаем IoU реального и спредиктенного
         # В зависимости от best_iou < ignore_thresh помечаем его как верно распознанный или неверено
-        def loop_body(
-                b,
-                ignore_mask,
-        ):
+        def loop_body(b, ignore_mask_):
             # в true_box запишутся первые 4 параметра (центр, высота и ширина объекта) того элемента,
             # значение которого в object_mask_bool равно True
-            true_box = tf.boolean_mask(y_true[l][b, ..., 0:4], object_mask_bool[b, ..., 0])
+            true_box = tf.boolean_mask(y_true[num][b, ..., 0:4], object_mask_bool[b, ..., 0])
             # Подсчитываем iou для спредиктенной ограничивающей рамки (pred_box) и оригинальной (true_box)
             iou = calc_iou(pred_box[b], true_box)
             # Находим лучшую ограничивающую рамку
             best_iou = K.max(iou, axis=-1)
             # Записываем в ignore_mask true или false в зависимости от (best_iou < ignore_thresh)
-            ignore_mask = ignore_mask.write(b, K.cast(best_iou < ignore_thresh, K.dtype(true_box)))
-            return b + 1, ignore_mask  # Увеличиваем счетчик на еденицу и возвращаем ignore_mask
+            ignore_mask_ = ignore_mask_.write(b, K.cast(best_iou < ignore_thresh, K.dtype(true_box)))
+            return b + 1, ignore_mask_  # Увеличиваем счетчик на еденицу и возвращаем ignore_mask
 
         # Пробегаем в цикле по всем элементам в пределах значения m (m = batch size)
         _, ignore_mask = tf.while_loop(lambda b, *args: b < m, loop_body, [0, ignore_mask])
@@ -591,8 +586,8 @@ def YoloLoss(inputs, num_anchors, ):
         # 1 компонента - для значений, которые были верно спредиктены
         # 2 компонента - для значения, которые были неверно спредиктены
         confidence_loss = (
-                object_mask * K.binary_crossentropy(object_mask, feats[..., 4:5], from_logits=True) +
-                (1 - object_mask) * K.binary_crossentropy(object_mask, feats[..., 4:5], from_logits=True) * ignore_mask
+            object_mask * K.binary_crossentropy(object_mask, feats[..., 4:5], from_logits=True) +
+            (1 - object_mask) * K.binary_crossentropy(object_mask, feats[..., 4:5], from_logits=True) * ignore_mask
         )
 
         # Считаем ошибку в определении класса объекта

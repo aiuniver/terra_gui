@@ -1,5 +1,4 @@
 import colorsys
-import copy
 import os
 from typing import Optional
 
@@ -11,10 +10,9 @@ from tensorflow.python.keras.utils.np_utils import to_categorical
 
 from terra_ai.callbacks.utils import dice_coef, sort_dict, get_y_true, get_image_class_colormap, get_confusion_matrix, \
     fill_heatmap_front_structure, get_classification_report, fill_table_front_structure, fill_graph_front_structure, \
-    fill_graph_plot_data, print_error, segmentation_metric, sequence_length_calculator, \
-    get_segmentation_confusion_matrix
+    fill_graph_plot_data, print_error, sequence_length_calculator, get_segmentation_confusion_matrix
 from terra_ai.data.datasets.dataset import DatasetOutputsData
-from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerEncodingChoice
+from terra_ai.data.datasets.extra import LayerEncodingChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
 from terra_ai.settings import CALLBACK_CLASSIFICATION_TREASHOLD_VALUE, DEPLOY_PRESET_PERCENT
 
@@ -145,6 +143,7 @@ class BaseSegmentationCallback:
             print_error(BaseSegmentationCallback().name, method_name, e)
 
 
+# noinspection PyUnresolvedReferences
 class ImageSegmentationCallback(BaseSegmentationCallback):
     def __init__(self):
         super().__init__()
@@ -498,13 +497,15 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                                 dict_to_sort=dataset_balance.get(f"{out}").get(class_type).get(data_type),
                                 mode=interactive_config.data_balance.sorted.name
                             )
+                            data_name = 'Тренировочная' if data_type == 'train' else 'Проверочная'
+                            class_name = 'баланс присутсвия' if class_type == 'presence_balance' \
+                                else 'процент пространства'
                             preset[data_type] = fill_graph_front_structure(
                                 _id=_id,
                                 _type='histogram',
                                 type_data=data_type,
-                                graph_name=f"Выход {out} - {'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка - "
-                                           f"{'баланс присутсвия' if class_type == 'presence_balance' else 'процент пространства'}",
-                                short_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} - "
+                                graph_name=f"Выход {out} - {data_name} выборка - {class_name}",
+                                short_name=f"{out} - {data_name} - "
                                            f"{'присутсвие' if class_type == 'presence_balance' else 'пространство'}",
                                 x_label="Название класса",
                                 y_label="Значение",
@@ -535,6 +536,7 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
             print_error(ImageSegmentationCallback().name, method_name, e)
 
 
+# noinspection PyTypeChecker
 class TextSegmentationCallback(BaseSegmentationCallback):
     def __init__(self):
         super().__init__()
@@ -606,7 +608,7 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                 labels = reformat_tags(label_array, tag_list)
                 colored_text = []
                 for w, word in enumerate(text):
-                    colored_text.append(add_tags_to_word(word, labels[w]))
+                    colored_text.append(add_tags_to_word(word, f"{labels[w]}"))
                 return ' '.join(colored_text)
 
             # TODO: пока исходим что для сегментации текста есть только один вход с текстом, если будут сложные модели
@@ -632,17 +634,16 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                     classes_names[name] = options.classes_names[i]
 
             if return_mode == 'deploy':
-                initinal_text = dataframe.iat[example_id, 0]
+                initial_text = dataframe.iat[example_id, 0]
                 text_segmentation = text_colorization(
-                    text=initinal_text, label_array=pred_array, tag_list=dataset_tags
+                    text=initial_text, label_array=pred_array, tag_list=dataset_tags
                 )
-
                 data = [('<p1>', '<p1>', (200, 200, 200))]
                 for tag in colors.keys():
                     data.append(
                         (tag, classes_names[tag], colors[tag])
                     )
-                return initinal_text, text_segmentation, data
+                return initial_text, text_segmentation, data
 
             if return_mode == 'callback':
                 data = {"y_true": {}, "y_pred": {}, "tags_color": {}, "stat": {}}
@@ -680,13 +681,13 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                         if np.sum(y_true[:, idx]) == 0 and np.sum(y_pred[:, idx]) == 0:
                             data["stat"]["data"].append({'title': cls, 'value': "-", 'color_mark': None})
                         elif np.sum(y_true[:, idx]) == 0:
-                            data["stat"]["data"].append({'title': cls, 'value': "0.0%", 'color_mark': 'wrong'})
+                            data["stat"]["data"].append({'title': f"{cls}", 'value': "0.0%", 'color_mark': 'wrong'})
                             count += 1
                         else:
                             class_recall = np.sum(y_true[:, idx] * y_pred[:, idx]) * 100 / np.sum(y_true[:, idx])
                             data["stat"]["data"].append(
                                 {
-                                    'title': cls,
+                                    'title': f"{cls}",
                                     'value': f"{np.round(class_recall, 1)} %",
                                     'color_mark': 'success' if class_recall >= 90 else 'wrong'
                                 }
@@ -703,7 +704,7 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                         mean_color_mark = None
                         mean_stat = '-'
                     data["stat"]["data"].insert(
-                        0, {'title': "Средняя точность", 'value': mean_stat, 'color_mark': mean_color_mark}
+                        0, {'title': 'Средняя точность', 'value': mean_stat, 'color_mark': mean_color_mark}
                     )
                 return data
         except Exception as e:
@@ -742,7 +743,7 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                     return_data[output_id]["data"].append(
                         {"source": source, "format": segment}
                     )
-                return_data[output_id]["color_map"] = colors
+                    return_data[output_id]["color_map"] = colors
             return return_data
         except Exception as e:
             print_error(TextSegmentationCallback().name, method_name, e)
@@ -768,7 +769,7 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                     phrase_count = {}
                     total_mean_length = []
                     for cl in classes:
-                        class_count[classes_names[cl]] =  np.sum(y_true.get(data_type).get(f"{out}")[..., cl]).item()
+                        class_count[classes_names[cl]] = np.sum(y_true.get(data_type).get(f"{out}")[..., cl]).item()
                         class_percent[classes_names[cl]] = np.round(
                             np.sum(y_true.get(data_type).get(f"{out}")[..., cl]) * 100
                             / np.prod(y_true.get(data_type).get(f"{out}")[..., cl].shape)).item()
@@ -958,4 +959,3 @@ class TextSegmentationCallback(BaseSegmentationCallback):
             return return_data
         except Exception as e:
             print_error(TextSegmentationCallback().name, method_name, e)
-

@@ -71,9 +71,9 @@ class BaseClassificationCallback:
             dataset_balance = {}
             for out in options.data.outputs.keys():
                 encoding = options.data.outputs.get(out).encoding
-                dataset_balance[f"{out}"] = {'class_histogramm': {}}
+                dataset_balance[f"{out}"] = {'class_histogram': {}}
                 for data_type in ['train', 'val']:
-                    dataset_balance[f"{out}"]['class_histogramm'][data_type] = class_counter(
+                    dataset_balance[f"{out}"]['class_histogram'][data_type] = class_counter(
                         y_array=y_true.get(data_type).get(f"{out}"),
                         classes_names=options.data.outputs.get(out).classes_names,
                         ohe=encoding == LayerEncodingChoice.ohe
@@ -339,7 +339,7 @@ class ImageClassificationCallback(BaseClassificationCallback):
     def __init__(self):
         super().__init__()
         self.name = 'ImageClassificationCallback'
-        print(f'Callback {self.name} is called')
+        # print(f'Callback {self.name} is called')
 
     @staticmethod
     def get_x_array(options):

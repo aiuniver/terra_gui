@@ -8,6 +8,7 @@ from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedC
 from terra_ai.settings import MAX_GRAPH_LENGTH, CALLBACK_REGRESSION_TREASHOLD_VALUE, DEPLOY_PRESET_PERCENT
 
 
+# noinspection PyTypeChecker,PyUnresolvedReferences
 class TimeseriesCallback:
     def __init__(self):
         self.name = 'TimeseriesCallback'
@@ -300,10 +301,10 @@ class TimeseriesCallback:
                             'data': data,
                         }
                     for out in options.data.outputs.keys():
-                        input = list(inverse_x_val.keys())[0]
+                        inp = list(inverse_x_val.keys())[0]
                         data = TimeseriesCallback().postprocess_time_series(
                             options=options.data,
-                            real_x=inverse_x_val.get(f"{input}")[example_idx[idx]],
+                            real_x=inverse_x_val.get(f"{inp}")[example_idx[idx]],
                             inverse_y_true=inverse_y_true.get("val").get(f"{out}")[example_idx[idx]],
                             inverse_y_pred=inverse_y_pred.get("val").get(f"{out}")[example_idx[idx]],
                             output_id=out,
@@ -557,7 +558,7 @@ class TimeseriesCallback:
                     "data": []
                 }
                 for i, channel in enumerate(options.columns.get(output_id).keys()):
-                    data["stat"]["data"].append({'title': channel.split("_", 1)[-1], 'value': [], 'color_mark': None})
+                    data["stat"]["data"].append({'title': channel.split("_", 1)[-1], "value": [], 'color_mark': None})
                     for step in range(inverse_y_true.shape[-2]):
                         deviation = (inverse_y_pred[step, i] - inverse_y_true[step, i]) * 100 / inverse_y_true[step, i]
                         data["stat"]["data"][-1]["value"].append(
@@ -575,4 +576,3 @@ class TimeseriesCallback:
             return data
         except Exception as e:
             print_error(TimeseriesCallback().name, method_name, e)
-
