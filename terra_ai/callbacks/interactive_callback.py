@@ -107,12 +107,10 @@ class InteractiveCallback:
                 if self.options.data.architecture in BASIC_ARCHITECTURE:
                     # t = time.time()
                     self.y_true = reformat_fit_array(
-                        array={"train": arrays.get("train_true"), "val": arrays.get("val_true")},
-                        options=self.options, train_idx=train_idx)
+                        array={"train": arrays.get("train_true"), "val": arrays.get("val_true")}, train_idx=train_idx)
                     self.inverse_y_true = self.callback.get_inverse_array(self.y_true, self.options)
                     self.y_pred = reformat_fit_array(
-                        array={"train": arrays.get("train_pred"), "val": arrays.get("val_pred")},
-                        options=self.options, train_idx=train_idx)
+                        array={"train": arrays.get("train_pred"), "val": arrays.get("val_pred")}, train_idx=train_idx)
                     self.inverse_y_pred = self.callback.get_inverse_array(self.y_pred, self.options)
                     # print('\nInteractiveCallback y_true, y_pred:', round(time.time() - t, 3))
                     # t = time.time()
