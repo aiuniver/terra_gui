@@ -12,6 +12,7 @@ from apps.api.cascades.serializers import (
     UpdateSerializer,
     PreviewSerializer,
     StartSerializer,
+    SaveSerializer,
 )
 from apps.plugins.project import project_path, data_path
 
@@ -45,10 +46,10 @@ class LoadAPIView(BaseAPIView):
         serializer = CascadeGetSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
-        cascade = agent_exchange(
+        request.project.cascade = agent_exchange(
             "cascade_get", value=serializer.validated_data.get("value")
         )
-        return BaseResponseSuccess(cascade.native())
+        return BaseResponseSuccess(request.project.cascade.native())
 
 
 class UpdateAPIView(BaseAPIView):
@@ -141,6 +142,12 @@ class StartProgressAPIView(BaseAPIView):
 
 class SaveAPIView(BaseAPIView):
     def post(self, request, **kwargs):
+        serializer = SaveSerializer(data=request.data)
+        if not serializer.is_valid():
+            return BaseResponseErrorFields(serializer.errors)
+        request.project.cascade.save(
+            path=project_path.cascades, **serializer.validated_data
+        )
         return BaseResponseSuccess()
 
 
