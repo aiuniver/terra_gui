@@ -270,9 +270,9 @@ class CreateVersion(object):
                     else:
                         self.preprocessing.preprocessing[key][col_name].fit(np.array(data.instructions).reshape(-1, 1))
 
-    #                     except Exception:
-    #                         progress.pool(self.progress_name, error='Ошибка обучения скейлера')
-    #                         raise
+        #                     except Exception:
+        #                         progress.pool(self.progress_name, error='Ошибка обучения скейлера')
+        #                         raise
 
     def create_table(self, version_data: CreationVersionData):
 
