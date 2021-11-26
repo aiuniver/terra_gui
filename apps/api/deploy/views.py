@@ -7,7 +7,6 @@ from django.conf import settings
 
 from terra_ai import settings as terra_ai_settings
 from terra_ai.agent import agent_exchange
-from terra_ai.progress import pool as progress_pool
 from terra_ai.deploy.prepare_deploy import DeployCreator
 from terra_ai.data.datasets.dataset import DatasetInfo, DatasetLoadData
 from terra_ai.data.deploy.tasks import DeployPageData
@@ -32,9 +31,12 @@ class GetAPIView(BaseAPIView):
         page = DeployPageData(**serializer.validated_data)
         datasets = []
         if page.type == DeployTypePageChoice.model:
-            with open(
-                Path(project_path.training, page.name, "model", "dataset.json")
-            ) as dataset_ref:
+            _path = Path(project_path.training, page.name, "model", "dataset.json")
+            if not _path.is_file():
+                _path = Path(
+                    project_path.training, page.name, "model", "dataset", "config.json"
+                )
+            with open(_path) as dataset_ref:
                 dataset_config = json.load(dataset_ref)
                 datasets.append(
                     DatasetLoadData(path=data_path.datasets, **dataset_config)
