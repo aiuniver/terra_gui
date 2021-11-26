@@ -44,9 +44,6 @@ export default {
       return this.$store.getters['cascades/getModel']?.keras || '';
     },
   },
-  mounted(){
-    this.save()
-  },
   methods: {
     async isTraining() {
       this.dialogLoadModel = await this.$store.dispatch('dialogs/trining', { ctx: this, page: 'модели' });
