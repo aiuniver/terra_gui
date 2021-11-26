@@ -1,9 +1,16 @@
+import json
 import hashlib
+
+from pathlib import Path
 
 from django.conf import settings
 
 from terra_ai import settings as terra_ai_settings
 from terra_ai.agent import agent_exchange
+from terra_ai.deploy.prepare_deploy import DeployCreator
+from terra_ai.data.datasets.dataset import DatasetInfo, DatasetLoadData
+from terra_ai.data.deploy.tasks import DeployPageData
+from terra_ai.data.deploy.extra import DeployTypePageChoice
 
 from apps.api.base import (
     BaseAPIView,
@@ -11,6 +18,7 @@ from apps.api.base import (
     BaseResponseErrorFields,
     BaseResponseErrorGeneral,
 )
+from apps.plugins.project import project_path, data_path
 
 from . import serializers
 
@@ -20,12 +28,43 @@ class GetAPIView(BaseAPIView):
         serializer = serializers.GetSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
-        request.project.set_deploy(
-            dataset=request.project.dataset, page=serializer.validated_data
-        )
-        return BaseResponseSuccess(
-            request.project.deploy.presets if request.project.deploy else None
-        )
+        page = DeployPageData(**serializer.validated_data)
+        datasets = []
+        if page.type == DeployTypePageChoice.model:
+            _path = Path(project_path.training, page.name, "model", "dataset.json")
+            if not _path.is_file():
+                _path = Path(
+                    project_path.training, page.name, "model", "dataset", "config.json"
+                )
+            with open(_path) as dataset_ref:
+                dataset_config = json.load(dataset_ref)
+                datasets.append(
+                    DatasetLoadData(path=data_path.datasets, **dataset_config)
+                )
+        agent_exchange("deploy_get", datasets=datasets, page=page)
+        return BaseResponseSuccess()
+
+
+class GetProgressAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        progress = agent_exchange("deploy_get_progress")
+        if progress.success:
+            if progress.finished:
+                progress.percent = 0
+                progress.message = ""
+                datasets = progress.data.get("datasets")
+                dataset_data = datasets[0].native() if len(datasets) else None
+                dataset = DatasetInfo(**dataset_data).dataset if dataset_data else None
+                request.project.deploy = DeployCreator().get_deploy(
+                    dataset=dataset,
+                    training_path=project_path.training,
+                    deploy_path=terra_ai_settings.DEPLOY_PATH,
+                    page=progress.data.get("kwargs", {}).get("page").native(),
+                )
+                progress.data = request.project.deploy.presets
+            return BaseResponseSuccess(data=progress.native())
+        else:
+            return BaseResponseErrorGeneral(progress.error, data=progress.native())
 
 
 class ReloadAPIView(BaseAPIView):

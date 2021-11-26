@@ -211,7 +211,7 @@ export default {
   }
   &--small {
     height: 24px;
-    width: 109px;
+    width: 100px;
   }
   &--small &__input {
     height: 24px;
@@ -223,9 +223,8 @@ export default {
     top: 0px;
   }
   &--small &__content {
-    width: auto;
     top: 23px;
-    min-width: 109px;
+    min-width: 100px;
     &--item {
       padding: 0 5px;
       font-size: 12px;

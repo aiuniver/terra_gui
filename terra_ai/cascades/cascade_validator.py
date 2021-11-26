@@ -33,8 +33,10 @@ class CascadeValidator:
                         if block.group == BlockGroupChoice.Model]
 
         for path in models_paths:
-            with open(os.path.join(training_path, path, "model", "dataset", "config.json"),
-                      "r", encoding="utf-8") as model_config:
+            dataset_path = os.path.join(training_path, path, "model", "dataset.json")
+            if not os.path.exists(dataset_path):
+                dataset_path = os.path.join(training_path, path, "model", "dataset", "config.json")
+            with open(dataset_path, "r", encoding="utf-8") as model_config:
                 model_config_data = json.load(model_config)
             models.append(model_config_data)
         return models

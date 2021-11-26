@@ -10,6 +10,7 @@ from tensorflow.keras import datasets as load_keras_datasets
 from tensorflow.python.data.ops.dataset_ops import DatasetV2 as Dataset
 from PIL import Image
 
+from terra_ai.data.training.extra import ArchitectureChoice
 from terra_ai.utils import decamelize
 from terra_ai.datasets.preprocessing import CreatePreprocessing
 from terra_ai.datasets.arrays_create import CreateArray
@@ -256,5 +257,8 @@ class PrepareDataset(object):
                     os.makedirs(folder_dir, exist_ok=True)
                     joblib.dump(obj, os.path.join(folder_dir, f'{col_name}.gz'))
 
-        with open(os.path.join(folder_path, 'config.json'), 'w') as cfg:
-            json.dump(self.data.native(), cfg)
+        dataset_data = self.data.native()
+        dataset_data.update({"instructions": self.instructions})
+
+        with open(os.path.join(folder_path, 'dataset.json'), 'w') as cfg:
+            json.dump(dataset_data, cfg)

@@ -37,6 +37,7 @@ class BaseSegmentationCallback:
         method_name = 'get_y_true'
         try:
             y_true = {"train": {}, "val": {}}
+            # y_true = {"val": {}}
             inverse_y_true = {"train": {}, "val": {}}
             for data_type in y_true.keys():
                 for out in options.data.outputs.keys():
@@ -44,9 +45,13 @@ class BaseSegmentationCallback:
                         y_true[data_type][f"{out}"] = options.Y.get(data_type).get(f"{out}")
                     else:
                         y_true[data_type][f"{out}"] = []
+                        # ccc = 1
                         for _, y_val in options.dataset[data_type].batch(1):
                             y_true[data_type][f"{out}"].extend(y_val.get(f'{out}').numpy())
+                            # print(ccc, y_val.get(f'{out}').shape)
+                            # ccc += 1
                         y_true[data_type][f"{out}"] = np.array(y_true[data_type][f"{out}"])
+                        # print('\ny_true[data_type][f"{out}"]', y_true[data_type][f"{out}"].shape)
             return y_true, inverse_y_true
         except Exception as e:
             print_error(BaseSegmentationCallback().name, method_name, e)

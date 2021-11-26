@@ -3,6 +3,7 @@ import math
 import random
 import re
 import string
+import time
 
 from pathlib import Path
 from typing import Union, Optional
@@ -104,9 +105,9 @@ class InteractiveCallback:
         self.options = dataset
         self._callback_router(dataset)
         self._class_metric_list()
-        print('set_attributes', dataset.data.architecture)
-        print('\ndataset_config', dataset.data)
-        print('\nparams', params.native(), '\n')
+        # print('set_attributes', dataset.data.architecture)
+        # print('\ndataset_config', dataset.data)
+        # print('\nparams', params.native(), '\n')
         self.training_details = params
         if dataset.data.architecture in self.basic_architecture:
             self.losses = losses
@@ -115,15 +116,25 @@ class InteractiveCallback:
             self.metrics_obj = prepare_metric_obj(metrics)
         self.dataset_path = dataset_path
         self.class_colors = get_classes_colors(dataset)
+        # print('self.class_colors', self.class_colors)
+        # t = time.time()
         self.x_val, self.inverse_x_val = self.callback.get_x_array(dataset)
+        # print(len(dataset.dataframe['train']), len(dataset.dataframe['val']))
+        # print('self.x_val, self.inverse_x_val time:', round(time.time() - t, 2))
+        # t = time.time()
         self.y_true, self.inverse_y_true = self.callback.get_y_true(dataset, dataset_path)
+        # print('self.y_true, self.inverse_y_true time:', round(time.time() - t, 2))
+        # t = time.time()
         if not self.log_history:
             self._prepare_null_log_history_template()
+        # print('_prepare_null_log_history_template time:', round(time.time() - t, 2))
+        # t = time.time()
         self.dataset_balance = self.callback.dataset_balance(
             options=self.options, y_true=self.y_true,
             preset_path=self.training_details.intermediate_path,
             class_colors=self.class_colors
         )
+        # print('self.dataset_balance time:', round(time.time() - t, 2))
         if dataset.data.architecture in self.classification_architecture:
             self.class_idx = self.callback.prepare_class_idx(self.y_true, self.options)
         self.seed_idx = self._prepare_seed()
