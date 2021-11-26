@@ -46,10 +46,10 @@ class LoadAPIView(BaseAPIView):
         serializer = CascadeGetSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
-        cascade = agent_exchange(
+        request.project.cascade = agent_exchange(
             "cascade_get", value=serializer.validated_data.get("value")
         )
-        return BaseResponseSuccess(cascade.native())
+        return BaseResponseSuccess(request.project.cascade.native())
 
 
 class UpdateAPIView(BaseAPIView):

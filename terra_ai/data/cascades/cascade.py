@@ -11,11 +11,11 @@ from terra_ai.exceptions.cascades import CascadeAlreadyExistsException
 from terra_ai.data.cascades.block import BlocksList
 from ... import settings
 from ..mixins import BaseMixinData, AliasMixinData, UniqueListMixin
-from ..types import condirpath, Base64Type
+from ..types import confilepath, Base64Type
 
 
 class CascadeLoadData(BaseMixinData):
-    value: condirpath(ext=settings.CASCADE_EXT)
+    value: confilepath(ext=settings.CASCADE_EXT)
 
 
 class CascadeDetailsData(AliasMixinData):
@@ -38,15 +38,15 @@ class CascadeDetailsData(AliasMixinData):
 
 
 class CascadeListData(BaseMixinData):
-    value: condirpath(ext=settings.CASCADE_EXT)
+    value: confilepath(ext=settings.CASCADE_EXT)
     label: Optional[str]
 
     @validator("label", allow_reuse=True, always=True)
     def _validate_label(cls, value: str, values) -> str:
-        dir_path = Path(values.get("value"))
-        if not dir_path:
+        file_path = Path(values.get("value"))
+        if not file_path:
             return value
-        return dir_path.name.split(f".{settings.CASCADE_EXT}")[0]
+        return file_path.name.split(f".{settings.CASCADE_EXT}")[0]
 
 
 class CascadesList(UniqueListMixin):
@@ -63,19 +63,16 @@ class CascadesList(UniqueListMixin):
 
         data = []
 
-        for dir_name in os.listdir(path):
-            dir_path = Path(path, dir_name)
+        for file_name in os.listdir(path):
+            file_path = Path(path, file_name)
 
-            if not dir_path.is_dir():
+            if not file_path.is_file():
                 continue
 
-            if dir_path.suffix != f".{settings.CASCADE_EXT}":
+            if file_path.suffix != f".{settings.CASCADE_EXT}":
                 continue
 
-            if not Path(dir_path, settings.CASCADE_CONFIG).is_file():
-                continue
-
-            dir_name_split = dir_path.name.split(dir_path.suffix)
-            data.append({"label": "".join(dir_name_split[:-1]), "value": dir_path})
+            file_name_split = file_path.name.split(file_path.suffix)
+            data.append({"label": "".join(file_name_split[:-1]), "value": file_path})
 
         super().__init__(data)
