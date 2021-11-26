@@ -1,9 +1,8 @@
 import json
 import random
 import shutil
-from pathlib import Path, PosixPath
+from pathlib import Path
 from typing import List, Tuple
-
 
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.settings import DEPLOY_PRESET_COUNT
@@ -48,7 +47,8 @@ class DataList(DataBaseList):
         self.preset[index] = item
 
         shutil.copyfile(
-            item.source, Path(self.path_deploy, f"{index + 1}{item.source.suffix}")
+            Path(self.path_deploy, item.source),
+            Path(self.path_deploy, f"{index + 1}{Path(item.source).suffix}"),
         )
 
 

@@ -14,7 +14,7 @@
           />
         </div>
         <at-collapse :value="collapse">
-          <at-collapse-item class="mb-3" title="Параметры блока">
+          <at-collapse-item v-show="main.length" class="mb-3" title="Параметры блока">
             <!-- <Forms :data="main" :id="block.id" @change="change" /> -->
             <template v-for="(data, i) of main">
               <t-auto-field-cascade v-bind="data" :key="data.name + i" :id="data.name" :parameters="parameters" :inline="false" @change="change" />
@@ -50,7 +50,7 @@ export default {
     BlockInfo
   },
   data: () => ({
-    collapse: ['0', '2'],
+    collapse: ['0', '1', '2'],
     oldBlock: null,
     debounce: null,
   }),

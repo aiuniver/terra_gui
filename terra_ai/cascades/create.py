@@ -46,8 +46,12 @@ def json2model_cascade(path: str):
     model = load_model(os.path.join(path, model), compile=False, custom_objects=None)
     model.load_weights(os.path.join(path, weight))
 
-    dataset_path = os.path.join(path, "dataset")
-    with open(os.path.join(dataset_path, "config.json")) as cfg:
+    dataset_path = os.path.join(path, "dataset.json")
+    dataset_data_path = path
+    if not os.path.exists(dataset_path):
+        dataset_path = os.path.join(path, "dataset", "config.json")
+        dataset_data_path = os.path.join(path, "dataset")
+    with open(dataset_path) as cfg:
         config = json.load(cfg)
 
     object_detection = False
@@ -55,10 +59,11 @@ def json2model_cascade(path: str):
     input_types, output_types = [], []
 
     if config['tags'][-1]['alias'] == 'object_detection':
+        version = "v3"
         object_detection = True
         for inp in config['outputs'].keys():
             for inp, param in config['columns'][inp].items():
-                with open(os.path.join(dataset_path, "instructions", "parameters", inp + '.json')) as cfg:
+                with open(os.path.join(dataset_data_path, "instructions", "parameters", inp + '.json')) as cfg:
                     spec_config = json.load(cfg)
                 if 'yolo' in spec_config.keys():
                     version = spec_config['yolo']
@@ -70,19 +75,19 @@ def json2model_cascade(path: str):
         if config['inputs'][inp]['task'] != 'Dataframe':
             param = {}  # for pycharm linter
             for inp, param in config['columns'][inp].items():
-                with open(os.path.join(dataset_path, "instructions", "parameters", inp + '.json')) as cfg:
+                with open(os.path.join(dataset_data_path, "instructions", "parameters", inp + '.json')) as cfg:
                     param.update(json.load(cfg))
             type_module = getattr(general_fucntions, decamelize(param['task']))
             preprocess.append(getattr(type_module, 'main')(
-                **param, dataset_path=dataset_path, key=inp)
+                **param, dataset_path=dataset_data_path, key=inp)
             )
         else:
             param = {}
             for key, cur_param in config['columns'][inp].items():
                 param[key] = cur_param
-                with open(os.path.join(dataset_path, "instructions", "parameters", key + '.json')) as cfg:
+                with open(os.path.join(dataset_data_path, "instructions", "parameters", key + '.json')) as cfg:
                     param[key].update(json.load(cfg))
-            param = {'columns': param, 'dataset_path': dataset_path, 'shape': config['inputs'][inp]['shape']}
+            param = {'columns': param, 'dataset_path': dataset_data_path, 'shape': config['inputs'][inp]['shape']}
             type_module = getattr(general_fucntions, 'dataframe')
             preprocess.append(getattr(type_module, 'main')(**param))
 
@@ -97,14 +102,16 @@ def json2model_cascade(path: str):
         for inp in config['outputs'].keys():
             if config['outputs'][inp]['task'] not in ['Timeseries', 'TimeseriesTrend']:
                 for inp, param in config['columns'][inp].items():
-                    with open(os.path.join(dataset_path, "instructions", "parameters", inp + '.json')) as cfg:
+                    with open(os.path.join(dataset_data_path, "instructions", "parameters", inp + '.json')) as cfg:
                         spec_config = json.load(cfg)
 
                     param.update(spec_config)
                     try:
                         task = decamelize(param['task'])
                         type_module = getattr(general_fucntions, task)
-                        postprocessing.append(getattr(type_module, 'main')(**param, dataset_path=dataset_path, key=inp))
+                        postprocessing.append(getattr(type_module, 'main')(**param,
+                                                                           dataset_path=dataset_data_path,
+                                                                           key=inp))
                         output_types.append(task)
                     except:
                         postprocessing.append(None)
@@ -112,9 +119,10 @@ def json2model_cascade(path: str):
                 param = {}
                 for key, cur_param in config['columns'][inp].items():
                     param[key] = cur_param
-                    with open(os.path.join(dataset_path, "instructions", "parameters", key + '.json')) as cfg:
+                    with open(os.path.join(dataset_data_path, "instructions", "parameters", key + '.json')) as cfg:
                         param[key].update(json.load(cfg))
-                param = {'columns': param, 'dataset_path': dataset_path, 'shape': config['outputs'][inp]['shape']}
+                param = {'columns': param, 'dataset_path': dataset_data_path,
+                         'shape': config['outputs'][inp]['shape']}
                 task = decamelize(config['outputs'][inp]['task'])
                 type_module = getattr(general_fucntions, task)
                 postprocessing.append(getattr(type_module, 'main')(**param))

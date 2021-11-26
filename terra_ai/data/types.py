@@ -96,8 +96,9 @@ def condirpath(*, ext: str = None) -> Type[DirectoryPath]:
     namespace = dict()
     if ext is not None:
         namespace = dict(ext=ext)
-    
+
     return type("DirectoryPathType", (DirectoryPathType,), namespace)
+
 
 class FileNameType(str):
     ext: str

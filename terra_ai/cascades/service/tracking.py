@@ -201,6 +201,10 @@ class Sort:
             NOTE: The number of objects returned may differ from the number of detections provided.
         """
         self.frame_count += 1
+
+        if not len(dets):
+            return np.empty((0, 5))
+
         # get predicted locations from existing trackers.
         tracks = np.zeros((len(self.trackers), 5))
         to_del = []

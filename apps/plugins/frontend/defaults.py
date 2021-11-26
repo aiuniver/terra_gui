@@ -792,7 +792,3 @@ class DefaultsData(BaseMixinData):
                 {"value": str(CASCADE_PATH.absolute()), "label": "Текущий каскад"}
             ]
             deploy_cascade_field.value = deploy_cascade_field.list[0].get("value")
-
-    def update_deploy(self, _type: str, _name: str):
-        self.deploy.type.fields[0].value = _type
-        self.deploy.type.fields[0].fields.get(_type)[0].value = _name

@@ -23,7 +23,7 @@ class DeployCreator:
     def get_deploy(self, training_path: Path, dataset: DatasetData, deploy_path: Path, page: dict):
         model_path = Path(os.path.join(training_path, page.get("name"), "model"))
         presets_path = os.path.join(DEPLOY_PATH, "deploy_presets")
-
+        print(model_path, presets_path, page)
         if page.get("type") == "model":
             if os.path.exists(DEPLOY_PATH):
                 shutil.rmtree(DEPLOY_PATH, ignore_errors=True)
@@ -74,7 +74,7 @@ class DeployCreator:
                                    "deploy_presets",
                                    "presets_config.json"), "r", encoding="utf-8") as presets_config:
                 deploy_data = json.load(presets_config)
-
+            print(deploy_data)
             cascade = CascadeCreator()
             cascade.copy_config(
                 deploy_path=Path(deploy_path),
@@ -92,7 +92,6 @@ class DeployCreator:
             )
 
         deploy_data.update({"page": page})
-
         return DeployData(**deploy_data)
 
     @staticmethod
@@ -111,6 +110,9 @@ class DeployCreator:
         for i in os.listdir(model_path):
             if i[-3:] == '.h5' and 'best' in i:
                 weight = i
+            if not weight:
+                if i[-3:] == '.h5':
+                    weight = i
         if weight:
             model.load_weights(os.path.join(model_path, weight))
             out_model = model
