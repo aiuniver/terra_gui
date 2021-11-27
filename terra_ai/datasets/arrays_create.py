@@ -294,8 +294,7 @@ class CreateArray(object):
 
         def read_text(file_path, lower, del_symbols, split, open_symbol=None, close_symbol=None) -> str:
 
-            with open(file_path, 'r', encoding='utf-8') as txt:
-                text = txt.read()
+            text = autodetect_encoding(file_path)
 
             if open_symbol:
                 text = re.sub(open_symbol, f" {open_symbol}", text)
