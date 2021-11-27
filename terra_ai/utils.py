@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from contextlib import contextmanager
 from typing import Union, Tuple
-from encodings.aliases import aliases
+from encodings.aliases import aliases as encodings_aliases
 
 
 def decamelize(camel_case_string: str):
@@ -41,7 +41,7 @@ def context_cwd(path: Path):
 def autodetect_encoding(
     path: str, return_encoding: bool = False
 ) -> Union[str, Tuple[str, str]]:
-    available = list(aliases)
+    available = list(encodings_aliases)
     available.insert(0, "utf8")
     available.insert(1, "windows_1251")
 
