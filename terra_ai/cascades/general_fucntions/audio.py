@@ -41,6 +41,9 @@ def main(**params):
         array = np.array(array)
         array = retype(array)
 
+        if len(array.shape) == 2:
+            array = array.transpose()
+
         if params['scaler'] != 'no_scaler' and params.get('preprocess'):
             orig_shape = array.shape
             array = params['preprocess'].transform(array.reshape(-1, 1))
