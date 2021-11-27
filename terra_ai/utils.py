@@ -38,7 +38,7 @@ def context_cwd(path: Path):
         os.chdir(_cwd)
 
 
-def auto_encoding(
+def autodetect_encoding(
     path: str, return_encoding: bool = False
 ) -> Union[str, Tuple[str, str]]:
     available = list(aliases)
