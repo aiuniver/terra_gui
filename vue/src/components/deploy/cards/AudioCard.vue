@@ -13,6 +13,7 @@
           canv-class="custom-player"
           canv-fill-color="#2B5278"
           :audio-src="src"
+          :key="update"
         ></av-waveform>
       </div>
     </div>
@@ -38,7 +39,6 @@ export default {
     },
   },
   mounted() {
-    console.log(this.update)
     this.$el.querySelector('audio').setAttribute('controlsList', 'nodownload');
   },
 };

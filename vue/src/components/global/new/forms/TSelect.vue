@@ -174,7 +174,7 @@ export default {
   &__content {
     position: absolute;
     top: 41px;
-    width: 100%;
+    min-width: 100%;
     border: 1px solid #6c7883;
     box-shadow: 0px -8px 34px 0px rgba(0, 0, 0, 0.05);
     border-radius: 0 0 4px 4px;
@@ -211,7 +211,7 @@ export default {
   }
   &--small {
     height: 24px;
-    width: 100px;
+    width: 109px;
   }
   &--small &__input {
     height: 24px;
@@ -224,7 +224,7 @@ export default {
   }
   &--small &__content {
     top: 23px;
-    min-width: 100px;
+    min-width: 100%;
     &--item {
       padding: 0 5px;
       font-size: 12px;

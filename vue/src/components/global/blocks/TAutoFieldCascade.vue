@@ -50,7 +50,7 @@
       @cleanError="cleanError"
       @change="change"
     />
-    <t-field v-if="type === 'select'" :inline="true" :label="label">
+    <t-field v-if="type === 'select'" :label="label">
       <t-select-new
         :value="getValue"
         :label="label"
@@ -157,7 +157,7 @@ export default {
   },
   mounted() {
     this.$emit('change', { id: this.id, value: this.getValue, name: this.name, mounted: true, parse: this.parse });
-    console.log(this.name, this.getValue , this.value);
+    // console.log(this.name, this.getValue , this.value);
     // this.valueIn = null;
     this.$nextTick(() => {
       this.valueIn = this.getValue;

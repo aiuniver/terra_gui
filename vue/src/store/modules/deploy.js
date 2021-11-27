@@ -90,6 +90,14 @@ export default {
       commit("SET_CARDS", []);
       commit("SET_DEPLOY_TYPE", []);
     },
+    random () {
+      let result = '';
+      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      for (var i = 0; i < 10; i++) {
+        result += characters.charAt(Math.floor(Math.random() * characters.length));
+      }
+      return result;
+    },
   },
   getters: {
     getParams ({ form }) {
@@ -106,11 +114,5 @@ export default {
     getOrigTextStyle: ({ origTextStyle }) => origTextStyle,
     getCards: ({ Cards }) => Cards,
     getDeployType: ({ deployType }) => deployType,
-    getRandId: ({ Cards }) => {
-      let id = Cards;
-      let crypto = require("crypto");
-      id = crypto.randomBytes(20).toString('hex');
-      return id;
-    }
   }
 }
