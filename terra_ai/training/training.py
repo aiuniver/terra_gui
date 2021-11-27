@@ -201,7 +201,7 @@ class GUINN:
             print_error(GUINN().name, method_name, e)
 
     def _set_model(self, model: ModelDetailsData, train_details: TrainingDetailsData,
-                   dataset: PrepareDataset) -> Model:
+                   dataset: PrepareDataset) -> Optional[BaseTerraModel, YoloTerraModel]:
         method_name = '_set_model'
         try:
             print(method_name)
@@ -227,7 +227,7 @@ class GUINN:
                     train_model = YoloTerraModel(model=train_model.base_model,
                                                  model_name=self.nn_name,
                                                  model_path=train_details.model_path,
-                                                 **options).yolo_model
+                                                 **options)
                 weight = None
                 for i in os.listdir(train_details.model_path):
                     if i[-3:] == '.h5' and 'last' in i:
@@ -323,27 +323,24 @@ class GUINN:
         self.nn_cleaner(retrain=True)
         return self
 
-    # @progress.threading
+    @progress.threading
     def model_fit(self, params: TrainingDetailsData, model: ModelDetailsData, dataset: PrepareDataset) -> None:
         method_name = 'base_model_fit'
         try:
-            print(method_name)
             yolo_arch = True if dataset.data.architecture in YOLO_ARCHITECTURE else False
             self._set_callbacks(dataset=dataset, train_details=params)
             # callback = FitCallback(dataset, params)
             threading.enumerate()[-1].setName("current_train")
             progress.pool(self.progress_name, finished=False, message="Компиляция модели ...")
             compiled_model = self._set_model(model=model, train_details=params, dataset=dataset)
+            compiled_model.set_callback(self.callback)
             if params.state.status == "training":
-                self.save_model(compiled_model)
+                compiled_model.save()
             if yolo_arch:
-                # version = dataset.instructions.get(list(dataset.data.outputs.keys())[0]).get('2_object_detection'
-                # ).get('yolo')
-                # classes = dataset.data.outputs.get(list(dataset.data.outputs.keys())[0]).classes_names
-                # yolo = create_yolo(model, input_size=416, channels=3, training=True, classes=classes, version=version)
-                self.train_yolo_model(yolo_model=compiled_model, params=params, dataset=dataset, callback=self.callback)
+                model = compiled_model.yolo_model
             else:
-                self.train_base_model(params, dataset, compiled_model, self.callback)
+                model = compiled_model.base_model
+            compiled_model.fit(params=params, dataset=dataset, model=model)
 
             progress.pool(self.progress_name, finished=False, message="\n Компиляция модели выполнена")
             progress.pool(self.progress_name, finished=False, message="\n Начало обучения ...")
