@@ -4,62 +4,68 @@ import joblib
 import json
 import pandas as pd
 import tensorflow as tf
+import shutil
+import zipfile
 
 from tensorflow.keras import utils
 from tensorflow.keras import datasets as load_keras_datasets
 from tensorflow.python.data.ops.dataset_ops import DatasetV2 as Dataset
 from PIL import Image
+from pathlib import Path
 
 from terra_ai.utils import decamelize
 from terra_ai.datasets.preprocessing import CreatePreprocessing
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.utils import PATH_TYPE_LIST
-from terra_ai.data.datasets.dataset import DatasetData, DatasetPathsData
+from terra_ai.data.datasets.dataset import DatasetData, DatasetPathsData, VersionData, VersionPathsData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, DatasetGroupChoice
 from terra_ai.data.presets.datasets import KerasInstructions
+from terra_ai.settings import DATASET_CONFIG, VERSION_EXT, VERSION_CONFIG
 
 
 class PrepareDataset(object):
 
-    def __init__(self, data: DatasetData, datasets_path=None):
+    dataframe: dict = {'train': None, 'val': None}
+    instructions: dict = {}
+    X: dict = {'train': {}, 'val': {}}
+    Y: dict = {'train': {}, 'val': {}}
+    service: dict = {'train': {}, 'val': {}}
+    dataset: dict = {'train': None, 'val': None}
+    version_data = None
+    preprocessing = None
 
-        self.data = data
-        self.language = None
-        self.dts_prepared: bool = False
-        self.dataframe: dict = {}
-        self.instructions: dict = {}
-        if self.data.group != 'keras':
-            self.paths = DatasetPathsData(basepath=datasets_path)
-            self.preprocessing = CreatePreprocessing(dataset_path=self.paths.basepath)
+    def __init__(self,
+                 data: DatasetData,
+                 datasets_path: Path = Path(''),
+                 parent_datasets_path: Path = Path('')
+                 ):
 
-            for put_id in list(self.data.inputs.keys()) + list(self.data.outputs.keys()):
-                self.instructions[put_id] = {}
-                for instr_json in os.listdir(os.path.join(self.paths.instructions, 'parameters')):
-                    idx, *name = os.path.splitext(instr_json)[0].split('_')
-                    name = '_'.join(name)
-                    if put_id == int(idx):
-                        with open(os.path.join(self.paths.instructions, 'parameters', instr_json),
-                                  'r') as instr:
-                            self.instructions[put_id].update([(f'{idx}_{name}', json.load(instr))])
-        else:
-            self.preprocessing = CreatePreprocessing()
+        self.dataset_data: DatasetData = data
+        if self.dataset_data.group != DatasetGroupChoice.keras:
+            self.version_paths_data = None
+            self.dataset_paths_data = DatasetPathsData(basepath=datasets_path)
+            self.parent_dataset_paths_data = DatasetPathsData(basepath=parent_datasets_path)
 
-        self.X: dict = {'train': {}, 'val': {}}
-        self.Y: dict = {'train': {}, 'val': {}}
-        self.service: dict = {'train': {}, 'val': {}}
+        # else:
+        #     self.preprocessing = CreatePreprocessing()
 
-        self.dataset: dict = {}
+    def __str__(self):
+
+        version = f'{self.version_data.alias}/{self.version_data.name}' if self.version_data else "не выбрана"
+
+        return f'Датасет: {self.dataset_data.alias}/{self.dataset_data.name}.\n' \
+               f'Версия: {version}.'
 
     def generator_common(self, split_name):
 
         inputs = {}
         outputs = {}
         for idx in range(len(self.dataframe[split_name])):
-            for inp_id in self.data.inputs.keys():
+            for inp_id in self.version_data.inputs.keys():
                 tmp = []
                 for col_name, data in self.instructions[inp_id].items():
                     if data['put_type'] in PATH_TYPE_LIST:
-                        sample = os.path.join(self.paths.basepath, self.dataframe[split_name].loc[idx, col_name])
+                        sample = self.version_paths_data.sources.joinpath(self.dataframe[split_name].loc[idx, col_name])
                     else:
                         sample = self.dataframe[split_name].loc[idx, col_name]
                     array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
@@ -69,11 +75,13 @@ class PrepareDataset(object):
                     tmp.append(array)
                 inputs[str(inp_id)] = np.concatenate(tmp, axis=0)
 
-            for out_id in self.data.outputs.keys():
+            for out_id in self.version_data.outputs.keys():
                 tmp = []
                 for col_name, data in self.instructions[out_id].items():
                     if data['put_type'] in PATH_TYPE_LIST:
-                        sample = os.path.join(self.paths.basepath, self.dataframe[split_name].loc[idx, col_name])
+                        sample = self.version_paths_data.basepath.joinpath(
+                            self.dataframe[split_name].loc[idx, col_name]
+                        )
                     else:
                         sample = self.dataframe[split_name].loc[idx, col_name]
                     array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
@@ -93,13 +101,13 @@ class PrepareDataset(object):
 
         for idx in range(len(self.dataframe[split_name])):
             augm_data = ''
-            for inp_id in self.data.inputs.keys():
+            for inp_id in self.version_data.inputs.keys():
                 tmp = []
                 for col_name, data in self.instructions[inp_id].items():
                     dict_to_pass = data.copy()
                     if data['augmentation'] and split_name == 'train':
                         dict_to_pass.update([('augm_data', self.dataframe[split_name].iloc[idx, 1])])
-                    sample = os.path.join(self.paths.basepath, self.dataframe[split_name].loc[idx, col_name])
+                    sample = self.version_paths_data.sources.joinpath(self.dataframe[split_name].loc[idx, col_name])
                     array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
                         'preprocess': self.preprocessing.preprocessing[inp_id][col_name]}, **dict_to_pass)
                     array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
@@ -112,9 +120,9 @@ class PrepareDataset(object):
 
                 inputs[str(inp_id)] = np.concatenate(tmp, axis=0)
 
-            for out_id in self.data.outputs.keys():
+            for out_id in self.version_data.outputs.keys():
                 for col_name, data in self.instructions[out_id].items():
-                    tmp_im = Image.open(os.path.join(self.paths.basepath, self.dataframe[split_name].iloc[idx, 0]))
+                    tmp_im = Image.open(self.version_paths_data.sources.joinpath(self.dataframe[split_name].iloc[idx, 0]))
                     data.update([('orig_x', tmp_im.width),
                                  ('orig_y', tmp_im.height)])
                     if augm_data and split_name == 'train':
@@ -154,13 +162,67 @@ class PrepareDataset(object):
             self.Y['train'][str(key)] = y_train
             self.Y['val'][str(key)] = y_val
 
+    def version(self, alias: str):
+
+        if self.dataset_data.group != DatasetGroupChoice.keras:
+            parent_version_path = self.parent_dataset_paths_data.versions.joinpath('.'.join([alias, VERSION_EXT]))
+            version_path = self.dataset_paths_data.versions.joinpath('.'.join([alias, VERSION_EXT]))
+            if not version_path.is_dir():
+                shutil.copytree(parent_version_path, version_path)
+                with zipfile.ZipFile(version_path.joinpath('version.zip'), 'r') as z_file:
+                    z_file.extractall(Path(version_path))
+                version_path.joinpath('version.zip').unlink(missing_ok=True)
+            self.version_paths_data = VersionPathsData(basepath=version_path)
+
+            with open(self.version_paths_data.basepath.joinpath(VERSION_CONFIG), 'r') as ver_config:
+                self.version_data = VersionData(**json.load(ver_config))
+
+            self.preprocessing = CreatePreprocessing(dataset_path=self.version_paths_data.preprocessing)
+
+            for split in self.dataframe:
+                self.dataframe[split] = pd.read_csv(
+                    self.version_paths_data.instructions.joinpath('tables', f'{split}.csv'),
+                    index_col=0
+                )
+
+            for put_id in list(self.version_data.inputs) + list(self.version_data.outputs):
+                self.instructions[put_id] = {}
+                for instr_json in os.listdir(self.version_paths_data.instructions.joinpath('parameters')):
+                    idx, *name = os.path.splitext(instr_json)[0].split('_')
+                    name = '_'.join(name)
+                    if put_id == int(idx):
+                        with open(self.version_paths_data.instructions.joinpath('parameters', instr_json),
+                                  'r') as instr:
+                            self.instructions[put_id].update([(f'{idx}_{name}', json.load(instr))])
+
+            if self.version_data.use_generator:
+                copy_archive = False
+                for col_name in self.instructions.values():
+                    for param in col_name.values():
+                        if param['put_type'] in ['image', 'segmentation']:
+                            copy_archive = True
+                if copy_archive:
+                    shutil.copyfile(self.parent_dataset_paths_data.basepath.joinpath('sources.zip'),
+                                    self.dataset_paths_data.basepath.joinpath('sources.zip'))
+                    with zipfile.ZipFile(self.dataset_paths_data.basepath.joinpath('sources.zip'), 'r') as z_file:
+                        z_file.extractall(self.version_paths_data.sources)
+                    self.dataset_paths_data.basepath.joinpath('sources.zip').unlink()
+        else:
+            """
+            Тут всякие движения для керасовских датасетов
+            """
+
+        print(self.__str__())
+
+        return self
+
     def prepare_dataset(self):
 
-        if self.data.group == DatasetGroupChoice.keras:
+        if self.dataset_data.group == DatasetGroupChoice.keras:
 
             self.keras_datasets()
 
-            for put_id, data in KerasInstructions[self.data.alias].items():
+            for put_id, data in KerasInstructions[self.dataset_data.alias].items():
                 self.instructions[put_id] = data
 
             self.preprocessing.create_scaler(**{'put': 1, 'scaler': 'min_max_scaler',
@@ -172,7 +234,7 @@ class PrepareDataset(object):
                     self.X[key][inp] = self.preprocessing.preprocessing[1][f'1_{self.data.alias}']\
                         .transform(self.X[key][inp].reshape(-1, 1)).reshape(self.X[key][inp].shape)
 
-            for split in ['train', 'val']:
+            for split in self.dataset:
                 if self.service[split]:
                     self.dataset[split] = Dataset.from_tensor_slices((self.X[split],
                                                                       self.Y[split],
@@ -181,32 +243,33 @@ class PrepareDataset(object):
                     self.dataset[split] = Dataset.from_tensor_slices((self.X[split],
                                                                       self.Y[split]))
 
-        elif self.data.group in [DatasetGroupChoice.terra, DatasetGroupChoice.custom]:
+        elif self.dataset_data.group in [DatasetGroupChoice.terra, DatasetGroupChoice.custom]:
 
-            for split in ['train', 'val']:
-                self.dataframe[split] = pd.read_csv(os.path.join(self.paths.instructions, 'tables', f'{split}.csv'),
-                                                    index_col=0)
+            self.preprocessing.load_preprocesses(self.version_data.columns)
 
-            self.preprocessing.load_preprocesses(self.data.columns)
-
-            if self.data.use_generator:
-                num_inputs = len(self.data.inputs)
-                num_outputs = len(self.data.outputs)
-                if self.data.tags[num_inputs].alias == decamelize(LayerOutputTypeChoice.ObjectDetection):
+            if self.version_data.use_generator:
+                num_inputs = len(self.version_data.inputs)
+                num_outputs = len(self.version_data.outputs)
+                if self.dataset_data.tags[num_inputs].alias == decamelize(LayerOutputTypeChoice.ObjectDetection):
                     gen = self.generator_object_detection
                     out_signature = (
-                        {str(x): tf.TensorSpec(shape=self.data.inputs[x].shape, dtype=self.data.inputs[x].dtype)
+                        {str(x): tf.TensorSpec(shape=self.version_data.inputs[x].shape,
+                                               dtype=self.version_data.inputs[x].dtype)
                          for x in range(1, num_inputs + 1)},
-                        {str(x): tf.TensorSpec(shape=self.data.outputs[x].shape, dtype=self.data.outputs[x].dtype)
+                        {str(x): tf.TensorSpec(shape=self.version_data.outputs[x].shape,
+                                               dtype=self.version_data.outputs[x].dtype)
                          for x in range(num_inputs + 1, num_inputs + num_outputs + 1)},
-                        {str(x): tf.TensorSpec(shape=self.data.service[x].shape, dtype=self.data.service[x].dtype)
+                        {str(x): tf.TensorSpec(shape=self.version_data.service[x].shape,
+                                               dtype=self.version_data.service[x].dtype)
                          for x in range(num_inputs + 1, num_inputs + num_outputs + 1)})
                 else:
                     gen = self.generator_common
                     out_signature = (
-                        {str(x): tf.TensorSpec(shape=self.data.inputs[x].shape, dtype=self.data.inputs[x].dtype)
+                        {str(x): tf.TensorSpec(shape=self.version_data.inputs[x].shape,
+                                               dtype=self.version_data.inputs[x].dtype)
                          for x in range(1, num_inputs + 1)},
-                        {str(x): tf.TensorSpec(shape=self.data.outputs[x].shape, dtype=self.data.outputs[x].dtype)
+                        {str(x): tf.TensorSpec(shape=self.version_data.outputs[x].shape,
+                                               dtype=self.version_data.outputs[x].dtype)
                          for x in range(num_inputs + 1, num_outputs + num_inputs + 1)})
 
                 self.dataset['train'] = Dataset.from_generator(lambda: gen(split_name='train'),
@@ -214,16 +277,18 @@ class PrepareDataset(object):
                 self.dataset['val'] = Dataset.from_generator(lambda: gen(split_name='val'),
                                                              output_signature=out_signature)
             else:
-
-                for split in ['train', 'val']:
-                    for index in self.data.inputs.keys():
-                        self.X[split][str(index)] = joblib.load(os.path.join(self.paths.arrays, split, f'{index}.gz'))
-                    for index in self.data.outputs.keys():
-                        self.Y[split][str(index)] = joblib.load(os.path.join(self.paths.arrays, split, f'{index}.gz'))
-                    for index in self.data.service.keys():
-                        if self.data.service[index]:
-                            self.service[split][str(index)] = joblib.load(os.path.join(self.paths.arrays,
-                                                                                       split, f'{index}_service.gz'))
+                for split in self.dataset:
+                    for index in self.version_data.inputs.keys():
+                        self.X[split][str(index)] = joblib.load(self.version_paths_data.arrays.joinpath(split,
+                                                                                                        f'{index}.gz'))
+                    for index in self.version_data.outputs.keys():
+                        self.Y[split][str(index)] = joblib.load(self.version_paths_data.arrays.joinpath(split,
+                                                                                                        f'{index}.gz'))
+                    for index in self.version_data.service.keys():
+                        if self.version_data.service[index]:
+                            self.service[split][str(index)] = joblib.load(
+                                self.version_paths_data.arrays.joinpath(split, f'{index}_service.gz')
+                            )
 
                 for split in ['train', 'val']:
                     if self.service[split]:
@@ -233,8 +298,6 @@ class PrepareDataset(object):
                     else:
                         self.dataset[split] = Dataset.from_tensor_slices((self.X[split],
                                                                           self.Y[split]))
-
-        self.dts_prepared = True
 
         pass
 
@@ -256,5 +319,5 @@ class PrepareDataset(object):
                     os.makedirs(folder_dir, exist_ok=True)
                     joblib.dump(obj, os.path.join(folder_dir, f'{col_name}.gz'))
 
-        with open(os.path.join(folder_path, 'config.json'), 'w') as cfg:
-            json.dump(self.data.native(), cfg)
+        with open(os.path.join(folder_path, VERSION_CONFIG), 'w') as cfg:
+            json.dump(self.version_data.native(), cfg)

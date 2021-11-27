@@ -174,6 +174,9 @@ KerasInstructions = {
     },
 }
 
+KerasDatasetsVersions = {
+    'mnist': {'mnist_standard': {'ИНСТРУКЦИИ'}}
+}
 
 DatasetsGroups = [
     {
