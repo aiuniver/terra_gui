@@ -44,7 +44,7 @@ from ..datasets.creating import CreateDataset
 from ..deploy import loading as deploy_loading
 from ..modeling.validator import ModelValidator
 from ..training import training_obj
-from ..training.guinn import interactive
+from ..training.training import interactive
 from ..project import loading as project_loading
 
 
