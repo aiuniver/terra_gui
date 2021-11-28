@@ -10,7 +10,7 @@ from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVide
 from terra_ai.data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice, \
     LayerTextModeChoice, LayerAudioModeChoice, LayerVideoModeChoice, LayerScalerAudioChoice
 from terra_ai.data.datasets.creations.layers.output.types.ObjectDetection import LayerODDatasetTypeChoice
-
+from terra_ai.utils import autodetect_encoding
 
 import os
 import re
@@ -123,8 +123,7 @@ class CreateArray(object):
 
         def read_text(file_path, lower, del_symbols, split, open_symbol=None, close_symbol=None) -> str:
 
-            with open(file_path, 'r', encoding='utf-8') as txt:
-                text = txt.read()
+            text = autodetect_encoding(file_path)
 
             if open_symbol:
                 text = re.sub(open_symbol, f" {open_symbol}", text)
@@ -295,8 +294,7 @@ class CreateArray(object):
 
         def read_text(file_path, lower, del_symbols, split, open_symbol=None, close_symbol=None) -> str:
 
-            with open(file_path, 'r', encoding='utf-8') as txt:
-                text = txt.read()
+            text = autodetect_encoding(file_path)
 
             if open_symbol:
                 text = re.sub(open_symbol, f" {open_symbol}", text)
