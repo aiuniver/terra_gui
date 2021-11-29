@@ -40,24 +40,13 @@ export default {
     source: Object,
     columns: Object,
   },
-  data: () => ({}),
-  // computed: {
-  //   columns() {
-  //     return this.extra?.columns ?? [];
-  //   },
-  // },
   methods: {
     ReloadRow(index) {
-      console.log('RELOAD_ROW');
-      this.$emit('reload', [index.toString()]);
+      this.$emit('reload', [String(index)]);
     },
     ReloadAll() {
       this.$emit('reloadAll');
     },
-  },
-  mounted() {
-    console.log(this.data)
-    console.log(this.columns)
   },
 };
 </script>
@@ -65,7 +54,6 @@ export default {
 <style scoped lang="scss">
 .content {
   height: 770px;
-  // width: 1200px;
 }
 .table {
   width: 100%;

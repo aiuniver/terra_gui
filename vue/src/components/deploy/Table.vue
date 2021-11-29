@@ -20,7 +20,6 @@
         <td class="table__result-data">{{ label }}</td>
         <td v-for="(data, i) of preset" :key="'data_' + index + i">
           <TableText v-bind="{value: data}" :style="{width: '100%'}"/>
-<!--          {{ data }}-->
         </td>
         <td class="table__result-data">{{ label }}</td>
       </tr>
@@ -38,23 +37,13 @@ export default {
     data: Array,
     columns: Array,
   },
-  // computed: {
-  //   columns() {
-  //     return this.extra?.columns ?? [];
-  //   },
-  // },
   methods: {
     ReloadRow(index) {
-      this.$emit('reload', [index.toString()]);
+      this.$emit('reload', [String(index)]);
     },
     ReloadAll() {
       this.$emit('reloadAll');
     },
-  },
-  mounted() {
-    console.log(12312312);
-    console.log(this.data);
-    console.log(this.columns);
   },
 };
 </script>
