@@ -12,6 +12,8 @@ class CascadeCreator:
 
     def create_config(self, deploy_path: Path, model_path: Path, func_name: str):
         dataset_path = os.path.join(model_path, "dataset.json")
+        if not os.path.exists(dataset_path):
+            dataset_path = os.path.join(model_path, "dataset", "config.json")
         with open(dataset_path) as cfg:
             dataset_config = json.load(cfg)
 
