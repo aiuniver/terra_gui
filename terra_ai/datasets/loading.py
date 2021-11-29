@@ -358,18 +358,24 @@ def choice(
 
 @progress.threading
 def multiload(progress_name: str, datasets_load_data: List[DatasetLoadData], **kwargs):
+    print(1)
     progress.pool.reset(progress_name, finished=False)
+    print(2)
     for dataset_choice in datasets_load_data:
+        print(3, dataset_choice)
         _method = getattr(
             sys.modules.get(__name__), f"_choice_from_{dataset_choice.group.name}", None
         )
+        print(4, _method)
         if _method:
+            print(5)
             progress.pool(
                 progress_name,
                 message=DATASET_CHOICE_TITLE
                 % (dataset_choice.group.value, dataset_choice.alias),
                 percent=0,
             )
+            print(6, "_run_choice_method")
             _run_choice_method(
                 method=_method,
                 progress_name=progress_name,
@@ -377,8 +383,11 @@ def multiload(progress_name: str, datasets_load_data: List[DatasetLoadData], **k
                 reset_model=False,
                 set_finished=False,
             )
+            print(7)
         else:
+            print(8)
             raise DatasetChoiceUndefinedMethodException(dataset_choice.group.value)
+    print(9)
     progress.pool(
         progress_name,
         finished=True,
