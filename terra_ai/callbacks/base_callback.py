@@ -185,132 +185,6 @@ class FitCallback:
         except Exception as e:
             print_error('FitCallback', method_name, e)
 
-    def _deploy_predict(self, presets_predict):
-        method_name = '_deploy_predict'
-        try:
-            print(method_name)
-            result = CreateArray().postprocess_results(
-                array=presets_predict, options=self.dataset, save_path=str(self.training_detail.model_path),
-                dataset_path=str(self.dataset.data.path))
-            deploy_presets = []
-            if result:
-                deploy_presets = list(result.values())[0]
-            return deploy_presets
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
-
-    def _create_form_data_for_dataframe_deploy(self):
-        method_name = '_create_form_data_for_dataframe_deploy'
-        try:
-            print(method_name)
-            form_data = []
-            with open(os.path.join(self.dataset.data.path, "config.json"), "r", encoding="utf-8") as dataset_conf:
-                dataset_info = json.load(dataset_conf).get("columns", {})
-            for inputs, input_data in dataset_info.items():
-                if int(inputs) not in list(self.dataset.data.outputs.keys()):
-                    for column, column_data in input_data.items():
-                        label = column
-                        available = column_data.get("classes_names") if column_data.get("classes_names") else None
-                        widget = "select" if available else "input"
-                        input_type = "text"
-                        if widget == "select":
-                            table_column_data = {
-                                "label": label,
-                                "widget": widget,
-                                "available": available
-                            }
-                        else:
-                            table_column_data = {
-                                "label": label,
-                                "widget": widget,
-                                "type": input_type
-                            }
-                        form_data.append(table_column_data)
-            with open(os.path.join(self.training_detail.deploy_path, "form.json"), "w", encoding="utf-8") as form_file:
-                json.dump(form_data, form_file, ensure_ascii=False)
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
-
-    def _create_cascade(self, **data):
-        method_name = '_create_cascade'
-        try:
-            print(method_name)
-            if self.dataset.data.alias not in ["imdb", "boston_housing", "reuters"]:
-                if "Dataframe" in self.deploy_type:
-                    self._create_form_data_for_dataframe_deploy()
-                if self.is_yolo:
-                    func_name = "object_detection"
-                else:
-                    func_name = decamelize(self.deploy_type)
-                config = CascadeCreator()
-                config.create_config(
-                    deploy_path=self.training_detail.deploy_path,
-                    model_path=self.training_detail.model_path,
-                    func_name=func_name
-                )
-                config.copy_package(
-                    deploy_path=self.training_detail.deploy_path,
-                    model_path=self.training_detail.model_path
-                )
-                config.copy_script(
-                    deploy_path=self.training_detail.deploy_path,
-                    function_name=func_name
-                )
-                if self.deploy_type == ArchitectureChoice.TextSegmentation:
-                    with open(os.path.join(self.training_detail.deploy_path, "format.txt"),
-                              "w", encoding="utf-8") as format_file:
-                        format_file.write(str(data.get("tags_map", "")))
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
-
-    def _prepare_deploy(self, model):
-        method_name = '_prepare_deploy'
-        try:
-            print(method_name, self.training_detail.deploy_path)
-            weight = None
-            cascade_data = {"deploy_path": self.training_detail.deploy_path}
-            for i in os.listdir(self.training_detail.model_path):
-                if i[-3:] == '.h5' and 'best' in i:
-                    weight = i
-            if weight:
-                model.load_weights(os.path.join(self.training_detail.model_path, weight))
-            deploy_predict, y_true = self._get_predict(current_model=model)
-            deploy_presets_data = self._deploy_predict(deploy_predict)
-            out_deploy_presets_data = {"data": deploy_presets_data}
-            if self.deploy_type == ArchitectureChoice.TextSegmentation:
-                cascade_data.update({"tags_map": deploy_presets_data.get("color_map")})
-                out_deploy_presets_data = {
-                    "data": deploy_presets_data.get("data", {}),
-                    "color_map": deploy_presets_data.get("color_map")
-                }
-            elif "Dataframe" in self.deploy_type:
-                columns = []
-                predict_column = ""
-                for inp, input_columns in self.dataset.data.columns.items():
-                    for column_name in input_columns.keys():
-                        columns.append(column_name[len(str(inp)) + 1:])
-                        if input_columns[column_name].__class__ == DatasetOutputsData:
-                            predict_column = column_name[len(str(inp)) + 1:]
-                if self.deploy_type == ArchitectureChoice.DataframeRegression:
-                    tmp_data = list(zip(deploy_presets_data.get("preset"), deploy_presets_data.get("label")))
-                    tmp_deploy = [{"preset": elem[0], "label": elem[1]} for elem in tmp_data]
-                    out_deploy_presets_data = {"data": tmp_deploy}
-                out_deploy_presets_data["columns"] = columns
-                out_deploy_presets_data[
-                    "predict_column"] = predict_column if predict_column else "Предсказанные значения"
-
-            out_deploy_data = dict([
-                ("path", Path(self.training_detail.deploy_path)),
-                ("path_model", Path(self.training_detail.model_path)),
-                ("type", self.deploy_type),
-                ("data", out_deploy_presets_data)
-            ])
-            print(self.deploy_type, type(self.deploy_type))
-            self.training_detail.deploy = DeployData(**out_deploy_data)
-            self._create_cascade(**cascade_data)
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
-
     @staticmethod
     def _estimate_step(current, start, now):
         method_name = '_estimate_step'
@@ -486,6 +360,9 @@ class FitCallback:
                 on_epoch_end_flag=True,
                 train_idx=train_data_idxs
             )
+            # print(train_epoch_data)
+            # print(self.history.get_history())
+            # print(interactive.log_history)
             # print('\nFitCallback interactive.update_state', round(time.time() - t, 3))
             # print(method_name, 'train_epoch_data', train_epoch_data)
             self._set_result_data({'train_data': train_epoch_data})

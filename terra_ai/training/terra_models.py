@@ -10,7 +10,7 @@ from tensorflow import keras
 from tensorflow.keras.models import Model
 
 from terra_ai.callbacks import interactive
-from terra_ai.callbacks.utils import print_error, loss_metric_config
+from terra_ai.callbacks.utils import print_error, loss_metric_config, get_dataset_length
 from terra_ai.customLayers import terra_custom_layers
 from terra_ai.data.training.train import TrainingDetailsData
 from terra_ai.datasets.preparing import PrepareDataset
@@ -159,6 +159,7 @@ class BaseTerraModel:
         method_name = 'fit'
         try:
             print(method_name)
+            self.train_length, self.val_length = get_dataset_length(dataset)
             current_epoch = self.callback.last_epoch
             train_pred, train_true, val_pred, val_true = {}, {}, {}, {}
             self.set_optimizer(params=params)
@@ -402,6 +403,7 @@ class YoloTerraModel(BaseTerraModel):
     def fit(self, params: TrainingDetailsData, dataset: PrepareDataset):
         method_name = 'train_yolo_model'
         try:
+            self.train_length, self.val_length = get_dataset_length(dataset)
             yolo_parameters = self.__create_yolo_parameters(params=params, dataset=dataset)
             num_class = yolo_parameters.get("parameters").get("num_class")
             classes = yolo_parameters.get("parameters").get("num_class")
