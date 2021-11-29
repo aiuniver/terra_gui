@@ -650,13 +650,13 @@ class CreateArray(object):
     @staticmethod
     def cut_segmentation(paths_list: list, dataset_folder=None, **options: dict):
 
-        for elem in paths_list:
-            os.makedirs(os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem))), exist_ok=True)
-            shutil.copyfile(elem, os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
-                                               os.path.basename(elem)))
-
-        paths_list = [os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)), os.path.basename(elem))
-                      for elem in paths_list]
+        # for elem in paths_list:
+        #     os.makedirs(os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem))), exist_ok=True)
+        #     shutil.copyfile(elem, os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
+        #                                        os.path.basename(elem)))
+        #
+        # paths_list = [os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)), os.path.basename(elem))
+        #               for elem in paths_list]
 
         instructions = {'instructions': paths_list,
                         'parameters': {'mask_range': options['mask_range'],
