@@ -802,11 +802,11 @@ def make_tracker_dataset(source_path, dst_path, bboxes, frame_mode):
         if crop.shape[1] > width:
             width = crop.shape[1]
 
-    for dir in os.listdir(tmp_directory):
-        for im_name in os.listdir(os.path.join(tmp_directory, dir)):
-            img = cv2.imread(os.path.join(tmp_directory, dir, im_name), cv2.IMREAD_UNCHANGED)
+    for directory in os.listdir(tmp_directory):
+        for im_name in os.listdir(os.path.join(tmp_directory, directory)):
+            img = cv2.imread(os.path.join(tmp_directory, directory, im_name), cv2.IMREAD_UNCHANGED)
             resized_im = resize_frame(img, (height, width), frame_mode)
-            cv2.imwrite(os.path.join(tmp_directory, dir, im_name), resized_im)
+            cv2.imwrite(os.path.join(tmp_directory, directory, im_name), resized_im)
 
     tracker_table = pd.DataFrame({'img_1': ims1,
                                   'img_2': ims2,
