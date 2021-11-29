@@ -85,6 +85,7 @@ class CascadeRunner:
         with open(os.path.join(training_path, model, "config.json"),
                   "r", encoding="utf-8") as training_config:
             training_details = json.load(training_config)
+            print('training_details', training_details)
         deploy_type = DeployTypeChoice(training_details.get("base").get("architecture").get("type"))
         if deploy_type in [DeployTypeChoice.YoloV3, DeployTypeChoice.YoloV4]:
             deploy_type = DeployTypeChoice.VideoObjectDetection
