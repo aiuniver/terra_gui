@@ -1,12 +1,12 @@
 <template>
-  <div class="params">
-    <div v-if="false" class="params__overlay" key="fdgtr">
+  <div class="params" :key="'key_update-' + updateKey">
+    <!-- <div v-if="false" class="params__overlay">
       <LoadSpiner :text="'Запуск обучения...'" />
-    </div>
+    </div> -->
     <scrollbar>
       <div class="params__body">
         <div class="params__items">
-          <at-collapse :value="collapse" @on-change="onchange" :key="key">
+          <at-collapse :value="collapse">
             <at-collapse-item
               v-for="({ visible, name, fields }, key) of params"
               v-show="visible && key !== 'server'"
@@ -53,14 +53,14 @@
               parse="deploy[overwrite]"
               name="deploy[overwrite]"
               class="pd__top"
-              @change="UseReplace"
+              @change="replaceFolder"
             />
             <Checkbox
               :label="'Использовать пароль для просмотра страницы'"
               parse="deploy[use_password]"
               name="deploy[use_password]"
               :type="'checkbox'"
-              @change="UseSec"
+              @change="usePasswordWatchpage"
             />
             <div class="password" v-if="use_sec">
               <div class="t-input">
@@ -100,7 +100,7 @@
               <div class="answer__url">
                 <i :class="['t-icon', 'icon-deploy-copy']" :title="'copy'" @click="Copy(moduleList.url)"></i>
                 <a :href="moduleList.url" target="_blank">
-                  {{ moduleList.url }}sdfasadfasdfasgdfhasiofhusduifhasiodcfuisfhoadsifisdhfiosdup
+                  {{ moduleList.url }}
                 </a>
               </div>
             </div>
@@ -118,7 +118,6 @@ import Checkbox from '@/components/forms/Checkbox';
 import ModuleList from './ModuleList';
 import LoadSpiner from '../../forms/LoadSpiner';
 import { debounce } from '@/utils/core/utils';
-// import ser from '@/assets/js/myserialize';
 export default {
   name: 'Settings',
   components: {
@@ -127,10 +126,10 @@ export default {
     LoadSpiner,
   },
   data: () => ({
+    updateKey: 0,
     debounce: null,
     collapse: ['type', 'server'],
     load: false,
-    key: '1212',
     downloadSettings: {},
     trainSettings: {},
     deploy: '',
@@ -169,14 +168,9 @@ export default {
       return this.sec == this.sec_accept ? 'icon-deploy-password-correct' : 'icon-deploy-password-incorrect';
     },
     send_disabled() {
-      if (this.DataLoading) {
-        return true;
-      }
-      if (this.use_sec) {
-        if (this.sec == this.sec_accept && this.sec.length > 5 && this.deploy.length != 0) return false;
-      } else {
-        if (this.deploy.length != 0) return false;
-      }
+      if (this.DataLoading) return true;
+      if (this.use_sec && this.sec == this.sec_accept && this.sec.length > 5 && this.deploy.length != 0) return false;
+      else if (this.deploy.length != 0) return false;
       return true;
     },
     isLoad() {
@@ -190,7 +184,7 @@ export default {
       const type = this.parameters?.type || '';
       const name = this.parameters?.name || '';
       if (type && name) {
-        const res = await this.$store.dispatch('deploy/DownloadSettings', { type, name });
+        const res = await this.$store.dispatch('deploy/downloadSettings', { type, name });
         if (res?.success) {
           this.$store.dispatch('settings/setOverlay', true);
           this.debounce(true);
@@ -199,7 +193,6 @@ export default {
     },
     async progressGet() {
       const res = await this.$store.dispatch('deploy/progress', {});
-      console.log(res);
       if (res && res?.data) {
         const { finished, message, percent } = res.data;
         this.$store.dispatch('messages/setProgressMessage', message);
@@ -216,28 +209,9 @@ export default {
         this.$store.dispatch('settings/setOverlay', false);
       }
     },
-    parse({ id, value, name, root }) {
-      console.log(id, value, name, root);
+    parse({ value, name }) {
       this.parameters[name] = value;
       this.parameters = { ...this.parameters };
-
-      // ser(this.trainSettings, parse, value);
-      // this.trainSettings = { ...this.trainSettings };
-      // if (!mounted && changeable) {
-      //   // this.$store.dispatch('trainings/update', this.trainSettings);
-      //   // this.state = { [`architecture[parameters][checkpoint][metric_name]`]: null };
-      // } else {
-      //   if (value) {
-      //     this.state = { [`${parse}`]: value };
-      //   }
-      // }
-    },
-    onchange(e) {
-      console.log(e);
-      // console.log(this.collapse);
-    },
-    click() {
-      console.log();
     },
     Percents(number) {
       let loading = document.querySelector('.progress-bar > .loading');
@@ -264,17 +238,15 @@ export default {
 
       document.body.removeChild(textArea);
     },
-    UseSec(data) {
+    usePasswordWatchpage(data) {
       this.use_sec = data.value;
     },
-    UseReplace(data) {
+    replaceFolder(data) {
       this.replace = data.value;
     },
     async progress() {
-      let answer = await this.$store.dispatch('deploy/CheckProgress');
-      console.log(answer);
+      let answer = await this.$store.dispatch('deploy/checkProgress');
       if (!answer) {
-        // this.Percents(30);
         this.getProgress();
       } else {
         this.DataLoading = false;
@@ -294,11 +266,9 @@ export default {
 
       if (this.use_sec) data['sec'] = this.sec;
 
-      const res = await this.$store.dispatch('deploy/SendDeploy', data);
-      console.log(res);
+      const res = await this.$store.dispatch('deploy/sendDeploy', data);
       if (res) {
         const { error, success } = res;
-        console.log(error, success);
         if (!error && success) {
           this.DataLoading = true;
           this.$emit('overlay', this.DataLoading);
@@ -309,11 +279,8 @@ export default {
   },
   created() {
     this.debounce = debounce(status => {
-      if (status) {
-        this.progressGet();
-      }
+      if (status) this.progressGet();
     }, 1000);
-    // this.debounce(this.isLearning);
   },
   beforeDestroy() {
     this.debounce(false);
@@ -321,7 +288,7 @@ export default {
   },
   watch: {
     params() {
-      this.key = 'dsdsdsd';
+      this.updateKey++;
     },
   },
 };

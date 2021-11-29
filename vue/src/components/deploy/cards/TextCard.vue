@@ -1,7 +1,9 @@
 <template>
   <div class="text-card">
     <scrollbar :ops="ops">
-      <pre><slot>TEXT</slot></pre>
+      <pre>
+        <slot></slot>
+      </pre>
     </scrollbar>
   </div>
 </template>
@@ -9,12 +11,6 @@
 <script>
 export default {
   name: "TextCard",
-  props: {
-    text: {
-      type: String,
-      default: "text"
-    }
-  },
   data: () => ({
     ops: {
       scrollPanel: {
