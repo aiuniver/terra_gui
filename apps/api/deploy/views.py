@@ -25,23 +25,38 @@ from . import serializers
 
 class GetAPIView(BaseAPIView):
     def post(self, request, **kwargs):
+        print(1)
         serializer = serializers.GetSerializer(data=request.data)
+        print(2)
         if not serializer.is_valid():
+            print(3)
             return BaseResponseErrorFields(serializer.errors)
+        print(4)
         page = DeployPageData(**serializer.validated_data)
+        print(5)
         datasets = []
         if page.type == DeployTypePageChoice.model:
+            print(6)
             _path = Path(project_path.training, page.name, "model", "dataset.json")
+            print(7)
             if not _path.is_file():
+                print(8)
                 _path = Path(
                     project_path.training, page.name, "model", "dataset", "config.json"
                 )
+                print(9)
+            print(10)
             with open(_path) as dataset_ref:
+                print(11)
                 dataset_config = json.load(dataset_ref)
+                print(12)
                 datasets.append(
                     DatasetLoadData(path=data_path.datasets, **dataset_config)
                 )
+                print(13)
+        print(14)
         agent_exchange("deploy_get", datasets=datasets, page=page)
+        print(15)
         return BaseResponseSuccess()
 
 
