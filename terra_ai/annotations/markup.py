@@ -12,6 +12,16 @@ from terra_ai.datasets.creating import CreateDataset
 from terra_ai.settings import DATASET_CONFIG
 
 
+# inp_dict = {'alias': 'cycles',
+#            'annotations_path': '/content/drive/MyDrive/TerraAI/annotations',
+#            'source': 'cycles.zip',
+#            'until': [2021,11,25],
+#            'task_type': 'object_detection',
+#            'classes_names':['cycle', 'tricycle', 'quadrocycle'],
+#            'classes_colors':[],
+#            'to_do': ['Ivanov', 'Petrov']}
+
+
 class MarkUp:
     def __init__(self, markup_data: MarkupData):
         common_path = os.path.join(os.sep, *markup_data.native()['annotations_path'].split(os.sep)[:-1])
