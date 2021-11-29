@@ -294,6 +294,7 @@ class InteractiveCallback:
                 'addtrain_epochs': self.addtrain_epochs,
             }
         else:
+            self.get_balance = True
             return {}
 
     def get_train_results(self):
