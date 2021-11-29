@@ -27,11 +27,13 @@ class BaseTerraModel:
         self.model_json = f"{model_name}_json.trm"
         self.custom_obj_json = f"{model_name}_custom_obj_json.trm"
         self.model_weights = f"{model_name}_weights.h5"
+        self.model_best_weights = f"{model_name}_best_weights.h5"
 
         self.saving_path = model_path
         self.file_path_model_json = os.path.join(self.saving_path, self.model_json)
         self.file_path_custom_obj_json = os.path.join(self.saving_path, self.custom_obj_json)
         self.file_path_model_weights = os.path.join(self.saving_path, self.model_weights)
+        self.file_path_model_best_weights = os.path.join(self.saving_path, self.model_best_weights)
 
         self.callback = None
         self.optimizer = None
@@ -58,12 +60,13 @@ class BaseTerraModel:
     def load(self) -> None:
         model_data, custom_dict = self.__get_json_data()
         custom_object = self.__set_custom_objects(custom_dict)
-
-        self.base_model = tf.keras.models.model_from_json(json.dumps(model_data), custom_objects=custom_object)
+        self.base_model = tf.keras.models.model_from_json(model_data, custom_objects=custom_object)
         self.json_model = self.base_model.to_json()
 
-    def save_weights(self):
-        self.base_model.save_weights(self.file_path_model_weights)
+    def save_weights(self, path_=None):
+        if not path_:
+            path_ = self.file_path_model_weights
+        self.base_model.save_weights(path_)
 
     def load_weights(self):
         self.base_model.load_weights(self.file_path_model_weights)
@@ -161,6 +164,7 @@ class BaseTerraModel:
             print(method_name)
             self.train_length, self.val_length = get_dataset_length(dataset)
             current_epoch = self.callback.last_epoch
+            end_epoch = self.callback.total_epochs
             train_pred, train_true, val_pred, val_true = {}, {}, {}, {}
             self.set_optimizer(params=params)
             loss = self._prepare_loss_dict(params=params)
@@ -176,7 +180,7 @@ class BaseTerraModel:
 
             train_data_idxs = np.arange(self.train_length).tolist()
             self.callback.on_train_begin()
-            for epoch in range(current_epoch, current_epoch + params.base.epochs):
+            for epoch in range(current_epoch, end_epoch):
                 self.callback.on_epoch_begin()
                 train_steps = 0
                 current_idx = 0
@@ -215,9 +219,9 @@ class BaseTerraModel:
                     if self.callback.stop_training:
                         break
 
-                self.save()
+                self.save_weights()
                 if self.callback.stop_training:
-                    self.callback.on_train_end(self.base_model)
+                    self.callback.on_train_end(self)
                     break
 
                 val_steps = 0
@@ -239,11 +243,10 @@ class BaseTerraModel:
                     train_data_idxs=train_data_idxs
                 )
 
-                best_path = self.callback.save_best_weights()
-                if best_path:
-                    self.save_weights()
-                    print(f"Best weights was saved in directory {best_path}\n")
-            self.callback.on_train_end(self.base_model)
+                if self.callback.is_best():
+                    self.save_weights(path_=self.file_path_model_best_weights)
+                    print(f"Best weights was saved\n")
+            self.callback.on_train_end(self)
         except Exception as e:
             print_error(self.__class__.__name__, method_name, e)
 
@@ -256,8 +259,10 @@ class YoloTerraModel(BaseTerraModel):
                                              classes=options.get("classes"),
                                              version=options.get("version"))
 
-    def save_weights(self):
-        self.yolo_model.save_weights(self.file_path_model_weights)
+    def save_weights(self, path_=None):
+        if not path_:
+            path_ = self.file_path_model_weights
+        self.yolo_model.save_weights(path_)
 
     def load_weights(self):
         self.yolo_model.load_weights(self.file_path_model_weights)

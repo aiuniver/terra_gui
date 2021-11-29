@@ -14,47 +14,49 @@ from terra_ai.callbacks.utils import BASIC_ARCHITECTURE, CLASS_ARCHITECTURE, YOL
     CLASSIFICATION_ARCHITECTURE, print_error, loss_metric_config, round_loss_metric, class_metric_list
 from terra_ai.data.datasets.extra import LayerEncodingChoice
 from terra_ai.data.presets.training import Metric
+from terra_ai.data.training.extra import StateStatusChoice
 from terra_ai.data.training.train import TrainingDetailsData
 from terra_ai.datasets.preparing import PrepareDataset
 
-
 OUTPUT_LOG_CONFIG = {
-                    "loss": {
-                        'giou_loss': {"train": [], "val": []},
-                        'conf_loss': {"train": [], "val": []},
-                        'prob_loss': {"train": [], "val": []},
-                        'total_loss': {"train": [], "val": []}
-                    },
-                    "class_loss": {'prob_loss': {}},
-                    "metrics": {'mAP50': {"train": [], "val": []}},
-                    "class_metrics": {'mAP50': {}},
-                    "progress_state": {
-                        "loss": {
-                            'giou_loss': {
-                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
-                            'conf_loss': {
-                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
-                            'prob_loss': {
-                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
-                            'total_loss': {
-                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []}
-                        },
-                        "metrics": {
-                            'mAP50': {"mean_log_history": [], "normal_state": [], "overfitting": []}
-                        }
-                    }
-                }
+    "loss": {
+        'giou_loss': {"train": [], "val": []},
+        'conf_loss': {"train": [], "val": []},
+        'prob_loss': {"train": [], "val": []},
+        'total_loss': {"train": [], "val": []}
+    },
+    "class_loss": {'prob_loss': {}},
+    "metrics": {'mAP50': {"train": [], "val": []}},
+    "class_metrics": {'mAP50': {}},
+    "progress_state": {
+        "loss": {
+            'giou_loss': {
+                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+            'conf_loss': {
+                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+            'prob_loss': {
+                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+            'total_loss': {
+                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []}
+        },
+        "metrics": {
+            'mAP50': {"mean_log_history": [], "normal_state": [], "overfitting": []}
+        }
+    }
+}
 
 
 class History:
 
-    def __init__(self, dataset: PrepareDataset, training_details: TrainingDetailsData, retrain_epochs: int = None,
-                 model_name: str = "model", deploy_type: str = ""):
+    def __init__(self, dataset: PrepareDataset, training_details: TrainingDetailsData, deploy_type: str = ""):
         self.architecture_type = deploy_type
         self.current_logs = {}
         self.dataset = dataset
         self.training_detail = training_details
         self.training_detail.logs = None
+        self.last_epoch = 0
+        self.epochs = training_details.base.epochs
+        self.sum_epoch = self.epochs
         self.log_history = self._load_logs(dataset=dataset, training_details=training_details)
         self.class_outputs = class_metric_list(dataset)
         if self.architecture_type in CLASSIFICATION_ARCHITECTURE:
@@ -65,27 +67,19 @@ class History:
         return self.log_history
 
     def save_logs(self):
-        method_name = '_save_logs'
+        method_name = 'save_logs'
         try:
             print(method_name)
             logs = {
                 "fit_log": self.log_history,
                 "interactive_log": interactive.log_history,
                 "progress_table": interactive.progress_table,
-                "addtrain_epochs": interactive.addtrain_epochs
+                "addtrain_epochs": interactive.addtrain_epochs,
+                "sum_epoch": self.sum_epoch
             }
             self.training_detail.logs = logs
-            interactive_path = os.path.join(self.training_detail.model_path, "interactive.history")
-            if not os.path.exists(interactive_path):
-                os.mkdir(interactive_path)
             with open(os.path.join(self.training_detail.model_path, "log.history"), "w", encoding="utf-8") as history:
-                json.dump(self.log_history, history)
-            with open(os.path.join(interactive_path, "log.int"), "w", encoding="utf-8") as log:
-                json.dump(interactive.log_history, log)
-            with open(os.path.join(interactive_path, "table.int"), "w", encoding="utf-8") as table:
-                json.dump(interactive.progress_table, table)
-            with open(os.path.join(interactive_path, "addtraining.int"), "w", encoding="utf-8") as addtraining:
-                json.dump({"addtrain_epochs": interactive.addtrain_epochs}, addtraining)
+                json.dump(logs, history)
         except Exception as e:
             print_error('FitCallback', method_name, e)
 
@@ -93,28 +87,29 @@ class History:
         method_name = '_load_logs'
         try:
             print(method_name)
-            if self.training_detail.state.status == "addtrain":
+            if self.training_detail.state.status == StateStatusChoice.addtrain:
                 if self.training_detail.logs:
-                    logs = self.training_detail.logs.get("fit_log")
-                    interactive.log_history = self.training_detail.logs.get("interactive_log")
-                    interactive.progress_table = self.training_detail.logs.get("progress_table")
-                    interactive.addtrain_epochs = self.training_detail.logs.get("addtrain_epochs")
+                    logs = self.training_detail.logs
                 else:
-                    interactive_path = os.path.join(self.training_detail.model_path, "interactive.history")
                     with open(os.path.join(self.training_detail.model_path, "log.history"), "r",
                               encoding="utf-8") as history:
                         logs = json.load(history)
-                    with open(os.path.join(interactive_path, "log.int"), "r", encoding="utf-8") as int_log:
-                        interactive.log_history = json.load(int_log)
-                    with open(os.path.join(interactive_path, "table.int"), "r", encoding="utf-8") as table_int:
-                        interactive.progress_table = json.load(table_int)
-                    with open(os.path.join(interactive_path, "addtraining.int"), "r",
-                              encoding="utf-8") as addtraining_int:
-                        interactive.addtrain_epochs = json.load(addtraining_int)["addtrain_epochs"]
-                self.last_epoch = max(logs.get('epochs'))
-                self.retrain_epochs = self.last_epoch + self.training_detail.base.epochs
-                self.still_epochs = self.retrain_epochs - self.last_epoch
-                return logs
+                print("LOGS: ", logs)
+                interactive.log_history = logs.get("interactive_log")
+                interactive.progress_table = logs.get("progress_table")
+                interactive.addtrain_epochs = logs.get("addtrain_epochs")
+                fit_logs = logs.get("fit_log")
+
+                self.last_epoch = max(fit_logs.get('epochs')) + 1
+                self.sum_epoch = logs.get("sum_epoch")
+                print(self.epochs, self.last_epoch, self.sum_epoch)
+                if self.training_detail.state.status == "addtrain":
+                    if logs.get("addtrain_epochs")[-1] >= self.sum_epoch:
+                        self.sum_epoch += self.training_detail.base.epochs
+                    if logs.get("addtrain_epochs")[-1] < self.sum_epoch:
+                        self.epochs = self.sum_epoch - logs.get("addtrain_epochs")[-1]
+                print(self.epochs, self.last_epoch, self.sum_epoch)
+                return fit_logs
             else:
                 return self._prepare_log_history_template(options=dataset, params=training_details)
         except Exception as e:

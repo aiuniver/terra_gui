@@ -34,7 +34,7 @@ class GUINN:
 
     def __init__(self) -> None:
         self.name = "GUINN"
-        self.callbacks = None
+        self.callback = None
         self.params: TrainingDetailsData
         self.nn_name: str = ''
         self.dataset: Optional[PrepareDataset] = None
@@ -82,16 +82,6 @@ class GUINN:
                     params.state.set("no_train")
                 raise exceptions.TooBigBatchSize(params.base.batch, train_size)
 
-            if params.state.status == "addtrain":
-                if params.logs.get("addtrain_epochs")[-1] >= self.sum_epoch:
-                    self.sum_epoch += params.base.epochs
-                if params.logs.get("addtrain_epochs")[-1] < self.sum_epoch:
-                    self.epochs = self.sum_epoch - params.logs.get("addtrain_epochs")[-1]
-                else:
-                    self.epochs = params.base.epochs
-            else:
-                self.epochs = params.base.epochs
-
             self.batch_size = params.base.batch
 
             interactive.set_attributes(dataset=self.dataset, params=params)
@@ -103,10 +93,8 @@ class GUINN:
         try:
             print(method_name)
             progress.pool(self.progress_name, finished=False, message="Добавление колбэков...")
-            retrain_epochs = self.sum_epoch if train_details.state.status == "addtrain" else self.epochs
 
-            self.callback = FitCallback(dataset=dataset, retrain_epochs=retrain_epochs,
-                                        training_details=train_details, model_name=self.nn_name,
+            self.callback = FitCallback(dataset=dataset, training_details=train_details, model_name=self.nn_name,
                                         deploy_type=self.deploy_type.name)
             progress.pool(self.progress_name, finished=False, message="Добавление колбэков выполнено")
         except Exception as e:
@@ -207,7 +195,7 @@ class GUINN:
                                                  **options)
                 weight = None
                 for i in os.listdir(train_details.model_path):
-                    if i[-3:] == '.h5' and 'last' in i:
+                    if i[-3:] == '.h5' and 'best' not in i:
                         weight = i
                 if weight:
                     train_model.load_weights()
@@ -248,33 +236,19 @@ class GUINN:
         except Exception as e:
             print_error(GUINN().name, method_name, e)
 
-    def terra_fit(self, dataset: DatasetData, gui_model: ModelDetailsData, training: TrainingDetailsData) -> dict:
+    def terra_fit(self, dataset: DatasetData, gui_model: ModelDetailsData, training: TrainingDetailsData) -> None:
         method_name = 'model_fit'
         try:
-            """
-               This method created for using wth externally compiled models
-
-               Args:
-                   dataset: DatasetData
-                   gui_model: Keras model for fit - ModelDetailsData
-                   training: TrainingDetailsData
-
-               Return:
-                   dict
-               """
             print(method_name)
-            # self._kill_last_training(state=training)
+            self._kill_last_training(state=training)
             progress.pool.reset(self.progress_name)
 
             if training.state.status != "addtrain":
                 self._save_params_for_deploy(params=training)
-
             self.nn_cleaner(retrain=True if training.state.status == "training" else False)
-
             self._set_training_params(dataset=dataset, params=training)
-
             self.model_fit(params=training, dataset=self.dataset, model=gui_model)
-            return {"dataset": self.dataset}
+
         except Exception as e:
             print_error(GUINN().name, method_name, e)
 
@@ -290,35 +264,26 @@ class GUINN:
                 self.sum_epoch = 0
                 self.loss = {}
                 self.metrics = {}
-                self.callbacks = []
+                self.callback = None
                 interactive.clear_history()
             gc.collect()
         except Exception as e:
             print_error(GUINN().name, method_name, e)
 
-    def get_nn(self):
-        self.nn_cleaner(retrain=True)
-        return self
-
     @progress.threading
     def model_fit(self, params: TrainingDetailsData, model: ModelDetailsData, dataset: PrepareDataset) -> None:
-        method_name = 'base_model_fit'
+        method_name = 'model_fit'
         try:
-            yolo_arch = True if dataset.data.architecture in YOLO_ARCHITECTURE else False
             self._set_callbacks(dataset=dataset, train_details=params)
-            # callback = FitCallback(dataset, params)
             threading.enumerate()[-1].setName("current_train")
             progress.pool(self.progress_name, finished=False, message="Компиляция модели ...")
             compiled_model = self._set_model(model=model, train_details=params, dataset=dataset)
             compiled_model.set_callback(self.callback)
+            progress.pool(self.progress_name, finished=False, message="\n Компиляция модели выполнена")
+            progress.pool(self.progress_name, finished=False, message="\n Начало обучения ...")
             if params.state.status == "training":
                 compiled_model.save()
             compiled_model.fit(params=params, dataset=dataset)
 
-            progress.pool(self.progress_name, finished=False, message="\n Компиляция модели выполнена")
-            progress.pool(self.progress_name, finished=False, message="\n Начало обучения ...")
-            if (params.state.status == "stopped" and self.callbacks[0].last_epoch < params.base.epochs) or \
-                    (params.state.status == "trained" and self.callbacks[0].last_epoch - 1 == params.base.epochs):
-                self.sum_epoch = params.base.epochs
         except Exception as e:
             print_error(GUINN().name, method_name, e)
