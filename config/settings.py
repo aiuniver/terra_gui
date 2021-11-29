@@ -155,3 +155,24 @@ USER_LASTNAME = env.str("USER_LASTNAME")
 USER_EMAIL = env.str("USER_EMAIL")
 USER_TOKEN = env.str("USER_TOKEN")
 USER_SERVERS = env.json("USER_SERVERS", default={})
+
+
+# Logging
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "file": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "filename": "logs.txt",
+        },
+    },
+    "loggers": {
+        "": {
+            "level": "DEBUG",
+            "handlers": ["file"],
+        }
+    },
+}
