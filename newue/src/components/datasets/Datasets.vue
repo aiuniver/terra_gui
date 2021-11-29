@@ -15,7 +15,7 @@
 
     <scrollbar style="justify-self: stretch;">
       <div v-if="cardsDisplay" class="datasets-cards">
-        <DatasetCard v-for="(item, idx) in sortedList" :key="idx" :dataset="item" />
+        <DatasetCard @click.native="selectDataset(item)" v-for="(item, idx) in sortedList" :key="idx" :dataset="item" />
       </div>
       <Table v-else :data="sortedDatasets" :selectedType="selectedType" />
     </scrollbar>
@@ -37,6 +37,9 @@ export default {
     selectedSort: {}
   }),
   methods:{
+    selectDataset(item){
+      this.$store.dispatch('datasets/selectDataset', item)
+    },
     handleChangeFilter(sort){
       this.selectedSort = sort
     },  

@@ -50,7 +50,44 @@
           </ul>
         </div>
       </div>
-      <Dataset :datasets="datasets" :selectedType="selectedType" />
+      <Datasets :datasets="datasets" :selectedType="selectedType" />
+      <BasePanel v-if="Object.keys(choiceDataset).length"> 
+        <BasePanelContent>
+          <template #header>Общее</template>
+           <template #content>
+            <ul>
+              <li>
+                <span>Название:</span>
+                <span>{{ choiceDataset.name }} </span>
+              </li>
+              <li>
+                <span>Вес:</span>
+              </li>
+              <li>
+                <span>Создатель:</span>
+              </li>
+            </ul>
+          </template>
+        </BasePanelContent>
+        <BasePanelContent>
+          <template #header>Отношение</template>
+           <template #content>
+            asd
+          </template>
+        </BasePanelContent>
+        <BasePanelContent>
+          <template #header>Размерности типов данных </template>
+           <template #content>
+            asd
+          </template>
+        </BasePanelContent>
+         <BasePanelContent>
+          <template #header>Пример файлов</template>
+           <template #content>
+            asd
+          </template>
+        </BasePanelContent>
+      </BasePanel>
     </div>
   </main>
 </template>
@@ -58,9 +95,9 @@
 <script>
 import { mapGetters } from 'vuex';
 export default {
-  name: 'Datasets',
+  name: 'Choice',
   components: {
-    Dataset: () => import('@/components/datasets/Datasets.vue'),
+    Datasets: () => import('@/components/datasets/Datasets.vue'),
   },
   data: () => ({
     selectedType: 2,
@@ -68,6 +105,7 @@ export default {
   computed: {
     ...mapGetters({
       datasets: 'datasets/getDatasets',
+      choiceDataset: 'datasets/choiceDataset'
     }),
   },
 };

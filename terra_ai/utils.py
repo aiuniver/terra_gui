@@ -3,6 +3,8 @@ import os
 
 from pathlib import Path
 from contextlib import contextmanager
+from typing import Union, Tuple
+from encodings.aliases import aliases as encodings_aliases
 
 
 def decamelize(camel_case_string: str):
@@ -17,9 +19,9 @@ def camelize(snake_case_string: str):
         return "KLDivergence"
     # if snake_case_string == "dice_coef":
     #     return "DiceCoefficient"
-    if snake_case_string == 'unscaled_mae':
+    if snake_case_string == "unscaled_mae":
         return "UnscaledMAE"
-    if snake_case_string == 'percent_mae':
+    if snake_case_string == "percent_mae":
         return "PercentMAE"
     if snake_case_string == "logcosh":
         return "LogCoshError"
@@ -34,3 +36,26 @@ def context_cwd(path: Path):
         yield
     finally:
         os.chdir(_cwd)
+
+
+def autodetect_encoding(
+    path: str, return_encoding: bool = False
+) -> Union[str, Tuple[str, str]]:
+    available = list(encodings_aliases)
+    available.insert(0, "utf8")
+    available.insert(1, "windows_1251")
+
+    output = None
+    with open(path, "rb") as txt_file_ref:
+        content = txt_file_ref.read()
+        for encoding in available:
+            try:
+                output = content.decode(encoding)
+                break
+            except UnicodeDecodeError:
+                pass
+
+    if return_encoding:
+        return output, encoding
+    else:
+        return output

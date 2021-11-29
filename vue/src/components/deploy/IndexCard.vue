@@ -22,7 +22,7 @@
           <scrollbar :ops="ops">
             <TableTextSegmented
               v-bind="{value: card.format, tags_color: {segmentationLayer}, layer: 'segmentationLayer', block_width: '598px'}"
-              :key="RandId"
+              :key="id"
             />
           </scrollbar>
         </div>
@@ -35,7 +35,7 @@
       </div>
       <div v-if="type == 'AudioClassification'">
         <div class="card__original">
-          <AudioCard :value="card.source" :update="RandId" />
+          <AudioCard :value="card.source" :update="random" />
         </div>
         <div class="card__result">
           <TextCard :style="{ width: '600px', height: '80px' }">{{ ClassificationResult }}</TextCard>
@@ -80,7 +80,7 @@
         </div>
       </div>
     </div>
-    <div class="card__reload"><button class="btn-reload" @click="ReloadCard"><i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i></button></div>
+    <div class="card__reload"><button class="btn-reload" @click="reload"><i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i></button></div>
   </div>
 </template>
 
@@ -111,6 +111,7 @@ export default {
 
   },
   data: () => ({
+    random: 'dsdsdd',
     ops: {
       scrollPanel: {
         scrollingX: false,
@@ -127,16 +128,15 @@ export default {
     color_map: {
       type: Array,
       default: () => ([]),
-    }
+    },
+    id: String
   },
 
   methods: {
-    ReloadCard() {
+    async reload() {
       this.$emit('reload', [this.index.toString()]);
+      this.random = await this.$store.dispatch('deploy/random')
     },
-    GraphicData(){
-
-    }
   },
   computed: {
     ...mapGetters({
@@ -144,7 +144,6 @@ export default {
       defaultLayout: 'deploy/getDefaultLayout',
       origTextStyle: 'deploy/getOrigTextStyle',
       type: 'deploy/getDeployType',
-      RandId: 'deploy/getRandId',
     }),
     layout() {
       const layout = this.defaultLayout;
@@ -176,7 +175,7 @@ export default {
     },
   },
   mounted() {
-    console.log(this.card)
+    // console.log(this.card)
   }
 };
 </script>

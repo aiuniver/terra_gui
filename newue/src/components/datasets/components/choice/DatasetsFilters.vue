@@ -5,20 +5,18 @@
     </TField>
 
     <div class="datasets-filter-sort">
-      <div 
-          class="datasets-filter-header" 
-          @click="showSortOptions = !showSortOptions" 
-          v-if="cardsDisplay"
-      >
-        <span>{{ selectedSort.title }}</span>
-        <SvgContainer name="arrow-chevron-down" />
-      </div>
-
-      <div class="datasets-filter-dropdown" v-if="showSortOptions">
-        <div v-for="(item, idx) in sortOptions" :key="idx" @click="selectSort(item.idx)">
-          {{ item.title }}
+      <div class="datasets-filter-header"  v-if="cardsDisplay">
+        <div  class="flex align-center" @click="showSortOptions = !showSortOptions">
+          <span>{{ selectedSort.title }}</span>
+          <SvgContainer name="arrow-chevron-down" />
+        </div>
+        <div class="datasets-filter-dropdown" v-if="showSortOptions">
+          <div v-for="(item, idx) in sortOptions" :key="idx" @click="selectSort(item.idx)">
+            {{ item.title }}
+          </div>
         </div>
       </div>
+
       <div class="datasets-filter-display" v-if="selectedType !== 2">
         <SvgContainer
           name="grid-cube-outline"
@@ -27,7 +25,7 @@
         />
         <SvgContainer
           name="lines-justyfy"
-          @click.native="$emit('changeDisplay', false), showSortOptions = false"
+          @click.native="$emit('changeDisplay', false), (showSortOptions = false)"
           :class="['ci-tile', { 'ci-tile--selected': !cardsDisplay }]"
         />
       </div>
@@ -132,11 +130,12 @@ export default {
   &-dropdown {
     position: absolute;
     top: calc(100% + 10px);
+    right: 0;
     background-color: #242f3d;
     z-index: 1;
     border-radius: 4px;
     overflow: hidden;
-    width: 200px;
+    width: 220px;
     cursor: pointer;
     div {
       padding: 10px;
@@ -149,8 +148,7 @@ export default {
 
   &-header {
     cursor: pointer;
-    display: flex;
-    align-items: center;
+    position: relative;
     user-select: none;
   }
 

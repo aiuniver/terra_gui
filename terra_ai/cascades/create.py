@@ -10,6 +10,7 @@ from tensorflow.keras.models import load_model
 from collections import OrderedDict
 import sys
 from inspect import signature
+import itertools
 
 
 def make_processing(preprocess_list):
@@ -20,15 +21,21 @@ def make_processing(preprocess_list):
                 inp += i
             else:
                 inp.append(i)
-
         out = []
-
-        for prep, element in zip(preprocess_list, inp):
-            if prep:
-                out.append(prep(element))
-            else:
-                out.append(element)
-
+        if len(inp) == 1:
+            # print('1')
+            for prep, element in itertools.zip_longest(preprocess_list, inp, fillvalue=inp[0]):
+                if prep:
+                    out.append(prep(element))
+                else:
+                    out.append(element)
+        else:
+            # print('>1')
+            for prep, element in zip(preprocess_list, inp):
+                if prep:
+                    out.append(prep(element))
+                else:
+                    out.append(element)
         return out
     return fun
 
@@ -213,6 +220,8 @@ def create_model(**params):
 
 
 def create_function(**params):
+    if "params" not in params.keys():
+        params['params'] = {}
     function = getattr(general_fucntions, decamelize(params['task']))
     function = CascadeElement(
         getattr(function, params['name'])(**params['params']),

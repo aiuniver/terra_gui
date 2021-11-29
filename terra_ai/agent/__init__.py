@@ -356,9 +356,7 @@ class Exchange:
         Получение каскада
         """
         data = CascadeLoadData(value=value)
-        with open(
-            Path(data.value, settings.CASCADE_CONFIG).absolute(), "r"
-        ) as config_ref:
+        with open(Path(data.value).absolute(), "r") as config_ref:
             config = json.load(config_ref)
             return CascadeDetailsData(**config)
 

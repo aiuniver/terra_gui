@@ -12,13 +12,9 @@
 </template>
 
 <script>
-import BasePanelPagination from '@/components/datasets/components/panel/BasePanelPagination';
 
 export default {
   name: 'BasePanel',
-  components: {
-    BasePanelPagination,
-  },
 };
 </script>
 

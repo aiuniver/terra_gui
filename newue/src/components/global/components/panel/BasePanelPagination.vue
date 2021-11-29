@@ -14,12 +14,14 @@
         <span>Входные данные</span>
       </div>
     </div>
-    <d-button @click="$emit('action', 'next')" style="width: 40%" color="secondary" direction="left" text="Далее" />
+    <DButton @click="$emit('action', 'next')" style="width: 40%" color="secondary" direction="left" text="Далее" />
   </div>
 </template>
 
 <script>
-export default {};
+export default {
+  name: "BasePanelPagination"
+};
 </script>
 
 <style lang="scss" scoped>
