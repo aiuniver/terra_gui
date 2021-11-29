@@ -576,22 +576,6 @@ def resize_bboxes(frame_mode, coords, orig_x, orig_y, target_x=416, target_y=416
     return real_boxes
 
 
-# def resize_bboxes(coords, orig_x, orig_y, target_x=416, target_y=416):
-#
-#     real_boxes = []
-#     for coord in coords.split(' '):
-#         sample = [literal_eval(x) for x in coord.split(',')]
-#         sample[0] = int(round((sample[0] / orig_x) * target_x, 0))
-#         sample[1] = int(round((sample[1] / orig_y) * target_y, 0))
-#         sample[2] = int(round((sample[2] / orig_x) * target_x, 0))
-#         sample[3] = int(round((sample[3] / orig_y) * target_y, 0))
-#
-#         if sample[0] < sample[2] and sample[1] < sample[3]:
-#             real_boxes.append(sample)
-#
-#     return real_boxes
-
-
 def get_od_names(creation_data):
     names_list = []
     for worker_name, worker_params in creation_data.version.processing.items():
@@ -651,6 +635,7 @@ def get_od_names(creation_data):
                 names_list = sorted(set(names_list))
 
     return names_list
+
 
 def get_annotation_type_autosearch(path: Path) -> LayerODDatasetTypeChoice:
     dir_names = []
