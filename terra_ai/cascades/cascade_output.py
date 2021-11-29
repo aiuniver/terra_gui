@@ -10,7 +10,7 @@ def video(path, **params):
     shape = (params['width'], params['height'])
 
     writer = cv2.VideoWriter(
-        path, cv2.VideoWriter_fourcc(*"MJPG"), 10, shape
+        path, cv2.VideoWriter_fourcc(*"VP80"), 15, shape
     )
 
     def fix(img):
@@ -52,4 +52,10 @@ def text(path):
         with open(path, 'a') as f:
             f.write(str(string) + '\n')
 
+    return fun
+
+
+def google_tts(path):
+    def fun(tts):
+        tts.save(path)
     return fun

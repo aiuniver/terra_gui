@@ -4,15 +4,13 @@ import shutil
 from pathlib import Path
 from typing import List, Tuple
 
-from pydantic import FilePath
-
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.settings import DEPLOY_PRESET_COUNT
 from ..extra import DataBaseList, DataBase
 
 
 class Item(BaseMixinData):
-    source: FilePath
+    source: str
     actual: str
     data: List[Tuple[str, float]]
 
@@ -20,6 +18,10 @@ class Item(BaseMixinData):
 class DataList(DataBaseList):
     class Meta:
         source = Item
+
+    def preset_update(self, data):
+        data.update({"source": str(Path(self.path_deploy, data.get("source")))})
+        return data
 
     def reload(self, indexes: List[int] = None):
         if indexes is None:
@@ -29,7 +31,7 @@ class DataList(DataBaseList):
         if not len(self):
             return
 
-        label_file = Path(self.path, "label.txt")
+        label_file = Path(self.path_deploy, "label.txt")
 
         for _index in indexes:
             self.update(_index)
@@ -44,7 +46,10 @@ class DataList(DataBaseList):
         item = random.choice(self)
         self.preset[index] = item
 
-        shutil.copyfile(item.source, Path(self.path, f"{index + 1}{item.source.suffix}"))
+        shutil.copyfile(
+            Path(self.path_deploy, item.source),
+            Path(self.path_deploy, f"{index + 1}{Path(item.source).suffix}"),
+        )
 
 
 class Data(DataBase):

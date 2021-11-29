@@ -5,7 +5,6 @@ from pathlib import Path, PurePath
 from typing import List, Tuple
 
 from PIL import Image
-from pydantic import FilePath
 
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.settings import DEPLOY_PRESET_COUNT
@@ -13,8 +12,8 @@ from ..extra import DataBaseList, DataBase
 
 
 class Item(BaseMixinData):
-    source: FilePath
-    segment: FilePath
+    source: str
+    segment: str
     data: List[Tuple[str, Tuple[int, int, int]]]
 
 
@@ -25,6 +24,11 @@ class DataList(DataBaseList):
     class Meta:
         source = Item
 
+    def preset_update(self, data):
+        for _param in ("source", "segment"):
+            data.update({_param: str(Path(self.path_deploy, data.get(_param)))})
+        return data
+
     def reload(self, indexes: List[int] = None):
         if indexes is None:
             indexes = list(range(DEPLOY_PRESET_COUNT))
@@ -33,11 +37,11 @@ class DataList(DataBaseList):
         if not len(self):
             return
 
-        self.source_path = Path(self.path, "preset", "in")
-        self.segment_path = Path(self.path, "preset", "out")
+        self.source_path = Path(self.path_deploy, "preset", "in")
+        self.segment_path = Path(self.path_deploy, "preset", "out")
         os.makedirs(self.source_path, exist_ok=True)
         os.makedirs(self.segment_path, exist_ok=True)
-        label_file = Path(self.path, "label.txt")
+        label_file = Path(self.path_deploy, "label.txt")
 
         for _index in indexes:
             self.update(_index)
@@ -55,8 +59,8 @@ class DataList(DataBaseList):
         destination_source = Path(self.source_path, f"{index + 1}.jpg")
         destination_segment = Path(self.segment_path, f"{index + 1}.jpg")
 
-        Image.open(item.source).save(destination_source)
-        Image.open(item.segment).save(destination_segment)
+        Image.open(Path(self.path_deploy, item.source)).save(destination_source)
+        Image.open(Path(self.path_deploy, item.segment)).save(destination_segment)
 
 
 class Data(DataBase):

@@ -9,13 +9,13 @@ def main(**params):
         acc *= 100
         acc = np.array(acc)
         acc = acc.astype(np.int)
+        print(acc.shape)
+        if len(acc) == 1:
+            acc = acc[0]
+        else:
+            acc = np.mean(acc, axis=0)
 
-        out = []
-
-        if len(acc.shape) == 2:
-            for i in acc:
-                out.append(list(zip(classes_names, i)))
-
+        out = list(zip(classes_names, acc))
         return sorted(out, key=lambda x: x[-1], reverse=True)
 
     return fun

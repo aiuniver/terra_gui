@@ -1,23 +1,25 @@
 import os
 import json
 import shutil
+
 import pynvml
 import tensorflow
 
 from pathlib import Path
-from typing import Any, NoReturn
+from typing import Any, Dict, List
 
 from . import exceptions as agent_exceptions
 from . import utils as agent_utils
 from .. import settings, progress
+from ..cascades.cascade_validator import CascadeValidator
 from ..exceptions import tensor_flow as tf_exceptions
 from ..data.datasets.creation import FilePathSourcesList
 from ..data.datasets.creation import SourceData, CreationData
 from ..data.datasets.dataset import (
-    DatasetLoadData,
     CustomDatasetConfigData,
     DatasetsGroupsList,
     DatasetData,
+    DatasetLoadData,
 )
 from ..data.datasets.extra import DatasetGroupChoice
 from ..data.extra import (
@@ -25,21 +27,25 @@ from ..data.extra import (
     HardwareAcceleratorChoice,
     FileManagerItem,
 )
+from ..cascades.cascade_runner import CascadeRunner
 from ..data.modeling.extra import ModelGroupChoice
 from ..data.modeling.model import ModelsGroupsList, ModelLoadData, ModelDetailsData
 from ..data.cascades.cascade import CascadesList, CascadeLoadData, CascadeDetailsData
 from ..data.presets.datasets import DatasetsGroups
 from ..data.presets.models import ModelsGroups
 from ..data.projects.project import ProjectsInfoData, ProjectsList
-from ..data.training.train import TrainData, InteractiveData
+from ..data.training.train import TrainingDetailsData
+from ..data.training.extra import StateStatusChoice
+from ..data.cascades.extra import BlockGroupChoice
+from ..data.deploy.tasks import DeployData, DeployPageData
 from ..datasets import loading as datasets_loading
 from ..datasets import utils as datasets_utils
 from ..datasets.creating import CreateDataset
 from ..deploy import loading as deploy_loading
 from ..modeling.validator import ModelValidator
-from ..progress import utils as progress_utils
 from ..training import training_obj
 from ..training.guinn import interactive
+from ..project import loading as project_loading
 
 
 class Exchange:
@@ -119,42 +125,27 @@ class Exchange:
         projects.sort(key=lambda item: item.label)
         return ProjectsInfoData(projects=projects.native())
 
-    def _call_project_save(
-        self, source: Path, target: Path, name: str, overwrite: bool
-    ):
-        """
-        Сохранение проекта
-        """
-        project_path = Path(target, f"{name}.{settings.PROJECT_EXT}")
-        if not overwrite and project_path.is_file():
-            raise agent_exceptions.ProjectAlreadyExistsException(name)
-        zip_destination = progress_utils.pack(
-            "project_save", "Сохранение проекта", source, delete=False
-        )
-        shutil.move(zip_destination.name, project_path)
-
-    def _call_project_load(self, source: Path, target: Path):
+    def _call_project_load(self, dataset_path: Path, source: Path, target: Path):
         """
         Загрузка проекта
         """
-        shutil.rmtree(target, ignore_errors=True)
-        destination = progress_utils.unpack("project_load", "Загрузка проекта", source)
-        shutil.move(destination, target)
+        project_loading.load(Path(dataset_path), Path(source), Path(target))
+
+    def _call_project_load_progress(self) -> progress.ProgressData:
+        """
+        Прогресс загрузки проекта
+        """
+        return progress.pool(project_loading.PROJECT_LOAD_NAME)
 
     def _call_dataset_choice(
-        self,
-        custom_path: Path,
-        destination: Path,
-        group: str,
-        alias: str,
-        reset_model: bool = False,
-    ) -> NoReturn:
+        self, custom_path: Path, group: str, alias: str, reset_model: bool = False
+    ):
         """
         Выбор датасета
         """
         datasets_loading.choice(
+            "dataset_choice",
             DatasetLoadData(path=custom_path, group=group, alias=alias),
-            destination=destination,
             reset_model=reset_model,
         )
 
@@ -313,57 +304,40 @@ class Exchange:
         self,
         dataset: DatasetData,
         model: ModelDetailsData,
-        training_path: Path,
-        dataset_path: Path,
-        params: TrainData,
-        initial_config: InteractiveData,
+        training: TrainingDetailsData,
     ):
         """
         Старт обучения
         """
-        if (
-            interactive.get_states().get("status") == "stopped"
-            or interactive.get_states().get("status") == "trained"
-        ):
-            interactive.set_status("addtrain")
-        else:
-            interactive.set_status("training")
+        training_obj.terra_fit(dataset=dataset, gui_model=model, training=training)
 
-        # print("\033[1;33m—————————————————— Training params ——————————————————\033[0m")
-        # print(params.json(indent=2, ensure_ascii=False))
-        # print("\033[1;33m—————————————————— Initial config ———————————————————\033[0m")
-        # print(initial_config.json(indent=2, ensure_ascii=False))
-        # print("\033[1;33m—————————————————————————————————————————————————————\033[0m")
-
-        training_obj.terra_fit(
-            dataset=dataset,
-            gui_model=model,
-            training_path=training_path,
-            dataset_path=dataset_path,
-            training_params=params,
-            initial_config=initial_config,
-        )
-        return interactive.train_states
-
-    def _call_training_stop(self):
+    def _call_training_stop(self, training: TrainingDetailsData):
         """
         Остановить обучение
         """
-        interactive.set_status("stopped")
-        return interactive.train_states
+        training.state.set(StateStatusChoice.stopped)
 
-    def _call_training_clear(self):
+    def _call_training_clear(self, training: TrainingDetailsData):
         """
         Очистить обучение
         """
-        interactive.set_status("no_train")
-        return interactive.train_states
+        training.state.set(StateStatusChoice.no_train)
 
-    def _call_training_interactive(self, config: InteractiveData) -> dict:
+    def _call_training_interactive(self, training: TrainingDetailsData):
         """
         Обновление интерактивных параметров обучения
         """
-        return interactive.get_train_results(config=config)
+        if training.state.status not in [
+            # StateStatusChoice.stopped,
+            StateStatusChoice.no_train,
+        ]:
+            interactive.get_train_results()
+
+    def _call_training_kill(self, training: TrainingDetailsData):
+        """
+        Удаление незавершенного обучения
+        """
+        training.state.set("kill")
 
     def _call_training_progress(self) -> progress.ProgressData:
         """
@@ -382,7 +356,7 @@ class Exchange:
         Получение каскада
         """
         data = CascadeLoadData(value=value)
-        with open(data.value.absolute(), "r") as config_ref:
+        with open(Path(data.value).absolute(), "r") as config_ref:
             config = json.load(config_ref)
             return CascadeDetailsData(**config)
 
@@ -392,11 +366,87 @@ class Exchange:
         """
         return CascadesList(path)
 
-    def _call_deploy_presets(self):
+    def _call_cascade_update(self, cascade: dict) -> CascadeDetailsData:
         """
-        получение данных для отображения пресетов на странице деплоя
+        Обновление каскада
         """
-        return interactive.deploy_presets_data
+        return CascadeDetailsData(**cascade)
+
+    def _call_cascade_validate(self, path: Path, cascade: CascadeDetailsData):
+        """
+        Валидация каскада
+        """
+        return CascadeValidator().get_validate(cascade_data=cascade, training_path=path)
+
+    def _call_cascade_start(
+        self,
+        training_path: Path,
+        datasets_path: Path,
+        sources: Dict[int, Dict[str, str]],
+        cascade: CascadeDetailsData,
+    ):
+        """
+        Запуск каскада
+        """
+        datasets = list(
+            map(
+                lambda item: DatasetLoadData(path=datasets_path, **dict(item)),
+                sources.values(),
+            )
+        )
+        for block in cascade.blocks:
+            if block.group == BlockGroupChoice.Model:
+                _path = Path(
+                    training_path, block.parameters.main.path, "model", "dataset.json"
+                )
+                if not _path.is_file():
+                    _path = Path(
+                        training_path,
+                        block.parameters.main.path,
+                        "model",
+                        "dataset",
+                        "config.json",
+                    )
+                with open(_path) as config_ref:
+                    data = json.load(config_ref)
+                    datasets.append(
+                        DatasetLoadData(
+                            path=datasets_path,
+                            alias=data.get("alias"),
+                            group=data.get("group"),
+                        )
+                    )
+        datasets_loading.multiload("cascade_start", datasets, sources=sources)
+
+    def _call_cascade_start_progress(self) -> progress.ProgressData:
+        """
+        Процесс запуска каскада
+        """
+        return progress.pool("cascade_start")
+
+    def _call_cascade_execute(
+        self, sources: Dict[int, List[str]], cascade: CascadeDetailsData, training_path
+    ):
+        """
+        Исполнение каскада
+        """
+        CascadeRunner().start_cascade(
+            sources=sources, cascade_data=cascade, training_path=training_path
+        )
+
+    def _call_deploy_get(
+        self, datasets: List[DatasetLoadData], page: DeployPageData
+    ) -> DeployData:
+        """
+        Получение данных для отображения пресетов на странице деплоя
+        """
+        datasets_loading.multiload("deploy_get", datasets, page=page)
+
+    def _call_deploy_get_progress(self) -> progress.ProgressData:
+        """
+        Прогресс получения данных для отображения пресетов на странице деплоя
+        """
+        return progress.pool("deploy_get")
 
     def _call_deploy_cascades_create(self, training_path: str, model_name: str):
         pass

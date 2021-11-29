@@ -1,5 +1,5 @@
 from terra_ai.data.datasets.creations.layers.image_augmentation import AugmentationData
-from terra_ai.utils import decamelize, camelize
+from terra_ai.utils import decamelize, camelize, autodetect_encoding
 from terra_ai.exceptions.tensor_flow import ResourceExhaustedError as Resource
 from terra_ai.datasets.data import DataType, InstructionsData, DatasetInstructionsData
 from terra_ai.datasets.utils import PATH_TYPE_LIST, get_od_names
@@ -68,7 +68,6 @@ class CreateDataset(object):
         self.y_cls: list = []
         self.columns = {}
         self.augmentation = {}
-        # self.augmentation = {'object': None, 'data': []}
 
         self.columns_processing = {}
         if creation_data.columns_processing:
@@ -152,7 +151,7 @@ class CreateDataset(object):
     def preprocess_creation_data(creation_data):
 
         for out in creation_data.outputs:
-            if out.type == LayerOutputTypeChoice.Classification:
+            if out.type in [LayerOutputTypeChoice.Classification, LayerOutputTypeChoice.Tracker]:
                 if not out.parameters.sources_paths or not out.parameters.sources_paths[0].suffix == '.csv':
                     for inp in creation_data.inputs:
                         if inp.type in [LayerInputTypeChoice.Image, LayerInputTypeChoice.Text,
@@ -180,6 +179,9 @@ class CreateDataset(object):
                         inp.parameters.open_tags = out.parameters.open_tags
                         inp.parameters.close_tags = out.parameters.close_tags
             elif out.type == LayerOutputTypeChoice.ObjectDetection:
+                for inp in creation_data.inputs:
+                    if inp.type == LayerInputTypeChoice.Image:
+                        out.parameters.frame_mode = inp.parameters.image_mode
                 names_list = get_od_names(creation_data)
                 out.parameters.classes_names = names_list
                 out.parameters.num_classes = len(names_list)
@@ -219,6 +221,9 @@ class CreateDataset(object):
                 if out.type == LayerOutputTypeChoice.Classification and self.y_cls:
                     for col_name, data in outputs[out.id].items():
                         data.instructions = self.y_cls
+                elif out.type == LayerOutputTypeChoice.Tracker and self.y_cls:
+                    for col_name, data in outputs[out.id].items():
+                        data.instructions = [0 for x in self.y_cls]
 
         instructions = DatasetInstructionsData(inputs=inputs, outputs=outputs)
 
@@ -230,7 +235,9 @@ class CreateDataset(object):
 
         for put in data:
             try:
-                df = pd.read_csv(put.parameters.sources_paths[0], nrows=0, sep=None, engine='python').columns
+                _, encoding = autodetect_encoding(put.parameters.sources_paths[0], True)
+                df = pd.read_csv(put.parameters.sources_paths[0], nrows=0, sep=None,
+                                 engine='python', encoding=encoding).columns
             except Exception:
                 progress.pool(self.progress_name, error='Ошибка чтения csv-файла')
                 raise
@@ -240,9 +247,10 @@ class CreateDataset(object):
             self.tags[put.id] = {}
             put_columns = {}
             cols_names = list(put.parameters.cols_names.keys())
+            _, encoding = autodetect_encoding(put.parameters.sources_paths[0], True)
             dataframe = pd.read_csv(put.parameters.sources_paths[0], usecols=[cols_names_dict[str_idx]
                                                                               for str_idx in cols_names],
-                                    sep=None, engine='python')
+                                    sep=None, engine='python', encoding=encoding)
             for idx, name_index in enumerate(cols_names):
                 name = cols_names_dict[name_index]
                 instructions_data = None
@@ -382,7 +390,8 @@ class CreateDataset(object):
                         if put.type not in [LayerOutputTypeChoice.Classification, LayerOutputTypeChoice.Segmentation,
                                             LayerOutputTypeChoice.TextSegmentation,
                                             LayerOutputTypeChoice.ObjectDetection, LayerOutputTypeChoice.Timeseries,
-                                            LayerOutputTypeChoice.TimeseriesTrend, LayerOutputTypeChoice.Regression]:
+                                            LayerOutputTypeChoice.TimeseriesTrend, LayerOutputTypeChoice.Regression,
+                                            LayerOutputTypeChoice.Tracker]:
                             y_classes = result[1] if len(result) > 1 else [os.path.basename(os.path.dirname(dir_name))
                                                                            for dir_name in result[0]['instructions']]
                             self.y_cls += y_classes
@@ -422,7 +431,7 @@ class CreateDataset(object):
                     elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
                         self.preprocessing.create_word2vec(text_list=data.instructions, **data.parameters)
                 # if 'augmentation' in data.parameters.keys() and data.parameters['augmentation']:
-                    # self.augmentation[data.parameters['cols_names']] = {'train': [], 'val': [], 'test': []}
+                    # self.augmentation[data.parameters['cols_names']] = {'train': [], 'val': []}
                     # {'object': self.preprocessing.create_image_augmentation(data.parameters['augmentation']),
                     # 'data': []}
 
@@ -480,19 +489,16 @@ class CreateDataset(object):
             for key in classes_dict.keys():
                 random.shuffle(classes_dict[key])
 
-        split_sequence = {"train": [], "val": [], "test": []}
+        split_sequence = {"train": [], "val": []}
         for key, value in classes_dict.items():
             train_len = int(creation_data.info.part.train * len(classes_dict[key]))
-            val_len = int(creation_data.info.part.validation * len(classes_dict[key]))
 
             split_sequence['train'].extend(value[:train_len])
-            split_sequence['val'].extend(value[train_len: train_len + val_len])
-            split_sequence['test'].extend(value[train_len + val_len:])
+            split_sequence['val'].extend(value[train_len:])
 
         if creation_data.info.shuffle:
             random.shuffle(split_sequence['train'])
             random.shuffle(split_sequence['val'])
-            random.shuffle(split_sequence['test'])
 
         build_dataframe = {}
         for inp in self.instructions.inputs.keys():
@@ -510,6 +516,7 @@ class CreateDataset(object):
         for key, value in split_sequence.items():
             self.dataframe[key] = dataframe.loc[value, :].reset_index(drop=True)
         # print(self.dataframe['train'])
+        # print(self.dataframe['val'])
 
     def create_input_parameters(self, creation_data: CreationData) -> dict:
 
@@ -523,8 +530,10 @@ class CreateDataset(object):
                 encoding = LayerEncodingChoice.none
                 if creation_data.inputs.get(key).type == LayerInputTypeChoice.Dataframe:
                     try:
+                        _, encoding = autodetect_encoding(creation_data.inputs.get(key).parameters.sources_paths[0],
+                                                          True)
                         column_names = pd.read_csv(creation_data.inputs.get(key).parameters.sources_paths[0], nrows=0,
-                                                   sep=None, engine='python').columns.to_list()
+                                                   sep=None, engine='python', encoding=encoding).columns.to_list()
                     except Exception:
                         progress.pool(self.progress_name, error='Ошибка чтения csv-файла')
                         raise
@@ -664,7 +673,7 @@ class CreateDataset(object):
                                                                                    data.parameters['depth']]
                 elif decamelize(creation_data.outputs.get(key).type) == decamelize(
                         LayerOutputTypeChoice.ObjectDetection):
-                    data_to_pass = data.instructions[0]
+                    data_to_pass = self.dataframe['train'].iloc[0, 1]
                     tmp_im = Image.open(os.path.join(self.paths.basepath,
                                                      self.dataframe['train'].iloc[0, 0]))
                     data.parameters.update([('orig_x', tmp_im.width),
@@ -693,8 +702,10 @@ class CreateDataset(object):
 
                 if creation_data.outputs.get(key).type == LayerOutputTypeChoice.Dataframe:
                     try:
+                        _, encoding = autodetect_encoding(creation_data.inputs.get(key).parameters.sources_paths[0],
+                                                          True)
                         column_names = pd.read_csv(creation_data.outputs.get(key).parameters.sources_paths[0], nrows=0,
-                                                   sep=None, engine='python').columns.to_list()
+                                                   sep=None, engine='python', encoding=encoding).columns.to_list()
                     except Exception:
                         progress.pool(self.progress_name, error='Ошибка чтения csv-файла')
                         raise
@@ -869,8 +880,8 @@ class CreateDataset(object):
 
             return full_array, augm_data
 
-        out_array = {'train': {}, 'val': {}, 'test': {}}
-        service = {'train': {}, 'val': {}, 'test': {}}
+        out_array = {'train': {}, 'val': {}}
+        service = {'train': {}, 'val': {}}
 
         for split in list(out_array.keys()):
             for key in put_data.keys():

@@ -16,6 +16,7 @@ class DeployTypeChoice(str, Enum):
     DataframeClassification = "DataframeClassification"
     Timeseries = "Timeseries"
     TimeseriesTrend = "TimeseriesTrend"
+    VideoObjectDetection = "VideoObjectDetection"
     YoloV3 = "YoloV3"
     YoloV4 = "YoloV4"
 
@@ -35,5 +36,11 @@ class DeployTypeDemoChoice(str, Enum):
     DataframeClassification = "table_data_classification"
     Timeseries = "time_series"
     TimeseriesTrend = "time_series_trend"
+    VideoObjectDetection = "video_object_detection"
     YoloV3 = "object_detection"
     YoloV4 = "object_detection"
+
+
+class DeployTypePageChoice(str, Enum):
+    cascade = "cascade"
+    model = "model"

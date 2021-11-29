@@ -17,7 +17,7 @@ def main(**params):
         open_symbol = open_tags[0][0]
         close_symbol = close_tags[0][-1]
 
-    length = params['length'] if params['text_mode'] == "length_and_step" else params['max_words']
+    length = params['length']
 
     preprocessing = joblib.load(
         os.path.join(
@@ -42,13 +42,11 @@ def main(**params):
         text = text.split()
         arr = []
 
-        if params['text_mode'] == "completely":
-            arr = [text[:params['max_words']]]
-        elif params['text_mode'] == "length_and_step":
-            for i in range(0, len(text) - length + params['step'], params['step']):
-                arr.append(text[i: i + length])
-            if len(text) < length:
-                arr.append(text)
+        for i in range(0, len(text) - length + params['step'], params['step']):
+            arr.append(text[i: i + length])
+        if len(text) < length:
+            arr.append(text)
+
         array = []
 
         if params['prepare_method'] == "embedding":

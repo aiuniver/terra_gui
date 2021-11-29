@@ -2,6 +2,8 @@ import FilesMenu from './blocks/FilesMenu';
 import TAutoField from './blocks/TAutoField';
 import TAutoFieldHeandler from './blocks/TAutoFieldHeandler';
 import TAutoFieldTrainings from './blocks/TAutoFieldTrainings';
+import TAutoFieldDeploy from './blocks/TAutoFieldDeploy';
+import TAutoFieldCascade from './blocks/TAutoFieldCascade';
 
 import Button from './forms/Button';
 import Autocomplete from './forms/Autocomplete';
@@ -13,6 +15,7 @@ import Checkbox from './forms/Checkbox';
 import Input from './forms/Input';
 import Select from './forms/Select';
 import SelectTasks from './forms/SelectTasks';
+import TupleCascade from './forms/TupleCascade';
 
 
 // _______________NEW____________________//
@@ -21,12 +24,15 @@ import TCheckbox from './new/forms/TCheckbox';
 import TSelect from './new/forms/TSelect';
 import TField from './forms/TField';
 import TAutoComplete from './new/forms/TAutoComplete';
+import TAutoCompleteTwo from './new/forms/TAutoCompleteTwo';
 
 export default [
   FilesMenu,
   TAutoField,
   TAutoFieldHeandler,
   TAutoFieldTrainings,
+  TAutoFieldDeploy,
+  TAutoFieldCascade,
   Button,
   Checkbox,
   Input,
@@ -37,10 +43,12 @@ export default [
   Autocomplete,
   MultiSelect,
   SelectTasks,
+  TupleCascade,
 
   TInput,
   TCheckbox,
   TSelect,
   TAutoComplete,
+  TAutoCompleteTwo,
   TField
 ];

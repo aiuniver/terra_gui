@@ -9,7 +9,7 @@ import pandas as pd
 from pandas import DataFrame
 from sklearn.metrics import classification_report, confusion_matrix
 
-from terra_ai.data.training.extra import BalanceSortedChoice
+# from terra_ai.data.training.extra import BalanceSortedChoice
 from terra_ai.utils import camelize
 
 loss_metric_config = {
@@ -216,6 +216,11 @@ loss_metric_config = {
             "mode": "min",
             "module": "tensorflow.keras.metrics"
         },
+        "PercentMAE": {
+            "log_name": "percent_mae",
+            "mode": "min",
+            "module": "terra_ai.training.customlosses"
+        },
         "Poisson": {
             "log_name": "poisson",
             "mode": "min",
@@ -345,6 +350,24 @@ def class_counter(y_array, classes_names: list, ohe=True):
         print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
+def sequence_length_calculator(array):
+    """ run length encoding. Partial credit to R rle function.
+        Multi datatype arrays catered for including non Numpy
+        returns: tuple (runlengths, startpositions, values) """
+    array = np.asarray(array)  # force numpy
+    n = len(array)
+    if n == 0:
+        return None
+    else:
+        y = array[1:] != array[:-1]
+        i = np.append(np.where(y), n - 1)
+        z = np.diff(np.append(-1, i))
+        sequence = z * array[i]
+        while 0 in sequence:
+            sequence = np.delete(sequence, list(sequence).index(0))
+        return list(sequence)
+
+
 def get_autocorrelation_graphic(y_true, y_pred, depth=10) -> (list, list, list):
     method_name = 'get_autocorrelation_graphic'
     try:
@@ -362,13 +385,21 @@ def get_autocorrelation_graphic(y_true, y_pred, depth=10) -> (list, list, list):
 
         auto_corr_true = []
         for i in range(depth):
-            auto_corr_true.append(get_auto_corr(y_true[:-(i + 1)], y_true[(i + 1):]))
+            if i == 0:
+                auto_corr_true.append(get_auto_corr(y_true, y_true))
+            else:
+                auto_corr_true.append(get_auto_corr(y_true[:-i], y_true[i:]))
 
         auto_corr_pred = []
         for i in range(depth):
-            auto_corr_pred.append(get_auto_corr(y_true[:-(i + 1)], y_pred[(i + 1):]))
+            if i == 0:
+                auto_corr_pred.append(get_auto_corr(y_true, y_pred))
+            else:
+                auto_corr_pred.append(get_auto_corr(y_true[:-i], y_pred[i:]))
+            # print(i, auto_corr_pred[-1])
 
         x_axis = np.arange(depth).astype('int').tolist()
+        # print('\nauto_corr_true, auto_corr_pred', auto_corr_true, auto_corr_pred)
         return x_axis, auto_corr_true, auto_corr_pred
     except Exception as e:
         print_error(f"None ({MODULE_NAME})", method_name, e)
@@ -388,22 +419,22 @@ def round_list(x: list) -> list:
         print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
-def sort_dict(dict_to_sort: dict, mode: BalanceSortedChoice = BalanceSortedChoice.alphabetic):
+def sort_dict(dict_to_sort: dict, mode: str = 'alphabetic'):
     method_name = 'sort_dict'
     try:
-        if mode == BalanceSortedChoice.alphabetic:
+        if mode == 'alphabetic':
             sorted_keys = sorted(dict_to_sort)
             sorted_values = []
             for w in sorted_keys:
                 sorted_values.append(dict_to_sort[w])
             return tuple(sorted_keys), tuple(sorted_values)
-        elif mode == BalanceSortedChoice.ascending:
+        elif mode == 'ascending':
             sorted_keys = sorted(dict_to_sort, key=dict_to_sort.get)
             sorted_values = []
             for w in sorted_keys:
                 sorted_values.append(dict_to_sort[w])
             return tuple(sorted_keys), tuple(sorted_values)
-        elif mode == BalanceSortedChoice.descending:
+        elif mode == 'descending':
             sorted_keys = sorted(dict_to_sort, key=dict_to_sort.get, reverse=True)
             sorted_values = []
             for w in sorted_keys:
@@ -573,7 +604,8 @@ def get_image_class_colormap(array: np.ndarray, colors: list, class_id: int, sav
             np.array(colors[class_id]) if np.sum(np.array(colors[class_id])) > 50 else np.array((255, 255, 255)),
             np.array((0, 0, 0))
         )
-        array = (np.sum(array, axis=0) / len(array)).astype("uint8")
+        # array = (np.sum(array, axis=0) / len(array)).astype("uint8")
+        array = (np.sum(array, axis=0) * 255 / np.sum(array, axis=0).max()).astype("uint8")
         matplotlib.image.imsave(save_path, array)
     except Exception as e:
         print_error(f"None ({MODULE_NAME})", method_name, e)
@@ -586,10 +618,10 @@ def round_loss_metric(x: float):
             return x
         elif math.isnan(float(x)):
             return None
-        elif x > 1000:
+        elif x > 10:
             return np.round(x, 1).item()
         elif x > 1:
-            return np.round(x, -int(math.floor(math.log10(abs(x))) - 3)).item()
+            return np.round(x, -int(math.floor(math.log10(abs(x))) - 2)).item()
         else:
             return np.round(x, -int(math.floor(math.log10(abs(x))) - 2)).item()
     except Exception as e:

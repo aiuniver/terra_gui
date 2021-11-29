@@ -1,10 +1,10 @@
 <template>
   <div class="form-inline-label">
     <template
-      v-for="({ type, value, list, event, label, parse, name }, key) of items"
+      v-for="({ type, value, list, event, label, parse, name, visible }, key) of items"
     >
       <Tuple
-        v-if="type === 'text_array'"
+        v-if="type === 'text_array'  && visible"
         :value="getValue(valueDef[name], value)"
         :label="label"
         type="text"
@@ -15,7 +15,7 @@
         @change="change"
       />
       <Input
-        v-if="type === 'number' || type === 'text'"
+        v-if="type === 'number' || type === 'text'  && visible"
         :value="getValue(valueDef[name], value)"
         :label="label"
         :type="type"
@@ -27,7 +27,7 @@
         @change="change"
       />
       <t-checkbox
-        v-if="type === 'checkbox'"
+        v-if="type === 'checkbox' && visible"
         inline
         :value="getValue(valueDef[name], value)"
         :label="label"
@@ -39,8 +39,8 @@
         @change="change"
       />
       <Select
-        v-if="type === 'select'"
-        :value="valueDef[name]"
+        v-if="type === 'select' && visible"
+        :value="getValue(valueDef[name], value)"
         :label="label"
         :lists="list"
         :parse="parse"
@@ -101,6 +101,7 @@ export default {
       this.$emit("change", { type: this.type, ...e });
     },
     getValue(val, defVal) {
+      // console.log(val, defVal)
       const value = val ?? defVal;
       // if (typeof value === "object") {
       //   return value.join();
@@ -124,3 +125,12 @@ export default {
   },
 };
 </script>
+
+<style lang="scss" scoped>
+.form-inline-label {
+  // display: flex;
+  .t-field {
+    // width: 48%;
+  }
+}
+</style>

@@ -8,8 +8,9 @@ import tensorflow as tf
 from tensorflow.keras import utils
 from tensorflow.keras import datasets as load_keras_datasets
 from tensorflow.python.data.ops.dataset_ops import DatasetV2 as Dataset
-from sklearn.model_selection import train_test_split
+from PIL import Image
 
+from terra_ai.data.training.extra import ArchitectureChoice
 from terra_ai.utils import decamelize
 from terra_ai.datasets.preprocessing import CreatePreprocessing
 from terra_ai.datasets.arrays_create import CreateArray
@@ -44,9 +45,9 @@ class PrepareDataset(object):
         else:
             self.preprocessing = CreatePreprocessing()
 
-        self.X: dict = {'train': {}, 'val': {}, 'test': {}}
-        self.Y: dict = {'train': {}, 'val': {}, 'test': {}}
-        self.service: dict = {'train': {}, 'val': {}, 'test': {}}
+        self.X: dict = {'train': {}, 'val': {}}
+        self.Y: dict = {'train': {}, 'val': {}}
+        self.service: dict = {'train': {}, 'val': {}}
 
         self.dataset: dict = {}
 
@@ -92,21 +93,36 @@ class PrepareDataset(object):
         service = {}
 
         for idx in range(len(self.dataframe[split_name])):
+            augm_data = ''
             for inp_id in self.data.inputs.keys():
                 tmp = []
                 for col_name, data in self.instructions[inp_id].items():
+                    dict_to_pass = data.copy()
+                    if data['augmentation'] and split_name == 'train':
+                        dict_to_pass.update([('augm_data', self.dataframe[split_name].iloc[idx, 1])])
                     sample = os.path.join(self.paths.basepath, self.dataframe[split_name].loc[idx, col_name])
                     array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
-                        'preprocess': self.preprocessing.preprocessing[inp_id][col_name]}, **data)
+                        'preprocess': self.preprocessing.preprocessing[inp_id][col_name]}, **dict_to_pass)
                     array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
                                                                                      **array['parameters'])
-                    tmp.append(array)
+                    if isinstance(array, tuple):
+                        tmp.append(array[0])
+                        augm_data += array[1]
+                    else:
+                        tmp.append(array)
+
                 inputs[str(inp_id)] = np.concatenate(tmp, axis=0)
 
             for out_id in self.data.outputs.keys():
                 for col_name, data in self.instructions[out_id].items():
-                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(self.dataframe[split_name]
-                                                                                 .loc[idx, col_name], **{
+                    tmp_im = Image.open(os.path.join(self.paths.basepath, self.dataframe[split_name].iloc[idx, 0]))
+                    data.update([('orig_x', tmp_im.width),
+                                 ('orig_y', tmp_im.height)])
+                    if augm_data and split_name == 'train':
+                        data_to_pass = augm_data
+                    else:
+                        data_to_pass = self.dataframe[split_name].loc[idx, col_name]
+                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(data_to_pass, **{
                         'preprocess': self.preprocessing.preprocessing[out_id][col_name]}, **data)
                     array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
                                                                                      **array['parameters'])
@@ -127,9 +143,7 @@ class PrepareDataset(object):
                 y_train = utils.to_categorical(y_train, len(np.unique(y_train, axis=0)))
                 y_val = utils.to_categorical(y_val, len(np.unique(y_val, axis=0)))
 
-        x_val, x_test, y_val, y_test = train_test_split(x_val, y_val, test_size=0.5, shuffle=True)
-
-        # for split in ['train', 'val', 'test']:
+        # for split in ['train', 'val']:
         #     for key in self.data.inputs.keys():
         #         self.X[split][str(key)] = globals()[f'x_{split}']
         #     for key in self.data.outputs.keys():
@@ -137,11 +151,9 @@ class PrepareDataset(object):
         for key in self.data.inputs.keys():
             self.X['train'][str(key)] = x_train
             self.X['val'][str(key)] = x_val
-            self.X['test'][str(key)] = x_test
         for key in self.data.outputs.keys():
             self.Y['train'][str(key)] = y_train
             self.Y['val'][str(key)] = y_val
-            self.Y['test'][str(key)] = y_test
 
     def prepare_dataset(self):
 
@@ -161,7 +173,7 @@ class PrepareDataset(object):
                     self.X[key][inp] = self.preprocessing.preprocessing[1][f'1_{self.data.alias}']\
                         .transform(self.X[key][inp].reshape(-1, 1)).reshape(self.X[key][inp].shape)
 
-            for split in ['train', 'val', 'test']:
+            for split in ['train', 'val']:
                 if self.service[split]:
                     self.dataset[split] = Dataset.from_tensor_slices((self.X[split],
                                                                       self.Y[split],
@@ -172,7 +184,7 @@ class PrepareDataset(object):
 
         elif self.data.group in [DatasetGroupChoice.terra, DatasetGroupChoice.custom]:
 
-            for split in ['train', 'val', 'test']:
+            for split in ['train', 'val']:
                 self.dataframe[split] = pd.read_csv(os.path.join(self.paths.instructions, 'tables', f'{split}.csv'),
                                                     index_col=0)
 
@@ -202,11 +214,9 @@ class PrepareDataset(object):
                                                                output_signature=out_signature)
                 self.dataset['val'] = Dataset.from_generator(lambda: gen(split_name='val'),
                                                              output_signature=out_signature)
-                self.dataset['test'] = Dataset.from_generator(lambda: gen(split_name='test'),
-                                                              output_signature=out_signature)
             else:
 
-                for split in os.listdir(self.paths.arrays):
+                for split in ['train', 'val']:
                     for index in self.data.inputs.keys():
                         self.X[split][str(index)] = joblib.load(os.path.join(self.paths.arrays, split, f'{index}.gz'))
                     for index in self.data.outputs.keys():
@@ -216,7 +226,7 @@ class PrepareDataset(object):
                             self.service[split][str(index)] = joblib.load(os.path.join(self.paths.arrays,
                                                                                        split, f'{index}_service.gz'))
 
-                for split in ['train', 'val', 'test']:
+                for split in ['train', 'val']:
                     if self.service[split]:
                         self.dataset[split] = Dataset.from_tensor_slices((self.X[split],
                                                                           self.Y[split],
@@ -247,5 +257,8 @@ class PrepareDataset(object):
                     os.makedirs(folder_dir, exist_ok=True)
                     joblib.dump(obj, os.path.join(folder_dir, f'{col_name}.gz'))
 
-        with open(os.path.join(folder_path, 'config.json'), 'w') as cfg:
-            json.dump(self.data.native(), cfg)
+        dataset_data = self.data.native()
+        dataset_data.update({"instructions": self.instructions})
+
+        with open(os.path.join(folder_path, 'dataset.json'), 'w') as cfg:
+            json.dump(dataset_data, cfg)

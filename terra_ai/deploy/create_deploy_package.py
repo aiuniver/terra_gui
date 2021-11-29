@@ -1,21 +1,17 @@
-import pathlib
 import shutil
 import sys
 import os
 import json
 
+from pathlib import Path
 from pydantic.color import Color
 from terra_ai.settings import ASSETS_PATH
 
 
 class CascadeCreator:
 
-    def create_config(self, model_path: str, out_path: str, func_name: str):
-        out_path = os.path.join(out_path, "deploy")
-        if func_name == "text_segmentation":
-            dataset_path = os.path.join(model_path, "dataset", "instructions", "parameters", f"2_{func_name}.json")
-        else:
-            dataset_path = os.path.join(model_path, "dataset", "config.json")
+    def create_config(self, deploy_path: Path, model_path: Path, func_name: str):
+        dataset_path = os.path.join(model_path, "dataset.json")
         with open(dataset_path) as cfg:
             dataset_config = json.load(cfg)
 
@@ -24,7 +20,7 @@ class CascadeCreator:
             config = json.load(cfg)
 
         config = getattr(self, f"make_{func_name}")(config, dataset_config, os.path.split(model_path)[-1])
-        with open(os.path.join(out_path, f"{os.path.split(model_path)[-1]}.cascade"), 'w', encoding="utf-8") as f:
+        with open(os.path.join(deploy_path, f"{os.path.split(model_path)[-1]}.cascade"), 'w', encoding="utf-8") as f:
             json.dump(config, f, indent=2)
 
     @staticmethod
@@ -69,8 +65,8 @@ class CascadeCreator:
     @staticmethod
     def make_text_segmentation(config, dataset_config, model):
         config['cascades']['model']['model'] = model
-        config['cascades']['2']['params']['open_tag'] = dataset_config['open_tags']
-        config['cascades']['2']['params']['close_tag'] = dataset_config['close_tags']
+        config['cascades']['2']['params']['open_tag'] = dataset_config['instructions']['2']['2_text_segmentation']['open_tags']
+        config['cascades']['2']['params']['close_tag'] = dataset_config['instructions']['2']['2_text_segmentation']['close_tags']
 
         return config
 
@@ -97,27 +93,32 @@ class CascadeCreator:
         return config
 
     @staticmethod
-    def copy_package(training_path):
-        deploy_path = os.path.join(training_path, "deploy")
+    def copy_package(deploy_path: Path, model_path: Path):
         if os.path.exists(os.path.join(deploy_path, "cascades")):
             shutil.rmtree(os.path.join(deploy_path, "cascades"), ignore_errors=True)
-        if os.path.exists(os.path.join(deploy_path, "model")):
-            shutil.rmtree(os.path.join(deploy_path, "model"), ignore_errors=True)
         shutil.copytree("terra_ai/cascades",
                         os.path.join(deploy_path, "cascades"),
                         ignore=shutil.ignore_patterns("demo_panel", "cascades"))
-        shutil.copytree(os.path.join(training_path, "model"),
-                        os.path.join(deploy_path, "model"),
-                        ignore=shutil.ignore_patterns("deploy_presets", "interactive.history",
-                                                      "config.presets", "config.train", "log.history"))
         shutil.copyfile("terra_ai/datasets/preprocessing.py",
                         os.path.join(deploy_path, "cascades", "preprocessing.py"))
 
     @staticmethod
-    def copy_script(training_path, function_name):
-        deploy_path = os.path.join(training_path, "deploy")
+    def copy_model(deploy_path: Path, model_path: Path):
+        if os.path.exists(os.path.join(deploy_path, "model")):
+            shutil.rmtree(os.path.join(deploy_path, "model"), ignore_errors=True)
+        shutil.copytree(model_path,
+                        os.path.join(deploy_path, "model"),
+                        ignore=shutil.ignore_patterns("deploy_presets", "interactive.history",
+                                                      "config.presets", "config.train", "log.history"))
+
+    @staticmethod
+    def copy_script(deploy_path, function_name):
         shutil.copyfile(f"terra_ai/deploy/deploy_scripts/{function_name}.py",
                         os.path.join(deploy_path, "script.py"))
+
+    @staticmethod
+    def copy_config(deploy_path, config_path):
+        shutil.copyfile(config_path, os.path.join(deploy_path, "config.cascade"))
 
 
 if __name__ == "__main__":

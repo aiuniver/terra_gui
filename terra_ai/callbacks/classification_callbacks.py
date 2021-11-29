@@ -8,9 +8,9 @@ from tensorflow.keras.preprocessing import image
 
 from terra_ai.callbacks.utils import sort_dict, fill_graph_front_structure, fill_graph_plot_data, get_y_true, \
     class_counter, get_confusion_matrix, fill_heatmap_front_structure, get_classification_report, \
-    fill_table_front_structure, print_error
+    fill_table_front_structure, print_error, round_list
 from terra_ai.data.datasets.dataset import DatasetOutputsData
-from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, LayerEncodingChoice
+from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerEncodingChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
 import moviepy.editor as moviepy_editor
 
@@ -32,8 +32,10 @@ class BaseClassificationCallback:
                     if not options.data.use_generator:
                         y_true[data_type][f"{out}"] = options.Y.get(data_type).get(f"{out}")
                     else:
+                        # print('options.dataset', options.dataset)
                         y_true[data_type][f"{out}"] = []
                         for _, y_val in options.dataset[data_type].batch(1):
+                            # print('y_val', y_val.keys())
                             y_true[data_type][f"{out}"].extend(y_val.get(f'{out}').numpy())
                         y_true[data_type][f"{out}"] = np.array(y_true[data_type][f"{out}"])
             return y_true, inverse_y_true
@@ -368,11 +370,16 @@ class ImageClassificationCallback(BaseClassificationCallback):
             else:
                 img = image.array_to_img(x_array[example_id])
             img = img.convert('RGB')
-            source = os.path.join(preset_path, f"initial_data_image_{save_id}_input_{input_id}.webp")
-            img.save(source, 'webp')
+
             if return_mode == 'deploy':
-                return source
+                source = os.path.join(preset_path, "deploy_presets",
+                                      f"initial_data_image_{save_id}_input_{input_id}.webp")
+                return_source = os.path.join("deploy_presets", f"initial_data_image_{save_id}_input_{input_id}.webp")
+                img.save(source, 'webp')
+                return return_source
             if return_mode == 'callback':
+                source = os.path.join(preset_path, f"initial_data_image_{save_id}_input_{input_id}.webp")
+                img.save(source, 'webp')
                 data = [
                     {
                         "title": "Изображение",
@@ -409,6 +416,7 @@ class ImageClassificationCallback(BaseClassificationCallback):
                 _id = 1
                 for idx in example_idx:
                     input_id = list(options.data.inputs.keys())[0]
+                    # preset_path = os.path.join(save_path, "deploy_presets")
                     source = ImageClassificationCallback.postprocess_initial_source(
                         options=options,
                         input_id=input_id,
@@ -425,7 +433,6 @@ class ImageClassificationCallback(BaseClassificationCallback):
                         options=options.data.outputs[output_id],
                         return_mode='deploy'
                     )
-
                     return_data[output_id].append(
                         {
                             "source": source,
@@ -805,11 +812,10 @@ class AudioClassificationCallback(BaseClassificationCallback):
             if not save_id:
                 return str(os.path.abspath(initial_file_path))
 
-            data = []
-            source = os.path.join(preset_path, f"initial_data_audio_{save_id}_input_{input_id}.webm")
-            AudioSegment.from_file(initial_file_path).export(source, format="webm")
             if return_mode == 'callback':
-                data_type = LayerInputTypeChoice.Audio.name
+                data = []
+                source = os.path.join(preset_path, f"initial_data_audio_{save_id}_input_{input_id}.webm")
+                AudioSegment.from_file(initial_file_path).export(source, format="webm")
                 data = [
                     {
                         "title": "Аудио",
@@ -817,10 +823,13 @@ class AudioClassificationCallback(BaseClassificationCallback):
                         "color_mark": None
                     }
                 ]
-            if return_mode == 'deploy':
-                return source
-            if return_mode == 'callback':
                 return data
+            if return_mode == 'deploy':
+                source = os.path.join(preset_path, "deploy_presets",
+                                      f"initial_data_audio_{save_id}_input_{input_id}.webm")
+                return_source = os.path.join("deploy_presets", f"initial_data_audio_{save_id}_input_{input_id}.webm")
+                AudioSegment.from_file(initial_file_path).export(source, format="webm")
+                return return_source
         except Exception as e:
             print_error(AudioClassificationCallback().name, method_name, e)
 
@@ -958,12 +967,16 @@ class VideoClassificationCallback(BaseClassificationCallback):
                 return str(os.path.abspath(initial_file_path))
 
             clip = moviepy_editor.VideoFileClip(initial_file_path)
-            source = os.path.join(preset_path, f"initial_data_video_{save_id}_input_{input_id}.webm")
-            clip.write_videofile(source)
 
             if return_mode == 'deploy':
-                return source
+                source = os.path.join(preset_path, "deploy_presets",
+                                      f"initial_data_video_{save_id}_input_{input_id}.webm")
+                return_source = os.path.join("deploy_presets", f"initial_data_video_{save_id}_input_{input_id}.webm")
+                clip.write_videofile(source)
+                return return_source
             if return_mode == 'callback':
+                source = os.path.join(preset_path, f"initial_data_video_{save_id}_input_{input_id}.webm")
+                clip.write_videofile(source)
                 data = [
                     {
                         "title": "Видео",
@@ -1161,6 +1174,7 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
     def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "") -> dict:
         method_name = 'postprocess_deploy'
         try:
+            x_array, inverse_x_array = TimeseriesTrendCallback().get_x_array(options)
             return_data = {}
             for i, output_id in enumerate(options.data.outputs.keys()):
                 true_array = get_y_true(options, output_id)
@@ -1175,40 +1189,28 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
                     output=output_id,
                     count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
                 )
-                return_data[output_id] = {}
-                # TODO: считаетм что инпут один
-                input_id = list(options.data.inputs.keys())[0]
-                inp_col_id = []
-                for j, out_col in enumerate(options.data.columns.get(output_id).keys()):
-                    for k, inp_col in enumerate(options.data.columns.get(input_id).keys()):
-                        if out_col.split('_', 1)[-1] == inp_col.split('_', 1)[-1]:
-                            inp_col_id.append((k, inp_col, j, out_col))
-                            break
-                preprocess = options.preprocessing.preprocessing.get(output_id)
-                for channel in inp_col_id:
-                    return_data[output_id][channel[3]] = []
-                    for idx in example_idx:
-                        if type(preprocess.get(channel[3])).__name__ in ['StandardScaler', 'MinMaxScaler']:
-                            inp_options = {int(output_id): {
-                                channel[3]: options.X.get('val').get(f"{input_id}")[idx, :, channel[0]:channel[0] + 1]}
-                            }
-                            inverse_true = options.preprocessing.inverse_data(inp_options).get(output_id).get(
-                                channel[3])
-                            inverse_true = inverse_true.squeeze().astype('float').tolist()
-                        else:
-                            inverse_true = options.X.get('val').get(f"{input_id}")[
-                                           idx, :, channel[0]:channel[0] + 1].squeeze().astype('float').tolist()
-                        actual_value, predict_values = ImageClassificationCallback.postprocess_classification(
+                return_data[output_id] = []
+                for idx in example_idx:
+                    data = {
+                        'source': {},
+                        'predict': {}
+                    }
+                    for inp in options.data.inputs.keys():
+                        for k, inp_col in enumerate(options.data.columns.get(inp).keys()):
+                            data['source'][inp_col.split('_', 1)[-1]] = \
+                                round_list(list(inverse_x_array[f"{inp}"][idx][:, k]))
+                    for channel in options.data.columns.get(output_id).keys():
+                        _, predict_values = ImageClassificationCallback.postprocess_classification(
                             predict_array=np.expand_dims(postprocess_array[idx], axis=0),
                             true_array=true_array[idx],
                             options=options.data.outputs[output_id],
                             return_mode='deploy'
                         )
-                        return_data[output_id][channel[3]].append(
-                            {
-                                "data": [inverse_true, predict_values[0]]
-                            }
-                        )
+                        data['predict'][channel.split('_', 1)[-1]] = \
+                            [data['source'][channel.split('_', 1)[-1]], [predict_values[0][0][0]]]
+                        # data['predict'][channel.split('_', 1)[-1]] = \
+                        #     [data['source'][channel.split('_', 1)[-1]], predict_values[0]]
+                    return_data[output_id].append(data)
             return return_data
         except Exception as e:
             print_error(TimeseriesTrendCallback().name, method_name, e)

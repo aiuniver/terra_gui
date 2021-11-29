@@ -1,10 +1,10 @@
 <template>
   <div :class="['t-predict-image', { 't-predict-image--large': isLarge }]" v-click-outside="outside">
-    <div v-if="isLarge && show" class="t-predict-image__mask" @click="click(false)"></div>
+    <!-- <div v-if="isLarge && show" class="t-predict-image__mask" @click="click(false)"></div>
     <div v-if="isLarge && show" class="t-predict-image__fixed">
       <i class="ci-icon ci-close_big" @click="click(false)"/>
       <img width="auto" :height="600" :src="src" :alt="'value'" :key="src" />
-    </div>
+    </div> -->
     <img width="auto" :height="isLarge ? 300 : 120" :src="src" :alt="'value'" :key="src" @click="click(true)" />
   </div>
 </template>
@@ -35,6 +35,7 @@ export default {
       if (this.isLarge) {
         this.show = value;
       }
+      if (value) this.$store.dispatch('trainings/setLargeImg', this.src)
     },
     outside() {
       this.show = false;
@@ -45,13 +46,14 @@ export default {
 
 <style lang="scss" scoped>
 .t-predict-image {
-  height: 160px;
+  min-width: 200px;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0 20px;
+  // padding: 0 20px;
   &--large {
     height: 300px;
+    min-width: 500px;
     cursor: pointer;
   }
   &__fixed {

@@ -1,11 +1,11 @@
 <template>
   <at-modal v-model="dialog" width="400" :maskClosable="false" :showClose="false">
     <div slot="header">
-      <span>Сохранить проект</span>
+      <span>Сохранить обучение</span>
     </div>
     <div class="inner form-inline-label">
       <div class="field-form">
-        <label>Название проекта</label>
+        <label>Название</label>
         <input v-model="name" type="text" :disabled="loading" />
       </div>
       <div class="field-form field-inline field-reverse">
@@ -17,8 +17,8 @@
       </div>
     </div>
     <template slot="footer">
-      <t-button @click="save({ name, overwrite })" :loading="loading">Сохранить</t-button>
-      <t-button @click="dialog = false" cancel :disabled="loading">Отменить</t-button>
+      <t-button :disabled="name === ''" :loading="loading" @click="save({ name, overwrite })">Сохранить</t-button>
+      <t-button cancel :disabled="loading" @click="dialog = false">Отменить</t-button>
     </template>
   </at-modal>
 </template>
@@ -49,10 +49,12 @@ export default {
     async save(data) {
       try {
         this.loading = true;
+        // console.log(data)
         // this.$emit('message', { message: `Сохранения проекта «${data.name}»` });
-        const res = await this.$store.dispatch('trainings/save', {});
+        const res = await this.$store.dispatch('trainings/save', data);
         if (res && !res.error) {
           this.$emit('message', { message: `Проект «${data.name}» сохранен` });
+          await this.$store.dispatch('projects/get', {});
           this.dialog = false;
           this.overwrite = false;
         } else {
@@ -68,7 +70,8 @@ export default {
   watch: {
     dialog(value) {
       if (value) {
-        this.name = this.$store.getters['projects/getProject'].name;
+        const name = this.$store.getters['projects/getProject'].training.name;
+        this.name = name === '__current' ? '' : name;
       }
     },
   },

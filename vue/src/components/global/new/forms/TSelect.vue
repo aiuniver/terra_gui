@@ -78,8 +78,8 @@ export default {
       },
       get() {
         const list = this.list ?? [];
-        const label = list.find(item => item.value === this.selected?.value || item.value === this.value)?.label || '';
-        return label || '';
+        const label = list.find(el => el.value === this.selected.value) || null;
+        return label ? label.label : '';
       },
     },
   },
@@ -174,7 +174,7 @@ export default {
   &__content {
     position: absolute;
     top: 41px;
-    width: 100%;
+    min-width: 100%;
     border: 1px solid #6c7883;
     box-shadow: 0px -8px 34px 0px rgba(0, 0, 0, 0.05);
     border-radius: 0 0 4px 4px;
@@ -223,9 +223,8 @@ export default {
     top: 0px;
   }
   &--small &__content {
-    width: auto;
     top: 23px;
-    min-width: 109px;
+    min-width: 100%;
     &--item {
       padding: 0 5px;
       font-size: 12px;

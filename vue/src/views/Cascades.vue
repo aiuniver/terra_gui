@@ -7,6 +7,7 @@
       <Blocks ref="container" />
       <Params />
       <CopyModal v-model="kerasModal" :title="'Код на keras'">{{ keras }}</CopyModal>
+      <DatasetsModal v-model="dialogDatasets" />
     </div>
   </main>
 </template>
@@ -18,6 +19,7 @@ import Params from '@/components/cascades/Params';
 import LoadModel from '@/components/cascades/modals/LoadModel';
 import SaveModel from '@/components/cascades/modals/SaveModel';
 import CopyModal from '../components/global/modals/CopyModal';
+import DatasetsModal from '../components/cascades/modals/DatasetsModal.vue'
 
 export default {
   name: 'cascades',
@@ -28,10 +30,12 @@ export default {
     LoadModel,
     SaveModel,
     CopyModal,
+    DatasetsModal
   },
   data: () => ({
     dialogLoadModel: false,
     dialogSaveModel: false,
+    dialogDatasets: false,
     imageModel: null,
     kerasModal: false,
   }),
@@ -49,15 +53,20 @@ export default {
       this.create = false;
       this.$store.dispatch('cascades/addBlock', { type, position });
     },
-    async saveModel() {
+    async save() {
       this.imageModel = null;
       this.dialogSaveModel = true;
       let image = await this.$refs.container.getImages();
       const { data = null } = await this.$store.dispatch('cascades/getImageModel', image.slice(22));
       if (data) this.imageModel = data;
     },
-    async validateModel() {
-      await this.$store.dispatch('cascades/validateModel', {});
+    async start() {
+      this.dialogDatasets = true
+      await this.$store.dispatch('cascades/setDatasets')
+      // await this.$store.dispatch('cascades/start', {});
+    },
+    async validation() {
+      await this.$store.dispatch('cascades/validate', {});
     },
     async clearModel() {
       const action = await this.$store.dispatch('dialogs/confirm', { ctx: this, content: 'Очистить модель?' });
@@ -69,15 +78,18 @@ export default {
       if (btn === 'load') {
         this.isTraining();
       }
-      if (['input', 'model', 'function', 'custom', 'output'].includes(btn)) {
+      if (['InputData', 'Model', 'Function', 'Custom', 'Service', 'OutputData'].includes(btn)) {
+        console.log(btn);
         this.addBlock(btn);
       }
+      if (btn === 'start') {
+        this.start();
+      }
       if (btn === 'save') {
-        this.saveModel();
-        this.$store.dispatch('cascades/selectBlock', {});
+        this.save();
       }
       if (btn === 'validation') {
-        this.validateModel();
+        this.validation();
       }
       if (btn === 'clear') {
         this.clearModel();
@@ -85,7 +97,6 @@ export default {
       if (btn === 'keras') {
         this.kerasModal = true;
       }
-      console.log(btn);
     },
   },
 };

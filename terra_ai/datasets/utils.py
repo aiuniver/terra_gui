@@ -1,7 +1,16 @@
 import os
+import cv2
+import json
+import csv
+import tempfile
+import zipfile
 import numpy as np
 import pandas as pd
+import xml.etree.ElementTree as Et
 
+from PIL import Image
+from ast import literal_eval
+from itertools import product
 from pathlib import Path
 from sklearn.cluster import KMeans
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
@@ -10,15 +19,8 @@ from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeCh
 from terra_ai.settings import DATASET_ANNOTATION
 from terra_ai.datasets.data import AnnotationClassesList
 from terra_ai.utils import decamelize
-from terra_ai.data.datasets.creation import CreationData
 from terra_ai.data.datasets.creations.layers.output.types.ObjectDetection import LayerODDatasetTypeChoice
 
-import xml.etree.ElementTree as Et
-from xml.etree.ElementTree import Element, ElementTree
-import csv
-from PIL import Image
-from ast import literal_eval
-import json
 
 ANNOTATION_SEPARATOR = ":"
 ANNOTATION_LABEL_NAME = "# label"
@@ -133,110 +135,6 @@ class Voc:
     """
 
     @staticmethod
-    def generate(data):
-        def xml_indent(elem, level=0):
-            i = "\n" + level * "\t"
-            if len(elem):
-                if not elem.text or not elem.text.strip():
-                    elem.text = i + "\t"
-                if not elem.tail or not elem.tail.strip():
-                    elem.tail = i
-                for elem in elem:
-                    xml_indent(elem, level + 1)
-                if not elem.tail or not elem.tail.strip():
-                    elem.tail = i
-            else:
-                if level and (not elem.tail or not elem.tail.strip()):
-                    elem.tail = i
-
-        xml_list = {}
-
-        for key in data:
-            element = data[key]
-
-            xml_annotation = Element("annotation")
-
-            xml_size = Element("size")
-            xml_width = Element("width")
-            xml_width.text = element["size"]["width"]
-            xml_size.append(xml_width)
-
-            xml_height = Element("height")
-            xml_height.text = element["size"]["height"]
-            xml_size.append(xml_height)
-
-            xml_depth = Element("depth")
-            xml_depth.text = element["size"]["depth"]
-            xml_size.append(xml_depth)
-
-            xml_annotation.append(xml_size)
-
-            xml_segmented = Element("segmented")
-            xml_segmented.text = "0"
-
-            xml_annotation.append(xml_segmented)
-
-            if int(element["objects"]["num_obj"]) < 1:
-                return False, "number of Object less than 1"
-
-            for i in range(0, int(element["objects"]["num_obj"])):
-                xml_object = Element("object")
-                obj_name = Element("name")
-                obj_name.text = element["objects"][str(i)]["name"]
-                xml_object.append(obj_name)
-
-                obj_pose = Element("pose")
-                obj_pose.text = "Unspecified"
-                xml_object.append(obj_pose)
-
-                obj_truncated = Element("truncated")
-                obj_truncated.text = "0"
-                xml_object.append(obj_truncated)
-
-                obj_difficult = Element("difficult")
-                obj_difficult.text = "0"
-                xml_object.append(obj_difficult)
-
-                xml_bndbox = Element("bndbox")
-
-                obj_xmin = Element("xmin")
-                obj_xmin.text = element["objects"][str(
-                    i)]["bndbox"]["xmin"]
-                xml_bndbox.append(obj_xmin)
-
-                obj_ymin = Element("ymin")
-                obj_ymin.text = element["objects"][str(
-                    i)]["bndbox"]["ymin"]
-                xml_bndbox.append(obj_ymin)
-
-                obj_xmax = Element("xmax")
-                obj_xmax.text = element["objects"][str(
-                    i)]["bndbox"]["xmax"]
-                xml_bndbox.append(obj_xmax)
-
-                obj_ymax = Element("ymax")
-                obj_ymax.text = element["objects"][str(
-                    i)]["bndbox"]["ymax"]
-                xml_bndbox.append(obj_ymax)
-                xml_object.append(xml_bndbox)
-
-                xml_annotation.append(xml_object)
-
-            xml_indent(xml_annotation)
-
-            xml_list[key.split(".")[0]] = xml_annotation
-        return xml_list
-
-    @staticmethod
-    def save(xml_list, path):
-        path = os.path.abspath(path)
-
-        for key in xml_list:
-            xml = xml_list[key]
-            filepath = os.path.join(path, "".join([key, ".xml"]))
-            ElementTree(xml).write(filepath)
-
-    @staticmethod
     def parse(paths_list, tmp_lst):
         data = {}
         for filename in paths_list:
@@ -291,6 +189,7 @@ class Voc:
 
 class Coco:
     """ Handler Class for COCO Format """
+
     @staticmethod
     def parse(paths_list, tmp_lst):
         json_path = paths_list[0]
@@ -390,7 +289,6 @@ class Udacity:
             if raw_line_length == 8:
                 state = raw_line[7].split('"')[1]
                 cls = cls + state
-
 
             bndbox = {
                 "xmin": xmin,
@@ -598,29 +496,102 @@ class Yolov1:
         return data, {}
 
 
-def resize_bboxes(coords, orig_x, orig_y):
-    x_scale = orig_x / 416
-    y_scale = orig_y / 416
+def resize_bboxes(frame_mode, coords, orig_x, orig_y, target_x=416, target_y=416):
     real_boxes = []
-    if x_scale == 1 and y_scale == 1:
+    if frame_mode == 'stretch':
         for coord in coords.split(' '):
-            real_boxes.append([literal_eval(num) for num in coord.split(',')])
-    else:
+            sample = [literal_eval(x) for x in coord.split(',')]
+            sample[0] = int(round((sample[0] / orig_x) * target_x, 0))
+            sample[1] = int(round((sample[1] / orig_y) * target_y, 0))
+            sample[2] = int(round((sample[2] / orig_x) * target_x, 0))
+            sample[3] = int(round((sample[3] / orig_y) * target_y, 0))
+
+            real_boxes.append(sample)
+
+    elif frame_mode == 'fit':
         for coord in coords.split(' '):
-            tmp = []
-            for i, num in enumerate(coord.split(',')):
-                if i in [0, 2]:
-                    tmp_value = int(literal_eval(num) / x_scale) - 1
-                    scale_value = orig_x if tmp_value > orig_x else tmp_value
-                    tmp.append(scale_value)
-                elif i in [1, 3]:
-                    tmp_value = int(literal_eval(num) / y_scale) - 1
-                    scale_value = orig_y if tmp_value > orig_y else tmp_value
-                    tmp.append(scale_value)
-                else:
-                    tmp.append(literal_eval(num))
-            real_boxes.append(tmp)
+            sample = [literal_eval(x) for x in coord.split(',')]
+            if orig_x >= orig_y:
+                new_y = int(orig_y / (orig_x / target_x))
+                sample[0] = int(round((sample[0] / orig_x) * target_x, 0))
+                sample[2] = int(round((sample[2] / orig_x) * target_x, 0))
+                sample[1] = int(round((sample[1] / orig_y) * new_y, 0) + (target_y - new_y) / 2)
+                sample[3] = int(round((sample[3] / orig_y) * new_y, 0) + (target_y - new_y) / 2)
+                if new_y > target_y:
+                    new_x = int(orig_x / (orig_y / target_y))
+                    sample[0] = int(round((sample[0] / orig_x) * new_x, 0) + (target_x - new_x) / 2)
+                    sample[2] = int(round((sample[2] / orig_x) * new_x, 0) + (target_x - new_x) / 2)
+                    sample[1] = int(round((sample[1] / orig_y) * target_y, 0))
+                    sample[3] = int(round((sample[3] / orig_y) * target_y, 0))
+
+            elif orig_y >= orig_x:
+                new_x = int(orig_x / (orig_y / target_y))
+                sample[0] = int(round((sample[0] / orig_x) * new_x, 0) + (target_x - new_x) / 2)
+                sample[2] = int(round((sample[2] / orig_x) * new_x, 0) + (target_x - new_x) / 2)
+                sample[1] = int(round((sample[1] / orig_y) * target_y, 0))
+                sample[3] = int(round((sample[3] / orig_y) * target_y, 0))
+                if new_x > target_x:
+                    new_y = int(orig_y / (orig_x / target_x))
+                    sample[0] = int(round((sample[0] / orig_x) * target_x, 0))
+                    sample[2] = int(round((sample[2] / orig_x) * target_x, 0))
+                    sample[1] = int(round((sample[1] / orig_y) * new_y, 0) + (target_y - new_y) / 2)
+                    sample[3] = int(round((sample[3] / orig_y) * new_y, 0) + (target_y - new_y) / 2)
+
+            real_boxes.append(sample)
+
+    elif frame_mode == 'cut':
+        for coord in coords.split(' '):
+            sample = [literal_eval(x) for x in coord.split(',')]
+            if orig_x <= target_x:
+                sample[0] = int(sample[0] + (target_x - orig_x) / 2)
+                sample[2] = int(sample[2] + (target_x - orig_x) / 2)
+            else:
+                sample[0] = int(sample[0] - (orig_x - target_x) / 2)
+                sample[2] = int(sample[2] - (orig_x - target_x) / 2)
+            if orig_y <= target_y:
+                sample[1] = int(sample[1] + (target_y - orig_y) / 2)
+                sample[3] = int(sample[3] + (target_y - orig_y) / 2)
+            else:
+                sample[1] = int(sample[1] - (orig_y - target_y) / 2)
+                sample[3] = int(sample[3] - (orig_y - target_y) / 2)
+
+            real_boxes.append(sample)
+
+    pop_idxs = []
+    for idx, bbox in enumerate(real_boxes):
+        for i in range(4):
+            if i in [0, 2]:
+                if bbox[i] > target_x:
+                    bbox[i] = target_x
+            elif i in [1, 3]:
+                if bbox[i] > target_y:
+                    bbox[i] = target_y
+            if bbox[i] < 0:
+                bbox[i] = 0
+
+        if bbox[0] >= bbox[2] or bbox[1] >= bbox[3]:
+            pop_idxs.append(idx)
+
+    for i in reversed(pop_idxs):
+        real_boxes.pop(i)
+
     return real_boxes
+
+
+# def resize_bboxes(coords, orig_x, orig_y, target_x=416, target_y=416):
+#
+#     real_boxes = []
+#     for coord in coords.split(' '):
+#         sample = [literal_eval(x) for x in coord.split(',')]
+#         sample[0] = int(round((sample[0] / orig_x) * target_x, 0))
+#         sample[1] = int(round((sample[1] / orig_y) * target_y, 0))
+#         sample[2] = int(round((sample[2] / orig_x) * target_x, 0))
+#         sample[3] = int(round((sample[3] / orig_y) * target_y, 0))
+#
+#         if sample[0] < sample[2] and sample[1] < sample[3]:
+#             real_boxes.append(sample)
+#
+#     return real_boxes
 
 
 def get_od_names(creation_data):
@@ -678,3 +649,178 @@ def get_od_names(creation_data):
                 names_list = sorted(set(names_list))
 
     return names_list
+
+
+def get_annotation_type_autosearch(path: Path) -> LayerODDatasetTypeChoice:
+    dir_names = []
+    file_names = []
+
+    for filename in os.listdir(path):
+        if os.path.isdir(os.path.join(path, filename)):
+            dir_names.append(filename)
+        elif filename.endswith('.csv'):
+            return LayerODDatasetTypeChoice.Udacity
+        else:
+            file_names.append(filename)
+
+    if len(dir_names) == 1:
+        return LayerODDatasetTypeChoice.Yolov1
+
+    for dir_name in dir_names:
+        if os.listdir(os.path.join(path, dir_name))[0].endswith('.json'):
+            return LayerODDatasetTypeChoice.Coco
+        elif os.listdir(os.path.join(path, dir_name))[0].endswith('.xml'):
+            return LayerODDatasetTypeChoice.Voc
+        elif os.listdir(os.path.join(path, dir_name))[0].endswith('.txt') and 'obj.names' not in file_names:
+            return LayerODDatasetTypeChoice.Kitti
+        elif os.listdir(os.path.join(path, dir_name))[0].endswith('.txt') and 'obj.names' in file_names:
+            return LayerODDatasetTypeChoice.Yolo_terra
+        else:
+            annotation_type = 'Не определено'
+
+    return annotation_type
+
+
+def resize_frame(image_array, target_shape, frame_mode):
+    original_shape = (image_array.shape[0], image_array.shape[1])
+    resized = None
+    if frame_mode == 'stretch':
+        resized = cv2.resize(image_array, (target_shape[1], target_shape[0]))
+
+    elif frame_mode == 'fit':
+        if image_array.shape[1] >= image_array.shape[0]:
+            resized_shape = list(target_shape).copy()
+            resized_shape[0] = int(image_array.shape[0] / (image_array.shape[1] / target_shape[1]))
+            if resized_shape[0] > target_shape[0]:
+                resized_shape = list(target_shape).copy()
+                resized_shape[1] = int(image_array.shape[1] / (image_array.shape[0] / target_shape[0]))
+            image_array = cv2.resize(image_array, (resized_shape[1], resized_shape[0]))
+        elif image_array.shape[0] >= image_array.shape[1]:
+            resized_shape = list(target_shape).copy()
+            resized_shape[1] = int(image_array.shape[1] / (image_array.shape[0] / target_shape[0]))
+            if resized_shape[1] > target_shape[1]:
+                resized_shape = list(target_shape).copy()
+                resized_shape[0] = int(image_array.shape[0] / (image_array.shape[1] / target_shape[1]))
+            image_array = cv2.resize(image_array, (resized_shape[1], resized_shape[0]))
+        resized = image_array
+        if resized.shape[0] < target_shape[0]:
+            black_bar = np.zeros((int((target_shape[0] - resized.shape[0]) / 2), resized.shape[1], 3),
+                                 dtype='uint8')
+            resized = np.concatenate((black_bar, resized))
+            black_bar_2 = np.zeros((int((target_shape[0] - resized.shape[0])), resized.shape[1], 3),
+                                   dtype='uint8')
+            resized = np.concatenate((resized, black_bar_2))
+        if resized.shape[1] < target_shape[1]:
+            black_bar = np.zeros((target_shape[0], int((target_shape[1] - resized.shape[1]) / 2), 3),
+                                 dtype='uint8')
+            resized = np.concatenate((black_bar, resized), axis=1)
+            black_bar_2 = np.zeros((target_shape[0], int((target_shape[1] - resized.shape[1])), 3),
+                                   dtype='uint8')
+            resized = np.concatenate((resized, black_bar_2), axis=1)
+
+    elif frame_mode == 'cut':
+        resized = image_array.copy()
+        if original_shape[0] > target_shape[0]:
+            resized = resized[int(original_shape[0] / 2 - target_shape[0] / 2):int(
+                original_shape[0] / 2 - target_shape[0] / 2) + target_shape[0], :]
+        else:
+            black_bar = np.zeros((int((target_shape[0] - original_shape[0]) / 2), original_shape[1], 3),
+                                 dtype='uint8')
+            resized = np.concatenate((black_bar, resized))
+            black_bar_2 = np.zeros((int((target_shape[0] - resized.shape[0])), original_shape[1], 3),
+                                   dtype='uint8')
+            resized = np.concatenate((resized, black_bar_2))
+        if original_shape[1] > target_shape[1]:
+            resized = resized[:, int(original_shape[1] / 2 - target_shape[1] / 2):int(
+                original_shape[1] / 2 - target_shape[1] / 2) + target_shape[1]]
+        else:
+            black_bar = np.zeros((target_shape[0], int((target_shape[1] - original_shape[1]) / 2), 3),
+                                 dtype='uint8')
+            resized = np.concatenate((black_bar, resized), axis=1)
+            black_bar_2 = np.zeros((target_shape[0], int((target_shape[1] - resized.shape[1])), 3),
+                                   dtype='uint8')
+            resized = np.concatenate((resized, black_bar_2), axis=1)
+    return resized
+
+
+def zip_dataset(src, dst):
+    zf = zipfile.ZipFile("%s.zip" % (dst), "w", zipfile.ZIP_DEFLATED)
+    abs_src = os.path.abspath(src)
+    for dirname, subdirs, files in os.walk(src):
+        for filename in files:
+            absname = os.path.abspath(os.path.join(dirname, filename))
+            arcname = absname[len(abs_src) + 1:]
+            zf.write(absname, arcname)
+    zf.close()
+
+
+def make_tracker_dataset(source_path, dst_path, bboxes, frame_mode):
+
+    def make_crop(image_path, bbox):
+        image = cv2.imread(image_path)
+        coor = np.array(bbox[:4], dtype=np.int32)
+        (x1, y1), (x2, y2) = (coor[0], coor[1]), (coor[2], coor[3])
+        crop = image[y1:y2, x1:x2]
+        return crop
+
+    img_path = os.path.join(source_path, 'Images')
+    tmp_directory = tempfile.mkdtemp()
+    ims1 = []
+    ims2 = []
+    classes = []
+    drop_idxs = []
+    border = 30
+    height = 0
+    width = 0
+    idx = 0
+    while idx < len(bboxes) - 1:
+        anns1 = bboxes[idx]
+        anns2 = bboxes[idx + 1]
+        os.makedirs(os.path.join(tmp_directory, f'frame_{idx}'), exist_ok=True)
+        for j, ann in enumerate(anns1):
+            crop = make_crop(os.path.join(img_path, sorted(os.listdir(img_path))[idx]), ann)
+            cv2.imwrite(os.path.join(tmp_directory, f'frame_{idx}', f'crop_{j}.jpeg'), crop)
+            if crop.shape[0] > height:
+                height = crop.shape[0]
+            if crop.shape[1] > width:
+                width = crop.shape[1]
+
+        for a1, a2 in product(anns1, anns2):
+            if abs(a1[0] - a2[0]) <= border and abs(a1[1] - a2[1]) <= border and a1[4] == a2[4]:
+                classes.append('Одинаковые')
+            else:
+                classes.append('Разные')
+            ims1.append(os.path.join(f'frame_{idx}', f'crop_{anns1.index(a1)}.jpeg'))
+            ims2.append(os.path.join(f'frame_{idx + 1}', f'crop_{anns2.index(a2)}.jpeg'))
+        idx += 1
+
+    for j, ann in enumerate(bboxes[-1]):
+        crop = make_crop(os.path.join(img_path, sorted(os.listdir(img_path))[-1]), ann)
+        cv2.imwrite(os.path.join(tmp_directory, f'frame_{len(bboxes)}', f'crop_{j}.jpeg'), crop)
+        if crop.shape[0] > height:
+            height = crop.shape[0]
+        if crop.shape[1] > width:
+            width = crop.shape[1]
+
+    for directory in os.listdir(tmp_directory):
+        for im_name in os.listdir(os.path.join(tmp_directory, directory)):
+            img = cv2.imread(os.path.join(tmp_directory, directory, im_name), cv2.IMREAD_UNCHANGED)
+            resized_im = resize_frame(img, (height, width), frame_mode)
+            cv2.imwrite(os.path.join(tmp_directory, directory, im_name), resized_im)
+
+    tracker_table = pd.DataFrame({'img_1': ims1,
+                                  'img_2': ims2,
+                                  'class': classes})
+
+    crops_list = sorted(set(tracker_table['img_1'].tolist()))
+    for crop in crops_list:
+        tmp_df = tracker_table[tracker_table['img_1'] == crop]
+        if len(tmp_df[tmp_df['class'] == 'Одинаковые']) > 1:
+            drop_idxs.append(tmp_df[tmp_df['class'] == 'Одинаковые'].index.tolist())
+    for idxs in drop_idxs:
+        tracker_table.drop(index=idxs, inplace=True)
+    tracker_table.index = range(0, len(tracker_table))
+
+    tracker_table.to_csv(os.path.join(tmp_directory, 'tracker.csv'), index=False)
+    zip_dataset(tmp_directory, os.path.join(dst_path, 'tracker'))
+

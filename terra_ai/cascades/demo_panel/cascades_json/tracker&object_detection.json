@@ -1,0 +1,82 @@
+{
+  "cascades": {
+    "input": {
+      "tag": "input",
+      "type": "video_by_frame"
+    },
+    "model": {
+      "tag": "model",
+      "task": "ObjectDetection",
+      "model": "/home/evgeniy/terra_gui/TerraProject/models/chess_test"
+    },
+    "normalize bboxes": {
+      "tag": "function",
+      "task": "ObjectDetection",
+      "name": "postprocess_boxes",
+      "params": {
+        "input_size": 416,
+        "score_threshold": 0.3,
+        "iou_threshold": 0.45,
+        "method": "nms",
+        "sigma": 0.3
+      }
+    },
+    "sort": {
+      "tag": "service",
+      "task": "tracking",
+      "name": "Sort",
+      "params": {
+        "max_age": 5,
+        "min_hits": 3
+      }
+    },
+    "plot bboxes": {
+      "tag": "function",
+      "task": "ObjectDetection",
+      "name": "plot_b_boxes",
+      "params": {
+        "classes": [
+          "black-knight",
+          "white-rook",
+          "white-pawn",
+          "white-king",
+          "white-bishop",
+          "black-rook",
+          "black-pawn",
+          "black-king",
+          "black-bishop",
+          "black-queen",
+          "white-queen",
+          "white-knight",
+          "bishop"
+        ]
+      }
+    },
+    "saving": {
+      "tag": "output",
+      "type": "video",
+      "params": {
+        "width": 1980,
+        "height": 1080
+      }    }
+  },
+  "adjacency_map": {
+    "normalize bboxes": [
+      "model",
+      "INPUT"
+    ],
+    "model": [
+      "INPUT"
+    ],
+    "plot bboxes": [
+      "sort",
+      "INPUT"
+    ],
+    "sort": [
+      "normalize bboxes"
+    ],
+    "saving": [
+      "plot bboxes"
+    ]
+  }
+}

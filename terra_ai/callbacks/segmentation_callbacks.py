@@ -11,7 +11,7 @@ from tensorflow.python.keras.utils.np_utils import to_categorical
 
 from terra_ai.callbacks.utils import dice_coef, sort_dict, get_y_true, get_image_class_colormap, get_confusion_matrix, \
     fill_heatmap_front_structure, get_classification_report, fill_table_front_structure, fill_graph_front_structure, \
-    fill_graph_plot_data, print_error, segmentation_metric
+    fill_graph_plot_data, print_error, segmentation_metric, sequence_length_calculator
 from terra_ai.data.datasets.dataset import DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerEncodingChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
@@ -37,6 +37,7 @@ class BaseSegmentationCallback:
         method_name = 'get_y_true'
         try:
             y_true = {"train": {}, "val": {}}
+            # y_true = {"val": {}}
             inverse_y_true = {"train": {}, "val": {}}
             for data_type in y_true.keys():
                 for out in options.data.outputs.keys():
@@ -44,9 +45,13 @@ class BaseSegmentationCallback:
                         y_true[data_type][f"{out}"] = options.Y.get(data_type).get(f"{out}")
                     else:
                         y_true[data_type][f"{out}"] = []
+                        # ccc = 1
                         for _, y_val in options.dataset[data_type].batch(1):
                             y_true[data_type][f"{out}"].extend(y_val.get(f'{out}').numpy())
+                            # print(ccc, y_val.get(f'{out}').shape)
+                            # ccc += 1
                         y_true[data_type][f"{out}"] = np.array(y_true[data_type][f"{out}"])
+                        # print('\ny_true[data_type][f"{out}"]', y_true[data_type][f"{out}"].shape)
             return y_true, inverse_y_true
         except Exception as e:
             print_error(BaseSegmentationCallback().name, method_name, e)
@@ -157,18 +162,16 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
             img = Image.open(initial_file_path)
             img = img.resize(options.data.inputs.get(input_id).shape[0:2][::-1], Image.ANTIALIAS)
             img = img.convert('RGB')
-            source = os.path.join(preset_path, f"initial_data_image_{save_id}_input_{input_id}.webp")
-            img.save(source, 'webp')
             if return_mode == 'deploy':
-                return source
+                source = os.path.join(preset_path, "deploy_presets",
+                                      f"initial_data_image_{save_id}_input_{input_id}.webp")
+                return_source = os.path.join("deploy_presets", f"initial_data_image_{save_id}_input_{input_id}.webp")
+                img.save(source, 'webp')
+                return return_source
             if return_mode == 'callback':
-                data = [
-                    {
-                        "title": "Изображение",
-                        "value": source,
-                        "color_mark": None
-                    }
-                ]
+                source = os.path.join(preset_path, f"initial_data_image_{save_id}_input_{input_id}.webp")
+                img.save(source, 'webp')
+                data = [{"title": "Изображение", "value": source, "color_mark": None }]
                 return data
         except Exception as e:
             print_error(ImageSegmentationCallback().name, method_name, e)
@@ -179,26 +182,22 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                                  colors: list = None, return_mode='deploy', show_stat: bool = False):
         method_name = 'postprocess_segmentation'
         try:
-            data = {
-                "y_true": {},
-                "y_pred": {},
-                "stat": {}
-            }
+            data = {"y_true": {}, "y_pred": {}, "stat": {}}
             if return_mode == 'deploy':
                 array = np.expand_dims(np.argmax(predict_array, axis=-1), axis=-1) * 512
                 for i, color in enumerate(options.classes_colors):
-                    array = np.where(
-                        array == i * 512,
-                        np.array(color.as_rgb_tuple()),
-                        array
-                    )
+                    array = np.where(array == i * 512, np.array(color.as_rgb_tuple()), array)
                 array = array.astype("uint8")
                 img_save_path = os.path.join(
-                    save_path,
+                    save_path, "deploy_presets",
+                    f"image_segmentation_postprocessing_{image_id}_output_{output_id}.webp"
+                )
+                return_path = os.path.join(
+                    "deploy_presets",
                     f"image_segmentation_postprocessing_{image_id}_output_{output_id}.webp"
                 )
                 matplotlib.image.imsave(img_save_path, array)
-                return img_save_path
+                return return_path
 
             if return_mode == 'callback':
                 y_true = np.expand_dims(np.argmax(true_array, axis=-1), axis=-1) * 512
@@ -387,20 +386,20 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                         'tags_color': {},
                         'statistic_values': {}
                     }
-                    if not len(options.data.outputs.keys()) == 1:
-                        for inp in options.data.inputs.keys():
-                            data = ImageSegmentationCallback.postprocess_initial_source(
-                                options=options,
-                                input_id=inp,
-                                save_id=idx + 1,
-                                example_id=example_idx[idx],
-                                dataset_path=dataset_path,
-                                preset_path=preset_path,
-                                return_mode='callback'
-                            )
-                            return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
-                                'type': 'image', 'data': data,
-                            }
+                    # if not len(options.data.outputs.keys()) == 1:
+                    for inp in options.data.inputs.keys():
+                        data = ImageSegmentationCallback.postprocess_initial_source(
+                            options=options,
+                            input_id=inp,
+                            save_id=idx + 1,
+                            example_id=example_idx[idx],
+                            dataset_path=dataset_path,
+                            preset_path=preset_path,
+                            return_mode='callback'
+                        )
+                        return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
+                            'type': 'image', 'data': data,
+                        }
                     for out in options.data.outputs.keys():
                         data = ImageSegmentationCallback().postprocess_segmentation(
                             predict_array=y_pred.get(f'{out}')[example_idx[idx]],
@@ -732,21 +731,36 @@ class TextSegmentationCallback(BaseSegmentationCallback):
             for out in options.data.outputs.keys():
                 dataset_balance[f"{out}"] = {
                     "presence_balance": {},
-                    "percent_balance": {}
+                    "percent_balance": {},
+                    "phrase_class_length": {},
+                    "phrase_class_count": {}
                 }
                 for data_type in ['train', 'val']:
                     classes_names = options.data.outputs.get(out).classes_names
                     classes = np.arange(options.data.outputs.get(out).num_classes)
                     class_count = {}
                     class_percent = {}
+                    phrase_length = {}
+                    phrase_count = {}
+                    total_mean_length = []
                     for cl in classes:
-                        class_count[classes_names[cl]] = \
-                            np.sum(y_true.get(data_type).get(f"{out}")[..., cl]).item()
-                        class_percent[options.data.outputs.get(out).classes_names[cl]] = np.round(
+                        class_count[classes_names[cl]] =  np.sum(y_true.get(data_type).get(f"{out}")[..., cl]).item()
+                        class_percent[classes_names[cl]] = np.round(
                             np.sum(y_true.get(data_type).get(f"{out}")[..., cl]) * 100
                             / np.prod(y_true.get(data_type).get(f"{out}")[..., cl].shape)).item()
+                        phrase_length[classes_names[cl]] = []
+                        phrase_count[classes_names[cl]] = 0
+                        for ex in range(len(y_true.get(data_type).get(f"{out}"))):
+                            rows = sequence_length_calculator(y_true.get(data_type).get(f"{out}")[ex, :, cl])
+                            phrase_length[classes_names[cl]].extend(rows)
+                            phrase_count[classes_names[cl]] += len(rows)
+                            total_mean_length.extend(rows)
+                        phrase_length[classes_names[cl]] = int(np.mean(phrase_length[classes_names[cl]]))
+                    phrase_length['Все сегменты'] = int(np.mean(total_mean_length))
                     dataset_balance[f"{out}"]["presence_balance"][data_type] = class_count
                     dataset_balance[f"{out}"]["percent_balance"][data_type] = class_percent
+                    dataset_balance[f"{out}"]["phrase_class_length"][data_type] = phrase_length
+                    dataset_balance[f"{out}"]["phrase_class_count"][data_type] = phrase_count
             return dataset_balance
         except Exception as e:
             print_error(TextSegmentationCallback().name, method_name, e)
@@ -873,22 +887,43 @@ class TextSegmentationCallback(BaseSegmentationCallback):
             for out in options.data.outputs.keys():
                 for class_type in dataset_balance.get(f"{out}").keys():
                     preset = {}
-                    if class_type in ["presence_balance", "percent_balance"]:
+                    if class_type in ["presence_balance", "percent_balance",
+                                      "phrase_class_length", "phrase_class_count"]:
                         for data_type in ['train', 'val']:
                             names, count = sort_dict(
                                 dict_to_sort=dataset_balance.get(f"{out}").get(class_type).get(data_type),
                                 mode=interactive_config.data_balance.sorted.name
                             )
+                            if class_type == 'presence_balance':
+                                y_label = 'Количество слов'
+                                class_label = 'баланс присутсвия'
+                                short_name = 'присутсвие'
+                            elif class_type == 'percent_balance':
+                                y_label = 'Процент слов'
+                                class_label = 'процент присутсвия'
+                                short_name = 'процент'
+                            elif class_type == 'phrase_class_length':
+                                y_label = 'Средняя длина фразы'
+                                class_label = 'средняя длина фразы'
+                                short_name = 'длина'
+                            elif class_type == 'phrase_class_count':
+                                y_label = 'Количество фраз'
+                                class_label = 'количество фраз'
+                                short_name = 'количество'
+                            else:
+                                y_label = ''
+                                class_label = ''
+                                short_name = ''
+
+                            data_label = 'Тренировочная' if data_type == 'train' else 'Проверочная'
                             preset[data_type] = fill_graph_front_structure(
                                 _id=_id,
                                 _type='histogram',
                                 type_data=data_type,
-                                graph_name=f"Выход {out} - {'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка - "
-                                           f"{'баланс присутсвия' if class_type == 'presence_balance' else 'процент пространства'}",
-                                short_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} - "
-                                           f"{'присутсвие' if class_type == 'presence_balance' else 'процент'}",
+                                graph_name=f"Выход {out} - {data_label} выборка - {class_label}",
+                                short_name=f"{data_label} - {short_name}",
                                 x_label="Название класса",
-                                y_label="Значение",
+                                y_label=y_label,
                                 plot_data=[fill_graph_plot_data(x=names, y=count)],
                             )
                             _id += 1
@@ -896,3 +931,4 @@ class TextSegmentationCallback(BaseSegmentationCallback):
             return return_data
         except Exception as e:
             print_error(TextSegmentationCallback().name, method_name, e)
+

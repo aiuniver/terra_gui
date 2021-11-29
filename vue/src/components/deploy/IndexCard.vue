@@ -22,20 +22,20 @@
           <scrollbar :ops="ops">
             <TableTextSegmented
               v-bind="{value: card.format, tags_color: {segmentationLayer}, layer: 'segmentationLayer', block_width: '598px'}"
-              :key="RandId"
+              :key="id"
             />
           </scrollbar>
         </div>
         <div class="card__result">
           <SegmentationTags
-            :style="{ width: '600px', height: '80px' }"
+            :style="{ width: '600px', height: '50px' }"
             :tags="segmentationLayer"
           />
         </div>
       </div>
       <div v-if="type == 'AudioClassification'">
         <div class="card__original">
-          <AudioCard :value="card.source" :update="RandId" />
+          <AudioCard :value="card.source" :update="random" />
         </div>
         <div class="card__result">
           <TextCard :style="{ width: '600px', height: '80px' }">{{ ClassificationResult }}</TextCard>
@@ -50,6 +50,14 @@
           <ImgCard :imgUrl="card.segment" />
         </div>
       </div>
+      <div v-if="type == 'VideoObjectDetection'">
+        <div class="card__original">
+          <TableVideo :value="card.source" />
+        </div>
+        <div class="card__result">
+          <TableVideo :value="card.predict" />
+        </div>
+      </div>
       <div v-if="type == 'YoloV3' || type == 'YoloV4'">
         <div class="card__original">
           <TableImage size="large" :value="card.source" />
@@ -61,25 +69,41 @@
       <div class="card__graphic" v-if="type == 'Timeseries'">
         <GraphicCard v-bind="card" :key="'graphic_' + index"/>
       </div>
+      <div class="card__graphic" v-if="type == 'TimeseriesTrend'">
+        
+        <div class="card__original">
+          <!-- <GraphicCard v-bind="card" :key="'grapрhic_' + index"/> -->
+          <GraphicCardPredict :data="card.predict" :key="'grapрhic_' + index"/>
+        </div>
+        <div class="card__result">
+          <GraphicCardSource :data="card.source" :key="'grвыaphic_' + index"/>
+        </div>
+      </div>
     </div>
-    <div class="card__reload"><button class="btn-reload" @click="ReloadCard"><i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i></button></div>
+    <div class="card__reload"><button class="btn-reload" @click="reload"><i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i></button></div>
   </div>
 </template>
 
 <script>
 import ImgCard from './cards/ImgCard';
+import TableVideo from './cards/TableVideo';
 import TextCard from './cards/TextCard';
 import AudioCard from './cards/AudioCard';
 import TableTextSegmented from "../training/main/prediction/components/TableTextSegmented";
 import SegmentationTags from "./cards/SegmentationTags";
 import GraphicCard from "./cards/GraphicCard";
+import GraphicCardSource from "./cards/GraphicCardSource";
+import GraphicCardPredict from "./cards/GraphicCardPredict";
 import { mapGetters } from 'vuex';
 export default {
   name: 'IndexCard',
   components: {
     ImgCard,
+    TableVideo,
     TextCard,
     GraphicCard,
+    GraphicCardSource,
+    GraphicCardPredict,
     AudioCard,
     TableTextSegmented,
     SegmentationTags,
@@ -87,6 +111,7 @@ export default {
 
   },
   data: () => ({
+    random: 'dsdsdd',
     ops: {
       scrollPanel: {
         scrollingX: false,
@@ -103,16 +128,15 @@ export default {
     color_map: {
       type: Array,
       default: () => ([]),
-    }
+    },
+    id: String
   },
 
   methods: {
-    ReloadCard() {
+    async reload() {
       this.$emit('reload', [this.index.toString()]);
+      this.random = await this.$store.dispatch('deploy/random')
     },
-    GraphicData(){
-
-    }
   },
   computed: {
     ...mapGetters({
@@ -120,7 +144,6 @@ export default {
       defaultLayout: 'deploy/getDefaultLayout',
       origTextStyle: 'deploy/getOrigTextStyle',
       type: 'deploy/getDeployType',
-      RandId: 'deploy/getRandId',
     }),
     layout() {
       const layout = this.defaultLayout;
@@ -152,7 +175,7 @@ export default {
     },
   },
   mounted() {
-    console.log(this.card)
+    // console.log(this.card)
   }
 };
 </script>

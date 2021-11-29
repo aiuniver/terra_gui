@@ -51,6 +51,9 @@ class LayerTypeChoice(str, Enum):
     Conv1DTranspose = "Conv1DTranspose"
     Conv2DTranspose = "Conv2DTranspose"
     Conv3DTranspose = "Conv3DTranspose"
+    ConvLSTM1D = "ConvLSTM1D",
+    ConvLSTM2D = "ConvLSTM2D",
+    ConvLSTM3D = "ConvLSTM3D",
     SeparableConv1D = "SeparableConv1D"
     SeparableConv2D = "SeparableConv2D"
     DepthwiseConv2D = "DepthwiseConv2D"
@@ -115,7 +118,7 @@ class LayerTypeChoice(str, Enum):
     MobileNetV3Small = "MobileNetV3Small"
     MobileNetV2 = "MobileNetV2"
     EfficientNetB0 = "EfficientNetB0"
-    CustomUNETBlock = "CustomUNETBlock"
+    # CustomUNETBlock = "CustomUNETBlock"
     YOLOResBlock = "YOLOResBlock"
     YOLOv3ResBlock = "YOLOv3ResBlock"
     YOLOConvBlock = "YOLOConvBlock"
@@ -127,8 +130,12 @@ class LayerTypeChoice(str, Enum):
     DarkNetResBlock = "DarkNetResBlock"
     DarkNetBatchNormalization = "DarkNetBatchNormalization"
     CONVBlock = "CONVBlock"
-    PSPBlock = "PSPBlock"
-    UNETBlock = "UNETBlock"
+    PSPBlock1D = "PSPBlock1D"
+    PSPBlock2D = "PSPBlock2D"
+    PSPBlock3D = "PSPBlock3D"
+    UNETBlock1D = "UNETBlock1D"
+    UNETBlock2D = "UNETBlock2D"
+    UNETBlock3D = "UNETBlock3D"
 
     @staticmethod
     def values() -> list:

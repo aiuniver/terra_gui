@@ -7,14 +7,13 @@
     "model": {
       "tag": "model",
       "task": "Image",
-      "model": "/home/evgeniy/terra_gui/TerraProjects/models/samolet"
+      "model": "/home/evgeniy/terra_gui/TerraProject/models/á ¬®«¥âë98/model"
     },
     "2": {
       "tag": "function",
       "task": "Segmentation",
       "name": "plot_mask_segmentation",
       "params": {
-        "num_class": 2,
         "classes_colors": [
           [0, 0, 0],
           [255, 0, 0]
@@ -32,8 +31,8 @@
         "INPUT"
       ],
       "2": [
-        "INPUT",
-        "model"
+        "model",
+        "INPUT"
       ],
       "4": [
         "2"

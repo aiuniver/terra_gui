@@ -1,0 +1,29 @@
+{
+  "cascades": {
+    "input": {
+      "tag": "input",
+      "type": "video_by_frame"
+    },
+    "model": {
+      "tag": "service",
+      "task": "ObjectDetection",
+      "name": "yolo_v5"
+    },
+    "saving": {
+      "tag": "output",
+      "type": "video",
+      "params": {
+        "width": 1280,
+        "height": 720
+      }
+    }
+  },
+  "adjacency_map": {
+    "model": [
+      "INPUT"
+    ],
+    "saving": [
+      "model"
+    ]
+  }
+}

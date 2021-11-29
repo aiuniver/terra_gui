@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 import environ
 import tempfile
 
-from django.utils import timezone
+from datetime import datetime
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -34,6 +34,7 @@ SECRET_KEY = env.str("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG", default=False)
+USE_GPU = env.bool("USE_GPU", default=True)
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 
@@ -129,7 +130,7 @@ VUE_ROOT = BASE_DIR("vue/dist")
 VUE_URL = "/"
 
 
-# DRF
+# Django Rest Framework
 
 REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "apps.api.exceptions.handler",
@@ -138,8 +139,7 @@ REST_FRAMEWORK = {
 
 # Terra AI
 
-TERRA_AI_DATE_START = timezone.now()
-TERRA_AI_SYNC_LOGS = env.bool("TERRA_AI_SYNC_LOGS", default=False)
+TERRA_AI_DATE_START = datetime.now()
 TERRA_AI_BASE_DIR = env.str("TERRA_AI_BASE_DIR", default="/")
 TERRA_AI_EXCHANGE_API_URL = env.str("TERRA_AI_EXCHANGE_API_URL")
 TERRA_AI_DATA_PATH = env.str("TERRA_AI_DATA_PATH")
@@ -154,3 +154,4 @@ USER_NAME = env.str("USER_NAME")
 USER_LASTNAME = env.str("USER_LASTNAME")
 USER_EMAIL = env.str("USER_EMAIL")
 USER_TOKEN = env.str("USER_TOKEN")
+USER_SERVERS = env.json("USER_SERVERS", default={})

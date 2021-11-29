@@ -7,14 +7,11 @@ import time
 import colorsys
 from tensorflow.keras.preprocessing.image import load_img
 import os
+
+from terra_ai.callbacks.utils import print_error
 from terra_ai.datasets.utils import resize_bboxes
 
 ### DETECTION ###
-
-def print_error(class_name: str, method_name: str, message: Exception):
-    return print(f'\n_________________________________________________\n'
-                 f'Error in class {class_name} method {method_name}: {message}'
-                 f'\n_________________________________________________\n')
 
 
 def detect_image(Yolo, original_image, output_path, input_size=416, show=False, CLASSES=None,
@@ -471,18 +468,15 @@ def create_yolo(model, input_size=416, channels=3, training=False, classes=None,
         if classes is None:
             classes = []
         num_class = len(classes)
-        input_layer = keras.layers.Input([input_size, input_size, channels])
-        conv_tensors = model(input_layer)
+        conv_tensors = model.outputs
         if conv_tensors[0].shape[1] == 13:
             conv_tensors.reverse()
-        # print('conv_tensors', conv_tensors.reverse())
         output_tensors = []
         for i, conv_tensor in enumerate(conv_tensors):
             pred_tensor = decode(conv_tensor, num_class, i, version)
             if training: output_tensors.append(conv_tensor)
             output_tensors.append(pred_tensor)
-        # print('output_tensors', output_tensors)
-        yolo = tf.keras.Model(input_layer, output_tensors)
+        yolo = tf.keras.Model(model.inputs, output_tensors)
         return yolo
     except Exception as e:
         print_error("module yolo_utils", method_name, e)
@@ -628,7 +622,6 @@ class CustomModelYolo(keras.Model):
 
     @tf.function
     def predict_step(self, data):
-
         return self.yolo(data, training=False)
 
 
@@ -725,7 +718,7 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
 
             true_bbox = dataset.dataframe.get("val").iloc[index, 1] #.split(' ')
             tmp_im = load_img(os.path.join(dataset_path, dataset.dataframe.get("val").iloc[index, 0]))
-            bbox_data_gt = np.array(resize_bboxes(true_bbox, tmp_im.width, tmp_im.height))
+            bbox_data_gt = np.array(resize_bboxes('stretch', true_bbox, tmp_im.width, tmp_im.height))
             # bbox_data_gt = np.array([list(map(int, box.split(','))) for box in y_true])
 
             if len(bbox_data_gt) == 0:
