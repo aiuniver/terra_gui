@@ -160,7 +160,7 @@ class GUINN:
             prepared_dataset = PrepareDataset(data=dataset, datasets_path=dataset.path)
             prepared_dataset.prepare_dataset()
             if state != "addtrain":
-                prepared_dataset.deploy_export(os.path.join(model_path, "dataset"))
+                prepared_dataset.deploy_export(os.path.join(model_path))
             return prepared_dataset
         except Exception as e:
             print_error(GUINN().name, method_name, e)

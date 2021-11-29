@@ -3,7 +3,7 @@ import os
 import shutil
 from pathlib import Path
 
-from tensorflow.keras.models import load_model
+from tensorflow.keras.models import model_from_json
 
 from terra_ai.cascades.common import decamelize
 from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
@@ -106,7 +106,13 @@ class DeployCreator:
         weight = None
         out_model = None
 
-        model = load_model(os.path.join(model_path, "trained_model.trm"), compile=False)
+        # with open(os.path.join(model_path, "trained_model_custom_obj_json.trm"), "r", encoding="utf-8") as custom_obj:
+        #     custom_dict = json.load(custom_obj)
+
+        with open(os.path.join(model_path, "trained_model_json.trm")) as json_file:
+            model_data = json.load(json_file)
+        model = model_from_json(model_data)
+
         for i in os.listdir(model_path):
             if i[-3:] == '.h5' and 'best' in i:
                 weight = i
@@ -120,7 +126,6 @@ class DeployCreator:
                 out_model = create_yolo(model=model, input_size=416, channels=3, training=False,
                                         classes=dataset.data.outputs.get(2).classes_names,
                                         version=dataset.instructions.get(2).get('2_object_detection').get('yolo'))
-
         return out_model
 
     @staticmethod
