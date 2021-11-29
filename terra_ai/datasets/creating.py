@@ -42,7 +42,63 @@ class CreateDataset(object):
 
     def __init__(self, cr_data: CreationData):
 
-        creation_data: CreationData = cr_data  # ВРЕМЕННО!!!
+        def preprocess_creation_data(creation_data):
+            for worker_name, worker_params in creation_data.version.processing.items():
+                if creation_data.version.processing[worker_name].type == 'Segmentation':
+                    for w_name, w_params in creation_data.version.processing.items():
+                        if creation_data.version.processing[w_name].type == 'Image':
+                            creation_data.version.processing[worker_name].parameters.height = \
+                                creation_data.version.processing[w_name].parameters.height
+                            creation_data.version.processing[worker_name].parameters.width = \
+                                creation_data.version.processing[w_name].parameters.width
+
+                elif creation_data.version.processing[worker_name].type == LayerOutputTypeChoice.TextSegmentation:
+                    for w_name, w_params in creation_data.version.processing.items():
+                        if creation_data.version.processing[w_name].type == LayerOutputTypeChoice.Text:
+                            # creation_data.version.processing[worker_name].parameters.sources_paths = creation_data.version.processing[w_name].parameters.sources_paths
+                            creation_data.version.processing[worker_name].parameters.text_mode = \
+                            creation_data.version.processing[w_name].parameters.text_mode
+                            creation_data.version.processing[worker_name].parameters.length = \
+                            creation_data.version.processing[w_name].parameters.length
+                            creation_data.version.processing[worker_name].parameters.step = \
+                            creation_data.version.processing[w_name].parameters.step
+                            creation_data.version.processing[worker_name].parameters.max_words = \
+                            creation_data.version.processing[w_name].parameters.max_words
+                            filters = creation_data.version.processing[w_name].parameters.filters
+                            for x in creation_data.version.processing[worker_name].parameters.open_tags + \
+                                     creation_data.version.processing[worker_name].parameters.close_tags:
+                                filters = filters.replace(x, '')
+                            creation_data.version.processing[w_name].parameters.filters = filters
+                            creation_data.version.processing[worker_name].parameters.filters = filters
+                            creation_data.version.processing[w_name].parameters.open_tags = \
+                            creation_data.version.processing[worker_name].parameters.open_tags
+                            creation_data.version.processing[w_name].parameters.close_tags = \
+                            creation_data.version.processing[worker_name].parameters.close_tags
+
+                elif creation_data.version.processing[worker_name].type == LayerOutputTypeChoice.ObjectDetection:
+                    for w_name, w_params in creation_data.version.processing.items():
+                        if creation_data.version.processing[w_name].type == LayerInputTypeChoice.Image:
+                            creation_data.version.processing[worker_name].parameters.frame_mode = \
+                            creation_data.version.processing[w_name].parameters.image_mode
+                    names_list = get_od_names(creation_data)
+                    creation_data.version.processing[worker_name].parameters.classes_names = names_list
+                    creation_data.version.processing[worker_name].parameters.num_classes = len(names_list)
+
+                elif creation_data.version.processing[worker_name].type == 'Timeseries':
+                    if creation_data.version.processing[worker_name].parameters.trend:
+                        creation_data.version.processing[worker_name].parameters.depth = 1
+                    for w_name, w_params in creation_data.version.processing.items():
+                        if creation_data.version.processing[w_name].type in ['Classification', 'Scaler']:
+                            creation_data.version.processing[w_name].parameters.length = \
+                                creation_data.version.processing[worker_name].parameters.length
+                            creation_data.version.processing[w_name].parameters.depth = \
+                                creation_data.version.processing[worker_name].parameters.depth
+                            creation_data.version.processing[w_name].parameters.step = \
+                                creation_data.version.processing[worker_name].parameters.step
+
+            return creation_data
+
+        creation_data: CreationData = preprocess_creation_data(cr_data)  # ВРЕМЕННО!!!
         self.temp_directory: Path = Path(tempfile.mkdtemp())
         os.makedirs(self.temp_directory.joinpath(f'{creation_data.alias}.{DATASET_EXT}_NEW'), exist_ok=True)
         self.dataset_paths_data: DatasetPathsData = DatasetPathsData(
