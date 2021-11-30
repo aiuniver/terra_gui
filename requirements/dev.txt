@@ -19,3 +19,4 @@ ipython==5.5.0
 matplotlib==3.2.2
 scipy==1.4.1
 tzlocal==1.5.1
+dill==0.3.4
