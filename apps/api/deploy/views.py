@@ -5,7 +5,7 @@ from pathlib import Path
 
 from django.conf import settings
 
-from terra_ai import settings as terra_ai_settings
+from terra_ai.settings import TERRA_PATH, DEPLOY_PATH
 from terra_ai.agent import agent_exchange
 from terra_ai.deploy.prepare_deploy import DeployCreator
 from terra_ai.data.datasets.dataset import DatasetInfo, DatasetLoadData
@@ -18,7 +18,7 @@ from apps.api.base import (
     BaseResponseErrorFields,
     BaseResponseErrorGeneral,
 )
-from apps.plugins.project import project_path, data_path
+from apps.plugins.project import project_path
 
 from . import serializers
 
@@ -39,7 +39,7 @@ class GetAPIView(BaseAPIView):
             with open(_path) as dataset_ref:
                 dataset_config = json.load(dataset_ref)
                 datasets.append(
-                    DatasetLoadData(path=data_path.datasets, **dataset_config)
+                    DatasetLoadData(path=TERRA_PATH.datasets, **dataset_config)
                 )
         agent_exchange("deploy_get", datasets=datasets, page=page)
         return BaseResponseSuccess()
@@ -58,7 +58,7 @@ class GetProgressAPIView(BaseAPIView):
                 request.project.deploy = DeployCreator().get_deploy(
                     dataset=dataset,
                     training_path=project_path.training,
-                    deploy_path=terra_ai_settings.DEPLOY_PATH,
+                    deploy_path=DEPLOY_PATH,
                     page=progress.data.get("kwargs", {}).get("page").native(),
                 )
                 progress.data = request.project.deploy.presets
@@ -87,7 +87,7 @@ class UploadAPIView(BaseAPIView):
         agent_exchange(
             "deploy_upload",
             **{
-                "source": terra_ai_settings.DEPLOY_PATH,
+                "source": DEPLOY_PATH,
                 "stage": 1,
                 "deploy": serializer.validated_data.get("deploy"),
                 "env": "v1",

@@ -2,9 +2,7 @@ import os
 import json
 import shutil
 
-from time import sleep
 from pathlib import Path
-from tempfile import mkdtemp
 from typing import Optional, List, Tuple
 from pydantic import validator, DirectoryPath, FilePath
 
@@ -14,7 +12,7 @@ from apps.plugins.frontend import defaults_data
 from apps.plugins.frontend.defaults import DefaultsTrainingData
 from apps.plugins.project import exceptions, utils
 
-from terra_ai.settings import PROJECT_EXT
+from terra_ai.settings import TERRA_PATH, PROJECT_EXT
 from terra_ai.agent import agent_exchange
 from terra_ai.progress import utils as progress_utils
 from terra_ai.data.types import confilepath
@@ -22,7 +20,6 @@ from terra_ai.data.extra import HardwareAcceleratorData
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.datasets.dataset import DatasetData, DatasetInfo
 from terra_ai.data.deploy.tasks import DeployData
-from terra_ai.data.deploy.extra import DeployTypePageChoice
 from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.training.train import TrainingDetailsData, DEFAULT_TRAINING_PATH_NAME
 from terra_ai.data.cascades.cascade import CascadeDetailsData
@@ -31,14 +28,6 @@ from terra_ai.data.presets.cascades import EmptyCascadeDetailsData
 
 
 UNKNOWN_NAME = "NoName"
-DATA_PATH = {
-    "base": Path(settings.TERRA_AI_DATA_PATH).absolute(),
-    "sources": Path(settings.TERRA_AI_DATA_PATH, "datasets", "sources").absolute(),
-    "datasets": Path(settings.TERRA_AI_DATA_PATH, "datasets").absolute(),
-    "modeling": Path(settings.TERRA_AI_DATA_PATH, "modeling").absolute(),
-    "training": Path(settings.TERRA_AI_DATA_PATH, "training").absolute(),
-    "projects": Path(settings.TERRA_AI_DATA_PATH, "projects").absolute(),
-}
 PROJECT_PATH = {
     "base": Path(settings.TERRA_AI_PROJECT_PATH).absolute(),
     "config": Path(settings.TERRA_AI_PROJECT_PATH, "config.json").absolute(),
@@ -48,29 +37,6 @@ PROJECT_PATH = {
     "cascades": Path(settings.TERRA_AI_PROJECT_PATH, "cascades").absolute(),
     "deploy": Path(settings.TERRA_AI_PROJECT_PATH, "deploy").absolute(),
 }
-
-
-class DataPathData(BaseMixinData):
-    base: DirectoryPath
-    sources: DirectoryPath
-    datasets: DirectoryPath
-    modeling: DirectoryPath
-    training: DirectoryPath
-    projects: DirectoryPath
-
-    @validator(
-        "base",
-        "sources",
-        "datasets",
-        "modeling",
-        "training",
-        "projects",
-        allow_reuse=True,
-        pre=True,
-    )
-    def _validate_path(cls, value: DirectoryPath) -> DirectoryPath:
-        os.makedirs(value, exist_ok=True)
-        return value
 
 
 class ProjectPathData(BaseMixinData):
@@ -195,7 +161,7 @@ class Project(BaseMixinData):
         defaults_data.update_models(self.trainings)
 
     def save(self, overwrite: bool):
-        destination_path = Path(data_path.projects, f"{self.name}.{PROJECT_EXT}")
+        destination_path = Path(TERRA_PATH.projects, f"{self.name}.{PROJECT_EXT}")
         if not overwrite and destination_path.is_file():
             raise exceptions.ProjectAlreadyExistsException(self.name)
         zip_destination = progress_utils.pack(
@@ -328,7 +294,6 @@ class Project(BaseMixinData):
         self.set_cascade(CascadeDetailsData(**EmptyCascadeDetailsData))
 
 
-data_path = DataPathData(**DATA_PATH)
 project_path = ProjectPathData(**PROJECT_PATH)
 
 try:

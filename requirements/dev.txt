@@ -11,3 +11,5 @@ gdown==3.6.4
 gensim==3.8.3
 notebook==6.4.1
 ipywidgets==7.6.3
+google-api-python-client==2.31.0
+grpcio==1.42.0

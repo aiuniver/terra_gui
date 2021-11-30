@@ -4,10 +4,10 @@ import sys
 from rest_framework import serializers
 from transliterate import slugify
 
-from apps.plugins.project import data_path
 from apps.plugins.frontend import choices as frontend_choices
-
 from apps.api.fields import DirectoryPathField, DirectoryOrFilePathField
+
+from terra_ai.settings import TERRA_PATH
 
 
 class MinMaxScalerSerializer(serializers.Serializer):
@@ -279,7 +279,7 @@ class CreateColumnProcessingSerializer(serializers.Serializer):
 class CreateSerializer(serializers.Serializer):
     alias = serializers.SerializerMethodField()
     name = serializers.CharField()
-    datasets_path = DirectoryPathField(default=str(data_path.datasets.absolute()))
+    datasets_path = DirectoryPathField(default=str(TERRA_PATH.datasets.absolute()))
     source_path = DirectoryPathField()
     info = CreateInfoSerializer()
     tags = serializers.ListSerializer(child=CreateTagSerializer(), default=[])

@@ -4,11 +4,10 @@ import base64
 from tempfile import NamedTemporaryFile
 from transliterate import slugify
 
+from terra_ai.settings import TERRA_PATH
 from terra_ai.agent import agent_exchange
 from terra_ai.data.modeling.extra import LayerGroupChoice
 from terra_ai.data.modeling.model import ModelDetailsData
-
-from apps.plugins.project import data_path
 
 from apps.api import utils
 from apps.api.base import BaseAPIView, BaseResponseSuccess, BaseResponseErrorFields
@@ -42,7 +41,7 @@ class LoadAPIView(BaseAPIView):
 class InfoAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         return BaseResponseSuccess(
-            agent_exchange("models", path=data_path.modeling).native()
+            agent_exchange("models", path=TERRA_PATH.modeling).native()
         )
 
 
@@ -137,7 +136,7 @@ class CreateAPIView(BaseAPIView):
             data=agent_exchange(
                 "model_create",
                 model=model.native(),
-                path=str(data_path.modeling),
+                path=str(TERRA_PATH.modeling),
                 overwrite=serializer.validated_data.get("overwrite"),
             )
         )

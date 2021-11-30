@@ -1,7 +1,8 @@
+from terra_ai.settings import TERRA_PATH
 from terra_ai.agent import agent_exchange
 from terra_ai.data.projects.project import ProjectPathData
 
-from apps.plugins.project import project_path, data_path
+from apps.plugins.project import project_path
 
 from apps.api.base import (
     BaseAPIView,
@@ -41,7 +42,7 @@ class SaveAPIView(BaseAPIView):
 class InfoAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         return BaseResponseSuccess(
-            agent_exchange("projects_info", path=data_path.projects).native()
+            agent_exchange("projects_info", path=TERRA_PATH.projects).native()
         )
 
 
@@ -52,7 +53,7 @@ class LoadAPIView(BaseAPIView):
             return BaseResponseErrorFields(serializer.errors)
         agent_exchange(
             "project_load",
-            dataset_path=data_path.datasets,
+            dataset_path=TERRA_PATH.datasets,
             source=serializer.validated_data.get("value"),
             target=project_path.base,
         )

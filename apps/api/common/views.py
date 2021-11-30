@@ -1,5 +1,4 @@
-from apps.plugins.project import data_path
-
+from terra_ai.settings import TERRA_PATH
 from terra_ai.agent import agent_exchange
 from terra_ai.agent.exceptions import FailedGetModelException
 
@@ -21,7 +20,7 @@ class ValidateDatasetModelAPIView(BaseAPIView):
         model = None
 
         if dataset_load:
-            datasets = agent_exchange("datasets_info", path=data_path.datasets)
+            datasets = agent_exchange("datasets_info", path=TERRA_PATH.datasets)
             dataset = datasets.get(dataset_load.get("group")).datasets.get(
                 dataset_load.get("alias")
             )
