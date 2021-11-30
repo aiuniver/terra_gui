@@ -5,36 +5,31 @@
         <div class="content">
           <div class="board__data-field">
             <div>
-              <!-- <button v-if="!isTable" class="board__reload-all" @click="ReloadAll">
-                <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
-                <span>Перезагрузить все</span>
-              </button> -->
               <div class="board__title">Исходные данные / Предсказанные данные</div>
               <div v-if="!isTable" class="board__data">
                 <IndexCard
-                  v-for="(card, i) in Cards"
-                  :key="'card-' + i"
-                  v-bind="card"
+                  v-for="(card, i) in cards"
+                  :key="'#board-card-' + i"
                   :card="card"
-                  :color_map="deploy.color_map"
+                  :color-map="deploy.color_map"
                   :index="i"
-                  @reload="ReloadCard"
+                  @reload="reload"
                 />
               </div>
               <div v-else class="board__data">
                 <Table
                   v-if="type === 'DataframeRegression'"
                   v-bind="deploy"
-                  :key="random"
-                  @reload="ReloadCard"
-                  @reloadAll="ReloadAll"
+                  :key="'#board-' + updateKey"
+                  @reload="reload"
+                  @reloadAll="reloadAll"
                 />
                 <TableClass
                   v-if="type === 'DataframeClassification'"
                   v-bind="deploy"
-                  :key="random"
-                  @reload="ReloadCard"
-                  @reloadAll="ReloadAll"
+                  :key="'#board-' + updateKey"
+                  @reload="reload"
+                  @reloadAll="reloadAll"
                 />
               </div>
             </div>
@@ -53,15 +48,12 @@ export default {
     IndexCard: () => import('./IndexCard'),
     Table: () => import('./Table.vue'),
     TableClass: () => import('./TableClass.vue'),
-    // Table,
   },
-  data: () => ({
-    random: 'sd32efl'
-  }),
+  data: () => ({ updateKey: 0 }),
   computed: {
     ...mapGetters({
       dataLoaded: 'deploy/getDataLoaded',
-      Cards: 'deploy/getCards',
+      cards: 'deploy/getCards',
       height: 'settings/autoHeight',
       type: 'deploy/getDeployType',
       deploy: 'deploy/getDeploy',
@@ -71,21 +63,15 @@ export default {
     },
   },
   methods: {
-    async ReloadCard(data) {
-      const res = await this.$store.dispatch('deploy/ReloadCard', data);
-      this.random = await this.$store.dispatch('deploy/random')
-      return res
+    async reload(index) {
+      this.updateKey++
+      await this.$store.dispatch('deploy/reloadCard', [String(index)]);
     },
-    async ReloadAll() {
+    async reloadAll() {
       let indexes = [];
-      for (let i = 0; i < this.Cards.length; i++) {
-        indexes.push(i.toString());
-      }
-      await this.$store.dispatch('deploy/ReloadCard', indexes);
+      for (let i = 0; i < this.cards.length; i++) indexes.push(String(i));
+      await this.$store.dispatch('deploy/reloadCard', indexes);
     },
-  },
-  mounted() {
-    console.log(this.deploy);
   },
 };
 </script>

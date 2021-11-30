@@ -29,7 +29,6 @@ class CascadeRunner:
                       sources: Dict[int, List[str]]):
 
         presets_path = os.path.join(DEPLOY_PATH, "deploy_presets")
-
         if os.path.exists(DEPLOY_PATH):
             shutil.rmtree(DEPLOY_PATH, ignore_errors=True)
             os.makedirs(DEPLOY_PATH, exist_ok=True)
@@ -37,6 +36,7 @@ class CascadeRunner:
             os.makedirs(presets_path, exist_ok=True)
 
         type_, model, inputs_ids = self._get_task_type(cascade_data=cascade_data, training_path=training_path)
+
         dataset_path = os.path.join(training_path, model, "model", "dataset.json")
         if not os.path.exists(dataset_path):
             dataset_path = os.path.join(training_path, model, "model", "dataset", "config.json")
@@ -45,6 +45,7 @@ class CascadeRunner:
 
         model_path = Path(os.path.join(training_path, model, "model"))
         config = CascadeCreator()
+
         config.copy_model(deploy_path=DEPLOY_PATH, model_path=model_path)
 
         model_task = list(set([val.get("task") for key, val in dataset_config_data.get("outputs").items()]))[0]
@@ -60,8 +61,6 @@ class CascadeRunner:
                                          source_path=Path(dataset_path),
                                          predict_path=str(DEPLOY_PATH), classes=classes,
                                          classes_colors=classes_colors)
-        # print(presets_data)
-
         out_data = dict([
             ("path_deploy", str(DEPLOY_PATH)),
             ("type", type_),
@@ -93,7 +92,6 @@ class CascadeRunner:
 
     def _create_config(self, cascade_data: CascadeDetailsData, model_task: str,
                        dataset_data: dict, presets_path: str):
-
         classes = list(dataset_data.get("outputs").values())[0].get("classes_names")
         num_class = list(dataset_data.get("outputs").values())[0].get("num_classes")
         classes_colors = []
