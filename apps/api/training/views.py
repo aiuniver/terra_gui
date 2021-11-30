@@ -4,7 +4,6 @@ from terra_ai.agent import agent_exchange
 from terra_ai.data.training.extra import StateStatusChoice
 
 from apps.plugins.frontend import defaults_data
-from apps.plugins.project import project_path
 
 from apps.api.base import BaseAPIView, BaseResponseSuccess, BaseResponseErrorFields
 

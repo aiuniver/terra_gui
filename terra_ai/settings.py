@@ -9,7 +9,7 @@ from tempfile import gettempdir
 
 from django.conf import settings as django_settings
 
-from .data.path import TerraPathData
+from .data.path import TerraPathData, ProjectPathData
 
 
 # General settings
@@ -26,6 +26,18 @@ TERRA_PATH = TerraPathData(
         "modeling": Path(django_settings.TERRA_PATH, "modeling").absolute(),
         "training": Path(django_settings.TERRA_PATH, "training").absolute(),
         "projects": Path(django_settings.TERRA_PATH, "projects").absolute(),
+    }
+)
+
+# Project paths
+PROJECT_PATH = ProjectPathData(
+    **{
+        "base": Path(django_settings.PROJECT_PATH).absolute(),
+        "datasets": Path(django_settings.PROJECT_PATH, "datasets").absolute(),
+        "modeling": Path(django_settings.PROJECT_PATH, "modeling").absolute(),
+        "training": Path(django_settings.PROJECT_PATH, "training").absolute(),
+        "cascades": Path(django_settings.PROJECT_PATH, "cascades").absolute(),
+        "deploy": Path(django_settings.PROJECT_PATH, "deploy").absolute(),
     }
 )
 
