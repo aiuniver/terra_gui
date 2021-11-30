@@ -33,4 +33,4 @@ torchaudio==0.10.0+cu111
 torchvision<=0.11.1+cu111
 tensorflow-hub==0.12.0
 mutagen==1.45.1
-mutagen==1.45.1
+grpcio==1.42.0
