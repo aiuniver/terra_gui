@@ -1,7 +1,7 @@
 Django==3.2.9
 django-environ-2==2.3.0
 djangorestframework==3.12.4
-APScheduler==3.8.1
+APScheduler==3.6.3
 pydantic==1.8.2
 pydantic-i18n==0.2.1
 opencv-python==4.5.4.60
