@@ -4,18 +4,16 @@ import shutil
 
 from pathlib import Path
 from typing import Optional, List, Tuple
-from pydantic import validator, DirectoryPath, FilePath
+from pydantic import validator
 
-from django.conf import settings
-
+from apps.plugins.project import exceptions, utils
 from apps.plugins.frontend import defaults_data
 from apps.plugins.frontend.defaults import DefaultsTrainingData
-from apps.plugins.project import exceptions, utils
 
-from terra_ai.settings import TERRA_PATH, PROJECT_EXT
+from terra_ai import settings as terra_ai_settings
 from terra_ai.agent import agent_exchange
 from terra_ai.progress import utils as progress_utils
-from terra_ai.data.types import confilepath
+from terra_ai.data.path import ProjectPathData
 from terra_ai.data.extra import HardwareAcceleratorData
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.datasets.dataset import DatasetData, DatasetInfo
@@ -28,48 +26,6 @@ from terra_ai.data.presets.cascades import EmptyCascadeDetailsData
 
 
 UNKNOWN_NAME = "NoName"
-PROJECT_PATH = {
-    "base": Path(settings.TERRA_AI_PROJECT_PATH).absolute(),
-    "config": Path(settings.TERRA_AI_PROJECT_PATH, "config.json").absolute(),
-    "datasets": Path(settings.TERRA_AI_PROJECT_PATH, "datasets").absolute(),
-    "modeling": Path(settings.TERRA_AI_PROJECT_PATH, "modeling").absolute(),
-    "training": Path(settings.TERRA_AI_PROJECT_PATH, "training").absolute(),
-    "cascades": Path(settings.TERRA_AI_PROJECT_PATH, "cascades").absolute(),
-    "deploy": Path(settings.TERRA_AI_PROJECT_PATH, "deploy").absolute(),
-}
-
-
-class ProjectPathData(BaseMixinData):
-    base: DirectoryPath
-    config: Optional[confilepath(ext="json")]
-    datasets: DirectoryPath
-    modeling: DirectoryPath
-    training: DirectoryPath
-    cascades: DirectoryPath
-    deploy: DirectoryPath
-
-    @validator(
-        "base",
-        "datasets",
-        "modeling",
-        "training",
-        "cascades",
-        "deploy",
-        allow_reuse=True,
-        pre=True,
-    )
-    def _validate_directory(cls, value: DirectoryPath) -> DirectoryPath:
-        os.makedirs(value, exist_ok=True)
-        return value
-
-    @validator("config", allow_reuse=True, pre=True)
-    def _validate_config(cls, value: FilePath) -> FilePath:
-        try:
-            with open(PROJECT_PATH.get("config"), "x") as _config_ref:
-                _config_ref.write("{}")
-        except FileExistsError:
-            pass
-        return value
 
 
 class Project(BaseMixinData):
@@ -83,7 +39,7 @@ class Project(BaseMixinData):
     def __init__(self, **data):
         if not data.get("training"):
             data["training"] = {}
-        data["training"]["path"] = project_path.training
+        data["training"]["path"] = terra_ai_settings.PROJECT_PATH.training
 
         _dataset = data.get("dataset")
         if _dataset:
@@ -115,7 +71,7 @@ class Project(BaseMixinData):
     @property
     def trainings(self) -> List[Tuple[str, str]]:
         items = []
-        for item in os.listdir(project_path.training):
+        for item in os.listdir(terra_ai_settings.PROJECT_PATH.training):
             if item == DEFAULT_TRAINING_PATH_NAME:
                 continue
             items.append((item, item))
@@ -147,9 +103,10 @@ class Project(BaseMixinData):
         return _data
 
     def create(self):
-        # Todo: kill current process of training
-        shutil.rmtree(project_path.base, ignore_errors=True)
-        ProjectPathData(**PROJECT_PATH)
+        shutil.rmtree(terra_ai_settings.PROJECT_PATH.base, ignore_errors=True)
+        terra_ai_settings.PROJECT_PATH = ProjectPathData(
+            **terra_ai_settings.PROJECT_PATH.dict()
+        )
         self._set_data(
             name=UNKNOWN_NAME,
             dataset_info=None,
@@ -161,18 +118,24 @@ class Project(BaseMixinData):
         defaults_data.update_models(self.trainings)
 
     def save(self, overwrite: bool):
-        destination_path = Path(TERRA_PATH.projects, f"{self.name}.{PROJECT_EXT}")
+        destination_path = Path(
+            terra_ai_settings.TERRA_PATH.projects,
+            f"{self.name}.{terra_ai_settings.PROJECT_EXT}",
+        )
         if not overwrite and destination_path.is_file():
             raise exceptions.ProjectAlreadyExistsException(self.name)
         zip_destination = progress_utils.pack(
-            "project_save", "Сохранение проекта", project_path.base, delete=False
+            "project_save",
+            "Сохранение проекта",
+            terra_ai_settings.PROJECT_PATH.base,
+            delete=False,
         )
         shutil.move(zip_destination.name, str(destination_path.absolute()))
         defaults_data.update_models(self.trainings)
 
     def load(self):
         try:
-            with open(project_path.config, "r") as _config_ref:
+            with open(terra_ai_settings.PROJECT_PATH.config, "r") as _config_ref:
                 _config = json.load(_config_ref)
                 _dataset = _config.get("dataset", None)
                 if _dataset:
@@ -188,7 +151,7 @@ class Project(BaseMixinData):
                     _config.get("training", {}),
                     ModelDetailsData(**(_model or EmptyModelDetailsData)),
                 )
-                _training["path"] = project_path.training
+                _training["path"] = terra_ai_settings.PROJECT_PATH.training
                 self._set_data(
                     name=_config.get("name", UNKNOWN_NAME),
                     dataset_info=DatasetInfo(**_dataset_info)
@@ -201,6 +164,9 @@ class Project(BaseMixinData):
                 self.save_config()
                 self.set_training(self.training.name)
                 defaults_data.update_models(self.trainings)
+                terra_ai_settings.PROJECT_PATH = ProjectPathData(
+                    **terra_ai_settings.PROJECT_PATH.dict()
+                )
         except Exception as error:
             print("ERROR PROJECT LOAD:", error)
             self.create()
@@ -211,7 +177,7 @@ class Project(BaseMixinData):
             data.pop("hardware")
         if data.get("deploy"):
             data.pop("deploy")
-        with open(project_path.config, "w") as _config_ref:
+        with open(terra_ai_settings.PROJECT_PATH.config, "w") as _config_ref:
             json.dump(data, _config_ref)
 
     def frontend(self):
@@ -250,7 +216,7 @@ class Project(BaseMixinData):
 
     def set_training(self, name: str = None):
         self.training = TrainingDetailsData(
-            name=name, path=project_path.training, model=self.model
+            name=name, path=terra_ai_settings.PROJECT_PATH.training, model=self.model
         )
         self.set_training_base()
         self.save_config()
@@ -271,8 +237,8 @@ class Project(BaseMixinData):
 
     def clear_dataset(self):
         self._set_data(dataset_info=None)
-        shutil.rmtree(project_path.datasets, ignore_errors=True)
-        os.makedirs(project_path.datasets, exist_ok=True)
+        shutil.rmtree(terra_ai_settings.PROJECT_PATH.datasets, ignore_errors=True)
+        os.makedirs(terra_ai_settings.PROJECT_PATH.datasets, exist_ok=True)
         defaults_data.modeling.set_layer_datatype(self.dataset)
         self.clear_training(DEFAULT_TRAINING_PATH_NAME)
         self.save_config()
@@ -286,7 +252,9 @@ class Project(BaseMixinData):
         self.save_config()
 
     def clear_training(self, name: str):
-        shutil.rmtree(Path(project_path.training, name), ignore_errors=True)
+        shutil.rmtree(
+            Path(terra_ai_settings.PROJECT_PATH.training, name), ignore_errors=True
+        )
         self.set_training(name)
         self.save_config()
 
@@ -294,10 +262,8 @@ class Project(BaseMixinData):
         self.set_cascade(CascadeDetailsData(**EmptyCascadeDetailsData))
 
 
-project_path = ProjectPathData(**PROJECT_PATH)
-
 try:
-    with open(project_path.config, "r") as _config_ref:
+    with open(terra_ai_settings.PROJECT_PATH.config, "r") as _config_ref:
         _config = json.load(_config_ref)
 except Exception:
     _config = {}

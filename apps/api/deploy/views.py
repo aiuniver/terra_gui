@@ -5,7 +5,7 @@ from pathlib import Path
 
 from django.conf import settings
 
-from terra_ai.settings import TERRA_PATH, DEPLOY_PATH
+from terra_ai.settings import TERRA_PATH, PROJECT_PATH, DEPLOY_PATH
 from terra_ai.agent import agent_exchange
 from terra_ai.deploy.prepare_deploy import DeployCreator
 from terra_ai.data.datasets.dataset import DatasetInfo, DatasetLoadData
@@ -18,7 +18,6 @@ from apps.api.base import (
     BaseResponseErrorFields,
     BaseResponseErrorGeneral,
 )
-from apps.plugins.project import project_path
 
 from . import serializers
 
@@ -31,10 +30,10 @@ class GetAPIView(BaseAPIView):
         page = DeployPageData(**serializer.validated_data)
         datasets = []
         if page.type == DeployTypePageChoice.model:
-            _path = Path(project_path.training, page.name, "model", "dataset.json")
+            _path = Path(PROJECT_PATH.training, page.name, "model", "dataset.json")
             if not _path.is_file():
                 _path = Path(
-                    project_path.training, page.name, "model", "dataset", "config.json"
+                    PROJECT_PATH.training, page.name, "model", "dataset", "config.json"
                 )
             with open(_path) as dataset_ref:
                 dataset_config = json.load(dataset_ref)
@@ -57,7 +56,7 @@ class GetProgressAPIView(BaseAPIView):
                 dataset = DatasetInfo(**dataset_data).dataset if dataset_data else None
                 request.project.deploy = DeployCreator().get_deploy(
                     dataset=dataset,
-                    training_path=project_path.training,
+                    training_path=PROJECT_PATH.training,
                     deploy_path=DEPLOY_PATH,
                     page=progress.data.get("kwargs", {}).get("page").native(),
                 )
