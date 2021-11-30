@@ -2,6 +2,7 @@ import base64
 
 from tempfile import NamedTemporaryFile
 
+from terra_ai.settings import TERRA_PATH
 from terra_ai.agent import agent_exchange
 from terra_ai.data.datasets.dataset import DatasetInfo
 from terra_ai.data.cascades.extra import BlockGroupChoice
@@ -14,7 +15,7 @@ from apps.api.cascades.serializers import (
     StartSerializer,
     SaveSerializer,
 )
-from apps.plugins.project import project_path, data_path
+from apps.plugins.project import project_path
 
 from ..base import (
     BaseAPIView,
@@ -91,7 +92,7 @@ class StartAPIView(BaseAPIView):
         agent_exchange(
             "cascade_start",
             training_path=project_path.training,
-            datasets_path=data_path.datasets,
+            datasets_path=TERRA_PATH.datasets,
             sources=serializer.validated_data.get("sources"),
             cascade=request.project.cascade,
         )
@@ -168,7 +169,7 @@ class DatasetsAPIView(BaseAPIView):
     @staticmethod
     def post(request, **kwargs):
         datasets_list = agent_exchange(
-            "datasets_info", path=data_path.datasets
+            "datasets_info", path=TERRA_PATH.datasets
         ).native()
         response = []
 
