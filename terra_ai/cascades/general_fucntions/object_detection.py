@@ -110,7 +110,7 @@ def postprocess_boxes(input_size=416, score_threshold=.3, iou_threshold=.45, met
 
 def plot_b_boxes(classes, colors=None, line_thickness=None):
     if colors is None:
-        colors = [(randrange(1, 256) for _ in range(3))
+        colors = [tuple((randrange(1, 256) for _ in range(3)))
                   for _ in range(len(classes))]
 
     def fun(bboxes, img):
@@ -131,13 +131,12 @@ def plot_b_boxes(classes, colors=None, line_thickness=None):
                 else:
                     color = colors[0]
                 c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
-
-                cv2.rectangle(img, c1, c2, color, tl, cv2.LINE_AA)
+                cv2.rectangle(img, c1, c2, color, int(tl), cv2.LINE_AA)
 
                 t_size = (114, 16)
-                c2 = c1[0] + t_size[0] + 5 if (c1[0] + t_size[0] + 5) > 0 else 0, \
-                     c1[1] - t_size[1] - 5 if (c1[1] - t_size[1] - 5) > 0 else 0
-                c1 = c1[0] if (c1[0]) > 0 else 0, c1[1] - 3 if (c1[1] - 3) > 0 else 0
+                c2 = int(c1[0] + t_size[0] + 5 if (c1[0] + t_size[0] + 5) > 0 else 0), \
+                     int(c1[1] - t_size[1] - 5 if (c1[1] - t_size[1] - 5) > 0 else 0)
+                c1 = int(c1[0] if (c1[0]) > 0 else 0), int(c1[1] - 3 if (c1[1] - 3) > 0 else 0)
 
                 cv2.rectangle(img, c1, c2, color, -1, cv2.LINE_AA)  # filled
 
