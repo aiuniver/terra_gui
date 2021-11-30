@@ -5,8 +5,6 @@
 </template>
 
 <script>
-import {mapGetters} from "vuex";
-
 export default {
   name: "ImgCard",
   props: {
@@ -16,11 +14,8 @@ export default {
     },
   },
   computed: {
-     ...mapGetters({
-      id: 'deploy/getRandId',
-    }),
     src() {
-      return `/_media/blank/?path=${this.imgUrl}&r=${this.id}`
+      return `/_media/blank/?path=${this.imgUrl}&r=${Date.now()}`
     }
   }
 }

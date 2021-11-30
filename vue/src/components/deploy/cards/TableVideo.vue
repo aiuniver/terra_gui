@@ -5,26 +5,17 @@
 </template>
 
 <script>
-import Media from '@dongido/vue-viaudio';
-
 export default {
   components: {
-    Media,
+    Media: () => import('@dongido/vue-viaudio'),
   },
   props: {
     value: { type: String, default: '' },
-    update: {
-      type: String,
-      default: '2323',
-    },
   },
   computed: {
     src() {
-       return `/_media/blank/?path=${this.value}&r=${this.update}`;
+       return `/_media/blank/?path=${this.value}&r=${Date.now()}`;
     },
   },
-  data: () => ({
-    autoStart: false,
-  }),
 };
 </script>
