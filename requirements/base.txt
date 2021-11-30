@@ -16,5 +16,6 @@ transformers==4.12.5
 mutagen==1.45.1
 gtts==2.2.3
 filterpy==1.4.5
+albumentations==1.1.0
 imgaug==0.4.0
 python-dotenv==0.19.2
