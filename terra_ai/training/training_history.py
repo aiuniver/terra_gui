@@ -278,7 +278,17 @@ class History:
         try:
             encoding = self.dataset.data.outputs.get(int(out)).encoding
             num_classes = self.dataset.data.outputs.get(int(out)).num_classes
-            if show_class and (encoding == LayerEncodingChoice.ohe or encoding == LayerEncodingChoice.multi):
+            if show_class and (encoding == LayerEncodingChoice.ohe or encoding == LayerEncodingChoice.multi) and \
+                    loss_obj.__name__ in ['CategoricalHinge', 'CategoricalCrossentropy', 'BinaryCrossentropy']:
+                array_shape = list(y_true.shape[:-1])
+                array_shape.append(2)
+                true_array = np.zeros(array_shape)
+                true_array[..., 0] = y_true[..., class_idx]
+                true_array[..., 1] = 1 - y_true[..., class_idx]
+                pred_array = np.zeros(array_shape)
+                pred_array[..., 0] = y_pred[..., class_idx]
+                pred_array[..., 1] = 1 - y_pred[..., class_idx]
+            elif show_class and (encoding == LayerEncodingChoice.ohe or encoding == LayerEncodingChoice.multi):
                 true_array = y_true[..., class_idx:class_idx + 1]
                 pred_array = y_pred[..., class_idx:class_idx + 1]
             elif show_class:
