@@ -183,16 +183,24 @@ class BlockCustomTypeChoice(str, Enum):
 class BlockServiceGroupChoice(str, Enum):
     Tracking = "Tracking"
     ObjectDetection = "ObjectDetection"
+    SpeechToText = "SpeechToText"
+    TextToSpeech = "TextToSpeech"
 
     @staticmethod
     def values() -> list:
-        return list(map(lambda item: item.value, BlockCustomGroupChoice))
+        return list(map(lambda item: item.value, BlockServiceGroupChoice))
 
 
 class BlockServiceTypeChoice(str, Enum):
     Sort = "Sort"
     BiTBasedTracker = "BiTBasedTracker"
     YoloV5 = "YoloV5"
+    DeepSort = "DeepSort"
+    GoogleSTT = "GoogleSTT"
+    GoogleTTS = "GoogleTTS"
+    Wav2Vec = "Wav2Vec"
+    Google = "Google"
+    TinkoffAPI = "TinkoffAPI"
 
     @staticmethod
     def values() -> list:
@@ -219,6 +227,18 @@ class BlockServiceYoloV5VersionChoice(str, Enum):
     @staticmethod
     def values() -> list:
         return list(map(lambda item: item.value, BlockServiceYoloV5VersionChoice))
+
+
+class BlockServiceGoogleTTSLanguageChoice(str, Enum):
+    ru = "ru"
+    en = "en"
+    fr = "fr"
+    pt = "pt"
+    es = "es"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, BlockServiceGoogleTTSLanguageChoice))
 
 
 class BlocksBindChoice(Enum):

@@ -6,6 +6,7 @@ from terra_ai.data.cascades.blocks.extra import (
     PostprocessBoxesMethodAvailableChoice,
     BlockServiceBiTBasedTrackerMetricChoice,
     BlockServiceYoloV5VersionChoice,
+    BlockServiceGoogleTTSLanguageChoice,
     ObjectDetectionFilterClassesList,
 )
 
@@ -232,6 +233,123 @@ ServiceTypesFields = {
             ),
         },
     ],
+    BlockServiceTypeChoice.DeepSort: [
+        {
+            "type": "number",
+            "label": "Порог сходства объектов",
+            "name": "max_dist",
+            "parse": "parameters[main][max_dist]",
+            "value": 0.2,
+        },
+        {
+            "type": "number",
+            "label": "Порог вероятности объектов",
+            "name": "min_confidence",
+            "parse": "parameters[main][min_confidence]",
+            "value": 0.3,
+        },
+        {
+            "type": "number",
+            "label": "Порог пересечения объектов",
+            "name": "nms_max_overlap",
+            "parse": "parameters[main][nms_max_overlap]",
+            "value": 1.0,
+        },
+        {
+            "type": "number",
+            "label": "Порог расстояния для пересечения объектов",
+            "name": "max_iou_distance",
+            "parse": "parameters[main][max_iou_distance]",
+            "value": 0.7,
+        },
+        {
+            "type": "number",
+            "label": "Количество кадров для остановки слежения",
+            "name": "deep_max_age",
+            "parse": "parameters[main][deep_max_age]",
+            "value": 70,
+        },
+        {
+            "type": "number",
+            "label": "Количество кадров для начала слежения",
+            "name": "n_init",
+            "parse": "parameters[main][n_init]",
+            "value": 3,
+        },
+        {
+            "type": "number",
+            "label": "Предел количества объектов для слежения",
+            "name": "nn_budget",
+            "parse": "parameters[main][nn_budget]",
+            "value": 100,
+        },
+    ],
+    BlockServiceTypeChoice.GoogleSTT: [],
+    BlockServiceTypeChoice.GoogleTTS: [
+        {
+            "type": "select",
+            "label": "Язык",
+            "name": "language",
+            "parse": "parameters[main][language]",
+            "value": BlockServiceGoogleTTSLanguageChoice.ru,
+            "list": list(
+                map(
+                    lambda item: {"value": item.name, "label": item.value},
+                    list(BlockServiceGoogleTTSLanguageChoice),
+                )
+            ),
+        },
+    ],
+    BlockServiceTypeChoice.Wav2Vec: [],
+    BlockServiceTypeChoice.Google: [],
+    BlockServiceTypeChoice.TinkoffAPI: [
+        {
+            "type": "text",
+            "label": "API key",
+            "name": "api_key",
+            "parse": "parameters[main][api_key]",
+        },
+        {
+            "type": "text",
+            "label": "Secret key",
+            "name": "secret_key",
+            "parse": "parameters[main][secret_key]",
+        },
+        {
+            "type": "number",
+            "label": "Количество вариантов перевода",
+            "name": "max_alternatives",
+            "parse": "parameters[main][max_alternatives]",
+            "value": 3,
+        },
+        {
+            "type": "checkbox",
+            "label": "Отключить режим диалога",
+            "name": "do_not_perform_vad",
+            "parse": "parameters[main][do_not_perform_vad]",
+            "value": True,
+        },
+        {
+            "type": "checkbox",
+            "label": "Фильтр ненормативной лексики",
+            "name": "profanity_filter",
+            "parse": "parameters[main][profanity_filter]",
+            "value": True,
+        },
+        {
+            "type": "number",
+            "label": "Предел времени получения ответа",
+            "name": "expiration_time",
+            "parse": "parameters[main][expiration_time]",
+            "value": 60000,
+        },
+        {
+            "type": "text",
+            "label": "Точка входа",
+            "name": "endpoint",
+            "parse": "parameters[main][endpoint]",
+        },
+    ],
     BlockServiceTypeChoice.YoloV5: [
         {
             "type": "select",
@@ -261,6 +379,16 @@ ServiceGroupTypeRel = {
     BlockServiceGroupChoice.Tracking: [
         BlockServiceTypeChoice.Sort,
         BlockServiceTypeChoice.BiTBasedTracker,
+        BlockServiceTypeChoice.DeepSort,
+    ],
+    BlockServiceGroupChoice.SpeechToText: [
+        BlockServiceTypeChoice.GoogleSTT,
+        BlockServiceTypeChoice.Wav2Vec,
+        BlockServiceTypeChoice.Google,
+        BlockServiceTypeChoice.TinkoffAPI,
+    ],
+    BlockServiceGroupChoice.TextToSpeech: [
+        BlockServiceTypeChoice.GoogleTTS,
     ],
     BlockServiceGroupChoice.ObjectDetection: [
         BlockServiceTypeChoice.YoloV5,
@@ -671,6 +799,16 @@ CascadesBlocksTypes = {
                         ServiceGroupTypeRel,
                         ServiceTypesFields,
                     ),
+                    BlockServiceGroupChoice.SpeechToText: get_type_field(
+                        BlockServiceGroupChoice.SpeechToText,
+                        ServiceGroupTypeRel,
+                        ServiceTypesFields,
+                    ),
+                    BlockServiceGroupChoice.TextToSpeech: get_type_field(
+                        BlockServiceGroupChoice.TextToSpeech,
+                        ServiceGroupTypeRel,
+                        ServiceTypesFields,
+                    ),
                     BlockServiceGroupChoice.ObjectDetection: get_type_field(
                         BlockServiceGroupChoice.ObjectDetection,
                         ServiceGroupTypeRel,
@@ -707,7 +845,60 @@ CascadesBlocksTypes = {
     <code>возвращает аналогичный массив bbox, где последний столбец - это идентификатор объекта</code>
 </p>
                     """,
-                    "YoloV5": f"""
+                    "DeepSort": """
+<p>Алгоритм трекера DeepSort для моделей <code>object_detection</code></p>
+<p>Необходимые связи с другими блоками на входе:</p>
+<ol>
+    <li>блок Function Постобработка yolo или блок Service YoloV5 (выключен переключатель “Выводить изображение”)</li>
+    <li>блок Input исходных изображений</li>
+</ol>
+<p>Возможные связи с другими блоками на выходе:</p>
+<ol>
+    <li>блок Function Наложение bbox на изображение</li>
+</ol>
+<p>Возвращает на выходе:<br />
+Возвращает аналогичный массив bbox, где последний столбец - это идентификатор объекта.</p>
+                    """,
+                    "Wav2Vec": """
+<p>Модель Wav2Vec large russian для перевода голоса в текст</p>
+<p>Необходимые связи с другими блоками на входе:</p>
+<ol>
+    <li>блок Input Аудио</li>
+</ol>
+<p>Возможные связи с другими блоками на выходе:</p>
+<ol>
+    <li>блок Output Текст</li>
+</ol>
+<p>Возвращает на выходе:<br />
+текст</p>
+                    """,
+                    "TinkoffAPI": """
+<p>Сервис Tinkoff voicekit gRPC API распознавания речи</p>
+<p>Необходимые связи с другими блоками на входе:</p>
+<ol>
+    <li>блок Input Аудио</li>
+</ol>
+<p>Возможные связи с другими блоками на выходе:</p>
+<ol>
+    <li>блок Output Текст</li>
+</ol>
+<p>Возвращает на выходе:<br />
+текст</p>
+                    """,
+                    "GoogleTTS": """
+<p>Сервис Google Text To Speech woman voice для перевода текста в голос</p>
+<p>Необходимые связи с другими блоками на входе:</p>
+<ol>
+    <li>блок Input Текст</li>
+</ol>
+<p>Возможные связи с другими блоками на выходе:</p>
+<ol>
+    <li>блок Output Аудио</li>
+</ol>
+<p>Возвращает на выходе:<br />
+аудио</p>
+                    """,
+                    "YoloV5": """
 <li>Предобученная YoloV5 на базе COCO:<li>
 <p>“Версия модели” выбирается в зависимости от необходимой точности.</p>
 <p>Переключатель “Выводить изображение” при включенном состоянии выводит исходное изображение с наложенными bbox, 
