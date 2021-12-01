@@ -14,7 +14,7 @@ from .data.path import TerraPathData, ProjectPathData
 
 # General settings
 ASSETS_PATH = Path(Path(__file__).parent, "assets")
-TMP_DIR = Path(gettempdir(), "terraai")
+TMP_DIR = Path(Path(__file__).parent.parent, "tmp")
 os.makedirs(TMP_DIR, exist_ok=True)
 
 # Terra paths
