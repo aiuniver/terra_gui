@@ -438,6 +438,7 @@ class YoloTerraModel(BaseTerraModel):
             self.set_optimizer(params=params)
 
             current_epoch = self.callback.last_epoch
+            end_epoch = self.callback.total_epochs
             train_pred, train_true, val_pred, val_true = [], [], [], []
             output_array = None
             for _, out, _ in dataset.dataset['train'].batch(1).take(1):
@@ -453,7 +454,7 @@ class YoloTerraModel(BaseTerraModel):
 
             train_data_idxs = np.arange(self.train_length).tolist()
             self.callback.on_train_begin()
-            for epoch in range(current_epoch, current_epoch + params.base.epochs):
+            for epoch in range(current_epoch, end_epoch):
                 self.callback.on_epoch_begin()
                 current_logs = {"epochs": epoch + 1, 'loss': {}, "metrics": {}, 'class_loss': {}, 'class_metrics': {}}
                 train_loss_cls = {}
@@ -508,7 +509,7 @@ class YoloTerraModel(BaseTerraModel):
 
                 self.save_weights()
                 if self.callback.stop_training:
-                    self.callback.on_train_end(model=self.yolo_model)
+                    self.callback.on_train_end()
                     break
 
                 current_logs['loss']['giou_loss'] = {'train': giou_train / cur_step}
@@ -578,6 +579,6 @@ class YoloTerraModel(BaseTerraModel):
                 if self.callback.is_best():
                     self.save_weights(path_=self.file_path_model_best_weights)
                     print(f"Best weights was saved\n")
-            self.callback.on_train_end(self)
+            self.callback.on_train_end()
         except Exception as e:
             print_error(self.__class__.__name__, method_name, e)
