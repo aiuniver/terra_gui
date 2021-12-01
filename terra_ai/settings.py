@@ -17,7 +17,7 @@ os.makedirs(TMP_DIR, exist_ok=True)
 PROJECT_EXT = "project"
 
 # Datasets
-DATASET_EXT = "trds"
+DATASET_EXT = "trds_NEW"  # Окончание _NEW исключительно на момент разработки новой версии.
 DATASET_CONFIG = "config.json"
 DATASET_ANNOTATION = "labelmap.txt"
 VERSION_EXT = "vrs"
