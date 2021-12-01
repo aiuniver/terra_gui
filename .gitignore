@@ -133,6 +133,7 @@ dmypy.json
 /datasets/
 /TerraAI/
 /Project/
+/tmp/
 
 /package-lock.json
 /.prettierrc

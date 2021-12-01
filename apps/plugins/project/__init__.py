@@ -50,6 +50,9 @@ class Project(BaseMixinData):
 
         super().__init__(**data)
 
+        if not self.dataset:
+            self.dataset_info = None
+
         defaults_data.modeling.set_layer_datatype(self.dataset)
         defaults_data.training = DefaultsTrainingData(
             project=self, architecture=self.training.base.architecture.type

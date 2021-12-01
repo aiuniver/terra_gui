@@ -458,20 +458,20 @@ class DatasetInfo(BaseMixinData):
     @property
     def dataset(self) -> Optional[DatasetData]:
         if not self.__dataset__:
-            with open(
-                Path(
-                    settings.DATASETS_LOADED_DIR,
-                    self.group.name,
-                    self.alias,
-                    settings.DATASET_CONFIG,
-                )
-            ) as config_ref:
-                self.__dataset__ = DatasetData(
-                    path=Path(
-                        settings.DATASETS_LOADED_DIR,
-                        self.group.name,
-                        self.alias,
-                    ),
-                    **json.load(config_ref)
-                )
+            config_path = Path(
+                settings.DATASETS_LOADED_DIR,
+                self.group.name,
+                self.alias,
+                settings.DATASET_CONFIG,
+            )
+            if config_path.is_file():
+                with open(config_path) as config_ref:
+                    self.__dataset__ = DatasetData(
+                        path=Path(
+                            settings.DATASETS_LOADED_DIR,
+                            self.group.name,
+                            self.alias,
+                        ),
+                        **json.load(config_ref)
+                    )
         return self.__dataset__
