@@ -100,7 +100,7 @@ class History:
                 interactive.addtrain_epochs = logs.get("addtrain_epochs")
                 fit_logs = logs.get("fit_log")
 
-                self.last_epoch = max(fit_logs.get('epochs')) + 1
+                self.last_epoch = max(fit_logs.get('epochs'))
                 self.sum_epoch = logs.get("sum_epoch")
                 print(self.epochs, self.last_epoch, self.sum_epoch)
                 if self.training_detail.state.status == "addtrain":

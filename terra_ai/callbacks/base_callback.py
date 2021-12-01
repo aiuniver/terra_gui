@@ -355,12 +355,14 @@ class FitCallback:
         except Exception as e:
             print_error('FitCallback', method_name, e)
 
-    def on_train_end(self, model):
+    def on_train_end(self):
         method_name = 'on_train_end'
         try:
             print(method_name)
-            interactive.addtrain_epochs.append(self.last_epoch)
-            print(self.last_epoch)
+            if self.stop_training:
+                interactive.addtrain_epochs.append(self.last_epoch-1)
+            else:
+                interactive.addtrain_epochs.append(self.last_epoch)
             if (self.stop_training and self.last_epoch < self.training_detail.base.epochs) or \
                     (self._get_train_status() == StateStatusChoice.trained and
                      self.last_epoch == self.training_detail.base.epochs):
@@ -371,18 +373,19 @@ class FitCallback:
                 self.num_batches * self.retrain_epochs, self.batch, self._start_time, finalize=True)
             self._sum_time += time_end
             total_epochs = self.total_epochs \
-                if self._get_train_status() in [StateStatusChoice.addtrain, StateStatusChoice.stopped] else self.retrain_epochs
+                if self._get_train_status() in [StateStatusChoice.addtrain,
+                                                StateStatusChoice.stopped] else self.retrain_epochs
             if self.stop_training:
                 progress.pool(
                     self.progress_name,
-                    message=f"Обучение остановлено. Эпоха {self.last_epoch} из {total_epochs}. Модель сохранена.",
+                    message=f"Обучение остановлено. Эпоха {self.last_epoch - 1} из {total_epochs}. Модель сохранена.",
                     data=self._get_result_data(),
                     finished=True,
                 )
             else:
                 percent = self.last_epoch / (
-                    self.total_epochs
-                    if self._get_train_status() == StateStatusChoice.addtrain or self._get_train_status() == StateStatusChoice.stopped
+                    self.total_epochs if self._get_train_status() == StateStatusChoice.addtrain or
+                                         self._get_train_status() == StateStatusChoice.stopped
                     else self.retrain_epochs
                 ) * 100
                 print('percent', percent, self.progress_name)
