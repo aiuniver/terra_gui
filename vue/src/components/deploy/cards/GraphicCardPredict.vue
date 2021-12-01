@@ -1,7 +1,7 @@
 <template>
   <div class="t-graphics">
     <div class="t-graphics__main">
-      <Plotly :data="result" :layout="layout" :display-mode-bar="false" />
+      <Plotly :data="result" :layout="defLayout" :display-mode-bar="false" />
       <div class="t-graphics__title">{{ name }}</div>
     </div>
   </div>
@@ -55,7 +55,6 @@ export default {
         linecolor: '#A7BED3',
         linewidth: 1,
         title: {
-          // text: 'Время',
           standoff: 0,
           font: { size: 10 },
         },
@@ -66,39 +65,29 @@ export default {
         linecolor: '#A7BED3',
         linewidth: 1,
         title: {
-          // text: 'Значение',
           font: { size: 10 },
         },
       },
     },
   }),
   computed: {
-    layout() {
-      const layout = this.defLayout;
-      // if (this.plot_data) {
-      //   // layout.title.text = this.graph_name;
-      //   layout.xaxis.title.text = this.x_label;
-      //   layout.yaxis.title.text = this.y_label;
-      // }
-      return layout;
-    },
     result() {
       const obj = this.data;
       const arr = [];
       for (let key in obj) {
         arr.push({
           type: 'scatter',
-          y: this.data[key][0],
-          x: this.data[key][0].map((_, i) => i),
-          name: key,
+          y: this.data[key][0] || [],
+          x: this.data[key][0].map((_, i) => i) || [],
+          name: key || null,
           mode: 'line',
           marker: { size: 10 },
-        });
-        arr.push({
+        },
+        {
           type: 'scatter',
-          y: this.data[key][1],
-          x: this.data[key][1].map((_, i) => i),
-          name: this.data[key][1][0],
+          y: this.data[key][1] || [],
+          x: this.data[key][1].map((_, i) => i) || [],
+          name: this.data[key][1][0] || null,
           mode: 'line',
           marker: { size: 10 },
         });

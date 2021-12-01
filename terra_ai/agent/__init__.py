@@ -434,9 +434,7 @@ class Exchange:
             sources=sources, cascade_data=cascade, training_path=training_path
         )
 
-    def _call_deploy_get(
-        self, datasets: List[DatasetLoadData], page: DeployPageData
-    ) -> DeployData:
+    def _call_deploy_get(self, datasets: List[DatasetLoadData], page: DeployPageData):
         """
         Получение данных для отображения пресетов на странице деплоя
         """

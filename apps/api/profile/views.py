@@ -24,9 +24,7 @@ class SaveAPIView(BaseAPIView):
                 "user_token": settings.USER_TOKEN,
             }
         )
-        response = requests.post(
-            f"{settings.TERRA_AI_EXCHANGE_API_URL}/update/", json=data
-        )
+        response = requests.post(f"{settings.TERRA_API_URL}/update/", json=data)
         if not response.json().get("success"):
             return BaseResponseErrorGeneral("Не удалось обновить данные пользователя")
         utils.update_env_file(**serializer.validated_data)
@@ -39,9 +37,7 @@ class UpdateTokenAPIView(BaseAPIView):
             "email": settings.USER_EMAIL,
             "user_token": settings.USER_TOKEN,
         }
-        response = requests.post(
-            f"{settings.TERRA_AI_EXCHANGE_API_URL}/update_token/", json=data
-        )
+        response = requests.post(f"{settings.TERRA_API_URL}/update_token/", json=data)
         if not response.json().get("new_token"):
             return BaseResponseErrorGeneral("Не удалось обновить токен пользователя")
         new_token = response.json().get("new_token")

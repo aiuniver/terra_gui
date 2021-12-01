@@ -18,7 +18,6 @@ export default {
 
 <style scoped>
 .s{
-  /*background-color: #0bbc49;*/
   border-radius: 4px;
   color: #FFFFFF;
 }

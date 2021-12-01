@@ -2,6 +2,7 @@ import base64
 
 from tempfile import NamedTemporaryFile
 
+from terra_ai.settings import TERRA_PATH, PROJECT_PATH
 from terra_ai.agent import agent_exchange
 from terra_ai.data.datasets.dataset import DatasetInfo
 from terra_ai.data.cascades.extra import BlockGroupChoice
@@ -14,7 +15,6 @@ from apps.api.cascades.serializers import (
     StartSerializer,
     SaveSerializer,
 )
-from apps.plugins.project import project_path, data_path
 
 from ..base import (
     BaseAPIView,
@@ -37,7 +37,7 @@ class GetAPIView(BaseAPIView):
 class InfoAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         return BaseResponseSuccess(
-            agent_exchange("cascades_info", path=project_path.cascades).native()
+            agent_exchange("cascades_info", path=PROJECT_PATH.cascades).native()
         )
 
 
@@ -77,7 +77,7 @@ class ValidateAPIView(BaseAPIView):
         return BaseResponseSuccess(
             agent_exchange(
                 "cascade_validate",
-                path=project_path.training,
+                path=PROJECT_PATH.training,
                 cascade=request.project.cascade,
             )
         )
@@ -90,8 +90,8 @@ class StartAPIView(BaseAPIView):
             return BaseResponseErrorFields(serializer.errors)
         agent_exchange(
             "cascade_start",
-            training_path=project_path.training,
-            datasets_path=data_path.datasets,
+            training_path=PROJECT_PATH.training,
+            datasets_path=TERRA_PATH.datasets,
             sources=serializer.validated_data.get("sources"),
             cascade=request.project.cascade,
         )
@@ -132,7 +132,7 @@ class StartProgressAPIView(BaseAPIView):
                 "cascade_execute",
                 sources=sources,
                 cascade=request.project.cascade,
-                training_path=project_path.training,
+                training_path=PROJECT_PATH.training,
             )
             progress.message = ""
             progress.percent = 0
@@ -146,7 +146,7 @@ class SaveAPIView(BaseAPIView):
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         request.project.cascade.save(
-            path=project_path.cascades, **serializer.validated_data
+            path=PROJECT_PATH.cascades, **serializer.validated_data
         )
         return BaseResponseSuccess()
 
@@ -168,7 +168,7 @@ class DatasetsAPIView(BaseAPIView):
     @staticmethod
     def post(request, **kwargs):
         datasets_list = agent_exchange(
-            "datasets_info", path=data_path.datasets
+            "datasets_info", path=TERRA_PATH.datasets
         ).native()
         response = []
 

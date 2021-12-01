@@ -23,7 +23,7 @@ class CreateAPIView(BaseAPIView):
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         response = requests.post(
-            f"{settings.TERRA_AI_EXCHANGE_API_URL}/server/create/",
+            f"{settings.TERRA_API_URL}/server/create/",
             json={"config": settings.USER_PORT, **serializer.validated_data},
         ).json()
         if not response.get("success"):

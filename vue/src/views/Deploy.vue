@@ -9,18 +9,13 @@
 </template>
 
 <script>
-import Params from '@/components/deploy/params/Params.vue';
-import Deploy from '@/components/deploy/Deploy.vue';
-
 export default {
   name: 'Datasets',
   components: {
-    Params,
-    Deploy,
+    Params: () => import('@/components/deploy/params/Params'),
+    Deploy: () => import('@/components/deploy/Deploy'),
   },
-  data: () => ({
-    overlay: false,
-  }),
+  data: () => ({ overlay: false }),
   methods: {
     setOverlay(value) {
       this.overlay = value;

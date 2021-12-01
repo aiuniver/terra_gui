@@ -1370,10 +1370,10 @@ def _non_max_suppression(boxes, max_bbox_overlap, scores=None):
            faster-non-maximum-suppression-python/
     Examples
     --------
-        >>> boxes = [d.roi for d in detections]
-        >>> scores = [d.confidence for d in detections]
-        >>> indices = non_max_suppression(boxes, max_bbox_overlap, scores)
-        >>> detections = [detections[i] for i in indices]
+        boxes = [d.roi for d in detections]
+        scores = [d.confidence for d in detections]
+        indices = non_max_suppression(boxes, max_bbox_overlap, scores)
+        detections = [detections[i] for i in indices]
     Parameters
     ----------
     boxes : ndarray

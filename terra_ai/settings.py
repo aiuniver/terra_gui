@@ -7,11 +7,39 @@ import os
 from pathlib import Path
 from tempfile import gettempdir
 
+from django.conf import settings as django_settings
+
+from .data.path import TerraPathData, ProjectPathData
+
 
 # General settings
 ASSETS_PATH = Path(Path(__file__).parent, "assets")
 TMP_DIR = Path(gettempdir(), "terraai")
 os.makedirs(TMP_DIR, exist_ok=True)
+
+# Terra paths
+TERRA_PATH = TerraPathData(
+    **{
+        "base": Path(django_settings.TERRA_PATH).absolute(),
+        "sources": Path(django_settings.TERRA_PATH, "datasets", "sources").absolute(),
+        "datasets": Path(django_settings.TERRA_PATH, "datasets").absolute(),
+        "modeling": Path(django_settings.TERRA_PATH, "modeling").absolute(),
+        "training": Path(django_settings.TERRA_PATH, "training").absolute(),
+        "projects": Path(django_settings.TERRA_PATH, "projects").absolute(),
+    }
+)
+
+# Project paths
+PROJECT_PATH = ProjectPathData(
+    **{
+        "base": Path(django_settings.PROJECT_PATH).absolute(),
+        "datasets": Path(django_settings.PROJECT_PATH, "datasets").absolute(),
+        "modeling": Path(django_settings.PROJECT_PATH, "modeling").absolute(),
+        "training": Path(django_settings.PROJECT_PATH, "training").absolute(),
+        "cascades": Path(django_settings.PROJECT_PATH, "cascades").absolute(),
+        "deploy": Path(django_settings.PROJECT_PATH, "deploy").absolute(),
+    }
+)
 
 # Projects
 PROJECT_EXT = "project"

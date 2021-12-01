@@ -1,9 +1,8 @@
 import shutil
 
+from terra_ai.settings import TERRA_PATH
 from terra_ai.agent import agent_exchange
 from terra_ai.data.datasets.creation import CreationData
-
-from apps.plugins.project import data_path
 
 from apps.api.base import (
     BaseAPIView,
@@ -22,7 +21,7 @@ class ChoiceAPIView(BaseAPIView):
             return BaseResponseErrorFields(serializer.errors)
         agent_exchange(
             "dataset_choice",
-            custom_path=data_path.datasets,
+            custom_path=TERRA_PATH.datasets,
             **serializer.validated_data,
         )
         return BaseResponseSuccess()
@@ -45,7 +44,7 @@ class InfoAPIView(BaseAPIView):
     @staticmethod
     def post(request, **kwargs):
         return BaseResponseSuccess(
-            agent_exchange("datasets_info", path=data_path.datasets).native()
+            agent_exchange("datasets_info", path=TERRA_PATH.datasets).native()
         )
 
 
@@ -123,7 +122,7 @@ class SourcesAPIView(BaseAPIView):
     @staticmethod
     def post(request, **kwargs):
         return BaseResponseSuccess(
-            agent_exchange("datasets_sources", path=str(data_path.sources)).native()
+            agent_exchange("datasets_sources", path=str(TERRA_PATH.sources)).native()
         )
 
 
@@ -135,7 +134,7 @@ class DeleteAPIView(BaseAPIView):
             return BaseResponseErrorFields(serializer.errors)
         agent_exchange(
             "dataset_delete",
-            path=str(data_path.datasets),
+            path=str(TERRA_PATH.datasets),
             **serializer.validated_data,
         )
         if request.project.dataset and (

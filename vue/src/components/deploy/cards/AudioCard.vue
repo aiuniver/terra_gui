@@ -28,14 +28,10 @@ export default {
       type: String,
       default: '',
     },
-    update: {
-      type: String,
-      default: '',
-    },
   },
   computed: {
     src() {
-      return `/_media/blank/?path=${this.value}&r=${this.update}`;
+      return `/_media/blank/?path=${this.value}&r=${Date.now()}`;
     },
   },
   mounted() {

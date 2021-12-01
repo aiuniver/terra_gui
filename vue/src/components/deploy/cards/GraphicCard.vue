@@ -4,12 +4,11 @@
       <scrollbar>
         <div class="t-graphics__extra">
           <div
-            v-for="(value, key) of predict"
-            :key="key"
+            v-for="(value, i) of predict"
+            :key="'t-graphics' + i"
             class="t-graphics__item"
-            :class="key == name ? 't-graphics__item--active' : ''"
-            :title="key"
-            @click="name = key"
+            :class="i == name ? 't-graphics__item--active' : ''"
+            @click="name = i"
           >
             {{ key }}
           </div>
@@ -89,16 +88,9 @@ export default {
       },
     },
   }),
-  computed: {
-    // plot_data() {
-    //   const name = this.name ?? (this.value?.[0]?.short_name || '')
-    //   return this.value.find(item => item.short_name === name);
-    // },
-  },
   methods: {
     layout() {
       const layout = this.defLayout;
-        // layout.title.text = this.graph_name;
       layout.xaxis.title.text = '';
       layout.yaxis.title.text = '';
       return layout;
@@ -121,25 +113,9 @@ export default {
       }
       return plot_data;
     },
-    // data({ plot_data }) {
-    //   return plot_data.map((el, i) => {
-    //     return {
-    //       type: 'scatter',
-    //       x: el.x,
-    //       y: el.y,
-    //       mode: 'lines',
-    //       name: el.label,
-    //       line: {
-    //         width: 2,
-    //         color: (i === 0) ? '#89D764' : null,
-    //       },
-    //     };
-    //   });
-    // },
   },
   mounted() {
-    // console.log(this.testPredictData(this.predict['<CLOSE>']))
-    this.name = Object.keys(this.predict)[0]
+    this.name = Object.keys(this.predict)[0] || null
   }
 };
 </script>
