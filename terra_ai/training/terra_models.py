@@ -7,7 +7,6 @@ from pathlib import Path
 
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras.models import Model
 
 from terra_ai.callbacks import interactive
 from terra_ai.callbacks.utils import print_error, loss_metric_config, get_dataset_length
@@ -253,8 +252,10 @@ class BaseTerraModel:
 
 class YoloTerraModel(BaseTerraModel):
 
-    def __init__(self, model, model_name: str, model_path: Path, options):
+    def __init__(self, model, model_name: str, model_path: Path, **options):
         super().__init__(model=model, model_name=model_name, model_path=model_path)
+        if not model:
+            super().load()
         self.yolo_model = self.__create_yolo(training=options.get("training"),
                                              classes=options.get("classes"),
                                              version=options.get("version"))
@@ -325,10 +326,10 @@ class YoloTerraModel(BaseTerraModel):
     @tf.function
     def __train_step(self, image_array, conv_target, serv_target, global_steps, **options):
         num_class = options.get("parameters").get("num_class")
-        classes = options.get("parameters").get("num_class")
-        yolo_iou_loss_thresh = options.get("parameters").get("num_class")
-        train_lr_init = options.get("parameters").get("num_class")
-        train_lr_end = options.get("parameters").get("num_class")
+        classes = options.get("parameters").get("classes")
+        yolo_iou_loss_thresh = options.get("parameters").get("yolo_iou_loss_thresh")
+        train_lr_init = options.get("parameters").get("train_lr_init")
+        train_lr_end = options.get("parameters").get("train_lr_end")
 
         warmup_steps = options.get("steps").get("warmup_steps")
         total_steps = options.get("steps").get("total_steps")
@@ -372,8 +373,8 @@ class YoloTerraModel(BaseTerraModel):
     @tf.function
     def __validate_step(self, image_array, conv_target, serv_target, **options):
         num_class = options.get("parameters").get("num_class")
-        classes = options.get("parameters").get("num_class")
-        yolo_iou_loss_thresh = options.get("parameters").get("num_class")
+        classes = options.get("parameters").get("classes")
+        yolo_iou_loss_thresh = options.get("parameters").get("yolo_iou_loss_thresh")
 
         pred_result = self.yolo_model(image_array['1'], training=False)
         giou_loss = conf_loss = prob_loss = tf.convert_to_tensor(0., dtype='float32')
@@ -411,7 +412,7 @@ class YoloTerraModel(BaseTerraModel):
             self.train_length, self.val_length = get_dataset_length(dataset)
             yolo_parameters = self.__create_yolo_parameters(params=params, dataset=dataset)
             num_class = yolo_parameters.get("parameters").get("num_class")
-            classes = yolo_parameters.get("parameters").get("num_class")
+            classes = yolo_parameters.get("parameters").get("classes")
             global_steps = tf.Variable(1, trainable=False, dtype=tf.int64)
 
             self.set_optimizer(params=params)
@@ -485,7 +486,7 @@ class YoloTerraModel(BaseTerraModel):
                     if self.callback.stop_training:
                         break
 
-                self.save()
+                self.save_weights()
                 if self.callback.stop_training:
                     self.callback.on_train_end(model=self.yolo_model)
                     break
@@ -554,10 +555,9 @@ class YoloTerraModel(BaseTerraModel):
                     logs=current_logs
                 )
 
-                best_path = self.callback.save_best_weights()
-                if best_path:
-                    self.save_weights()
-                    print(f"Best weights was saved in directory {best_path}")
-            self.callback.on_train_end(model=self.yolo_model)
+                if self.callback.is_best():
+                    self.save_weights(path_=self.file_path_model_best_weights)
+                    print(f"Best weights was saved\n")
+            self.callback.on_train_end(self)
         except Exception as e:
             print_error(self.__class__.__name__, method_name, e)

@@ -3,18 +3,20 @@ import os
 import shutil
 from pathlib import Path
 
-from tensorflow.keras.models import model_from_json
+from tensorflow.keras.models import load_model
 
+from terra_ai.callbacks.utils import YOLO_ARCHITECTURE
 from terra_ai.cascades.common import decamelize
 from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice
-from terra_ai.data.deploy.tasks import DeployData, types
+from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.training.extra import ArchitectureChoice
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.exceptions.deploy import MethodNotImplementedException
-from terra_ai.training.yolo_utils import create_yolo
+from terra_ai.training import GUINN
+from terra_ai.training.terra_models import BaseTerraModel, YoloTerraModel
 from terra_ai.settings import DEPLOY_PATH
 
 
@@ -55,6 +57,9 @@ class DeployCreator:
                 predict = model.predict(dataset.dataset.get('val').batch(1), batch_size=1)
             else:
                 predict = model.predict(dataset.X.get('val'), batch_size=training_details.get("base").get("batch"))
+
+            if "Yolo" in deploy_type:
+                predict = [predict[1], predict[3], predict[5]]
 
             presets = self._get_presets(predict=predict, dataset_data=dataset_data,
                                         dataset=dataset, deploy_path=DEPLOY_PATH)
@@ -106,12 +111,19 @@ class DeployCreator:
         weight = None
         out_model = None
 
-        # with open(os.path.join(model_path, "trained_model_custom_obj_json.trm"), "r", encoding="utf-8") as custom_obj:
-        #     custom_dict = json.load(custom_obj)
-
-        with open(os.path.join(model_path, "trained_model_json.trm")) as json_file:
-            model_data = json.load(json_file)
-        model = model_from_json(model_data)
+        if os.path.exists(os.path.join(model_path, "trained_model.trm")):
+            model = load_model(os.path.join(model_path, "trained_model.trm"))
+        else:
+            model = BaseTerraModel(model=None,
+                                   model_name="trained_model",
+                                   model_path=model_path)
+            model.load()
+            if dataset.data.architecture in YOLO_ARCHITECTURE:
+                options = GUINN().get_yolo_init_parameters(dataset=dataset)
+                model = YoloTerraModel(model=None,
+                                       model_name="trained_model",
+                                       model_path=model_path,
+                                       **options)
 
         for i in os.listdir(model_path):
             if i[-3:] == '.h5' and 'best' in i:
@@ -120,12 +132,10 @@ class DeployCreator:
                 if i[-3:] == '.h5':
                     weight = i
         if weight:
-            model.load_weights(os.path.join(model_path, weight))
-            out_model = model
+            out_model = model.base_model
             if "Yolo" in deploy_type:
-                out_model = create_yolo(model=model, input_size=416, channels=3, training=False,
-                                        classes=dataset.data.outputs.get(2).classes_names,
-                                        version=dataset.instructions.get(2).get('2_object_detection').get('yolo'))
+                out_model = model.yolo_model
+            out_model.load_weights(os.path.join(model_path, weight))
         return out_model
 
     @staticmethod

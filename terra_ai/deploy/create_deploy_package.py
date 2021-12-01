@@ -103,6 +103,10 @@ class CascadeCreator:
                         ignore=shutil.ignore_patterns("demo_panel", "cascades"))
         shutil.copyfile("terra_ai/datasets/preprocessing.py",
                         os.path.join(deploy_path, "cascades", "preprocessing.py"))
+        shutil.copyfile("terra_ai/customLayers.py",
+                        os.path.join(deploy_path, "cascades", "customLayers.py"))
+        shutil.copyfile("terra_ai/training/customlosses.py",
+                        os.path.join(deploy_path, "cascades", "customlosses.py"))
 
     @staticmethod
     def copy_model(deploy_path: Path, model_path: Path):

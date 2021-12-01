@@ -1,15 +1,6 @@
-import importlib
-import json
 import os
 
 import graphviz  # conda install python-graphviz
-import numpy as np
-import tensorflow.keras.layers
-import tensorflow_addons
-from tensorflow import TensorShape
-
-from terra_ai import customLayers
-from terra_ai.data.modeling import layers
 
 """ Официальная документация graphviz - https://www.graphviz.org/doc/info/shapes.html """
 

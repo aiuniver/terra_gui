@@ -181,7 +181,7 @@ class GUINN:
                     train_model = YoloTerraModel(model=base_model,
                                                  model_name=self.nn_name,
                                                  model_path=train_details.model_path,
-                                                 **options).yolo_model
+                                                 **options)
             else:
                 train_model = BaseTerraModel(model=None,
                                              model_name=self.nn_name,
@@ -189,7 +189,7 @@ class GUINN:
                 train_model.load()
                 if dataset.data.architecture in YOLO_ARCHITECTURE:
                     options = self.get_yolo_init_parameters(dataset=dataset)
-                    train_model = YoloTerraModel(model=train_model.base_model,
+                    train_model = YoloTerraModel(model=None,
                                                  model_name=self.nn_name,
                                                  model_path=train_details.model_path,
                                                  **options)
