@@ -89,7 +89,8 @@ def _authorization_metadata(api_key: str, secret_key, scope, expiration_time):
     return list(metadata)
 
 
-def _build_request(path: str, max_alternatives: int, do_not_perform_vad: bool, profanity_filter: bool):
+def _build_request(path: str, max_alternatives: int, do_not_perform_vad: bool, profanity_filter: bool,
+                   enable_automatic_punctuation: bool):
     mp3_file = mp3.MP3(path)
     num_ch = int(mp3_file.info.channels)
     sr_audio = int(mp3_file.info.sample_rate)
@@ -104,17 +105,19 @@ def _build_request(path: str, max_alternatives: int, do_not_perform_vad: bool, p
     request.config.max_alternatives = max_alternatives  # включение альтернативных распознаваний
     request.config.do_not_perform_vad = do_not_perform_vad  # отключение режима диалога
     request.config.profanity_filter = profanity_filter  # фильтр ненормативной лексики
+    request.config.enable_automatic_punctuation = enable_automatic_punctuation  # фильтр ненормативной лексики
     return request
 
 
 def tinkoff_api(api_key: str, secret_key: str, max_alternatives: int = 3, do_not_perform_vad: bool = True,
-            profanity_filter: bool = True, expiration_time: int = int(6e4), endpoint: str = 'stt.tinkoff.ru:443'):
+            profanity_filter: bool = True, enable_automatic_punctuation: bool = True,
+                expiration_time: int = int(6e4), endpoint: str = 'stt.tinkoff.ru:443'):
     stub = _SpeechToTextStub(grpc.secure_channel(endpoint, grpc.ssl_channel_credentials()))
     metadata = _authorization_metadata(api_key, secret_key, "tinkoff.cloud.stt", expiration_time)
 
     def fun(path):
         response = stub.Recognize(_build_request(
-            path, max_alternatives, do_not_perform_vad, profanity_filter
+            path, max_alternatives, do_not_perform_vad, profanity_filter, enable_automatic_punctuation
         ), metadata=metadata)
 
         tinkoff_res = ''
