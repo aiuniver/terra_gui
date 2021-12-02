@@ -88,7 +88,6 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
 export default {
   name: 'IndexCard',
   components: {
@@ -123,7 +122,15 @@ export default {
     index: {
       type: [String, Number],
       required: true
-    }
+    },
+    defaultLayout:{
+      type: Object,
+      default: () => ({})
+    },
+    type: {
+      type: String,
+      default: ""
+    },
   },
 
   methods: {
@@ -132,12 +139,6 @@ export default {
     },
   },
   computed: {
-    ...mapGetters({
-      graphicData: 'deploy/getGraphicData',
-      defaultLayout: 'deploy/getDefaultLayout',
-      origTextStyle: 'deploy/getOrigTextStyle',
-      type: 'deploy/getDeployType',
-    }),
     layout() {
       const layout = this.defaultLayout;
       if (this.char) {

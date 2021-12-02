@@ -1,8 +1,5 @@
 <template>
   <div class="params" :key="'key_update-' + updateKey">
-    <!-- <div v-if="false" class="params__overlay">
-      <LoadSpiner :text="'Запуск обучения...'" />
-    </div> -->
     <scrollbar>
       <div class="params__body">
         <div class="params__items">
@@ -25,13 +22,13 @@
                     :inline="false"
                     @change="parse"
                   />
-                  <t-button @click="handleDownload" :key="'key' + i" :disabled="isLoad">Загрузить</t-button>
+                  <t-button @click="$emit('downloadSettings', parameters)" :key="'key' + i" :disabled="overlayStatus">Загрузить</t-button>
                 </template>
               </div>
             </at-collapse-item>
           </at-collapse>
         </div>
-        <div class="params__items" v-if="load">
+        <div class="params__items" v-if="paramsDownloaded.isParamsSettingsLoad">
           <div class="params-container pa-5">
             <div class="t-input">
               <label class="label" for="deploy[deploy]">Название папки</label>
@@ -44,7 +41,6 @@
                 type="text"
                 id="deploy[deploy]"
                 name="deploy[deploy]"
-                @blur="$emit('blur', $event.target.value)"
               />
             </div>
             <Checkbox
@@ -53,14 +49,14 @@
               parse="deploy[overwrite]"
               name="deploy[overwrite]"
               class="pd__top"
-              @change="replaceFolder"
+              @change="this.replace = $event.target.value.value"
             />
             <Checkbox
               :label="'Использовать пароль для просмотра страницы'"
               parse="deploy[use_password]"
               name="deploy[use_password]"
               :type="'checkbox'"
-              @change="usePasswordWatchpage"
+              @change="this.use_sec = $event.target.value.value"
             />
             <div class="password" v-if="use_sec">
               <div class="t-input">
@@ -87,24 +83,18 @@
                 <p>Пароль должен содержать не менее 6 символов</p>
               </div>
             </div>
-            <t-button :disabled="send_disabled" @click="SendData" v-if="!DataSent">Загрузить</t-button>
-            <div class="loader" v-if="DataLoading">
-              <div class="loader__title">Дождитесь окончания загрузки</div>
-              <div class="loader__progress">
-                <load-spiner></load-spiner>
-              </div>
-            </div>
-            <div class="req-ans" v-if="DataSent">
+            <t-button :disabled="send_disabled" @click="sendDeployData" v-if="!paramsDownloaded.isSendParamsDeploy">Загрузить</t-button>
+            <div class="req-ans" v-if="paramsDownloaded.isSendParamsDeploy">
               <div class="answer__success">Загрузка завершена!</div>
               <div class="answer__label">Ссылка на сформированную загрузку</div>
               <div class="answer__url">
-                <i :class="['t-icon', 'icon-deploy-copy']" :title="'copy'" @click="Copy(moduleList.url)"></i>
+                <i :class="['t-icon', 'icon-deploy-copy']" :title="'copy'" @click="copy(moduleList.url)"></i>
                 <a :href="moduleList.url" target="_blank">
                   {{ moduleList.url }}
                 </a>
               </div>
             </div>
-            <ModuleList v-if="DataSent" :moduleList="moduleList.api_text" />
+            <ModuleList v-if="paramsDownloaded.isSendParamsDeploy" :moduleList="moduleList.api_text" />
           </div>
         </div>
       </div>
@@ -113,112 +103,76 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
 import Checkbox from '@/components/forms/Checkbox';
 import ModuleList from './ModuleList';
-import LoadSpiner from '../../forms/LoadSpiner';
-import { debounce } from '@/utils/core/utils';
+import {DEPLOY_ICONS_PASSWORD, DEPLOY_COLLAPS} from '@/components/deploy/config/const-params'
+
 export default {
   name: 'Settings',
   components: {
     Checkbox,
     ModuleList,
-    LoadSpiner,
+  },
+  props:{
+    params: {
+      type: [Object, Array],
+      default: () => ({})
+    },
+    height: {
+      type: [String, Number],
+      default: ""
+    },
+    moduleList: {
+      type: Object,
+      default: () => ({})
+    },
+    projectData: {
+      type: [Array, Object],
+      default: () => []
+    },
+    userData: {
+      type: [Object, Array],
+      default: () => {}
+    },
+    paramsDownloaded:{
+      type: Object,
+      default: () => ({})
+    },
+    overlayStatus:{
+      type: Boolean,
+      default: false
+    }
   },
   data: () => ({
     updateKey: 0,
-    debounce: null,
-    collapse: ['type', 'server'],
-    load: false,
-    downloadSettings: {},
-    trainSettings: {},
+    collapse: DEPLOY_COLLAPS,
     deploy: '',
     replace: false,
     use_sec: false,
     sec: '',
     sec_accept: '',
-    DataSent: false,
-    DataLoading: false,
     passwordShow: false,
     parameters: {},
-    ops: {
-      scrollPanel: {
-        scrollingX: false,
-        scrollingY: true,
-      },
-    },
   }),
   computed: {
-    ...mapGetters({
-      params: 'deploy/getParams',
-      height: 'settings/height',
-      moduleList: 'deploy/getModuleList',
-      projectData: 'projects/getProject',
-      userData: 'projects/getUser',
-    }),
-    state: {
-      set(value) {
-        this.$store.dispatch('deploy/setStateParams', value);
-      },
-      get() {
-        return this.$store.getters['deploy/getStateParams'];
-      },
-    },
     checkCorrect() {
-      return this.sec == this.sec_accept ? 'icon-deploy-password-correct' : 'icon-deploy-password-incorrect';
+      return this.sec == this.sec_accept ? DEPLOY_ICONS_PASSWORD[0] : DEPLOY_ICONS_PASSWORD[1];
     },
     send_disabled() {
-      if (this.DataLoading) return true;
       if (this.use_sec && this.sec == this.sec_accept && this.sec.length > 5 && this.deploy.length != 0) return false;
       else if (this.deploy.length != 0) return false;
       return true;
     },
     isLoad() {
-      const type = this.parameters?.type || '';
-      const name = this.parameters?.name || '';
-      return !(name && type);
+      return !(!!this.parameters.type && !!this.parameters.name);
     },
   },
   methods: {
-    async handleDownload() {
-      const type = this.parameters?.type || '';
-      const name = this.parameters?.name || '';
-      if (type && name) {
-        const res = await this.$store.dispatch('deploy/downloadSettings', { type, name });
-        if (res?.success) {
-          this.$store.dispatch('settings/setOverlay', true);
-          this.debounce(true);
-        }
-      }
-    },
-    async progressGet() {
-      const res = await this.$store.dispatch('deploy/progress', {});
-      if (res && res?.data) {
-        const { finished, message, percent } = res.data;
-        this.$store.dispatch('messages/setProgressMessage', message);
-        this.$store.dispatch('messages/setProgress', percent);
-        if (!finished) {
-          this.debounce(true);
-        } else {
-          this.$store.dispatch('settings/setOverlay', false);
-          this.$store.dispatch('projects/get');
-          this.load = true;
-        }
-      }
-      if (res?.error) {
-        this.$store.dispatch('settings/setOverlay', false);
-      }
-    },
     parse({ value, name }) {
       this.parameters[name] = value;
       this.parameters = { ...this.parameters };
     },
-    Percents(number) {
-      let loading = document.querySelector('.progress-bar > .loading');
-      loading.style.width = number + '%';
-      loading.find('span').value = number;
-    },
-    Copy(text) {
+    copy(text) {
       var textArea = document.createElement('textarea');
       textArea.value = text;
 
@@ -238,53 +192,18 @@ export default {
 
       document.body.removeChild(textArea);
     },
-    usePasswordWatchpage(data) {
-      this.use_sec = data.value;
-    },
-    replaceFolder(data) {
-      this.replace = data.value;
-    },
-    async progress() {
-      let answer = await this.$store.dispatch('deploy/checkProgress');
-      if (!answer) {
-        this.getProgress();
-      } else {
-        this.DataLoading = false;
-        this.DataSent = true;
-        this.$emit('overlay', this.DataLoading);
-      }
-    },
-    getProgress() {
-      setTimeout(this.progress, 2000);
-    },
-    async SendData() {
-      let data = {
+    async sendDeployData() {
+      const data = {
         deploy: this.deploy,
         replace: this.replace,
         use_sec: this.use_sec,
       };
-
       if (this.use_sec) data['sec'] = this.sec;
-
-      const res = await this.$store.dispatch('deploy/sendDeploy', data);
-      if (res) {
-        const { error, success } = res;
-        if (!error && success) {
-          this.DataLoading = true;
-          this.$emit('overlay', this.DataLoading);
-          this.getProgress();
-        }
-      }
+      $emit('sendParamsDeploy', data)
     },
   },
-  created() {
-    this.debounce = debounce(status => {
-      if (status) this.progressGet();
-    }, 1000);
-  },
   beforeDestroy() {
-    this.debounce(false);
-    this.$store.dispatch('deploy/clear');
+    $emit('clear')
   },
   watch: {
     params() {
