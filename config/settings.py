@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 import environ
-import tempfile
 
 from pathlib import Path
 from datetime import datetime
@@ -144,7 +143,6 @@ TERRA_AI_DATE_START = datetime.now()
 TERRA_AI_BASE_DIR = env.str("TERRA_AI_BASE_DIR", default="/")
 TERRA_API_URL = env.str("TERRA_API_URL")
 TERRA_PATH = Path(env.str("TERRA_PATH")).absolute()
-TERRA_AI_PROJECT_PATH = f"{tempfile.gettempdir()}/tai-project"
 PROJECT_PATH = Path(env.str("PROJECT_PATH", default="./Project")).absolute()
 
 

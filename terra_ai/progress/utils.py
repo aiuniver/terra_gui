@@ -4,7 +4,6 @@ import zipfile
 import requests
 
 from pathlib import Path
-from tempfile import mkdtemp, NamedTemporaryFile
 from pydantic.networks import HttpUrl
 
 from ..utils import context_cwd, get_tempfile, get_tempdir
@@ -29,17 +28,17 @@ def download(progress_name: str, title: str, url: HttpUrl) -> Path:
                 size += file_destination_ref.write(data)
                 pool(progress_name, percent=size / length * 100)
     except requests.exceptions.ConnectionError as error:
-        os.remove(file_destination.absolute())
+        os.remove(file_destination)
         raise requests.exceptions.ConnectionError(error)
     return file_destination
 
 
 def pack(progress_name: str, title: str, source: Path, delete=True) -> Path:
     pool.reset(progress_name, message=title, finished=False)
-    zip_destination = NamedTemporaryFile(suffix=".zip", delete=delete)
+    zip_destination = get_tempfile()
     try:
         with context_cwd(source), zipfile.ZipFile(
-            zip_destination.name, "w"
+            zip_destination.absolute(), "w"
         ) as zipfile_ref:
             quantity = sum(list(map(lambda item: len(item[2]), os.walk("./"))))
             __num = 0
@@ -50,8 +49,8 @@ def pack(progress_name: str, title: str, source: Path, delete=True) -> Path:
                     __num += 1
                     pool(progress_name, percent=__num / quantity * 100)
     except Exception as error:
+        os.remove(zip_destination)
         raise Exception(error)
-    os.chmod(zip_destination.name, 0o644)
     return zip_destination
 
 

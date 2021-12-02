@@ -5,7 +5,6 @@
 import os
 
 from pathlib import Path
-from tempfile import gettempdir
 
 from django.conf import settings as django_settings
 

@@ -133,7 +133,7 @@ class Project(BaseMixinData):
             terra_ai_settings.PROJECT_PATH.base,
             delete=False,
         )
-        shutil.move(zip_destination.name, str(destination_path.absolute()))
+        shutil.move(zip_destination.absolute(), destination_path.absolute())
         defaults_data.update_models(self.trainings)
 
     def load(self):
