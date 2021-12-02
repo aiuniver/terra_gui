@@ -10,7 +10,7 @@ from tensorflow import keras
 
 from terra_ai.callbacks import interactive
 from terra_ai.callbacks.utils import print_error, loss_metric_config, get_dataset_length
-from terra_ai.customLayers import terra_custom_layers
+from terra_ai.custom_objects.customLayers import terra_custom_layers
 from terra_ai.data.training.train import TrainingDetailsData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.training.yolo_utils import decode, compute_loss, get_mAP
@@ -19,8 +19,6 @@ from terra_ai.training.yolo_utils import decode, compute_loss, get_mAP
 class BaseTerraModel:
 
     def __init__(self, model, model_name: str, model_path: Path):
-        self.base_model = model
-        self.json_model = self.base_model.to_json() if model else None
 
         self.model_name = model_name
         self.model_json = f"{model_name}_json.trm"
@@ -33,6 +31,13 @@ class BaseTerraModel:
         self.file_path_custom_obj_json = os.path.join(self.saving_path, self.custom_obj_json)
         self.file_path_model_weights = os.path.join(self.saving_path, self.model_weights)
         self.file_path_model_best_weights = os.path.join(self.saving_path, self.model_best_weights)
+
+        self.base_model = model
+        self.json_model = self.base_model.to_json() if model else None
+
+        if not model:
+            self.load()
+            self.load_weights()
 
         self.callback = None
         self.optimizer = None
@@ -97,7 +102,7 @@ class BaseTerraModel:
         custom_object = {}
         for k, v in custom_dict.items():
             try:
-                custom_object[k] = getattr(importlib.import_module(v), k)
+                custom_object[k] = getattr(importlib.import_module(f".{v}", package="terra_ai.custom_objects"), k)
             except:
                 continue
         return custom_object
@@ -274,19 +279,9 @@ class YoloTerraModel(BaseTerraModel):
 
     def __init__(self, model, model_name: str, model_path: Path, **options):
         super().__init__(model=model, model_name=model_name, model_path=model_path)
-        if not model:
-            super().load()
         self.yolo_model = self.__create_yolo(training=options.get("training"),
                                              classes=options.get("classes"),
                                              version=options.get("version"))
-
-    # def save_weights(self, path_=None):
-    #     if not path_:
-    #         path_ = self.file_path_model_weights
-    #     self.base_model.save_weights(path_)
-    #
-    # def load_weights(self):
-    #     self.base_model.load_weights(self.file_path_model_weights)
 
     def __create_yolo(self, training=False, classes=None, version='v3') -> tf.keras.Model:
         method_name = 'create_yolo'

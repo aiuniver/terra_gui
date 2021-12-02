@@ -170,35 +170,21 @@ class GUINN:
         method_name = '_set_model'
         try:
             print(method_name)
+            base_model = None
             if train_details.state.status == "training":
                 validator = ModelValidator(model)
                 base_model = validator.get_keras_model()
+
+            if dataset.data.architecture not in YOLO_ARCHITECTURE:
                 train_model = BaseTerraModel(model=base_model,
                                              model_name=self.nn_name,
                                              model_path=train_details.model_path)
-                if dataset.data.architecture in YOLO_ARCHITECTURE:
-                    options = self.get_yolo_init_parameters(dataset=dataset)
-                    train_model = YoloTerraModel(model=base_model,
-                                                 model_name=self.nn_name,
-                                                 model_path=train_details.model_path,
-                                                 **options)
             else:
-                train_model = BaseTerraModel(model=None,
+                options = self.get_yolo_init_parameters(dataset=dataset)
+                train_model = YoloTerraModel(model=base_model,
                                              model_name=self.nn_name,
-                                             model_path=train_details.model_path)
-                train_model.load()
-                if dataset.data.architecture in YOLO_ARCHITECTURE:
-                    options = self.get_yolo_init_parameters(dataset=dataset)
-                    train_model = YoloTerraModel(model=None,
-                                                 model_name=self.nn_name,
-                                                 model_path=train_details.model_path,
-                                                 **options)
-                weight = None
-                for i in os.listdir(train_details.model_path):
-                    if i[-3:] == '.h5' and 'best' not in i:
-                        weight = i
-                if weight:
-                    train_model.load_weights()
+                                             model_path=train_details.model_path,
+                                             **options)
             return train_model
         except Exception as e:
             print_error(GUINN().name, method_name, e)

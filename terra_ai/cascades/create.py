@@ -11,6 +11,7 @@ import sys
 from inspect import signature
 import itertools
 import importlib
+import importlib.util
 
 
 def make_processing(preprocess_list):
@@ -72,7 +73,10 @@ def json2model_cascade(path: str):
         custom_object = {}
         for k, v in custom_dict.items():
             try:
-                custom_object[k] = getattr(importlib.import_module(v), k)
+                package_ = "terra_ai.custom_objects"
+                if not importlib.util.find_spec(v, package=package_):
+                    package_ = "custom_objects"
+                custom_object[k] = getattr(importlib.import_module(f".{v}", package=package_), k)
             except:
                 continue
         return custom_object

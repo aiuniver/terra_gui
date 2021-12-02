@@ -58,7 +58,6 @@ class CascadeCreator:
     @staticmethod
     def make_image_segmentation(config, dataset_config, model):
         config['cascades']['model']['model'] = model
-        config['cascades']['2']['params']['num_class'] = dataset_config['outputs']['2']['num_classes']
         config['cascades']['2']['params']['classes_colors'] = [Color(i).as_rgb_tuple() for i in
                                                                dataset_config['outputs']['2']['classes_colors']]
 
@@ -98,15 +97,15 @@ class CascadeCreator:
     def copy_package(deploy_path: Path, model_path: Path):
         if os.path.exists(os.path.join(deploy_path, "cascades")):
             shutil.rmtree(os.path.join(deploy_path, "cascades"), ignore_errors=True)
+        if os.path.exists(os.path.join(deploy_path, "custom_objects")):
+            shutil.rmtree(os.path.join(deploy_path, "custom_objects"), ignore_errors=True)
         shutil.copytree("terra_ai/cascades",
                         os.path.join(deploy_path, "cascades"),
                         ignore=shutil.ignore_patterns("demo_panel", "cascades"))
+        shutil.copytree("terra_ai/custom_objects",
+                        os.path.join(deploy_path, "custom_objects"))
         shutil.copyfile("terra_ai/datasets/preprocessing.py",
                         os.path.join(deploy_path, "cascades", "preprocessing.py"))
-        shutil.copyfile("terra_ai/customLayers.py",
-                        os.path.join(deploy_path, "cascades", "customLayers.py"))
-        shutil.copyfile("terra_ai/training/customlosses.py",
-                        os.path.join(deploy_path, "cascades", "customlosses.py"))
 
     @staticmethod
     def copy_model(deploy_path: Path, model_path: Path):

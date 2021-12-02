@@ -9,22 +9,22 @@ from tensorflow.keras import layers
 from tensorflow.python.keras.layers import BatchNormalization
 
 terra_custom_layers = {
-    "InstanceNormalization": "terra_ai.customLayers",
-    "VAEBlock": "terra_ai.customLayers",
-    "YOLOResBlock": "terra_ai.customLayers",
-    "YOLOv3ResBlock": "terra_ai.customLayers",
-    "YOLOConvBlock": "terra_ai.customLayers",
-    "Mish": "terra_ai.customLayers",
-    "DarkNetBatchNormalization": "terra_ai.customLayers",
-    "DarkNetConvolutional": "terra_ai.customLayers",
-    "DarkNetResBlock": "terra_ai.customLayers",
-    "DarkNetUpsample": "terra_ai.customLayers",
-    "CONVBlock": "terra_ai.customLayers",
-    "PSPBlock2D": "terra_ai.customLayers",
-    "UNETBlock2D": "terra_ai.customLayers",
-    "UNETBlock1D": "terra_ai.customLayers",
-    "UNETBlock3D": "terra_ai.customLayers",
-    "PSPBlock1D": "terra_ai.customLayers",
+    "InstanceNormalization": "customLayers",
+    "VAEBlock": "customLayers",
+    "YOLOResBlock": "customLayers",
+    "YOLOv3ResBlock": "customLayers",
+    "YOLOConvBlock": "customLayers",
+    "Mish": "customLayers",
+    "DarkNetBatchNormalization": "customLayers",
+    "DarkNetConvolutional": "customLayers",
+    "DarkNetResBlock": "customLayers",
+    "DarkNetUpsample": "customLayers",
+    "CONVBlock": "customLayers",
+    "PSPBlock2D": "customLayers",
+    "UNETBlock2D": "customLayers",
+    "UNETBlock1D": "customLayers",
+    "UNETBlock3D": "customLayers",
+    "PSPBlock1D": "customLayers",
 }
 
 
