@@ -1428,7 +1428,7 @@ def _non_max_suppression(boxes, max_bbox_overlap, scores=None):
 
 class DeepSort(object):
     def __init__(self, model_path, max_dist=0.2, min_confidence=0.3, nms_max_overlap=1.0,
-                 max_iou_distance=0.7, max_age=70, n_init=3, nn_budget=100):
+                 max_iou_distance=0.7, deep_max_age=70, n_init=3, nn_budget=100):
         self.min_confidence = min_confidence
         self.nms_max_overlap = nms_max_overlap
         self.height, self.width = None, None
@@ -1436,7 +1436,7 @@ class DeepSort(object):
 
         max_cosine_distance = max_dist
         metric = _NearestNeighborDistanceMetric("cosine", max_cosine_distance, nn_budget)
-        self.tracker = _Tracker(metric, max_iou_distance=max_iou_distance, max_age=max_age, n_init=n_init)
+        self.tracker = _Tracker(metric, max_iou_distance=max_iou_distance, max_age=deep_max_age, n_init=n_init)
 
     def __call__(self, bbox_xyxy, ori_img):
         confidences = bbox_xyxy[:, 4]
