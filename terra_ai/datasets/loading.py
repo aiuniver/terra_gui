@@ -1,10 +1,8 @@
 import os
 import sys
-import uuid
 import json
 import shutil
 import base64
-import tempfile
 import requests
 
 from pathlib import Path
@@ -28,6 +26,7 @@ from ..exceptions.datasets import (
     DatasetChoiceUndefinedMethodException,
     UnknownDatasetException,
 )
+from ..utils import get_tempdir
 from ..progress import utils as progress_utils
 
 DOWNLOAD_SOURCE_TITLE = "Загрузка исходников датасета"
@@ -172,22 +171,18 @@ def _choice_from_terra(
             DATASET_CHOICE_UNPACK_TITLE % (DatasetGroupChoice.terra.value, name),
             zipfile_path,
         )
-        data = CustomDatasetConfigData(path=Path(zip_destination))
-        zip_dirpath = Path(tempfile.gettempdir(), str(uuid.uuid4()))
-        shutil.copytree(data.path, zip_dirpath)
-        os.chmod(zip_dirpath, 0o755)
-        zip_filepath = Path(zip_dirpath, "dataset.zip")
-        unpacked = progress_utils.unpack(
+        os.remove(zipfile_path)
+        data = CustomDatasetConfigData(path=zip_destination)
+        zip_filepath = Path(zip_destination, "dataset.zip")
+        progress_utils.unpack(
             progress_name,
             DATASET_CHOICE_UNPACK_TITLE % (DatasetGroupChoice.terra.value, name),
             zip_filepath,
+            zip_destination,
         )
         os.remove(zip_filepath)
-        for item in os.listdir(unpacked):
-            shutil.move(str(Path(unpacked, item).absolute()), zip_dirpath)
         shutil.rmtree(destination, ignore_errors=True)
-        os.rename(zip_dirpath, destination)
-        shutil.rmtree(unpacked)
+        os.rename(zip_destination, destination)
         config_path = Path(destination, settings.DATASET_CONFIG)
         if config_path.is_file():
             with open(config_path) as config_ref:
@@ -205,6 +200,7 @@ def _choice_from_terra(
                 finished=True,
             )
         else:
+            shutil.rmtree(destination, ignore_errors=True)
             progress.pool(
                 progress_name,
                 finished=True,
@@ -242,22 +238,20 @@ def _choice_from_custom(
         data = CustomDatasetConfigData(
             path=Path(source, f"{name}.{settings.DATASET_EXT}")
         )
-        zip_dirpath = Path(tempfile.gettempdir(), str(uuid.uuid4()))
-        shutil.copytree(data.path, zip_dirpath)
-        os.chmod(zip_dirpath, 0o755)
-        zip_filepath = Path(zip_dirpath, "dataset.zip")
-        unpacked = progress_utils.unpack(
+        zip_destination = get_tempdir(False)
+        shutil.copytree(data.path, zip_destination)
+        zip_filepath = Path(zip_destination, "dataset.zip")
+        progress_utils.unpack(
             progress_name,
             DATASET_CHOICE_UNPACK_TITLE % (DatasetGroupChoice.custom.value, name),
             zip_filepath,
+            zip_destination,
         )
         os.remove(zip_filepath)
-        for item in os.listdir(unpacked):
-            shutil.move(str(Path(unpacked, item).absolute()), zip_dirpath)
         shutil.rmtree(destination, ignore_errors=True)
-        os.rename(zip_dirpath, destination)
-        shutil.rmtree(unpacked)
-        if Path(destination, settings.DATASET_CONFIG).is_file():
+        os.rename(zip_destination, destination)
+        config_path = Path(destination, settings.DATASET_CONFIG)
+        if config_path.is_file():
             progress.pool(
                 progress_name,
                 percent=100,
@@ -268,6 +262,7 @@ def _choice_from_custom(
                 finished=True,
             )
         else:
+            shutil.rmtree(destination, ignore_errors=True)
             progress.pool(
                 progress_name,
                 finished=True,

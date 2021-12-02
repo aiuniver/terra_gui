@@ -1,10 +1,13 @@
 import re
 import os
 
+from uuid import uuid4
 from pathlib import Path
 from contextlib import contextmanager
 from typing import Union, Tuple
 from encodings.aliases import aliases as encodings_aliases
+
+from .settings import TMP_DIR
 
 
 def decamelize(camel_case_string: str):
@@ -59,3 +62,28 @@ def autodetect_encoding(
         return output, encoding
     else:
         return output
+
+
+def _get_temppath() -> Path:
+    def uuid_path() -> Path:
+        return Path(TMP_DIR, str(uuid4()))
+
+    path_dir = uuid_path()
+    while path_dir.is_dir() or path_dir.is_file():
+        path_dir = uuid_path()
+
+    return path_dir
+
+
+def get_tempdir(create: bool = True) -> Path:
+    path_dir = _get_temppath()
+    if create:
+        path_dir.mkdir()
+    return path_dir
+
+
+def get_tempfile(create: bool = True) -> Path:
+    path_file = _get_temppath()
+    if create:
+        path_file.touch()
+    return path_file
