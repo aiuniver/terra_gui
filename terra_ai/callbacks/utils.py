@@ -159,12 +159,12 @@ loss_metric_config = {
         "DiceCoef": {
             "log_name": "dice_coef",
             "mode": "max",
-            "module": "terra_ai.training.customlosses"
+            "module": "terra_ai.custom_objects.customlosses"
         },
         "BalancedDiceCoef": {
             "log_name": "balanced_dice_coef",
             "mode": "max",
-            "module": "terra_ai.training.customlosses"
+            "module": "terra_ai.custom_objects.customlosses"
         },
         "FalseNegatives": {
             "log_name": "false_negatives",
@@ -219,7 +219,7 @@ loss_metric_config = {
         "PercentMAE": {
             "log_name": "percent_mae",
             "mode": "min",
-            "module": "terra_ai.training.customlosses"
+            "module": "terra_ai.custom_objects.customlosses"
         },
         "Poisson": {
             "log_name": "poisson",
@@ -239,27 +239,27 @@ loss_metric_config = {
         "RecallPercent": {
             "log_name": "recall_percent",
             "mode": "max",
-            "module": "terra_ai.training.customlosses"
+            "module": "terra_ai.custom_objects.customlosses"
         },
         "BalancedRecall": {
             "log_name": "balanced_recall",
             "mode": "max",
-            "module": "terra_ai.training.customlosses"
+            "module": "terra_ai.custom_objects.customlosses"
         },
         "BalancedPrecision": {
             "log_name": "balanced_precision",
             "mode": "max",
-            "module": "terra_ai.training.customlosses"
+            "module": "terra_ai.custom_objects.customlosses"
         },
         "BalancedFScore": {
             "log_name": "balanced_f_score",
             "mode": "max",
-            "module": "terra_ai.training.customlosses"
+            "module": "terra_ai.custom_objects.customlosses"
         },
         "FScore": {
             "log_name": "f_score",
             "mode": "max",
-            "module": "terra_ai.training.customlosses"
+            "module": "terra_ai.custom_objects.customlosses"
         },
         "RootMeanSquaredError": {
             "log_name": "root_mean_squared_error",
@@ -304,7 +304,7 @@ loss_metric_config = {
         "UnscaledMAE": {
             "log_name": "unscaled_mae",
             "mode": "min",
-            "module": "terra_ai.training.customlosses"
+            "module": "terra_ai.custom_objects.customlosses"
         },
         "mAP50": {
             "log_name": "mAP50",

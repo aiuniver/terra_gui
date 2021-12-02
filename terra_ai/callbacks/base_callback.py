@@ -1,7 +1,3 @@
-import json
-import os
-from pathlib import Path
-
 import psutil
 import time
 import pynvml as N
@@ -11,24 +7,18 @@ from config import settings
 
 from terra_ai import progress
 from terra_ai.callbacks.utils import print_error, loss_metric_config, YOLO_ARCHITECTURE
-from terra_ai.data.datasets.dataset import DatasetOutputsData
-
 from terra_ai.data.deploy.extra import DeployTypeChoice
-from terra_ai.data.deploy.tasks import DeployData
-from terra_ai.data.training.extra import CheckpointTypeChoice, ArchitectureChoice, StateStatusChoice
+from terra_ai.data.training.extra import CheckpointTypeChoice,StateStatusChoice
 from terra_ai.data.training.train import TrainingDetailsData
-from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preparing import PrepareDataset
-from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.training.training_history import History
-from terra_ai.utils import decamelize
 from terra_ai.callbacks import interactive
 
 
 class FitCallback:
     """CustomCallback for all task type"""
 
-    def __init__(self, dataset: PrepareDataset, training_details: TrainingDetailsData, retrain_epochs: int = None,
+    def __init__(self, dataset: PrepareDataset, training_details: TrainingDetailsData,
                  model_name: str = "model", deploy_type: str = ""):
         super().__init__()
         print('\n FitCallback')
