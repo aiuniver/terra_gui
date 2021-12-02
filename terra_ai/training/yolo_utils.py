@@ -199,10 +199,7 @@ def postprocess_boxes(pred_bbox, original_image, input_size, score_threshold):
         pred_coor = np.concatenate([pred_xywh[:, :2] - pred_xywh[:, 2:] * 0.5,
                                     pred_xywh[:, :2] + pred_xywh[:, 2:] * 0.5], axis=-1)
         # 2. (xmin, ymin, xmax, ymax) -> (xmin_org, ymin_org, xmax_org, ymax_org)
-        if isinstance(original_image, tuple) or (original_image == None):
-            org_h, org_w = input_size, input_size
-        else:
-            org_h, org_w = original_image.shape[:2]
+        org_h, org_w = np.squeeze(original_image).shape[:2]
         resize_ratio = min(input_size / org_w, input_size / org_h)
 
         dw = (input_size - resize_ratio * org_w) / 2
@@ -775,13 +772,14 @@ def get_mAP(Yolo: object, dataset: object, score_threshold: object = 0.25, iou_t
                 ms = sum(times) / len(times) * 1000
                 fps = 1000 / ms
         else:
-            for inp, out, serv in dataset.dataset['val'].batch(1).take(-1):
-                original_image = inp['1'].numpy()[0]
-                image_data = inp['1'].numpy()
-                original_image_shape.append(original_image.shape)
+            for inp, out, serv in dataset.dataset['val'].batch(1):
+                # original_image = np.array(tmp_im)
+                # print(np.array(tmp_im).shape)
+                # image_data = inp['1'].numpy()
+                # original_image_shape.append(np.array(tmp_im).shape)
                 t1 = time.time()
 
-                pred_bbox = Yolo.predict(image_data)
+                pred_bbox = Yolo.predict(inp)
                 pred_bbox = [pred_bbox[1], pred_bbox[3], pred_bbox[5]]
                 t2 = time.time()
                 times.append(t2 - t1)
@@ -793,6 +791,7 @@ def get_mAP(Yolo: object, dataset: object, score_threshold: object = 0.25, iou_t
                 ms = sum(times) / len(times) * 1000
                 fps = 1000 / ms
 
+
         ap_dictionary = {}
         for i_iou in iou_threshold:
 
@@ -800,8 +799,9 @@ def get_mAP(Yolo: object, dataset: object, score_threshold: object = 0.25, iou_t
             class_predictions = {}
             len_bbox = 0
             for i_image, pred_bbox in enumerate(predict):
-
-                bboxes = postprocess_boxes(pred_bbox, original_image_shape[i_image], TEST_INPUT_SIZE, score_threshold)
+                tmp_im = load_img(os.path.join(dataset_path, dataset.dataframe.get("val").iloc[i_image, 0]))
+                tmp_im = np.array(tmp_im)
+                bboxes = postprocess_boxes(pred_bbox, tmp_im, TEST_INPUT_SIZE, score_threshold)
                 bboxes = nms(bboxes, i_iou, method='nms')
                 len_bbox += len(bboxes)
                 for bbox in bboxes:

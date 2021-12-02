@@ -133,9 +133,10 @@ class DeployCreator:
                     weight = i
         if weight:
             out_model = model.base_model
+            out_model.load_weights(os.path.join(model_path, weight))
             if "Yolo" in deploy_type:
                 out_model = model.yolo_model
-            out_model.load_weights(os.path.join(model_path, weight))
+
         return out_model
 
     @staticmethod

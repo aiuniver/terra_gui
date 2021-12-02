@@ -280,13 +280,13 @@ class YoloTerraModel(BaseTerraModel):
                                              classes=options.get("classes"),
                                              version=options.get("version"))
 
-    def save_weights(self, path_=None):
-        if not path_:
-            path_ = self.file_path_model_weights
-        self.yolo_model.save_weights(path_)
-
-    def load_weights(self):
-        self.yolo_model.load_weights(self.file_path_model_weights)
+    # def save_weights(self, path_=None):
+    #     if not path_:
+    #         path_ = self.file_path_model_weights
+    #     self.base_model.save_weights(path_)
+    #
+    # def load_weights(self):
+    #     self.base_model.load_weights(self.file_path_model_weights)
 
     def __create_yolo(self, training=False, classes=None, version='v3') -> tf.keras.Model:
         method_name = 'create_yolo'

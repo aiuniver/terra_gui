@@ -1,16 +1,16 @@
 from . import cascade_input, cascade_output, general_fucntions, service
 from .cascade import CascadeElement, CascadeOutput, BuildModelCascade, CompleteCascade, CascadeBlock
-
 from .common import decamelize, yolo_decode, type2str
 import json
 import os
 from tensorflow.keras import Model
 from tensorflow.keras.layers import Input
-from tensorflow.keras.models import load_model
+from tensorflow.keras.models import load_model, model_from_json
 from collections import OrderedDict
 import sys
 from inspect import signature
 import itertools
+import importlib
 
 
 def make_processing(preprocess_list):
@@ -37,20 +37,53 @@ def make_processing(preprocess_list):
                 else:
                     out.append(element)
         return out
+
     return fun
 
 
 def json2model_cascade(path: str):
     weight = None
     model = None
+    custom_object = None
+    model_tf_format = False
     for i in os.listdir(path):
         if i[-3:] == '.h5' and 'best' in i:
             weight = i
         elif weight is None and i[-3:] == '.h5':
             weight = i
-        elif i[-4:] == '.trm':
+        elif i == 'trained_model.trm':
             model = i
-    model = load_model(os.path.join(path, model), compile=False, custom_objects=None)
+            model_tf_format = True
+        elif i[-4:] == '.trm' and 'model_json' in i:
+            model = i
+        elif i[-4:] == '.trm' and 'custom_obj_json' in i:
+            custom_object = i
+
+    def __get_json_data(path_model_json, path_custom_obj_json):
+        with open(path_model_json) as json_file:
+            data = json.load(json_file)
+
+        with open(path_custom_obj_json) as json_file:
+            custom_dict = json.load(json_file)
+
+        return data, custom_dict
+
+    def __set_custom_objects(custom_dict):
+        custom_object = {}
+        for k, v in custom_dict.items():
+            try:
+                custom_object[k] = getattr(importlib.import_module(v), k)
+            except:
+                continue
+        return custom_object
+
+    if model_tf_format:
+        model = load_model(os.path.join(path, model), compile=False, custom_objects=None)
+    else:
+        model_data, custom_dict = __get_json_data(os.path.join(path, model), os.path.join(path, custom_object))
+        custom_object = __set_custom_objects(custom_dict)
+
+        model = model_from_json(model_data, custom_objects=custom_object)
     model.load_weights(os.path.join(path, weight))
 
     dataset_path = os.path.join(path, "dataset.json")

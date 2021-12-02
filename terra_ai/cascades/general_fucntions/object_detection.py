@@ -43,10 +43,7 @@ def postprocess_boxes(input_size=416, score_threshold=.3, iou_threshold=.45, met
         pred_coor = np.concatenate([pred_xywh[:, :2] - pred_xywh[:, 2:] * 0.5,
                                     pred_xywh[:, :2] + pred_xywh[:, 2:] * 0.5], axis=-1)
         # 2. (xmin, ymin, xmax, ymax) -> (xmin_org, ymin_org, xmax_org, ymax_org)
-        if isinstance(original_image, tuple):
-            org_h, org_w = input_size, input_size
-        else:
-            org_h, org_w = original_image.shape[:2]
+        org_h, org_w = np.squeeze(original_image).shape[:2]
         resize_ratio = min(input_size / org_w, input_size / org_h)
 
         dw = (input_size - resize_ratio * org_w) / 2
@@ -108,12 +105,13 @@ def postprocess_boxes(input_size=416, score_threshold=.3, iou_threshold=.45, met
     return fun
 
 
-def plot_b_boxes(classes, colors=None, line_thickness=None):
+def plot_bboxes(classes, colors=None, line_thickness=None):
     if colors is None:
         colors = [tuple((randrange(1, 256) for _ in range(3)))
                   for _ in range(len(classes))]
 
     def fun(bboxes, img):
+        img = np.squeeze(img)
         if bboxes.shape != (0, 5):
             brawl_color = True
 

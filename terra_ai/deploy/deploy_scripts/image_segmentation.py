@@ -22,7 +22,9 @@ def predict(input_path, output_path):
 
 
 def get_params(config_path):
-    dataset_path = os.path.join(config_path, "dataset", "config.json")
+    dataset_path = os.path.join(config_path, "dataset.json")
+    if not os.path.exists(dataset_path):
+        dataset_path = os.path.join(config_path, "dataset", "config.json")
     with open(dataset_path) as cfg:
         config = json.load(cfg)
 
