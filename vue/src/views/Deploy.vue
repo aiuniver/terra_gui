@@ -44,11 +44,10 @@
       </div>
       <Params 
         :params="params"
-        :height="height"
         :module-list="moduleList"
         :project-data="projectData"
         :user-data="userData"
-        :sent-deploy="isSendParamsDeploy"
+        :sent-deploy="paramsSettings.isSendParamsDeploy"
         :params-downloaded="paramsSettings"
         :overlay-status="overlay"
         @downloadSettings="downloadSettings"
@@ -62,13 +61,14 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 export default {
   name: 'Datasets',
   components: {
     Params: () => import('@/components/deploy/params/Params'),
-    IndexCard: () => import('./IndexCard'),
-    Table: () => import('./Table.vue'),
-    TableClass: () => import('./TableClass.vue'),
+    IndexCard: () => import('@/components/deploy/IndexCard'),
+    Table: () => import('@/components/deploy/Table'),
+    TableClass: () => import('@/components/deploy/TableClass'),
   },
   computed: {
     ...mapGetters({
@@ -113,7 +113,7 @@ export default {
       }
     },
     async sendParamsDeploy(){
-      const res = await this.$store.dispatch('deploy/sendDeploy', data);
+      const res = await this.$store.dispatch('deploy/sendDeploy');
       if (res) {
         const { error, success } = res;
         if (!error && success) {

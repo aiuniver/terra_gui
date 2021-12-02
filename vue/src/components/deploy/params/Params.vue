@@ -118,10 +118,6 @@ export default {
       type: [Object, Array],
       default: () => ({})
     },
-    height: {
-      type: [String, Number],
-      default: ""
-    },
     moduleList: {
       type: Object,
       default: () => ({})
@@ -199,11 +195,11 @@ export default {
         use_sec: this.use_sec,
       };
       if (this.use_sec) data['sec'] = this.sec;
-      $emit('sendParamsDeploy', data)
+      this.$emit('sendParamsDeploy', data)
     },
   },
   beforeDestroy() {
-    $emit('clear')
+    this.$emit('clear')
   },
   watch: {
     params() {
