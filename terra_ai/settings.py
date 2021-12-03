@@ -13,7 +13,7 @@ from .data.path import TerraPathData, ProjectPathData
 
 # General settings
 ASSETS_PATH = Path(Path(__file__).parent, "assets")
-TMP_DIR = Path(Path(__file__).parent.parent, "tmp")
+TMP_DIR = Path(Path(__file__).parent.parent, "Usage")
 os.makedirs(TMP_DIR, exist_ok=True)
 
 # Terra paths
