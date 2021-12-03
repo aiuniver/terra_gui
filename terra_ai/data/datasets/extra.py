@@ -184,6 +184,7 @@ class DatasetGroupChoice(str, Enum):
     keras = "keras"
     terra = "terra"
     custom = "custom"
+    trds = "trds"
 
     @staticmethod
     def values() -> list:
@@ -203,6 +204,7 @@ class ColumnProcessingTypeChoice(str, Enum):
     Classification = "Classification"
     Regression = "Regression"
     Segmentation = "Segmentation"
+    TextSegmentation = "TextSegmentation"
     Timeseries = "Timeseries"
 
 

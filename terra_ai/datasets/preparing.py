@@ -167,7 +167,7 @@ class PrepareDataset(object):
             # alias = '.'.join([self.dataset_data.alias, self.dataset_data.group])
 
         build_table = {'alias': [], 'Название': [], 'Входы': [], 'Выходы': []}
-        if self.dataset_data.group == 'custom':
+        if self.dataset_data.group == 'trds':
             build_table.update({'Размер': [], 'Генератор': [], 'Дата создания': []})
             for d_path in Path(TERRA_PATH).joinpath('.'.join([alias, DATASET_EXT]), 'versions').glob('*.' + VERSION_EXT):
                 with open(d_path.joinpath(VERSION_CONFIG), 'r') as config:
@@ -357,6 +357,31 @@ class PrepareDataset(object):
                 if version['alias'] == alias:
                     self.version_data = VersionData(**version)
 
+            # (x_train, y_train), (x_val, y_val) = getattr(load_keras_datasets, self.dataset_data.alias).load_data()
+            #
+            # if self.dataset_data.alias in ['mnist', 'fashion_mnist'] and self.version_data.alias == 'add_dimension':
+            #     x_train = x_train[..., None]
+            #     x_val = x_val[..., None]
+            # y_train = utils.to_categorical(y_train, len(np.unique(y_train, axis=0)))
+            # y_val = utils.to_categorical(y_val, len(np.unique(y_val, axis=0)))
+            #
+            # for key in self.version_data.inputs.keys():
+            #     self.X['train'][str(key)] = x_train
+            #     self.X['val'][str(key)] = x_val
+            # for key in self.version_data.outputs.keys():
+            #     self.Y['train'][str(key)] = y_train
+            #     self.Y['val'][str(key)] = y_val
+
+            # del x_train, y_train, x_val, y_val
+
+        print(self.__str__())
+
+        return self
+
+    def prepare_dataset(self):
+
+        if self.dataset_data.group == DatasetGroupChoice.keras:
+
             (x_train, y_train), (x_val, y_val) = getattr(load_keras_datasets, self.dataset_data.alias).load_data()
 
             if self.dataset_data.alias in ['mnist', 'fashion_mnist'] and self.version_data.alias == 'add_dimension':
@@ -372,15 +397,7 @@ class PrepareDataset(object):
                 self.Y['train'][str(key)] = y_train
                 self.Y['val'][str(key)] = y_val
 
-        del x_train, y_train, x_val, y_val
-
-        print(self.__str__())
-
-        return self
-
-    def prepare_dataset(self):
-
-        if self.dataset_data.group == DatasetGroupChoice.keras:
+            del x_train, y_train, x_val, y_val
 
             for put_id, data in KerasInstructions[self.dataset_data.alias].items():
                 self.instructions[put_id] = data
@@ -403,7 +420,7 @@ class PrepareDataset(object):
                     self.dataset[split] = Dataset.from_tensor_slices((self.X[split],
                                                                       self.Y[split]))
 
-        elif self.dataset_data.group in [DatasetGroupChoice.terra, DatasetGroupChoice.custom]:
+        elif self.dataset_data.group in [DatasetGroupChoice.terra, DatasetGroupChoice.trds]:
 
             self.preprocessing.load_preprocesses(self.version_data.columns)
 

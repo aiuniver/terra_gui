@@ -44,9 +44,9 @@ class CreateDataset(object):
 
         creation_data: CreationData = cr_data  # ВРЕМЕННО!!!
         self.temp_directory: Path = Path(tempfile.mkdtemp())
-        os.makedirs(self.temp_directory.joinpath(f'{creation_data.alias}.{DATASET_EXT}_NEW'), exist_ok=True)
+        os.makedirs(self.temp_directory.joinpath('.'.join([creation_data.alias, DATASET_EXT])), exist_ok=True)
         self.dataset_paths_data: DatasetPathsData = DatasetPathsData(
-            basepath=self.temp_directory.joinpath(f'{creation_data.alias}.{DATASET_EXT}_NEW'))
+            basepath=self.temp_directory.joinpath('.'.join([creation_data.alias, DATASET_EXT])))
         copy_tree(str(creation_data.source_path), str(self.dataset_paths_data.sources))
         self.zip_dataset(self.dataset_paths_data.sources, self.temp_directory.joinpath('sources'))
         shutil.move(str(self.temp_directory.joinpath('sources.zip')), self.dataset_paths_data.basepath)
@@ -55,8 +55,8 @@ class CreateDataset(object):
         #                 shutil.rmtree(value)
         shutil.rmtree(self.dataset_paths_data.sources)
         self.write_dataset_configure(creation_data)
-        if creation_data.datasets_path.joinpath(f'{creation_data.alias}.{DATASET_EXT}_NEW').is_dir():
-            shutil.rmtree(creation_data.datasets_path.joinpath(f'{creation_data.alias}.{DATASET_EXT}_NEW'))
+        if creation_data.datasets_path.joinpath('.'.join([creation_data.alias, DATASET_EXT])).is_dir():
+            shutil.rmtree(creation_data.datasets_path.joinpath('.'.join([creation_data.alias, DATASET_EXT])))
         shutil.move(str(self.dataset_paths_data.basepath), creation_data.datasets_path)
         shutil.rmtree(self.temp_directory)
         if creation_data.version:  # Больше сделано для дебаггинга
@@ -81,7 +81,7 @@ class CreateDataset(object):
 
         data = {'name': creation_data.name,
                 'alias': creation_data.alias,
-                'group': DatasetGroupChoice.custom,
+                'group': DatasetGroupChoice.trds,
                 'tags': tags_list,
                 'date': datetime.now().astimezone(timezone("Europe/Moscow")).isoformat(),
                 'architecture': creation_data.task_type,
@@ -101,11 +101,12 @@ class CreateVersion(object):
         self.columns: dict = {}
         self.preprocessing = CreatePreprocessing()
 
+        version_data = self.preprocess_version_data(version_data)
         self.temp_directory: Path = Path(tempfile.mkdtemp())
         self.sources_temp_directory: Path = Path(tempfile.mkdtemp())
         self.dataset_paths_data = DatasetPathsData(basepath=self.temp_directory)
         self.parent_dataset_paths_data = DatasetPathsData(
-            basepath=version_data.datasets_path.joinpath(f'{version_data.parent_alias}.{DATASET_EXT}_NEW')
+            basepath=version_data.datasets_path.joinpath('.'.join([version_data.parent_alias, DATASET_EXT]))
         )
         shutil.copyfile(
             self.parent_dataset_paths_data.basepath.joinpath('sources.zip'),
@@ -157,6 +158,75 @@ class CreateVersion(object):
                 zf.write(absname, arcname)
         zf.close()
 
+    @staticmethod
+    def preprocess_version_data(version_data):
+
+        for worker_name, worker_params in version_data.processing.items():
+            if version_data.processing[worker_name].type == LayerOutputTypeChoice.Segmentation:
+                for w_name in version_data.processing:
+                    if version_data.processing[w_name].type == LayerInputTypeChoice.Image:
+                        version_data.processing[worker_name].parameters.height =\
+                            version_data.processing[w_name].parameters.height
+                        version_data.processing[worker_name].parameters.width = \
+                            version_data.processing[w_name].parameters.width
+            elif version_data.processing[worker_name].type == LayerOutputTypeChoice.TextSegmentation:
+                for w_name in version_data.processing:
+                    if version_data.processing[w_name].type == LayerOutputTypeChoice.Text:
+                        version_data.processing[worker_name].parameters.text_mode = \
+                            version_data.processing[w_name].parameters.text_mode
+                        version_data.processing[worker_name].parameters.length = \
+                            version_data.processing[w_name].parameters.length
+                        version_data.processing[worker_name].parameters.step = \
+                            version_data.processing[w_name].parameters.step
+                        version_data.processing[worker_name].parameters.max_words = \
+                            version_data.processing[w_name].parameters.max_words
+                        filters = version_data.processing[w_name].parameters.filters
+                        for x in version_data.processing[worker_name].parameters.open_tags + version_data.processing[worker_name].parameters.close_tags:
+                            filters = filters.replace(x, '')
+                        version_data.processing[w_name].parameters.filters = filters
+                        version_data.processing[worker_name].parameters.filters = filters
+                        version_data.processing[w_name].parameters.open_tags = \
+                            version_data.processing[worker_name].parameters.open_tags
+                        version_data.processing[w_name].parameters.close_tags = \
+                            version_data.processing[worker_name].parameters.close_tags
+            elif version_data.processing[worker_name].type == LayerOutputTypeChoice.ObjectDetection:
+                for w_name, w_params in version_data.processing.items():
+                    if version_data.processing[w_name].type == LayerInputTypeChoice.Image:
+                        version_data.processing[worker_name].parameters.frame_mode = \
+                            version_data.processing[w_name].parameters.image_mode
+                names_list = get_od_names(version_data)
+                version_data.processing[worker_name].parameters.classes_names = names_list
+                version_data.processing[worker_name].parameters.num_classes = len(names_list)
+
+        return version_data
+
+    @staticmethod
+    def postprocess_timeseries(full_array):
+        try:
+            new_array = np.array(full_array).transpose()
+        except:
+            new_array = []
+            array = []
+            for el in full_array:
+                if type(el[0]) == np.ndarray:
+                    tmp = []
+                    for j in range(len(el)):
+                        tmp.append(list(el[j]))
+                    array.append(tmp)
+                else:
+                    array.append(el.tolist())
+            array = np.array(array).transpose().tolist()
+            for i in array:
+                tmp = []
+                for j in i:
+                    if type(j) == list:
+                        tmp.extend(j)
+                    else:
+                        tmp.append(j)
+                new_array.append(tmp)
+            new_array = np.array(new_array)
+        return new_array
+
     def create_instructions(self, version_data):
 
         inputs = self.create_put_instructions(puts=version_data.inputs, processing=version_data.processing)
@@ -172,44 +242,50 @@ class CreateVersion(object):
 
         for idx in range(puts[0].id, puts[0].id + len(puts)):
             data = []
+            parameters = None
             for path, val in puts.get(idx).parameters.items():
                 data_to_pass = []
-                parameters = None
+                cols_names = ''
                 current_path = self.sources_temp_directory.joinpath(path)
+                parameters = processing[str(val[os.path.basename(path)][0])].native()  # Аккуратно с [0]
                 if current_path.is_dir():
                     for direct, folder, file_name in os.walk(current_path):
                         if file_name:
                             for name in sorted(file_name):
                                 data_to_pass.append(os.path.join(current_path, name))
-                    parameters = processing[str(val[os.path.basename(path)][0])].native()  # Аккуратно с [0]
-                    self.tags[idx] = {
-                        f'{puts.get(idx).id}_{decamelize(parameters["type"])}': decamelize(parameters['type'])}
+                    cols_names = f"{puts.get(idx).id}_{decamelize(parameters['type'])}"
+                    self.tags[idx] = {cols_names: decamelize(parameters['type'])}
                     if parameters['type'] == LayerOutputTypeChoice.Classification:
                         data_to_pass = self.y_cls
-
                 elif current_path.is_file():
                     print('ТАБЛИЦА')
-                print(data_to_pass[0])
-                print(parameters)
                 instr = getattr(CreateArray, f'instructions_{decamelize(parameters["type"])}')(data_to_pass,
                                                                                                **parameters[
                                                                                                    'parameters'])
                 cut = getattr(CreateArray, f'cut_{decamelize(parameters["type"])}')(instr['instructions'],
-                                                                                    **instr['parameters'], **{
-                        'cols_names': decamelize(parameters["type"]), 'put': idx})
+                                                                                    self.version_paths_data.sources,
+                                                                                    **instr['parameters'],
+                                                                                    **{'cols_names': cols_names,'put': idx})
+                print(self.sources_temp_directory)
+                print(cut['instructions'][0])
+                print(cut['instructions'][0].replace(str(self.version_paths_data.sources), '')[1:])
                 for i in range(len(cut['instructions'])):
-                    if parameters['type'] != LayerOutputTypeChoice.Classification:
-                        if decamelize(parameters['type']) in PATH_TYPE_LIST:
-                            data.append(os.path.join(cut['instructions'][i].replace(str(self.sources_temp_directory), '')[1:]))
-                        else:
-                            data.append(cut['instructions'][i])
-                        self.y_cls.append(os.path.basename(path))
-
-            if parameters['type'] != LayerOutputTypeChoice.Classification:
-                instructions_data = InstructionsData(instructions=data, parameters=cut['parameters'])
-            else:
-                instructions_data = InstructionsData(instructions=self.y_cls, parameters=cut['parameters'])
-            instructions_data.parameters.update([('put_type', decamelize(parameters['type']))])
+                    if decamelize(parameters['type']) in PATH_TYPE_LIST:
+                        data.append(cut['instructions'][i].replace(str(self.version_paths_data.sources), '')[1:])
+                    else:
+                        data.append(cut['instructions'][i])
+                    # if idx - 1 > 0 and parameters['type'] != prev_type:
+                    # if idx == 0:
+                    # if parameters['type'] != LayerOutputTypeChoice.Classification and i == 0:
+                    #     self.y_cls.append(os.path.basename(path))
+                if idx == puts[0].id and parameters['type'] != LayerOutputTypeChoice.Classification:
+                    self.y_cls += [os.path.basename(path) for _ in range(len(cut['instructions']))]
+            data = self.y_cls if parameters['type'] == LayerOutputTypeChoice.Classification else data
+            # if parameters['type'] != LayerOutputTypeChoice.Classification:
+            instructions_data = InstructionsData(instructions=data, parameters=cut['parameters'])
+            # else:
+            #     instructions_data = InstructionsData(instructions=self.y_cls, parameters=cut['parameters'])
+            instructions_data.parameters.update({'put_type': decamelize(parameters['type'])})
             put_parameters[idx] = {f'{idx}_{decamelize(parameters["type"])}': instructions_data}
 
         return put_parameters
@@ -236,6 +312,10 @@ class CreateVersion(object):
                         self.preprocessing.create_tokenizer(text_list=data.instructions, **data.parameters)
                     elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
                         self.preprocessing.create_word2vec(text_list=data.instructions, **data.parameters)
+                else:
+                    self.preprocessing.preprocessing.update(
+                        {data.parameters['put']: {data.parameters['cols_names']: None}}
+                    )
                 # if 'augmentation' in data.parameters.keys() and data.parameters['augmentation']:
                 # self.augmentation[data.parameters['cols_names']] = {'train': [], 'val': [], 'test': []}
                 # {'object': self.preprocessing.create_image_augmentation(data.parameters['augmentation']),
@@ -270,9 +350,9 @@ class CreateVersion(object):
                     else:
                         self.preprocessing.preprocessing[key][col_name].fit(np.array(data.instructions).reshape(-1, 1))
 
-    #                     except Exception:
-    #                         progress.pool(self.progress_name, error='Ошибка обучения скейлера')
-    #                         raise
+                        # except Exception:
+                        #     progress.pool(self.progress_name, error='Ошибка обучения скейлера')
+                        #     raise
 
     def create_table(self, version_data: CreationVersionData):
 
@@ -311,9 +391,11 @@ class CreateVersion(object):
         for inp in self.instructions.inputs.keys():
             for key, value in self.instructions.inputs[inp].items():
                 build_dataframe[key] = value.instructions
+                print('inp', len(value.instructions))
         for out in self.instructions.outputs.keys():
             for key, value in self.instructions.outputs[out].items():
                 build_dataframe[key] = value.instructions
+                print('out', len(value.instructions))
         #         try:
         dataframe = pd.DataFrame(build_dataframe)
         #         except Exception:
@@ -333,9 +415,12 @@ class CreateVersion(object):
             for col_name, data in put_instructions[key].items():
                 data_to_pass = data.instructions[0]
                 if self.tags[key][col_name] in PATH_TYPE_LIST:
-                    data_to_pass = str(self.sources_temp_directory.joinpath(data_to_pass))
-                create = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(data_to_pass, **data.parameters,)
-                                                                                      #**{'preprocess': prep})
+                    data_to_pass = str(self.version_paths_data.sources.joinpath(data_to_pass))  # self.sources_temp_directory
+                create = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(
+                    data_to_pass,
+                    **data.parameters,
+                    **{'preprocess': self.preprocessing.preprocessing[key][col_name]}
+                )
                 array = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(create['instructions'],
                                                                                          **create['parameters'])
 
@@ -343,16 +428,10 @@ class CreateVersion(object):
                 # if not array.shape:
                 #     array = np.expand_dims(array, 0)
                 put_array.append(array)
-                #
-                # classes_names = sorted([os.path.basename(x) for x in put_instructions.get(key).parameters.sources_paths.keys()]) if not os.path.isfile(creation_data.inputs.get(key).parameters.sources_paths[0]) else arr['parameters'].get('classes_names')
-                # if self.dataset_paths_data.basepath.joinpath(list(data.parameters.keys())[0]).is_file():
-                #     classes_names = arr['parameters'].get('classes_names')
                 if create['parameters'].get('classes_names'):
                     classes_names = create['parameters'].get('classes_names')
                 else:
                     classes_names = sorted([os.path.basename(x) for x in version_data.__dict__[put].get(key).parameters.keys()])
-
-                # num_classes = len(classes_names) if classes_names else None
 
                 # Прописываем параметры для колонки
                 col_parameters = {'datatype': DataType.get(len(array.shape), 'DIM'),
@@ -368,16 +447,15 @@ class CreateVersion(object):
                 self.columns[key].update([(col_name, current_column.native())])
 
             put_array = np.concatenate(put_array, axis=0)
-            # classes_colors_list = []
-            # classes_names_list = []
-            # encoding_list = []
-            # task_list = []
             classes_colors_list, classes_names_list, encoding_list, task_list = [], [], [], []
             for value in self.columns[key].values():
-                classes_colors_list.append(*value['classes_colors']) if value.get('classes_colors') else None  # возможны баги
-                for c_name in value.get('classes_names'):
-                    classes_names_list.append(c_name)
-                encoding_list.append(value.get('encoding'))
+                if value.get('classes_colors'):
+                    for c_color in value.get('classes_colors'):
+                        classes_colors_list.append(c_color)
+                if value.get('classes_names'):
+                    for c_name in value.get('classes_names'):
+                        classes_names_list.append(c_name)
+                encoding_list.append(value.get('encoding') if value.get('encoding') else 'none')
                 task_list.append(value.get('task'))
             put_parameters = {'datatype': DataType.get(len(put_array.shape), 'DIM'),
                               'dtype': str(put_array.dtype),
@@ -385,6 +463,7 @@ class CreateVersion(object):
                               'name': version_data.__dict__[put].get(key).name,
                               'task': task_list[0] if len(task_list) == 1 else 'Dataframe',
                               'classes_names': classes_names_list if classes_names_list else None,
+                              'classes_colors': classes_colors_list if classes_colors_list else None,
                               'num_classes': len(classes_names_list) if classes_names_list else None,
                               'encoding': 'none' if len(encoding_list) > 1 or not encoding_list else encoding_list[0]}
 
@@ -445,7 +524,7 @@ class CreateVersion(object):
                             parameters_to_pass.update([('preprocess', prep)])
 
                         if self.tags[key][col_name] in PATH_TYPE_LIST:
-                            tmp_data.append(os.path.join(self.sources_temp_directory,
+                            tmp_data.append(os.path.join(self.version_paths_data.sources, # .self.sources_temp_directory
                                                          self.dataframe[split].loc[i, col_name]))
                         elif 'depth' in data.parameters.keys() and data.parameters['depth']:
                             if 'trend' in data.parameters.keys() and data.parameters['trend']:
@@ -467,7 +546,7 @@ class CreateVersion(object):
                             #                                 tmp_data.append(self.augmentation[split]['1_image'][i])
                             #                             else:
                             tmp_data.append(self.dataframe[split].loc[i, col_name])
-                            tmp_im = Image.open(os.path.join(self.dataset_paths_data.basepath,
+                            tmp_im = Image.open(os.path.join(self.sources_temp_directory,
                                                              self.dataframe[split].iloc[i, 0]))
                             parameters_to_pass.update([('orig_x', tmp_im.width),
                                                        ('orig_y', tmp_im.height)])

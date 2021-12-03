@@ -37,6 +37,10 @@ class ColumnProcessingSegmentationData(types.ParametersSegmentationData):
     pass
 
 
+class ColumnProcessingTextSegmentationData(types.ParametersTextSegmentationData):
+    pass
+
+
 class ColumnProcessingTimeseriesData(types.ParametersTimeseriesData):
     pass
 
