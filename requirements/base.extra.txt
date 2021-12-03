@@ -9,7 +9,7 @@ google-api-python-client==1.12.8
 tensorflow-hub==0.12.0
 gensim==3.6.0
 psutil==5.4.8
-numpy==1.19.5
+numba==0.54.1
 requests==2.23.0
 ipython==5.5.0
 matplotlib==3.2.2
