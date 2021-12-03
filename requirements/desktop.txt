@@ -1,4 +1,4 @@
--r dev.txt
+-r base.extra.txt
 -f https://download.pytorch.org/whl/cu113/torch_stable.html
 
 torch==1.10.0+cu113

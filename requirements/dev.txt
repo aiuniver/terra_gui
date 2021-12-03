@@ -1,23 +1,6 @@
--r base.txt
+-r base.extra.txt
 -f https://download.pytorch.org/whl/cu111/torch_stable.html
 
-pandas==1.1.5
-Pillow==7.1.2
-tensorflow==2.7.0
-joblib==1.1.0
-librosa==0.8.1
 torch==1.10.0+cu111
 torchaudio==0.10.0+cu111
 torchvision==0.11.1+cu111
-google-api-python-client==1.12.8
-tensorflow-hub==0.12.0
-gensim==3.6.0
-psutil==5.4.8
-numpy==1.19.5
-requests==2.23.0
-ipython==5.5.0
-matplotlib==3.2.2
-scipy==1.4.1
-tzlocal==1.5.1
-grpcio==1.42.0
-dill==0.3.4
