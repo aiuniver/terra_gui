@@ -13,7 +13,7 @@ from PIL import Image
 from terra_ai.data.training.extra import ArchitectureChoice
 from terra_ai.utils import decamelize
 from terra_ai.datasets.preprocessing import CreatePreprocessing
-from terra_ai.datasets.arrays_create import CreateArray
+from terra_ai.datasets import arrays_create
 from terra_ai.datasets.utils import PATH_TYPE_LIST
 from terra_ai.data.datasets.dataset import DatasetData, DatasetPathsData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, DatasetGroupChoice
@@ -63,10 +63,11 @@ class PrepareDataset(object):
                         sample = os.path.join(self.paths.basepath, self.dataframe[split_name].loc[idx, col_name])
                     else:
                         sample = self.dataframe[split_name].loc[idx, col_name]
-                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
+                    array = getattr(arrays_create.CreateArray(), f'create_{data["put_type"]}')(sample, **{
                         'preprocess': self.preprocessing.preprocessing[inp_id][col_name]}, **data)
-                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
-                                                                                     **array['parameters'])
+                    array = getattr(arrays_create.CreateArray(), f'preprocess_{data["put_type"]}')(
+                        array['instructions'], **array['parameters']
+                    )
                     tmp.append(array)
                 inputs[str(inp_id)] = np.concatenate(tmp, axis=0)
 
@@ -77,10 +78,11 @@ class PrepareDataset(object):
                         sample = os.path.join(self.paths.basepath, self.dataframe[split_name].loc[idx, col_name])
                     else:
                         sample = self.dataframe[split_name].loc[idx, col_name]
-                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
+                    array = getattr(arrays_create.CreateArray(), f'create_{data["put_type"]}')(sample, **{
                         'preprocess': self.preprocessing.preprocessing[out_id][col_name]}, **data)
-                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
-                                                                                     **array['parameters'])
+                    array = getattr(arrays_create.CreateArray(), f'preprocess_{data["put_type"]}')(
+                        array['instructions'], **array['parameters']
+                    )
                     tmp.append(array)
                 outputs[str(out_id)] = np.concatenate(tmp, axis=0)
 
@@ -101,10 +103,11 @@ class PrepareDataset(object):
                     if data['augmentation'] and split_name == 'train':
                         dict_to_pass.update([('augm_data', self.dataframe[split_name].iloc[idx, 1])])
                     sample = os.path.join(self.paths.basepath, self.dataframe[split_name].loc[idx, col_name])
-                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
+                    array = getattr(arrays_create.CreateArray(), f'create_{data["put_type"]}')(sample, **{
                         'preprocess': self.preprocessing.preprocessing[inp_id][col_name]}, **dict_to_pass)
-                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
-                                                                                     **array['parameters'])
+                    array = getattr(arrays_create.CreateArray(), f'preprocess_{data["put_type"]}')(
+                        array['instructions'], **array['parameters']
+                    )
                     if isinstance(array, tuple):
                         tmp.append(array[0])
                         augm_data += array[1]
@@ -122,10 +125,11 @@ class PrepareDataset(object):
                         data_to_pass = augm_data
                     else:
                         data_to_pass = self.dataframe[split_name].loc[idx, col_name]
-                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(data_to_pass, **{
+                    array = getattr(arrays_create.CreateArray(), f'create_{data["put_type"]}')(data_to_pass, **{
                         'preprocess': self.preprocessing.preprocessing[out_id][col_name]}, **data)
-                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
-                                                                                     **array['parameters'])
+                    array = getattr(arrays_create.CreateArray(), f'preprocess_{data["put_type"]}')(
+                        array['instructions'], **array['parameters']
+                    )
                     for n in range(3):
                         outputs[str(out_id + n)] = np.array(array[n])
                         service[str(out_id + n)] = np.array(array[n+3])
