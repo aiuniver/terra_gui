@@ -35,6 +35,11 @@ class ExampleChoiceTypeChoice(str, Enum):
     random = "random"
 
 
+class DataTypeChoice(str, Enum):
+    train = "train"
+    val = "val"
+
+
 class BalanceSortedChoice(str, Enum):
     descending = "descending"
     ascending = "ascending"
