@@ -55,20 +55,6 @@ class BaseSegmentationCallback:
         except Exception as e:
             print_error(BaseSegmentationCallback().name, method_name, e)
 
-    @staticmethod
-    def get_y_pred(y_true, y_pred, options):
-        method_name = 'get_y_pred'
-        try:
-            reformat_pred = {}
-            inverse_pred = {}
-            for idx, out in enumerate(y_true.get('val').keys()):
-                if len(y_true.get('val').keys()) == 1:
-                    reformat_pred[out] = y_pred
-                else:
-                    reformat_pred[out] = y_pred[idx]
-            return reformat_pred, inverse_pred
-        except Exception as e:
-            print_error(BaseSegmentationCallback().name, method_name, e)
 
     @staticmethod
     def get_inverse_array(array: dict, options, type="output"):

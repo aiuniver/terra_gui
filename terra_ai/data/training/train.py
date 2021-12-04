@@ -62,7 +62,7 @@ class MetricGraphsList(UniqueListMixin):
 class IntermediateResultData(BaseMixinData):
     show_results: bool = False
     example_choice_type: ExampleChoiceTypeChoice = ExampleChoiceTypeChoice.seed
-    data_type: Optional[DataTypeChoice] = DataTypeChoice.val
+    data_type: Optional[DataTypeChoice] = DataTypeChoice.train
     main_output: Optional[PositiveInt]
     box_channel: conint(ge=0, le=2) = 1
     num_examples: conint(ge=1, le=10) = 10

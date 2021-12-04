@@ -62,31 +62,31 @@ class DataframeRegressionCallback:
         except Exception as e:
             print_error(DataframeRegressionCallback().name, method_name, e)
 
-    @staticmethod
-    def get_y_pred(y_true: dict, y_pred, options):
-        method_name = 'get_y_pred'
-        try:
-            reformat_pred = {}
-            inverse_y_pred = {}
-            for idx, out in enumerate(y_true.get('val').keys()):
-                if len(y_true.get('val').keys()) == 1:
-                    reformat_pred[out] = y_pred
-                else:
-                    reformat_pred[out] = y_pred[idx]
-                preprocess_dict = options.preprocessing.preprocessing.get(int(out))
-                inverse_y = np.zeros_like(reformat_pred.get(out)[:, 0:1])
-                for i, column in enumerate(preprocess_dict.keys()):
-                    if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
-                        _options = {int(out): {column: reformat_pred.get(out)[:, i:i + 1]}}
-                        inverse_col = options.preprocessing.inverse_data(_options).get(int(out)).get(column)
-                    else:
-                        inverse_col = reformat_pred.get(out)[:, i:i + 1]
-                    inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
-                inverse_y_pred[out] = inverse_y[:, 1:]
-
-            return reformat_pred, inverse_y_pred
-        except Exception as e:
-            print_error(DataframeRegressionCallback().name, method_name, e)
+    # @staticmethod
+    # def get_y_pred(y_true: dict, y_pred, options):
+    #     method_name = 'get_y_pred'
+    #     try:
+    #         reformat_pred = {}
+    #         inverse_y_pred = {}
+    #         for idx, out in enumerate(y_true.get('val').keys()):
+    #             if len(y_true.get('val').keys()) == 1:
+    #                 reformat_pred[out] = y_pred
+    #             else:
+    #                 reformat_pred[out] = y_pred[idx]
+    #             preprocess_dict = options.preprocessing.preprocessing.get(int(out))
+    #             inverse_y = np.zeros_like(reformat_pred.get(out)[:, 0:1])
+    #             for i, column in enumerate(preprocess_dict.keys()):
+    #                 if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
+    #                     _options = {int(out): {column: reformat_pred.get(out)[:, i:i + 1]}}
+    #                     inverse_col = options.preprocessing.inverse_data(_options).get(int(out)).get(column)
+    #                 else:
+    #                     inverse_col = reformat_pred.get(out)[:, i:i + 1]
+    #                 inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
+    #             inverse_y_pred[out] = inverse_y[:, 1:]
+    #
+    #         return reformat_pred, inverse_y_pred
+    #     except Exception as e:
+    #         print_error(DataframeRegressionCallback().name, method_name, e)
 
     @staticmethod
     def get_inverse_array(array: dict, options):
