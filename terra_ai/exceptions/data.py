@@ -11,6 +11,7 @@ from terra_ai.settings import TRANSLATIONS_DIR, LANGUAGE
 
 LANGUAGE = "en_US" if LANGUAGE == "eng" else LANGUAGE
 
+
 class JsonLoader(BaseLoader):
     def __init__(self, directory: str):
         if not os.path.exists(directory):
