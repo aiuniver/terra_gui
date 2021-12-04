@@ -152,16 +152,16 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str, preset_path: str,
-                                   save_id: int = None, return_mode='deploy'):
+                                   save_id: int = None, return_mode='deploy', data_type='val'):
         method_name = 'postprocess_initial_source'
         try:
             column_idx = []
             for inp in options.data.inputs.keys():
-                for column_name in options.dataframe.get('val').columns:
+                for column_name in options.dataframe.get(data_type).columns:
                     if column_name.split('_')[0] == f"{inp}":
-                        column_idx.append(options.dataframe.get('val').columns.tolist().index(column_name))
+                        column_idx.append(options.dataframe.get(data_type).columns.tolist().index(column_name))
             initial_file_path = os.path.join(
-                dataset_path, options.dataframe.get('val').iat[example_id, column_idx[0]]
+                dataset_path, options.dataframe.get(data_type).iat[example_id, column_idx[0]]
             )
             if not save_id:
                 return str(os.path.abspath(initial_file_path))
@@ -385,6 +385,7 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
         try:
             return_data = {}
             if interactive_config.intermediate_result.show_results:
+                data_type = interactive_config.intermediate_result.data_type.name
                 for idx in range(interactive_config.intermediate_result.num_examples):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
@@ -402,15 +403,16 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                             example_id=example_idx[idx],
                             dataset_path=dataset_path,
                             preset_path=preset_path,
-                            return_mode='callback'
+                            return_mode='callback',
+                            data_type=data_type
                         )
                         return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
                             'type': 'image', 'data': data,
                         }
                     for out in options.data.outputs.keys():
                         data = ImageSegmentationCallback().postprocess_segmentation(
-                            predict_array=y_pred.get('val').get(f'{out}')[example_idx[idx]],
-                            true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
+                            predict_array=y_pred.get(data_type).get(f'{out}')[example_idx[idx]],
+                            true_array=y_true.get(data_type).get(f'{out}')[example_idx[idx]],
                             options=options.data.outputs.get(out),
                             colors=class_colors,
                             output_id=out,
@@ -544,18 +546,18 @@ class TextSegmentationCallback(BaseSegmentationCallback):
         # print(f'Callback {self.name} is called')
 
     @staticmethod
-    def postprocess_initial_source(options, example_id: int, return_mode='deploy'):
+    def postprocess_initial_source(options, example_id: int, return_mode='deploy', data_type='val'):
         method_name = 'postprocess_initial_source'
         try:
             column_idx = []
             for inp in options.data.inputs.keys():
-                for column_name in options.dataframe.get('val').columns:
+                for column_name in options.dataframe.get(data_type).columns:
                     if column_name.split('_')[0] == f"{inp}":
-                        column_idx.append(options.dataframe.get('val').columns.tolist().index(column_name))
+                        column_idx.append(options.dataframe.get(data_type).columns.tolist().index(column_name))
             data = []
             source = ""
             for column in column_idx:
-                source = options.dataframe.get('val').iat[example_id, column]
+                source = options.dataframe.get(data_type).iat[example_id, column]
                 if return_mode == 'deploy':
                     break
                 if return_mode == 'callback':
@@ -798,6 +800,7 @@ class TextSegmentationCallback(BaseSegmentationCallback):
         try:
             return_data = {}
             if interactive_config.intermediate_result.show_results:
+                data_type = interactive_config.intermediate_result.data_type.name
                 for idx in range(interactive_config.intermediate_result.num_examples):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
@@ -815,7 +818,8 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                                 example_id=example_idx[idx],
                                 dataset_path=dataset_path,
                                 preset_path=preset_path,
-                                return_mode='callback'
+                                return_mode='callback',
+                                data_type=data_type
                             )
                             return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
                                 'type': 'text', 'data': data,
@@ -823,10 +827,10 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                     for out in options.data.outputs.keys():
                         output_col = list(options.instructions.get(out).keys())[0]
                         data = TextSegmentationCallback().postprocess_text_segmentation(
-                            pred_array=y_pred.get('val').get(f'{out}')[example_idx[idx]],
-                            true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
+                            pred_array=y_pred.get(data_type).get(f'{out}')[example_idx[idx]],
+                            true_array=y_true.get(data_type).get(f'{out}')[example_idx[idx]],
                             options=options.data.outputs.get(out),
-                            dataframe=options.dataframe.get('val'),
+                            dataframe=options.dataframe.get(data_type),
                             example_id=example_idx[idx],
                             dataset_params=options.instructions.get(out).get(output_col),
                             return_mode='callback',

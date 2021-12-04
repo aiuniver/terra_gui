@@ -383,11 +383,7 @@ class TrainingDetailsData(BaseMixinData):
             progress_table = []
             statistic_data = {}
             data_balance = {}
-            intermediate_result = {
-                "main_output": self.model.outputs[0].id
-                if len(self.model.outputs)
-                else None
-            }
+            intermediate_result = {"main_output": self.model.outputs[0].id if len(self.model.outputs) else None}
 
             _index_m = 0
             _index_l = 0
@@ -412,7 +408,7 @@ class TrainingDetailsData(BaseMixinData):
                             "output_idx": layer.id,
                             "show": MetricGraphShowChoice.classes,
                             "show_metric": metric,
-                            # "data_type": DataTypeChoice.train
+                            "data_type": DataTypeChoice.train
                         }
                     )
                     _index_m += 1
@@ -422,7 +418,7 @@ class TrainingDetailsData(BaseMixinData):
                             "output_idx": layer.id,
                             "show": MetricGraphShowChoice.classes,
                             "show_metric": metric,
-                            # "data_type": DataTypeChoice.val
+                            "data_type": DataTypeChoice.val
                         }
                     )
                 _index_l += 1
@@ -439,7 +435,7 @@ class TrainingDetailsData(BaseMixinData):
                         "id": _index_l,
                         "output_idx": layer.id,
                         "show": LossGraphShowChoice.classes,
-                        # "data_type": DataTypeChoice.train
+                        "data_type": DataTypeChoice.train
                     }
                 )
                 _index_l += 1
@@ -448,7 +444,7 @@ class TrainingDetailsData(BaseMixinData):
                         "id": _index_l,
                         "output_idx": layer.id,
                         "show": LossGraphShowChoice.classes,
-                        # "data_type": DataTypeChoice.val
+                        "data_type": DataTypeChoice.val
                     }
                 )
                 progress_table.append(

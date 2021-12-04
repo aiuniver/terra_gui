@@ -49,20 +49,21 @@ class BaseClassificationCallback:
         #     for out in options.data.outputs.keys():
         return inverse_array
 
-    @staticmethod
-    def get_y_pred(y_true, y_pred, options):
-        method_name = 'get_y_pred'
-        try:
-            reformat_pred = {}
-            inverse_pred = {}
-            for idx, out in enumerate(y_true.get('val').keys()):
-                if len(y_true.get('val').keys()) == 1:
-                    reformat_pred[out] = y_pred
-                else:
-                    reformat_pred[out] = y_pred[idx]
-            return reformat_pred, inverse_pred
-        except Exception as e:
-            print_error(BaseClassificationCallback().name, method_name, e)
+    # @staticmethod
+    # def get_y_pred(y_true, y_pred, options):
+    #     method_name = 'get_y_pred'
+    #     try:
+    #         reformat_pred = {'train': {}, 'val': {}}
+    #         inverse_pred = {'train': {}, 'val': {}}
+    #         for data_type in ['train', 'val']:
+    #             for idx, out in enumerate(y_true.get('val').keys()):
+    #                 if len(y_true.get('val').keys()) == 1:
+    #                     reformat_pred[data_type][out] = y_pred
+    #                 else:
+    #                     reformat_pred[data_type][out] = y_pred[idx]
+    #         return reformat_pred, inverse_pred
+    #     except Exception as e:
+    #         print_error(BaseClassificationCallback().name, method_name, e)
 
     @staticmethod
     def dataset_balance(options, y_true, preset_path: str, class_colors) -> dict:
@@ -345,27 +346,28 @@ class ImageClassificationCallback(BaseClassificationCallback):
     def get_x_array(options):
         method_name = 'get_x_array'
         try:
-            x_val = None
-            inverse_x_val = None
+            x_val = {}
+            inverse_x_val = {}
             if options.data.group == DatasetGroupChoice.keras:
-                x_val = options.X.get("val")
+                for data_type in ['train', 'val']:
+                    x_val[data_type] = options.X.get(data_type)
             return x_val, inverse_x_val
         except Exception as e:
             print_error(ImageClassificationCallback().name, method_name, e)
 
     @staticmethod
-    def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str,
-                                   preset_path: str, save_id: int = None, x_array=None, return_mode='deploy'):
+    def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str, preset_path: str,
+                                   data_type: str = 'val', save_id: int = None, x_array=None, return_mode='deploy'):
         method_name = 'postprocess_initial_source'
         try:
             column_idx = []
             if options.data.group != DatasetGroupChoice.keras:
                 for inp in options.data.inputs.keys():
-                    for column_name in options.dataframe.get('val').columns:
+                    for column_name in options.dataframe.get(data_type).columns:
                         if column_name.split('_')[0] == f"{inp}":
-                            column_idx.append(options.dataframe.get('val').columns.tolist().index(column_name))
+                            column_idx.append(options.dataframe.get(data_type).columns.tolist().index(column_name))
                 initial_file_path = os.path.join(
-                    dataset_path, options.dataframe.get('val').iat[example_id, column_idx[0]]
+                    dataset_path, options.dataframe.get(data_type).iat[example_id, column_idx[0]]
                 )
                 if not save_id:
                     return str(os.path.abspath(initial_file_path))
@@ -468,6 +470,8 @@ class ImageClassificationCallback(BaseClassificationCallback):
             print(method_name)
             return_data = {}
             if interactive_config.intermediate_result.show_results:
+                data_type = interactive_config.intermediate_result.data_type.name
+                # print('\ndata_type', data_type, '\n')
                 for idx in range(interactive_config.intermediate_result.num_examples):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
@@ -484,8 +488,9 @@ class ImageClassificationCallback(BaseClassificationCallback):
                             example_id=example_idx[idx],
                             dataset_path=dataset_path,
                             preset_path=preset_path,
-                            x_array=x_val.get(f"{inp}") if x_val else None,
-                            return_mode='callback'
+                            x_array=x_val.get(data_type).get(f"{inp}") if x_val else None,
+                            return_mode='callback',
+                            data_type=data_type
                         )
                         return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
                             'type': 'image',
@@ -494,8 +499,8 @@ class ImageClassificationCallback(BaseClassificationCallback):
 
                     for out in options.data.outputs.keys():
                         data = ImageClassificationCallback.postprocess_classification(
-                            predict_array=y_pred.get('val').get(f'{out}')[example_idx[idx]],
-                            true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
+                            predict_array=y_pred.get(data_type).get(f'{out}')[example_idx[idx]],
+                            true_array=y_true.get(data_type).get(f'{out}')[example_idx[idx]],
                             options=options.data.outputs.get(out),
                             show_stat=interactive_config.intermediate_result.show_statistic,
                             return_mode='callback'
@@ -530,18 +535,18 @@ class TextClassificationCallback(BaseClassificationCallback):
             print_error(TextClassificationCallback().name, method_name, e)
 
     @staticmethod
-    def postprocess_initial_source(options, example_id: int, return_mode='deploy'):
+    def postprocess_initial_source(options, example_id: int, return_mode='deploy', data_type='val'):
         method_name = 'postprocess_initial_source'
         try:
             column_idx = []
             for inp in options.data.inputs.keys():
-                for column_name in options.dataframe.get('val').columns:
+                for column_name in options.dataframe.get(data_type).columns:
                     if column_name.split('_')[0] == f"{inp}":
-                        column_idx.append(options.dataframe.get('val').columns.tolist().index(column_name))
+                        column_idx.append(options.dataframe.get(data_type).columns.tolist().index(column_name))
             data = []
             source = ""
             for column in column_idx:
-                source = options.dataframe.get('val').iat[example_id, column]
+                source = options.dataframe.get(data_type).iat[example_id, column]
                 if return_mode == 'deploy':
                     break
                 if return_mode == 'callback':
@@ -612,6 +617,7 @@ class TextClassificationCallback(BaseClassificationCallback):
         try:
             return_data = {}
             if interactive_config.intermediate_result.show_results:
+                data_type = interactive_config.intermediate_result.data_type.name
                 for idx in range(interactive_config.intermediate_result.num_examples):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
@@ -624,7 +630,8 @@ class TextClassificationCallback(BaseClassificationCallback):
                         data = TextClassificationCallback.postprocess_initial_source(
                             options=options,
                             example_id=example_idx[idx],
-                            return_mode='callback'
+                            return_mode='callback',
+                            data_type=data_type
                         )
                         return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
                             'type': 'text',
@@ -632,8 +639,8 @@ class TextClassificationCallback(BaseClassificationCallback):
                         }
                     for out in options.data.outputs.keys():
                         data = ImageClassificationCallback.postprocess_classification(
-                            predict_array=y_pred.get('val').get(f'{out}')[example_idx[idx]],
-                            true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
+                            predict_array=y_pred.get(data_type).get(f'{out}')[example_idx[idx]],
+                            true_array=y_true.get(data_type).get(f'{out}')[example_idx[idx]],
                             options=options.data.outputs.get(out),
                             show_stat=interactive_config.intermediate_result.show_statistic,
                             return_mode='callback'
@@ -676,13 +683,13 @@ class DataframeClassificationCallback(BaseClassificationCallback):
             print_error(DataframeClassificationCallback().name, method_name, e)
 
     @staticmethod
-    def postprocess_initial_source(options, input_id: int, example_id: int, return_mode='deploy'):
+    def postprocess_initial_source(options, input_id: int, example_id: int, return_mode='deploy', data_type='val'):
         method_name = 'postprocess_initial_source'
         try:
             data = []
             source = []
             for col_name in options.data.columns.get(input_id).keys():
-                value = options.dataframe.get('val')[col_name].to_list()[example_id]
+                value = options.dataframe.get(data_type)[col_name].to_list()[example_id]
                 if return_mode == 'deploy':
                     source.append(value)
                 if return_mode == 'callback':
@@ -753,6 +760,7 @@ class DataframeClassificationCallback(BaseClassificationCallback):
         try:
             return_data = {}
             if interactive_config.intermediate_result.show_results:
+                data_type = interactive_config.intermediate_result.data_type.name
                 for idx in range(interactive_config.intermediate_result.num_examples):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
@@ -766,7 +774,8 @@ class DataframeClassificationCallback(BaseClassificationCallback):
                             options=options,
                             input_id=inp,
                             example_id=example_idx[idx],
-                            return_mode='callback'
+                            return_mode='callback',
+                            data_type=data_type
                         )
                         return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
                             'type': 'str',
@@ -775,8 +784,8 @@ class DataframeClassificationCallback(BaseClassificationCallback):
 
                     for out in options.data.outputs.keys():
                         data = ImageClassificationCallback.postprocess_classification(
-                            predict_array=y_pred.get('val').get(f'{out}')[example_idx[idx]],
-                            true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
+                            predict_array=y_pred.get(data_type).get(f'{out}')[example_idx[idx]],
+                            true_array=y_true.get(data_type).get(f'{out}')[example_idx[idx]],
                             options=options.data.outputs.get(out),
                             show_stat=interactive_config.intermediate_result.show_statistic,
                             return_mode='callback'
@@ -812,22 +821,21 @@ class AudioClassificationCallback(BaseClassificationCallback):
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str,
-                                   preset_path: str, save_id: int = None, return_mode='deploy'):
+                                   preset_path: str, save_id: int = None, return_mode='deploy', data_type='val'):
         method_name = 'postprocess_initial_source'
         try:
             column_idx = []
             for inp in options.data.inputs.keys():
-                for column_name in options.dataframe.get('val').columns:
+                for column_name in options.dataframe.get(data_type).columns:
                     if column_name.split('_')[0] == f"{inp}":
-                        column_idx.append(options.dataframe.get('val').columns.tolist().index(column_name))
+                        column_idx.append(options.dataframe.get(data_type).columns.tolist().index(column_name))
             initial_file_path = os.path.join(
-                dataset_path, options.dataframe.get('val').iat[example_id, column_idx[0]]
+                dataset_path, options.dataframe.get(data_type).iat[example_id, column_idx[0]]
             )
             if not save_id:
                 return str(os.path.abspath(initial_file_path))
 
             if return_mode == 'callback':
-                data = []
                 source = os.path.join(preset_path, f"initial_data_audio_{save_id}_input_{input_id}.webm")
                 AudioSegment.from_file(initial_file_path).export(source, format="webm")
                 data = [
@@ -904,6 +912,7 @@ class AudioClassificationCallback(BaseClassificationCallback):
         try:
             return_data = {}
             if interactive_config.intermediate_result.show_results:
+                data_type = interactive_config.intermediate_result.data_type.name
                 for idx in range(interactive_config.intermediate_result.num_examples):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
@@ -920,7 +929,8 @@ class AudioClassificationCallback(BaseClassificationCallback):
                             example_id=example_idx[idx],
                             dataset_path=dataset_path,
                             preset_path=preset_path,
-                            return_mode='callback'
+                            return_mode='callback',
+                            data_type=data_type
                         )
                         return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
                             'type': 'audio',
@@ -929,8 +939,8 @@ class AudioClassificationCallback(BaseClassificationCallback):
 
                     for out in options.data.outputs.keys():
                         data = ImageClassificationCallback.postprocess_classification(
-                            predict_array=y_pred.get('val').get(f'{out}')[example_idx[idx]],
-                            true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
+                            predict_array=y_pred.get(data_type).get(f'{out}')[example_idx[idx]],
+                            true_array=y_true.get(data_type).get(f'{out}')[example_idx[idx]],
                             options=options.data.outputs.get(out),
                             show_stat=interactive_config.intermediate_result.show_statistic,
                             return_mode='callback'
@@ -966,16 +976,16 @@ class VideoClassificationCallback(BaseClassificationCallback):
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str, preset_path: str,
-                                   save_id: int = None, return_mode='deploy'):
+                                   save_id: int = None, return_mode='deploy', data_type='val'):
         method_name = 'postprocess_initial_source'
         try:
             column_idx = []
             for inp in options.data.inputs.keys():
-                for column_name in options.dataframe.get('val').columns:
+                for column_name in options.dataframe.get(data_type).columns:
                     if column_name.split('_')[0] == f"{inp}":
-                        column_idx.append(options.dataframe.get('val').columns.tolist().index(column_name))
+                        column_idx.append(options.dataframe.get(data_type).columns.tolist().index(column_name))
             initial_file_path = os.path.join(
-                dataset_path, options.dataframe.get('val').iat[example_id, column_idx[0]]
+                dataset_path, options.dataframe.get(data_type).iat[example_id, column_idx[0]]
             )
             if not save_id:
                 return str(os.path.abspath(initial_file_path))
@@ -1059,6 +1069,7 @@ class VideoClassificationCallback(BaseClassificationCallback):
         try:
             return_data = {}
             if interactive_config.intermediate_result.show_results:
+                data_type = interactive_config.intermediate_result.data_type.name
                 for idx in range(interactive_config.intermediate_result.num_examples):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
@@ -1075,7 +1086,8 @@ class VideoClassificationCallback(BaseClassificationCallback):
                             example_id=example_idx[idx],
                             dataset_path=dataset_path,
                             preset_path=preset_path,
-                            return_mode='callback'
+                            return_mode='callback',
+                            data_type=data_type
                         )
                         return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
                             'type': 'video',
@@ -1083,8 +1095,8 @@ class VideoClassificationCallback(BaseClassificationCallback):
                         }
                     for out in options.data.outputs.keys():
                         data = ImageClassificationCallback.postprocess_classification(
-                            predict_array=y_pred.get('val').get(f'{out}')[example_idx[idx]],
-                            true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
+                            predict_array=y_pred.get(data_type).get(f'{out}')[example_idx[idx]],
+                            true_array=y_true.get(data_type).get(f'{out}')[example_idx[idx]],
                             options=options.data.outputs.get(out),
                             show_stat=interactive_config.intermediate_result.show_statistic,
                             return_mode='callback'
@@ -1140,14 +1152,14 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
             print_error(TimeseriesTrendCallback().name, method_name, e)
 
     @staticmethod
-    def postprocess_initial_source(options, input_id: int, example_id: int, inverse_x_array=None):
+    def postprocess_initial_source(options, input_id: int, example_id: int, inverse_x_array=None, data_type='val'):
         method_name = 'postprocess_initial_source'
         try:
             column_idx = []
             for inp in options.data.inputs.keys():
-                for column_name in options.dataframe.get('val').columns:
+                for column_name in options.dataframe.get(data_type).columns:
                     if column_name.split('_')[0] == f"{inp}":
-                        column_idx.append(options.dataframe.get('val').columns.tolist().index(column_name))
+                        column_idx.append(options.dataframe.get(data_type).columns.tolist().index(column_name))
             graphics_data = []
             names = ""
             multi = False
@@ -1237,6 +1249,7 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
         try:
             return_data = {}
             if interactive_config.intermediate_result.show_results:
+                data_type = interactive_config.intermediate_result.data_type.name
                 for idx in range(interactive_config.intermediate_result.num_examples):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
@@ -1251,6 +1264,7 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
                             input_id=inp,
                             example_id=example_idx[idx],
                             inverse_x_array=inverse_x_val,
+                            data_type=data_type
                         )
                         return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
                             'type': 'graphic',
@@ -1258,8 +1272,8 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
                         }
                     for out in options.data.outputs.keys():
                         data = ImageClassificationCallback.postprocess_classification(
-                            predict_array=y_pred.get('val').get(f'{out}')[example_idx[idx]],
-                            true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
+                            predict_array=y_pred.get(data_type).get(f'{out}')[example_idx[idx]],
+                            true_array=y_true.get(data_type).get(f'{out}')[example_idx[idx]],
                             options=options.data.outputs.get(out),
                             show_stat=interactive_config.intermediate_result.show_statistic,
                             return_mode='callback'

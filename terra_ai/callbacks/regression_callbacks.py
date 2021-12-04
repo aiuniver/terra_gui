@@ -111,13 +111,13 @@ class DataframeRegressionCallback:
             print_error(DataframeRegressionCallback().name, method_name, e)
 
     @staticmethod
-    def postprocess_initial_source(options, input_id: int, example_id: int, return_mode='deploy'):
+    def postprocess_initial_source(options, input_id: int, example_id: int, return_mode='deploy', data_type='val'):
         method_name = 'postprocess_initial_source'
         try:
             data = []
             source = []
             for col_name in options.data.columns.get(input_id).keys():
-                value = options.dataframe.get('val')[col_name].to_list()[example_id]
+                value = options.dataframe.get(data_type)[col_name].to_list()[example_id]
                 if return_mode == 'deploy':
                     source.append(value)
                 if return_mode == 'callback':
@@ -226,6 +226,7 @@ class DataframeRegressionCallback:
         try:
             return_data = {}
             if interactive_config.intermediate_result.show_results:
+                data_type = interactive_config.intermediate_result.data_type.name
                 for idx in range(interactive_config.intermediate_result.num_examples):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
@@ -240,7 +241,8 @@ class DataframeRegressionCallback:
                             options=options,
                             input_id=inp,
                             example_id=example_idx[idx],
-                            return_mode='callback'
+                            return_mode='callback',
+                            data_type=data_type
                         )
                         return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
                             'type': 'str', 'data': data,
@@ -249,8 +251,8 @@ class DataframeRegressionCallback:
                     for out in options.data.outputs.keys():
                         data = DataframeRegressionCallback().postprocess_regression(
                             column_names=list(options.data.columns.get(out).keys()),
-                            inverse_y_true=inverse_y_true.get('val').get(f"{out}")[example_idx[idx]],
-                            inverse_y_pred=inverse_y_pred.get('val').get(f"{out}")[example_idx[idx]],
+                            inverse_y_true=inverse_y_true.get(data_type).get(f"{out}")[example_idx[idx]],
+                            inverse_y_pred=inverse_y_pred.get(data_type).get(f"{out}")[example_idx[idx]],
                             show_stat=interactive_config.intermediate_result.show_statistic,
                             return_mode='callback'
                         )

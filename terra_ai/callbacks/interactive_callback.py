@@ -129,11 +129,12 @@ class InteractiveCallback:
                     # t = time.time()
                     out = f"{self.training_details.interactive.intermediate_result.main_output}"
                     count = self.training_details.interactive.intermediate_result.num_examples
-                    count = count if count > len(self.y_true.get('val').get(out)) \
-                        else len(self.y_true.get('val').get(out))
+                    data_type = self.training_details.interactive.intermediate_result.data_type.name
+                    count = count if count > len(self.y_true.get(data_type).get(out)) \
+                        else len(self.y_true.get(data_type).get(out))
                     self.example_idx = self.callback.prepare_example_idx_to_show(
-                        array=self.y_pred.get("val").get(out),
-                        true_array=self.y_true.get("val").get(out),
+                        array=self.y_pred.get(data_type).get(out),
+                        true_array=self.y_true.get(data_type).get(out),
                         options=self.options,
                         output=int(out),
                         count=count,
@@ -579,6 +580,7 @@ class InteractiveCallback:
             if self.options.data.architecture in BASIC_ARCHITECTURE:
                 if not self.training_details.interactive.loss_graphs or not self.log_history.get("epochs"):
                     return data_return
+                # print('self.training_details.interactive.loss_graphs', self.training_details.interactive.loss_graphs)
                 for loss_graph_config in self.training_details.interactive.loss_graphs:
                     loss_name = self.training_details.base.architecture.parameters.outputs[0].loss.name
                     if self.options.data.architecture in YOLO_ARCHITECTURE:
@@ -636,7 +638,7 @@ class InteractiveCallback:
                             fill_graph_front_structure(
                                 _id=loss_graph_config.id,
                                 _type='graphic',
-                                graph_name=f"Выходной слой «{loss_graph_config.output_idx}» - График ошибки обучения",
+                                graph_name=f"Выход «{loss_graph_config.output_idx}» - График ошибки обучения",
                                 short_name=f"{loss_graph_config.output_idx} - График ошибки обучения",
                                 x_label="Эпоха",
                                 y_label="Значение",
@@ -647,12 +649,14 @@ class InteractiveCallback:
                         )
                     if loss_graph_config.show == LossGraphShowChoice.classes and \
                             self.class_graphics.get(loss_graph_config.output_idx):
+                        loss_data_type = loss_graph_config.data_type.name
+                        data_type_name = "Тренировочная" if loss_data_type == "train" else "Проверочная"
                         data_return.append(
                             fill_graph_front_structure(
                                 _id=loss_graph_config.id,
                                 _type='graphic',
-                                graph_name=f"Выходной слой «{loss_graph_config.output_idx}» - "
-                                           f"График ошибки обучения по классам",
+                                graph_name=f"Выход «{loss_graph_config.output_idx}» - "
+                                           f"График ошибки обучения по классам - {data_type_name} выборка",
                                 short_name=f"{loss_graph_config.output_idx} - График ошибки обучения по классам",
                                 x_label="Эпоха",
                                 y_label="Значение",
@@ -660,7 +664,7 @@ class InteractiveCallback:
                                     fill_graph_plot_data(
                                         x=self.log_history.get("epochs"),
                                         y=self.log_history.get(f"{loss_graph_config.output_idx}").get('class_loss').get(
-                                            class_name).get(loss_name).get("val"),
+                                            class_name).get(loss_name).get(loss_data_type),
                                         label=f"Класс {class_name}"
                                     ) for class_name in
                                     self.options.data.outputs.get(int(loss_graph_config.output_idx)).classes_names
@@ -812,7 +816,7 @@ class InteractiveCallback:
                             fill_graph_front_structure(
                                 _id=metric_graph_config.id,
                                 _type='graphic',
-                                graph_name=f"Выходной слой «{metric_graph_config.output_idx}» - График метрики "
+                                graph_name=f"Выход «{metric_graph_config.output_idx}» - График метрики "
                                            f"{metric_graph_config.show_metric.name}",
                                 short_name=f"{metric_graph_config.output_idx} - {metric_graph_config.show_metric.name}",
                                 x_label="Эпоха",
@@ -824,12 +828,15 @@ class InteractiveCallback:
                         )
                     if metric_graph_config.show == MetricGraphShowChoice.classes and \
                             self.class_graphics.get(metric_graph_config.output_idx):
+                        metric_data_type = metric_graph_config.data_type.name
+                        data_type_name = "Тренировочная" if metric_data_type == "train" else "Проверочная"
                         data_return.append(
                             fill_graph_front_structure(
                                 _id=metric_graph_config.id,
                                 _type='graphic',
-                                graph_name=f"Выходной слой «{metric_graph_config.output_idx}» - График метрики "
-                                           f"{metric_graph_config.show_metric.name} по классам",
+                                graph_name=f"Выход «{metric_graph_config.output_idx}» - График метрики "
+                                           f"{metric_graph_config.show_metric.name} по классам - "
+                                           f"{data_type_name} выборка",
                                 short_name=f"{metric_graph_config.output_idx} - "
                                            f"{metric_graph_config.show_metric.name} по классам",
                                 x_label="Эпоха",
@@ -838,8 +845,8 @@ class InteractiveCallback:
                                     fill_graph_plot_data(
                                         x=self.log_history.get("epochs"),
                                         y=self.log_history.get(f"{metric_graph_config.output_idx}").get(
-                                            'class_metrics').get(
-                                            class_name).get(metric_graph_config.show_metric).get('val'),
+                                            'class_metrics').get(class_name).get(metric_graph_config.show_metric
+                                                                                 ).get(metric_data_type),
                                         label=f"Класс {class_name}"
                                     ) for class_name in
                                     self.options.data.outputs.get(metric_graph_config.output_idx).classes_names
