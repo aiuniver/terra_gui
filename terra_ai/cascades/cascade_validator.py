@@ -43,6 +43,7 @@ class CascadeValidator:
 
     def _check_bind_and_data(self, cascade_data: CascadeDetailsData, model_data_type: str):
         bind_errors = dict()
+        # print('cascade_data', cascade_data)
         blocks = cascade_data.blocks
         named_map = self._create_bind_named_map(cascade_data=cascade_data)
         video_by_frame = False
