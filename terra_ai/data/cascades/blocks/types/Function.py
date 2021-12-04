@@ -9,6 +9,7 @@ from terra_ai.data.cascades.blocks.extra import (
     BlockFunctionTypeChoice,
     ChangeTypeAvailableChoice,
     PostprocessBoxesMethodAvailableChoice,
+    ObjectDetectionFilterClassesList,
 )
 
 
@@ -27,7 +28,7 @@ class ParametersMainData(BaseMixinData):
     ] = PostprocessBoxesMethodAvailableChoice.nms
     sigma: Optional[confloat(gt=0, le=1)] = 0.3
     line_thickness: Optional[conint(ge=1, le=5)] = 1
-    filter_classes: Optional[List[str]]
+    filter_classes: Optional[List[str]] = ObjectDetectionFilterClassesList[0]
 
     class_id: Optional[conint(ge=0)] = 0
     classes_colors: Optional[List[Color]]
