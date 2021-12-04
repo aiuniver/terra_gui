@@ -314,12 +314,13 @@ class FitCallback:
     def on_epoch_end(self, epoch, arrays=None, logs=None, train_data_idxs=None):
         method_name = 'on_epoch_end'
         try:
-            print(method_name, epoch)
+            # print(method_name, epoch)
             if self.is_yolo:
                 self.history.current_logs = logs
             else:
                 self.history.current_basic_logs(epoch=epoch, arrays=arrays, train_idx=train_data_idxs)
             self.history.update_log_history()
+            print('\n', method_name, epoch, '\n', self.history.get_history())
             if epoch == 1:
                 interactive.log_history = self.history.get_history()
             current_epoch_time = time.time() - self._time_first_step
