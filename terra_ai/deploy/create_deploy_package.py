@@ -106,6 +106,12 @@ class CascadeCreator:
                         os.path.join(deploy_path, "custom_objects"))
         shutil.copyfile("terra_ai/datasets/preprocessing.py",
                         os.path.join(deploy_path, "cascades", "preprocessing.py"))
+        shutil.copyfile("terra_ai/data/datasets/extra.py",
+                        os.path.join(deploy_path, "cascades", "extra.py"))
+        shutil.copyfile("terra_ai/datasets/arrays_create.py",
+                        os.path.join(deploy_path, "cascades", "arrays_create.py"))
+        shutil.copyfile("terra_ai/datasets/utils.py",
+                        os.path.join(deploy_path, "cascades", "utils.py"))
 
     @staticmethod
     def copy_model(deploy_path: Path, model_path: Path):

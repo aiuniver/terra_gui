@@ -11,7 +11,7 @@ from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice
 from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.training.extra import ArchitectureChoice
-from terra_ai.datasets.arrays_create import CreateArray
+from .postprocessing import postprocess_results
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.exceptions.deploy import MethodNotImplementedException
@@ -142,10 +142,10 @@ class DeployCreator:
     @staticmethod
     def _get_presets(predict, dataset: PrepareDataset,
                      dataset_data: DatasetData, deploy_path: Path):
-        result = CreateArray().postprocess_results(array=predict,
-                                                   options=dataset,
-                                                   save_path=str(deploy_path),
-                                                   dataset_path=str(dataset_data.path))
+        result = postprocess_results(array=predict,
+                                     options=dataset,
+                                     save_path=str(deploy_path),
+                                     dataset_path=str(dataset_data.path))
         deploy_presets = []
         if result:
             deploy_presets = list(result.values())[0]
