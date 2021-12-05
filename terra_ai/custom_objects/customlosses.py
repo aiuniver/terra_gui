@@ -56,7 +56,6 @@ class BalancedDiceCoef(tf.keras.metrics.Metric):
         pass
 
     def update_state(self, y_true, y_pred, smooth=1, show_class=False, class_idx=0):
-        # print('BalancedDiceCoef', show_classes, class_idx, self.encoding)
         true = tf.cast(y_true, tf.float32)
         pred = tf.cast(y_pred, tf.float32)
 
@@ -71,7 +70,6 @@ class BalancedDiceCoef(tf.keras.metrics.Metric):
             intersection = K.sum(true[..., class_idx:class_idx + 1] * pred[..., class_idx:class_idx + 1])
             union = K.sum(true[..., class_idx:class_idx + 1]) + K.sum(pred[..., class_idx:class_idx + 1])
             self.dice = tf.convert_to_tensor((2. * intersection + smooth) / (union + smooth))
-            print('BalancedDiceCoef', show_class, class_idx, self.dice)
         else:
             balanced_dice = tf.convert_to_tensor(0., dtype=tf.float32)
             for i in range(true.shape[-1]):
@@ -80,7 +78,6 @@ class BalancedDiceCoef(tf.keras.metrics.Metric):
                 balanced_dice = tf.add(balanced_dice,
                                        tf.convert_to_tensor((2. * intersection + smooth) / (union + smooth)))
             self.dice = tf.convert_to_tensor(balanced_dice / true.shape[-1])
-            # print(self.dice, intersection, union)
 
     def get_config(self):
         """
@@ -306,10 +303,8 @@ class UnscaledMAE(tf.keras.metrics.Metric):
         m = tf.keras.metrics.MeanAbsoluteError()
         m.update_state(y_true, y_pred)
         delta = m.result().numpy()
-        # print('delta', np.array([delta]))
         m.reset_state()
         self.mae_result = self.unscale_result(np.array([delta]), output=output, preprocess=preprocess)
-        # print('self.mae_result', self.mae_result)
 
     @staticmethod
     def unscale_result(mae_result, output: int, preprocess: CreatePreprocessing):

@@ -94,7 +94,6 @@ class History:
                     with open(os.path.join(self.training_detail.model_path, "log.history"), "r",
                               encoding="utf-8") as history:
                         logs = json.load(history)
-                print("LOGS: ", logs)
                 interactive.log_history = logs.get("interactive_log")
                 interactive.progress_table = logs.get("progress_table")
                 interactive.addtrain_epochs = logs.get("addtrain_epochs")
@@ -102,13 +101,11 @@ class History:
 
                 self.last_epoch = max(fit_logs.get('epochs'))
                 self.sum_epoch = logs.get("sum_epoch")
-                print(self.epochs, self.last_epoch, self.sum_epoch)
                 if self.training_detail.state.status == "addtrain":
                     if logs.get("addtrain_epochs")[-1] >= self.sum_epoch:
                         self.sum_epoch += self.training_detail.base.epochs
                     if logs.get("addtrain_epochs")[-1] < self.sum_epoch:
                         self.epochs = self.sum_epoch - logs.get("addtrain_epochs")[-1]
-                print(self.epochs, self.last_epoch, self.sum_epoch)
                 return fit_logs
             else:
                 return self._prepare_log_history_template(options=dataset, params=training_details)
@@ -150,7 +147,6 @@ class History:
                                 log_history[out]["class_metrics"][class_name][metric.name] = {"train": [], "val": []}
 
             if options.data.architecture in YOLO_ARCHITECTURE:
-                # log_history['learning_rate'] = []
                 log_history['output'] = OUTPUT_LOG_CONFIG
                 out = list(options.data.outputs.keys())[0]
                 for class_name in options.data.outputs.get(out).classes_names:
@@ -202,7 +198,6 @@ class History:
                 val_loss = self._get_loss_calculation(
                     loss_obj=loss_fn, out=out, y_true=arrays.get("val_true").get(out),
                     y_pred=arrays.get("val_pred").get(out))
-                # print(train_loss, val_loss)
                 self.current_logs[out]["loss"][output_layer.loss.name] = {"train": train_loss, "val": val_loss}
                 if self.class_outputs.get(output_layer.id):
                     self.current_logs[out]["class_loss"][output_layer.loss.name] = {}
@@ -429,7 +424,6 @@ class History:
                                     round_loss_metric(self.current_logs[out]['class_metrics'][metric_name][cls]["val"]))
 
             if self.dataset.data.architecture in YOLO_ARCHITECTURE:
-                # self.log_history['learning_rate'] = self.current_logs.get('learning_rate')
                 out = list(self.dataset.data.outputs.keys())[0]
                 classes_names = self.dataset.data.outputs.get(out).classes_names
                 for key in self.log_history['output']["loss"].keys():

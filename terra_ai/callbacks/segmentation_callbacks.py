@@ -529,7 +529,6 @@ class TextSegmentationCallback(BaseSegmentationCallback):
     def __init__(self):
         super().__init__()
         self.name = 'TextSegmentationCallback'
-        # print(f'Callback {self.name} is called')
 
     @staticmethod
     def postprocess_initial_source(options, example_id: int, return_mode='deploy', data_type='val'):
@@ -596,7 +595,7 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                 labels = reformat_tags(label_array, tag_list)
                 colored_text = []
                 for w, word in enumerate(text):
-                    colored_text.append(add_tags_to_word(word, f"{labels[w]}"))
+                    colored_text.append(add_tags_to_word(word, labels[w]))
                 return ' '.join(colored_text)
 
             # TODO: пока исходим что для сегментации текста есть только один вход с текстом, если будут сложные модели

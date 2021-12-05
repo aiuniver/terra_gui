@@ -89,7 +89,7 @@ class FitCallback:
     def _get_checkpoint_mode(self):
         method_name = '_get_checkpoint_mode'
         try:
-            print(method_name, self.checkpoint_config)
+            print(method_name)
             if self.checkpoint_config.type == CheckpointTypeChoice.Loss:
                 return 'min'
             elif self.checkpoint_config.type == CheckpointTypeChoice.Metrics:
@@ -179,7 +179,6 @@ class FitCallback:
     def _estimate_step(current, start, now):
         method_name = '_estimate_step'
         try:
-            # print(method_name)
             if current:
                 _time_per_unit = (now - start) / current
             else:
@@ -207,7 +206,6 @@ class FitCallback:
     def update_progress(self, target, current, start_time, finalize=False, stop_current=0, stop_flag=False):
         method_name = 'update_progress'
         try:
-            # print(method_name)
             """
             Updates the progress bar.
             """
@@ -230,7 +228,7 @@ class FitCallback:
     def on_train_begin(self):
         method_name = 'on_train_begin'
         try:
-            print(method_name, self.dataset.dataframe.keys())
+            print(method_name)
             status = self._get_train_status()
             self._start_time = time.time()
             if status != StateStatusChoice.addtrain:
@@ -314,13 +312,12 @@ class FitCallback:
     def on_epoch_end(self, epoch, arrays=None, logs=None, train_data_idxs=None):
         method_name = 'on_epoch_end'
         try:
-            print(method_name, epoch)
+            print(method_name)
             if self.is_yolo:
                 self.history.current_logs = logs
             else:
                 self.history.current_basic_logs(epoch=epoch, arrays=arrays, train_idx=train_data_idxs)
             self.history.update_log_history()
-            # print('\n', method_name, epoch, '\n', self.history.get_history())
             if epoch == 1:
                 interactive.log_history = self.history.get_history()
             current_epoch_time = time.time() - self._time_first_step
