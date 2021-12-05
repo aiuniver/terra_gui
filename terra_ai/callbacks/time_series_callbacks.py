@@ -76,31 +76,31 @@ class TimeseriesCallback:
         except Exception as e:
             print_error(TimeseriesCallback().name, method_name, e)
 
-    @staticmethod
-    def get_y_pred(y_true: dict, y_pred, options):
-        method_name = 'get_y_pred'
-        try:
-            reformat_pred = {}
-            inverse_y_pred = {}
-            for idx, out in enumerate(y_true.get('val').keys()):
-                if len(y_true.get('val').keys()) == 1:
-                    reformat_pred[out] = y_pred
-                else:
-                    reformat_pred[out] = y_pred[idx]
-                preprocess_dict = options.preprocessing.preprocessing.get(int(out))
-                inverse_y = np.zeros_like(reformat_pred.get(out)[:, :, 0:1])
-                for i, column in enumerate(preprocess_dict.keys()):
-                    if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
-                        _options = {int(out): {column: reformat_pred.get(out)[:, :, i]}}
-                        inverse_col = np.expand_dims(
-                            options.preprocessing.inverse_data(_options).get(int(out)).get(column), axis=-1)
-                    else:
-                        inverse_col = reformat_pred.get(out)[:, :, i:i + 1]
-                    inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
-                inverse_y_pred[out] = inverse_y[:, :, 1:]
-            return reformat_pred, inverse_y_pred
-        except Exception as e:
-            print_error(TimeseriesCallback().name, method_name, e)
+    # @staticmethod
+    # def get_y_pred(y_true: dict, y_pred, options):
+    #     method_name = 'get_y_pred'
+    #     try:
+    #         reformat_pred = {}
+    #         inverse_y_pred = {}
+    #         for idx, out in enumerate(y_true.get('val').keys()):
+    #             if len(y_true.get('val').keys()) == 1:
+    #                 reformat_pred[out] = y_pred
+    #             else:
+    #                 reformat_pred[out] = y_pred[idx]
+    #             preprocess_dict = options.preprocessing.preprocessing.get(int(out))
+    #             inverse_y = np.zeros_like(reformat_pred.get(out)[:, :, 0:1])
+    #             for i, column in enumerate(preprocess_dict.keys()):
+    #                 if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
+    #                     _options = {int(out): {column: reformat_pred.get(out)[:, :, i]}}
+    #                     inverse_col = np.expand_dims(
+    #                         options.preprocessing.inverse_data(_options).get(int(out)).get(column), axis=-1)
+    #                 else:
+    #                     inverse_col = reformat_pred.get(out)[:, :, i:i + 1]
+    #                 inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
+    #             inverse_y_pred[out] = inverse_y[:, :, 1:]
+    #         return reformat_pred, inverse_y_pred
+    #     except Exception as e:
+    #         print_error(TimeseriesCallback().name, method_name, e)
 
     @staticmethod
     def get_inverse_array(array: dict, options):
@@ -127,14 +127,14 @@ class TimeseriesCallback:
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, inverse_x_array=None,
-                                   return_mode='deploy'):
+                                   return_mode='deploy', data_type='val'):
         method_name = 'postprocess_initial_source'
         try:
             column_idx = []
             for inp in options.data.inputs.keys():
-                for column_name in options.dataframe.get('val').columns:
+                for column_name in options.dataframe.get(data_type).columns:
                     if column_name.split('_')[0] == f"{inp}":
-                        column_idx.append(options.dataframe.get('val').columns.tolist().index(column_name))
+                        column_idx.append(options.dataframe.get(data_type).columns.tolist().index(column_name))
 
             source = ""
             graphics_data = []
@@ -280,6 +280,7 @@ class TimeseriesCallback:
         try:
             return_data = {}
             if interactive_config.intermediate_result.show_results:
+                data_type = interactive_config.intermediate_result.data_type.name
                 for idx in range(interactive_config.intermediate_result.num_examples):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
@@ -295,6 +296,7 @@ class TimeseriesCallback:
                             example_id=example_idx[idx],
                             inverse_x_array=inverse_x_val.get(f"{inp}") if inverse_x_val else None,
                             return_mode='callback',
+                            data_type=data_type
                         )
                         return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
                             'type': 'graphic',
@@ -305,10 +307,10 @@ class TimeseriesCallback:
                         data = TimeseriesCallback().postprocess_time_series(
                             options=options.data,
                             real_x=inverse_x_val.get(f"{inp}")[example_idx[idx]],
-                            inverse_y_true=inverse_y_true.get("val").get(f"{out}")[example_idx[idx]],
-                            inverse_y_pred=inverse_y_pred.get("val").get(f"{out}")[example_idx[idx]],
+                            inverse_y_true=inverse_y_true.get(data_type).get(f"{out}")[example_idx[idx]],
+                            inverse_y_pred=inverse_y_pred.get(data_type).get(f"{out}")[example_idx[idx]],
                             output_id=out,
-                            depth=inverse_y_true.get("val").get(f"{out}")[example_idx[idx]].shape[-2],
+                            depth=inverse_y_true.get(data_type).get(f"{out}")[example_idx[idx]].shape[-2],
                             show_stat=interactive_config.intermediate_result.show_statistic,
                             templates=[fill_graph_plot_data, fill_graph_front_structure],
                             max_length=MAX_INTERMEDIATE_GRAPH_LENGTH

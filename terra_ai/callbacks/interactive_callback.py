@@ -20,7 +20,7 @@ from terra_ai.data.training.extra import LossGraphShowChoice, MetricGraphShowCho
 from terra_ai.data.training.train import TrainingDetailsData
 from terra_ai.datasets.preparing import PrepareDataset
 
-__version__ = 0.085
+__version__ = 0.086
 
 
 class InteractiveCallback:
@@ -75,6 +75,8 @@ class InteractiveCallback:
 
     def set_attributes(self, dataset: PrepareDataset, params: TrainingDetailsData):
         self.options = dataset
+        # self.seed_idx = self._prepare_seed()
+        # print('self.seed_idx', self.seed_idx)
         self._callback_router(dataset)
         self.class_graphics = self._class_metric_list()
         print('set_attributes', dataset.data.architecture)
@@ -103,52 +105,47 @@ class InteractiveCallback:
                      on_epoch_end_flag=False, train_idx: list = None) -> dict:
         if self.log_history:
             if arrays:
-                # t = time.time()
+                data_type = self.training_details.interactive.intermediate_result.data_type.name
                 if self.options.data.architecture in BASIC_ARCHITECTURE:
-                    # t = time.time()
                     self.y_true = reformat_fit_array(
                         array={"train": arrays.get("train_true"), "val": arrays.get("val_true")}, train_idx=train_idx)
                     self.inverse_y_true = self.callback.get_inverse_array(self.y_true, self.options)
                     self.y_pred = reformat_fit_array(
                         array={"train": arrays.get("train_pred"), "val": arrays.get("val_pred")}, train_idx=train_idx)
                     self.inverse_y_pred = self.callback.get_inverse_array(self.y_pred, self.options)
-                    # print('\nInteractiveCallback y_true, y_pred:', round(time.time() - t, 3))
-                    # t = time.time()
                     if self.get_balance:
                         self.dataset_balance = self.callback.dataset_balance(
                             options=self.options, y_true=self.y_true,
                             preset_path=self.training_details.intermediate_path,
                             class_colors=self.class_colors
                         )
-                        # print('\n self.dataset_balance', self.dataset_balance)
                         if self.options.data.architecture in CLASSIFICATION_ARCHITECTURE:
                             self.class_idx = self.callback.prepare_class_idx(self.y_true, self.options)
                         self.seed_idx = self._prepare_seed()
                         self.get_balance = False
-                    # print('\nInteractiveCallback dataset_balance:', round(time.time() - t, 3))
-                    # t = time.time()
+                        print('\nself.seed_idx', self.seed_idx)
                     out = f"{self.training_details.interactive.intermediate_result.main_output}"
                     count = self.training_details.interactive.intermediate_result.num_examples
-                    count = count if count > len(self.y_true.get('val').get(out)) \
-                        else len(self.y_true.get('val').get(out))
+                    count = count if count > len(self.y_true.get(data_type).get(out)) \
+                        else len(self.y_true.get(data_type).get(out))
+                    print('data_type', data_type)
                     self.example_idx = self.callback.prepare_example_idx_to_show(
-                        array=self.y_pred.get("val").get(out),
-                        true_array=self.y_true.get("val").get(out),
+                        array=self.y_pred.get(data_type).get(out),
+                        true_array=self.y_true.get(data_type).get(out),
                         options=self.options,
                         output=int(out),
                         count=count,
                         choice_type=self.training_details.interactive.intermediate_result.example_choice_type,
-                        seed_idx=self.seed_idx[:self.training_details.interactive.intermediate_result.num_examples]
+                        seed_idx=self.seed_idx[data_type][
+                                 :self.training_details.interactive.intermediate_result.num_examples]
                     )
-                    # print('\nInteractiveCallback prepare_example_idx_to_show', round(time.time() - t, 3))
+
                 if self.options.data.architecture in YOLO_ARCHITECTURE:
-                    # t = time.time()
                     self.raw_y_pred = arrays.get("val_pred")
                     sensitivity = self.training_details.interactive.intermediate_result.sensitivity \
                         if self.training_details.interactive.intermediate_result.sensitivity else 0.3
                     threashold = self.training_details.interactive.intermediate_result.threashold \
                         if self.training_details.interactive.intermediate_result.threashold else 0.5
-                    # print('\nInteractiveCallback get_y_pred: start', sensitivity, threashold)
                     self.y_pred = self.callback.get_y_pred(
                         y_pred=arrays.get("val_pred"), options=self.options,
                         sensitivity=sensitivity,
@@ -163,15 +160,11 @@ class InteractiveCallback:
                             class_colors=self.class_colors
                         )
                         self.seed_idx = self._prepare_seed()
-                        # print('\n seed_idx', self.seed_idx[:10], '\n')
                         self.get_balance = False
-                    # print('\nInteractiveCallback get_y_pred', round(time.time() - t, 3), sensitivity, threashold)
                     count = self.training_details.interactive.intermediate_result.num_examples
-                    count = count if count > len(self.options.dataframe.get('val')) \
-                        else len(self.options.dataframe.get('val'))
+                    count = count if count > len(self.options.dataframe.get(data_type)) \
+                        else len(self.options.dataframe.get(data_type))
                     self.raw_y_true = arrays.get("val_true")
-                    # print('\nInteractiveCallback prepare_example_idx_to_show: start')
-                    # t = time.time()
                     self.example_idx, _ = self.callback.prepare_example_idx_to_show(
                         array=self.y_pred,
                         true_array=self.y_true,
@@ -180,20 +173,14 @@ class InteractiveCallback:
                         box_channel=self.training_details.interactive.intermediate_result.box_channel,
                         count=count,
                         choice_type=self.training_details.interactive.intermediate_result.example_choice_type,
-                        seed_idx=self.seed_idx,
+                        seed_idx=self.seed_idx['val'],
                         sensitivity=self.training_details.interactive.intermediate_result.sensitivity,
                     )
-                #     print('\nInteractiveCallback example_idx', round(time.time() - t, 3))
-                # print('\nInteractiveCallback if self.options.data.architecture in BASIC_ARCHITECTURE:',
-                # round(time.time() - t, 3))
-                # t = time.time()
                 if on_epoch_end_flag:
                     self.current_epoch = fit_logs.get('epochs')[-1]
                     self.log_history = fit_logs
                     self._update_progress_table(current_epoch_time)
                     if self.training_details.interactive.intermediate_result.autoupdate:
-                        # print('\nInteractiveCallback intermediate_result_request: start')
-                        # t = time.time()
                         self.intermediate_result = self.callback.intermediate_result_request(
                             options=self.options,
                             interactive_config=self.training_details.interactive,
@@ -208,11 +195,9 @@ class InteractiveCallback:
                             inverse_y_true=self.inverse_y_true,
                             class_colors=self.class_colors,
                         )
-                        # print('\nInteractiveCallback intermediate_result_request', round(time.time() - t, 3))
                     if self.options.data.architecture in BASIC_ARCHITECTURE and \
                             self.training_details.interactive.statistic_data.output_id \
                             and self.training_details.interactive.statistic_data.autoupdate:
-                        # t = time.time()
                         self.statistic_result = self.callback.statistic_data_request(
                             interactive_config=self.training_details.interactive,
                             options=self.options,
@@ -221,12 +206,9 @@ class InteractiveCallback:
                             y_pred=self.y_pred,
                             inverse_y_pred=self.inverse_y_pred,
                         )
-                        # print('\nInteractiveCallback statistic_data_request', round(time.time() - t, 3))
                     if self.options.data.architecture in YOLO_ARCHITECTURE and \
                             self.training_details.interactive.statistic_data.box_channel \
                             and self.training_details.interactive.statistic_data.autoupdate:
-                        # print('\nInteractiveCallback statistic_data_request: start')
-                        # t = time.time()
                         self.statistic_result = self.callback.statistic_data_request(
                             interactive_config=self.training_details.interactive,
                             options=self.options,
@@ -235,9 +217,7 @@ class InteractiveCallback:
                             inverse_y_pred=self.inverse_y_pred,
                             inverse_y_true=self.inverse_y_true
                         )
-                        # print('\nInteractiveCallback statistic_data_request', round(time.time() - t, 3))
                 else:
-                    # t = time.time()
                     self.intermediate_result = self.callback.intermediate_result_request(
                         options=self.options,
                         interactive_config=self.training_details.interactive,
@@ -252,10 +232,8 @@ class InteractiveCallback:
                         inverse_y_true=self.inverse_y_true,
                         class_colors=self.class_colors,
                     )
-                    # print('\nInteractiveCallback intermediate_result_request', round(time.time() - t, 3))
                     if self.options.data.architecture in BASIC_ARCHITECTURE and \
                             self.training_details.interactive.statistic_data.output_id:
-                        # t = time.time()
                         self.statistic_result = self.callback.statistic_data_request(
                             interactive_config=self.training_details.interactive,
                             options=self.options,
@@ -264,7 +242,6 @@ class InteractiveCallback:
                             inverse_y_pred=self.inverse_y_pred,
                             inverse_y_true=self.inverse_y_true,
                         )
-                        # print('\nInteractiveCallback statistic_data_request', round(time.time() - t, 3))
                     if self.options.data.architecture in YOLO_ARCHITECTURE and \
                             self.training_details.interactive.statistic_data.box_channel:
                         self.statistic_result = self.callback.statistic_data_request(
@@ -277,7 +254,6 @@ class InteractiveCallback:
                         )
                 self.urgent_predict = False
                 self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
-                # print('\nInteractiveCallback if on_epoch_end_flag:', round(time.time() - t, 3))
             return {
                 'update': self.random_key,
                 "class_graphics": self.class_graphics,
@@ -298,27 +274,27 @@ class InteractiveCallback:
             return {}
 
     def get_train_results(self):
-        # print('InteractiveCallback.get_train_results')
         """Return dict with data for current interactive request"""
         if self.log_history and self.log_history.get("epochs", {}):
+            data_type = self.training_details.interactive.intermediate_result.data_type.name
             if self.options.data.architecture in BASIC_ARCHITECTURE:
                 if self.training_details.interactive.intermediate_result.show_results:
                     out = f"{self.training_details.interactive.intermediate_result.main_output}"
                     count = self.training_details.interactive.intermediate_result.num_examples
-                    count = count if count > len(self.y_true.get('val').get(out)) \
-                        else len(self.y_true.get('val').get(out))
+                    count = count if count > len(self.y_true.get(data_type).get(out)) \
+                        else len(self.y_true.get(data_type).get(out))
                     self.example_idx = self.callback.prepare_example_idx_to_show(
-                        array=self.y_true.get("val").get(out),
-                        true_array=self.y_true.get("val").get(out),
+                        array=self.y_true.get(data_type).get(out),
+                        true_array=self.y_true.get(data_type).get(out),
                         options=self.options,
                         output=int(out),
                         count=count,
                         choice_type=self.training_details.interactive.intermediate_result.example_choice_type,
-                        seed_idx=self.seed_idx[:self.training_details.interactive.intermediate_result.num_examples]
+                        seed_idx=self.seed_idx[data_type][
+                                 :self.training_details.interactive.intermediate_result.num_examples]
                     )
                 if self.training_details.interactive.intermediate_result.show_results or \
                         self.training_details.interactive.statistic_data.output_id:
-                    # print('\n statistic_data', self.training_details.interactive.statistic_data)
                     self.urgent_predict = True
                     self.intermediate_result = self.callback.intermediate_result_request(
                         options=self.options,
@@ -352,8 +328,8 @@ class InteractiveCallback:
                         threashold=self.training_details.interactive.intermediate_result.threashold
                     )
                     count = self.training_details.interactive.intermediate_result.num_examples
-                    count = count if count > len(self.options.dataframe.get('val')) \
-                        else len(self.options.dataframe.get('val'))
+                    count = count if count > len(self.options.dataframe.get(data_type)) \
+                        else len(self.options.dataframe.get(data_type))
                     self.example_idx, _ = self.callback.prepare_example_idx_to_show(
                         array=self.y_pred,
                         true_array=self.y_true,
@@ -362,7 +338,7 @@ class InteractiveCallback:
                         box_channel=self.training_details.interactive.intermediate_result.box_channel,
                         count=count,
                         choice_type=self.training_details.interactive.intermediate_result.example_choice_type,
-                        seed_idx=self.seed_idx,
+                        seed_idx=self.seed_idx['val'],
                         sensitivity=self.training_details.interactive.intermediate_result.sensitivity,
                     )
                     self.intermediate_result = self.callback.intermediate_result_request(
@@ -493,39 +469,42 @@ class InteractiveCallback:
         method_name = '_prepare_seed'
         try:
             print(method_name)
-            if self.options.data.architecture in YOLO_ARCHITECTURE:
-                example_idx = np.arange(len(self.options.dataframe.get("val")))
-                np.random.shuffle(example_idx)
-            elif self.options.data.architecture in BASIC_ARCHITECTURE:
-                output = self.training_details.interactive.intermediate_result.main_output
-                example_idx = []
-                if self.options.data.architecture in CLASSIFICATION_ARCHITECTURE:
-                    y_true = np.argmax(self.y_true.get('val').get(f"{output}"), axis=-1)
-                    class_idx = {}
-                    for _id in range(self.options.data.outputs.get(output).num_classes):
-                        class_idx[_id] = []
-                    for i, _id in enumerate(y_true):
-                        class_idx[_id].append(i)
-                    for key in class_idx.keys():
-                        np.random.shuffle(class_idx[key])
-                    num_ex = 25 if len(y_true) > 25 else len(y_true)
-                    while num_ex:
-                        key = np.random.choice(list(class_idx.keys()))
-                        if not class_idx.get(key):
-                            class_idx.pop(key)
+            example_idx = {}
+            for data_type in ['train', 'val']:
+                if self.options.data.architecture in YOLO_ARCHITECTURE:
+                    example_idx[data_type] = np.arange(len(self.options.dataframe.get(data_type)))
+                    np.random.shuffle(example_idx[data_type])
+                elif self.options.data.architecture in BASIC_ARCHITECTURE:
+                    output = self.training_details.interactive.intermediate_result.main_output
+                    example_idx[data_type] = []
+                    if self.options.data.architecture in CLASSIFICATION_ARCHITECTURE:
+                        y_true = np.argmax(self.y_true.get(data_type).get(f"{output}"), axis=-1)
+                        class_idx = {}
+                        for _id in range(self.options.data.outputs.get(output).num_classes):
+                            class_idx[_id] = []
+                        for i, _id in enumerate(y_true):
+                            class_idx[_id].append(i)
+                        for key in class_idx.keys():
+                            np.random.shuffle(class_idx[key])
+                        num_ex = 25 if len(y_true) > 25 else len(y_true)
+                        while num_ex:
                             key = np.random.choice(list(class_idx.keys()))
-                        example_idx.append(class_idx[key][0])
-                        class_idx[key].pop(0)
-                        num_ex -= 1
-                else:
-                    if self.options.data.group == DatasetGroupChoice.keras or self.x_val:
-                        example_idx = np.arange(len(self.y_true.get("val").get(list(self.y_true.get("val").keys())[0])))
+                            if not class_idx.get(key):
+                                class_idx.pop(key)
+                                key = np.random.choice(list(class_idx.keys()))
+                            example_idx[data_type].append(class_idx[key][0])
+                            class_idx[key].pop(0)
+                            num_ex -= 1
                     else:
-                        example_idx = np.arange(len(self.options.dataframe.get("val")))
-                    np.random.shuffle(example_idx)
-            else:
-                example_idx = np.arange(len(self.options.dataframe.get("val")))
-                np.random.shuffle(example_idx)
+                        if self.options.data.group == DatasetGroupChoice.keras or self.x_val:
+                            example_idx[data_type] = np.arange(len(self.y_true.get(data_type).get(
+                                list(self.y_true.get(data_type).keys())[0])))
+                        else:
+                            example_idx[data_type] = np.arange(len(self.options.dataframe.get(data_type)))
+                        np.random.shuffle(example_idx[data_type])
+                else:
+                    example_idx[data_type] = np.arange(len(self.options.dataframe.get(data_type)))
+                    np.random.shuffle(example_idx[data_type])
             return example_idx
         except Exception as e:
             print_error(InteractiveCallback().name, method_name, e)
@@ -636,7 +615,7 @@ class InteractiveCallback:
                             fill_graph_front_structure(
                                 _id=loss_graph_config.id,
                                 _type='graphic',
-                                graph_name=f"Выходной слой «{loss_graph_config.output_idx}» - График ошибки обучения",
+                                graph_name=f"Выход «{loss_graph_config.output_idx}» - График ошибки обучения",
                                 short_name=f"{loss_graph_config.output_idx} - График ошибки обучения",
                                 x_label="Эпоха",
                                 y_label="Значение",
@@ -647,12 +626,14 @@ class InteractiveCallback:
                         )
                     if loss_graph_config.show == LossGraphShowChoice.classes and \
                             self.class_graphics.get(loss_graph_config.output_idx):
+                        loss_data_type = loss_graph_config.data_type.name
+                        data_type_name = "Тренировочная" if loss_data_type == "train" else "Проверочная"
                         data_return.append(
                             fill_graph_front_structure(
                                 _id=loss_graph_config.id,
                                 _type='graphic',
-                                graph_name=f"Выходной слой «{loss_graph_config.output_idx}» - "
-                                           f"График ошибки обучения по классам",
+                                graph_name=f"Выход «{loss_graph_config.output_idx}» - "
+                                           f"График ошибки обучения по классам - {data_type_name} выборка",
                                 short_name=f"{loss_graph_config.output_idx} - График ошибки обучения по классам",
                                 x_label="Эпоха",
                                 y_label="Значение",
@@ -660,7 +641,7 @@ class InteractiveCallback:
                                     fill_graph_plot_data(
                                         x=self.log_history.get("epochs"),
                                         y=self.log_history.get(f"{loss_graph_config.output_idx}").get('class_loss').get(
-                                            class_name).get(loss_name).get("val"),
+                                            class_name).get(loss_name).get(loss_data_type),
                                         label=f"Класс {class_name}"
                                     ) for class_name in
                                     self.options.data.outputs.get(int(loss_graph_config.output_idx)).classes_names
@@ -812,7 +793,7 @@ class InteractiveCallback:
                             fill_graph_front_structure(
                                 _id=metric_graph_config.id,
                                 _type='graphic',
-                                graph_name=f"Выходной слой «{metric_graph_config.output_idx}» - График метрики "
+                                graph_name=f"Выход «{metric_graph_config.output_idx}» - График метрики "
                                            f"{metric_graph_config.show_metric.name}",
                                 short_name=f"{metric_graph_config.output_idx} - {metric_graph_config.show_metric.name}",
                                 x_label="Эпоха",
@@ -824,12 +805,15 @@ class InteractiveCallback:
                         )
                     if metric_graph_config.show == MetricGraphShowChoice.classes and \
                             self.class_graphics.get(metric_graph_config.output_idx):
+                        metric_data_type = metric_graph_config.data_type.name
+                        data_type_name = "Тренировочная" if metric_data_type == "train" else "Проверочная"
                         data_return.append(
                             fill_graph_front_structure(
                                 _id=metric_graph_config.id,
                                 _type='graphic',
-                                graph_name=f"Выходной слой «{metric_graph_config.output_idx}» - График метрики "
-                                           f"{metric_graph_config.show_metric.name} по классам",
+                                graph_name=f"Выход «{metric_graph_config.output_idx}» - График метрики "
+                                           f"{metric_graph_config.show_metric.name} по классам - "
+                                           f"{data_type_name} выборка",
                                 short_name=f"{metric_graph_config.output_idx} - "
                                            f"{metric_graph_config.show_metric.name} по классам",
                                 x_label="Эпоха",
@@ -838,8 +822,8 @@ class InteractiveCallback:
                                     fill_graph_plot_data(
                                         x=self.log_history.get("epochs"),
                                         y=self.log_history.get(f"{metric_graph_config.output_idx}").get(
-                                            'class_metrics').get(
-                                            class_name).get(metric_graph_config.show_metric).get('val'),
+                                            'class_metrics').get(class_name).get(metric_graph_config.show_metric
+                                                                                 ).get(metric_data_type),
                                         label=f"Класс {class_name}"
                                     ) for class_name in
                                     self.options.data.outputs.get(metric_graph_config.output_idx).classes_names

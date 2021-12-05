@@ -2,7 +2,7 @@ import json
 import os
 import shutil
 import numpy as np
-
+from copy import copy
 import moviepy.editor as moviepy_editor
 from pydub import AudioSegment
 
@@ -14,7 +14,7 @@ from pydantic.color import Color
 
 from terra_ai.cascades.common import decamelize
 from terra_ai.cascades.create import json2cascade
-from terra_ai.data.cascades.blocks.extra import BlockFunctionGroupChoice, FunctionParamsChoice
+from terra_ai.data.cascades.blocks.extra import BlockFunctionGroupChoice, FunctionParamsChoice, ObjectDetectionFilterClassesList
 from terra_ai.data.cascades.cascade import CascadeDetailsData
 from terra_ai.data.cascades.extra import BlockGroupChoice
 from terra_ai.data.datasets.extra import LayerInputTypeChoice
@@ -36,7 +36,7 @@ class CascadeRunner:
             os.makedirs(presets_path, exist_ok=True)
 
         type_, model, inputs_ids = self._get_task_type(cascade_data=cascade_data, training_path=training_path)
-
+        # print('type_', type_)
         dataset_path = os.path.join(training_path, model, "model", "dataset.json")
         if not os.path.exists(dataset_path):
             dataset_path = os.path.join(training_path, model, "model", "dataset", "config.json")
@@ -45,14 +45,14 @@ class CascadeRunner:
 
         model_path = Path(os.path.join(training_path, model, "model"))
         config = CascadeCreator()
-
+        # print('config', config)
         config.copy_model(deploy_path=DEPLOY_PATH, model_path=model_path)
 
         model_task = list(set([val.get("task") for key, val in dataset_config_data.get("outputs").items()]))[0]
-
+        # print('model_task', model_task)
         cascade_config, classes, classes_colors = self._create_config(cascade_data=cascade_data, model_task=model_task,
                                              dataset_data=dataset_config_data, presets_path=presets_path)
-
+        # print('cascade_config', cascade_config)
         main_block = json2cascade(path=os.path.join(training_path, model), cascade_config=cascade_config, mode="run")
 
         sources = sources.get(inputs_ids[0])
@@ -158,13 +158,16 @@ class CascadeRunner:
                     }
                     if "classes" in parameters.keys() and not parameters.get("classes"):
                         parameters["classes"] = classes
+                    if "filter_classes" in parameters.keys():
+                        parameters["filter_classes"] = [ObjectDetectionFilterClassesList.index(x)
+                                                        for x in parameters["filter_classes"]]
                     # if "num_class" in parameters.keys() and not parameters.get("num_class"):
                     #     parameters["num_class"] = num_class
                     if "classes_colors" in parameters.keys() and not parameters.get("classes_colors"):
                         parameters["classes_colors"] = classes_colors
                 elif block.group == BlockGroupChoice.Service:
                     _tag = block.group.value.lower()
-                    _task = block.parameters.main.group.value.lower()
+                    _task = decamelize(block.parameters.main.group.value) #.lower()
                     _name = block.parameters.main.type.value
                     block_parameters = FunctionParamsChoice.get_parameters(input_block=block.parameters.main.type)
                     parameters = {

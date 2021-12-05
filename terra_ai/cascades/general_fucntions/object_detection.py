@@ -105,7 +105,7 @@ def postprocess_boxes(input_size=416, score_threshold=.3, iou_threshold=.45, met
     return fun
 
 
-def plot_bboxes(classes, colors=None, line_thickness=None):
+def plot_b_boxes(classes, colors=None, line_thickness=None):
     if colors is None:
         colors = [tuple((randrange(1, 256) for _ in range(3)))
                   for _ in range(len(classes))]
@@ -152,11 +152,11 @@ def plot_bboxes(classes, colors=None, line_thickness=None):
     return fun
 
 
-def filter_classes(classes: list):
+def filter_classes(filter_classes: list):
     def fun(bboxes: np.ndarray):
-        g = bboxes[bboxes[:, -1] == classes[0]]
+        g = bboxes[bboxes[:, -1] == filter_classes[0]]
 
-        for i in classes[1:]:
+        for i in filter_classes[1:]:
             g = np.concatenate((g, bboxes[bboxes[:, -1] == i]))
 
         return g

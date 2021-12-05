@@ -9,6 +9,9 @@
         <t-field inline label="Тип выбора данных">
           <t-select-new :list="sortOutput" v-model="main_output" small @change="show" />
         </t-field>
+        <t-field inline label="Тип выборки">
+          <t-select-new v-model="data_type" :list="list" small @change="show" />
+        </t-field>
         <t-field inline label="Показать примеров">
           <t-input-new
             v-model.number="num_examples"
@@ -83,9 +86,14 @@ export default {
       { label: 'Seed', value: 'seed' },
       { label: 'Random', value: 'random' },
     ],
+    list: [
+      { label: 'Тренировочная', value: 'train' },
+      { label: 'Проверочная', value: 'val' },
+    ],
     autoupdate: false,
     example_choice_type: 'seed',
     main_output: 2,
+    data_type: 'val',
     num_examples: 10,
     show_results: true,
     show_statistic: true,
@@ -170,6 +178,7 @@ export default {
         num_examples: this.num_examples > 10 ? 10 : this.num_examples,
         show_results: this.show_results,
         show_statistic: this.show_statistic,
+        data_type: this.data_type,
         sensitivity: this.sensitivity,
         box_channel: this.box_channel,
       };

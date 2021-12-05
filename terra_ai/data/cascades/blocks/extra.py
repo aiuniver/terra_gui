@@ -201,6 +201,7 @@ class BlockServiceTypeChoice(str, Enum):
     Wav2Vec = "Wav2Vec"
     Google = "Google"
     TinkoffAPI = "TinkoffAPI"
+    FilterClasses = "FilterClasses"
 
     @staticmethod
     def values() -> list:
@@ -264,12 +265,20 @@ class BlocksBindChoice(Enum):
 
     Sort = (
         "Sort",
-        (BlockFunctionTypeChoice.PostprocessBoxes,),
+        (
+            (BlockFunctionTypeChoice.PostprocessBoxes,
+             BlockServiceTypeChoice.FilterClasses,
+             ),
+        ),
         (LayerInputTypeChoice.Image,),
     )
     BiTBasedTracker = (
         "BiTBasedTracker",
-        (BlockFunctionTypeChoice.PostprocessBoxes, BlockGroupChoice.InputData),
+        (
+            (BlockFunctionTypeChoice.PostprocessBoxes,
+             BlockServiceTypeChoice.FilterClasses,
+             ),
+            BlockGroupChoice.InputData,),
         (LayerInputTypeChoice.Image,),
     )
     YoloV5 = ("YoloV5", (BlockGroupChoice.InputData,), (LayerInputTypeChoice.Image,))
@@ -316,11 +325,17 @@ class BlocksBindChoice(Enum):
         (
             (
                 BlockFunctionTypeChoice.PostprocessBoxes,
-                BlockCustomTypeChoice.Sort,
+                BlockServiceTypeChoice.Sort,
                 BlockServiceTypeChoice.BiTBasedTracker,
+                BlockServiceTypeChoice.FilterClasses,
             ),
             BlockGroupChoice.InputData,
         ),
+        (LayerInputTypeChoice.Image,),
+    )
+    FilterClasses = (
+        "FilterClasses",
+        (BlockServiceTypeChoice.YoloV5, ),
         (LayerInputTypeChoice.Image,),
     )
 
@@ -392,6 +407,7 @@ class FunctionParamsChoice(Enum):
         ("max_age", "distance_threshold", "metric"),
     )
     YoloV5 = (BlockServiceTypeChoice.YoloV5, ("version", "render_img"))
+    FilterClasses = (BlockServiceTypeChoice.FilterClasses, ("filter_classes",))
 
     def __init__(self, name, parameters):
         self._name = name

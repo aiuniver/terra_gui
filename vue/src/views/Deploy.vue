@@ -62,6 +62,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
+import { debounce } from '@/utils/core/utils';
 export default {
   name: 'Datasets',
   components: {
@@ -91,12 +92,21 @@ export default {
   data: () => ({ 
     overlay: false,
     updateKey: 0,
+    debounce: null,
     idCheckProgressSendDeploy: null,
     paramsSettings: {
       isSendParamsDeploy: false,
       isParamsSettingsLoad: false
     }
   }),
+  created() {
+    this.debounce = debounce(status => {
+      if (status) this.checkProgressDownload();
+    }, 1000);
+  },
+  beforeDestroy() {
+    this.debounce(false);
+  },
   methods: {
     clearParams(){
       this.$store.dispatch('deploy/clear');
@@ -122,14 +132,29 @@ export default {
         }
       }
     },
+    async checkProgressDownload() {
+      const res = await this.$store.dispatch('deploy/progress', {});
+      if (res && res?.data) {
+        const { finished, message, percent } = res.data;
+        this.$store.dispatch('messages/setProgressMessage', message);
+        this.$store.dispatch('messages/setProgress', percent);
+        if (!finished) {
+          await this.debounce(true);
+        } else {
+          this.$store.dispatch('projects/get');
+          this.paramsSettings.isParamsSettingsLoad = true
+          this.overlay = false
+        }
+      }
+      if (res?.error) {
+        this.overlay = false
+      }
+    },
     async downloadSettings({ type = null, name = null }){
       if (type && name) {
         this.overlay = true
         const res = await this.$store.dispatch('deploy/downloadSettings', { type, name });
-        if (res?.success) {
-          this.overlay = false
-          this.paramsSettings.isParamsSettingsLoad = true
-        }
+        if (res?.success) await this.debounce(true);
       }
     },
     async reload(index) {

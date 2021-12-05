@@ -26,6 +26,7 @@ from terra_ai.data.training.extra import (
     BalanceSortedChoice,
     MetricChoice,
     StateStatusChoice,
+    DataTypeChoice,
 )
 
 
@@ -36,6 +37,7 @@ CONFIG_TRAINING_FILENAME = "config.json"
 class LossGraphData(IDMixinData):
     output_idx: PositiveInt
     show: LossGraphShowChoice
+    data_type: Optional[DataTypeChoice]
 
 
 class LossGraphsList(UniqueListMixin):
@@ -48,6 +50,7 @@ class MetricGraphData(IDMixinData):
     output_idx: PositiveInt
     show: MetricGraphShowChoice
     show_metric: Optional[MetricChoice]
+    data_type: Optional[DataTypeChoice]
 
 
 class MetricGraphsList(UniqueListMixin):
@@ -59,6 +62,7 @@ class MetricGraphsList(UniqueListMixin):
 class IntermediateResultData(BaseMixinData):
     show_results: bool = False
     example_choice_type: ExampleChoiceTypeChoice = ExampleChoiceTypeChoice.seed
+    data_type: Optional[DataTypeChoice] = DataTypeChoice.train
     main_output: Optional[PositiveInt]
     box_channel: conint(ge=0, le=2) = 1
     num_examples: conint(ge=1, le=10) = 10
@@ -379,11 +383,7 @@ class TrainingDetailsData(BaseMixinData):
             progress_table = []
             statistic_data = {}
             data_balance = {}
-            intermediate_result = {
-                "main_output": self.model.outputs[0].id
-                if len(self.model.outputs)
-                else None
-            }
+            intermediate_result = {"main_output": self.model.outputs[0].id if len(self.model.outputs) else None}
 
             _index_m = 0
             _index_l = 0
@@ -408,6 +408,17 @@ class TrainingDetailsData(BaseMixinData):
                             "output_idx": layer.id,
                             "show": MetricGraphShowChoice.classes,
                             "show_metric": metric,
+                            "data_type": DataTypeChoice.train
+                        }
+                    )
+                    _index_m += 1
+                    metric_graphs.append(
+                        {
+                            "id": _index_m,
+                            "output_idx": layer.id,
+                            "show": MetricGraphShowChoice.classes,
+                            "show_metric": metric,
+                            "data_type": DataTypeChoice.val
                         }
                     )
                 _index_l += 1
@@ -424,6 +435,16 @@ class TrainingDetailsData(BaseMixinData):
                         "id": _index_l,
                         "output_idx": layer.id,
                         "show": LossGraphShowChoice.classes,
+                        "data_type": DataTypeChoice.train
+                    }
+                )
+                _index_l += 1
+                loss_graphs.append(
+                    {
+                        "id": _index_l,
+                        "output_idx": layer.id,
+                        "show": LossGraphShowChoice.classes,
+                        "data_type": DataTypeChoice.val
                     }
                 )
                 progress_table.append(
