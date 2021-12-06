@@ -39,22 +39,13 @@ class ParametersImageData(ParametersBaseData, MinMaxScalerData):
         height: int - высота изображений (пикс)
         image_mode: str - режим обработки изображений. Варианты: 'stretch', 'fit', 'cut'
         net: str - режим обработки массивов. Варианты: 'convolutional', 'linear'
-        scaler: str - выбор скейлера. Варианты: 'MinMaxScaler', 'TerraImageScaler'
+        scaler: str - тип скейлера. Варианты: 'no_scaler', 'min_max_scaler', 'terra_image_scaler'
     """
     width: PositiveInt
     height: PositiveInt
     image_mode: LayerImageFrameModeChoice = LayerImageFrameModeChoice.stretch
     net: LayerNetChoice = LayerNetChoice.convolutional
     scaler: LayerScalerImageChoice
-
-    def __str__(self):
-
-        attributes = ''
-        for attr in dir(self):
-            if not attr.startswith('_'):
-                attributes += f"{attr} = {getattr(self, attr)}"
-
-        return attributes
 
 
 class ParametersTextData(ParametersBaseData):
@@ -120,7 +111,7 @@ class ParametersAudioData(ParametersBaseData, MinMaxScalerData):
         'spectral_centroid', 'spectral_bandwidth', 'spectral_rolloff', 'zero_crossing_rate'
         resample: str - режим ресемпла аудиофайлов (влияет на скорость обработки файлов).
         Варианты: 'kaiser_best', 'kaiser_fast', 'scipy'
-        scaler: str - выбор скейлера. Варианты: 'no_scaler', 'min_max_scaler', 'standard_scaler'
+        scaler: str - тип скейлера. Варианты: 'no_scaler', 'min_max_scaler', 'standard_scaler'
     """
     sample_rate: PositiveInt = 22050
     audio_mode: LayerAudioModeChoice = LayerAudioModeChoice.completely
@@ -154,7 +145,7 @@ class ParametersVideoData(ParametersBaseData, MinMaxScalerData):
         length: int - \x1B[3mОПЦИОНАЛЬНО при video_mode==length_and_step.\x1B[0m Длина окна выборки (кол-во кадров)
         step: int - \x1B[3mОПЦИОНАЛЬНО при video_mode==length_and_step.\x1B[0m Шаг окна выборки (кол-во кадров)
         fill_mode: str - режим обработки аудиофайлов. Варианты: 'last_frames', 'loop', 'average_value'
-        scaler: str - выбор скейлера. Варианты: 'no_scaler', 'min_max_scaler'
+        scaler: str - тип скейлера. Варианты: 'no_scaler', 'min_max_scaler'
     """
     width: PositiveInt
     height: PositiveInt
@@ -177,6 +168,11 @@ class ParametersVideoData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersScalerData(ParametersBaseData, MinMaxScalerData):
+    """
+    Обработчик числовых значений.
+    Inputs:
+        scaler: str - тип скейлера. Варианты: 'standard_scaler', 'min_max_scaler'
+    """
     scaler: LayerScalerDefaultChoice
     length: int = 0
     depth: int = 0
@@ -193,6 +189,12 @@ class ParametersScalerData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersClassificationData(ParametersBaseData):
+    """
+    Обработчик типа задачи "классификация".
+    Inputs:
+        type_processing: str - режим обработки кадров. Варианты: 'categorical', 'ranges'. По умолчанию: 'categorical'
+        ranges: int - \x1B[3mОПЦИОНАЛЬНО при type_processing==ranges.\x1B[0m Диапазоны разбивки на классы.
+    """
     one_hot_encoding: bool = True
     type_processing: Optional[
         LayerTypeProcessingClassificationChoice
@@ -212,10 +214,22 @@ class ParametersClassificationData(ParametersBaseData):
 
 
 class ParametersRegressionData(ParametersBaseData, MinMaxScalerData):
+    """
+    Обработчик типа задачи "регрессия".
+    Inputs:
+        scaler: str - тип скейлера. Варианты: 'standard_scaler', 'min_max_scaler'
+    """
     scaler: LayerScalerRegressionChoice
 
 
 class ParametersSegmentationData(ParametersBaseData):
+    """
+    Обработчик типа задачи "сегментация".
+    Inputs:
+        mask_range: int - диапазон для каждого из RGB каналов.
+        classes_names: list - названия классов
+        classes_colors: list - цвета классов в формате RGB
+    """
     mask_range: PositiveInt
     classes_names: List[str]
     classes_colors: List[Color]
@@ -230,6 +244,12 @@ class ParametersSegmentationData(ParametersBaseData):
 
 
 class ParametersTextSegmentationData(ParametersBaseData):
+    """
+    Обработчик типа задачи "сегментация текстов".
+    Inputs:
+        open_tags: str - открывающие теги (через пробел)
+        close_tags: str - закрывающие теги (через пробел)
+    """
     open_tags: str
     close_tags: str
 
@@ -255,6 +275,16 @@ class ParametersTextSegmentationData(ParametersBaseData):
 
 
 class ParametersTimeseriesData(ParametersBaseData, MinMaxScalerData):
+    """
+    Обработчик видеофайлов.
+    Inputs:
+        length: int - ***
+        step: int - ***
+        trend: bool - ***
+        trend_limit: bool - \x1B[3mОПЦИОНАЛЬНО при trend==True.\x1B[0m ***
+        depth: int - \x1B[3mОПЦИОНАЛЬНО при ***==***.\x1B[0m ***
+        scaler: str - тип скейлера. Варианты: 'no_scaler', 'standard_scaler', 'min_max_scaler'
+    """
     length: PositiveInt
     step: PositiveInt
     trend: bool

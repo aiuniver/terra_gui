@@ -40,27 +40,41 @@ from pytz import timezone
 
 class CreateDataset(object):
 
-    def __init__(self, cr_data: CreationData):
+    progress_name: str = 'create_dataset'
 
-        creation_data: CreationData = cr_data  # ВРЕМЕННО!!!
+    @progress.threading
+    def __init__(self, creation_data: CreationData):
+
+        progress.pool.reset(name=self.progress_name,
+                            message='Начало',
+                            finished=False)
+
         self.temp_directory: Path = Path(tempfile.mkdtemp())
         os.makedirs(self.temp_directory.joinpath('.'.join([creation_data.alias, DATASET_EXT])), exist_ok=True)
         self.dataset_paths_data: DatasetPathsData = DatasetPathsData(
             basepath=self.temp_directory.joinpath('.'.join([creation_data.alias, DATASET_EXT])))
+        progress.pool(name=self.progress_name, message='Копирование файлов', percent=10)
         copy_tree(str(creation_data.source_path), str(self.dataset_paths_data.sources))
         self.zip_dataset(self.dataset_paths_data.sources, self.temp_directory.joinpath('sources'))
         shutil.move(str(self.temp_directory.joinpath('sources.zip')), self.dataset_paths_data.basepath)
-        #         for key, value in self.dataset_paths_data.__dict__.items():
-        #             if not key == 'basepath':
-        #                 shutil.rmtree(value)
         shutil.rmtree(self.dataset_paths_data.sources)
-        self.write_dataset_configure(creation_data)
+        dataset_data = self.write_dataset_configure(creation_data)
         if creation_data.datasets_path.joinpath('.'.join([creation_data.alias, DATASET_EXT])).is_dir():
+            progress.pool(name=self.progress_name,
+                          message=f"Удаление существующего датасета "
+                                  f"{creation_data.datasets_path.joinpath('.'.join([creation_data.alias, DATASET_EXT]))}",
+                          percent=70)
             shutil.rmtree(creation_data.datasets_path.joinpath('.'.join([creation_data.alias, DATASET_EXT])))
+        progress.pool(name=self.progress_name, message=f"Копирование датасета в {creation_data.datasets_path}",
+                      percent=80)
         shutil.move(str(self.dataset_paths_data.basepath), creation_data.datasets_path)
+        progress.pool(name=self.progress_name, message=f"Удаление временной папки {self.temp_directory}", percent=95)
         shutil.rmtree(self.temp_directory)
-        if creation_data.version:  # Больше сделано для дебаггинга
-            self.version = CreateVersion(version_data=creation_data.version)
+        progress.pool(name=self.progress_name, message='Формирование датасета завершено', data=dataset_data,
+                      percent=100, finished=True)
+
+        # if creation_data.version:  # Больше сделано для дебаггинга
+        #     self.version = CreateVersion(version_data=creation_data.version)
 
     @staticmethod
     def zip_dataset(src, dst):
@@ -86,9 +100,11 @@ class CreateDataset(object):
                 'date': datetime.now().astimezone(timezone("Europe/Moscow")).isoformat(),
                 'architecture': creation_data.task_type,
                 }
-
+        dataset_data = DatasetData(**data)
         with open(os.path.join(self.dataset_paths_data.basepath, DATASET_CONFIG), 'w') as fp:
-            json.dump(DatasetData(**data).native(), fp)
+            json.dump(dataset_data.native(), fp)
+
+        return dataset_data
 
 
 class CreateVersion(object):

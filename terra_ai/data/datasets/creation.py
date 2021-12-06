@@ -385,6 +385,15 @@ class ColumnsProcessingData(BaseMixinData):
 class CreationVersionData(AliasMixinData):
     """
     Полная информация о создании версии датасета
+    Inputs:
+        alias: str - alias версии
+        name: str - название версии
+        datasets_path: pathlib.Path - путь к директории датасетов проекта (./TerraAI/datasets)
+        parent_alias: str - alias датасета, от которого создаётся версия
+        info: CreationInfoData - соотношение обучающей выборки к валидационной, а также его перемешивание
+        use_generator: bool - использовать генератор при обучении. По умолчанию: False
+        inputs: CreationInputsList - входные слои
+        outputs: CreationOutputsList - выходные слои
     """
 
     name: str
@@ -422,10 +431,10 @@ class CreationData(AliasMixinData):
     "Список тегов"
     version: Optional[CreationVersionData]  # Optional больше сделано для дебаггинга
 
-    # @property
-    # def path(self) -> Path:
-    #     return Path(self.datasets_path, f"{self.alias}.{terra_ai_settings.DATASET_EXT}")
-    #
+    @property
+    def path(self) -> Path:
+        return Path(self.datasets_path, f"{self.alias}.{terra_ai_settings.DATASET_EXT}")
+
     # @validator("inputs", "outputs")
     # def _validate_required(cls, value: UniqueListMixin) -> UniqueListMixin:
     #     if not len(value):
