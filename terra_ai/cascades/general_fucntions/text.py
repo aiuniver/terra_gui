@@ -17,8 +17,8 @@ def main(**params):
         open_symbol = open_tags[0][0]
         close_symbol = close_tags[0][-1]
 
-    length = params['length']
-
+    length = params['length'] if params['text_mode'] == "length_and_step" else \
+        params['max_words']
     preprocessing = joblib.load(
         os.path.join(
             params['dataset_path'], 'preprocessing', params["key"].split('_')[0], f'{params["key"]}.gz'
@@ -26,11 +26,14 @@ def main(**params):
     )
 
     def fun(text):
+        if not isinstance(text, str):
+            text = text[params['cols_names']][0]
+
         if open_symbol:
             text = re.sub(open_symbol, f" {open_symbol}", text)
             text = re.sub(close_symbol, f"{close_symbol} ", text)
 
-        text = ' '.join(text_to_word_sequence(text, lower=True, filters=params['filters']))
+        text = ' '.join(text_to_word_sequence(text, lower=True, filters=params['filters'], split=' '))
 
         if open_symbol:
             text = ' '.join([word for word in text.split() if word not in open_tags + close_tags])
@@ -41,11 +44,14 @@ def main(**params):
 
         text = text.split()
         arr = []
-
-        for i in range(0, len(text) - length + params['step'], params['step']):
-            arr.append(text[i: i + length])
-        if len(text) < length:
+        if params['text_mode'] == 'completely':
+            text = text[:params['max_words']]
             arr.append(text)
+        else:
+            for i in range(0, len(text) - length + params['step'], params['step']):
+                arr.append(text[i: i + length])
+            if len(text) < length:
+                arr.append(text)
 
         array = []
 
