@@ -173,7 +173,8 @@ class CascadeValidator:
     @staticmethod
     def _search_block_instead_of_model(cascade_data: CascadeDetailsData):
         for block in cascade_data.blocks:
-            if block.parameters.main.type == BlockServiceTypeChoice.YoloV5:
+            if block.parameters.main.type in [BlockServiceTypeChoice.YoloV5, BlockServiceTypeChoice.GoogleTTS,
+                                              BlockServiceTypeChoice.Wav2Vec, BlockServiceTypeChoice.TinkoffAPI]:
                 type_ = BlocksBindChoice.checked_block(input_block=block.parameters.main.type).data_type
                 return True, type_
         return False, None

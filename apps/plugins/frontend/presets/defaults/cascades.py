@@ -284,7 +284,7 @@ ServiceTypesFields = {
             "value": 100,
         },
     ],
-    BlockServiceTypeChoice.GoogleSTT: [],
+    # BlockServiceTypeChoice.GoogleSTT: [],
     BlockServiceTypeChoice.GoogleTTS: [
         {
             "type": "select",
@@ -301,7 +301,7 @@ ServiceTypesFields = {
         },
     ],
     BlockServiceTypeChoice.Wav2Vec: [],
-    BlockServiceTypeChoice.Google: [],
+    # BlockServiceTypeChoice.Google: [],
     BlockServiceTypeChoice.TinkoffAPI: [
         {
             "type": "text",
@@ -382,9 +382,9 @@ ServiceGroupTypeRel = {
         BlockServiceTypeChoice.DeepSort,
     ],
     BlockServiceGroupChoice.SpeechToText: [
-        BlockServiceTypeChoice.GoogleSTT,
+        # BlockServiceTypeChoice.GoogleSTT,
         BlockServiceTypeChoice.Wav2Vec,
-        BlockServiceTypeChoice.Google,
+        # BlockServiceTypeChoice.Google,
         BlockServiceTypeChoice.TinkoffAPI,
     ],
     BlockServiceGroupChoice.TextToSpeech: [

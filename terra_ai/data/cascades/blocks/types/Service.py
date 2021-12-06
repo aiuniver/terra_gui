@@ -62,14 +62,14 @@ class ParametersMainData(BaseMixinData):
                 "n_init",
                 "nn_budget",
             ]
-        elif _type == BlockServiceTypeChoice.GoogleSTT:
-            _keys += []
+        # elif _type == BlockServiceTypeChoice.GoogleSTT:
+        #     _keys += []
         elif _type == BlockServiceTypeChoice.GoogleTTS:
             _keys += ["language"]
         elif _type == BlockServiceTypeChoice.Wav2Vec:
             _keys += []
-        elif _type == BlockServiceTypeChoice.Google:
-            _keys += []
+        # elif _type == BlockServiceTypeChoice.Google:
+        #     _keys += []
         elif _type == BlockServiceTypeChoice.TinkoffAPI:
             _keys += [
                 "api_key",
@@ -106,14 +106,14 @@ class ParametersMainData(BaseMixinData):
             cls.__fields__["deep_max_age"].required = True
             cls.__fields__["n_init"].required = True
             cls.__fields__["nn_budget"].required = True
-        if value == BlockServiceTypeChoice.GoogleSTT:
-            pass
+        # if value == BlockServiceTypeChoice.GoogleSTT:
+        #     pass
         if value == BlockServiceTypeChoice.GoogleTTS:
             cls.__fields__["language"].required = True
         if value == BlockServiceTypeChoice.Wav2Vec:
             pass
-        if value == BlockServiceTypeChoice.Google:
-            pass
+        # if value == BlockServiceTypeChoice.Google:
+        #     pass
         if value == BlockServiceTypeChoice.TinkoffAPI:
             cls.__fields__["api_key"].required = True
             cls.__fields__["secret_key"].required = True

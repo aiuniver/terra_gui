@@ -143,31 +143,31 @@ def json2model_cascade(path: str):
         output_types.append(type2str(signature(postprocessing).return_annotation))
 
     else:
-        for inp in config['outputs'].keys():
-            if config['outputs'][inp]['task'] not in ['Timeseries', 'TimeseriesTrend']:
-                for inp, param in config['columns'][inp].items():
-                    with open(os.path.join(dataset_data_path, "instructions", "parameters", inp + '.json')) as cfg:
+        for out in config['outputs'].keys():
+            if config['outputs'][out]['task'] not in ['Timeseries', 'TimeseriesTrend']:
+                for key, cur_param in config['columns'][out].items():
+                    with open(os.path.join(dataset_data_path, "instructions", "parameters", key + '.json')) as cfg:
                         spec_config = json.load(cfg)
 
-                    param.update(spec_config)
+                    cur_param.update(spec_config)
                     try:
-                        task = decamelize(param['task'])
+                        task = decamelize(cur_param['task'])
                         type_module = getattr(general_fucntions, task)
-                        postprocessing.append(getattr(type_module, 'main')(**param,
+                        postprocessing.append(getattr(type_module, 'main')(**cur_param,
                                                                            dataset_path=dataset_data_path,
-                                                                           key=inp))
+                                                                           key=key))
                         output_types.append(task)
                     except:
                         postprocessing.append(None)
             else:
                 param = {}
-                for key, cur_param in config['columns'][inp].items():
+                for key, cur_param in config['columns'][out].items():
                     param[key] = cur_param
                     with open(os.path.join(dataset_data_path, "instructions", "parameters", key + '.json')) as cfg:
                         param[key].update(json.load(cfg))
                 param = {'columns': param, 'dataset_path': dataset_data_path,
-                         'shape': config['outputs'][inp]['shape']}
-                task = decamelize(config['outputs'][inp]['task'])
+                         'shape': config['outputs'][out]['shape']}
+                task = decamelize(config['outputs'][out]['task'])
                 type_module = getattr(general_fucntions, task)
                 postprocessing.append(getattr(type_module, 'main')(**param))
                 output_types.append(task)

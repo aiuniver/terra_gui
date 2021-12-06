@@ -10,7 +10,10 @@ from mutagen import mp3
 import hmac
 
 
-def wav2vec2_large_russian(**nothing):
+def Wav2Vec(**nothing):
+    """
+    wav2vec2_large_russian
+    """
     processor = Wav2Vec2Processor.from_pretrained("jonatasgrosman/wav2vec2-large-xlsr-53-russian")
     model = Wav2Vec2ForCTC.from_pretrained("jonatasgrosman/wav2vec2-large-xlsr-53-russian")
 
@@ -39,20 +42,20 @@ class _SpeechToTextStub(object):
             channel: A grpc.Channel.
         """
         self.Recognize = channel.unary_unary(
-                '/tinkoff.cloud.stt.v1.SpeechToText/Recognize',
-                request_serializer=stt_pb2.RecognizeRequest.SerializeToString,
-                response_deserializer=stt_pb2.RecognizeResponse.FromString,
-                )
+            '/tinkoff.cloud.stt.v1.SpeechToText/Recognize',
+            request_serializer=stt_pb2.RecognizeRequest.SerializeToString,
+            response_deserializer=stt_pb2.RecognizeResponse.FromString,
+        )
         self.StreamingRecognize = channel.stream_stream(
-                '/tinkoff.cloud.stt.v1.SpeechToText/StreamingRecognize',
-                request_serializer=stt_pb2.StreamingRecognizeRequest.SerializeToString,
-                response_deserializer=stt_pb2.StreamingRecognizeResponse.FromString,
-                )
+            '/tinkoff.cloud.stt.v1.SpeechToText/StreamingRecognize',
+            request_serializer=stt_pb2.StreamingRecognizeRequest.SerializeToString,
+            response_deserializer=stt_pb2.StreamingRecognizeResponse.FromString,
+        )
         self.LongRunningRecognize = channel.unary_unary(
-                '/tinkoff.cloud.stt.v1.SpeechToText/LongRunningRecognize',
-                request_serializer=stt_pb2.LongRunningRecognizeRequest.SerializeToString,
-                response_deserializer=stt_pb2.Operation.FromString,
-                )
+            '/tinkoff.cloud.stt.v1.SpeechToText/LongRunningRecognize',
+            request_serializer=stt_pb2.LongRunningRecognizeRequest.SerializeToString,
+            response_deserializer=stt_pb2.Operation.FromString,
+        )
 
 
 def _generate_jwt(api_key, secret_key, payload, expiration_time=6000):
@@ -109,9 +112,9 @@ def _build_request(path: str, max_alternatives: int, do_not_perform_vad: bool, p
     return request
 
 
-def tinkoff_api(api_key: str, secret_key: str, max_alternatives: int = 3, do_not_perform_vad: bool = True,
-            profanity_filter: bool = True, enable_automatic_punctuation: bool = True,
-                expiration_time: int = int(6e4), endpoint: str = 'stt.tinkoff.ru:443'):
+def TinkoffAPI(api_key: str, secret_key: str, max_alternatives: int = 3, do_not_perform_vad: bool = True,
+               profanity_filter: bool = True, enable_automatic_punctuation: bool = True,
+               expiration_time: int = int(6e4), endpoint: str = 'stt.tinkoff.ru:443'):
     stub = _SpeechToTextStub(grpc.secure_channel(endpoint, grpc.ssl_channel_credentials()))
     metadata = _authorization_metadata(api_key, secret_key, "tinkoff.cloud.stt", expiration_time)
 

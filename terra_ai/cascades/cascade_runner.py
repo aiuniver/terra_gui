@@ -174,6 +174,8 @@ class CascadeRunner:
                         key: val for key, val in block.parameters.main.native().items()
                         if key in block_parameters
                     }
+                    if "model_path" in parameters.keys() and not parameters.get("model_path"):
+                        parameters["model_path"] = "terra_ai/assets/cascades/ckpt.t7"
                 else:
                     parameters = {
                         key: val for key, val in block.parameters.main.native().items()
