@@ -196,7 +196,7 @@ def _choice_from_terra(
         progress.pool(progress_name, finished=True, error=error)
 
 
-def _choice_from_customs(
+def _choice_from_custom(
     progress_name: str,
     destination: Path,
     name: str,
