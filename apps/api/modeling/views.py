@@ -9,17 +9,21 @@ from terra_ai.agent import agent_exchange
 from terra_ai.data.modeling.extra import LayerGroupChoice
 from terra_ai.data.modeling.model import ModelDetailsData
 
-from apps.api import utils
-from apps.api.base import BaseAPIView, BaseResponseSuccess, BaseResponseErrorFields
-
-from . import serializers
+from apps.api import decorators
+from apps.api.utils import autocrop_image_square
+from apps.api.base import BaseAPIView, BaseResponseSuccess
+from apps.api.modeling.serializers import (
+    ModelGetSerializer,
+    UpdateSerializer,
+    PreviewSerializer,
+    CreateSerializer,
+    DatatypeSerializer,
+)
 
 
 class GetAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        serializer = serializers.ModelGetSerializer(data=request.data)
-        if not serializer.is_valid():
-            return BaseResponseErrorFields(serializer.errors)
+    @decorators.serialize_data(ModelGetSerializer)
+    def post(self, request, serializer, **kwargs):
         model = agent_exchange(
             "model_get", value=serializer.validated_data.get("value")
         )
@@ -27,10 +31,8 @@ class GetAPIView(BaseAPIView):
 
 
 class LoadAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        serializer = serializers.ModelGetSerializer(data=request.data)
-        if not serializer.is_valid():
-            return BaseResponseErrorFields(serializer.errors)
+    @decorators.serialize_data(ModelGetSerializer)
+    def post(self, request, serializer, **kwargs):
         model = agent_exchange(
             "model_get", value=serializer.validated_data.get("value")
         )
@@ -52,10 +54,8 @@ class ClearAPIView(BaseAPIView):
 
 
 class UpdateAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        serializer = serializers.UpdateSerializer(data=request.data)
-        if not serializer.is_valid():
-            return BaseResponseErrorFields(serializer.errors)
+    @decorators.serialize_data(UpdateSerializer)
+    def post(self, request, serializer, **kwargs):
         model = request.project.model
         data = serializer.validated_data
         for item in data.get("layers"):
@@ -102,23 +102,19 @@ class ValidateAPIView(BaseAPIView):
 
 
 class PreviewAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        serializer = serializers.PreviewSerializer(data=request.data)
-        if not serializer.is_valid():
-            return BaseResponseErrorFields(serializer.errors)
-        filepath = NamedTemporaryFile(suffix=".png")  # Add for Win ,delete=False
+    @decorators.serialize_data(PreviewSerializer)
+    def post(self, request, serializer, **kwargs):
+        filepath = NamedTemporaryFile(suffix=".png")
         filepath.write(base64.b64decode(serializer.validated_data.get("preview")))
-        utils.autocrop_image_square(filepath.name, min_size=600)
+        autocrop_image_square(filepath.name, min_size=600)
         with open(filepath.name, "rb") as filepath_ref:
             content = filepath_ref.read()
             return BaseResponseSuccess(base64.b64encode(content))
 
 
 class CreateAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        serializer = serializers.CreateSerializer(data=request.data)
-        if not serializer.is_valid():
-            return BaseResponseErrorFields(serializer.errors)
+    @decorators.serialize_data(CreateSerializer)
+    def post(self, request, serializer, **kwargs):
         model_data = request.project.model.native()
         model_data.update(
             {
@@ -133,7 +129,7 @@ class CreateAPIView(BaseAPIView):
         )
         model = ModelDetailsData(**model_data)
         return BaseResponseSuccess(
-            data=agent_exchange(
+            agent_exchange(
                 "model_create",
                 model=model.native(),
                 path=str(TERRA_PATH.modeling),
@@ -149,10 +145,8 @@ class DeleteAPIView(BaseAPIView):
 
 
 class DatatypeAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        serializer = serializers.DatatypeSerializer(data=request.data)
-        if not serializer.is_valid():
-            return BaseResponseErrorFields(serializer.errors)
+    @decorators.serialize_data(DatatypeSerializer)
+    def post(self, request, serializer, **kwargs):
         source_id = serializer.validated_data.get("source")
         target_id = serializer.validated_data.get("target")
         if source_id != target_id:

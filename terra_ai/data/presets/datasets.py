@@ -1,8 +1,5 @@
-"""
-Предустановки датасетов
-"""
-
 from enum import Enum
+
 from terra_ai.data.datasets.extra import (
     DatasetGroupChoice,
     LayerInputTypeChoice,

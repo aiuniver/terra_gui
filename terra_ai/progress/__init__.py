@@ -17,8 +17,8 @@ def threading(method):
 class ProgressData(BaseMixinData):
     percent: ConstrainedFloatValueGe0Le100 = 0
     message: str = ""
-    error: str = ""
     finished: bool = True
+    error: Any
     data: Any
 
     @property

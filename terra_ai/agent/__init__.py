@@ -1,7 +1,6 @@
 import os
 import json
 import shutil
-
 import pynvml
 import tensorflow
 
@@ -10,9 +9,8 @@ from typing import Any, Dict, List
 
 from . import exceptions as agent_exceptions
 from . import utils as agent_utils
-from .. import settings, progress
+from .. import settings
 from ..cascades.cascade_validator import CascadeValidator
-from ..exceptions import tensor_flow as tf_exceptions
 from ..data.datasets.creation import FilePathSourcesList
 from ..data.datasets.creation import SourceData, CreationData
 from ..data.datasets.dataset import (
@@ -22,11 +20,7 @@ from ..data.datasets.dataset import (
     DatasetLoadData,
 )
 from ..data.datasets.extra import DatasetGroupChoice
-from ..data.extra import (
-    HardwareAcceleratorData,
-    HardwareAcceleratorChoice,
-    FileManagerItem,
-)
+from ..data.extra import HardwareAcceleratorData, HardwareAcceleratorChoice
 from ..cascades.cascade_runner import CascadeRunner
 from ..data.modeling.extra import ModelGroupChoice
 from ..data.modeling.model import ModelsGroupsList, ModelLoadData, ModelDetailsData
@@ -37,7 +31,7 @@ from ..data.projects.project import ProjectsInfoData, ProjectsList
 from ..data.training.train import TrainingDetailsData
 from ..data.training.extra import StateStatusChoice
 from ..data.cascades.extra import BlockGroupChoice
-from ..data.deploy.tasks import DeployData, DeployPageData
+from ..data.deploy.tasks import DeployPageData
 from ..datasets import loading as datasets_loading
 from ..datasets import utils as datasets_utils
 from ..datasets.creating import CreateDataset
@@ -46,6 +40,7 @@ from ..modeling.validator import ModelValidator
 from ..training import training_obj
 from ..training.training import interactive
 from ..project import loading as project_loading
+from ..exceptions.datasets import DatasetCanNotBeDeletedException
 
 
 class Exchange:
@@ -67,27 +62,7 @@ class Exchange:
             )
 
         # Вызываем метод
-        try:
-            return __method(**kwargs)
-        except tensorflow.errors.OpError as error:
-            err_msg = str(
-                getattr(
-                    tf_exceptions, error.__class__.__name__, tf_exceptions.UnknownError
-                )(error.message)
-            )
-            raise getattr(
-                agent_utils.ExceptionClasses,
-                method,
-                agent_utils.ExceptionClasses.unknown,
-            ).value(err_msg)
-        except agent_exceptions.ExchangeBaseException as error:
-            raise error
-        except Exception as error:
-            raise getattr(
-                agent_utils.ExceptionClasses,
-                method,
-                agent_utils.ExceptionClasses.unknown,
-            ).value(str(error))
+        return __method(**kwargs)
 
     @property
     def is_colab(self) -> bool:
@@ -131,41 +106,6 @@ class Exchange:
         """
         project_loading.load(Path(dataset_path), Path(source), Path(target))
 
-    def _call_project_load_progress(self) -> progress.ProgressData:
-        """
-        Прогресс загрузки проекта
-        """
-        return progress.pool(project_loading.PROJECT_LOAD_NAME)
-
-    def _call_dataset_choice(
-        self, custom_path: Path, group: str, alias: str, reset_model: bool = False
-    ):
-        """
-        Выбор датасета
-        """
-        datasets_loading.choice(
-            "dataset_choice",
-            DatasetLoadData(path=custom_path, group=group, alias=alias),
-            reset_model=reset_model,
-        )
-
-    def _call_dataset_choice_progress(self) -> progress.ProgressData:
-        """
-        Прогресс выбора датасета
-        """
-        return progress.pool("dataset_choice")
-
-    def _call_dataset_delete(self, path: str, group: str, alias: str):
-        """
-        Удаление датасета
-        """
-        if group == DatasetGroupChoice.custom:
-            shutil.rmtree(
-                Path(path, f"{alias}.{settings.DATASET_EXT}"), ignore_errors=True
-            )
-        else:
-            raise agent_exceptions.DatasetCanNotBeDeletedException(alias, group)
-
     def _call_datasets_info(self, path: Path) -> DatasetsGroupsList:
         """
         Получение данных для страницы датасетов: датасеты и теги
@@ -182,27 +122,35 @@ class Exchange:
                     pass
         return info
 
+    def _call_dataset_choice(
+        self, custom_path: Path, group: str, alias: str, reset_model: bool = False
+    ):
+        """
+        Выбор датасета
+        """
+        datasets_loading.choice(
+            "dataset_choice",
+            DatasetLoadData(path=custom_path, group=group, alias=alias),
+            reset_model=reset_model,
+        )
+
+    def _call_datasets_sources(self, path: str) -> FilePathSourcesList:
+        """
+        Получение списка исходников датасетов
+        """
+        files = FilePathSourcesList()
+        for filename in os.listdir(path):
+            if filename.endswith(".zip"):
+                filepath = Path(path, filename)
+                files.append({"value": filepath})
+        files.sort(key=lambda item: item.label)
+        return files
+
     def _call_dataset_source_load(self, mode: str, value: str):
         """
         Загрузка исходников датасета
         """
         datasets_loading.source(SourceData(mode=mode, value=value))
-
-    def _call_dataset_source_load_progress(self) -> progress.ProgressData:
-        """
-        Прогресс загрузки исходников датасета
-        """
-        progress_data = progress.pool("dataset_source_load")
-        if progress_data.finished and progress_data.data:
-            __path = progress_data.data.absolute()
-            file_manager = FileManagerItem(path=__path).native().get("children")
-            progress_data.data = {
-                "file_manager": file_manager,
-                "source_path": __path,
-            }
-        else:
-            progress.data = []
-        return progress_data
 
     def _call_dataset_source_segmentation_classes_auto_search(
         self, path: Path, num_classes: int, mask_range: int
@@ -226,23 +174,16 @@ class Exchange:
         """
         CreateDataset(creation_data)
 
-    def _call_dataset_create_progress(self) -> progress.ProgressData:
+    def _call_dataset_delete(self, path: str, group: str, alias: str):
         """
-        Прогресс создание датасета из исходников
+        Удаление датасета
         """
-        return progress.pool("create_dataset")
-
-    def _call_datasets_sources(self, path: str) -> FilePathSourcesList:
-        """
-        Получение списка исходников датасетов
-        """
-        files = FilePathSourcesList()
-        for filename in os.listdir(path):
-            if filename.endswith(".zip"):
-                filepath = Path(path, filename)
-                files.append({"value": filepath})
-        files.sort(key=lambda item: item.label)
-        return files
+        if group == DatasetGroupChoice.custom:
+            shutil.rmtree(
+                Path(path, f"{alias}.{settings.DATASET_EXT}"), ignore_errors=True
+            )
+        else:
+            raise DatasetCanNotBeDeletedException(alias, group)
 
     def _call_models(self, path: str) -> ModelsGroupsList:
         """
@@ -327,10 +268,7 @@ class Exchange:
         """
         Обновление интерактивных параметров обучения
         """
-        if training.state.status not in [
-            # StateStatusChoice.stopped,
-            StateStatusChoice.no_train,
-        ]:
+        if training.state.status not in (StateStatusChoice.no_train,):
             interactive.get_train_results()
 
     def _call_training_kill(self, training: TrainingDetailsData):
@@ -338,12 +276,6 @@ class Exchange:
         Удаление незавершенного обучения
         """
         training.state.set("kill")
-
-    def _call_training_progress(self) -> progress.ProgressData:
-        """
-        Прогресс обучения
-        """
-        return progress.pool("training")
 
     def _call_training_save(self):
         """
@@ -418,12 +350,6 @@ class Exchange:
                     )
         datasets_loading.multiload("cascade_start", datasets, sources=sources)
 
-    def _call_cascade_start_progress(self) -> progress.ProgressData:
-        """
-        Процесс запуска каскада
-        """
-        return progress.pool("cascade_start")
-
     def _call_cascade_execute(
         self, sources: Dict[int, List[str]], cascade: CascadeDetailsData, training_path
     ):
@@ -440,12 +366,6 @@ class Exchange:
         """
         datasets_loading.multiload("deploy_get", datasets, page=page)
 
-    def _call_deploy_get_progress(self) -> progress.ProgressData:
-        """
-        Прогресс получения данных для отображения пресетов на странице деплоя
-        """
-        return progress.pool("deploy_get")
-
     def _call_deploy_cascades_create(self, training_path: str, model_name: str):
         pass
 
@@ -454,12 +374,6 @@ class Exchange:
         Деплой: загрузка
         """
         deploy_loading.upload(source, kwargs)
-
-    def _call_deploy_upload_progress(self) -> progress.ProgressData:
-        """
-        Деплой: прогресс загрузки
-        """
-        return progress.pool("deploy_upload")
 
 
 agent_exchange = Exchange()

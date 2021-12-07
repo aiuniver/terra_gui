@@ -1,24 +1,31 @@
-import shutil
+from pathlib import Path
 
 from terra_ai.settings import TERRA_PATH
 from terra_ai.agent import agent_exchange
+from terra_ai.data.extra import FileManagerItem
 from terra_ai.data.datasets.creation import CreationData
 
-from apps.api.base import (
-    BaseAPIView,
-    BaseResponseSuccess,
-    BaseResponseErrorFields,
-    BaseResponseErrorGeneral,
+from apps.api import decorators
+from apps.api.base import BaseAPIView, BaseResponseSuccess
+from apps.api.datasets.serializers import (
+    ChoiceSerializer,
+    SourceLoadSerializer,
+    SourceSegmentationClassesAutosearchSerializer,
+    CreateSerializer,
+    DeleteSerializer,
 )
-from . import serializers
+
+
+class InfoAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        return BaseResponseSuccess(
+            agent_exchange("datasets_info", path=TERRA_PATH.datasets).native()
+        )
 
 
 class ChoiceAPIView(BaseAPIView):
-    @staticmethod
-    def post(request, **kwargs):
-        serializer = serializers.ChoiceSerializer(data=request.data)
-        if not serializer.is_valid():
-            return BaseResponseErrorFields(serializer.errors)
+    @decorators.serialize_data(ChoiceSerializer)
+    def post(self, request, serializer, **kwargs):
         agent_exchange(
             "dataset_choice",
             custom_path=TERRA_PATH.datasets,
@@ -28,54 +35,44 @@ class ChoiceAPIView(BaseAPIView):
 
 
 class ChoiceProgressAPIView(BaseAPIView):
-    @staticmethod
-    def post(request, **kwargs):
-        progress = agent_exchange("dataset_choice_progress")
+    @decorators.progress_error("dataset_choice")
+    def post(self, request, progress, **kwargs):
         if progress.finished and progress.data and progress.data.get("info"):
             request.project.set_dataset(**progress.data)
             progress.data = request.project.dataset.native()
-        if progress.success:
-            return BaseResponseSuccess(data=progress.native())
-        else:
-            return BaseResponseErrorGeneral(progress.error, data=progress.native())
+        return BaseResponseSuccess(progress.native())
 
 
-class InfoAPIView(BaseAPIView):
-    @staticmethod
-    def post(request, **kwargs):
+class SourcesAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
         return BaseResponseSuccess(
-            agent_exchange("datasets_info", path=TERRA_PATH.datasets).native()
+            agent_exchange("datasets_sources", path=str(TERRA_PATH.sources)).native()
         )
 
 
 class SourceLoadAPIView(BaseAPIView):
-    @staticmethod
-    def post(request, **kwargs):
-        serializer = serializers.SourceLoadSerializer(data=request.data)
-        if not serializer.is_valid():
-            return BaseResponseErrorFields(serializer.errors)
+    @decorators.serialize_data(SourceLoadSerializer)
+    def post(self, request, serializer, **kwargs):
         agent_exchange("dataset_source_load", **serializer.validated_data)
         return BaseResponseSuccess()
 
 
 class SourceLoadProgressAPIView(BaseAPIView):
-    @staticmethod
-    def post(request, **kwargs):
-        progress = agent_exchange("dataset_source_load_progress")
-        if progress.success:
-            return BaseResponseSuccess(data=progress.native())
-        else:
-            return BaseResponseErrorGeneral(progress.error, data=progress.native())
+    @decorators.progress_error("dataset_source_load")
+    def post(self, request, progress, **kwargs):
+        if progress.finished and progress.data:
+            source_path = Path(progress.data).absolute()
+            file_manager = FileManagerItem(path=source_path).native().get("children")
+            progress.data = {
+                "file_manager": file_manager,
+                "source_path": source_path,
+            }
+        return BaseResponseSuccess(progress.native())
 
 
 class SourceSegmentationClassesAutoSearchAPIView(BaseAPIView):
-    @staticmethod
-    def post(request, **kwargs):
-        serializer = serializers.SourceSegmentationClassesAutosearchSerializer(
-            data=request.data
-        )
-        if not serializer.is_valid():
-            return BaseResponseErrorFields(serializer.errors)
+    @decorators.serialize_data(SourceSegmentationClassesAutosearchSerializer)
+    def post(self, request, serializer, **kwargs):
         return BaseResponseSuccess(
             agent_exchange(
                 "dataset_source_segmentation_classes_auto_search",
@@ -86,8 +83,7 @@ class SourceSegmentationClassesAutoSearchAPIView(BaseAPIView):
 
 
 class SourceSegmentationClassesAnnotationAPIView(BaseAPIView):
-    @staticmethod
-    def post(request, **kwargs):
+    def post(self, request, **kwargs):
         return BaseResponseSuccess(
             agent_exchange(
                 "dataset_source_segmentation_classes_annotation",
@@ -97,48 +93,26 @@ class SourceSegmentationClassesAnnotationAPIView(BaseAPIView):
 
 
 class CreateAPIView(BaseAPIView):
-    @staticmethod
-    def post(request, **kwargs):
-        serializer = serializers.CreateSerializer(data=request.data)
-        if not serializer.is_valid():
-            return BaseResponseErrorFields(serializer.errors)
+    @decorators.serialize_data(CreateSerializer)
+    def post(self, request, serializer, **kwargs):
         data = CreationData(**serializer.data)
         agent_exchange("dataset_create", creation_data=data)
         return BaseResponseSuccess()
 
 
 class CreateProgressAPIView(BaseAPIView):
-    @staticmethod
-    def post(request, **kwargs):
-        progress = agent_exchange("dataset_create_progress")
-        if progress.success:
-            return BaseResponseSuccess(progress.native())
-        else:
-            shutil.rmtree(progress.data.get("path"), ignore_errors=True)
-            return BaseResponseErrorGeneral(progress.error, data=progress.native())
-
-
-class SourcesAPIView(BaseAPIView):
-    @staticmethod
-    def post(request, **kwargs):
-        return BaseResponseSuccess(
-            agent_exchange("datasets_sources", path=str(TERRA_PATH.sources)).native()
-        )
+    @decorators.progress_error("create_dataset")
+    def post(self, request, progress, **kwargs):
+        return BaseResponseSuccess(progress.native())
 
 
 class DeleteAPIView(BaseAPIView):
-    @staticmethod
-    def post(request, **kwargs):
-        serializer = serializers.DeleteSerializer(data=request.data)
-        if not serializer.is_valid():
-            return BaseResponseErrorFields(serializer.errors)
-        agent_exchange(
-            "dataset_delete",
-            path=str(TERRA_PATH.datasets),
-            **serializer.validated_data,
-        )
+    @decorators.serialize_data(DeleteSerializer)
+    def post(self, request, serializer, **kwargs):
+        data = serializer.validated_data
+        agent_exchange("dataset_delete", path=str(TERRA_PATH.datasets), **data)
         if request.project.dataset and (
-            request.project.dataset.alias == serializer.validated_data.get("alias")
+            request.project.dataset.alias == data.get("alias")
         ):
             request.project.clear_dataset()
         return BaseResponseSuccess()

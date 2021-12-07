@@ -12,21 +12,18 @@ from terra_ai.data.datasets.dataset import DatasetInfo, DatasetLoadData
 from terra_ai.data.deploy.tasks import DeployPageData
 from terra_ai.data.deploy.extra import DeployTypePageChoice
 
-from apps.api.base import (
-    BaseAPIView,
-    BaseResponseSuccess,
-    BaseResponseErrorFields,
-    BaseResponseErrorGeneral,
+from apps.api import decorators
+from apps.api.base import BaseAPIView, BaseResponseSuccess
+from apps.api.deploy.serializers import (
+    GetSerializer,
+    ReloadSerializer,
+    UploadSerializer,
 )
-
-from . import serializers
 
 
 class GetAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        serializer = serializers.GetSerializer(data=request.data)
-        if not serializer.is_valid():
-            return BaseResponseErrorFields(serializer.errors)
+    @decorators.serialize_data(GetSerializer)
+    def post(self, request, serializer, **kwargs):
         page = DeployPageData(**serializer.validated_data)
         datasets = []
         if page.type == DeployTypePageChoice.model:
@@ -45,8 +42,8 @@ class GetAPIView(BaseAPIView):
 
 
 class GetProgressAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        progress = agent_exchange("deploy_get_progress")
+    @decorators.progress_error("deploy_get")
+    def post(self, request, progress, **kwargs):
         if progress.success:
             if progress.finished:
                 progress.percent = 0
@@ -61,16 +58,12 @@ class GetProgressAPIView(BaseAPIView):
                     page=progress.data.get("kwargs", {}).get("page").native(),
                 )
                 progress.data = request.project.deploy.presets
-            return BaseResponseSuccess(data=progress.native())
-        else:
-            return BaseResponseErrorGeneral(progress.error, data=progress.native())
+        return BaseResponseSuccess(progress.native())
 
 
 class ReloadAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        serializer = serializers.ReloadSerializer(data=request.data)
-        if not serializer.is_valid():
-            return BaseResponseErrorFields(serializer.errors)
+    @decorators.serialize_data(ReloadSerializer)
+    def post(self, request, serializer, **kwargs):
         if request.project.deploy:
             request.project.deploy.data.reload(serializer.validated_data)
         request.project.save_config()
@@ -78,10 +71,8 @@ class ReloadAPIView(BaseAPIView):
 
 
 class UploadAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        serializer = serializers.UploadSerializer(data=request.data)
-        if not serializer.is_valid():
-            return BaseResponseErrorFields(serializer.errors)
+    @decorators.serialize_data(UploadSerializer)
+    def post(self, request, serializer, **kwargs):
         sec = serializer.validated_data.get("sec")
         agent_exchange(
             "deploy_upload",
@@ -107,9 +98,6 @@ class UploadAPIView(BaseAPIView):
 
 
 class UploadProgressAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        progress = agent_exchange("deploy_upload_progress")
-        if progress.success:
-            return BaseResponseSuccess(data=progress.native())
-        else:
-            return BaseResponseErrorGeneral(progress.error, data=progress.native())
+    @decorators.progress_error("deploy_upload")
+    def post(self, request, progress, **kwargs):
+        return BaseResponseSuccess(progress.native())
