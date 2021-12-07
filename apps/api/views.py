@@ -1,19 +1,29 @@
 import json
 
 from django.conf import settings
+from rest_framework.exceptions import APIException
 
 from apps.plugins.frontend import defaults_data
-
-from . import base
-
-
-class NotFoundAPIView(base.BaseAPIView):
-    pass
+from apps.api.base import BaseAPIView, BaseResponseSuccess
 
 
-class ConfigAPIView(base.BaseAPIView):
+class NotFoundAPIView(BaseAPIView):
+    def dispatch(self, request, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+        request = self.initialize_request(request, *args, **kwargs)
+        self.request = request
+        self.headers = self.default_response_headers
+        response = self.handle_exception(
+            APIException(f"API-метод {request.path} не найден")
+        )
+        self.response = self.finalize_response(request, response, *args, **kwargs)
+        return self.response
+
+
+class ConfigAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        return base.BaseResponseSuccess(
+        return BaseResponseSuccess(
             {
                 "defaults": json.loads(defaults_data.json()),
                 "project": json.loads(request.project.frontend()),

@@ -3,11 +3,10 @@ from pydantic import BaseModel
 from terra_ai.agent import agent_exchange
 from terra_ai.data.training.extra import StateStatusChoice
 
+from apps.api import decorators
+from apps.api.base import BaseAPIView, BaseResponseSuccess
+from apps.api.training.serializers import SaveSerializer
 from apps.plugins.frontend import defaults_data
-
-from apps.api.base import BaseAPIView, BaseResponseSuccess, BaseResponseErrorFields
-
-from . import serializers
 
 
 class TrainingResponseData(BaseModel):
@@ -91,8 +90,8 @@ class InteractiveAPIView(BaseAPIView):
 
 
 class ProgressAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        progress = agent_exchange("training_progress")
+    @decorators.progress_error("training")
+    def post(self, request, progress, **kwargs):
         if progress.finished and progress.percent == 100:
             progress.percent = 0
         request.project.training.progress = progress.native()
@@ -106,10 +105,8 @@ class ProgressAPIView(BaseAPIView):
 
 
 class SaveAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        serializer = serializers.SaveSerializer(data=request.data)
-        if not serializer.is_valid():
-            return BaseResponseErrorFields(serializer.errors)
+    @decorators.serialize_data(SaveSerializer)
+    def post(self, request, serializer, **kwargs):
         request.project.training.save(**serializer.validated_data)
         defaults_data.update_models(request.project.trainings)
         return BaseResponseSuccess()

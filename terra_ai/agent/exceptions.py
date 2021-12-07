@@ -38,21 +38,9 @@ class ExceptionMessages(dict, Enum):
         "eng": "Error when loading project. %s",
     }
     # Dataset
-    FailedChoiceDataset = {
-        "ru": "Не удалось выбрать датасет. %s",
-        "eng": "Error when choosing dataset: %s",
-    }
     FailedDeleteDataset = {
         "ru": "Не удалось удалить датасет. %s",
         "eng": "Dataset could not be deleted: %s",
-    }
-    DatasetCanNotBeDeleted = {
-        "ru": "Датасет `%s` из группы `%s` нельзя удалить",
-        "eng": "The dataset `%s` cannot be deleted from the group `%s`",
-    }
-    FailedGetProgressDatasetChoice = {
-        "ru": "Не удалось получить прогресс выбора датасета. %s",
-        "eng": "Could not get the progress of the dataset choice: %s",
     }
     FailedGetDatasetsInfo = {
         "ru": "Не удалось получить информацию о датасетах. %s",
@@ -217,19 +205,9 @@ class ProjectNotFoundException(ExchangeBaseException):
 # Dataset exceptions
 
 
-class FailedChoiceDatasetException(ExchangeBaseException):
-    class Meta:
-        message = ExceptionMessages.FailedChoiceDataset
-
-
 class FailedDeleteDatasetException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.FailedDeleteDataset
-
-
-class FailedGetProgressDatasetChoiceException(ExchangeBaseException):
-    class Meta:
-        message = ExceptionMessages.FailedGetProgressDatasetChoice
 
 
 class FailedGetDatasetsInfoException(ExchangeBaseException):
@@ -250,14 +228,6 @@ class FailedLoadProgressDatasetsSource(ExchangeBaseException):
 class FailedGetDatasetsSourcesException(ExchangeBaseException):
     class Meta:
         message = ExceptionMessages.FailedGetDatasetsSources
-
-
-class DatasetCanNotBeDeletedException(ExchangeBaseException):
-    class Meta:
-        message = ExceptionMessages.DatasetCanNotBeDeleted
-
-    def __init__(self, __dataset: str, __group: str, **kwargs):
-        super().__init__(str(__dataset), str(__group), **kwargs)
 
 
 class FailedCreateDatasetException(ExchangeBaseException):
