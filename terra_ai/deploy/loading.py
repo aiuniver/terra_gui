@@ -9,7 +9,7 @@ from django.conf import settings as django_settings
 
 from .. import progress, settings
 from ..data.deploy.stages import StageUploadData, StageCompleteData, StageResponseData
-from ..exceptions.deploy import RequestAPIException, RsyncException
+from ..exceptions.deploy import RequestAPIException
 
 from ..progress import utils as progress_utils
 
@@ -93,4 +93,4 @@ def upload(source: Path, data: dict):
             os.remove(destination)
             raise RequestAPIException()
     except Exception as error:
-        progress.pool(progress_name, error=str(RsyncException(str(error))))
+        progress.pool(progress_name, finished=True, error=error)

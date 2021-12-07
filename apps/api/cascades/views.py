@@ -7,7 +7,9 @@ from terra_ai.agent import agent_exchange
 from terra_ai.data.datasets.dataset import DatasetInfo
 from terra_ai.data.cascades.extra import BlockGroupChoice
 
-from apps.api import utils
+from apps.api import decorators
+from apps.api.utils import autocrop_image_square
+from apps.api.base import BaseAPIView, BaseResponseSuccess
 from apps.api.cascades.serializers import (
     CascadeGetSerializer,
     UpdateSerializer,
@@ -16,18 +18,10 @@ from apps.api.cascades.serializers import (
     SaveSerializer,
 )
 
-from ..base import (
-    BaseAPIView,
-    BaseResponseSuccess,
-    BaseResponseErrorFields,
-)
-
 
 class GetAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        serializer = CascadeGetSerializer(data=request.data)
-        if not serializer.is_valid():
-            return BaseResponseErrorFields(serializer.errors)
+    @decorators.serialize_data(CascadeGetSerializer)
+    def post(self, request, serializer, **kwargs):
         cascade = agent_exchange(
             "cascade_get", value=serializer.validated_data.get("value")
         )
@@ -42,10 +36,8 @@ class InfoAPIView(BaseAPIView):
 
 
 class LoadAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        serializer = CascadeGetSerializer(data=request.data)
-        if not serializer.is_valid():
-            return BaseResponseErrorFields(serializer.errors)
+    @decorators.serialize_data(CascadeGetSerializer)
+    def post(self, request, serializer, **kwargs):
         request.project.cascade = agent_exchange(
             "cascade_get", value=serializer.validated_data.get("value")
         )
@@ -53,10 +45,8 @@ class LoadAPIView(BaseAPIView):
 
 
 class UpdateAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        serializer = UpdateSerializer(data=request.data)
-        if not serializer.is_valid():
-            return BaseResponseErrorFields(serializer.errors)
+    @decorators.serialize_data(UpdateSerializer)
+    def post(self, request, serializer, **kwargs):
         cascade = request.project.cascade
         data = serializer.validated_data
         cascade_data = cascade.native()
@@ -84,10 +74,8 @@ class ValidateAPIView(BaseAPIView):
 
 
 class StartAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        serializer = StartSerializer(data={"sources": request.data})
-        if not serializer.is_valid():
-            return BaseResponseErrorFields(serializer.errors)
+    @decorators.serialize_data(StartSerializer)
+    def post(self, request, serializer, **kwargs):
         agent_exchange(
             "cascade_start",
             training_path=PROJECT_PATH.training,
@@ -99,8 +87,8 @@ class StartAPIView(BaseAPIView):
 
 
 class StartProgressAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        progress = agent_exchange("cascade_start_progress")
+    @decorators.progress_error("cascade_start")
+    def post(self, request, progress, **kwargs):
         if progress.finished:
             sources_data = progress.data.get("kwargs", {}).get("sources", {})
             dataset_sources = progress.data.get("datasets", [])
@@ -141,10 +129,8 @@ class StartProgressAPIView(BaseAPIView):
 
 
 class SaveAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        serializer = SaveSerializer(data=request.data)
-        if not serializer.is_valid():
-            return BaseResponseErrorFields(serializer.errors)
+    @decorators.serialize_data(SaveSerializer)
+    def post(self, request, serializer, **kwargs):
         request.project.cascade.save(
             path=PROJECT_PATH.cascades, **serializer.validated_data
         )
@@ -152,26 +138,22 @@ class SaveAPIView(BaseAPIView):
 
 
 class PreviewAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        serializer = PreviewSerializer(data=request.data)
-        if not serializer.is_valid():
-            return BaseResponseErrorFields(serializer.errors)
-        filepath = NamedTemporaryFile(suffix=".png")  # Add for Win ,delete=False
+    @decorators.serialize_data(PreviewSerializer)
+    def post(self, request, serializer, **kwargs):
+        filepath = NamedTemporaryFile(suffix=".png")
         filepath.write(base64.b64decode(serializer.validated_data.get("preview")))
-        utils.autocrop_image_square(filepath.name, min_size=600)
+        autocrop_image_square(filepath.name, min_size=600)
         with open(filepath.name, "rb") as filepath_ref:
             content = filepath_ref.read()
             return BaseResponseSuccess(base64.b64encode(content))
 
 
 class DatasetsAPIView(BaseAPIView):
-    @staticmethod
-    def post(request, **kwargs):
+    def post(self, request, **kwargs):
         datasets_list = agent_exchange(
             "datasets_info", path=TERRA_PATH.datasets
         ).native()
         response = []
-
         for datasets in datasets_list:
             for dataset in datasets.get("datasets", []):
                 response.append(
@@ -181,5 +163,4 @@ class DatasetsAPIView(BaseAPIView):
                         "group": dataset.get("group", ""),
                     }
                 )
-
         return BaseResponseSuccess(response)

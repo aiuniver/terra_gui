@@ -1,12 +1,8 @@
-"""
-## Дополнительные структуры данных для оптимайзеров
-"""
-
 from enum import Enum
 from typing import List, Tuple
 
-from ..mixins import BaseMixinData, UniqueListMixin
-from ..presets.training import TasksGroups
+from terra_ai.data.mixins import BaseMixinData, UniqueListMixin
+from terra_ai.data.presets.training import TasksGroups
 
 
 class StateStatusChoice(str, Enum):

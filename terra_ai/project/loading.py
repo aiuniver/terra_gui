@@ -44,4 +44,4 @@ def load(dataset_path: Path, source: Path, destination: Path):
             )
 
     except Exception as error:
-        progress.pool(PROJECT_LOAD_NAME, finished=True, error=str(error))
+        progress.pool(PROJECT_LOAD_NAME, finished=True, error=error)
