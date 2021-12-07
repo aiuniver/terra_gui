@@ -121,12 +121,10 @@ class InteractiveCallback:
                             self.class_idx = self.callback.prepare_class_idx(self.y_true, self.options)
                         self.seed_idx = self._prepare_seed()
                         self.get_balance = False
-                        print('\nself.seed_idx', self.seed_idx)
                     out = f"{self.training_details.interactive.intermediate_result.main_output}"
                     count = self.training_details.interactive.intermediate_result.num_examples
                     count = count if count > len(self.y_true.get(data_type).get(out)) \
                         else len(self.y_true.get(data_type).get(out))
-                    print('data_type', data_type)
                     self.example_idx = self.callback.prepare_example_idx_to_show(
                         array=self.y_pred.get(data_type).get(out),
                         true_array=self.y_true.get(data_type).get(out),
