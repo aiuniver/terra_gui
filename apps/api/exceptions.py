@@ -33,5 +33,5 @@ def handler(exc, context):
             title=title,
             message=message,
         ),
-        data=getattr(exc, "data"),
+        data=getattr(exc, "data", None),
     )
