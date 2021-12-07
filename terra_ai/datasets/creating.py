@@ -235,9 +235,9 @@ class CreateDataset(object):
 
         for put in data:
             try:
-                _, encoding = autodetect_encoding(put.parameters.sources_paths[0], True)
+                _, enc = autodetect_encoding(put.parameters.sources_paths[0], True)
                 df = pd.read_csv(put.parameters.sources_paths[0], nrows=0, sep=None,
-                                 engine='python', encoding=encoding).columns
+                                 engine='python', encoding=enc).columns
             except Exception:
                 progress.pool(self.progress_name, error='Ошибка чтения csv-файла')
                 raise
@@ -247,10 +247,10 @@ class CreateDataset(object):
             self.tags[put.id] = {}
             put_columns = {}
             cols_names = list(put.parameters.cols_names.keys())
-            _, encoding = autodetect_encoding(put.parameters.sources_paths[0], True)
+            _, enc = autodetect_encoding(put.parameters.sources_paths[0], True)
             dataframe = pd.read_csv(put.parameters.sources_paths[0], usecols=[cols_names_dict[str_idx]
                                                                               for str_idx in cols_names],
-                                    sep=None, engine='python', encoding=encoding)
+                                    sep=None, engine='python', encoding=enc)
             for idx, name_index in enumerate(cols_names):
                 name = cols_names_dict[name_index]
                 instructions_data = None
@@ -530,10 +530,10 @@ class CreateDataset(object):
                 encoding = LayerEncodingChoice.none
                 if creation_data.inputs.get(key).type == LayerInputTypeChoice.Dataframe:
                     try:
-                        _, encoding = autodetect_encoding(creation_data.inputs.get(key).parameters.sources_paths[0],
+                        _, enc = autodetect_encoding(creation_data.inputs.get(key).parameters.sources_paths[0],
                                                           True)
                         column_names = pd.read_csv(creation_data.inputs.get(key).parameters.sources_paths[0], nrows=0,
-                                                   sep=None, engine='python', encoding=encoding).columns.to_list()
+                                                   sep=None, engine='python', encoding=enc).columns.to_list()
                     except Exception:
                         progress.pool(self.progress_name, error='Ошибка чтения csv-файла')
                         raise
@@ -702,10 +702,9 @@ class CreateDataset(object):
 
                 if creation_data.outputs.get(key).type == LayerOutputTypeChoice.Dataframe:
                     try:
-                        _, encoding = autodetect_encoding(creation_data.inputs.get(key).parameters.sources_paths[0],
-                                                          True)
+                        _, enc = autodetect_encoding(creation_data.outputs.get(key).parameters.sources_paths[0], True)
                         column_names = pd.read_csv(creation_data.outputs.get(key).parameters.sources_paths[0], nrows=0,
-                                                   sep=None, engine='python', encoding=encoding).columns.to_list()
+                                                   sep=None, engine='python', encoding=enc).columns.to_list()
                     except Exception:
                         progress.pool(self.progress_name, error='Ошибка чтения csv-файла')
                         raise
