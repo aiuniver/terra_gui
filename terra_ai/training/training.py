@@ -89,16 +89,11 @@ class GUINN:
             print_error(GUINN().name, method_name, e)
 
     def _set_callbacks(self, dataset: PrepareDataset, train_details: TrainingDetailsData) -> None:
-        method_name = '_set_callbacks'
-        try:
-            print(method_name)
-            progress.pool(self.progress_name, finished=False, message="Добавление колбэков...")
+        progress.pool(self.progress_name, finished=False, message="Добавление колбэков...")
 
-            self.callback = FitCallback(dataset=dataset, training_details=train_details, model_name=self.nn_name,
-                                        deploy_type=self.deploy_type.name)
-            progress.pool(self.progress_name, finished=False, message="Добавление колбэков выполнено")
-        except Exception as e:
-            print_error(GUINN().name, method_name, e)
+        self.callback = FitCallback(dataset=dataset, training_details=train_details, model_name=self.nn_name,
+                                    deploy_type=self.deploy_type.name)
+        progress.pool(self.progress_name, finished=False, message="Добавление колбэков выполнено")
 
     @staticmethod
     def _set_deploy_type(dataset: PrepareDataset) -> str:
@@ -272,4 +267,6 @@ class GUINN:
             compiled_model.fit(params=params, dataset=dataset)
 
         except Exception as e:
+            print(e.__class__, e.__str__())
             print_error(GUINN().name, method_name, e)
+            progress.pool(self.progress_name, data=params, finished=True, error=e)

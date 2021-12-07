@@ -271,8 +271,8 @@ class BaseTerraModel:
                     self.save_weights(path_=self.file_path_model_best_weights)
                     print(f"Best weights was saved\n")
             self.callback.on_train_end()
-        except Exception as e:
-            print_error(self.__class__.__name__, method_name, e)
+        except Exception as error:
+            raise error
 
 
 class YoloTerraModel(BaseTerraModel):

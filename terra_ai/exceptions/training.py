@@ -25,6 +25,26 @@ class TrainingMessages(dict, Enum):
         "eng": "It is forbidden to use the name `%s`",
     }
 
+    NoCheckpointParameters = {
+        "ru": "Отсутствуют параметры для чекпойнта. Класс `%s`, метод `%s`.",
+        "eng": "There are no parameters for the checkpoint. `%s` class, `%s` method.",
+    }
+
+    NoCheckpointMetric = {
+        "ru": "Для чекпойнта выбран тип 'Метрика', но метрика не установлена. Класс `%s`, метод `%s`.",
+        "eng": "The 'Metric' type is selected for the checkpoint, but the metric is not set. `%s` class, `%s` method.",
+    }
+
+    NoImportantParameters = {
+        "ru": "Отсутствуют важные параметры: `%s`. Класс `%s`, метод `%s`.",
+        "eng": "Important parameters are missing: `%s`. `%s` class, `%s` method.",
+    }
+
+    PredictImpossible = {
+        "ru": "Невозможно получить предсказание. Класс `%s`, метод `%s`.",
+        "eng": "It is impossible to get a prediction. `%s` class, `%s` method.",
+    }
+
 
 class TrainingException(TerraBaseException):
     class Meta:
@@ -52,3 +72,35 @@ class TrainingAlreadyExistsException(TrainingException):
 class TrainingDefaultNameException(TrainingException):
     class Meta:
         message = TrainingMessages.TrainingDefaultName
+
+
+class NoCheckpointParameters(TrainingException):
+    class Meta:
+        message = TrainingMessages.NoCheckpointParameters
+
+    def __init__(self, __module: str, __method: str, **kwargs):
+        super().__init__(str(__module), str(__method), **kwargs)
+
+
+class NoCheckpointMetric(TrainingException):
+    class Meta:
+        message = TrainingMessages.NoCheckpointMetric
+
+    def __init__(self, __module: str, __method: str, **kwargs):
+        super().__init__(str(__module), str(__method), **kwargs)
+
+
+class NoImportantParameters(TrainingException):
+    class Meta:
+        message = TrainingMessages.NoImportantParameters
+
+    def __init__(self, __params: str, __module: str, __method: str, **kwargs):
+        super().__init__(str(__params), str(__module), str(__method), **kwargs)
+
+
+class PredictImpossible(TrainingException):
+    class Meta:
+        message = TrainingMessages.PredictImpossible
+
+    def __init__(self, __module: str, __method: str, **kwargs):
+        super().__init__(str(__module), str(__method), **kwargs)
