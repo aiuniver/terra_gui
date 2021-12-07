@@ -65,22 +65,32 @@ def main(**params):
         elif params['prepare_method'] == "word_to_vec":
             for word in arr:
                 try:
-                    array.append(preprocessing[word])
+                    tmp_list = preprocessing[word]
+                    tmp_arr = np.array(tmp_list)
+                    if tmp_arr.shape[0] < length:
+                        new_array = np.zeros((length, params['word_to_vec_size']))
+                        new_array[:tmp_arr.shape[0], :] = tmp_arr[:, :]
+                        array.append(new_array)
+                    elif tmp_arr.shape[0] > length:
+                        new_array = np.zeros((length, params['word_to_vec_size']))
+                        new_array[:, :] = tmp_arr[:length, :]
+                        array.append(new_array)
+
                 except KeyError:
                     array.append(np.zeros((length, params['word_to_vec_size'])))
             array = np.array(array)
 
-            if array.shape[1] < length:
-                new_array = np.zeros((1, length, params['word_to_vec_size']))
-                new_array[:, :array.shape[1]] += array
-                array = new_array
-            elif array.shape[1] > length:
-                n = (array.shape[0] % length) + 1
-                new_array = np.zeros((n, length, params['word_to_vec_size']))
-                for i in range(n):
-                    new_array[i][:len(array[i])] += array[i]
-
-                array = new_array
+            # if array.shape[1] < length:
+            #     new_array = np.zeros((1, length, params['word_to_vec_size']))
+            #     new_array[:, :array.shape[1]] += array
+            #     array = new_array
+            # elif array.shape[1] > length:
+            #     n = (array.shape[0] % length) + 1
+            #     new_array = np.zeros((n, length, params['word_to_vec_size']))
+            #     for i in range(n):
+            #         new_array[i][:len(array[i])] += array[i]
+            #
+            #     array = new_array
 
         array = np.array(array)
 
