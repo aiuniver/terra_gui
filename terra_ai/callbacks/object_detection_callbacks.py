@@ -796,15 +796,12 @@ class BaseObjectDetectionCallback:
                 for item in example_stat['recognize']['unrecognize']:
                     class_matrix[line_names.index(item['class_name'])][-1] += 1
             for class_name in name_classes:
-                class_accuracy_hist[class_name] = np.round(np.mean(class_accuracy_hist[class_name]) * 100,
-                                                           2).item() if \
-                    class_accuracy_hist[class_name] else 0.
-                class_coord_accuracy[class_name] = np.round(np.mean(class_coord_accuracy[class_name]) * 100,
-                                                            2).item() if \
-                    class_coord_accuracy[class_name] else 0.
+                class_accuracy_hist[class_name] = np.round(np.mean(class_accuracy_hist[class_name]) * 100, 2).item() \
+                    if class_accuracy_hist[class_name] else 0.
+                class_coord_accuracy[class_name] = np.round(np.mean(class_coord_accuracy[class_name]) * 100, 2).item() \
+                    if class_coord_accuracy[class_name] else 0.
                 class_loss_hist[class_name] = np.round(np.mean(class_loss_hist[class_name]) * 100, 2).item() if \
-                    class_loss_hist[
-                        class_name] else 0.
+                    class_loss_hist[class_name] else 0.
             object_matrix = [[object_tt, object_tf], [object_ft, 0]]
             class_matrix_percent = []
             for i in class_matrix:

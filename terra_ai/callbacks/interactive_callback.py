@@ -75,8 +75,6 @@ class InteractiveCallback:
 
     def set_attributes(self, dataset: PrepareDataset, params: TrainingDetailsData):
         self.options = dataset
-        # self.seed_idx = self._prepare_seed()
-        # print('self.seed_idx', self.seed_idx)
         self._callback_router(dataset)
         self.class_graphics = self._class_metric_list()
         print('set_attributes', dataset.data.architecture)
@@ -560,8 +558,6 @@ class InteractiveCallback:
                     return data_return
                 for loss_graph_config in self.training_details.interactive.loss_graphs:
                     loss_name = self.training_details.base.architecture.parameters.outputs[0].loss.name
-                    if self.options.data.architecture in YOLO_ARCHITECTURE:
-                        loss_graph_config.output_idx = 'output'
                     if loss_graph_config.show == LossGraphShowChoice.model:
                         if sum(self.log_history.get(f"{loss_graph_config.output_idx}").get("progress_state").get(
                                 "loss").get(loss_name).get('overfitting')[-self.log_gap:]) >= self.progress_threashold:
@@ -652,81 +648,84 @@ class InteractiveCallback:
             if self.options.data.architecture in YOLO_ARCHITECTURE:
                 if not self.training_details.interactive.loss_graphs or not self.log_history.get("epochs"):
                     return data_return
-                _id = 1
+                model_loss = 0
                 for loss_graph_config in self.training_details.interactive.loss_graphs:
                     if loss_graph_config.show == LossGraphShowChoice.model:
-                        for loss in self.log_history.get('output').get('loss').keys():
-                            if sum(self.log_history.get("output").get("progress_state").get("loss").get(loss).get(
-                                    'overfitting')[-self.log_gap:]) >= self.progress_threashold:
-                                progress_state = "overfitting"
-                            elif sum(self.log_history.get("output").get("progress_state").get("loss").get(
-                                    loss).get('underfitting')[-self.log_gap:]) >= self.progress_threashold:
-                                progress_state = "underfitting"
-                            else:
-                                progress_state = "normal"
-                            train_list = self.log_history.get("output").get('loss').get(loss).get('train')
-                            no_none_train = []
-                            for x in train_list:
-                                if x is not None:
-                                    no_none_train.append(x)
-                            best_train_value = min(no_none_train) if no_none_train else None
-                            best_train = fill_graph_plot_data(
-                                x=[self.log_history.get("epochs")[train_list.index(best_train_value)]
-                                   if best_train_value is not None else None],
-                                y=[best_train_value],
-                                label="Лучший результат на тренировочной выборке"
+                        idx = model_loss if model_loss <= 3 else model_loss % 4
+                        loss = list(self.log_history.get('output').get('loss').keys())[idx]
+                        if sum(self.log_history.get("output").get("progress_state").get("loss").get(loss).get(
+                                'overfitting')[-self.log_gap:]) >= self.progress_threashold:
+                            progress_state = "overfitting"
+                        elif sum(self.log_history.get("output").get("progress_state").get("loss").get(
+                                loss).get('underfitting')[-self.log_gap:]) >= self.progress_threashold:
+                            progress_state = "underfitting"
+                        else:
+                            progress_state = "normal"
+                        train_list = self.log_history.get("output").get('loss').get(loss).get('train')
+                        no_none_train = []
+                        for x in train_list:
+                            if x is not None:
+                                no_none_train.append(x)
+                        best_train_value = min(no_none_train) if no_none_train else None
+                        best_train = fill_graph_plot_data(
+                            x=[self.log_history.get("epochs")[train_list.index(best_train_value)]
+                               if best_train_value is not None else None],
+                            y=[best_train_value],
+                            label="Лучший результат на тренировочной выборке"
+                        )
+                        train_plot = fill_graph_plot_data(
+                            x=self.log_history.get("epochs"),
+                            y=train_list,
+                            label="Тренировочная выборка"
+                        )
+                        val_list = self.log_history.get("output").get('loss').get(loss).get("val")
+                        no_none_val = []
+                        for x in val_list:
+                            if x is not None:
+                                no_none_val.append(x)
+                        best_val_value = min(no_none_val) if no_none_val else None
+                        best_val = fill_graph_plot_data(
+                            x=[self.log_history.get("epochs")[val_list.index(best_val_value)]
+                               if best_val_value is not None else None],
+                            y=[best_val_value],
+                            label="Лучший результат на проверочной выборке"
+                        )
+                        val_plot = fill_graph_plot_data(
+                            x=self.log_history.get("epochs"),
+                            y=self.log_history.get("output").get('loss').get(loss).get("val"),
+                            label="Проверочная выборка"
+                        )
+                        data_return.append(
+                            fill_graph_front_structure(
+                                _id=loss_graph_config.id,
+                                _type='graphic',
+                                graph_name=f"График ошибки обучения «{loss}»",
+                                short_name=f"График «{loss}»",
+                                x_label="Эпоха",
+                                y_label="Значение",
+                                plot_data=[train_plot, val_plot],
+                                best=[best_train, best_val],
+                                progress_state=progress_state
                             )
-                            train_plot = fill_graph_plot_data(
-                                x=self.log_history.get("epochs"),
-                                y=train_list,
-                                label="Тренировочная выборка"
-                            )
-                            val_list = self.log_history.get("output").get('loss').get(loss).get("val")
-                            no_none_val = []
-                            for x in val_list:
-                                if x is not None:
-                                    no_none_val.append(x)
-                            best_val_value = min(no_none_val) if no_none_val else None
-                            best_val = fill_graph_plot_data(
-                                x=[self.log_history.get("epochs")[val_list.index(best_val_value)]
-                                   if best_val_value is not None else None],
-                                y=[best_val_value],
-                                label="Лучший результат на проверочной выборке"
-                            )
-                            val_plot = fill_graph_plot_data(
-                                x=self.log_history.get("epochs"),
-                                y=self.log_history.get("output").get('loss').get(loss).get("val"),
-                                label="Проверочная выборка"
-                            )
-                            data_return.append(
-                                fill_graph_front_structure(
-                                    _id=_id,
-                                    _type='graphic',
-                                    graph_name=f"График ошибки обучения «{loss}»",
-                                    short_name=f"График «{loss}»",
-                                    x_label="Эпоха",
-                                    y_label="Значение",
-                                    plot_data=[train_plot, val_plot],
-                                    best=[best_train, best_val],
-                                    progress_state=progress_state
-                                )
-                            )
-                            _id += 1
+                        )
+                        model_loss += 1
                     if loss_graph_config.show == LossGraphShowChoice.classes:
+                        loss_data_type = loss_graph_config.data_type.name
+                        data_type_name = "Тренировочная" if loss_data_type == "train" else "Проверочная"
                         output_idx = list(self.options.data.outputs.keys())[0]
                         data_return.append(
                             fill_graph_front_structure(
-                                _id=_id,
+                                _id=loss_graph_config.id,
                                 _type='graphic',
-                                graph_name=f"График ошибки обучения «prob_loss» по классам - Проверочная выборка",
-                                short_name=f"График ошибки обучения по классам - Проверочная",
+                                graph_name=f"График ошибки обучения «prob_loss» по классам - {data_type_name} выборка",
+                                short_name=f"График ошибки обучения по классам - {data_type_name}",
                                 x_label="Эпоха",
                                 y_label="Значение",
                                 plot_data=[
                                     fill_graph_plot_data(
                                         x=self.log_history.get("epochs"),
                                         y=self.log_history.get("output").get('class_loss').get('prob_loss').get(
-                                            class_name).get("val"),
+                                            class_name).get(loss_data_type),
                                         label=f"Класс {class_name}"
                                     ) for class_name in self.options.data.outputs.get(output_idx).classes_names
                                 ],
@@ -863,8 +862,7 @@ class InteractiveCallback:
                             fill_graph_front_structure(
                                 _id=_id,
                                 _type='graphic',
-                                graph_name=f"График метрики {metric_graph_config.show_metric.name} - "
-                                           f"Эпоха №{self.log_history.get('epochs')[-1]}",
+                                graph_name=f"График метрики {metric_graph_config.show_metric.name}",
                                 short_name=f"{metric_graph_config.show_metric.name}",
                                 x_label="Эпоха",
                                 y_label="Значение",
@@ -881,7 +879,7 @@ class InteractiveCallback:
                                 _id=_id,
                                 _type='graphic',
                                 graph_name=f"График метрики {metric_graph_config.show_metric.name} по классам - "
-                                           f"Эпоха №{self.log_history.get('epochs')[-1]}",
+                                           f"Проверочная выборка",
                                 short_name=f"{metric_graph_config.show_metric.name} по классам",
                                 x_label="Эпоха",
                                 y_label="Значение",
