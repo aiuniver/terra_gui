@@ -16,14 +16,18 @@ class BaseResponseData(BaseModel):
     success: bool = True
     data: Any
     error: Optional[LogData]
+    warning: Optional[LogData]
 
 
 class BaseResponse(Response):
-    def __init__(self, data=None, error: LogData = None, *args, **kwargs):
+    def __init__(
+        self, data=None, error: LogData = None, warning: LogData = None, *args, **kwargs
+    ):
         __response = BaseResponseData(
             success=(error is None),
             data=data,
             error=error,
+            warning=warning,
         )
         kwargs.update({"status": HTTP_200_OK})
         super().__init__(data=__response.dict(), *args, **kwargs)

@@ -1,5 +1,5 @@
 from time import sleep
-from typing import Optional, Any, Dict
+from typing import Optional, Any, Dict, Union, Tuple
 from threading import Thread
 
 from ..data.types import ConstrainedFloatValueGe0Le100
@@ -18,6 +18,7 @@ class ProgressData(BaseMixinData):
     percent: ConstrainedFloatValueGe0Le100 = 0
     message: str = ""
     finished: bool = True
+    warning: Optional[Union[str, Tuple[str, str]]]
     error: Any
     data: Any
 
@@ -52,6 +53,7 @@ class ProgressPool:
                 name: ProgressData(
                     percent=kwargs.get("percent", __progress.percent),
                     message=kwargs.get("message", __progress.message),
+                    warning=kwargs.get("warning", __progress.warning),
                     error=kwargs.get("error", __progress.error),
                     finished=kwargs.get("finished", __progress.finished),
                     data=kwargs.get("data", __progress.data),
