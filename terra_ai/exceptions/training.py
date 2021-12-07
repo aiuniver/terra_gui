@@ -45,6 +45,16 @@ class TrainingMessages(dict, Enum):
         "eng": "It is impossible to get a prediction. `%s` class, `%s` method.",
     }
 
+    StartNumBatchesMissing = {
+        "ru": "Ошибка расчета батчей на старте обучения. Класс `%s`, метод `%s`.",
+        "eng": "Error in calculating the batches at the start of training. `%s` class, `%s` method.",
+    }
+
+    BatchResultMissing = {
+        "ru": "Ошибка обучения на батче № %s. Класс `%s`, метод `%s`.",
+        "eng": "Learning error on the batch № %s. `%s` class, `%s` method.",
+    }
+
 
 class TrainingException(TerraBaseException):
     class Meta:
@@ -104,3 +114,20 @@ class PredictImpossible(TrainingException):
 
     def __init__(self, __module: str, __method: str, **kwargs):
         super().__init__(str(__module), str(__method), **kwargs)
+
+
+class StartNumBatchesMissing(TrainingException):
+    class Meta:
+        message = TrainingMessages.StartNumBatchesMissing
+
+    def __init__(self, __module: str, __method: str, **kwargs):
+        super().__init__(str(__module), str(__method), **kwargs)
+
+
+class BatchResultMissing(TrainingException):
+    class Meta:
+        message = TrainingMessages.BatchResultMissing
+
+    def __init__(self, __butch_number: int, __module: str, __method: str, **kwargs):
+        super().__init__(str(__butch_number), str(__module), str(__method), **kwargs)
+

@@ -13,7 +13,7 @@ from terra_ai.data.training.train import TrainingDetailsData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.exceptions.base import TerraBaseException
 from terra_ai.exceptions.training import NoCheckpointParameters, NoCheckpointMetric, NoImportantParameters, \
-    PredictImpossible
+    PredictImpossible, StartNumBatchesMissing, BatchResultMissing
 from terra_ai.training.training_history import History
 from terra_ai.callbacks import interactive
 from terra_ai.logging import logger
@@ -246,20 +246,21 @@ class FitCallback:
                 self.batch = 1
             if not self.dataset.data.use_generator:
                 if len(list(self.dataset.X['train'].values())[0]) % self.batch_size:
-                    self.num_batches = len(list(self.dataset.X['bla'].values())[0]) // self.batch_size + 1
+                    self.num_batches = len(list(self.dataset.X['train'].values())[0]) // self.batch_size + 1
                 else:
-                    self.num_batches = len(list(self.dataset.X['bla'].values())[0]) // self.batch_size
+                    self.num_batches = len(list(self.dataset.X['train'].values())[0]) // self.batch_size
             else:
                 if len(self.dataset.dataframe['train']) % self.batch_size:
                     self.num_batches = len(self.dataset.dataframe['train']) // self.batch_size + 1
                 else:
                     self.num_batches = len(self.dataset.dataframe['train']) // self.batch_size
         except Exception as error:
-            print(error)
-            self.__stop_by_error(PredictImpossible(self.__class__.__name__, method_name).with_traceback(error.__traceback__))
+            self.__stop_by_error(
+                StartNumBatchesMissing(
+                    self.__class__.__name__, method_name
+                ).with_traceback(error.__traceback__))
 
     def on_epoch_begin(self):
-        print('on_epoch_begin')
         self.last_epoch += 1
         self._time_first_step = time.time()
 
@@ -267,12 +268,14 @@ class FitCallback:
         method_name = 'on_train_batch_end'
         try:
             if self._get_train_status() == StateStatusChoice.stopped:
-                print('_get_train_status() == "stopped"')
+                logger.info(f"method {method_name}, train_status is 'stopped'")
                 self.stop_training = True
                 progress.pool(
                     self.progress_name,
                     percent=self.last_epoch / (
-                        self.total_epochs if self._get_train_status() == StateStatusChoice.addtrain else self.retrain_epochs) * 100,
+                        self.total_epochs if self._get_train_status() == StateStatusChoice.addtrain
+                        else self.retrain_epochs
+                    ) * 100,
                     message="Обучение остановлено пользователем, ожидайте остановку...",
                     finished=False,
                 )
@@ -294,9 +297,9 @@ class FitCallback:
                     target_, target_ - still_current + self.batch, self._start_time, stop_flag=True)
 
                 if interactive.urgent_predict:
-                    train_batch_data = interactive.update_state(arrays=arrays, train_idx=train_data_idxs)
+                    train_batch_data = interactive.update_state(arrays=arrays[0], train_idx=train_data_idxs)
                 else:
-                    train_batch_data = interactive.update_state(arrays=None, train_idx=None)
+                    train_batch_data = interactive.update_state(arrays=arrays[0], train_idx=None)
                 if train_batch_data:
                     result_data = {
                         'timings': [estimated_time, elapsed_time, still_time,
@@ -318,8 +321,10 @@ class FitCallback:
                             f"{self.total_epochs if self._get_train_status() in [StateStatusChoice.addtrain, StateStatusChoice.stopped] else self.retrain_epochs}",
                     finished=False,
                 )
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
+        except Exception as error:
+            raise BatchResultMissing(
+                self.batch, self.__class__.__name__, method_name
+                ).with_traceback(error.__traceback__)
 
     def on_epoch_end(self, epoch, arrays=None, logs=None, train_data_idxs=None):
         method_name = 'on_epoch_end'
