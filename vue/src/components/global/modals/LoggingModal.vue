@@ -1,35 +1,33 @@
 <template>
-  <at-modal v-model="dialog" width="800">
-    <div slot="header" style="text-align: center">
-      <span>{{ title }}</span>
+  <at-modal v-model="dialog" width="800" class="logging-modal">
+    <div slot="header">
+      <span class="logging-modal__title">{{ title }}</span>
     </div>
     <div class="t-logging">
       <div class="t-logging__item">
+        <div class="t-logging__type">Тип</div>
         <div class="t-logging__date">Время</div>
-        <div class="t-logging__error">Ошибка</div>
+        <div class="t-logging__error">Название</div>
       </div>
       <scrollbar>
-        <template v-for="({ date, error }, i) of errors">
+        <template v-for="(error, i) of errors">
           <div class="t-logging__item" :key="'errors_' + i">
-            <div class="t-logging__date">{{ date | formatDate }}</div>
-            <div class="t-logging__error" @click="$emit('error', { error, date })">{{ error }}</div>
+            <div class="t-logging__type">{{ error.level }}</div>
+            <div class="t-logging__date">{{ (error.time * 1000) | formatDate }}</div>
+            <div class="t-logging__error" @click="click(error)">{{ error.title }}</div>
           </div>
         </template>
       </scrollbar>
     </div>
-    <div slot="footer">
-      <!-- <div class="copy-buffer">
-        <i :class="['t-icon', 'icon-clipboard']" :title="'copy'" @click="Copy"></i>
-        <p v-if="copy" class="success">Код скопирован в буфер обмена</p>
-        <p v-else>Скопировать в буфер обмена</p>
-      </div> -->
-    </div>
+    <div slot="footer"></div>
   </at-modal>
 </template>
 
 <script>
+import filter from '@/mixins/datasets/filters'
 export default {
   name: 'CopyModal',
+  mixins: [filter],
   props: {
     errors: {
       type: Array,
@@ -45,25 +43,8 @@ export default {
     copy: false,
   }),
   methods: {
-    Copy() {
-      let element = this.$refs['message-modal-copy'],
-        range,
-        selection;
-
-      try {
-        selection = window.getSelection();
-        range = document.createRange();
-        range.selectNodeContents(element);
-        selection.removeAllRanges();
-        selection.addRange(range);
-        console.log(selection);
-
-        this.copy = true;
-
-        document.execCommand('copy');
-      } catch (e) {
-        console.error('Fallback: Oops, unable to copy', e);
-      }
+    click(error) {
+      this.$emit('error', error);
     },
   },
   computed: {
@@ -79,22 +60,15 @@ export default {
       },
     },
   },
-  filters: {
-    formatDate: value => {
-      const date = new Date(value);
-      return date.toLocaleString(['ru-RU'], {
-        month: 'short',
-        day: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    },
-  },
 };
 </script>
 
 <style scoped lang="scss">
+.logging-modal {
+  &__title {
+    
+  }
+}
 .t-logging {
   height: 300px;
   background: #0e1621;
@@ -106,28 +80,18 @@ export default {
     border-bottom: 1px solid #4d5c6a;
   }
   &__date {
-    width: 130px;
+    width: 100px;
+  }
+  &__type {
+    width: 50px;
   }
   &__error {
     cursor: pointer;
+    width: 586px;
+    overflow: hidden;
     &:hover {
       opacity: 0.7;
     }
-  }
-}
-
-.copy-buffer {
-  display: flex;
-  align-items: center;
-  p {
-    margin-left: 15px;
-    font-size: 0.85rem;
-    &.success {
-      color: #3eba31;
-    }
-  }
-  .icon-clipboard {
-    cursor: pointer;
   }
 }
 </style>

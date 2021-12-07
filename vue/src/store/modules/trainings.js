@@ -146,21 +146,7 @@ export default {
     },
     async progress ({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/progress/', data }, { root: true });
-      if (res) {
-        const { data, error } = res;
-        if (data) {
-          dispatch('parseStruct', data || {});
-          const err = data?.progress?.error || ''
-          if (err) {
-            dispatch('messages/setMessage', { error: err }, { root: true });
-            dispatch('logging/setError', JSON.stringify(err, null, 2), { root: true });
-          } 
-        }
-        if (error) {
-          dispatch('messages/setMessage', { error: error }, { root: true });
-          dispatch('logging/setError', JSON.stringify(error, null, 2), { root: true });
-        }
-      }
+      if (res?.data) dispatch('parseStruct', res.data || {});
       return res
     },
     async resetTraining ({ dispatch }) {

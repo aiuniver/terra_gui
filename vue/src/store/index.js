@@ -31,18 +31,17 @@ export default {
   actions: {
     async axios ({ dispatch }, { method = 'post', url, data = {} }) {
       try {
-        const response = await axios({ method, url: '/api/v1' + url, data });
-        const { error, success } = response.data;
-        if (success) {
-          dispatch('messages/setMessage', '');
-        } else {
-          dispatch('messages/setMessage', { error: JSON.stringify(error, null, 2) });
-          dispatch('logging/setError', JSON.stringify(error, null, 2));
+        const { data: res } = await axios({ method, url: '/api/v1' + url, data });
+        if (res) {
+          const { error, success } = res;
+          if (success) dispatch('messages/setMessage', '');
+          if (error) dispatch('logging/setError', error);
         }
-        return response.data;
+        return res;
       } catch (error) {
-        dispatch('messages/setMessage', { error: JSON.stringify(error, null, 2) });
-        dispatch('logging/setError', JSON.stringify(error, null, 2));
+        console.error({ error: JSON.stringify(error, null, 2) })
+        // dispatch('messages/setMessage', { error: JSON.stringify(error, null, 2) });
+        // dispatch('logging/setError', JSON.stringify(error, null, 2));
         dispatch('settings/setOverlay', false);
         return null;
       }
