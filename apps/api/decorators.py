@@ -8,6 +8,7 @@ def progress_error(progress_name: str):
         def wrapper(*args, **kwargs):
             progress = progress_pool(progress_name)
             if not progress.success:
+                progress.error.data = progress.data
                 raise progress.error
             return method(*args, progress, **kwargs)
 

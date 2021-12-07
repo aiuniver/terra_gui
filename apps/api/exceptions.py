@@ -32,5 +32,6 @@ def handler(exc, context):
             time=unixtime,
             title=title,
             message=message,
-        )
+        ),
+        data=getattr(exc, "data"),
     )
