@@ -1648,6 +1648,30 @@ class PSPBlock3D(Layer):
         return cls(**config)
 
 
+class OnlyYOLO(Layer):
+
+    def __init__(self, classes=5, **kwargs):
+        super(OnlyYOLO, self).__init__(**kwargs)
+        self.classes = classes
+
+    def call(self, input_, training=True, **kwargs):
+        return [input_, input_, input_]
+
+    def get_config(self):
+        config = {
+            'classes': self.classes,
+        }
+        base_config = super(OnlyYOLO, self).get_config()
+        return dict(tuple(base_config.items()) + tuple(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+    def compute_output_shape(self, input_shape):
+        return [input_shape, input_shape, input_shape]
+
+
 if __name__ == "__main__":
     # input = tensorflow.keras.layers.Input(shape=(32, 32, 3))
     # x = YOLOResBlock(32, 2)(input)

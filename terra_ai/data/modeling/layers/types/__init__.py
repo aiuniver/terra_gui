@@ -147,5 +147,5 @@ from . import (
     UNETBlock2D,
     UNETBlock1D,
     UNETBlock3D,
-
+    OnlyYOLO
 )
