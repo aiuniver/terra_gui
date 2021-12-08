@@ -4,7 +4,7 @@
       <div class="footer__message--icon" @click="dialogErrors = true">
         <span v-if="errors.length"></span>
       </div>
-      <div :class="['footer__message--text', showMsg.color]" @click="click(showMsg.color)">
+      <div :class="['footer__message--text', showMsg.color]" @click="dialogError = true">
         <transition name="error-slide" mode="out-in">
           <span :key="key">{{ showMsg.msg }}</span>
         </transition>
@@ -31,7 +31,7 @@
       <span v-if="version" class="footer__version">{{ version }}</span>
     </div>
     <LoggingModal v-if="errors.length" v-model="dialogErrors" :errors="errors" :title="'Логи'" @error="clickError" />
-    <CopyModal v-model="dialogError" :title="'Ошибка!'">{{ text }}</CopyModal>
+    <ErrorModal v-model="dialogError" v-bind="error" />
   </div>
 </template>
 
@@ -39,7 +39,7 @@
 import { mapGetters } from 'vuex';
 export default {
   components: {
-    CopyModal: () => import('../global/modals/CopyModal'),
+    ErrorModal: () => import('../global/modals/ErrorModal'),
     LoggingModal: () => import('../global/modals/LoggingModal'),
   },
   data: () => ({
@@ -56,6 +56,7 @@ export default {
       progress: 'messages/getProgress',
       project: 'projects/getProject',
       progressMessage: 'messages/getProgressMessage',
+      error: 'logging/getError',
       errors: 'logging/getErrors',
     }),
     protsessor() {
@@ -79,16 +80,15 @@ export default {
         this.dialogError = true;
       }
     },
-    clickError({ error }) {
-      this.color === 'error';
-      this.text = error;
+    clickError() {
       this.dialogError = true;
     }
   },
   watch: {
-    message(newVal) {
-      if (!newVal) return
-      this.msgList.push({ msg: newVal, color: this.color })
+    error(value) {
+      if (!value) return
+      console.log(value)
+      this.msgList.push({ msg: value.title, color: this.color })
       setTimeout(() => {
         this.msgList.shift()
         this.key++
@@ -160,7 +160,7 @@ export default {
         display: block;
         overflow: hidden;
         text-overflow: ellipsis;
-        transition-duration: 500ms;
+        transition-duration: 200ms;
       }
     }
     &--icon {
