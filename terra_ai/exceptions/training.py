@@ -85,6 +85,11 @@ class TrainingMessages(dict, Enum):
         "eng": "Missing dataset parameters for Yolo. `%s` class, `%s` method.",
     }
 
+    NoHistoryLogs = {
+        "ru": "Невозможно загрузить логи для продолжения обучения. Класс `%s`, метод `%s`.",
+        "eng": "It is not possible to load logs to continue training. `%s` class, `%s` method.",
+    }
+
 
 class TrainingException(TerraBaseException):
     class Meta:
@@ -205,6 +210,14 @@ class ModelSettingMissing(TrainingException):
 class NoYoloParamsException(TrainingException):
     class Meta:
         message = TrainingMessages.NoYoloParams
+
+    def __init__(self, __module: str, __method: str, **kwargs):
+        super().__init__(str(__module), str(__method), **kwargs)
+
+
+class NoHistoryLogsException(TrainingException):
+    class Meta:
+        message = TrainingMessages.NoHistoryLogs
 
     def __init__(self, __module: str, __method: str, **kwargs):
         super().__init__(str(__module), str(__method), **kwargs)

@@ -224,7 +224,7 @@ class GUINN:
             raise error
 
     def terra_fit(self, dataset: DatasetData, gui_model: ModelDetailsData, training: TrainingDetailsData) -> None:
-        method_name = 'model_fit'
+        method_name = 'terra_fit'
         logger.info(f"start {method_name}")
         try:
             self._kill_last_training(state=training)
@@ -237,7 +237,7 @@ class GUINN:
             self.model_fit(params=training, dataset=self.dataset, model=gui_model)
 
         except Exception as error:
-            progress.pool(self.progress_name, data=training, finished=True, error=error)
+            raise error
 
     def nn_cleaner(self, retrain: bool = False) -> None:
         method_name = 'nn_cleaner'
@@ -272,4 +272,4 @@ class GUINN:
             compiled_model.fit(params=params, dataset=dataset)
 
         except Exception as error:
-            raise error
+            progress.pool(self.progress_name, data=params, finished=True, error=error)

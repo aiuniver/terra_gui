@@ -47,14 +47,21 @@ class FitCallback:
         self.model_path = training_details.model_path
         self.stop_training = False
 
-        self.history = History(dataset=dataset, training_details=training_details, deploy_type=self.deploy_type)
+        self.last_epoch = 0
+        self.total_epochs = 0
+        self.still_epochs = 0
+
+        try:
+            self.history = History(dataset=dataset, training_details=training_details, deploy_type=self.deploy_type)
+            self.last_epoch = self.history.last_epoch
+            self.total_epochs = self.history.sum_epoch
+            self.still_epochs = self.history.epochs
+        except Exception as error:
+            self.__stop_by_error(error=error)
 
         self.batch = 0
         self.num_batches = 0
         self.retrain_epochs = self.training_detail.base.epochs
-        self.last_epoch = self.history.last_epoch
-        self.total_epochs = self.history.sum_epoch
-        self.still_epochs = self.history.epochs
         self._start_time = time.time()
         self._time_batch_step = time.time()
         self._time_first_step = time.time()
@@ -98,7 +105,7 @@ class FitCallback:
 
     def __stop_by_error(self, error):
         if not isinstance(error, NoImportantParameters):
-            if self.last_epoch <= 1:
+            if self.last_epoch <= 1 and self.training_detail.state.status == StateStatusChoice.training:
                 self.training_detail.state.set(StateStatusChoice.no_train)
             else:
                 self.training_detail.state.set(StateStatusChoice.stopped)
@@ -313,9 +320,9 @@ class FitCallback:
 
                 self._set_result_data(result_data)
                 self.training_detail.result = self._get_result_data()
-                _usage = self.result["train_usage"]["hard_usage"]["GPU"]["gpu_utilization"]
-                if float(_usage) > 90:
-                    logger.critical(f"Критическая нагрузка на GPU - {_usage}")
+                # _usage = self.result["train_usage"]["hard_usage"]["GPU"]["gpu_utilization"]
+                # if float(_usage) > 90:
+                #     logger.critical(f"Критическая нагрузка на GPU - {_usage}")
                 progress.pool(
                     self.progress_name,
                     percent=self.last_epoch / (
