@@ -297,9 +297,9 @@ class FitCallback:
                     target_, target_ - still_current + self.batch, self._start_time, stop_flag=True)
 
                 if interactive.urgent_predict:
-                    train_batch_data = interactive.update_state(arrays=arrays[0], train_idx=train_data_idxs)
+                    train_batch_data = interactive.update_state(arrays=arrays, train_idx=train_data_idxs)
                 else:
-                    train_batch_data = interactive.update_state(arrays=arrays[0], train_idx=None)
+                    train_batch_data = interactive.update_state(arrays=None, train_idx=None)
                 if train_batch_data:
                     result_data = {
                         'timings': [estimated_time, elapsed_time, still_time,
@@ -312,6 +312,9 @@ class FitCallback:
 
                 self._set_result_data(result_data)
                 self.training_detail.result = self._get_result_data()
+                _usage = self.result["train_usage"]["hard_usage"]["GPU"]["gpu_utilization"]
+                if float(_usage) > 90:
+                    logger.critical(f"Критическая нагрузка на GPU - {_usage}")
                 progress.pool(
                     self.progress_name,
                     percent=self.last_epoch / (
