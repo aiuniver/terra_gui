@@ -17,6 +17,7 @@ from terra_ai.data.presets.training import Metric
 from terra_ai.data.training.extra import StateStatusChoice
 from terra_ai.data.training.train import TrainingDetailsData
 from terra_ai.datasets.preparing import PrepareDataset
+from terra_ai.exceptions.training import NoHistoryLogsException
 
 OUTPUT_LOG_CONFIG = {
     "loss": {
@@ -86,7 +87,6 @@ class History:
     def _load_logs(self, dataset: PrepareDataset, training_details: TrainingDetailsData):
         method_name = '_load_logs'
         try:
-            print(method_name)
             if self.training_detail.state.status == StateStatusChoice.addtrain:
                 if self.training_detail.logs:
                     logs = self.training_detail.logs
@@ -109,8 +109,10 @@ class History:
                 return fit_logs
             else:
                 return self._prepare_log_history_template(options=dataset, params=training_details)
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
+        except Exception as error:
+            raise NoHistoryLogsException(
+                self.__class__.__name__, method_name
+            ).with_traceback(error.__traceback__)
 
     @staticmethod
     def _prepare_log_history_template(options: PrepareDataset, params: TrainingDetailsData):

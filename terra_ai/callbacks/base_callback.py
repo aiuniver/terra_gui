@@ -8,11 +8,16 @@ from config import settings
 from terra_ai import progress
 from terra_ai.callbacks.utils import print_error, loss_metric_config, YOLO_ARCHITECTURE
 from terra_ai.data.deploy.extra import DeployTypeChoice
-from terra_ai.data.training.extra import CheckpointTypeChoice,StateStatusChoice
+from terra_ai.data.training.extra import CheckpointTypeChoice, StateStatusChoice
 from terra_ai.data.training.train import TrainingDetailsData
 from terra_ai.datasets.preparing import PrepareDataset
+from terra_ai.exceptions.base import TerraBaseException
+from terra_ai.exceptions.training import NoCheckpointParameters, NoCheckpointMetric, NoImportantParameters, \
+    PredictImpossible, StartNumBatchesMissing, BatchResultMissing, HistoryUpdateMissing, EpochResultMissing, \
+    TrainingLogsSavingMissing
 from terra_ai.training.training_history import History
 from terra_ai.callbacks import interactive
+from terra_ai.logging import logger
 
 
 class FitCallback:
@@ -20,8 +25,13 @@ class FitCallback:
 
     def __init__(self, dataset: PrepareDataset, training_details: TrainingDetailsData,
                  model_name: str = "model", deploy_type: str = ""):
-        super().__init__()
-        print('\n FitCallback')
+        method_name = "__init__"
+
+        if not training_details:
+            self.__stop_by_error(error=NoImportantParameters('training_details', self.__class__.__name__, method_name))
+        if not dataset:
+            self.__stop_by_error(error=NoImportantParameters('dataset', self.__class__.__name__, method_name))
+
         self.name = "FitCallback"
         self.current_logs = {}
         self.usage_info = MemoryUsage(debug=False)
@@ -37,14 +47,21 @@ class FitCallback:
         self.model_path = training_details.model_path
         self.stop_training = False
 
-        self.history = History(dataset=dataset, training_details=training_details, deploy_type=self.deploy_type)
+        self.last_epoch = 0
+        self.total_epochs = 0
+        self.still_epochs = 0
+
+        try:
+            self.history = History(dataset=dataset, training_details=training_details, deploy_type=self.deploy_type)
+            self.last_epoch = self.history.last_epoch
+            self.total_epochs = self.history.sum_epoch
+            self.still_epochs = self.history.epochs
+        except Exception as error:
+            self.__stop_by_error(error=error)
 
         self.batch = 0
         self.num_batches = 0
         self.retrain_epochs = self.training_detail.base.epochs
-        self.last_epoch = self.history.last_epoch
-        self.total_epochs = self.history.sum_epoch
-        self.still_epochs = self.history.epochs
         self._start_time = time.time()
         self._time_batch_step = time.time()
         self._time_first_step = time.time()
@@ -86,20 +103,29 @@ class FitCallback:
         self.samples_target_train = []
         self.samples_target_val = []
 
+    def __stop_by_error(self, error):
+        if not isinstance(error, NoImportantParameters):
+            if self.last_epoch <= 1 and self.training_detail.state.status == StateStatusChoice.training:
+                self.training_detail.state.set(StateStatusChoice.no_train)
+            else:
+                self.training_detail.state.set(StateStatusChoice.stopped)
+            self.stop_training = True
+        raise error
+
     def _get_checkpoint_mode(self):
         method_name = '_get_checkpoint_mode'
         try:
-            print(method_name)
             if self.checkpoint_config.type == CheckpointTypeChoice.Loss:
                 return 'min'
             elif self.checkpoint_config.type == CheckpointTypeChoice.Metrics:
                 metric_name = self.checkpoint_config.metric_name
+                if not metric_name:
+                    raise NoCheckpointMetric(self.__class__.__name__, method_name)
                 return loss_metric_config.get("metric").get(metric_name).get("mode")
             else:
-                print('\nClass FitCallback method _get_checkpoint_mode: No checkpoint types are found\n')
-                return None
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
+                raise NoCheckpointParameters(self.__class__.__name__, method_name)
+        except Exception as error:
+            self.__stop_by_error(error=error)
 
     @staticmethod
     def _logs_predict_extract(logs, prefix):
@@ -112,20 +138,21 @@ class FitCallback:
     def _best_epoch_monitoring(self):
         method_name = '_best_epoch_monitoring'
         try:
-            print(method_name)
             output = "output" if self.is_yolo else f"{self.checkpoint_config.layer}"
             checkpoint_type = self.checkpoint_config.type.name.lower()
             metric = self.checkpoint_config.metric_name.name
             indicator = self.checkpoint_config.indicator.name.lower()
             checkpoint_list = self.history.get_checkpoint_data(output, checkpoint_type, metric, indicator)
+            if not checkpoint_list:
+                raise NoCheckpointParameters(self.__class__.__name__, method_name)
             if self.checkpoint_mode == 'min' and checkpoint_list[-1] == min(checkpoint_list):
                 return True
             elif self.checkpoint_mode == "max" and checkpoint_list[-1] == max(checkpoint_list):
                 return True
             else:
                 return False
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
+        except Exception as error:
+            self.__stop_by_error(error=error)
 
     def _set_result_data(self, param: dict) -> None:
         method_name = '_set_result_data'
@@ -156,7 +183,7 @@ class FitCallback:
     def _get_predict(self, current_model=None):
         method_name = '_get_predict'
         try:
-            print(method_name)
+            logger.debug(f"start method {method_name}")
             # current_model = deploy_model if deploy_model else self.model
             if self.is_yolo:
                 current_predict = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_val)]
@@ -172,55 +199,47 @@ class FitCallback:
                 # current_predict = None
                 current_target = None
             return current_predict, current_target
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
+        except Exception as error:
+            self.__stop_by_error(PredictImpossible(error=error, __module=self.__class__.__name__, __method=method_name))
 
     @staticmethod
     def _estimate_step(current, start, now):
         method_name = '_estimate_step'
-        try:
-            if current:
-                _time_per_unit = (now - start) / current
-            else:
-                _time_per_unit = (now - start)
-            return _time_per_unit
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
+        if current:
+            _time_per_unit = (now - start) / current
+        else:
+            _time_per_unit = (now - start)
+        return _time_per_unit
 
     @staticmethod
     def eta_format(eta):
         method_name = 'eta_format'
-        try:
-            print(method_name)
-            if eta > 3600:
-                eta_format = '%d ч %02d мин %02d сек' % (eta // 3600,
-                                                         (eta % 3600) // 60, eta % 60)
-            elif eta > 60:
-                eta_format = '%d мин %02d сек' % (eta // 60, eta % 60)
-            else:
-                eta_format = '%d сек' % eta
-            return ' %s' % eta_format
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
+
+        if eta > 3600:
+            eta_format = '%d ч %02d мин %02d сек' % (eta // 3600,
+                                                     (eta % 3600) // 60, eta % 60)
+        elif eta > 60:
+            eta_format = '%d мин %02d сек' % (eta // 60, eta % 60)
+        else:
+            eta_format = '%d сек' % eta
+        return ' %s' % eta_format
 
     def update_progress(self, target, current, start_time, finalize=False, stop_current=0, stop_flag=False):
         method_name = 'update_progress'
-        try:
-            """
-            Updates the progress bar.
-            """
-            _now_time = time.time()
-            if finalize:
-                eta = _now_time - start_time
+
+        """
+        Updates the progress bar.
+        """
+        _now_time = time.time()
+        if finalize:
+            eta = _now_time - start_time
+        else:
+            time_per_unit = self._estimate_step(current, start_time, _now_time)
+            if stop_flag:
+                eta = time_per_unit * (target - current)
             else:
-                time_per_unit = self._estimate_step(current, start_time, _now_time)
-                if stop_flag:
-                    eta = time_per_unit * (target - current)
-                else:
-                    eta = time_per_unit * target
-            return int(eta)
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
+                eta = time_per_unit * target
+        return int(eta)
 
     def is_best(self):
         return self._best_epoch_monitoring()
@@ -228,8 +247,8 @@ class FitCallback:
     def on_train_begin(self):
         method_name = 'on_train_begin'
         try:
-            print(method_name)
             status = self._get_train_status()
+            logger.info(f"start method {method_name}, status - {status}")
             self._start_time = time.time()
             if status != StateStatusChoice.addtrain:
                 self.batch = 1
@@ -243,11 +262,13 @@ class FitCallback:
                     self.num_batches = len(self.dataset.dataframe['train']) // self.batch_size + 1
                 else:
                     self.num_batches = len(self.dataset.dataframe['train']) // self.batch_size
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
+        except Exception as error:
+            self.__stop_by_error(
+                StartNumBatchesMissing(
+                    self.__class__.__name__, method_name
+                ).with_traceback(error.__traceback__))
 
     def on_epoch_begin(self):
-        print('on_epoch_begin')
         self.last_epoch += 1
         self._time_first_step = time.time()
 
@@ -255,12 +276,14 @@ class FitCallback:
         method_name = 'on_train_batch_end'
         try:
             if self._get_train_status() == StateStatusChoice.stopped:
-                print('_get_train_status() == "stopped"')
+                logger.info(f"method {method_name}, train_status is 'stopped'")
                 self.stop_training = True
                 progress.pool(
                     self.progress_name,
                     percent=self.last_epoch / (
-                        self.total_epochs if self._get_train_status() == StateStatusChoice.addtrain else self.retrain_epochs) * 100,
+                        self.total_epochs if self._get_train_status() == StateStatusChoice.addtrain
+                        else self.retrain_epochs
+                    ) * 100,
                     message="Обучение остановлено пользователем, ожидайте остановку...",
                     finished=False,
                 )
@@ -297,6 +320,9 @@ class FitCallback:
 
                 self._set_result_data(result_data)
                 self.training_detail.result = self._get_result_data()
+                # _usage = self.result["train_usage"]["hard_usage"]["GPU"]["gpu_utilization"]
+                # if float(_usage) > 90:
+                #     logger.critical(f"Критическая нагрузка на GPU - {_usage}")
                 progress.pool(
                     self.progress_name,
                     percent=self.last_epoch / (
@@ -306,13 +332,16 @@ class FitCallback:
                             f"{self.total_epochs if self._get_train_status() in [StateStatusChoice.addtrain, StateStatusChoice.stopped] else self.retrain_epochs}",
                     finished=False,
                 )
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
+        except Exception as error:
+            self.__stop_by_error(BatchResultMissing(
+                self.batch, self.__class__.__name__, method_name
+            ).with_traceback(error.__traceback__))
 
     def on_epoch_end(self, epoch, arrays=None, logs=None, train_data_idxs=None):
         method_name = 'on_epoch_end'
+        logger.debug(f"{method_name}, epoch {self.last_epoch}")
+
         try:
-            print(method_name)
             if self.is_yolo:
                 self.history.current_logs = logs
             else:
@@ -320,8 +349,15 @@ class FitCallback:
             self.history.update_log_history()
             if epoch == 1:
                 interactive.log_history = self.history.get_history()
-            current_epoch_time = time.time() - self._time_first_step
-            self._sum_epoch_time += current_epoch_time
+        except Exception as error:
+            self.__stop_by_error(HistoryUpdateMissing(
+                self.last_epoch, self.__class__.__name__, method_name
+            ).with_traceback(error.__traceback__))
+
+        current_epoch_time = time.time() - self._time_first_step
+        self._sum_epoch_time += current_epoch_time
+
+        try:
             train_epoch_data = interactive.update_state(
                 fit_logs=self.history.get_history(),
                 arrays=arrays,
@@ -329,6 +365,7 @@ class FitCallback:
                 on_epoch_end_flag=True,
                 train_idx=train_data_idxs
             )
+
             self._set_result_data({'train_data': train_epoch_data})
             progress.pool(
                 self.progress_name,
@@ -340,15 +377,18 @@ class FitCallback:
                         f"{self.total_epochs if self._get_train_status() in [StateStatusChoice.addtrain, StateStatusChoice.stopped] else self.retrain_epochs}",
                 finished=False,
             )
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
+        except Exception as error:
+            self.__stop_by_error(EpochResultMissing(
+                self.last_epoch, self.__class__.__name__, method_name
+            ).with_traceback(error.__traceback__))
 
     def on_train_end(self):
         method_name = 'on_train_end'
+        logger.debug(f"{method_name}, epoch {self.last_epoch}, train status "
+                     f"is {self.training_detail.state.status.value}")
         try:
-            print(method_name)
             if self.stop_training:
-                interactive.addtrain_epochs.append(self.last_epoch-1)
+                interactive.addtrain_epochs.append(self.last_epoch - 1)
             else:
                 interactive.addtrain_epochs.append(self.last_epoch)
             if (self.stop_training and self.last_epoch < self.training_detail.base.epochs) or \
@@ -356,39 +396,39 @@ class FitCallback:
                      self.last_epoch == self.training_detail.base.epochs):
                 self.history.sum_epoch = self.training_detail.base.epochs
             self.history.save_logs()
+        except Exception as error:
+            self.__stop_by_error(TrainingLogsSavingMissing(
+                self.__class__.__name__, method_name
+            ).with_traceback(error.__traceback__))
 
-            time_end = self.update_progress(
-                self.num_batches * self.retrain_epochs, self.batch, self._start_time, finalize=True)
-            self._sum_time += time_end
-            total_epochs = self.total_epochs \
-                if self._get_train_status() in [StateStatusChoice.addtrain,
-                                                StateStatusChoice.stopped] else self.retrain_epochs
-            if self.stop_training:
-                progress.pool(
-                    self.progress_name,
-                    message=f"Обучение остановлено. Эпоха {self.last_epoch - 1} из {total_epochs}. Модель сохранена.",
-                    data=self._get_result_data(),
-                    finished=True,
-                )
-            else:
-                percent = self.last_epoch / (
-                    self.total_epochs if self._get_train_status() == StateStatusChoice.addtrain or
-                                         self._get_train_status() == StateStatusChoice.stopped
-                    else self.retrain_epochs
-                ) * 100
-                print('percent', percent, self.progress_name)
+        time_end = self.update_progress(
+            self.num_batches * self.retrain_epochs, self.batch, self._start_time, finalize=True)
+        self._sum_time += time_end
+        total_epochs = self.total_epochs \
+            if self._get_train_status() in [StateStatusChoice.addtrain,
+                                            StateStatusChoice.stopped] else self.retrain_epochs
+        if self.stop_training:
+            progress.pool(
+                self.progress_name,
+                message=f"Обучение остановлено. Эпоха {self.last_epoch - 1} из {total_epochs}. Модель сохранена.",
+                data=self._get_result_data(),
+                finished=True,
+            )
+        else:
+            percent = self.last_epoch / (
+                self.total_epochs if self._get_train_status() == StateStatusChoice.addtrain or
+                                     self._get_train_status() == StateStatusChoice.stopped
+                else self.retrain_epochs
+            ) * 100
 
-                self.training_detail.state.set("trained")
-                self.training_detail.result = self._get_result_data()
-                progress.pool(
-                    self.progress_name,
-                    percent=percent,
-                    message=f"Обучение завершено. Эпоха {self.last_epoch} из {total_epochs}",
-                    finished=True,
-                )
-                print(progress.pool(self.progress_name))
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
+            self.training_detail.state.set("trained")
+            self.training_detail.result = self._get_result_data()
+            progress.pool(
+                self.progress_name,
+                percent=percent,
+                message=f"Обучение завершено. Эпоха {self.last_epoch} из {total_epochs}",
+                finished=True,
+            )
 
 
 # noinspection PyBroadException

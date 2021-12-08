@@ -19,8 +19,10 @@ from terra_ai.data.training.extra import ArchitectureChoice
 from terra_ai.data.training.train import TrainingDetailsData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.exceptions.deploy import MethodNotImplementedException
+from terra_ai.exceptions.training import TooBigBatchSize, DatasetPrepareMissing, ModelSettingMissing, \
+    NoYoloParamsException
+from terra_ai.logging import logger
 from terra_ai.modeling.validator import ModelValidator
-from terra_ai.exceptions import training as exceptions
 from terra_ai.training.terra_models import BaseTerraModel, YoloTerraModel
 from terra_ai.callbacks.base_callback import FitCallback
 
@@ -60,10 +62,11 @@ class GUINN:
     def _set_training_params(self, dataset: DatasetData, params: TrainingDetailsData) -> None:
         method_name = '_set_training_params'
         try:
-            print(method_name)
             self.params = params
+            progress.pool(self.progress_name, finished=False, message="Подготовка датасета...")
             self.dataset = self._prepare_dataset(
                 dataset=dataset, model_path=params.model_path, state=params.state.status)
+            progress.pool(self.progress_name, finished=False, message="Подготовка датасета выполнена.")
             self.train_length, self.val_length = get_dataset_length(self.dataset)
 
             if not self.dataset.data.architecture or self.dataset.data.architecture == ArchitectureChoice.Basic:
@@ -80,31 +83,25 @@ class GUINN:
                     params.state.set("stopped")
                 else:
                     params.state.set("no_train")
-                raise exceptions.TooBigBatchSize(params.base.batch, train_size)
+                raise TooBigBatchSize(params.base.batch, train_size)
 
             self.batch_size = params.base.batch
 
             interactive.set_attributes(dataset=self.dataset, params=params)
-        except Exception as e:
-            print_error(GUINN().name, method_name, e)
+        except Exception as error:
+            raise error
 
     def _set_callbacks(self, dataset: PrepareDataset, train_details: TrainingDetailsData) -> None:
-        method_name = '_set_callbacks'
-        try:
-            print(method_name)
-            progress.pool(self.progress_name, finished=False, message="Добавление колбэков...")
+        progress.pool(self.progress_name, finished=False, message="Добавление колбэков...")
 
-            self.callback = FitCallback(dataset=dataset, training_details=train_details, model_name=self.nn_name,
-                                        deploy_type=self.deploy_type.name)
-            progress.pool(self.progress_name, finished=False, message="Добавление колбэков выполнено")
-        except Exception as e:
-            print_error(GUINN().name, method_name, e)
+        self.callback = FitCallback(dataset=dataset, training_details=train_details, model_name=self.nn_name,
+                                    deploy_type=self.deploy_type.name)
+        progress.pool(self.progress_name, finished=False, message="Добавление колбэков выполнено")
 
     @staticmethod
     def _set_deploy_type(dataset: PrepareDataset) -> str:
         method_name = '_set_deploy_type'
         try:
-            print(method_name)
             data = dataset.data
             inp_tasks = []
             out_tasks = []
@@ -149,27 +146,26 @@ class GUINN:
                 raise MethodNotImplementedException(__method=inp_task_name + out_task_name,
                                                     __class="ArchitectureChoice")
             return deploy_type
-        except Exception as e:
-            print_error(GUINN().name, method_name, e)
+        except Exception as error:
+            raise error
 
-    @staticmethod
-    def _prepare_dataset(dataset: DatasetData, model_path: Path, state: str) -> PrepareDataset:
+    def _prepare_dataset(self, dataset: DatasetData, model_path: Path, state: str) -> PrepareDataset:
         method_name = '_prepare_dataset'
         try:
-            print(method_name)
             prepared_dataset = PrepareDataset(data=dataset, datasets_path=dataset.path)
             prepared_dataset.prepare_dataset()
             if state != "addtrain":
                 prepared_dataset.deploy_export(os.path.join(model_path))
             return prepared_dataset
-        except Exception as e:
-            print_error(GUINN().name, method_name, e)
+        except Exception as error:
+            raise DatasetPrepareMissing(
+                self.__class__.__name__, method_name
+            ).with_traceback(error.__traceback__)
 
     def _set_model(self, model: ModelDetailsData, train_details: TrainingDetailsData,
                    dataset: PrepareDataset) -> Union[BaseTerraModel, YoloTerraModel]:
         method_name = '_set_model'
         try:
-            print(method_name)
             base_model = None
             if train_details.state.status == "training":
                 validator = ModelValidator(model)
@@ -186,31 +182,36 @@ class GUINN:
                                              model_path=train_details.model_path,
                                              **options)
             return train_model
-        except Exception as e:
-            print_error(GUINN().name, method_name, e)
+        except Exception as error:
+            raise ModelSettingMissing(
+                self.__class__.__name__, method_name
+            ).with_traceback(error.__traceback__)
 
-    @staticmethod
-    def get_yolo_init_parameters(dataset: PrepareDataset):
-        version = dataset.instructions.get(list(dataset.data.outputs.keys())[0]).get(
-            '2_object_detection').get('yolo')
-        classes = dataset.data.outputs.get(list(dataset.data.outputs.keys())[0]).classes_names
-        options = {"training": True, "classes": classes, "version": version}
-        return options
+    def get_yolo_init_parameters(self, dataset: PrepareDataset):
+        method_name = 'get_yolo_init_parameters'
+        try:
+            version = dataset.instructions.get(list(dataset.data.outputs.keys())[0]).get(
+                '2_object_detection').get('yolo')
+            classes = dataset.data.outputs.get(list(dataset.data.outputs.keys())[0]).classes_names
+            options = {"training": True, "classes": classes, "version": version}
+            return options
+        except Exception as error:
+            raise NoYoloParamsException(
+                self.__class__.__name__, method_name
+            ).with_traceback(error.__traceback__)
 
     @staticmethod
     def _save_params_for_deploy(params: TrainingDetailsData):
         method_name = '_save_params_for_deploy'
         try:
-            print(method_name)
             with open(os.path.join(params.model_path, "config.train"), "w", encoding="utf-8") as train_config:
                 json.dump(params.base.native(), train_config)
-        except Exception as e:
-            print_error(GUINN().name, method_name, e)
+        except Exception as error:
+            raise error
 
     def _kill_last_training(self, state):
         method_name = '_kill_last_training'
         try:
-            print(method_name)
             for one_thread in threading.enumerate():
                 if one_thread.getName() == "current_train":
                     current_status = state.state.status
@@ -219,13 +220,13 @@ class GUINN:
                                   message="Найдено незавершенное обучение. Идет очистка. Подождите.")
                     one_thread.join()
                     state.state.set(current_status)
-        except Exception as e:
-            print_error(GUINN().name, method_name, e)
+        except Exception as error:
+            raise error
 
     def terra_fit(self, dataset: DatasetData, gui_model: ModelDetailsData, training: TrainingDetailsData) -> None:
-        method_name = 'model_fit'
+        method_name = 'terra_fit'
+        logger.info(f"start {method_name}")
         try:
-            print(method_name)
             self._kill_last_training(state=training)
             progress.pool.reset(self.progress_name)
 
@@ -235,13 +236,12 @@ class GUINN:
             self._set_training_params(dataset=dataset, params=training)
             self.model_fit(params=training, dataset=self.dataset, model=gui_model)
 
-        except Exception as e:
-            print_error(GUINN().name, method_name, e)
+        except Exception as error:
+            raise error
 
     def nn_cleaner(self, retrain: bool = False) -> None:
         method_name = 'nn_cleaner'
         try:
-            print(method_name)
             keras.backend.clear_session()
             self.dataset = None
             self.deploy_type = None
@@ -253,8 +253,8 @@ class GUINN:
                 self.callback = None
                 interactive.clear_history()
             gc.collect()
-        except Exception as e:
-            print_error(GUINN().name, method_name, e)
+        except Exception as error:
+            raise error
 
     @progress.threading
     def model_fit(self, params: TrainingDetailsData, model: ModelDetailsData, dataset: PrepareDataset) -> None:
@@ -266,10 +266,10 @@ class GUINN:
             compiled_model = self._set_model(model=model, train_details=params, dataset=dataset)
             compiled_model.set_callback(self.callback)
             progress.pool(self.progress_name, finished=False, message="\n Компиляция модели выполнена")
-            progress.pool(self.progress_name, finished=False, message="\n Начало обучения ...")
             if params.state.status == "training":
                 compiled_model.save()
+            progress.pool(self.progress_name, finished=False, message="\n Начало обучения ...")
             compiled_model.fit(params=params, dataset=dataset)
 
-        except Exception as e:
-            print_error(GUINN().name, method_name, e)
+        except Exception as error:
+            progress.pool(self.progress_name, data=params, finished=True, error=error)
