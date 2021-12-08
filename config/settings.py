@@ -198,6 +198,11 @@ LOGGING = {
             "class": "apps.api.logging.TerraConsoleHandler",
             "formatter": "terra.console",
         },
+        "terra.request_catcher": {
+            "level": "DEBUG",
+            "class": "apps.api.logging.TerraRequestCatcherHandler",
+            "formatter": "terra.console",
+        },
         "mail_admins": {
             "level": "ERROR",
             "filters": ["require_debug_false"],
@@ -215,7 +220,7 @@ LOGGING = {
             "propagate": False,
         },
         "terra": {
-            "handlers": ["terra.console"],
+            "handlers": ["terra.console", "terra.request_catcher"],
             "level": "DEBUG",
             "propagate": False,
         },
