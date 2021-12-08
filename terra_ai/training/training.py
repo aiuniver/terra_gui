@@ -11,7 +11,7 @@ from tensorflow import keras
 
 
 from terra_ai import progress
-from terra_ai.callbacks.utils import print_error, YOLO_ARCHITECTURE, get_dataset_length
+from terra_ai.callbacks.utils import YOLO_ARCHITECTURE, get_dataset_length
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice
 from terra_ai.data.modeling.model import ModelDetailsData
@@ -143,8 +143,8 @@ class GUINN:
                 deploy_type = ArchitectureChoice.__dict__[dataset.instructions.get(2).parameters.model.title() +
                                                           dataset.instructions.get(2).parameters.yolo.title()]
             else:
-                raise MethodNotImplementedException(__method=inp_task_name + out_task_name,
-                                                    __class="ArchitectureChoice")
+                raise MethodNotImplementedException(
+                    __method=inp_task_name + out_task_name, __class="ArchitectureChoice")
             return deploy_type
         except Exception as error:
             raise error

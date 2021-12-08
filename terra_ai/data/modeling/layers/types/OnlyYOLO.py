@@ -2,20 +2,10 @@
 ## Тип слоя `OnlyYOLO`
 """
 
-from typing import Optional
 from pydantic.types import PositiveInt
 
 from ....mixins import BaseMixinData
-from ..extra import (
-    ActivationChoice,
-    InitializerChoice,
-    RegularizerChoice,
-    ConstraintChoice,
-    LayerConfigData,
-    LayerValidationMethodChoice,
-    ModuleChoice,
-    ModuleTypeChoice,
-)
+from ..extra import LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice
 
 LayerConfig = LayerConfigData(
     **{
