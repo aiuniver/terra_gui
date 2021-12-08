@@ -2,9 +2,6 @@ import json
 import logging
 import traceback
 
-from time import mktime
-from datetime import datetime
-
 from rest_framework.views import exception_handler
 from rest_framework.exceptions import ValidationError
 
@@ -13,7 +10,6 @@ from apps.api.logging import LogData, LevelnameChoice
 
 
 def handler(exc, context):
-    unixtime = mktime(datetime.now().timetuple())
     response = exception_handler(exc, context)
 
     if isinstance(exc, ValidationError):
@@ -27,11 +23,6 @@ def handler(exc, context):
         logging.getLogger("django.request").error(title if message is None else message)
 
     return BaseResponseError(
-        LogData(
-            level=LevelnameChoice.ERROR,
-            time=unixtime,
-            title=title,
-            message=message,
-        ),
+        LogData(level=LevelnameChoice.ERROR, title=title, message=message),
         data=getattr(exc, "data", None),
     )
