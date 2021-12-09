@@ -527,8 +527,8 @@ class YoloTerraModel(BaseTerraModel):
                                                    target1,
                                                    target2,
                                                    **yolo_parameters)
-                    print(f'Batch {val_steps}; giou_loss, conf_loss, prob_loss, total_loss',
-                          results[0].numpy(), results[1].numpy(), results[2].numpy(), results[3].numpy())
+                    # print(f'Batch {val_steps}; giou_loss, conf_loss, prob_loss, total_loss',
+                    #       results[0].numpy(), results[1].numpy(), results[2].numpy(), results[3].numpy())
                     giou_val += results[0].numpy()
                     conf_val += results[1].numpy()
                     prob_val += results[2].numpy()
@@ -564,7 +564,7 @@ class YoloTerraModel(BaseTerraModel):
                     except:
                         current_logs['class_metrics']['mAP50'][str(classes[cls])] = {"val": None}
 
-                print(f'\n Epoch {epoch}: current_logs - {current_logs}')
+                # print(f'\n Epoch {epoch}: current_logs - {current_logs}')
                 self.callback.on_epoch_end(
                     epoch=epoch + 1,
                     arrays={"train_pred": train_pred, "val_pred": val_pred, "train_true": train_true,

@@ -42,7 +42,7 @@ def read_class_names(class_file_name):
     return names
 
 
-class DarknetBatchNormalization(BatchNormalization):
+class BatchNormalization(BatchNormalization):
     # "Frozen state" and "inference mode" are two separate concepts.
     # `layer.trainable = False` is to freeze the layer, so the layer will use
     # stored moving `var` and `mean` in the "inference mode", and both `gama`
@@ -68,7 +68,7 @@ def convolutional(input_layer, filters_shape, downsample=False, activate=True, b
                   kernel_initializer=tf.random_normal_initializer(stddev=0.01),
                   bias_initializer=tf.constant_initializer(0.))(input_layer)
     if bn:
-        conv = DarknetBatchNormalization()(conv)
+        conv = BatchNormalization()(conv)
     if activate:
         if activate_type == "leaky":
             conv = LeakyReLU(alpha=0.1)(conv)

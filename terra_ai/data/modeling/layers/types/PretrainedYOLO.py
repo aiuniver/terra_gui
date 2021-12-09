@@ -25,7 +25,8 @@ LayerConfig = LayerConfigData(
 
 class ParametersMainData(BaseMixinData):
     num_classes: PositiveInt = 5
-    mode: YOLOModeChoice = YOLOModeChoice.YOLOv3
+    version: YOLOModeChoice = YOLOModeChoice.YOLOv3
+    use_weights: bool = True
 
 
 class ParametersExtraData(BaseMixinData):

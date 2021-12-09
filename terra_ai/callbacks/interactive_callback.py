@@ -173,6 +173,7 @@ class InteractiveCallback:
                         sensitivity=self.training_details.interactive.intermediate_result.sensitivity,
                     )
                 if on_epoch_end_flag:
+                    # print('\n fit_logs', fit_logs)
                     self.current_epoch = fit_logs.get('epochs')[-1]
                     self.log_history = fit_logs
                     self._update_progress_table(current_epoch_time)
