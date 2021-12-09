@@ -3,6 +3,17 @@
     <div slot="header">
       <span class="logging-modal__title">{{ title }}</span>
     </div>
+    <div class="t-tags">
+      <template v-for="tag of tags">
+        <div
+          :key="tag"
+          :class="['t-tags__tag', { 't-tags__tag--active': !selected.includes(tag) }]"
+          @click="onChange(tag)"
+        >
+          {{ tag }}
+        </div>
+      </template>
+    </div>
     <div class="t-logging">
       <div class="t-logging__item">
         <div class="t-logging__date">Время</div>
@@ -11,7 +22,7 @@
       </div>
       <scrollbar>
         <div>
-          <template v-for="(error, i) of errors">
+          <template v-for="(error, i) of filter">
             <div class="t-logging__item" :key="'errors_' + i">
               <div class="t-logging__date">{{ (error.time * 1000) | formatDate }}</div>
               <div class="t-logging__type">{{ error.level }}</div>
@@ -20,6 +31,7 @@
               </div>
             </div>
           </template>
+          <p v-if="!filter.length" class="t-logging__empty" >Ничего не выбрано</p>
         </div>
       </scrollbar>
     </div>
@@ -45,13 +57,32 @@ export default {
   },
   data: () => ({
     copy: false,
+    // tags: [
+    //   { name: 'ERROR', active: true },
+    //   { name: 'INFO', active: true },
+    //   { name: 'WARNING', active: true },
+    // ],
+    selected: [],
   }),
   methods: {
     click(error) {
       this.$emit('error', error);
     },
+    onChange(tag) {
+      if (this.selected.includes(tag)) {
+        this.selected.pop(tag);
+      } else {
+        this.selected.push(tag);
+      }
+    },
   },
   computed: {
+    tags() {
+      return this.errors.map(i => i.level);
+    },
+    filter() {
+      return this.errors.filter(item => !this.selected.includes(item.level));
+    },
     dialog: {
       set(value) {
         this.$emit('input', value);
@@ -91,6 +122,10 @@ export default {
   &__type {
     width: 50px;
   }
+  &__empty {
+    text-align: center;
+    margin-top: 50px;
+  }
   &__error {
     flex: 1 1 auto;
     white-space: pre-wrap;
@@ -99,6 +134,22 @@ export default {
     // overflow: hidden;
     &:hover {
       opacity: 0.7;
+    }
+  }
+}
+.t-tags {
+  display: flex;
+  margin-bottom: 10px;
+  &__tag {
+    color: #a7bed3;
+    border: 1px solid #6c7883;
+    background-color: #242f3d;
+    border-radius: 4px;
+    padding: 0 15px;
+    margin-right: 5px;
+    cursor: pointer;
+    &--active {
+      border-color: #65b9f4;
     }
   }
 }
