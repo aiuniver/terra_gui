@@ -1,7 +1,6 @@
 import copy
 import gc
 import importlib
-import logging
 import sys
 
 from typing import List, Optional, Tuple, Dict, Any, Union
@@ -9,16 +8,12 @@ from typing import List, Optional, Tuple, Dict, Any, Union
 import networkx as nx
 import numpy as np
 import tensorflow
-from tensorflow import TensorShape
 from tensorflow.python.keras.backend import clear_session
-
-from terra_ai.callbacks.utils import print_error
 from terra_ai.data.modeling import layers
 from terra_ai.data.modeling.extra import LayerGroupChoice, LayerTypeChoice
-from terra_ai.data.modeling.layer import LayerData
 from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.modeling.layers.extra import ModuleTypeChoice, LayerValidationMethodChoice, \
-    SpaceToDepthDataFormatChoice, LayerConfigData
+    SpaceToDepthDataFormatChoice, LayerConfigData, LayerValueConfig
 from terra_ai.exceptions import modeling as exceptions
 from terra_ai.modeling.utils import logger, get_layer_info, reformat_input_shape, reorder_plan, get_edges, get_links, \
     tensor_shape_to_tuple, get_idx_line
@@ -395,7 +390,6 @@ class ModelValidator:
                 if comment:
                     comment = f"Errors in block {layer[2].get('name', layer[0])}: {comment[:-2]}"
             else:
-
                 output_shape, comment = self._layer_validation(
                     layer=layer,
                     layer_input_shape=self.layer_input_shapes.get(layer[0]),
@@ -406,8 +400,15 @@ class ModelValidator:
             if comment:
                 self.valid = False
                 self.val_dictionary[layer[0]] = comment
-            for down_link in self.down_links[layer[0]]:
-                self.layer_input_shapes[down_link].extend(output_shape)
+            if layer[1] == LayerTypeChoice.PretrainedYOLO:
+                for i, down_link in enumerate(self.down_links[layer[0]]):
+                    self.layer_input_shapes[down_link].append(output_shape[i])
+            else:
+                for down_link in self.down_links[layer[0]]:
+                    self.layer_input_shapes[down_link].extend(output_shape)
+            # print('\n _model_validation', layer[1], output_shape,
+            #       '\n self.down_links[layer[0]]', self.down_links[layer[0]],
+            #       '\n self.layer_input_shapes', self.layer_input_shapes)
         if not self.valid:
             return self.val_dictionary
 
@@ -422,7 +423,8 @@ class ModelValidator:
             shape=layer_input_shape,
             parameters=layer[2],
             defaults=defaults,
-            config=config
+            config=config,
+            **{'down_links': self.down_links[layer[0]]}
         )
         return self.validator.get_validated()
 
@@ -518,21 +520,18 @@ class LayerValidation:
                         params.pop("trainable")
                         if params.get("name"):
                             params.pop("name")
-                    output_shape = [
-                        tuple(
-                            getattr(
-                                self.module, self.layer_type
-                            )(**params).compute_output_shape(
-                                self.inp_shape[0] if len(self.inp_shape) == 1 else self.inp_shape
-                            )
-                        )
-                    ]
+                    if self.layer_type == LayerTypeChoice.PretrainedYOLO:
+                        output_shape = getattr(self.module, self.layer_type)(**params).compute_output_shape(
+                            self.inp_shape[0] if len(self.inp_shape) == 1 else self.inp_shape)
+                    else:
+                        output_shape = [
+                            tuple(getattr(self.module, self.layer_type)(**params).compute_output_shape(
+                                self.inp_shape[0] if len(self.inp_shape) == 1 else self.inp_shape))
+                        ]
+                    # print('\n get_validated', self.layer_type, output_shape)
                     # LSTM and GRU can returns list of one tuple of tensor shapes
                     # code below reformat it to list of shapes
-                    if (
-                            len(output_shape) == 1
-                            and type(output_shape[0][0]).__name__ == "TensorShape"
-                    ):
+                    if len(output_shape) == 1 and type(output_shape[0][0]).__name__ == "TensorShape":
                         new = []
                         for shape in output_shape[0]:
                             new.append(tensor_shape_to_tuple(shape))
@@ -668,8 +667,8 @@ class LayerValidation:
                 f"{self.num_uplinks[0]} or greater", 's' if self.num_uplinks[0] > 1 else '', len(self.inp_shape)))
         elif isinstance(self.num_uplinks[0], tuple) and \
                 self.num_uplinks[1] not in [
-                    LayerValidationMethodChoice.dependence_tuple2,
-                    LayerValidationMethodChoice.dependence_tuple3] and \
+            LayerValidationMethodChoice.dependence_tuple2,
+            LayerValidationMethodChoice.dependence_tuple3] and \
                 len(self.inp_shape) not in self.num_uplinks[0]:
             return str(exceptions.IncorrectQuantityInputShapeException(
                 f"one of {self.num_uplinks}", "s", len(self.inp_shape)))
@@ -709,8 +708,8 @@ class LayerValidation:
                     f"{self.input_dimension[0]} or greater", len(self.inp_shape[0])))
             elif isinstance(self.input_dimension[0], tuple) and \
                     self.input_dimension[1] in [
-                        LayerValidationMethodChoice.dependence_tuple2,
-                        LayerValidationMethodChoice.dependence_tuple3] and \
+                LayerValidationMethodChoice.dependence_tuple2,
+                LayerValidationMethodChoice.dependence_tuple3] and \
                     len(self.inp_shape[0]) not in self.input_dimension[0]:
                 return str(exceptions.IncorrectQuantityInputDimensionsException(
                     f"one of {self.input_dimension[0]}", len(self.inp_shape[0])))
@@ -797,22 +796,22 @@ class LayerValidation:
                 return str(exceptions.ClassesShouldBeException(
                     "using `weights` as `imagenet` with `include_top` as true",
                     1000, self.layer_parameters.get('classes')))
-            elif self.layer_type == "NASNetMobile":
+            elif self.layer_type == LayerTypeChoice.NASNetMobile:
                 if self.layer_parameters.get("weights") == 'imagenet' and self.inp_shape[0][1:] != (224, 224, 3):
                     return str(exceptions.InputShapeMustBeOnlyException(
                         "pre-loaded 'imagenet' weights", (224, 224, 3), self.inp_shape[0][1:]))
                 elif self.inp_shape[0][1] < 32 or self.inp_shape[0][2] < 32 or self.inp_shape[0][3] < 3:
                     return str(exceptions.InputShapeMustBeInEchDimException(
-                        "greater or equal", (32, 32, 3), self.inp_shape[0][1:] ))
-            elif self.layer_type == "NASNetLarge":
+                        "greater or equal", (32, 32, 3), self.inp_shape[0][1:]))
+            elif self.layer_type == LayerTypeChoice.NASNetLarge:
                 if self.layer_parameters.get("weights") == 'imagenet' \
                         and self.inp_shape[0][1:] != (331, 331, 3):
                     return str(exceptions.InputShapeMustBeOnlyException(
-                        "pre-loaded 'imagenet' weights", (331, 331, 3), self.inp_shape[0][1:] ))
+                        "pre-loaded 'imagenet' weights", (331, 331, 3), self.inp_shape[0][1:]))
                 elif self.inp_shape[0][1] < 32 or self.inp_shape[0][2] < 32 or self.inp_shape[0][3] < 3:
                     return str(exceptions.InputShapeMustBeInEchDimException(
                         "greater or equal", (32, 32, 3), self.inp_shape[0][1:]))
-            elif self.layer_type == "InceptionV3":
+            elif self.layer_type == LayerTypeChoice.InceptionV3:
                 if self.layer_parameters.get("weights") == 'imagenet' \
                         and self.inp_shape[0][1:] != (299, 299, 3):
                     return str(exceptions.InputShapeMustBeOnlyException(
@@ -826,7 +825,7 @@ class LayerValidation:
                         self.layer_parameters.get("classifier_activation") is not None:
                     return str(exceptions.ActivationFunctionShouldBeException(
                         "using pretrained weights, with `include_top=True`", "`None` or `softmax`"))
-            elif self.layer_type == "Xception":
+            elif self.layer_type == LayerTypeChoice.Xception:
                 if self.layer_parameters.get("weights") == 'imagenet' and \
                         self.inp_shape[0][1:] != (299, 299, 3):
                     return str(exceptions.InputShapeMustBeOnlyException(
@@ -840,8 +839,9 @@ class LayerValidation:
                         self.layer_parameters.get("classifier_activation") is not None:
                     return str(exceptions.ActivationFunctionShouldBeException(
                         "using pretrained weights, with `include_top=True`", "`None` or `softmax`"))
-            elif self.layer_type in ["VGG16", "VGG19", "ResNet50", "ResNet101", "ResNet152", "ResNet50V2",
-                                     "ResNet101V2", "ResNet152V2"]:
+            elif self.layer_type in [LayerTypeChoice.VGG16, LayerTypeChoice.VGG19, LayerTypeChoice.ResNet50,
+                                     LayerTypeChoice.ResNet101, LayerTypeChoice.ResNet152, LayerTypeChoice.ResNet50V2,
+                                     LayerTypeChoice.ResNet101V2, LayerTypeChoice.ResNet152V2]:
                 if self.layer_parameters.get("include_top") and self.layer_parameters.get('weights') == 'imagenet' \
                         and self.inp_shape[0][1:] != (224, 224, 3):
                     return str(exceptions.InputShapeMustBeOnlyException(
@@ -856,7 +856,8 @@ class LayerValidation:
                         self.layer_parameters.get("classifier_activation") is not None:
                     return str(exceptions.ActivationFunctionShouldBeException(
                         "using pretrained weights, with `include_top=True`", "`None` or `softmax`"))
-            elif self.layer_type in ["DenseNet121", "DenseNet169", "DenseNet201"]:
+            elif self.layer_type in [LayerTypeChoice.DenseNet121, LayerTypeChoice.DenseNet169,
+                                     LayerTypeChoice.DenseNet201]:
                 if self.layer_parameters.get("weights") == 'imagenet' and \
                         self.layer_parameters.get("include_top") and \
                         self.inp_shape[0][1:] != (224, 224, 3):
@@ -866,7 +867,8 @@ class LayerValidation:
                 elif self.inp_shape[0][1] < 32 or self.inp_shape[0][2] < 32 or self.inp_shape[0][3] < 3:
                     return str(exceptions.InputShapeMustBeInEchDimException(
                         "greater or equal", (32, 32, 3), self.inp_shape[0][1:]))
-            elif self.layer_type in ["MobileNetV3Small", "MobileNetV2", "EfficientNetB0"]:
+            elif self.layer_type in [LayerTypeChoice.MobileNetV3Small, LayerTypeChoice.MobileNetV2,
+                                     LayerTypeChoice.EfficientNetB0]:
                 if self.layer_parameters.get("include_top") and \
                         self.layer_parameters.get("weights") and \
                         self.layer_parameters.get("classifier_activation") != "softmax" and \
@@ -935,8 +937,7 @@ class LayerValidation:
                     (self.inp_shape[0][2] % self.layer_parameters.get("block_size") != 0 or
                      self.inp_shape[0][3] % self.layer_parameters.get("block_size") != 0):
                 return str(exceptions.DimensionSizeMustBeEvenlyDivisibleException(
-                    self.inp_shape[0][2:4],
-                    f"input_shape {self.inp_shape[0]}",
+                    self.inp_shape[0][2:4], f"input_shape {self.inp_shape[0]}",
                     f"block_size = {self.layer_parameters.get('block_size')}"
                 ))
         # DarkNetResBlock exceptions
@@ -944,6 +945,14 @@ class LayerValidation:
                 self.layer_parameters.get("filter_num2") != self.inp_shape[0][-1]:
             return f"Incorrect parameters: Parameter 'filter_num2'={self.layer_parameters.get('filter_num2')} " \
                    f"must be equal the number of channels={self.inp_shape[0][-1]} in input tensor"
+        # OnlyYOLO exceptions
+        if self.layer_type == LayerTypeChoice.PretrainedYOLO:
+            if self.inp_shape[0][1:] != (416, 416, 3):
+                return str(exceptions.InputShapeMustBeOnlyException(
+                    "'PretrainedYOLO'", (416, 416, 3), self.inp_shape[0][1:]))
+            if len(self.kwargs.get('down_links')) != 3:
+                return str(exceptions.IncorrectQuantityOutputLayersException(
+                    3, '', len(self.kwargs.get('down_links'))))
 
 
 class CustomLayer(tensorflow.keras.layers.Layer):
@@ -985,6 +994,7 @@ class ModelCreator:
         super().__init__()
         self.name = 'ModelCreator'
         self.model_plan = model_plan
+        # print('\nModelCreator, model_plan\n', model_plan, '\n', input_shapes, '\n', block_plans, '\n', layer_config)
         self.block_plans = block_plans
         self.input_shape = input_shapes
         self.nnmodel = None
@@ -1050,13 +1060,24 @@ class ModelCreator:
                 shape=_input_shape, name=terra_layer[2].get("name")
             )
         else:
-            if len(terra_layer[3]) == 1:
-                input_tensors = self.tensors[terra_layer[3][0]]
+            marker = None
+            yolo_out_idx = None
+            for idx, layer in enumerate(self.model_plan):
+                if layer[0] in self.model_plan[idx][3] and self.model_plan[idx][1] == LayerTypeChoice.PretrainedYOLO:
+                    marker = LayerTypeChoice.PretrainedYOLO
+                    yolo_out_idx = self.model_plan[idx][3].index(layer[0])
+                    break
+            if marker == LayerTypeChoice.PretrainedYOLO:
+                print(marker, yolo_out_idx)
+                pass
             else:
-                input_tensors = []
-                for idx in terra_layer[3]:
-                    input_tensors.append(self.tensors[idx])
-            self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(**terra_layer[2])(input_tensors)
+                if len(terra_layer[3]) == 1:
+                    input_tensors = self.tensors[terra_layer[3][0]]
+                else:
+                    input_tensors = []
+                    for idx in terra_layer[3]:
+                        input_tensors.append(self.tensors[idx])
+                self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(**terra_layer[2])(input_tensors)
 
     def _tf_layer_init(self, terra_layer):
         """Create tensorflow layer_obj from terra_plan layer"""
@@ -1132,3 +1153,44 @@ class ModelCreator:
         del self.nnmodel
         gc.collect()
         self.nnmodel = tensorflow.keras.Model()
+
+
+if __name__ == "__main__":
+    model_plan = [
+        (1, 'Input', {'name': '1'}, [-1], [5]),
+        (5, 'PretrainedYOLO', {'num_classes': 13, 'name': 'PretrainedYOLO_5'}, [1], [2, 3, 4]),
+        (2, 'Reshape', {'target_shape': [52, 52, 3, 18], 'name': '2'}, [5], []),
+        (3, 'Reshape', {'target_shape': [26, 26, 3, 18], 'name': '3'}, [5], []),
+        (4, 'Reshape', {'target_shape': [13, 13, 3, 18], 'name': '4'}, [5], [])]
+    input_shapes = {1: [(416, 416, 3)]}
+    block_plans = {}
+    layer_config = {
+        1: LayerConfigData(
+            num_uplinks=LayerValueConfig(value=1, validation='fixed'),
+            input_dimension=LayerValueConfig(value=2, validation='minimal'),
+            module='tensorflow.keras.layers',
+            module_type='keras'),
+        2: LayerConfigData(
+            num_uplinks=LayerValueConfig(value=1, validation='fixed'),
+            input_dimension=LayerValueConfig(value=2, validation='minimal'),
+            module='tensorflow.keras.layers', module_type='keras'),
+        3: LayerConfigData(
+            num_uplinks=LayerValueConfig(value=1, validation='fixed'),
+            input_dimension=LayerValueConfig(value=2, validation= 'minimal'),
+            module='tensorflow.keras.layers',
+            module_type='keras'),
+        4: LayerConfigData(
+            num_uplinks=LayerValueConfig(value=1, validation='fixed'),
+            input_dimension=LayerValueConfig(value=2, validation='minimal'),
+            module='tensorflow.keras.layers',
+            module_type='keras'),
+        5: LayerConfigData(
+            num_uplinks=LayerValueConfig(value=1, validation='fixed'),
+            input_dimension=LayerValueConfig(value=4, validation='fixed'),
+            module='terra_ai.custom_objects.customLayers',
+            module_type='terra_layer')}
+
+    mc = ModelCreator(model_plan=model_plan, input_shapes=input_shapes,
+                      block_plans=block_plans, layer_config=layer_config)
+    mc.create_model()
+    pass

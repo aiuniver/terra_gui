@@ -8,6 +8,8 @@ from tensorflow import cast
 from tensorflow.keras import layers
 from tensorflow.python.keras.layers import BatchNormalization
 
+from terra_ai.custom_objects.pretrained_yolo import CreateYolo, YOLOv4
+
 terra_custom_layers = {
     "InstanceNormalization": "customLayers",
     "VAEBlock": "customLayers",
@@ -1648,20 +1650,31 @@ class PSPBlock3D(Layer):
         return cls(**config)
 
 
-class OnlyYOLO(Layer):
+class PretrainedYOLO(Layer):
 
-    def __init__(self, classes=5, **kwargs):
-        super(OnlyYOLO, self).__init__(**kwargs)
-        self.classes = classes
+    def __init__(self, num_classes=5, **kwargs):
+        super(PretrainedYOLO, self).__init__(**kwargs)
+        self.num_classes = num_classes
+        # self.out_1 = tensorflow.keras.layers.Conv2D(
+        #     filters=3 * (5 + self.num_classes), padding='same', strides=(8, 8), kernel_size=1)
+        # self.out_2 = tensorflow.keras.layers.Conv2D(
+        #     filters=3 * (5 + self.num_classes), padding='same', strides=(16, 16), kernel_size=1)
+        # self.out_3 = tensorflow.keras.layers.Conv2D(
+        #     filters=3 * (5 + self.num_classes), padding='same', strides=(32, 32), kernel_size=1)
 
-    def call(self, input_, training=True, **kwargs):
-        return [input_, input_, input_]
+    def call(self, input_, **kwargs):
+        # if YOLO_TYPE == "yolov4":
+        #     conv_tensors = YOLOv4(input_layer, NUM_CLASS)
+        # if YOLO_TYPE == "yolov3":
+        #     conv_tensors = YOLOv3(input_layer, NUM_CLASS)
+        # return CreateYolo(input_, self.num_classes)
+        return YOLOv4(input_, self.num_classes)
 
     def get_config(self):
         config = {
-            'classes': self.classes,
+            'num_classes': self.num_classes,
         }
-        base_config = super(OnlyYOLO, self).get_config()
+        base_config = super(PretrainedYOLO, self).get_config()
         return dict(tuple(base_config.items()) + tuple(config.items()))
 
     @classmethod
@@ -1669,7 +1682,9 @@ class OnlyYOLO(Layer):
         return cls(**config)
 
     def compute_output_shape(self, input_shape):
-        return [input_shape, input_shape, input_shape]
+        return [(None, 52, 52, 3*(5+self.num_classes)),
+                (None, 26, 26, 3*(5+self.num_classes)),
+                (None, 13, 13, 3*(5+self.num_classes))]
 
 
 if __name__ == "__main__":
@@ -1686,8 +1701,8 @@ if __name__ == "__main__":
     #                 dropout_layer=True, dropout_rate=0.1)
     # x = PSPBlock2D(filters_base=32, n_pooling_branches=3, filters_coef=1, n_conv_layers=2, activation='relu',
     #                kernel_size=(3, 3), batch_norm_layer = True, dropout_layer = True, dropout_rate = 0.1)
-    x = PSPBlock3D(filters_base=32, n_pooling_branches=3, filters_coef=1, n_conv_layers=1, activation='relu',
-                   kernel_size=(3, 3, 3), batch_norm_layer=True, dropout_layer=True, dropout_rate=0.1)
+    # x = PSPBlock3D(filters_base=32, n_pooling_branches=3, filters_coef=1, n_conv_layers=1, activation='relu',
+    #                kernel_size=(3, 3, 3), batch_norm_layer=True, dropout_layer=True, dropout_rate=0.1)
     # x = PSPBlock1D(filters_base=32, n_pooling_branches=3, filters_coef=1, n_conv_layers=2, activation='relu',
     #                kernel_size=5, batch_norm_layer = True, dropout_layer = True, dropout_rate = 0.1)
     # x = UNETBlock1D(filters_base=16, n_pooling_branches=3, filters_coef=1, n_conv_layers=2, activation='relu',
@@ -1702,5 +1717,10 @@ if __name__ == "__main__":
     #     aa, to_file='C:\PycharmProjects\\terra_gui\\test_example\\model.png', show_shapes=True, show_dtype=False,
     #     show_layer_names=True, rankdir='TB', expand_nested=False, dpi=96,
     #     layer_range=None, show_layer_activations=False)
-    print(x.compute_output_shape(input_shape=(None, 12, 32, 32, 3)))
+    x = PretrainedYOLO(num_classes=5)
+    print(x.compute_output_shape(input_shape=(None, 416, 416, 3)))
+
+    input = tensorflow.keras.layers.Input(shape=(416, 416, 3))
+    x = PretrainedYOLO(num_classes=5)(input)
+    print(x)
     pass

@@ -53,6 +53,8 @@ class ModelingMessages(dict, Enum):
                                                   "must be evenly divisible by the number of groups %s"}
     IncorrectQuantityInputShape = {"ru": "Expected %s input shape%s but got %s",
                                    "eng": "Expected %s input shape%s but got %s"}
+    IncorrectQuantityOutputLayers = {"ru": "Expected %s output layers%s but got %s",
+                                     "eng": "Expected %s output shape%s but got %s"}
     InputShapeEmpty = {"ru": "Получена пустая размерность входных данных",
                        "eng": "Received empty input shape"}
     # Input dimension
@@ -189,6 +191,14 @@ class IncorrectNumberOfFiltersAndChannelsException(ModelingException):
 class IncorrectQuantityInputShapeException(ModelingException):
     class Meta:
         message = ModelingMessages.IncorrectQuantityInputShape
+
+    def __init__(self, __expected, __suffix, __got, **kwargs):
+        super().__init__(str(__expected), str(__suffix), str(__got), **kwargs)
+
+
+class IncorrectQuantityOutputLayersException(ModelingException):
+    class Meta:
+        message = ModelingMessages.IncorrectQuantityOutputLayers
 
     def __init__(self, __expected, __suffix, __got, **kwargs):
         super().__init__(str(__expected), str(__suffix), str(__got), **kwargs)

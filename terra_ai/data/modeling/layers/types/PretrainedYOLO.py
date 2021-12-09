@@ -1,5 +1,5 @@
 """
-## Тип слоя `OnlyYOLO`
+## Тип слоя `PretrainedYOLO`
 """
 
 from pydantic.types import PositiveInt
@@ -24,7 +24,7 @@ LayerConfig = LayerConfigData(
 
 
 class ParametersMainData(BaseMixinData):
-    classes: PositiveInt = 5
+    num_classes: PositiveInt = 5
 
 
 class ParametersExtraData(BaseMixinData):

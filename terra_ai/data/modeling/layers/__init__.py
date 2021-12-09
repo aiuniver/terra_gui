@@ -679,12 +679,12 @@ class LayerUNETBlock3DData(LayerMixinData):
     )
 
 
-class LayerOnlyYOLOData(LayerMixinData):
-    main: types.OnlyYOLO.ParametersMainData = (
-        types.OnlyYOLO.ParametersMainData()
+class LayerPretrainedYOLOData(LayerMixinData):
+    main: types.PretrainedYOLO.ParametersMainData = (
+        types.PretrainedYOLO.ParametersMainData()
     )
-    extra: types.OnlyYOLO.ParametersExtraData = (
-        types.OnlyYOLO.ParametersExtraData()
+    extra: types.PretrainedYOLO.ParametersExtraData = (
+        types.PretrainedYOLO.ParametersExtraData()
     )
 
 
