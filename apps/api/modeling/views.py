@@ -5,7 +5,6 @@ from tempfile import NamedTemporaryFile
 from transliterate import slugify
 
 from terra_ai.settings import TERRA_PATH
-from terra_ai.agent import agent_exchange
 from terra_ai.data.modeling.extra import LayerGroupChoice
 from terra_ai.data.modeling.model import ModelDetailsData
 
@@ -24,7 +23,7 @@ from apps.api.modeling.serializers import (
 class GetAPIView(BaseAPIView):
     @decorators.serialize_data(ModelGetSerializer)
     def post(self, request, serializer, **kwargs):
-        model = agent_exchange(
+        model = self.terra_exchange(
             "model_get", value=serializer.validated_data.get("value")
         )
         return BaseResponseSuccess(model.native())
@@ -33,7 +32,7 @@ class GetAPIView(BaseAPIView):
 class LoadAPIView(BaseAPIView):
     @decorators.serialize_data(ModelGetSerializer)
     def post(self, request, serializer, **kwargs):
-        model = agent_exchange(
+        model = self.terra_exchange(
             "model_get", value=serializer.validated_data.get("value")
         )
         request.project.set_model(model, serializer.validated_data.get("reset_dataset"))
@@ -43,7 +42,7 @@ class LoadAPIView(BaseAPIView):
 class InfoAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         return BaseResponseSuccess(
-            agent_exchange("models", path=TERRA_PATH.modeling).native()
+            self.terra_exchange("models", path=TERRA_PATH.modeling).native()
         )
 
 
@@ -78,7 +77,7 @@ class UpdateAPIView(BaseAPIView):
                     del item["shape"]
         model_data = model.native()
         model_data.update(data)
-        model = agent_exchange("model_update", model=model_data)
+        model = self.terra_exchange("model_update", model=model_data)
         request.project.set_model(model)
         return BaseResponseSuccess()
 
@@ -96,7 +95,7 @@ class ValidateAPIView(BaseAPIView):
 
     def post(self, request, **kwargs):
         self._reset_layers_shape(request.project.model)
-        errors = agent_exchange("model_validate", model=request.project.model)
+        errors = self.terra_exchange("model_validate", model=request.project.model)
         request.project.save_config()
         return BaseResponseSuccess(errors)
 
@@ -129,7 +128,7 @@ class CreateAPIView(BaseAPIView):
         )
         model = ModelDetailsData(**model_data)
         return BaseResponseSuccess(
-            agent_exchange(
+            self.terra_exchange(
                 "model_create",
                 model=model.native(),
                 path=str(TERRA_PATH.modeling),
@@ -140,7 +139,7 @@ class CreateAPIView(BaseAPIView):
 
 class DeleteAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        agent_exchange("model_delete", path=request.data.get("path"))
+        self.terra_exchange("model_delete", path=request.data.get("path"))
         return BaseResponseSuccess()
 
 

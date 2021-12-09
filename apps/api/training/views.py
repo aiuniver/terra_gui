@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 
-from terra_ai.agent import agent_exchange
 from terra_ai.data.training.extra import StateStatusChoice
 
 from apps.api import decorators
@@ -41,7 +40,7 @@ class StartAPIView(BaseAPIView):
         else:
             request.project.training.state.set(StateStatusChoice.training)
         request.project.set_training_base(request.data)
-        agent_exchange(
+        self.terra_exchange(
             "training_start",
             **{
                 "dataset": request.project.dataset,
@@ -57,7 +56,7 @@ class StartAPIView(BaseAPIView):
 class StopAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         training_base = request.project.training.base.native()
-        agent_exchange("training_stop", training=request.project.training)
+        self.terra_exchange("training_stop", training=request.project.training)
         request.project.set_training_base(training_base)
         request.project.training.save(request.project.training.name)
         request.project.save_config()
@@ -69,7 +68,7 @@ class StopAPIView(BaseAPIView):
 class ClearAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         name = request.project.training.name
-        agent_exchange("training_clear", training=request.project.training)
+        self.terra_exchange("training_clear", training=request.project.training)
         request.project.clear_training(name)
         request.project.training.save(request.project.training.name)
         request.project.save_config()
@@ -81,7 +80,7 @@ class ClearAPIView(BaseAPIView):
 class InteractiveAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         request.project.training.set_interactive(data=request.data)
-        agent_exchange("training_interactive", training=request.project.training)
+        self.terra_exchange("training_interactive", training=request.project.training)
         request.project.training.save(request.project.training.name)
         request.project.save_config()
         return BaseResponseSuccess(

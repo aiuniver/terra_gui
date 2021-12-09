@@ -515,12 +515,14 @@ class History:
         try:
             mode = loss_metric_config.get(metric_type).get(metric_name).get("mode")
             overfitting = False
-            if mode == 'min':
-                if min(mean_log) and mean_log[-1] and mean_log[-1] > min(mean_log) and \
+            if not mean_log[-1] or not min(mean_log) or not max(mean_log):
+                overfitting = True
+            elif mode == 'min':
+                if mean_log[-1] > min(mean_log) and \
                         (mean_log[-1] - min(mean_log)) * 100 / min(mean_log) > 2:
                     overfitting = True
-            if mode == 'max':
-                if max(mean_log) and mean_log[-1] and mean_log[-1] < max(mean_log) and \
+            else:
+                if mean_log[-1] < max(mean_log) and \
                         (max(mean_log) - mean_log[-1]) * 100 / max(mean_log) > 2:
                     overfitting = True
             return overfitting
@@ -533,13 +535,16 @@ class History:
         try:
             mode = loss_metric_config.get(metric_type).get(metric_name).get("mode")
             underfitting = False
-            if mode == 'min' and train_log and val_log:
+            if not train_log or not val_log:
+                underfitting = True
+            elif mode == 'min':
                 if val_log < 1 and train_log < 1 and (val_log - train_log) > 0.05:
                     underfitting = True
                 if (val_log >= 1 or train_log >= 1) and (val_log - train_log) / train_log * 100 > 5:
                     underfitting = True
-            if mode == 'max' and train_log and val_log and (train_log - val_log) / train_log * 100 > 3:
-                underfitting = True
+            else:
+                if (train_log - val_log) / train_log * 100 > 3:
+                    underfitting = True
             return underfitting
         except Exception as e:
             print_error('FitCallback', method_name, e)

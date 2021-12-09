@@ -8,7 +8,10 @@ import colorsys
 from tensorflow.keras.preprocessing.image import load_img
 import os
 
+from tensorflow.python.keras import Model
+
 from terra_ai.callbacks.utils import print_error
+from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.datasets.utils import resize_bboxes
 
 
@@ -700,9 +703,9 @@ def voc_ap(rec, prec):
 #             real_boxes.append(tmp)
 #     return real_boxes
 
-def get_mAP(Yolo: object, dataset: object, score_threshold: object = 0.25, iou_threshold: object = None,
-            TEST_INPUT_SIZE: object = 416, TRAIN_CLASSES: object = None,
-            pred: object = None, dataset_path: object = '') -> dict:
+def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25, iou_threshold: object = None,
+            TEST_INPUT_SIZE: int = 416, TRAIN_CLASSES: list = None,
+            pred: np.ndarray = None, dataset_path: str = '') -> dict:
     method_name = 'get_mAP'
     tt1 = time.time()
     try:
@@ -779,7 +782,7 @@ def get_mAP(Yolo: object, dataset: object, score_threshold: object = 0.25, iou_t
                 # original_image_shape.append(np.array(tmp_im).shape)
                 t1 = time.time()
 
-                pred_bbox = Yolo.predict(inp)
+                pred_bbox = Yolo(inp)
                 pred_bbox = [pred_bbox[1], pred_bbox[3], pred_bbox[5]]
                 t2 = time.time()
                 times.append(t2 - t1)
@@ -790,11 +793,8 @@ def get_mAP(Yolo: object, dataset: object, score_threshold: object = 0.25, iou_t
 
                 ms = sum(times) / len(times) * 1000
                 fps = 1000 / ms
-
-
         ap_dictionary = {}
         for i_iou in iou_threshold:
-
             json_pred = [[] for _ in range(n_classes)]
             class_predictions = {}
             len_bbox = 0

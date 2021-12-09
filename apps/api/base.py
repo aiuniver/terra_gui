@@ -13,6 +13,12 @@ from apps.api.logging import catcher, LogData, LevelnameChoice
 class BaseAPIView(APIView):
     authentication_classes = ()
 
+    @property
+    def terra_exchange(self):
+        from terra_ai.agent import agent_exchange
+
+        return agent_exchange
+
     def dispatch(self, request, *args, **kwargs):
         catcher.request = request
         response = super().dispatch(request, *args, **kwargs)

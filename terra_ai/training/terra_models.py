@@ -157,7 +157,7 @@ class BaseTerraModel:
     @tf.function
     def __test_step(self, x_batch, y_batch):
         with tf.GradientTape() as tape:
-            test_logits = self.base_model(x_batch, training=False)
+            test_logits = self.base_model(x_batch)
             true_array = list(y_batch.values())
             test_logits = test_logits if isinstance(test_logits, list) else [test_logits]
         return test_logits, true_array
@@ -391,7 +391,7 @@ class YoloTerraModel(BaseTerraModel):
         classes = options.get("parameters").get("classes")
         yolo_iou_loss_thresh = options.get("parameters").get("yolo_iou_loss_thresh")
 
-        pred_result = self.yolo_model(image_array['1'], training=False)
+        pred_result = self.yolo_model(image_array['1'], training=True)
         giou_loss = conf_loss = prob_loss = tf.convert_to_tensor(0., dtype='float32')
 
         prob_loss_cls = {}
@@ -418,7 +418,6 @@ class YoloTerraModel(BaseTerraModel):
 
         total_loss = tf.add(giou_loss, conf_loss)
         total_loss = tf.add(total_loss, prob_loss)
-
         return giou_loss, conf_loss, prob_loss, total_loss, prob_loss_cls, predict
 
     def fit(self, params: TrainingDetailsData, dataset: PrepareDataset):
@@ -528,6 +527,8 @@ class YoloTerraModel(BaseTerraModel):
                                                    target1,
                                                    target2,
                                                    **yolo_parameters)
+                    print(f'Batch {val_steps}; giou_loss, conf_loss, prob_loss, total_loss',
+                          results[0].numpy(), results[1].numpy(), results[2].numpy(), results[3].numpy())
                     giou_val += results[0].numpy()
                     conf_val += results[1].numpy()
                     prob_val += results[2].numpy()
@@ -563,6 +564,7 @@ class YoloTerraModel(BaseTerraModel):
                     except:
                         current_logs['class_metrics']['mAP50'][str(classes[cls])] = {"val": None}
 
+                print(f'\n Epoch {epoch}: current_logs - {current_logs}')
                 self.callback.on_epoch_end(
                     epoch=epoch + 1,
                     arrays={"train_pred": train_pred, "val_pred": val_pred, "train_true": train_true,

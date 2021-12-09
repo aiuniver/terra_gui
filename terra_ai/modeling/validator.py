@@ -1071,10 +1071,10 @@ class ModelCreator:
                     marker = LayerTypeChoice.PretrainedYOLO
                     yolo_out_idx = layer[4].index(terra_layer[0])
                     break
-            print('\n marker, yolo_out_idx', terra_layer[1], marker, yolo_out_idx)
+            # print('\n marker, yolo_out_idx', terra_layer[1], marker, yolo_out_idx)
             if marker == LayerTypeChoice.PretrainedYOLO:
                 input_tensors = self.tensors[terra_layer[3][0]][yolo_out_idx]
-                print(self.tensors[terra_layer[3][0]][yolo_out_idx])
+                # print(self.tensors[terra_layer[3][0]][yolo_out_idx])
             else:
                 if len(terra_layer[3]) == 1:
                     input_tensors = self.tensors[terra_layer[3][0]]
@@ -1083,7 +1083,7 @@ class ModelCreator:
                     for idx in terra_layer[3]:
                         input_tensors.append(self.tensors[idx])
             self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(**terra_layer[2])(input_tensors)
-            print()
+            # print()
 
     def _tf_layer_init(self, terra_layer):
         """Create tensorflow layer_obj from terra_plan layer"""

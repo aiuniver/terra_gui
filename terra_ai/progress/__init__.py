@@ -2,8 +2,8 @@ from time import sleep
 from typing import Optional, Any, Dict
 from threading import Thread
 
-from ..data.types import ConstrainedFloatValueGe0Le100
-from ..data.mixins import BaseMixinData
+from terra_ai.data.types import ConstrainedFloatValueGe0Le100
+from terra_ai.data.mixins import BaseMixinData
 
 
 def threading(method):

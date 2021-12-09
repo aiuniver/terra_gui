@@ -157,7 +157,7 @@ class PretrainedModelPoolingChoice(str, Enum):
 class YOLOModeChoice(str, Enum):
     YOLOv3 = "YOLOv3"
     YOLOv4 = "YOLOv4"
-    YOLOv5 = "YOLOv5"
+    # YOLOv5 = "YOLOv5"
 
     @staticmethod
     def values() -> list:

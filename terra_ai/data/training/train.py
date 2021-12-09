@@ -14,6 +14,7 @@ from pydantic.types import conint, confloat, PositiveInt
 from pydantic.errors import EnumMemberError
 
 from terra_ai import settings
+
 from terra_ai.callbacks.utils import YOLO_ARCHITECTURE
 from terra_ai.exceptions.training import TrainingAlreadyExistsException
 from terra_ai.data.mixins import BaseMixinData, UniqueListMixin, IDMixinData
@@ -264,7 +265,7 @@ class TrainingDetailsData(BaseMixinData):
         self._path = Path(data.get("path"))
 
         _name = (
-                data.get("name", DEFAULT_TRAINING_PATH_NAME) or DEFAULT_TRAINING_PATH_NAME
+            data.get("name", DEFAULT_TRAINING_PATH_NAME) or DEFAULT_TRAINING_PATH_NAME
         )
         _path = Path(self._path, _name)
         if _path.is_file():
@@ -384,7 +385,11 @@ class TrainingDetailsData(BaseMixinData):
             progress_table = []
             statistic_data = {}
             data_balance = {}
-            intermediate_result = {"main_output": self.model.outputs[0].id if len(self.model.outputs) else None}
+            intermediate_result = {
+                "main_output": self.model.outputs[0].id
+                if len(self.model.outputs)
+                else None
+            }
 
             _index_m = 0
             _index_l = 0
@@ -410,7 +415,7 @@ class TrainingDetailsData(BaseMixinData):
                                 "output_idx": layer.id,
                                 "show": MetricGraphShowChoice.classes,
                                 "show_metric": metric,
-                                "data_type": DataTypeChoice.train
+                                "data_type": DataTypeChoice.train,
                             }
                         )
                     _index_m += 1
@@ -420,7 +425,7 @@ class TrainingDetailsData(BaseMixinData):
                             "output_idx": layer.id,
                             "show": MetricGraphShowChoice.classes,
                             "show_metric": metric,
-                            "data_type": DataTypeChoice.val
+                            "data_type": DataTypeChoice.val,
                         }
                     )
                 _index_l += 1
@@ -462,7 +467,7 @@ class TrainingDetailsData(BaseMixinData):
                         "id": _index_l,
                         "output_idx": layer.id,
                         "show": LossGraphShowChoice.classes,
-                        "data_type": DataTypeChoice.train
+                        "data_type": DataTypeChoice.train,
                     }
                 )
                 _index_l += 1
@@ -471,7 +476,7 @@ class TrainingDetailsData(BaseMixinData):
                         "id": _index_l,
                         "output_idx": layer.id,
                         "show": LossGraphShowChoice.classes,
-                        "data_type": DataTypeChoice.val
+                        "data_type": DataTypeChoice.val,
                     }
                 )
                 progress_table.append(

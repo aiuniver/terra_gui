@@ -5,7 +5,7 @@
 from pydantic.types import PositiveInt
 
 from ....mixins import BaseMixinData
-from ..extra import LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice
+from ..extra import LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice, YOLOModeChoice
 
 LayerConfig = LayerConfigData(
     **{
@@ -25,6 +25,7 @@ LayerConfig = LayerConfigData(
 
 class ParametersMainData(BaseMixinData):
     num_classes: PositiveInt = 5
+    mode: YOLOModeChoice = YOLOModeChoice.YOLOv3
 
 
 class ParametersExtraData(BaseMixinData):

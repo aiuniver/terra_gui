@@ -1,5 +1,4 @@
 from terra_ai.settings import TERRA_PATH, PROJECT_PATH
-from terra_ai.agent import agent_exchange
 from terra_ai.project.loading import PROJECT_LOAD_NAME
 from terra_ai.data.projects.project import ProjectPathData
 
@@ -37,14 +36,14 @@ class SaveAPIView(BaseAPIView):
 class InfoAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         return BaseResponseSuccess(
-            agent_exchange("projects_info", path=TERRA_PATH.projects).native()
+            self.terra_exchange("projects_info", path=TERRA_PATH.projects).native()
         )
 
 
 class LoadAPIView(BaseAPIView):
     @decorators.serialize_data(LoadSerializer)
     def post(self, request, serializer, **kwargs):
-        agent_exchange(
+        self.terra_exchange(
             "project_load",
             dataset_path=TERRA_PATH.datasets,
             source=serializer.validated_data.get("value"),

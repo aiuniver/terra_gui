@@ -7,27 +7,31 @@ from tensorflow.keras import initializers, regularizers, constraints
 from tensorflow.keras import backend as K
 from tensorflow import cast
 from tensorflow.keras import layers
-from tensorflow.python.keras.layers import BatchNormalization
+from tensorflow.keras.layers import BatchNormalization
 
-from terra_ai.custom_objects.pretrained_yolo import CreateYolo, YOLOv4
+from terra_ai.custom_objects.pretrained_yolo import CreateYolo, YOLOv4, YOLOv3
+from terra_ai.data.modeling.layers.extra import YOLOModeChoice
 
 terra_custom_layers = {
-    "InstanceNormalization": "customLayers",
-    "VAEBlock": "customLayers",
-    "YOLOResBlock": "customLayers",
-    "YOLOv3ResBlock": "customLayers",
-    "YOLOConvBlock": "customLayers",
-    "Mish": "customLayers",
-    "DarkNetBatchNormalization": "customLayers",
-    "DarkNetConvolutional": "customLayers",
-    "DarkNetResBlock": "customLayers",
-    "DarkNetUpsample": "customLayers",
-    "CONVBlock": "customLayers",
-    "PSPBlock2D": "customLayers",
-    "UNETBlock2D": "customLayers",
-    "UNETBlock1D": "customLayers",
-    "UNETBlock3D": "customLayers",
-    "PSPBlock1D": "customLayers",
+    "InstanceNormalization": "custom_objects/customLayers",
+    "VAEBlock": "custom_objects/customLayers",
+    "YOLOResBlock": "custom_objects/customLayers",
+    "YOLOv3ResBlock": "custom_objects/customLayers",
+    "YOLOConvBlock": "custom_objects/customLayers",
+    "Mish": "custom_objects/customLayers",
+    "DarkNetBatchNormalization": "custom_objects/customLayers",
+    "DarkNetConvolutional": "custom_objects/customLayers",
+    "DarkNetResBlock": "custom_objects/customLayers",
+    "DarkNetUpsample": "custom_objects/customLayers",
+    "CONVBlock": "custom_objects/customLayers",
+    "PSPBlock2D": "custom_objects/customLayers",
+    "UNETBlock2D": "custom_objects/customLayers",
+    "UNETBlock1D": "custom_objects/customLayers",
+    "UNETBlock3D": "custom_objects/customLayers",
+    "PSPBlock1D": "custom_objects/customLayers",
+    "PretrainedYOLO": "custom_objects/customLayers",
+    # "DarknetBatchNormalization": "custom_objects/pretrained_yolo"
+    "OnlyYolo": "custom_objects/customLayers",
 }
 
 
@@ -616,10 +620,10 @@ class Mish(Layer):
         return input_shape
 
 
-class DarkNetBatchNormalization(BatchNormalization):
+class BatchNormalization(BatchNormalization):
 
     def __init__(self, **kwargs):
-        super(DarkNetBatchNormalization, self).__init__(**kwargs)
+        super(BatchNormalization, self).__init__(**kwargs)
         self.supports_masking = True
 
     def call(self, inputs, training=False, **kwargs):
@@ -629,7 +633,7 @@ class DarkNetBatchNormalization(BatchNormalization):
         return super().call(inputs, training)
 
     def get_config(self):
-        config = super(DarkNetBatchNormalization, self).get_config()
+        config = super(BatchNormalization, self).get_config()
         return config
 
 
@@ -1651,42 +1655,408 @@ class PSPBlock3D(Layer):
         return cls(**config)
 
 
+<<<<<<< HEAD
 class PretrainedYOLO(Layer):
 
-    def __init__(self, num_classes=5, **kwargs):
+    def __init__(self, num_classes=5, mode="", **kwargs):
         super(PretrainedYOLO, self).__init__(**kwargs)
         self.num_classes = num_classes
-        # self.out_1 = tensorflow.keras.layers.Conv2D(
-        #     filters=3 * (5 + self.num_classes), padding='same', strides=(8, 8), kernel_size=1)
-        # self.out_2 = tensorflow.keras.layers.Conv2D(
-        #     filters=3 * (5 + self.num_classes), padding='same', strides=(16, 16), kernel_size=1)
-        # self.out_3 = tensorflow.keras.layers.Conv2D(
-        #     filters=3 * (5 + self.num_classes), padding='same', strides=(32, 32), kernel_size=1)
+        self.mode = mode
 
     def call(self, input_, training=True, **kwargs):
-        # if YOLO_TYPE == "yolov4":
-        #     conv_tensors = YOLOv4(input_layer, NUM_CLASS)
-        # if YOLO_TYPE == "yolov3":
-        #     conv_tensors = YOLOv3(input_layer, NUM_CLASS)
-        # return CreateYolo(input_, self.num_classes)
-        return YOLOv4(input_, self.num_classes)
+        if self.mode == YOLOModeChoice.YOLOv3:
+            return YOLOv3(input_, self.num_classes)
+        if self.mode == YOLOModeChoice.YOLOv4:
+            return YOLOv4(input_, self.num_classes)
 
     def get_config(self):
         config = {
             'num_classes': self.num_classes,
         }
         base_config = super(PretrainedYOLO, self).get_config()
+=======
+# class BatchNormalization(BatchNormalization):
+#     # "Frozen state" and "inference mode" are two separate concepts.
+#     # `layer.trainable = False` is to freeze the layer, so the layer will use
+#     # stored moving `var` and `mean` in the "inference mode", and both `gama`
+#     # and `beta` will not be updated !
+#     def call(self, x, training=False):
+#         if not training:
+#             training = tf.constant(False)
+#         training = tf.logical_and(training, self.trainable)
+#         return super().call(x, training)
+
+
+class OnlyYolo(Layer):
+    """
+    OnlyYolo Block
+        use_weights - bool
+        num_classes - int
+        version - str v3 or v4
+    """
+
+    def __init__(self, use_weights: bool = True, num_classes: int = 1, yolo_version: str = 'v4', **kwargs):
+
+        super(OnlyYolo, self).__init__(**kwargs)
+        self.use_weights = use_weights
+        self.num_classes = num_classes
+        self.yolo_version = yolo_version
+        self.save_weights = "C:\\PycharmProjects\\terra_gui\\terra_ai\\assets\\cascades\\yolov4.weights" \
+            if self.yolo_version == 'v4' else "terra_ai/assets/cascades/yolov3.weights"
+        self.yolo = self.create_yolo(classes=self.num_classes)
+        if use_weights:
+            self.base_yolo = self.create_yolo()
+            self.load_yolo_weights(self.base_yolo, self.save_weights)
+            for i, l in enumerate(self.base_yolo.layers):
+                layer_weights = l.get_weights()
+                if layer_weights != []:
+                    try:
+                        self.yolo.layers[i].set_weights(layer_weights)
+                    except:
+                        print("skipping", self.yolo.layers[i].name)
+            del self.base_yolo
+        # print(self.yolo.summary())
+
+    def create_yolo(self, input_size=416, channels=3, classes=80):
+        tf.keras.backend.clear_session()  # used to reset layer names
+        input_layer = layers.Input([input_size, input_size, channels])
+        if self.yolo_version == "v4":
+            output_tensors = self.YOLOv4(input_layer, classes)
+        if self.yolo_version == "v3":
+            output_tensors = self.YOLOv3(input_layer, classes)
+
+        yolo = tf.keras.Model(input_layer, output_tensors)
+        return yolo
+
+    def load_yolo_weights(self, model, weights_file):
+        tf.keras.backend.clear_session()  # used to reset layer names
+        # load Darknet original weights to TensorFlow model
+        if self.yolo_version == "v3":
+            range1 = 75
+            range2 = [58, 66, 74]
+        if self.yolo_version == "v4":
+            range1 = 110
+            range2 = [93, 101, 109]
+
+        with open(weights_file, 'rb') as wf:
+            major, minor, revision, seen, _ = np.fromfile(wf, dtype=np.int32, count=5)
+
+            j = 0
+            for i in range(range1):
+                if i > 0:
+                    conv_layer_name = 'conv2d_%d' % i
+                else:
+                    conv_layer_name = 'conv2d'
+
+                if j > 0:
+                    bn_layer_name = 'batch_normalization_%d' % j
+                else:
+                    bn_layer_name = 'batch_normalization'
+
+                conv_layer = model.get_layer(conv_layer_name)
+                filters = conv_layer.filters
+                k_size = conv_layer.kernel_size[0]
+                in_dim = conv_layer.input_shape[-1]
+
+                if i not in range2:
+                    # darknet weights: [beta, gamma, mean, variance]
+                    bn_weights = np.fromfile(wf, dtype=np.float32, count=4 * filters)
+                    # tf weights: [gamma, beta, mean, variance]
+                    bn_weights = bn_weights.reshape((4, filters))[[1, 0, 2, 3]]
+                    bn_layer = model.get_layer(bn_layer_name)
+                    j += 1
+                else:
+                    conv_bias = np.fromfile(wf, dtype=np.float32, count=filters)
+
+                # darknet shape (out_dim, in_dim, height, width)
+                conv_shape = (filters, in_dim, k_size, k_size)
+                conv_weights = np.fromfile(wf, dtype=np.float32, count=np.product(conv_shape))
+                # tf shape (height, width, in_dim, out_dim)
+                conv_weights = conv_weights.reshape(conv_shape).transpose([2, 3, 1, 0])
+
+                if i not in range2:
+                    conv_layer.set_weights([conv_weights])
+                    bn_layer.set_weights(bn_weights)
+                else:
+                    conv_layer.set_weights([conv_weights, conv_bias])
+
+            assert len(wf.read()) == 0, 'failed to read all data'
+
+    def convolutional(self, input_layer, filters_shape, downsample=False, activate=True, bn=True,
+                      activate_type='leaky'):
+        if downsample:
+            input_layer = layers.ZeroPadding2D(((1, 0), (1, 0)))(input_layer)
+            padding = 'valid'
+            strides = 2
+        else:
+            strides = 1
+            padding = 'same'
+
+        conv = layers.Conv2D(filters=filters_shape[-1], kernel_size=filters_shape[0], strides=strides,
+                             padding=padding, use_bias=not bn,
+                             kernel_regularizer=tf.keras.regularizers.l2(0.0005),
+                             kernel_initializer=tf.random_normal_initializer(stddev=0.01),
+                             bias_initializer=tf.constant_initializer(0.))(input_layer)
+        if bn:
+            conv = BatchNormalization()(conv)
+        if activate == True:
+            if activate_type == "leaky":
+                conv = layers.LeakyReLU(alpha=0.1)(conv)
+            elif activate_type == "mish":
+                conv = self.mish(conv)
+
+        return conv
+
+    def mish(self, x):
+        return x * tf.math.tanh(tf.math.softplus(x))
+
+    def residual_block(self, input_layer, input_channel, filter_num1, filter_num2, activate_type='leaky'):
+        short_cut = input_layer
+        conv = self.convolutional(input_layer, filters_shape=(1, 1, input_channel, filter_num1),
+                                  activate_type=activate_type)
+        conv = self.convolutional(conv, filters_shape=(3, 3, filter_num1, filter_num2), activate_type=activate_type)
+
+        residual_output = short_cut + conv
+        return residual_output
+
+    def upsample(self, input_layer):
+        return tf.image.resize(input_layer, (input_layer.shape[1] * 2, input_layer.shape[2] * 2), method='nearest')
+
+    def route_group(self, input_layer, groups, group_id):
+        convs = tf.split(input_layer, num_or_size_splits=groups, axis=-1)
+        return convs[group_id]
+
+    def darknet53(self, input_data):
+        input_data = self.convolutional(input_data, (3, 3, 3, 32))
+        input_data = self.convolutional(input_data, (3, 3, 32, 64), downsample=True)
+
+        for i in range(1):
+            input_data = self.residual_block(input_data, 64, 32, 64)
+
+        input_data = self.convolutional(input_data, (3, 3, 64, 128), downsample=True)
+
+        for i in range(2):
+            input_data = self.residual_block(input_data, 128, 64, 128)
+
+        input_data = self.convolutional(input_data, (3, 3, 128, 256), downsample=True)
+
+        for i in range(8):
+            input_data = self.residual_block(input_data, 256, 128, 256)
+
+        route_1 = input_data
+        input_data = self.convolutional(input_data, (3, 3, 256, 512), downsample=True)
+
+        for i in range(8):
+            input_data = self.residual_block(input_data, 512, 256, 512)
+
+        route_2 = input_data
+        input_data = self.convolutional(input_data, (3, 3, 512, 1024), downsample=True)
+
+        for i in range(4):
+            input_data = self.residual_block(input_data, 1024, 512, 1024)
+
+        return route_1, route_2, input_data
+
+    def cspdarknet53(self, input_data):
+        input_data = self.convolutional(input_data, (3, 3, 3, 32), activate_type="mish")
+        input_data = self.convolutional(input_data, (3, 3, 32, 64), downsample=True, activate_type="mish")
+
+        route = input_data
+        route = self.convolutional(route, (1, 1, 64, 64), activate_type="mish")
+        input_data = self.convolutional(input_data, (1, 1, 64, 64), activate_type="mish")
+        for i in range(1):
+            input_data = self.residual_block(input_data, 64, 32, 64, activate_type="mish")
+        input_data = self.convolutional(input_data, (1, 1, 64, 64), activate_type="mish")
+
+        input_data = tf.concat([input_data, route], axis=-1)
+        input_data = self.convolutional(input_data, (1, 1, 128, 64), activate_type="mish")
+        input_data = self.convolutional(input_data, (3, 3, 64, 128), downsample=True, activate_type="mish")
+        route = input_data
+        route = self.convolutional(route, (1, 1, 128, 64), activate_type="mish")
+        input_data = self.convolutional(input_data, (1, 1, 128, 64), activate_type="mish")
+        for i in range(2):
+            input_data = self.residual_block(input_data, 64, 64, 64, activate_type="mish")
+        input_data = self.convolutional(input_data, (1, 1, 64, 64), activate_type="mish")
+        input_data = tf.concat([input_data, route], axis=-1)
+
+        input_data = self.convolutional(input_data, (1, 1, 128, 128), activate_type="mish")
+        input_data = self.convolutional(input_data, (3, 3, 128, 256), downsample=True, activate_type="mish")
+        route = input_data
+        route = self.convolutional(route, (1, 1, 256, 128), activate_type="mish")
+        input_data = self.convolutional(input_data, (1, 1, 256, 128), activate_type="mish")
+        for i in range(8):
+            input_data = self.residual_block(input_data, 128, 128, 128, activate_type="mish")
+        input_data = self.convolutional(input_data, (1, 1, 128, 128), activate_type="mish")
+        input_data = tf.concat([input_data, route], axis=-1)
+
+        input_data = self.convolutional(input_data, (1, 1, 256, 256), activate_type="mish")
+        route_1 = input_data
+        input_data = self.convolutional(input_data, (3, 3, 256, 512), downsample=True, activate_type="mish")
+        route = input_data
+        route = self.convolutional(route, (1, 1, 512, 256), activate_type="mish")
+        input_data = self.convolutional(input_data, (1, 1, 512, 256), activate_type="mish")
+        for i in range(8):
+            input_data = self.residual_block(input_data, 256, 256, 256, activate_type="mish")
+        input_data = self.convolutional(input_data, (1, 1, 256, 256), activate_type="mish")
+        input_data = tf.concat([input_data, route], axis=-1)
+
+        input_data = self.convolutional(input_data, (1, 1, 512, 512), activate_type="mish")
+        route_2 = input_data
+        input_data = self.convolutional(input_data, (3, 3, 512, 1024), downsample=True, activate_type="mish")
+        route = input_data
+        route = self.convolutional(route, (1, 1, 1024, 512), activate_type="mish")
+        input_data = self.convolutional(input_data, (1, 1, 1024, 512), activate_type="mish")
+        for i in range(4):
+            input_data = self.residual_block(input_data, 512, 512, 512, activate_type="mish")
+        input_data = self.convolutional(input_data, (1, 1, 512, 512), activate_type="mish")
+        input_data = tf.concat([input_data, route], axis=-1)
+
+        input_data = self.convolutional(input_data, (1, 1, 1024, 1024), activate_type="mish")
+        input_data = self.convolutional(input_data, (1, 1, 1024, 512))
+        input_data = self.convolutional(input_data, (3, 3, 512, 1024))
+        input_data = self.convolutional(input_data, (1, 1, 1024, 512))
+
+        max_pooling_1 = tf.keras.layers.MaxPool2D(pool_size=13, padding='SAME', strides=1)(input_data)
+        max_pooling_2 = tf.keras.layers.MaxPool2D(pool_size=9, padding='SAME', strides=1)(input_data)
+        max_pooling_3 = tf.keras.layers.MaxPool2D(pool_size=5, padding='SAME', strides=1)(input_data)
+        input_data = tf.concat([max_pooling_1, max_pooling_2, max_pooling_3, input_data], axis=-1)
+
+        input_data = self.convolutional(input_data, (1, 1, 2048, 512))
+        input_data = self.convolutional(input_data, (3, 3, 512, 1024))
+        input_data = self.convolutional(input_data, (1, 1, 1024, 512))
+
+        return route_1, route_2, input_data
+
+    def YOLOv3(self, input_layer, NUM_CLASS):
+        # After the input layer enters the Darknet-53 network, we get three branches
+        route_1, route_2, conv = self.darknet53(input_layer)
+        # See the orange module (DBL) in the figure above, a total of 5 Subconvolution operation
+        conv = self.convolutional(conv, (1, 1, 1024, 512))
+        conv = self.convolutional(conv, (3, 3, 512, 1024))
+        conv = self.convolutional(conv, (1, 1, 1024, 512))
+        conv = self.convolutional(conv, (3, 3, 512, 1024))
+        conv = self.convolutional(conv, (1, 1, 1024, 512))
+        conv_lobj_branch = self.convolutional(conv, (3, 3, 512, 1024))
+
+        # conv_lbbox is used to predict large-sized objects , Shape = [None, 13, 13, 255]
+        conv_lbbox = self.convolutional(conv_lobj_branch, (1, 1, 1024, 3 * (NUM_CLASS + 5)), activate=False, bn=False)
+
+        conv = self.convolutional(conv, (1, 1, 512, 256))
+        # upsample here uses the nearest neighbor interpolation method, which has the advantage that the
+        # upsampling process does not need to learn, thereby reducing the network parameter
+        conv = self.upsample(conv)
+
+        conv = tf.concat([conv, route_2], axis=-1)
+        conv = self.convolutional(conv, (1, 1, 768, 256))
+        conv = self.convolutional(conv, (3, 3, 256, 512))
+        conv = self.convolutional(conv, (1, 1, 512, 256))
+        conv = self.convolutional(conv, (3, 3, 256, 512))
+        conv = self.convolutional(conv, (1, 1, 512, 256))
+        conv_mobj_branch = self.convolutional(conv, (3, 3, 256, 512))
+
+        # conv_mbbox is used to predict medium-sized objects, shape = [None, 26, 26, 255]
+        conv_mbbox = self.convolutional(conv_mobj_branch, (1, 1, 512, 3 * (NUM_CLASS + 5)), activate=False, bn=False)
+
+        conv = self.convolutional(conv, (1, 1, 256, 128))
+        conv = self.upsample(conv)
+
+        conv = tf.concat([conv, route_1], axis=-1)
+        conv = self.convolutional(conv, (1, 1, 384, 128))
+        conv = self.convolutional(conv, (3, 3, 128, 256))
+        conv = self.convolutional(conv, (1, 1, 256, 128))
+        conv = self.convolutional(conv, (3, 3, 128, 256))
+        conv = self.convolutional(conv, (1, 1, 256, 128))
+        conv_sobj_branch = self.convolutional(conv, (3, 3, 128, 256))
+
+        # conv_sbbox is used to predict small size objects, shape = [None, 52, 52, 255]
+        conv_sbbox = self.convolutional(conv_sobj_branch, (1, 1, 256, 3 * (NUM_CLASS + 5)), activate=False, bn=False)
+
+        return [conv_sbbox, conv_mbbox, conv_lbbox]
+
+    def YOLOv4(self, input_layer, NUM_CLASS):
+        route_1, route_2, conv = self.cspdarknet53(input_layer)
+
+        route = conv
+        conv = self.convolutional(conv, (1, 1, 512, 256))
+        conv = self.upsample(conv)
+        route_2 = self.convolutional(route_2, (1, 1, 512, 256))
+        conv = tf.concat([route_2, conv], axis=-1)
+
+        conv = self.convolutional(conv, (1, 1, 512, 256))
+        conv = self.convolutional(conv, (3, 3, 256, 512))
+        conv = self.convolutional(conv, (1, 1, 512, 256))
+        conv = self.convolutional(conv, (3, 3, 256, 512))
+        conv = self.convolutional(conv, (1, 1, 512, 256))
+
+        route_2 = conv
+        conv = self.convolutional(conv, (1, 1, 256, 128))
+        conv = self.upsample(conv)
+        route_1 = self.convolutional(route_1, (1, 1, 256, 128))
+        conv = tf.concat([route_1, conv], axis=-1)
+
+        conv = self.convolutional(conv, (1, 1, 256, 128))
+        conv = self.convolutional(conv, (3, 3, 128, 256))
+        conv = self.convolutional(conv, (1, 1, 256, 128))
+        conv = self.convolutional(conv, (3, 3, 128, 256))
+        conv = self.convolutional(conv, (1, 1, 256, 128))
+
+        route_1 = conv
+        conv = self.convolutional(conv, (3, 3, 128, 256))
+        conv_sbbox = self.convolutional(conv, (1, 1, 256, 3 * (NUM_CLASS + 5)), activate=False, bn=False)
+
+        conv = self.convolutional(route_1, (3, 3, 128, 256), downsample=True)
+        conv = tf.concat([conv, route_2], axis=-1)
+
+        conv = self.convolutional(conv, (1, 1, 512, 256))
+        conv = self.convolutional(conv, (3, 3, 256, 512))
+        conv = self.convolutional(conv, (1, 1, 512, 256))
+        conv = self.convolutional(conv, (3, 3, 256, 512))
+        conv = self.convolutional(conv, (1, 1, 512, 256))
+
+        route_2 = conv
+        conv = self.convolutional(conv, (3, 3, 256, 512))
+        conv_mbbox = self.convolutional(conv, (1, 1, 512, 3 * (NUM_CLASS + 5)), activate=False, bn=False)
+
+        conv = self.convolutional(route_2, (3, 3, 256, 512), downsample=True)
+        conv = tf.concat([conv, route], axis=-1)
+
+        conv = self.convolutional(conv, (1, 1, 1024, 512))
+        conv = self.convolutional(conv, (3, 3, 512, 1024))
+        conv = self.convolutional(conv, (1, 1, 1024, 512))
+        conv = self.convolutional(conv, (3, 3, 512, 1024))
+        conv = self.convolutional(conv, (1, 1, 1024, 512))
+
+        conv = self.convolutional(conv, (3, 3, 512, 1024))
+        conv_lbbox = self.convolutional(conv, (1, 1, 1024, 3 * (NUM_CLASS + 5)), activate=False, bn=False)
+
+        return [conv_sbbox, conv_mbbox, conv_lbbox]
+
+    def call(self, inputs, training=True, **kwargs):
+        x = self.yolo(inputs)
+        return x
+
+    def get_config(self):
+        config = {
+            'use_weights': self.use_weights,
+            'num_classes': self.num_classes,
+            'version': self.yolo_version,
+        }
+        base_config = super(OnlyYolo, self).get_config()
+>>>>>>> dev
         return dict(tuple(base_config.items()) + tuple(config.items()))
 
     @classmethod
     def from_config(cls, config):
         return cls(**config)
 
+<<<<<<< HEAD
     def compute_output_shape(self, input_shape):
-        return [(None, 52, 52, 3*(5+self.num_classes)),
-                (None, 26, 26, 3*(5+self.num_classes)),
-                (None, 13, 13, 3*(5+self.num_classes))]
+        return [(None, 52, 52, 3 * (5 + self.num_classes)),
+                (None, 26, 26, 3 * (5 + self.num_classes)),
+                (None, 13, 13, 3 * (5 + self.num_classes))]
 
+=======
+>>>>>>> dev
 
 if __name__ == "__main__":
     # input = tensorflow.keras.layers.Input(shape=(32, 32, 3))
@@ -1712,16 +2082,21 @@ if __name__ == "__main__":
     # x = UNETBlock3D(filters_base=16, n_pooling_branches=3, filters_coef=1, n_conv_layers=1, activation='relu',
     #                 kernel_size=(3,3,3), batch_norm_layer=True,
     #                 dropout_layer=True, dropout_rate=0.1)
+    x = OnlyYolo(use_weights=True, num_classes=1, yolo_version='v4')
     # aa = x.build((64, 64, 3))
-    # aa.summary()
+    # x.summary()
     # tf.keras.utils.plot_model(
     #     aa, to_file='C:\PycharmProjects\\terra_gui\\test_example\\model.png', show_shapes=True, show_dtype=False,
     #     show_layer_names=True, rankdir='TB', expand_nested=False, dpi=96,
     #     layer_range=None, show_layer_activations=False)
+<<<<<<< HEAD
     x = PretrainedYOLO(num_classes=5)
     print(x.compute_output_shape(input_shape=(None, 416, 416, 3)))
 
     input = tensorflow.keras.layers.Input(shape=(416, 416, 3))
     x = PretrainedYOLO(num_classes=5)(input)
     print(x)
+=======
+    print(x.compute_output_shape(input_shape=(None, 416, 416, 3)))
+>>>>>>> dev
     pass
