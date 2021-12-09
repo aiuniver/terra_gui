@@ -135,6 +135,7 @@ dmypy.json
 /Project/
 /Usage/
 
+package-lock.json
 /package-lock.json
 /.prettierrc
 /rsa.key
