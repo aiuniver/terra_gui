@@ -89,7 +89,7 @@ export default {
 .error-modal {
   &__header {
     display: flex;
-    align-items: end;
+    align-items: flex-end;
     padding-bottom: 10px;
     overflow: hidden;
     width: 90%;

@@ -47,7 +47,7 @@ export default {
     dialogErrors: false,
     text: '',
     key: 0,
-    msgList: []
+    msgList: [],
   }),
   computed: {
     ...mapGetters({
@@ -57,6 +57,7 @@ export default {
       project: 'projects/getProject',
       progressMessage: 'messages/getProgressMessage',
       error: 'logging/getError',
+      warning: 'logging/getWarning',
       errors: 'logging/getErrors',
     }),
     protsessor() {
@@ -69,9 +70,9 @@ export default {
       return this.$config.isDev ? `ver. ${this.$config.version}` : '';
     },
     showMsg() {
-      if (!this.msgList.length) return ''
-      return this.msgList[0]
-    }
+      if (!this.msgList.length) return '';
+      return this.msgList[0];
+    },
   },
   methods: {
     click(color) {
@@ -82,19 +83,28 @@ export default {
     },
     clickError() {
       this.dialogError = true;
-    }
+    },
   },
   watch: {
     error(value) {
-      if (!value) return
-      console.log(value)
-      this.msgList.push({ msg: value.title, color: this.color })
-      setTimeout(() => {
-        this.msgList.shift()
-        this.key++
-      }, this.msgList.length > 1 ? 1000 : 5000)
-    }
-  }
+      if (!value) return;
+      this.msgList.push({ msg: value.title, color: this.color });
+      setTimeout(
+        () => {
+          this.msgList.shift();
+          this.key++;
+        },
+        this.msgList.length > 1 ? 1000 : 5000
+      );
+    },
+    warning(arr) {
+      if (arr.lenght) {
+        arr.forEach(element => {
+          this.$Notify.warning({ title: element });
+        });
+      }
+    },
+  },
 };
 </script>
 
