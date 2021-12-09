@@ -1688,6 +1688,7 @@ class OnlyYolo(Layer):
                         self.yolo.layers[i].set_weights(layer_weights)
                     except:
                         print("skipping", self.yolo.layers[i].name)
+            del self.base_yolo
         # print(self.yolo.summary())
 
     def create_yolo(self, input_size=416, channels=3, classes=80):
