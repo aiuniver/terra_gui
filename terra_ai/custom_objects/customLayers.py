@@ -1,7 +1,8 @@
 import numpy as np
 import tensorflow as tf
 import tensorflow
-from tensorflow.keras.layers import Layer, InputSpec
+from tensorflow.keras.layers import InputSpec
+from tensorflow.python.layers.base import Layer
 from tensorflow.keras import initializers, regularizers, constraints
 from tensorflow.keras import backend as K
 from tensorflow import cast
@@ -1662,7 +1663,7 @@ class PretrainedYOLO(Layer):
         # self.out_3 = tensorflow.keras.layers.Conv2D(
         #     filters=3 * (5 + self.num_classes), padding='same', strides=(32, 32), kernel_size=1)
 
-    def call(self, input_, **kwargs):
+    def call(self, input_, training=True, **kwargs):
         # if YOLO_TYPE == "yolov4":
         #     conv_tensors = YOLOv4(input_layer, NUM_CLASS)
         # if YOLO_TYPE == "yolov3":

@@ -1047,6 +1047,7 @@ class ModelCreator:
         inputs = [self.tensors.get(i) for i in self.start_row]
         outputs = [self.tensors.get(i) for i in self.end_row]
         self.nnmodel = tensorflow.keras.Model(inputs, outputs)
+        print('\n self.nnmodel', self.nnmodel.summary())
 
     def _keras_layer_init(self, terra_layer):
         """Create keras layer_obj from terra_plan layer"""
@@ -1063,13 +1064,17 @@ class ModelCreator:
             marker = None
             yolo_out_idx = None
             for idx, layer in enumerate(self.model_plan):
-                if layer[0] in self.model_plan[idx][3] and self.model_plan[idx][1] == LayerTypeChoice.PretrainedYOLO:
+                # print('\n', terra_layer[1], idx, layer, self.model_plan)
+                if terra_layer[0] in layer[4] and \
+                        layer[1] == LayerTypeChoice.PretrainedYOLO and \
+                        terra_layer[0] != layer[0]:
                     marker = LayerTypeChoice.PretrainedYOLO
-                    yolo_out_idx = self.model_plan[idx][3].index(layer[0])
+                    yolo_out_idx = layer[4].index(terra_layer[0])
                     break
+            print('\n marker, yolo_out_idx', terra_layer[1], marker, yolo_out_idx)
             if marker == LayerTypeChoice.PretrainedYOLO:
-                print(marker, yolo_out_idx)
-                pass
+                input_tensors = self.tensors[terra_layer[3][0]][yolo_out_idx]
+                print(self.tensors[terra_layer[3][0]][yolo_out_idx])
             else:
                 if len(terra_layer[3]) == 1:
                     input_tensors = self.tensors[terra_layer[3][0]]
@@ -1077,7 +1082,8 @@ class ModelCreator:
                     input_tensors = []
                     for idx in terra_layer[3]:
                         input_tensors.append(self.tensors[idx])
-                self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(**terra_layer[2])(input_tensors)
+            self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(**terra_layer[2])(input_tensors)
+            print()
 
     def _tf_layer_init(self, terra_layer):
         """Create tensorflow layer_obj from terra_plan layer"""
@@ -1144,6 +1150,7 @@ class ModelCreator:
         """
         logger.debug(f"{self.name}, {self.create_model.__name__}")
         self._build_keras_model()
+
         return self.nnmodel
 
     def creator_cleaner(self) -> None:
