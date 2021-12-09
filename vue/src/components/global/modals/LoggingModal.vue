@@ -5,18 +5,22 @@
     </div>
     <div class="t-logging">
       <div class="t-logging__item">
-        <div class="t-logging__type">Тип</div>
         <div class="t-logging__date">Время</div>
+        <div class="t-logging__type">Тип</div>
         <div class="t-logging__error">Название</div>
       </div>
       <scrollbar>
-        <template v-for="(error, i) of errors">
-          <div class="t-logging__item" :key="'errors_' + i">
-            <div class="t-logging__type">{{ error.level }}</div>
-            <div class="t-logging__date">{{ (error.time * 1000) | formatDate }}</div>
-            <div class="t-logging__error" @click="click(error)">{{ error.title }}</div>
-          </div>
-        </template>
+        <div>
+          <template v-for="(error, i) of errors">
+            <div class="t-logging__item" :key="'errors_' + i">
+              <div class="t-logging__date">{{ (error.time * 1000) | formatDate }}</div>
+              <div class="t-logging__type">{{ error.level }}</div>
+              <div class="t-logging__error" @click="click(error)">
+                {{ error.title }}
+              </div>
+            </div>
+          </template>
+        </div>
       </scrollbar>
     </div>
     <div slot="footer"></div>
@@ -24,7 +28,7 @@
 </template>
 
 <script>
-import filter from '@/mixins/datasets/filters'
+import filter from '@/mixins/datasets/filters';
 export default {
   name: 'CopyModal',
   mixins: [filter],
@@ -66,7 +70,6 @@ export default {
 <style scoped lang="scss">
 .logging-modal {
   &__title {
-    
   }
 }
 .t-logging {
@@ -77,18 +80,23 @@ export default {
   padding: 10px;
   &__item {
     display: flex;
+    align-items: center;
     border-bottom: 1px solid #4d5c6a;
+    width: 100%;
   }
   &__date {
     width: 100px;
+    height: 100%;
   }
   &__type {
     width: 50px;
   }
   &__error {
+    flex: 1 1 auto;
+    white-space: pre-wrap;
     cursor: pointer;
-    width: 586px;
-    overflow: hidden;
+    // width: 586px;
+    // overflow: hidden;
     &:hover {
       opacity: 0.7;
     }
