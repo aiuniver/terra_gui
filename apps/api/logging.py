@@ -2,7 +2,9 @@ import time
 import logging
 
 from enum import Enum
+from time import mktime
 from typing import Optional
+from datetime import datetime
 from pydantic import BaseModel
 from pydantic.types import PositiveInt
 
@@ -27,9 +29,42 @@ class LevelnameChoice(str, Enum):
 
 class LogData(BaseModel):
     level: LevelnameChoice
-    time: PositiveInt
+    time: Optional[PositiveInt]
     title: str
     message: Optional[str]
+
+    def __init__(self, **data):
+        data["time"] = mktime(datetime.now().timetuple())
+        super().__init__(**data)
+
+
+class TerraRequestCatcher:
+    _requests: list = []
+
+    @property
+    def request(self):
+        return self._requests
+
+    @request.setter
+    def request(self, request):
+        request.logs = []
+        self._requests.append(request)
+
+    @property
+    def record(self):
+        return
+
+    @record.setter
+    def record(self, record):
+        for _request in self._requests:
+            _request.logs.append(record)
+
+    def collect(self, request):
+        _request = self._requests.pop(self._requests.index(request))
+        return _request.logs
+
+
+catcher = TerraRequestCatcher()
 
 
 class TerraConsoleFormatter(ServerFormatter):
@@ -62,3 +97,8 @@ class TerraConsoleFormatter(ServerFormatter):
 class TerraConsoleHandler(logging.Handler):
     def emit(self, record):
         print(self.format(record))
+
+
+class TerraRequestCatcherHandler(logging.Handler):
+    def emit(self, record):
+        catcher.record = record
