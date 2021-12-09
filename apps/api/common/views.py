@@ -1,5 +1,4 @@
 from terra_ai.settings import TERRA_PATH
-from terra_ai.agent import agent_exchange
 
 from apps.api import decorators
 from apps.api.base import BaseAPIView, BaseResponseSuccess
@@ -16,14 +15,14 @@ class ValidateDatasetModelAPIView(BaseAPIView):
         model = None
 
         if dataset_load:
-            datasets = agent_exchange("datasets_info", path=TERRA_PATH.datasets)
+            datasets = self.terra_exchange("datasets_info", path=TERRA_PATH.datasets)
             dataset = datasets.get(dataset_load.get("group")).datasets.get(
                 dataset_load.get("alias")
             )
             model = request.project.model
 
         if model_load:
-            model = agent_exchange("model_get", value=model_load.get("value"))
+            model = self.terra_exchange("model_get", value=model_load.get("value"))
             dataset = request.project.dataset
 
         if not dataset or not len(model.layers):

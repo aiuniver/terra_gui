@@ -6,7 +6,6 @@ from pathlib import Path
 from django.conf import settings
 
 from terra_ai.settings import TERRA_PATH, PROJECT_PATH, DEPLOY_PATH
-from terra_ai.agent import agent_exchange
 from terra_ai.deploy.prepare_deploy import DeployCreator
 from terra_ai.data.datasets.dataset import DatasetInfo, DatasetLoadData
 from terra_ai.data.deploy.tasks import DeployPageData
@@ -37,7 +36,7 @@ class GetAPIView(BaseAPIView):
                 datasets.append(
                     DatasetLoadData(path=TERRA_PATH.datasets, **dataset_config)
                 )
-        agent_exchange("deploy_get", datasets=datasets, page=page)
+        self.terra_exchange("deploy_get", datasets=datasets, page=page)
         return BaseResponseSuccess()
 
 
@@ -74,7 +73,7 @@ class UploadAPIView(BaseAPIView):
     @decorators.serialize_data(UploadSerializer)
     def post(self, request, serializer, **kwargs):
         sec = serializer.validated_data.get("sec")
-        agent_exchange(
+        self.terra_exchange(
             "deploy_upload",
             **{
                 "source": DEPLOY_PATH,

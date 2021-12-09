@@ -7,40 +7,58 @@ import tensorflow
 from pathlib import Path
 from typing import Any, Dict, List
 
-from . import exceptions as agent_exceptions
-from . import utils as agent_utils
-from .. import settings
-from ..cascades.cascade_validator import CascadeValidator
-from ..data.datasets.creation import FilePathSourcesList
-from ..data.datasets.creation import SourceData, CreationData
-from ..data.datasets.dataset import (
-    CustomDatasetConfigData,
+from terra_ai.settings import DATASET_EXT, ASSETS_PATH, MODEL_EXT
+from terra_ai import exceptions as terra_ai_exceptions
+from terra_ai.agent.exceptions import (
+    CallMethodNotFoundException,
+    MethodNotCallableException,
+    ModelAlreadyExistsException,
+)
+from terra_ai.data.extra import HardwareAcceleratorData, HardwareAcceleratorChoice
+from terra_ai.data.projects.project import ProjectsInfoData, ProjectsList
+from terra_ai.data.datasets.dataset import (
     DatasetsGroupsList,
     DatasetData,
     DatasetLoadData,
+    CustomDatasetConfigData,
 )
-from ..data.datasets.extra import DatasetGroupChoice
-from ..data.extra import HardwareAcceleratorData, HardwareAcceleratorChoice
-from ..cascades.cascade_runner import CascadeRunner
-from ..data.modeling.extra import ModelGroupChoice
-from ..data.modeling.model import ModelsGroupsList, ModelLoadData, ModelDetailsData
-from ..data.cascades.cascade import CascadesList, CascadeLoadData, CascadeDetailsData
-from ..data.presets.datasets import DatasetsGroups
-from ..data.presets.models import ModelsGroups
-from ..data.projects.project import ProjectsInfoData, ProjectsList
-from ..data.training.train import TrainingDetailsData
-from ..data.training.extra import StateStatusChoice
-from ..data.cascades.extra import BlockGroupChoice
-from ..data.deploy.tasks import DeployPageData
-from ..datasets import loading as datasets_loading
-from ..datasets import utils as datasets_utils
-from ..datasets.creating import CreateDataset
-from ..deploy import loading as deploy_loading
-from ..modeling.validator import ModelValidator
-from ..training import training_obj
-from ..training.training import interactive
-from ..project import loading as project_loading
-from ..exceptions.datasets import DatasetCanNotBeDeletedException
+from terra_ai.data.datasets.creation import (
+    CreationData,
+    FilePathSourcesList,
+    SourceData,
+)
+from terra_ai.data.datasets.extra import DatasetGroupChoice
+from terra_ai.data.modeling.model import (
+    ModelsGroupsList,
+    ModelDetailsData,
+    ModelLoadData,
+)
+from terra_ai.data.modeling.extra import ModelGroupChoice
+from terra_ai.data.training.train import TrainingDetailsData
+from terra_ai.data.training.extra import StateStatusChoice
+from terra_ai.data.cascades.cascade import (
+    CascadeDetailsData,
+    CascadesList,
+    CascadeLoadData,
+)
+from terra_ai.data.cascades.extra import BlockGroupChoice
+from terra_ai.data.deploy.tasks import DeployPageData
+from terra_ai.data.presets.datasets import DatasetsGroups
+from terra_ai.data.presets.models import ModelsGroups
+from terra_ai.project.loading import load as project_load
+from terra_ai.datasets import utils as datasets_utils
+from terra_ai.datasets.creating import CreateDataset
+from terra_ai.datasets.loading import (
+    source as dataset_source,
+    choice as dataset_choice,
+    multiload as dataset_multiload,
+)
+from terra_ai.modeling.validator import ModelValidator
+from terra_ai.training import training_obj
+from terra_ai.training.training import interactive
+from terra_ai.cascades.cascade_validator import CascadeValidator
+from terra_ai.cascades.cascade_runner import CascadeRunner
+from terra_ai.deploy.loading import upload as deploy_upload
 
 
 class Exchange:
@@ -51,15 +69,11 @@ class Exchange:
 
         # Проверяем, существует ли метод
         if __method is None:
-            raise agent_exceptions.CallMethodNotFoundException(
-                self.__class__, __method_name
-            )
+            raise CallMethodNotFoundException(self.__class__, __method_name)
 
         # Проверяем, является ли метод вызываемым
         if not callable(__method):
-            raise agent_exceptions.MethodNotCallableException(
-                __method_name, self.__class__
-            )
+            raise MethodNotCallableException(__method_name, self.__class__)
 
         # Вызываем метод
         return __method(**kwargs)
@@ -104,7 +118,7 @@ class Exchange:
         """
         Загрузка проекта
         """
-        project_loading.load(Path(dataset_path), Path(source), Path(target))
+        project_load(Path(dataset_path), Path(source), Path(target))
 
     def _call_datasets_info(self, path: Path) -> DatasetsGroupsList:
         """
@@ -112,7 +126,7 @@ class Exchange:
         """
         info = DatasetsGroupsList(DatasetsGroups)
         for dirname in os.listdir(str(path.absolute())):
-            if dirname.endswith(settings.DATASET_EXT):
+            if dirname.endswith(DATASET_EXT):
                 try:
                     dataset_config = CustomDatasetConfigData(path=Path(path, dirname))
                     info.get(DatasetGroupChoice.custom.name).datasets.append(
@@ -128,7 +142,7 @@ class Exchange:
         """
         Выбор датасета
         """
-        datasets_loading.choice(
+        dataset_choice(
             "dataset_choice",
             DatasetLoadData(path=custom_path, group=group, alias=alias),
             reset_model=reset_model,
@@ -150,7 +164,7 @@ class Exchange:
         """
         Загрузка исходников датасета
         """
-        datasets_loading.source(SourceData(mode=mode, value=value))
+        dataset_source(SourceData(mode=mode, value=value))
 
     def _call_dataset_source_segmentation_classes_auto_search(
         self, path: Path, num_classes: int, mask_range: int
@@ -179,18 +193,18 @@ class Exchange:
         Удаление датасета
         """
         if group == DatasetGroupChoice.custom:
-            shutil.rmtree(
-                Path(path, f"{alias}.{settings.DATASET_EXT}"), ignore_errors=True
-            )
+            shutil.rmtree(Path(path, f"{alias}.{DATASET_EXT}"), ignore_errors=True)
         else:
-            raise DatasetCanNotBeDeletedException(alias, group)
+            raise terra_ai_exceptions.datasets.DatasetCanNotBeDeletedException(
+                alias, group
+            )
 
     def _call_models(self, path: str) -> ModelsGroupsList:
         """
         Получение списка моделей
         """
         models = ModelsGroupsList(ModelsGroups)
-        preset_models_path = Path(settings.ASSETS_PATH, "models")
+        preset_models_path = Path(ASSETS_PATH, "models")
         custom_models_path = path
         couples = (("preset", preset_models_path), ("custom", custom_models_path))
         for models_group, models_path in couples:
@@ -229,9 +243,9 @@ class Exchange:
         """
         Создание модели
         """
-        model_path = Path(path, f'{model.get("name")}.{settings.MODEL_EXT}')
+        model_path = Path(path, f'{model.get("name")}.{MODEL_EXT}')
         if not overwrite and model_path.is_file():
-            raise agent_exceptions.ModelAlreadyExistsException(model.get("name"))
+            raise ModelAlreadyExistsException(model.get("name"))
         with open(model_path, "w") as model_ref:
             json.dump(model, model_ref)
 
@@ -348,7 +362,7 @@ class Exchange:
                             group=data.get("group"),
                         )
                     )
-        datasets_loading.multiload("cascade_start", datasets, sources=sources)
+        dataset_multiload("cascade_start", datasets, sources=sources)
 
     def _call_cascade_execute(
         self, sources: Dict[int, List[str]], cascade: CascadeDetailsData, training_path
@@ -364,7 +378,7 @@ class Exchange:
         """
         Получение данных для отображения пресетов на странице деплоя
         """
-        datasets_loading.multiload("deploy_get", datasets, page=page)
+        dataset_multiload("deploy_get", datasets, page=page)
 
     def _call_deploy_cascades_create(self, training_path: str, model_name: str):
         pass
@@ -373,7 +387,7 @@ class Exchange:
         """
         Деплой: загрузка
         """
-        deploy_loading.upload(source, kwargs)
+        deploy_upload(source, kwargs)
 
 
 agent_exchange = Exchange()

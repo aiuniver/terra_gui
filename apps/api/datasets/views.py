@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from terra_ai.settings import TERRA_PATH
-from terra_ai.agent import agent_exchange
 from terra_ai.data.extra import FileManagerItem
 from terra_ai.data.datasets.creation import CreationData
 
@@ -19,14 +18,14 @@ from apps.api.datasets.serializers import (
 class InfoAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         return BaseResponseSuccess(
-            agent_exchange("datasets_info", path=TERRA_PATH.datasets).native()
+            self.terra_exchange("datasets_info", path=TERRA_PATH.datasets).native()
         )
 
 
 class ChoiceAPIView(BaseAPIView):
     @decorators.serialize_data(ChoiceSerializer)
     def post(self, request, serializer, **kwargs):
-        agent_exchange(
+        self.terra_exchange(
             "dataset_choice",
             custom_path=TERRA_PATH.datasets,
             **serializer.validated_data,
@@ -46,14 +45,16 @@ class ChoiceProgressAPIView(BaseAPIView):
 class SourcesAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         return BaseResponseSuccess(
-            agent_exchange("datasets_sources", path=str(TERRA_PATH.sources)).native()
+            self.terra_exchange(
+                "datasets_sources", path=str(TERRA_PATH.sources)
+            ).native()
         )
 
 
 class SourceLoadAPIView(BaseAPIView):
     @decorators.serialize_data(SourceLoadSerializer)
     def post(self, request, serializer, **kwargs):
-        agent_exchange("dataset_source_load", **serializer.validated_data)
+        self.terra_exchange("dataset_source_load", **serializer.validated_data)
         return BaseResponseSuccess()
 
 
@@ -74,7 +75,7 @@ class SourceSegmentationClassesAutoSearchAPIView(BaseAPIView):
     @decorators.serialize_data(SourceSegmentationClassesAutosearchSerializer)
     def post(self, request, serializer, **kwargs):
         return BaseResponseSuccess(
-            agent_exchange(
+            self.terra_exchange(
                 "dataset_source_segmentation_classes_auto_search",
                 path=request.data.get("path"),
                 **serializer.validated_data,
@@ -85,7 +86,7 @@ class SourceSegmentationClassesAutoSearchAPIView(BaseAPIView):
 class SourceSegmentationClassesAnnotationAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         return BaseResponseSuccess(
-            agent_exchange(
+            self.terra_exchange(
                 "dataset_source_segmentation_classes_annotation",
                 path=request.data.get("path"),
             )
@@ -96,7 +97,7 @@ class CreateAPIView(BaseAPIView):
     @decorators.serialize_data(CreateSerializer)
     def post(self, request, serializer, **kwargs):
         data = CreationData(**serializer.data)
-        agent_exchange("dataset_create", creation_data=data)
+        self.terra_exchange("dataset_create", creation_data=data)
         return BaseResponseSuccess()
 
 
@@ -110,7 +111,7 @@ class DeleteAPIView(BaseAPIView):
     @decorators.serialize_data(DeleteSerializer)
     def post(self, request, serializer, **kwargs):
         data = serializer.validated_data
-        agent_exchange("dataset_delete", path=str(TERRA_PATH.datasets), **data)
+        self.terra_exchange("dataset_delete", path=str(TERRA_PATH.datasets), **data)
         if request.project.dataset and (
             request.project.dataset.alias == data.get("alias")
         ):

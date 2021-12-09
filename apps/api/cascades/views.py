@@ -3,7 +3,6 @@ import base64
 from tempfile import NamedTemporaryFile
 
 from terra_ai.settings import TERRA_PATH, PROJECT_PATH
-from terra_ai.agent import agent_exchange
 from terra_ai.data.datasets.dataset import DatasetInfo
 from terra_ai.data.cascades.extra import BlockGroupChoice
 
@@ -22,7 +21,7 @@ from apps.api.cascades.serializers import (
 class GetAPIView(BaseAPIView):
     @decorators.serialize_data(CascadeGetSerializer)
     def post(self, request, serializer, **kwargs):
-        cascade = agent_exchange(
+        cascade = self.terra_exchange(
             "cascade_get", value=serializer.validated_data.get("value")
         )
         return BaseResponseSuccess(cascade.native())
@@ -31,14 +30,14 @@ class GetAPIView(BaseAPIView):
 class InfoAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         return BaseResponseSuccess(
-            agent_exchange("cascades_info", path=PROJECT_PATH.cascades).native()
+            self.terra_exchange("cascades_info", path=PROJECT_PATH.cascades).native()
         )
 
 
 class LoadAPIView(BaseAPIView):
     @decorators.serialize_data(CascadeGetSerializer)
     def post(self, request, serializer, **kwargs):
-        request.project.cascade = agent_exchange(
+        request.project.cascade = self.terra_exchange(
             "cascade_get", value=serializer.validated_data.get("value")
         )
         return BaseResponseSuccess(request.project.cascade.native())
@@ -51,7 +50,7 @@ class UpdateAPIView(BaseAPIView):
         data = serializer.validated_data
         cascade_data = cascade.native()
         cascade_data.update(data)
-        cascade = agent_exchange("cascade_update", cascade=cascade_data)
+        cascade = self.terra_exchange("cascade_update", cascade=cascade_data)
         request.project.set_cascade(cascade)
         return BaseResponseSuccess({"blocks": cascade.blocks.native()})
 
@@ -65,7 +64,7 @@ class ClearAPIView(BaseAPIView):
 class ValidateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         return BaseResponseSuccess(
-            agent_exchange(
+            self.terra_exchange(
                 "cascade_validate",
                 path=PROJECT_PATH.training,
                 cascade=request.project.cascade,
@@ -76,7 +75,7 @@ class ValidateAPIView(BaseAPIView):
 class StartAPIView(BaseAPIView):
     @decorators.serialize_data(StartSerializer)
     def post(self, request, serializer, **kwargs):
-        agent_exchange(
+        self.terra_exchange(
             "cascade_start",
             training_path=PROJECT_PATH.training,
             datasets_path=TERRA_PATH.datasets,
@@ -116,7 +115,7 @@ class StartProgressAPIView(BaseAPIView):
                         ).dataset.sources
                     }
                 )
-            agent_exchange(
+            self.terra_exchange(
                 "cascade_execute",
                 sources=sources,
                 cascade=request.project.cascade,
@@ -150,7 +149,7 @@ class PreviewAPIView(BaseAPIView):
 
 class DatasetsAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        datasets_list = agent_exchange(
+        datasets_list = self.terra_exchange(
             "datasets_info", path=TERRA_PATH.datasets
         ).native()
         response = []
