@@ -737,7 +737,7 @@ CascadesBlocksTypes = {
 </ol>
 <p>Возможные связи с другими блоками на выходе:</p>
 <ol> 
-    <li>блок Service Tracking (Sort, BiTBasedTracker)</li>
+    <li>блок Service Tracking (Sort, BiTBasedTracker, DeepSort)</li>
     <li>блок Function Наложение bbox на изображение</li>
 </ol>
 <p>Возвращает на выходе:<br />
@@ -748,7 +748,7 @@ CascadesBlocksTypes = {
 <p>Наложение bbox</b> на изображение YOLOV3 и V4</p>
 <p>Необходимые связи с другими блоками на входе:</p>
 <ol>
-    <li>блок Function Постобработка yolo или блок Service Tracking (Sort, BiTBasedTracker)</li>  
+    <li>блок Function Постобработка yolo или блок Service Tracking (Sort, BiTBasedTracker, DeepSort)</li>  
     <li>блок Input исходных изображений или видео</li>
 </ol>
 <p>Возможные связи с другими блоками на выходе:</p>
@@ -764,11 +764,11 @@ CascadesBlocksTypes = {
 <p>Необходимо отметить классы объектов которые должен отслеживать трекер или которые должны отображаться на изображении.</p>
 <p>Необходимые связи с другими блоками на входе:</p>
 <ol> 
-    <li>блок Service ObjectDetection (YoloV5).</li>
+    <li>блок Service ObjectDetection (YoloV5) (выключен переключатель “Выводить изображение”).</li>
 </ol>
 <p>Возможные связи с другими блоками на выходе:</p>
 <ol>
-    <li>блок Service Tracking (Sort, DeepSort);</li>
+    <li>блок Service Tracking (Sort, BiTBasedTracker, DeepSort);</li>
     <li>блок Function Наложение bbox на изображение.</li>
 </ol>
 <p>Возвращает на выходе:<br />
