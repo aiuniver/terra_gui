@@ -73,8 +73,9 @@ class ValidateAPIView(BaseAPIView):
 
 
 class StartAPIView(BaseAPIView):
-    @decorators.serialize_data(StartSerializer)
-    def post(self, request, serializer, **kwargs):
+    def post(self, request, **kwargs):
+        serializer = StartSerializer(data={"sources": request.data})
+        serializer.is_valid(raise_exception=True)
         self.terra_exchange(
             "cascade_start",
             training_path=PROJECT_PATH.training,
