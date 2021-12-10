@@ -4,7 +4,7 @@ from django.conf import settings
 
 from apps.api import decorators
 from apps.api.base import BaseAPIView, BaseResponseSuccess
-from apps.api.profile.servers.serializers import CreateSerializer
+from apps.api.servers.serializers import CreateSerializer
 
 
 class ListAPIView(BaseAPIView):
