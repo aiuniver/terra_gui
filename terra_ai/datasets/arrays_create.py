@@ -22,6 +22,7 @@ import pymorphy2
 import random
 import librosa.feature as librosa_feature
 import imgaug
+from pathlib import Path
 from PIL import UnidentifiedImageError
 from ast import literal_eval
 from sklearn.cluster import KMeans
@@ -222,32 +223,23 @@ class CreateArray(object):
     @staticmethod
     def instructions_classification(paths_list: list, **options) -> dict:
 
-        length = options['length'] if 'length' in options.keys() else None
-        depth = options['depth'] if 'depth' in options.keys() else None
-        step = options['step'] if 'step' in options.keys() else None
-
-        type_processing = options['type_processing']
-
-        if 'sources_paths' in options.keys():
-            classes_names = sorted([os.path.basename(elem) for elem in options['sources_paths']])
+        if options['type_processing'] == "categorical":
+            classes_names = list(dict.fromkeys(paths_list))
         else:
-            if type_processing == "categorical":
-                classes_names = list(dict.fromkeys(paths_list))
+            if len(options["ranges"].split(" ")) == 1:
+                border = max(paths_list) / int(options["ranges"])
+                classes_names = np.linspace(border, max(paths_list), int(options["ranges"])).tolist()
             else:
-                if len(options["ranges"].split(" ")) == 1:
-                    border = max(paths_list) / int(options["ranges"])
-                    classes_names = np.linspace(border, max(paths_list), int(options["ranges"])).tolist()
-                else:
-                    classes_names = options["ranges"].split(" ")
+                classes_names = options["ranges"].split(" ")
 
         instructions = {'instructions': paths_list,
                         'parameters': {**options,
                                        "classes_names": classes_names,
                                        "num_classes": len(classes_names),
-                                       'type_processing': type_processing,
-                                       'length': length,
-                                       'step': step,
-                                       'depth': depth
+                                       'type_processing': options['type_processing'],
+                                       'length': options['length'] if 'length' in options.keys() else None,
+                                       'step': options['step'] if 'step' in options.keys() else None,
+                                       'depth': options['depth'] if 'depth' in options.keys() else None
                                        }
                         }
 
@@ -436,17 +428,16 @@ class CreateArray(object):
     @staticmethod
     def cut_image(paths_list: list, dataset_folder=None, **options: dict):
 
-        # for elem in paths_list:
-        #     os.makedirs(os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem))), exist_ok=True)
-        #     shutil.copyfile(elem, os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
-        #                                        os.path.basename(elem)))
-
-        # paths_list = [os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)), os.path.basename(elem))
-                      # for elem in paths_list]
+        new_paths_list = []
+        for elem in paths_list:
+            new_path = dataset_folder.joinpath(Path(elem).parent.name, Path(elem).name)
+            os.makedirs(new_path.parent, exist_ok=True)
+            shutil.copyfile(elem, new_path)
+            new_paths_list.append(str(new_path))
 
         image_mode = 'stretch' if not options.get('image_mode') else options['image_mode']
 
-        instructions = {'instructions': paths_list,
+        instructions = {'instructions': new_paths_list,
                         'parameters': {'height': options['height'],
                                        'width': options['width'],
                                        'net': options['net'],
