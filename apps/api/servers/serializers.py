@@ -8,3 +8,11 @@ class CreateSerializer(serializers.Serializer):
     domain_name = serializers.CharField()
     port_http = serializers.IntegerField(min_value=1, default=80)
     port_https = serializers.IntegerField(min_value=1, default=443)
+
+
+class InstructionSerializer(serializers.Serializer):
+    id = serializers.IntegerField(min_value=1)
+
+
+class SetupSerializer(serializers.Serializer):
+    id = serializers.IntegerField(min_value=1)

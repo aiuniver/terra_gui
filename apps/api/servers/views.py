@@ -4,7 +4,11 @@ from django.conf import settings
 
 from apps.api import decorators
 from apps.api.base import BaseAPIView, BaseResponseSuccess
-from apps.api.servers.serializers import CreateSerializer
+from apps.api.servers.serializers import (
+    CreateSerializer,
+    InstructionSerializer,
+    SetupSerializer,
+)
 
 
 class ListAPIView(BaseAPIView):
@@ -24,3 +28,15 @@ class CreateAPIView(BaseAPIView):
                 f'Не удалось создать конфигурацию сервера: {response_data.get("error")}'
             )
         return BaseResponseSuccess(response_data.get("data"))
+
+
+class InstructionAPIView(BaseAPIView):
+    @decorators.serialize_data(InstructionSerializer)
+    def post(self, request, serializer, **kwargs):
+        return BaseResponseSuccess()
+
+
+class SetupAPIView(BaseAPIView):
+    @decorators.serialize_data(SetupSerializer)
+    def post(self, request, serializer, **kwargs):
+        return BaseResponseSuccess()
