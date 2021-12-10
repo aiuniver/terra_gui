@@ -530,8 +530,7 @@ class CreateDataset(object):
                 encoding = LayerEncodingChoice.none
                 if creation_data.inputs.get(key).type == LayerInputTypeChoice.Dataframe:
                     try:
-                        _, enc = autodetect_encoding(creation_data.inputs.get(key).parameters.sources_paths[0],
-                                                          True)
+                        _, enc = autodetect_encoding(creation_data.inputs.get(key).parameters.sources_paths[0], True)
                         column_names = pd.read_csv(creation_data.inputs.get(key).parameters.sources_paths[0], nrows=0,
                                                    sep=None, engine='python', encoding=enc).columns.to_list()
                     except Exception:
@@ -862,22 +861,22 @@ class CreateDataset(object):
         def array_creation(row, instructions):
 
             full_array = []
-            augm_data = ''
+            # augm_data = ''
             for h in range(len(row)):
                 try:
                     arr = getattr(CreateArray(), f'create_{instructions[h]["put_type"]}')(row[h], **instructions[h])
                     arr = getattr(CreateArray(), f'preprocess_{instructions[h]["put_type"]}')(arr['instructions'],
                                                                                               **arr['parameters'])
-                    if isinstance(arr, tuple):
-                        full_array.append(arr[0])
-                        augm_data += arr[1]
-                    else:
-                        full_array.append(arr)
+                    # if isinstance(arr, tuple):
+                    #     full_array.append(arr[0])
+                    #     augm_data += arr[1]
+                    # else:
+                    full_array.append(arr)
                 except Exception:
                     progress.pool(self.progress_name, error='Ошибка создания массивов данных')
                     raise
 
-            return full_array, augm_data
+            return full_array  # , augm_data
 
         out_array = {'train': {}, 'val': {}}
         service = {'train': {}, 'val': {}}
@@ -927,19 +926,19 @@ class CreateDataset(object):
                                                 col_name])
 
                         elif self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
-                            if self.augmentation[split]['1_image']:
-                                tmp_data.append(self.augmentation[split]['1_image'][i])
-                            else:
-                                tmp_data.append(self.dataframe[split].loc[i, col_name])
+                            # if self.augmentation[split]['1_image']:
+                            #     tmp_data.append(self.augmentation[split]['1_image'][i])
+                            # else:
+                            tmp_data.append(self.dataframe[split].loc[i, col_name])
                             tmp_im = Image.open(os.path.join(self.paths.basepath,
                                                              self.dataframe[split].iloc[i, 0]))
                             parameters_to_pass.update([('orig_x', tmp_im.width),
                                                        ('orig_y', tmp_im.height)])
                         else:
                             tmp_data.append(self.dataframe[split].loc[i, col_name])
-                        if self.tags[key][col_name] == decamelize(LayerInputTypeChoice.Image) and\
-                                '2_object_detection' in self.dataframe[split].columns:
-                            parameters_to_pass.update([('augm_data', self.dataframe[split].loc[i, '2_object_detection'])])
+                        # if self.tags[key][col_name] == decamelize(LayerInputTypeChoice.Image) and\
+                        #         '2_object_detection' in self.dataframe[split].columns:
+                        #     parameters_to_pass.update([('augm_data', self.dataframe[split].loc[i, '2_object_detection'])])
                         tmp_parameter_data.append(parameters_to_pass)
                     data_to_pass.append(tmp_data)
                     dict_to_pass.append(tmp_parameter_data)
@@ -947,8 +946,8 @@ class CreateDataset(object):
                 progress.pool(self.progress_name,
                               message=f'Формирование массивов {split.title()} выборки. ID: {key}.',
                               percent=0)
-                if not self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
-                    self.augmentation[split] = {col_name: []}
+                # if not self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
+                #     self.augmentation[split] = {col_name: []}
                 current_arrays: list = []
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     results = executor.map(array_creation, data_to_pass, dict_to_pass)
@@ -956,26 +955,27 @@ class CreateDataset(object):
                         if psutil.virtual_memory()._asdict().get("percent") > 90:
                             current_arrays = []
                             raise Resource
-                        if isinstance(result, tuple):
-                            augm_data = result[1]
-                            result = result[0]
-                            if not augm_data:
-                                augm_data = ''
+                        # if isinstance(result, tuple):
+                        #     augm_data = result[1]
+                        #     result = result[0]
+                        #     if not augm_data:
+                        #         augm_data = ''
                         progress.pool(self.progress_name, percent=ceil(i / len(data_to_pass) * 100))
                         if not self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
                             if depth:
                                 if 'trend' in dict_to_pass[i][0].keys() and dict_to_pass[i][0]['trend']:
-                                    array = np.array(result[0])
+                                    array = np.array(result)  # result[0]
                                 else:
                                     array = self.postprocess_timeseries(result)
                             else:
                                 array = np.concatenate(result, axis=0)
                             current_arrays.append(array)
-                            if isinstance(augm_data, str):
-                                self.augmentation[split][col_name].append(augm_data)
+                            # if isinstance(augm_data, str):
+                            #     self.augmentation[split][col_name].append(augm_data)
                         else:
+                            # print(len(result))
                             for n in range(6):
-                                globals()[f'current_arrays_{n}'].append(result[0][n])
+                                globals()[f'current_arrays_{n}'].append(result[0][n])  # result[0][n]
 
                 if self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
                     for n in range(3):
