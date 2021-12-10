@@ -1,5 +1,7 @@
 import requests
 
+from typing import Dict
+
 from django.conf import settings
 
 from apps.api import decorators
@@ -11,12 +13,21 @@ from apps.api.servers.serializers import (
 )
 
 
-class ListAPIView(BaseAPIView):
+class ServersListMixinAPIView(BaseAPIView):
+    def get_servers(self) -> Dict[int, dict]:
+        response_data = requests.post(
+            f"{settings.TERRA_API_URL}/servers/",
+            json={"config": settings.USER_PORT},
+        ).json()
+        return response_data.get("data")
+
+
+class ListAPIView(ServersListMixinAPIView):
     def post(self, request, **kwargs):
-        return BaseResponseSuccess(settings.USER_SERVERS)
+        return BaseResponseSuccess(self.get_servers())
 
 
-class CreateAPIView(BaseAPIView):
+class CreateAPIView(ServersListMixinAPIView):
     @decorators.serialize_data(CreateSerializer)
     def post(self, request, serializer, **kwargs):
         response_data = requests.post(
@@ -27,7 +38,12 @@ class CreateAPIView(BaseAPIView):
             raise ValueError(
                 f'Не удалось создать конфигурацию сервера: {response_data.get("error")}'
             )
-        return BaseResponseSuccess(response_data.get("data"))
+        return BaseResponseSuccess(
+            {
+                "id": response_data.get("data").get("id"),
+                "servers": self.get_servers(),
+            }
+        )
 
 
 class InstructionAPIView(BaseAPIView):
