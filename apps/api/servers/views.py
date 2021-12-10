@@ -1,3 +1,4 @@
+import json
 import requests
 
 from typing import Dict
@@ -8,8 +9,9 @@ from apps.api import decorators
 from apps.api.base import BaseAPIView, BaseResponseSuccess
 from apps.api.servers.serializers import (
     CreateSerializer,
-    InstructionSerializer,
-    SetupSerializer,
+    ServerSerializer,
+    ServerData,
+    ServerFullData,
 )
 
 
@@ -19,7 +21,32 @@ class ServersListMixinAPIView(BaseAPIView):
             f"{settings.TERRA_API_URL}/servers/",
             json={"config": settings.USER_PORT},
         ).json()
-        return response_data.get("data")
+        servers_data = response_data.get("data")
+        servers = []
+        for server in servers_data:
+            server["state"] = {
+                "name": server.get("state"),
+                "error": server.get("error"),
+            }
+            servers.append(json.loads(ServerData(**server).json(ensure_ascii=False)))
+        return servers
+
+    def get_servers_ready(self) -> Dict[int, dict]:
+        response_data = requests.post(
+            f"{settings.TERRA_API_URL}/servers/ready/",
+            json={"config": settings.USER_PORT},
+        ).json()
+        servers_data = response_data.get("data")
+        servers = []
+        for server in servers_data:
+            server["state"] = {
+                "name": server.get("state"),
+                "error": server.get("error"),
+            }
+            servers.append(
+                json.loads(ServerFullData(**server).json(ensure_ascii=False))
+            )
+        return servers
 
 
 class ListAPIView(ServersListMixinAPIView):
@@ -46,13 +73,33 @@ class CreateAPIView(ServersListMixinAPIView):
         )
 
 
-class InstructionAPIView(BaseAPIView):
-    @decorators.serialize_data(InstructionSerializer)
+class GetAPIView(BaseAPIView):
+    @decorators.serialize_data(ServerSerializer)
     def post(self, request, serializer, **kwargs):
-        return BaseResponseSuccess()
+        response_data = requests.post(
+            f"{settings.TERRA_API_URL}/server/",
+            json={"config": settings.USER_PORT, **serializer.validated_data},
+        ).json()
+        server = response_data.get("data")
+        server["state"] = {
+            "name": server.get("state"),
+            "error": server.get("error"),
+        }
+        return BaseResponseSuccess(
+            json.loads(ServerFullData(**server).json(ensure_ascii=False))
+        )
 
 
-class SetupAPIView(BaseAPIView):
-    @decorators.serialize_data(SetupSerializer)
+class SetupAPIView(ServersListMixinAPIView):
+    @decorators.serialize_data(ServerSerializer)
     def post(self, request, serializer, **kwargs):
-        return BaseResponseSuccess()
+        response_data = requests.post(
+            f"{settings.TERRA_API_URL}/server/setup/",
+            json={"config": settings.USER_PORT, **serializer.validated_data},
+        ).json()
+        return BaseResponseSuccess(self.get_servers())
+
+
+class ReadyAPIView(ServersListMixinAPIView):
+    def post(self, request, **kwargs):
+        return BaseResponseSuccess(self.get_servers_ready())
