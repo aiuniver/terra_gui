@@ -39,29 +39,18 @@ class LogData(BaseModel):
 
 
 class TerraRequestCatcher:
-    _requests: list = []
+    _records: list = []
 
     @property
-    def request(self):
-        return self._requests
-
-    @request.setter
-    def request(self, request):
-        request.logs = []
-        self._requests.append(request)
-
-    @property
-    def record(self):
-        return
+    def record(self) -> list:
+        return self._records
 
     @record.setter
     def record(self, record):
-        for _request in self._requests:
-            _request.logs.append(record)
+        self._records.append(record)
 
-    def collect(self, request):
-        _request = self._requests.pop(self._requests.index(request))
-        return _request.logs
+    def clear(self):
+        self._records = []
 
 
 catcher = TerraRequestCatcher()
