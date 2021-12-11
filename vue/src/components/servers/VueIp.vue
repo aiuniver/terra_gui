@@ -129,7 +129,6 @@ export default {
     },
     ipKeydown(event, index) {
       let keyCode = event.keyCode || event.which;
-      console.log('keycode', keyCode);
       if (keyCode === 8 || keyCode === 37) {
         if (this.ipCopy[index].length === 0 && this.ipCopy[index - 1] !== undefined)
           this.$refs.ipSegment[index - 1].focus();

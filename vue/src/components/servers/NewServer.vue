@@ -1,29 +1,32 @@
 <template>
   <div class="new-server">
     <p class="new-server__header">Добавление сервера демо-панели</p>
-    <form @submit.prevent class="new-server__form" @submit="$emit('addserver')">
+    <form class="new-server__form" @submit.prevent="addServer">
       <t-field label="Доменное имя">
-        <DInputText placeholder="" />
+        <DInputText placeholder="" v-model="domain_name" />
       </t-field>
       <t-field label="IP адрес">
-        <VueIP :ip="ip" :onChange="change" />
+        <VueIP :ip="ip_address" :onChange="change" />
       </t-field>
       <t-field label="Имя пользователя">
-        <DInputText placeholder="" />
+        <DInputText placeholder="" v-model="user" />
       </t-field>
       <div class="new-server__ports">
         <t-field label="SSH порт">
-          <DInputNumber placeholder="" />
+          <DInputNumber placeholder="" v-model="port_ssh" />
         </t-field>
         <t-field label="HTTP порт">
-          <DInputNumber placeholder="" />
+          <DInputNumber placeholder="" v-model="port_http" />
         </t-field>
         <t-field label="HTTPS порт">
-          <DInputNumber placeholder="" />
+          <DInputNumber placeholder="" v-model="port_https" />
         </t-field>
       </div>
-      <button class="new-server__btn" :disabled="!ipValid">Добавить</button>
+      <t-button class="new-server__btn"
+			:disabled="!validForm" 
+			:loading="loading">Добавить</t-button>
     </form>
+
     <div class="new-server__error">
       <p class="new-server__error--header">Ошибка добавления сервера демо-панели</p>
       <p class="new-server__error--info">
@@ -39,19 +42,43 @@ import VueIP from './VueIp.vue';
 export default {
   name: 'NewServer',
   data: () => ({
-    ip: '255.255.255.255',
+    ip_address: '255.255.255.255',
     ipValid: null,
+		domain_name: '',
+		user: '',
+		port_ssh: 0,
+		port_http: 0,
+		port_https: 0,
+		loading: false
   }),
   components: {
     VueIP,
     DInputNumber: () => import('@/components/global/design/forms/components/DInputNumber'),
     DInputText: () => import('@/components/global/design/forms/components/DInputText'),
   },
+	computed: {
+		validForm() {
+			return !!(this.ipValid && this.domain_name && this.user && this.port_ssh && this.port_http && this.port_https)
+		}
+	},
   methods: {
     change(ip, x, valid) {
-      this.ip = ip;
+      this.ip_address = ip;
       this.ipValid = valid;
     },
+		async addServer() {
+      this.loading = true
+			const { id } = await this.$store.dispatch('servers/addServer', {
+				domain_name: this.domain_name, 
+				ip_address: this.ip_address, 
+				user: this.user, 
+				port_ssh: this.port_ssh, 
+				port_http: this.port_http, 
+				port_https: this.port_https
+			})
+      this.$emit('addServer', id)
+      this.loading = false
+		}
   },
 };
 </script>

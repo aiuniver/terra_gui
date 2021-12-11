@@ -10,6 +10,7 @@ import tables from './modules/tables';
 import profile from './modules/profile';
 import logging from './modules/logging';
 import dialogs from './modules/dialogs';
+import servers from './modules/servers';
 
 import axios from 'axios';
 // import Vue from 'vue';
@@ -26,7 +27,8 @@ export default {
     projects,
     tables,
     profile,
-    logging
+    logging,
+    servers
   },
   actions: {
     async axios ({ dispatch }, { method = 'post', url, data = {} }) {
