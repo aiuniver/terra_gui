@@ -59,7 +59,7 @@ const router = new Router({
       name: 'Cascades',
       meta: { 
         title: 'Каскады', //process.env.NODE_ENV === 'development' ? 'Каскады' : null,
-        access: false,
+        access: true,
         text: `Для перехода на страницу каскадов необходимо загрузить датасет.`, 
       },
       component: () => import('@/views/Cascades'),
