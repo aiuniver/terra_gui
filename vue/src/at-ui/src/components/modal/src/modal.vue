@@ -100,12 +100,15 @@
       showConfirmButton: {
         type: Boolean,
         default: true
+      },
+      showCancelButton: {
+        type: Boolean,
+        default: true
       }
     },
     data () {
       return {
         wrapShow: false,
-        showCancelButton: true,
         action: '',
         visible: this.value,
         inputValue: null,
