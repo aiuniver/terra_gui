@@ -10,11 +10,7 @@
     <div class="t-modal-datasets">
       <template v-for="(block, idx) in inputBlocks">
         <t-field :label="block.name" :key="idx">
-          <t-auto-complete-new
-            :list="filters"
-            v-model="selected[block.id]"
-            placeholder="Выберите датасет"
-          />
+          <t-auto-complete-new :list="filters" placeholder="Выберите датасет" @change="change(block.id, $event)" />
           <!-- <t-select-new small :list="datasets" v-model="selected[block.id]" placeholder="Выберите датасет" @change="change"/> -->
         </t-field>
       </template>
@@ -61,6 +57,14 @@ export default {
     },
   },
   methods: {
+    change(id, { value }) {
+      const dataset = this.datasets.find(i => i.alias === value);
+      if (dataset) {
+        const { alias, group } = dataset;
+        this.selected[id] = { alias, group };
+        this.selected = { ...this.selected };
+      }
+    },
     async confirm() {
       if (!this.isReady) return this.$store.dispatch('messages/setMessage', { error: 'Выберите датасеты' });
       this.$store.dispatch('settings/setOverlay', true);
