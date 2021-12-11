@@ -505,8 +505,6 @@ class YoloTerraModel(BaseTerraModel):
                                                    target1,
                                                    target2,
                                                    **yolo_parameters)
-                    # print(f'Batch {val_steps}; giou_loss, conf_loss, prob_loss, total_loss',
-                    #       results[0].numpy(), results[1].numpy(), results[2].numpy(), results[3].numpy())
                     giou_val += results[0].numpy()
                     conf_val += results[1].numpy()
                     prob_val += results[2].numpy()
