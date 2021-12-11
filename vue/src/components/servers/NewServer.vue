@@ -27,12 +27,12 @@
 			:loading="loading">Добавить</t-button>
     </form>
 
-    <div class="new-server__error">
+    <!-- <div class="new-server__error">
       <p class="new-server__error--header">Ошибка добавления сервера демо-панели</p>
       <p class="new-server__error--info">
         Неверно указан IP адрес. Отредактируйте поле и снова нажмите кнопку Добавить
       </p>
-    </div>
+    </div> -->
   </div>
 </template>
 
