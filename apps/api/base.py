@@ -20,10 +20,9 @@ class BaseAPIView(APIView):
         return agent_exchange
 
     def dispatch(self, request, *args, **kwargs):
-        catcher.request = request
         response = super().dispatch(request, *args, **kwargs)
         warnings = response.data.get("warning", [])
-        for log in catcher.collect(request):
+        for log in catcher.record:
             if log.levelno != logging.WARNING:
                 continue
             title = None
@@ -38,6 +37,7 @@ class BaseAPIView(APIView):
                         level=LevelnameChoice.WARNING, title=title, message=message
                     ).dict()
                 )
+        catcher.clear()
         response.data["warning"] = warnings
         return response
 
