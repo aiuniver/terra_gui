@@ -22,7 +22,9 @@
                     :inline="false"
                     @change="parse"
                   />
-                  <t-button @click="$emit('downloadSettings', parameters)" :key="'key' + i" :disabled="overlayStatus">Загрузить</t-button>
+                  <t-button @click="$emit('downloadSettings', parameters)" :key="'key' + i" :disabled="overlayStatus">
+                    Загрузить
+                  </t-button>
                 </template>
               </div>
             </at-collapse-item>
@@ -35,28 +37,24 @@
               <div class="t-input__label">
                 https://srv1.demo.neural-university.ru/{{ userData.login }}/{{ projectData.name_alias }}/{{ deploy }}
               </div>
-              <input
-                v-model="deploy"
-                class="t-input__input"
-                type="text"
-                id="deploy[deploy]"
-                name="deploy[deploy]"
-              />
+              <input v-model="deploy" class="t-input__input" type="text" id="deploy[deploy]" name="deploy[deploy]" />
             </div>
+            <Autocomplete2 :list="list" :name="'deploy[server]'" label="Сервер" @focus="focus" @change="selected" />
+
             <Checkbox
               :label="'Перезаписать с таким же названием папки'"
               :type="'checkbox'"
-              parse="deploy[overwrite]"
-              name="deploy[overwrite]"
+              parse="replace"
+              name="replace"
               class="pd__top"
-              @change="this.replace = $event.target.value.value"
+              @change="onChange"
             />
             <Checkbox
               :label="'Использовать пароль для просмотра страницы'"
-              parse="deploy[use_password]"
-              name="deploy[use_password]"
+              parse="replace"
+              name="use_sec"
               :type="'checkbox'"
-              @change="this.use_sec = $event.target.value.value"
+              @change="onChange"
             />
             <div class="password" v-if="use_sec">
               <div class="t-input">
@@ -83,7 +81,9 @@
                 <p>Пароль должен содержать не менее 6 символов</p>
               </div>
             </div>
-            <t-button :disabled="send_disabled" @click="sendDeployData" v-if="!paramsDownloaded.isSendParamsDeploy">Загрузить</t-button>
+            <t-button :disabled="send_disabled" @click="sendDeployData" v-if="!paramsDownloaded.isSendParamsDeploy">
+              Загрузить
+            </t-button>
             <div class="req-ans" v-if="paramsDownloaded.isSendParamsDeploy">
               <div class="answer__success">Загрузка завершена!</div>
               <div class="answer__label">Ссылка на сформированную загрузку</div>
@@ -104,51 +104,55 @@
 
 <script>
 import Checkbox from '@/components/forms/Checkbox';
+import Autocomplete2 from '@/components/forms/Autocomplete2';
 import ModuleList from './ModuleList';
-import {DEPLOY_ICONS_PASSWORD, DEPLOY_COLLAPS} from '@/components/deploy/config/const-params'
+import { DEPLOY_ICONS_PASSWORD, DEPLOY_COLLAPS } from '@/components/deploy/config/const-params';
 
 export default {
   name: 'Settings',
   components: {
     Checkbox,
     ModuleList,
+    Autocomplete2,
   },
-  props:{
+  props: {
     params: {
       type: [Object, Array],
-      default: () => ({})
+      default: () => ({}),
     },
     moduleList: {
       type: Object,
-      default: () => ({})
+      default: () => ({}),
     },
     projectData: {
       type: [Array, Object],
-      default: () => []
+      default: () => [],
     },
     userData: {
       type: [Object, Array],
-      default: () => {}
+      default: () => {},
     },
-    paramsDownloaded:{
+    paramsDownloaded: {
       type: Object,
-      default: () => ({})
+      default: () => ({}),
     },
-    overlayStatus:{
+    overlayStatus: {
       type: Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
   data: () => ({
     updateKey: 0,
     collapse: DEPLOY_COLLAPS,
     deploy: '',
+    server: '',
     replace: false,
     use_sec: false,
     sec: '',
     sec_accept: '',
     passwordShow: false,
     parameters: {},
+    list: [],
   }),
   computed: {
     checkCorrect() {
@@ -167,6 +171,9 @@ export default {
     parse({ value, name }) {
       this.parameters[name] = value;
       this.parameters = { ...this.parameters };
+    },
+    onChange({ name, value }) {
+      this[name] = value;
     },
     copy(text) {
       var textArea = document.createElement('textarea');
@@ -188,18 +195,27 @@ export default {
 
       document.body.removeChild(textArea);
     },
+    async focus() {
+      const res = await this.$store.dispatch('servers/ready');
+      if (res.data) this.list = res?.data || [];
+      console.log(res);
+    },
+    selected({ value }) {
+      this.server = value;
+    },
     async sendDeployData() {
       const data = {
         deploy: this.deploy,
+        server: this.server,
         replace: this.replace,
         use_sec: this.use_sec,
       };
       if (this.use_sec) data['sec'] = this.sec;
-      this.$emit('sendParamsDeploy', data)
+      this.$emit('sendParamsDeploy', data);
     },
   },
   beforeDestroy() {
-    this.$emit('clear')
+    this.$emit('clear');
   },
   watch: {
     params() {
