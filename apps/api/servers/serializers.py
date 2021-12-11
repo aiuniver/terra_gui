@@ -45,6 +45,7 @@ class ServerData(BaseModel):
 class ServerFullData(ServerData):
     private_ssh_key: str
     public_ssh_key: str
+    instruction: str
 
 
 class CreateSerializer(serializers.Serializer):
