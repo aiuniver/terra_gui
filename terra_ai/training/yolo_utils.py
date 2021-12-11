@@ -815,7 +815,8 @@ def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25
                     try:
                         json_pred[gt_classes.index(class_name)].append(
                             {"confidence": str(score), "file_id": str(i_image), "bbox": str(bbox)})
-                    except Exception:
+                    except Exception as e:
+                        print(f'module yolo_utils, {method_name}, json_pred[gt_classes.index(class_name)].append, {e}')
                         continue
             for class_name in gt_classes:
                 json_pred[gt_classes.index(class_name)].sort(key=lambda x: float(x['confidence']), reverse=True)
