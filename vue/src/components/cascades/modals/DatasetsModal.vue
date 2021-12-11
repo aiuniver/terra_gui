@@ -1,32 +1,40 @@
 <template>
-	<at-modal v-model="dialog" width="400" okText="Выбрать" @on-confirm="confirm" title="Запуск" :showConfirmButton="isReady" >
-		<div class="t-modal-datasets">
-			<template v-for="(block, idx) in inputBlocks">
-				<t-field :label="block.name" :key="idx">
-					<t-select-new small :list="datasets" v-model="selected[block.id]" placeholder="Выберите датасет"/>
-				</t-field>
-			</template>
-		</div>	
-	</at-modal>
+  <at-modal
+    v-model="dialog"
+    width="400"
+    okText="Выбрать"
+    @on-confirm="confirm"
+    title="Запуск"
+    :showConfirmButton="isReady"
+  >
+    <div class="t-modal-datasets">
+      <template v-for="(block, idx) in inputBlocks">
+        <t-field :label="block.name" :key="idx">
+          <t-auto-complete-new :list="datasets" v-model="selected[block.id]" placeholder="Выберите датасет" />
+          <!-- <t-select-new small :list="datasets" v-model="selected[block.id]" placeholder="Выберите датасет" /> -->
+        </t-field>
+      </template>
+    </div>
+  </at-modal>
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
-import TSelectNew from '../comp/TSelect.vue'
+import { mapGetters } from 'vuex';
+// import TSelectNew from '../comp/TSelect.vue';
 
 export default {
-	name: 'ModalDatasets',
-	components: {
-		TSelectNew
-	},
-	props: {
-		value: Boolean
-	},
-	data: () => ({
-		selected: {}
-	}),
-	computed: {
-		dialog: {
+  name: 'ModalDatasets',
+  components: {
+    // TSelectNew,
+  },
+  props: {
+    value: Boolean,
+  },
+  data: () => ({
+    selected: {},
+  }),
+  computed: {
+    dialog: {
       set(value) {
         this.$emit('input', value);
       },
@@ -34,25 +42,25 @@ export default {
         return this.value;
       },
     },
-		...mapGetters({
-			getBlocks: 'cascades/getBlocks',
-			datasets: 'cascades/getDatasets'
-		}),
-		inputBlocks() {
-			return this.getBlocks.filter(item => item.group === 'InputData');
-		},
-		isReady() {
-			return Object.keys(this.selected).length === this.inputBlocks.length;
-		}
-	},
-	methods: {
-		async confirm() {
-			if (!this.isReady) return this.$store.dispatch('messages/setMessage', { error: 'Выберите датасеты' });
-			this.$store.dispatch('settings/setOverlay', true);
-			await this.$store.dispatch('cascades/start', this.selected);
-			this.createInterval();
-		},
-		createInterval() {
+    ...mapGetters({
+      getBlocks: 'cascades/getBlocks',
+      datasets: 'cascades/getDatasets',
+    }),
+    inputBlocks() {
+      return this.getBlocks.filter(item => item.group === 'InputData');
+    },
+    isReady() {
+      return Object.keys(this.selected).length === this.inputBlocks.length;
+    },
+  },
+  methods: {
+    async confirm() {
+      if (!this.isReady) return this.$store.dispatch('messages/setMessage', { error: 'Выберите датасеты' });
+      this.$store.dispatch('settings/setOverlay', true);
+      await this.$store.dispatch('cascades/start', this.selected);
+      this.createInterval();
+    },
+    createInterval() {
       this.interval = setTimeout(async () => {
         const res = await this.$store.dispatch('cascades/startProgress');
         if (res) {
@@ -84,14 +92,14 @@ export default {
         }
       }, 1000);
     },
-	}
-}
+  },
+};
 </script>
 
 <style lang="scss" scoped>
 .t-modal-datasets {
-	display: flex;
-	flex-direction: column;
-	gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 </style>
