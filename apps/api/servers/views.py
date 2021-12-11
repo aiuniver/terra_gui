@@ -102,4 +102,15 @@ class SetupAPIView(ServersListMixinAPIView):
 
 class ReadyAPIView(ServersListMixinAPIView):
     def post(self, request, **kwargs):
-        return BaseResponseSuccess(self.get_servers_ready())
+        return BaseResponseSuccess(
+            [{"label": "Демо-панель TerraAI", "value": 0}]
+            + list(
+                map(
+                    lambda server: {
+                        "label": f'{server.get("domain_name")} [{server.get("ip_address")}]',
+                        "value": server.get("id"),
+                    },
+                    self.get_servers_ready(),
+                )
+            )
+        )

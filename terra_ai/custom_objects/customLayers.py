@@ -1663,9 +1663,10 @@ class PretrainedYOLO(Layer):
         self.num_classes = num_classes
         self.version = version
         self.use_weights = use_weights
-
-        self.save_weights = "D:/AI/terra_gui/terra_ai/assets/cascades/yolov4.weights" \
-            if self.version == YOLOModeChoice.YOLOv4 else "D:/AI/terra_gui/terra_ai/assets/cascades/yolov3.weights"
+        self.save_weights = "C:/PycharmProjects/terra_gui/terra_ai/assets/cascades/yolov4.weights" \
+            if self.version == YOLOModeChoice.YOLOv4 else "C:/PycharmProjects/terra_gui/terra_ai/assets/cascades/yolov3.weights"
+        # self.save_weights = "D:/AI/terra_gui/terra_ai/assets/cascades/yolov4.weights" \
+        #     if self.version == YOLOModeChoice.YOLOv4 else "D:/AI/terra_gui/terra_ai/assets/cascades/yolov3.weights"
         self.yolo = self.create_yolo(classes=self.num_classes)
         if use_weights:
             self.base_yolo = self.create_yolo()

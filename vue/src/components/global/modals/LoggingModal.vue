@@ -31,7 +31,7 @@
               </div>
             </div>
           </template>
-          <p v-if="!filter.length" class="t-logging__empty" >Ничего не выбрано</p>
+          <p v-if="!filter.length" class="t-logging__empty">Ничего не выбрано</p>
         </div>
       </scrollbar>
     </div>
@@ -78,7 +78,7 @@ export default {
   },
   computed: {
     tags() {
-      return this.errors.map(i => i.level);
+      return [...new Set(this.errors.map(i => i.level))];
     },
     filter() {
       return this.errors.filter(item => !this.selected.includes(item.level));

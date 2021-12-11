@@ -189,11 +189,12 @@ export default {
     width: 100%;
     border: 1px solid #6c7883;
     box-shadow: 0px -8px 34px 0px rgba(0, 0, 0, 0.05);
-    overflow: hidden;
+    overflow: auto;
     border-radius: 0 0 4px 4px;
     z-index: 3;
     color: #a7bed3;
     background-color: #242f3d;
+    max-height: 300px;
     &--item {
       color: inherit;
       font-size: 14px;

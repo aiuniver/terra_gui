@@ -103,6 +103,7 @@ class InteractiveCallback:
                      on_epoch_end_flag=False, train_idx: list = None) -> dict:
         if self.log_history:
             if arrays:
+                print('\n InteractiveCallback update_state\n', fit_logs)
                 data_type = self.training_details.interactive.intermediate_result.data_type.name
                 if self.options.data.architecture in BASIC_ARCHITECTURE:
                     self.y_true = reformat_fit_array(
@@ -173,7 +174,7 @@ class InteractiveCallback:
                         sensitivity=self.training_details.interactive.intermediate_result.sensitivity,
                     )
                 if on_epoch_end_flag:
-                    # print('\n fit_logs', fit_logs)
+                    print('\n self._get_loss_graph_data_request()', self._get_loss_graph_data_request())
                     self.current_epoch = fit_logs.get('epochs')[-1]
                     self.log_history = fit_logs
                     self._update_progress_table(current_epoch_time)
@@ -251,21 +252,21 @@ class InteractiveCallback:
                         )
                 self.urgent_predict = False
                 self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
-            return {
-                'update': self.random_key,
-                "class_graphics": self.class_graphics,
-                'loss_graphs': self._get_loss_graph_data_request(),
-                'metric_graphs': self._get_metric_graph_data_request(),
-                'intermediate_result': self.intermediate_result,
-                'progress_table': self.progress_table,
-                'statistic_data': self.statistic_result,
-                'data_balance': self.callback.balance_data_request(
-                    options=self.options,
-                    dataset_balance=self.dataset_balance,
-                    interactive_config=self.training_details.interactive
-                ),
-                'addtrain_epochs': self.addtrain_epochs,
-            }
+                return {
+                    'update': self.random_key,
+                    "class_graphics": self.class_graphics,
+                    'loss_graphs': self._get_loss_graph_data_request(),
+                    'metric_graphs': self._get_metric_graph_data_request(),
+                    'intermediate_result': self.intermediate_result,
+                    'progress_table': self.progress_table,
+                    'statistic_data': self.statistic_result,
+                    'data_balance': self.callback.balance_data_request(
+                        options=self.options,
+                        dataset_balance=self.dataset_balance,
+                        interactive_config=self.training_details.interactive
+                    ),
+                    'addtrain_epochs': self.addtrain_epochs,
+                }
         else:
             self.get_balance = True
             return {}
@@ -649,9 +650,11 @@ class InteractiveCallback:
                     return data_return
                 model_loss = 0
                 for loss_graph_config in self.training_details.interactive.loss_graphs:
+                    print(1, loss_graph_config.id)
                     if loss_graph_config.show == LossGraphShowChoice.model:
                         idx = model_loss if model_loss <= 3 else model_loss % 4
                         loss = list(self.log_history.get('output').get('loss').keys())[idx]
+                        print(2)
                         if sum(self.log_history.get("output").get("progress_state").get("loss").get(loss).get(
                                 'overfitting')[-self.log_gap:]) >= self.progress_threashold:
                             progress_state = "overfitting"
@@ -660,12 +663,17 @@ class InteractiveCallback:
                             progress_state = "underfitting"
                         else:
                             progress_state = "normal"
+                        print(3)
                         train_list = self.log_history.get("output").get('loss').get(loss).get('train')
                         no_none_train = []
                         for x in train_list:
                             if x is not None:
                                 no_none_train.append(x)
                         best_train_value = min(no_none_train) if no_none_train else None
+                        print(4, self.log_history.get("epochs"),
+                              '\n best_train_value', best_train_value,
+                              '\n train_list', train_list,
+                              '\n no_none_train', no_none_train)
                         best_train = fill_graph_plot_data(
                             x=[self.log_history.get("epochs")[train_list.index(best_train_value)]
                                if best_train_value is not None else None],
@@ -677,6 +685,7 @@ class InteractiveCallback:
                             y=train_list,
                             label="Тренировочная выборка"
                         )
+                        print(5)
                         val_list = self.log_history.get("output").get('loss').get(loss).get("val")
                         no_none_val = []
                         for x in val_list:
@@ -694,6 +703,7 @@ class InteractiveCallback:
                             y=self.log_history.get("output").get('loss').get(loss).get("val"),
                             label="Проверочная выборка"
                         )
+                        print(6)
                         data_return.append(
                             fill_graph_front_structure(
                                 _id=loss_graph_config.id,
@@ -708,7 +718,9 @@ class InteractiveCallback:
                             )
                         )
                         model_loss += 1
+                        print(7)
                     if loss_graph_config.show == LossGraphShowChoice.classes:
+                        print(1, loss_graph_config.id)
                         loss_data_type = loss_graph_config.data_type.name
                         data_type_name = "Тренировочная" if loss_data_type == "train" else "Проверочная"
                         output_idx = list(self.options.data.outputs.keys())[0]
@@ -730,6 +742,7 @@ class InteractiveCallback:
                                 ],
                             )
                         )
+                        print(8)
             return data_return
         except Exception as e:
             if self.first_error:

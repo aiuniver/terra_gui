@@ -448,7 +448,8 @@ export default {
           x += this.optionsForChild.width / 2;
           // console.log()
           // y += this.$refs?.['block_' + block.id]?.[0]?.getHeight();
-          y += 55;
+          y += this.$refs?.['block_' + block.id]?.[0]?.getHeight() || 55;
+          // y += 55;
         }
         if (slotNumber === 1) {
           x += this.optionsForChild.width;

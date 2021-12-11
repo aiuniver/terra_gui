@@ -381,6 +381,8 @@ class ImageClassificationCallback(BaseClassificationCallback):
                     Image.ANTIALIAS
                 )
             else:
+                if x_array is None:
+                    x_array = options.X.get(data_type).get(f"{list(options.data.inputs.keys())[0]}")
                 img = image.array_to_img(x_array[example_id])
             img = img.convert('RGB')
 

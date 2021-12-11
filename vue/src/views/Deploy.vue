@@ -115,15 +115,16 @@ export default {
       this.overlay = value;
     },
     async checkProgressSendDeploy() {
-      let answer = await this.$store.dispatch('deploy/checkProgress');
+      const answer = await this.$store.dispatch('deploy/checkProgress');
+      console.log(answer)
       if (answer) {
         this.overlay = true
         this.paramsSettings.isSendParamsDeploy = true
         clearTimeout(this.idCheckProgressSendDeploy)
       }
     },
-    async sendParamsDeploy(){
-      const res = await this.$store.dispatch('deploy/sendDeploy');
+    async sendParamsDeploy(data){
+      const res = await this.$store.dispatch('deploy/sendDeploy', data);
       if (res) {
         const { error, success } = res;
         if (!error && success) {
