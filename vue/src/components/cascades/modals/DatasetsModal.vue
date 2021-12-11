@@ -10,8 +10,12 @@
     <div class="t-modal-datasets">
       <template v-for="(block, idx) in inputBlocks">
         <t-field :label="block.name" :key="idx">
-          <t-auto-complete-new :list="datasets" v-model="selected[block.id]" placeholder="Выберите датасет" />
-          <!-- <t-select-new small :list="datasets" v-model="selected[block.id]" placeholder="Выберите датасет" /> -->
+          <t-auto-complete-new
+            :list="filters"
+            v-model="selected[block.id]"
+            placeholder="Выберите датасет"
+          />
+          <!-- <t-select-new small :list="datasets" v-model="selected[block.id]" placeholder="Выберите датасет" @change="change"/> -->
         </t-field>
       </template>
     </div>
@@ -46,6 +50,9 @@ export default {
       getBlocks: 'cascades/getBlocks',
       datasets: 'cascades/getDatasets',
     }),
+    filters() {
+      return this.datasets.map(i => ({ label: i.label, value: i.alias }));
+    },
     inputBlocks() {
       return this.getBlocks.filter(item => item.group === 'InputData');
     },
