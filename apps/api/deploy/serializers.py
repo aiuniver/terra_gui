@@ -20,6 +20,7 @@ class UploadSerializer(serializers.Serializer):
     replace = serializers.BooleanField(default=False)
     use_sec = serializers.BooleanField(default=False)
     sec = serializers.CharField(required=False)
+    server = serializers.IntegerField(min_value=0)
 
     def validate(self, attrs):
         if attrs.get("use_sec"):
