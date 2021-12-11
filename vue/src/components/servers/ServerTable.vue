@@ -14,60 +14,22 @@
       </tr>
     </thead>
     <tbody>
-      <tr>
-        <td>bl613490u.xyz</td>
-        <td>255.255.255.255</td>
-        <td>root</td>
-        <td>22</td>
-        <td>80</td>
-        <td>422</td>
-        <td class="clickable"><span>Открыть</span></td>
-        <td>Не готов к работе</td>
-        <td class="clickable">
-          <i class="ci-icon ci-play_arrow"></i>
-          <span>Запустить</span>
-        </td>
-      </tr>
-      <tr>
-        <td>bl613490u.xyz</td>
-        <td>255.255.255.255</td>
-        <td>root</td>
-        <td>22</td>
-        <td>80</td>
-        <td>422</td>
-        <td class="clickable"><span>Открыть</span></td>
-        <td>Ожидание готовности</td>
-        <td class="clickable"></td>
-      </tr>
-      <tr>
-        <td>bl613490u.xyz</td>
-        <td>255.255.255.255</td>
-        <td>root</td>
-        <td>22</td>
-        <td>80</td>
-        <td>422</td>
-        <td class="clickable"><span>Открыть</span></td>
-        <td>Готов к работе</td>
-        <td class="clickable">
-          <i class="ci-icon ci-redo"></i>
-          <span>Обновить запуск</span>
-        </td>
-      </tr>
-      <tr>
-        <td>bl613490u.xyz</td>
-        <td>255.255.255.255</td>
-        <td>root</td>
-        <td>22</td>
-        <td>80</td>
-        <td>422</td>
-        <td class="clickable"><span>Открыть</span></td>
-        <td class="error">
-          Ошибка настройки
+      <tr v-for="server in servers" :key="server.id">
+        <td>{{ server.domain_name }}</td>
+        <td>{{ server.ip_address }}</td>
+        <td>{{ server.user }}</td>
+        <td>{{ server.port_ssh }}</td>
+        <td>{{ server.port_http }}</td>
+        <td>{{ server.port_https }}</td>
+        <td class="clickable"><span @click="instruction(server.id)">Открыть</span></td>
+        <td v-if="server.state.error">
+          <span>{{ server.state.error }}</span>
           <i class="ci-icon ci-info_circle_outline"></i>
         </td>
-        <td class="clickable">
-          <i class="ci-icon ci-play_arrow"></i>
-          <span>Запустить</span>
+        <td v-else>{{ server.state.value }}</td>
+        <td class="clickable" @click="setup(server.id)">
+          <i :class="['ci-icon', getIcon(server.state.name)]"></i>
+          <span>{{ getAction(server.state.name) }}</span>
         </td>
       </tr>
     </tbody>
@@ -77,6 +39,27 @@
 <script>
 export default {
   name: 'ServerTable',
+  props: {
+    servers: Array
+  },
+  methods: {
+    instruction(id) {
+      this.$emit('instruction', id)
+    },
+    setup(id) {
+      this.$store.dispatch('servers/setup', { id })
+    },
+    getIcon(state) {
+      if (state === 'ready') return 'ci-redo'
+      if (state === 'idle') return ''
+      return 'ci-play_arrow'
+    },
+    getAction(state) {
+      if (state === 'ready') return 'Обновить запуск'
+      if (state === 'idle') return ''
+      return 'Запустить'
+    }
+  }
 };
 </script>
 
@@ -102,11 +85,14 @@ export default {
   }
   td,
   th {
-    padding-left: 10px;
+    padding-right: 10px;
+    &:first-child {
+      padding-left: 10px;
+    }
   }
   .clickable {
     color: #65b9f4;
-    cursor: pointer;
+    > * {cursor: pointer;}
     i {
       font-size: 16px;
       margin-right: 5px;

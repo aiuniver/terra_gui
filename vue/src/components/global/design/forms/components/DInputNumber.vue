@@ -23,8 +23,8 @@
         <i class="ci-icon ci-close_big" @click="clear" />
       </div>
       <div v-if="type === 'number'" :class="['d-input__btn--number', { 'd-input__btn--disabled': isDisabled }]">
-        <i class="ci-icon ci-caret_up" @click="+input++" />
-        <i class="ci-icon ci-caret_down" @click="+input--" />
+        <i class="ci-icon ci-caret_up" @click="send(input+1)" />
+        <i class="ci-icon ci-caret_down" @click="send(input-1)" />
       </div>
     </div>
   </div>
@@ -62,8 +62,9 @@ export default {
       this.send(target.value);
     },
     send(value) {
+      if (value < 0) return this.input = 0
       this.$emit('change', { name: this.name, value });
-      this.$emit('input', value);
+      this.$emit('input', +value);
     },
   },
   created() {
