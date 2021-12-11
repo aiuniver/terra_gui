@@ -14,23 +14,28 @@
 		<div class="page-servers__new">
 			<NewServer v-show="addNew" @addServer="newServer" />
 		</div>
-		<at-modal v-model="serverModal" class="modal" okText="Читать инструкцию" @on-confirm="openInstruction(serverID)">
+		<at-modal v-model="serverModal"
+		class="modal" 
+		okText="Читать инструкцию" 
+		@on-confirm="openInstruction(serverID)">
 			<template v-slot:header><span class="modal-title">Сервер демо-панели добавлен</span></template>
 			<p>Ознакомьтесь с дальнейшими действиями в <span class="clickable" @click="openInstruction(serverID)">Инструкции</span></p>
 			<p>Вы также сможете найти ее в таблице серверов на владке Серверы демо-панелей в вашем Профиле</p>
 		</at-modal>
-		<at-modal v-model="InstructionModal" class="modal">
+		<at-modal v-model="InstructionModal"
+		class="modal"
+		:showConfirmButton="false"
+		:showCancelButton="false"
+		>
 			<template v-slot:header><span class="modal-title">Инструкция по настройке сервера демо-панели</span></template>
-			<t-field label="Приватный SSH-ключ">
-				<div class="ssh-wrapper">
-					<span class="ssh" ref="private">{{ private_key }}</span> <i title="Скопировать" @click="copy($refs.private)" class="btn-copy"></i> <span class="clickable">Скачать</span>
-				</div>
-			</t-field>
-			<t-field label="Публичный  SSH-ключ">
-				<div class="ssh-wrapper">
-					<span class="ssh" ref="public">{{ public_key }}</span> <i title="Скопировать" @click="copy($refs.public)" class="btn-copy"></i> <span class="clickable">Скачать</span>
-				</div>
-			</t-field>
+			<div class="ssh-wrapper">
+				<span class="ssh">Приватный SSH-ключ</span> <i title="Скопировать" @click="copy(private_key)" class="btn-copy"></i> <span class="clickable">Скачать</span>
+			</div>
+			<div class="ssh-wrapper">
+				<span class="ssh">Публичный  SSH-ключ</span> <i title="Скопировать" @click="copy(public_key)" class="btn-copy"></i> <span class="clickable">Скачать</span>
+			</div>
+			<hr>
+			<div class="instruction" v-html="instruction"></div>
 		</at-modal>
 	</main>
 </template>
@@ -52,7 +57,8 @@ export default {
 		InstructionModal: false,
 		serverID: null,
 		private_key: null,
-		public_key: null
+		public_key: null,
+		instruction: null
 	}),
 	computed: {
 		...mapGetters({
@@ -70,15 +76,13 @@ export default {
 			this.selectedServer = server
 			this.manualModal = true
 		},
-		copy(ref) {
-			let selection = window.getSelection()
-      let range = document.createRange()
-
-      range.selectNodeContents(ref)
-      selection.removeAllRanges()
-      selection.addRange(range)
+		copy(text) {
+			const $el = document.createElement('input')
+			document.body.appendChild($el)
+			$el.value = text
+			$el.select()
       document.execCommand('copy')
-      selection.removeAllRanges()
+			$el.remove()
 		},
 		newServer(id) {
 			this.serverID = id
@@ -91,6 +95,7 @@ export default {
 			const { data } = await this.$store.dispatch('servers/getInstruction', { id })
 			this.private_key = data.private_ssh_key
 			this.public_key = data.public_ssh_key
+			this.instruction = data.instruction
 		}
 	},
 	created() {
@@ -136,13 +141,16 @@ export default {
 }
 
 .modal {
+	hr {
+		border: none;
+		border-top: 1px solid #0e1621;
+		margin: 15px 0;
+	}
 	&-title {
 		font-size: 16px;
 	}
-	p {
-		color: #A7BED3;
-		font-size: 14px;
-		margin-bottom: 20px;
+	.instruction {
+		margin-bottom: -20px;
 	}
 	.clickable {
 		color: #65B9F4;
@@ -170,14 +178,12 @@ export default {
 }
 
 .ssh {
-	text-overflow: ellipsis;
-	overflow: hidden;
-	max-width: 300px;
-	white-space: nowrap;
+	color: #A7BED3;
 	&-wrapper {
 		display: flex;
 		align-items: center;
 		gap: 20px;
+		margin-bottom: 10px;
 	}
 }
 </style>
