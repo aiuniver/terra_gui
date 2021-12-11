@@ -1,3 +1,4 @@
+import librosa
 from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
 import torch
 from ..utils import stt_pb2
@@ -17,7 +18,9 @@ def Wav2Vec(**nothing):
     processor = Wav2Vec2Processor.from_pretrained("jonatasgrosman/wav2vec2-large-xlsr-53-russian")
     model = Wav2Vec2ForCTC.from_pretrained("jonatasgrosman/wav2vec2-large-xlsr-53-russian")
 
-    def fun(speech_array):
+    def fun(input_path):
+        speech_array = librosa.load(input_path, sr=16000)[0]
+
         inputs = processor(speech_array, sampling_rate=16_000, return_tensors="pt", padding=True)
 
         with torch.no_grad():
