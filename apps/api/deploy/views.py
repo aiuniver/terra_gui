@@ -91,6 +91,7 @@ class UploadAPIView(BaseAPIView):
                 },
                 "task": request.project.deploy.type.demo,
                 "replace": serializer.validated_data.get("replace"),
+                "server": serializer.validated_data.get("server"),
             }
         )
         return BaseResponseSuccess()
