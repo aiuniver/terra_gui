@@ -225,27 +225,6 @@ class BaseTerraModel:
 
                 self.save_weights()
                 if self.callback.stop_training:
-                    # val_steps = 0
-                    # current_val_idx = 0
-                    # for x_batch_val, y_batch_val in dataset.dataset.get('val').batch(params.base.batch):
-                    #     val_pred_array, val_true_array = self.__test_step(x_batch=x_batch_val, y_batch=y_batch_val)
-                    #     length = val_true_array[0].shape[0]
-                    #     for i, out in enumerate(output_list):
-                    #         val_pred[f"{out}"][current_val_idx: current_val_idx + length] = \
-                    #             val_pred_array[i].numpy()
-                    #         val_true[f"{out}"][current_val_idx: current_val_idx + length] = \
-                    #             val_true_array[i].numpy()
-                    #     current_val_idx += length
-                    #     val_steps += 1
-                    # self.callback.on_epoch_end(
-                    #     epoch=epoch + 1,
-                    #     arrays={
-                    #         "train_pred": train_pred, "val_pred": val_pred, "train_true": train_true,
-                    #         "val_true": val_true
-                    #     },
-                    #     train_data_idxs=train_data_idxs
-                    # )
-                    # self.callback.on_train_end()
                     break
 
                 val_steps = 0
@@ -503,7 +482,6 @@ class YoloTerraModel(BaseTerraModel):
 
                 self.save_weights()
                 if self.callback.stop_training:
-                    self.callback.on_train_end()
                     break
 
                 current_logs['loss']['giou_loss'] = {'train': giou_train / cur_step}

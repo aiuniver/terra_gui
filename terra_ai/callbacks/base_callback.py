@@ -1,7 +1,6 @@
 import psutil
 import time
 import pynvml as N
-import numpy as np
 
 from config import settings
 
@@ -11,9 +10,8 @@ from terra_ai.data.deploy.extra import DeployTypeChoice
 from terra_ai.data.training.extra import CheckpointTypeChoice, StateStatusChoice
 from terra_ai.data.training.train import TrainingDetailsData
 from terra_ai.datasets.preparing import PrepareDataset
-from terra_ai.exceptions.base import TerraBaseException
 from terra_ai.exceptions.training import NoCheckpointParameters, NoCheckpointMetric, NoImportantParameters, \
-    PredictImpossible, StartNumBatchesMissing, BatchResultMissing, HistoryUpdateMissing, EpochResultMissing, \
+    StartNumBatchesMissing, BatchResultMissing, HistoryUpdateMissing, EpochResultMissing, \
     TrainingLogsSavingMissing
 from terra_ai.training.training_history import History
 from terra_ai.callbacks import interactive
@@ -179,28 +177,6 @@ class FitCallback:
 
     def _get_train_status(self) -> str:
         return self.training_detail.state.status
-
-    def _get_predict(self, current_model=None):
-        method_name = '_get_predict'
-        try:
-            logger.debug(f"start method {method_name}")
-            # current_model = deploy_model if deploy_model else self.model
-            if self.is_yolo:
-                current_predict = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_val)]
-                current_target = [np.concatenate(elem, axis=0) for elem in zip(*self.samples_target_val)]
-            else:
-                # TODO: настроить вывод массивов их обучения, выводить словарь
-                #  {'train_true': train_true, 'train_pred': train_pred, 'val_true': val_true, 'val_pred': val_pred}
-                if self.dataset.data.use_generator:
-                    current_predict = current_model.predict(
-                        self.dataset.dataset.get('val').batch(1), batch_size=1)
-                else:
-                    current_predict = current_model.predict(self.dataset.X.get('val'), batch_size=self.batch_size)
-                # current_predict = None
-                current_target = None
-            return current_predict, current_target
-        except Exception as error:
-            self.__stop_by_error(PredictImpossible(error=error, __module=self.__class__.__name__, __method=method_name))
 
     @staticmethod
     def _estimate_step(current, start, now):

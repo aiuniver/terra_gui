@@ -14,7 +14,8 @@ from pydantic.color import Color
 
 from terra_ai.cascades.common import decamelize
 from terra_ai.cascades.create import json2cascade
-from terra_ai.data.cascades.blocks.extra import BlockFunctionGroupChoice, FunctionParamsChoice, ObjectDetectionFilterClassesList
+from terra_ai.data.cascades.blocks.extra import BlockFunctionGroupChoice, FunctionParamsChoice, \
+    ObjectDetectionFilterClassesList, BlockServiceTypeChoice
 from terra_ai.data.cascades.cascade import CascadeDetailsData
 from terra_ai.data.cascades.extra import BlockGroupChoice
 from terra_ai.data.datasets.extra import LayerInputTypeChoice
@@ -28,6 +29,8 @@ class CascadeRunner:
     def start_cascade(self, cascade_data: CascadeDetailsData, training_path: Path,
                       sources: Dict[int, List[str]]):
 
+        config = CascadeCreator()
+
         presets_path = os.path.join(DEPLOY_PATH, "deploy_presets")
         if os.path.exists(DEPLOY_PATH):
             shutil.rmtree(DEPLOY_PATH, ignore_errors=True)
@@ -37,28 +40,31 @@ class CascadeRunner:
 
         type_, model, inputs_ids = self._get_task_type(cascade_data=cascade_data, training_path=training_path)
         # print('type_', type_)
-        dataset_path = os.path.join(training_path, model, "model", "dataset.json")
-        if not os.path.exists(dataset_path):
-            dataset_path = os.path.join(training_path, model, "model", "dataset", "config.json")
-        with open(dataset_path, "r", encoding="utf-8") as dataset_config:
-            dataset_config_data = json.load(dataset_config)
+        if model:
+            dataset_path = os.path.join(training_path, model, "model", "dataset.json")
+            if not os.path.exists(dataset_path):
+                dataset_path = os.path.join(training_path, model, "model", "dataset", "config.json")
+            with open(dataset_path, "r", encoding="utf-8") as dataset_config:
+                dataset_config_data = json.load(dataset_config)
+            model_path = Path(os.path.join(training_path, model, "model"))
+            cascade_path = os.path.join(training_path, model)
+            config.copy_model(deploy_path=DEPLOY_PATH, model_path=model_path)
+            model_task = list(set([val.get("task") for key, val in dataset_config_data.get("outputs").items()]))[0]
+        else:
+            dataset_config_data = None
+            cascade_path = None
+            model_task = "ObjectDetection"
 
-        model_path = Path(os.path.join(training_path, model, "model"))
-        config = CascadeCreator()
-        # print('config', config)
-        config.copy_model(deploy_path=DEPLOY_PATH, model_path=model_path)
+        cascade_config, classes, classes_colors = self._create_config(cascade_data=cascade_data,
+                                                                      model_task=model_task,
+                                                                      dataset_data=dataset_config_data,
+                                                                      presets_path=presets_path)
 
-        model_task = list(set([val.get("task") for key, val in dataset_config_data.get("outputs").items()]))[0]
-        # print('model_task', model_task)
-        cascade_config, classes, classes_colors = self._create_config(cascade_data=cascade_data, model_task=model_task,
-                                             dataset_data=dataset_config_data, presets_path=presets_path)
-        # print('cascade_config', cascade_config)
-        main_block = json2cascade(path=os.path.join(training_path, model), cascade_config=cascade_config, mode="run")
+        main_block = json2cascade(path=cascade_path, cascade_config=cascade_config, mode="run")
 
         sources = sources.get(inputs_ids[0])
 
         presets_data = self._get_presets(sources=sources, type_=type_, cascade=main_block,
-                                         source_path=Path(dataset_path),
                                          predict_path=str(DEPLOY_PATH), classes=classes,
                                          classes_colors=classes_colors)
         out_data = dict([
@@ -76,28 +82,44 @@ class CascadeRunner:
     def _get_task_type(cascade_data: CascadeDetailsData, training_path: Path):
         model = "__current"
         _inputs = []
+        _input_type = "video"
+        deploy_type = DeployTypeChoice.VideoObjectDetection
         for block in cascade_data.blocks:
             if block.group == BlockGroupChoice.Model:
                 model = block.parameters.main.path
             if block.group == BlockGroupChoice.InputData:
                 _inputs.append(block.id)
-        with open(os.path.join(training_path, model, "config.json"),
-                  "r", encoding="utf-8") as training_config:
-            training_details = json.load(training_config)
-        deploy_type = DeployTypeChoice(training_details.get("base").get("architecture").get("type"))
-        if deploy_type in [DeployTypeChoice.YoloV3, DeployTypeChoice.YoloV4]:
-            deploy_type = DeployTypeChoice.VideoObjectDetection
+                if block.parameters.main.type == LayerInputTypeChoice.Image:
+                    _input_type = "image"
+            if block.parameters.main.type in [BlockServiceTypeChoice.YoloV5,
+                                              BlockServiceTypeChoice.GoogleTTS,
+                                              BlockServiceTypeChoice.TinkoffAPI,
+                                              BlockServiceTypeChoice.Wav2Vec]:
+                model = None
+                if block.parameters.main.type == BlockServiceTypeChoice.YoloV5 and _input_type == "image":
+                    deploy_type = DeployTypeChoice.YoloV3
+
+        if model:
+            with open(os.path.join(training_path, model, "config.json"),
+                      "r", encoding="utf-8") as training_config:
+                training_details = json.load(training_config)
+            if deploy_type not in [DeployTypeChoice.YoloV3, DeployTypeChoice.YoloV4]:
+                deploy_type = DeployTypeChoice(training_details.get("base").get("architecture").get("type"))
 
         return deploy_type, model, _inputs
 
     def _create_config(self, cascade_data: CascadeDetailsData, model_task: str,
                        dataset_data: dict, presets_path: str):
-        classes = list(dataset_data.get("outputs").values())[0].get("classes_names")
-        num_class = list(dataset_data.get("outputs").values())[0].get("num_classes")
-        classes_colors = []
-        if list(dataset_data.get("outputs").values())[0].get("classes_colors"):
-            classes_colors = [list(Color(color).as_rgb_tuple()) for color in
-                              list(dataset_data.get("outputs").values())[0].get("classes_colors")]
+        if dataset_data:
+            classes = list(dataset_data.get("outputs").values())[0].get("classes_names")
+            num_class = list(dataset_data.get("outputs").values())[0].get("num_classes")
+            classes_colors = []
+            if list(dataset_data.get("outputs").values())[0].get("classes_colors"):
+                classes_colors = [list(Color(color).as_rgb_tuple()) for color in
+                                  list(dataset_data.get("outputs").values())[0].get("classes_colors")]
+        else:
+            classes = ObjectDetectionFilterClassesList
+            classes_colors = None
 
         config = {"cascades": {}}
         adjacency_map = {}
@@ -167,7 +189,7 @@ class CascadeRunner:
                         parameters["classes_colors"] = classes_colors
                 elif block.group == BlockGroupChoice.Service:
                     _tag = block.group.value.lower()
-                    _task = decamelize(block.parameters.main.group.value) #.lower()
+                    _task = decamelize(block.parameters.main.group.value)  # .lower()
                     _name = block.parameters.main.type.value
                     block_parameters = FunctionParamsChoice.get_parameters(input_block=block.parameters.main.type)
                     parameters = {
@@ -217,12 +239,11 @@ class CascadeRunner:
         return mapping
 
     def _get_presets(self, sources: List[Any], type_: DeployTypeChoice, cascade: Any,
-                     source_path: Path, predict_path: str, classes: list, classes_colors: list):
+                     predict_path: str, classes: list, classes_colors: list):
 
         out_data = []
         iter_ = 0
         for source in sources[:3]:
-            input_path = os.path.join(source_path, source)
             if type_ in [DeployTypeChoice.YoloV3, DeployTypeChoice.YoloV4, DeployTypeChoice.VideoObjectDetection]:
                 if type_ == DeployTypeChoice.VideoObjectDetection:
                     data_type = "video"
@@ -234,10 +255,10 @@ class CascadeRunner:
                     source_file_name = f"deploy_presets/initial_{iter_}.webp"
 
                 output_path = os.path.join(predict_path, predict_file_name)
-                self._save_web_format(initial_path=input_path,
+                self._save_web_format(initial_path=source,
                                       deploy_path=os.path.join(predict_path, source_file_name),
                                       source_type=data_type)
-                cascade(input_path=input_path, output_path=output_path)
+                cascade(input_path=source, output_path=output_path)
                 out_data.append({
                     "source": source_file_name,
                     "predict": predict_file_name
@@ -272,10 +293,10 @@ class CascadeRunner:
                 source_file_name = f"deploy_presets/initial_{iter_}.webp"
                 output_path = os.path.join(predict_path, predict_file_name)
 
-                self._save_web_format(initial_path=input_path,
+                self._save_web_format(initial_path=source,
                                       deploy_path=os.path.join(predict_path, source_file_name),
                                       source_type=data_type)
-                cascade(input_path=input_path, output_path=output_path)
+                cascade(input_path=source, output_path=output_path)
                 mask = cascade[0][1].out
                 sum_list = [np.sum(mask[:, :, :, i]) for i in range(mask.shape[-1])]
                 example_data = [(classes[i], classes_colors[i]) for i, count in enumerate(sum_list) if count > 0]
