@@ -3,6 +3,7 @@ import tensorflow
 import numpy as np
 import os
 from tensorflow.keras.utils import save_img
+from pydub import AudioSegment
 
 
 def video(path, **params):
@@ -58,4 +59,14 @@ def text(path):
 def google_tts(path):
     def fun(tts):
         tts.save(path)
+
+    return fun
+
+
+def audio(path):
+
+    def fun(iobytes):
+        song = AudioSegment.from_file(iobytes, format="mp3")
+        song.export(path, format="webm")
+
     return fun

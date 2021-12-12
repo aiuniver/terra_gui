@@ -2,7 +2,9 @@ import json
 import os
 import shutil
 from pathlib import Path
+from copy import copy
 
+import numpy as np
 from tensorflow.keras.models import load_model
 
 from terra_ai.callbacks.utils import YOLO_ARCHITECTURE
@@ -54,7 +56,17 @@ class DeployCreator:
             model = self._prepare_model(model_path=model_path, deploy_type=deploy_type, dataset=dataset)
 
             if dataset.data.use_generator:
-                predict = model.predict(dataset.dataset.get('val').batch(1), batch_size=1)
+                if "Yolo" in deploy_type:
+                    predict = []
+                    for inp, out, serv in dataset.dataset.get('val').batch(training_details.get("base").get("batch")):
+                        batch = model(inp)
+                        if len(predict):
+                            for i, y in enumerate(predict):
+                                predict[i] = np.concatenate((y, batch[i]), axis=0)
+                        else:
+                            predict = copy(batch)
+                else:
+                    predict = model.predict(dataset.dataset.get('val').batch(1), batch_size=1)
             else:
                 predict = model.predict(dataset.X.get('val'), batch_size=training_details.get("base").get("batch"))
 

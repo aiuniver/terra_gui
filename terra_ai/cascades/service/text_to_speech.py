@@ -1,4 +1,5 @@
 from gtts import gTTS
+from io import BytesIO
 
 
 def GoogleTTS(language: str = 'ru'):
@@ -7,5 +8,9 @@ def GoogleTTS(language: str = 'ru'):
     """
     def fun(text: str):
         tts = gTTS(text, lang=language)
-        return tts
+        fp = BytesIO()
+        tts.write_to_fp(fp)
+        fp.seek(0)
+        return fp
+
     return fun
