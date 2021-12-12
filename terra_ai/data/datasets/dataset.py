@@ -189,7 +189,8 @@ class DatasetData(AliasMixinData):
                         sources[column].to_list(),
                     )
                 )
-        print(out)
+            else:
+                out = sources[column].to_list()
         return out
 
     @property
