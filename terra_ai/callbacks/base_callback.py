@@ -31,7 +31,7 @@ class FitCallback:
         if not dataset:
             self.__stop_by_error(error=NoImportantParameters('dataset', self.__class__.__name__, method_name))
 
-        # logger.infо("Добавление колбэка...")
+        logger.info("Добавление колбэка...")
         self.current_logs = {}
         self.usage_info = MemoryUsage(debug=False)
         self.training_detail = training_details

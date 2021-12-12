@@ -60,7 +60,7 @@ class CascadeRunner:
                                                                       model_task=model_task,
                                                                       dataset_data=dataset_config_data,
                                                                       presets_path=presets_path)
-
+        # print('cascade_config', cascade_config)
         main_block = json2cascade(path=cascade_path, cascade_config=cascade_config, mode="run")
 
         sources = sources.get(inputs_ids[0])
@@ -149,6 +149,7 @@ class CascadeRunner:
                         },
                 }
             elif block.group == BlockGroupChoice.OutputData:
+                print('model_task', model_task)
                 if model_task in ["ObjectDetection", "Segmentation"]:
                     block_description = {
                         "saving": {
@@ -164,6 +165,16 @@ class CascadeRunner:
                         })
                     adjacency_map.update({"saving": self._get_bind_names(cascade_data=cascade_data,
                                                                          blocks_ids=block.bind.up)})
+                elif model_task in ["TextToAudio"]:
+                    block_description = {
+                        "saving": {
+                            "tag": "output",
+                            "type": "audio"
+                        }
+                    }
+                    adjacency_map.update({"saving": self._get_bind_names(cascade_data=cascade_data,
+                                                                         blocks_ids=block.bind.up)})
+
             elif block.group == BlockGroupChoice.Model:
                 block_description = {
                     "model": {
@@ -251,7 +262,7 @@ class CascadeRunner:
 
         out_data = []
         iter_ = 0
-        for source in sources[:30]:
+        for source in sources[:10]:
             if type_ in [DeployTypeChoice.YoloV3, DeployTypeChoice.YoloV4, DeployTypeChoice.VideoObjectDetection]:
                 if type_ == DeployTypeChoice.VideoObjectDetection:
                     data_type = "video"
