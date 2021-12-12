@@ -86,7 +86,7 @@ class History:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 History.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     def _load_logs(self, dataset: PrepareDataset, training_details: TrainingDetailsData):
@@ -162,7 +162,7 @@ class History:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 History.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -179,7 +179,7 @@ class History:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 History.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     def get_checkpoint_data(self, output: str, checkpoint_type: str, metric: str, indicator: str):
@@ -278,7 +278,7 @@ class History:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 History.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     def _get_loss_calculation(self, loss_obj, out: str, y_true, y_pred, show_class=False, class_idx=0):
@@ -310,7 +310,7 @@ class History:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 History.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     def _get_metric_calculation(self, metric_name, metric_obj, out: str, y_true, y_pred, show_class=False, class_idx=0):
@@ -353,7 +353,7 @@ class History:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 History.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     def update_log_history(self):
@@ -510,7 +510,7 @@ class History:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 History.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -527,7 +527,7 @@ class History:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 History.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             return 0.
 
     @staticmethod
@@ -550,7 +550,7 @@ class History:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 History.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -573,5 +573,5 @@ class History:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 History.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc

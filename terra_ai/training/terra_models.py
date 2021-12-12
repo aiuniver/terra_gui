@@ -63,7 +63,7 @@ class BaseTerraModel:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 BaseTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     def load(self) -> None:
@@ -93,7 +93,7 @@ class BaseTerraModel:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 BaseTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     def __save_model_to_json(self):
@@ -139,7 +139,7 @@ class BaseTerraModel:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 BaseTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @tf.function
@@ -255,12 +255,12 @@ class BaseTerraModel:
 
                 if self.callback.is_best():
                     self.save_weights(path_=self.file_path_model_best_weights)
-                    logger.info("Best weights was saved")
+                    logger.info("Веса лучшей эпохи успешно сохранены", extra={"front_level": "success"})
             self.callback.on_train_end()
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 BaseTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
 
@@ -293,7 +293,7 @@ class YoloTerraModel(BaseTerraModel):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 YoloTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -559,10 +559,10 @@ class YoloTerraModel(BaseTerraModel):
 
                 if self.callback.is_best():
                     self.save_weights(path_=self.file_path_model_best_weights)
-                    logger.info("Best weights was saved")
+                    logger.info("Веса лучшей эпохи успешно сохранены", extra={"front_level": "success"})
             self.callback.on_train_end()
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 YoloTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc

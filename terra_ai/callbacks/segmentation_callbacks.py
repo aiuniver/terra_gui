@@ -35,7 +35,7 @@ class BaseSegmentationCallback:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 BaseSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -57,7 +57,7 @@ class BaseSegmentationCallback:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 BaseSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
 
@@ -131,7 +131,7 @@ class BaseSegmentationCallback:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 BaseSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
 
@@ -176,7 +176,7 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 ImageSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -276,7 +276,7 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 ImageSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -333,7 +333,7 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 ImageSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -379,7 +379,7 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 ImageSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -440,7 +440,7 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 ImageSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -480,7 +480,7 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 ImageSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -536,7 +536,7 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 ImageSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
 
@@ -579,7 +579,7 @@ class TextSegmentationCallback(BaseSegmentationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 TextSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -718,7 +718,7 @@ class TextSegmentationCallback(BaseSegmentationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 TextSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -759,7 +759,7 @@ class TextSegmentationCallback(BaseSegmentationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 TextSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -804,7 +804,7 @@ class TextSegmentationCallback(BaseSegmentationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 TextSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -866,7 +866,7 @@ class TextSegmentationCallback(BaseSegmentationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 TextSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -928,7 +928,7 @@ class TextSegmentationCallback(BaseSegmentationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 TextSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -985,5 +985,5 @@ class TextSegmentationCallback(BaseSegmentationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 TextSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc

@@ -173,7 +173,7 @@ class FitCallback:
         except Exception as error:
             exc = ErrorInClassInMethodException(
                 FitCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     def _get_result_data(self):

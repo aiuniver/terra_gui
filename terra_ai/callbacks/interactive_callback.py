@@ -80,9 +80,9 @@ class InteractiveCallback:
         self.options = dataset
         self._callback_router(dataset)
         self.class_graphics = self._class_metric_list()
-        logger.info(f"dataset architecture: {dataset.data.architecture}")
-        logger.info(f"dataset config: \n{dataset.data}")
-        logger.info(f"training parameters: \n{params.native()}\n")
+        logger.info(f"dataset architecture: {dataset.data.architecture}", extra={"front_level": "no_show"})
+        logger.info(f"dataset config: \n{dataset.data}", extra={"front_level": "no_show"})
+        logger.info(f"training parameters: \n{params.native()}\n", extra={"front_level": "no_show"})
         self.training_details = params
         self.last_training_details = copy.deepcopy(params)
         self.dataset_path = dataset.data.path
@@ -108,7 +108,7 @@ class InteractiveCallback:
             if arrays:
                 data_type = self.training_details.interactive.intermediate_result.data_type.name
                 if self.options.data.architecture in BASIC_ARCHITECTURE:
-                    logger.info(f"{InteractiveCallback.name}: обработка массивов...")
+                    logger.info(f"{InteractiveCallback.name}: обработка массивов...", extra={"front_level": "info"})
                     self.y_true = reformat_fit_array(
                         array={"train": arrays.get("train_true"), "val": arrays.get("val_true")}, train_idx=train_idx)
                     self.inverse_y_true = self.callback.get_inverse_array(self.y_true, self.options)
@@ -116,7 +116,8 @@ class InteractiveCallback:
                         array={"train": arrays.get("train_pred"), "val": arrays.get("val_pred")}, train_idx=train_idx)
                     self.inverse_y_pred = self.callback.get_inverse_array(self.y_pred, self.options)
                     if self.get_balance:
-                        logger.info(f"{InteractiveCallback.name}: расчет баланса датасета...")
+                        logger.info(f"{InteractiveCallback.name}: расчет баланса датасета...",
+                                    extra={"front_level": "info"})
                         self.dataset_balance = self.callback.dataset_balance(
                             options=self.options, y_true=self.y_true,
                             preset_path=self.training_details.intermediate_path,
@@ -124,14 +125,16 @@ class InteractiveCallback:
                         )
                         if self.options.data.architecture in CLASSIFICATION_ARCHITECTURE:
                             self.class_idx = self.callback.prepare_class_idx(self.y_true, self.options)
-                        logger.info(f"{InteractiveCallback.name}: получение индексов seed...")
+                        logger.info(f"{InteractiveCallback.name}: получение индексов seed...",
+                                    extra={"front_level": "info"})
                         self.seed_idx = self._prepare_seed()
                         self.get_balance = False
                     out = f"{self.training_details.interactive.intermediate_result.main_output}"
                     count = self.training_details.interactive.intermediate_result.num_examples
                     count = count if count > len(self.y_true.get(data_type).get(out)) \
                         else len(self.y_true.get(data_type).get(out))
-                    logger.info(f"{InteractiveCallback.name}: получение индексов для промежуточных результатов...")
+                    logger.info(f"{InteractiveCallback.name}: получение индексов для промежуточных результатов...",
+                                extra={"front_level": "info"})
                     self.example_idx = self.callback.prepare_example_idx_to_show(
                         array=self.y_pred.get(data_type).get(out),
                         true_array=self.y_true.get(data_type).get(out),
@@ -144,7 +147,7 @@ class InteractiveCallback:
                     )
 
                 if self.options.data.architecture in YOLO_ARCHITECTURE:
-                    logger.info(f"{InteractiveCallback.name}: обработка массивов...")
+                    logger.info(f"{InteractiveCallback.name}: обработка массивов...", extra={"front_level": "info"})
                     self.raw_y_pred = arrays.get("val_pred")
                     sensitivity = self.training_details.interactive.intermediate_result.sensitivity \
                         if self.training_details.interactive.intermediate_result.sensitivity else 0.3
@@ -156,7 +159,8 @@ class InteractiveCallback:
                         threashold=threashold
                     )
                     if self.get_balance:
-                        logger.info(f"{InteractiveCallback.name}: расчет баланса датасета...")
+                        logger.info(f"{InteractiveCallback.name}: расчет баланса датасета...",
+                                    extra={"front_level": "info"})
                         self.y_true, self.inverse_y_true = \
                             self.callback.get_y_true(self.options, self.options.data.path)
                         self.dataset_balance = self.callback.dataset_balance(
@@ -164,14 +168,16 @@ class InteractiveCallback:
                             preset_path=self.training_details.intermediate_path,
                             class_colors=self.class_colors
                         )
-                        logger.info(f"{InteractiveCallback.name}: получение индексов seed...")
+                        logger.info(f"{InteractiveCallback.name}: получение индексов seed...",
+                                    extra={"front_level": "info"})
                         self.seed_idx = self._prepare_seed()
                         self.get_balance = False
                     count = self.training_details.interactive.intermediate_result.num_examples
                     count = count if count > len(self.options.dataframe.get(data_type)) \
                         else len(self.options.dataframe.get(data_type))
                     self.raw_y_true = arrays.get("val_true")
-                    logger.info(f"{InteractiveCallback.name}: получение индексов для промежуточных результатов...")
+                    logger.info(f"{InteractiveCallback.name}: получение индексов для промежуточных результатов...",
+                                extra={"front_level": "info"})
                     self.example_idx, _ = self.callback.prepare_example_idx_to_show(
                         array=self.y_pred,
                         true_array=self.y_true,
@@ -185,11 +191,13 @@ class InteractiveCallback:
                     )
                 if on_epoch_end_flag:
                     self.current_epoch = fit_logs.get('epochs')[-1]
-                    logger.info(f"{InteractiveCallback.name}: обновление логов и таблицы прогресса обучения...")
+                    logger.info(f"{InteractiveCallback.name}: обновление логов и таблицы прогресса обучения...",
+                                extra={"front_level": "info"})
                     self.log_history = fit_logs
                     self._update_progress_table(current_epoch_time)
                     if self.training_details.interactive.intermediate_result.autoupdate:
-                        logger.info(f"{InteractiveCallback.name}: расчет промежуточных результатов...")
+                        logger.info(f"{InteractiveCallback.name}: расчет промежуточных результатов...",
+                                    extra={"front_level": "info"})
                         self.intermediate_result = self.callback.intermediate_result_request(
                             options=self.options,
                             interactive_config=self.training_details.interactive,
@@ -207,7 +215,8 @@ class InteractiveCallback:
                     if self.options.data.architecture in BASIC_ARCHITECTURE and \
                             self.training_details.interactive.statistic_data.output_id \
                             and self.training_details.interactive.statistic_data.autoupdate:
-                        logger.info(f"{InteractiveCallback.name}: расчет статистических данных...")
+                        logger.info(f"{InteractiveCallback.name}: расчет статистических данных...",
+                                    extra={"front_level": "info"})
                         self.statistic_result = self.callback.statistic_data_request(
                             interactive_config=self.training_details.interactive,
                             options=self.options,
@@ -219,7 +228,8 @@ class InteractiveCallback:
                     if self.options.data.architecture in YOLO_ARCHITECTURE and \
                             self.training_details.interactive.statistic_data.box_channel \
                             and self.training_details.interactive.statistic_data.autoupdate:
-                        logger.info(f"{InteractiveCallback.name}: расчет статистических данных...")
+                        logger.info(f"{InteractiveCallback.name}: расчет статистических данных...",
+                                    extra={"front_level": "info"})
                         self.statistic_result = self.callback.statistic_data_request(
                             interactive_config=self.training_details.interactive,
                             options=self.options,
@@ -229,7 +239,8 @@ class InteractiveCallback:
                             inverse_y_true=self.inverse_y_true
                         )
                 else:
-                    logger.info(f"{InteractiveCallback.name}: расчет промежуточных результатов...")
+                    logger.info(f"{InteractiveCallback.name}: расчет промежуточных результатов...",
+                                extra={"front_level": "info"})
                     self.intermediate_result = self.callback.intermediate_result_request(
                         options=self.options,
                         interactive_config=self.training_details.interactive,
@@ -246,7 +257,8 @@ class InteractiveCallback:
                     )
                     if self.options.data.architecture in BASIC_ARCHITECTURE and \
                             self.training_details.interactive.statistic_data.output_id:
-                        logger.info(f"{InteractiveCallback.name}: расчет статистических данных...")
+                        logger.info(f"{InteractiveCallback.name}: расчет статистических данных...",
+                                    extra={"front_level": "info"})
                         self.statistic_result = self.callback.statistic_data_request(
                             interactive_config=self.training_details.interactive,
                             options=self.options,
@@ -257,7 +269,8 @@ class InteractiveCallback:
                         )
                     if self.options.data.architecture in YOLO_ARCHITECTURE and \
                             self.training_details.interactive.statistic_data.box_channel:
-                        logger.info(f"{InteractiveCallback.name}: расчет статистических данных...")
+                        logger.info(f"{InteractiveCallback.name}: расчет статистических данных...",
+                                    extra={"front_level": "info"})
                         self.statistic_result = self.callback.statistic_data_request(
                             interactive_config=self.training_details.interactive,
                             options=self.options,
@@ -268,7 +281,8 @@ class InteractiveCallback:
                         )
                 self.urgent_predict = False
                 self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
-                logger.info(f"{InteractiveCallback.name}: передача данных на страницу обучения...")
+                logger.info(f"{InteractiveCallback.name}: передача данных на страницу обучения...",
+                            extra={"front_level": "info"})
                 return {
                     'update': self.random_key,
                     "class_graphics": self.class_graphics,
@@ -471,7 +485,7 @@ class InteractiveCallback:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 InteractiveCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     def _class_metric_list(self):
@@ -481,7 +495,7 @@ class InteractiveCallback:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 InteractiveCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     def _prepare_seed(self):
@@ -527,7 +541,7 @@ class InteractiveCallback:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 InteractiveCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     def _update_progress_table(self, epoch_time: float):
@@ -571,7 +585,7 @@ class InteractiveCallback:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 InteractiveCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     def _get_loss_graph_data_request(self) -> list:
@@ -762,7 +776,7 @@ class InteractiveCallback:
                 self.first_error = False
                 exc = exception.ErrorInClassInMethodException(
                     InteractiveCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-                logger.error(exc)
+                # logger.error(exc)
                 raise exc
             else:
                 pass
@@ -925,10 +939,10 @@ class InteractiveCallback:
             return data_return
         except Exception as error:
             if self.first_error:
+                self.first_error = False
                 exc = exception.ErrorInClassInMethodException(
                     InteractiveCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-                logger.error(exc)
+                # logger.error(exc)
                 raise exc
-                self.first_error = False
             else:
                 pass
