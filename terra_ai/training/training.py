@@ -62,7 +62,7 @@ class GUINN:
 
     def _set_training_params(self, dataset: DatasetData, params: TrainingDetailsData) -> None:
         method_name = '_set_training_params'
-        logger.infо("Установка параметров обучения...")
+        # logger.infо("Установка параметров обучения...")
         try:
             self.params = params
             progress.pool(self.progress_name, finished=False, message="Подготовка датасета...")
@@ -97,7 +97,7 @@ class GUINN:
             raise error
 
     def _set_callbacks(self, dataset: PrepareDataset, train_details: TrainingDetailsData) -> None:
-        logger.infо("Добавление колбэков...")
+        # logger.infо("Добавление колбэков...")
         progress.pool(self.progress_name, finished=False, message="Добавление колбэков...")
 
         self.callback = FitCallback(dataset=dataset, training_details=train_details, model_name=self.nn_name,
