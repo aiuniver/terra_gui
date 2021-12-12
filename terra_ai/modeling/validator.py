@@ -1,6 +1,7 @@
 import copy
 import gc
 import importlib
+import logging
 import sys
 
 from typing import List, Optional, Tuple, Dict, Any, Union
@@ -15,7 +16,8 @@ from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.modeling.layers.extra import ModuleTypeChoice, LayerValidationMethodChoice, \
     SpaceToDepthDataFormatChoice, LayerConfigData, LayerValueConfig
 from terra_ai.exceptions import modeling as exceptions
-from terra_ai.modeling.utils import logger, get_layer_info, reformat_input_shape, reorder_plan, get_edges, get_links, \
+from terra_ai.logging import logger
+from terra_ai.modeling.utils import get_layer_info, reformat_input_shape, reorder_plan, get_edges, get_links, \
     tensor_shape_to_tuple, get_idx_line
 
 
@@ -23,7 +25,7 @@ class ModelValidator:
     """Make validation of model plan"""
 
     def __init__(self, model: ModelDetailsData):
-        print('\nvalidated model', model.layers, '\n')
+        logger.info(f"Валидируемая модель: \n{model.layers}\n")
         self.name = "ModelValidator"
         self.validator: LayerValidation = LayerValidation()
         self.model: ModelDetailsData = model
@@ -72,7 +74,8 @@ class ModelValidator:
 
     def compile_keras_code(self) -> None:
         """Create keras code from model plan"""
-        logger.debug(f"{self.name}, {self.compile_keras_code.__name__}")
+        # logger.debug(f"{self.name}, {self.compile_keras_code.__name__}")
+        logger.info("Компиляция керас-кода модели...")
         self.keras_code = ""
         layers_import = {}
         name_dict = {}
@@ -136,12 +139,15 @@ class ModelValidator:
 
     def get_validated(self):
         """Returns all necessary info about modeling"""
-        logger.debug(f"{self.name}, {self.get_validated.__name__}")
+        # logger.debug(f"{self.name}, {self.get_validated.__name__}")
+        logger.info("Валидация модели...")
         self._model_validation()
         if self.valid:
             self.compile_keras_code()
+            logger.info("Валидация модели прошла успешно")
         else:
             self.keras_code = None
+            logger.info("Модель не валидна")
         for idx, layer in enumerate(self.filled_model.layers):
             # fill inputs
             if layer.group == LayerGroupChoice.input:
@@ -176,12 +182,12 @@ class ModelValidator:
         return self.val_dictionary
 
     def get_keras_model(self):
-        logger.debug(f"{self.name}, {self.get_keras_model.__name__}")
+        # logger.debug(f"{self.name}, {self.get_keras_model.__name__}")
         mc = ModelCreator(self.model_plan, self.input_shape, self.block_plans, self.layers_config)
         return mc.create_model()
 
     def _get_layer_str(self, _layer, name_dict, identifier="", _block_uplinks=None):
-        logger.debug(f"{self.name}, {self._get_layer_str.__name__}")
+        # logger.debug(f"{self.name}, {self._get_layer_str.__name__}")
         _layer_str = ""
         if _block_uplinks:
             _block_uplinks[_layer[0]] = f"{identifier}_{_layer[1]}_{_layer[0]}"
@@ -250,7 +256,8 @@ class ModelValidator:
         return _layer_str
 
     def _build_model_plan(self):
-        logger.debug(f"{self.name}, {self._build_model_plan.__name__}")
+        # logger.debug(f"{self.name}, {self._build_model_plan.__name__}")
+        logger.info("Предобработка плана модели...")
         for layer in self.model.layers:
             if layer.group == LayerGroupChoice.input:
                 self.input_shape[layer.id] = layer.shape.input
@@ -276,7 +283,7 @@ class ModelValidator:
             val_dictionary, dict:   with or without comments about cycles
             valid, bool:            True if no cycles, otherwise False
         """
-        logger.debug(f"{self.name}, {self._get_cycles_check.__name__}")
+        # logger.debug(f"{self.name}, {self._get_cycles_check.__name__}")
         edges = get_edges(self.model_plan)
         di_graph = nx.DiGraph(edges)
         for cycle in nx.simple_cycles(di_graph):
@@ -294,7 +301,7 @@ class ModelValidator:
             val_dictionary, dict:   with or without comments about separation
             valid, bool:            True if no separation, otherwise False
         """
-        logger.debug(f"{self.name}, {self._get_full_connection_check.__name__}")
+        # logger.debug(f"{self.name}, {self._get_full_connection_check.__name__}")
         edges = get_edges(model_plan=self.model_plan, full_connection=True)
         di_graph = nx.DiGraph(edges)
         sub_graphs = sorted(
@@ -305,19 +312,20 @@ class ModelValidator:
             self.valid = False
             for group in sub_graphs[1:]:
                 for layer in group:
+                    logger.warning(f"Слой {layer}: {exceptions.LayerNotConnectedToMainPartException()}")
                     self.val_dictionary[layer] = str(exceptions.LayerNotConnectedToMainPartException())
 
     def _get_model_links(self) -> None:
-        logger.debug(f"{self.name}, {self._get_model_links.__name__}")
+        # logger.debug(f"{self.name}, {self._get_model_links.__name__}")
         (self.start_row, self.up_links, self.down_links, self.all_indexes, self.end_row) = get_links(self.model_plan)
 
     def _get_reorder_model(self):
-        logger.debug(f"{self.name}, {self._get_reorder_model.__name__}")
+        # logger.debug(f"{self.name}, {self._get_reorder_model.__name__}")
         self.model_plan = reorder_plan(self.model_plan)
 
     def _get_input_shape_check(self) -> None:
         """Check empty input shapes"""
-        logger.debug(f"{self.name}, {self._get_input_shape_check.__name__}")
+        # logger.debug(f"{self.name}, {self._get_input_shape_check.__name__}")
         input_layers = {}
         for layer in self.model_plan:
             if layer[0] in self.input_shape.keys():
@@ -327,17 +335,19 @@ class ModelValidator:
             if idx not in input_layers.keys():
                 self.valid = False
                 self.layer_input_shapes[idx].append(None)
+                logger.warning(f"Входной слой {idx}: {exceptions.LayerDoesNotHaveInputShapeException()}")
                 self.val_dictionary[idx] = str(exceptions.LayerDoesNotHaveInputShapeException())
 
         # check if plan input shapes is not None
         for _id, shape in self.input_shape.items():
             if not shape or None in shape:
                 self.valid = False
+                logger.warning(f"Входной слой {_id}: {exceptions.LayerDoesNotHaveInputShapeException()}")
                 self.val_dictionary[_id] = str(exceptions.LayerDoesNotHaveInputShapeException())
 
     def _get_output_shape_check(self):
         """Check compatibility of dataset's and results model output shapes"""
-        logger.debug(f"{self.name}, {self._get_output_shape_check.__name__}")
+        # logger.debug(f"{self.name}, {self._get_output_shape_check.__name__}")
         if self.output_shape:
             outputs = []
             for layer in self.model_plan:
@@ -353,32 +363,38 @@ class ModelValidator:
                             else [self.layer_output_shapes[layer[0]][i][1:] for i in
                                   self.layer_output_shapes[layer[0]]]
                         ))
+                        logger.warning(f"Выходной слой {layer[0]}: {self.val_dictionary[layer[0]]}")
             # check unspecified output layers
             for idx in self.end_row:
                 if idx not in outputs:
                     self.valid = False
                     self.val_dictionary[idx] = str(exceptions.UnspecifiedOutputLayerException())
+                    logger.warning(f"Выходной слой {idx}: {self.val_dictionary[idx]}")
 
     def _model_validation(self) -> dict:
         """Full model validation"""
-        logger.debug(f"{self.name}, {self._model_validation.__name__}")
+        # logger.debug(f"{self.name}, {self._model_validation.__name__}")
         # check for cycles
+        logger.info("Проверка наличия циклических структур...")
         self._get_cycles_check()
         if not self.valid:
             return self.val_dictionary
 
         # check for full connection
+        logger.info("Проверка на полносвязность слоев...")
         self._get_full_connection_check()
         if not self.valid:
             return self.val_dictionary
 
         # check for input shapes compatibility
+        logger.info("Проверка входных размерностей...")
         self._get_model_links()
         self._get_input_shape_check()
         if not self.valid:
             return self.val_dictionary
 
         # check layers
+        logger.info("Проверка слоев на ошибки...")
         for layer in self.model_plan:
             if layer[1] == LayerTypeChoice.CustomBlock:
                 output_shape, comment = self._custom_block_validation(
@@ -406,18 +422,16 @@ class ModelValidator:
             else:
                 for down_link in self.down_links[layer[0]]:
                     self.layer_input_shapes[down_link].extend(output_shape)
-            # print('\n _model_validation', layer[1], output_shape,
-            #       '\n self.down_links[layer[0]]', self.down_links[layer[0]],
-            #       '\n self.layer_input_shapes', self.layer_input_shapes)
         if not self.valid:
             return self.val_dictionary
 
         # check output shapes compatibility
+        logger.info("Проверка выходных размерностей...")
         self._get_output_shape_check()
         return self.val_dictionary
 
     def _layer_validation(self, layer: tuple, layer_input_shape: list, defaults: dict, config: LayerConfigData):
-        logger.debug(f"{self.name}, {self._layer_validation.__name__}")
+        # logger.debug(f"{self.name}, {self._layer_validation.__name__}")
         self.validator.set_state(
             layer_type=layer[1],
             shape=layer_input_shape,
@@ -430,7 +444,7 @@ class ModelValidator:
 
     def _custom_block_validation(self, block_plan, block_input_shape, defaults, config):
         """block modeling"""
-        logger.debug(f"{self.name}, {self._custom_block_validation.__name__}")
+        # logger.debug(f"{self.name}, {self._custom_block_validation.__name__}")
         _, _, down_links, _, end_row = get_links(block_plan)
         block_val_dict = {}
         block_input_shapes = {}
@@ -490,7 +504,7 @@ class LayerValidation:
 
     def set_state(self, layer_type, shape: list, parameters: dict, defaults: dict, config: LayerConfigData, **kwargs):
         """Set input data and fill attributes"""
-        logger.debug(f"{self.name}, {self.set_state.__name__}")
+        # logger.debug(f"{self.name}, {self.set_state.__name__}")
         self.layer_type = layer_type
         self.inp_shape = shape
         self.def_parameters = defaults
@@ -503,7 +517,7 @@ class LayerValidation:
 
     def get_validated(self):
         """Validate given layer parameters and return output shape and possible error comment"""
-        logger.debug(f"{self.name}, {self.get_validated.__name__}")
+        # logger.debug(f"{self.name}, {self.get_validated.__name__}")
         error = self.primary_layer_validation()
         if error:
             return [None], error
@@ -528,7 +542,6 @@ class LayerValidation:
                             tuple(getattr(self.module, self.layer_type)(**params).compute_output_shape(
                                 self.inp_shape[0] if len(self.inp_shape) == 1 else self.inp_shape))
                         ]
-                    # print('\n get_validated', self.layer_type, output_shape)
                     # LSTM and GRU can returns list of one tuple of tensor shapes
                     # code below reformat it to list of shapes
                     if len(output_shape) == 1 and type(output_shape[0][0]).__name__ == "TensorShape":
@@ -537,8 +550,6 @@ class LayerValidation:
                             new.append(tensor_shape_to_tuple(shape))
                         return new, None
                     return output_shape, None
-                except ValueError:
-                    return output_shape, self.parameters_validation()
                 except:
                     return output_shape, self.parameters_validation()
 
@@ -554,14 +565,14 @@ class LayerValidation:
                         **self.layer_parameters,
                     )
                     return [tensor_shape_to_tuple(output.shape)], None
-                except Exception:
+                except:
                     return output_shape, self.parameters_validation()
 
     def get_problem_parameter(self, base_dict: dict, check_dict: dict, problem_dict, inp_shape, revert=False):
         """check each not default parameter from check_dict by setting it in base_dict
         revert means set default parameter in layer parameters and need additional check if pass
         on initial layer parameters"""
-        logger.debug(f"{self.name}, {self.get_problem_parameter.__name__}")
+        # logger.debug(f"{self.name}, {self.get_problem_parameter.__name__}")
         for param in base_dict.keys():
             val_dict = copy.deepcopy(base_dict)
             if val_dict.get(param) != check_dict.get(param):
@@ -590,21 +601,16 @@ class LayerValidation:
                             if self.module_type == ModuleTypeChoice.tensorflow:
                                 getattr(self.module, self.layer_type)(
                                     tensorflow.keras.layers.Input(shape=inp_shape), **base_dict)
-                        except ValueError as error:
+                        except Exception as error:
                             problem_dict[param] = (base_dict.get(param), str(error))
-                        except TypeError as error:
-                            problem_dict[param] = (base_dict.get(param), str(error))
-                except ValueError as error:
-                    if not revert:
-                        problem_dict[param] = (val_dict.get(param), str(error))
-                except TypeError as error:
+                except Exception as error:
                     if not revert:
                         problem_dict[param] = (val_dict.get(param), str(error))
         return problem_dict
 
     def parameters_validation(self):
         """Parameter control comparing with default"""
-        logger.debug(f"{self.name}, {self.parameters_validation.__name__}")
+        # logger.debug(f"{self.name}, {self.parameters_validation.__name__}")
         if isinstance(self.def_parameters, str):
             return self.def_parameters
         problem_params = {}
@@ -633,11 +639,12 @@ class LayerValidation:
                     comment += (
                         f"{key}={problem_params[key][0]} ({problem_params[key][1]}); "
                     )
+            logger.warning(f"Слой {self.layer_type}: {str(exceptions.BadParametersException(comment[:-2]))}")
             return str(exceptions.BadParametersException(comment[:-2]))
 
     def primary_layer_validation(self) -> Optional[str]:
         """Whole modeling for specific parameters, uplink number and input dimension"""
-        logger.debug(f"{self.name}, {self.primary_layer_validation.__name__}")
+        # logger.debug(f"{self.name}, {self.primary_layer_validation.__name__}")
         comment = self.position_validation()
         if comment:
             return comment
@@ -652,35 +659,44 @@ class LayerValidation:
 
     def position_validation(self) -> Optional[str]:
         """Validate number of uplinks"""
-        logger.debug(f"{self.name}, {self.position_validation.__name__}")
+        # logger.debug(f"{self.name}, {self.position_validation.__name__}")
         if None in self.inp_shape:
-            return str(exceptions.InputShapeEmptyException())
+            exc = str(exceptions.InputShapeEmptyException())
+            logger.warning(f"Слой {self.layer_type}: {exc}")
+            return exc
         elif isinstance(self.num_uplinks[0], int) and \
                 self.num_uplinks[1] == LayerValidationMethodChoice.fixed and \
                 len(self.inp_shape) != self.num_uplinks[0]:
-            return str(exceptions.IncorrectQuantityInputShapeException(
+            exc = str(exceptions.IncorrectQuantityInputShapeException(
                 self.num_uplinks[0], 's' if self.num_uplinks[0] > 1 else '', len(self.inp_shape)))
+            logger.warning(f"Слой {self.layer_type}: {exc}")
+            return exc
         elif isinstance(self.num_uplinks[0], int) and \
                 self.num_uplinks[1] == LayerValidationMethodChoice.minimal and \
                 len(self.inp_shape) < self.num_uplinks[0]:
-            return str(exceptions.IncorrectQuantityInputShapeException(
+            exc = str(exceptions.IncorrectQuantityInputShapeException(
                 f"{self.num_uplinks[0]} or greater", 's' if self.num_uplinks[0] > 1 else '', len(self.inp_shape)))
+            logger.warning(f"Слой {self.layer_type}: {exc}")
+            return exc
         elif isinstance(self.num_uplinks[0], tuple) and \
                 self.num_uplinks[1] not in [
-            LayerValidationMethodChoice.dependence_tuple2,
-            LayerValidationMethodChoice.dependence_tuple3] and \
+            LayerValidationMethodChoice.dependence_tuple2, LayerValidationMethodChoice.dependence_tuple3] and \
                 len(self.inp_shape) not in self.num_uplinks[0]:
-            return str(exceptions.IncorrectQuantityInputShapeException(
+            exc = str(exceptions.IncorrectQuantityInputShapeException(
                 f"one of {self.num_uplinks}", "s", len(self.inp_shape)))
+            logger.warning(f"Слой {self.layer_type}: {exc}")
+            return exc
         else:
             return None
 
     def input_dimension_validation(self) -> Optional[str]:
         """Dimension compatibility of first_shape shape"""
-        logger.debug(f"{self.name}, {self.input_dimension_validation.__name__}")
+        # logger.debug(f"{self.name}, {self.input_dimension_validation.__name__}")
         if len(self.inp_shape) > 1:
             for shape in self.inp_shape[1:]:
                 if len(self.inp_shape[0]) != len(shape):
+                    logger.warning(f"Слой {self.layer_type}: "
+                                   f"{exceptions.InputShapesHaveDifferentSizesException(self.inp_shape)}")
                     return str(exceptions.InputShapesHaveDifferentSizesException(self.inp_shape))
             axis = self.layer_parameters.get("axis", None)
             if axis:
@@ -690,52 +706,67 @@ class LayerValidation:
                     shape = list(shape)
                     shape.pop(axis)
                     if shape != first_shape:
+                        logger.warning(f"Слой {self.layer_type}: "
+                                       f"{exceptions.MismatchedInputShapesException(axis, self.inp_shape)}")
                         return str(exceptions.MismatchedInputShapesException(axis, self.inp_shape))
             else:
                 for shape in self.inp_shape[1:]:
                     if shape != self.inp_shape[0]:
+                        logger.warning(f"Слой {self.layer_type}: "
+                                       f"{(exceptions.InputShapesAreDifferentException()) % self.inp_shape}")
                         return str(exceptions.InputShapesAreDifferentException()) % self.inp_shape
         else:
             if isinstance(self.input_dimension[0], int) and \
                     self.input_dimension[1] == LayerValidationMethodChoice.fixed and \
                     len(self.inp_shape[0]) != self.input_dimension[0]:
-                return str(exceptions.IncorrectQuantityInputDimensionsException(
+                exc = str(exceptions.IncorrectQuantityInputDimensionsException(
                     self.input_dimension[0], len(self.inp_shape[0])))
+                logger.warning(f"Слой {self.layer_type}: {exc}")
+                return exc
             elif isinstance(self.input_dimension[0], int) and \
                     self.input_dimension[1] == LayerValidationMethodChoice.minimal and \
                     len(self.inp_shape[0]) < self.input_dimension[0]:
-                return str(exceptions.IncorrectQuantityInputDimensionsException(
+                exc = str(exceptions.IncorrectQuantityInputDimensionsException(
                     f"{self.input_dimension[0]} or greater", len(self.inp_shape[0])))
+                logger.warning(f"Слой {self.layer_type}: {exc}")
+                return exc
             elif isinstance(self.input_dimension[0], tuple) and \
                     self.input_dimension[1] in [
-                LayerValidationMethodChoice.dependence_tuple2,
-                LayerValidationMethodChoice.dependence_tuple3] and \
+                LayerValidationMethodChoice.dependence_tuple2, LayerValidationMethodChoice.dependence_tuple3] and \
                     len(self.inp_shape[0]) not in self.input_dimension[0]:
-                return str(exceptions.IncorrectQuantityInputDimensionsException(
+                exc = str(exceptions.IncorrectQuantityInputDimensionsException(
                     f"one of {self.input_dimension[0]}", len(self.inp_shape[0])))
+                logger.warning(f"Слой {self.layer_type}: {exc}")
+                return exc
             else:
                 return None
 
     # @property
     def specific_parameters_validation(self) -> str:
         """Validate specific layer parameters or its combination"""
-        logger.debug(f"{self.name}, {self.specific_parameters_validation.__name__}")
+        # logger.debug(f"{self.name}, {self.specific_parameters_validation.__name__}")
         # initializer identity
         for key in self.layer_parameters.keys():
             if self.layer_parameters.get(key) == "identity" and len(self.inp_shape[0]) != 2:
-                return str(exceptions.InitializerCanTakeOnlyNDInputShapeException(
+                exc = str(exceptions.InitializerCanTakeOnlyNDInputShapeException(
                     "'Identity'", key, 2, len(self.inp_shape[0]), self.inp_shape[0]))
+                logger.warning(f"Слой {self.layer_type}: {exc}")
+                return exc
         # strides and dilation_rate in 1D layers
         if isinstance(self.layer_parameters.get("strides"), int) and \
                 isinstance(self.layer_parameters.get("dilation_rate"), int):
             if self.layer_parameters.get("dilation_rate") > 1 and self.layer_parameters.get("strides") > 1:
-                return str(exceptions.CannotHaveValueException("'dilation_rate' and 'strides'", "> 1"))
+                exc = str(exceptions.CannotHaveValueException("'dilation_rate' and 'strides'", "> 1"))
+                logger.warning(f"Слой {self.layer_type}: {exc}")
+                return exc
         # strides and dilation_rate in 2+D layers
         if isinstance(self.layer_parameters.get("dilation_rate"), (tuple, list)) and \
                 isinstance(self.layer_parameters.get("strides"), (tuple, list)):
             if max(self.layer_parameters.get("dilation_rate")) > 1 and max(
                     self.layer_parameters.get("strides")) > 1:
-                return str(exceptions.CannotHaveValueException("'dilation_rate' and 'strides'", "> 1"))
+                exc = str(exceptions.CannotHaveValueException("'dilation_rate' and 'strides'", "> 1"))
+                logger.warning(f"Слой {self.layer_type}: {exc}")
+                return exc
         # value range for axis
         if self.layer_parameters.get("axis", None) and (
                 self.layer_parameters.get("axis", None) == 0
@@ -744,7 +775,9 @@ class LayerValidation:
         ):
             axis_values = list(np.arange(-len(self.inp_shape[0]) + 1, len(self.inp_shape[0])))
             axis_values.pop(axis_values.index(0))
-            return str(exceptions.CanTakeOneOfTheFollowingValuesException('axis', axis_values))
+            exc = str(exceptions.CanTakeOneOfTheFollowingValuesException('axis', axis_values))
+            logging.warning(f"Слой {self.layer_type}: {exc}")
+            return exc
         # groups with data_format, filters and inp_shape
         if self.layer_parameters.get("groups", None) and \
                 self.layer_parameters.get("data_format", None) and \
@@ -754,116 +787,146 @@ class LayerValidation:
                     self.layer_parameters.get("filters") % self.layer_parameters.get("groups") != 0
                     or self.inp_shape[0][-1] % self.layer_parameters.get("groups") != 0
             ):
-                return str(exceptions.IncorrectNumberOfFiltersAndChannelsException(
-                    self.layer_parameters.get('filters'),
-                    self.inp_shape[0][-1],
-                    self.layer_parameters.get('groups')
+                exc = str(exceptions.IncorrectNumberOfFiltersAndChannelsException(
+                    self.layer_parameters.get('filters'), self.inp_shape[0][-1], self.layer_parameters.get('groups')
                 ))
+                logger.warning(f"Слой {self.layer_type}: {exc}")
+                return exc
             if self.layer_parameters.get("data_format") == "channels_first" and (
                     self.layer_parameters.get("filters") % self.layer_parameters.get("groups") != 0
                     or self.inp_shape[0][dim] % self.layer_parameters.get("groups") != 0
             ):
-                return str(exceptions.IncorrectNumberOfFiltersAndChannelsException(
-                    self.layer_parameters.get('filters'),
-                    self.inp_shape[0][dim],
-                    self.layer_parameters.get('groups')
+                exc = str(exceptions.IncorrectNumberOfFiltersAndChannelsException(
+                    self.layer_parameters.get('filters'), self.inp_shape[0][dim], self.layer_parameters.get('groups')
                 ))
+                logger.warning(f"Слой {self.layer_type}: {exc}")
+                return exc
 
             if self.layer_parameters.get("data_format") == "channels_first" and len(self.inp_shape[0]) > -dim + 1:
                 if (isinstance(self.layer_parameters.get("strides"), int) and
                     self.layer_parameters.get("strides") > 1) or (
                         isinstance(self.layer_parameters.get("strides"), (tuple, list))
-                        and max(self.layer_parameters.get("strides")) > 1
-                ):
-                    return str(exceptions.ParameterCanNotBeForInputShapeException(
+                        and max(self.layer_parameters.get("strides")) > 1):
+                    exc = str(exceptions.ParameterCanNotBeForInputShapeException(
                         f"dim > {-dim + 1} and 'data_format'='channels_first'",
-                        "strides", "> 1", self.layer_parameters.get('strides')
-                    ))
+                        "strides", "> 1", self.layer_parameters.get('strides')))
+                    logging.warning(f"Слой {self.layer_type}: {exc}")
+                    return exc
         # maxwordcount
         if self.layer_type == LayerTypeChoice.Embedding and self.kwargs.get("maxwordcount") \
                 and self.layer_parameters.get("input_dim"):
             if self.layer_parameters.get("input_dim") < self.kwargs.get("maxwordcount"):
-                return str(exceptions.InputDimMustBeThenSizeOfException(
+                exc = str(exceptions.InputDimMustBeThenSizeOfException(
                     self.layer_parameters.get('input_dim'),
-                    "equal or greater",
-                    f"words dictionary (maxwordcount={self.kwargs.get('maxwordcount')})"
-                ))
+                    "equal or greater", f"words dictionary (maxwordcount={self.kwargs.get('maxwordcount')})"))
+                logger.warning(f"Слой {self.layer_type}: {exc}")
+                return exc
         # pretrained models exclusions
         if self.module_type == layers.extra.ModuleTypeChoice.keras_pretrained_model:
             if self.layer_parameters.get("include_top") and \
                     self.layer_parameters.get("weights") and \
                     self.layer_parameters.get("classes") != 1000:
-                return str(exceptions.ClassesShouldBeException(
+                exc = str(exceptions.ClassesShouldBeException(
                     "using `weights` as `imagenet` with `include_top` as true",
                     1000, self.layer_parameters.get('classes')))
+                logger.warning(f"Слой {self.layer_type}: {exc}")
+                return exc
             elif self.layer_type == LayerTypeChoice.NASNetMobile:
                 if self.layer_parameters.get("weights") == 'imagenet' and self.inp_shape[0][1:] != (224, 224, 3):
-                    return str(exceptions.InputShapeMustBeOnlyException(
+                    exc = str(exceptions.InputShapeMustBeOnlyException(
                         "pre-loaded 'imagenet' weights", (224, 224, 3), self.inp_shape[0][1:]))
+                    logger.warning(f"Слой {self.layer_type}: {exc}")
+                    return exc
                 elif self.inp_shape[0][1] < 32 or self.inp_shape[0][2] < 32 or self.inp_shape[0][3] < 3:
-                    return str(exceptions.InputShapeMustBeInEchDimException(
+                    exc = str(exceptions.InputShapeMustBeInEchDimException(
                         "greater or equal", (32, 32, 3), self.inp_shape[0][1:]))
+                    logger.warning(f"Слой {self.layer_type}: {exc}")
+                    return exc
             elif self.layer_type == LayerTypeChoice.NASNetLarge:
                 if self.layer_parameters.get("weights") == 'imagenet' \
                         and self.inp_shape[0][1:] != (331, 331, 3):
-                    return str(exceptions.InputShapeMustBeOnlyException(
+                    exc = str(exceptions.InputShapeMustBeOnlyException(
                         "pre-loaded 'imagenet' weights", (331, 331, 3), self.inp_shape[0][1:]))
+                    logger.warning(f"Слой {self.layer_type}: {exc}")
+                    return exc
                 elif self.inp_shape[0][1] < 32 or self.inp_shape[0][2] < 32 or self.inp_shape[0][3] < 3:
-                    return str(exceptions.InputShapeMustBeInEchDimException(
+                    exc = str(exceptions.InputShapeMustBeInEchDimException(
                         "greater or equal", (32, 32, 3), self.inp_shape[0][1:]))
+                    logger.warning(f"Слой {self.layer_type}: {exc}")
+                    return exc
             elif self.layer_type == LayerTypeChoice.InceptionV3:
                 if self.layer_parameters.get("weights") == 'imagenet' \
                         and self.inp_shape[0][1:] != (299, 299, 3):
-                    return str(exceptions.InputShapeMustBeOnlyException(
+                    exc = str(exceptions.InputShapeMustBeOnlyException(
                         "pre-loaded 'imagenet' weights", (299, 299, 3), self.inp_shape[0][1:]))
+                    logger.warning(f"Слой {self.layer_type}: {exc}")
+                    return exc
                 elif self.inp_shape[0][1] < 75 or self.inp_shape[0][2] < 75 or self.inp_shape[0][3] < 3:
-                    return str(exceptions.InputShapeMustBeInEchDimException(
+                    exc = str(exceptions.InputShapeMustBeInEchDimException(
                         "greater or equal", (75, 75, 3), self.inp_shape[0][1:]))
+                    logger.warning(f"Слой {self.layer_type}: {exc}")
+                    return exc
                 elif self.layer_parameters.get("include_top") and \
                         self.layer_parameters.get("weights") and \
                         self.layer_parameters.get("classifier_activation") != "softmax" and \
                         self.layer_parameters.get("classifier_activation") is not None:
-                    return str(exceptions.ActivationFunctionShouldBeException(
+                    exc = str(exceptions.ActivationFunctionShouldBeException(
                         "using pretrained weights, with `include_top=True`", "`None` or `softmax`"))
+                    logger.warning(f"Слой {self.layer_type}: {exc}")
+                    return exc
             elif self.layer_type == LayerTypeChoice.Xception:
                 if self.layer_parameters.get("weights") == 'imagenet' and \
                         self.inp_shape[0][1:] != (299, 299, 3):
-                    return str(exceptions.InputShapeMustBeOnlyException(
+                    exc = str(exceptions.InputShapeMustBeOnlyException(
                         "pre-loaded 'imagenet' weights", (299, 299, 3), self.inp_shape[0][1:]))
+                    logger.warning(f"Слой {self.layer_type}: {exc}")
+                    return exc
                 elif self.inp_shape[0][1] < 71 or self.inp_shape[0][2] < 71 or self.inp_shape[0][3] < 3:
-                    return str(exceptions.InputShapeMustBeInEchDimException(
+                    exc = str(exceptions.InputShapeMustBeInEchDimException(
                         "greater or equal", (71, 71, 3), self.inp_shape[0][1:]))
+                    logger.warning(f"Слой {self.layer_type}: {exc}")
+                    return exc
                 elif self.layer_parameters.get("include_top") and \
                         self.layer_parameters.get("weights") and \
                         self.layer_parameters.get("classifier_activation") != "softmax" and \
                         self.layer_parameters.get("classifier_activation") is not None:
-                    return str(exceptions.ActivationFunctionShouldBeException(
+                    exc = str(exceptions.ActivationFunctionShouldBeException(
                         "using pretrained weights, with `include_top=True`", "`None` or `softmax`"))
+                    logger.warning(f"Слой {self.layer_type}: {exc}")
+                    return exc
             elif self.layer_type in [LayerTypeChoice.VGG16, LayerTypeChoice.VGG19, LayerTypeChoice.ResNet50,
                                      LayerTypeChoice.ResNet101, LayerTypeChoice.ResNet152, LayerTypeChoice.ResNet50V2,
                                      LayerTypeChoice.ResNet101V2, LayerTypeChoice.ResNet152V2]:
                 if self.layer_parameters.get("include_top") and self.layer_parameters.get('weights') == 'imagenet' \
                         and self.inp_shape[0][1:] != (224, 224, 3):
-                    return str(exceptions.InputShapeMustBeOnlyException(
+                    exc = str(exceptions.InputShapeMustBeOnlyException(
                         "'include_top'=True and using pre-trained weights on 'imagenet'",
                         (224, 224, 3), self.inp_shape[0][1:]))
+                    logger.warning(f"Слой {self.layer_type}: {exc}")
+                    return exc
                 elif self.inp_shape[0][1] < 32 or self.inp_shape[0][2] < 32 or self.inp_shape[0][3] < 3:
-                    return str(exceptions.InputShapeMustBeInEchDimException(
+                    exc = str(exceptions.InputShapeMustBeInEchDimException(
                         "greater or equal", (32, 32, 3), self.inp_shape[0][1:]))
+                    logger.warning(f"Слой {self.layer_type}: {exc}")
+                    return exc
                 elif self.layer_parameters.get("include_top") and \
                         self.layer_parameters.get("weights") and \
                         self.layer_parameters.get("classifier_activation") != "softmax" and \
                         self.layer_parameters.get("classifier_activation") is not None:
-                    return str(exceptions.ActivationFunctionShouldBeException(
+                    exc = str(exceptions.ActivationFunctionShouldBeException(
                         "using pretrained weights, with `include_top=True`", "`None` or `softmax`"))
+                    logger.warning(f"Слой {self.layer_type}: {exc}")
+                    return exc
             elif self.layer_type in [LayerTypeChoice.DenseNet121, LayerTypeChoice.DenseNet169,
                                      LayerTypeChoice.DenseNet201]:
                 if self.layer_parameters.get("weights") == 'imagenet' and \
                         self.layer_parameters.get("include_top") and \
                         self.inp_shape[0][1:] != (224, 224, 3):
-                    return str(exceptions.InputShapeMustBeOnlyException(
+                    exc = str(exceptions.InputShapeMustBeOnlyException(
                         "'include_top'=True and using pre-trained weights on 'imagenet'",
                         (224, 224, 3), self.inp_shape[0][1:]))
+                    logger.warning(f"Слой {self.layer_type}: {exc}")
+                    return exc
                 elif self.inp_shape[0][1] < 32 or self.inp_shape[0][2] < 32 or self.inp_shape[0][3] < 3:
                     return str(exceptions.InputShapeMustBeInEchDimException(
                         "greater or equal", (32, 32, 3), self.inp_shape[0][1:]))
@@ -873,86 +936,109 @@ class LayerValidation:
                         self.layer_parameters.get("weights") and \
                         self.layer_parameters.get("classifier_activation") != "softmax" and \
                         self.layer_parameters.get("classifier_activation") is not None:
-                    return str(exceptions.ActivationFunctionShouldBeException(
+                    exc = str(exceptions.ActivationFunctionShouldBeException(
                         "using pretrained weights, with `include_top=True`", "`None` or `softmax`"))
+                    logger.warning(f"Слой {self.layer_type}: {exc}")
+                    return exc
                 elif (self.layer_parameters.get("dropout_rate")) and \
                         (self.layer_parameters.get("dropout_rate") > 1.0 or
                          self.layer_parameters.get("dropout_rate") < 0):
-                    return str(exceptions.CanTakeOneOfTheFollowingValuesException(
+                    exc = str(exceptions.CanTakeOneOfTheFollowingValuesException(
                         "Dropout_rate", "floats from range [0.0, 1.0]"))
+                    logger.warning(f"Слой {self.layer_type}: {exc}")
+                    return exc
             else:
                 pass
         # UNETBlock2D and PSPBlock2D exceptions
         if self.layer_type == LayerTypeChoice.UNETBlock2D or self.layer_type == LayerTypeChoice.PSPBlock2D:
             if self.inp_shape[0][1] % 4 != 0 or self.inp_shape[0][2] % 4 != 0:
-                return str(exceptions.InputShapeMustBeWholeDividedByException(self.inp_shape[0], 4))
-
+                exc = str(exceptions.InputShapeMustBeWholeDividedByException(self.inp_shape[0], 4))
+                logger.warning(f"Слой {self.layer_type}: {exc}")
+                return exc
             if ((self.inp_shape[0][1] // (2 ** self.layer_parameters.get("n_pooling_branches"))) % 2 != 0 or
                 (self.inp_shape[0][1] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 1) and \
                     ((self.inp_shape[0][2] // (2 ** self.layer_parameters.get("n_pooling_branches"))) % 2 != 0 or
                      (self.inp_shape[0][2] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 1):
-                return str(exceptions.InputShapeMustBeInEchDimException(
+                exc = str(exceptions.InputShapeMustBeInEchDimException(
                     "equal multiple of 4",
                     f"or decrease n_pooling_branches < {self.layer_parameters.get('n_pooling_branches')}",
-                    self.inp_shape[0][1:]
-                ))
+                    self.inp_shape[0][1:]))
+                logger.warning(f"Слой {self.layer_type}: {exc}")
+                return exc
         # UNETBlock1D and PSPBlock1D exceptions
         if self.layer_type == LayerTypeChoice.UNETBlock1D or self.layer_type == LayerTypeChoice.PSPBlock1D:
             if self.inp_shape[0][1] % 4 != 0:
-                return str(exceptions.InputShapeMustBeWholeDividedByException(self.inp_shape[0], 4))
+                exc = str(exceptions.InputShapeMustBeWholeDividedByException(self.inp_shape[0], 4))
+                logger.warning(f"Слой {self.layer_type}: {exc}")
+                return exc
             if ((self.inp_shape[0][1] // (2 ** self.layer_parameters.get("n_pooling_branches"))) % 2 != 0 or
                     (self.inp_shape[0][1] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 1):
-                return str(exceptions.InputShapeMustBeInEchDimException(
+                exc = str(exceptions.InputShapeMustBeInEchDimException(
                     "equal multiple of 4",
                     f"or decrease n_pooling_branches < {self.layer_parameters.get('n_pooling_branches')}",
-                    self.inp_shape[0][1:]
-                ))
+                    self.inp_shape[0][1:]))
+                logger.warning(f"Слой {self.layer_type}: {exc}")
+                return exc
         # UNETBlock3D and PSPBlock3D exceptions
         if self.layer_type == LayerTypeChoice.UNETBlock3D or self.layer_type == LayerTypeChoice.PSPBlock3D:
             if self.inp_shape[0][1] % 4 != 0 or self.inp_shape[0][2] % 4 != 0 or self.inp_shape[0][3] % 4 != 0:
-                return str(exceptions.InputShapeMustBeWholeDividedByException(self.inp_shape[0], 4))
+                exc = str(exceptions.InputShapeMustBeWholeDividedByException(self.inp_shape[0], 4))
+                logger.warning(f"Слой {self.layer_type}: {exc}")
+                return exc
             if ((self.inp_shape[0][1] // (2 ** self.layer_parameters.get("n_pooling_branches"))) % 2 != 0 or
                 (self.inp_shape[0][1] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 1) and \
                     ((self.inp_shape[0][2] // (2 ** self.layer_parameters.get("n_pooling_branches"))) % 2 != 0 or
                      (self.inp_shape[0][2] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 1) and \
                     ((self.inp_shape[0][3] // (2 ** self.layer_parameters.get("n_pooling_branches"))) % 2 != 0 or
                      (self.inp_shape[0][3] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 1):
-                return str(exceptions.InputShapeMustBeInEchDimException(
+                exc = str(exceptions.InputShapeMustBeInEchDimException(
                     "equal multiple of 4",
                     f"or decrease n_pooling_branches < {self.layer_parameters.get('n_pooling_branches')}",
-                    self.inp_shape[0][1:]
-                ))
+                    self.inp_shape[0][1:]))
+                logger.warning(f"Слой {self.layer_type}: {exc}")
+                return exc
         # space_to_depth dimensions
         if self.layer_type == LayerTypeChoice.SpaceToDepth:
             if self.layer_parameters.get("data_format") == SpaceToDepthDataFormatChoice.NCHW \
                     or self.layer_parameters.get("data_format") == SpaceToDepthDataFormatChoice.NHWC \
                     and len(self.inp_shape[0]) != 4:
-                return str(exceptions.ExpectedOtherInputShapeDimException(
+                exc = str(exceptions.ExpectedOtherInputShapeDimException(
                     4, "`data_format`=`NHWC` or `NCHW`", len(self.inp_shape[0]), self.inp_shape[0]))
+                logger.warning(f"Слой {self.layer_type}: {exc}")
+                return exc
             if self.layer_parameters.get("data_format") == SpaceToDepthDataFormatChoice.NCHW_VECT_C and \
                     len(self.inp_shape[0]) != 5:
-                return str(exceptions.ExpectedOtherInputShapeDimException(
+                exc = str(exceptions.ExpectedOtherInputShapeDimException(
                     5, "`data_format`=`NCHW_VECT_C`", len(self.inp_shape[0]), self.inp_shape[0]))
+                logger.warning(f"Слой {self.layer_type}: {exc}")
+                return exc
             if self.layer_parameters.get("data_format") == SpaceToDepthDataFormatChoice.NCHW_VECT_C and \
                     (self.inp_shape[0][2] % self.layer_parameters.get("block_size") != 0 or
                      self.inp_shape[0][3] % self.layer_parameters.get("block_size") != 0):
-                return str(exceptions.DimensionSizeMustBeEvenlyDivisibleException(
+                exc = str(exceptions.DimensionSizeMustBeEvenlyDivisibleException(
                     self.inp_shape[0][2:4], f"input_shape {self.inp_shape[0]}",
-                    f"block_size = {self.layer_parameters.get('block_size')}"
-                ))
+                    f"block_size = {self.layer_parameters.get('block_size')}"))
+                logger.warning(f"Слой {self.layer_type}: {exc}")
+                return exc
         # DarkNetResBlock exceptions
         if self.layer_type == LayerTypeChoice.DarkNetResBlock and \
                 self.layer_parameters.get("filter_num2") != self.inp_shape[0][-1]:
-            return f"Incorrect parameters: Parameter 'filter_num2'={self.layer_parameters.get('filter_num2')} " \
+            exc = f"Incorrect parameters: Parameter 'filter_num2'={self.layer_parameters.get('filter_num2')} " \
                    f"must be equal the number of channels={self.inp_shape[0][-1]} in input tensor"
+            logger.warning(f"Слой {self.layer_type}: {exc}")
+            return exc
         # OnlyYOLO exceptions
         if self.layer_type == LayerTypeChoice.PretrainedYOLO:
             if self.inp_shape[0][1:] != (416, 416, 3):
-                return str(exceptions.InputShapeMustBeOnlyException(
+                exc = str(exceptions.InputShapeMustBeOnlyException(
                     "'PretrainedYOLO'", (416, 416, 3), self.inp_shape[0][1:]))
+                logger.warning(f"Слой {self.layer_type}: {exc}")
+                return exc
             if len(self.kwargs.get('down_links')) != 3:
-                return str(exceptions.IncorrectQuantityOutputLayersException(
+                exc = str(exceptions.IncorrectQuantityOutputLayersException(
                     3, '', len(self.kwargs.get('down_links'))))
+                logger.warning(f"Слой {self.layer_type}: {exc}")
+                return exc
 
 
 class CustomLayer(tensorflow.keras.layers.Layer):
@@ -994,12 +1080,10 @@ class ModelCreator:
         super().__init__()
         self.name = 'ModelCreator'
         self.model_plan = model_plan
-        # print('\nModelCreator, model_plan\n', model_plan, '\n', input_shapes, '\n', block_plans, '\n', layer_config)
         self.block_plans = block_plans
         self.input_shape = input_shapes
         self.nnmodel = None
         self.layer_config = layer_config
-        # self.debug = False
         self._get_idx_line()
         self._get_model_links()
         self.id_idx_dict = {}
@@ -1013,68 +1097,65 @@ class ModelCreator:
 
     def _get_model_links(self):
         """Get start_row, uplinks, downlinks from terra_plan"""
-        logger.debug(f"{self.name}, {self._get_model_links.__name__}")
+        # logger.debug(f"{self.name}, {self._get_model_links.__name__}")
         self.start_row, self.uplinks, self.downlinks, _, self.end_row = get_links(self.model_plan)
 
     def _get_idx_line(self):
         """Get start_row, uplinks, downlinks from terra_plan"""
-        logger.debug(f"{self.name}, {self._get_idx_line.__name__}")
+        # logger.debug(f"{self.name}, {self._get_idx_line.__name__}")
         self.idx_line = get_idx_line(self.model_plan)
 
     def _build_keras_model(self):
         """Build keras model from plan"""
-        logger.debug(f"{self.name}, {self._build_keras_model.__name__}")
+        logger.info("Сборка модели из плана...")
+        # logger.debug(f"{self.name}, {self._build_keras_model.__name__}")
         for _id in self.idx_line:
             layer_type = self.model_plan[self.id_idx_dict.get(_id)][1]
+            layer_idx = self.model_plan[self.id_idx_dict.get(_id)][0]
 
-            if self.layer_config.get(_id).module_type.value == ModuleTypeChoice.tensorflow:
-                self._tf_layer_init(self.model_plan[self.id_idx_dict.get(_id)])
-
-            elif self.layer_config.get(_id).module_type.value == ModuleTypeChoice.keras_pretrained_model:
-                self._pretrained_model_init_(self.model_plan[self.id_idx_dict.get(_id)])
-
-            elif self.layer_config.get(_id).module_type.value == ModuleTypeChoice.block_plan:
-                self._custom_block_init(self.model_plan[self.id_idx_dict.get(_id)])
-
-            elif self.layer_config.get(_id).module_type.value == ModuleTypeChoice.keras \
-                    or self.layer_config.get(_id).module_type.value == ModuleTypeChoice.terra_layer:
-                self._keras_layer_init(self.model_plan[self.id_idx_dict.get(_id)])
-
-            else:
-                msg = f'Error: "Layer `{layer_type}` is not found'
-                sys.exit(msg)
+            try:
+                if self.layer_config.get(_id).module_type.value == ModuleTypeChoice.tensorflow:
+                    self._tf_layer_init(self.model_plan[self.id_idx_dict.get(_id)])
+                elif self.layer_config.get(_id).module_type.value == ModuleTypeChoice.keras_pretrained_model:
+                    self._pretrained_model_init_(self.model_plan[self.id_idx_dict.get(_id)])
+                elif self.layer_config.get(_id).module_type.value == ModuleTypeChoice.block_plan:
+                    self._custom_block_init(self.model_plan[self.id_idx_dict.get(_id)])
+                elif self.layer_config.get(_id).module_type.value == ModuleTypeChoice.keras \
+                        or self.layer_config.get(_id).module_type.value == ModuleTypeChoice.terra_layer:
+                    self._keras_layer_init(self.model_plan[self.id_idx_dict.get(_id)])
+                else:
+                    msg = f'Error: "Layer `{layer_type}` is not found'
+                    logger.error(msg)
+                    sys.exit(msg)
+            except Exception as error:
+                raise exceptions.NotInitializedLayerException(
+                    f"{layer_idx}_{layer_type}").with_traceback(error.__traceback__)
 
         inputs = [self.tensors.get(i) for i in self.start_row]
         outputs = [self.tensors.get(i) for i in self.end_row]
         self.nnmodel = tensorflow.keras.Model(inputs, outputs)
-        print('\n self.nnmodel', self.nnmodel.summary())
+        logger.debug(self.nnmodel.summary())
 
     def _keras_layer_init(self, terra_layer):
         """Create keras layer_obj from terra_plan layer"""
-        logger.debug(f"{self.name}, {self._keras_layer_init.__name__}")
-        module = importlib.import_module(
-            self.layer_config.get(terra_layer[0]).module.value
-        )
+        # logger.debug(f"{self.name}, {self._keras_layer_init.__name__}")
+        module = importlib.import_module(self.layer_config.get(terra_layer[0]).module.value)
         if terra_layer[1] == LayerTypeChoice.Input:
             _input_shape = self.input_shape.get(int(terra_layer[2].get("name")))[0]
             self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(
-                shape=_input_shape, name=terra_layer[2].get("name")
-            )
+                shape=_input_shape, name=terra_layer[2].get("name"))
         else:
             marker = None
             yolo_out_idx = None
             for idx, layer in enumerate(self.model_plan):
-                # print('\n', terra_layer[1], idx, layer, self.model_plan)
                 if terra_layer[0] in layer[4] and \
                         layer[1] == LayerTypeChoice.PretrainedYOLO and \
                         terra_layer[0] != layer[0]:
                     marker = LayerTypeChoice.PretrainedYOLO
                     yolo_out_idx = layer[4].index(terra_layer[0])
                     break
-            # print('\n marker, yolo_out_idx', terra_layer[1], marker, yolo_out_idx)
             if marker == LayerTypeChoice.PretrainedYOLO:
                 input_tensors = self.tensors[terra_layer[3][0]][yolo_out_idx]
-                # print(self.tensors[terra_layer[3][0]][yolo_out_idx])
             else:
                 if len(terra_layer[3]) == 1:
                     input_tensors = self.tensors[terra_layer[3][0]]
@@ -1083,11 +1164,10 @@ class ModelCreator:
                     for idx in terra_layer[3]:
                         input_tensors.append(self.tensors[idx])
             self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(**terra_layer[2])(input_tensors)
-            # print()
 
     def _tf_layer_init(self, terra_layer):
         """Create tensorflow layer_obj from terra_plan layer"""
-        logger.debug(f"{self.name}, {self._tf_layer_init.__name__}")
+        # logger.debug(f"{self.name}, {self._tf_layer_init.__name__}")
         module = importlib.import_module(self.layer_config.get(terra_layer[0]).module.value)
         if len(terra_layer[3]) == 1:
             input_tensors = self.tensors[terra_layer[3][0]]
@@ -1099,7 +1179,7 @@ class ModelCreator:
 
     def _pretrained_model_init_(self, terra_layer):
         """Create pretrained model as layer_obj from terra_plan layer"""
-        logger.debug(f"{self.name}, {self._pretrained_model_init_.__name__}")
+        # logger.debug(f"{self.name}, {self._pretrained_model_init_.__name__}")
         module = importlib.import_module(self.layer_config.get(terra_layer[0]).module.value)
         param2del = ["name", "trainable", "output_layer"]
         attr = copy.deepcopy(terra_layer[2])
@@ -1121,15 +1201,13 @@ class ModelCreator:
             activation='linear', name=terra_layer[2].get("name"))(pretrained_layer)
 
     def _custom_block_init(self, terra_layer):
-        logger.debug(f"{self.name}, {self._custom_block_init.__name__}")
+        # logger.debug(f"{self.name}, {self._custom_block_init.__name__}")
         block_object = CustomLayer()
         block_object.block_plan = self.block_plans.get(terra_layer[0])
         for layer in block_object.block_plan:
             # TODO: поправить на конфиг self.layer_config.get(terra_layer[0]).module.value
             #  когда будет рабочая версия ModelData с блоками
-            module = importlib.import_module(
-                getattr(layers.types, layer[1]).LayerConfig.module.value
-            )
+            module = importlib.import_module(getattr(layers.types, layer[1]).LayerConfig.module.value)
             layer_object = getattr(module, layer[1])(**layer[2])
             setattr(block_object, f"x_{layer[0]}", layer_object)
         # пока реализация с одним входом/выходом
@@ -1148,14 +1226,13 @@ class ModelCreator:
         3 - # uplinks - (list of  int)
         4 - # downlinks - (list of int)
         """
-        logger.debug(f"{self.name}, {self.create_model.__name__}")
+        # logger.debug(f"{self.name}, {self.create_model.__name__}")
         self._build_keras_model()
-
         return self.nnmodel
 
     def creator_cleaner(self) -> None:
         """clean and reset to default self.nnmodel"""
-        logger.debug(f"\n{self.name}, {self.creator_cleaner.__name__}")
+        # logger.debug(f"\n{self.name}, {self.creator_cleaner.__name__}")
         clear_session()
         del self.nnmodel
         gc.collect()

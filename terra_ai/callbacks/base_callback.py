@@ -5,11 +5,12 @@ import pynvml as N
 from config import settings
 
 from terra_ai import progress
-from terra_ai.callbacks.utils import print_error, loss_metric_config, YOLO_ARCHITECTURE
+from terra_ai.callbacks.utils import loss_metric_config, YOLO_ARCHITECTURE
 from terra_ai.data.deploy.extra import DeployTypeChoice
 from terra_ai.data.training.extra import CheckpointTypeChoice, StateStatusChoice
 from terra_ai.data.training.train import TrainingDetailsData
 from terra_ai.datasets.preparing import PrepareDataset
+from terra_ai.exceptions.callbacks import ErrorInClassInMethodException
 from terra_ai.exceptions.training import NoCheckpointParameters, NoCheckpointMetric, NoImportantParameters, \
     StartNumBatchesMissing, BatchResultMissing, HistoryUpdateMissing, EpochResultMissing, \
     TrainingLogsSavingMissing
@@ -20,17 +21,17 @@ from terra_ai.logging import logger
 
 class FitCallback:
     """CustomCallback for all task type"""
+    name = "FitCallback"
 
     def __init__(self, dataset: PrepareDataset, training_details: TrainingDetailsData,
                  model_name: str = "model", deploy_type: str = ""):
-        method_name = "__init__"
-
+        method_name = '__init__'
         if not training_details:
             self.__stop_by_error(error=NoImportantParameters('training_details', self.__class__.__name__, method_name))
         if not dataset:
             self.__stop_by_error(error=NoImportantParameters('dataset', self.__class__.__name__, method_name))
 
-        self.name = "FitCallback"
+        # logger.infо("Добавление колбэка...")
         self.current_logs = {}
         self.usage_info = MemoryUsage(debug=False)
         self.training_detail = training_details
@@ -169,8 +170,11 @@ class FitCallback:
                     self.result["train_usage"]["timings"]["epoch"] = param[key][5]
                     self.result["train_usage"]["timings"]["batch"] = param[key][6]
             self.result["train_usage"]["hard_usage"] = self.usage_info.get_usage()
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
+        except Exception as error:
+            exc = ErrorInClassInMethodException(
+                FitCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     def _get_result_data(self):
         return self.result
@@ -180,7 +184,6 @@ class FitCallback:
 
     @staticmethod
     def _estimate_step(current, start, now):
-        method_name = '_estimate_step'
         if current:
             _time_per_unit = (now - start) / current
         else:
@@ -189,8 +192,6 @@ class FitCallback:
 
     @staticmethod
     def eta_format(eta):
-        method_name = 'eta_format'
-
         if eta > 3600:
             eta_format = '%d ч %02d мин %02d сек' % (eta // 3600,
                                                      (eta % 3600) // 60, eta % 60)
@@ -201,8 +202,6 @@ class FitCallback:
         return ' %s' % eta_format
 
     def update_progress(self, target, current, start_time, finalize=False, stop_current=0, stop_flag=False):
-        method_name = 'update_progress'
-
         """
         Updates the progress bar.
         """

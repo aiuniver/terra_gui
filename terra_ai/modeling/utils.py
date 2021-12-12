@@ -1,21 +1,12 @@
 import copy
-import logging
-import sys
 from typing import List, Tuple, Optional
-
 from tensorflow import TensorShape
-
 from terra_ai.data.modeling.extra import LayerGroupChoice
 from terra_ai.data.modeling.layer import LayerData
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-handler = logging.StreamHandler(stream=sys.stdout)
-logger.addHandler(handler)
-
 
 def get_links(model_plan: List[tuple]) -> Tuple[list, dict, dict, list, list]:
-    logger.debug(f"Validator module, {get_links.__name__}")
+    # logger.debug(f"Validator module, {get_links.__name__}")
     start_row = []
     end_row = []
     up_links = {}
@@ -33,7 +24,7 @@ def get_links(model_plan: List[tuple]) -> Tuple[list, dict, dict, list, list]:
 
 
 def get_idx_line(model_plan: List[tuple]):
-    logger.debug(f"Validator module, {get_idx_line.__name__}")
+    # logger.debug(f"Validator module, {get_idx_line.__name__}")
     start_row, up_links, down_links, idx2remove, _ = get_links(model_plan)
     distribution = []  # distribution plan, show rows with layers
 
@@ -74,7 +65,7 @@ def get_idx_line(model_plan: List[tuple]):
 
 
 def reorder_plan(model_plan: List[tuple]):
-    logger.debug(f"Validator module, {reorder_plan.__name__}")
+    # logger.debug(f"Validator module, {reorder_plan.__name__}")
     idx_line = get_idx_line(model_plan)
     order_plan = []
     for idx in idx_line:
@@ -86,7 +77,7 @@ def reorder_plan(model_plan: List[tuple]):
 
 
 def get_edges(model_plan: List[tuple], full_connection: bool = False) -> List[Tuple[int, int]]:
-    logger.debug(f"Validator module, {get_edges.__name__}")
+    # logger.debug(f"Validator module, {get_edges.__name__}")
     edges = []
     for layer in model_plan:
         for link in layer[3]:
@@ -101,7 +92,7 @@ def get_edges(model_plan: List[tuple], full_connection: bool = False) -> List[Tu
 
 
 def reformat_input_shape(input_sh: List[Tuple[Optional[int]]]) -> List[Tuple[Optional[int]]]:
-    logger.debug(f"Validator module, {reformat_input_shape.__name__}")
+    # logger.debug(f"Validator module, {reformat_input_shape.__name__}")
     if len(input_sh) == 1:
         if input_sh[0][0]:
             input_sh = list(input_sh[0])
@@ -122,7 +113,7 @@ def reformat_input_shape(input_sh: List[Tuple[Optional[int]]]) -> List[Tuple[Opt
 
 
 def get_layer_info(layer_strict: LayerData, block_name=None) -> tuple:
-    logger.debug(f"Validator module, {get_layer_info.__name__}")
+    # logger.debug(f"Validator module, {get_layer_info.__name__}")
     params_dict = layer_strict.parameters.merged
     if layer_strict.group == LayerGroupChoice.input or layer_strict.group == LayerGroupChoice.output:
         params_dict["name"] = f"{layer_strict.id}"
@@ -140,7 +131,7 @@ def get_layer_info(layer_strict: LayerData, block_name=None) -> tuple:
 
 
 def tensor_shape_to_tuple(tensor_shape: TensorShape):
-    logger.debug(f"Validator module, {tensor_shape_to_tuple.__name__}")
+    # logger.debug(f"Validator module, {tensor_shape_to_tuple.__name__}")
     tuple_shape = []
     for dim in tensor_shape:
         tuple_shape.append(dim)

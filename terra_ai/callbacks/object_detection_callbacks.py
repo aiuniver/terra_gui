@@ -8,15 +8,17 @@ from PIL import Image, ImageFont, ImageDraw
 from tensorflow.python.keras.utils.np_utils import to_categorical
 
 from terra_ai.callbacks.utils import sort_dict, round_loss_metric, fill_heatmap_front_structure, \
-    fill_graph_front_structure, fill_graph_plot_data, print_error
+    fill_graph_front_structure, fill_graph_plot_data
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
 from terra_ai.settings import DEPLOY_PRESET_PERCENT
+import terra_ai.exceptions.callbacks as exception
 
 
 # noinspection PyTypeChecker,PyUnresolvedReferences
 class BaseObjectDetectionCallback:
+    name = 'BaseObjectDetectionCallback'
+
     def __init__(self):
-        self.name = 'BaseObjectDetectionCallback'
         pass
 
     @staticmethod
@@ -54,8 +56,11 @@ class BaseObjectDetectionCallback:
             for channel in range(len(options.data.outputs.keys())):
                 y_true[channel] = bb
             return y_true, None
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def get_yolo_y_pred(array, options, sensitivity: float = 0.15, threashold: float = 0.1):
@@ -75,14 +80,15 @@ class BaseObjectDetectionCallback:
                     channel_boxes.append(boxes)
                 y_pred[i] = channel_boxes
             return y_pred
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def get_inverse_array(array: dict, options, type="output"):
         inverse_array = {"train": {}, "val": {}}
-        # for data_type in inverse_array.keys():
-        #     for out in options.data.outputs.keys():
         return inverse_array
 
     @staticmethod
@@ -100,8 +106,11 @@ class BaseObjectDetectionCallback:
             union_area = boxes1_area + boxes2_area - inter_area
             ious = np.maximum(1.0 * inter_area / union_area, np.finfo(np.float32).eps)
             return ious
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def non_max_suppression_fast(boxes: np.ndarray, scores: np.ndarray, sensitivity: float = 0.15):
@@ -132,8 +141,11 @@ class BaseObjectDetectionCallback:
                 mean_iou.append(overlap)
                 idxs = np.delete(idxs, np.concatenate(([last], np.where(overlap > sensitivity)[0])))
             return pick, mean_iou
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def get_predict_boxes(array, name_classes: list, sensitivity: float = 0.15, threashold: float = 0.1):
@@ -178,8 +190,11 @@ class BaseObjectDetectionCallback:
             _conf_param = (_scores_out / _class_param_out)[:, :1]
             pick, _ = BaseObjectDetectionCallback().non_max_suppression_fast(_boxes_out, _scores_out, sensitivity)
             return np.concatenate([_boxes_out[pick], _conf_param[pick], _scores_out[pick]], axis=-1)
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def plot_boxes(true_bb, pred_bb, img_path, name_classes, colors, image_id, add_only_true=False, plot_true=True,
@@ -303,8 +318,11 @@ class BaseObjectDetectionCallback:
                 return return_predict_path, return_true_path
             if return_mode == 'callback':
                 return save_predict_path, save_true_path
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def get_yolo_example_statistic(true_bb, pred_bb, name_classes, sensitivity=0.25):
@@ -397,8 +415,11 @@ class BaseObjectDetectionCallback:
                 'total_metric': (total_conf + total_class + total_overlap) / 3 / count if count else 0.
             }
             return compat
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def prepare_example_idx_to_show(array: dict, true_array: dict, name_classes: list, box_channel,
@@ -471,8 +492,11 @@ class BaseObjectDetectionCallback:
             else:
                 example_idx = np.random.randint(0, len(true_array.get(box_channel)), count)
             return example_idx, box_channel
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def postprocess_object_detection(predict_array, true_array, image_path: str, colors: list,
@@ -581,8 +605,11 @@ class BaseObjectDetectionCallback:
                             ]
                         }
                 return data
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def postprocess_od_deploy(array, options, save_path: str = "", dataset_path: str = "", sensitivity=0.15,
@@ -624,8 +651,11 @@ class BaseObjectDetectionCallback:
                 )
                 return_data[bb].append({"source": return_source, "predict": save_predict_path})
             return return_data
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def get_box_square(bbs, imsize=(416, 416)):
@@ -638,8 +668,11 @@ class BaseObjectDetectionCallback:
                 return square / len(bbs) / np.prod(imsize) * 100
             else:
                 return 0.
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def plot_bb_colormap(class_bb: dict, colors: list, name_classes: list, data_type: str,
@@ -668,8 +701,11 @@ class BaseObjectDetectionCallback:
             link_dict['all_classes'] = img_save_path
             matplotlib.image.imsave(img_save_path, template)
             return link_dict
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def prepare_dataset_balance(options, class_colors, preset_path) -> dict:
@@ -705,8 +741,11 @@ class BaseObjectDetectionCallback:
                     save_path=preset_path, imgsize=(imsize[0], imsize[1])
                 )
             return dataset_balance
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def get_intermediate_result(options, yolo_interactive_config, y_pred, y_true, example_idx,
@@ -748,8 +787,11 @@ class BaseObjectDetectionCallback:
                     else:
                         return_data[f"{idx + 1}"]['statistic_values'] = {}
             return return_data
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def get_statistic_data_request(yolo_interactive_config, options, y_true, y_pred) -> list:
@@ -875,8 +917,11 @@ class BaseObjectDetectionCallback:
                 )
             )
             return return_data
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def get_balance_data_request(options, dataset_balance, interactive_config) -> list:
@@ -931,14 +976,19 @@ class BaseObjectDetectionCallback:
                             _id += 1
                         return_data.append(preset)
             return return_data
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
 
 class YoloV3Callback(BaseObjectDetectionCallback):
+    name = 'YoloV3Callback'
+
     def __init__(self):
         super().__init__()
-        self.name = 'YoloV3Callback'
+        pass
 
     @staticmethod
     def get_y_true(options, dataset_path):
@@ -983,9 +1033,11 @@ class YoloV3Callback(BaseObjectDetectionCallback):
 
 
 class YoloV4Callback(BaseObjectDetectionCallback):
+    name = 'YoloV4Callback'
+
     def __init__(self):
         super().__init__()
-        self.name = 'YoloV4Callback'
+        pass
 
     @staticmethod
     def get_y_true(options, dataset_path):

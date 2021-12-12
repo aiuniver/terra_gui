@@ -9,14 +9,17 @@ import tensorflow as tf
 from tensorflow import keras
 
 from terra_ai.callbacks import interactive
-from terra_ai.callbacks.utils import print_error, loss_metric_config, get_dataset_length
+from terra_ai.callbacks.utils import loss_metric_config, get_dataset_length
 from terra_ai.custom_objects.customLayers import terra_custom_layers
 from terra_ai.data.training.train import TrainingDetailsData
 from terra_ai.datasets.preparing import PrepareDataset
+from terra_ai.logging import logger
 from terra_ai.training.yolo_utils import decode, compute_loss, get_mAP
+import terra_ai.exceptions.callbacks as exception
 
 
 class BaseTerraModel:
+    name = "BaseTerraModel"
 
     def __init__(self, model, model_name: str, model_path: Path):
 
@@ -54,12 +57,14 @@ class BaseTerraModel:
             None
         """
         try:
-            print(method_name)
             self.__save_model_to_json()
             self.__save_custom_objects_to_json()
             self.save_weights()
-        except Exception as e:
-            print_error(self.__class__.__name__, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     def load(self) -> None:
         model_data, custom_dict = self.__get_json_data()
@@ -85,9 +90,11 @@ class BaseTerraModel:
             parameters = params.base.optimizer.parameters.main.native()
             parameters.update(params.base.optimizer.parameters.extra.native())
             self.optimizer = optimizer_object(**parameters)
-        except Exception as e:
-            print_error(self.__class__.__name__, method_name, e)
-            return None
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     def __save_model_to_json(self):
         with open(self.file_path_model_json, "w", encoding="utf-8") as json_file:
@@ -120,7 +127,6 @@ class BaseTerraModel:
     def _prepare_loss_dict(params: TrainingDetailsData):
         method_name = '_prepare_loss_dict'
         try:
-            print(method_name)
             loss_dict = {}
             for output_layer in params.base.architecture.parameters.outputs:
                 loss_obj = getattr(
@@ -130,9 +136,11 @@ class BaseTerraModel:
                 )()
                 loss_dict.update({str(output_layer.id): loss_obj})
             return loss_dict
-        except Exception as e:
-            print_error("BaseModel", method_name, e)
-            return None
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @tf.function
     def __train_step(self, x_batch, y_batch, losses: dict, set_optimizer):
@@ -165,7 +173,6 @@ class BaseTerraModel:
     def fit(self, params: TrainingDetailsData, dataset: PrepareDataset):
         method_name = 'fit'
         try:
-            print(method_name)
             self.train_length, self.val_length = get_dataset_length(dataset)
             current_epoch = self.callback.last_epoch
             end_epoch = self.callback.total_epochs
@@ -248,13 +255,17 @@ class BaseTerraModel:
 
                 if self.callback.is_best():
                     self.save_weights(path_=self.file_path_model_best_weights)
-                    print(f"Best weights was saved\n")
+                    logger.info("Best weights was saved")
             self.callback.on_train_end()
         except Exception as error:
-            raise error
+            exc = exception.ErrorInClassInMethodException(
+                BaseTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
 
 class YoloTerraModel(BaseTerraModel):
+    name = "YoloTerraModel"
 
     def __init__(self, model, model_name: str, model_path: Path, **options):
         super().__init__(model=model, model_name=model_name, model_path=model_path)
@@ -279,8 +290,11 @@ class YoloTerraModel(BaseTerraModel):
                 output_tensors.append(pred_tensor)
             yolo = tf.keras.Model(self.base_model.inputs, output_tensors)
             return yolo
-        except Exception as e:
-            print_error("module yolo_utils", method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                YoloTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def __create_yolo_parameters(params: TrainingDetailsData, dataset: PrepareDataset):
@@ -293,10 +307,6 @@ class YoloTerraModel(BaseTerraModel):
 
         steps_per_epoch = int(len(dataset.dataframe['train']) // params.base.batch)
         warmup_steps = train_warmup_epochs * steps_per_epoch
-        # if params.state.status != "addtrain":
-        #     warmup_steps = train_warmup_epochs * steps_per_epoch
-        # else:
-        #     warmup_steps = 0
         total_steps = params.base.epochs * steps_per_epoch
 
         out = {
@@ -314,7 +324,6 @@ class YoloTerraModel(BaseTerraModel):
                 "total_steps": total_steps
             }
         }
-
         return out
 
     @tf.function
@@ -540,7 +549,6 @@ class YoloTerraModel(BaseTerraModel):
                     except:
                         current_logs['class_metrics']['mAP50'][str(classes[cls])] = {"val": None}
 
-                # print(f'\n Epoch {epoch}: current_logs - {current_logs}')
                 self.callback.on_epoch_end(
                     epoch=epoch + 1,
                     arrays={"train_pred": train_pred, "val_pred": val_pred, "train_true": train_true,
@@ -551,7 +559,10 @@ class YoloTerraModel(BaseTerraModel):
 
                 if self.callback.is_best():
                     self.save_weights(path_=self.file_path_model_best_weights)
-                    print(f"Best weights was saved\n")
+                    logger.info("Best weights was saved")
             self.callback.on_train_end()
-        except Exception as e:
-            print_error(self.__class__.__name__, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                YoloTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
