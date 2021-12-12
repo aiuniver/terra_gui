@@ -24,7 +24,6 @@ class ServerStateName(str, Enum):
 class ServerStateData(BaseModel):
     name: ServerStateName = ServerStateName.idle
     value: Optional[ServerStateValue]
-    error: Optional[str]
 
     @validator("value", always=True, pre=True)
     def _validate_value(cls, value, values):
