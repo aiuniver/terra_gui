@@ -42,17 +42,17 @@
           </div>
         </scrollbar>
       </div>
-      <Params 
+      <Params
         :params="params"
         :module-list="moduleList"
         :project-data="projectData"
         :user-data="userData"
         :sent-deploy="paramsSettings.isSendParamsDeploy"
         :params-downloaded="paramsSettings"
-        :overlay-status="overlay"
-        @downloadSettings="downloadSettings"
-        @overlay="setOverlay" 
-        @sendParamsDeploy="sendParamsDeploy"
+        :overlay-status="isOverlay"
+        @downloadSettings="getData"
+        @overlay="setOverlay"
+        @sendParamsDeploy="uploadData"
         @clear="clearParams"
       />
     </div>
@@ -61,7 +61,7 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapGetters } from 'vuex';
 import { debounce } from '@/utils/core/utils';
 export default {
   name: 'Datasets',
@@ -81,6 +81,7 @@ export default {
       deploy: 'deploy/getDeploy',
       params: 'deploy/getParams',
       height: 'settings/height',
+      isOverlay: 'settings/getOverlay',
       moduleList: 'deploy/getModuleList',
       projectData: 'projects/getProject',
       userData: 'projects/getUser',
@@ -89,75 +90,91 @@ export default {
       return ['DataframeClassification', 'DataframeRegression'].includes(this.type);
     },
   },
-  data: () => ({ 
-    overlay: false,
+  data: () => ({
     updateKey: 0,
-    debounce: null,
+    debounceProgressData: null,
+    debounceProgressUpload: null,
     idCheckProgressSendDeploy: null,
     paramsSettings: {
       isSendParamsDeploy: false,
-      isParamsSettingsLoad: false
-    }
+      isParamsSettingsLoad: false,
+    },
   }),
   created() {
-    this.debounce = debounce(status => {
-      if (status) this.checkProgressDownload();
+    this.debounceProgressData = debounce(status => {
+      if (status) this.progressData();
     }, 1000);
+
+    this.debounceProgressUpload = debounce(status => {
+      if (status) this.progressUpload();
+    }, 1000);
+    // this.debounceProgressUpload(true);
   },
   beforeDestroy() {
-    this.debounce(false);
+    this.debounceProgressUpload(false);
+    this.debounceProgressData(false);
   },
   methods: {
-    clearParams(){
+    clearParams() {
       this.$store.dispatch('deploy/clear');
     },
     setOverlay(value) {
-      this.overlay = value;
+      this.$store.dispatch('settings/setOverlay', value);
     },
-    async checkProgressSendDeploy() {
-      const answer = await this.$store.dispatch('deploy/checkProgress');
-      console.log(answer)
-      if (answer) {
-        this.overlay = true
-        this.paramsSettings.isSendParamsDeploy = true
-        clearTimeout(this.idCheckProgressSendDeploy)
-      }
-    },
-    async sendParamsDeploy(data){
-      const res = await this.$store.dispatch('deploy/sendDeploy', data);
-      if (res) {
-        const { error, success } = res;
-        if (!error && success) {
-          this.overlay = true
-          this.idCheckProgressSendDeploy = setTimeout(this.checkProgressSendDeploy, 2000);
+    async progressUpload() {
+      const res = await this.$store.dispatch('deploy/progressUpload');
+      console.log(res);
+      if (res?.data) {
+        const { finished, message, percent } = res.data;
+        this.$store.dispatch('messages/setProgressMessage', message);
+        this.$store.dispatch('messages/setProgress', percent);
+        if (!finished && !res.error) {
+          await this.debounceProgressUpload(true);
+        } else {
+          this.$store.dispatch('projects/get');
+          this.paramsSettings.isSendParamsDeploy = true;
+          this.setOverlay(false)
+          
         }
       }
     },
-    async checkProgressDownload() {
-      const res = await this.$store.dispatch('deploy/progress', {});
+    async uploadData(data) {
+      const res = await this.$store.dispatch('deploy/uploadData', data);
+      if (res) {
+        const { error, success } = res;
+        if (!error && success) {
+          this.setOverlay(true)
+          await this.debounceProgressUpload(true);
+        }
+      }
+    },
+
+    async progressData() {
+      const res = await this.$store.dispatch('deploy/progressData', {});
       if (res && res?.data) {
         const { finished, message, percent } = res.data;
         this.$store.dispatch('messages/setProgressMessage', message);
         this.$store.dispatch('messages/setProgress', percent);
         if (!finished) {
-          await this.debounce(true);
+          await this.debounceProgressData(true);
         } else {
           this.$store.dispatch('projects/get');
-          this.paramsSettings.isParamsSettingsLoad = true
-          this.overlay = false
+          this.paramsSettings.isParamsSettingsLoad = true;
+          this.setOverlay(false)
         }
       }
       if (res?.error) {
-        this.overlay = false
+        this.setOverlay(false)
       }
     },
-    async downloadSettings({ type = null, name = null }){
+    async getData({ type = null, name = null }) {
       if (type && name) {
-        this.overlay = true
-        const res = await this.$store.dispatch('deploy/downloadSettings', { type, name });
-        if (res?.success) await this.debounce(true);
+        this.setOverlay(true)
+        const res = await this.$store.dispatch('deploy/getData', { type, name });
+        if (res?.success) await this.debounceProgressData(true);
       }
     },
+
     async reload(index) {
       this.updateKey++;
       await this.$store.dispatch('deploy/reloadCard', [String(index)]);
@@ -167,7 +184,7 @@ export default {
       for (let i = 0; i < this.cards.length; i++) indexes.push(String(i));
       await this.$store.dispatch('deploy/reloadCard', indexes);
     },
-  }
+  },
 };
 </script>
 

@@ -44,18 +44,18 @@ export default {
     parseStruct ({ commit }, { form }) {
       if (form) commit("SET_BASE", form)
     },
-    async sendDeploy ({ dispatch }, data) {
+    async uploadData ({ dispatch }, data) {
       return await dispatch('axios', { url: '/deploy/upload/', data }, { root: true });
     },
-    async checkProgress ({ commit, dispatch }) {
-      const { data } = await dispatch('axios', { url: '/deploy/upload/progress/' }, { root: true });
-      if (data.finished) commit("SET_MODULE_LIST", data.data);
-      return data.finished;
+    async progressUpload ({ commit, dispatch }) {
+      const res = await dispatch('axios', { url: '/deploy/upload/progress/' }, { root: true });
+      if (res?.data?.finished) commit("SET_MODULE_LIST", res.data.data);
+      return res;
     },
-    async downloadSettings ({ dispatch }, data) {
+    async getData ({ dispatch }, data) {
       return await dispatch('axios', { url: '/deploy/get/', data }, { root: true });
     },
-    async progress ({ dispatch, commit }, data) {
+    async progressData ({ dispatch, commit }, data) {
       const res = await dispatch('axios', { url: '/deploy/get/progress/', data }, { root: true });
       if (res) {
         if (res?.data) {

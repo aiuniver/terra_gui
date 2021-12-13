@@ -23,7 +23,7 @@
                     @change="parse"
                   />
                   <t-button @click="$emit('downloadSettings', parameters)" :key="'key' + i" :disabled="overlayStatus">
-                    Загрузить
+                    Подготовить
                   </t-button>
                 </template>
               </div>
