@@ -2,14 +2,15 @@
   <div class="new-server">
     <p class="new-server__header">Добавление сервера демо-панели</p>
     <form class="new-server__form" @submit.prevent="addServer">
+      <div class="new-server__form--overlay" v-show="loading"></div>
       <t-field label="Доменное имя">
-        <DInputText placeholder="" v-model="domain_name" />
+        <t-input-new placeholder="" v-model="domain_name" />
       </t-field>
       <t-field label="IP адрес">
         <VueIP :ip="ip_address" :onChange="change" />
       </t-field>
       <t-field label="Имя пользователя">
-        <DInputText placeholder="" v-model="user" />
+        <t-input-new placeholder="" v-model="user" />
       </t-field>
       <div class="new-server__ports">
         <t-field label="SSH порт">
@@ -23,10 +24,10 @@
         </t-field>
       </div>
       <t-button class="new-server__btn"
-			:disabled="!validForm" 
-			:loading="loading">Добавить</t-button>
+			:disabled="!validForm || loading" 
+			>Добавить</t-button>
     </form>
-
+    <LoadSpiner v-show="loading" text=""/>
     <!-- <div class="new-server__error">
       <p class="new-server__error--header">Ошибка добавления сервера демо-панели</p>
       <p class="new-server__error--info">
@@ -38,23 +39,25 @@
 
 <script>
 import VueIP from './VueIp.vue';
+import DInputNumber from './DInputNumber.vue'
+import LoadSpiner from "@/components/forms/LoadSpiner"
 
 export default {
   name: 'NewServer',
   data: () => ({
-    ip_address: '255.255.255.255',
+    ip_address: '',
     ipValid: null,
 		domain_name: '',
 		user: '',
-		port_ssh: 0,
-		port_http: 0,
-		port_https: 0,
+		port_ssh: 22,
+		port_http: 80,
+		port_https: 443,
 		loading: false
   }),
   components: {
     VueIP,
-    DInputNumber: () => import('@/components/global/design/forms/components/DInputNumber'),
-    DInputText: () => import('@/components/global/design/forms/components/DInputText'),
+    DInputNumber,
+    LoadSpiner
   },
 	computed: {
 		validForm() {
@@ -96,6 +99,18 @@ export default {
   }
   &__form {
     padding: 30px 20px;
+    > * {
+      margin-bottom: 20px;
+    }
+    &--overlay {
+      background: rgba(14, 22, 33, 0.3);
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+    }
   }
   &__ports {
     display: flex;
@@ -105,7 +120,7 @@ export default {
     }
   }
   &__btn {
-    margin-top: 65px;
+    margin-top: 10px;
   }
   &__error {
     position: absolute;
