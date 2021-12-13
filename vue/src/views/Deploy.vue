@@ -108,7 +108,7 @@ export default {
     this.debounceProgressUpload = debounce(status => {
       if (status) this.progressUpload();
     }, 1000);
-    this.debounceProgressUpload(true);
+    // this.debounceProgressUpload(true);
   },
   beforeDestroy() {
     this.debounceProgressUpload(false);
