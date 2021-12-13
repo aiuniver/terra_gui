@@ -129,7 +129,7 @@ export default {
         const { error, success } = res;
         if (!error && success) {
           this.overlay = true
-          this.idCheckProgressSendDeploy = setTimeout(this.checkProgressSendDeploy, 2000);
+          await this.debounce(true);
         }
       }
     },
