@@ -104,12 +104,15 @@ export default {
     this.debounceProgressData = debounce(status => {
       if (status) this.progressData();
     }, 1000);
+
     this.debounceProgressUpload = debounce(status => {
       if (status) this.progressUpload();
     }, 1000);
+    this.debounceProgressUpload(true);
   },
   beforeDestroy() {
-    this.progressData(false);
+    this.debounceProgressUpload(false);
+    this.debounceProgressData(false);
   },
   methods: {
     clearParams() {
@@ -121,11 +124,11 @@ export default {
     async progressUpload() {
       const res = await this.$store.dispatch('deploy/progressUpload');
       console.log(res);
-      if (res) {
+      if (res?.data) {
         const { finished, message, percent } = res.data;
         this.$store.dispatch('messages/setProgressMessage', message);
         this.$store.dispatch('messages/setProgress', percent);
-        if (!finished) {
+        if (!finished && !res.error) {
           await this.debounceProgressUpload(true);
         } else {
           this.$store.dispatch('projects/get');
