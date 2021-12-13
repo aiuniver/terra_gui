@@ -29,7 +29,7 @@ class CascadeRunner:
 
     def start_cascade(self, cascade_data: CascadeDetailsData, training_path: Path,
                       sources: Dict[int, List[str]]):
-
+        # print('sources', sources)
         config = CascadeCreator()
 
         presets_path = os.path.join(DEPLOY_PATH, "deploy_presets")
@@ -262,7 +262,7 @@ class CascadeRunner:
 
         out_data = []
         iter_ = 0
-        for source in sources[:10]:
+        for source in sources[:30]:
             if type_ in [DeployTypeChoice.YoloV3, DeployTypeChoice.YoloV4, DeployTypeChoice.VideoObjectDetection]:
                 if type_ == DeployTypeChoice.VideoObjectDetection:
                     data_type = "video"
@@ -282,7 +282,7 @@ class CascadeRunner:
                     "source": source_file_name,
                     "predict": predict_file_name
                 })
-            elif type_ in [DeployTypeChoice.GoogleTTS.demo, DeployTypeChoice.TinkoffAPI.demo]:
+            elif type_ == DeployTypeChoice.GoogleTTS.demo:
                 predict_file_name = f"deploy_presets/result_{iter_}.webm"
                 source_file_name = f"deploy_presets/initial_{iter_}.txt"
 
@@ -297,7 +297,7 @@ class CascadeRunner:
                     "source": source_file_name,
                     "predict": predict_file_name
                 })
-            elif type_ == DeployTypeChoice.Wav2Vec.demo:
+            elif type_ in [DeployTypeChoice.Wav2Vec.demo, DeployTypeChoice.TinkoffAPI.demo]:
                 data_type = "audio"
                 predict_file_name = f"deploy_presets/result_{iter_}.txt"
                 source_file_name = f"deploy_presets/initial_{iter_}.webm"

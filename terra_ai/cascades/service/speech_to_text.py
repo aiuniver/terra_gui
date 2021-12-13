@@ -2,6 +2,7 @@ import librosa
 from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
 import torch
 from ..utils import stt_pb2
+from ..utils import longrunning_pb2
 import grpc
 import copy
 from time import time
@@ -57,7 +58,7 @@ class _SpeechToTextStub(object):
         self.LongRunningRecognize = channel.unary_unary(
             '/tinkoff.cloud.stt.v1.SpeechToText/LongRunningRecognize',
             request_serializer=stt_pb2.LongRunningRecognizeRequest.SerializeToString,
-            response_deserializer=stt_pb2.Operation.FromString,
+            response_deserializer=longrunning_pb2.Operation.FromString,
         )
 
 
@@ -97,9 +98,13 @@ def _authorization_metadata(api_key: str, secret_key, scope, expiration_time):
 
 def _build_request(path: str, max_alternatives: int, do_not_perform_vad: bool, profanity_filter: bool,
                    enable_automatic_punctuation: bool):
-    mp3_file = mp3.MP3(path)
-    num_ch = int(mp3_file.info.channels)
-    sr_audio = int(mp3_file.info.sample_rate)
+    print('path', path)
+    y, sr_audio = librosa.load(path, sr=None, mono=False)
+    num_ch = len(y.shape)  # mono (1 channel)
+    print('num_ch', num_ch, y.shape)
+    # mp3_file = mp3.MP3(path)
+    # num_ch = int(mp3_file.info.channels)
+    # sr_audio = int(mp3_file.info.sample_rate)
     request = stt_pb2.RecognizeRequest()
     with open(path, "rb") as f:
         request.audio.content = f.read()
