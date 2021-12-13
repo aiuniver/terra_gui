@@ -1,18 +1,18 @@
 <template>
 	<main class="page-servers">
-		<div class="page-servers__list">
-		<scrollbar class="page-servers__scroll">
-			<div class="page-servers__table-wrapper">
-				<ServerTable v-if="showTable" @instruction="openInstruction" :servers="servers" />
-				<p v-else class="page-servers__noserver">Нет добавленных серверов демо-панелий</p>
-				<span class="page-servers__btn" @click="addNew = true">
-					<i class="ci-icon ci-plus_circle"></i><span>Добавить сервер</span>
-				</span>
+		<scrollbar class="page-servers__scroll" @handle-scroll="handleScroll">
+			<span class="page-servers__btn" @click="addNew = true" :style="{ transform: `translateX(${scroll}px)` }">
+				<i class="ci-icon ci-plus_circle"></i><span>Добавить сервер</span>
+			</span>
+			<div class="page-servers__list">
+				<LoadSpiner v-show="fetchingServers" text="Получение списка серверов" />
+				<ServerTable v-show="showTable && !fetchingServers" @instruction="openInstruction" :servers="servers" />
+				<p v-show="!showTable && !fetchingServers" class="page-servers__noserver">Нет добавленных серверов демо-панелий</p>
 			</div>
 		</scrollbar>
-		</div>
+		
 		<div class="page-servers__new">
-			<NewServer v-show="addNew" @addServer="newServer" />
+			<NewServer v-if="addNew" @addServer="newServer" />
 		</div>
 		<at-modal v-model="serverModal"
 		class="modal" 
@@ -26,13 +26,20 @@
 		class="modal"
 		:showConfirmButton="false"
 		:showCancelButton="false"
+		@on-cancel="buffer = ''"
 		>
 			<template v-slot:header><span class="modal-title">Инструкция по настройке сервера демо-панели</span></template>
 			<div class="ssh-wrapper">
-				<span class="ssh">Приватный SSH-ключ</span> <i title="Скопировать" @click="copy(private_key)" class="btn-copy"></i> <span class="clickable">Скачать</span>
+				<span class="ssh">Приватный SSH-ключ</span>
+				<i title="Скопировать" @click="copy('private')" class="btn-copy"></i>
+				<span class="clickable">Скачать</span>
+				<span v-show="buffer === 'private'" class="buffer">Ключ скопирован в буффер обмена</span>
 			</div>
 			<div class="ssh-wrapper">
-				<span class="ssh">Публичный  SSH-ключ</span> <i title="Скопировать" @click="copy(public_key)" class="btn-copy"></i> <span class="clickable">Скачать</span>
+				<span class="ssh">Публичный  SSH-ключ</span>
+				<i title="Скопировать" @click="copy('public')" class="btn-copy"></i>
+				<span class="clickable">Скачать</span>
+				<span v-show="buffer === 'public'" class="buffer">Ключ скопирован в буффер обмена</span>
 			</div>
 			<hr>
 			<div class="instruction" v-html="instruction"></div>
@@ -43,13 +50,15 @@
 <script>
 import ServerTable from '@/components/servers/ServerTable.vue'
 import NewServer from '@/components/servers/NewServer.vue'
+import LoadSpiner from "@/components/forms/LoadSpiner"
 import { mapGetters } from 'vuex'
 
 export default {
 	name: 'servers',
 	components: {
 		ServerTable,
-		NewServer
+		NewServer,
+		LoadSpiner
 	},
 	data: () => ({
 		addNew: false,
@@ -58,7 +67,10 @@ export default {
 		serverID: null,
 		private_key: null,
 		public_key: null,
-		instruction: null
+		instruction: null,
+		fetchingServers: false,
+		buffer: '',
+		scroll: 0
 	}),
 	computed: {
 		...mapGetters({
@@ -76,16 +88,19 @@ export default {
 			this.selectedServer = server
 			this.manualModal = true
 		},
-		copy(text) {
+		copy(type) {
+			let key = type === 'private' ? this.private_key: this.public_key
 			const $el = document.createElement('input')
 			document.body.appendChild($el)
-			$el.value = text
+			$el.value = key
 			$el.select()
       document.execCommand('copy')
 			$el.remove()
+			this.buffer = type
 		},
 		newServer(id) {
 			this.serverID = id
+			this.addNew = false
 			this.serverModal = true
 		},
 		async openInstruction(id) {
@@ -96,29 +111,36 @@ export default {
 			this.private_key = data.private_ssh_key
 			this.public_key = data.public_ssh_key
 			this.instruction = data.instruction
+		},
+		handleScroll(vert, horiz) {
+			this.scroll = horiz.scrollLeft
 		}
 	},
-	created() {
-    this.$store.dispatch('servers/getServers')
+	async created() {
+		this.fetchingServers = true
+    await this.$store.dispatch('servers/getServers')
+		this.fetchingServers = false
   }
 }
 </script>
 
 <style lang="scss" scoped>
 .page-servers {
-	display: flex;
+	display: grid;
+	grid-template: 1fr / 1fr 400px;
 	height: 100%;
 	&__list {
 		height: 100%;
 		background: #17212B;
-		flex-grow: 1;
-	}
-	&__table-wrapper {
-		padding: 30px 20px;
+		padding: 0 20px;
+		width: 100%;
 	}
 	&__noserver {
 		font-size: 12px;
 		color: #A7BED3;
+	}
+	&__scroll {
+		background: #17212B;
 	}
 	&__btn {
 		color: #65B9F4;
@@ -128,13 +150,17 @@ export default {
 		align-items: center;
 		gap: 10px;
 		width: max-content;
-		margin-top: 40px;
+		position: sticky;
+		top: 0;
+		padding: 30px 20px 10px;
+		background: #17212B;
+		width: 100%;
+		z-index: 2;
 		i {
 			font-size: 20px;
 		}
 	}
 	&__new {
-		flex: 0 0 350px;
 		border-left: #0e1621 1px solid;
 		background: #17212B;
 	}
@@ -185,5 +211,9 @@ export default {
 		gap: 20px;
 		margin-bottom: 10px;
 	}
+}
+
+.buffer {
+	color: #3eba31;
 }
 </style>
