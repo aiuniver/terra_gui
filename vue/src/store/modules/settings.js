@@ -12,30 +12,30 @@ export default {
     },
   }),
   mutations: {
-    SET_OVERLAY(state, value) {
+    SET_OVERLAY (state, value) {
       state.overlay = value;
     },
-    SET_ALL_HEIGHT(state, value) {
+    SET_ALL_HEIGHT (state, value) {
       state.height = { ...state.height, ...value };
     },
-    SET_ALL_WIGTH(state, value) {
+    SET_ALL_WIGTH (state, value) {
       state.wigth = { ...state.wigth, ...value };
     },
   },
   actions: {
-    setOverlay({ commit }, value) {
+    setOverlay ({ commit }, value) {
       commit("SET_OVERLAY", value);
     },
-    setResize({ commit }, { height, wigth }) {
+    setResize ({ commit }, { height, wigth }) {
       commit("SET_ALL_HEIGHT", { all: height });
       commit("SET_ALL_WIGTH", { all: wigth });
     },
-    setHeight({ commit }, obj) {
+    setHeight ({ commit }, obj) {
       commit("SET_ALL_HEIGHT", obj);
     },
   },
   getters: {
-    isMobile() {
+    isMobile () {
       return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
         navigator.userAgent
       );
@@ -53,5 +53,6 @@ export default {
     // getFilterHeight({ filterHeight }) {
     //   return filterHeight;
     // },
+    getOverlay: ({ overlay }) => overlay
   },
 };

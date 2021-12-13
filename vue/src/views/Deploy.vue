@@ -49,7 +49,7 @@
         :user-data="userData"
         :sent-deploy="paramsSettings.isSendParamsDeploy"
         :params-downloaded="paramsSettings"
-        :overlay-status="overlay"
+        :overlay-status="isOverlay"
         @downloadSettings="getData"
         @overlay="setOverlay"
         @sendParamsDeploy="uploadData"
@@ -81,6 +81,7 @@ export default {
       deploy: 'deploy/getDeploy',
       params: 'deploy/getParams',
       height: 'settings/height',
+      isOverlay: 'settings/getOverlay',
       moduleList: 'deploy/getModuleList',
       projectData: 'projects/getProject',
       userData: 'projects/getUser',
@@ -90,7 +91,6 @@ export default {
     },
   },
   data: () => ({
-    overlay: false,
     updateKey: 0,
     debounceProgressData: null,
     debounceProgressUpload: null,
@@ -119,7 +119,7 @@ export default {
       this.$store.dispatch('deploy/clear');
     },
     setOverlay(value) {
-      this.overlay = value;
+      this.$store.dispatch('settings/setOverlay', value);
     },
     async progressUpload() {
       const res = await this.$store.dispatch('deploy/progressUpload');
@@ -133,7 +133,8 @@ export default {
         } else {
           this.$store.dispatch('projects/get');
           this.paramsSettings.isSendParamsDeploy = true;
-          this.overlay = false;
+          this.setOverlay(false)
+          
         }
       }
     },
@@ -142,7 +143,7 @@ export default {
       if (res) {
         const { error, success } = res;
         if (!error && success) {
-          this.overlay = true;
+          this.setOverlay(true)
           await this.debounceProgressUpload(true);
         }
       }
@@ -159,16 +160,16 @@ export default {
         } else {
           this.$store.dispatch('projects/get');
           this.paramsSettings.isParamsSettingsLoad = true;
-          this.overlay = false;
+          this.setOverlay(false)
         }
       }
       if (res?.error) {
-        this.overlay = false;
+        this.setOverlay(false)
       }
     },
     async getData({ type = null, name = null }) {
       if (type && name) {
-        this.overlay = true;
+        this.setOverlay(true)
         const res = await this.$store.dispatch('deploy/getData', { type, name });
         if (res?.success) await this.debounceProgressData(true);
       }
