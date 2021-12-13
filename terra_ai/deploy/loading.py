@@ -39,33 +39,22 @@ def upload(source: Path, data: dict):
 
     try:
         # Подготовка данных (архивация исходников)
-        print(1)
         zip_destination = progress_utils.pack(
             progress_name, DEPLOY_PREPARE_TITLE, source
         )
-        print(2)
         destination = Path(f"{zip_destination.absolute()}.zip")
-        print(3)
         os.rename(zip_destination, destination)
-        print(4)
         data.update({"file": {"path": destination.absolute()}})
-        print(5)
         upload_data = StageUploadData(**data)
-        print(6)
         upload_response = requests.post(
             settings.DEPLOY_URL,
             json=upload_data.native(),
             headers={"Content-Type": "application/json"},
         )
-        print(7)
         if upload_response.ok:
-            print(8)
             upload_response = upload_response.json()
-            print(9)
             if upload_response.get("success"):
-                print(10)
                 progress.pool(progress_name, message=DEPLOY_UPLOAD_TITLE, percent=0)
-                print(11)
                 # import shutil
                 #
                 # print(upload_data.file.path)
@@ -77,40 +66,31 @@ def upload(source: Path, data: dict):
                     upload_data.file.path,
                     upload_response.get("destination"),
                 )
-                print(12)
                 complete_data = StageCompleteData(
                     stage=2,
                     deploy=upload_response.get("deploy"),
                     login=upload_data.user.login,
                     project=upload_data.project.slug,
                 )
-                print(13)
                 complete_response = requests.post(
                     settings.DEPLOY_URL,
                     json=complete_data.native(),
                     headers={"Content-Type": "application/json"},
                 )
-                print(14)
                 os.remove(destination)
-                print(15)
                 if complete_response.ok:
-                    print(16)
                     progress.pool(
                         progress_name,
                         data=StageResponseData(**complete_response.json()),
                         finished=True,
                     )
                 else:
-                    print(17)
                     raise RequestAPIException()
             else:
-                print(18)
                 os.remove(destination)
                 raise RequestAPIException()
         else:
-            print(19)
             os.remove(destination)
             raise RequestAPIException()
     except Exception as error:
-        print(20)
         progress.pool(progress_name, finished=True, error=error)

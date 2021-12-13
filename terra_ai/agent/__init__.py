@@ -387,8 +387,6 @@ class Exchange:
         """
         Деплой: загрузка
         """
-        print(source)
-        print(kwargs)
         deploy_upload(source, kwargs)
 
 
