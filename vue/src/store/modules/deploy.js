@@ -67,7 +67,7 @@ export default {
           }
         }
         if (res?.error) {
-          dispatch('messages/setMessage', { error: res.error }, { root: true });
+          // dispatch('messages/setMessage', { error: res.error }, { root: true });
           dispatch('logging/setError', JSON.stringify(res.error, null, 2), { root: true });
         }
       }

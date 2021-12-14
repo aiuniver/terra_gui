@@ -6,15 +6,16 @@
 .at-notification {
   position: fixed;
   display: flex;
-  right: 16px;
+  left: 16px;
   width: $notification-width;
   padding: $notification-padding;
   color: $notification-text-color;
   background-color: $notification-bg-color;
   line-height: 1.5;
   border-radius: $border-radius-base;
+  border: 1px solid #65b9f4;
   box-shadow: $notification-shadow;
-  transition: opacity .3s, transform .3s, top .4s;
+  transition: opacity .3s, transform .3s, bottom .4s;
   z-index: $zindex-notification;
 
   /* element */

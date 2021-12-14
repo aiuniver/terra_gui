@@ -87,7 +87,7 @@ export default {
               this.$store.dispatch('settings/setOverlay', false);
             } else {
               if (error) {
-                this.$store.dispatch('messages/setMessage', { error });
+                // this.$store.dispatch('messages/setMessage', { error });
                 this.$store.dispatch('messages/setProgressMessage', '');
                 this.$store.dispatch('messages/setProgress', 0);
                 this.$store.dispatch('settings/setOverlay', false);

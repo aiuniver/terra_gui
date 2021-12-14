@@ -49,12 +49,12 @@ export default {
         if (data) {
           const err = data?.error || ''
           if (err) {
-            dispatch('messages/setMessage', { error: err }, { root: true });
+            // dispatch('messages/setMessage', { error: err }, { root: true });
             dispatch('logging/setError', JSON.stringify(err, null, 2), { root: true });
           } 
         }
         if (error) {
-          dispatch('messages/setMessage', { error: error }, { root: true });
+          // dispatch('messages/setMessage', { error: error }, { root: true });
           dispatch('logging/setError', JSON.stringify(error, null, 2), { root: true });
         }
       }
