@@ -46,7 +46,7 @@ class DeployTypeDemoChoice(str, Enum):
     YoloV5 = "object_detection"
     GoogleTTS = "text_to_audio"
     Wav2Vec = "audio_to_text"
-    TinkoffAPI = "text_to_audio"
+    TinkoffAPI = "audio_to_text"
 
 
 class DeployTypePageChoice(str, Enum):
