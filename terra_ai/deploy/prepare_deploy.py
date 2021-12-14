@@ -20,6 +20,7 @@ from terra_ai.exceptions.deploy import MethodNotImplementedException
 from terra_ai.training import GUINN
 from terra_ai.training.terra_models import BaseTerraModel, YoloTerraModel
 from terra_ai.settings import DEPLOY_PATH
+from ..data.deploy.extra import DeployTypeChoice
 
 
 class DeployCreator:
@@ -91,7 +92,7 @@ class DeployCreator:
                                    "deploy_presets",
                                    "presets_config.json"), "r", encoding="utf-8") as presets_config:
                 deploy_data = json.load(presets_config)
-            print(deploy_data)
+
             cascade = CascadeCreator()
             cascade.copy_config(
                 deploy_path=Path(deploy_path),
@@ -105,7 +106,7 @@ class DeployCreator:
             )
             cascade.copy_script(
                 deploy_path=Path(deploy_path),
-                function_name="video_object_detection"
+                function_name=DeployTypeChoice(deploy_data.get("type")).demo
             )
 
         deploy_data.update({"page": page})

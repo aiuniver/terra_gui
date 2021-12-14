@@ -98,14 +98,14 @@ class CascadeRunner:
                                               BlockServiceTypeChoice.Wav2Vec]:
                 model = None
                 if block.parameters.main.type == BlockServiceTypeChoice.YoloV5 and _input_type == "image":
-                    deploy_type = DeployTypeChoice.YoloV5.demo
+                    deploy_type = DeployTypeChoice.YoloV5
                 if block.parameters.main.type == BlockServiceTypeChoice.Wav2Vec:
-                    deploy_type = DeployTypeChoice.Wav2Vec.demo
+                    deploy_type = DeployTypeChoice.Wav2Vec
                     _input_type = "audio"
                 if block.parameters.main.type == BlockServiceTypeChoice.GoogleTTS:
-                    deploy_type = DeployTypeChoice.GoogleTTS.demo
+                    deploy_type = DeployTypeChoice.GoogleTTS
                 if block.parameters.main.type == BlockServiceTypeChoice.TinkoffAPI:
-                    deploy_type = DeployTypeChoice.TinkoffAPI.demo
+                    deploy_type = DeployTypeChoice.TinkoffAPI
 
         if model:
             with open(os.path.join(training_path, model, "config.json"),
@@ -263,7 +263,8 @@ class CascadeRunner:
         out_data = []
         iter_ = 0
         for source in sources[:10]:
-            if type_ in [DeployTypeChoice.YoloV3, DeployTypeChoice.YoloV4, DeployTypeChoice.VideoObjectDetection]:
+            if type_ in [DeployTypeChoice.YoloV3, DeployTypeChoice.YoloV4,
+                         DeployTypeChoice.YoloV5, DeployTypeChoice.VideoObjectDetection]:
                 if type_ == DeployTypeChoice.VideoObjectDetection:
                     data_type = "video"
                     predict_file_name = f"deploy_presets/result_{iter_}.webm"
@@ -282,7 +283,7 @@ class CascadeRunner:
                     "source": source_file_name,
                     "predict": predict_file_name
                 })
-            elif type_ == DeployTypeChoice.GoogleTTS.demo:
+            elif type_ == DeployTypeChoice.GoogleTTS:
                 predict_file_name = f"deploy_presets/result_{iter_}.webm"
                 source_file_name = f"deploy_presets/initial_{iter_}.txt"
 
@@ -297,7 +298,7 @@ class CascadeRunner:
                     "source": source_file_name,
                     "predict": predict_file_name
                 })
-            elif type_ in [DeployTypeChoice.Wav2Vec.demo, DeployTypeChoice.TinkoffAPI.demo]:
+            elif type_ in [DeployTypeChoice.Wav2Vec, DeployTypeChoice.TinkoffAPI]:
                 data_type = "audio"
                 predict_file_name = f"deploy_presets/result_{iter_}.txt"
                 source_file_name = f"deploy_presets/initial_{iter_}.webm"
