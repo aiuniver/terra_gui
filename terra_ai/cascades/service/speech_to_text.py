@@ -9,6 +9,7 @@ from time import time
 import json
 import base64
 from mutagen import mp3
+import wave
 import hmac
 
 
@@ -99,24 +100,29 @@ def _authorization_metadata(api_key: str, secret_key, scope, expiration_time):
 def _build_request(path: str, max_alternatives: int, do_not_perform_vad: bool, profanity_filter: bool,
                    enable_automatic_punctuation: bool):
     print('path', path)
-    y, sr_audio = librosa.load(path, sr=None, mono=False)
-    num_ch = len(y.shape)  # mono (1 channel)
-    print('num_ch', num_ch, y.shape)
-    # mp3_file = mp3.MP3(path)
-    # num_ch = int(mp3_file.info.channels)
-    # sr_audio = int(mp3_file.info.sample_rate)
     request = stt_pb2.RecognizeRequest()
-    with open(path, "rb") as f:
-        request.audio.content = f.read()
+    if path.split('.')[-1].lower() == 'mp3':
+        mp3_file = mp3.MP3(path)
+        num_ch = int(mp3_file.info.channels)
+        sr_audio = int(mp3_file.info.sample_rate)
+        with open(path, "rb") as f:
+            request.audio.content = f.read()
+        request.config.encoding = stt_pb2.AudioEncoding.MPEG_AUDIO
 
-    request.config.encoding = stt_pb2.AudioEncoding.MPEG_AUDIO
+    elif path.split('.')[-1].lower() == 'wav':
+        with wave.open(path) as f:
+            sr_audio = f.getframerate()
+            num_ch = f.getnchannels()
+            request.audio.content = f.readframes(f.getnframes())
+        request.config.encoding = stt_pb2.AudioEncoding.LINEAR16
+
     request.config.sample_rate_hertz = sr_audio
     request.config.num_channels = num_ch  # количество каналов в записи
 
     request.config.max_alternatives = max_alternatives  # включение альтернативных распознаваний
     request.config.do_not_perform_vad = do_not_perform_vad  # отключение режима диалога
     request.config.profanity_filter = profanity_filter  # фильтр ненормативной лексики
-    request.config.enable_automatic_punctuation = enable_automatic_punctuation  # фильтр ненормативной лексики
+    request.config.enable_automatic_punctuation = enable_automatic_punctuation  # вставка знаков пунктуации
     return request
 
 

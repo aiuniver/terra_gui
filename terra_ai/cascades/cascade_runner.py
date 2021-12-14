@@ -262,7 +262,7 @@ class CascadeRunner:
 
         out_data = []
         iter_ = 0
-        for source in sources[:30]:
+        for source in sources[:10]:
             if type_ in [DeployTypeChoice.YoloV3, DeployTypeChoice.YoloV4, DeployTypeChoice.VideoObjectDetection]:
                 if type_ == DeployTypeChoice.VideoObjectDetection:
                     data_type = "video"
