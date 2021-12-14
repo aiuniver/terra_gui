@@ -57,11 +57,6 @@ export default {
   },
   data: () => ({
     copy: false,
-    // tags: [
-    //   { name: 'ERROR', active: true },
-    //   { name: 'INFO', active: true },
-    //   { name: 'WARNING', active: true },
-    // ],
     selected: [],
   }),
   methods: {

@@ -18,7 +18,7 @@ class ModelingMessages(dict, Enum):
                             "eng": "With %s input shape must be only %s but received: %s"}
     InputShapeMustBeWholeDividedBy = {"ru": "Input shape `%s` except channels must be whole divided by %s",
                                       "eng": "Input shape `%s` except channels must be whole divided by %s"}
-    LayerDoesNotHaveInputShape = {"ru": "Layer does not have input shape",
+    LayerDoesNotHaveInputShape = {"ru": "У слоя не задана входная размерность",
                                   "eng": "Layer does not have input shape"}
     # Output Shape
     UnexpectedOutputShape = {"ru": "На выходных данных ожидалась размерность %s, но получена %s",
@@ -67,6 +67,9 @@ class ModelingMessages(dict, Enum):
     MismatchedInputShapes = {
         "ru": "Required inputs with matching shapes except for the concat axis `%s` but received: %s",
         "eng": "Required inputs with matching shapes except for the concat axis `%s` but received: %s"}
+    NotInitializedLayer = {
+        "ru": "Невозможно инициалицировать слой `%s`",
+        "eng": "Can't initialize layer `%s`"}
 
 
 class ModelingException(TerraBaseException):
@@ -236,3 +239,11 @@ class MismatchedInputShapesException(ModelingException):
 
     def __init__(self, __expected, __got, **kwargs):
         super().__init__(str(__expected), str(__got), **kwargs)
+
+
+class NotInitializedLayerException(ModelingException):
+    class Meta:
+        message = ModelingMessages.NotInitializedLayer
+
+    def __init__(self, __layer_name, **kwargs):
+        super().__init__(str(__layer_name), **kwargs)

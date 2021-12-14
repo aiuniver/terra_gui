@@ -10,16 +10,20 @@ from tensorflow.python.keras.utils.np_utils import to_categorical
 
 from terra_ai.callbacks.utils import dice_coef, sort_dict, get_y_true, get_image_class_colormap, get_confusion_matrix, \
     fill_heatmap_front_structure, get_classification_report, fill_table_front_structure, fill_graph_front_structure, \
-    fill_graph_plot_data, print_error, sequence_length_calculator, get_segmentation_confusion_matrix
+    fill_graph_plot_data, sequence_length_calculator, get_segmentation_confusion_matrix
 from terra_ai.data.datasets.dataset import DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerEncodingChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
+from terra_ai.logging import logger
 from terra_ai.settings import CALLBACK_CLASSIFICATION_TREASHOLD_VALUE, DEPLOY_PRESET_PERCENT
+import terra_ai.exceptions.callbacks as exception
 
 
 class BaseSegmentationCallback:
+    name = 'BaseSegmentationCallback'
+
     def __init__(self):
-        self.name = 'BaseSegmentationCallback'
+        pass
 
     @staticmethod
     def get_x_array(options):
@@ -28,15 +32,17 @@ class BaseSegmentationCallback:
             x_val = None
             inverse_x_val = None
             return x_val, inverse_x_val
-        except Exception as e:
-            print_error(BaseSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def get_y_true(options, dataset_path):
         method_name = 'get_y_true'
         try:
             y_true = {"train": {}, "val": {}}
-            # y_true = {"val": {}}
             inverse_y_true = {"train": {}, "val": {}}
             for data_type in y_true.keys():
                 for out in options.data.outputs.keys():
@@ -44,23 +50,20 @@ class BaseSegmentationCallback:
                         y_true[data_type][f"{out}"] = options.Y.get(data_type).get(f"{out}")
                     else:
                         y_true[data_type][f"{out}"] = []
-                        # ccc = 1
                         for _, y_val in options.dataset[data_type].batch(1):
                             y_true[data_type][f"{out}"].extend(y_val.get(f'{out}').numpy())
-                            # print(ccc, y_val.get(f'{out}').shape)
-                            # ccc += 1
                         y_true[data_type][f"{out}"] = np.array(y_true[data_type][f"{out}"])
-                        # print('\ny_true[data_type][f"{out}"]', y_true[data_type][f"{out}"].shape)
             return y_true, inverse_y_true
-        except Exception as e:
-            print_error(BaseSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
 
     @staticmethod
     def get_inverse_array(array: dict, options, type="output"):
         inverse_array = {"train": {}, "val": {}}
-        # for data_type in inverse_array.keys():
-        #     for out in options.data.outputs.keys():
         return inverse_array
 
     @staticmethod
@@ -125,16 +128,20 @@ class BaseSegmentationCallback:
                 example_idx = np.random.randint(0, len(true_array), count)
 
             return example_idx
-        except Exception as e:
-            print_error(BaseSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
 
 # noinspection PyUnresolvedReferences
 class ImageSegmentationCallback(BaseSegmentationCallback):
+    name = 'ImageSegmentationCallback'
+
     def __init__(self):
         super().__init__()
-        self.name = 'ImageSegmentationCallback'
-        # print(f'Callback {self.name} is called')
+        pass
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str, preset_path: str,
@@ -166,8 +173,11 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                 img.save(source, 'webp')
                 data = [{"title": "Изображение", "value": source, "color_mark": None }]
                 return data
-        except Exception as e:
-            print_error(ImageSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                ImageSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def postprocess_segmentation(predict_array: np.ndarray, true_array: Optional[np.ndarray],
@@ -263,8 +273,11 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                         }
                     )
                 return data
-        except Exception as e:
-            print_error(ImageSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                ImageSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "") -> dict:
@@ -317,8 +330,11 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                     )
                     _id += 1
             return return_data
-        except Exception as e:
-            print_error(ImageSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                ImageSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def dataset_balance(options, y_true, preset_path: str, class_colors) -> dict:
@@ -360,8 +376,11 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                     dataset_balance[f"{out}"]["presence_balance"][data_type] = class_count
                     dataset_balance[f"{out}"]["square_balance"][data_type] = class_percent
             return dataset_balance
-        except Exception as e:
-            print_error(ImageSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                ImageSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
@@ -418,30 +437,22 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                         else:
                             return_data[f"{idx + 1}"]['statistic_values'] = {}
             return return_data
-        except Exception as e:
-            print_error(ImageSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                ImageSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def statistic_data_request(interactive_config, options, y_true: dict, inverse_y_true: dict,
                                y_pred: dict, inverse_y_pred: dict, raw_y_pred=None) -> list:
         method_name = 'statistic_data_request'
         try:
-            # print(method_name, y_pred.get('train').keys())
-            # print(interactive_config)
             return_data = []
             _id = 1
             for out in interactive_config.statistic_data.output_id:
                 for data_type in y_true.keys():
                     type_name = "Тренировочная" if data_type == 'train' else "Проверочная"
-                    # print(out, y_true.get(data_type).keys())
-                    # print(out, y_pred.get(data_type).keys())
-                    # cm, cm_percent = get_confusion_matrix(
-                    #     y_true=np.argmax(y_true.get(data_type).get(f"{out}"), axis=-1).reshape(
-                    #         np.prod(np.argmax(y_true.get(data_type).get(f"{out}"), axis=-1).shape)).astype('int'),
-                    #     y_pred=np.argmax(y_pred.get(data_type).get(f'{out}'), axis=-1).reshape(
-                    #         np.prod(np.argmax(y_pred.get(data_type).get(f'{out}'), axis=-1).shape)).astype('int'),
-                    #     get_percent=True
-                    # )
                     num_classes = options.data.outputs.get(out).num_classes
                     cm, cm_percent = get_segmentation_confusion_matrix(
                         y_true=to_categorical(np.argmax(y_true.get(data_type).get(f'{out}'), axis=-1),
@@ -451,7 +462,6 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                         num_classes=num_classes,
                         get_percent=True
                     )
-                    print(cm, cm_percent)
                     return_data.append(
                         fill_heatmap_front_structure(
                             _id=_id,
@@ -467,8 +477,11 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                     )
                     _id += 1
             return return_data
-        except Exception as e:
-            print_error(ImageSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                ImageSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def balance_data_request(options, dataset_balance, interactive_config) -> list:
@@ -520,15 +533,20 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                                 _id += 1
                             return_data.append(preset)
             return return_data
-        except Exception as e:
-            print_error(ImageSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                ImageSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
 
 # noinspection PyTypeChecker
 class TextSegmentationCallback(BaseSegmentationCallback):
+    name = 'TextSegmentationCallback'
+
     def __init__(self):
         super().__init__()
-        self.name = 'TextSegmentationCallback'
+        pass
 
     @staticmethod
     def postprocess_initial_source(options, example_id: int, return_mode='deploy', data_type='val'):
@@ -558,8 +576,11 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                 return source
             if return_mode == 'callback':
                 return data
-        except Exception as e:
-            print_error(TextSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TextSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def postprocess_text_segmentation(pred_array: np.ndarray, options: DatasetOutputsData, dataframe: DataFrame,
@@ -694,8 +715,11 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                         0, {'title': 'Средняя точность', 'value': mean_stat, 'color_mark': mean_color_mark}
                     )
                 return data
-        except Exception as e:
-            print_error(TextSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TextSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "") -> dict:
@@ -732,8 +756,11 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                     )
                     return_data[output_id]["color_map"] = colors
             return return_data
-        except Exception as e:
-            print_error(TextSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TextSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def dataset_balance(options, y_true, preset_path: str, class_colors) -> dict:
@@ -774,8 +801,11 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                     dataset_balance[f"{out}"]["phrase_class_length"][data_type] = phrase_length
                     dataset_balance[f"{out}"]["phrase_class_count"][data_type] = phrase_count
             return dataset_balance
-        except Exception as e:
-            print_error(TextSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TextSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
@@ -833,8 +863,11 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                         else:
                             return_data[f"{idx + 1}"]['statistic_values'] = {}
             return return_data
-        except Exception as e:
-            print_error(TextSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TextSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def statistic_data_request(interactive_config, options, y_true, inverse_y_true,
@@ -892,8 +925,11 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                     else:
                         pass
             return return_data
-        except Exception as e:
-            print_error(TextSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TextSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def balance_data_request(options, dataset_balance, interactive_config) -> list:
@@ -946,5 +982,8 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                             _id += 1
                     return_data.append(preset)
             return return_data
-        except Exception as e:
-            print_error(TextSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TextSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc

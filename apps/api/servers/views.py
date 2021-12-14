@@ -24,10 +24,7 @@ class ServersListMixinAPIView(BaseAPIView):
         servers_data = response_data.get("data")
         servers = []
         for server in servers_data:
-            server["state"] = {
-                "name": server.get("state"),
-                "error": server.get("error"),
-            }
+            server["state"] = {"name": server.get("state")}
             servers.append(json.loads(ServerData(**server).json(ensure_ascii=False)))
         return servers
 
@@ -39,10 +36,7 @@ class ServersListMixinAPIView(BaseAPIView):
         servers_data = response_data.get("data")
         servers = []
         for server in servers_data:
-            server["state"] = {
-                "name": server.get("state"),
-                "error": server.get("error"),
-            }
+            server["state"] = {"name": server.get("state")}
             servers.append(
                 json.loads(ServerFullData(**server).json(ensure_ascii=False))
             )
@@ -81,10 +75,7 @@ class GetAPIView(BaseAPIView):
             json={"config": settings.USER_PORT, **serializer.validated_data},
         ).json()
         server = response_data.get("data")
-        server["state"] = {
-            "name": server.get("state"),
-            "error": server.get("error"),
-        }
+        server["state"] = {"name": server.get("state")}
         return BaseResponseSuccess(
             json.loads(ServerFullData(**server).json(ensure_ascii=False))
         )

@@ -12,4 +12,8 @@ from . import (
     VideoObjectDetection,
     YoloV3,
     YoloV4,
+    YoloV5,
+    GoogleTTS,
+    Wav2Vec,
+    TinkoffAPI,
 )

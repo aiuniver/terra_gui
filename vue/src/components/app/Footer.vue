@@ -99,10 +99,14 @@ export default {
     },
     warning(arr) {
       if (arr.lenght) {
-        arr.forEach(element => {
-          this.$Notify.warning({ title: element });
+        arr.forEach(({ title, message }) => {
+          this.$Notify.warning({ title, message });
         });
       }
+    },
+    message(value) {
+      console.log(value)
+      if(value) this.$Notify({ type: this.color, title: 'Успешно', message: value });
     },
   },
 };

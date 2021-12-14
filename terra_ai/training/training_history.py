@@ -11,13 +11,15 @@ from tensorflow.python.keras.utils.np_utils import to_categorical
 from terra_ai.callbacks import interactive
 from terra_ai.callbacks.classification_callbacks import BaseClassificationCallback
 from terra_ai.callbacks.utils import BASIC_ARCHITECTURE, CLASS_ARCHITECTURE, YOLO_ARCHITECTURE, \
-    CLASSIFICATION_ARCHITECTURE, print_error, loss_metric_config, round_loss_metric, class_metric_list
+    CLASSIFICATION_ARCHITECTURE, loss_metric_config, round_loss_metric, class_metric_list
 from terra_ai.data.datasets.extra import LayerEncodingChoice
 from terra_ai.data.presets.training import Metric
 from terra_ai.data.training.extra import StateStatusChoice
 from terra_ai.data.training.train import TrainingDetailsData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.exceptions.training import NoHistoryLogsException
+import terra_ai.exceptions.callbacks as exception
+from terra_ai.logging import logger
 
 OUTPUT_LOG_CONFIG = {
     "loss": {
@@ -48,6 +50,7 @@ OUTPUT_LOG_CONFIG = {
 
 
 class History:
+    name = "History"
 
     def __init__(self, dataset: PrepareDataset, training_details: TrainingDetailsData, deploy_type: str = ""):
         self.architecture_type = deploy_type
@@ -70,7 +73,6 @@ class History:
     def save_logs(self):
         method_name = 'save_logs'
         try:
-            print(method_name)
             logs = {
                 "fit_log": self.log_history,
                 "interactive_log": interactive.log_history,
@@ -81,8 +83,11 @@ class History:
             self.training_detail.logs = logs
             with open(os.path.join(self.training_detail.model_path, "log.history"), "w", encoding="utf-8") as history:
                 json.dump(logs, history)
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                History.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     def _load_logs(self, dataset: PrepareDataset, training_details: TrainingDetailsData):
         method_name = '_load_logs'
@@ -118,7 +123,6 @@ class History:
     def _prepare_log_history_template(options: PrepareDataset, params: TrainingDetailsData):
         method_name = '_prepare_log_history_template'
         try:
-            print(method_name)
             log_history = {"epochs": []}
             if options.data.architecture in BASIC_ARCHITECTURE:
                 for output_layer in params.base.architecture.parameters.outputs:
@@ -155,14 +159,16 @@ class History:
                     log_history['output']["class_loss"]['prob_loss'][class_name] = {"train": [], "val": []}
                     log_history['output']["class_metrics"]['mAP50'][class_name] = {"train": [], "val": []}
             return log_history
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                History.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def update_class_idx(dataset_class_idx, predict_idx):
         method_name = 'update_class_idx'
         try:
-            print(method_name)
             update_idx = {'train': {}, "val": dataset_class_idx.get('val')}
             for out in dataset_class_idx['train'].keys():
                 update_idx['train'][out] = {}
@@ -170,8 +176,11 @@ class History:
                     shift = predict_idx[0]
                     update_idx['train'][out][cls] = list(np.array(dataset_class_idx['train'][out][cls]) - shift)
             return update_idx
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                History.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     def get_checkpoint_data(self, output: str, checkpoint_type: str, metric: str, indicator: str):
         return self.log_history.get(output, {}).get(checkpoint_type, {}).get(metric, {}).get(indicator, None)
@@ -179,7 +188,6 @@ class History:
     def current_basic_logs(self, epoch: int, arrays: dict, train_idx: list):
         method_name = 'current_basic_logs'
         try:
-            print(method_name)
             self.current_logs = {"epochs": epoch}
             update_cls = {}
             if self.architecture_type in CLASSIFICATION_ARCHITECTURE:
@@ -267,8 +275,11 @@ class History:
                                     y_pred=arrays.get("val_pred").get(out), class_idx=i)
                                 self.current_logs[out]["class_metrics"][metric_name][cls] = \
                                     {"train": train_class_metric, "val": val_class_metric}
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                History.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     def _get_loss_calculation(self, loss_obj, out: str, y_true, y_pred, show_class=False, class_idx=0):
         method_name = '_get_loss_calculation'
@@ -296,8 +307,11 @@ class History:
                 pred_array = y_pred
             loss_value = float(loss_obj()(true_array, pred_array).numpy())
             return loss_value if not math.isnan(loss_value) else None
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                History.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     def _get_metric_calculation(self, metric_name, metric_obj, out: str, y_true, y_pred, show_class=False, class_idx=0):
         method_name = '_get_metric_calculation'
@@ -336,15 +350,17 @@ class History:
                     m.update_state(y_true, y_pred)
             metric_value = float(m.result().numpy())
             return metric_value if not math.isnan(metric_value) else None
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                History.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     def update_log_history(self):
         method_name = 'update_log_history'
         try:
-            print(method_name)
             if self.current_logs['epochs'] in self.log_history['epochs']:
-                print(f"\nCurrent epoch {self.current_logs['epochs']} is already in log_history\n")
+                logger.warning(f"Текущая эпоха {self.current_logs['epochs']} уже записана ранее в логи")
             self.log_history['epochs'].append(self.current_logs['epochs'])
             if self.dataset.data.architecture in BASIC_ARCHITECTURE:
                 for output_layer in self.training_detail.base.architecture.parameters.outputs:
@@ -491,8 +507,11 @@ class History:
                         metric_overfitting)
                     self.log_history['output']['progress_state']['metrics'][metric_name]['normal_state'].append(
                         normal_state)
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                History.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def _get_mean_log(logs):
@@ -505,8 +524,10 @@ class History:
                 return float(np.mean(copy_logs))
             else:
                 return float(np.mean(copy_logs[-5:]))
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                History.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
             return 0.
 
     @staticmethod
@@ -526,8 +547,11 @@ class History:
                         (max(mean_log) - mean_log[-1]) * 100 / max(mean_log) > 2:
                     overfitting = True
             return overfitting
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                History.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def _evaluate_underfitting(metric_name: str, train_log: float, val_log: float, metric_type: str):
@@ -546,5 +570,8 @@ class History:
                 if (train_log - val_log) / train_log * 100 > 3:
                     underfitting = True
             return underfitting
-        except Exception as e:
-            print_error('FitCallback', method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                History.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc

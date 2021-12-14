@@ -1673,7 +1673,7 @@ DatasetsGroups = [
                 ],
             },
             {
-                "alias": "bus",
+                "alias": "bus_split",
                 "name": "Автобусы v4 (генератор)",
                 "group": DatasetGroupChoice.terra.value,
                 "inputs": {

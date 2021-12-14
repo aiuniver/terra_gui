@@ -175,16 +175,18 @@ class DatasetData(AliasMixinData):
         out = []
         sources = read_csv(Path(self.path, "instructions", "tables", "val.csv"))
         for column in sources.columns:
-            if column.split("_")[-1].title() in ["Image", "Text", "Audio", "Video"]:
-                out = list(
-                    map(
-                        lambda item: str(
-                            Path(self.path, PureWindowsPath(item).as_posix())
-                        ),
-                        sources[column].to_list(),
+            _title = column.split("_")[-1].title()
+            if _title in ["Image", "Text", "Audio", "Video"]:
+                out = sources[column].to_list()
+                if _title != "Text":
+                    out = list(
+                        map(
+                            lambda item: str(
+                                Path(self.path, PureWindowsPath(item).as_posix())
+                            ),
+                            out,
+                        )
                     )
-                )
-        print(out)
         return out
 
     @property

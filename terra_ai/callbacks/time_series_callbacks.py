@@ -1,18 +1,21 @@
 import numpy as np
 
 from terra_ai.callbacks.utils import fill_graph_front_structure, fill_graph_plot_data, sort_dict, round_list, \
-    get_y_true, get_distribution_histogram, get_autocorrelation_graphic, print_error, get_time_series_graphic, \
+    get_y_true, get_distribution_histogram, get_autocorrelation_graphic, get_time_series_graphic, \
     MAX_INTERMEDIATE_GRAPH_LENGTH
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
 from terra_ai.settings import MAX_GRAPH_LENGTH, CALLBACK_REGRESSION_TREASHOLD_VALUE, DEPLOY_PRESET_PERCENT
+import terra_ai.exceptions.callbacks as exception
 
 
 # noinspection PyTypeChecker,PyUnresolvedReferences
 class TimeseriesCallback:
+    name = 'TimeseriesCallback'
+
     def __init__(self):
-        self.name = 'TimeseriesCallback'
-        # print(f'Callback {self.name} is called')
+        pass
+
 
     @staticmethod
     def get_x_array(options):
@@ -42,8 +45,11 @@ class TimeseriesCallback:
                     inverse_x = np.concatenate([inverse_x, inverse_col], axis=-1)
                 inverse_x_val[inp] = inverse_x[:, :, 1:]
             return x_val, inverse_x_val
-        except Exception as e:
-            print_error(TimeseriesCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TimeseriesCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def get_y_true(options, dataset_path):
@@ -73,34 +79,11 @@ class TimeseriesCallback:
                     inverse_y_true[data_type][f"{out}"] = inverse_y[:, :, 1:]
 
             return y_true, inverse_y_true
-        except Exception as e:
-            print_error(TimeseriesCallback().name, method_name, e)
-
-    # @staticmethod
-    # def get_y_pred(y_true: dict, y_pred, options):
-    #     method_name = 'get_y_pred'
-    #     try:
-    #         reformat_pred = {}
-    #         inverse_y_pred = {}
-    #         for idx, out in enumerate(y_true.get('val').keys()):
-    #             if len(y_true.get('val').keys()) == 1:
-    #                 reformat_pred[out] = y_pred
-    #             else:
-    #                 reformat_pred[out] = y_pred[idx]
-    #             preprocess_dict = options.preprocessing.preprocessing.get(int(out))
-    #             inverse_y = np.zeros_like(reformat_pred.get(out)[:, :, 0:1])
-    #             for i, column in enumerate(preprocess_dict.keys()):
-    #                 if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
-    #                     _options = {int(out): {column: reformat_pred.get(out)[:, :, i]}}
-    #                     inverse_col = np.expand_dims(
-    #                         options.preprocessing.inverse_data(_options).get(int(out)).get(column), axis=-1)
-    #                 else:
-    #                     inverse_col = reformat_pred.get(out)[:, :, i:i + 1]
-    #                 inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
-    #             inverse_y_pred[out] = inverse_y[:, :, 1:]
-    #         return reformat_pred, inverse_y_pred
-    #     except Exception as e:
-    #         print_error(TimeseriesCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TimeseriesCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def get_inverse_array(array: dict, options):
@@ -122,8 +105,11 @@ class TimeseriesCallback:
                         inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
                     inverse_array[data_type][out] = inverse_y[:, :, 1:]
             return inverse_array
-        except Exception as e:
-            print_error(TimeseriesCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TimeseriesCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, inverse_x_array=None,
@@ -174,8 +160,11 @@ class TimeseriesCallback:
 
             if return_mode == 'deploy':
                 return source
-        except Exception as e:
-            print_error(TimeseriesCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TimeseriesCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "") -> dict:
@@ -228,8 +217,11 @@ class TimeseriesCallback:
                         data['predict'][channel.split('_', 1)[-1]] = [inverse_true, inverse_pred]
                     return_data[output_id].append(data)
             return return_data
-        except Exception as e:
-            print_error(TimeseriesCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TimeseriesCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def dataset_balance(options, y_true, preset_path: str, class_colors) -> list:
@@ -269,8 +261,11 @@ class TimeseriesCallback:
                             _id += 1
                         dataset_balance.append(preset)
             return dataset_balance
-        except Exception as e:
-            print_error(TimeseriesCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TimeseriesCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
@@ -324,8 +319,11 @@ class TimeseriesCallback:
                         else:
                             return_data[f"{idx + 1}"]['statistic_values'] = {}
             return return_data
-        except Exception as e:
-            print_error(TimeseriesCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TimeseriesCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def statistic_data_request(interactive_config, inverse_y_true, y_pred, inverse_y_pred, options=None,
@@ -432,16 +430,15 @@ class TimeseriesCallback:
                             )
                             _id += 1
             return return_data
-        except Exception as e:
-            print_error(TimeseriesCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TimeseriesCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def balance_data_request(options, dataset_balance, interactive_config) -> list:
-        method_name = 'balance_data_request'
-        try:
-            return dataset_balance
-        except Exception as e:
-            print_error(TimeseriesCallback().name, method_name, e)
+        return dataset_balance
 
     @staticmethod
     def prepare_example_idx_to_show(array: np.ndarray, true_array: np.ndarray, count: int, options=None, output=None,
@@ -490,8 +487,11 @@ class TimeseriesCallback:
             else:
                 example_idx = np.random.randint(0, len(true_array), count)
             return example_idx
-        except Exception as e:
-            print_error(TimeseriesCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TimeseriesCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
 
     @staticmethod
     def postprocess_time_series(options: DatasetData, real_x: np.ndarray, inverse_y_true: np.ndarray,
@@ -576,5 +576,8 @@ class TimeseriesCallback:
                             }
                         )
             return data
-        except Exception as e:
-            print_error(TimeseriesCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TimeseriesCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            logger.error(exc)
+            raise exc
