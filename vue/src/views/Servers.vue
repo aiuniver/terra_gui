@@ -1,7 +1,7 @@
 <template>
 	<main class="page-servers">
 		<scrollbar class="page-servers__scroll" @handle-scroll="handleScroll">
-			<span class="page-servers__btn" @click="addNew = true" :style="{ transform: `translateX(${scroll}px)` }">
+			<span class="page-servers__btn" @click="addNew = true" :style="{ left: `${scrollLeft}px`, top: `${scrollTop}px` }">
 				<i class="ci-icon ci-plus_circle"></i><span>Добавить сервер</span>
 			</span>
 			<div class="page-servers__list">
@@ -70,7 +70,8 @@ export default {
 		instruction: null,
 		fetchingServers: false,
 		buffer: '',
-		scroll: 0
+		scrollLeft: 0,
+		scrollTop: 0
 	}),
 	computed: {
 		...mapGetters({
@@ -113,7 +114,8 @@ export default {
 			this.instruction = data.instruction
 		},
 		handleScroll(vert, horiz) {
-			this.scroll = horiz.scrollLeft
+			this.scrollLeft = horiz.scrollLeft
+			this.scrollTop = vert.scrollTop
 		}
 	},
 	async created() {
@@ -132,7 +134,7 @@ export default {
 	&__list {
 		height: 100%;
 		background: #17212B;
-		padding: 0 20px;
+		padding: 60px 20px 0;
 		width: 100%;
 	}
 	&__noserver {
@@ -149,12 +151,10 @@ export default {
 		display: flex;
 		align-items: center;
 		gap: 10px;
-		width: max-content;
-		position: sticky;
-		top: 0;
+		position: absolute;
+		right: 0;
 		padding: 30px 20px 10px;
 		background: #17212B;
-		width: 100%;
 		z-index: 2;
 		i {
 			font-size: 20px;

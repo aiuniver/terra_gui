@@ -19,9 +19,9 @@
       @focus="focus"
     />
     <div class="d-input__btn">
-      <div v-show="input && !isDisabled" class="d-input__btn--cleener">
+      <!-- <div v-show="input && !isDisabled" class="d-input__btn--cleener">
         <i class="ci-icon ci-close_big" @click="clear" />
-      </div>
+      </div> -->
       <div v-if="type === 'number'" :class="['d-input__btn--number', { 'd-input__btn--disabled': isDisabled }]">
         <i class="ci-icon ci-caret_up" @click="send(input+1)" />
         <i class="ci-icon ci-caret_down" @click="send(input-1)" />
@@ -84,6 +84,12 @@ export default {
 .d-input {
   background: #242f3d;
   border: 1px solid #6c7883;
+  &__btn--number .ci-icon:hover {
+    background: none;
+  }
+  &__input {
+    padding: 8px 10px;
+  }
   &:not(.d-input--error):focus-within {
     background-color: #242f3d;
     border-color: #fff;
