@@ -223,7 +223,7 @@ class DeployCreator:
             if deploy_type == ArchitectureChoice.TextSegmentation:
                 with open(os.path.join(deploy_path, "format.txt"),
                           "w", encoding="utf-8") as format_file:
-                    format_file.write(str(presets.get("tags_map", "")))
+                    format_file.write(str(presets.get("color_map", "")))
 
     @staticmethod
     def _prepare_deploy(presets, deploy_path: Path, model_path: Path, deploy_type: str, dataset: PrepareDataset):
