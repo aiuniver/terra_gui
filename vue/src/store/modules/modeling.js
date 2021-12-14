@@ -138,7 +138,7 @@ export default {
     async removeModel ({ dispatch }, data) {
       return await dispatch('axios', { url: '/modeling/delete/', data }, { root: true });
     },
-    async updateModel ({ commit, state: { blocks, links }, dispatch }, block) {
+    async updateModel ({ commit, state: { blocks, links }, dispatch }) {
       const semdBlocks = JSON.parse(JSON.stringify(blocks))
       semdBlocks.forEach(block => {
         // if (block.group !== 'input') block.shape.input = null;
