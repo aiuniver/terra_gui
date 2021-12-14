@@ -192,10 +192,12 @@ class BaseTerraModel:
             train_data_idxs = np.arange(self.train_length).tolist()
             self.callback.on_train_begin()
             for epoch in range(current_epoch, end_epoch):
+                logger.info(f"Эпоха {epoch+1}", extra={"front_level": "info"})
                 self.callback.on_epoch_begin()
                 train_steps = 0
                 current_idx = 0
-
+                logger.info(f"Эпоха {epoch + 1}: обучение на тренировочной выборке...",
+                            extra={"front_level": "info"})
                 for x_batch_train, y_batch_train in dataset.dataset.get('train').batch(params.base.batch):
                     logits, y_true = self.__train_step(
                         x_batch=x_batch_train, y_batch=y_batch_train,
@@ -209,6 +211,9 @@ class BaseTerraModel:
                     train_steps += 1
 
                     if interactive.urgent_predict:
+                        logger.info(f"Эпоха {epoch + 1}: urgent_predict", extra={"front_level": "info"})
+                        logger.info(f"Эпоха {epoch + 1}: обработка проверочной выборки...",
+                                    extra={"front_level": "info"})
                         val_steps = 0
                         current_val_idx = 0
                         for x_batch_val, y_batch_val in dataset.dataset.get('val').batch(params.base.batch):
@@ -230,10 +235,13 @@ class BaseTerraModel:
                     if self.callback.stop_training:
                         break
 
+                logger.info(f"Эпоха {epoch + 1}: сохраниеиние весов текущей эпохи...", extra={"front_level": "info"})
                 self.save_weights()
                 if self.callback.stop_training:
+                    logger.info(f"Эпоха {epoch + 1}: остановка обучения", extra={"front_level": "success"})
                     break
 
+                logger.info(f"Эпоха {epoch + 1}: обработка проверочной выборки...", extra={"front_level": "info"})
                 val_steps = 0
                 current_val_idx = 0
                 for x_batch_val, y_batch_val in dataset.dataset.get('val').batch(params.base.batch):
@@ -437,6 +445,7 @@ class YoloTerraModel(BaseTerraModel):
             train_data_idxs = np.arange(self.train_length).tolist()
             self.callback.on_train_begin()
             for epoch in range(current_epoch, end_epoch):
+                logger.info(f"Эпоха {epoch + 1}", extra={"front_level": "info"})
                 self.callback.on_epoch_begin()
                 current_logs = {"epochs": epoch + 1, 'loss': {}, "metrics": {}, 'class_loss': {}, 'class_metrics': {}}
                 train_loss_cls = {}
@@ -444,6 +453,8 @@ class YoloTerraModel(BaseTerraModel):
                     train_loss_cls[classes[cls]] = 0.
                 current_idx = 0
                 cur_step, giou_train, conf_train, prob_train, total_train = 0, 0, 0, 0, 0
+                logger.info(f"Эпоха {epoch + 1}: обучение на тренировочной выборке...",
+                            extra={"front_level": "info"})
                 for image_data, target1, target2 in dataset.dataset.get('train').batch(params.base.batch):
                     results = self.__train_step(image_data,
                                                 target1,
@@ -466,6 +477,9 @@ class YoloTerraModel(BaseTerraModel):
                     current_idx += length
                     cur_step += 1
                     if interactive.urgent_predict:
+                        logger.info(f"Эпоха {epoch + 1}: urgent_predict", extra={"front_level": "info"})
+                        logger.info(f"Эпоха {epoch + 1}: обработка проверочной выборки...",
+                                    extra={"front_level": "info"})
                         val_steps = 0
                         val_current_idx = 0
                         for val_image_data, val_target1, val_target2 in dataset.dataset.get('val').batch(
@@ -489,8 +503,10 @@ class YoloTerraModel(BaseTerraModel):
                     if self.callback.stop_training:
                         break
 
+                logger.info(f"Эпоха {epoch + 1}: сохраниеиние весов текущей эпохи...", extra={"front_level": "info"})
                 self.save_weights()
                 if self.callback.stop_training:
+                    logger.info(f"Эпоха {epoch + 1}: остановка обучения", extra={"front_level": "success"})
                     break
 
                 current_logs['loss']['giou_loss'] = {'train': giou_train / cur_step}
@@ -504,6 +520,7 @@ class YoloTerraModel(BaseTerraModel):
                         {'train': train_loss_cls[str(classes[cls])] / cur_step}
                     train_loss_cls[str(classes[cls])] = train_loss_cls[str(classes[cls])] / cur_step
 
+                logger.info(f"Эпоха {epoch + 1}: обработка проверочной выборки...", extra={"front_level": "info"})
                 val_steps, giou_val, conf_val, prob_val, total_val = 0, 0, 0, 0, 0
                 val_loss_cls = {}
                 for cls in range(num_class):
@@ -538,6 +555,7 @@ class YoloTerraModel(BaseTerraModel):
                     current_logs['class_loss']['prob_loss'][str(classes[cls])]["val"] = \
                         val_loss_cls[str(classes[cls])] / val_steps
 
+                logger.info(f"Эпоха {epoch + 1}: расчет метрики map50...", extra={"front_level": "info"})
                 map50 = get_mAP(self.yolo_model, dataset, score_threshold=0.05, iou_threshold=[0.50],
                                 TRAIN_CLASSES=dataset.data.outputs.get(2).classes_names, dataset_path=dataset.data.path)
                 current_logs['metrics']['mAP50'] = {"val": map50.get('val_mAP50')}

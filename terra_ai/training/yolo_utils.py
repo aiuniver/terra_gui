@@ -699,7 +699,7 @@ def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25
     method_name = 'get_mAP'
     tt1 = time.time()
     try:
-        logger.info(f"Расчет метрики mAP...")
+        # logger.info(f"Расчет метрики mAP...")
         if TRAIN_CLASSES is None:
             TRAIN_CLASSES = []
         if iou_threshold is None:
@@ -886,7 +886,8 @@ def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25
             ap_dictionary[f"val_mAP{int(i_iou * 100)}"] = mAP * 100
         ap_dictionary["val_fps"] = fps
         tt2 = time.time()
-        logger.info(f'Расчет метрики mAP завершен. Время расчета: {round(tt2 - tt1, 2)} сек')
+        logger.info(f'Расчет метрики mAP завершен. Время расчета: {round(tt2 - tt1, 2)} сек',
+                    extra={"front_level": "info"})
         return ap_dictionary
     except Exception as error:
         exc = exception.ErrorInModuleInMethodException(
