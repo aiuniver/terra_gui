@@ -36,7 +36,7 @@ export default {
         const { data: res } = await axios({ method, url: '/api/v1' + url, data });
         if (res) {
           const { error, success, warning } = res;
-          if (success) dispatch('messages/setMessage', '');
+          // if (success) dispatch('messages/setMessage', '');
           if (error) dispatch('logging/setError', error);
           if (warning) dispatch('logging/setWarning', warning);
         }

@@ -30,7 +30,6 @@ export default {
       commit("modeling/SET_MODELING", { layers_types, layer_form }, { root: true });
       commit("modeling/SET_MODEL", model, { root: true });
       commit("cascades/SET_CASCADES", formsCascades, { root: true });
-      console.log(cascade)
       commit("cascades/SET_MODEL", cascade, { root: true });
       commit("datasets/SET_CREATION", creation, { root: true });
       dispatch("trainings/parseStruct", { ...training, form }, { root: true });
@@ -44,20 +43,6 @@ export default {
     },
     async progress ({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/project/load/progress/', data }, { root: true });
-      if (res) {
-        const { data, error } = res;
-        if (data) {
-          const err = data?.error || ''
-          if (err) {
-            // dispatch('messages/setMessage', { error: err }, { root: true });
-            dispatch('logging/setError', JSON.stringify(err, null, 2), { root: true });
-          } 
-        }
-        if (error) {
-          // dispatch('messages/setMessage', { error: error }, { root: true });
-          dispatch('logging/setError', JSON.stringify(error, null, 2), { root: true });
-        }
-      }
       return res
     },
     async saveNameProject ({ dispatch }, name) {
