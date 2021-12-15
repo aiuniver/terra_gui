@@ -1658,13 +1658,14 @@ class PSPBlock3D(Layer):
 class PretrainedYOLO(Layer):
 
     def __init__(self, num_classes: int = 5, version: str = "YOLOv4",
-                 use_weights: bool = True, **kwargs):
+                 use_weights: bool = True, save_weights: str = '', **kwargs):
         super(PretrainedYOLO, self).__init__(**kwargs)
         self.num_classes = num_classes
         self.version = version
         self.use_weights = use_weights
-        self.save_weights = "C:/PycharmProjects/terra_gui/terra_ai/assets/cascades/yolov4.weights" \
-            if self.version == "YOLOv4" else "C:/PycharmProjects/terra_gui/terra_ai/assets/cascades/yolov3.weights"
+        self.save_weights = save_weights
+        # self.save_weights = "C:/PycharmProjects/terra_gui/terra_ai/assets/cascades/yolov4.weights" \
+        #     if self.version == "YOLOv4" else "C:/PycharmProjects/terra_gui/terra_ai/assets/cascades/yolov3.weights"
         # self.save_weights = "D:/AI/terra_gui/terra_ai/assets/cascades/yolov4.weights" \
         #     if self.version == YOLOModeChoice.YOLOv4 else "D:/AI/terra_gui/terra_ai/assets/cascades/yolov3.weights"
         self.yolo = self.create_yolo(classes=self.num_classes)
@@ -1999,7 +2000,8 @@ class PretrainedYOLO(Layer):
         config = {
             'num_classes': self.num_classes,
             'version': self.version,
-            'use_weights': self.use_weights
+            'use_weights': self.use_weights,
+            'save_weights': self.save_weights
         }
         base_config = super(PretrainedYOLO, self).get_config()
         return dict(tuple(base_config.items()) + tuple(config.items()))
