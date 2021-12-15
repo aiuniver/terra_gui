@@ -54,7 +54,7 @@ class CascadeRunner:
         else:
             dataset_config_data = None
             cascade_path = None
-            model_task = camelize(type_)
+            model_task = type_
 
         cascade_config, classes, classes_colors = self._create_config(cascade_data=cascade_data,
                                                                       model_task=model_task,
@@ -165,7 +165,7 @@ class CascadeRunner:
                         })
                     adjacency_map.update({"saving": self._get_bind_names(cascade_data=cascade_data,
                                                                          blocks_ids=block.bind.up)})
-                elif model_task in ["TextToAudio"]:
+                elif model_task in [DeployTypeChoice.GoogleTTS]:
                     block_description = {
                         "saving": {
                             "tag": "output",
