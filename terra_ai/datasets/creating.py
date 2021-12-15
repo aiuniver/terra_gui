@@ -27,6 +27,8 @@ import tempfile
 import shutil
 import zipfile
 import concurrent.futures
+import logging
+import h5py
 from math import ceil
 from PIL import Image
 from itertools import repeat
@@ -40,18 +42,32 @@ class CreateDataset(object):
 
     progress_name = 'create_dataset'
 
+    formatter = logging.Formatter('%(levelname)s:%(asctime)s:%(name)s:%(message)s')
+    # file_handler = logging.FileHandler('employee.log')
+    # file_handler.setFormatter(formatter)
+    # file_handler.setLevel(logging.ERROR)
+
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
+
+    logger = logging.getLogger(__name__)
+    # logger.addHandler(file_handler)
+    logger.addHandler(stream_handler)
+    logger.setLevel(logging.DEBUG)
+
     @progress.threading
     def __init__(self, cr_data: CreationData):
 
         progress.pool.reset(name=self.progress_name,
                             message='Начало',
                             finished=False)
-
+        self.logger.info(f'Начало формирования датасета {cr_data.name}')
         try:
             creation_data = self.preprocess_creation_data(cr_data)
         except Exception:
             progress.pool(self.progress_name,
                           error='Ошибка выбора параметров создания датасета')
+            self.logger.error('Ошибка выбора параметров создания датасета')
             raise
 
         self.temp_directory = tempfile.mkdtemp()
@@ -63,7 +79,7 @@ class CreateDataset(object):
         self.temporary: dict = {}
         self.tags: dict = {}
         self.preprocessing = CreatePreprocessing()
-        self.use_generator: bool = False
+        self.use_generator: bool = False if not creation_data.use_generator else True
         self.source_path = creation_data.source_path
         self.y_cls: list = []
         self.columns = {}
@@ -82,13 +98,9 @@ class CreateDataset(object):
         self.fit_preprocessing(put_data=self.instructions.outputs)
         self.create_table(creation_data=creation_data)
 
-        if not creation_data.use_generator:
-            x_array = self.create_dataset_arrays(put_data=self.instructions.inputs)
-            y_array = self.create_dataset_arrays(put_data=self.instructions.outputs)
-            if not isinstance(y_array, dict):
-                self.write_arrays(x_array, y_array[0], y_array[1])
-            else:
-                self.write_arrays(x_array, y_array)
+        # if not creation_data.use_generator:
+        self.create_dataset_arrays(put_data=self.instructions.inputs)
+        self.create_dataset_arrays(put_data=self.instructions.outputs)
 
         self.inputs = self.create_input_parameters(creation_data=creation_data)
         self.outputs = self.create_output_parameters(creation_data=creation_data)
@@ -119,6 +131,7 @@ class CreateDataset(object):
                       finished=True,
                       data=self.datasetdata
                       )
+        self.logger.info(f'Создан датасет {creation_data.name}')
 
     @staticmethod
     def postprocess_timeseries(full_array):
@@ -240,6 +253,7 @@ class CreateDataset(object):
                                  engine='python', encoding=enc).columns
             except Exception:
                 progress.pool(self.progress_name, error='Ошибка чтения csv-файла')
+                self.logger.exception('Ошибка чтения csv-файла')
                 raise
             output_cols = list(put.parameters.cols_names.keys())
             cols_names_dict = {str_idx: df[int(str_idx)] for str_idx in output_cols}
@@ -283,6 +297,7 @@ class CreateDataset(object):
                                                             **instr['parameters']}
                     except Exception:
                         progress.pool(self.progress_name, error='Ошибка создания инструкций')
+                        self.logger.exception('Ошибка создания инструкций')
                         raise
                 else:
                     self.tags[put.id][f'{put.id}_{name}'] = decamelize(LayerInputTypeChoice.Raw)
@@ -313,6 +328,7 @@ class CreateDataset(object):
                                                                                  **instr['parameters'])
             except Exception:
                 progress.pool(self.progress_name, error='Ошибка создания инструкций')
+                self.logger.exception('Ошибка создания инструкций')
                 raise
 
             class_name = [os.path.basename(os.path.dirname(x)) for x in list(instr['instructions'].keys())]\
@@ -464,6 +480,7 @@ class CreateDataset(object):
                             self.preprocessing.preprocessing[key][col_name].fit(np.array(data.instructions).reshape(-1, 1))
                     except Exception:
                         progress.pool(self.progress_name, error='Ошибка обучения скейлера')
+                        self.logger.exception('Ошибка обучения скейлера')
                         raise
 
     def create_table(self, creation_data: CreationData):
@@ -512,6 +529,7 @@ class CreateDataset(object):
         except Exception:
             progress.pool(self.progress_name,
                           error='Ошибка создания датасета. Нессответствие количества входных/выходных данных')
+            self.logger.exception('Ошибка создания датасета. Нессответствие количества входных/выходных данных')
             raise
         for key, value in split_sequence.items():
             self.dataframe[key] = dataframe.loc[value, :].reset_index(drop=True)
@@ -535,6 +553,7 @@ class CreateDataset(object):
                                                    sep=None, engine='python', encoding=enc).columns.to_list()
                     except Exception:
                         progress.pool(self.progress_name, error='Ошибка чтения csv-файла')
+                        self.logger.exception('Ошибка чтения csv-файла')
                         raise
                     current_col_name = '_'.join(col_name.split('_')[1:])
                     idx = column_names.index(current_col_name)
@@ -706,6 +725,7 @@ class CreateDataset(object):
                                                    sep=None, engine='python', encoding=enc).columns.to_list()
                     except Exception:
                         progress.pool(self.progress_name, error='Ошибка чтения csv-файла')
+                        self.logger.exception('Ошибка чтения csv-файла')
                         raise
                     current_col_name = '_'.join(col_name.split('_')[1:])
                     idx = column_names.index(current_col_name)
@@ -874,15 +894,20 @@ class CreateDataset(object):
                     full_array.append(arr)
                 except Exception:
                     progress.pool(self.progress_name, error='Ошибка создания массивов данных')
+                    self.logger.exception('Ошибка создания массивов данных')
                     raise
 
             return full_array  # , augm_data
 
-        out_array = {'train': {}, 'val': {}}
-        service = {'train': {}, 'val': {}}
-
-        for split in list(out_array.keys()):
+        for split in ['train', 'val']:
+            open_mode = 'w' if not self.paths.arrays.joinpath('dataset.h5').is_file() else 'a'
+            hdf = h5py.File(self.paths.arrays.joinpath('dataset.h5'), open_mode)
+            if not self.use_generator:
+                os.makedirs(self.paths.arrays.joinpath(split), exist_ok=True)
+            if split not in list(hdf.keys()):
+                hdf.create_group(split)
             for key in put_data.keys():
+                hdf[split].create_group(f'id_{key}')
                 col_name = None
                 length, depth, step = 0, 0, 1
 
@@ -949,6 +974,16 @@ class CreateDataset(object):
                 # if not self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
                 #     self.augmentation[split] = {col_name: []}
                 current_arrays: list = []
+                if self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
+                    for n in range(3):
+                        current_group = f'id_{key + n}'
+                        current_serv_group = f'id_{key + n}_service'
+                        if current_group not in list(hdf[split].keys()):
+                            hdf[split].create_group(current_group)
+                        if current_serv_group not in list(hdf[split].keys()):
+                            hdf[split].create_group(current_serv_group)
+                        globals()[f'current_arrays_{n}'] = []
+                        globals()[f'current_arrays_{n+3}'] = []
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     results = executor.map(array_creation, data_to_pass, dict_to_pass)
                     for i, result in enumerate(results):
@@ -961,6 +996,7 @@ class CreateDataset(object):
                         #     if not augm_data:
                         #         augm_data = ''
                         progress.pool(self.progress_name, percent=ceil(i / len(data_to_pass) * 100))
+
                         if not self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
                             if depth:
                                 if 'trend' in dict_to_pass[i][0].keys() and dict_to_pass[i][0]['trend']:
@@ -969,41 +1005,50 @@ class CreateDataset(object):
                                     array = self.postprocess_timeseries(result)
                             else:
                                 array = np.concatenate(result, axis=0)
-                            current_arrays.append(array)
+                            if self.use_generator:
+                                hdf[f'{split}/id_{key}'].create_dataset(str(i), data=array)
+                            else:
+                                current_arrays.append(array)
+
                             # if isinstance(augm_data, str):
                             #     self.augmentation[split][col_name].append(augm_data)
                         else:
-                            # print(len(result))
-                            for n in range(6):
-                                globals()[f'current_arrays_{n}'].append(result[0][n])  # result[0][n]
+                            if self.use_generator:
+                                for n in range(3):
+                                    hdf[f'{split}/id_{key + n}'].create_dataset(str(i), data=result[0][n])
+                                    hdf[f'{split}/id_{key + n}_service'].create_dataset(str(i), data=result[0][n + 3])
+                            #     for n in range(3):
+                            #         joblib.dump(np.array(result[0][n]),
+                            #                     os.path.join(self.paths.arrays, split, f'{key+n}_{i}.gz'))
+                            #         joblib.dump(np.array(result[0][n + 3]),
+                            #                     os.path.join(self.paths.arrays, split, f'{key+n}_{i}_service.gz'))
+                            else:
+                                for n in range(6):
+                                    globals()[f'current_arrays_{n}'].append(result[0][n])
 
-                if self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
-                    for n in range(3):
-                        out_array[split][key + n] = np.array(globals()[f'current_arrays_{n}'])
-                        service[split][key + n] = np.array(globals()[f'current_arrays_{n + 3}'])
-                        # print(np.array(globals()[f'current_arrays_{n}']).shape)
-                        # print(np.array(globals()[f'current_arrays_{n + 3}']).shape)
-                else:
-                    out_array[split][key] = np.array(current_arrays)
-                    # print(out_array[split][key].shape)
+                            # for n in range(3):
+                            #     hdf[f'id_{key + n}'].create_dataset(str(i), data=result[0][n])
+                            #     hdf[f'id_{key + n}_service'].create_dataset(str(i), data=result[0][n + 3])
+                        del result
 
-        if service['train']:
-            return out_array, service
-        else:
-            return out_array
-
-    def write_arrays(self, array_x, array_y, array_service=None):
-
-        for array in [array_x, array_y]:
-            for sample in array.keys():
-                for inp in array[sample].keys():
-                    os.makedirs(os.path.join(self.paths.arrays, sample), exist_ok=True)
-                    joblib.dump(array[sample][inp], os.path.join(self.paths.arrays, sample, f'{inp}.gz'))
-        if array_service:
-            for sample in array_service.keys():
-                for inp in array_service[sample].keys():
-                    joblib.dump(array_service[sample][inp],
-                                os.path.join(self.paths.arrays, sample, f'{inp}_service.gz'))
+                if not self.use_generator:
+                    if self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
+                        for n in range(3):
+                            # os.makedirs(os.path.join(self.paths.arrays, split), exist_ok=True)
+                            joblib.dump(np.array(globals()[f'current_arrays_{n}']),
+                                        os.path.join(self.paths.arrays, split, f'{key + n}.gz'))
+                            joblib.dump(np.array(globals()[f'current_arrays_{n + 3}']),
+                                        os.path.join(self.paths.arrays, split, f'{key + n}_service.gz'))
+                            # print('СОХРАНЕНО ПО АДРЕСУ', os.path.join(self.paths.arrays, split, f'{key + n}.gz'))
+                            # print('СОХРАНЕНО ПО АДРЕСУ', os.path.join(self.paths.arrays, split, f'{key + n}_service.gz'))
+                            del globals()[f'current_arrays_{n}']
+                            del globals()[f'current_arrays_{n + 3}']
+                    else:
+                        # os.makedirs(os.path.join(self.paths.arrays, split), exist_ok=True)
+                        joblib.dump(np.array(current_arrays), os.path.join(self.paths.arrays, split, f'{key}.gz'))
+                        # print('СОХРАНЕНО ПО АДРЕСУ', os.path.join(self.paths.arrays, split, f'{key}.gz'))
+                        del current_arrays
+            hdf.close()
 
     def write_instructions_to_files(self):
 
