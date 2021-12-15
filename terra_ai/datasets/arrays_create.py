@@ -418,7 +418,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def instructions_tracker(paths_list: list, **options: dict) -> dict:
+    def instructions_no_output(paths_list: list, **options: dict) -> dict:
 
         instructions = {'instructions': paths_list,
                         'parameters': options}
@@ -713,7 +713,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_tracker(path_list: int, dataset_folder=None, **options: dict) -> dict:
+    def cut_no_output(path_list: int, dataset_folder=None, **options: dict) -> dict:
 
         instructions = {'instructions': path_list,
                         'parameters': options}
@@ -1071,7 +1071,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def create_tracker(zero: int, **options):
+    def create_no_output(zero: int, **options):
 
         instructions = {'instructions': np.array([zero]),
                         'parameters': options}
@@ -1285,7 +1285,7 @@ class CreateArray(object):
         return array
 
     @staticmethod
-    def preprocess_tracker(zero: int, **options):
+    def preprocess_no_output(zero: int, **options):
 
         return zero
 

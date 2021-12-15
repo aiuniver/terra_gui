@@ -23,6 +23,7 @@ class LayerOutputTypeChoice(str, Enum):
     TextSegmentation = "Сегментация текстов"
     ObjectDetection = "Обнаружение объектов"
     Tracker = "Трекер"
+    NoOutput = "Не создавать выходные данные"
 
     @staticmethod
     def items_tuple() -> list:

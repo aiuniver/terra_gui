@@ -221,3 +221,4 @@ class LayerOutputTypeChoice(str, Enum):
     ObjectDetection = "ObjectDetection"
     Raw = "Raw"
     Tracker = "Tracker"
+    NoOutput = "NoOutput"

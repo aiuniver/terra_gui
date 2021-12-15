@@ -149,8 +149,8 @@ class DatasetData(AliasMixinData):
     use_generator: bool = False
     architecture: ArchitectureChoice = ArchitectureChoice.Basic
     tags: Optional[TagsList] = TagsList()
-    inputs: Dict[PositiveInt, DatasetInputsData] = {}
-    outputs: Dict[PositiveInt, DatasetOutputsData] = {}
+    inputs: Optional[Dict[PositiveInt, DatasetInputsData]] = {}
+    outputs: Optional[Dict[PositiveInt, DatasetOutputsData]] = {}
     service: Optional[Dict[PositiveInt, DatasetOutputsData]] = {}
     columns: Optional[Dict[PositiveInt, Dict[str, Any]]] = {}
 
@@ -168,7 +168,7 @@ class DatasetData(AliasMixinData):
 
     @property
     def training_available(self) -> bool:
-        return self.architecture != ArchitectureChoice.Tracker
+        return self.architecture != ArchitectureChoice.Tracker or self.outputs != {}
 
     @property
     def sources(self) -> List[str]:

@@ -43,7 +43,7 @@ class CreateDataset(object):
     progress_name = 'create_dataset'
 
     formatter = logging.Formatter('%(levelname)s:%(asctime)s:%(name)s:%(message)s')
-    # file_handler = logging.FileHandler('employee.log')
+    # file_handler = logging.FileHandler('dataset.log')
     # file_handler.setFormatter(formatter)
     # file_handler.setLevel(logging.ERROR)
 
@@ -99,20 +99,22 @@ class CreateDataset(object):
         self.create_table(creation_data=creation_data)
 
         # if not creation_data.use_generator:
-        self.create_dataset_arrays(put_data=self.instructions.inputs)
-        self.create_dataset_arrays(put_data=self.instructions.outputs)
-
         self.inputs = self.create_input_parameters(creation_data=creation_data)
-        self.outputs = self.create_output_parameters(creation_data=creation_data)
-        self.service = self.create_service_parameters(creation_data=creation_data)
+        if not creation_data.outputs[0].type == LayerOutputTypeChoice.NoOutput:
+            self.outputs = self.create_output_parameters(creation_data=creation_data)
+            self.service = self.create_service_parameters(creation_data=creation_data)
+
+            self.create_dataset_arrays(put_data=self.instructions.inputs)
+            self.create_dataset_arrays(put_data=self.instructions.outputs)
+
+            self.write_preprocesses_to_files()
+            self.write_instructions_to_files()
 
         progress.pool(self.progress_name,
                       message='Сохранение датасета',
                       percent=100
                       )
 
-        self.write_preprocesses_to_files()
-        self.write_instructions_to_files()
         self.zip_dataset(self.paths.basepath, os.path.join(self.temp_directory, 'dataset'))
         shutil.move(os.path.join(self.temp_directory, 'dataset.zip'), self.paths.basepath)
         for key, value in self.paths.__dict__.items():
@@ -164,7 +166,7 @@ class CreateDataset(object):
     def preprocess_creation_data(creation_data):
 
         for out in creation_data.outputs:
-            if out.type in [LayerOutputTypeChoice.Classification, LayerOutputTypeChoice.Tracker]:
+            if out.type in [LayerOutputTypeChoice.Classification, LayerOutputTypeChoice.NoOutput]:
                 if not out.parameters.sources_paths or not out.parameters.sources_paths[0].suffix == '.csv':
                     for inp in creation_data.inputs:
                         if inp.type in [LayerInputTypeChoice.Image, LayerInputTypeChoice.Text,
@@ -234,9 +236,9 @@ class CreateDataset(object):
                 if out.type == LayerOutputTypeChoice.Classification and self.y_cls:
                     for col_name, data in outputs[out.id].items():
                         data.instructions = self.y_cls
-                elif out.type == LayerOutputTypeChoice.Tracker and self.y_cls:
+                elif out.type == LayerOutputTypeChoice.NoOutput and self.y_cls:
                     for col_name, data in outputs[out.id].items():
-                        data.instructions = [0 for x in self.y_cls]
+                        data.instructions = ['no_data' for _ in self.y_cls]
 
         instructions = DatasetInstructionsData(inputs=inputs, outputs=outputs)
 
@@ -407,7 +409,7 @@ class CreateDataset(object):
                                             LayerOutputTypeChoice.TextSegmentation,
                                             LayerOutputTypeChoice.ObjectDetection, LayerOutputTypeChoice.Timeseries,
                                             LayerOutputTypeChoice.TimeseriesTrend, LayerOutputTypeChoice.Regression,
-                                            LayerOutputTypeChoice.Tracker]:
+                                            LayerOutputTypeChoice.NoOutput]:
                             y_classes = result[1] if len(result) > 1 else [os.path.basename(os.path.dirname(dir_name))
                                                                            for dir_name in result[0]['instructions']]
                             self.y_cls += y_classes
@@ -1101,47 +1103,51 @@ class CreateDataset(object):
             tags_list.append(tag.native())
 
         # Выбор архитектуры
-        inp_tasks = []
-        out_tasks = []
-        for key, val in self.inputs.items():
-            if val['task'] == LayerInputTypeChoice.Dataframe:
-                tmp = []
-                for value in self.columns[key].values():
-                    tmp.append(value['task'])
-                unique_vals = list(set(tmp))
-                if len(unique_vals) == 1 and unique_vals[0] in LayerInputTypeChoice.__dict__.keys() and unique_vals[0] \
-                        in [LayerInputTypeChoice.Image, LayerInputTypeChoice.Text,
-                            LayerInputTypeChoice.Audio, LayerInputTypeChoice.Video]:
-                    inp_tasks.append(unique_vals[0])
+        if not creation_data.outputs[0].type == LayerOutputTypeChoice.NoOutput:
+            inp_tasks = []
+            out_tasks = []
+            for key, val in self.inputs.items():
+                if val['task'] == LayerInputTypeChoice.Dataframe:
+                    tmp = []
+                    for value in self.columns[key].values():
+                        tmp.append(value['task'])
+                    unique_vals = list(set(tmp))
+                    if len(unique_vals) == 1 and unique_vals[0] in LayerInputTypeChoice.__dict__.keys() and unique_vals[0] \
+                            in [LayerInputTypeChoice.Image, LayerInputTypeChoice.Text,
+                                LayerInputTypeChoice.Audio, LayerInputTypeChoice.Video]:
+                        inp_tasks.append(unique_vals[0])
+                    else:
+                        inp_tasks.append(val['task'])
                 else:
                     inp_tasks.append(val['task'])
-            else:
-                inp_tasks.append(val['task'])
-        for key, val in self.outputs.items():
-            if val['task'] == LayerOutputTypeChoice.Dataframe:
-                tmp = []
-                for value in self.columns[key].values():
-                    tmp.append(value['task'])
-                unique_vals = list(set(tmp))
-                if len(unique_vals) == 1 and unique_vals[0] in LayerOutputTypeChoice.__dict__.keys():
-                    out_tasks.append(unique_vals[0])
+
+            for key, val in self.outputs.items():
+                if val['task'] == LayerOutputTypeChoice.Dataframe:
+                    tmp = []
+                    for value in self.columns[key].values():
+                        tmp.append(value['task'])
+                    unique_vals = list(set(tmp))
+                    if len(unique_vals) == 1 and unique_vals[0] in LayerOutputTypeChoice.__dict__.keys():
+                        out_tasks.append(unique_vals[0])
+                    else:
+                        out_tasks.append(val['task'])
                 else:
                     out_tasks.append(val['task'])
+
+            inp_task_name = list(set(inp_tasks))[0] if len(set(inp_tasks)) == 1 else LayerInputTypeChoice.Dataframe
+            out_task_name = list(set(out_tasks))[0] if len(set(out_tasks)) == 1 else LayerOutputTypeChoice.Dataframe
+
+            if inp_task_name + out_task_name in ArchitectureChoice.__dict__.keys():
+                architecture = ArchitectureChoice.__dict__[inp_task_name + out_task_name]
+            elif out_task_name in ArchitectureChoice.__dict__.keys():
+                architecture = ArchitectureChoice.__dict__[out_task_name]
+            elif out_task_name == LayerOutputTypeChoice.ObjectDetection:
+                architecture = ArchitectureChoice.__dict__[creation_data.outputs.get(2).parameters.model.title() +
+                                                           creation_data.outputs.get(2).parameters.yolo.title()]
             else:
-                out_tasks.append(val['task'])
-
-        inp_task_name = list(set(inp_tasks))[0] if len(set(inp_tasks)) == 1 else LayerInputTypeChoice.Dataframe
-        out_task_name = list(set(out_tasks))[0] if len(set(out_tasks)) == 1 else LayerOutputTypeChoice.Dataframe
-
-        if inp_task_name + out_task_name in ArchitectureChoice.__dict__.keys():
-            architecture = ArchitectureChoice.__dict__[inp_task_name + out_task_name]
-        elif out_task_name in ArchitectureChoice.__dict__.keys():
-            architecture = ArchitectureChoice.__dict__[out_task_name]
-        elif out_task_name == LayerOutputTypeChoice.ObjectDetection:
-            architecture = ArchitectureChoice.__dict__[creation_data.outputs.get(2).parameters.model.title() +
-                                                       creation_data.outputs.get(2).parameters.yolo.title()]
+                architecture = ArchitectureChoice.Basic
         else:
-            architecture = ArchitectureChoice.Basic
+            architecture = ArchitectureChoice.Tracker
 
         data = {'name': creation_data.name,
                 'alias': creation_data.alias,
@@ -1156,11 +1162,12 @@ class CreateDataset(object):
                 }
 
         for attr in ['inputs', 'outputs', 'columns', 'service']:
-            data[attr] = self.__dict__[attr]
+            if attr in self.__dict__.keys():
+                data[attr] = self.__dict__[attr]
 
         with open(os.path.join(self.paths.basepath, DATASET_CONFIG), 'w') as fp:
             json.dump(DatasetData(**data).native(), fp)
-        # print(DatasetData(**data).native())
+        self.logger.debug(DatasetData(**data).native())
 
         return data
 

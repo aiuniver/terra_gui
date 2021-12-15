@@ -53,6 +53,10 @@ class LayerTrackerData(LayerBaseData, types.Tracker.ParametersData):
     pass
 
 
+class LayerNoOutputData(LayerBaseData, types.NoOutput.ParametersData):
+    pass
+
+
 Layer = Enum(
     "Layer",
     dict(
