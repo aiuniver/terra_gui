@@ -42,6 +42,14 @@
           <TextCard :style="{ width: '600px', height: '80px' }">{{ classificationResult }}</TextCard>
         </div>
       </div>
+      <div v-if="type == 'GoogleTTS'">
+        <div class="card__original">
+          <AudioCard :value="card.predict" />
+        </div>
+        <div class="card__result">
+          <TextCard :style="{ width: '600px', height: '80px' }">{{ card.source }}</TextCard>
+        </div>
+      </div>
 
       <div v-if="type == 'ImageSegmentation'">
         <div class="card__original">

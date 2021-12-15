@@ -34,9 +34,7 @@
           <div class="params-container pa-5">
             <div class="t-input">
               <label class="label" for="deploy[deploy]">Название папки</label>
-              <div class="t-input__label">
-                https://srv1.demo.neural-university.ru/{{ userData.login }}/{{ projectData.name_alias }}/{{ deploy }}
-              </div>
+              <div class="t-input__label">{{ `https://srv1.demo.neural-university.ru/${userData.login}/${projectData.name_alias}/${deploy}` }}</div>
               <input v-model="deploy" class="t-input__input" type="text" id="deploy[deploy]" name="deploy[deploy]" />
             </div>
             <Autocomplete2 :list="list" :name="'deploy[server]'" label="Сервер" @focus="focus" @change="selected" />

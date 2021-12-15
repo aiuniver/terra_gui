@@ -1,12 +1,15 @@
 <template>
-  <at-modal v-model="dialog" class="error-modal" width="700">
+  <at-modal v-model="dialog" class="error-modal" :width="isMore ? 700 : 600">
     <div class="error-modal__header">
       <span class="error-modal__level">{{ level }}</span>
       <span class="error-modal__title" :title="title">{{ title }}</span>
     </div>
-    <div class="t-pre">
+    <div class="t-pre" :style="style">
       <scrollbar>
-        <pre ref="message-modal-copy" class="message" v-html="message"></pre>
+        <div class="error-modal__content">
+          <pre v-if="isMore" ref="message-modal-copy" class="message" v-html="message"></pre>
+          <span v-else class="error-modal__btn" @click="isMore = true">Подробней</span>
+        </div>
       </scrollbar>
     </div>
     <div slot="footer" class="error-modal__footer">
@@ -52,6 +55,7 @@ export default {
   },
   data: () => ({
     isCopy: false,
+    isMore: false,
   }),
   methods: {
     copy() {
@@ -81,6 +85,14 @@ export default {
         return this.value;
       },
     },
+    style() {
+      return { height: this.isMore ? '500px' : '60px' };
+    },
+  },
+  watch: {
+    dialog(value) {
+      if (!value) this.isMore = false;
+    },
   },
 };
 </script>
@@ -100,21 +112,34 @@ export default {
   }
   &__level {
     font-size: 16px;
-    margin-right: 30px;
+    margin-right: 10px;
     color: snow;
   }
   &__title {
-    font-size: 12px;
+    font-size: 14px;
     margin-bottom: 2px;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis; 
+    text-overflow: ellipsis;
   }
   &__footer {
     display: flex;
     width: 100%;
     justify-content: space-between;
     padding: 0 10px;
+  }
+  &__content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  &__btn {
+    margin-top: 18px;
+    font-size: 14px;
+    cursor: pointer;
+    &:hover {
+      color: #6395c2;
+    }
   }
 }
 .t-pre {
