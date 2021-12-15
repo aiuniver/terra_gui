@@ -44,6 +44,8 @@ class ModelValidator:
         self.val_dictionary: Dict[int, Any] = {}
         self.keras_code: str = ""
         self.valid: bool = True
+        self.num_models: int = 0
+        self.model_count = [1, 2]
 
         self.input_shape = {}
         self.model_plan = []
@@ -308,9 +310,11 @@ class ModelValidator:
             list(nx.weakly_connected_components(di_graph)),
             key=lambda subgraph: -len(subgraph),
         )
-        if len(sub_graphs) > 1:
+        # if len(sub_graphs) > 1:
+        if len(sub_graphs) > max(self.model_count):
             self.valid = False
-            for group in sub_graphs[1:]:
+            # for group in sub_graphs[1:]:
+            for group in sub_graphs[max(self.model_count):]:
                 for layer in group:
                     logger.warning(f"Слой {layer}: {exceptions.LayerNotConnectedToMainPartException()}")
                     self.val_dictionary[layer] = str(exceptions.LayerNotConnectedToMainPartException())

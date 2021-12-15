@@ -35,6 +35,44 @@ terra_custom_layers = {
 }
 
 
+class InputNoise(Layer):
+    """
+    Custom Layer InputNoise
+    'normal': tf.random.normal
+    'uniform': tf.random.uniform
+    'truncated_normal': tf.random.truncated_normal
+    'gamma': tf.random.gamma
+    """
+
+    def __init__(self, distribution='normal', alpha=0.5, **kwargs):
+        super(InputNoise, self).__init__(**kwargs)
+        # sampling
+        self.distribution = distribution
+        self.alpha = alpha
+
+    def call(self, shape, training=True, **kwargs):
+        if self.distribution == 'normal':
+            return tensorflow.keras.layers.Input(tensor=tf.random.normal(shape=shape))
+        if self.distribution == 'uniform':
+            return tensorflow.keras.layers.Input(tensor=tf.random.uniform(shape=shape))
+        if self.distribution == 'truncated_normal':
+            return tensorflow.keras.layers.Input(tensor=tf.random.truncated_normal(shape=shape))
+        if self.distribution == 'gamma':
+            return tensorflow.keras.layers.Input(tensor=tf.random.gamma(shape=shape, alpha=self.alpha))
+
+    def get_config(self):
+        config = {
+            'distribution': self.distribution,
+            'alpha': self.alpha
+        }
+        base_config = super(InputNoise, self).get_config()
+        return dict(tuple(base_config.items()) + tuple(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+
 class InstanceNormalization(Layer):
     """Instance normalization layer.
     Normalize the activations of the previous layer at each step,
@@ -1684,7 +1722,7 @@ class PretrainedYOLO(Layer):
     def create_yolo(self, input_size=416, channels=3, classes=80):
         tf.keras.backend.clear_session()  # used to reset layer names
         input_layer = layers.Input([input_size, input_size, channels])
-        if self.version =="YOLOv4":
+        if self.version == "YOLOv4":
             output_tensors = self.YOLOv4(input_layer, classes)
         else:
             output_tensors = self.YOLOv3(input_layer, classes)
