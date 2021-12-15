@@ -2,12 +2,14 @@ import librosa
 from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
 import torch
 from ..utils import stt_pb2
+from ..utils import longrunning_pb2
 import grpc
 import copy
 from time import time
 import json
 import base64
 from mutagen import mp3
+import wave
 import hmac
 
 
@@ -57,7 +59,7 @@ class _SpeechToTextStub(object):
         self.LongRunningRecognize = channel.unary_unary(
             '/tinkoff.cloud.stt.v1.SpeechToText/LongRunningRecognize',
             request_serializer=stt_pb2.LongRunningRecognizeRequest.SerializeToString,
-            response_deserializer=stt_pb2.Operation.FromString,
+            response_deserializer=longrunning_pb2.Operation.FromString,
         )
 
 
@@ -97,21 +99,30 @@ def _authorization_metadata(api_key: str, secret_key, scope, expiration_time):
 
 def _build_request(path: str, max_alternatives: int, do_not_perform_vad: bool, profanity_filter: bool,
                    enable_automatic_punctuation: bool):
-    mp3_file = mp3.MP3(path)
-    num_ch = int(mp3_file.info.channels)
-    sr_audio = int(mp3_file.info.sample_rate)
+    print('path', path)
     request = stt_pb2.RecognizeRequest()
-    with open(path, "rb") as f:
-        request.audio.content = f.read()
+    if path.split('.')[-1].lower() == 'mp3':
+        mp3_file = mp3.MP3(path)
+        num_ch = int(mp3_file.info.channels)
+        sr_audio = int(mp3_file.info.sample_rate)
+        with open(path, "rb") as f:
+            request.audio.content = f.read()
+        request.config.encoding = stt_pb2.AudioEncoding.MPEG_AUDIO
 
-    request.config.encoding = stt_pb2.AudioEncoding.MPEG_AUDIO
+    elif path.split('.')[-1].lower() == 'wav':
+        with wave.open(path) as f:
+            sr_audio = f.getframerate()
+            num_ch = f.getnchannels()
+            request.audio.content = f.readframes(f.getnframes())
+        request.config.encoding = stt_pb2.AudioEncoding.LINEAR16
+
     request.config.sample_rate_hertz = sr_audio
     request.config.num_channels = num_ch  # количество каналов в записи
 
     request.config.max_alternatives = max_alternatives  # включение альтернативных распознаваний
     request.config.do_not_perform_vad = do_not_perform_vad  # отключение режима диалога
     request.config.profanity_filter = profanity_filter  # фильтр ненормативной лексики
-    request.config.enable_automatic_punctuation = enable_automatic_punctuation  # фильтр ненормативной лексики
+    request.config.enable_automatic_punctuation = enable_automatic_punctuation  # вставка знаков пунктуации
     return request
 
 

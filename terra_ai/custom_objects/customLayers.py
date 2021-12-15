@@ -1657,14 +1657,14 @@ class PSPBlock3D(Layer):
 
 class PretrainedYOLO(Layer):
 
-    def __init__(self, num_classes: int = 5, version: YOLOModeChoice = YOLOModeChoice.YOLOv4,
+    def __init__(self, num_classes: int = 5, version: str = "YOLOv4",
                  use_weights: bool = True, **kwargs):
         super(PretrainedYOLO, self).__init__(**kwargs)
         self.num_classes = num_classes
         self.version = version
         self.use_weights = use_weights
         self.save_weights = "C:/PycharmProjects/terra_gui/terra_ai/assets/cascades/yolov4.weights" \
-            if self.version == YOLOModeChoice.YOLOv4 else "C:/PycharmProjects/terra_gui/terra_ai/assets/cascades/yolov3.weights"
+            if self.version == "YOLOv4" else "C:/PycharmProjects/terra_gui/terra_ai/assets/cascades/yolov3.weights"
         # self.save_weights = "D:/AI/terra_gui/terra_ai/assets/cascades/yolov4.weights" \
         #     if self.version == YOLOModeChoice.YOLOv4 else "D:/AI/terra_gui/terra_ai/assets/cascades/yolov3.weights"
         self.yolo = self.create_yolo(classes=self.num_classes)
@@ -1683,7 +1683,7 @@ class PretrainedYOLO(Layer):
     def create_yolo(self, input_size=416, channels=3, classes=80):
         tf.keras.backend.clear_session()  # used to reset layer names
         input_layer = layers.Input([input_size, input_size, channels])
-        if self.version == YOLOModeChoice.YOLOv4:
+        if self.version =="YOLOv4":
             output_tensors = self.YOLOv4(input_layer, classes)
         else:
             output_tensors = self.YOLOv3(input_layer, classes)
@@ -1693,10 +1693,10 @@ class PretrainedYOLO(Layer):
     def load_yolo_weights(self, model, weights_file):
         tf.keras.backend.clear_session()  # used to reset layer names
         # load Darknet original weights to TensorFlow model
-        if self.version == YOLOModeChoice.YOLOv3:
+        if self.version == "YOLOv3":
             range1 = 75
             range2 = [58, 66, 74]
-        if self.version == YOLOModeChoice.YOLOv4:
+        if self.version == "YOLOv4":
             range1 = 110
             range2 = [93, 101, 109]
 

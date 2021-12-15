@@ -72,7 +72,6 @@ export default {
   },
   actions: {
     parseStruct ({ commit }, { form, interactive, progress, state, result, base }) {
-      // console.log(form, interactive, progress, state)
       if (base) commit("SET_BASE", base)
       if (form) commit("SET_FORM", { ...form })
       if (state) commit("SET_STATE", state)
@@ -99,7 +98,6 @@ export default {
         const res = await dispatch('axios', { url: '/training/start/', data }, { root: true });
         if (res && res?.data) {
           await dispatch('projects/get', {}, { root: true })
-          // dispatch('setState', res);
         } else {
           dispatch('setStatusTrain', 'no_train');
         }
@@ -110,13 +108,11 @@ export default {
     },
     async stop ({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/stop/', data }, { root: true });
-      // dispatch('setState', res);
       dispatch('parseStruct', res?.data || {});
       return res
     },
     async save ({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/save/', data }, { root: true });
-      // dispatch('parseStruct', res?.data || {});
       return res
     },
     async update ({ dispatch }, parse) {
@@ -139,9 +135,6 @@ export default {
       const data = { ...interactive, ...part }
       const res = await dispatch('axios', { url: '/training/interactive/', data }, { root: true });
       dispatch('parseStruct', res?.data || {});
-      // if (res) {
-      //   dispatch('setObjectInteractive', data);
-      // }
       return res
     },
     async progress ({ dispatch }, data) {
@@ -176,10 +169,6 @@ export default {
     setСollapse ({ commit }, data) {
       commit("SET_COLLAPSE", data);
     },
-    // setObjectInteractive ({ state, commit }, charts) {
-    //   const data = { ...state.interactive, ...charts }
-    //   commit("SET_INTERACTIV", data);
-    // },
     setStatusTrain ({ commit }, value) {
       commit("SET_STATUS_TRAIN", value);
     },

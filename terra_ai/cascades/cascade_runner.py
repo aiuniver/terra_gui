@@ -29,7 +29,7 @@ class CascadeRunner:
 
     def start_cascade(self, cascade_data: CascadeDetailsData, training_path: Path,
                       sources: Dict[int, List[str]]):
-
+        # print('sources', sources)
         config = CascadeCreator()
 
         presets_path = os.path.join(DEPLOY_PATH, "deploy_presets")
@@ -54,7 +54,7 @@ class CascadeRunner:
         else:
             dataset_config_data = None
             cascade_path = None
-            model_task = camelize(type_)
+            model_task = type_
 
         cascade_config, classes, classes_colors = self._create_config(cascade_data=cascade_data,
                                                                       model_task=model_task,
@@ -98,14 +98,14 @@ class CascadeRunner:
                                               BlockServiceTypeChoice.Wav2Vec]:
                 model = None
                 if block.parameters.main.type == BlockServiceTypeChoice.YoloV5 and _input_type == "image":
-                    deploy_type = DeployTypeChoice.YoloV5.demo
+                    deploy_type = DeployTypeChoice.YoloV5
                 if block.parameters.main.type == BlockServiceTypeChoice.Wav2Vec:
-                    deploy_type = DeployTypeChoice.Wav2Vec.demo
+                    deploy_type = DeployTypeChoice.Wav2Vec
                     _input_type = "audio"
                 if block.parameters.main.type == BlockServiceTypeChoice.GoogleTTS:
-                    deploy_type = DeployTypeChoice.GoogleTTS.demo
+                    deploy_type = DeployTypeChoice.GoogleTTS
                 if block.parameters.main.type == BlockServiceTypeChoice.TinkoffAPI:
-                    deploy_type = DeployTypeChoice.TinkoffAPI.demo
+                    deploy_type = DeployTypeChoice.TinkoffAPI
 
         if model:
             with open(os.path.join(training_path, model, "config.json"),
@@ -165,7 +165,7 @@ class CascadeRunner:
                         })
                     adjacency_map.update({"saving": self._get_bind_names(cascade_data=cascade_data,
                                                                          blocks_ids=block.bind.up)})
-                elif model_task in ["TextToAudio"]:
+                elif model_task in [DeployTypeChoice.GoogleTTS]:
                     block_description = {
                         "saving": {
                             "tag": "output",
@@ -263,7 +263,8 @@ class CascadeRunner:
         out_data = []
         iter_ = 0
         for source in sources[:10]:
-            if type_ in [DeployTypeChoice.YoloV3, DeployTypeChoice.YoloV4, DeployTypeChoice.VideoObjectDetection]:
+            if type_ in [DeployTypeChoice.YoloV3, DeployTypeChoice.YoloV4,
+                         DeployTypeChoice.YoloV5, DeployTypeChoice.VideoObjectDetection]:
                 if type_ == DeployTypeChoice.VideoObjectDetection:
                     data_type = "video"
                     predict_file_name = f"deploy_presets/result_{iter_}.webm"
@@ -282,7 +283,7 @@ class CascadeRunner:
                     "source": source_file_name,
                     "predict": predict_file_name
                 })
-            elif type_ in [DeployTypeChoice.GoogleTTS.demo, DeployTypeChoice.TinkoffAPI.demo]:
+            elif type_ == DeployTypeChoice.GoogleTTS:
                 predict_file_name = f"deploy_presets/result_{iter_}.webm"
                 source_file_name = f"deploy_presets/initial_{iter_}.txt"
 
@@ -297,7 +298,7 @@ class CascadeRunner:
                     "source": source_file_name,
                     "predict": predict_file_name
                 })
-            elif type_ == DeployTypeChoice.Wav2Vec.demo:
+            elif type_ in [DeployTypeChoice.Wav2Vec, DeployTypeChoice.TinkoffAPI]:
                 data_type = "audio"
                 predict_file_name = f"deploy_presets/result_{iter_}.txt"
                 source_file_name = f"deploy_presets/initial_{iter_}.webm"

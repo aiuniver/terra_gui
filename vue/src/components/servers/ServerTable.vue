@@ -22,11 +22,7 @@
         <td>{{ server.port_http }}</td>
         <td>{{ server.port_https }}</td>
         <td class="clickable"><span @click="instruction(server.id)">Открыть</span></td>
-        <td v-if="server.state.error">
-          <span>{{ server.state.error }}</span>
-          <i class="ci-icon ci-info_circle_outline"></i>
-        </td>
-        <td v-else>{{ server.state.value }}</td>
+        <td :class="{ error: server.state.name === 'error' }">{{ server.state.value }}</td>
         <td class="clickable" @click="setup(server.id)">
           <i :class="['ci-icon', getIcon(server.state.name)]"></i>
           <span>{{ getAction(server.state.name) }}</span>
@@ -40,7 +36,7 @@
 export default {
   name: 'ServerTable',
   props: {
-    servers: Array
+    servers: [Array, Object]
   },
   methods: {
     instruction(id) {
@@ -50,14 +46,16 @@ export default {
       this.$store.dispatch('servers/setup', { id })
     },
     getIcon(state) {
-      if (state === 'ready') return 'ci-redo'
-      if (state === 'idle') return ''
+      if (state === 'ready') return ''
+      // if (state === 'idle') return 'ci-play_arrow'
+      if (state === 'waiting') return ''
       return 'ci-play_arrow'
     },
     getAction(state) {
-      if (state === 'ready') return 'Обновить запуск'
-      if (state === 'idle') return ''
-      return 'Запустить'
+      if (state === 'ready') return ''
+      // if (state === 'idle') return 'Установить'
+      if (state === 'waiting') return ''
+      return 'Установить'
     }
   }
 };
@@ -66,10 +64,12 @@ export default {
 <style lang="scss" scoped>
 .server-table {
   width: 100%;
+  .error {
+    color: #f00;
+  }
   thead {
     color: #6c7883;
-    font-size: 14px;
-    height: 35px;
+    font-size: 12px;
     th {
       font-weight: 400;
     }
@@ -77,7 +77,6 @@ export default {
   tbody {
     font-size: 14px;
     tr {
-      height: 55px;
       &:hover {
         background: #0e1621;
       }
@@ -85,9 +84,11 @@ export default {
   }
   td,
   th {
-    padding-right: 10px;
+    padding: 10px 20px 10px 0;
+    white-space: nowrap;
+    line-height: 1.25;
     &:first-child {
-      padding-left: 10px;
+      padding-left: 20px;
     }
   }
   .clickable {
@@ -96,6 +97,7 @@ export default {
     i {
       font-size: 16px;
       margin-right: 5px;
+      vertical-align: middle;
     }
     span {
       position: relative;

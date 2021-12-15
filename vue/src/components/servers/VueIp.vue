@@ -7,7 +7,7 @@
       <input
         type="number"
         v-model="ipCopy[index]"
-        :placeholder="placeholderPos(index)"
+        placeholder="___"
         maxlength="3"
         @paste="paste($event)"
         @keydown="ipKeydown($event, index)"
@@ -186,15 +186,13 @@ export default {
 <style lang="scss" scoped>
 .vue-ip {
   display: flex;
-  border: 1px solid #242f3d;
+  border: 1px solid #6c7883;
   border-radius: 4px;
   padding: 0 10px;
-  background: #1b2531;
-  height: 40px;
-  &:hover,
+  background: #242f3d;
+  height: 42px;
   &:focus-within {
-    background-color: #65b9f426;
-    border-color: #65b9f4;
+    border-color: #fff;
     box-shadow: 0px 0px 4px rgba(101, 185, 244, 0.2);
   }
   input {
@@ -208,11 +206,16 @@ export default {
   .segment {
     position: relative;
     max-width: 35px;
+    input::placeholder {
+      color: #666;
+    }
     &::after {
       content: '.';
       position: absolute;
       right: -2px;
       bottom: 6px;
+      font-weight: bold;
+      color: #666;
     }
     &:last-child::after {
       content: '';

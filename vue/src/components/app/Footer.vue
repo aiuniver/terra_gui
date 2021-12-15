@@ -106,7 +106,8 @@ export default {
     },
     message(value) {
       console.log(value)
-      if(value) this.$Notify({ type: this.color, title: 'Успешно', message: value });
+      if(value) this.$Notify({ type: this.color, title: this.color === 'success' ? 'Успешно' : 'Ошибка', message: value });
+      // if(value) this.$Notify({ type: this.color, title: 'Успешно', message: value });
     },
   },
 };
