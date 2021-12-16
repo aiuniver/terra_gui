@@ -418,8 +418,12 @@ class ModelValidator:
                 self.valid = False
                 self.val_dictionary[layer[0]] = comment
             if layer[1] == LayerTypeChoice.PretrainedYOLO:
-                for i, down_link in enumerate(self.down_links[layer[0]]):
-                    self.layer_input_shapes[down_link].append(output_shape[i])
+                if output_shape[0]:
+                    for i, down_link in enumerate(self.down_links[layer[0]]):
+                        self.layer_input_shapes[down_link].append(output_shape[i])
+                else:
+                    for down_link in self.down_links[layer[0]]:
+                        self.layer_input_shapes[down_link].append(output_shape[0])
             else:
                 for down_link in self.down_links[layer[0]]:
                     self.layer_input_shapes[down_link].extend(output_shape)
@@ -505,7 +509,7 @@ class LayerValidation:
 
     def set_state(self, layer_type, shape: list, parameters: dict, defaults: dict, config: LayerConfigData, **kwargs):
         """Set input data and fill attributes"""
-        # logger.debug(f"{self.name}, {self.set_state.__name__}")
+        logger.debug(f"{self.name}, {self.set_state.__name__}")
         self.layer_type = layer_type
         self.inp_shape = shape
         self.def_parameters = defaults
@@ -518,7 +522,7 @@ class LayerValidation:
 
     def get_validated(self):
         """Validate given layer parameters and return output shape and possible error comment"""
-        # logger.debug(f"{self.name}, {self.get_validated.__name__}")
+        logger.debug(f"{self.name}, {self.get_validated.__name__}")
         error = self.primary_layer_validation()
         if error:
             return [None], error
@@ -529,20 +533,27 @@ class LayerValidation:
                     or self.module_type == ModuleTypeChoice.keras_pretrained_model:
                 try:
                     params = copy.deepcopy(self.layer_parameters)
+                    # print('params', params)
                     if self.layer_type == LayerTypeChoice.Input:
                         return self.inp_shape, None
-                    if self.module_type == ModuleTypeChoice.keras_pretrained_model:
+                    elif self.module_type == ModuleTypeChoice.keras_pretrained_model:
                         params.pop("trainable")
                         if params.get("name"):
                             params.pop("name")
-                    if self.layer_type == LayerTypeChoice.PretrainedYOLO:
+                    elif self.layer_type == LayerTypeChoice.PretrainedYOLO:
+                        # print(self.inp_shape)
+                        params['use_weights'] = False
+                        # print('params', params)
+                        # print(getattr(self.module, self.layer_type))
                         output_shape = getattr(self.module, self.layer_type)(**params).compute_output_shape(
                             self.inp_shape[0] if len(self.inp_shape) == 1 else self.inp_shape)
+                        # print(output_shape)
                     else:
                         output_shape = [
                             tuple(getattr(self.module, self.layer_type)(**params).compute_output_shape(
                                 self.inp_shape[0] if len(self.inp_shape) == 1 else self.inp_shape))
                         ]
+
                     # LSTM and GRU can returns list of one tuple of tensor shapes
                     # code below reformat it to list of shapes
                     if len(output_shape) == 1 and type(output_shape[0][0]).__name__ == "TensorShape":
@@ -573,7 +584,7 @@ class LayerValidation:
         """check each not default parameter from check_dict by setting it in base_dict
         revert means set default parameter in layer parameters and need additional check if pass
         on initial layer parameters"""
-        # logger.debug(f"{self.name}, {self.get_problem_parameter.__name__}")
+        logger.debug(f"{self.name}, {self.get_problem_parameter.__name__}")
         for param in base_dict.keys():
             val_dict = copy.deepcopy(base_dict)
             if val_dict.get(param) != check_dict.get(param):
@@ -1164,6 +1175,9 @@ class ModelCreator:
                     input_tensors = []
                     for idx in terra_layer[3]:
                         input_tensors.append(self.tensors[idx])
+            if terra_layer[1] == LayerTypeChoice.PretrainedYOLO:
+                terra_layer[2]['save_weights'] = ""
+                # print(terra_layer)
             self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(**terra_layer[2])(input_tensors)
 
     def _tf_layer_init(self, terra_layer):
