@@ -186,7 +186,12 @@ class Project(BaseMixinData):
     def frontend(self):
         _data = self.native()
         _data.pop("dataset_info")
-        _data.update({"dataset": self.dataset.native() if self.dataset else None})
+        _data.update(
+            {
+                "dataset": self.dataset.native() if self.dataset else None,
+                "deploy": self.deploy.presets if self.deploy else None,
+            }
+        )
         return json.dumps(_data)
 
     def set_name(self, name: str):
