@@ -33,7 +33,7 @@ from terra_ai.data.modeling.model import (
     ModelDetailsData,
     ModelLoadData,
 )
-from terra_ai.data.modeling.extra import ModelGroupChoice
+from terra_ai.data.modeling.extra import ModelGroupChoice, LayerTypeChoice
 from terra_ai.data.training.train import TrainingDetailsData
 from terra_ai.data.training.extra import StateStatusChoice, ArchitectureChoice
 from terra_ai.data.cascades.cascade import (
@@ -239,6 +239,10 @@ class Exchange:
         """
         Валидация модели
         """
+        for layer in model.layers:
+            if layer.type == LayerTypeChoice.PretrainedYOLO:
+                layer.parameters.weight_load()
+
         return ModelValidator(model, architecture).get_validated()
 
     def _call_model_create(self, model: dict, path: Path, overwrite: bool):
