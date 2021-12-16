@@ -509,7 +509,7 @@ class LayerValidation:
 
     def set_state(self, layer_type, shape: list, parameters: dict, defaults: dict, config: LayerConfigData, **kwargs):
         """Set input data and fill attributes"""
-        logger.debug(f"{self.name}, {self.set_state.__name__}")
+        # logger.debug(f"{self.name}, {self.set_state.__name__}")
         self.layer_type = layer_type
         self.inp_shape = shape
         self.def_parameters = defaults
@@ -522,7 +522,7 @@ class LayerValidation:
 
     def get_validated(self):
         """Validate given layer parameters and return output shape and possible error comment"""
-        logger.debug(f"{self.name}, {self.get_validated.__name__}")
+        # logger.debug(f"{self.name}, {self.get_validated.__name__}")
         error = self.primary_layer_validation()
         if error:
             return [None], error
@@ -584,7 +584,7 @@ class LayerValidation:
         """check each not default parameter from check_dict by setting it in base_dict
         revert means set default parameter in layer parameters and need additional check if pass
         on initial layer parameters"""
-        logger.debug(f"{self.name}, {self.get_problem_parameter.__name__}")
+        # logger.debug(f"{self.name}, {self.get_problem_parameter.__name__}")
         for param in base_dict.keys():
             val_dict = copy.deepcopy(base_dict)
             if val_dict.get(param) != check_dict.get(param):
@@ -1175,9 +1175,6 @@ class ModelCreator:
                     input_tensors = []
                     for idx in terra_layer[3]:
                         input_tensors.append(self.tensors[idx])
-            if terra_layer[1] == LayerTypeChoice.PretrainedYOLO:
-                terra_layer[2]['save_weights'] = ""
-                # print(terra_layer)
             self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(**terra_layer[2])(input_tensors)
 
     def _tf_layer_init(self, terra_layer):
