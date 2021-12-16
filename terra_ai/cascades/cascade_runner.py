@@ -92,10 +92,11 @@ class CascadeRunner:
                 _inputs.append(block.id)
                 if block.parameters.main.type == LayerInputTypeChoice.Image:
                     _input_type = "image"
-            if block.parameters.main.type in [BlockServiceTypeChoice.YoloV5,
-                                              BlockServiceTypeChoice.GoogleTTS,
-                                              BlockServiceTypeChoice.TinkoffAPI,
-                                              BlockServiceTypeChoice.Wav2Vec]:
+            if block.group == BlockGroupChoice.Service \
+                    and block.parameters.main.type in [BlockServiceTypeChoice.YoloV5,
+                                                       BlockServiceTypeChoice.GoogleTTS,
+                                                       BlockServiceTypeChoice.TinkoffAPI,
+                                                       BlockServiceTypeChoice.Wav2Vec]:
                 model = None
                 if block.parameters.main.type == BlockServiceTypeChoice.YoloV5 and _input_type == "image":
                     deploy_type = DeployTypeChoice.YoloV5
