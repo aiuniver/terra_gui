@@ -239,10 +239,6 @@ class Exchange:
         """
         Валидация модели
         """
-        for layer in model.layers:
-            if layer.type == LayerTypeChoice.PretrainedYOLO:
-                layer.parameters.weight_load()
-
         return ModelValidator(model, architecture).get_validated()
 
     def _call_model_create(self, model: dict, path: Path, overwrite: bool):
@@ -270,6 +266,10 @@ class Exchange:
         """
         Старт обучения
         """
+        for layer in model.layers:
+            if layer.type == LayerTypeChoice.PretrainedYOLO:
+                layer.parameters.weight_load()
+
         training_obj.terra_fit(dataset=dataset, gui_model=model, training=training)
 
     def _call_training_stop(self, training: TrainingDetailsData):
