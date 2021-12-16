@@ -20,13 +20,10 @@ from terra_ai.data.modeling.layers.extra import (
 )
 
 
-WEIGHT_STORAGE_URL = f"{settings.GOOGLE_STORAGE_URL}neural_network/weights/"
 WEIGHT_FILES = {
     YOLOModeChoice.YOLOv3: "yolov3.weights",
     YOLOModeChoice.YOLOv4: "yolov4.weights",
 }
-WEIGHT_PATH = Path(settings.TMP_DIR, "modeling", "weights")
-os.makedirs(WEIGHT_PATH, exist_ok=True)
 
 
 class LayerDefaultData(BaseMixinData):
@@ -702,16 +699,16 @@ class LayerPretrainedYOLOData(LayerMixinData):
         return super().dict(**kwargs)
 
     def weight_load(self):
-        os.makedirs(WEIGHT_PATH, exist_ok=True)
+        os.makedirs(settings.WEIGHT_PATH, exist_ok=True)
         value = None
         if self.main.use_weights:
             weight_filename = WEIGHT_FILES.get(self.main.version)
-            value = Path(WEIGHT_PATH, weight_filename)
+            value = Path(settings.WEIGHT_PATH, weight_filename)
             if not value.is_file():
                 filepath = progress_utils.download(
                     "weight_load",
                     "Загрузка весов `{weight_filename}`",
-                    f"{WEIGHT_STORAGE_URL}{weight_filename}",
+                    f"{settings.WEIGHT_STORAGE_URL}{weight_filename}",
                 )
                 shutil.move(filepath, value)
         self.weight_path = value

@@ -376,6 +376,9 @@ class Exchange:
         """
         Исполнение каскада
         """
+        for block in cascade.blocks:
+            if block.group == BlockGroupChoice.Service:
+                block.parameters.model_load()
         CascadeRunner().start_cascade(
             sources=sources, cascade_data=cascade, training_path=training_path
         )
