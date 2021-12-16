@@ -1722,8 +1722,6 @@ class PretrainedYOLO(Layer):
                 filters = conv_layer.filters
                 k_size = conv_layer.kernel_size[0]
                 in_dim = conv_layer.input_shape[-1]
-                print(i, conv_layer_name, k_size, in_dim)
-
                 if i not in range2:
                     # darknet weights: [beta, gamma, mean, variance]
                     bn_weights = np.fromfile(wf, dtype=np.float32, count=4 * filters)
@@ -1737,7 +1735,6 @@ class PretrainedYOLO(Layer):
                 # darknet shape (out_dim, in_dim, height, width)
                 conv_shape = (filters, in_dim, k_size, k_size)
                 conv_weights = np.fromfile(wf, dtype=np.float32, count=np.product(conv_shape))
-                print(i, conv_shape, conv_weights.shape)
                 # tf shape (height, width, in_dim, out_dim)
                 conv_weights = conv_weights.reshape(conv_shape).transpose([2, 3, 1, 0])
 

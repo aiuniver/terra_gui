@@ -780,6 +780,7 @@ def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25
                 ms = sum(times) / len(times) * 1000
                 fps = 1000 / ms
         ap_dictionary = {}
+        warnings = []
         for i_iou in iou_threshold:
             json_pred = [[] for _ in range(n_classes)]
             class_predictions = {}
@@ -802,8 +803,11 @@ def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25
                         json_pred[gt_classes.index(class_name)].append(
                             {"confidence": str(score), "file_id": str(i_image), "bbox": str(bbox)})
                     except Exception as error:
-                        logger.warning(f'module yolo_utils, {method_name}, '
-                                     f'json_pred[gt_classes.index(class_name)].append, {error}')
+                        msg = f'module yolo_utils, {method_name}, json_pred[gt_classes.index(class_name)].append, ' \
+                           f'{error}'
+                        if msg not in warnings:
+                            logger.warning(msg)
+                            warnings.append(msg)
                         continue
             for class_name in gt_classes:
                 json_pred[gt_classes.index(class_name)].sort(key=lambda x: float(x['confidence']), reverse=True)
