@@ -352,10 +352,10 @@ class ModelValidator:
             list(nx.weakly_connected_components(di_graph)),
             key=lambda subgraph: -len(subgraph),
         )
-        # if len(sub_graphs) > 1:
-        if len(sub_graphs) > self.model_count:
+        if not self.model_count:
+            self.model_idxs = sub_graphs
+        elif len(sub_graphs) > self.model_count:
             self.valid = False
-            # for group in sub_graphs[1:]:
             for group in sub_graphs[self.model_count:]:
                 for layer in group:
                     logger.warning(f"Слой {layer}: {exceptions.LayerNotConnectedToMainPartException()}")
@@ -370,9 +370,6 @@ class ModelValidator:
                         str(exceptions.ExpectedMoreModelsException(self.model_count, len(sub_graphs)))
         else:
             self.model_idxs = sub_graphs
-            # print('\nGenerator', self.model_idxs[0])
-            # print('\nDiscriminator', self.model_idxs[1])
-            # print()
 
     def _get_model_links(self) -> None:
         # logger.debug(f"{self.name}, {self._get_model_links.__name__}")
@@ -442,7 +439,6 @@ class ModelValidator:
             return self.val_dictionary
 
         # check for full connection
-        if not self.model_count
         logger.info("Проверка на полносвязность слоев...", extra={"front_level": "info"})
         self._get_full_connection_check()
         if not self.valid:
