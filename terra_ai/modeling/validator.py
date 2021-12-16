@@ -15,6 +15,7 @@ from terra_ai.data.modeling.extra import LayerGroupChoice, LayerTypeChoice
 from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.modeling.layers.extra import ModuleTypeChoice, LayerValidationMethodChoice, \
     SpaceToDepthDataFormatChoice, LayerConfigData, LayerValueConfig
+from terra_ai.data.training.extra import ArchitectureChoice
 from terra_ai.exceptions import modeling as exceptions
 from terra_ai.logging import logger
 from terra_ai.modeling.utils import get_layer_info, reformat_input_shape, reorder_plan, get_edges, get_links, \
@@ -24,7 +25,7 @@ from terra_ai.modeling.utils import get_layer_info, reformat_input_shape, reorde
 class ModelValidator:
     """Make validation of model plan"""
 
-    def __init__(self, model: ModelDetailsData):
+    def __init__(self, model: ModelDetailsData, architecture: Optional[ArchitectureChoice] = None):
         logger.info(f"Валидируемая модель: \n{model.layers}\n")
         self.name = "ModelValidator"
         self.validator: LayerValidation = LayerValidation()

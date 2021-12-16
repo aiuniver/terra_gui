@@ -42,6 +42,22 @@
           <TextCard :style="{ width: '600px', height: '80px' }">{{ classificationResult }}</TextCard>
         </div>
       </div>
+      <div v-if="type == 'GoogleTTS'">
+        <div class="card__result">
+          <TextCard :style="{ width: '600px', height: '80px' }">{{ card.source }}</TextCard>
+        </div>
+        <div class="card__original">
+          <AudioCard :value="card.predict" />
+        </div>
+      </div>
+      <div v-if="['Wav2Vec', 'TinkoffAPI'].includes(type)">
+        <div class="card__original">
+          <AudioCard :value="card.source" />
+        </div>
+        <div class="card__result">
+          <TextCard :style="{ width: '600px', height: '80px' }">{{ card.predict }}</TextCard>
+        </div>
+      </div>
 
       <div v-if="type == 'ImageSegmentation'">
         <div class="card__original">
@@ -121,15 +137,15 @@ export default {
     },
     index: {
       type: [String, Number],
-      required: true
+      required: true,
     },
-    defaultLayout:{
+    defaultLayout: {
       type: Object,
-      default: () => ({})
+      default: () => ({}),
     },
     type: {
       type: String,
-      default: ""
+      default: '',
     },
   },
 
@@ -158,8 +174,8 @@ export default {
       return layer;
     },
     classificationResult() {
-      let text = this.card.data
-      let prepareText = ''
+      let text = this.card.data;
+      let prepareText = '';
       text.sort((a, b) => (a[1] < b[1] ? 1 : -1));
       for (let i = 0; i < text.length; i++) prepareText += `${text[i][0]} - ${text[i][1]}% \n`;
       return prepareText;

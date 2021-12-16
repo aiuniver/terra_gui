@@ -23,7 +23,13 @@
           />
           <template v-for="({ name, label, parse, list }, i) of datatypes">
             <t-field :label="label" :key="'datatype' + i">
-              <t-select-new :value="block.id"  :list="list" :parse="parse" :name="name" @change="changeId({ ...$event, id: block.id })"/>
+              <t-select-new
+                :value="block.id"
+                :list="list"
+                :parse="parse"
+                :name="name"
+                @change="changeId({ ...$event, id: block.id })"
+              />
             </t-field>
           </template>
         </div>
@@ -40,7 +46,7 @@
               v-model="block.shape.input"
               :label="'Размерность входных данных'"
               :name="'shape_input'"
-              :disabled="block.type !== 'Input' || !!project.dataset"
+              :disabled="block.type !== 'Input' || block.task !== 'Noise' || !!project.dataset"
               @change="saveModel"
             />
             <Shape
@@ -90,7 +96,7 @@ export default {
       project: 'projects/getProject',
     }),
     datatypes() {
-      return this.layersForm.filter(({ name }) => name === `datatype_${this.block.group}`)
+      return this.layersForm.filter(({ name }) => name === `datatype_${this.block.group}`);
     },
     isBlock() {
       return !this.block.id;
