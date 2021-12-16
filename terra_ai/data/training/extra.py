@@ -58,7 +58,7 @@ class ArchitectureChoice(str, Enum):
     YoloV4 = "YoloV4"
     Tracker = "Tracker"
     GAN = "GAN"
-    ConditionalGAN = "ConditionalGAN"
+    CGAN = "CGAN"
 
 
 class CheckpointIndicatorChoice(str, Enum):

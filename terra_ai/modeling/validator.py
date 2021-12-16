@@ -23,9 +23,9 @@ from terra_ai.logging import logger
 from terra_ai.modeling.utils import get_layer_info, reformat_input_shape, reorder_plan, get_edges, get_links, \
     tensor_shape_to_tuple, get_idx_line
 
+architechture = ArchitectureChoice.GAN
+# architechture = None
 
-# architechture = ArchitectureChoice.GAN
-architechture = None
 
 class ModelValidator:
     """Make validation of model plan"""
@@ -55,6 +55,8 @@ class ModelValidator:
         self.model_count: int = 1
         if architechture in GAN_ARCHITECTURE:
             self.model_count = 2
+        if not architechture:
+            self.model_count = None
         self.separated_plans: list = []
 
         self.input_shape = {}
@@ -440,6 +442,7 @@ class ModelValidator:
             return self.val_dictionary
 
         # check for full connection
+        if not self.model_count
         logger.info("Проверка на полносвязность слоев...", extra={"front_level": "info"})
         self._get_full_connection_check()
         if not self.valid:

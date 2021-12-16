@@ -344,7 +344,7 @@ CLASSIFICATION_ARCHITECTURE = [
     ArchitectureChoice.VideoClassification, ArchitectureChoice.DataframeClassification,
 ]
 
-GAN_ARCHITECTURE = [ArchitectureChoice.GAN, ArchitectureChoice.ConditionalGAN]
+GAN_ARCHITECTURE = [ArchitectureChoice.GAN, ArchitectureChoice.CGAN]
 
 
 # def print_error(class_name: str, method_name: str, message: Exception):
