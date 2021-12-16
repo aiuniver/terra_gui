@@ -87,15 +87,18 @@ export default {
   },
   watch: {
     error(value) {
+      if (value) {
+        this.dialogError = true;
+      }
       if (!value) return;
-      this.msgList.push({ msg: value.title, color: this.color });
-      setTimeout(
-        () => {
-          this.msgList.shift();
-          this.key++;
-        },
-        this.msgList.length > 1 ? 1000 : 5000
-      );
+      // this.msgList.push({ msg: value.title, color: 'error' });
+      // setTimeout(
+      //   () => {
+      //     this.msgList.shift();
+      //     this.key++;
+      //   },
+      //   this.msgList.length > 1 ? 1000 : 5000
+      // );
     },
     warning(arr) {
       if (arr.lenght) {
@@ -105,8 +108,9 @@ export default {
       }
     },
     message(value) {
-      console.log(value)
-      if(value) this.$Notify({ type: this.color, title: this.color === 'success' ? 'Успешно' : 'Ошибка', message: value });
+      console.log(value);
+      if (value)
+        this.$Notify({ type: this.color, title: this.color === 'success' ? 'Успешно' : 'Ошибка', message: value });
       // if(value) this.$Notify({ type: this.color, title: 'Успешно', message: value });
     },
   },

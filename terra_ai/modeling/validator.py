@@ -15,6 +15,7 @@ from terra_ai.data.modeling.extra import LayerGroupChoice, LayerTypeChoice
 from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.modeling.layers.extra import ModuleTypeChoice, LayerValidationMethodChoice, \
     SpaceToDepthDataFormatChoice, LayerConfigData, LayerValueConfig
+from terra_ai.data.training.extra import ArchitectureChoice
 from terra_ai.exceptions import modeling as exceptions
 from terra_ai.logging import logger
 from terra_ai.modeling.utils import get_layer_info, reformat_input_shape, reorder_plan, get_edges, get_links, \
@@ -24,8 +25,8 @@ from terra_ai.modeling.utils import get_layer_info, reformat_input_shape, reorde
 class ModelValidator:
     """Make validation of model plan"""
 
-    def __init__(self, model: ModelDetailsData):
-        logger.info(f"Валидируемая модель: \n{model.layers}\n", extra={"front_level": "no_show"})
+    def __init__(self, model: ModelDetailsData, architecture: Optional[ArchitectureChoice] = None):
+        logger.info(f"Валидируемая модель: \n{model.layers}\n")
         self.name = "ModelValidator"
         self.validator: LayerValidation = LayerValidation()
         self.model: ModelDetailsData = model
@@ -75,7 +76,7 @@ class ModelValidator:
     def compile_keras_code(self) -> None:
         """Create keras code from model plan"""
         # logger.debug(f"{self.name}, {self.compile_keras_code.__name__}")
-        logger.info("Компиляция керас-кода модели...", extra={"front_level": "info"})
+        logger.info("Компиляция керас-кода модели...")
         self.keras_code = ""
         layers_import = {}
         name_dict = {}
@@ -140,14 +141,14 @@ class ModelValidator:
     def get_validated(self):
         """Returns all necessary info about modeling"""
         # logger.debug(f"{self.name}, {self.get_validated.__name__}")
-        logger.info("Валидация модели...", extra={"front_level": "info"})
+        logger.info("Валидация модели...")
         self._model_validation()
         if self.valid:
             self.compile_keras_code()
-            logger.info("Валидация модели прошла успешно", extra={"front_level": "success"})
+            logger.info("Валидация модели прошла успешно")
         else:
             self.keras_code = None
-            logger.info("Валидация модели не прошла. Модель содержит ошибки.", extra={"front_level": "info"})
+            logger.info("Модель не валидна")
         for idx, layer in enumerate(self.filled_model.layers):
             # fill inputs
             if layer.group == LayerGroupChoice.input:
@@ -257,7 +258,7 @@ class ModelValidator:
 
     def _build_model_plan(self):
         # logger.debug(f"{self.name}, {self._build_model_plan.__name__}")
-        logger.info("Предобработка плана модели...", extra={"front_level": "info"})
+        logger.info("Предобработка плана модели...")
         for layer in self.model.layers:
             if layer.group == LayerGroupChoice.input:
                 self.input_shape[layer.id] = layer.shape.input
@@ -375,26 +376,26 @@ class ModelValidator:
         """Full model validation"""
         # logger.debug(f"{self.name}, {self._model_validation.__name__}")
         # check for cycles
-        logger.info("Проверка наличия циклических структур...", extra={"front_level": "info"})
+        logger.info("Проверка наличия циклических структур...")
         self._get_cycles_check()
         if not self.valid:
             return self.val_dictionary
 
         # check for full connection
-        logger.info("Проверка на полносвязность слоев...", extra={"front_level": "info"})
+        logger.info("Проверка на полносвязность слоев...")
         self._get_full_connection_check()
         if not self.valid:
             return self.val_dictionary
 
         # check for input shapes compatibility
-        logger.info("Проверка входных размерностей...", extra={"front_level": "info"})
+        logger.info("Проверка входных размерностей...")
         self._get_model_links()
         self._get_input_shape_check()
         if not self.valid:
             return self.val_dictionary
 
         # check layers
-        logger.info("Проверка слоев на ошибки...", extra={"front_level": "info"})
+        logger.info("Проверка слоев на ошибки...")
         for layer in self.model_plan:
             if layer[1] == LayerTypeChoice.CustomBlock:
                 output_shape, comment = self._custom_block_validation(
@@ -426,7 +427,7 @@ class ModelValidator:
             return self.val_dictionary
 
         # check output shapes compatibility
-        logger.info("Проверка выходных размерностей...", extra={"front_level": "info"})
+        logger.info("Проверка выходных размерностей...")
         self._get_output_shape_check()
         return self.val_dictionary
 
@@ -1107,7 +1108,7 @@ class ModelCreator:
 
     def _build_keras_model(self):
         """Build keras model from plan"""
-        logger.info("Сборка модели из плана...", extra={"front_level": "info"})
+        logger.info("Сборка модели из плана...")
         # logger.debug(f"{self.name}, {self._build_keras_model.__name__}")
         for _id in self.idx_line:
             layer_type = self.model_plan[self.id_idx_dict.get(_id)][1]

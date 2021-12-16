@@ -95,7 +95,13 @@ class ValidateAPIView(BaseAPIView):
 
     def post(self, request, **kwargs):
         self._reset_layers_shape(request.project.model)
-        errors = self.terra_exchange("model_validate", model=request.project.model)
+        errors = self.terra_exchange(
+            "model_validate",
+            model=request.project.model,
+            architecture=request.project.dataset.architecture
+            if request.project.dataset
+            else None,
+        )
         request.project.save_config()
         return BaseResponseSuccess(errors)
 

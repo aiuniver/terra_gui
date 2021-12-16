@@ -56,7 +56,6 @@
         @clear="clearParams"
       />
     </div>
-    <div class="overlay" v-if="overlay"></div>
   </main>
 </template>
 
