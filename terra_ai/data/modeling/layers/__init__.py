@@ -6,6 +6,7 @@ import shutil
 from enum import Enum
 from typing import Any, Optional
 from pathlib import Path
+from pydantic import validator
 from pydantic.types import FilePath
 
 from terra_ai import settings
@@ -693,6 +694,12 @@ class LayerPretrainedYOLOData(LayerMixinData):
         types.PretrainedYOLO.ParametersExtraData()
     )
     weight_path: Optional[FilePath]
+
+    @validator("weight_path", always=True)
+    def _validate_weight_path(cls, value):
+        if not value:
+            value = None
+        return value
 
     def dict(self, **kwargs):
         kwargs.update({"exclude": {"weight_path"}})
