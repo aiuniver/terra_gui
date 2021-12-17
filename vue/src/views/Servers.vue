@@ -32,13 +32,13 @@
 			<div class="ssh-wrapper">
 				<span class="ssh">Приватный SSH-ключ</span>
 				<i title="Скопировать" @click="copy('private')" class="btn-copy"></i>
-				<span class="clickable">Скачать</span>
+				<a class="clickable" :href="privateURI" download="id_rsa">Скачать</a>
 				<span v-show="buffer === 'private'" class="buffer">Ключ скопирован в буффер обмена</span>
 			</div>
 			<div class="ssh-wrapper">
 				<span class="ssh">Публичный  SSH-ключ</span>
 				<i title="Скопировать" @click="copy('public')" class="btn-copy"></i>
-				<span class="clickable">Скачать</span>
+				<a class="clickable" :href="publicURI" download="id_rsa.pub">Скачать</a>
 				<span v-show="buffer === 'public'" class="buffer">Ключ скопирован в буффер обмена</span>
 			</div>
 			<hr>
@@ -71,7 +71,8 @@ export default {
 		fetchingServers: false,
 		buffer: '',
 		scrollLeft: 0,
-		scrollTop: 0
+		scrollTop: 0,
+		intervalID: null
 	}),
 	computed: {
 		...mapGetters({
@@ -82,6 +83,12 @@ export default {
 		},
 		getServer() {
 			return this.servers.find(server => server.id === this.serverID)
+		},
+		privateURI() {
+			return 'data:application/octet-stream;charset=utf-8,' + encodeURIComponent(this.private_key)
+		},
+		publicURI() {
+			return 'data:application/octet-stream;charset=utf-8,' + encodeURIComponent(this.public_key) 
 		}
 	},
 	methods: {
@@ -120,8 +127,14 @@ export default {
 	},
 	async created() {
 		this.fetchingServers = true
-    await this.$store.dispatch('servers/getServers')
+		await this.$store.dispatch('servers/getServers')
+		this.intervalID = setInterval(async () => {
+			await this.$store.dispatch('servers/getServers')
+		}, 60000)
 		this.fetchingServers = false
+		this.$router.afterEach(() => {
+			clearInterval(this.intervalID)
+		})
   }
 }
 </script>
