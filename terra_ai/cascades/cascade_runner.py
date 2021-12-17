@@ -138,7 +138,7 @@ class CascadeRunner:
             if "type" in block.parameters.main.native().keys():
                 _type = block.parameters.main.type.value.lower()
             if block.group == BlockGroupChoice.InputData:
-                if model_task == "ObjectDetection" and \
+                if (model_task == "ObjectDetection" or model_task == DeployTypeChoice.YoloV5) and \
                         block.parameters.main.type == LayerInputTypeChoice.Video \
                         and block.parameters.main.switch_on_frame:
                     _type = "video_by_frame"
