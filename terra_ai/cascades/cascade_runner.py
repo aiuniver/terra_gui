@@ -60,7 +60,7 @@ class CascadeRunner:
                                                                       model_task=model_task,
                                                                       dataset_data=dataset_config_data,
                                                                       presets_path=presets_path)
-        # print('cascade_config', cascade_config)
+        print('cascade_config', cascade_config)
         main_block = json2cascade(path=cascade_path, cascade_config=cascade_config, mode="run")
 
         sources = sources.get(inputs_ids[0])
@@ -150,7 +150,6 @@ class CascadeRunner:
                         },
                 }
             elif block.group == BlockGroupChoice.OutputData:
-                print('model_task', model_task)
                 if model_task in ["ObjectDetection", "Segmentation", DeployTypeChoice.VideoObjectDetection]:
                     block_description = {
                         "saving": {
@@ -216,8 +215,10 @@ class CascadeRunner:
                         key: val for key, val in block.parameters.main.native().items()
                         if key in block_parameters
                     }
+                    print('block.parameters', block.parameters)
                     if "model_path" in parameters.keys() and not parameters.get("model_path"):
-                        parameters["model_path"] = "terra_ai/assets/cascades/ckpt.t7"
+                        parameters["model_path"] = str(block.parameters.model_path)
+                        print('parameters["model_path"]', parameters["model_path"])
                 else:
                     parameters = {
                         key: val for key, val in block.parameters.main.native().items()
@@ -264,6 +265,7 @@ class CascadeRunner:
         out_data = []
         iter_ = 0
         for source in sources[:10]:
+            print('source', source)
             if type_ in [DeployTypeChoice.YoloV3, DeployTypeChoice.YoloV4,
                          DeployTypeChoice.YoloV5, DeployTypeChoice.VideoObjectDetection]:
                 if type_ == DeployTypeChoice.VideoObjectDetection:

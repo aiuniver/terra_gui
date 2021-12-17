@@ -1664,15 +1664,9 @@ class PretrainedYOLO(Layer):
         self.version = version
         self.use_weights = use_weights
         self.save_weights = save_weights
-        # self.save_weights = "C:/PycharmProjects/terra_gui/terra_ai/assets/cascades/yolov4.weights" \
-        #     if self.version == "YOLOv4" else "C:/PycharmProjects/terra_gui/terra_ai/assets/cascades/yolov3.weights"
-        # self.save_weights = "D:/AI/terra_gui/terra_ai/assets/cascades/yolov4.weights" \
-        #     if self.version == YOLOModeChoice.YOLOv4 else "D:/AI/terra_gui/terra_ai/assets/cascades/yolov3.weights"
-        # if not kwargs.get('validation'):
         self.yolo = self.create_yolo(classes=self.num_classes)
         if use_weights:
             self.base_yolo = self.create_yolo()
-            print('self.save_weights', self.save_weights)
             self.load_yolo_weights(self.base_yolo, self.save_weights)
             for i, l in enumerate(self.base_yolo.layers):
                 layer_weights = l.get_weights()
@@ -1686,7 +1680,7 @@ class PretrainedYOLO(Layer):
     def create_yolo(self, input_size=416, channels=3, classes=80):
         tf.keras.backend.clear_session()  # used to reset layer names
         input_layer = layers.Input([input_size, input_size, channels])
-        if self.version =="YOLOv4":
+        if self.version == "YOLOv4":
             output_tensors = self.YOLOv4(input_layer, classes)
         else:
             output_tensors = self.YOLOv3(input_layer, classes)
