@@ -1,16 +1,6 @@
-from terra_ai.data.mixins import BaseMixinData
-from ..extra import DataBaseList, DataBase
+from . import BaseSTT
 
 
-class Item(BaseMixinData):
-    pass
-
-
-class DataList(DataBaseList):
+class Data(BaseSTT.Data):
     class Meta:
-        source = Item
-
-
-class Data(DataBase):
-    class Meta:
-        source = DataList
+        source = BaseSTT.DataList

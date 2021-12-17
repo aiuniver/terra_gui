@@ -180,7 +180,7 @@ class GUINN:
             logger.info("Загрузка модели...", extra={"front_level": "info"})
             base_model = None
             if train_details.state.status == "training":
-                validator = ModelValidator(model)
+                validator = ModelValidator(model, dataset.data.architecture)
                 base_model = validator.get_keras_model()
 
             if dataset.data.architecture not in YOLO_ARCHITECTURE:

@@ -167,6 +167,7 @@ export default {
   },
   methods: {
     parse({ value, name }) {
+      if (name === 'type') this.parameters['name'] = null;
       this.parameters[name] = value;
       this.parameters = { ...this.parameters };
     },
