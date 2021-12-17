@@ -151,7 +151,7 @@ class CascadeRunner:
                 }
             elif block.group == BlockGroupChoice.OutputData:
                 print('model_task', model_task)
-                if model_task in ["ObjectDetection", "Segmentation"]:
+                if model_task in ["ObjectDetection", "Segmentation", DeployTypeChoice.VideoObjectDetection]:
                     block_description = {
                         "saving": {
                             "tag": "output",
