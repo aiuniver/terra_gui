@@ -19,8 +19,12 @@ Vue.use(vuescroll, {
     vuescroll: {
       mode: 'native',
       sizeStrategy: 'percent',
-      detectResize: false,
+      detectResize: true,
       locking: true,
+    },
+    scrollPanel: {
+      initialScrollY: 0.1,
+      initialScrollX: 0.1
     },
     bar: {
       showDelay: 500,
