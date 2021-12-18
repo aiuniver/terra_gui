@@ -57,6 +57,10 @@ class ArchitectureChoice(str, Enum):
     YoloV3 = "YoloV3"
     YoloV4 = "YoloV4"
     Tracker = "Tracker"
+    Speech2Text = "Speech2Text"
+    Text2Speech = "Text2Speech"
+    GAN = "GAN"
+    CGAN = "CGAN"
 
 
 class CheckpointIndicatorChoice(str, Enum):

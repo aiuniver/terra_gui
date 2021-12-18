@@ -26,6 +26,7 @@ from tensorflow.keras import utils
 from tensorflow import concat as tf_concat
 from tensorflow import maximum as tf_maximum
 from tensorflow import minimum as tf_minimum
+from tensorflow import random as tf_random
 
 
 class CreateArray(object):
@@ -426,6 +427,49 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
+    def instructions_speech_2_text(paths_list: list, **options: dict) -> dict:
+
+        instructions = {'instructions': paths_list,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def instructions_text_2_speech(paths_list: list, **options: dict) -> dict:
+
+        instructions = {'instructions': paths_list,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def instructions_noise(paths_list: list, **options):
+
+        lst = [None for _ in range(len(paths_list))]
+
+        instructions = {'instructions': lst, 'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def instructions_generator(paths_list: list, **options):
+
+        lst = [None for _ in range(len(paths_list))]
+
+        instructions = {'instructions': lst, 'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def instructions_discriminator(paths_list: list, **options):
+
+        lst = [None for _ in range(len(paths_list))]
+
+        instructions = {'instructions': lst, 'parameters': options}
+
+        return instructions
+
+    @staticmethod
     def cut_image(paths_list: list, dataset_folder=None, **options: dict):
 
         for elem in paths_list:
@@ -716,6 +760,46 @@ class CreateArray(object):
     def cut_tracker(path_list: int, dataset_folder=None, **options: dict) -> dict:
 
         instructions = {'instructions': path_list,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def cut_speech_2_text(path_list: int, dataset_folder=None, **options: dict) -> dict:
+
+        instructions = {'instructions': path_list,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def cut_text_2_speech(path_list: int, dataset_folder=None, **options: dict) -> dict:
+
+        instructions = {'instructions': path_list,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def cut_noise(lst: list, dataset_folder=None, **options) -> dict:
+
+        instructions = {'instructions': lst,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def cut_generator(lst: list, dataset_folder=None, **options) -> dict:
+
+        instructions = {'instructions': lst,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def cut_discriminator(lst: list, dataset_folder=None, **options) -> dict:
+
+        instructions = {'instructions': lst,
                         'parameters': options}
 
         return instructions
@@ -1079,6 +1163,22 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
+    def create_speech_2_text(zero: int, **options):
+
+        instructions = {'instructions': np.array([zero]),
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def create_text_2_speech(zero: int, **options):
+
+        instructions = {'instructions': np.array([zero]),
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
     def create_raw(item, **options) -> dict:
         if isinstance(item, str):
             try:
@@ -1095,6 +1195,32 @@ class CreateArray(object):
 
         instructions = {'instructions': item,
                         'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def create_generator(item=None, **options):
+
+        interpolation_noise = tf_random.normal(shape=options['shape'])
+        instructions = {'instructions': interpolation_noise.numpy(), 'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def create_discriminator(item=None, **options):
+
+        if item is None:
+            item = np.array([1])
+
+        instructions = {'instructions': item, 'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def create_noise(item=None, **options):
+
+        interpolation_noise = tf_random.normal(shape=options['shape'])
+        instructions = {'instructions': interpolation_noise.numpy(), 'parameters': options}
 
         return instructions
 
@@ -1290,6 +1416,31 @@ class CreateArray(object):
         return zero
 
     @staticmethod
+    def preprocess_speech_2_text(zero: int, **options):
+
+        return zero
+
+    @staticmethod
+    def preprocess_text_2_speech(zero: int, **options):
+
+        return zero
+
+    @staticmethod
     def preprocess_raw(array: np.ndarray, **options) -> np.ndarray:
+
+        return array
+
+    @staticmethod
+    def preprocess_generator(array: np.ndarray, **options) -> np.ndarray:
+
+        return array
+
+    @staticmethod
+    def preprocess_discriminator(array: np.ndarray, **options) -> np.ndarray:
+
+        return array
+
+    @staticmethod
+    def preprocess_noise(array: np.ndarray, **options):
 
         return array
