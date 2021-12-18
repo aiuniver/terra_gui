@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK
 
-from apps.api.logging import catcher, LogData, LevelnameChoice
+from apps.api.logging import logs_catcher, LogData, LevelnameChoice
 
 
 class BaseAPIView(APIView):
@@ -22,7 +22,7 @@ class BaseAPIView(APIView):
     def dispatch(self, request, *args, **kwargs):
         response = super().dispatch(request, *args, **kwargs)
         warnings = response.data.get("warning", [])
-        for log in catcher.record:
+        for log in logs_catcher.record:
             if log.levelno != logging.WARNING:
                 continue
             title = None
@@ -37,7 +37,7 @@ class BaseAPIView(APIView):
                         level=LevelnameChoice.WARNING, title=title, message=message
                     ).dict()
                 )
-        catcher.clear()
+        logs_catcher.clear()
         response.data["warning"] = warnings
         return response
 
