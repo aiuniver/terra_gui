@@ -10,5 +10,6 @@ from . import (
     Regression,
     Timeseries,
     Tracker,
-    NoOutput
+    Text2Speech,
+    Speech2Text
 )
