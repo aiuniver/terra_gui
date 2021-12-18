@@ -25,7 +25,7 @@ class DataframeRegressionCallback:
                 x_val = options.X.get("val")
             else:
                 x_val = {}
-                for inp in options.dataset['val'].keys():
+                for inp in options.data.inputs.keys():
                     x_val[inp] = []
                     for x_val_, _ in options.dataset['val'].batch(1):
                         x_val[inp].extend(x_val_.get(f'{inp}').numpy())
