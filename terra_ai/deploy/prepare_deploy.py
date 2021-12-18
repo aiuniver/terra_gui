@@ -32,14 +32,7 @@ class DeployCreator:
         method_name = "get_deploy"
         try:
             model_path = Path(os.path.join(training_path, page.get("name"), "model"))
-            if os.path.exists(os.path.join(model_path, "log.history")):
-                with open(os.path.join(model_path, "log.history"), "r", encoding="utf-8") as log_:
-                    history_ = json.load(log_)
-                    print("EPOCHS: ", history_.get("fit_log", {}).get("epochs", []))
-                    if len(history_.get("fit_log", {}).get("epochs", [])) == 0:
-                        raise NoTrainedModelException(self.__class__.__name__, method_name)
-            else:
-                raise NoTrainedModelException(self.__class__.__name__, method_name)
+            self._check_model_on_training(model_path=model_path)
             presets_path = os.path.join(DEPLOY_PATH, "deploy_presets")
             print(model_path, presets_path, page)
             if page.get("type") == "model":
@@ -352,3 +345,13 @@ class DeployCreator:
 
         dataset["architecture"] = deploy_type
         return dataset
+
+    def _check_model_on_training(self, model_path):
+        method_name = "check on training"
+        if os.path.exists(os.path.join(model_path, "log.history")):
+            with open(os.path.join(model_path, "log.history"), "r", encoding="utf-8") as log_:
+                history_ = json.load(log_)
+                if len(history_.get("fit_log", {}).get("epochs", [])) == 0:
+                    raise NoTrainedModelException(self.__class__.__name__, method_name)
+        else:
+            raise NoTrainedModelException(self.__class__.__name__, method_name)
