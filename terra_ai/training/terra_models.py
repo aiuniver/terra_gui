@@ -7,6 +7,7 @@ from pathlib import Path
 
 import tensorflow as tf
 from tensorflow import keras
+from tensorflow.python.keras.models import Model
 
 from terra_ai.callbacks import interactive
 from terra_ai.callbacks.utils import loss_metric_config, get_dataset_length
@@ -415,6 +416,255 @@ class YoloTerraModel(BaseTerraModel):
         total_loss = tf.add(giou_loss, conf_loss)
         total_loss = tf.add(total_loss, prob_loss)
         return giou_loss, conf_loss, prob_loss, total_loss, prob_loss_cls, predict
+
+    def fit(self, params: TrainingDetailsData, dataset: PrepareDataset):
+        method_name = 'train_yolo_model'
+        try:
+            self.train_length, self.val_length = get_dataset_length(dataset)
+            yolo_parameters = self.__create_yolo_parameters(params=params, dataset=dataset)
+            num_class = yolo_parameters.get("parameters").get("num_class")
+            classes = yolo_parameters.get("parameters").get("classes")
+            global_steps = tf.Variable(1, trainable=False, dtype=tf.int64)
+
+            self.set_optimizer(params=params)
+
+            current_epoch = self.callback.last_epoch
+            end_epoch = self.callback.total_epochs
+            train_pred, train_true, val_pred, val_true = [], [], [], []
+            output_array = None
+            for _, out, _ in dataset.dataset['train'].batch(1).take(1):
+                output_array = out
+            for array in output_array.values():
+                train_target_shape, val_target_shape = [self.train_length], [self.val_length]
+                train_target_shape.extend(list(array.shape[1:]))
+                val_target_shape.extend(list(array.shape[1:]))
+                train_pred.append(np.zeros(train_target_shape))
+                train_true.append(np.zeros(train_target_shape))
+                val_pred.append(np.zeros(val_target_shape))
+                val_true.append(np.zeros(val_target_shape))
+
+            train_data_idxs = np.arange(self.train_length).tolist()
+            self.callback.on_train_begin()
+            for epoch in range(current_epoch, end_epoch):
+                logger.info(f"Эпоха {epoch + 1}", extra={"front_level": "info"})
+                self.callback.on_epoch_begin()
+                current_logs = {"epochs": epoch + 1, 'loss': {}, "metrics": {}, 'class_loss': {}, 'class_metrics': {}}
+                train_loss_cls = {}
+                for cls in range(num_class):
+                    train_loss_cls[classes[cls]] = 0.
+                current_idx = 0
+                cur_step, giou_train, conf_train, prob_train, total_train = 0, 0, 0, 0, 0
+                logger.info(f"Эпоха {epoch + 1}: обучение на тренировочной выборке...",
+                            extra={"front_level": "info"})
+                for image_data, target1, target2 in dataset.dataset.get('train').batch(params.base.batch):
+                    results = self.__train_step(image_data,
+                                                target1,
+                                                target2,
+                                                global_steps=global_steps,
+                                                **yolo_parameters)
+
+                    giou_train += results[1].numpy()
+                    conf_train += results[2].numpy()
+                    prob_train += results[3].numpy()
+                    total_train += results[4].numpy()
+                    for cls in range(num_class):
+                        train_loss_cls[classes[cls]] += results[5][classes[cls]].numpy()
+
+                    true_array = list(target1.values())
+                    length = results[6][0].shape[0]
+                    for i in range(len(train_pred)):
+                        train_pred[i][current_idx: current_idx + length] = results[6][i].numpy()
+                        train_true[i][current_idx: current_idx + length] = true_array[i].numpy()
+                    current_idx += length
+                    cur_step += 1
+                    if interactive.urgent_predict:
+                        logger.info(f"Эпоха {epoch + 1}: urgent_predict", extra={"front_level": "info"})
+                        logger.info(f"Эпоха {epoch + 1}: обработка проверочной выборки...",
+                                    extra={"front_level": "info"})
+                        val_steps = 0
+                        val_current_idx = 0
+                        for val_image_data, val_target1, val_target2 in dataset.dataset.get('val').batch(
+                                params.base.batch):
+                            results = self.__validate_step(val_image_data,
+                                                           target1,
+                                                           target2,
+                                                           **yolo_parameters)
+                            val_true_array = list(val_target1.values())
+                            length = val_true_array[0].shape[0]
+                            for i in range(len(val_true_array)):
+                                val_pred[i][val_current_idx: val_current_idx + length] = results[5][i].numpy()
+                                val_true[i][val_current_idx: val_current_idx + length] = val_true_array[i].numpy()
+                            val_current_idx += length
+                            val_steps += 1
+                        self.callback.on_train_batch_end(batch=cur_step, arrays={
+                            "train_true": train_true, "val_true": val_true, "train_pred": train_pred,
+                            "val_pred": val_pred}, train_data_idxs=train_data_idxs)
+                    else:
+                        self.callback.on_train_batch_end(batch=cur_step)
+                    if self.callback.stop_training:
+                        break
+
+                logger.info(f"Эпоха {epoch + 1}: сохраниеиние весов текущей эпохи...", extra={"front_level": "info"})
+                self.save_weights()
+                if self.callback.stop_training:
+                    logger.info(f"Эпоха {epoch + 1}: остановка обучения", extra={"front_level": "success"})
+                    break
+
+                current_logs['loss']['giou_loss'] = {'train': giou_train / cur_step}
+                current_logs['loss']['conf_loss'] = {'train': conf_train / cur_step}
+                current_logs['loss']['prob_loss'] = {'train': prob_train / cur_step}
+                current_logs['loss']['total_loss'] = {'train': total_train / cur_step}
+                current_logs['class_loss']['prob_loss'] = {}
+
+                for cls in range(num_class):
+                    current_logs['class_loss']['prob_loss'][str(classes[cls])] = \
+                        {'train': train_loss_cls[str(classes[cls])] / cur_step}
+                    train_loss_cls[str(classes[cls])] = train_loss_cls[str(classes[cls])] / cur_step
+
+                logger.info(f"Эпоха {epoch + 1}: обработка проверочной выборки...", extra={"front_level": "info"})
+                val_steps, giou_val, conf_val, prob_val, total_val = 0, 0, 0, 0, 0
+                val_loss_cls = {}
+                for cls in range(num_class):
+                    val_loss_cls[classes[cls]] = 0.
+                val_current_idx = 0
+                for image_data, target1, target2 in dataset.dataset.get('val').batch(params.base.batch):
+                    results = self.__validate_step(image_data,
+                                                   target1,
+                                                   target2,
+                                                   **yolo_parameters)
+                    giou_val += results[0].numpy()
+                    conf_val += results[1].numpy()
+                    prob_val += results[2].numpy()
+                    total_val += results[3].numpy()
+                    for cls in range(num_class):
+                        val_loss_cls[str(classes[cls])] += results[4][str(classes[cls])].numpy()
+
+                    val_true_array = list(target1.values())
+                    length = val_true_array[0].shape[0]
+                    for i in range(len(val_true_array)):
+                        val_pred[i][val_current_idx: val_current_idx + length] = results[5][i].numpy()
+                        val_true[i][val_current_idx: val_current_idx + length] = val_true_array[i].numpy()
+                    val_current_idx += length
+                    val_steps += 1
+
+                current_logs['loss']['giou_loss']["val"] = giou_val / val_steps
+                current_logs['loss']['conf_loss']["val"] = conf_val / val_steps
+                current_logs['loss']['prob_loss']["val"] = prob_val / val_steps
+                current_logs['loss']['total_loss']["val"] = total_val / val_steps
+
+                for cls in range(num_class):
+                    current_logs['class_loss']['prob_loss'][str(classes[cls])]["val"] = \
+                        val_loss_cls[str(classes[cls])] / val_steps
+
+                logger.info(f"Эпоха {epoch + 1}: расчет метрики map50...", extra={"front_level": "info"})
+                map50 = get_mAP(self.yolo_model, dataset, score_threshold=0.05, iou_threshold=[0.50],
+                                TRAIN_CLASSES=dataset.data.outputs.get(2).classes_names, dataset_path=dataset.data.path)
+                current_logs['metrics']['mAP50'] = {"val": map50.get('val_mAP50')}
+                current_logs['class_metrics']['mAP50'] = {}
+                for cls in range(num_class):
+                    try:
+                        current_logs['class_metrics']['mAP50'][str(classes[cls])] = \
+                            {"val": map50.get(f"val_mAP50_class_{classes[cls]}") * 100}
+                    except:
+                        current_logs['class_metrics']['mAP50'][str(classes[cls])] = {"val": None}
+
+                self.callback.on_epoch_end(
+                    epoch=epoch + 1,
+                    arrays={"train_pred": train_pred, "val_pred": val_pred, "train_true": train_true,
+                            "val_true": val_true},
+                    train_data_idxs=train_data_idxs,
+                    logs=current_logs
+                )
+
+                if self.callback.is_best():
+                    self.save_weights(path_=self.file_path_model_best_weights)
+                    logger.info("Веса лучшей эпохи успешно сохранены", extra={"front_level": "success"})
+            self.callback.on_train_end()
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                YoloTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
+
+
+class GANTerraModel(BaseTerraModel):
+    name = "GANTerraModel"
+
+    def __init__(self, model, model_name: str, model_path: Path, **options):
+        super().__init__(model=model, model_name=model_name, model_path=model_path)
+        self.generator: Model = None
+        self.discriminator: Model = None
+        self.noise_dim = self.generator.inputs.shape[1:]
+        self.generator_loss_func = None
+        self.discriminator_loss_func = None
+        self.generator_optimizer = None
+        self.discriminator_optimizer = None
+        pass
+
+    @staticmethod
+    def __discriminator_loss(loss_func, real_output, fake_output):
+        real_loss = loss_func(tf.ones_like(real_output), real_output)
+        fake_loss = loss_func(tf.zeros_like(fake_output), fake_output)
+        total_loss = real_loss + fake_loss
+        return total_loss
+
+    @staticmethod
+    def __generator_loss(loss_func, fake_output):
+        return loss_func(tf.ones_like(fake_output), fake_output)
+
+    @staticmethod
+    def __gradient_penalty(batch_size, real_images, fake_images, discriminator):
+        """ Calculates the gradient penalty.
+
+        This loss is calculated on an interpolated image
+        and added to the discriminator loss.
+        """
+        if real_images.shape[0] > fake_images.shape[0]:
+            while real_images.shape[0] > fake_images.shape[0]:
+                fake_images = tf.concat([fake_images, fake_images], axis=0)
+        if real_images.shape[0] <= fake_images.shape[0]:
+            fake_images = fake_images[:real_images.shape[0]]
+
+        alpha = tf.random.normal([batch_size, 1, 1, 1], 0.0, 1.0)
+        diff = fake_images - real_images
+        interpolated = real_images + alpha * diff
+
+        with tf.GradientTape() as gp_tape:
+            gp_tape.watch(interpolated)
+            # 1. Get the discriminator output for this interpolated image.
+            pred = discriminator(interpolated)
+
+        # 2. Calculate the gradients w.r.t to this interpolated image.
+        grads = gp_tape.gradient(pred, [interpolated])[0]
+        # 3. Calculate the norm of the gradients.
+        norm = tf.sqrt(tf.reduce_sum(tf.square(grads), axis=[1, 2, 3]))
+        gp = tf.reduce_mean((norm - 1.0) ** 2)
+        return gp
+
+    @tf.function
+    def __train_step(self, images, gen_batch, dis_batch, grad_penalty=True, gp_weight=1, **options):
+        noise = tf.random.normal([gen_batch, self.noise_dim])
+        gp_weight = tf.convert_to_tensor(gp_weight, dtype='float32')
+        with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
+            generated_images = self.generator(noise, training=True)
+            real_output = self.discriminator(images, training=True)
+            fake_output = self.discriminator(generated_images, training=True)
+            gen_loss = self.__generator_loss(loss_func=self.generator_loss_func, fake_output=fake_output)
+            disc_loss = self.__discriminator_loss(
+                loss_func=self.discriminator_loss_func, real_output=real_output, fake_output=fake_output)
+            if grad_penalty:
+                gp = self.__gradient_penalty(
+                    batch_size=dis_batch, real_images=images, fake_images=generated_images,
+                    discriminator=self.discriminator)
+                disc_loss = tf.add(disc_loss, gp * gp_weight)
+        gradients_of_generator = gen_tape.gradient(gen_loss, self.generator.trainable_variables)
+        disc_loss = tf.convert_to_tensor(disc_loss, dtype='float32')
+        gradients_of_discriminator = disc_tape.gradient(disc_loss, self.discriminator.trainable_variables)
+        self.generator_optimizer.apply_gradients(
+            zip(gradients_of_generator, self.generator.trainable_variables))
+        self.discriminator_optimizer.apply_gradients(
+            zip(gradients_of_discriminator, self.discriminator.trainable_variables))
+        return generated_images, gen_loss, disc_loss
 
     def fit(self, params: TrainingDetailsData, dataset: PrepareDataset):
         method_name = 'train_yolo_model'
