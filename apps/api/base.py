@@ -1,5 +1,3 @@
-import logging
-
 from typing import Any, Optional, List
 from pydantic import BaseModel
 
@@ -21,24 +19,18 @@ class BaseAPIView(APIView):
 
     def dispatch(self, request, *args, **kwargs):
         response = super().dispatch(request, *args, **kwargs)
-        warnings = response.data.get("warning", [])
-        for log in logs_catcher.record:
-            if log.levelno != logging.WARNING:
-                continue
-            title = None
-            message = None
-            if isinstance(log.msg, str):
-                title = log.msg
-            elif isinstance(log.msg, tuple) and len(log.msg) == 2:
-                title, message = log.msg
-            if title:
-                warnings.append(
-                    LogData(
-                        level=LevelnameChoice.WARNING, title=title, message=message
-                    ).dict()
+        logs = logs_catcher.pool + response.data.get("logs", [])
+        response.data.update(
+            {
+                "logs": list(
+                    filter(
+                        lambda log: log.get("level")
+                        in (LevelnameChoice.INFO, LevelnameChoice.WARNING),
+                        logs,
+                    )
                 )
-        logs_catcher.clear()
-        response.data["warning"] = warnings
+            }
+        )
         return response
 
 
@@ -46,20 +38,20 @@ class BaseResponseData(BaseModel):
     success: bool = True
     data: Any
     error: Optional[LogData]
-    warning: List[LogData] = []
+    logs: List[LogData] = []
 
 
 class BaseResponse(Response):
     def __init__(
-        self, data=None, error: LogData = None, warning: LogData = None, *args, **kwargs
+        self, data=None, error: LogData = None, logs: LogData = None, *args, **kwargs
     ):
-        if warning is None:
-            warning = []
+        if logs is None:
+            logs = []
         __response = BaseResponseData(
             success=(error is None),
             data=data,
             error=error,
-            warning=warning,
+            logs=logs,
         )
         kwargs.update({"status": HTTP_200_OK})
         super().__init__(data=__response.dict(), *args, **kwargs)
