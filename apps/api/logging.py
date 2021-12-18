@@ -38,7 +38,7 @@ class LogData(BaseModel):
         super().__init__(**data)
 
 
-class TerraRequestCatcher:
+class TerraLogsCatcher:
     _records: list = []
 
     @property
@@ -53,7 +53,7 @@ class TerraRequestCatcher:
         self._records = []
 
 
-catcher = TerraRequestCatcher()
+logs_catcher = TerraLogsCatcher()
 
 
 class TerraConsoleFormatter(ServerFormatter):
@@ -88,6 +88,6 @@ class TerraConsoleHandler(logging.Handler):
         print(self.format(record))
 
 
-class TerraRequestCatcherHandler(logging.Handler):
+class TerraLogsCatcherHandler(logging.Handler):
     def emit(self, record):
-        catcher.record = record
+        logs_catcher.record = record
