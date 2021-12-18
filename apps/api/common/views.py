@@ -3,6 +3,12 @@ from terra_ai.settings import TERRA_PATH
 from apps.api import decorators
 from apps.api.base import BaseAPIView, BaseResponseSuccess
 from apps.api.common.serializers import ValidateDatasetModelSerializer
+from apps.api.logging import logs_catcher
+
+
+class LogsAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        return BaseResponseSuccess(logs_catcher.logs)
 
 
 class ValidateDatasetModelAPIView(BaseAPIView):
