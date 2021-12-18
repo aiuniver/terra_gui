@@ -1,9 +1,10 @@
 import json
 import requests
 
-from typing import Dict
+from typing import Dict, Any
 
 from django.conf import settings
+from rest_framework.exceptions import APIException
 
 from apps.api import decorators
 from apps.api.base import BaseAPIView, BaseResponseSuccess
@@ -15,31 +16,31 @@ from apps.api.servers.serializers import (
 )
 
 
+def remote_request(url: str, data: dict = None) -> Any:
+    if data is None:
+        data = {}
+    response = requests.post(
+        f"{settings.TERRA_API_URL}{url}",
+        json={"config": settings.USER_PORT, **data},
+    )
+    if response.ok:
+        data = response.json()
+        if data.get("success"):
+            return data.get("data")
+        else:
+            raise APIException(data.get("error"))
+    else:
+        response.raise_for_status()
+
+
 class ServersListMixinAPIView(BaseAPIView):
-    def get_servers(self) -> Dict[int, dict]:
-        response_data = requests.post(
-            f"{settings.TERRA_API_URL}/servers/",
-            json={"config": settings.USER_PORT},
-        ).json()
-        servers_data = response_data.get("data")
+    def get_servers(self, state: str = None) -> Dict[int, dict]:
         servers = []
-        for server in servers_data:
+        for server in remote_request(
+            f'/server/list/{f"?state={state}" if state else ""}'
+        ):
             server["state"] = {"name": server.get("state")}
             servers.append(json.loads(ServerData(**server).json(ensure_ascii=False)))
-        return servers
-
-    def get_servers_ready(self) -> Dict[int, dict]:
-        response_data = requests.post(
-            f"{settings.TERRA_API_URL}/servers/ready/",
-            json={"config": settings.USER_PORT},
-        ).json()
-        servers_data = response_data.get("data")
-        servers = []
-        for server in servers_data:
-            server["state"] = {"name": server.get("state")}
-            servers.append(
-                json.loads(ServerFullData(**server).json(ensure_ascii=False))
-            )
         return servers
 
 
@@ -51,30 +52,17 @@ class ListAPIView(ServersListMixinAPIView):
 class CreateAPIView(ServersListMixinAPIView):
     @decorators.serialize_data(CreateSerializer)
     def post(self, request, serializer, **kwargs):
-        response_data = requests.post(
-            f"{settings.TERRA_API_URL}/server/create/",
-            json={"config": settings.USER_PORT, **serializer.validated_data},
-        ).json()
-        if not response_data.get("success"):
-            raise ValueError(
-                f'Не удалось создать конфигурацию сервера: {response_data.get("error")}'
-            )
+        server = remote_request("/server/create/", serializer.validated_data)
+        server["state"] = {"name": server.get("state")}
         return BaseResponseSuccess(
-            {
-                "id": response_data.get("data").get("id"),
-                "servers": self.get_servers(),
-            }
+            json.loads(ServerData(**server).json(ensure_ascii=False))
         )
 
 
 class GetAPIView(BaseAPIView):
     @decorators.serialize_data(ServerSerializer)
     def post(self, request, serializer, **kwargs):
-        response_data = requests.post(
-            f"{settings.TERRA_API_URL}/server/",
-            json={"config": settings.USER_PORT, **serializer.validated_data},
-        ).json()
-        server = response_data.get("data")
+        server = remote_request("/server/get/", serializer.validated_data)
         server["state"] = {"name": server.get("state")}
         return BaseResponseSuccess(
             json.loads(ServerFullData(**server).json(ensure_ascii=False))
@@ -84,11 +72,9 @@ class GetAPIView(BaseAPIView):
 class SetupAPIView(ServersListMixinAPIView):
     @decorators.serialize_data(ServerSerializer)
     def post(self, request, serializer, **kwargs):
-        response_data = requests.post(
-            f"{settings.TERRA_API_URL}/server/setup/",
-            json={"config": settings.USER_PORT, **serializer.validated_data},
-        ).json()
-        return BaseResponseSuccess(self.get_servers())
+        return BaseResponseSuccess(
+            remote_request("/server/setup/", serializer.validated_data)
+        )
 
 
 class ReadyAPIView(ServersListMixinAPIView):
@@ -101,7 +87,7 @@ class ReadyAPIView(ServersListMixinAPIView):
                         "label": f'{server.get("domain_name")} [{server.get("ip_address")}]',
                         "value": server.get("id"),
                     },
-                    self.get_servers_ready(),
+                    self.get_servers("ready"),
                 )
             )
         )

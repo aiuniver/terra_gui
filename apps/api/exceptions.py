@@ -8,6 +8,8 @@ from rest_framework.exceptions import ValidationError
 from apps.api.base import BaseResponseError
 from apps.api.logging import LogData, LevelnameChoice
 
+from terra_ai.logging import FrontTypeMessage
+
 
 def handler(exc, context):
     response = exception_handler(exc, context)
@@ -23,6 +25,11 @@ def handler(exc, context):
         logging.getLogger("django.request").error(title if message is None else message)
 
     return BaseResponseError(
-        LogData(level=LevelnameChoice.ERROR, title=title, message=message),
+        LogData(
+            level=LevelnameChoice.ERROR,
+            title=title,
+            message=message,
+            type=FrontTypeMessage.error,
+        ),
         data=getattr(exc, "data", None),
     )

@@ -129,7 +129,23 @@ class CascadeCreator:
 
     @staticmethod
     def copy_config(deploy_path, config_path):
-        shutil.copyfile(config_path, os.path.join(deploy_path, "config.cascade"))
+        deepsort = False
+        with open(config_path, "r", encoding="utf-8") as config_:
+            cascade = json.load(config_)
+        for block, params in cascade.get("cascades").items():
+            if params.get("name") == "DeepSort":
+                weight_path = params.get("params").get("model_path")
+                if not os.path.exists(os.path.join(deploy_path, "weights")):
+                    os.makedirs(os.path.join(deploy_path, "weights"))
+                shutil.copyfile(weight_path, os.path.join(deploy_path, "weights/deepsort.t7"))
+                params["params"]["model_path"] = "weights/deepsort.t7"
+                cascade["cascades"][block] = params
+                with open(os.path.join(deploy_path, "config.cascade"), "w", encoding="utf-8") as deploy_config:
+                    json.dump(cascade, deploy_config)
+                deepsort = True
+                break
+        if not deepsort:
+            shutil.copyfile(config_path, os.path.join(deploy_path, "config.cascade"))
 
 
 if __name__ == "__main__":
