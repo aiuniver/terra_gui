@@ -352,6 +352,13 @@ class CreateDataset(object):
                             result['parameters'].update([('put_type', decamelize(self.columns_processing[str(worker)].type))])
                             instructions_data = InstructionsData(instructions=results_list,
                                                                  parameters=result['parameters'])
+                            if instructions_data.parameters['put_type'] == 'classification':
+                                list_of_classes = []
+                                for x in list_of_data:
+                                    if x not in list_of_classes:
+                                        list_of_classes.append(x)
+                                instructions_data.parameters['classes_names'] = list_of_classes
+                                instructions_data.parameters['num_classes'] = len(list_of_classes)
                     except Exception:
                         progress.pool(self.progress_name, error='Ошибка создания инструкций')
                         self.logger.exception('Ошибка создания инструкций')
