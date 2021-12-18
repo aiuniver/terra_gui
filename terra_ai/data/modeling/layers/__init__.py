@@ -1,15 +1,30 @@
 """
 ## Параметры типов слоев
 """
-
+import os
+import shutil
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
+from pathlib import Path
+from pydantic import validator
+from pydantic.types import FilePath
 
-from ...mixins import BaseMixinData
-from ..extra import LayerTypeChoice
-from .extra import ActivationChoice, LayerConfigData
+from terra_ai import settings
+from terra_ai.progress import utils as progress_utils
+from terra_ai.data.mixins import BaseMixinData
+from terra_ai.data.modeling.extra import LayerTypeChoice
+from terra_ai.data.modeling.layers import types
+from terra_ai.data.modeling.layers.extra import (
+    ActivationChoice,
+    LayerConfigData,
+    YOLOModeChoice,
+)
 
-from . import types
+
+WEIGHT_FILES = {
+    YOLOModeChoice.YOLOv3: "yolov3.weights",
+    YOLOModeChoice.YOLOv4: "yolov4.weights",
+}
 
 
 class LayerDefaultData(BaseMixinData):
@@ -678,6 +693,32 @@ class LayerPretrainedYOLOData(LayerMixinData):
     extra: types.PretrainedYOLO.ParametersExtraData = (
         types.PretrainedYOLO.ParametersExtraData()
     )
+    weight_path: Optional[FilePath]
+
+    @validator("weight_path", always=True)
+    def _validate_weight_path(cls, value):
+        if not value:
+            value = None
+        return value
+
+    def dict(self, **kwargs):
+        kwargs.update({"exclude": {"weight_path"}})
+        return super().dict(**kwargs)
+
+    def weight_load(self):
+        os.makedirs(settings.WEIGHT_PATH, exist_ok=True)
+        value = None
+        if self.main.use_weights:
+            weight_filename = WEIGHT_FILES.get(self.main.version)
+            value = Path(settings.WEIGHT_PATH, weight_filename)
+            if not value.is_file():
+                filepath = progress_utils.download(
+                    "weight_load",
+                    "Загрузка весов `{weight_filename}`",
+                    f"{settings.WEIGHT_STORAGE_URL}{weight_filename}",
+                )
+                shutil.move(filepath, value)
+        self.weight_path = value
 
 
 Layer = Enum(

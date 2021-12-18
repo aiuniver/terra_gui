@@ -42,7 +42,7 @@ class BaseClassificationCallback:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 BaseClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -68,7 +68,7 @@ class BaseClassificationCallback:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 BaseClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -128,7 +128,7 @@ class BaseClassificationCallback:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 BaseClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -162,7 +162,7 @@ class BaseClassificationCallback:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 BaseClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -236,7 +236,7 @@ class BaseClassificationCallback:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 BaseClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -310,7 +310,7 @@ class BaseClassificationCallback:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 BaseClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -334,7 +334,7 @@ class BaseClassificationCallback:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 BaseClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
 
@@ -356,7 +356,7 @@ class ImageClassificationCallback(BaseClassificationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 ImageClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -410,7 +410,7 @@ class ImageClassificationCallback(BaseClassificationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 ImageClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -469,7 +469,7 @@ class ImageClassificationCallback(BaseClassificationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 ImageClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -526,7 +526,7 @@ class ImageClassificationCallback(BaseClassificationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 ImageClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
 
@@ -572,7 +572,7 @@ class TextClassificationCallback(BaseClassificationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 TextClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -617,7 +617,7 @@ class TextClassificationCallback(BaseClassificationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 TextClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -668,7 +668,7 @@ class TextClassificationCallback(BaseClassificationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 TextClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
 
@@ -686,16 +686,16 @@ class DataframeClassificationCallback(BaseClassificationCallback):
                 x_val = options.X.get("val")
             else:
                 x_val = {}
-                for inp in options.dataset['val'].keys():
-                    x_val[inp] = []
+                for inp in options.data.inputs.keys():
+                    x_val[f'{inp}'] = []
                     for x_val_, _ in options.dataset['val'].batch(1):
-                        x_val[inp].extend(x_val_.get(f'{inp}').numpy())
-                    x_val[inp] = np.array(x_val[inp])
+                        x_val[f'{inp}'].extend(x_val_.get(f'{inp}').numpy())
+                    x_val[f'{inp}'] = np.array(x_val[f'{inp}'])
             return x_val, inverse_x_val
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 DataframeClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -723,7 +723,7 @@ class DataframeClassificationCallback(BaseClassificationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 DataframeClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -770,7 +770,7 @@ class DataframeClassificationCallback(BaseClassificationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 DataframeClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -823,7 +823,7 @@ class DataframeClassificationCallback(BaseClassificationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 DataframeClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
 
@@ -874,7 +874,7 @@ class AudioClassificationCallback(BaseClassificationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 AudioClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -926,7 +926,7 @@ class AudioClassificationCallback(BaseClassificationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 AudioClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -982,7 +982,7 @@ class AudioClassificationCallback(BaseClassificationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 AudioClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
 
@@ -1035,7 +1035,7 @@ class VideoClassificationCallback(BaseClassificationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 VideoClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -1087,7 +1087,7 @@ class VideoClassificationCallback(BaseClassificationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 VideoClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -1142,7 +1142,7 @@ class VideoClassificationCallback(BaseClassificationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 VideoClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
 
@@ -1160,11 +1160,11 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
                 x_val = options.X.get("val")
             else:
                 x_val = {}
-                for inp in options.dataset['val'].keys():
-                    x_val[inp] = []
+                for inp in options.data.inputs.keys():
+                    x_val[f'{inp}'] = []
                     for x_val_, _ in options.dataset['val'].batch(1):
-                        x_val[inp].extend(x_val_.get(f'{inp}').numpy())
-                    x_val[inp] = np.array(x_val[inp])
+                        x_val[f'{inp}'].extend(x_val_.get(f'{inp}').numpy())
+                    x_val[f'{inp}'] = np.array(x_val[f'{inp}'])
             for inp in x_val.keys():
                 preprocess_dict = options.preprocessing.preprocessing.get(int(inp))
                 inverse_x = np.zeros_like(x_val.get(inp)[:, :, 0:1])
@@ -1182,7 +1182,7 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 TimeseriesTrendCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -1230,7 +1230,7 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 TimeseriesTrendCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -1276,7 +1276,7 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 TimeseriesTrendCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -1328,5 +1328,5 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 TimeseriesTrendCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc

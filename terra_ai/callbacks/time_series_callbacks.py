@@ -48,7 +48,7 @@ class TimeseriesCallback:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 TimeseriesCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -82,7 +82,7 @@ class TimeseriesCallback:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 TimeseriesCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -108,7 +108,7 @@ class TimeseriesCallback:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 TimeseriesCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -163,7 +163,7 @@ class TimeseriesCallback:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 TimeseriesCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -220,7 +220,7 @@ class TimeseriesCallback:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 TimeseriesCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -264,7 +264,7 @@ class TimeseriesCallback:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 TimeseriesCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -322,7 +322,7 @@ class TimeseriesCallback:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 TimeseriesCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -433,7 +433,7 @@ class TimeseriesCallback:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 TimeseriesCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -490,7 +490,7 @@ class TimeseriesCallback:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 TimeseriesCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @staticmethod
@@ -579,5 +579,5 @@ class TimeseriesCallback:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 TimeseriesCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc

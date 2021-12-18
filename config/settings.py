@@ -200,7 +200,7 @@ LOGGING = {
         },
         "terra.request_catcher": {
             "level": "DEBUG",
-            "class": "apps.api.logging.TerraRequestCatcherHandler",
+            "class": "apps.api.logging.TerraLogsCatcherHandler",
             "formatter": "terra.console",
         },
         "mail_admins": {

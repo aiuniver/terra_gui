@@ -15,6 +15,7 @@ from terra_ai.data.modeling.extra import LayerGroupChoice, LayerTypeChoice
 from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.modeling.layers.extra import ModuleTypeChoice, LayerValidationMethodChoice, \
     SpaceToDepthDataFormatChoice, LayerConfigData, LayerValueConfig
+from terra_ai.data.training.extra import ArchitectureChoice
 from terra_ai.exceptions import modeling as exceptions
 from terra_ai.logging import logger
 from terra_ai.modeling.utils import get_layer_info, reformat_input_shape, reorder_plan, get_edges, get_links, \
@@ -24,7 +25,7 @@ from terra_ai.modeling.utils import get_layer_info, reformat_input_shape, reorde
 class ModelValidator:
     """Make validation of model plan"""
 
-    def __init__(self, model: ModelDetailsData):
+    def __init__(self, model: ModelDetailsData, architecture: Optional[ArchitectureChoice] = None):
         logger.info(f"Валидируемая модель: \n{model.layers}\n")
         self.name = "ModelValidator"
         self.validator: LayerValidation = LayerValidation()
@@ -417,8 +418,12 @@ class ModelValidator:
                 self.valid = False
                 self.val_dictionary[layer[0]] = comment
             if layer[1] == LayerTypeChoice.PretrainedYOLO:
-                for i, down_link in enumerate(self.down_links[layer[0]]):
-                    self.layer_input_shapes[down_link].append(output_shape[i])
+                if output_shape[0]:
+                    for i, down_link in enumerate(self.down_links[layer[0]]):
+                        self.layer_input_shapes[down_link].append(output_shape[i])
+                else:
+                    for down_link in self.down_links[layer[0]]:
+                        self.layer_input_shapes[down_link].append(output_shape[0])
             else:
                 for down_link in self.down_links[layer[0]]:
                     self.layer_input_shapes[down_link].extend(output_shape)
@@ -528,20 +533,27 @@ class LayerValidation:
                     or self.module_type == ModuleTypeChoice.keras_pretrained_model:
                 try:
                     params = copy.deepcopy(self.layer_parameters)
+                    # print('params', params)
                     if self.layer_type == LayerTypeChoice.Input:
                         return self.inp_shape, None
-                    if self.module_type == ModuleTypeChoice.keras_pretrained_model:
+                    elif self.module_type == ModuleTypeChoice.keras_pretrained_model:
                         params.pop("trainable")
                         if params.get("name"):
                             params.pop("name")
-                    if self.layer_type == LayerTypeChoice.PretrainedYOLO:
+                    elif self.layer_type == LayerTypeChoice.PretrainedYOLO:
+                        # print(self.inp_shape)
+                        params['use_weights'] = False
+                        # print('params', params)
+                        # print(getattr(self.module, self.layer_type))
                         output_shape = getattr(self.module, self.layer_type)(**params).compute_output_shape(
                             self.inp_shape[0] if len(self.inp_shape) == 1 else self.inp_shape)
+                        # print(output_shape)
                     else:
                         output_shape = [
                             tuple(getattr(self.module, self.layer_type)(**params).compute_output_shape(
                                 self.inp_shape[0] if len(self.inp_shape) == 1 else self.inp_shape))
                         ]
+
                     # LSTM and GRU can returns list of one tuple of tensor shapes
                     # code below reformat it to list of shapes
                     if len(output_shape) == 1 and type(output_shape[0][0]).__name__ == "TensorShape":

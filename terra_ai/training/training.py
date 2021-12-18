@@ -62,7 +62,7 @@ class GUINN:
 
     def _set_training_params(self, dataset: DatasetData, params: TrainingDetailsData) -> None:
         method_name = '_set_training_params'
-        logger.info("Установка параметров обучения...")
+        logger.info("Установка параметров обучения...", extra={"front_level": "info"})
         try:
             self.params = params
             progress.pool(self.progress_name, finished=False, message="Подготовка датасета...")
@@ -93,11 +93,11 @@ class GUINN:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 GUINN.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
-            raise error
+            # logger.error(exc)
+            raise exc
 
     def _set_callbacks(self, dataset: PrepareDataset, train_details: TrainingDetailsData) -> None:
-        logger.info("Добавление колбэков...")
+        logger.info("Добавление колбэков...", extra={"front_level": "info"})
         progress.pool(self.progress_name, finished=False, message="Добавление колбэков...")
 
         self.callback = FitCallback(dataset=dataset, training_details=train_details, model_name=self.nn_name,
@@ -161,11 +161,12 @@ class GUINN:
     def _prepare_dataset(self, dataset: DatasetData, model_path: Path, state: str) -> PrepareDataset:
         method_name = '_prepare_dataset'
         try:
-            logger.info("Загрузка датасета...")
+            logger.info("Загрузка датасета...", extra={"front_level": "info"})
             prepared_dataset = PrepareDataset(data=dataset, datasets_path=dataset.path)
             prepared_dataset.prepare_dataset()
             if state != "addtrain":
                 prepared_dataset.deploy_export(os.path.join(model_path))
+            logger.info("Загрузка датасета завершена", extra={"front_level": "success"})
             return prepared_dataset
         except Exception as error:
             raise DatasetPrepareMissing(
@@ -176,10 +177,10 @@ class GUINN:
                    dataset: PrepareDataset) -> Union[BaseTerraModel, YoloTerraModel]:
         method_name = '_set_model'
         try:
-            logger.info("Загрузка модели...")
+            logger.info("Загрузка модели...", extra={"front_level": "info"})
             base_model = None
             if train_details.state.status == "training":
-                validator = ModelValidator(model)
+                validator = ModelValidator(model, dataset.data.architecture)
                 base_model = validator.get_keras_model()
 
             if dataset.data.architecture not in YOLO_ARCHITECTURE:
@@ -220,8 +221,8 @@ class GUINN:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 GUINN.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
-            raise error
+            # logger.error(exc)
+            raise exc
 
     def _kill_last_training(self, state):
         method_name = '_kill_last_training'
@@ -237,8 +238,8 @@ class GUINN:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 GUINN.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
-            raise error
+            # logger.error(exc)
+            raise exc
 
     def terra_fit(self, dataset: DatasetData, gui_model: ModelDetailsData, training: TrainingDetailsData) -> None:
         method_name = 'terra_fit'
@@ -254,8 +255,8 @@ class GUINN:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 GUINN.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
-            raise error
+            # logger.error(exc)
+            raise exc
 
     def nn_cleaner(self, retrain: bool = False) -> None:
         method_name = 'nn_cleaner'
@@ -274,14 +275,14 @@ class GUINN:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 GUINN.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
-            raise error
+            # logger.error(exc)
+            raise exc
 
     @progress.threading
     def model_fit(self, params: TrainingDetailsData, model: ModelDetailsData, dataset: PrepareDataset) -> None:
         method_name = 'model_fit'
         try:
-            logger.info(f"Старт обучения модели...")
+            logger.info(f"Старт обучения модели...", extra={"front_level": "info"})
             self._set_callbacks(dataset=dataset, train_details=params)
             threading.enumerate()[-1].setName("current_train")
             progress.pool(self.progress_name, finished=False, message="Компиляция модели ...")

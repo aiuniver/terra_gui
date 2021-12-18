@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 from filterpy.kalman import KalmanFilter
 from scipy.spatial.distance import cosine
@@ -1432,6 +1434,9 @@ class DeepSort(object):
         self.min_confidence = min_confidence
         self.nms_max_overlap = nms_max_overlap
         self.height, self.width = None, None
+        if not os.path.isabs(model_path):
+            parent_dir = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+            model_path = os.path.join(parent_dir, model_path)
         self.extractor = _Extractor(model_path)
 
         max_cosine_distance = max_dist

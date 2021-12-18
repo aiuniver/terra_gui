@@ -1,7 +1,7 @@
 import copy
 from typing import List, Tuple, Optional
 from tensorflow import TensorShape
-from terra_ai.data.modeling.extra import LayerGroupChoice
+from terra_ai.data.modeling.extra import LayerGroupChoice, LayerTypeChoice
 from terra_ai.data.modeling.layer import LayerData
 
 
@@ -115,6 +115,9 @@ def reformat_input_shape(input_sh: List[Tuple[Optional[int]]]) -> List[Tuple[Opt
 def get_layer_info(layer_strict: LayerData, block_name=None) -> tuple:
     # logger.debug(f"Validator module, {get_layer_info.__name__}")
     params_dict = layer_strict.parameters.merged
+    if layer_strict.type == LayerTypeChoice.PretrainedYOLO:
+        print('layer_strict.parameters.weight_path', str(layer_strict.parameters.weight_path))
+        params_dict['save_weights'] = layer_strict.parameters.weight_path
     if layer_strict.group == LayerGroupChoice.input or layer_strict.group == LayerGroupChoice.output:
         params_dict["name"] = f"{layer_strict.id}"
     elif block_name:

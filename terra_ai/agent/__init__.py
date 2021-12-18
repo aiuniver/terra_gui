@@ -33,9 +33,9 @@ from terra_ai.data.modeling.model import (
     ModelDetailsData,
     ModelLoadData,
 )
-from terra_ai.data.modeling.extra import ModelGroupChoice
+from terra_ai.data.modeling.extra import ModelGroupChoice, LayerTypeChoice
 from terra_ai.data.training.train import TrainingDetailsData
-from terra_ai.data.training.extra import StateStatusChoice
+from terra_ai.data.training.extra import StateStatusChoice, ArchitectureChoice
 from terra_ai.data.cascades.cascade import (
     CascadeDetailsData,
     CascadesList,
@@ -233,11 +233,13 @@ class Exchange:
         """
         return ModelDetailsData(**model)
 
-    def _call_model_validate(self, model: ModelDetailsData) -> tuple:
+    def _call_model_validate(
+        self, model: ModelDetailsData, architecture: ArchitectureChoice
+    ) -> tuple:
         """
         Валидация модели
         """
-        return ModelValidator(model).get_validated()
+        return ModelValidator(model, architecture).get_validated()
 
     def _call_model_create(self, model: dict, path: Path, overwrite: bool):
         """
@@ -264,6 +266,10 @@ class Exchange:
         """
         Старт обучения
         """
+        for layer in model.layers:
+            if layer.type == LayerTypeChoice.PretrainedYOLO:
+                layer.parameters.weight_load()
+
         training_obj.terra_fit(dataset=dataset, gui_model=model, training=training)
 
     def _call_training_stop(self, training: TrainingDetailsData):
@@ -370,6 +376,9 @@ class Exchange:
         """
         Исполнение каскада
         """
+        for block in cascade.blocks:
+            if block.group == BlockGroupChoice.Service:
+                block.parameters.model_load()
         CascadeRunner().start_cascade(
             sources=sources, cascade_data=cascade, training_path=training_path
         )

@@ -781,9 +781,15 @@ class DefaultsData(BaseMixinData):
         deploy_model_fields = self.deploy.type.fields[0].fields.get("model")
         if deploy_model_fields:
             deploy_model_field = deploy_model_fields[0]
-            deploy_model_field.list = options
-            if deploy_model_field.value not in values:
-                deploy_model_field.value = values[0] if len(values) else None
+            deploy_model_field.list = [
+                {"value": "__current", "label": "Текущее обучение"}
+            ] + options
+            if deploy_model_field.value not in deploy_model_field.list:
+                deploy_model_field.value = (
+                    deploy_model_field.list[0].get("value")
+                    if len(deploy_model_field.list)
+                    else None
+                )
 
         deploy_cascade_fields = self.deploy.type.fields[0].fields.get("cascade")
         if deploy_cascade_fields:

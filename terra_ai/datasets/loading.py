@@ -3,13 +3,10 @@ import sys
 import json
 import shutil
 import base64
-import requests
 
 from pathlib import Path
 from typing import List, Callable
-from pydantic import ValidationError
 from pydantic.networks import HttpUrl
-from pydantic.errors import PathNotExistsError
 
 from .. import progress, settings
 from ..data.datasets.creation import SourceData
@@ -33,7 +30,7 @@ DOWNLOAD_SOURCE_TITLE = "Загрузка исходников датасета"
 DATASET_SOURCE_UNPACK_TITLE = "Распаковка исходников датасета"
 DATASET_CHOICE_TITLE = "Загрузка датасета `%s.%s`"
 DATASET_CHOICE_UNPACK_TITLE = "Распаковка датасета `%s.%s`"
-DATASET_CHOICE_TERRA_URL = "https://storage.googleapis.com/terra_ai/DataSets/Numpy/"
+DATASET_CHOICE_TERRA_URL = f"{settings.GOOGLE_STORAGE_URL}DataSets/Numpy/"
 
 
 os.makedirs(settings.DATASETS_SOURCE_DIR, exist_ok=True)

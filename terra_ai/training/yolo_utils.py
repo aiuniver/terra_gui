@@ -62,7 +62,7 @@ def detect_image(Yolo, original_image, output_path, input_size=416, show=False, 
     except Exception as error:
         exc = exception.ErrorInModuleInMethodException(
             MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
-        logger.error(exc)
+        # logger.error(exc)
         raise exc
 
 
@@ -122,7 +122,7 @@ def draw_bbox(image, bboxes, CLASSES, show_label=True, show_confidence=True,
     except Exception as error:
         exc = exception.ErrorInModuleInMethodException(
             MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
-        logger.error(exc)
+        # logger.error(exc)
         raise exc
 
 
@@ -147,7 +147,7 @@ def bboxes_iou(boxes1, boxes2):
     except Exception as error:
         exc = exception.ErrorInModuleInMethodException(
             MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
-        logger.error(exc)
+        # logger.error(exc)
         raise exc
 
 
@@ -194,7 +194,7 @@ def nms(bboxes, iou_threshold, sigma=0.3, method='nms'):
     except Exception as error:
         exc = exception.ErrorInModuleInMethodException(
             MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
-        logger.error(exc)
+        # logger.error(exc)
         raise exc
 
 
@@ -242,7 +242,7 @@ def postprocess_boxes(pred_bbox, original_image, input_size, score_threshold):
     except Exception as error:
         exc = exception.ErrorInModuleInMethodException(
             MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
-        logger.error(exc)
+        # logger.error(exc)
         raise exc
 
 
@@ -270,7 +270,7 @@ def bbox_iou(boxes1, boxes2):
     except Exception as error:
         exc = exception.ErrorInModuleInMethodException(
             MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
-        logger.error(exc)
+        # logger.error(exc)
         raise exc
 
 
@@ -315,7 +315,7 @@ def bbox_giou(boxes1, boxes2):
     except Exception as error:
         exc = exception.ErrorInModuleInMethodException(
             MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
-        logger.error(exc)
+        # logger.error(exc)
         raise exc
 
 
@@ -352,7 +352,7 @@ def bbox_ciou(boxes1, boxes2):
     except Exception as error:
         exc = exception.ErrorInModuleInMethodException(
             MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
-        logger.error(exc)
+        # logger.error(exc)
         raise exc
 
 
@@ -422,7 +422,7 @@ def compute_loss(pred, conv, label, bboxes, i=0, CLASSES=None, STRIDES=None, YOL
     except Exception as error:
         exc = exception.ErrorInModuleInMethodException(
             MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
-        logger.error(exc)
+        # logger.error(exc)
         raise exc
 
 
@@ -470,7 +470,7 @@ def decode(conv_output, NUM_CLASS, i=0, YOLO_TYPE="v3", STRIDES=None):
     except Exception as error:
         exc = exception.ErrorInModuleInMethodException(
             MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
-        logger.error(exc)
+        # logger.error(exc)
         raise exc
 
 
@@ -495,7 +495,7 @@ def create_yolo(model, input_size=416, channels=3, training=False, classes=None,
     except Exception as error:
         exc = exception.ErrorInModuleInMethodException(
             MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
-        logger.error(exc)
+        # logger.error(exc)
         raise exc
 
 
@@ -540,7 +540,7 @@ class CustomModelYolo(keras.Model):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 CustomModelYolo.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @tf.function
@@ -598,7 +598,7 @@ class CustomModelYolo(keras.Model):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 CustomModelYolo.name, method_name, str(error)).with_traceback(error.__traceback__)
-            logger.error(exc)
+            # logger.error(exc)
             raise exc
 
     @tf.function
@@ -689,7 +689,7 @@ def voc_ap(rec, prec):
     except Exception as error:
         exc = exception.ErrorInModuleInMethodException(
             MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
-        logger.error(exc)
+        # logger.error(exc)
         raise exc
 
 
@@ -699,7 +699,7 @@ def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25
     method_name = 'get_mAP'
     tt1 = time.time()
     try:
-        logger.info(f"Расчет метрики mAP...")
+        # logger.info(f"Расчет метрики mAP...")
         if TRAIN_CLASSES is None:
             TRAIN_CLASSES = []
         if iou_threshold is None:
@@ -780,6 +780,7 @@ def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25
                 ms = sum(times) / len(times) * 1000
                 fps = 1000 / ms
         ap_dictionary = {}
+        warnings = []
         for i_iou in iou_threshold:
             json_pred = [[] for _ in range(n_classes)]
             class_predictions = {}
@@ -802,8 +803,11 @@ def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25
                         json_pred[gt_classes.index(class_name)].append(
                             {"confidence": str(score), "file_id": str(i_image), "bbox": str(bbox)})
                     except Exception as error:
-                        logger.warning(f'module yolo_utils, {method_name}, '
-                                     f'json_pred[gt_classes.index(class_name)].append, {error}')
+                        msg = f'module yolo_utils, {method_name}, json_pred[gt_classes.index(class_name)].append, ' \
+                           f'{error}'
+                        if msg not in warnings:
+                            logger.warning(msg)
+                            warnings.append(msg)
                         continue
             for class_name in gt_classes:
                 json_pred[gt_classes.index(class_name)].sort(key=lambda x: float(x['confidence']), reverse=True)
@@ -886,10 +890,11 @@ def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25
             ap_dictionary[f"val_mAP{int(i_iou * 100)}"] = mAP * 100
         ap_dictionary["val_fps"] = fps
         tt2 = time.time()
-        logger.info(f'Расчет метрики mAP завершен. Время расчета: {round(tt2 - tt1, 2)} сек')
+        logger.info(f'Расчет метрики mAP завершен. Время расчета: {round(tt2 - tt1, 2)} сек',
+                    extra={"front_level": "info"})
         return ap_dictionary
     except Exception as error:
         exc = exception.ErrorInModuleInMethodException(
             MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
-        logger.error(exc)
+        # logger.error(exc)
         raise exc

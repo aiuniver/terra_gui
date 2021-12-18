@@ -1,6 +1,6 @@
-from . import YoloV3
+from . import BaseYolo
 
 
-class Data(YoloV3.Data):
+class Data(BaseYolo.Data):
     class Meta:
-        source = YoloV3.DataList
+        source = BaseYolo.DataList
