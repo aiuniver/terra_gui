@@ -17,7 +17,8 @@ from .postprocessing import postprocess_results
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.exceptions.deploy import MethodNotImplementedException, DatasetCreateException, \
-    DatasetPrepareException, ModelCreateException, PredictionException, NoPredictException, PresetsException
+    DatasetPrepareException, ModelCreateException, PredictionException, NoPredictException, PresetsException, \
+    NoTrainedModelException
 from terra_ai.training import GUINN
 from terra_ai.training.terra_models import BaseTerraModel, YoloTerraModel
 from terra_ai.settings import DEPLOY_PATH
@@ -31,6 +32,14 @@ class DeployCreator:
         method_name = "get_deploy"
         try:
             model_path = Path(os.path.join(training_path, page.get("name"), "model"))
+            if os.path.exists(os.path.join(model_path, "log.history")):
+                with open(os.path.join(model_path, "log.history"), "r", encoding="utf-8") as log_:
+                    history_ = json.load(log_)
+                    print("EPOCHS: ", history_.get("fit_log", {}).get("epochs", []))
+                    if len(history_.get("fit_log", {}).get("epochs", [])) == 0:
+                        raise NoTrainedModelException(self.__class__.__name__, method_name)
+            else:
+                raise NoTrainedModelException(self.__class__.__name__, method_name)
             presets_path = os.path.join(DEPLOY_PATH, "deploy_presets")
             print(model_path, presets_path, page)
             if page.get("type") == "model":
