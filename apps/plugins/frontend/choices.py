@@ -23,6 +23,8 @@ class LayerOutputTypeChoice(str, Enum):
     TextSegmentation = "Сегментация текстов"
     ObjectDetection = "Обнаружение объектов"
     Tracker = "Трекер"
+    Text2Speech = "Генерация речи"
+    Speech2Text = "Распознавание речи"
 
     @staticmethod
     def items_tuple() -> list:
