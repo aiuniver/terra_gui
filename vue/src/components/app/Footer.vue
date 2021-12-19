@@ -97,9 +97,9 @@ export default {
     },
     logs(arr) {
       if (arr.length) {
-        arr.forEach(({ type, title }) => {
+        arr.forEach(({ type, title, message }) => {
           setTimeout(() => {
-            this.$Notify({ type, title: this.type[type], message: title });
+            this.$Notify({ type, title, message });
           }, 100);
         });
       }
