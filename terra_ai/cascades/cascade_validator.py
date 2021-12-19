@@ -7,6 +7,7 @@ from terra_ai.data.cascades.extra import BlockGroupChoice
 from terra_ai.data.cascades.blocks.extra import BlocksBindChoice, BlockServiceTypeChoice
 from terra_ai.data.datasets.extra import LayerInputTypeChoice
 from terra_ai.exceptions import cascades as exceptions
+from terra_ai.logging import logger
 
 
 class CascadeValidator:
@@ -22,8 +23,15 @@ class CascadeValidator:
                 result = self._check_bind_and_data(cascade_data=cascade_data, model_data_type=model_data_type)
             else:
                 result = self._add_error(errors={}, block_id=1,
-                                         error=str(exceptions.RequiredBlockMissingException(BlockGroupChoice.Model)))
-        print(result)
+                                         error=str(exceptions.RequiredBlockMissingException(
+                                             ", или ".join([BlockGroupChoice.Model.value,
+                                                           BlockServiceTypeChoice.YoloV5.value,
+                                                           BlockServiceTypeChoice.GoogleTTS.value,
+                                                           BlockServiceTypeChoice.Wav2Vec.value,
+                                                           BlockServiceTypeChoice.TinkoffAPI.value
+                                                           ])
+                                         )))
+        logger.info("Валидация каскада завершена", extra={"type": "success"})
         return result
 
     @staticmethod
