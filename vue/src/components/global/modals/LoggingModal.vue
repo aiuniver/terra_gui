@@ -40,6 +40,7 @@
 </template>
 
 <script>
+import { mapActions } from 'vuex';
 import filter from '@/mixins/datasets/filters';
 export default {
   name: 'CopyModal',
@@ -60,6 +61,9 @@ export default {
     selected: [],
   }),
   methods: {
+    ...mapActions({
+      getLogs: 'logging/get',
+    }),
     click(error) {
       this.$emit('error', error);
     },
@@ -88,6 +92,11 @@ export default {
       get() {
         return this.value;
       },
+    },
+  },
+  watch: {
+    dialog() {
+      this.getLogs();
     },
   },
 };
