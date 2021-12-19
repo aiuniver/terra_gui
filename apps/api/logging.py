@@ -35,7 +35,7 @@ class LogData(BaseModel):
     time: Optional[PositiveInt]
     title: str
     message: Optional[str]
-    type: FrontTypeMessage
+    type: Optional[FrontTypeMessage]
 
     def __init__(self, **data):
         data["time"] = mktime(datetime.now().timetuple())
@@ -101,20 +101,11 @@ class TerraLogsCatcherHandler(logging.Handler):
         super().__init__()
 
     def emit(self, record):
-        try:
-            _type = record.type
-        except AttributeError:
-            if record.levelname in (LevelnameChoice.WARNING,):
-                _type = FrontTypeMessage.warning
-            elif record.levelname in (LevelnameChoice.ERROR, LevelnameChoice.CRITICAL):
-                _type = FrontTypeMessage.error
-            else:
-                _type = FrontTypeMessage.info
         logs_catcher.push(
             LogData(
                 level=record.levelname,
                 title=record.getMessage(),
                 message=str(record.exc_info[1]) if record.exc_info else None,
-                type=_type,
+                type=getattr(record, "type", None),
             )
         )
