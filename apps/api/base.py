@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK
 
-from apps.api.logging import logs_catcher, LogData, LevelnameChoice
+from apps.api.logging import logs_catcher, LogData
 
 
 class BaseAPIView(APIView):
@@ -21,15 +21,7 @@ class BaseAPIView(APIView):
         response = super().dispatch(request, *args, **kwargs)
         logs = logs_catcher.pool + response.data.get("logs", [])
         response.data.update(
-            {
-                "logs": list(
-                    filter(
-                        lambda log: log.get("level")
-                        in (LevelnameChoice.INFO, LevelnameChoice.WARNING),
-                        logs,
-                    )
-                )
-            }
+            {"logs": list(filter(lambda log: log.get("type") is not None, logs))}
         )
         return response
 
