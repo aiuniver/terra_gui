@@ -97,10 +97,12 @@ export default {
     },
     logs(arr) {
       if (arr.length) {
-        arr.forEach(({ type, title, message }) => {
-          setTimeout(() => {
-            this.$Notify({ type, title, message });
-          }, 100);
+        arr.forEach(({ type = '', title = '', message = '', duration = 5000 }) => {
+          if (type && title) {
+            setTimeout(() => {
+              this.$Notify({ type, title, message, duration });
+            }, 100);
+          }
         });
       }
     },
