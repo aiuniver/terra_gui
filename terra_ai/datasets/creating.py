@@ -586,11 +586,9 @@ class CreateDataset(object):
         for inp in self.instructions.inputs.keys():
             for key, value in self.instructions.inputs[inp].items():
                 build_dataframe[key] = value.instructions
-                print(len(value.instructions))
         for out in self.instructions.outputs.keys():
             for key, value in self.instructions.outputs[out].items():
                 build_dataframe[key] = value.instructions
-                print(len(value.instructions))
         try:
             dataframe = pd.DataFrame(build_dataframe)
         except Exception:
