@@ -180,10 +180,10 @@ class DatasetData(AliasMixinData):
         out = []
         sources = read_csv(Path(self.path, "instructions", "tables", "val.csv"))
         for column in sources.columns:
-            match = re.match(r"^[\d]+_(.+)$", column)
+            match = re.findall(r"^([\d]+_)(.+)$", column)
             if not match:
                 continue
-            _title = match.group(0).title()
+            _title = match[0][1].title()
             if _title in ["Image", "Text", "Audio", "Video"]:
                 out = sources[column].to_list()
                 if _title != "Text":
