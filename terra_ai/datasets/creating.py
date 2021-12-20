@@ -593,8 +593,8 @@ class CreateDataset(object):
             dataframe = pd.DataFrame(build_dataframe)
         except Exception:
             progress.pool(self.progress_name,
-                          error='Ошибка создания датасета. Нессответствие количества входных/выходных данных')
-            self.logger.exception('Ошибка создания датасета. Нессответствие количества входных/выходных данных')
+                          error='Ошибка создания датасета. Несоответствие количества входных/выходных данных')
+            self.logger.exception('Ошибка создания датасета. Несоответствие количества входных/выходных данных')
             raise
         for key, value in split_sequence.items():
             self.dataframe[key] = dataframe.loc[value, :].reset_index(drop=True)
