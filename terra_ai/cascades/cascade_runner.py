@@ -150,7 +150,9 @@ class CascadeRunner:
                         },
                 }
             elif block.group == BlockGroupChoice.OutputData:
-                if model_task in ["ObjectDetection", "Segmentation", DeployTypeChoice.VideoObjectDetection]:
+                if model_task in ["ObjectDetection", "Segmentation",
+                                  DeployTypeChoice.VideoObjectDetection,
+                                  DeployTypeChoice.YoloV5]:
                     block_description = {
                         "saving": {
                             "tag": "output",
