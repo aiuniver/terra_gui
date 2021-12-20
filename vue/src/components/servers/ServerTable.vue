@@ -22,7 +22,7 @@
         <td>{{ server.port_http }}</td>
         <td>{{ server.port_https }}</td>
         <td class="clickable"><span @click="instruction(server.id)">Открыть</span></td>
-        <td :class="{ error: server.state.name === 'error' }">{{ server.state.value }}</td>
+        <td :class="[`${server.state.name}`]">{{ server.state.value }}</td>
         <td class="clickable" @click="setup(server.id)">
           <i :class="['ci-icon', getIcon(server.state.name)]"></i>
           <span>{{ getAction(server.state.name) }}</span>
@@ -66,6 +66,15 @@ export default {
   width: 100%;
   .error {
     color: #f00;
+  }
+  .idle {
+    color: #aaa;
+  }
+  .ready {
+    color: #0f0;
+  }
+  .waiting {
+    color: #ff0;
   }
   thead {
     color: #6c7883;
@@ -114,7 +123,6 @@ export default {
     }
   }
   .error {
-    color: #ca5035;
     i {
       color: #65b9f4;
       font-size: 16px;
