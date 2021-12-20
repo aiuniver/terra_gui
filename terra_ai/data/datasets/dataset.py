@@ -1,4 +1,5 @@
 import os
+import re
 import json
 
 from pathlib import Path, PureWindowsPath
@@ -179,7 +180,10 @@ class DatasetData(AliasMixinData):
         out = []
         sources = read_csv(Path(self.path, "instructions", "tables", "val.csv"))
         for column in sources.columns:
-            _title = column.split("_")[-1].title()
+            match = re.match(r"^[\d]+_(.+)$", column)
+            if not match:
+                continue
+            _title = match.group(0).title()
             if _title in ["Image", "Text", "Audio", "Video"]:
                 out = sources[column].to_list()
                 if _title != "Text":
