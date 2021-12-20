@@ -168,7 +168,11 @@ class DatasetData(AliasMixinData):
 
     @property
     def training_available(self) -> bool:
-        return self.architecture != ArchitectureChoice.Tracker or self.outputs != {}
+        return self.architecture not in (
+            ArchitectureChoice.Tracker,
+            ArchitectureChoice.Speech2Text,
+            ArchitectureChoice.Text2Speech,
+        )
 
     @property
     def sources(self) -> List[str]:
