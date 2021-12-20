@@ -806,7 +806,7 @@ def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25
                         msg = f'module yolo_utils, {method_name}, json_pred[gt_classes.index(class_name)].append, ' \
                            f'{error}'
                         if msg not in warnings:
-                            logger.warning(msg)
+                            logger.warning(msg, extra={"type": "warning"})
                             warnings.append(msg)
                         continue
             for class_name in gt_classes:
@@ -890,8 +890,7 @@ def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25
             ap_dictionary[f"val_mAP{int(i_iou * 100)}"] = mAP * 100
         ap_dictionary["val_fps"] = fps
         tt2 = time.time()
-        logger.info(f'Расчет метрики mAP завершен. Время расчета: {round(tt2 - tt1, 2)} сек',
-                    extra={"front_level": "info"})
+        logger.debug(f'Расчет метрики mAP завершен. Время расчета: {round(tt2 - tt1, 2)} сек')
         return ap_dictionary
     except Exception as error:
         exc = exception.ErrorInModuleInMethodException(

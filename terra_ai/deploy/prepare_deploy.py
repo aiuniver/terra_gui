@@ -32,10 +32,10 @@ class DeployCreator:
         method_name = "get_deploy"
         try:
             model_path = Path(os.path.join(training_path, page.get("name"), "model"))
-            self._check_model_on_training(model_path=model_path)
             presets_path = os.path.join(DEPLOY_PATH, "deploy_presets")
             print(model_path, presets_path, page)
             if page.get("type") == "model":
+                self._check_model_on_training(model_path=model_path)
                 if os.path.exists(DEPLOY_PATH):
                     shutil.rmtree(DEPLOY_PATH, ignore_errors=True)
                     os.makedirs(DEPLOY_PATH, exist_ok=True)
