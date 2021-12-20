@@ -53,39 +53,15 @@ export default {
         console.log(error);
       }
     },
-    // async messageDeploy(showClose) {
-    //   try {
-    //     const data = await this.$Modal.alert({
-    //       title: 'Предупреждение!',
-    //       width: 300,
-    //       content: 'Для перехода на страницу деплоя необходимо обучить модель',
-    //       showClose,
-    //       okText: 'Обучить модель',
-    //     });
-    //     if (data === 'confirm') {
-    //       if (this.$route.path !== '/training') {
-    //         this.$router.push('/training');
-    //       }
-    //     }
-    //   } catch (error) {
-    //     console.log(error);
-    //   }
-    // },
     async nav({ path, access, text }) {
-      // console.log(path)
       if (!this.project.dataset && access === false) {
         this.message({ text }, true);
-      }
-      // else if(this.project?.deploy === null && access === false && path == '/deploy'){
-      //   this.messageDeploy(true);
-      // }
-      else {
+      } else {
         if (this.$route.path !== path) {
           this.$router.push(path);
         }
       }
       this.$store.dispatch('messages/resetProgress');
-      // if (!this.isTrain) this.$store.dispatch('messages/resetProgress');
     },
   },
 };
