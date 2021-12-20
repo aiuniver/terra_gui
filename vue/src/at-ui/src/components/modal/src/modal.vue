@@ -96,13 +96,19 @@
           return {}
         }
       },
-      type: String
+      type: String,
+      showConfirmButton: {
+        type: Boolean,
+        default: true
+      },
+      showCancelButton: {
+        type: Boolean,
+        default: true
+      }
     },
     data () {
       return {
         wrapShow: false,
-        showCancelButton: true,
-        showConfirmButton: true,
         action: '',
         visible: this.value,
         inputValue: null,

@@ -1,7 +1,8 @@
 from typing import Callable
 from collections import OrderedDict
-from inspect import signature
+from inspect import signature, _empty
 import tensorflow
+from .common import type2str
 
 
 class Cascade:
@@ -34,7 +35,13 @@ class CascadeElement(Cascade):
         super(CascadeElement, self).__init__(name)
 
         self.fun = fun
-        param = signature(fun).parameters
+        param = signature(fun)
+
+        self.input = [param.parameters[i].annotation for i in param.parameters]
+        self.input = None if any([i == _empty for i in self.input]) else list(map(type2str, self.input))
+        self.output = None
+
+        param = param.parameters
         self.all_arg = len(param.keys()) > 1 and all(['*' not in a for a in str(param)])
 
     def __call__(self, *agr):
@@ -44,6 +51,12 @@ class CascadeElement(Cascade):
             self.out = self.fun(agr)
         else:
             self.out = self.fun(*agr)
+
+        if self.output is None:
+            if isinstance(self.out, (tuple, list)):
+                self.output = [type(x) for x in self.out]
+            else:
+                self.output = [type(self.out)]
         return self.out
 
 
@@ -93,7 +106,7 @@ class CascadeBlock(Cascade):
     def __call__(self, *item):
         self.out_map = {}
 
-        global cascade
+        global cascade, cascade_old
         for cascade, inp in self.adjacency_map.items():
             cascade_input = []
             for j in inp:
@@ -106,8 +119,18 @@ class CascadeBlock(Cascade):
                     cascade_input += j
                 else:
                     cascade_input.append(j)
+            try:
+                cascade(*cascade_input)
+            except TypeError:
+                output_types = []
+                for i in inp:
+                    if isinstance(i, str):
+                        output_types.append("input")
+                    else:
+                        output_types += i.output
+                raise TypeError(f"({', '.join(cascade.input)}) is required, but ({', '.join(output_types)}) is given")
 
-            cascade(*cascade_input)
+            cascade_old = cascade
 
         self.out = cascade.out
 
@@ -155,7 +178,7 @@ class BuildModelCascade(CascadeBlock):
     Класс который вызывается при создании модели из json
     """
 
-    def __init__(self, preprocess, model, postprocessing, name=None):
+    def __init__(self, preprocess, model, postprocessing, name=None, output=None, input=None):
 
         self.preprocess = CascadeElement(preprocess, name="Препроцесс") if preprocess else preprocess
         self.model = CascadeElement(model, name=name) if name else CascadeElement(model, name="Модель")
@@ -169,5 +192,8 @@ class BuildModelCascade(CascadeBlock):
 
         if self.postprocessing:
             adjacency_map[self.postprocessing] = [self.model, 'INPUT']
+
+        self.input = input
+        self.output = output
 
         super(BuildModelCascade, self).__init__(adjacency_map)

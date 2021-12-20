@@ -17,6 +17,8 @@ $quanityPxMult: 4px;
 
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 :root {
@@ -25,6 +27,10 @@ $quanityPxMult: 4px;
   --color-text: #{$color-dark-text};
   --color-bg-dropdown: #{$color-dark-bg-dropdown};
   --color-bg-dropdown-item-active: #{$color-dark-bg-dropdown-iterm-active};
+  --color-light-blue: #{$color-light-blue};
+  --color-gray-blue: #{$color-gray-blue};
+  --color-dark-gray: #{$color-dark-gray};
+  --color-light-gray: #{$color-light-gray};
 
   @media screen {
     &[data-theme="light"] {
@@ -72,5 +78,16 @@ li {
 
 .page {
   height: 100%;
-  margin-top: 52px;
+  // margin-top: 52px;
+}
+
+.ci-icon {
+  display: block;
+}
+
+hr {
+  margin: 0;
+  height: 1px;
+  border: none;
+  background-color: #6c7883;
 }

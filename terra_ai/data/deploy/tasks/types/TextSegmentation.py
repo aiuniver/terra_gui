@@ -1,5 +1,6 @@
 import os
 import random
+
 from pathlib import Path, PurePath
 from typing import List, Tuple
 
@@ -28,8 +29,8 @@ class DataList(DataBaseList):
         if not len(self):
             return
 
-        self.source_path = Path(self.path, "preset", "in")
-        self.format_path = Path(self.path, "preset", "out")
+        self.source_path = Path(self.path_deploy, "preset", "in")
+        self.format_path = Path(self.path_deploy, "preset", "out")
         os.makedirs(self.source_path, exist_ok=True)
         os.makedirs(self.format_path, exist_ok=True)
 

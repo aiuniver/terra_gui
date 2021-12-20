@@ -13,7 +13,6 @@ import sys
 def _classification(**params):
 
     classes_names = params['classes_names']
-
     def fun(x):
         index = []
 
@@ -84,8 +83,7 @@ def main(**params):
 
         j = 0
         for column, proc in zip(columns, process):
-
-            i = np.array(data[column[2:]])
+            i = np.array(data[column])
 
             if proc:
                 x = proc(i[:lenght])

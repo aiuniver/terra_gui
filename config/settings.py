@@ -11,9 +11,9 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 import environ
-import tempfile
 
-from django.utils import timezone
+from pathlib import Path
+from datetime import datetime
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -139,12 +139,11 @@ REST_FRAMEWORK = {
 
 # Terra AI
 
-TERRA_AI_DATE_START = timezone.now()
-TERRA_AI_SYNC_LOGS = env.bool("TERRA_AI_SYNC_LOGS", default=False)
+TERRA_AI_DATE_START = datetime.now()
 TERRA_AI_BASE_DIR = env.str("TERRA_AI_BASE_DIR", default="/")
-TERRA_AI_EXCHANGE_API_URL = env.str("TERRA_AI_EXCHANGE_API_URL")
-TERRA_AI_DATA_PATH = env.str("TERRA_AI_DATA_PATH")
-TERRA_AI_PROJECT_PATH = f"{tempfile.gettempdir()}/tai-project"
+TERRA_API_URL = env.str("TERRA_API_URL")
+TERRA_PATH = Path(env.str("TERRA_PATH")).absolute()
+PROJECT_PATH = Path(env.str("PROJECT_PATH", default="./Project")).absolute()
 
 
 # User data
@@ -155,3 +154,75 @@ USER_NAME = env.str("USER_NAME")
 USER_LASTNAME = env.str("USER_LASTNAME")
 USER_EMAIL = env.str("USER_EMAIL")
 USER_TOKEN = env.str("USER_TOKEN")
+USER_SERVERS = env.json("USER_SERVERS", default={})
+
+
+# Logging
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {
+        "require_debug_false": {
+            "()": "django.utils.log.RequireDebugFalse",
+        },
+        "require_debug_true": {
+            "()": "django.utils.log.RequireDebugTrue",
+        },
+    },
+    "formatters": {
+        "django.server": {
+            "()": "django.utils.log.ServerFormatter",
+            "format": "[{server_time}] {message}",
+            "style": "{",
+        },
+        "terra.console": {
+            "()": "apps.api.logging.TerraConsoleFormatter",
+            "format": "[{server_time}] \033[{levelname_color}mTerra [{levelname_short}]\033[0m: {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "level": "INFO",
+            "filters": ["require_debug_true"],
+            "class": "logging.StreamHandler",
+        },
+        "django.server": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "django.server",
+        },
+        "terra.console": {
+            "level": "DEBUG",
+            "class": "apps.api.logging.TerraConsoleHandler",
+            "formatter": "terra.console",
+        },
+        "terra.request_catcher": {
+            "level": "DEBUG",
+            "class": "apps.api.logging.TerraLogsCatcherHandler",
+            "formatter": "terra.console",
+        },
+        "mail_admins": {
+            "level": "ERROR",
+            "filters": ["require_debug_false"],
+            "class": "django.utils.log.AdminEmailHandler",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console", "mail_admins"],
+            "level": "INFO",
+        },
+        "django.server": {
+            "handlers": ["django.server"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "terra": {
+            "handlers": ["terra.console", "terra.request_catcher"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+    },
+}

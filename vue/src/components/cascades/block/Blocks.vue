@@ -116,7 +116,8 @@ export default {
         Model: ['clone', 'link', 'remove'],
         Function: ['clone', 'link', 'remove'],
         Custom: ['clone', 'link', 'remove'],
-        OutputData: this.project?.dataset ? ['link'] : ['clone', 'link', 'remove'],
+        Service: ['clone', 'link', 'remove'],
+        OutputData: this.blocks.filter(i => i.group === 'OutputData').length > 1 ? ['clone', 'link', 'remove'] : ['link'],
       };
     },
     errors() {
@@ -447,7 +448,8 @@ export default {
           x += this.optionsForChild.width / 2;
           // console.log()
           // y += this.$refs?.['block_' + block.id]?.[0]?.getHeight();
-          y += 55;
+          y += this.$refs?.['block_' + block.id]?.[0]?.getHeight() || 55;
+          // y += 55;
         }
         if (slotNumber === 1) {
           x += this.optionsForChild.width;

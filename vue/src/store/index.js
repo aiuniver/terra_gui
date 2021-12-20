@@ -10,6 +10,7 @@ import tables from './modules/tables';
 import profile from './modules/profile';
 import logging from './modules/logging';
 import dialogs from './modules/dialogs';
+import servers from './modules/servers';
 
 import axios from 'axios';
 // import Vue from 'vue';
@@ -26,23 +27,24 @@ export default {
     projects,
     tables,
     profile,
-    logging
+    logging,
+    servers
   },
   actions: {
     async axios ({ dispatch }, { method = 'post', url, data = {} }) {
       try {
-        const response = await axios({ method, url: '/api/v1' + url, data });
-        const { error, success } = response.data;
-        if (success) {
-          dispatch('messages/setMessage', '');
-        } else {
-          dispatch('messages/setMessage', { error: JSON.stringify(error, null, 2) });
-          dispatch('logging/setError', JSON.stringify(error, null, 2));
+        const { data: res } = await axios({ method, url: '/api/v1' + url, data });
+        if (res) {
+          const { error, logs } = res;
+          // if (success) dispatch('messages/setMessage', '');
+          if (error) dispatch('logging/setError', error);
+          if (logs && logs.length) dispatch('logging/setLogs', logs);
         }
-        return response.data;
+        return res;
       } catch (error) {
-        dispatch('messages/setMessage', { error: JSON.stringify(error, null, 2) });
-        dispatch('logging/setError', JSON.stringify(error, null, 2));
+        console.error({ error: JSON.stringify(error, null, 2) })
+        // dispatch('messages/setMessage', { error: JSON.stringify(error, null, 2) });
+        // dispatch('logging/setError', JSON.stringify(error, null, 2));
         dispatch('settings/setOverlay', false);
         return null;
       }

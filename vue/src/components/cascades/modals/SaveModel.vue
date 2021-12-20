@@ -74,7 +74,7 @@ export default {
       if (this.image) {
         const res = await this.$store.dispatch('cascades/createModel', {
           name: this.name,
-          preview: this.image,
+          image: this.image,
           overwrite: this.overwrite,
         });
         if (res?.error && res?.error?.general) {

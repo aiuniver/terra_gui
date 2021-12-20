@@ -5,14 +5,13 @@ from . import exceptions
 
 class ExceptionClasses(Enum):
     """Вызываемые методы агента и их базовые исключения"""
+
     unknown = exceptions.ExchangeBaseException
     # Project
     projects_info = exceptions.FailedGetProjectsInfoException
     project_save = exceptions.FailedSaveProjectException
     project_load = exceptions.FailedLoadProjectException
     # Dataset
-    dataset_choice = exceptions.FailedChoiceDatasetException
-    dataset_choice_progress = exceptions.FailedGetProgressDatasetChoiceException
     dataset_delete = exceptions.FailedDeleteDatasetException
     datasets_info = exceptions.FailedGetDatasetsInfoException
     dataset_source_load = exceptions.FailedLoadDatasetsSourceException

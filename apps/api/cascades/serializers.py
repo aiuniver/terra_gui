@@ -18,8 +18,27 @@ class BlockSerializer(serializers.Serializer):
     group = serializers.ChoiceField(choices=tuple(BlockGroupChoice.values()))
     bind = BlockBindSerializer()
     position = serializers.ListSerializer(child=serializers.FloatField())
-    parameters = serializers.DictField() 
+    parameters = serializers.DictField()
 
-    
+
 class UpdateSerializer(serializers.Serializer):
     blocks = serializers.ListSerializer(child=BlockSerializer())
+
+
+class PreviewSerializer(serializers.Serializer):
+    preview = serializers.CharField()
+
+
+class StartItemSerializer(serializers.Serializer):
+    alias = serializers.CharField()
+    group = serializers.CharField()
+
+
+class StartSerializer(serializers.Serializer):
+    sources = serializers.DictField(child=StartItemSerializer())
+
+
+class SaveSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    image = serializers.CharField()
+    overwrite = serializers.BooleanField(default=False)

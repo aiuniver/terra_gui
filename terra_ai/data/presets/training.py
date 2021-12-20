@@ -141,7 +141,7 @@ TasksGroups = [
             Loss.CategoricalCrossentropy,
             Loss.BinaryCrossentropy,
             Loss.MeanAbsoluteError,
-            # Loss.CategoricalHinge,
+            Loss.CategoricalHinge,
             Loss.MeanSquaredError,
             # Loss.CosineSimilarity,
             # Loss.Hinge,

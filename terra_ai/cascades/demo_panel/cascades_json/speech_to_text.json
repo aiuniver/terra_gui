@@ -1,0 +1,37 @@
+{
+  "cascades": {
+    "input": {
+      "tag": "input",
+      "type": "audio"
+    },
+    "loader": {
+      "tag": "function",
+      "task": "audio",
+      "name": "load_audio",
+      "params": {
+        "sample_rate": 16000
+      }
+    },
+    "model": {
+      "tag": "service",
+      "task": "speech_to_text",
+      "name": "wav2vec2_large_russian"
+    },
+    "out": {
+      "tag": "output",
+      "type": "text"
+    }
+  },
+
+  "adjacency_map": {
+    "loader": [
+      "INPUT"
+    ],
+    "model": [
+      "loader"
+    ],
+    "out": [
+      "model"
+    ]
+  }
+}

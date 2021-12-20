@@ -10,6 +10,7 @@ urlpatterns = [
     path("config/", views.ConfigAPIView.as_view(), name="config"),
     path("common/", include("apps.api.common.urls", namespace="common")),
     path("profile/", include("apps.api.profile.urls", namespace="profile")),
+    path("servers/", include("apps.api.servers.urls", namespace="servers")),
     path("project/", include("apps.api.project.urls", namespace="project")),
     path("datasets/", include("apps.api.datasets.urls", namespace="datasets")),
     path("modeling/", include("apps.api.modeling.urls", namespace="modeling")),

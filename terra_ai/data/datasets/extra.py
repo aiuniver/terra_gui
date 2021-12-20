@@ -206,6 +206,11 @@ class ColumnProcessingTypeChoice(str, Enum):
     Segmentation = "Segmentation"
     TextSegmentation = "TextSegmentation"
     Timeseries = "Timeseries"
+    GAN = "GAN"
+    CGAN = "CGAN"
+    Noise = "Noise"
+    Discriminator = "Discriminator"
+    Generator = "Generator"
 
 
 class LayerInputTypeChoice(str, Enum):
@@ -221,6 +226,7 @@ class LayerInputTypeChoice(str, Enum):
     Classification = "Classification"
     Scaler = "Scaler"
     Raw = "Raw"
+    Noise = "Noise"
 
 
 class LayerOutputTypeChoice(str, Enum):
@@ -240,3 +246,10 @@ class LayerOutputTypeChoice(str, Enum):
     TimeseriesTrend = "TimeseriesTrend"
     ObjectDetection = "ObjectDetection"
     Raw = "Raw"
+    Tracker = "Tracker"
+    Speech2Text = "Speech2Text"
+    Text2Speech = "Text2Speech"
+    GAN = "GAN"
+    CGAN = "CGAN"
+    Discriminator = "Discriminator"
+    Generator = "Generator"

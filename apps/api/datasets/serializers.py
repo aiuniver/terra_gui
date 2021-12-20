@@ -4,10 +4,10 @@ import sys
 from rest_framework import serializers
 from transliterate import slugify
 
-from apps.plugins.project import data_path
 from apps.plugins.frontend import choices as frontend_choices
-
 from apps.api.fields import DirectoryPathField, DirectoryOrFilePathField
+
+from terra_ai.settings import TERRA_PATH
 
 
 class MinMaxScalerSerializer(serializers.Serializer):
@@ -30,7 +30,10 @@ class LayerParametersSerializer(serializers.Serializer):
     sources_paths = serializers.ListSerializer(child=DirectoryOrFilePathField())
 
     def validate_sources_paths(self, value):
-        if self.__class__ == LayerParametersClassificationSerializer:
+        if self.__class__ in [
+            LayerParametersClassificationSerializer,
+            LayerParametersTrackerSerializer,
+        ]:
             return value
         if not len(value):
             raise serializers.ValidationError("Этот список не может быть пустым.")
@@ -169,10 +172,22 @@ class LayerParametersClassificationSerializer(LayerParametersSerializer):
     pass
 
 
+class LayerParametersTrackerSerializer(LayerParametersSerializer):
+    pass
+
+
+class LayerParametersSpeech2TextSerializer(serializers.Serializer):
+    pass
+
+
+class LayerParametersText2SpeechSerializer(serializers.Serializer):
+    pass
+
+
 class LayerParametersSegmentationSerializer(LayerParametersSerializer):
     width: serializers.IntegerField(min_value=1)
     height: serializers.IntegerField(min_value=1)
-    mask_range = serializers.IntegerField(min_value=1)
+    mask_range = serializers.IntegerField(min_value=0)
     classes_names: serializers.ListSerializer(child=serializers.CharField())
     classes_colors: serializers.ListSerializer(child=serializers.CharField())
 
@@ -242,8 +257,8 @@ class CreateTagSerializer(serializers.Serializer):
 
 
 class CreateInfoPartSerializer(serializers.Serializer):
-    train = serializers.FloatField(min_value=0.05, max_value=0.9)
-    validation = serializers.FloatField(min_value=0.05, max_value=0.9)
+    train = serializers.FloatField(min_value=0.1, max_value=0.9)
+    validation = serializers.FloatField(min_value=0.1, max_value=0.9)
 
 
 class CreateInfoSerializer(serializers.Serializer):
@@ -272,7 +287,7 @@ class CreateColumnProcessingSerializer(serializers.Serializer):
 class CreateSerializer(serializers.Serializer):
     alias = serializers.SerializerMethodField()
     name = serializers.CharField()
-    datasets_path = DirectoryPathField(default=str(data_path.datasets.absolute()))
+    datasets_path = DirectoryPathField(default=str(TERRA_PATH.datasets.absolute()))
     source_path = DirectoryPathField()
     info = CreateInfoSerializer()
     tags = serializers.ListSerializer(child=CreateTagSerializer(), default=[])
@@ -300,6 +315,7 @@ class CreateSerializer(serializers.Serializer):
                 f"LayerParameters{_type}Serializer",
                 None,
             )
+            print(f"LayerParameters{_type}Serializer")
             if _serializer_class:
                 _serializer_parameters = _serializer_class(
                     data=value.get("parameters", {})
@@ -342,4 +358,4 @@ class DeleteSerializer(serializers.Serializer):
 
 class SourceSegmentationClassesAutosearchSerializer(serializers.Serializer):
     num_classes = serializers.IntegerField(min_value=1)
-    mask_range = serializers.IntegerField(min_value=1)
+    mask_range = serializers.IntegerField(min_value=0)

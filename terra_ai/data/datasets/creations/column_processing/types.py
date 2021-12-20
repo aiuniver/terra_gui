@@ -3,6 +3,7 @@ from pydantic import validator
 from pydantic.types import PositiveInt, PositiveFloat
 from pydantic.color import Color
 
+from terra_ai.data.types import ConstrainedIntValueGe0
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.datasets.extra import (
     LayerNetChoice,
@@ -23,6 +24,7 @@ from terra_ai.data.datasets.extra import (
     LayerVideoModeChoice,
     LayerTypeProcessingClassificationChoice,
     LayerImageFrameModeChoice,
+    LayerTypeProcessingClassificationChoice, LayerImageFrameModeChoice,
 )
 from terra_ai.data.datasets.creations.layers.extra import MinMaxScalerData
 
@@ -32,6 +34,7 @@ class ParametersBaseData(BaseMixinData):
 
 
 class ParametersImageData(ParametersBaseData, MinMaxScalerData):
+
     """
     Обработчик изображений.
     Inputs:
@@ -41,6 +44,7 @@ class ParametersImageData(ParametersBaseData, MinMaxScalerData):
         net: str - режим обработки массивов. Варианты: 'convolutional', 'linear'
         scaler: str - тип скейлера. Варианты: 'no_scaler', 'min_max_scaler', 'terra_image_scaler'
     """
+
     width: PositiveInt
     height: PositiveInt
     image_mode: LayerImageFrameModeChoice = LayerImageFrameModeChoice.stretch
@@ -49,6 +53,7 @@ class ParametersImageData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersTextData(ParametersBaseData):
+
     """
     Обработчик текстовых данных.
     Inputs:
@@ -62,6 +67,7 @@ class ParametersTextData(ParametersBaseData):
         prepare_method: str - режим формирования массивов. Варианты: 'embedding', 'bag_of_words', 'word_to_vec'
         word_to_vec_size: int - \x1B[3mОПЦИОНАЛЬНО при prepare_method==word_to_vec.\x1B[0m Размер Word2Vec пространства.
     """
+
     filters: str = '–—!"#$%&()*+,-./:;<=>?@[\\]^«»№_`{|}~\t\n\xa0–\ufeff'
     text_mode: LayerTextModeChoice
     max_words: Optional[PositiveInt]
@@ -97,6 +103,7 @@ class ParametersTextData(ParametersBaseData):
 
 
 class ParametersAudioData(ParametersBaseData, MinMaxScalerData):
+
     """
     Обработчик аудиофайлов.
     Inputs:
@@ -113,6 +120,7 @@ class ParametersAudioData(ParametersBaseData, MinMaxScalerData):
         Варианты: 'kaiser_best', 'kaiser_fast', 'scipy'
         scaler: str - тип скейлера. Варианты: 'no_scaler', 'min_max_scaler', 'standard_scaler'
     """
+
     sample_rate: PositiveInt = 22050
     audio_mode: LayerAudioModeChoice = LayerAudioModeChoice.completely
     max_seconds: Optional[PositiveFloat]
@@ -134,6 +142,7 @@ class ParametersAudioData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersVideoData(ParametersBaseData, MinMaxScalerData):
+
     """
     Обработчик видеофайлов.
     Inputs:
@@ -147,6 +156,7 @@ class ParametersVideoData(ParametersBaseData, MinMaxScalerData):
         fill_mode: str - режим обработки аудиофайлов. Варианты: 'last_frames', 'loop', 'average_value'
         scaler: str - тип скейлера. Варианты: 'no_scaler', 'min_max_scaler'
     """
+
     width: PositiveInt
     height: PositiveInt
     fill_mode: LayerVideoFillModeChoice = LayerVideoFillModeChoice.last_frames
@@ -168,11 +178,13 @@ class ParametersVideoData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersScalerData(ParametersBaseData, MinMaxScalerData):
+
     """
     Обработчик числовых значений.
     Inputs:
         scaler: str - тип скейлера. Варианты: 'standard_scaler', 'min_max_scaler'
     """
+
     scaler: LayerScalerDefaultChoice
     length: int = 0
     depth: int = 0
@@ -189,12 +201,14 @@ class ParametersScalerData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersClassificationData(ParametersBaseData):
+
     """
     Обработчик типа задачи "классификация".
     Inputs:
         type_processing: str - режим обработки кадров. Варианты: 'categorical', 'ranges'. По умолчанию: 'categorical'
         ranges: int - \x1B[3mОПЦИОНАЛЬНО при type_processing==ranges.\x1B[0m Диапазоны разбивки на классы.
     """
+
     one_hot_encoding: bool = True
     type_processing: Optional[
         LayerTypeProcessingClassificationChoice
@@ -214,15 +228,18 @@ class ParametersClassificationData(ParametersBaseData):
 
 
 class ParametersRegressionData(ParametersBaseData, MinMaxScalerData):
+
     """
     Обработчик типа задачи "регрессия".
     Inputs:
         scaler: str - тип скейлера. Варианты: 'standard_scaler', 'min_max_scaler'
     """
+
     scaler: LayerScalerRegressionChoice
 
 
 class ParametersSegmentationData(ParametersBaseData):
+
     """
     Обработчик типа задачи "сегментация".
     Inputs:
@@ -230,7 +247,8 @@ class ParametersSegmentationData(ParametersBaseData):
         classes_names: list - названия классов
         classes_colors: list - цвета классов в формате RGB
     """
-    mask_range: PositiveInt
+
+    mask_range: ConstrainedIntValueGe0
     classes_names: List[str]
     classes_colors: List[Color]
     height: Optional[PositiveInt]
@@ -244,12 +262,14 @@ class ParametersSegmentationData(ParametersBaseData):
 
 
 class ParametersTextSegmentationData(ParametersBaseData):
+
     """
     Обработчик типа задачи "сегментация текстов".
     Inputs:
         open_tags: str - открывающие теги (через пробел)
         close_tags: str - закрывающие теги (через пробел)
     """
+
     open_tags: str
     close_tags: str
 
@@ -275,6 +295,7 @@ class ParametersTextSegmentationData(ParametersBaseData):
 
 
 class ParametersTimeseriesData(ParametersBaseData, MinMaxScalerData):
+
     """
     Обработчик видеофайлов.
     Inputs:
@@ -285,6 +306,7 @@ class ParametersTimeseriesData(ParametersBaseData, MinMaxScalerData):
         depth: int - \x1B[3mОПЦИОНАЛЬНО при ***==***.\x1B[0m ***
         scaler: str - тип скейлера. Варианты: 'no_scaler', 'standard_scaler', 'min_max_scaler'
     """
+
     length: PositiveInt
     step: PositiveInt
     trend: bool
@@ -311,3 +333,33 @@ class ParametersTimeseriesData(ParametersBaseData, MinMaxScalerData):
             cls.__fields__["depth"].required = True
             cls.__fields__["scaler"].required = True
         return value
+
+
+class ParametersGANData(ParametersBaseData):
+
+    """
+    Обработчик типа задачи "GAN".
+    """
+
+    pass
+
+
+class ParametersCGANData(ParametersBaseData):
+
+    """
+    Обработчик типа задачи "CGAN".
+    """
+
+    pass
+
+
+class ParametersGeneratorData(ParametersBaseData):
+    shape: tuple
+
+
+class ParametersDiscriminatorData(ParametersBaseData):
+    shape: tuple
+
+
+class ParametersNoiseData(ParametersBaseData):
+    shape: tuple

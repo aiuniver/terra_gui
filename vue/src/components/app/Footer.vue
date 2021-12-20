@@ -4,7 +4,7 @@
       <div class="footer__message--icon" @click="dialogErrors = true">
         <span v-if="errors.length"></span>
       </div>
-      <div :class="['footer__message--text', showMsg.color]" @click="click(showMsg.color)">
+      <div :class="['footer__message--text', showMsg.color]" @click="dialogError = true">
         <transition name="error-slide" mode="out-in">
           <span :key="key">{{ showMsg.msg }}</span>
         </transition>
@@ -31,7 +31,7 @@
       <span v-if="version" class="footer__version">{{ version }}</span>
     </div>
     <LoggingModal v-if="errors.length" v-model="dialogErrors" :errors="errors" :title="'Логи'" @error="clickError" />
-    <CopyModal v-model="dialogError" :title="'Ошибка!'">{{ text }}</CopyModal>
+    <ErrorModal v-model="dialogError" v-bind="error" />
   </div>
 </template>
 
@@ -39,7 +39,7 @@
 import { mapGetters } from 'vuex';
 export default {
   components: {
-    CopyModal: () => import('../global/modals/CopyModal'),
+    ErrorModal: () => import('../global/modals/ErrorModal'),
     LoggingModal: () => import('../global/modals/LoggingModal'),
   },
   data: () => ({
@@ -47,7 +47,13 @@ export default {
     dialogErrors: false,
     text: '',
     key: 0,
-    msgList: []
+    msgList: [],
+    type: {
+      info: 'Успешно',
+      warning: 'Внимание',
+      error: 'Ошибка',
+      critical: 'Опасно',
+    },
   }),
   computed: {
     ...mapGetters({
@@ -56,6 +62,8 @@ export default {
       progress: 'messages/getProgress',
       project: 'projects/getProject',
       progressMessage: 'messages/getProgressMessage',
+      error: 'logging/getError',
+      logs: 'logging/getLogs',
       errors: 'logging/getErrors',
     }),
     protsessor() {
@@ -68,9 +76,9 @@ export default {
       return this.$config.isDev ? `ver. ${this.$config.version}` : '';
     },
     showMsg() {
-      if (!this.msgList.length) return ''
-      return this.msgList[0]
-    }
+      if (!this.msgList.length) return '';
+      return this.msgList[0];
+    },
   },
   methods: {
     click(color) {
@@ -79,22 +87,30 @@ export default {
         this.dialogError = true;
       }
     },
-    clickError({ error }) {
-      this.color === 'error';
-      this.text = error;
+    clickError() {
       this.dialogError = true;
-    }
+    },
   },
   watch: {
-    message(newVal) {
-      if (!newVal) return
-      this.msgList.push({ msg: newVal, color: this.color })
-      setTimeout(() => {
-        this.msgList.shift()
-        this.key++
-      }, this.msgList.length > 1 ? 1000 : 5000)
-    }
-  }
+    error(value) {
+      if (value) this.dialogError = true;
+    },
+    logs(arr) {
+      if (arr.length) {
+        arr.forEach(({ type = '', title = '', message = '', duration = 5000 }) => {
+          if (type && title) {
+            setTimeout(() => {
+              this.$Notify({ type, title, message, duration });
+            }, 100);
+          }
+        });
+      }
+    },
+    message(value) {
+      if (value)
+        this.$Notify({ type: this.color, title: this.color === 'success' ? 'Успешно' : 'Ошибка', message: value });
+    },
+  },
 };
 </script>
 
@@ -160,7 +176,7 @@ export default {
         display: block;
         overflow: hidden;
         text-overflow: ellipsis;
-        transition-duration: 500ms;
+        transition-duration: 200ms;
       }
     }
     &--icon {

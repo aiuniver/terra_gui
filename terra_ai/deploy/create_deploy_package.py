@@ -11,9 +11,8 @@ from terra_ai.settings import ASSETS_PATH
 class CascadeCreator:
 
     def create_config(self, deploy_path: Path, model_path: Path, func_name: str):
-        if func_name == "text_segmentation":
-            dataset_path = os.path.join(model_path, "dataset", "instructions", "parameters", f"2_{func_name}.json")
-        else:
+        dataset_path = os.path.join(model_path, "dataset.json")
+        if not os.path.exists(dataset_path):
             dataset_path = os.path.join(model_path, "dataset", "config.json")
         with open(dataset_path) as cfg:
             dataset_config = json.load(cfg)
@@ -59,7 +58,6 @@ class CascadeCreator:
     @staticmethod
     def make_image_segmentation(config, dataset_config, model):
         config['cascades']['model']['model'] = model
-        config['cascades']['2']['params']['num_class'] = dataset_config['outputs']['2']['num_classes']
         config['cascades']['2']['params']['classes_colors'] = [Color(i).as_rgb_tuple() for i in
                                                                dataset_config['outputs']['2']['classes_colors']]
 
@@ -68,8 +66,8 @@ class CascadeCreator:
     @staticmethod
     def make_text_segmentation(config, dataset_config, model):
         config['cascades']['model']['model'] = model
-        config['cascades']['2']['params']['open_tag'] = dataset_config['open_tags']
-        config['cascades']['2']['params']['close_tag'] = dataset_config['close_tags']
+        config['cascades']['2']['params']['open_tag'] = dataset_config['instructions']['2']['2_text_segmentation']['open_tags']
+        config['cascades']['2']['params']['close_tag'] = dataset_config['instructions']['2']['2_text_segmentation']['close_tags']
 
         return config
 
@@ -99,22 +97,55 @@ class CascadeCreator:
     def copy_package(deploy_path: Path, model_path: Path):
         if os.path.exists(os.path.join(deploy_path, "cascades")):
             shutil.rmtree(os.path.join(deploy_path, "cascades"), ignore_errors=True)
-        if os.path.exists(os.path.join(deploy_path, "model")):
-            shutil.rmtree(os.path.join(deploy_path, "model"), ignore_errors=True)
+        if os.path.exists(os.path.join(deploy_path, "custom_objects")):
+            shutil.rmtree(os.path.join(deploy_path, "custom_objects"), ignore_errors=True)
         shutil.copytree("terra_ai/cascades",
                         os.path.join(deploy_path, "cascades"),
                         ignore=shutil.ignore_patterns("demo_panel", "cascades"))
+        shutil.copytree("terra_ai/custom_objects",
+                        os.path.join(deploy_path, "custom_objects"))
+        shutil.copyfile("terra_ai/datasets/preprocessing.py",
+                        os.path.join(deploy_path, "cascades", "preprocessing.py"))
+        shutil.copyfile("terra_ai/data/datasets/extra.py",
+                        os.path.join(deploy_path, "cascades", "extra.py"))
+        shutil.copyfile("terra_ai/datasets/arrays_create.py",
+                        os.path.join(deploy_path, "cascades", "arrays_create.py"))
+        shutil.copyfile("terra_ai/datasets/utils.py",
+                        os.path.join(deploy_path, "cascades", "utils.py"))
+
+    @staticmethod
+    def copy_model(deploy_path: Path, model_path: Path):
+        if os.path.exists(os.path.join(deploy_path, "model")):
+            shutil.rmtree(os.path.join(deploy_path, "model"), ignore_errors=True)
         shutil.copytree(model_path,
                         os.path.join(deploy_path, "model"),
                         ignore=shutil.ignore_patterns("deploy_presets", "interactive.history",
                                                       "config.presets", "config.train", "log.history"))
-        shutil.copyfile("terra_ai/datasets/preprocessing.py",
-                        os.path.join(deploy_path, "cascades", "preprocessing.py"))
 
     @staticmethod
     def copy_script(deploy_path, function_name):
         shutil.copyfile(f"terra_ai/deploy/deploy_scripts/{function_name}.py",
                         os.path.join(deploy_path, "script.py"))
+
+    @staticmethod
+    def copy_config(deploy_path, config_path):
+        deepsort = False
+        with open(config_path, "r", encoding="utf-8") as config_:
+            cascade = json.load(config_)
+        for block, params in cascade.get("cascades").items():
+            if params.get("name") == "DeepSort":
+                weight_path = params.get("params").get("model_path")
+                if not os.path.exists(os.path.join(deploy_path, "weights")):
+                    os.makedirs(os.path.join(deploy_path, "weights"))
+                shutil.copyfile(weight_path, os.path.join(deploy_path, "weights/deepsort.t7"))
+                params["params"]["model_path"] = "weights/deepsort.t7"
+                cascade["cascades"][block] = params
+                with open(os.path.join(deploy_path, "config.cascade"), "w", encoding="utf-8") as deploy_config:
+                    json.dump(cascade, deploy_config)
+                deepsort = True
+                break
+        if not deepsort:
+            shutil.copyfile(config_path, os.path.join(deploy_path, "config.cascade"))
 
 
 if __name__ == "__main__":

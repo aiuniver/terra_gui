@@ -1,10 +1,11 @@
 from pathlib import Path
+from typing import Optional
 from rest_framework.exceptions import ValidationError
 
-from apps.plugins.project import project_path
+from terra_ai import settings as terra_ai_settings
 
 
-def validate_filepath(value) -> Path:
+def validate_filepath(value) -> Optional[Path]:
     if value is None:
         return value
     value = Path(value)
@@ -13,10 +14,14 @@ def validate_filepath(value) -> Path:
     return value
 
 
-def validate_project_path(value) -> Path:
+def validate_project_path(value) -> Optional[Path]:
     if value is None:
         return value
     value = Path(value)
-    if not str(value).startswith(f"{project_path.base}/"):
+    if (
+        not str(value).startswith(f"{terra_ai_settings.PROJECT_PATH.base}/")
+        and not str(value).startswith(f"{terra_ai_settings.CASCADE_PATH}/")
+        and not str(value).startswith(f"{terra_ai_settings.DEPLOY_PATH}/")
+    ):
         raise ValidationError(f"Файл {value} запрещен для вывода")
     return value

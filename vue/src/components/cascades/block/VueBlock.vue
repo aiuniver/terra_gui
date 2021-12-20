@@ -2,7 +2,7 @@
   <div class="t-block-cascades" :style="style" @mouseover="hover = true" @mouseleave="hover = false">
     <div :class="['t-block-cascades__header', group, { selected: selected }, { error: !!error }]">
       <div class="t-block-cascades__header--title" :title="name">{{ `${id}) ${group}: ${name}` }}</div>
-      <div class="t-block-cascades__header--parametr" :title="parametr">{{ }}</div>
+      <div class="t-block-cascades__header--parametr" :title="parametr">{{ parametr }}</div>
     </div>
     <div class="t-block-cascades__base"></div>
     <div v-if="error" v-show="hover || selected" class="t-block-cascades__error">
@@ -64,7 +64,6 @@ export default {
       },
     },
     selected: Boolean,
-    type: String,
     typeLabel: String,
     title: {
       type: String,
@@ -85,7 +84,7 @@ export default {
       default: () => {},
     },
     shape: Object,
-    bind: Object
+    bind: Object,
   },
   data: () => ({
     hover: false,
@@ -101,7 +100,26 @@ export default {
     },
     parametr() {
       const parametr = Object.values(this.parameters?.main || {}).filter(item => item);
-      return this.group === 'input' ? this.shape?.input?.join(' ') || '' : parametr.join(' ');
+      const group = this.group;
+      console.log(group);
+      console.log(parametr);
+      if (group === 'Function') {
+        const { type, group } = this.parameters?.main || {};
+        return `${group} ${type}`;
+      }
+      if (group === 'Service') {
+        const { type, group } = this.parameters?.main || {};
+        return `${group} ${type}`;
+      }
+      if (group === 'Model') {
+        const { path } = this.parameters?.main || {};
+        return `${path}`;
+      }
+      if (group === 'InputData') {
+        const { type } = this.parameters?.main || {};
+        return `${type}`;
+      }
+      return parametr.join(' ');
     },
     styleHover() {
       const len = this.iconsFilter.length;
@@ -362,6 +380,16 @@ $circleConnectedColor: #569dcf;
     &.Custom {
       background: #ffb740;
       border: $blockBorder solid #ffb740;
+      &:hover {
+        border: $blockBorder solid #ffffff;
+      }
+      &.selected {
+        border: $blockBorder solid #ffffff;
+      }
+    }
+    &.Service {
+      background: #ef40ff;
+      border: $blockBorder solid #ef40ff;
       &:hover {
         border: $blockBorder solid #ffffff;
       }

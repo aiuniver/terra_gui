@@ -30,8 +30,8 @@ class DataList(DataBaseList):
         if not len(self):
             return
 
-        self.preset_file = Path(self.path, "preset.txt")
-        label_file = Path(self.path, "label.txt")
+        self.preset_file = Path(self.path_deploy, "preset.txt")
+        label_file = Path(self.path_deploy, "label.txt")
 
         for _path in (self.preset_file, label_file):
             if _path.exists():
@@ -51,9 +51,7 @@ class DataList(DataBaseList):
         self.preset[index] = item
 
         with open(self.preset_file, "a") as preset_file_ref:
-            preset_file_ref.write(
-                json.dumps(item.source, ensure_ascii=False)
-            )
+            preset_file_ref.write(json.dumps(item.source, ensure_ascii=False))
             preset_file_ref.write("\n")
 
 

@@ -3,6 +3,7 @@ import tensorflow
 import numpy as np
 import os
 from tensorflow.keras.utils import save_img
+from pydub import AudioSegment
 
 
 def video(path, **params):
@@ -10,7 +11,7 @@ def video(path, **params):
     shape = (params['width'], params['height'])
 
     writer = cv2.VideoWriter(
-        path, cv2.VideoWriter_fourcc(*"MJPG"), 10, shape
+        path, cv2.VideoWriter_fourcc(*"VP80"), 15, shape
     )
 
     def fix(img):
@@ -51,5 +52,21 @@ def text(path):
     def fun(string):
         with open(path, 'a') as f:
             f.write(str(string) + '\n')
+
+    return fun
+
+
+def google_tts(path):
+    def fun(tts):
+        tts.save(path)
+
+    return fun
+
+
+def audio(path):
+
+    def fun(iobytes):
+        song = AudioSegment.from_file(iobytes, format="mp3")
+        song.export(path, format="webm")
 
     return fun

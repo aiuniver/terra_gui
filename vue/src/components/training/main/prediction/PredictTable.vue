@@ -79,7 +79,7 @@
                 {{ id }}
               </td>
 
-              <template v-for="({ type, data, update }, key) in initial_data">
+              <template v-for="({ type, data }, key) in initial_data">
                 <template v-for="(item, i) of data">
                   <td :key="'finitial_layer_' + i + JSON.stringify(key)">
                     <Forms :data="item" :tags_color="tags_color" :layer="key" :update="update" :type="type" :idx="id" />
@@ -193,7 +193,7 @@
 
               <template v-for="({ type, data }, key) in initial_data">
                 <template v-for="(item, i) of data">
-                  <td :key="'initial_layer_' + i + JSON.stringify(key) + update">
+                  <td :key="'initial_layer_' + i + JSON.stringify(key)">
                     <Forms :data="item" :tags_color="tags_color" :layer="key" :update="update" :type="type" :idx="id" />
                   </td>
                 </template>
@@ -201,7 +201,7 @@
 
               <template v-for="({ type, data }, key) in true_value">
                 <template v-for="(item, i) of data">
-                  <td :key="'true_layer_' + i + JSON.stringify(key) + update">
+                  <td :key="'true_layer_' + i + JSON.stringify(key)">
                     <Forms :data="item" :tags_color="tags_color" :layer="key" :update="update" :type="type" :idx="id" />
                   </td>
                 </template>
@@ -209,7 +209,7 @@
 
               <template v-for="({ type, data }, key) in predict_value">
                 <template v-for="(item, i) of data">
-                  <td :key="'predict_layer_' + i + JSON.stringify(key) + update">
+                  <td :key="'predict_layer_' + i + JSON.stringify(key)">
                     <Forms :data="item" :tags_color="tags_color" :layer="key" :update="update" :type="type" :idx="id" />
                   </td>
                 </template>
@@ -217,8 +217,8 @@
 
               <template v-for="({ type, data }, key) in statistic_values">
                 <template v-for="(item, i) of data">
-                  <td :key="'statistic_layer_' + i + JSON.stringify(key) + update">
-                    <Forms :data="item" :type="type" :idx="id" />
+                  <td :key="'statistic_layer_' + i + JSON.stringify(key)">
+                    <Forms :data="item" :type="type" :idx="id" :update="update" />
                   </td>
                 </template>
               </template>

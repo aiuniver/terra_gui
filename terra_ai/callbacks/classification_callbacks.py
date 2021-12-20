@@ -8,13 +8,15 @@ from tensorflow.keras.preprocessing import image
 
 from terra_ai.callbacks.utils import sort_dict, fill_graph_front_structure, fill_graph_plot_data, get_y_true, \
     class_counter, get_confusion_matrix, fill_heatmap_front_structure, get_classification_report, \
-    fill_table_front_structure, print_error
+    fill_table_front_structure, round_list
 from terra_ai.data.datasets.dataset import DatasetOutputsData
-from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, LayerEncodingChoice
+from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerEncodingChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
 import moviepy.editor as moviepy_editor
 
+from terra_ai.logging import logger
 from terra_ai.settings import MAX_GRAPH_LENGTH, DEPLOY_PRESET_PERCENT
+import terra_ai.exceptions.callbacks as exception
 
 
 class BaseClassificationCallback:
@@ -22,7 +24,7 @@ class BaseClassificationCallback:
         self.name = 'BaseClassificationCallback'
 
     @staticmethod
-    def get_y_true(options, dataset_path):
+    def get_y_true(options, dataset_path=""):
         method_name = 'get_y_true'
         try:
             y_true = {"train": {}, "val": {}}
@@ -32,30 +34,21 @@ class BaseClassificationCallback:
                     if not options.data.use_generator:
                         y_true[data_type][f"{out}"] = options.Y.get(data_type).get(f"{out}")
                     else:
-                        # print('options.dataset', options.dataset)
                         y_true[data_type][f"{out}"] = []
                         for _, y_val in options.dataset[data_type].batch(1):
-                            # print('y_val', y_val.keys())
                             y_true[data_type][f"{out}"].extend(y_val.get(f'{out}').numpy())
                         y_true[data_type][f"{out}"] = np.array(y_true[data_type][f"{out}"])
             return y_true, inverse_y_true
-        except Exception as e:
-            print_error(BaseClassificationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
-    def get_y_pred(y_true, y_pred, options):
-        method_name = 'get_y_pred'
-        try:
-            reformat_pred = {}
-            inverse_pred = {}
-            for idx, out in enumerate(y_true.get('val').keys()):
-                if len(y_true.get('val').keys()) == 1:
-                    reformat_pred[out] = y_pred
-                else:
-                    reformat_pred[out] = y_pred[idx]
-            return reformat_pred, inverse_pred
-        except Exception as e:
-            print_error(BaseClassificationCallback().name, method_name, e)
+    def get_inverse_array(array: dict, options, type="output"):
+        inverse_array = {"train": {}, "val": {}}
+        return inverse_array
 
     @staticmethod
     def dataset_balance(options, y_true, preset_path: str, class_colors) -> dict:
@@ -64,16 +57,19 @@ class BaseClassificationCallback:
             dataset_balance = {}
             for out in options.data.outputs.keys():
                 encoding = options.data.outputs.get(out).encoding
-                dataset_balance[f"{out}"] = {'class_histogramm': {}}
+                dataset_balance[f"{out}"] = {'class_histogram': {}}
                 for data_type in ['train', 'val']:
-                    dataset_balance[f"{out}"]['class_histogramm'][data_type] = class_counter(
+                    dataset_balance[f"{out}"]['class_histogram'][data_type] = class_counter(
                         y_array=y_true.get(data_type).get(f"{out}"),
                         classes_names=options.data.outputs.get(out).classes_names,
                         ohe=encoding == LayerEncodingChoice.ohe
                     )
             return dataset_balance
-        except Exception as e:
-            print_error(BaseClassificationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def statistic_data_request(interactive_config, options, y_true, inverse_y_true,
@@ -84,50 +80,56 @@ class BaseClassificationCallback:
             _id = 1
             for out in interactive_config.statistic_data.output_id:
                 encoding = options.data.outputs.get(out).encoding
-                if encoding != LayerEncodingChoice.multi:
-                    cm, cm_percent = get_confusion_matrix(
-                        np.argmax(y_true.get("val").get(f'{out}'), axis=-1) if encoding == LayerEncodingChoice.ohe
-                        else y_true.get("val").get(f'{out}'),
-                        np.argmax(y_pred.get(f'{out}'), axis=-1),
-                        get_percent=True
-                    )
-                    return_data.append(
-                        fill_heatmap_front_structure(
-                            _id=_id,
-                            _type="heatmap",
-                            graph_name=f"Выходной слой «{out}» - Confusion matrix",
-                            short_name=f"{out} - Confusion matrix",
-                            x_label="Предсказание",
-                            y_label="Истинное значение",
-                            labels=options.data.outputs.get(out).classes_names,
-                            data_array=cm,
-                            data_percent_array=cm_percent,
+                for data_type in y_true.keys():
+                    type_name = "Тренировочная" if data_type == 'train' else "Проверочная"
+                    if encoding != LayerEncodingChoice.multi:
+                        cm, cm_percent = get_confusion_matrix(
+                            y_true=np.argmax(y_true.get(data_type).get(f'{out}'), axis=-1)
+                            if encoding == LayerEncodingChoice.ohe else y_true.get("val").get(f'{out}'),
+                            y_pred=np.argmax(y_pred.get(data_type).get(f'{out}'), axis=-1),
+                            get_percent=True
                         )
-                    )
-                    _id += 1
+                        return_data.append(
+                            fill_heatmap_front_structure(
+                                _id=_id,
+                                _type="heatmap",
+                                graph_name=f"Выход «{out}» - Confusion matrix - {type_name} выборка",
+                                short_name=f"{out} - Confusion matrix - {type_name}",
+                                x_label="Предсказание",
+                                y_label="Истинное значение",
+                                labels=options.data.outputs.get(out).classes_names,
+                                data_array=cm,
+                                data_percent_array=cm_percent,
+                            )
+                        )
+                        _id += 1
 
-                else:
-                    report = get_classification_report(
-                        y_true=y_true.get("val").get(f"{out}").reshape(
-                            (np.prod(y_true.get("val").get(f"{out}").shape[:-1]),
-                             y_true.get("val").get(f"{out}").shape[-1])
-                        ),
-                        y_pred=np.where(y_pred.get(f"{out}") >= 0.9, 1, 0).reshape(
-                            (np.prod(y_pred.get(f"{out}").shape[:-1]), y_pred.get(f"{out}").shape[-1])
-                        ),
-                        labels=options.data.outputs.get(out).classes_names
-                    )
-                    return_data.append(
-                        fill_table_front_structure(
-                            _id=_id,
-                            graph_name=f"Выходной слой «{out}» - Отчет по классам",
-                            plot_data=report
+                    else:
+                        report = get_classification_report(
+                            y_true=y_true.get(data_type).get(f"{out}").reshape(
+                                (np.prod(y_true.get(data_type).get(f"{out}").shape[:-1]),
+                                 y_true.get(data_type).get(f"{out}").shape[-1])
+                            ),
+                            y_pred=np.where(y_pred.get(data_type).get(f"{out}") >= 0.9, 1, 0).reshape(
+                                (np.prod(y_pred.get(data_type).get(f"{out}").shape[:-1]),
+                                 y_pred.get(data_type).get(f"{out}").shape[-1])
+                            ),
+                            labels=options.data.outputs.get(out).classes_names
                         )
-                    )
-                    _id += 1
+                        return_data.append(
+                            fill_table_front_structure(
+                                _id=_id,
+                                graph_name=f"Выход «{out}» - Отчет по классам - {type_name} выборка",
+                                plot_data=report
+                            )
+                        )
+                        _id += 1
             return return_data
-        except Exception as e:
-            print_error(BaseClassificationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def balance_data_request(options, dataset_balance, interactive_config):
@@ -157,8 +159,11 @@ class BaseClassificationCallback:
                         _id += 1
                     return_data.append(preset)
             return return_data
-        except Exception as e:
-            print_error(BaseClassificationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def prepare_example_idx_to_show(array: np.ndarray, true_array: np.ndarray, options, output: int, count: int,
@@ -228,8 +233,11 @@ class BaseClassificationCallback:
             else:
                 pass
             return example_idx
-        except Exception as e:
-            print_error(BaseClassificationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def postprocess_classification(predict_array: np.ndarray, true_array: np.ndarray, options: DatasetOutputsData,
@@ -299,8 +307,11 @@ class BaseClassificationCallback:
                             }
                         )
                 return data
-        except Exception as e:
-            print_error(BaseClassificationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def prepare_class_idx(y_true: dict, options) -> dict:
@@ -320,41 +331,47 @@ class BaseClassificationCallback:
                         class_idx[data_type][out][
                             options.data.outputs.get(int(out)).classes_names[y_true_argmax[idx]]].append(idx)
             return class_idx
-        except Exception as e:
-            print_error(BaseClassificationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
 
 class ImageClassificationCallback(BaseClassificationCallback):
     def __init__(self):
         super().__init__()
         self.name = 'ImageClassificationCallback'
-        print(f'Callback {self.name} is called')
 
     @staticmethod
     def get_x_array(options):
         method_name = 'get_x_array'
         try:
-            x_val = None
-            inverse_x_val = None
+            x_val = {}
+            inverse_x_val = {}
             if options.data.group == DatasetGroupChoice.keras:
-                x_val = options.X.get("val")
+                for data_type in ['train', 'val']:
+                    x_val[data_type] = options.X.get(data_type)
             return x_val, inverse_x_val
-        except Exception as e:
-            print_error(ImageClassificationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                ImageClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
-    def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str,
-                                   preset_path: str, save_id: int = None, x_array=None, return_mode='deploy'):
+    def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str, preset_path: str,
+                                   data_type: str = 'val', save_id: int = None, x_array=None, return_mode='deploy'):
         method_name = 'postprocess_initial_source'
         try:
             column_idx = []
             if options.data.group != DatasetGroupChoice.keras:
                 for inp in options.data.inputs.keys():
-                    for column_name in options.dataframe.get('val').columns:
+                    for column_name in options.dataframe.get(data_type).columns:
                         if column_name.split('_')[0] == f"{inp}":
-                            column_idx.append(options.dataframe.get('val').columns.tolist().index(column_name))
+                            column_idx.append(options.dataframe.get(data_type).columns.tolist().index(column_name))
                 initial_file_path = os.path.join(
-                    dataset_path, options.dataframe.get('val').iat[example_id, column_idx[0]]
+                    dataset_path, options.dataframe.get(data_type).iat[example_id, column_idx[0]]
                 )
                 if not save_id:
                     return str(os.path.abspath(initial_file_path))
@@ -368,6 +385,8 @@ class ImageClassificationCallback(BaseClassificationCallback):
                     Image.ANTIALIAS
                 )
             else:
+                if x_array is None:
+                    x_array = options.X.get(data_type).get(f"{list(options.data.inputs.keys())[0]}")
                 img = image.array_to_img(x_array[example_id])
             img = img.convert('RGB')
 
@@ -388,8 +407,11 @@ class ImageClassificationCallback(BaseClassificationCallback):
                     }
                 ]
                 return data
-        except Exception as e:
-            print_error(ImageClassificationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                ImageClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "") -> dict:
@@ -397,6 +419,8 @@ class ImageClassificationCallback(BaseClassificationCallback):
         try:
             x_array, inverse_x_array = ImageClassificationCallback.get_x_array(options)
             return_data = {}
+            if array is None:
+                logger.warning("postprocess_deploy: array is None")
 
             for i, output_id in enumerate(options.data.outputs.keys()):
                 true_array = get_y_true(options, output_id)
@@ -416,7 +440,6 @@ class ImageClassificationCallback(BaseClassificationCallback):
                 _id = 1
                 for idx in example_idx:
                     input_id = list(options.data.inputs.keys())[0]
-                    # preset_path = os.path.join(save_path, "deploy_presets")
                     source = ImageClassificationCallback.postprocess_initial_source(
                         options=options,
                         input_id=input_id,
@@ -443,8 +466,11 @@ class ImageClassificationCallback(BaseClassificationCallback):
                     _id += 1
 
             return return_data
-        except Exception as e:
-            print_error(ImageClassificationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                ImageClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
@@ -454,6 +480,7 @@ class ImageClassificationCallback(BaseClassificationCallback):
         try:
             return_data = {}
             if interactive_config.intermediate_result.show_results:
+                data_type = interactive_config.intermediate_result.data_type.name
                 for idx in range(interactive_config.intermediate_result.num_examples):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
@@ -470,8 +497,9 @@ class ImageClassificationCallback(BaseClassificationCallback):
                             example_id=example_idx[idx],
                             dataset_path=dataset_path,
                             preset_path=preset_path,
-                            x_array=x_val.get(f"{inp}") if x_val else None,
-                            return_mode='callback'
+                            x_array=x_val.get(data_type).get(f"{inp}") if x_val else None,
+                            return_mode='callback',
+                            data_type=data_type
                         )
                         return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
                             'type': 'image',
@@ -480,8 +508,8 @@ class ImageClassificationCallback(BaseClassificationCallback):
 
                     for out in options.data.outputs.keys():
                         data = ImageClassificationCallback.postprocess_classification(
-                            predict_array=y_pred.get(f'{out}')[example_idx[idx]],
-                            true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
+                            predict_array=y_pred.get(data_type).get(f'{out}')[example_idx[idx]],
+                            true_array=y_true.get(data_type).get(f'{out}')[example_idx[idx]],
                             options=options.data.outputs.get(out),
                             show_stat=interactive_config.intermediate_result.show_statistic,
                             return_mode='callback'
@@ -495,39 +523,37 @@ class ImageClassificationCallback(BaseClassificationCallback):
                         else:
                             return_data[f"{idx + 1}"]['statistic_values'] = {}
                 return return_data
-        except Exception as e:
-            print_error(ImageClassificationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                ImageClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
 
 class TextClassificationCallback(BaseClassificationCallback):
     def __init__(self):
         super().__init__()
         self.name = 'TextClassificationCallback'
-        # print(f'Callback {self.name} is called')
 
     @staticmethod
     def get_x_array(options):
-        method_name = 'get_x_array'
-        try:
-            x_val = None
-            inverse_x_val = None
-            return x_val, inverse_x_val
-        except Exception as e:
-            print_error(TextClassificationCallback().name, method_name, e)
+        x_val = None
+        inverse_x_val = None
+        return x_val, inverse_x_val
 
     @staticmethod
-    def postprocess_initial_source(options, example_id: int, return_mode='deploy'):
+    def postprocess_initial_source(options, example_id: int, return_mode='deploy', data_type='val'):
         method_name = 'postprocess_initial_source'
         try:
             column_idx = []
             for inp in options.data.inputs.keys():
-                for column_name in options.dataframe.get('val').columns:
+                for column_name in options.dataframe.get(data_type).columns:
                     if column_name.split('_')[0] == f"{inp}":
-                        column_idx.append(options.dataframe.get('val').columns.tolist().index(column_name))
+                        column_idx.append(options.dataframe.get(data_type).columns.tolist().index(column_name))
             data = []
             source = ""
             for column in column_idx:
-                source = options.dataframe.get('val').iat[example_id, column]
+                source = options.dataframe.get(data_type).iat[example_id, column]
                 if return_mode == 'deploy':
                     break
                 if return_mode == 'callback':
@@ -543,8 +569,11 @@ class TextClassificationCallback(BaseClassificationCallback):
                 return source
             if return_mode == 'callback':
                 return data
-        except Exception as e:
-            print_error(TextClassificationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TextClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "") -> dict:
@@ -564,7 +593,6 @@ class TextClassificationCallback(BaseClassificationCallback):
                     output=output_id,
                     count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
                 )
-
                 return_data[output_id] = []
                 for idx in example_idx:
                     source = TextClassificationCallback.postprocess_initial_source(
@@ -578,7 +606,6 @@ class TextClassificationCallback(BaseClassificationCallback):
                         options=options.data.outputs[output_id],
                         return_mode='deploy'
                     )
-
                     return_data[output_id].append(
                         {
                             "source": source,
@@ -587,8 +614,11 @@ class TextClassificationCallback(BaseClassificationCallback):
                         }
                     )
             return return_data
-        except Exception as e:
-            print_error(TextClassificationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TextClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
@@ -598,6 +628,7 @@ class TextClassificationCallback(BaseClassificationCallback):
         try:
             return_data = {}
             if interactive_config.intermediate_result.show_results:
+                data_type = interactive_config.intermediate_result.data_type.name
                 for idx in range(interactive_config.intermediate_result.num_examples):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
@@ -610,7 +641,8 @@ class TextClassificationCallback(BaseClassificationCallback):
                         data = TextClassificationCallback.postprocess_initial_source(
                             options=options,
                             example_id=example_idx[idx],
-                            return_mode='callback'
+                            return_mode='callback',
+                            data_type=data_type
                         )
                         return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
                             'type': 'text',
@@ -618,8 +650,8 @@ class TextClassificationCallback(BaseClassificationCallback):
                         }
                     for out in options.data.outputs.keys():
                         data = ImageClassificationCallback.postprocess_classification(
-                            predict_array=y_pred.get(f'{out}')[example_idx[idx]],
-                            true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
+                            predict_array=y_pred.get(data_type).get(f'{out}')[example_idx[idx]],
+                            true_array=y_true.get(data_type).get(f'{out}')[example_idx[idx]],
                             options=options.data.outputs.get(out),
                             show_stat=interactive_config.intermediate_result.show_statistic,
                             return_mode='callback'
@@ -633,15 +665,17 @@ class TextClassificationCallback(BaseClassificationCallback):
                         else:
                             return_data[f"{idx + 1}"]['statistic_values'] = {}
                 return return_data
-        except Exception as e:
-            print_error(TextClassificationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TextClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
 
 class DataframeClassificationCallback(BaseClassificationCallback):
     def __init__(self):
         super().__init__()
         self.name = 'DataframeClassificationCallback'
-        # print(f'Callback {self.name} is called')
 
     @staticmethod
     def get_x_array(options):
@@ -652,23 +686,26 @@ class DataframeClassificationCallback(BaseClassificationCallback):
                 x_val = options.X.get("val")
             else:
                 x_val = {}
-                for inp in options.dataset['val'].keys():
-                    x_val[inp] = []
+                for inp in options.data.inputs.keys():
+                    x_val[f'{inp}'] = []
                     for x_val_, _ in options.dataset['val'].batch(1):
-                        x_val[inp].extend(x_val_.get(f'{inp}').numpy())
-                    x_val[inp] = np.array(x_val[inp])
+                        x_val[f'{inp}'].extend(x_val_.get(f'{inp}').numpy())
+                    x_val[f'{inp}'] = np.array(x_val[f'{inp}'])
             return x_val, inverse_x_val
-        except Exception as e:
-            print_error(DataframeClassificationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                DataframeClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
-    def postprocess_initial_source(options, input_id: int, example_id: int, return_mode='deploy'):
+    def postprocess_initial_source(options, input_id: int, example_id: int, return_mode='deploy', data_type='val'):
         method_name = 'postprocess_initial_source'
         try:
             data = []
             source = []
             for col_name in options.data.columns.get(input_id).keys():
-                value = options.dataframe.get('val')[col_name].to_list()[example_id]
+                value = options.dataframe.get(data_type)[col_name].to_list()[example_id]
                 if return_mode == 'deploy':
                     source.append(value)
                 if return_mode == 'callback':
@@ -679,13 +716,15 @@ class DataframeClassificationCallback(BaseClassificationCallback):
                             "color_mark": None
                         }
                     )
-
             if return_mode == 'deploy':
                 return source
             if return_mode == 'callback':
                 return data
-        except Exception as e:
-            print_error(DataframeClassificationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                DataframeClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "") -> dict:
@@ -728,8 +767,11 @@ class DataframeClassificationCallback(BaseClassificationCallback):
                         }
                     )
             return return_data
-        except Exception as e:
-            print_error(DataframeClassificationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                DataframeClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
@@ -739,6 +781,7 @@ class DataframeClassificationCallback(BaseClassificationCallback):
         try:
             return_data = {}
             if interactive_config.intermediate_result.show_results:
+                data_type = interactive_config.intermediate_result.data_type.name
                 for idx in range(interactive_config.intermediate_result.num_examples):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
@@ -752,7 +795,8 @@ class DataframeClassificationCallback(BaseClassificationCallback):
                             options=options,
                             input_id=inp,
                             example_id=example_idx[idx],
-                            return_mode='callback'
+                            return_mode='callback',
+                            data_type=data_type
                         )
                         return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
                             'type': 'str',
@@ -761,8 +805,8 @@ class DataframeClassificationCallback(BaseClassificationCallback):
 
                     for out in options.data.outputs.keys():
                         data = ImageClassificationCallback.postprocess_classification(
-                            predict_array=y_pred.get(f'{out}')[example_idx[idx]],
-                            true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
+                            predict_array=y_pred.get(data_type).get(f'{out}')[example_idx[idx]],
+                            true_array=y_true.get(data_type).get(f'{out}')[example_idx[idx]],
                             options=options.data.outputs.get(out),
                             show_stat=interactive_config.intermediate_result.show_statistic,
                             return_mode='callback'
@@ -776,44 +820,41 @@ class DataframeClassificationCallback(BaseClassificationCallback):
                         else:
                             return_data[f"{idx + 1}"]['statistic_values'] = {}
                 return return_data
-        except Exception as e:
-            print_error(DataframeClassificationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                DataframeClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
 
 class AudioClassificationCallback(BaseClassificationCallback):
     def __init__(self):
         super().__init__()
         self.name = 'AudioClassificationCallback'
-        # print(f'Callback {self.name} is called')
 
     @staticmethod
     def get_x_array(options):
-        method_name = 'get_x_array'
-        try:
-            x_val = None
-            inverse_x_val = None
-            return x_val, inverse_x_val
-        except Exception as e:
-            print_error(AudioClassificationCallback().name, method_name, e)
+        x_val = None
+        inverse_x_val = None
+        return x_val, inverse_x_val
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str,
-                                   preset_path: str, save_id: int = None, return_mode='deploy'):
+                                   preset_path: str, save_id: int = None, return_mode='deploy', data_type='val'):
         method_name = 'postprocess_initial_source'
         try:
             column_idx = []
             for inp in options.data.inputs.keys():
-                for column_name in options.dataframe.get('val').columns:
+                for column_name in options.dataframe.get(data_type).columns:
                     if column_name.split('_')[0] == f"{inp}":
-                        column_idx.append(options.dataframe.get('val').columns.tolist().index(column_name))
+                        column_idx.append(options.dataframe.get(data_type).columns.tolist().index(column_name))
             initial_file_path = os.path.join(
-                dataset_path, options.dataframe.get('val').iat[example_id, column_idx[0]]
+                dataset_path, options.dataframe.get(data_type).iat[example_id, column_idx[0]]
             )
             if not save_id:
                 return str(os.path.abspath(initial_file_path))
 
             if return_mode == 'callback':
-                data = []
                 source = os.path.join(preset_path, f"initial_data_audio_{save_id}_input_{input_id}.webm")
                 AudioSegment.from_file(initial_file_path).export(source, format="webm")
                 data = [
@@ -830,8 +871,11 @@ class AudioClassificationCallback(BaseClassificationCallback):
                 return_source = os.path.join("deploy_presets", f"initial_data_audio_{save_id}_input_{input_id}.webm")
                 AudioSegment.from_file(initial_file_path).export(source, format="webm")
                 return return_source
-        except Exception as e:
-            print_error(AudioClassificationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                AudioClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "") -> dict:
@@ -879,8 +923,11 @@ class AudioClassificationCallback(BaseClassificationCallback):
                     )
                     _id += 1
             return return_data
-        except Exception as e:
-            print_error(AudioClassificationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                AudioClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
@@ -890,6 +937,7 @@ class AudioClassificationCallback(BaseClassificationCallback):
         try:
             return_data = {}
             if interactive_config.intermediate_result.show_results:
+                data_type = interactive_config.intermediate_result.data_type.name
                 for idx in range(interactive_config.intermediate_result.num_examples):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
@@ -906,7 +954,8 @@ class AudioClassificationCallback(BaseClassificationCallback):
                             example_id=example_idx[idx],
                             dataset_path=dataset_path,
                             preset_path=preset_path,
-                            return_mode='callback'
+                            return_mode='callback',
+                            data_type=data_type
                         )
                         return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
                             'type': 'audio',
@@ -915,8 +964,8 @@ class AudioClassificationCallback(BaseClassificationCallback):
 
                     for out in options.data.outputs.keys():
                         data = ImageClassificationCallback.postprocess_classification(
-                            predict_array=y_pred.get(f'{out}')[example_idx[idx]],
-                            true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
+                            predict_array=y_pred.get(data_type).get(f'{out}')[example_idx[idx]],
+                            true_array=y_true.get(data_type).get(f'{out}')[example_idx[idx]],
                             options=options.data.outputs.get(out),
                             show_stat=interactive_config.intermediate_result.show_statistic,
                             return_mode='callback'
@@ -930,38 +979,36 @@ class AudioClassificationCallback(BaseClassificationCallback):
                         else:
                             return_data[f"{idx + 1}"]['statistic_values'] = {}
                 return return_data
-        except Exception as e:
-            print_error(AudioClassificationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                AudioClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
 
 class VideoClassificationCallback(BaseClassificationCallback):
     def __init__(self):
         super().__init__()
         self.name = 'VideoClassificationCallback'
-        # print(f'Callback {self.name} is called')
 
     @staticmethod
     def get_x_array(options):
-        method_name = 'get_x_array'
-        try:
-            x_val = None
-            inverse_x_val = None
-            return x_val, inverse_x_val
-        except Exception as e:
-            print_error(VideoClassificationCallback().name, method_name, e)
+        x_val = None
+        inverse_x_val = None
+        return x_val, inverse_x_val
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str, preset_path: str,
-                                   save_id: int = None, return_mode='deploy'):
+                                   save_id: int = None, return_mode='deploy', data_type='val'):
         method_name = 'postprocess_initial_source'
         try:
             column_idx = []
             for inp in options.data.inputs.keys():
-                for column_name in options.dataframe.get('val').columns:
+                for column_name in options.dataframe.get(data_type).columns:
                     if column_name.split('_')[0] == f"{inp}":
-                        column_idx.append(options.dataframe.get('val').columns.tolist().index(column_name))
+                        column_idx.append(options.dataframe.get(data_type).columns.tolist().index(column_name))
             initial_file_path = os.path.join(
-                dataset_path, options.dataframe.get('val').iat[example_id, column_idx[0]]
+                dataset_path, options.dataframe.get(data_type).iat[example_id, column_idx[0]]
             )
             if not save_id:
                 return str(os.path.abspath(initial_file_path))
@@ -985,8 +1032,11 @@ class VideoClassificationCallback(BaseClassificationCallback):
                     }
                 ]
                 return data
-        except Exception as e:
-            print_error(VideoClassificationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                VideoClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "") -> dict:
@@ -1034,8 +1084,11 @@ class VideoClassificationCallback(BaseClassificationCallback):
                     )
                     _id += 1
             return return_data
-        except Exception as e:
-            print_error(VideoClassificationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                VideoClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
@@ -1045,6 +1098,7 @@ class VideoClassificationCallback(BaseClassificationCallback):
         try:
             return_data = {}
             if interactive_config.intermediate_result.show_results:
+                data_type = interactive_config.intermediate_result.data_type.name
                 for idx in range(interactive_config.intermediate_result.num_examples):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
@@ -1061,7 +1115,8 @@ class VideoClassificationCallback(BaseClassificationCallback):
                             example_id=example_idx[idx],
                             dataset_path=dataset_path,
                             preset_path=preset_path,
-                            return_mode='callback'
+                            return_mode='callback',
+                            data_type=data_type
                         )
                         return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
                             'type': 'video',
@@ -1069,8 +1124,8 @@ class VideoClassificationCallback(BaseClassificationCallback):
                         }
                     for out in options.data.outputs.keys():
                         data = ImageClassificationCallback.postprocess_classification(
-                            predict_array=y_pred.get(f'{out}')[example_idx[idx]],
-                            true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
+                            predict_array=y_pred.get(data_type).get(f'{out}')[example_idx[idx]],
+                            true_array=y_true.get(data_type).get(f'{out}')[example_idx[idx]],
                             options=options.data.outputs.get(out),
                             show_stat=interactive_config.intermediate_result.show_statistic,
                             return_mode='callback'
@@ -1084,15 +1139,17 @@ class VideoClassificationCallback(BaseClassificationCallback):
                         else:
                             return_data[f"{idx + 1}"]['statistic_values'] = {}
                 return return_data
-        except Exception as e:
-            print_error(VideoClassificationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                VideoClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
 
 class TimeseriesTrendCallback(BaseClassificationCallback):
     def __init__(self):
         super().__init__()
         self.name = 'TimeseriesTrendCallback'
-        # print(f'Callback {self.name} is called')
 
     @staticmethod
     def get_x_array(options):
@@ -1103,11 +1160,11 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
                 x_val = options.X.get("val")
             else:
                 x_val = {}
-                for inp in options.dataset['val'].keys():
-                    x_val[inp] = []
+                for inp in options.data.inputs.keys():
+                    x_val[f'{inp}'] = []
                     for x_val_, _ in options.dataset['val'].batch(1):
-                        x_val[inp].extend(x_val_.get(f'{inp}').numpy())
-                    x_val[inp] = np.array(x_val[inp])
+                        x_val[f'{inp}'].extend(x_val_.get(f'{inp}').numpy())
+                    x_val[f'{inp}'] = np.array(x_val[f'{inp}'])
             for inp in x_val.keys():
                 preprocess_dict = options.preprocessing.preprocessing.get(int(inp))
                 inverse_x = np.zeros_like(x_val.get(inp)[:, :, 0:1])
@@ -1122,18 +1179,21 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
                     inverse_x = np.concatenate([inverse_x, inverse_col], axis=-1)
                 inverse_x_val[inp] = inverse_x[:, :, 1:]
             return x_val, inverse_x_val
-        except Exception as e:
-            print_error(TimeseriesTrendCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TimeseriesTrendCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
-    def postprocess_initial_source(options, input_id: int, example_id: int, inverse_x_array=None):
+    def postprocess_initial_source(options, input_id: int, example_id: int, inverse_x_array=None, data_type='val'):
         method_name = 'postprocess_initial_source'
         try:
             column_idx = []
             for inp in options.data.inputs.keys():
-                for column_name in options.dataframe.get('val').columns:
+                for column_name in options.dataframe.get(data_type).columns:
                     if column_name.split('_')[0] == f"{inp}":
-                        column_idx.append(options.dataframe.get('val').columns.tolist().index(column_name))
+                        column_idx.append(options.dataframe.get(data_type).columns.tolist().index(column_name))
             graphics_data = []
             names = ""
             multi = False
@@ -1167,13 +1227,17 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
                 }
             ]
             return data
-        except Exception as e:
-            print_error(TimeseriesTrendCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TimeseriesTrendCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "") -> dict:
         method_name = 'postprocess_deploy'
         try:
+            x_array, inverse_x_array = TimeseriesTrendCallback().get_x_array(options)
             return_data = {}
             for i, output_id in enumerate(options.data.outputs.keys()):
                 true_array = get_y_true(options, output_id)
@@ -1188,43 +1252,32 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
                     output=output_id,
                     count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
                 )
-                return_data[output_id] = {}
-                # TODO: считаетм что инпут один
-                input_id = list(options.data.inputs.keys())[0]
-                inp_col_id = []
-                for j, out_col in enumerate(options.data.columns.get(output_id).keys()):
-                    for k, inp_col in enumerate(options.data.columns.get(input_id).keys()):
-                        if out_col.split('_', 1)[-1] == inp_col.split('_', 1)[-1]:
-                            inp_col_id.append((k, inp_col, j, out_col))
-                            break
-                preprocess = options.preprocessing.preprocessing.get(output_id)
-                for channel in inp_col_id:
-                    return_data[output_id][channel[3]] = []
-                    for idx in example_idx:
-                        if type(preprocess.get(channel[3])).__name__ in ['StandardScaler', 'MinMaxScaler']:
-                            inp_options = {int(output_id): {
-                                channel[3]: options.X.get('val').get(f"{input_id}")[idx, :, channel[0]:channel[0] + 1]}
-                            }
-                            inverse_true = options.preprocessing.inverse_data(inp_options).get(output_id).get(
-                                channel[3])
-                            inverse_true = inverse_true.squeeze().astype('float').tolist()
-                        else:
-                            inverse_true = options.X.get('val').get(f"{input_id}")[
-                                           idx, :, channel[0]:channel[0] + 1].squeeze().astype('float').tolist()
-                        actual_value, predict_values = ImageClassificationCallback.postprocess_classification(
+                return_data[output_id] = []
+                for idx in example_idx:
+                    data = {
+                        'source': {},
+                        'predict': {}
+                    }
+                    for inp in options.data.inputs.keys():
+                        for k, inp_col in enumerate(options.data.columns.get(inp).keys()):
+                            data['source'][inp_col.split('_', 1)[-1]] = \
+                                round_list(list(inverse_x_array[f"{inp}"][idx][:, k]))
+                    for channel in options.data.columns.get(output_id).keys():
+                        _, predict_values = ImageClassificationCallback.postprocess_classification(
                             predict_array=np.expand_dims(postprocess_array[idx], axis=0),
                             true_array=true_array[idx],
                             options=options.data.outputs[output_id],
                             return_mode='deploy'
                         )
-                        return_data[output_id][channel[3]].append(
-                            {
-                                "data": [inverse_true, predict_values[0]]
-                            }
-                        )
+                        data['predict'][channel.split('_', 1)[-1]] = \
+                            [data['source'][channel.split('_', 1)[-1]], [predict_values[0][0][0]]]
+                    return_data[output_id].append(data)
             return return_data
-        except Exception as e:
-            print_error(TimeseriesTrendCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TimeseriesTrendCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
@@ -1234,6 +1287,7 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
         try:
             return_data = {}
             if interactive_config.intermediate_result.show_results:
+                data_type = interactive_config.intermediate_result.data_type.name
                 for idx in range(interactive_config.intermediate_result.num_examples):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
@@ -1248,6 +1302,7 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
                             input_id=inp,
                             example_id=example_idx[idx],
                             inverse_x_array=inverse_x_val,
+                            data_type=data_type
                         )
                         return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
                             'type': 'graphic',
@@ -1255,8 +1310,8 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
                         }
                     for out in options.data.outputs.keys():
                         data = ImageClassificationCallback.postprocess_classification(
-                            predict_array=y_pred.get(f'{out}')[example_idx[idx]],
-                            true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
+                            predict_array=y_pred.get(data_type).get(f'{out}')[example_idx[idx]],
+                            true_array=y_true.get(data_type).get(f'{out}')[example_idx[idx]],
                             options=options.data.outputs.get(out),
                             show_stat=interactive_config.intermediate_result.show_statistic,
                             return_mode='callback'
@@ -1270,5 +1325,8 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
                         else:
                             return_data[f"{idx + 1}"]['statistic_values'] = {}
             return return_data
-        except Exception as e:
-            print_error(TimeseriesTrendCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TimeseriesTrendCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc

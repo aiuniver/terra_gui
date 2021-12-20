@@ -45,6 +45,26 @@ class ColumnProcessingTimeseriesData(types.ParametersTimeseriesData):
     pass
 
 
+class ColumnProcessingGANData(types.ParametersGANData):
+    pass
+
+
+class ColumnProcessingCGANData(types.ParametersCGANData):
+    pass
+
+
+class ColumnProcessingNoiseData(types.ParametersNoiseData):
+    pass
+
+
+class ColumnProcessingGeneratorData(types.ParametersGeneratorData):
+    pass
+
+
+class ColumnProcessingDiscriminatorData(types.ParametersDiscriminatorData):
+    pass
+
+
 ColumnProcessing = Enum(
     "ColumnProcessing",
     dict(

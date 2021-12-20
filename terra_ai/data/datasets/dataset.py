@@ -177,36 +177,73 @@ In [7]: print(data.json(indent=2, ensure_ascii=False))
 import os
 import json
 
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
+from pandas import read_csv
 from datetime import datetime
 from typing import Optional, Dict, List, Tuple, Any
 from pydantic import validator, DirectoryPath, PrivateAttr
 from pydantic.types import PositiveInt
 from pydantic.color import Color
 
-from .tags import TagsList
-from .extra import (
+from terra_ai.data.mixins import AliasMixinData, UniqueListMixin, BaseMixinData
+from terra_ai.data.extra import FileSizeData
+from terra_ai.data.exceptions import TrdsConfigFileNotFoundException
+from terra_ai.data.datasets.tags import TagsList
+from terra_ai.data.datasets.extra import (
     DatasetGroupChoice,
     LayerInputTypeChoice,
     LayerOutputTypeChoice,
     LayerEncodingChoice,
 )
-from ..mixins import AliasMixinData, UniqueListMixin, BaseMixinData
-from ..extra import FileSizeData
-from ..exceptions import TrdsConfigFileNotFoundException
-from ..modeling.model import ModelDetailsData
-from ..modeling.extra import LayerTypeChoice, LayerGroupChoice
-from ..modeling.layers.extra import ActivationChoice
-from ..presets.models import EmptyModelDetailsData
-from ..presets.datasets import OutputLayersDefaults
-from ... import settings
+from terra_ai.data.modeling.model import ModelDetailsData
+from terra_ai.data.modeling.extra import LayerTypeChoice, LayerGroupChoice
+from terra_ai.data.modeling.layers.extra import ActivationChoice
 from terra_ai.data.training.extra import ArchitectureChoice
+from terra_ai.data.presets.models import EmptyModelDetailsData
+from terra_ai.data.presets.datasets import OutputLayersDefaults, DatasetsGroups
+
+from terra_ai.exceptions.datasets import (
+    DatasetUndefinedGroupException,
+    DatasetNotFoundInGroupException,
+    DatasetUndefinedConfigException,
+)
+from terra_ai.settings import DATASET_EXT, DATASET_CONFIG, DATASETS_LOADED_DIR
 
 
 class DatasetLoadData(BaseMixinData):
     path: DirectoryPath
     group: DatasetGroupChoice
     alias: str
+
+    @validator("alias")
+    def _validate_alias(cls, value: str, values) -> str:
+        group = values.get("group")
+
+        if group in (DatasetGroupChoice.keras, DatasetGroupChoice.terra):
+            groups = list(
+                filter(lambda item: item.get("alias") == group.name, DatasetsGroups)
+            )
+            if not len(groups):
+                raise DatasetUndefinedGroupException(group.value)
+            dataset_match = list(
+                filter(
+                    lambda item: item.get("alias") == value,
+                    groups[0].get("datasets", []),
+                )
+            )
+            if not len(dataset_match):
+                raise DatasetNotFoundInGroupException(value, group.value)
+
+        elif group in (DatasetGroupChoice.custom,):
+            dataset_path = Path(values.get("path"), f"{value}.{DATASET_EXT}")
+            if not dataset_path.is_dir():
+                raise DatasetNotFoundInGroupException(value, group.value)
+
+            config_path = Path(dataset_path, DATASET_CONFIG)
+            if not config_path.is_file():
+                raise DatasetUndefinedConfigException(value, group.value)
+
+        return value
 
 
 class CustomDatasetConfigData(BaseMixinData):

@@ -93,16 +93,14 @@ export default {
       if (block.selected) {
         block.selected = false;
       }
-      dispatch('removeLinkToBlock', block);
       commit('SET_BLOCKS', blocks.filter(b => b.id !== block.id));
-      dispatch('updateModel');
+      dispatch('removeLinkToBlock', block);
+      // dispatch('updateModel');
     },
     removeLink ({ commit, state: { links } }, id) {
-      console.log(id)
       commit('SET_LINKS', links.filter(value => value.id !== id));
     },
     removeLinkToBlock ({ dispatch, commit, state: { links } }, block) {
-      console.log(block)
       commit('SET_LINKS', links.filter(link => (link.originID !== block.id && link.targetID !== block.id)));
       dispatch('updateModel');
     },
@@ -140,7 +138,7 @@ export default {
     async removeModel ({ dispatch }, data) {
       return await dispatch('axios', { url: '/modeling/delete/', data }, { root: true });
     },
-    async updateModel ({ commit, state: { blocks, links }, dispatch }, block) {
+    async updateModel ({ commit, state: { blocks, links }, dispatch }) {
       const semdBlocks = JSON.parse(JSON.stringify(blocks))
       semdBlocks.forEach(block => {
         // if (block.group !== 'input') block.shape.input = null;
@@ -157,22 +155,7 @@ export default {
           .filter(link => link);
       });
       commit('SET_STATUS', { isUpdate: true });
-
       const res = await dispatch('axios', { url: '/modeling/update/', data: { layers: semdBlocks } }, { root: true });
-      if (res) {
-        const { data, error, success } = res
-        console.log(data, error, success, block)
-        if (error) {
-          // const { general, fields } = error
-
-          // const newError = {}
-          // for (const key in error) {
-          //   newError[key.replace('fields', block.id)] = error[key]
-          // }
-          console.log(error)
-          // commit('SET_ERRORS_FIELDS', { ...errorsBlocks, ...newError });
-        }
-      }
       return res
     },
     async getModel ({ dispatch }, value) {
@@ -198,7 +181,6 @@ export default {
     async clearModel ({ commit, dispatch }) {
       const res = await dispatch('axios', { url: '/modeling/clear/' }, { root: true });
       if (res.success) {
-        // console.log(res)
         commit('SET_ERRORS_BLOCKS', {})
         await dispatch('projects/get', {}, { root: true });
       }

@@ -72,9 +72,8 @@ export default {
   },
   actions: {
     parseStruct ({ commit }, { form, interactive, progress, state, result, base }) {
-      // console.log(form, interactive, progress, state)
       if (base) commit("SET_BASE", base)
-      if (form) commit("SET_FORM", form)
+      if (form) commit("SET_FORM", { ...form })
       if (state) commit("SET_STATE", state)
       if (state?.status) commit("SET_STATUS_TRAIN", state.status)
       if (interactive) commit("SET_INTERACTIV", interactive)
@@ -86,7 +85,6 @@ export default {
       if (status === 'no_train') {
         const valid = await dispatch('modeling/validateModel', {}, { root: true })
         isValid = !Object.values(valid || {}).filter(item => item).length
-        dispatch('setTrainData', {});
       }
       if (isValid) {
         dispatch('setStatusTrain', 'start');
@@ -100,7 +98,6 @@ export default {
         const res = await dispatch('axios', { url: '/training/start/', data }, { root: true });
         if (res && res?.data) {
           await dispatch('projects/get', {}, { root: true })
-          // dispatch('setState', res);
         } else {
           dispatch('setStatusTrain', 'no_train');
         }
@@ -111,13 +108,11 @@ export default {
     },
     async stop ({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/stop/', data }, { root: true });
-      // dispatch('setState', res);
       dispatch('parseStruct', res?.data || {});
       return res
     },
     async save ({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/save/', data }, { root: true });
-      // dispatch('parseStruct', res?.data || {});
       return res
     },
     async update ({ dispatch }, parse) {
@@ -132,48 +127,28 @@ export default {
     },
     async clear ({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/clear/', data }, { root: true });
-      // dispatch('setState', res);
-      dispatch('resetTraining', {});
+      dispatch('resetAllTraining', {});
       dispatch('parseStruct', res?.data || {});
       return res
     },
     async interactive ({ state: { interactive }, dispatch }, part) {
       const data = { ...interactive, ...part }
       const res = await dispatch('axios', { url: '/training/interactive/', data }, { root: true });
-      if (res) {
-        dispatch('setObjectInteractive', data);
-      }
-      if (res?.data?.train_data) {
-        const { data: { train_data } } = res
-        dispatch('setTrainData', train_data);
-      }
+      dispatch('parseStruct', res?.data || {});
       return res
     },
     async progress ({ dispatch }, data) {
       const res = await dispatch('axios', { url: '/training/progress/', data }, { root: true });
-      if (res) {
-        const { data, error } = res;
-        if (data) {
-          dispatch('parseStruct', data || {});
-        }
-        if (error) {
-          dispatch('messages/setMessage', { error: error }, { root: true });
-          dispatch('logging/setError', JSON.stringify(error, null, 2), { root: true });
-        }
-      }
+      if (res?.data) dispatch('parseStruct', res.data || {});
       return res
     },
     async resetTraining ({ dispatch }) {
       localStorage.removeItem('settingsTrainings');
       dispatch('messages/resetProgress', {}, { root: true });
-      // dispatch('setTrainData', {});
-      // dispatch('setTrainUsage', {});
       await dispatch('projects/get', {}, { root: true })
     },
     async resetAllTraining ({ commit, dispatch }) {
       dispatch('resetTraining', {});
-      // dispatch('setTrainSettings', {});
-      // dispatch('setTrainSettings', {});
       commit("SET_STATE_PARAMS", {});
     },
     setDrawer ({ commit }, data) {
@@ -193,10 +168,6 @@ export default {
     },
     setСollapse ({ commit }, data) {
       commit("SET_COLLAPSE", data);
-    },
-    setObjectInteractive ({ state, commit }, charts) {
-      const data = { ...state.interactive, ...charts }
-      commit("SET_INTERACTIV", data);
     },
     setStatusTrain ({ commit }, value) {
       commit("SET_STATUS_TRAIN", value);

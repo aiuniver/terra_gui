@@ -1,12 +1,8 @@
-"""
-## Дополнительные структуры данных для оптимайзеров
-"""
-
 from enum import Enum
 from typing import List, Tuple
 
-from ..mixins import BaseMixinData, UniqueListMixin
-from ..presets.training import TasksGroups
+from terra_ai.data.mixins import BaseMixinData, UniqueListMixin
+from terra_ai.data.presets.training import TasksGroups
 
 
 class StateStatusChoice(str, Enum):
@@ -15,6 +11,7 @@ class StateStatusChoice(str, Enum):
     trained = "trained"  # Сетка обучена
     stopped = "stopped"  # Обучение Остановлена
     addtrain = "addtrain"  # Дообучение или возобновление после остановки
+    kill = "kill"  # Завершение без действий и удаление
 
 
 class LossGraphShowChoice(str, Enum):
@@ -32,6 +29,11 @@ class ExampleChoiceTypeChoice(str, Enum):
     worst = "worst"
     seed = "seed"
     random = "random"
+
+
+class DataTypeChoice(str, Enum):
+    train = "train"
+    val = "val"
 
 
 class BalanceSortedChoice(str, Enum):
@@ -54,6 +56,11 @@ class ArchitectureChoice(str, Enum):
     VideoClassification = "VideoClassification"
     YoloV3 = "YoloV3"
     YoloV4 = "YoloV4"
+    Tracker = "Tracker"
+    Speech2Text = "Speech2Text"
+    Text2Speech = "Text2Speech"
+    GAN = "GAN"
+    CGAN = "CGAN"
 
 
 class CheckpointIndicatorChoice(str, Enum):

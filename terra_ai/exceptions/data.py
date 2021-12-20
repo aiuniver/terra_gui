@@ -1,13 +1,40 @@
-from typing import Any, List
+import json
+import os
+from typing import Any, List, Sequence, Mapping, Dict
 
 from pydantic import ValidationError, BaseModel, validator
-from pydantic_i18n import PydanticI18n, JsonLoader
+from pydantic_i18n import PydanticI18n, BaseLoader
 
 from terra_ai.exceptions.base import TerraBaseException
 from terra_ai.assets.translations.extra import errors
 from terra_ai.settings import TRANSLATIONS_DIR, LANGUAGE
 
 LANGUAGE = "en_US" if LANGUAGE == "eng" else LANGUAGE
+
+
+class JsonLoader(BaseLoader):
+    def __init__(self, directory: str):
+        if not os.path.exists(directory):
+            raise OSError(f"Directory '{directory}' doesn't exist.")
+        if not os.path.isdir(directory):
+            raise OSError(f"'{directory}' is not a directory.")
+
+        self.directory = directory
+
+    @property
+    def locales(self) -> Sequence[str]:
+        locales: Sequence[str] = [
+            filename[:-5]
+            for filename in os.listdir(self.directory)
+            if filename.endswith(".json")
+        ]
+        return locales
+
+    def get_translations(self, locale: str) -> Mapping[str, str]:
+        with open(os.path.join(self.directory, f"{locale}.json"), encoding='utf-8') as fp:
+            data: Dict[str, str] = json.load(fp)
+
+        return data
 
 
 class Error(BaseModel):

@@ -30,7 +30,6 @@ export default {
       commit("modeling/SET_MODELING", { layers_types, layer_form }, { root: true });
       commit("modeling/SET_MODEL", model, { root: true });
       commit("cascades/SET_CASCADES", formsCascades, { root: true });
-      console.log(cascade)
       commit("cascades/SET_MODEL", cascade, { root: true });
       commit("datasets/SET_CREATION", creation, { root: true });
       dispatch("trainings/parseStruct", { ...training, form }, { root: true });
@@ -41,6 +40,10 @@ export default {
         commit("deploy/SET_DEPLOY_TYPE", training.deploy.type, { root: true });
       }
       return data
+    },
+    async progress ({ dispatch }, data) {
+      const res = await dispatch('axios', { url: '/project/load/progress/', data }, { root: true });
+      return res
     },
     async saveNameProject ({ dispatch }, name) {
       const res = { url: "/project/name/", data: name };
@@ -59,19 +62,21 @@ export default {
       document.location.href = "/"; // "Миша, все хня, давай по новой" 
       return res
     },
-    async loadProject ({ dispatch }, data) {
+    async load ({ dispatch }, data) {
       const res = await dispatch("axios", { url: "/project/load/", data }, { root: true });
-      document.location.href = "/"; // "Миша, все хня, давай по новой, снова" 
+      // document.location.href = "/"; // "Миша, все хня, давай по новой, снова" 
       return res
     },
-    async removeProject ({ dispatch }, data) {
+    async remove ({ dispatch }, data) {
       return await dispatch("axios", { url: "/project/delete/", data }, { root: true });
     },
     async infoProject ({ dispatch }, data) {
       return await dispatch("axios", { url: "/project/info/", data }, { root: true });
     },
     async saveProject ({ dispatch }, data) {
-      return await dispatch("axios", { url: "/project/save/", data }, { root: true });
+      const res = await dispatch("axios", { url: "/project/save/", data }, { root: true });
+      if (!res?.error) await dispatch("get", {});
+      return res
     },
   },
   getters: {

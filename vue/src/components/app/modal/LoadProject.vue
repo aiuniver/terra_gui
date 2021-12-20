@@ -39,6 +39,7 @@
 </template>
 
 <script>
+import { debounce } from '@/utils/core/utils';
 export default {
   name: 'modal-load-project',
   props: {
@@ -48,6 +49,7 @@ export default {
     selected: {},
     show: true,
     list: [],
+    debounce: null,
   }),
   computed: {
     dialog: {
@@ -60,6 +62,24 @@ export default {
     },
   },
   methods: {
+    async progress() {
+      const res = await this.$store.dispatch('projects/progress', {});
+      // console.log(res?.data?.progress)
+      if (res && res?.data) {
+        const { finished, message, percent } = res.data;
+        this.$store.dispatch('messages/setProgressMessage', message);
+        this.$store.dispatch('messages/setProgress', percent);
+        if (!finished) {
+          this.debounce(true);
+        } else {
+          this.$store.dispatch('projects/get');
+          this.$store.dispatch('settings/setOverlay', false);
+          this.$emit('message', { message: `Проект загружен` });
+          this.dialog = false;
+        }
+      }
+      if (res?.error) this.$store.dispatch('settings/setOverlay', false);
+    },
     remove(list) {
       // this.show = false;
       this.$Modal
@@ -81,11 +101,11 @@ export default {
     async loadProject(list) {
       console.log(list);
       try {
-        const res = await this.$store.dispatch('projects/loadProject', { value: list.value });
+        const res = await this.$store.dispatch('projects/load', { value: list.value });
         console.log(res);
-        if (res && !res.error) {
-          this.$emit('message', { message: `Проект «${list.label}» загружен` });
-          this.dialog = false;
+        if (res?.success) {
+          this.$store.dispatch('settings/setOverlay', true);
+          this.debounce(true);
         }
       } catch (error) {
         console.log(error);
@@ -94,10 +114,10 @@ export default {
     async removeProject(list) {
       console.log(list);
       try {
-        const res = await this.$store.dispatch('projects/removeProject', { path: list.value });
+        const res = await this.$store.dispatch('projects/remove', { path: list.value });
         if (res && !res.error) {
           this.$emit('message', { message: `Проект «${list.label}» удален` });
-          this.infoProject();
+          await this.infoProject();
         }
       } catch (error) {
         console.log(error);
@@ -121,6 +141,17 @@ export default {
         console.log(error);
       }
     },
+  },
+  created() {
+    this.debounce = debounce(status => {
+      if (status) {
+        this.progress();
+      }
+    }, 1000);
+    this.debounce(this.isLearning);
+  },
+  beforeDestroy() {
+    this.debounce(false);
   },
   watch: {
     dialog(value) {

@@ -1,28 +1,49 @@
-from typing import Any
-from pydantic import BaseModel, ValidationError
-from dict_recursive_update import recursive_update
+from typing import Any, Optional, List
+from pydantic import BaseModel
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK
 
+from apps.api.logging import logs_catcher, LogData
+
 
 class BaseAPIView(APIView):
-    pass
+    authentication_classes = ()
+
+    @property
+    def terra_exchange(self):
+        from terra_ai.agent import agent_exchange
+
+        return agent_exchange
+
+    def dispatch(self, request, *args, **kwargs):
+        response = super().dispatch(request, *args, **kwargs)
+        logs = logs_catcher.pool + response.data.get("logs", [])
+        response.data.update(
+            {"logs": list(filter(lambda log: log.get("type") is not None, logs))}
+        )
+        return response
 
 
 class BaseResponseData(BaseModel):
     success: bool = True
     data: Any
-    error: Any
+    error: Optional[LogData]
+    logs: List[LogData] = []
 
 
 class BaseResponse(Response):
-    def __init__(self, data=None, error=None, *args, **kwargs):
+    def __init__(
+        self, data=None, error: LogData = None, logs: LogData = None, *args, **kwargs
+    ):
+        if logs is None:
+            logs = []
         __response = BaseResponseData(
             success=(error is None),
             data=data,
             error=error,
+            logs=logs,
         )
         kwargs.update({"status": HTTP_200_OK})
         super().__init__(data=__response.dict(), *args, **kwargs)
@@ -34,38 +55,5 @@ class BaseResponseSuccess(BaseResponse):
 
 
 class BaseResponseError(BaseResponse):
-    def __init__(self, error=None, *args, **kwargs):
+    def __init__(self, error: LogData, *args, **kwargs):
         super().__init__(error=error, *args, **kwargs)
-
-
-class BaseResponseErrorGeneral(BaseResponseError):
-    def __init__(self, error=None, *args, **kwargs):
-        if isinstance(error, dict):
-            error = list(filter(None, [str(error.get("detail", ""))]))
-        super().__init__(error={"general": error}, *args, **kwargs)
-
-
-class BaseResponseErrorFields(BaseResponseError):
-    def __init__(self, error=None, *args, **kwargs):
-        if isinstance(error, ValidationError):
-            __errors = {}
-            for __error in error.errors():
-                __locs = __error.get("loc", ())
-                __current_errors = __errors.get(__locs[0], {})
-                __locs = __locs[1:]
-                while __locs:
-                    __loc = __locs[0]
-                    __current_errors = __current_errors.get(__loc, {})
-                    __locs = __locs[1:]
-                if not __current_errors:
-                    __current_errors = []
-                __loc_dict = __current_errors + [__error.get("msg")]
-                __locs = __error.get("loc", ())
-                while __locs:
-                    __loc = __locs[-1]
-                    __loc_dict = {__loc: __loc_dict}
-                    __locs = __locs[:-1]
-                __errors = recursive_update(__errors, __loc_dict)
-            error = __errors
-
-        super().__init__(error={"fields": error}, *args, **kwargs)

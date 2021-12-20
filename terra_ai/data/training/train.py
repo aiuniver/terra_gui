@@ -14,8 +14,9 @@ from pydantic.types import conint, confloat, PositiveInt
 from pydantic.errors import EnumMemberError
 
 from terra_ai import settings
+
+from terra_ai.callbacks.utils import YOLO_ARCHITECTURE
 from terra_ai.exceptions.training import TrainingAlreadyExistsException
-from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.mixins import BaseMixinData, UniqueListMixin, IDMixinData
 from terra_ai.data.training import optimizers, architectures
 from terra_ai.data.training.extra import (
@@ -27,8 +28,8 @@ from terra_ai.data.training.extra import (
     BalanceSortedChoice,
     MetricChoice,
     StateStatusChoice,
+    DataTypeChoice,
 )
-
 
 DEFAULT_TRAINING_PATH_NAME = "__current"
 CONFIG_TRAINING_FILENAME = "config.json"
@@ -37,6 +38,7 @@ CONFIG_TRAINING_FILENAME = "config.json"
 class LossGraphData(IDMixinData):
     output_idx: PositiveInt
     show: LossGraphShowChoice
+    data_type: Optional[DataTypeChoice]
 
 
 class LossGraphsList(UniqueListMixin):
@@ -49,6 +51,7 @@ class MetricGraphData(IDMixinData):
     output_idx: PositiveInt
     show: MetricGraphShowChoice
     show_metric: Optional[MetricChoice]
+    data_type: Optional[DataTypeChoice]
 
 
 class MetricGraphsList(UniqueListMixin):
@@ -60,6 +63,7 @@ class MetricGraphsList(UniqueListMixin):
 class IntermediateResultData(BaseMixinData):
     show_results: bool = False
     example_choice_type: ExampleChoiceTypeChoice = ExampleChoiceTypeChoice.seed
+    data_type: Optional[DataTypeChoice] = DataTypeChoice.val
     main_output: Optional[PositiveInt]
     box_channel: conint(ge=0, le=2) = 1
     num_examples: conint(ge=1, le=10) = 10
@@ -213,6 +217,7 @@ class ArchitectureData(BaseMixinData):
             value = {}
         _model = values.get("model")
         _outputs = value.get("outputs", [])
+        # print('\n _validate_parameters', values)
         for _index, _output in enumerate(_outputs):
             _output["task"] = (
                 _model.layers.get(_output.get("id")).task.value
@@ -371,9 +376,9 @@ class TrainingDetailsData(BaseMixinData):
         if not data["architecture"].get("parameters"):
             data["architecture"].update({"parameters": {}})
         self.base = TrainData(**data)
-        self.set_interactive()
+        self.set_interactive(architecture=data["architecture"]["type"])
 
-    def set_interactive(self, data: dict = None):
+    def set_interactive(self, architecture=None, data: dict = None):
         if not data:
             loss_graphs = []
             metric_graphs = []
@@ -402,6 +407,17 @@ class TrainingDetailsData(BaseMixinData):
                             "show_metric": metric,
                         }
                     )
+                    if architecture not in YOLO_ARCHITECTURE:
+                        _index_m += 1
+                        metric_graphs.append(
+                            {
+                                "id": _index_m,
+                                "output_idx": layer.id,
+                                "show": MetricGraphShowChoice.classes,
+                                "show_metric": metric,
+                                "data_type": DataTypeChoice.train,
+                            }
+                        )
                     _index_m += 1
                     metric_graphs.append(
                         {
@@ -409,6 +425,7 @@ class TrainingDetailsData(BaseMixinData):
                             "output_idx": layer.id,
                             "show": MetricGraphShowChoice.classes,
                             "show_metric": metric,
+                            "data_type": DataTypeChoice.val,
                         }
                     )
                 _index_l += 1
@@ -419,12 +436,47 @@ class TrainingDetailsData(BaseMixinData):
                         "show": LossGraphShowChoice.model,
                     }
                 )
+                if architecture in YOLO_ARCHITECTURE:
+                    _index_l += 1
+                    loss_graphs.append(
+                        {
+                            "id": _index_l,
+                            "output_idx": layer.id,
+                            "show": LossGraphShowChoice.model,
+                        }
+                    )
+                    _index_l += 1
+                    loss_graphs.append(
+                        {
+                            "id": _index_l,
+                            "output_idx": layer.id,
+                            "show": LossGraphShowChoice.model,
+                        }
+                    )
+                    _index_l += 1
+                    loss_graphs.append(
+                        {
+                            "id": _index_l,
+                            "output_idx": layer.id,
+                            "show": LossGraphShowChoice.model,
+                        }
+                    )
                 _index_l += 1
                 loss_graphs.append(
                     {
                         "id": _index_l,
                         "output_idx": layer.id,
                         "show": LossGraphShowChoice.classes,
+                        "data_type": DataTypeChoice.train,
+                    }
+                )
+                _index_l += 1
+                loss_graphs.append(
+                    {
+                        "id": _index_l,
+                        "output_idx": layer.id,
+                        "show": LossGraphShowChoice.classes,
+                        "data_type": DataTypeChoice.val,
                     }
                 )
                 progress_table.append(
@@ -432,6 +484,8 @@ class TrainingDetailsData(BaseMixinData):
                         "output_idx": layer.id,
                     }
                 )
+                if architecture in YOLO_ARCHITECTURE:
+                    break
             data = {
                 "loss_graphs": loss_graphs,
                 "metric_graphs": metric_graphs,

@@ -8,6 +8,7 @@ import shutil
 import zipfile
 import tempfile
 import re
+import h5py
 
 from tensorflow.keras import utils
 from tensorflow.keras import datasets as load_keras_datasets
@@ -17,8 +18,12 @@ from pathlib import Path
 from datetime import datetime
 from IPython.display import display
 
-from terra_ai.utils import decamelize
+# from terra_ai.data.training.extra import ArchitectureChoice
+# from terra_ai.utils import decamelize
 from terra_ai.datasets.preprocessing import CreatePreprocessing
+# from terra_ai.datasets import arrays_create
+# from terra_ai.datasets.utils import PATH_TYPE_LIST
+from terra_ai.data.datasets.dataset import DatasetData, DatasetPathsData
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.utils import PATH_TYPE_LIST
 from terra_ai.data.datasets.dataset import DatasetData, DatasetPathsData, VersionData, VersionPathsData
@@ -237,246 +242,188 @@ class PrepareDataset(object):
                 outputs[str(out_id)] = np.concatenate(tmp, axis=0)
 
             yield inputs, outputs
+    def generator(self, inputs, outputs, service=None):
 
-    def generator_object_detection(self, split_name):
+        for i in range(len(inputs)):
 
-        inputs = {}
-        outputs = {}
-        service = {}
+            with h5py.File(self.paths.arrays.joinpath('dataset.h5'), 'r') as hdf:
+                full_inp_arrays = [hdf[path][()] for path in inputs[i]]
+                full_out_arrays = [hdf[path][()] for path in outputs[i]]
 
-        for idx in range(len(self.dataframe[split_name])):
-            augm_data = ''
-            for inp_id in self.version_data.inputs.keys():
-                tmp = []
-                for col_name, data in self.instructions[inp_id].items():
-                    dict_to_pass = data.copy()
-                    if data['augmentation'] and split_name == 'train':
-                        dict_to_pass.update([('augm_data', self.dataframe[split_name].iloc[idx, 1])])
-                    sample = self.version_paths_data.sources.joinpath(self.dataframe[split_name].loc[idx, col_name])
-                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
-                        'preprocess': self.preprocessing.preprocessing[inp_id][col_name]}, **dict_to_pass)
-                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
-                                                                                     **array['parameters'])
-                    if isinstance(array, tuple):
-                        tmp.append(array[0])
-                        augm_data += array[1]
-                    else:
-                        tmp.append(array)
+                inp_dict = {str(j + 1): full_inp_arrays[j] for j in range(len(full_inp_arrays))}
+                out_dict = {str(len(inputs[i]) + j + 1): full_out_arrays[j] for j in range(len(full_out_arrays))}
 
-                inputs[str(inp_id)] = np.concatenate(tmp, axis=0)
+                if self.data.service:
+                    full_srv_arrays = [hdf[path][()] for path in service[i]]
+                    srv_dict = {str(len(inputs[i]) + j + 1): full_srv_arrays[j] for j in range(len(service[i]))}
+                    yield inp_dict, out_dict, srv_dict
+                else:
+                    yield inp_dict, out_dict
 
-            for out_id in self.version_data.outputs.keys():
-                for col_name, data in self.instructions[out_id].items():
-                    tmp_im = Image.open(self.version_paths_data.sources.joinpath(self.dataframe[split_name].iloc[idx, 0]))
-                    data.update([('orig_x', tmp_im.width),
-                                 ('orig_y', tmp_im.height)])
-                    if augm_data and split_name == 'train':
-                        data_to_pass = augm_data
-                    else:
-                        data_to_pass = self.dataframe[split_name].loc[idx, col_name]
-                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(data_to_pass, **{
-                        'preprocess': self.preprocessing.preprocessing[out_id][col_name]}, **data)
-                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
-                                                                                     **array['parameters'])
-                    for n in range(3):
-                        outputs[str(out_id + n)] = np.array(array[n])
-                        service[str(out_id + n)] = np.array(array[n+3])
-            yield inputs, outputs, service
+    def keras_datasets(self):
 
-    # def keras_datasets(self):
-    #
-    #     (x_train, y_train), (x_val, y_val) = getattr(load_keras_datasets, self.data.alias).load_data()
-    #
-    #     if self.data.alias in ['mnist', 'fashion_mnist']:
-    #         x_train = x_train[..., None]
-    #         x_val = x_val[..., None]
-    #     for out in self.data.outputs.keys():
-    #         if self.data.outputs[out].task == LayerOutputTypeChoice.Classification:
-    #             y_train = utils.to_categorical(y_train, len(np.unique(y_train, axis=0)))
-    #             y_val = utils.to_categorical(y_val, len(np.unique(y_val, axis=0)))
-    #
-    #     # for split in ['train', 'val']:
-    #     #     for key in self.data.inputs.keys():
-    #     #         self.X[split][str(key)] = globals()[f'x_{split}']
-    #     #     for key in self.data.outputs.keys():
-    #     #         self.Y[split][str(key)] = globals()[f'y_{split}']
-    #     for key in self.data.inputs.keys():
-    #         self.X['train'][str(key)] = x_train
-    #         self.X['val'][str(key)] = x_val
-    #     for key in self.data.outputs.keys():
-    #         self.Y['train'][str(key)] = y_train
-    #         self.Y['val'][str(key)] = y_val
+        (x_train, y_train), (x_val, y_val) = getattr(load_keras_datasets, self.data.alias).load_data()
 
-    def version(self, alias: str):
+        if self.data.alias in ['mnist', 'fashion_mnist']:
+            x_train = x_train[..., None]
+            x_val = x_val[..., None]
+        for out in self.data.outputs.keys():
+            if self.data.outputs[out].task == LayerOutputTypeChoice.Classification:
+                y_train = utils.to_categorical(y_train, len(np.unique(y_train, axis=0)))
+                y_val = utils.to_categorical(y_val, len(np.unique(y_val, axis=0)))
 
-        if self.dataset_data.group != DatasetGroupChoice.keras:
-            parent_version_path = self.parent_dataset_paths_data.versions.joinpath('.'.join([alias, VERSION_EXT]))
-            version_path = self.dataset_paths_data.versions.joinpath('.'.join([alias, VERSION_EXT]))
-            if not version_path.is_dir():
-                shutil.copytree(parent_version_path, version_path)
-                with zipfile.ZipFile(version_path.joinpath('version.zip'), 'r') as z_file:
-                    z_file.extractall(Path(version_path))
-                version_path.joinpath('version.zip').unlink(missing_ok=True)
-            self.version_paths_data = VersionPathsData(basepath=version_path)
-
-            with open(self.version_paths_data.basepath.joinpath(VERSION_CONFIG), 'r') as ver_config:
-                self.version_data = VersionData(**json.load(ver_config))
-
-            self.preprocessing = CreatePreprocessing(dataset_path=self.version_paths_data.preprocessing)
-
-            for split in self.dataframe:
-                self.dataframe[split] = pd.read_csv(
-                    self.version_paths_data.instructions.joinpath('tables', f'{split}.csv'),
-                    index_col=0
-                )
-
-            for put_id in list(self.version_data.inputs) + list(self.version_data.outputs):
-                self.instructions[put_id] = {}
-                for instr_json in os.listdir(self.version_paths_data.instructions.joinpath('parameters')):
-                    idx, *name = os.path.splitext(instr_json)[0].split('_')
-                    name = '_'.join(name)
-                    if put_id == int(idx):
-                        with open(self.version_paths_data.instructions.joinpath('parameters', instr_json),
-                                  'r') as instr:
-                            self.instructions[put_id].update([(f'{idx}_{name}', json.load(instr))])
-
-            if self.version_data.use_generator:
-                copy_archive = False
-                for col_name in self.instructions.values():
-                    for param in col_name.values():
-                        if param['put_type'] in ['image', 'segmentation']:
-                            copy_archive = True
-                if copy_archive:
-                    shutil.copyfile(self.parent_dataset_paths_data.basepath.joinpath('sources.zip'),
-                                    self.dataset_paths_data.basepath.joinpath('sources.zip'))
-                    with zipfile.ZipFile(self.dataset_paths_data.basepath.joinpath('sources.zip'), 'r') as z_file:
-                        z_file.extractall(self.version_paths_data.sources)
-                    self.dataset_paths_data.basepath.joinpath('sources.zip').unlink()
-        else:
-            for version in VersionsGroup[0]['datasets'][0][self.dataset_data.alias]:
-                if version['alias'] == alias:
-                    self.version_data = VersionData(**version)
-
-            # (x_train, y_train), (x_val, y_val) = getattr(load_keras_datasets, self.dataset_data.alias).load_data()
-            #
-            # if self.dataset_data.alias in ['mnist', 'fashion_mnist'] and self.version_data.alias == 'add_dimension':
-            #     x_train = x_train[..., None]
-            #     x_val = x_val[..., None]
-            # y_train = utils.to_categorical(y_train, len(np.unique(y_train, axis=0)))
-            # y_val = utils.to_categorical(y_val, len(np.unique(y_val, axis=0)))
-            #
-            # for key in self.version_data.inputs.keys():
-            #     self.X['train'][str(key)] = x_train
-            #     self.X['val'][str(key)] = x_val
-            # for key in self.version_data.outputs.keys():
-            #     self.Y['train'][str(key)] = y_train
-            #     self.Y['val'][str(key)] = y_val
-
-            # del x_train, y_train, x_val, y_val
-
-        print(self.__str__())
-
-        return self
+        # for split in ['train', 'val']:
+        #     for key in self.data.inputs.keys():
+        #         self.X[split][str(key)] = globals()[f'x_{split}']
+        #     for key in self.data.outputs.keys():
+        #         self.Y[split][str(key)] = globals()[f'y_{split}']
+        for key in self.data.inputs.keys():
+            self.X['train'][str(key)] = x_train
+            self.X['val'][str(key)] = x_val
+        for key in self.data.outputs.keys():
+            self.Y['train'][str(key)] = y_train
+            self.Y['val'][str(key)] = y_val
 
     def prepare_dataset(self):
 
-        if self.dataset_data.group == DatasetGroupChoice.keras:
+        if self.data.group == DatasetGroupChoice.keras:
 
-            (x_train, y_train), (x_val, y_val) = getattr(load_keras_datasets, self.dataset_data.alias).load_data()
+            self.keras_datasets()
 
-            if self.dataset_data.alias in ['mnist', 'fashion_mnist'] and self.version_data.alias == 'add_dimension':
-                x_train = x_train[..., None]
-                x_val = x_val[..., None]
-            y_train = utils.to_categorical(y_train, len(np.unique(y_train, axis=0)))
-            y_val = utils.to_categorical(y_val, len(np.unique(y_val, axis=0)))
-
-            for key in self.version_data.inputs.keys():
-                self.X['train'][str(key)] = x_train
-                self.X['val'][str(key)] = x_val
-            for key in self.version_data.outputs.keys():
-                self.Y['train'][str(key)] = y_train
-                self.Y['val'][str(key)] = y_val
-
-            del x_train, y_train, x_val, y_val
-
-            for put_id, data in KerasInstructions[self.dataset_data.alias].items():
+            for put_id, data in KerasInstructions[self.data.alias].items():
                 self.instructions[put_id] = data
 
             self.preprocessing.create_scaler(**{'put': 1, 'scaler': 'min_max_scaler',
                                                 'min_scaler': 0, 'max_scaler': 1,
-                                                'cols_names': f'1_{self.dataset_data.alias}'})
-            self.preprocessing.preprocessing[1][f'1_{self.dataset_data.alias}'].fit(self.X['train']['1'].reshape(-1, 1))
+                                                'cols_names': f'1_{self.data.alias}'})
+            self.preprocessing.preprocessing[1][f'1_{self.data.alias}'].fit(self.X['train']['1'].reshape(-1, 1))
             for key in self.X.keys():
                 for inp in self.X[key]:
-                    self.X[key][inp] = self.preprocessing.preprocessing[1][f'1_{self.dataset_data.alias}']\
+                    self.X[key][inp] = self.preprocessing.preprocessing[1][f'1_{self.data.alias}']\
                         .transform(self.X[key][inp].reshape(-1, 1)).reshape(self.X[key][inp].shape)
 
-            for split in self.dataset:
+            for split in ['train', 'val']:
                 if self.service[split]:
-                    self.dataset[split] = Dataset.from_tensor_slices((self.X[split],
-                                                                      self.Y[split],
+                    self.dataset[split] = Dataset.from_tensor_slices((self.X[split], self.Y[split],
                                                                       self.service[split]))
                 else:
-                    self.dataset[split] = Dataset.from_tensor_slices((self.X[split],
-                                                                      self.Y[split]))
+                    self.dataset[split] = Dataset.from_tensor_slices((self.X[split], self.Y[split]))
 
-        elif self.dataset_data.group in [DatasetGroupChoice.terra, DatasetGroupChoice.trds]:
+        elif self.data.group in [DatasetGroupChoice.terra, DatasetGroupChoice.custom]:
 
-            self.preprocessing.load_preprocesses(self.version_data.columns)
+            for split in ['train', 'val']:
+                self.dataframe[split] = pd.read_csv(os.path.join(self.paths.instructions, 'tables', f'{split}.csv'),
+                                                    index_col=0)
 
-            if self.version_data.use_generator:
-                num_inputs = len(self.version_data.inputs)
-                num_outputs = len(self.version_data.outputs)
-                if self.dataset_data.tags[num_inputs].alias == decamelize(LayerOutputTypeChoice.ObjectDetection):
-                    gen = self.generator_object_detection
-                    out_signature = (
-                        {str(x): tf.TensorSpec(shape=self.version_data.inputs[x].shape,
-                                               dtype=self.version_data.inputs[x].dtype)
-                         for x in range(1, num_inputs + 1)},
-                        {str(x): tf.TensorSpec(shape=self.version_data.outputs[x].shape,
-                                               dtype=self.version_data.outputs[x].dtype)
-                         for x in range(num_inputs + 1, num_inputs + num_outputs + 1)},
-                        {str(x): tf.TensorSpec(shape=self.version_data.service[x].shape,
-                                               dtype=self.version_data.service[x].dtype)
-                         for x in range(num_inputs + 1, num_inputs + num_outputs + 1)})
-                else:
-                    gen = self.generator_common
-                    out_signature = (
-                        {str(x): tf.TensorSpec(shape=self.version_data.inputs[x].shape,
-                                               dtype=self.version_data.inputs[x].dtype)
-                         for x in range(1, num_inputs + 1)},
-                        {str(x): tf.TensorSpec(shape=self.version_data.outputs[x].shape,
-                                               dtype=self.version_data.outputs[x].dtype)
-                         for x in range(num_inputs + 1, num_outputs + num_inputs + 1)})
+            self.preprocessing.load_preprocesses(self.data.columns)
 
-                self.dataset['train'] = Dataset.from_generator(lambda: gen(split_name='train'),
-                                                               output_signature=out_signature)
-                self.dataset['val'] = Dataset.from_generator(lambda: gen(split_name='val'),
-                                                             output_signature=out_signature)
+            if self.data.use_generator:
+
+                # num_inputs = len(self.data.inputs)
+                # num_outputs = len(self.data.outputs)
+
+                # out_signature = [
+                #     {str(x): tf.TensorSpec(shape=self.data.inputs[x].shape, dtype=self.data.inputs[x].dtype)
+                #      for x in range(1, num_inputs + 1)},
+                #     {str(x): tf.TensorSpec(shape=self.data.outputs[x].shape, dtype=self.data.outputs[x].dtype)
+                #      for x in range(num_inputs + 1, num_inputs + num_outputs + 1)},
+                #     ]
+                # if self.data.service:
+                #     out_signature.append(
+                #         {str(x): tf.TensorSpec(shape=self.data.service[x].shape, dtype=self.data.service[x].dtype)
+                #          for x in range(num_inputs + 1, num_inputs + num_outputs + 1)}
+                #     )
+
+                # for split_g in ['train', 'val']:
+                #
+                #     globals()[f'{split_g}_files_x'] = []
+                #     globals()[f'{split_g}_files_y'] = []
+                #     globals()[f'{split_g}_files_s'] = []
+                #
+                #     for idx in range(len(self.dataframe[split_g])):
+                #         globals()[f'{split_g}_files_x'].append([f"{split_g}/id_{key}/{idx}" for key in self.data.inputs])
+                #         globals()[f'{split_g}_files_y'].append([f"{split_g}/id_{key}/{idx}" for key in self.data.outputs])
+                #         globals()[f'{split_g}_files_s'].append([f"{split_g}/id_{key}_service/{idx}" for key in self.data.service
+                #                                                 if self.data.service])
+                #
+                #     globals()[f"{split_g}_parameters"] = {'inputs': globals()[f'{split_g}_files_x'],
+                #                                           'outputs': globals()[f'{split_g}_files_y']}
+                #     if self.data.service:
+                #         globals()[f"{split_g}_parameters"].update([('service', globals()[f'{split_g}_files_s'])])
+
+                with h5py.File(self.paths.arrays.joinpath('dataset.h5'), 'r') as hdf:
+
+                    out_signature = [{}, {}]
+
+                    for key in self.data.inputs:
+                        if f"train/id_{key}/1" in hdf:
+                            out_signature[0].update({str(key): tf.TensorSpec(shape=self.data.inputs[key].shape,
+                                                                             dtype=self.data.inputs[key].dtype)})
+                    for key in self.data.outputs:
+                        if f"train/id_{key}/0" in hdf:
+                            out_signature[1].update({str(key): tf.TensorSpec(shape=self.data.outputs[key].shape,
+                                                                             dtype=self.data.outputs[key].dtype)})
+
+                    if self.data.service:
+                        out_signature.append({})
+                        for key in self.data.service:
+                            if f"train/id_{key}_service/0" in hdf:
+                                out_signature[2].update({str(key): tf.TensorSpec(shape=self.data.service[key].shape,
+                                                                                 dtype=self.data.service[key].dtype)})
+
+                    for split_g in ['train', 'val']:
+
+                        globals()[f'{split_g}_files_x'] = []
+                        globals()[f'{split_g}_files_y'] = []
+                        globals()[f'{split_g}_files_s'] = []
+
+                        for idx in range(len(self.dataframe[split_g])):
+                            globals()[f'{split_g}_files_x'].append(
+                                [f"{split_g}/id_{key}/{idx}" for key in self.data.inputs if
+                                 f"{split_g}/id_{key}/{idx}" in hdf])
+                            globals()[f'{split_g}_files_y'].append(
+                                [f"{split_g}/id_{key}/{idx}" for key in self.data.outputs if
+                                 f"{split_g}/id_{key}/{idx}" in hdf])
+                            globals()[f'{split_g}_files_s'].append(
+                                [f"{split_g}/id_{key}_service/{idx}" for key in self.data.service
+                                 if self.data.service and f"{split_g}/id_{key}/{idx}" in hdf])
+
+                            globals()[f"{split_g}_parameters"] = {'inputs': globals()[f'{split_g}_files_x'],
+                                                                  'outputs': globals()[f'{split_g}_files_y']}
+                            if self.data.service:
+                                globals()[f"{split_g}_parameters"].update([('service', globals()[f'{split_g}_files_s'])])\
+
+                        globals()[f"{split_g}_parameters"] = {'inputs': globals()[f'{split_g}_files_x'],
+                                                              'outputs': globals()[f'{split_g}_files_y']}
+                        if self.data.service:
+                            globals()[f"{split_g}_parameters"].update([('service', globals()[f'{split_g}_files_s'])])
+
+                self.dataset['train'] = Dataset.from_generator(lambda: self.generator(**globals()[f"train_parameters"]),
+                                                               output_signature=tuple(out_signature))
+
+                self.dataset['val'] = Dataset.from_generator(lambda: self.generator(**globals()[f"val_parameters"]),
+                                                             output_signature=tuple(out_signature))
+
             else:
-                for split in self.dataset:
-                    for index in self.version_data.inputs.keys():
-                        self.X[split][str(index)] = joblib.load(self.version_paths_data.arrays.joinpath(split,
-                                                                                                        f'{index}.gz'))
-                    for index in self.version_data.outputs.keys():
-                        self.Y[split][str(index)] = joblib.load(self.version_paths_data.arrays.joinpath(split,
-                                                                                                        f'{index}.gz'))
-                    for index in self.version_data.service.keys():
-                        if self.version_data.service[index]:
-                            self.service[split][str(index)] = joblib.load(
-                                self.version_paths_data.arrays.joinpath(split, f'{index}_service.gz')
-                            )
+
+                for split in ['train', 'val']:
+                    for index in self.data.inputs.keys():
+                        self.X[split][str(index)] = joblib.load(os.path.join(self.paths.arrays, split, f'{index}.gz'))
+                    for index in self.data.outputs.keys():
+                        self.Y[split][str(index)] = joblib.load(os.path.join(self.paths.arrays, split, f'{index}.gz'))
+                    for index in self.data.service.keys():
+                        if self.data.service[index]:
+                            self.service[split][str(index)] = joblib.load(os.path.join(self.paths.arrays,
+                                                                                       split, f'{index}_service.gz'))
 
                 for split in ['train', 'val']:
                     if self.service[split]:
-                        self.dataset[split] = Dataset.from_tensor_slices((self.X[split],
-                                                                          self.Y[split],
+                        self.dataset[split] = Dataset.from_tensor_slices((self.X[split], self.Y[split],
                                                                           self.service[split]))
                     else:
-                        self.dataset[split] = Dataset.from_tensor_slices((self.X[split],
-                                                                          self.Y[split]))
+                        self.dataset[split] = Dataset.from_tensor_slices((self.X[split], self.Y[split]))
 
-        pass
+        self.dts_prepared = True
 
     def deploy_export(self, folder_path: str):
 

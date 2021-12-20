@@ -1,229 +1,180 @@
 <template>
-  <div class="params">
-    <div v-if="false" class="params__overlay" key="fdgtr">
-      <LoadSpiner :text="'Запуск обучения...'" />
-    </div>
+  <div class="params" :key="'key_update-' + updateKey">
     <scrollbar>
       <div class="params__body">
         <div class="params__items">
-          <at-collapse :value="collapse" @on-change="onchange" :key="key">
+          <at-collapse :value="collapse">
             <at-collapse-item
-              v-show="visible"
               v-for="({ visible, name, fields }, key) of params"
+              v-show="visible && key !== 'server'"
               :key="key"
               class="mt-3"
               :name="key"
               :title="name || ''"
             >
-              <div v-if="key !== 'outputs'" class="params__fields">
+              <div class="params__fields">
                 <template v-for="(data, i) of fields">
-                  <t-auto-field-deploy
+                  <t-auto-field-cascade
                     v-bind="data"
-                    :class="`params__fields--${key}`"
                     :key="key + i"
-                    :state="state"
+                    :big="key === 'type'"
+                    :parameters="parameters"
                     :inline="false"
-                    @parse="parse"
+                    @change="parse"
                   />
-                </template>
-              </div>
-              <div v-else class="blocks-layers">
-                <template v-for="(field, i) of fields">
-                  <div class="block-layers" :key="'block_layers_' + i">
-                    <div class="block-layers__header">
-                      {{ field.name }}
-                    </div>
-                    <div class="block-layers__body">
-                      <template v-for="(data, i) of field.fields">
-                        <t-auto-field-deploy
-                          v-bind="data"
-                          :key="'checkpoint_' + i + data.parse"
-                          :state="state"
-                          :inline="true"
-                          @parse="parse"
-                        />
-                      </template>
-                    </div>
-                  </div>
+                  <t-button @click="$emit('downloadSettings', parameters)" :key="'key' + i" :disabled="overlayStatus">
+                    Подготовить
+                  </t-button>
                 </template>
               </div>
             </at-collapse-item>
           </at-collapse>
         </div>
+        <div class="params__items" v-if="paramsDownloaded.isParamsSettingsLoad">
+          <div class="params-container pa-5">
+            <div class="t-input">
+              <label class="label" for="deploy[deploy]">Название папки</label>
+              <div class="t-input__label">{{ `https://srv1.demo.neural-university.ru/${userData.login}/${projectData.name_alias}/${deploy}` }}</div>
+              <input v-model="deploy" class="t-input__input" type="text" id="deploy[deploy]" name="deploy[deploy]" />
+            </div>
+            <Autocomplete2 :list="list" :name="'deploy[server]'" label="Сервер" @focus="focus" @change="selected" />
+
+            <Checkbox
+              :label="'Перезаписать с таким же названием папки'"
+              :type="'checkbox'"
+              parse="replace"
+              name="replace"
+              class="pd__top"
+              @change="onChange"
+            />
+            <Checkbox
+              :label="'Использовать пароль для просмотра страницы'"
+              parse="replace"
+              name="use_sec"
+              :type="'checkbox'"
+              @change="onChange"
+            />
+            <div class="password" v-if="use_sec">
+              <div class="t-input">
+                <input :type="passwordShow ? 'text' : 'password'" placeholder="Введите пароль" v-model="sec" />
+                <div class="password__icon">
+                  <i
+                    :class="['t-icon', passwordShow ? 'icon-deploy-password-open' : 'icon-deploy-password-close']"
+                    :title="'show password'"
+                    @click="passwordShow = !passwordShow"
+                  ></i>
+                </div>
+              </div>
+              <div class="t-input">
+                <input
+                  :type="passwordShow ? 'text' : 'password'"
+                  placeholder="Подтверждение пароля"
+                  v-model="sec_accept"
+                />
+                <div class="password__icon">
+                  <i :class="['t-icon', checkCorrect]" :title="'is correct'"></i>
+                </div>
+              </div>
+              <div class="password__rule">
+                <p>Пароль должен содержать не менее 6 символов</p>
+              </div>
+            </div>
+            <t-button :disabled="send_disabled" @click="sendDeployData" v-if="!paramsDownloaded.isSendParamsDeploy">
+              Загрузить
+            </t-button>
+            <div class="req-ans" v-if="paramsDownloaded.isSendParamsDeploy">
+              <div class="answer__success">Загрузка завершена!</div>
+              <div class="answer__label">Ссылка на сформированную загрузку</div>
+              <div class="answer__url">
+                <i :class="['t-icon', 'icon-deploy-copy']" :title="'copy'" @click="copy(moduleList.url)"></i>
+                <a :href="moduleList.url" target="_blank">
+                  {{ moduleList.url }}
+                </a>
+              </div>
+            </div>
+            <ModuleList v-if="paramsDownloaded.isSendParamsDeploy" :moduleList="moduleList.api_text" />
+          </div>
+        </div>
       </div>
     </scrollbar>
-    <!-- <div class="params__footer">
-      <div v-if="stopLearning" class="params__overlay">
-        <LoadSpiner :text="'Остановка...'" />
-      </div>
-      <div v-for="({ title, visible }, key) of button" :key="key" class="params__btn">
-        <t-button :disabled="!visible" @click="btnEvent(key)">{{ title }}</t-button>
-      </div>
-    </div> -->
   </div>
-
-  <!-- <div class="params-container__name">Загрузка в демо-панель</div>
-      <div class="params-container pa-5">
-        <div class="t-input">
-          <label class="label" for="deploy[deploy]">Название папки</label>
-          <div class="t-input__label">
-            https://srv1.demo.neural-university.ru/{{ userData.login }}/{{ projectData.name_alias }}/{{ deploy }}
-          </div>
-          <input
-            v-model="deploy"
-            class="t-input__input"
-            type="text"
-            id="deploy[deploy]"
-            name="deploy[deploy]"
-            @blur="$emit('blur', $event.target.value)"
-          />
-        </div>
-        <Checkbox
-          :label="'Перезаписать с таким же названием папки'"
-          :type="'checkbox'"
-          parse="deploy[overwrite]"
-          name="deploy[overwrite]"
-          class="pd__top"
-          @change="UseReplace"
-        />
-        <Checkbox
-          :label="'Использовать пароль для просмотра страницы'"
-          parse="deploy[use_password]"
-          name="deploy[use_password]"
-          :type="'checkbox'"
-          @change="UseSec"
-        />
-        <div class="password" v-if="use_sec">
-          <div class="t-input">
-            <input :type="passwordShow ? 'text' : 'password'" placeholder="Введите пароль" v-model="sec" />
-            <div class="password__icon">
-              <i
-                :class="['t-icon', passwordShow ? 'icon-deploy-password-open' : 'icon-deploy-password-close']"
-                :title="'show password'"
-                @click="passwordShow = !passwordShow"
-              ></i>
-            </div>
-          </div>
-          <div class="t-input">
-            <input :type="passwordShow ? 'text' : 'password'" placeholder="Подтверждение пароля" v-model="sec_accept" />
-            <div class="password__icon">
-              <i :class="['t-icon', checkCorrect]" :title="'is correct'"></i>
-            </div>
-          </div>
-          <div class="password__rule">
-            <p>Пароль должен содержать не менее 6 символов</p>
-          </div>
-        </div>
-        <button :disabled="send_disabled" @click="SendData" v-if="!DataSent">Загрузить</button>
-        <div class="loader" v-if="DataLoading">
-          <div class="loader__title">Дождитесь окончания загрузки</div>
-          <div class="loader__progress">
-            <load-spiner></load-spiner>
-          </div>
-        </div>
-        <div class="req-ans" v-if="DataSent">
-          <div class="answer__success">Загрузка завершена!</div>
-          <div class="answer__label">Ссылка на сформированную загрузку</div>
-          <div class="answer__url">
-            <i :class="['t-icon', 'icon-deploy-copy']" :title="'copy'" @click="Copy(moduleList.url)"></i>
-            <a :href="moduleList.url" target="_blank">{{ moduleList.url }}sdfasadfasdfasgdfhasiofhusduifhasiodcfuisfhoadsifisdhfiosdup</a>
-          </div>
-        </div>
-        <ModuleList v-if="DataSent" :moduleList="moduleList.api_text" />
-      </div> -->
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
-// import Checkbox from '@/components/forms/Checkbox';
-// import ModuleList from './ModuleList';
-// import LoadSpiner from '../../forms/LoadSpiner';
-import ser from '@/assets/js/myserialize';
+import Checkbox from '@/components/forms/Checkbox';
+import Autocomplete2 from '@/components/forms/Autocomplete2';
+import ModuleList from './ModuleList';
+import { DEPLOY_ICONS_PASSWORD, DEPLOY_COLLAPS } from '@/components/deploy/config/const-params';
+
 export default {
   name: 'Settings',
   components: {
-    // Checkbox,
-    // ModuleList,
-    // LoadSpiner,
+    Checkbox,
+    ModuleList,
+    Autocomplete2,
+  },
+  props: {
+    params: {
+      type: [Object, Array],
+      default: () => ({}),
+    },
+    moduleList: {
+      type: Object,
+      default: () => ({}),
+    },
+    projectData: {
+      type: [Array, Object],
+      default: () => [],
+    },
+    userData: {
+      type: [Object, Array],
+      default: () => {},
+    },
+    paramsDownloaded: {
+      type: Object,
+      default: () => ({}),
+    },
+    overlayStatus: {
+      type: Boolean,
+      default: false,
+    },
   },
   data: () => ({
-    collapse: ['type', 'server'],
-    key: '1212',
-    trainSettings: {},
+    updateKey: 0,
+    collapse: DEPLOY_COLLAPS,
     deploy: '',
+    server: '',
     replace: false,
     use_sec: false,
     sec: '',
     sec_accept: '',
-    DataSent: false,
-    DataLoading: false,
     passwordShow: false,
-    ops: {
-      scrollPanel: {
-        scrollingX: false,
-        scrollingY: true,
-      },
-    },
+    parameters: {},
+    list: [],
   }),
   computed: {
-    ...mapGetters({
-      params: 'deploy/getParams',
-      height: 'settings/height',
-      moduleList: 'deploy/getModuleList',
-      projectData: 'projects/getProject',
-      userData: 'projects/getUser',
-    }),
-    state: {
-      set(value) {
-        this.$store.dispatch('deploy/setStateParams', value);
-      },
-      get() {
-        return this.$store.getters['deploy/getStateParams'];
-      },
-    },
     checkCorrect() {
-      return this.sec == this.sec_accept ? 'icon-deploy-password-correct' : 'icon-deploy-password-incorrect';
+      return this.sec == this.sec_accept ? DEPLOY_ICONS_PASSWORD[0] : DEPLOY_ICONS_PASSWORD[1];
     },
     send_disabled() {
-      if (this.DataLoading) {
-        return true;
-      }
-      if (this.use_sec) {
-        if (this.sec == this.sec_accept && this.sec.length > 5 && this.deploy.length != 0) return false;
-      } else {
-        if (this.deploy.length != 0) return false;
-      }
+      if (this.use_sec && this.sec == this.sec_accept && this.sec.length > 5 && this.deploy.length != 0) return false;
+      else if (this.deploy.length != 0) return false;
       return true;
+    },
+    isLoad() {
+      return !(!!this.parameters.type && !!this.parameters.name);
     },
   },
   methods: {
-    parse({ parse, value, changeable, mounted }) {
-      console.log(parse);
-      console.log(parse, value, changeable, mounted);
-      ser(this.trainSettings, parse, value);
-      this.trainSettings = { ...this.trainSettings };
-      if (!mounted && changeable) {
-        // this.$store.dispatch('trainings/update', this.trainSettings);
-        // this.state = { [`architecture[parameters][checkpoint][metric_name]`]: null };
-      } else {
-        if (value) {
-          this.state = { [`${parse}`]: value };
-        }
-      }
+    parse({ value, name }) {
+      if (name === 'type') this.parameters['name'] = null;
+      this.parameters[name] = value;
+      this.parameters = { ...this.parameters };
     },
-    onchange(e) {
-      console.log(e);
-      // console.log(this.collapse);
+    onChange({ name, value }) {
+      this[name] = value;
     },
-    click() {
-      console.log();
-    },
-    Percents(number) {
-      let loading = document.querySelector('.progress-bar > .loading');
-      loading.style.width = number + '%';
-      loading.find('span').value = number;
-    },
-    Copy(text) {
+    copy(text) {
       var textArea = document.createElement('textarea');
       textArea.value = text;
 
@@ -243,52 +194,31 @@ export default {
 
       document.body.removeChild(textArea);
     },
-    UseSec(data) {
-      this.use_sec = data.value;
+    async focus() {
+      const res = await this.$store.dispatch('servers/ready');
+      if (res.data) this.list = res?.data || [];
+      console.log(res);
     },
-    UseReplace(data) {
-      this.replace = data.value;
+    selected({ value }) {
+      this.server = value;
     },
-    async progress() {
-      let answer = await this.$store.dispatch('deploy/CheckProgress');
-      console.log(answer);
-      if (!answer) {
-        // this.Percents(30);
-        this.getProgress();
-      } else {
-        this.DataLoading = false;
-        this.DataSent = true;
-        this.$emit('overlay', this.DataLoading);
-      }
-    },
-    getProgress() {
-      setTimeout(this.progress, 2000);
-    },
-    async SendData() {
-      let data = {
+    async sendDeployData() {
+      const data = {
         deploy: this.deploy,
+        server: this.server,
         replace: this.replace,
         use_sec: this.use_sec,
       };
-
       if (this.use_sec) data['sec'] = this.sec;
-
-      const res = await this.$store.dispatch('deploy/SendDeploy', data);
-      console.log(res);
-      if (res) {
-        const { error, success } = res;
-        console.log(error, success);
-        if (!error && success) {
-          this.DataLoading = true;
-          this.$emit('overlay', this.DataLoading);
-          this.getProgress();
-        }
-      }
+      this.$emit('sendParamsDeploy', data);
     },
+  },
+  beforeDestroy() {
+    this.$emit('clear');
   },
   watch: {
     params() {
-      this.key = 'dsdsdsd';
+      this.updateKey++;
     },
   },
 };
@@ -298,6 +228,11 @@ export default {
 .params {
   flex: 0 0 400px;
   border-left: #0e1621 solid 1px;
+  &__fields {
+    button {
+      margin: 30px 0 0 0;
+    }
+  }
 }
 .params-container__name {
   padding: 30px 0 0 20px;
