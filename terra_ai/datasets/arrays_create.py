@@ -114,17 +114,19 @@ class CreateArray(object):
     @staticmethod
     def instructions_text(text_list: list, **options) -> dict:
 
-        def read_text(file_path, lower, del_symbols, split, open_symbol=None, close_symbol=None) -> str:
+        def read_text(file_path, op_symbol=None, cl_symbol=None) -> str:
 
-            text = autodetect_encoding(file_path)
+            cur_text = autodetect_encoding(file_path)
 
             if open_symbol:
-                text = re.sub(open_symbol, f" {open_symbol}", text)
-                text = re.sub(close_symbol, f"{close_symbol} ", text)
+                cur_text = re.sub(op_symbol, f" {op_symbol}", cur_text)
+                cur_text = re.sub(cl_symbol, f"{cl_symbol} ", cur_text)
 
-            text = ' '.join(text_to_word_sequence(text, **{'lower': lower, 'filters': del_symbols, 'split': split}))
+            cur_text = ' '.join(text_to_word_sequence(
+                cur_text, **{'lower': False, 'filters': '\r\t\n\ufeff\xa0', 'split': ' '})
+            )
 
-            return text
+            return cur_text
 
         def apply_pymorphy(text, morphy) -> str:
 
@@ -135,12 +137,10 @@ class CreateArray(object):
 
         txt_dict: dict = {}
         text: dict = {}
-        lower: bool = True
-        open_tags, close_tags = None, None
+        open_tags, close_tags = options.get('open_tags'), options.get('close_tags')
         open_symbol, close_symbol = None, None
         if options.get('open_tags'):
             open_tags, close_tags = options['open_tags'].split(' '), options['close_tags'].split(' ')
-            # if open_tags:
             open_symbol = open_tags[0][0]
             close_symbol = close_tags[0][-1]
         length = options['length'] if options['text_mode'] == LayerTextModeChoice.length_and_step else \
@@ -148,8 +148,7 @@ class CreateArray(object):
 
         for idx, text_row in enumerate(text_list):
             if os.path.isfile(str(text_row)):
-                text_file = read_text(file_path=text_row, lower=lower, del_symbols=options['filters'], split=' ',
-                                      open_symbol=open_symbol, close_symbol=close_symbol)
+                text_file = read_text(file_path=text_row, op_symbol=open_symbol, cl_symbol=close_symbol)
                 if text_file:
                     txt_dict[text_row] = text_file
             else:
@@ -174,19 +173,41 @@ class CreateArray(object):
                 txt_dict[key] = apply_pymorphy(value, pymorphy)
 
         for key, value in sorted(txt_dict.items()):
-            if options['text_mode'] == LayerTextModeChoice.completely:
-                text[';'.join([str(key), f'[0-{options["max_words"]}]'])] = ' '.join(
-                    value.split(' ')[:options['max_words']])
-            elif options['text_mode'] == LayerTextModeChoice.length_and_step:
-                max_length = len(value.split(' '))
+            value = value.split(' ')
+            if options['text_mode'] == 'completely':
+                iter_count = 0
+                adjust_flag = False
+                adjusted_length = options['length']
+                while not adjust_flag:
+                    adjust_length = options['length'] - len(
+                        text_to_word_sequence(' '.join(value[0: adjusted_length]), options['filters'], lower=False))
+                    adjusted_length += adjust_length
+                    if adjust_length == 0 or iter_count == 10:
+                        adjust_flag = True
+                    iter_count += 1
+                text[';'.join([str(key), f'[0-{adjusted_length}]'])] = ' '.join(value[0: adjusted_length])
+
+            elif options['text_mode'] == 'length_and_step':
                 cur_step = 0
                 stop_flag = False
                 while not stop_flag:
-                    text[';'.join([str(key), f'[{cur_step}-{cur_step + length}]'])] = ' '.join(
-                        value.split(' ')[cur_step: cur_step + length])
-                    cur_step += options['step']
-                    if cur_step + options['length'] > max_length:
+                    adjusted_length = options['length']
+                    if cur_step + options['length'] < len(value):
+                        iter_count = 0
+                        adjust_flag = False
+                        while not adjust_flag:
+                            adjust_length = options['length'] - len(
+                                text_to_word_sequence(' '.join(value[cur_step: cur_step + adjusted_length]),
+                                                      options['filters'], lower=False))
+                            adjusted_length += adjust_length
+                            if adjust_length == 0 or iter_count == 10:
+                                adjust_flag = True
+                            iter_count += 1
+                    else:
                         stop_flag = True
+                    text[';'.join([str(key), f'[{cur_step}-{cur_step + adjusted_length}]'])] = ' '.join(
+                        value[cur_step: cur_step + adjusted_length])
+                    cur_step += options['step'] + (adjusted_length - options['length'])
 
         instructions = {'instructions': text,
                         'parameters': {**options,
@@ -1335,7 +1356,7 @@ class CreateArray(object):
     def preprocess_text(text: str, **options) -> np.ndarray:
 
         array = []
-        text = text.split(' ')
+        text = text_to_word_sequence(text, filters=options['filters'], lower=False, split=' ')
         words_to_add = []
 
         if options['prepare_method'] == LayerPrepareMethodChoice.embedding:
@@ -1356,6 +1377,8 @@ class CreateArray(object):
                 words_to_add = [[0 for _ in range(options['word_to_vec_size'])] for _ in
                                 range((options['length']) - len(array))]
             array += words_to_add
+        elif len(array) > options['length']:
+            array = array[:options['length']]
 
         array = np.array(array)
 

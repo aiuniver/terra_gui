@@ -102,7 +102,8 @@ class CreateDataset(object):
         self.outputs = self.create_output_parameters(creation_data=creation_data)
         self.service = self.create_service_parameters(creation_data=creation_data)
 
-        if not creation_data.outputs[0].type in [LayerOutputTypeChoice.Speech2Text, LayerOutputTypeChoice.Text2Speech]:
+        if not creation_data.outputs[0].type in [LayerOutputTypeChoice.Speech2Text, LayerOutputTypeChoice.Text2Speech,
+                                                 LayerOutputTypeChoice.Tracker]:
             self.create_dataset_arrays(put_data=self.instructions.inputs)
             if not creation_data.outputs[0].type in [LayerOutputTypeChoice.GAN, LayerOutputTypeChoice.CGAN]:
                 self.create_dataset_arrays(put_data=self.instructions.outputs)
@@ -591,10 +592,12 @@ class CreateDataset(object):
                 build_dataframe[key] = value.instructions
         try:
             dataframe = pd.DataFrame(build_dataframe)
+            # print(dataframe)
         except Exception:
+            message = 'Ошибка создания датасета. Несоответствие количества входных/выходных данных'
             progress.pool(self.progress_name,
-                          error='Ошибка создания датасета. Несоответствие количества входных/выходных данных')
-            self.logger.exception('Ошибка создания датасета. Несоответствие количества входных/выходных данных')
+                          error=message)
+            self.logger.exception(message)
             raise
         for key, value in split_sequence.items():
             self.dataframe[key] = dataframe.loc[value, :].reset_index(drop=True)
