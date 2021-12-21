@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from typing import Union, Tuple
 from encodings.aliases import aliases as encodings_aliases
 
+from .exceptions.base import TerraBaseException, NotDescribedException
 from .settings import TMP_DIR
 
 
@@ -87,3 +88,10 @@ def get_tempfile(create: bool = True) -> Path:
     if create:
         path_file.touch()
     return path_file
+
+
+def check_error(error_in: Exception, error_target: str, error_method: str) -> Exception:
+    if issubclass(error_in.__class__, TerraBaseException):
+        return error_in
+    else:
+        return NotDescribedException(error_target, error_method).with_traceback(error_in.__traceback__)

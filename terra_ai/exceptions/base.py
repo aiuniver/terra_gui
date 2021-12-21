@@ -5,6 +5,10 @@ from terra_ai.settings import LANGUAGE
 
 class Messages(dict, Enum):
     Unknown = {"ru": "%s", "eng": "%s"}
+    NotDescribed = {
+        "ru": "Еще не описанная ошибка. Класс `%s`, метод `%s`.",
+        "eng": "An error not yet described. `%s` class, `%s` method.",
+    }
 
 
 class TerraBaseException(Exception):
@@ -21,3 +25,11 @@ class TerraBaseException(Exception):
                 pass
 
         super().__init__(error_msg)
+
+
+class NotDescribedException(TerraBaseException):
+    class Meta:
+        message: dict = Messages.NotDescribed
+
+    def __init__(self, __module: str, __method: str, **kwargs):
+        super().__init__(str(__module), str(__method), **kwargs)
