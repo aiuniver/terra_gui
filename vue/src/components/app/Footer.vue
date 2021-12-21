@@ -48,6 +48,12 @@ export default {
     text: '',
     key: 0,
     msgList: [],
+    type: {
+      info: 'Успешно',
+      warning: 'Внимание',
+      error: 'Ошибка',
+      critical: 'Опасно',
+    },
   }),
   computed: {
     ...mapGetters({
@@ -57,7 +63,7 @@ export default {
       project: 'projects/getProject',
       progressMessage: 'messages/getProgressMessage',
       error: 'logging/getError',
-      warning: 'logging/getWarning',
+      logs: 'logging/getLogs',
       errors: 'logging/getErrors',
     }),
     protsessor() {
@@ -87,31 +93,22 @@ export default {
   },
   watch: {
     error(value) {
-      if (value) {
-        this.dialogError = true;
-      }
-      if (!value) return;
-      // this.msgList.push({ msg: value.title, color: 'error' });
-      // setTimeout(
-      //   () => {
-      //     this.msgList.shift();
-      //     this.key++;
-      //   },
-      //   this.msgList.length > 1 ? 1000 : 5000
-      // );
+      if (value) this.dialogError = true;
     },
-    warning(arr) {
-      if (arr.lenght) {
-        arr.forEach(({ title, message }) => {
-          this.$Notify.warning({ title, message });
+    logs(arr) {
+      if (arr.length) {
+        arr.forEach(({ type = '', title = '', message = '', duration = 5000 }) => {
+          if (type && title) {
+            setTimeout(() => {
+              this.$Notify({ type, title, message, duration });
+            }, 100);
+          }
         });
       }
     },
     message(value) {
-      console.log(value);
       if (value)
         this.$Notify({ type: this.color, title: this.color === 'success' ? 'Успешно' : 'Ошибка', message: value });
-      // if(value) this.$Notify({ type: this.color, title: 'Успешно', message: value });
     },
   },
 };

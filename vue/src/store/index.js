@@ -35,10 +35,10 @@ export default {
       try {
         const { data: res } = await axios({ method, url: '/api/v1' + url, data });
         if (res) {
-          const { error, warning } = res;
+          const { error, logs } = res;
           // if (success) dispatch('messages/setMessage', '');
           if (error) dispatch('logging/setError', error);
-          if (warning) dispatch('logging/setWarning', warning);
+          if (logs && logs.length) dispatch('logging/setLogs', logs);
         }
         return res;
       } catch (error) {

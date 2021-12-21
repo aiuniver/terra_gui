@@ -6,7 +6,8 @@ from terra_ai.datasets.utils import PATH_TYPE_LIST, get_od_names
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preprocessing import CreatePreprocessing
 from terra_ai.data.training.extra import ArchitectureChoice
-from terra_ai.data.datasets.creation import CreationData, CreationInputsList, CreationOutputsList
+from terra_ai.data.datasets.creation import CreationData, CreationInputsList, CreationOutputsList, \
+    ColumnsProcessingData, CreationOutputData, CreationInputData
 from terra_ai.data.datasets.dataset import DatasetData, DatasetInputsData, DatasetOutputsData, DatasetPathsData
 from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice, \
     LayerPrepareMethodChoice, LayerScalerImageChoice, ColumnProcessingTypeChoice, \
@@ -43,7 +44,7 @@ class CreateDataset(object):
     progress_name = 'create_dataset'
 
     formatter = logging.Formatter('%(levelname)s:%(asctime)s:%(name)s:%(message)s')
-    # file_handler = logging.FileHandler('employee.log')
+    # file_handler = logging.FileHandler('dataset.log')
     # file_handler.setFormatter(formatter)
     # file_handler.setLevel(logging.ERROR)
 
@@ -65,11 +66,10 @@ class CreateDataset(object):
         try:
             creation_data = self.preprocess_creation_data(cr_data)
         except Exception:
+            self.logger.error('Ошибка выбора параметров создания датасета')
             progress.pool(self.progress_name,
                           error='Ошибка выбора параметров создания датасета')
-            self.logger.error('Ошибка выбора параметров создания датасета')
             raise
-
         self.temp_directory = tempfile.mkdtemp()
         os.makedirs(Path(self.temp_directory, f'{creation_data.alias}.{DATASET_EXT}'), exist_ok=True)
         self.paths = DatasetPathsData(basepath=Path(self.temp_directory, f'{creation_data.alias}.{DATASET_EXT}'))
@@ -98,21 +98,23 @@ class CreateDataset(object):
         self.fit_preprocessing(put_data=self.instructions.outputs)
         self.create_table(creation_data=creation_data)
 
-        # if not creation_data.use_generator:
-        self.create_dataset_arrays(put_data=self.instructions.inputs)
-        self.create_dataset_arrays(put_data=self.instructions.outputs)
-
         self.inputs = self.create_input_parameters(creation_data=creation_data)
         self.outputs = self.create_output_parameters(creation_data=creation_data)
         self.service = self.create_service_parameters(creation_data=creation_data)
+
+        if not creation_data.outputs[0].type in [LayerOutputTypeChoice.Speech2Text, LayerOutputTypeChoice.Text2Speech]:
+            self.create_dataset_arrays(put_data=self.instructions.inputs)
+            if not creation_data.outputs[0].type in [LayerOutputTypeChoice.GAN, LayerOutputTypeChoice.CGAN]:
+                self.create_dataset_arrays(put_data=self.instructions.outputs)
+
+        self.write_preprocesses_to_files()
+        self.write_instructions_to_files()
 
         progress.pool(self.progress_name,
                       message='Сохранение датасета',
                       percent=100
                       )
 
-        self.write_preprocesses_to_files()
-        self.write_instructions_to_files()
         self.zip_dataset(self.paths.basepath, os.path.join(self.temp_directory, 'dataset'))
         shutil.move(os.path.join(self.temp_directory, 'dataset.zip'), self.paths.basepath)
         for key, value in self.paths.__dict__.items():
@@ -163,8 +165,28 @@ class CreateDataset(object):
     @staticmethod
     def preprocess_creation_data(creation_data):
 
+        for inp in range(len(creation_data.inputs)):
+            for worker_name, worker_params in creation_data.columns_processing.items():
+                if creation_data.columns_processing[worker_name].type == 'Image':
+                    shape = (worker_params.parameters.height, worker_params.parameters.width, 3)
+                elif creation_data.columns_processing[worker_name].type == 'GAN':
+                    new_worker_id = int(list(creation_data.columns_processing.keys())[-1]) + 1
+                    creation_data.columns_processing[str(new_worker_id)] = ColumnsProcessingData(
+                        **{"type": "Noise", "parameters": {'shape': (100,)}})
+                    output_copy = creation_data.outputs[0]
+                    creation_data.inputs.append(CreationInputData(
+                        **{'id': creation_data.inputs[-1].id + 1,
+                           'name': 'Шум',
+                           'type': LayerOutputTypeChoice.Dataframe,
+                           'parameters': {
+                               'cols_names': {list(output_copy.parameters.cols_names.keys())[0]: [new_worker_id]},
+                               'sources_paths': output_copy.parameters.sources_paths}})
+                    )
+                    break
+
         for out in creation_data.outputs:
-            if out.type in [LayerOutputTypeChoice.Classification, LayerOutputTypeChoice.Tracker]:
+            if out.type in [LayerOutputTypeChoice.Classification, LayerOutputTypeChoice.Tracker,
+                            LayerOutputTypeChoice.Speech2Text, LayerOutputTypeChoice.Text2Speech]:
                 if not out.parameters.sources_paths or not out.parameters.sources_paths[0].suffix == '.csv':
                     for inp in creation_data.inputs:
                         if inp.type in [LayerInputTypeChoice.Image, LayerInputTypeChoice.Text,
@@ -219,6 +241,25 @@ class CreateDataset(object):
                                 creation_data.columns_processing[worker_name].parameters.depth
                             creation_data.columns_processing[w_name].parameters.step = \
                                 creation_data.columns_processing[worker_name].parameters.step
+                elif creation_data.columns_processing[worker_name].type in [LayerOutputTypeChoice.GAN,
+                                                                            LayerOutputTypeChoice.CGAN]:
+                    new_worker_id = int(list(creation_data.columns_processing.keys())[-1]) + 1
+                    creation_data.columns_processing[worker_name] = ColumnsProcessingData(
+                        **{"type": "Generator", "parameters": {'shape': shape}})
+                    creation_data.columns_processing[str(new_worker_id)] = ColumnsProcessingData(
+                        **{"type": "Discriminator", "parameters": {'shape': (1,)}})
+                    creation_data.outputs[0].id = creation_data.inputs[-1].id + 1
+                    creation_data.outputs[0].name = 'Генератор'
+                    output_copy = creation_data.outputs[0]
+                    creation_data.outputs.append(CreationOutputData(
+                        **{'id': creation_data.outputs[-1].id + 1,
+                           'name': 'Дискриминатор',
+                           'type': LayerOutputTypeChoice.Dataframe,
+                           'parameters': {'cols_names': {
+                               list(output_copy.parameters.cols_names.keys())[0]: [new_worker_id]},
+                                          'sources_paths': output_copy.parameters.sources_paths}})
+                    )
+                    break
 
         return creation_data
 
@@ -234,15 +275,35 @@ class CreateDataset(object):
                 if out.type == LayerOutputTypeChoice.Classification and self.y_cls:
                     for col_name, data in outputs[out.id].items():
                         data.instructions = self.y_cls
-                elif out.type == LayerOutputTypeChoice.Tracker and self.y_cls:
+                elif out.type in [LayerOutputTypeChoice.Tracker, LayerOutputTypeChoice.Text2Speech,
+                                  LayerOutputTypeChoice.Speech2Text] and self.y_cls:
                     for col_name, data in outputs[out.id].items():
-                        data.instructions = [0 for x in self.y_cls]
+                        data.instructions = ['no_data' for _ in self.y_cls]
 
         instructions = DatasetInstructionsData(inputs=inputs, outputs=outputs)
 
         return instructions
 
     def create_dataframe_put_instructions(self, data: Union[CreationInputsList, CreationOutputsList]):
+
+        def instructions(item, cur_put, proc_worker):
+            try:
+                instr = getattr(CreateArray(),
+                                f'instructions_{decamelize(self.columns_processing[str(proc_worker)].type)}')(
+                    [item], **{'cols_names': f'{put.id}_{name}', 'put': put.id},
+                    **self.columns_processing[str(proc_worker)].parameters.native())
+                cut_data = getattr(CreateArray(),
+                                   f"cut_{decamelize(self.columns_processing[str(proc_worker)].type)}")(
+                    instr['instructions'],
+                    self.paths.sources.joinpath(f"{cur_put.id}_", f"{decamelize(cur_put.type)}"),
+                    **instr['parameters']
+                )
+            except Exception:
+                progress.pool(self.progress_name, error='Ошибка создания инструкций')
+                self.logger.exception('Ошибка создания инструкций')
+                raise
+
+            return cut_data
 
         put_parameters = {}
 
@@ -252,8 +313,8 @@ class CreateDataset(object):
                 df = pd.read_csv(put.parameters.sources_paths[0], nrows=0, sep=None,
                                  engine='python', encoding=enc).columns
             except Exception:
-                progress.pool(self.progress_name, error='Ошибка чтения csv-файла')
                 self.logger.exception('Ошибка чтения csv-файла')
+                progress.pool(self.progress_name, error='Ошибка чтения csv-файла')
                 raise
             output_cols = list(put.parameters.cols_names.keys())
             cols_names_dict = {str_idx: df[int(str_idx)] for str_idx in output_cols}
@@ -274,27 +335,30 @@ class CreateDataset(object):
                         for worker in put.parameters.cols_names[name_index]:  # На будущее после 1 октября - очень аккуратно!
                             self.tags[put.id][f'{put.id}_{name}'] = decamelize(self.columns_processing[str(worker)].type)
                             if decamelize(self.columns_processing[str(worker)].type) in PATH_TYPE_LIST:
-                                list_of_data = [os.path.join(self.source_path, x) for x in list_of_data]
-                            instr = getattr(CreateArray(),
-                                            f'instructions_{decamelize(self.columns_processing[str(worker)].type)}')(
-                                list_of_data, **{'cols_names': f'{put.id}_{name}', 'put': put.id},
-                                **self.columns_processing[str(worker)].parameters.native())
-                            if decamelize(self.columns_processing[str(worker)].type) in PATH_TYPE_LIST:
-                                data_to_cut = [os.path.join(self.source_path, elem) for elem in instr['instructions']]
-                            else:
-                                data_to_cut = instr['instructions']
-                            instructions_data = InstructionsData(
-                                **getattr(CreateArray(),
-                                          f"cut_{decamelize(self.columns_processing[str(worker)].type)}")(
-                                    data_to_cut, os.path.join(self.paths.sources, f'{put.id}_{name}'),
-                                    **instr['parameters']))
-                            if decamelize(self.columns_processing[str(worker)].type) in PATH_TYPE_LIST:
-                                instructions_data.instructions = [path.replace(str(self.paths.basepath) + os.path.sep, '')
-                                                                  for path in instructions_data.instructions]
-
-                            instructions_data.parameters = {'put_type': decamelize(self.columns_processing[
-                                                                                       str(worker)].type),
-                                                            **instr['parameters']}
+                                # list_of_data = [os.path.join(self.source_path, x) for x in list_of_data]
+                                list_of_data = [Path(self.source_path).joinpath(Path(x)) for x in list_of_data]
+                            results_list = []
+                            with concurrent.futures.ThreadPoolExecutor() as executor:
+                                results = executor.map(instructions, list_of_data, repeat(put), repeat(worker))
+                                progress.pool(self.progress_name,
+                                              message=f'Обработка колонки {name}')
+                                for i, result in enumerate(results):
+                                    progress.pool(self.progress_name, percent=ceil(i / len(list_of_data) * 100))
+                                    if decamelize(self.columns_processing[str(worker)].type) in PATH_TYPE_LIST:
+                                        new_paths = [path.replace(str(self.paths.basepath) + os.path.sep, '')
+                                                     for path in result['instructions']]
+                                        result['instructions'] = new_paths
+                                    results_list += result['instructions']
+                            result['parameters'].update([('put_type', decamelize(self.columns_processing[str(worker)].type))])
+                            instructions_data = InstructionsData(instructions=results_list,
+                                                                 parameters=result['parameters'])
+                            if instructions_data.parameters['put_type'] == 'classification':
+                                list_of_classes = []
+                                for x in list_of_data:
+                                    if x not in list_of_classes:
+                                        list_of_classes.append(x)
+                                instructions_data.parameters['classes_names'] = list_of_classes
+                                instructions_data.parameters['num_classes'] = len(list_of_classes)
                     except Exception:
                         progress.pool(self.progress_name, error='Ошибка создания инструкций')
                         self.logger.exception('Ошибка создания инструкций')
@@ -407,7 +471,8 @@ class CreateDataset(object):
                                             LayerOutputTypeChoice.TextSegmentation,
                                             LayerOutputTypeChoice.ObjectDetection, LayerOutputTypeChoice.Timeseries,
                                             LayerOutputTypeChoice.TimeseriesTrend, LayerOutputTypeChoice.Regression,
-                                            LayerOutputTypeChoice.Tracker]:
+                                            LayerOutputTypeChoice.Tracker, LayerOutputTypeChoice.Speech2Text,
+                                            LayerOutputTypeChoice.Text2Speech]:
                             y_classes = result[1] if len(result) > 1 else [os.path.basename(os.path.dirname(dir_name))
                                                                            for dir_name in result[0]['instructions']]
                             self.y_cls += y_classes
@@ -528,8 +593,8 @@ class CreateDataset(object):
             dataframe = pd.DataFrame(build_dataframe)
         except Exception:
             progress.pool(self.progress_name,
-                          error='Ошибка создания датасета. Нессответствие количества входных/выходных данных')
-            self.logger.exception('Ошибка создания датасета. Нессответствие количества входных/выходных данных')
+                          error='Ошибка создания датасета. Несоответствие количества входных/выходных данных')
+            self.logger.exception('Ошибка создания датасета. Несоответствие количества входных/выходных данных')
             raise
         for key, value in split_sequence.items():
             self.dataframe[key] = dataframe.loc[value, :].reset_index(drop=True)
@@ -698,12 +763,13 @@ class CreateDataset(object):
                                             ('orig_y', tmp_im.height)])
                 else:
                     data_to_pass = data.instructions[0]
-                arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(data_to_pass, **data.parameters,
-                                                                                   **{'preprocess': prep})
+                array = np.array([1])
+                if not self.tags[key][col_name] in ['discriminator', 'generator']:
+                    arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(data_to_pass, **data.parameters,
+                                                                                       **{'preprocess': prep})
 
-                array = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(arr['instructions'],
-                                                                                         **arr['parameters'])
-
+                    array = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(arr['instructions'],
+                                                                                             **arr['parameters'])
                 if isinstance(array, list):  # Условие для ObjectDetection
                     output_array = [arr for arr in array]
                 elif isinstance(array, tuple):
@@ -926,45 +992,46 @@ class CreateDataset(object):
                     tmp_data = []
                     tmp_parameter_data = []
                     for col_name, data in put_data[key].items():
-                        parameters_to_pass = data.parameters.copy()
-                        if self.preprocessing.preprocessing.get(key) and \
-                                self.preprocessing.preprocessing.get(key).get(col_name):
-                            prep = self.preprocessing.preprocessing.get(key).get(col_name)
-                            parameters_to_pass.update([('preprocess', prep)])
+                        if not data.parameters['put_type'] in ['noise', 'discriminator', 'generator']:
+                            parameters_to_pass = data.parameters.copy()
+                            if self.preprocessing.preprocessing.get(key) and \
+                                    self.preprocessing.preprocessing.get(key).get(col_name):
+                                prep = self.preprocessing.preprocessing.get(key).get(col_name)
+                                parameters_to_pass.update([('preprocess', prep)])
 
-                        if self.tags[key][col_name] in PATH_TYPE_LIST:
-                            tmp_data.append(os.path.join(self.paths.basepath,
-                                                         self.dataframe[split].loc[i, col_name]))
-                        elif 'depth' in data.parameters.keys() and data.parameters['depth']:
-                            if 'trend' in data.parameters.keys() and data.parameters['trend']:
-                                tmp_data.append([self.dataframe[split].loc[i, col_name],
-                                                 self.dataframe[split].loc[i + data.parameters['length'],
-                                                                           col_name]])
-                            elif 'trend' in data.parameters.keys():
-                                tmp_data.append(
-                                    self.dataframe[split].loc[i + data.parameters['length']:i +
-                                                                                            data.parameters['length']
-                                                                                            + data.parameters[
-                                                                                                'depth'] - 1, col_name])
+                            if self.tags[key][col_name] in PATH_TYPE_LIST:
+                                tmp_data.append(os.path.join(self.paths.basepath,
+                                                             self.dataframe[split].loc[i, col_name]))
+                            elif 'depth' in data.parameters.keys() and data.parameters['depth']:
+                                if 'trend' in data.parameters.keys() and data.parameters['trend']:
+                                    tmp_data.append([self.dataframe[split].loc[i, col_name],
+                                                     self.dataframe[split].loc[i + data.parameters['length'],
+                                                                               col_name]])
+                                elif 'trend' in data.parameters.keys():
+                                    tmp_data.append(
+                                        self.dataframe[split].loc[i + data.parameters['length']:i +
+                                                                                                data.parameters['length']
+                                                                                                + data.parameters[
+                                                                                                    'depth'] - 1, col_name])
+                                else:
+                                    tmp_data.append(self.dataframe[split].loc[i:i + data.parameters['length'] - 1,
+                                                    col_name])
+
+                            elif self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
+                                # if self.augmentation[split]['1_image']:
+                                #     tmp_data.append(self.augmentation[split]['1_image'][i])
+                                # else:
+                                tmp_data.append(self.dataframe[split].loc[i, col_name])
+                                tmp_im = Image.open(os.path.join(self.paths.basepath,
+                                                                 self.dataframe[split].iloc[i, 0]))
+                                parameters_to_pass.update([('orig_x', tmp_im.width),
+                                                           ('orig_y', tmp_im.height)])
                             else:
-                                tmp_data.append(self.dataframe[split].loc[i:i + data.parameters['length'] - 1,
-                                                col_name])
-
-                        elif self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
-                            # if self.augmentation[split]['1_image']:
-                            #     tmp_data.append(self.augmentation[split]['1_image'][i])
-                            # else:
-                            tmp_data.append(self.dataframe[split].loc[i, col_name])
-                            tmp_im = Image.open(os.path.join(self.paths.basepath,
-                                                             self.dataframe[split].iloc[i, 0]))
-                            parameters_to_pass.update([('orig_x', tmp_im.width),
-                                                       ('orig_y', tmp_im.height)])
-                        else:
-                            tmp_data.append(self.dataframe[split].loc[i, col_name])
-                        # if self.tags[key][col_name] == decamelize(LayerInputTypeChoice.Image) and\
-                        #         '2_object_detection' in self.dataframe[split].columns:
-                        #     parameters_to_pass.update([('augm_data', self.dataframe[split].loc[i, '2_object_detection'])])
-                        tmp_parameter_data.append(parameters_to_pass)
+                                tmp_data.append(self.dataframe[split].loc[i, col_name])
+                            # if self.tags[key][col_name] == decamelize(LayerInputTypeChoice.Image) and\
+                            #         '2_object_detection' in self.dataframe[split].columns:
+                            #     parameters_to_pass.update([('augm_data', self.dataframe[split].loc[i, '2_object_detection'])])
+                            tmp_parameter_data.append(parameters_to_pass)
                     data_to_pass.append(tmp_data)
                     dict_to_pass.append(tmp_parameter_data)
 
@@ -973,81 +1040,68 @@ class CreateDataset(object):
                               percent=0)
                 # if not self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
                 #     self.augmentation[split] = {col_name: []}
-                current_arrays: list = []
-                if self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
-                    for n in range(3):
-                        current_group = f'id_{key + n}'
-                        current_serv_group = f'id_{key + n}_service'
-                        if current_group not in list(hdf[split].keys()):
-                            hdf[split].create_group(current_group)
-                        if current_serv_group not in list(hdf[split].keys()):
-                            hdf[split].create_group(current_serv_group)
-                        globals()[f'current_arrays_{n}'] = []
-                        globals()[f'current_arrays_{n+3}'] = []
-                with concurrent.futures.ThreadPoolExecutor() as executor:
-                    results = executor.map(array_creation, data_to_pass, dict_to_pass)
-                    for i, result in enumerate(results):
-                        if psutil.virtual_memory()._asdict().get("percent") > 90:
-                            current_arrays = []
-                            raise Resource
-                        # if isinstance(result, tuple):
-                        #     augm_data = result[1]
-                        #     result = result[0]
-                        #     if not augm_data:
-                        #         augm_data = ''
-                        progress.pool(self.progress_name, percent=ceil(i / len(data_to_pass) * 100))
-
-                        if not self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
-                            if depth:
-                                if 'trend' in dict_to_pass[i][0].keys() and dict_to_pass[i][0]['trend']:
-                                    array = np.array(result)  # result[0]
-                                else:
-                                    array = self.postprocess_timeseries(result)
-                            else:
-                                array = np.concatenate(result, axis=0)
-                            if self.use_generator:
-                                hdf[f'{split}/id_{key}'].create_dataset(str(i), data=array)
-                            else:
-                                current_arrays.append(array)
-
-                            # if isinstance(augm_data, str):
-                            #     self.augmentation[split][col_name].append(augm_data)
-                        else:
-                            if self.use_generator:
-                                for n in range(3):
-                                    hdf[f'{split}/id_{key + n}'].create_dataset(str(i), data=result[0][n])
-                                    hdf[f'{split}/id_{key + n}_service'].create_dataset(str(i), data=result[0][n + 3])
-                            #     for n in range(3):
-                            #         joblib.dump(np.array(result[0][n]),
-                            #                     os.path.join(self.paths.arrays, split, f'{key+n}_{i}.gz'))
-                            #         joblib.dump(np.array(result[0][n + 3]),
-                            #                     os.path.join(self.paths.arrays, split, f'{key+n}_{i}_service.gz'))
-                            else:
-                                for n in range(6):
-                                    globals()[f'current_arrays_{n}'].append(result[0][n])
-
-                            # for n in range(3):
-                            #     hdf[f'id_{key + n}'].create_dataset(str(i), data=result[0][n])
-                            #     hdf[f'id_{key + n}_service'].create_dataset(str(i), data=result[0][n + 3])
-                        del result
-
-                if not self.use_generator:
+                if not self.tags[key][col_name] in ['noise', 'discriminator', 'generator']:
+                    current_arrays: list = []
                     if self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
                         for n in range(3):
-                            # os.makedirs(os.path.join(self.paths.arrays, split), exist_ok=True)
-                            joblib.dump(np.array(globals()[f'current_arrays_{n}']),
-                                        os.path.join(self.paths.arrays, split, f'{key + n}.gz'))
-                            joblib.dump(np.array(globals()[f'current_arrays_{n + 3}']),
-                                        os.path.join(self.paths.arrays, split, f'{key + n}_service.gz'))
-                            # print('СОХРАНЕНО ПО АДРЕСУ', os.path.join(self.paths.arrays, split, f'{key + n}.gz'))
-                            # print('СОХРАНЕНО ПО АДРЕСУ', os.path.join(self.paths.arrays, split, f'{key + n}_service.gz'))
-                            del globals()[f'current_arrays_{n}']
-                            del globals()[f'current_arrays_{n + 3}']
-                    else:
-                        # os.makedirs(os.path.join(self.paths.arrays, split), exist_ok=True)
-                        joblib.dump(np.array(current_arrays), os.path.join(self.paths.arrays, split, f'{key}.gz'))
-                        # print('СОХРАНЕНО ПО АДРЕСУ', os.path.join(self.paths.arrays, split, f'{key}.gz'))
-                        del current_arrays
+                            current_group = f'id_{key + n}'
+                            current_serv_group = f'id_{key + n}_service'
+                            if current_group not in list(hdf[split].keys()):
+                                hdf[split].create_group(current_group)
+                            if current_serv_group not in list(hdf[split].keys()):
+                                hdf[split].create_group(current_serv_group)
+                            globals()[f'current_arrays_{n}'] = []
+                            globals()[f'current_arrays_{n+3}'] = []
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        results = executor.map(array_creation, data_to_pass, dict_to_pass)
+                        for i, result in enumerate(results):
+                            if psutil.virtual_memory()._asdict().get("percent") > 90:
+                                current_arrays = []
+                                raise Resource
+                            # if isinstance(result, tuple):
+                            #     augm_data = result[1]
+                            #     result = result[0]
+                            #     if not augm_data:
+                            #         augm_data = ''
+                            progress.pool(self.progress_name, percent=ceil(i / len(data_to_pass) * 100))
+
+                            if not self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
+                                if depth:
+                                    if 'trend' in dict_to_pass[i][0].keys() and dict_to_pass[i][0]['trend']:
+                                        array = np.array(result)  # result[0]
+                                    else:
+                                        array = self.postprocess_timeseries(result)
+                                else:
+                                    array = np.concatenate(result, axis=0)
+                                if self.use_generator:
+                                    hdf[f'{split}/id_{key}'].create_dataset(str(i), data=array)
+                                else:
+                                    current_arrays.append(array)
+
+                                # if isinstance(augm_data, str):
+                                #     self.augmentation[split][col_name].append(augm_data)
+                            else:
+                                if self.use_generator:
+                                    for n in range(3):
+                                        hdf[f'{split}/id_{key + n}'].create_dataset(str(i), data=result[0][n])
+                                        hdf[f'{split}/id_{key + n}_service'].create_dataset(str(i), data=result[0][n + 3])
+                                else:
+                                    for n in range(6):
+                                        globals()[f'current_arrays_{n}'].append(result[0][n])
+                            del result
+
+                    if not self.use_generator:
+                        if self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
+                            for n in range(3):
+                                joblib.dump(np.array(globals()[f'current_arrays_{n}']),
+                                            os.path.join(self.paths.arrays, split, f'{key + n}.gz'))
+                                joblib.dump(np.array(globals()[f'current_arrays_{n + 3}']),
+                                            os.path.join(self.paths.arrays, split, f'{key + n}_service.gz'))
+                                del globals()[f'current_arrays_{n}']
+                                del globals()[f'current_arrays_{n + 3}']
+                        else:
+                            joblib.dump(np.array(current_arrays), os.path.join(self.paths.arrays, split, f'{key}.gz'))
+                            del current_arrays
             hdf.close()
 
     def write_instructions_to_files(self):
@@ -1117,6 +1171,7 @@ class CreateDataset(object):
                     inp_tasks.append(val['task'])
             else:
                 inp_tasks.append(val['task'])
+
         for key, val in self.outputs.items():
             if val['task'] == LayerOutputTypeChoice.Dataframe:
                 tmp = []
@@ -1140,6 +1195,16 @@ class CreateDataset(object):
         elif out_task_name == LayerOutputTypeChoice.ObjectDetection:
             architecture = ArchitectureChoice.__dict__[creation_data.outputs.get(2).parameters.model.title() +
                                                        creation_data.outputs.get(2).parameters.yolo.title()]
+        elif out_task_name == LayerOutputTypeChoice.Tracker:
+            architecture = ArchitectureChoice.Tracker
+        elif out_task_name == LayerOutputTypeChoice.Speech2Text:
+            architecture = ArchitectureChoice.Speech2Text
+        elif out_task_name == LayerOutputTypeChoice.Text2Speech:
+            architecture = ArchitectureChoice.Text2Speech
+        elif creation_data.outputs[0].type == LayerOutputTypeChoice.GAN:
+            architecture = ArchitectureChoice.GAN
+        elif creation_data.outputs[0].type == LayerOutputTypeChoice.CGAN:
+            architecture = ArchitectureChoice.CGAN
         else:
             architecture = ArchitectureChoice.Basic
 
@@ -1156,11 +1221,12 @@ class CreateDataset(object):
                 }
 
         for attr in ['inputs', 'outputs', 'columns', 'service']:
-            data[attr] = self.__dict__[attr]
+            if attr in self.__dict__.keys():
+                data[attr] = self.__dict__[attr]
 
         with open(os.path.join(self.paths.basepath, DATASET_CONFIG), 'w') as fp:
             json.dump(DatasetData(**data).native(), fp)
-        # print(DatasetData(**data).native())
+        self.logger.debug(DatasetData(**data).native())
 
         return data
 

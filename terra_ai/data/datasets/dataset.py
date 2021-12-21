@@ -1,4 +1,5 @@
 import os
+import re
 import json
 
 from pathlib import Path, PureWindowsPath
@@ -149,8 +150,8 @@ class DatasetData(AliasMixinData):
     use_generator: bool = False
     architecture: ArchitectureChoice = ArchitectureChoice.Basic
     tags: Optional[TagsList] = TagsList()
-    inputs: Dict[PositiveInt, DatasetInputsData] = {}
-    outputs: Dict[PositiveInt, DatasetOutputsData] = {}
+    inputs: Optional[Dict[PositiveInt, DatasetInputsData]] = {}
+    outputs: Optional[Dict[PositiveInt, DatasetOutputsData]] = {}
     service: Optional[Dict[PositiveInt, DatasetOutputsData]] = {}
     columns: Optional[Dict[PositiveInt, Dict[str, Any]]] = {}
 
@@ -168,14 +169,21 @@ class DatasetData(AliasMixinData):
 
     @property
     def training_available(self) -> bool:
-        return self.architecture != ArchitectureChoice.Tracker
+        return self.architecture not in (
+            ArchitectureChoice.Tracker,
+            ArchitectureChoice.Speech2Text,
+            ArchitectureChoice.Text2Speech,
+        )
 
     @property
     def sources(self) -> List[str]:
         out = []
         sources = read_csv(Path(self.path, "instructions", "tables", "val.csv"))
         for column in sources.columns:
-            _title = column.split("_")[-1].title()
+            match = re.findall(r"^([\d]+_)(.+)$", column)
+            if not match:
+                continue
+            _title = match[0][1].title()
             if _title in ["Image", "Text", "Audio", "Video"]:
                 out = sources[column].to_list()
                 if _title != "Text":

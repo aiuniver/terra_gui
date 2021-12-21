@@ -18,9 +18,10 @@ from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.training.extra import ArchitectureChoice
 from terra_ai.data.training.train import TrainingDetailsData
 from terra_ai.datasets.preparing import PrepareDataset
+from terra_ai.exceptions.base import TerraBaseException
 from terra_ai.exceptions.deploy import MethodNotImplementedException
 from terra_ai.exceptions.training import TooBigBatchSize, DatasetPrepareMissing, ModelSettingMissing, \
-    NoYoloParamsException
+    NoYoloParamsException, TrainingException
 from terra_ai.logging import logger
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.terra_models import BaseTerraModel, YoloTerraModel
@@ -253,10 +254,12 @@ class GUINN:
             self._set_training_params(dataset=dataset, params=training)
             self.model_fit(params=training, dataset=self.dataset, model=gui_model)
         except Exception as error:
-            exc = exception.ErrorInClassInMethodException(
-                GUINN.name, method_name, str(error)).with_traceback(error.__traceback__)
-            # logger.error(exc)
-            raise exc
+            if issubclass(error.__class__, TerraBaseException):
+                raise error
+            else:
+                raise TrainingException(
+                    self.__class__.__name__, method_name
+                ).with_traceback(error.__traceback__)
 
     def nn_cleaner(self, retrain: bool = False) -> None:
         method_name = 'nn_cleaner'

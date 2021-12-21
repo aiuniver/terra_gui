@@ -5,8 +5,8 @@ from .base import TerraBaseException
 
 class TrainingMessages(dict, Enum):
     Undefined = {
-        "ru": "Неопределенная ошибка обучения",
-        "eng": "Undefined error of training",
+        "ru": "Неизвестная ошибка обучения. Класс `%s`, метод `%s`.",
+        "eng": "Undefined error of training. `%s` class, `%s` method.",
     }
     TooBigBatchSize = {
         "ru": "batch_size `%s` не может быть больше чем размер тренировочной выборки `%s`",
@@ -95,8 +95,11 @@ class TrainingException(TerraBaseException):
     class Meta:
         message: dict = TrainingMessages.Undefined
 
+    def __init__(self, __module: str, __method: str, **kwargs):
+        super().__init__(str(__module), str(__method), **kwargs)
 
-class TooBigBatchSize(TrainingException):
+
+class TooBigBatchSize(TerraBaseException):
     class Meta:
         message = TrainingMessages.TooBigBatchSize
 
@@ -123,19 +126,13 @@ class NoCheckpointParameters(TrainingException):
     class Meta:
         message = TrainingMessages.NoCheckpointParameters
 
-    def __init__(self, __module: str, __method: str, **kwargs):
-        super().__init__(str(__module), str(__method), **kwargs)
-
 
 class NoCheckpointMetric(TrainingException):
     class Meta:
         message = TrainingMessages.NoCheckpointMetric
 
-    def __init__(self, __module: str, __method: str, **kwargs):
-        super().__init__(str(__module), str(__method), **kwargs)
 
-
-class NoImportantParameters(TrainingException):
+class NoImportantParameters(TerraBaseException):
     class Meta:
         message = TrainingMessages.NoImportantParameters
 
@@ -147,19 +144,13 @@ class PredictImpossible(TrainingException):
     class Meta:
         message = TrainingMessages.PredictImpossible
 
-    def __init__(self, __module: str, __method: str, **kwargs):
-        super().__init__(str(__module), str(__method), **kwargs)
-
 
 class StartNumBatchesMissing(TrainingException):
     class Meta:
         message = TrainingMessages.StartNumBatchesMissing
 
-    def __init__(self, __module: str, __method: str, **kwargs):
-        super().__init__(str(__module), str(__method), **kwargs)
 
-
-class BatchResultMissing(TrainingException):
+class BatchResultMissing(TerraBaseException):
     class Meta:
         message = TrainingMessages.BatchResultMissing
 
@@ -167,7 +158,7 @@ class BatchResultMissing(TrainingException):
         super().__init__(str(__butch_number), str(__module), str(__method), **kwargs)
 
 
-class HistoryUpdateMissing(TrainingException):
+class HistoryUpdateMissing(TerraBaseException):
     class Meta:
         message = TrainingMessages.HistoryUpdateMissing
 
@@ -175,7 +166,7 @@ class HistoryUpdateMissing(TrainingException):
         super().__init__(str(__epoch_number), str(__module), str(__method), **kwargs)
 
 
-class EpochResultMissing(TrainingException):
+class EpochResultMissing(TerraBaseException):
     class Meta:
         message = TrainingMessages.EpochResultMissing
 
@@ -187,37 +178,22 @@ class TrainingLogsSavingMissing(TrainingException):
     class Meta:
         message = TrainingMessages.TrainingLogsSavingMissing
 
-    def __init__(self, __module: str, __method: str, **kwargs):
-        super().__init__(str(__module), str(__method), **kwargs)
-
 
 class DatasetPrepareMissing(TrainingException):
     class Meta:
         message = TrainingMessages.DatasetPrepareMissing
-
-    def __init__(self, __module: str, __method: str, **kwargs):
-        super().__init__(str(__module), str(__method), **kwargs)
 
 
 class ModelSettingMissing(TrainingException):
     class Meta:
         message = TrainingMessages.ModelSettingMissing
 
-    def __init__(self, __module: str, __method: str, **kwargs):
-        super().__init__(str(__module), str(__method), **kwargs)
-
 
 class NoYoloParamsException(TrainingException):
     class Meta:
         message = TrainingMessages.NoYoloParams
 
-    def __init__(self, __module: str, __method: str, **kwargs):
-        super().__init__(str(__module), str(__method), **kwargs)
-
 
 class NoHistoryLogsException(TrainingException):
     class Meta:
         message = TrainingMessages.NoHistoryLogs
-
-    def __init__(self, __module: str, __method: str, **kwargs):
-        super().__init__(str(__module), str(__method), **kwargs)

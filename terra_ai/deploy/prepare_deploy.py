@@ -17,12 +17,14 @@ from .postprocessing import postprocess_results
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.exceptions.deploy import MethodNotImplementedException, DatasetCreateException, \
-    DatasetPrepareException, ModelCreateException, PredictionException, NoPredictException, PresetsException
+    DatasetPrepareException, ModelCreateException, PredictionException, NoPredictException, PresetsException, \
+    NoTrainedModelException
 from terra_ai.training import GUINN
 from terra_ai.training.terra_models import BaseTerraModel, YoloTerraModel
 from terra_ai.settings import DEPLOY_PATH
 from ..data.deploy.extra import DeployTypeChoice
 from ..exceptions.base import TerraBaseException
+from ..exceptions.training import TrainingException
 
 
 class DeployCreator:
@@ -34,6 +36,7 @@ class DeployCreator:
             presets_path = os.path.join(DEPLOY_PATH, "deploy_presets")
             print(model_path, presets_path, page)
             if page.get("type") == "model":
+                self._check_model_on_training(model_path=model_path)
                 if os.path.exists(DEPLOY_PATH):
                     shutil.rmtree(DEPLOY_PATH, ignore_errors=True)
                     os.makedirs(DEPLOY_PATH, exist_ok=True)
@@ -343,3 +346,13 @@ class DeployCreator:
 
         dataset["architecture"] = deploy_type
         return dataset
+
+    def _check_model_on_training(self, model_path):
+        method_name = "check on training"
+        if os.path.exists(os.path.join(model_path, "log.history")):
+            with open(os.path.join(model_path, "log.history"), "r", encoding="utf-8") as log_:
+                history_ = json.load(log_)
+                if len(history_.get("fit_log", {}).get("epochs", [])) == 0:
+                    raise NoTrainedModelException(self.__class__.__name__, method_name)
+        else:
+            raise NoTrainedModelException(self.__class__.__name__, method_name)

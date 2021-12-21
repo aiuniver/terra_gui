@@ -328,3 +328,33 @@ class ParametersTimeseriesData(ParametersBaseData, MinMaxScalerData):
             cls.__fields__["depth"].required = True
             cls.__fields__["scaler"].required = True
         return value
+
+
+class ParametersGANData(ParametersBaseData):
+
+    """
+    Обработчик типа задачи "GAN".
+    """
+
+    pass
+
+
+class ParametersCGANData(ParametersBaseData):
+
+    """
+    Обработчик типа задачи "CGAN".
+    """
+
+    pass
+
+
+class ParametersGeneratorData(ParametersBaseData):
+    shape: tuple
+
+
+class ParametersDiscriminatorData(ParametersBaseData):
+    shape: tuple
+
+
+class ParametersNoiseData(ParametersBaseData):
+    shape: tuple

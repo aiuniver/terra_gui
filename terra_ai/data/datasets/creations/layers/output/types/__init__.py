@@ -9,5 +9,7 @@ from . import (
     ObjectDetection,
     Regression,
     Timeseries,
-    Tracker
+    Tracker,
+    Text2Speech,
+    Speech2Text
 )

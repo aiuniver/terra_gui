@@ -7,8 +7,9 @@ import tensorflow
 from pathlib import Path
 from typing import Any, Dict, List
 
-from terra_ai.settings import DATASET_EXT, ASSETS_PATH, MODEL_EXT
 from terra_ai import exceptions as terra_ai_exceptions
+from terra_ai import progress as terra_ai_progress
+from terra_ai.settings import DATASET_EXT, ASSETS_PATH, MODEL_EXT, PROJECT_PATH
 from terra_ai.agent.exceptions import (
     CallMethodNotFoundException,
     MethodNotCallableException,
@@ -21,6 +22,7 @@ from terra_ai.data.datasets.dataset import (
     DatasetData,
     DatasetLoadData,
     CustomDatasetConfigData,
+    DatasetInfo,
 )
 from terra_ai.data.datasets.creation import (
     CreationData,
@@ -52,6 +54,7 @@ from terra_ai.datasets.loading import (
     source as dataset_source,
     choice as dataset_choice,
     multiload as dataset_multiload,
+    multiload_no_thread as dataset_multiload_no_thread,
 )
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training import training_obj
@@ -330,6 +333,7 @@ class Exchange:
         """
         return CascadeValidator().get_validate(cascade_data=cascade, training_path=path)
 
+    @terra_ai_progress.threading
     def _call_cascade_start(
         self,
         training_path: Path,
@@ -340,6 +344,7 @@ class Exchange:
         """
         Запуск каскада
         """
+        progress_name = "cascade_start"
         datasets = list(
             map(
                 lambda item: DatasetLoadData(path=datasets_path, **dict(item)),
@@ -368,7 +373,41 @@ class Exchange:
                             group=data.get("group"),
                         )
                     )
-        dataset_multiload("cascade_start", datasets, sources=sources)
+        dataset_multiload_no_thread(progress_name, datasets, sources=sources)
+        terra_ai_progress.pool(progress_name, finished=False)
+        progress_data = terra_ai_progress.pool(progress_name).data
+        sources_data = progress_data.get("kwargs", {}).get("sources", {})
+        dataset_sources = progress_data.get("datasets", [])
+        sources = {}
+        for block in cascade.blocks:
+            if block.group != BlockGroupChoice.InputData:
+                continue
+            source_data = sources_data.get(str(block.id))
+            if not source_data:
+                continue
+            datasets_source = list(
+                filter(
+                    lambda item: item.alias == source_data.get("alias")
+                    and item.group == source_data.get("group"),
+                    dataset_sources,
+                )
+            )
+            if not len(datasets_source):
+                continue
+            sources.update(
+                {
+                    block.id: DatasetInfo(
+                        alias=datasets_source[0].alias,
+                        group=datasets_source[0].group,
+                    ).dataset.sources
+                }
+            )
+        self(
+            "cascade_execute",
+            sources=sources,
+            cascade=cascade,
+            training_path=PROJECT_PATH.training,
+        )
 
     def _call_cascade_execute(
         self, sources: Dict[int, List[str]], cascade: CascadeDetailsData, training_path

@@ -29,6 +29,7 @@
   &__content {
     flex: 1;
     padding-right: 8px;
+    overflow: hidden;
   }
   &__title {
     color: $notification-text-color;

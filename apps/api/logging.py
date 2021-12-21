@@ -1,14 +1,17 @@
 import time
+import json
 import logging
 
 from enum import Enum
 from time import mktime
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from pydantic import BaseModel
 from pydantic.types import PositiveInt
 
 from django.utils.log import ServerFormatter
+
+from terra_ai.logging import FrontTypeMessage
 
 
 class LevelnameColor(str, Enum):
@@ -32,28 +35,33 @@ class LogData(BaseModel):
     time: Optional[PositiveInt]
     title: str
     message: Optional[str]
+    type: Optional[FrontTypeMessage]
 
     def __init__(self, **data):
         data["time"] = mktime(datetime.now().timetuple())
         super().__init__(**data)
 
 
-class TerraRequestCatcher:
-    _records: list = []
+class TerraLogsCatcher:
+    _logs: List[dict] = []
+    _pool: List[dict] = []
 
     @property
-    def record(self) -> list:
-        return self._records
+    def logs(self) -> List[dict]:
+        return self._logs
 
-    @record.setter
-    def record(self, record):
-        self._records.append(record)
+    @property
+    def pool(self) -> List[dict]:
+        _logs = self._pool
+        self._pool = []
+        self._logs = _logs + self._logs
+        return _logs
 
-    def clear(self):
-        self._records = []
+    def push(self, log: LogData):
+        self._pool.insert(0, json.loads(log.json(ensure_ascii=False)))
 
 
-catcher = TerraRequestCatcher()
+logs_catcher = TerraLogsCatcher()
 
 
 class TerraConsoleFormatter(ServerFormatter):
@@ -88,6 +96,16 @@ class TerraConsoleHandler(logging.Handler):
         print(self.format(record))
 
 
-class TerraRequestCatcherHandler(logging.Handler):
+class TerraLogsCatcherHandler(logging.Handler):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+
     def emit(self, record):
-        catcher.record = record
+        logs_catcher.push(
+            LogData(
+                level=record.levelname,
+                title=record.getMessage(),
+                message=str(record.exc_info[1]) if record.exc_info else None,
+                type=getattr(record, "type", None),
+            )
+        )

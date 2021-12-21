@@ -52,6 +52,11 @@ class DeployMessages(dict, Enum):
         "eng": "It is impossible to get demo results. `%s` class, `%s` method.",
     }
 
+    NoTrainedModelMissing = {
+        "ru": "Выбранная модель не обучена. Класс `%s`, метод `%s`.",
+        "eng": "The selected model is not trained. `%s` class, `%s` method.",
+    }
+
 
 class DeployException(TerraBaseException):
     class Meta:
@@ -122,6 +127,14 @@ class PostprocessException(DeployException):
 class PresetsException(DeployException):
     class Meta:
         message: dict = DeployMessages.PresetsMissing
+
+    def __init__(self, __method: str, __class: str, **kwargs):
+        super().__init__(str(__method), str(__class), **kwargs)
+
+
+class NoTrainedModelException(DeployException):
+    class Meta:
+        message: dict = DeployMessages.NoTrainedModelMissing
 
     def __init__(self, __method: str, __class: str, **kwargs):
         super().__init__(str(__method), str(__class), **kwargs)

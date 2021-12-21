@@ -27,19 +27,29 @@
 		:showConfirmButton="false"
 		:showCancelButton="false"
 		@on-cancel="buffer = ''"
+		:width="600"
 		>
 			<template v-slot:header><span class="modal-title">Инструкция по настройке сервера демо-панели</span></template>
-			<div class="ssh-wrapper">
-				<span class="ssh">Приватный SSH-ключ</span>
-				<i title="Скопировать" @click="copy('private')" class="btn-copy"></i>
-				<span class="clickable">Скачать</span>
-				<span v-show="buffer === 'private'" class="buffer">Ключ скопирован в буффер обмена</span>
+			<div :class="['server-state', `${selectedServer.state.name}`]">{{ selectedServer.state.value }}</div>
+			<div class="server-info">
+				<div v-for="(value, key) in selectedServer.info" class="server-info__item" :key="key">
+					<p class="label">{{ key }}</p>
+					<p class="value">{{ value }}</p>
+				</div>
 			</div>
 			<div class="ssh-wrapper">
-				<span class="ssh">Публичный  SSH-ключ</span>
-				<i title="Скопировать" @click="copy('public')" class="btn-copy"></i>
-				<span class="clickable">Скачать</span>
-				<span v-show="buffer === 'public'" class="buffer">Ключ скопирован в буффер обмена</span>
+				<div class="ssh-wrapper__item">
+					<span class="ssh">Приватный SSH-ключ</span>
+					<i title="Скопировать" @click="copy('private')" class="btn-copy"></i>
+					<a class="clickable" :href="privateURI" download="id_rsa">Скачать</a>
+					<span v-show="buffer === 'private'" class="buffer">Ключ скопирован в буффер обмена</span>
+				</div>
+				<div class="ssh-wrapper__item">
+					<span class="ssh">Публичный  SSH-ключ</span>
+					<i title="Скопировать" @click="copy('public')" class="btn-copy"></i>
+					<a class="clickable" :href="publicURI" download="id_rsa.pub">Скачать</a>
+					<span v-show="buffer === 'public'" class="buffer">Ключ скопирован в буффер обмена</span>
+				</div>
 			</div>
 			<hr>
 			<div class="instruction" v-html="instruction"></div>
@@ -71,7 +81,8 @@ export default {
 		fetchingServers: false,
 		buffer: '',
 		scrollLeft: 0,
-		scrollTop: 0
+		scrollTop: 0,
+		intervalID: null
 	}),
 	computed: {
 		...mapGetters({
@@ -82,13 +93,30 @@ export default {
 		},
 		getServer() {
 			return this.servers.find(server => server.id === this.serverID)
+		},
+		privateURI() {
+			return 'data:application/octet-stream;charset=utf-8,' + encodeURIComponent(this.private_key)
+		},
+		publicURI() {
+			return 'data:application/octet-stream;charset=utf-8,' + encodeURIComponent(this.public_key) 
+		},
+		selectedServer() {
+			const selected = this.$store.getters['servers/getServers'].find(server => server.id === this.serverID)
+			if (!selected) return { state: '' }
+			return {
+				info: {
+					'Доменное имя': selected.domain_name,
+					'Имя пользователя': selected.user,
+					'HTTP порт': selected.port_http,
+					'IP адерс': selected.ip_address,
+					'SSH порт': selected.port_ssh,
+					'HTTPS порт': selected.port_https
+				},
+				state: selected.state
+			}
 		}
 	},
 	methods: {
-		openManual(server) {
-			this.selectedServer = server
-			this.manualModal = true
-		},
 		copy(type) {
 			let key = type === 'private' ? this.private_key: this.public_key
 			const $el = document.createElement('input')
@@ -120,8 +148,14 @@ export default {
 	},
 	async created() {
 		this.fetchingServers = true
-    await this.$store.dispatch('servers/getServers')
+		await this.$store.dispatch('servers/getServers')
+		this.intervalID = setInterval(async () => {
+			await this.$store.dispatch('servers/getServers')
+		}, 60000)
 		this.fetchingServers = false
+		this.$router.afterEach(() => {
+			clearInterval(this.intervalID)
+		})
   }
 }
 </script>
@@ -192,6 +226,41 @@ export default {
 			background: #65B9F4;
 		}
 	}
+	.server-info {
+		display: flex;
+		justify-content: space-between;
+		flex-wrap: wrap;
+		gap: 20px;
+		margin-bottom: 20px;
+		&__item {
+			flex: 1 0 170px;
+			.label {
+				font-size: .75rem;
+				color: #a7bed3;
+				margin-bottom: 5px;
+			}
+			.value {
+				font-size: 1rem;
+				color: #fff;
+			}
+		}
+	}
+	.error {
+		color: #f00;
+	}
+	.idle {
+		color: #aaa;
+	}
+	.ready {
+		color: #0f0;
+	}
+	.waiting {
+		color: #ff0;
+	}
+	.server-state {
+		font-size: 1rem;
+		margin-bottom: 20px;
+	}
 }
 
 .btn-copy {
@@ -203,13 +272,17 @@ export default {
   background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjRweCIgZmlsbD0iI0E3QkVEMyI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0xNiAxSDRjLTEuMSAwLTIgLjktMiAydjE0aDJWM2gxMlYxem0zIDRIOGMtMS4xIDAtMiAuOS0yIDJ2MTRjMCAxLjEuOSAyIDIgMmgxMWMxLjEgMCAyLS45IDItMlY3YzAtMS4xLS45LTItMi0yem0wIDE2SDhWN2gxMXYxNHoiLz48L3N2Zz4=');
 }
 
-.ssh {
+.ssh-wrapper {
+	display: flex;
+	align-items: flex-start;
+	flex-wrap: wrap;
+	gap: 20px;
 	color: #A7BED3;
-	&-wrapper {
+	&__item {
+		flex: 1 0 250px;
 		display: flex;
-		align-items: center;
 		gap: 20px;
-		margin-bottom: 10px;
+		flex-wrap: wrap;
 	}
 }
 

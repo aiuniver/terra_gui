@@ -310,8 +310,9 @@ def choice(
     choice_no_thread(progress_name, dataset_choice, reset_model)
 
 
-@progress.threading
-def multiload(progress_name: str, datasets_load_data: List[DatasetLoadData], **kwargs):
+def multiload_no_thread(
+    progress_name: str, datasets_load_data: List[DatasetLoadData], **kwargs
+):
     progress.pool.reset(progress_name, finished=False)
     for dataset_choice in datasets_load_data:
         _method = getattr(
@@ -345,3 +346,8 @@ def multiload(progress_name: str, datasets_load_data: List[DatasetLoadData], **k
         message="",
         data={"datasets": datasets_load_data, "kwargs": kwargs},
     )
+
+
+@progress.threading
+def multiload(progress_name: str, datasets_load_data: List[DatasetLoadData], **kwargs):
+    multiload_no_thread(progress_name, datasets_load_data, **kwargs)

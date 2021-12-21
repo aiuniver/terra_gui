@@ -193,12 +193,12 @@ class BaseTerraModel:
             train_data_idxs = np.arange(self.train_length).tolist()
             self.callback.on_train_begin()
             for epoch in range(current_epoch, end_epoch):
-                logger.info(f"Эпоха {epoch+1}", extra={"front_level": "info"})
+                logger.info(f"Эпоха {epoch+1}")
                 self.callback.on_epoch_begin()
                 train_steps = 0
                 current_idx = 0
                 logger.info(f"Эпоха {epoch + 1}: обучение на тренировочной выборке...",
-                            extra={"front_level": "info"})
+                            extra={"type": "info"})
                 for x_batch_train, y_batch_train in dataset.dataset.get('train').batch(params.base.batch):
                     logits, y_true = self.__train_step(
                         x_batch=x_batch_train, y_batch=y_batch_train,
@@ -212,9 +212,8 @@ class BaseTerraModel:
                     train_steps += 1
 
                     if interactive.urgent_predict:
-                        logger.info(f"Эпоха {epoch + 1}: urgent_predict", extra={"front_level": "info"})
-                        logger.info(f"Эпоха {epoch + 1}: обработка проверочной выборки...",
-                                    extra={"front_level": "info"})
+                        logger.info(f"Эпоха {epoch + 1}: urgent_predict")
+                        logger.info(f"Эпоха {epoch + 1}: обработка проверочной выборки...")
                         val_steps = 0
                         current_val_idx = 0
                         for x_batch_val, y_batch_val in dataset.dataset.get('val').batch(params.base.batch):
@@ -236,13 +235,13 @@ class BaseTerraModel:
                     if self.callback.stop_training:
                         break
 
-                logger.info(f"Эпоха {epoch + 1}: сохраниеиние весов текущей эпохи...", extra={"front_level": "info"})
+                logger.info(f"Эпоха {epoch + 1}: сохранение весов текущей эпохи...")
                 self.save_weights()
                 if self.callback.stop_training:
-                    logger.info(f"Эпоха {epoch + 1}: остановка обучения", extra={"front_level": "success"})
+                    logger.info(f"Эпоха {epoch + 1}: остановка обучения", extra={"type": "info"})
                     break
 
-                logger.info(f"Эпоха {epoch + 1}: обработка проверочной выборки...", extra={"front_level": "info"})
+                logger.info(f"Эпоха {epoch + 1}: обработка проверочной выборки...")
                 val_steps = 0
                 current_val_idx = 0
                 for x_batch_val, y_batch_val in dataset.dataset.get('val').batch(params.base.batch):
@@ -264,7 +263,7 @@ class BaseTerraModel:
 
                 if self.callback.is_best():
                     self.save_weights(path_=self.file_path_model_best_weights)
-                    logger.info("Веса лучшей эпохи успешно сохранены", extra={"front_level": "success"})
+                    logger.info("Веса лучшей эпохи успешно сохранены", extra={"type": "info"})
             self.callback.on_train_end()
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(

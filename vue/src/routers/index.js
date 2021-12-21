@@ -69,7 +69,7 @@ const router = new Router({
       name: 'Deploy',
       meta: { 
         title: 'Деплой',
-        access: false,
+        access: true,
         text: `Для перехода на страницу деплоя необходимо загрузить датасет.`, 
       },
       component: () => import('@/views/Deploy'),
