@@ -72,8 +72,10 @@ class GetAPIView(BaseAPIView):
 class SetupAPIView(ServersListMixinAPIView):
     @decorators.serialize_data(ServerSerializer)
     def post(self, request, serializer, **kwargs):
+        server = remote_request("/server/setup/", serializer.validated_data)
+        server["state"] = {"name": server.get("state")}
         return BaseResponseSuccess(
-            remote_request("/server/setup/", serializer.validated_data)
+            json.loads(ServerData(**server).json(ensure_ascii=False))
         )
 
 
