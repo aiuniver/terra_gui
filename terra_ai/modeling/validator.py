@@ -51,7 +51,7 @@ class ModelValidator:
         self.num_models: int = 0
         self.model_idxs: list = []
         self.model_count: int = 1
-        # architecture = ArchitectureChoice.GAN
+        architecture = ArchitectureChoice.GAN
         self.architecture = architecture
         if architecture in GAN_ARCHITECTURE:
             self.model_count = 2
