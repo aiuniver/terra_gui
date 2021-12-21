@@ -46,7 +46,7 @@ export default {
   },
   methods: {
     async isTraining() {
-      this.dialogLoadModel = await this.$store.dispatch('dialogs/trining', { ctx: this, page: 'модели' });
+      this.dialogLoadModel = true// = await this.$store.dispatch('dialogs/trining', { ctx: this, page: 'модели' });
     },
     addBlock(type) {
       const position = this.$refs.container.getCenter();
