@@ -1,7 +1,7 @@
 <template>
   <div class="card">
     <div class="card__content">
-      <div v-if="type == 'ImageClassification'">
+      <div v-if="type == 'image_classification'">
         <div class="card__original">
           <ImgCard :imgUrl="card.source" />
         </div>
@@ -9,7 +9,7 @@
           <TextCard :style="{ width: '224px', height: '80px' }">{{ classificationResult }}</TextCard>
         </div>
       </div>
-      <div v-if="type == 'TextClassification'">
+      <div v-if="type == 'text_classification'">
         <div class="card__original">
           <TextCard :style="{ width: '600px', color: '#A7BED3', height: '324px' }">{{ card.source }}</TextCard>
         </div>
@@ -17,7 +17,7 @@
           <TextCard :style="{ width: '600px', height: '80px' }">{{ classificationResult }}</TextCard>
         </div>
       </div>
-      <div v-if="type == 'TextSegmentation'">
+      <div v-if="type == 'text_segmentation'">
         <div class="card__original segmentation__original" :style="{ height: '324px' }">
           <scrollbar :ops="ops">
             <TableTextSegmented
@@ -34,7 +34,7 @@
           <SegmentationTags :style="{ width: '600px', height: '50px' }" :tags="segmentationLayer" />
         </div>
       </div>
-      <div v-if="type == 'AudioClassification'">
+      <div v-if="type == 'audio_classification'">
         <div class="card__original">
           <AudioCard :value="card.source" />
         </div>
@@ -42,7 +42,7 @@
           <TextCard :style="{ width: '600px', height: '80px' }">{{ classificationResult }}</TextCard>
         </div>
       </div>
-      <div v-if="type == 'GoogleTTS'">
+      <div v-if="type == 'text_to_audio'">
         <div class="card__result">
           <TextCard :style="{ width: '600px', height: '80px' }">{{ card.source }}</TextCard>
         </div>
@@ -50,7 +50,7 @@
           <AudioCard :value="card.predict" />
         </div>
       </div>
-      <div v-if="['Wav2Vec', 'TinkoffAPI'].includes(type)">
+      <div v-if="type == 'audio_to_text'">
         <div class="card__original">
           <AudioCard :value="card.source" />
         </div>
@@ -59,7 +59,7 @@
         </div>
       </div>
 
-      <div v-if="type == 'ImageSegmentation'">
+      <div v-if="type == 'image_segmentation'">
         <div class="card__original">
           <ImgCard :imgUrl="card.source" />
         </div>
@@ -67,7 +67,7 @@
           <ImgCard :imgUrl="card.segment" />
         </div>
       </div>
-      <div v-if="type == 'VideoObjectDetection'">
+      <div v-if="type == 'video_object_detection'">
         <div class="card__original">
           <TableVideo :value="card.source" />
         </div>
@@ -75,7 +75,7 @@
           <TableVideo :value="card.predict" />
         </div>
       </div>
-      <div v-if="type == 'YoloV3' || type == 'YoloV4'">
+      <div v-if="type == 'object_detection'">
         <div class="card__original">
           <TableImage size="large" :value="card.source" />
         </div>
@@ -83,10 +83,10 @@
           <TableImage size="large" :value="card.predict" />
         </div>
       </div>
-      <div class="card__graphic" v-if="type == 'Timeseries'">
+      <div class="card__graphic" v-if="type == 'time_series'">
         <GraphicCard v-bind="card" :key="'graphic_' + index" />
       </div>
-      <div class="card__graphic" v-if="type == 'TimeseriesTrend'">
+      <div class="card__graphic" v-if="type == 'time_series_trend'">
         <div class="card__original">
           <GraphicCardPredict :data="card.predict" />
         </div>
@@ -102,8 +102,26 @@
     </div>
   </div>
 </template>
-
 <script>
+
+// ImageSegmentation = "image_segmentation"
+// ImageClassification = "image_classification"
+// TextSegmentation = "text_segmentation"
+// TextClassification = "text_classification"
+// AudioClassification = "audio_classification"
+// VideoClassification = "video_classification"
+// DataframeRegression = "table_data_regression"
+// DataframeClassification = "table_data_classification"
+// Timeseries = "time_series"
+// TimeseriesTrend = "time_series_trend"
+// VideoObjectDetection = "video_object_detection"
+// YoloV3 = "object_detection"
+// YoloV4 = "object_detection"
+// YoloV5 = "object_detection"
+// GoogleTTS = "text_to_audio"
+// Wav2Vec = "audio_to_text"
+// TinkoffAPI = "audio_to_text"
+    
 export default {
   name: 'IndexCard',
   components: {
