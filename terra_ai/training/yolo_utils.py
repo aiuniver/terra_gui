@@ -699,7 +699,7 @@ def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25
     method_name = 'get_mAP'
     tt1 = time.time()
     try:
-        # logger.info(f"Расчет метрики mAP...")
+        logger.info(f"Расчет метрики mAP50...", extra={"type": "info"})
         if TRAIN_CLASSES is None:
             TRAIN_CLASSES = []
         if iou_threshold is None:
@@ -741,8 +741,10 @@ def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25
 
             id_ground_truth[str(index)] = bounding_boxes
 
-        # for cls in NUM_CLASS:
-        #     if gt_counter_per_class.get(cls) is None:
+        for cls in NUM_CLASS:
+            if gt_counter_per_class.get(cls) is None:
+                logger.warning(f"Внимание! Класс {cls} не представлен в проверочной выборке!",
+                               extra={"type": "warning"})
         #         gt_counter_per_class[cls] = 1
         gt_classes = list(gt_counter_per_class.keys())
 
@@ -803,11 +805,11 @@ def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25
                         json_pred[gt_classes.index(class_name)].append(
                             {"confidence": str(score), "file_id": str(i_image), "bbox": str(bbox)})
                     except Exception as error:
-                        msg = f'module yolo_utils, {method_name}, json_pred[gt_classes.index(class_name)].append, ' \
-                           f'{error}'
-                        if msg not in warnings:
-                            logger.warning(msg, extra={"type": "warning"})
-                            warnings.append(msg)
+                        # msg = f'module yolo_utils, {method_name}, json_pred[gt_classes.index(class_name)].append, ' \
+                        #    f'{error}'
+                        # if msg not in warnings:
+                        #     logger.warning(msg)
+                        #     warnings.append(msg)
                         continue
             for class_name in gt_classes:
                 json_pred[gt_classes.index(class_name)].sort(key=lambda x: float(x['confidence']), reverse=True)
