@@ -65,6 +65,10 @@ class ArchitectureTrackerData(ArchitectureBasicData):
     pass
 
 
+class ArchitectureGANData(ArchitectureBasicData):
+    pass
+
+
 Architecture = Enum(
     "Architecture",
     dict(
