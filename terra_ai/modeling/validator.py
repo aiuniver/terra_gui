@@ -1244,6 +1244,7 @@ class ModelCreator:
                     input_tensors = []
                     for idx in terra_layer[3]:
                         input_tensors.append(self.tensors[idx])
+            # print('\nterra_layer', terra_layer)
             self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(**terra_layer[2])(input_tensors)
 
     def _tf_layer_init(self, terra_layer):

@@ -101,8 +101,6 @@ class InstanceNormalization(Layer):
         if (self.axis is not None) and (ndim == 2):
             raise ValueError('Cannot specify axis for rank 1 tensor')
 
-        self.input_spec = InputSpec(ndim=ndim)
-
         if self.axis is None:
             shape = (1,)
         else:
@@ -166,6 +164,9 @@ class InstanceNormalization(Layer):
     @classmethod
     def from_config(cls, config):
         return cls(**config)
+
+    def compute_output_shape(self, input_shape):
+        return input_shape
 
 
 class VAEBlock(Layer):
@@ -2043,10 +2044,11 @@ if __name__ == "__main__":
     #     aa, to_file='C:\PycharmProjects\\terra_gui\\test_example\\model.png', show_shapes=True, show_dtype=False,
     #     show_layer_names=True, rankdir='TB', expand_nested=False, dpi=96,
     #     layer_range=None, show_layer_activations=False)
-    x = PretrainedYOLO(num_classes=5)
+    x = InstanceNormalization()
     print(x.compute_output_shape(input_shape=(None, 416, 416, 3)))
 
-    input = tensorflow.keras.layers.Input(shape=(416, 416, 3))
-    x = PretrainedYOLO(num_classes=5)(input)
-    print(x)
+    input = tensorflow.keras.Input(shape=(416, 416, 3))
+    # print(input)
+    x = InstanceNormalization()(input)
+    print(x.shape)
     pass
