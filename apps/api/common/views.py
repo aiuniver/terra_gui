@@ -8,7 +8,9 @@ from apps.api.logging import logs_catcher
 
 class LogsAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        return BaseResponseSuccess(logs_catcher.logs)
+        return BaseResponseSuccess(
+            list(filter(lambda item: item.get("type") is not None, logs_catcher.logs))
+        )
 
 
 class ValidateDatasetModelAPIView(BaseAPIView):
