@@ -22,14 +22,14 @@
                   </div>
                   <div v-else class="board__data">
                     <Table
-                      v-if="type === 'DataframeRegression'"
+                      v-if="type === 'table_data_regression'"
                       v-bind="deploy"
                       :key="'#board-' + updateKey"
                       @reload="reload"
                       @reloadAll="reloadAll"
                     />
                     <TableClass
-                      v-if="type === 'DataframeClassification'"
+                      v-if="type === 'table_data_classification'"
                       v-bind="deploy"
                       :key="'#board-' + updateKey"
                       @reload="reload"
@@ -86,7 +86,7 @@ export default {
       userData: 'projects/getUser',
     }),
     isTable() {
-      return ['DataframeClassification', 'DataframeRegression'].includes(this.type);
+      return ['table_data_classification', 'table_data_regression'].includes(this.type);
     },
   },
   data: () => ({
