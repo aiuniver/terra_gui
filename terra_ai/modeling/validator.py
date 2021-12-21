@@ -51,7 +51,7 @@ class ModelValidator:
         self.num_models: int = 0
         self.model_idxs: list = []
         self.model_count: int = 1
-        architecture = ArchitectureChoice.GAN
+        # architecture = ArchitectureChoice.GAN
         self.architecture = architecture
         if architecture in GAN_ARCHITECTURE:
             self.model_count = 2
@@ -550,7 +550,7 @@ class ModelValidator:
 
     def _plan_separation(self):
         if len(self.model_idxs) == 1:
-            self.separated_plans = self.model_plan
+            self.separated_plans = [self.model_plan]
         else:
             for plan_idxs in self.model_idxs:
                 new_plan = []
