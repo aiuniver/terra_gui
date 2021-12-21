@@ -12,7 +12,7 @@ export default {
     },
     SETUP_SERVER (state, value) {
       const idx = state.servers.findIndex(server => server.id === value.id)
-      state.servers[idx] = value
+      state.servers.splice(idx, 1, value)
     }
   },
   actions: {
@@ -30,7 +30,7 @@ export default {
     },
     async setup ({ commit, dispatch }, data) {
       const res = await dispatch("axios", { url: "/servers/setup/", data }, { root: true })
-      commit('SETUP_SERVER', res.data.id)
+      commit('SETUP_SERVER', res.data)
     },
     async ready ({ dispatch }, data) {
       const res = await dispatch("axios", { url: "/servers/ready/", data }, { root: true })

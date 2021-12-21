@@ -65,16 +65,16 @@ export default {
 .server-table {
   width: 100%;
   .error {
-    color: #f00;
+    color: #f44336;
   }
   .idle {
-    color: #aaa;
+    color: #9e9e9e;
   }
   .ready {
-    color: #0f0;
+    color: #8bc34a;
   }
   .waiting {
-    color: #ff0;
+    color: #ff9800;
   }
   thead {
     color: #6c7883;
