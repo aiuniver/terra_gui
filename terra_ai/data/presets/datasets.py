@@ -30,6 +30,8 @@ class Tags(dict, Enum):
     smart_home = {"alias": "smart_home", "name": "Smart home"}
     trading = {"alias": "trading", "name": "Trading"}
     tracker = {"alias": "tracker", "name": "Tracker"}
+    text_to_speech = {"alias": "text_to_speech", "name": "Text-to-Speech"}
+    speech_to_text = {"alias": "speech_to_text", "name": "Speech-to-Text"}
 
 
 OutputLayersDefaults = {
@@ -3769,6 +3771,121 @@ DatasetsGroups = [
                 "tags": [
                     Tags.video.value,
                     Tags.tracker.value,
+                    Tags.terra_ai.value,
+                ],
+            },
+            {
+                "alias": "video_progulka_po_piteru",
+                "name": "Видео_прогулка_по_Питеру",
+                "architecture": ArchitectureChoice.Tracker.name,
+                "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "3D",
+                        "dtype": "uint8",
+                        "name": "Вход 1",
+                        "shape": (450, 480, 640, 3),
+                        "task": LayerInputTypeChoice.Video.value,
+                        "num_classes": 1,
+                        "classes_names": ["video"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "uint8",
+                        "name": "Выход 2",
+                        "shape": (1,),
+                        "task": LayerOutputTypeChoice.Tracker.value,
+                        "num_classes": 1,
+                        "classes_names": ["video"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "tags": [
+                    Tags.video.value,
+                    Tags.tracker.value,
+                    Tags.terra_ai.value,
+                ],
+            },
+            {
+                "alias": "audio_kniga_hobit_60sek",
+                "name": "аудио_книга_Хобит_60сек",
+                "architecture": ArchitectureChoice.Speech2Text.name,
+                "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "DIM",
+                        "dtype": "float32",
+                        "name": "Вход 1",
+                        "shape": (1323000,),
+                        "task": LayerInputTypeChoice.Audio.value,
+                        "num_classes": 1,
+                        "classes_names": ['audio'],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "uint8",
+                        "name": "Выход 2",
+                        "shape": (1,),
+                        "task": LayerOutputTypeChoice.Speech2Text.value,
+                        "num_classes": 1,
+                        "classes_names": ['audio'],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "tags": [
+                    Tags.text.value,
+                    Tags.speech_to_text.value,
+                    Tags.terra_ai.value,
+                ],
+            },
+            {
+                "alias": "teksty_pisatelej_1000",
+                "name": "тексты_писателей_1000",
+                "architecture": ArchitectureChoice.Text2Speech.name,
+                "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "DIM",
+                        "dtype": "int32",
+                        "name": "Вход 1",
+                        "shape": (1000,),
+                        "task": LayerInputTypeChoice.Text.value,
+                        "num_classes": 6,
+                        "classes_names": ['Бредбери',
+                                          'Булгаков',
+                                          'ОГенри',
+                                          'Саймак',
+                                          'Стругацкие',
+                                          'Фрай'],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "uint8",
+                        "name": "Выход 2",
+                        "shape": (1,),
+                        "task": LayerOutputTypeChoice.Text2Speech.value,
+                        "num_classes": 6,
+                        "classes_names": ['Бредбери',
+                                          'Булгаков',
+                                          'ОГенри',
+                                          'Саймак',
+                                          'Стругацкие',
+                                          'Фрай'],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "tags": [
+                    Tags.text.value,
+                    Tags.text_to_speech.value,
                     Tags.terra_ai.value,
                 ],
             },
