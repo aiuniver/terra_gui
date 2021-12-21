@@ -23,9 +23,6 @@ from terra_ai.logging import logger
 from terra_ai.modeling.utils import get_layer_info, reformat_input_shape, reorder_plan, get_edges, get_links, \
     tensor_shape_to_tuple, get_idx_line
 
-architechture = ArchitectureChoice.GAN
-# architechture = None
-
 
 class ModelValidator:
     """Make validation of model plan"""
@@ -53,9 +50,11 @@ class ModelValidator:
         self.num_models: int = 0
         self.model_idxs: list = []
         self.model_count: int = 1
-        if architechture in GAN_ARCHITECTURE:
+        # architecture = ArchitectureChoice.GAN
+        self.architecture = architecture
+        if architecture in GAN_ARCHITECTURE:
             self.model_count = 2
-        if not architechture:
+        if not architecture:
             self.model_count = None
         self.separated_plans: list = []
 
@@ -123,6 +122,7 @@ class ModelValidator:
             )
         layers_str = f"{layers_str}from tensorflow.keras.models import Model\n\n"
 
+        model_count = 1
         for idx, model in enumerate(self.separated_plans):
             model_name = 'model'
             inputs_str = ""
@@ -134,12 +134,15 @@ class ModelValidator:
             outputs_str = ""
             for out in output_list.keys():
                 if out in self.model_idxs[idx]:
-                    if architechture == "GAN" and self.layer_output_shapes[out][0][1:] == (1,):
-                        model_name = "discriminator"
-                    if architechture == "GAN" and self.layer_output_shapes[out][0][1:] != (1,):
-                        model_name = "generator"
+                    if self.architecture in GAN_ARCHITECTURE and self.layer_output_shapes[out][0][1:] == (1,):
+                        model_name = f"discriminator_{model_count}"
+                    elif self.architecture in GAN_ARCHITECTURE and self.layer_output_shapes[out][0][1:] != (1,):
+                        model_name = f"generator_{model_count}"
+                    else:
+                        model_name = f'model_{model_count}'
                     outputs_str += f"{output_list.get(out)}, "
             outputs_str = f"[{outputs_str[:-2]}]"
+            model_count += 1
 
             for layer in model:
                 if layer[1] == LayerTypeChoice.CustomBlock:
@@ -211,7 +214,7 @@ class ModelValidator:
     def get_keras_model(self):
         self._plan_separation()
         # logger.debug(f"{self.name}, {self.get_keras_model.__name__}")
-        if architechture == "GAN":
+        if self.architecture in GAN_ARCHITECTURE:
             models = {'generator': None, 'discriminator': None}
             for model_plan in self.separated_plans:
                 mc = ModelCreator(model_plan, self.input_shape, self.block_plans, self.layers_config)
