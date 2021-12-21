@@ -12,6 +12,7 @@ from pathlib import Path
 from PIL import Image
 from pydantic.color import Color
 
+from terra_ai import progress
 from terra_ai.cascades.common import decamelize
 from terra_ai.cascades.create import json2cascade
 from terra_ai.data.cascades.blocks.extra import BlockFunctionGroupChoice, FunctionParamsChoice, \
@@ -21,6 +22,7 @@ from terra_ai.data.cascades.extra import BlockGroupChoice
 from terra_ai.data.datasets.extra import LayerInputTypeChoice
 from terra_ai.data.deploy.extra import DeployTypeChoice
 from terra_ai.deploy.create_deploy_package import CascadeCreator
+from terra_ai.logging import logger
 from terra_ai.settings import DEPLOY_PATH
 from terra_ai.utils import camelize
 
@@ -29,7 +31,7 @@ class CascadeRunner:
 
     def start_cascade(self, cascade_data: CascadeDetailsData, training_path: Path,
                       sources: Dict[int, List[str]]):
-        # print('sources', sources)
+        logger.info("Запуск сборки каскада", extra={"type": "info"})
         config = CascadeCreator()
 
         presets_path = os.path.join(DEPLOY_PATH, "deploy_presets")
@@ -60,11 +62,12 @@ class CascadeRunner:
                                                                       model_task=model_task,
                                                                       dataset_data=dataset_config_data,
                                                                       presets_path=presets_path)
-        print('cascade_config', cascade_config)
+
         main_block = json2cascade(path=cascade_path, cascade_config=cascade_config, mode="run")
 
         sources = sources.get(inputs_ids[0])
-
+        logger.info("Сборка каскада завершена", extra={"type": "success"})
+        logger.info("Идет подготовка примеров", extra={"type": "info"})
         presets_data = self._get_presets(sources=sources, type_=type_, cascade=main_block,
                                          predict_path=str(DEPLOY_PATH), classes=classes,
                                          classes_colors=classes_colors)
@@ -77,6 +80,9 @@ class CascadeRunner:
         with open(os.path.join(presets_path, "presets_config.json"), "w", encoding="utf-8") as config:
             json.dump(out_data, config)
 
+        logger.info(f"Подготовка примеров выполнена. Подготовлено примеров: {len(sources)}",
+                    extra={"type": "success"})
+        progress.pool("cascade_start", finished=True)
         return cascade_config
 
     @staticmethod
@@ -263,11 +269,17 @@ class CascadeRunner:
 
     def _get_presets(self, sources: List[Any], type_: DeployTypeChoice, cascade: Any,
                      predict_path: str, classes: list, classes_colors: list):
-
+        progress_name = "cascade_start"
         out_data = []
         iter_ = 0
+        percent_ = 0
         for source in sources[:10]:
-            print('source', source)
+            percent_ = (sources.index(source) + 1) / len(sources) * 100
+            print(percent_)
+            progress.pool(progress_name,
+                          message=f"Пример {sources.index(source) + 1} из {len(sources)}",
+                          percent=percent_,
+                          finished=False)
             if type_ in [DeployTypeChoice.YoloV3, DeployTypeChoice.YoloV4,
                          DeployTypeChoice.YoloV5, DeployTypeChoice.VideoObjectDetection]:
                 if type_ == DeployTypeChoice.VideoObjectDetection:
@@ -364,7 +376,10 @@ class CascadeRunner:
                     "data": example_data
                 })
             iter_ += 1
-
+        progress.pool(progress_name,
+                      message=f"Подготовка примеров завершена",
+                      percent=percent_,
+                      finished=False)
         return {"data": out_data}
 
     @staticmethod
