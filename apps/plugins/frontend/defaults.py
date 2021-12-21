@@ -717,6 +717,10 @@ class ArchitectureTrackerForm(ArchitectureBasicForm):
     pass
 
 
+class ArchitectureGANForm(ArchitectureBasicForm):
+    pass
+
+
 class DefaultsTrainingData(BaseMixinData):
     architecture: ArchitectureChoice
     base: Optional[ArchitectureBaseForm]

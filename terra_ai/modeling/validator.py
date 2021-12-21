@@ -51,7 +51,7 @@ class ModelValidator:
         self.num_models: int = 0
         self.model_idxs: list = []
         self.model_count: int = 1
-        architecture = ArchitectureChoice.GAN
+        # architecture = ArchitectureChoice.GAN
         self.architecture = architecture
         if architecture in GAN_ARCHITECTURE:
             self.model_count = 2
@@ -550,7 +550,7 @@ class ModelValidator:
 
     def _plan_separation(self):
         if len(self.model_idxs) == 1:
-            self.separated_plans = self.model_plan
+            self.separated_plans = [self.model_plan]
         else:
             for plan_idxs in self.model_idxs:
                 new_plan = []
@@ -1244,6 +1244,7 @@ class ModelCreator:
                     input_tensors = []
                     for idx in terra_layer[3]:
                         input_tensors.append(self.tensors[idx])
+            # print('\nterra_layer', terra_layer)
             self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(**terra_layer[2])(input_tensors)
 
     def _tf_layer_init(self, terra_layer):
