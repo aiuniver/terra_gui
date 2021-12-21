@@ -129,12 +129,14 @@ export default {
     padding: 0 10px;
   }
   &__content {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    // display: flex;
+    // justify-content: center;
+    // align-items: center;
   }
   &__btn {
-    margin-top: 18px;
+    display: block;
+    text-align: center;
+    margin-top: 10px;
     font-size: 14px;
     cursor: pointer;
     &:hover {
