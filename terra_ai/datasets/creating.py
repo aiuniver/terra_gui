@@ -16,6 +16,7 @@ from terra_ai.settings import DATASET_EXT, DATASET_CONFIG, VERSION_EXT, VERSION_
 from terra_ai.data.datasets.creations.layers.output.types.ObjectDetection import LayerODDatasetTypeChoice
 from terra_ai import progress
 
+import h5py
 import psutil
 import cv2
 import os
@@ -150,14 +151,13 @@ class CreateVersion(object):
         self.fit_preprocessing(put_data=self.instructions.outputs)
         self.create_table(version_data)
         progress.pool(name=self.progress_name, message='Создание массивов данных', percent=0)
-        if not version_data.use_generator:
-            x_array = self.create_dataset_arrays(put_data=self.instructions.inputs)
-            y_array = self.create_dataset_arrays(put_data=self.instructions.outputs)
-            progress.pool(name=self.progress_name, message='Запись массивов данных на диск', percent=100)
-            if not isinstance(y_array, dict):
-                self.write_arrays(x_array, y_array[0], y_array[1])
-            else:
-                self.write_arrays(x_array, y_array)
+        x_array = self.create_dataset_arrays(put_data=self.instructions.inputs)
+        y_array = self.create_dataset_arrays(put_data=self.instructions.outputs)
+        progress.pool(name=self.progress_name, message='Запись массивов данных на диск', percent=100)
+        if not isinstance(y_array, dict):
+            self.write_arrays(x_array, y_array[0], y_array[1])
+        else:
+            self.write_arrays(x_array, y_array)
         self.inputs = self.create_put_parameters(self.instructions.inputs, version_data, 'inputs')
         self.outputs = self.create_put_parameters(self.instructions.outputs, version_data, 'outputs')
         # self.service = self.create_put_parameters(self.instructions.service, version_data, 'service')
@@ -543,26 +543,23 @@ class CreateVersion(object):
         def array_creation(row, instructions):
 
             full_array = []
-            # augm_data = ''
             for h in range(len(row)):
                 try:
                     arr = getattr(CreateArray(), f'create_{instructions[h]["put_type"]}')(row[h], **instructions[h])
                     arr = getattr(CreateArray(), f'preprocess_{instructions[h]["put_type"]}')(arr['instructions'],
                                                                                               **arr['parameters'])
-                    # if isinstance(arr, tuple):
-                    #     full_array.append(arr[0])
-                    #     augm_data += arr[1]
-                    # else:
                     full_array.append(arr)
                 except Exception:
                     progress.pool(self.progress_name, error='Ошибка создания массивов данных')
                     raise
-            return full_array  # , augm_data
 
-        out_array = {'train': {}, 'val': {}}
-        service = {'train': {}, 'val': {}}
+            return full_array
 
-        for split in list(out_array.keys()):
+        for split in ['train', 'val']:
+            open_mode = 'w' if not self.version_paths_data.arrays.joinpath('dataset.h5') else 'a'
+            hdf = h5py.File(self.version_paths_data.arrays.joinpath('dataset.h5'), open_mode)
+            if split not in list(hdf.keys()):
+                hdf.create_group(split)
             for key in put_data.keys():
                 col_name = None
                 length, depth, step = 0, 0, 1
@@ -572,9 +569,6 @@ class CreateVersion(object):
                                                         data.parameters['depth'] else 0
                     length = data.parameters['length'] if depth else 0
                     step = data.parameters['step'] if depth else 1
-
-                for j in range(6):
-                    globals()[f'current_arrays_{j}'] = []
 
                 data_to_pass = []
                 dict_to_pass = []
@@ -607,9 +601,6 @@ class CreateVersion(object):
                                                 col_name])
 
                         elif self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
-                            #                             if self.augmentation[split]['1_image']:
-                            #                                 tmp_data.append(self.augmentation[split]['1_image'][i])
-                            #                             else:
                             tmp_data.append(self.dataframe[split].loc[i, col_name])
                             tmp_im = Image.open(os.path.join(self.sources_temp_directory,
                                                              self.dataframe[split].iloc[i, 0]))
@@ -617,10 +608,6 @@ class CreateVersion(object):
                                                        ('orig_y', tmp_im.height)])
                         else:
                             tmp_data.append(self.dataframe[split].loc[i, col_name])
-                        # if self.tags[key][col_name] == decamelize(LayerInputTypeChoice.Image) and \
-                        #         '2_object_detection' in self.dataframe[split].columns:
-                        #     parameters_to_pass.update(
-                        #         [('augm_data', self.dataframe[split].loc[i, '2_object_detection'])])
                         tmp_parameter_data.append(parameters_to_pass)
                     data_to_pass.append(tmp_data)
                     dict_to_pass.append(tmp_parameter_data)
@@ -628,20 +615,21 @@ class CreateVersion(object):
                 progress.pool(self.progress_name,
                               message=f'Формирование массивов {split.title()} выборки. ID: {key}.',
                               percent=0)
-                #                 if not self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
-                #                     self.augmentation[split] = {col_name: []}
-                current_arrays: list = []
+
+                if self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
+                    for n in range(3):
+                        current_group = f'id_{key + n}'
+                        current_serv_group = f'id_{key + n}_service'
+                        if current_group not in list(hdf[split].keys()):
+                            hdf[split].create_group(current_group)
+                        if current_serv_group not in list(hdf[split].keys()):
+                            hdf[split].create_group(current_serv_group)
+                else:
+                    hdf[split].create_group(f'id_{key}')
+
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     results = executor.map(array_creation, data_to_pass, dict_to_pass)
                     for i, result in enumerate(results):
-                        if psutil.virtual_memory()._asdict().get("percent") > 90:
-                            current_arrays = []
-                            raise Resource
-                        # if isinstance(result, tuple):
-                        #     augm_data = result[1]
-                        #     result = result[0]
-                        #     if not augm_data:
-                        #         augm_data = ''
                         progress.pool(self.progress_name, percent=ceil(i / len(data_to_pass) * 100))
                         if not self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
                             if depth:
@@ -651,40 +639,13 @@ class CreateVersion(object):
                                     array = self.postprocess_timeseries(result)
                             else:
                                 array = np.concatenate(result, axis=0)
-                            current_arrays.append(array)
-                        #                             if isinstance(augm_data, str):
-                        #                                 self.augmentation[split][col_name].append(augm_data)
+                            hdf[f'{split}/id_{key}'].create_dataset(str(i), data=array)
                         else:
-                            for n in range(6):
-                                globals()[f'current_arrays_{n}'].append(result[0][n])
-
-                if self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
-                    for n in range(3):
-                        out_array[split][key + n] = np.array(globals()[f'current_arrays_{n}'])
-                        service[split][key + n] = np.array(globals()[f'current_arrays_{n + 3}'])
-                        # print(np.array(globals()[f'current_arrays_{n}']).shape)
-                        # print(np.array(globals()[f'current_arrays_{n + 3}']).shape)
-                else:
-                    out_array[split][key] = np.array(current_arrays)
-                    # print(out_array[split][key].shape)
-
-        if service['train']:
-            return out_array, service
-        else:
-            return out_array
-
-    def write_arrays(self, array_x, array_y, array_service=None):
-
-        for array in [array_x, array_y]:
-            for sample in array.keys():
-                for put in array[sample].keys():
-                    os.makedirs(os.path.join(self.version_paths_data.arrays, sample), exist_ok=True)
-                    joblib.dump(array[sample][put], os.path.join(self.version_paths_data.arrays, sample, f'{put}.gz'))
-        if array_service:
-            for sample in array_service.keys():
-                for put in array_service[sample].keys():
-                    joblib.dump(array_service[sample][put],
-                                os.path.join(self.version_paths_data.arrays, sample, f'{put}_service.gz'))
+                            for n in range(3):
+                                hdf[f'{split}/id_{key + n}'].create_dataset(str(i), data=result[0][n])
+                                hdf[f'{split}/id_{key + n}_service'].create_dataset(str(i), data=result[0][n + 3])
+                        del result
+            hdf.close()
 
     def write_instructions_to_files(self):
 
