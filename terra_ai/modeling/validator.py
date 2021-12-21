@@ -29,6 +29,7 @@ class ModelValidator:
 
     def __init__(self, model: ModelDetailsData, architecture: Optional[ArchitectureChoice] = None):
         logger.info(f"Валидируемая модель: \n{model.layers}\n")
+        logger.info(f"Используемая архитектура: {architecture}\n")
         self.name = "ModelValidator"
         self.validator: LayerValidation = LayerValidation()
         self.model: ModelDetailsData = model
@@ -50,7 +51,7 @@ class ModelValidator:
         self.num_models: int = 0
         self.model_idxs: list = []
         self.model_count: int = 1
-        # architecture = ArchitectureChoice.GAN
+        architecture = ArchitectureChoice.GAN
         self.architecture = architecture
         if architecture in GAN_ARCHITECTURE:
             self.model_count = 2
