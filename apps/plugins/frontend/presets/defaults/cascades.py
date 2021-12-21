@@ -148,7 +148,7 @@ FunctionTypesFields = {
             "label": "Фильтр имен классов",
             "name": "filter_classes",
             "parse": "parameters[main][filter_classes]",
-            "value": [],
+            "value": [ObjectDetectionFilterClassesList[0]],
             "list": list(
                 map(
                     lambda item: {"value": item, "label": item},
