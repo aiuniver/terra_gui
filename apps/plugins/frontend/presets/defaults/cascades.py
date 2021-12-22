@@ -369,7 +369,7 @@ ServiceTypesFields = {
             "label": "Выводить изображение",
             "name": "render_img",
             "parse": "parameters[main][render_img]",
-            "value": True,
+            "value": False,
         },
     ],
 }
@@ -911,7 +911,7 @@ CascadesBlocksTypes = {
 <ol>
 <li>блок Function ObjectDetection Фильтрация классов Service YoloV5 (выключен переключатель “Выводить изображение”)</li>
 <li>блок Output сохранение изображений или видео  (активирован переключатель “Выводить изображение”)</li>
-<li>блок Service Tracking (Sort, DeepSort)(выключен переключатель “Выводить изображение”)</li>
+<li>блок Service Tracking (Sort, BiTBasedTracker, DeepSort)(выключен переключатель “Выводить изображение”)</li>
 </ol>
 <p>Возвращает на выходе:<br />
     <code>если активирован переключатель “Выводить изображение” то исходное изображение (фрейм) 

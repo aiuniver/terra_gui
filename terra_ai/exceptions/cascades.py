@@ -80,6 +80,10 @@ class CascadesMessages(dict, Enum):
         "ru": "Каскад `%s` уже существует",
         "eng": "Cascade `%s` already exists",
     }
+    TypeMismatch = {
+        "ru": "Тип исходного файла не соответствует типу входа каскада: вход `%s`, файл `%s`.",
+        "eng": "The source file type does not match the cascade input type: input '%s`, file `%s'.",
+    }
 
 
 class CascadesException(TerraBaseException):
@@ -194,3 +198,11 @@ class RequiredBlockMissingException(CascadesException):
 
     def __init__(self, __expected, **kwargs):
         super().__init__(str(__expected), **kwargs)
+
+
+class TypeMismatchException(TerraBaseException):
+    class Meta:
+        message: dict = CascadesMessages.TypeMismatch
+
+    def __init__(self, __input_type: str, __file_type: str, **kwargs):
+        super().__init__(str(__input_type), str(__file_type), **kwargs)
