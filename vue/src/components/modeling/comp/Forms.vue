@@ -1,6 +1,6 @@
 <template>
   <div class="form-inline-label">
-    <template v-for="({ type, value, list, event, label, parse, name }, key) of items">
+    <template v-for="({ type, value, list, event, label, parse, name, placeholder }, key) of items">
       <Tuple
         v-if="type === 'text_array'"
         :value="getValue(valueDef[name], value)"
@@ -10,6 +10,7 @@
         :name="name"
         :key="blockType + key"
         :error="getError(parse)"
+        :placeholder="placeholder"
         inline
         @change="change"
       />
@@ -22,6 +23,7 @@
         :name="name"
         :key="blockType + key"
         :error="getError(parse)"
+        :placeholder="placeholder"
         inline
         @change="change"
       />
@@ -36,6 +38,7 @@
         :event="event"
         :error="getError(parse)"
         :key="blockType + key"
+        :placeholder="placeholder"
         @change="change"
       />
       <Select
@@ -47,6 +50,7 @@
         :name="name"
         :key="blockType + key"
         :error="getError(parse)"
+        :placeholder="placeholder"
         @change="change"
       />
     </template>
