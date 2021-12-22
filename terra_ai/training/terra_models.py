@@ -184,10 +184,10 @@ class BaseTerraModel:
                 train_target_shape, val_target_shape = [self.train_length], [self.val_length]
                 train_target_shape.extend(list(dataset.data.outputs.get(out).shape))
                 val_target_shape.extend(list(dataset.data.outputs.get(out).shape))
-                train_pred[f"{out}"] = np.zeros(train_target_shape)
-                train_true[f"{out}"] = np.zeros(train_target_shape)
-                val_pred[f"{out}"] = np.zeros(val_target_shape)
-                val_true[f"{out}"] = np.zeros(val_target_shape)
+                train_pred[f"{out}"] = np.zeros(train_target_shape).astype('float32')
+                train_true[f"{out}"] = np.zeros(train_target_shape).astype('float32')
+                val_pred[f"{out}"] = np.zeros(val_target_shape).astype('float32')
+                val_true[f"{out}"] = np.zeros(val_target_shape).astype('float32')
 
             train_data_idxs = np.arange(self.train_length).tolist()
             self.callback.on_train_begin()
