@@ -21,6 +21,7 @@ class Field(BaseMixinData):
     type: FieldTypeChoice
     name: AliasType
     label: Optional[str]
+    placeholder: Optional[str]
     parse: Optional[str]
     value: Any = ""
     disabled: bool = False

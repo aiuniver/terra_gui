@@ -72,7 +72,7 @@ class ValidateAPIView(BaseAPIView):
 
 class StartAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        serializer = StartSerializer(data={"sources": request.data})
+        serializer = StartSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         request.project.deploy = None
         self.terra_exchange(
@@ -81,6 +81,7 @@ class StartAPIView(BaseAPIView):
             datasets_path=TERRA_PATH.datasets,
             sources=serializer.validated_data.get("sources"),
             cascade=request.project.cascade,
+            example_count=serializer.validated_data.get("example_count"),
         )
         return BaseResponseSuccess()
 

@@ -340,6 +340,7 @@ class Exchange:
         datasets_path: Path,
         sources: Dict[int, Dict[str, str]],
         cascade: CascadeDetailsData,
+        example_count: int = None,
     ):
         """
         Запуск каскада
@@ -407,10 +408,15 @@ class Exchange:
             sources=sources,
             cascade=cascade,
             training_path=PROJECT_PATH.training,
+            example_count=example_count,
         )
 
     def _call_cascade_execute(
-        self, sources: Dict[int, List[str]], cascade: CascadeDetailsData, training_path
+        self,
+        sources: Dict[int, List[str]],
+        cascade: CascadeDetailsData,
+        training_path,
+        example_count: int = None,
     ):
         """
         Исполнение каскада
@@ -419,7 +425,10 @@ class Exchange:
             if block.group == BlockGroupChoice.Service:
                 block.parameters.model_load()
         CascadeRunner().start_cascade(
-            sources=sources, cascade_data=cascade, training_path=training_path
+            sources=sources,
+            cascade_data=cascade,
+            training_path=training_path,
+            example_count=example_count,
         )
 
     def _call_deploy_get(self, datasets: List[DatasetLoadData], page: DeployPageData):
