@@ -19,6 +19,13 @@ from ...choices import (
 
 CascadesBlockForm = [
     {
+        "type": "number",
+        "label": "Количество примеров",
+        "name": "example_count",
+        "parse": "example_count",
+        "placeholder": "Все",
+    },
+    {
         "type": "text",
         "label": "Название блока",
         "name": "name",
