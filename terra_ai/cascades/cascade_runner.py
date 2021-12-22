@@ -1,10 +1,8 @@
 import json
 import os
 import shutil
-import traceback
 
 import numpy as np
-from copy import copy
 import moviepy.editor as moviepy_editor
 from pydub import AudioSegment
 
@@ -19,8 +17,8 @@ from terra_ai.exceptions.cascades import TypeMismatchException
 from terra_ai.utils import check_error
 from terra_ai.cascades.common import decamelize
 from terra_ai.cascades.create import json2cascade
-from terra_ai.data.cascades.blocks.extra import BlockFunctionGroupChoice, FunctionParamsChoice, \
-    ObjectDetectionFilterClassesList, BlockServiceTypeChoice
+from terra_ai.data.cascades.blocks.extra import FunctionParamsChoice, ObjectDetectionFilterClassesList, \
+    BlockServiceTypeChoice
 from terra_ai.data.cascades.cascade import CascadeDetailsData
 from terra_ai.data.cascades.extra import BlockGroupChoice
 from terra_ai.data.datasets.extra import LayerInputTypeChoice
@@ -28,17 +26,25 @@ from terra_ai.data.deploy.extra import DeployTypeChoice
 from terra_ai.deploy.create_deploy_package import CascadeCreator
 from terra_ai.logging import logger
 from terra_ai.settings import DEPLOY_PATH
-from terra_ai.utils import camelize
 
 
 class CascadeRunner:
 
     def start_cascade(self, cascade_data: CascadeDetailsData, training_path: Path,
-                      sources: Dict[int, List[str]]):
+                      sources: Dict[int, List[str]], example_count):
         progress.pool.reset("cascade_start", message="Начало работы каскада...", percent=0, finished=False)
-
+        if not example_count:
+            example_count = len(sources)
+        if example_count > len(sources):
+            logger.warning("Количество примеров завышено пользователем.",
+                           extra={
+                               "type": "warning",
+                               "details": f"Всего примеров в датасете {len(sources)}, \n"
+                                          f"указано пользователем {example_count}. \n"
+                                          f"Будет обработано {len(sources)} примеров."
+                           })
+            example_count = len(sources)
         method_name = "start cascade"
-        out_error = None
         logger.info("Запуск сборки каскада", extra={"type": "info"})
         config = CascadeCreator()
         try:
@@ -78,7 +84,7 @@ class CascadeRunner:
             logger.info("Идет подготовка примеров", extra={"type": "info"})
             presets_data = self._get_presets(sources=sources, type_=type_, cascade=main_block,
                                              predict_path=str(DEPLOY_PATH), classes=classes,
-                                             classes_colors=classes_colors)
+                                             classes_colors=classes_colors, example_count=example_count)
             out_data = dict([
                 ("path_deploy", str(DEPLOY_PATH)),
                 ("type", type_),
@@ -281,15 +287,15 @@ class CascadeRunner:
         return mapping
 
     def _get_presets(self, sources: List[Any], type_: DeployTypeChoice, cascade: Any,
-                     predict_path: str, classes: list, classes_colors: list):
+                     predict_path: str, classes: list, classes_colors: list, example_count: int):
         progress_name = "cascade_start"
         out_data = []
         iter_ = 0
         percent_ = 0
-        for source in sources[:10]:
-            percent_ = (sources.index(source) + 1) / len(sources) * 100
+        for source in sources[:example_count]:
+            percent_ = (sources.index(source) + 1) / example_count * 100
             progress.pool(progress_name,
-                          message=f"Пример {sources.index(source) + 1} из {len(sources)}",
+                          message=f"Пример {sources.index(source) + 1} из {example_count}",
                           percent=percent_,
                           finished=False)
             if type_ in [DeployTypeChoice.YoloV3, DeployTypeChoice.YoloV4,
