@@ -35,6 +35,8 @@ class CascadeRunner:
 
     def start_cascade(self, cascade_data: CascadeDetailsData, training_path: Path,
                       sources: Dict[int, List[str]]):
+        progress.pool.reset("cascade_start", message="Начало работы каскада...", percent=0, finished=False)
+
         method_name = "start cascade"
         out_error = None
         logger.info("Запуск сборки каскада", extra={"type": "info"})
@@ -88,12 +90,11 @@ class CascadeRunner:
 
             logger.info("Подготовка примеров выполнена.",
                         extra={"type": "success", "details": f"Подготовлено примеров: {len(sources)}"})
-            # progress.pool("cascade_start", finished=True)
+            progress.pool("cascade_start", message=f"Работа каскада завершена.", percent=100, finished=True)
             return cascade_config
         except Exception as error:
             out_error = check_error(error, str(self.__class__.__name__), method_name)
-            raise out_error
-        finally:
+            logger.error(out_error)
             progress.pool("cascade_start", error=out_error, fininshed=True)
 
     @staticmethod

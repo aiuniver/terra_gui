@@ -11,8 +11,6 @@ from apps.api.logging import LogData, LevelnameChoice
 
 def handler(exc, context):
     response = exception_handler(exc, context)
-    print("RESPONSE ", traceback.format_exc())
-    print("END")
     if isinstance(exc, ValidationError):
         title = "Ошибка валидации данных"
         message = json.dumps(exc.args, indent=2, ensure_ascii=False)
