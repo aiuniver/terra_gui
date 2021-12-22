@@ -8,6 +8,9 @@
     :showConfirmButton="isReady"
   >
     <div class="t-modal-datasets">
+      <t-field :label="'Количество примеров'">
+        <t-input-new v-model.number="example_count" placeholder="Все" type="number" />
+      </t-field>
       <template v-for="(block, idx) in inputBlocks">
         <t-field :label="block.name" :key="idx">
           <t-auto-complete-new :list="filters" placeholder="Выберите датасет" @change="change(block.id, $event)" />
@@ -20,18 +23,16 @@
 
 <script>
 import { mapGetters } from 'vuex';
-// import TSelectNew from '../comp/TSelect.vue';
 
 export default {
   name: 'ModalDatasets',
-  components: {
-    // TSelectNew,
-  },
+  components: {},
   props: {
     value: Boolean,
   },
   data: () => ({
     selected: {},
+    example_count: null,
   }),
   computed: {
     dialog: {
@@ -68,7 +69,10 @@ export default {
     async confirm() {
       if (!this.isReady) return this.$store.dispatch('messages/setMessage', { error: 'Выберите датасеты' });
       this.$store.dispatch('settings/setOverlay', true);
-      await this.$store.dispatch('cascades/start', this.selected);
+      await this.$store.dispatch('cascades/start', {
+        sources: { ...this.selected },
+        example_count: this.example_count,
+      });
       this.createInterval();
     },
     createInterval() {
