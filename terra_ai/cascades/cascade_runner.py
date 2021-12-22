@@ -33,17 +33,6 @@ class CascadeRunner:
     def start_cascade(self, cascade_data: CascadeDetailsData, training_path: Path,
                       sources: Dict[int, List[str]], example_count):
         progress.pool.reset("cascade_start", message="Начало работы каскада...", percent=0, finished=False)
-        if not example_count:
-            example_count = len(sources)
-        if example_count > len(sources):
-            logger.warning("Количество примеров завышено пользователем.",
-                           extra={
-                               "type": "warning",
-                               "details": f"Всего примеров в датасете {len(sources)}, \n"
-                                          f"указано пользователем {example_count}. \n"
-                                          f"Будет обработано {len(sources)} примеров."
-                           })
-            example_count = len(sources)
         method_name = "start cascade"
         logger.info("Запуск сборки каскада", extra={"type": "info"})
         config = CascadeCreator()
@@ -80,6 +69,17 @@ class CascadeRunner:
             main_block = json2cascade(path=cascade_path, cascade_config=cascade_config, mode="run")
 
             sources = sources.get(inputs_ids[0])
+            if not example_count:
+                example_count = len(sources)
+            if example_count > len(sources):
+                logger.warning("Количество примеров завышено пользователем.",
+                               extra={
+                                   "type": "warning",
+                                   "details": f"Всего примеров в датасете {len(sources)}, \n"
+                                              f"указано пользователем {example_count}. \n"
+                                              f"Будет обработано {len(sources)} примеров."
+                               })
+                example_count = len(sources)
             logger.info("Сборка каскада завершена", extra={"type": "success"})
             logger.info("Идет подготовка примеров", extra={"type": "info"})
             presets_data = self._get_presets(sources=sources, type_=type_, cascade=main_block,
@@ -95,7 +95,7 @@ class CascadeRunner:
                 json.dump(out_data, config)
 
             logger.info("Подготовка примеров выполнена.",
-                        extra={"type": "success", "details": f"Подготовлено примеров: {len(sources)}"})
+                        extra={"type": "success", "details": f"Подготовлено примеров: {example_count}"})
             progress.pool("cascade_start", message=f"Работа каскада завершена.", percent=100, finished=True)
             return cascade_config
         except Exception as error:
