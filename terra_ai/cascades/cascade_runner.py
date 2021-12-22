@@ -1,6 +1,8 @@
 import json
 import os
 import shutil
+import traceback
+
 import numpy as np
 from copy import copy
 import moviepy.editor as moviepy_editor
@@ -13,6 +15,7 @@ from PIL import Image
 from pydantic.color import Color
 
 from terra_ai import progress
+from terra_ai.exceptions.cascades import TypeMismatchException
 from terra_ai.utils import check_error
 from terra_ai.cascades.common import decamelize
 from terra_ai.cascades.create import json2cascade
@@ -33,6 +36,7 @@ class CascadeRunner:
     def start_cascade(self, cascade_data: CascadeDetailsData, training_path: Path,
                       sources: Dict[int, List[str]]):
         method_name = "start cascade"
+        out_error = None
         logger.info("Запуск сборки каскада", extra={"type": "info"})
         config = CascadeCreator()
         try:
@@ -82,12 +86,15 @@ class CascadeRunner:
             with open(os.path.join(presets_path, "presets_config.json"), "w", encoding="utf-8") as config:
                 json.dump(out_data, config)
 
-            logger.info(f"Подготовка примеров выполнена. Подготовлено примеров: {len(sources)}",
-                        extra={"type": "success"})
-            progress.pool("cascade_start", finished=True)
+            logger.info("Подготовка примеров выполнена.",
+                        extra={"type": "success", "details": f"Подготовлено примеров: {len(sources)}"})
+            # progress.pool("cascade_start", finished=True)
             return cascade_config
         except Exception as error:
-            raise check_error(error, self.__class__.__name__, method_name)
+            out_error = check_error(error, str(self.__class__.__name__), method_name)
+            raise out_error
+        finally:
+            progress.pool("cascade_start", error=out_error, fininshed=True)
 
     @staticmethod
     def _get_task_type(cascade_data: CascadeDetailsData, training_path: Path):
@@ -122,11 +129,9 @@ class CascadeRunner:
             with open(os.path.join(training_path, model, "config.json"),
                       "r", encoding="utf-8") as training_config:
                 training_details = json.load(training_config)
-            if deploy_type not in [DeployTypeChoice.YoloV3, DeployTypeChoice.YoloV4]:
-                deploy_type = DeployTypeChoice(training_details.get("base").get("architecture").get("type"))
-            else:
-                if _input_type == "image":
-                    deploy_type = DeployTypeChoice(training_details.get("base").get("architecture").get("type"))
+            deploy_type = DeployTypeChoice(training_details.get("base").get("architecture").get("type"))
+            if deploy_type in [DeployTypeChoice.YoloV3, DeployTypeChoice.YoloV4] and _input_type == "video":
+                deploy_type = DeployTypeChoice.VideoObjectDetection
 
         return deploy_type, model, _inputs
 
@@ -391,7 +396,14 @@ class CascadeRunner:
     @staticmethod
     def _save_web_format(initial_path: str, deploy_path: str, source_type: str):
         if source_type == "image":
-            img = Image.open(initial_path)
+            img = None
+            try:
+                img = Image.open(initial_path)
+            except Exception as error:
+                if "cannot identify image file" in error.__str__():
+                    raise TypeMismatchException(
+                        source_type, error.__str__()[error.__str__().find("."):-1]
+                    ).with_traceback(error.__traceback__)
             img.save(deploy_path, 'webp')
         elif source_type == "video":
             clip = moviepy_editor.VideoFileClip(initial_path)
