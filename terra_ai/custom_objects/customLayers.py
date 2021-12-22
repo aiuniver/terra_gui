@@ -1,16 +1,12 @@
 import numpy as np
 import tensorflow as tf
 import tensorflow
-from tensorflow.keras.layers import InputSpec
 from tensorflow.python.layers.base import Layer
 from tensorflow.keras import initializers, regularizers, constraints
 from tensorflow.keras import backend as K
 from tensorflow import cast
 from tensorflow.keras import layers
 from tensorflow.keras.layers import BatchNormalization
-
-from terra_ai.custom_objects.pretrained_yolo import YOLOv4, YOLOv3
-from terra_ai.data.modeling.layers.extra import YOLOModeChoice
 
 terra_custom_layers = {
     "InstanceNormalization": "custom_objects/customLayers",

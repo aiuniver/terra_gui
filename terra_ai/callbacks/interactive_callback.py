@@ -4,10 +4,12 @@ import string
 # import time
 from typing import Optional
 import numpy as np
+import tensorflow
 
 from terra_ai import progress
 from terra_ai.callbacks.classification_callbacks import ImageClassificationCallback, TextClassificationCallback, \
     AudioClassificationCallback, VideoClassificationCallback, DataframeClassificationCallback, TimeseriesTrendCallback
+from terra_ai.callbacks.gan_callback import GANCallback
 from terra_ai.callbacks.object_detection_callbacks import YoloV3Callback, YoloV4Callback
 from terra_ai.callbacks.regression_callbacks import DataframeRegressionCallback
 from terra_ai.callbacks.segmentation_callbacks import ImageSegmentationCallback, TextSegmentationCallback
@@ -74,6 +76,7 @@ class InteractiveCallback:
         self.deploy_presets_data = None
         self.random_key = ''
         self.get_balance = True
+        self.noise = 100
         pass
 
     def set_attributes(self, dataset: PrepareDataset, params: TrainingDetailsData):
@@ -486,6 +489,8 @@ class InteractiveCallback:
                 self.callback = YoloV3Callback()
             elif dataset.data.architecture == ArchitectureChoice.YoloV4:
                 self.callback = YoloV4Callback()
+            elif dataset.data.architecture == ArchitectureChoice.GAN:
+                self.callback = GANCallback()
             else:
                 pass
         except Exception as error:
@@ -504,7 +509,7 @@ class InteractiveCallback:
             # logger.error(exc)
             raise exc
 
-    def _prepare_seed(self):
+    def _prepare_seed(self, tf=None):
         method_name = '_prepare_seed'
         try:
             example_idx = {}
@@ -512,6 +517,8 @@ class InteractiveCallback:
                 if self.options.data.architecture in YOLO_ARCHITECTURE:
                     example_idx[data_type] = np.arange(len(self.options.dataframe.get(data_type)))
                     np.random.shuffle(example_idx[data_type])
+                elif self.options.data.architecture == ArchitectureChoice.GAN:
+                    example_idx[data_type] = tensorflow.random.normal(shape=(10, 5, self.noise))
                 elif self.options.data.architecture in BASIC_ARCHITECTURE:
                     output = self.training_details.interactive.intermediate_result.main_output
                     example_idx[data_type] = []
