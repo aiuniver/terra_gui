@@ -15,6 +15,7 @@ from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoic
 from terra_ai.settings import DATASET_EXT, DATASET_CONFIG
 from terra_ai.data.datasets.creations.layers.output.types.ObjectDetection import LayerODDatasetTypeChoice
 from terra_ai import progress
+from terra_ai.logging import logger
 
 import psutil
 import cv2
