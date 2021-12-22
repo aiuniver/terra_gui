@@ -85,9 +85,9 @@ class InteractiveCallback:
             self.options = dataset
             self._callback_router(dataset)
             self.class_graphics = self._class_metric_list()
-            logger.info(f"dataset architecture: {dataset.data.architecture}")
-            logger.info(f"dataset config: \n{dataset.data}")
-            logger.info(f"training parameters: \n{params.native()}\n")
+            logger.info(f"\ndataset architecture: {dataset.data.architecture}")
+            logger.info(f"\ndataset config: \n{dataset.data}")
+            logger.info(f"\ntraining parameters: \n{params.native()}\n")
             self.training_details = params
             self.last_training_details = copy.deepcopy(params)
             self.dataset_path = dataset.data.path
@@ -509,7 +509,7 @@ class InteractiveCallback:
             # logger.error(exc)
             raise exc
 
-    def _prepare_seed(self, tf=None):
+    def _prepare_seed(self):
         method_name = '_prepare_seed'
         try:
             example_idx = {}
@@ -517,8 +517,6 @@ class InteractiveCallback:
                 if self.options.data.architecture in YOLO_ARCHITECTURE:
                     example_idx[data_type] = np.arange(len(self.options.dataframe.get(data_type)))
                     np.random.shuffle(example_idx[data_type])
-                elif self.options.data.architecture == ArchitectureChoice.GAN:
-                    example_idx[data_type] = tensorflow.random.normal(shape=(10, 5, self.noise))
                 elif self.options.data.architecture in BASIC_ARCHITECTURE:
                     output = self.training_details.interactive.intermediate_result.main_output
                     example_idx[data_type] = []

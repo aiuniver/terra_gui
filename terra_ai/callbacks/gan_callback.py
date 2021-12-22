@@ -1,15 +1,29 @@
+import os
+
 import numpy as np
 import tensorflow
+from PIL import Image
+from tensorflow.keras.preprocessing import image
 
+from terra_ai.callbacks.utils import get_y_true, round_loss_metric
+from terra_ai.data.datasets.extra import DatasetGroupChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice
 import terra_ai.exceptions.callbacks as exception
+from terra_ai.logging import logger
+from terra_ai.settings import DEPLOY_PRESET_PERCENT
 
 
-class BaseGANCallback:
-    name = 'BaseGANCallback'
+class GANCallback:
+    name = 'GANCallback'
 
     def __init__(self):
         self.noise = 100
+
+    @staticmethod
+    def get_x_array(options):
+        x_val = {}
+        inverse_x_val = {}
+        return x_val, inverse_x_val
 
     @staticmethod
     def get_y_true(options, dataset_path=""):
@@ -33,7 +47,7 @@ class BaseGANCallback:
                     postprocess_array = array[i]
                 else:
                     postprocess_array = array
-                example_idx = DataframeRegressionCallback().prepare_example_idx_to_show(
+                example_idx = GANCallback().prepare_example_idx_to_show(
                     array=postprocess_array[:len(array)],
                     true_array=true_array[:len(array)],
                     count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
@@ -62,7 +76,7 @@ class BaseGANCallback:
             return return_data
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
-                DataframeRegressionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+                GANCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
             # logger.error(exc)
             raise exc
 
@@ -92,7 +106,7 @@ class BaseGANCallback:
             return example_idx
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
-                BaseGANCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+                GANCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
             # logger.error(exc)
             raise exc
 
@@ -138,21 +152,11 @@ class BaseGANCallback:
                 return data
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
-                DataframeRegressionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+                GANCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
             # logger.error(exc)
             raise exc
 
 
-class GANCallback(BaseGANCallback):
-    def __init__(self):
-        super().__init__()
-        self.name = 'GANCallback'
-
-    @staticmethod
-    def get_x_array(options):
-        x_val = {}
-        inverse_x_val = {}
-        return x_val, inverse_x_val
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str, preset_path: str,
@@ -212,7 +216,7 @@ class GANCallback(BaseGANCallback):
     def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "") -> dict:
         method_name = 'postprocess_deploy'
         try:
-            x_array, inverse_x_array = ImageClassificationCallback.get_x_array(options)
+            x_array, inverse_x_array = GANCallback.get_x_array(options)
             return_data = {}
             if array is None:
                 logger.warning("postprocess_deploy: array is None")
@@ -223,7 +227,7 @@ class GANCallback(BaseGANCallback):
                     postprocess_array = array[i]
                 else:
                     postprocess_array = array
-                example_idx = ImageClassificationCallback.prepare_example_idx_to_show(
+                example_idx = GANCallback.prepare_example_idx_to_show(
                     array=postprocess_array[:len(array)],
                     true_array=true_array[:len(array)],
                     options=options,
@@ -235,7 +239,7 @@ class GANCallback(BaseGANCallback):
                 _id = 1
                 for idx in example_idx:
                     input_id = list(options.data.inputs.keys())[0]
-                    source = ImageClassificationCallback.postprocess_initial_source(
+                    source = GANCallback.postprocess_initial_source(
                         options=options,
                         input_id=input_id,
                         save_id=_id,
@@ -245,7 +249,7 @@ class GANCallback(BaseGANCallback):
                         x_array=None if not x_array else x_array.get(f"{input_id}"),
                         return_mode='deploy'
                     )
-                    actual_value, predict_values = ImageClassificationCallback.postprocess_classification(
+                    actual_value, predict_values = GANCallback.postprocess_classification(
                         predict_array=np.expand_dims(postprocess_array[idx], axis=0),
                         true_array=true_array[idx],
                         options=options.data.outputs[output_id],
@@ -263,7 +267,7 @@ class GANCallback(BaseGANCallback):
             return return_data
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
-                ImageClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+                GANCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
             # logger.error(exc)
             raise exc
 
@@ -285,7 +289,7 @@ class GANCallback(BaseGANCallback):
                         'statistic_values': {}
                     }
                     for inp in options.data.inputs.keys():
-                        data = ImageClassificationCallback.postprocess_initial_source(
+                        data = GANCallback.postprocess_initial_source(
                             options=options,
                             input_id=inp,
                             save_id=idx + 1,
@@ -302,7 +306,7 @@ class GANCallback(BaseGANCallback):
                         }
 
                     for out in options.data.outputs.keys():
-                        data = ImageClassificationCallback.postprocess_classification(
+                        data = GANCallback().postprocess_classification(
                             predict_array=y_pred.get(data_type).get(f'{out}')[example_idx[idx]],
                             true_array=y_true.get(data_type).get(f'{out}')[example_idx[idx]],
                             options=options.data.outputs.get(out),
@@ -320,6 +324,6 @@ class GANCallback(BaseGANCallback):
                 return return_data
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
-                ImageClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+                GANCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
             # logger.error(exc)
             raise exc

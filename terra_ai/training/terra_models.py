@@ -590,6 +590,7 @@ class GANTerraModel(BaseTerraModel):
     name = "GANTerraModel"
 
     def __init__(self, model: dict, model_name: str, model_path: Path, **options):
+        logger.debug(f"{GANTerraModel.name} is started")
         super().__init__(model=model, model_name=model_name, model_path=model_path)
         self.generator: Model = model.get('generator')
         self.discriminator: Model = model.get('discriminator')
