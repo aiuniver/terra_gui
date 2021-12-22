@@ -74,6 +74,7 @@ class StartAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         serializer = StartSerializer(data={"sources": request.data})
         serializer.is_valid(raise_exception=True)
+        request.project.deploy = None
         self.terra_exchange(
             "cascade_start",
             training_path=PROJECT_PATH.training,
