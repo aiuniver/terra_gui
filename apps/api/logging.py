@@ -105,7 +105,8 @@ class TerraLogsCatcherHandler(logging.Handler):
             LogData(
                 level=record.levelname,
                 title=record.getMessage(),
-                message=str(record.exc_info[1]) if record.exc_info else None,
+                message=getattr(record, "details", None),
+                # message=str(record.exc_info[1]) if record.exc_info else None,
                 type=getattr(record, "type", None),
             )
         )

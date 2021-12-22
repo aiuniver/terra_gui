@@ -395,6 +395,6 @@ class CascadeRunner:
             img.save(deploy_path, 'webp')
         elif source_type == "video":
             clip = moviepy_editor.VideoFileClip(initial_path)
-            clip.write_videofile(deploy_path)
+            clip.write_videofile(deploy_path, preset='ultrafast', bitrate='3000k')
         elif source_type == "audio":
             AudioSegment.from_file(initial_path).export(deploy_path, format="webm")
