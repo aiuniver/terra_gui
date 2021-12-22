@@ -138,9 +138,9 @@ class Voc:
     def parse(paths_list, tmp_lst):
         data = {}
         for filename in paths_list:
-            xml = open(filename, "r")
-
+            xml = open(filename, "r", encoding='utf-8')
             tree = Et.parse(xml)
+            xml.close()
             root = tree.getroot()
 
             xml_size = root.find("size")
@@ -619,12 +619,13 @@ def get_od_names(version_data):
             elif worker_params.parameters.model_type == LayerODDatasetTypeChoice.Voc:
                 (dir_path, dir_names, filenames) = next(os.walk(os.path.abspath(os.path.join(version_data.source_path, ann_path))))
                 for filename in filenames:
-                    xml = open(os.path.join(dir_path, filename), "r")
+                    xml = open(os.path.join(dir_path, filename), "r", encoding='utf-8')
                     tree = Et.parse(xml)
                     root = tree.getroot()
                     objects = root.findall("object")
                     for _object in objects:
                         names_list.append(_object.find("name").text)
+                    xml.close()
                 names_list = sorted(set(names_list))
 
             elif worker_params.parameters.model_type == LayerODDatasetTypeChoice.Kitti:
@@ -634,6 +635,7 @@ def get_od_names(version_data):
                     for line in txt:
                         elements = line.split(" ")
                         names_list.append(elements[0])
+                    txt.close()
                 names_list = sorted(set(names_list))
 
             elif worker_params.parameters.model_type == LayerODDatasetTypeChoice.Udacity:

@@ -16,6 +16,10 @@ class CallbacksMessages(dict, Enum):
         "ru": "Ошибка в классе `%s`, метод `%s`: %s",
         "eng": "Error in class `%s` method `%s`: %s",
     }
+    SetInteractiveAttributesMissing = {
+        "ru": "Не удалось установить аттрибуты для интерактивного коллбэка. Класс `%s`, метод `%s`.",
+        "eng": "The attributes for the interactive callback could not be set. `%s` class, `%s` method.",
+    }
 
 
 class UndefinedException(TerraBaseException):
@@ -38,3 +42,10 @@ class ErrorInClassInMethodException(TerraBaseException):
     def __init__(self, __class_name: str, __method_name: str, __error: str, **kwargs):
         super().__init__(__class_name, __method_name, __error, **kwargs)
 
+
+class SetInteractiveAttributesException(TerraBaseException):
+    class Meta:
+        message: dict = CallbacksMessages.SetInteractiveAttributesMissing
+
+    def __init__(self, __module_name: str, __method_name: str, **kwargs):
+        super().__init__(__module_name, __method_name, **kwargs)

@@ -3,8 +3,6 @@ import base64
 from tempfile import NamedTemporaryFile
 
 from terra_ai.settings import TERRA_PATH, PROJECT_PATH
-from terra_ai.data.datasets.dataset import DatasetInfo
-from terra_ai.data.cascades.extra import BlockGroupChoice
 
 from apps.api import decorators
 from apps.api.utils import autocrop_image_square
@@ -74,14 +72,16 @@ class ValidateAPIView(BaseAPIView):
 
 class StartAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        serializer = StartSerializer(data={"sources": request.data})
+        serializer = StartSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        request.project.deploy = None
         self.terra_exchange(
             "cascade_start",
             training_path=PROJECT_PATH.training,
             datasets_path=TERRA_PATH.datasets,
             sources=serializer.validated_data.get("sources"),
             cascade=request.project.cascade,
+            example_count=serializer.validated_data.get("example_count"),
         )
         return BaseResponseSuccess()
 
@@ -90,38 +90,6 @@ class StartProgressAPIView(BaseAPIView):
     @decorators.progress_error("cascade_start")
     def post(self, request, progress, **kwargs):
         if progress.finished:
-            sources_data = progress.data.get("kwargs", {}).get("sources", {})
-            dataset_sources = progress.data.get("datasets", [])
-            sources = {}
-            for block in request.project.cascade.blocks:
-                if block.group != BlockGroupChoice.InputData:
-                    continue
-                source_data = sources_data.get(str(block.id))
-                if not source_data:
-                    continue
-                datasets_source = list(
-                    filter(
-                        lambda item: item.alias == source_data.get("alias")
-                        and item.group == source_data.get("group"),
-                        dataset_sources,
-                    )
-                )
-                if not len(datasets_source):
-                    continue
-                sources.update(
-                    {
-                        block.id: DatasetInfo(
-                            alias=datasets_source[0].alias,
-                            group=datasets_source[0].group,
-                        ).dataset.sources
-                    }
-                )
-            self.terra_exchange(
-                "cascade_execute",
-                sources=sources,
-                cascade=request.project.cascade,
-                training_path=PROJECT_PATH.training,
-            )
             progress.message = ""
             progress.percent = 0
             progress.data = None

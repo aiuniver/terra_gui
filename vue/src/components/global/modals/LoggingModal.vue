@@ -69,7 +69,7 @@ export default {
     },
     onChange(tag) {
       if (this.selected.includes(tag)) {
-        this.selected.pop(tag);
+        this.selected = this.selected.filter(i => i !== tag);
       } else {
         this.selected.push(tag);
       }
@@ -124,7 +124,7 @@ export default {
     height: 100%;
   }
   &__type {
-    width: 50px;
+    width: 70px;
   }
   &__empty {
     text-align: center;

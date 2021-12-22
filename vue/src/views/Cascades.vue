@@ -46,7 +46,7 @@ export default {
   },
   methods: {
     async isTraining() {
-      this.dialogLoadModel = await this.$store.dispatch('dialogs/trining', { ctx: this, page: 'модели' });
+      this.dialogLoadModel = true// = await this.$store.dispatch('dialogs/trining', { ctx: this, page: 'модели' });
     },
     addBlock(type) {
       const position = this.$refs.container.getCenter();
@@ -69,7 +69,7 @@ export default {
       await this.$store.dispatch('cascades/validate', {});
     },
     async clearModel() {
-      const action = await this.$store.dispatch('dialogs/confirm', { ctx: this, content: 'Очистить модель?' });
+      const action = await this.$store.dispatch('dialogs/confirm', { ctx: this, content: 'Очистить каскад?' });
       if (action == 'confirm') {
         await this.$store.dispatch('cascades/clearModel');
       }

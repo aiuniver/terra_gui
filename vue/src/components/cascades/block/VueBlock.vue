@@ -99,27 +99,24 @@ export default {
       return this.errors?.[this.id] || '';
     },
     parametr() {
-      const parametr = Object.values(this.parameters?.main || {}).filter(item => item);
-      const group = this.group;
-      console.log(group);
-      console.log(parametr);
-      if (group === 'Function') {
-        const { type, group } = this.parameters?.main || {};
-        return `${group} ${type}`;
+      const { type, group, path } = this.parameters.main;
+      const b = this.group;
+      if (b === 'Service') {
+        return `${group} ${type || ''}`;
       }
-      if (group === 'Service') {
-        const { type, group } = this.parameters?.main || {};
-        return `${group} ${type}`;
-      }
-      if (group === 'Model') {
-        const { path } = this.parameters?.main || {};
+      if (b === 'Model') {
         return `${path}`;
       }
-      if (group === 'InputData') {
-        const { type } = this.parameters?.main || {};
+      if (b === 'InputData') {
         return `${type}`;
       }
-      return parametr.join(' ');
+      if (b === 'OutputData') {
+        return `${type}`;
+      }
+      if (b === 'Function') {
+        return `${group} ${type || ''}`;
+      }
+      return '';
     },
     styleHover() {
       const len = this.iconsFilter.length;

@@ -3,6 +3,7 @@ import base64
 
 from tempfile import NamedTemporaryFile
 from transliterate import slugify
+from pydantic.error_wrappers import ValidationError
 
 from terra_ai.settings import TERRA_PATH
 from terra_ai.data.modeling.extra import LayerGroupChoice
@@ -77,9 +78,24 @@ class UpdateAPIView(BaseAPIView):
                     del item["shape"]
         model_data = model.native()
         model_data.update(data)
-        model = self.terra_exchange("model_update", model=model_data)
-        request.project.set_model(model)
-        return BaseResponseSuccess()
+        errors = {}
+        try:
+            model = self.terra_exchange("model_update", model=model_data)
+            request.project.set_model(model)
+        except ValidationError as exc:
+            errors = self._errors_processing(exc)
+        return BaseResponseSuccess(errors)
+
+    def _errors_processing(self, exc: ValidationError) -> dict:
+        errors = {}
+        for error in exc.errors():
+            loc = error.get("loc")
+            name = loc[0]
+            tail = loc[1:]
+            if len(tail):
+                name += f'[{"][".join(tail)}]'
+            errors.update({name: str(error.get("msg"))})
+        return errors
 
 
 class ValidateAPIView(BaseAPIView):

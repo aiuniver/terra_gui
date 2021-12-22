@@ -11,6 +11,8 @@ from django.conf import settings as django_settings
 from .data.path import TerraPathData, ProjectPathData
 
 
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+
 # General settings
 ASSETS_PATH = Path(Path(__file__).parent, "assets")
 TMP_DIR = Path(Path(__file__).parent.parent, "Usage")

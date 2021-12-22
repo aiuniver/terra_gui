@@ -9,7 +9,7 @@ from terra_ai.settings import TERRA_PATH, PROJECT_PATH, DEPLOY_PATH
 from terra_ai.deploy.prepare_deploy import DeployCreator
 from terra_ai.data.datasets.dataset import DatasetInfo, DatasetLoadData
 from terra_ai.data.deploy.tasks import DeployPageData
-from terra_ai.data.deploy.extra import DeployTypePageChoice
+from terra_ai.data.deploy.extra import DeployTypePageChoice, DeployTypeDemoChoice
 
 from apps.api import decorators
 from apps.api.base import BaseAPIView, BaseResponseSuccess
@@ -57,6 +57,9 @@ class GetProgressAPIView(BaseAPIView):
                     page=progress.data.get("kwargs", {}).get("page").native(),
                 )
                 progress.data = request.project.deploy.presets
+                progress.data.update(
+                    {"type": DeployTypeDemoChoice[progress.data.get("type")]}
+                )
         return BaseResponseSuccess(progress.native())
 
 

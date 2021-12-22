@@ -77,18 +77,24 @@ class InteractiveCallback:
         pass
 
     def set_attributes(self, dataset: PrepareDataset, params: TrainingDetailsData):
-        self.options = dataset
-        self._callback_router(dataset)
-        self.class_graphics = self._class_metric_list()
-        logger.info(f"dataset architecture: {dataset.data.architecture}", extra={"front_level": "no_show"})
-        logger.info(f"dataset config: \n{dataset.data}", extra={"front_level": "no_show"})
-        logger.info(f"training parameters: \n{params.native()}\n", extra={"front_level": "no_show"})
-        self.training_details = params
-        self.last_training_details = copy.deepcopy(params)
-        self.dataset_path = dataset.data.path
-        self.class_colors = get_classes_colors(dataset)
-        self.x_val, self.inverse_x_val = self.callback.get_x_array(dataset)
-        self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
+        method_name = "set attributes"
+        try:
+            self.options = dataset
+            self._callback_router(dataset)
+            self.class_graphics = self._class_metric_list()
+            logger.info(f"dataset architecture: {dataset.data.architecture}")
+            logger.info(f"dataset config: \n{dataset.data}")
+            logger.info(f"training parameters: \n{params.native()}\n")
+            self.training_details = params
+            self.last_training_details = copy.deepcopy(params)
+            self.dataset_path = dataset.data.path
+            self.class_colors = get_classes_colors(dataset)
+            self.x_val, self.inverse_x_val = self.callback.get_x_array(dataset)
+            self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
+        except Exception as error:
+            raise exception.SetInteractiveAttributesException(
+                self.__class__.__name__, method_name
+            ).with_traceback(error.__traceback__)
 
     def clear_history(self):
         self.log_history = {}

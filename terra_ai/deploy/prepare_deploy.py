@@ -24,6 +24,7 @@ from terra_ai.training.terra_models import BaseTerraModel, YoloTerraModel
 from terra_ai.settings import DEPLOY_PATH
 from ..data.deploy.extra import DeployTypeChoice
 from ..exceptions.base import TerraBaseException
+from ..exceptions.training import TrainingException
 
 
 class DeployCreator:

@@ -246,17 +246,17 @@ export default {
 		}
 	}
 	.error {
-		color: #f00;
-	}
-	.idle {
-		color: #aaa;
-	}
-	.ready {
-		color: #0f0;
-	}
-	.waiting {
-		color: #ff0;
-	}
+    color: #f44336;
+  }
+  .idle {
+    color: #9e9e9e;
+  }
+  .ready {
+    color: #8bc34a;
+  }
+  .waiting {
+    color: #ff9800;
+  }
 	.server-state {
 		font-size: 1rem;
 		margin-bottom: 20px;

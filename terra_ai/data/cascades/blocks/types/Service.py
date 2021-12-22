@@ -24,7 +24,7 @@ class ParametersMainData(BaseMixinData):
     version: Optional[
         BlockServiceYoloV5VersionChoice
     ] = BlockServiceYoloV5VersionChoice.Small
-    render_img: Optional[bool] = True
+    render_img: Optional[bool] = False
     max_dist: Optional[confloat(gt=0, lt=1)] = 0.2
     min_confidence: Optional[confloat(gt=0, lt=1)] = 0.3
     nms_max_overlap: Optional[confloat(gt=0, le=1)] = 1

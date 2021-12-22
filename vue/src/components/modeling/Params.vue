@@ -46,7 +46,7 @@
               v-model="block.shape.input"
               :label="'Размерность входных данных'"
               :name="'shape_input'"
-              :disabled="block.type !== 'Input' || block.task !== 'Noise' || !!project.dataset"
+              :disabled="block.type !== 'Input' || block.task === 'Noise' || !!project.dataset"
               @change="saveModel"
             />
             <Shape

@@ -2,7 +2,7 @@
   <div class="footer">
     <div class="footer__message">
       <div class="footer__message--icon" @click="dialogErrors = true">
-        <span v-if="errors.length"></span>
+        <span ></span>
       </div>
       <div :class="['footer__message--text', showMsg.color]" @click="dialogError = true">
         <transition name="error-slide" mode="out-in">
@@ -30,7 +30,7 @@
       {{ `Copyright © «Университет искусственного интеллекта», ${new Date().getFullYear()}` }}
       <span v-if="version" class="footer__version">{{ version }}</span>
     </div>
-    <LoggingModal v-if="errors.length" v-model="dialogErrors" :errors="errors" :title="'Логи'" @error="clickError" />
+    <LoggingModal v-model="dialogErrors" :errors="errors" :title="'Логи'" @error="clickError" />
     <ErrorModal v-model="dialogError" v-bind="error" />
   </div>
 </template>
@@ -106,10 +106,10 @@ export default {
         });
       }
     },
-    message(value) {
-      if (value)
-        this.$Notify({ type: this.color, title: this.color === 'success' ? 'Успешно' : 'Ошибка', message: value });
-    },
+    // message(value) {
+    //   if (value)
+    //     // this.$Notify({ type: this.color, title: this.color === 'success' ? 'Успешно' : 'Ошибка', message: value });
+    // },
   },
 };
 </script>
