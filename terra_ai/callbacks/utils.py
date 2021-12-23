@@ -9,6 +9,7 @@ import pandas as pd
 from pandas import DataFrame
 from sklearn.metrics import classification_report, confusion_matrix
 
+from terra_ai.data.datasets.extra import DatasetGroupChoice
 from terra_ai.data.training.extra import ArchitectureChoice
 import terra_ai.exceptions.callbacks as exception
 from terra_ai.utils import camelize
@@ -893,11 +894,14 @@ def segmentation_metric(true_array, pred_array):
 
 def get_dataset_length(options):
     method_name = 'get_dataset_length'
+    # logger.debug(f"{MODULE_NAME}, {get_dataset_length.__name__}")
     try:
         train_length, val_length = 0, 0
+        if options.data.architecture not in [ArchitectureChoice.Timeseries, ArchitectureChoice.TimeseriesTrend] and \
+                options.data.group != DatasetGroupChoice.keras:
+            return len(options.dataframe.get('train')), len(options.dataframe.get('val'))
         for x in options.dataset.get('train').batch(2 ** 10):
             train_length += list(x[0].values())[0].shape[0]
-        val_length = 0
         for x in options.dataset.get('val').batch(2 ** 10):
             val_length += list(x[0].values())[0].shape[0]
         return train_length, val_length
