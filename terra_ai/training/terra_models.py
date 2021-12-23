@@ -36,8 +36,9 @@ class BaseTerraModel:
         self.file_path_model_weights = os.path.join(self.saving_path, self.model_weights)
         self.file_path_model_best_weights = os.path.join(self.saving_path, self.model_best_weights)
 
-        self.base_model = model
-        self.json_model = self.base_model.to_json() if model else None
+        if not isinstance(model, dict):
+            self.base_model = model
+            self.json_model = self.base_model.to_json() if model else None
 
         if not model:
             self.load()
@@ -592,13 +593,15 @@ class GANTerraModel(BaseTerraModel):
     def __init__(self, model: dict, model_name: str, model_path: Path, **options):
         logger.debug(f"{GANTerraModel.name} is started")
         super().__init__(model=model, model_name=model_name, model_path=model_path)
+        logger.debug(f'model: {model}')
         self.generator: Model = model.get('generator')
         self.discriminator: Model = model.get('discriminator')
         self.file_path_gen_json = os.path.join(self.saving_path, "generator_json.trm")
         self.file_path_disc_json = os.path.join(self.saving_path, "discriminator_json.trm")
         self.generator_json = self.generator.to_json()
         self.discriminator_json = self.discriminator.to_json()
-        self.noise = self.generator.inputs.shape[1:]
+        self.noise = self.generator.inputs[0].shape[1:]
+        logger.debug(f'self.noise: {self.noise}')
         self.generator_loss_func = None
         self.discriminator_loss_func = None
         self.generator_optimizer = None
@@ -612,6 +615,7 @@ class GANTerraModel(BaseTerraModel):
         pass
 
     def save(self) -> None:
+        logger.debug(f"{GANTerraModel.name}, {GANTerraModel.save.__name__}")
         method_name = 'save_model'
         try:
             self.__save_model_to_json()
@@ -624,6 +628,7 @@ class GANTerraModel(BaseTerraModel):
             raise exc
 
     def load(self) -> None:
+        logger.debug(f"{GANTerraModel.name}, {GANTerraModel.load.__name__}")
         gen_model_data, disc_model_data, custom_dict = self.__get_json_data()
         custom_object = self.__set_custom_objects(custom_dict)
         self.generator = tf.keras.models.model_from_json(gen_model_data, custom_objects=custom_object)
@@ -632,6 +637,7 @@ class GANTerraModel(BaseTerraModel):
         self.discriminator_json = self.discriminator.to_json()
 
     def save_weights(self, gw_path_=None, dw_path_=None):
+        logger.debug(f"{GANTerraModel.name}, {GANTerraModel.save_weights.__name__}")
         if not gw_path_:
             gw_path_ = os.path.join(self.saving_path, self.generator_weights)
         self.generator.save_weights(gw_path_)
@@ -640,10 +646,12 @@ class GANTerraModel(BaseTerraModel):
         self.discriminator.save_weights(dw_path_)
 
     def load_weights(self):
+        logger.debug(f"{GANTerraModel.name}, {GANTerraModel.load_weights.__name__}")
         self.generator.load_weights(self.file_path_gen_weights)
         self.discriminator.load_weights(self.file_path_disc_weights)
 
     def __save_model_to_json(self):
+        logger.debug(f"{GANTerraModel.name}, {GANTerraModel.__save_model_to_json.__name__}")
         with open(self.file_path_gen_json, "w", encoding="utf-8") as json_file:
             json.dump(self.generator_json, json_file)
 
@@ -651,6 +659,7 @@ class GANTerraModel(BaseTerraModel):
             json.dump(self.discriminator_json, json_file)
 
     def __get_json_data(self):
+        logger.debug(f"{GANTerraModel.name}, {GANTerraModel.__get_json_data.__name__}")
         with open(self.file_path_gen_json) as json_file:
             gen_data = json.load(json_file)
 
@@ -664,10 +673,12 @@ class GANTerraModel(BaseTerraModel):
 
     @staticmethod
     def __prepare_seed(noise):
+        logger.debug(f"{GANTerraModel.name}, {GANTerraModel.__prepare_seed.__name__}")
         return tf.random.normal(shape=(50, noise))
 
     @staticmethod
     def __discriminator_loss(loss_func, real_output, fake_output):
+        logger.debug(f"{GANTerraModel.name}, {GANTerraModel.__discriminator_loss.__name__}")
         real_loss = loss_func(tf.ones_like(real_output), real_output)
         fake_loss = loss_func(tf.zeros_like(fake_output), fake_output)
         total_loss = real_loss + fake_loss
@@ -675,10 +686,12 @@ class GANTerraModel(BaseTerraModel):
 
     @staticmethod
     def __generator_loss(loss_func, fake_output):
+        logger.debug(f"{GANTerraModel.name}, {GANTerraModel.__generator_loss.__name__}")
         return loss_func(tf.ones_like(fake_output), fake_output)
 
     @staticmethod
     def __gradient_penalty(batch_size, real_images, fake_images, discriminator):
+        logger.debug(f"{GANTerraModel.name}, {GANTerraModel.__gradient_penalty.__name__}")
         """ Calculates the gradient penalty.
 
         This loss is calculated on an interpolated image
@@ -707,6 +720,7 @@ class GANTerraModel(BaseTerraModel):
         return gp
 
     def set_optimizer(self, params: TrainingDetailsData):
+        logger.debug(f"{GANTerraModel.name}, {GANTerraModel.set_optimizer.__name__}")
         method_name = 'set_optimizer'
         try:
             optimizer_object = getattr(keras.optimizers, params.base.optimizer.type)
@@ -746,6 +760,7 @@ class GANTerraModel(BaseTerraModel):
         return generated_images, gen_loss, disc_loss, disc_real_loss, disc_fake_loss
 
     def fit(self, params: TrainingDetailsData, dataset: PrepareDataset):
+        logger.debug(f"{GANTerraModel.name}, {GANTerraModel.fit.__name__}")
         method_name = 'fit'
         try:
             self.train_length = len(dataset.dataframe.get('train'))
@@ -758,20 +773,11 @@ class GANTerraModel(BaseTerraModel):
 
             current_epoch = self.callback.last_epoch
             end_epoch = self.callback.total_epochs
-            train_pred, seed_pred = [], []
-            # image_array = None
-            # for inp, _ in dataset.dataset['train'].batch(1).take(1):
-            #     image_array = inp
-            #     break
-            # for array in image_array.values():
             target_shape, seed_shape = [self.train_length], [10]
             target_shape.extend(list(self.generator.outputs.shape[1:]))
             seed_shape.extend(list(self.generator.outputs.shape[1:]))
-            # val_target_shape.extend(list(inp.shape[1:]))
             train_pred = np.zeros(target_shape)
-            seed_pred = np.zeros(seed_shape)
-            # val_pred.append(np.zeros(val_target_shape))
-            # val_true.append(np.zeros(val_target_shape))
+            # seed_pred = np.zeros(seed_shape)
 
             train_data_idxs = np.arange(self.train_length).tolist()
             self.callback.on_train_begin()
@@ -779,9 +785,6 @@ class GANTerraModel(BaseTerraModel):
                 logger.debug(f"Эпоха {epoch + 1}")
                 self.callback.on_epoch_begin()
                 current_logs = {"epochs": epoch + 1, 'loss': {}, "metrics": {}}
-                # train_loss_cls = {}
-                # for cls in range(num_class):
-                #     train_loss_cls[classes[cls]] = 0.
                 current_idx = 0
                 cur_step, gen_loss, disc_loss, disc_real_loss, disc_fake_loss = 0, 0, 0, 0, 0
                 logger.debug(f"Эпоха {epoch + 1}: обучение на тренировочной выборке...")
@@ -794,35 +797,14 @@ class GANTerraModel(BaseTerraModel):
                     disc_loss += results[2].numpy()
                     disc_real_loss += results[3].numpy()
                     disc_fake_loss += results[4].numpy()
-                    # for cls in range(num_class):
-                    #     train_loss_cls[classes[cls]] += results[5][classes[cls]].numpy()
 
-                    # true_array = list(target1.values())
                     length = results[0].shape[0]
                     for i in range(len(train_pred)):
                         train_pred[current_idx: current_idx + length] = results[0].numpy()
-                        # train_true[i][current_idx: current_idx + length] = true_array[i].numpy()
                     current_idx += length
                     cur_step += 1
                     if interactive.urgent_predict:
                         logger.debug(f"Эпоха {epoch + 1}: urgent_predict")
-                        # logger.info(f"Эпоха {epoch + 1}: обработка проверочной выборки...",
-                        #             extra={"front_level": "info"})
-                        # val_steps = 0
-                        # val_current_idx = 0
-                        # for val_image_data, val_target1, val_target2 in dataset.dataset.get('val').batch(
-                        #         params.base.batch):
-                        #     results = self.__validate_step(val_image_data,
-                        #                                    target1,
-                        #                                    target2,
-                        #                                    **yolo_parameters)
-                        #     val_true_array = list(val_target1.values())
-                        #     length = val_true_array[0].shape[0]
-                        #     for i in range(len(val_true_array)):
-                        #         val_pred[i][val_current_idx: val_current_idx + length] = results[5][i].numpy()
-                        #         val_true[i][val_current_idx: val_current_idx + length] = val_true_array[i].numpy()
-                        #     val_current_idx += length
-                        #     val_steps += 1
                         self.callback.on_train_batch_end(batch=cur_step, arrays={
                             "train": train_pred, "seed": self.generator(self.seed)
                         })

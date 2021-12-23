@@ -51,9 +51,9 @@ class ModelValidator:
         self.num_models: int = 0
         self.model_idxs: list = []
         self.model_count: int = 1
-        architecture = ArchitectureChoice.GAN
+        # architecture = ArchitectureChoice.GAN
         self.architecture = architecture
-        if architecture in GAN_ARCHITECTURE:
+        if self.architecture in GAN_ARCHITECTURE:
             self.model_count = 2
         if not architecture:
             self.model_count = None
@@ -88,7 +88,7 @@ class ModelValidator:
 
     def compile_keras_code(self) -> None:
         """Create keras code from model plan"""
-        # logger.debug(f"{self.name}, {self.compile_keras_code.__name__}")
+        logger.debug(f"{self.name}, {self.compile_keras_code.__name__}")
         logger.info("Компиляция керас-кода модели...")
         self._plan_separation()
         self.keras_code = ""
@@ -170,7 +170,7 @@ class ModelValidator:
 
     def get_validated(self):
         """Returns all necessary info about modeling"""
-        # logger.debug(f"{self.name}, {self.get_validated.__name__}")
+        logger.debug(f"{self.name}, {self.get_validated.__name__}")
         logger.info("Валидация модели...")
         self._model_validation()
         if self.valid:
@@ -214,7 +214,7 @@ class ModelValidator:
 
     def get_keras_model(self):
         self._plan_separation()
-        # logger.debug(f"{self.name}, {self.get_keras_model.__name__}")
+        logger.debug(f"{self.name}, {self.get_keras_model.__name__}")
         if self.architecture in GAN_ARCHITECTURE:
             models = {'generator': None, 'discriminator': None}
             for model_plan in self.separated_plans:
@@ -224,7 +224,7 @@ class ModelValidator:
                     models['discriminator'] = model
                 else:
                     models['generator'] = model
-            # print(models, models['discriminator'].outputs, models['generator'].outputs)
+            print(models, models['discriminator'].outputs, models['generator'].outputs)
             return models
         else:
             mc = ModelCreator(self.model_plan, self.input_shape, self.block_plans, self.layers_config)
@@ -234,7 +234,7 @@ class ModelValidator:
             return mc.create_model()
 
     def _get_layer_str(self, _layer, name_dict, identifier="", _block_uplinks=None):
-        # logger.debug(f"{self.name}, {self._get_layer_str.__name__}")
+        logger.debug(f"{self.name}, {self._get_layer_str.__name__}")
         _layer_str = ""
         if _block_uplinks:
             _block_uplinks[_layer[0]] = f"{identifier}_{_layer[1]}_{_layer[0]}"
@@ -303,7 +303,7 @@ class ModelValidator:
         return _layer_str
 
     def _build_model_plan(self):
-        # logger.debug(f"{self.name}, {self._build_model_plan.__name__}")
+        logger.debug(f"{self.name}, {self._build_model_plan.__name__}")
         logger.info("Предобработка плана модели...")
         for layer in self.model.layers:
             if layer.group == LayerGroupChoice.input:
@@ -330,7 +330,7 @@ class ModelValidator:
             val_dictionary, dict:   with or without comments about cycles
             valid, bool:            True if no cycles, otherwise False
         """
-        # logger.debug(f"{self.name}, {self._get_cycles_check.__name__}")
+        logger.debug(f"{self.name}, {self._get_cycles_check.__name__}")
         edges = get_edges(self.model_plan)
         di_graph = nx.DiGraph(edges)
         for cycle in nx.simple_cycles(di_graph):
@@ -348,7 +348,7 @@ class ModelValidator:
             val_dictionary, dict:   with or without comments about separation
             valid, bool:            True if no separation, otherwise False
         """
-        # logger.debug(f"{self.name}, {self._get_full_connection_check.__name__}")
+        logger.debug(f"{self.name}, {self._get_full_connection_check.__name__}")
         edges = get_edges(model_plan=self.model_plan, full_connection=True)
         di_graph = nx.DiGraph(edges)
         sub_graphs = sorted(
@@ -375,18 +375,16 @@ class ModelValidator:
             self.model_idxs = sub_graphs
 
     def _get_model_links(self) -> None:
-        # logger.debug(f"{self.name}, {self._get_model_links.__name__}")
+        logger.debug(f"{self.name}, {self._get_model_links.__name__}")
         (self.start_row, self.up_links, self.down_links, self.all_indexes, self.end_row) = get_links(self.model_plan)
 
     @staticmethod
     def _get_reorder_model(plan: list):
-        # logger.debug(f"{self.name}, {self._get_reorder_model.__name__}")
-        # model_plan = reorder_plan(self.model_plan)
         return reorder_plan(plan)
 
     def _get_input_shape_check(self) -> None:
         """Check empty input shapes"""
-        # logger.debug(f"{self.name}, {self._get_input_shape_check.__name__}")
+        logger.debug(f"{self.name}, {self._get_input_shape_check.__name__}")
         input_layers = {}
         for layer in self.model_plan:
             if layer[0] in self.input_shape.keys():
@@ -408,7 +406,7 @@ class ModelValidator:
 
     def _get_output_shape_check(self):
         """Check compatibility of dataset's and results model output shapes"""
-        # logger.debug(f"{self.name}, {self._get_output_shape_check.__name__}")
+        logger.debug(f"{self.name}, {self._get_output_shape_check.__name__}")
         if self.output_shape:
             outputs = []
             for layer in self.model_plan:
@@ -434,7 +432,7 @@ class ModelValidator:
 
     def _model_validation(self) -> dict:
         """Full model validation"""
-        # logger.debug(f"{self.name}, {self._model_validation.__name__}")
+        logger.debug(f"{self.name}, {self._model_validation.__name__}")
         # check for cycles
         logger.info("Проверка наличия циклических структур...")
         self._get_cycles_check()
@@ -496,7 +494,7 @@ class ModelValidator:
         return self.val_dictionary
 
     def _layer_validation(self, layer: tuple, layer_input_shape: list, defaults: dict, config: LayerConfigData):
-        # logger.debug(f"{self.name}, {self._layer_validation.__name__}")
+        logger.debug(f"{self.name}, {self._layer_validation.__name__}")
         self.validator.set_state(
             layer_type=layer[1],
             shape=layer_input_shape,
@@ -509,7 +507,7 @@ class ModelValidator:
 
     def _custom_block_validation(self, block_plan, block_input_shape, defaults, config):
         """block modeling"""
-        # logger.debug(f"{self.name}, {self._custom_block_validation.__name__}")
+        logger.debug(f"{self.name}, {self._custom_block_validation.__name__}")
         _, _, down_links, _, end_row = get_links(block_plan)
         block_val_dict = {}
         block_input_shapes = {}
@@ -549,6 +547,9 @@ class ModelValidator:
         return block_output, block_comment
 
     def _plan_separation(self):
+        logger.debug(f"{self.name}, {self._plan_separation.__name__}")
+        self._get_full_connection_check()
+        # logger.debug(f'self.model_idxs - {self.model_idxs}')
         if len(self.model_idxs) == 1:
             self.separated_plans = [self.model_plan]
         else:
@@ -559,9 +560,9 @@ class ModelValidator:
                         if idx == layer[0]:
                             new_plan.append(layer)
                             break
+                # logger.debug(f'self._get_reorder_model(new_plan) - {self._get_reorder_model(new_plan)}')
                 self.separated_plans.append(self._get_reorder_model(new_plan))
-        # print('\n self.separated_plans\n', self.separated_plans[0],
-        #       '\n ', self.separated_plans[1])
+        # logger.debug(f'\n self.separated_plans\n {self.separated_plans[0]} \n  {self.separated_plans[1]}')
 
 
 # noinspection PyBroadException
@@ -584,7 +585,7 @@ class LayerValidation:
 
     def set_state(self, layer_type, shape: list, parameters: dict, defaults: dict, config: LayerConfigData, **kwargs):
         """Set input data and fill attributes"""
-        # logger.debug(f"{self.name}, {self.set_state.__name__}")
+        logger.debug(f"{self.name}, {self.set_state.__name__}")
         self.layer_type = layer_type
         self.inp_shape = shape
         self.def_parameters = defaults
@@ -597,7 +598,7 @@ class LayerValidation:
 
     def get_validated(self):
         """Validate given layer parameters and return output shape and possible error comment"""
-        # logger.debug(f"{self.name}, {self.get_validated.__name__}")
+        logger.debug(f"{self.name}, {self.get_validated.__name__}")
         error = self.primary_layer_validation()
         if error:
             return [None], error
@@ -653,7 +654,7 @@ class LayerValidation:
         """check each not default parameter from check_dict by setting it in base_dict
         revert means set default parameter in layer parameters and need additional check if pass
         on initial layer parameters"""
-        # logger.debug(f"{self.name}, {self.get_problem_parameter.__name__}")
+        logger.debug(f"{self.name}, {self.get_problem_parameter.__name__}")
         for param in base_dict.keys():
             val_dict = copy.deepcopy(base_dict)
             if val_dict.get(param) != check_dict.get(param):
@@ -691,7 +692,7 @@ class LayerValidation:
 
     def parameters_validation(self):
         """Parameter control comparing with default"""
-        # logger.debug(f"{self.name}, {self.parameters_validation.__name__}")
+        logger.debug(f"{self.name}, {self.parameters_validation.__name__}")
         if isinstance(self.def_parameters, str):
             return self.def_parameters
         problem_params = {}
@@ -725,7 +726,7 @@ class LayerValidation:
 
     def primary_layer_validation(self) -> Optional[str]:
         """Whole modeling for specific parameters, uplink number and input dimension"""
-        # logger.debug(f"{self.name}, {self.primary_layer_validation.__name__}")
+        logger.debug(f"{self.name}, {self.primary_layer_validation.__name__}")
         comment = self.position_validation()
         if comment:
             return comment
@@ -740,7 +741,7 @@ class LayerValidation:
 
     def position_validation(self) -> Optional[str]:
         """Validate number of uplinks"""
-        # logger.debug(f"{self.name}, {self.position_validation.__name__}")
+        logger.debug(f"{self.name}, {self.position_validation.__name__}")
         if None in self.inp_shape:
             exc = str(exceptions.InputShapeEmptyException())
             logger.warning(f"Слой {self.layer_type}: {exc}")
@@ -772,7 +773,7 @@ class LayerValidation:
 
     def input_dimension_validation(self) -> Optional[str]:
         """Dimension compatibility of first_shape shape"""
-        # logger.debug(f"{self.name}, {self.input_dimension_validation.__name__}")
+        logger.debug(f"{self.name}, {self.input_dimension_validation.__name__}")
         if len(self.inp_shape) > 1:
             for shape in self.inp_shape[1:]:
                 if len(self.inp_shape[0]) != len(shape):
@@ -825,7 +826,7 @@ class LayerValidation:
     # @property
     def specific_parameters_validation(self) -> str:
         """Validate specific layer parameters or its combination"""
-        # logger.debug(f"{self.name}, {self.specific_parameters_validation.__name__}")
+        logger.debug(f"{self.name}, {self.specific_parameters_validation.__name__}")
         # initializer identity
         for key in self.layer_parameters.keys():
             if self.layer_parameters.get(key) == "identity" and len(self.inp_shape[0]) != 2:
@@ -1178,18 +1179,18 @@ class ModelCreator:
 
     def _get_model_links(self):
         """Get start_row, uplinks, downlinks from terra_plan"""
-        # logger.debug(f"{self.name}, {self._get_model_links.__name__}")
+        logger.debug(f"{self.name}, {self._get_model_links.__name__}")
         self.start_row, self.uplinks, self.downlinks, _, self.end_row = get_links(self.model_plan)
 
     def _get_idx_line(self):
         """Get start_row, uplinks, downlinks from terra_plan"""
-        # logger.debug(f"{self.name}, {self._get_idx_line.__name__}")
+        logger.debug(f"{self.name}, {self._get_idx_line.__name__}")
         self.idx_line = get_idx_line(self.model_plan)
 
     def _build_keras_model(self):
         """Build keras model from plan"""
         logger.info("Сборка модели из плана...")
-        # logger.debug(f"{self.name}, {self._build_keras_model.__name__}")
+        logger.debug(f"{self.name}, {self._build_keras_model.__name__}")
         for _id in self.idx_line:
             layer_type = self.model_plan[self.id_idx_dict.get(_id)][1]
             layer_idx = self.model_plan[self.id_idx_dict.get(_id)][0]
@@ -1219,7 +1220,7 @@ class ModelCreator:
 
     def _keras_layer_init(self, terra_layer):
         """Create keras layer_obj from terra_plan layer"""
-        # logger.debug(f"{self.name}, {self._keras_layer_init.__name__}")
+        logger.debug(f"{self.name}, {self._keras_layer_init.__name__}")
         module = importlib.import_module(self.layer_config.get(terra_layer[0]).module.value)
         if terra_layer[1] == LayerTypeChoice.Input:
             _input_shape = self.input_shape.get(int(terra_layer[2].get("name")))[0]
@@ -1244,12 +1245,12 @@ class ModelCreator:
                     input_tensors = []
                     for idx in terra_layer[3]:
                         input_tensors.append(self.tensors[idx])
-            # print('\nterra_layer', terra_layer)
+            logger.debug(f' --terra_layer - {terra_layer}')
             self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(**terra_layer[2])(input_tensors)
 
     def _tf_layer_init(self, terra_layer):
         """Create tensorflow layer_obj from terra_plan layer"""
-        # logger.debug(f"{self.name}, {self._tf_layer_init.__name__}")
+        logger.debug(f"{self.name}, {self._tf_layer_init.__name__}")
         module = importlib.import_module(self.layer_config.get(terra_layer[0]).module.value)
         if len(terra_layer[3]) == 1:
             input_tensors = self.tensors[terra_layer[3][0]]
@@ -1261,7 +1262,7 @@ class ModelCreator:
 
     def _pretrained_model_init_(self, terra_layer):
         """Create pretrained model as layer_obj from terra_plan layer"""
-        # logger.debug(f"{self.name}, {self._pretrained_model_init_.__name__}")
+        logger.debug(f"{self.name}, {self._pretrained_model_init_.__name__}")
         module = importlib.import_module(self.layer_config.get(terra_layer[0]).module.value)
         param2del = ["name", "trainable", "output_layer"]
         attr = copy.deepcopy(terra_layer[2])
@@ -1283,7 +1284,7 @@ class ModelCreator:
             activation='linear', name=terra_layer[2].get("name"))(pretrained_layer)
 
     def _custom_block_init(self, terra_layer):
-        # logger.debug(f"{self.name}, {self._custom_block_init.__name__}")
+        logger.debug(f"{self.name}, {self._custom_block_init.__name__}")
         block_object = CustomLayer()
         block_object.block_plan = self.block_plans.get(terra_layer[0])
         for layer in block_object.block_plan:
@@ -1308,13 +1309,13 @@ class ModelCreator:
         3 - # uplinks - (list of  int)
         4 - # downlinks - (list of int)
         """
-        # logger.debug(f"{self.name}, {self.create_model.__name__}")
+        logger.debug(f"{self.name}, {self.create_model.__name__}")
         self._build_keras_model()
         return self.nnmodel
 
     def creator_cleaner(self) -> None:
         """clean and reset to default self.nnmodel"""
-        # logger.debug(f"\n{self.name}, {self.creator_cleaner.__name__}")
+        logger.debug(f"\n{self.name}, {self.creator_cleaner.__name__}")
         clear_session()
         del self.nnmodel
         gc.collect()

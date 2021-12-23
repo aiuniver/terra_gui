@@ -23,6 +23,7 @@ class DeployTypeChoice(str, Enum):
     GoogleTTS = "GoogleTTS"
     Wav2Vec = "Wav2Vec"
     TinkoffAPI = "TinkoffAPI"
+    GAN = "GAN"
 
     @property
     def demo(self) -> str:

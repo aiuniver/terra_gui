@@ -2041,9 +2041,9 @@ if __name__ == "__main__":
     #     show_layer_names=True, rankdir='TB', expand_nested=False, dpi=96,
     #     layer_range=None, show_layer_activations=False)
     x = InstanceNormalization()
-    print(x.compute_output_shape(input_shape=(None, 416, 416, 3)))
+    print(x.compute_output_shape(input_shape=(None, 100)))
 
-    input = tensorflow.keras.Input(shape=(416, 416, 3))
+    input = tensorflow.keras.Input(shape=(100,))
     # print(input)
     x = InstanceNormalization()(input)
     print(x.shape)

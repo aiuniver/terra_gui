@@ -1,5 +1,6 @@
 import os
 
+import matplotlib
 import numpy as np
 import tensorflow
 from PIL import Image
@@ -17,27 +18,18 @@ class GANCallback:
     name = 'GANCallback'
 
     def __init__(self):
-        self.noise = 100
+        pass
 
     @staticmethod
     def get_x_array(options):
-        x_val = {}
-        inverse_x_val = {}
+        logger.debug(f"{GANCallback.name}, {GANCallback.get_x_array.__name__}")
+        x_val = None
+        inverse_x_val = None
         return x_val, inverse_x_val
 
     @staticmethod
-    def get_y_true(options, dataset_path=""):
-        y_true = {"train": {}, "val": {}}
-        inverse_y_true = {"train": {}, "val": {}}
-        return y_true, inverse_y_true
-
-    @staticmethod
-    def get_inverse_array(array: dict, options, type="output"):
-        inverse_array = {"train": {}, "val": {}}
-        return inverse_array
-
-    @staticmethod
     def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "") -> dict:
+        logger.debug(f"{GANCallback.name}, {GANCallback.postprocess_deploy.__name__}")
         method_name = 'postprocess_deploy'
         try:
             return_data = {}
@@ -49,7 +41,7 @@ class GANCallback:
                     postprocess_array = array
                 example_idx = GANCallback().prepare_example_idx_to_show(
                     array=postprocess_array[:len(array)],
-                    true_array=true_array[:len(array)],
+                    seed_array=None,
                     count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
                 )
                 return_data[output_id] = {'preset': [], 'label': []}
@@ -87,22 +79,22 @@ class GANCallback:
     @staticmethod
     def statistic_data_request(interactive_config, options, y_true, inverse_y_true,
                                y_pred, inverse_y_pred, raw_y_pred=None) -> list:
-        return []
+        return {}
 
     @staticmethod
     def balance_data_request(options, dataset_balance, interactive_config):
-        return []
+        return {}
 
     @staticmethod
-    def prepare_example_idx_to_show(self, array: np.ndarray, true_array: np.ndarray, options, output: int, count: int,
-                                    choice_type: ExampleChoiceTypeChoice = ExampleChoiceTypeChoice.best,
-                                    seed_idx: dict = None, noise: int = None) -> dict:
+    def prepare_example_idx_to_show(array: np.ndarray, seed_array: np.ndarray, count: int,
+                                    choice_type: ExampleChoiceTypeChoice = ExampleChoiceTypeChoice.seed) -> dict:
+        logger.debug(f"{GANCallback.name}, {GANCallback.prepare_example_idx_to_show.__name__}")
         method_name = 'prepare_example_idx_to_show'
         try:
-            if choice_type == ExampleChoiceTypeChoice.seed and len(seed_idx):
-                example_idx = seed_idx['train'][:count]
+            if choice_type == ExampleChoiceTypeChoice.seed:
+                example_idx = seed_array[:count*5]
             else:
-                example_idx = {'train': tensorflow.random.normal(shape=(count, 5, noise))}
+                example_idx = array[np.random.randint(0, len(array), count*5)]
             return example_idx
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
@@ -111,44 +103,32 @@ class GANCallback:
             raise exc
 
     @staticmethod
-    def postprocess_gan(column_names: list, inverse_y_true: np.ndarray, inverse_y_pred: np.ndarray,
-                        show_stat: bool = False, return_mode='deploy'):
-        method_name = 'postprocess_regression'
+    def postprocess_gan(predict_array: np.ndarray, image_id: int, save_path, return_mode='deploy'):
+        logger.debug(f"{GANCallback.name}, {GANCallback.postprocess_gan.__name__}")
+        method_name = 'postprocess_gan'
         try:
-            data = {"y_true": {"type": "str", "data": []}}
+            data = {"y_true": {}, "y_pred": {}, "stat": {}}
             if return_mode == 'deploy':
-                source = []
-                return source
-            else:
-                for i, name in enumerate(column_names):
-                    data["y_true"]["data"].append(
-                        {"title": name.split('_', 1)[-1], "value": f"{inverse_y_true[i]: .2f}", "color_mark": None}
-                    )
-                deviation = np.abs((inverse_y_pred - inverse_y_true) * 100 / inverse_y_true)
-                data["y_pred"] = {
-                    "type": "str",
-                    "data": []
-                }
-                for i, name in enumerate(column_names):
-                    color_mark = 'success' if deviation[i] < 2 else "wrong"
+                # predict_array = predict_array.astype("uint8")
+                img_save_path = os.path.join(save_path, "deploy_presets", f"gan_postprocessing_{image_id}.webp")
+                return_path = os.path.join("deploy_presets", f"gan_postprocessing_{image_id}.webp")
+                matplotlib.image.imsave(img_save_path, predict_array)
+                return return_path
+
+            if return_mode == 'callback':
+                _id = 1
+                data["y_pred"] = {"type": "image", "data": []}
+                for array in predict_array:
+                    y_pred_save_path = os.path.join(save_path, f"predict_gan_image_{image_id}_position_{_id}.webp")
+                    matplotlib.image.imsave(y_pred_save_path, array)
                     data["y_pred"]["data"].append(
                         {
-                            "title": name.split('_', 1)[-1],
-                            "value": f"{inverse_y_pred[i]: .2f}",
-                            "color_mark": color_mark
+                            "title": "Изображение",
+                            "value": y_pred_save_path,
+                            "color_mark": None
                         }
                     )
-                if show_stat:
-                    data["stat"] = {"type": "str", "data": []}
-                    for i, name in enumerate(column_names):
-                        color_mark = 'success' if deviation[i] < 2 else "wrong"
-                        data["stat"]["data"].append(
-                            {
-                                'title': f"Отклонение - «{name.split('_', 1)[-1]}»",
-                                'value': f"{np.round(deviation[i], 2)} %",
-                                'color_mark': color_mark
-                            }
-                        )
+                    _id += 1
                 return data
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
@@ -157,129 +137,16 @@ class GANCallback:
             raise exc
 
 
-
-    @staticmethod
-    def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str, preset_path: str,
-                                   data_type: str = 'val', save_id: int = None, x_array=None, return_mode='deploy'):
-        method_name = 'postprocess_initial_source'
-        try:
-            column_idx = []
-            if options.data.group != DatasetGroupChoice.keras:
-                for inp in options.data.inputs.keys():
-                    for column_name in options.dataframe.get(data_type).columns:
-                        if column_name.split('_')[0] == f"{inp}":
-                            column_idx.append(options.dataframe.get(data_type).columns.tolist().index(column_name))
-                initial_file_path = os.path.join(
-                    dataset_path, options.dataframe.get(data_type).iat[example_id, column_idx[0]]
-                )
-                if not save_id:
-                    return str(os.path.abspath(initial_file_path))
-            else:
-                initial_file_path = ""
-
-            if options.data.group != DatasetGroupChoice.keras:
-                img = Image.open(initial_file_path)
-                img = img.resize(
-                    options.data.inputs.get(input_id).shape[0:2][::-1],
-                    Image.ANTIALIAS
-                )
-            else:
-                if x_array is None:
-                    x_array = options.X.get(data_type).get(f"{list(options.data.inputs.keys())[0]}")
-                img = image.array_to_img(x_array[example_id])
-            img = img.convert('RGB')
-
-            if return_mode == 'deploy':
-                source = os.path.join(preset_path, "deploy_presets",
-                                      f"initial_data_image_{save_id}_input_{input_id}.webp")
-                return_source = os.path.join("deploy_presets", f"initial_data_image_{save_id}_input_{input_id}.webp")
-                img.save(source, 'webp')
-                return return_source
-            if return_mode == 'callback':
-                source = os.path.join(preset_path, f"initial_data_image_{save_id}_input_{input_id}.webp")
-                img.save(source, 'webp')
-                data = [
-                    {
-                        "title": "Изображение",
-                        "value": source,
-                        "color_mark": None
-                    }
-                ]
-                return data
-        except Exception as error:
-            exc = exception.ErrorInClassInMethodException(
-                ImageClassificationCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            # logger.error(exc)
-            raise exc
-
-    @staticmethod
-    def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "") -> dict:
-        method_name = 'postprocess_deploy'
-        try:
-            x_array, inverse_x_array = GANCallback.get_x_array(options)
-            return_data = {}
-            if array is None:
-                logger.warning("postprocess_deploy: array is None")
-
-            for i, output_id in enumerate(options.data.outputs.keys()):
-                true_array = get_y_true(options, output_id)
-                if len(options.data.outputs.keys()) > 1:
-                    postprocess_array = array[i]
-                else:
-                    postprocess_array = array
-                example_idx = GANCallback.prepare_example_idx_to_show(
-                    array=postprocess_array[:len(array)],
-                    true_array=true_array[:len(array)],
-                    options=options,
-                    output=output_id,
-                    count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
-                )
-
-                return_data[output_id] = []
-                _id = 1
-                for idx in example_idx:
-                    input_id = list(options.data.inputs.keys())[0]
-                    source = GANCallback.postprocess_initial_source(
-                        options=options,
-                        input_id=input_id,
-                        save_id=_id,
-                        example_id=idx,
-                        dataset_path=dataset_path,
-                        preset_path=save_path,
-                        x_array=None if not x_array else x_array.get(f"{input_id}"),
-                        return_mode='deploy'
-                    )
-                    actual_value, predict_values = GANCallback.postprocess_classification(
-                        predict_array=np.expand_dims(postprocess_array[idx], axis=0),
-                        true_array=true_array[idx],
-                        options=options.data.outputs[output_id],
-                        return_mode='deploy'
-                    )
-                    return_data[output_id].append(
-                        {
-                            "source": source,
-                            "actual": actual_value,
-                            "data": predict_values[0]
-                        }
-                    )
-                    _id += 1
-
-            return return_data
-        except Exception as error:
-            exc = exception.ErrorInClassInMethodException(
-                GANCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
-            # logger.error(exc)
-            raise exc
-
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
                                     preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
                                     y_true, inverse_y_true, class_colors, raw_y_pred=None):
+        logger.debug(f"{GANCallback.name}, {GANCallback.intermediate_result_request.__name__}")
         method_name = 'intermediate_result_request'
         try:
             return_data = {}
             if interactive_config.intermediate_result.show_results:
-                data_type = interactive_config.intermediate_result.data_type.name
+                # data_type = interactive_config.intermediate_result.data_type.name
                 for idx in range(interactive_config.intermediate_result.num_examples):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
@@ -288,39 +155,13 @@ class GANCallback:
                         'tags_color': None,
                         'statistic_values': {}
                     }
-                    for inp in options.data.inputs.keys():
-                        data = GANCallback.postprocess_initial_source(
-                            options=options,
-                            input_id=inp,
-                            save_id=idx + 1,
-                            example_id=example_idx[idx],
-                            dataset_path=dataset_path,
-                            preset_path=preset_path,
-                            x_array=x_val.get(data_type).get(f"{inp}") if x_val else None,
-                            return_mode='callback',
-                            data_type=data_type
-                        )
-                        return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
-                            'type': 'image',
-                            'data': data,
-                        }
-
-                    for out in options.data.outputs.keys():
-                        data = GANCallback().postprocess_classification(
-                            predict_array=y_pred.get(data_type).get(f'{out}')[example_idx[idx]],
-                            true_array=y_true.get(data_type).get(f'{out}')[example_idx[idx]],
-                            options=options.data.outputs.get(out),
-                            show_stat=interactive_config.intermediate_result.show_statistic,
-                            return_mode='callback'
-                        )
-                        if data.get('y_true'):
-                            return_data[f"{idx + 1}"]['true_value'][f"Выходной слой «{out}»"] = data.get('y_true')
-                        return_data[f"{idx + 1}"]['predict_value'][f"Выходной слой «{out}»"] = data.get('y_pred')
-                        return_data[f"{idx + 1}"]['tags_color'] = None
-                        if data.get('stat'):
-                            return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
-                        else:
-                            return_data[f"{idx + 1}"]['statistic_values'] = {}
+                    data = GANCallback().postprocess_gan(
+                        predict_array=example_idx[idx*5: (idx+1)*5],
+                        image_id=idx,
+                        save_path=preset_path,
+                        return_mode='callback'
+                    )
+                    return_data[f"{idx + 1}"]['predict_value'][f"Генератор"] = data.get('y_pred')
                 return return_data
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
