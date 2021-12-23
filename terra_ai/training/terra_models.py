@@ -50,7 +50,7 @@ class BaseTerraModel:
         self.train_length, self.val_length = 0, 0
 
     def save(self) -> None:
-        method_name = 'save_model'
+        method_name = 'save'
 
         """
         Saving last model on each epoch end
@@ -616,14 +616,14 @@ class GANTerraModel(BaseTerraModel):
 
     def save(self) -> None:
         logger.debug(f"{GANTerraModel.name}, {GANTerraModel.save.__name__}")
-        method_name = 'save_model'
+        method_name = 'save'
         try:
             self.__save_model_to_json()
             self.__save_custom_objects_to_json()
             self.save_weights()
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
-                BaseTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
+                GANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
             # logger.error(exc)
             raise exc
 
@@ -650,6 +650,26 @@ class GANTerraModel(BaseTerraModel):
         self.generator.load_weights(self.file_path_gen_weights)
         self.discriminator.load_weights(self.file_path_disc_weights)
 
+    @staticmethod
+    def _prepare_loss_dict(params: TrainingDetailsData):
+        method_name = '_prepare_loss_dict'
+        try:
+            loss_dict = {}
+            logger.debug(f"params.base.architecture.parameters.outputs\n {params.base.architecture.parameters.outputs}")
+            for output_layer in params.base.architecture.parameters.outputs:
+                loss_obj = getattr(
+                    importlib.import_module(
+                        loss_metric_config.get("loss").get(output_layer.loss.name, {}).get('module')),
+                    output_layer.loss.name
+                )()
+                loss_dict.update({str(output_layer.task.name).lower(): loss_obj})
+            return loss_dict
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                GANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
+
     def __save_model_to_json(self):
         logger.debug(f"{GANTerraModel.name}, {GANTerraModel.__save_model_to_json.__name__}")
         with open(self.file_path_gen_json, "w", encoding="utf-8") as json_file:
@@ -657,6 +677,10 @@ class GANTerraModel(BaseTerraModel):
 
         with open(self.file_path_disc_json, "w", encoding="utf-8") as json_file:
             json.dump(self.discriminator_json, json_file)
+
+    def __save_custom_objects_to_json(self):
+        with open(self.file_path_custom_obj_json, "w", encoding="utf-8") as json_file:
+            json.dump(terra_custom_layers, json_file)
 
     def __get_json_data(self):
         logger.debug(f"{GANTerraModel.name}, {GANTerraModel.__get_json_data.__name__}")
@@ -674,7 +698,9 @@ class GANTerraModel(BaseTerraModel):
     @staticmethod
     def __prepare_seed(noise):
         logger.debug(f"{GANTerraModel.name}, {GANTerraModel.__prepare_seed.__name__}")
-        return tf.random.normal(shape=(50, noise))
+        shape = [50]
+        shape.extend(list(noise))
+        return tf.random.normal(shape=shape)
 
     @staticmethod
     def __discriminator_loss(loss_func, real_output, fake_output):
@@ -686,6 +712,7 @@ class GANTerraModel(BaseTerraModel):
 
     @staticmethod
     def __generator_loss(loss_func, fake_output):
+        logger.debug(f'__generator_loss loss_func {loss_func}')
         logger.debug(f"{GANTerraModel.name}, {GANTerraModel.__generator_loss.__name__}")
         return loss_func(tf.ones_like(fake_output), fake_output)
 
@@ -730,13 +757,17 @@ class GANTerraModel(BaseTerraModel):
             self.discriminator_optimizer = optimizer_object(**parameters)
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
-                BaseTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
+                GANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
             # logger.error(exc)
             raise exc
 
     @tf.function
     def __train_step(self, images, gen_batch, dis_batch, grad_penalty=False, gp_weight=1, **options):
-        noise = tf.random.normal([gen_batch, self.noise])
+        logger.debug(f"{GANTerraModel.name}, {GANTerraModel.__train_step.__name__}")
+        noise_shape = [gen_batch]
+        noise_shape.extend(list(self.noise))
+        noise = tf.random.normal(noise_shape)
+
         # gp_weight = tf.convert_to_tensor(gp_weight, dtype='float32')
         with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
             generated_images = self.generator(noise, training=True)
@@ -767,15 +798,19 @@ class GANTerraModel(BaseTerraModel):
             # yolo_parameters = self.__create_yolo_parameters(params=params, dataset=dataset)
             # num_class = yolo_parameters.get("parameters").get("num_class")
             # classes = yolo_parameters.get("parameters").get("classes")
-            global_steps = tf.Variable(1, trainable=False, dtype=tf.int64)
+            # global_steps = tf.Variable(1, trainable=False, dtype=tf.int64)
+            loss_dict = self._prepare_loss_dict(params)
+            self.generator_loss_func = loss_dict.get('generator')
+            self.discriminator_loss_func = loss_dict.get('discriminator')
+            logger.debug(f'loss_dict - {loss_dict}')
 
             self.set_optimizer(params=params)
 
             current_epoch = self.callback.last_epoch
             end_epoch = self.callback.total_epochs
             target_shape, seed_shape = [self.train_length], [10]
-            target_shape.extend(list(self.generator.outputs.shape[1:]))
-            seed_shape.extend(list(self.generator.outputs.shape[1:]))
+            target_shape.extend(list(self.generator.outputs[0].shape[1:]))
+            seed_shape.extend(list(self.generator.outputs[0].shape[1:]))
             train_pred = np.zeros(target_shape)
             # seed_pred = np.zeros(seed_shape)
 
@@ -786,7 +821,7 @@ class GANTerraModel(BaseTerraModel):
                 self.callback.on_epoch_begin()
                 current_logs = {"epochs": epoch + 1, 'loss': {}, "metrics": {}}
                 current_idx = 0
-                cur_step, gen_loss, disc_loss, disc_real_loss, disc_fake_loss = 0, 0, 0, 0, 0
+                cur_step, gen_loss, disc_loss, disc_real_loss, disc_fake_loss = 1, 0, 0, 0, 0
                 logger.debug(f"Эпоха {epoch + 1}: обучение на тренировочной выборке...")
                 for image_data, _ in dataset.dataset.get('train').batch(params.base.batch):
                     results = self.__train_step(images=image_data.get(self.discriminator.inputs[0].name),
@@ -797,6 +832,11 @@ class GANTerraModel(BaseTerraModel):
                     disc_loss += results[2].numpy()
                     disc_real_loss += results[3].numpy()
                     disc_fake_loss += results[4].numpy()
+                    logger.debug(f"Batch {cur_step}: "
+                                 f"gen_loss={round(gen_loss / cur_step, 3)}, "
+                                 f"disc_loss={round(disc_loss / cur_step, 3)}, "
+                                 f"disc_real_loss={round(disc_real_loss / cur_step, 3)}, "
+                                 f"disc_fake_loss={round(disc_fake_loss / cur_step, 3)}")
 
                     length = results[0].shape[0]
                     for i in range(len(train_pred)):
@@ -838,6 +878,6 @@ class GANTerraModel(BaseTerraModel):
             self.callback.on_train_end()
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
-                YoloTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
+                GANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
             # logger.error(exc)
             raise exc
