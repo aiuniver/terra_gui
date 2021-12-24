@@ -9,6 +9,20 @@
           <TextCard :style="{ width: '224px', height: '80px' }">{{ classificationResult }}</TextCard>
         </div>
       </div>
+      <div v-if="type == 'video_classification'">
+        <div class="card__original">
+          <TableVideo :value="card.source" />
+        </div>
+        <div class="card__result">
+          <TextCard :style="{ width: '300px', height: '80px' }">
+            <div class="video_classification">
+              <template v-for="{ name, value } of getData">
+                <div class="video_classification__item" :key="name">{{ `${name}: ${value}` }}</div>
+              </template>
+            </div>
+          </TextCard>
+        </div>
+      </div>
       <div v-if="type == 'text_classification'">
         <div class="card__original">
           <TextCard :style="{ width: '600px', color: '#A7BED3', height: '324px' }">{{ card.source }}</TextCard>
@@ -194,8 +208,14 @@ export default {
       let text = this.card.data;
       let prepareText = '';
       text.sort((a, b) => (a[1] < b[1] ? 1 : -1));
-      for (let i = 0; i < text.length; i++) prepareText += `${text[i][0]} - ${text[i][1]}% \n`;
+      for (let i = 0; i < text.length; i++) prepareText += `${text[i][0]} - ${text[i][1]}%`;
       return prepareText;
+    },
+    getData() {
+      const arr = this.card?.data || [];
+      const text = arr.map(i => ({ name: i[0], value: i[1] }));
+
+      return text;
     },
   },
 };
@@ -238,6 +258,14 @@ export default {
   &__original {
     border: 1px solid #6c7883;
     border-radius: 4px;
+  }
+}
+.video_classification {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  &__item {
+    flex: 1 1 45%;
   }
 }
 </style>
