@@ -141,7 +141,6 @@ class CreateVersion(object):
         self.version_paths_data = VersionPathsData(basepath=current_version)
         progress.pool(name=self.progress_name, message='Распаковка исходного архива', percent=0)
         with zipfile.ZipFile(self.dataset_paths_data.basepath.joinpath('sources.zip'), 'r') as z_file:
-            # z_file.extractall(self.version_paths_data.sources)
             z_file.extractall(self.sources_temp_directory)
         progress.pool(name=self.progress_name, message='Создание инструкций', percent=0)
         self.instructions: DatasetInstructionsData = self.create_instructions(version_data)
@@ -151,17 +150,14 @@ class CreateVersion(object):
         self.fit_preprocessing(put_data=self.instructions.outputs)
         self.create_table(version_data)
         progress.pool(name=self.progress_name, message='Создание массивов данных', percent=0)
-        x_array = self.create_dataset_arrays(put_data=self.instructions.inputs)
-        y_array = self.create_dataset_arrays(put_data=self.instructions.outputs)
-        progress.pool(name=self.progress_name, message='Запись массивов данных на диск', percent=100)
-        if not isinstance(y_array, dict):
-            self.write_arrays(x_array, y_array[0], y_array[1])
-        else:
-            self.write_arrays(x_array, y_array)
+        self.create_dataset_arrays(put_data=self.instructions.inputs)
+        self.create_dataset_arrays(put_data=self.instructions.outputs)
+
         self.inputs = self.create_put_parameters(self.instructions.inputs, version_data, 'inputs')
         self.outputs = self.create_put_parameters(self.instructions.outputs, version_data, 'outputs')
         # self.service = self.create_put_parameters(self.instructions.service, version_data, 'service')
 
+        progress.pool(name=self.progress_name, message='Сохранение', percent=100)
         self.write_instructions_to_files()
         self.zip_dataset(self.version_paths_data.basepath, os.path.join(self.dataset_paths_data.versions, 'version'))
         version_dir = self.parent_dataset_paths_data.versions.joinpath('.'.join([version_data.alias, VERSION_EXT]))
@@ -302,7 +298,6 @@ class CreateVersion(object):
                 if current_path.is_dir():
                     if parameters['type'] == LayerOutputTypeChoice.Classification:
                         data_to_pass = self.y_cls
-                        print(len(self.y_cls), self.y_cls)
                     else:
                         for direct, folder, file_name in os.walk(current_path):
                             if file_name:
@@ -321,6 +316,7 @@ class CreateVersion(object):
                             for j in range(len(result['instructions'])):
                                 result['instructions'][j] = result['instructions'][j].replace(str(self.version_paths_data.sources), '')[1:]
                         data += result['instructions']
+                        result_params = result['parameters']
                         # classes_names += result['parameters']['classes_names']
                         # if idx == puts[0].id and parameters['type'] != LayerOutputTypeChoice.Classification:
                         #     self.y_cls += [os.path.basename(path) for _ in range(len(result['instructions']))]
@@ -351,9 +347,8 @@ class CreateVersion(object):
                 result['parameters']['num_classes'] = len(classes_names)
                 # ###
             data = self.y_cls if parameters['type'] == LayerOutputTypeChoice.Classification else data
-            instructions_data = InstructionsData(instructions=data, parameters=result['parameters'])
+            instructions_data = InstructionsData(instructions=data, parameters=result_params)
             instructions_data.parameters.update({'put_type': decamelize(parameters['type'])})
-            print(instructions_data.parameters)
             put_parameters[idx] = {f'{idx}_{decamelize(parameters["type"])}': instructions_data}
 
         return put_parameters
@@ -384,10 +379,6 @@ class CreateVersion(object):
                     self.preprocessing.preprocessing.update(
                         {data.parameters['put']: {data.parameters['cols_names']: None}}
                     )
-                # if 'augmentation' in data.parameters.keys() and data.parameters['augmentation']:
-                # self.augmentation[data.parameters['cols_names']] = {'train': [], 'val': [], 'test': []}
-                # {'object': self.preprocessing.create_image_augmentation(data.parameters['augmentation']),
-                # 'data': []}
 
     def fit_preprocessing(self, put_data):
 
