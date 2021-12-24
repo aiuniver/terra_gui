@@ -56,7 +56,7 @@ class DataList(DataBaseList):
 
         shutil.copyfile(
             Path(self.path_deploy, item.source),
-            Path(self.path_deploy, f"{index + 1}{Path(item.source).suffix}"),
+            Path(self.source_path, f"{index + 1}{Path(item.source).suffix}"),
         )
 
 
