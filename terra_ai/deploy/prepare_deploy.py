@@ -34,7 +34,7 @@ class DeployCreator:
         try:
             model_path = Path(os.path.join(training_path, page.get("name"), "model"))
             presets_path = os.path.join(DEPLOY_PATH, "deploy_presets")
-            print(model_path, presets_path, page)
+
             if page.get("type") == "model":
                 self._check_model_on_training(model_path=model_path)
                 if os.path.exists(DEPLOY_PATH):
@@ -148,6 +148,7 @@ class DeployCreator:
                 )
 
             deploy_data.update({"page": page})
+
             return DeployData(**deploy_data)
         except Exception as error:
             raise error
