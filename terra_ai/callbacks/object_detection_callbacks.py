@@ -8,7 +8,7 @@ from PIL import Image, ImageFont, ImageDraw
 from tensorflow.python.keras.utils.np_utils import to_categorical
 
 from terra_ai.callbacks.utils import sort_dict, round_loss_metric, fill_heatmap_front_structure, \
-    fill_graph_front_structure, fill_graph_plot_data
+    fill_graph_front_structure, fill_graph_plot_data, set_preset_count
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
 from terra_ai.settings import DEPLOY_PRESET_PERCENT
 import terra_ai.exceptions.callbacks as exception
@@ -626,12 +626,13 @@ class BaseObjectDetectionCallback:
             colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
             image_size = options.data.inputs.get(list(options.data.inputs.keys())[0]).shape[:2]
 
+            count = set_preset_count(len_array=len(y_pred[0]), preset_percent=DEPLOY_PRESET_PERCENT)
             example_idx, bb = BaseObjectDetectionCallback().prepare_example_idx_to_show(
                 array=y_pred,
                 true_array=y_true,
                 name_classes=options.data.outputs.get(list(options.data.outputs.keys())[0]).classes_names,
                 box_channel=None,
-                count=int(len(y_pred[0]) * DEPLOY_PRESET_PERCENT / 100),
+                count=count,
                 choice_type='best',
                 sensitivity=sensitivity,
                 get_optimal_channel=True
