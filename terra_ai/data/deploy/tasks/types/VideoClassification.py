@@ -2,7 +2,6 @@ import random
 
 from typing import List, Tuple
 from pathlib import Path
-from pydantic import PositiveFloat
 
 from terra_ai.data.mixins import BaseMixinData
 from ..extra import DataBaseList, DataBase
@@ -11,7 +10,7 @@ from ..extra import DataBaseList, DataBase
 class Item(BaseMixinData):
     source: str
     actual: str
-    data: List[Tuple[str, PositiveFloat]]
+    data: List[Tuple[str, float]]
 
 
 class DataList(DataBaseList):
