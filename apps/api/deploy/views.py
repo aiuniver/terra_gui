@@ -50,7 +50,6 @@ class GetProgressAPIView(BaseAPIView):
                 datasets = progress.data.get("datasets")
                 dataset_data = datasets[0].native() if len(datasets) else None
                 dataset = DatasetInfo(**dataset_data).dataset if dataset_data else None
-                print(progress.data)
                 request.project.deploy = DeployCreator().get_deploy(
                     dataset=dataset,
                     training_path=PROJECT_PATH.training,
