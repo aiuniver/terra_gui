@@ -171,14 +171,14 @@ class ModelValidator:
     def get_validated(self):
         """Returns all necessary info about modeling"""
         logger.debug(f"{self.name}, {self.get_validated.__name__}")
-        logger.info("Валидация модели...")
+        logger.info("Валидация модели...", extra={'type': "info"})
         self._model_validation()
         if self.valid:
             self.compile_keras_code()
-            logger.info("Валидация модели прошла успешно")
+            logger.info("Валидация модели прошла успешно", extra={'type': "success"})
         else:
             self.keras_code = None
-            logger.info("Модель не валидна")
+            logger.warning("Модель не прошла валидацию", extra={'type': "warning"})
         for idx, layer in enumerate(self.filled_model.layers):
             # fill inputs
             if layer.group == LayerGroupChoice.input:
@@ -1245,7 +1245,6 @@ class ModelCreator:
                     input_tensors = []
                     for idx in terra_layer[3]:
                         input_tensors.append(self.tensors[idx])
-            logger.debug(f' --terra_layer - {terra_layer}')
             self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(**terra_layer[2])(input_tensors)
 
     def _tf_layer_init(self, terra_layer):

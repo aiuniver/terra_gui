@@ -948,34 +948,23 @@ class CreateArray(object):
     @staticmethod
     def create_segmentation(image_path: str, **options) -> dict:
 
-        def cluster_to_ohe(mask_image):
+        def image_to_ohe(img_array):
+            mask_ohe = []
+            for color in options['classes_colors']:
+                color_array = np.expand_dims(np.where((color[0] + options['mask_range'] >= img_array[:, :, 0]) &
+                                                      (img_array[:, :, 0] >= color[0] - options['mask_range']) &
+                                                      (color[1] + options['mask_range'] >= img_array[:, :, 1]) &
+                                                      (img_array[:, :, 1] >= color[1] - options['mask_range']) &
+                                                      (color[2] + options['mask_range'] >= img_array[:, :, 2]) &
+                                                      (img_array[:, :, 2] >= color[2] - options['mask_range']), 1, 0),
+                                             axis=2)
+                mask_ohe.append(color_array)
 
-            mask_image = mask_image.reshape(-1, 3)
-            km = KMeans(n_clusters=options['num_classes'])
-            km.fit(mask_image)
-            labels = km.labels_
-            cl_cent = km.cluster_centers_.astype('uint8')[:max(labels) + 1]
-            cl_mask = utils.to_categorical(labels, max(labels) + 1, dtype='uint8')
-            cl_mask = cl_mask.reshape(options['height'], options['width'], cl_mask.shape[-1])
-            mask_ohe = np.zeros((options['height'], options['width']))
-            for k, color in enumerate(options['classes_colors']):
-                rgb = Color(color).as_rgb_tuple()
-                mask = np.zeros((options['height'], options['width']))
-                for j, cl_rgb in enumerate(cl_cent):
-                    if rgb[0] in range(cl_rgb[0] - options['mask_range'], cl_rgb[0] + options['mask_range']) and \
-                            rgb[1] in range(cl_rgb[1] - options['mask_range'], cl_rgb[1] + options['mask_range']) and \
-                            rgb[2] in range(cl_rgb[2] - options['mask_range'], cl_rgb[2] + options['mask_range']):
-                        mask = cl_mask[:, :, j]
-                if k == 0:
-                    mask_ohe = mask
-                else:
-                    mask_ohe = np.dstack((mask_ohe, mask))
-
-            return mask_ohe
+            return np.concatenate(np.array(mask_ohe), axis=2)
 
         img = load_img(path=image_path, target_size=(options['height'], options['width']))
         array = np.array(img)
-        array = cluster_to_ohe(array)
+        array = image_to_ohe(array)
 
         instructions = {'instructions': array,
                         'parameters': options}

@@ -14,7 +14,7 @@ from terra_ai.callbacks.utils import YOLO_ARCHITECTURE, get_dataset_length, GAN_
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice
 from terra_ai.data.modeling.model import ModelDetailsData
-from terra_ai.data.training.extra import ArchitectureChoice
+from terra_ai.data.training.extra import ArchitectureChoice, StateStatusChoice
 from terra_ai.data.training.train import TrainingDetailsData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.exceptions.base import TerraBaseException
@@ -227,7 +227,7 @@ class GUINN:
                     current_status = state.state.status
                     state.state.set("stopped")
                     progress.pool(self.progress_name,
-                                  message="Найдено незавершенное обучение. Идет очистка. Подождите.")
+                                  message="Найдено незавершенное обучение. Идет очистка. Подождите.", finished=False)
                     one_thread.join()
                     state.state.set(current_status)
         except Exception as error:
@@ -240,7 +240,7 @@ class GUINN:
         try:
             # check and kill last training if it detect
             self._kill_last_training(state=training)
-            progress.pool.reset(self.progress_name)
+            progress.pool.reset(self.progress_name, finished=False)
 
             # save base training params for deploy
             if training.state.status != "addtrain":
@@ -285,5 +285,9 @@ class GUINN:
             progress.pool(self.progress_name, finished=False, message="\n Начало обучения ...")
             compiled_model.fit(params=params, dataset=dataset)
         except Exception as error:
+            if self.callback and self.callback.last_epoch <= 1 and params.state.status == StateStatusChoice.training:
+                params.state.set(StateStatusChoice.no_train)
+            else:
+                params.state.set(StateStatusChoice.stopped)
             progress.pool(self.progress_name, data=params, finished=True, error=error)
             raise check_error(error, self.__class__.__name__, method_name)

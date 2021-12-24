@@ -8,7 +8,7 @@ from tensorflow.keras.preprocessing import image
 
 from terra_ai.callbacks.utils import sort_dict, fill_graph_front_structure, fill_graph_plot_data, get_y_true, \
     class_counter, get_confusion_matrix, fill_heatmap_front_structure, get_classification_report, \
-    fill_table_front_structure, round_list
+    fill_table_front_structure, round_list, set_preset_count
 from terra_ai.data.datasets.dataset import DatasetOutputsData
 from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerEncodingChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
@@ -428,12 +428,13 @@ class ImageClassificationCallback(BaseClassificationCallback):
                     postprocess_array = array[i]
                 else:
                     postprocess_array = array
+                count = set_preset_count(len_array=len(postprocess_array), preset_percent=DEPLOY_PRESET_PERCENT)
                 example_idx = ImageClassificationCallback.prepare_example_idx_to_show(
                     array=postprocess_array[:len(array)],
                     true_array=true_array[:len(array)],
                     options=options,
                     output=output_id,
-                    count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
+                    count=count
                 )
 
                 return_data[output_id] = []
@@ -586,12 +587,13 @@ class TextClassificationCallback(BaseClassificationCallback):
                     postprocess_array = array[i]
                 else:
                     postprocess_array = array
+                count = set_preset_count(len_array=len(postprocess_array), preset_percent=DEPLOY_PRESET_PERCENT)
                 example_idx = ImageClassificationCallback.prepare_example_idx_to_show(
                     array=postprocess_array[:len(array)],
                     true_array=true_array[:len(array)],
                     options=options,
                     output=output_id,
-                    count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
+                    count=count
                 )
                 return_data[output_id] = []
                 for idx in example_idx:
@@ -737,12 +739,13 @@ class DataframeClassificationCallback(BaseClassificationCallback):
                     postprocess_array = array[i]
                 else:
                     postprocess_array = array
+                count = set_preset_count(len_array=len(postprocess_array), preset_percent=DEPLOY_PRESET_PERCENT)
                 example_idx = ImageClassificationCallback.prepare_example_idx_to_show(
                     array=postprocess_array[:len(array)],
                     true_array=true_array[:len(array)],
                     options=options,
                     output=output_id,
-                    count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
+                    count=count
                 )
                 return_data[output_id] = []
                 for idx in example_idx:
@@ -888,12 +891,13 @@ class AudioClassificationCallback(BaseClassificationCallback):
                     postprocess_array = array[i]
                 else:
                     postprocess_array = array
+                count = set_preset_count(len_array=len(postprocess_array), preset_percent=DEPLOY_PRESET_PERCENT)
                 example_idx = ImageClassificationCallback.prepare_example_idx_to_show(
                     array=postprocess_array[:len(array)],
                     true_array=true_array[:len(array)],
                     options=options,
                     output=output_id,
-                    count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
+                    count=count
                 )
                 return_data[output_id] = []
                 _id = 1
@@ -1049,12 +1053,13 @@ class VideoClassificationCallback(BaseClassificationCallback):
                     postprocess_array = array[i]
                 else:
                     postprocess_array = array
+                count = set_preset_count(len_array=len(postprocess_array), preset_percent=DEPLOY_PRESET_PERCENT)
                 example_idx = ImageClassificationCallback.prepare_example_idx_to_show(
                     array=postprocess_array[:len(array)],
                     true_array=true_array[:len(array)],
                     options=options,
                     output=output_id,
-                    count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
+                    count=count
                 )
                 return_data[output_id] = []
                 _id = 1
@@ -1245,12 +1250,13 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
                     postprocess_array = array[i]
                 else:
                     postprocess_array = array
+                count = set_preset_count(len_array=len(postprocess_array), preset_percent=DEPLOY_PRESET_PERCENT)
                 example_idx = ImageClassificationCallback.prepare_example_idx_to_show(
                     array=postprocess_array[:len(array)],
                     true_array=true_array[:len(array)],
                     options=options,
                     output=output_id,
-                    count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
+                    count=count
                 )
                 return_data[output_id] = []
                 for idx in example_idx:

@@ -290,10 +290,10 @@ class History:
                     loss_obj.__name__ in ['CategoricalHinge', 'CategoricalCrossentropy', 'BinaryCrossentropy']:
                 array_shape = list(y_true.shape[:-1])
                 array_shape.append(2)
-                true_array = np.zeros(array_shape)
+                true_array = np.zeros(array_shape).astype('float32')
                 true_array[..., 0] = y_true[..., class_idx]
                 true_array[..., 1] = 1 - y_true[..., class_idx]
-                pred_array = np.zeros(array_shape)
+                pred_array = np.zeros(array_shape).astype('float32')
                 pred_array[..., 0] = y_pred[..., class_idx]
                 pred_array[..., 1] = 1 - y_pred[..., class_idx]
             elif show_class and (encoding == LayerEncodingChoice.ohe or encoding == LayerEncodingChoice.multi):

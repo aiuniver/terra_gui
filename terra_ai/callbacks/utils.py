@@ -906,3 +906,14 @@ def get_dataset_length(options):
         raise exception.ErrorInModuleInMethodException(
             MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
         # print_error(f"None ({MODULE_NAME})", method_name, e)
+
+
+def set_preset_count(len_array: int, preset_percent: int) -> int:
+    if int(len_array * preset_percent / 100) >= 100:
+        return 100
+    elif int(len_array * preset_percent / 100) >= 10:
+        return 10
+    elif len_array >= 10:
+        return 10
+    else:
+        return len_array

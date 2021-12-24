@@ -17,7 +17,14 @@
           <at-collapse-item v-show="main.length" class="mb-3" title="Параметры блока">
             <!-- <Forms :data="main" :id="block.id" @change="change" /> -->
             <template v-for="(data, i) of main">
-              <t-auto-field-cascade v-bind="data" :key="data.name + i" :id="data.name" :parameters="parameters" :inline="false" @change="change" />
+              <t-auto-field-cascade
+                v-bind="data"
+                :key="data.name + i"
+                :id="data.name"
+                :parameters="parameters"
+                :inline="false"
+                @change="change"
+              />
             </template>
           </at-collapse-item>
           <at-collapse-item v-show="!!info" class="mb-3" title="Информация о блоке">
@@ -34,25 +41,20 @@
 
 <script>
 import Input from '@/components/forms/Input.vue';
-// import Autocomplete2 from '@/components/forms/Autocomplete2.vue';
-// import Forms from '@/components/cascades/comp/Forms.vue';
 import { mapGetters } from 'vuex';
-// import serialize from "@/assets/js/serialize";
-import BlockInfo from '@/components/cascades/comp/Info.vue'
-// import Select from "@/components/forms/Select.vue";
+import BlockInfo from '@/components/cascades/comp/Info.vue';
 import { debounce } from '@/utils/core/utils';
 export default {
   name: 'Params',
   components: {
-    // Autocomplete2,
-    // Forms,
     Input,
-    BlockInfo
+    BlockInfo,
   },
   data: () => ({
     collapse: ['0', '1', '2'],
     oldBlock: null,
     debounce: null,
+    example_count: null,
   }),
   computed: {
     ...mapGetters({
@@ -62,7 +64,7 @@ export default {
       // buttons: 'cascades/getButtons',
       block: 'cascades/getBlock',
       project: 'projects/getProject',
-      manual: 'cascades/getManual'
+      manual: 'cascades/getManual',
     }),
     datatypes() {
       return this.layersForm.filter(({ name }) => name === `datatype_${this.block.group}`);
@@ -96,9 +98,9 @@ export default {
       }
     },
     info() {
-      if (this.manual[this.block.group]) return this.manual[this.block.group][this.parameters.type]
-      return ''
-    }
+      if (this.manual[this.block.group]) return this.manual[this.block.group][this.parameters.type];
+      return '';
+    },
     // extra() {
     //   const blockType = this.block?.group;
     //   if (Object.keys(this.layers).length && blockType) {
@@ -133,7 +135,7 @@ export default {
   created() {
     this.debounce = debounce(() => {
       // console.log(status)
-      this.saveModel()
+      this.saveModel();
     }, 200);
   },
   beforeDestroy() {

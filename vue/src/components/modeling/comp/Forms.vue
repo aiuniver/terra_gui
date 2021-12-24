@@ -1,8 +1,6 @@
 <template>
   <div class="form-inline-label">
-    <template
-      v-for="({ type, value, list, event, label, parse, name }, key) of items"
-    >
+    <template v-for="({ type, value, list, event, label, parse, name, placeholder }, key) of items">
       <Tuple
         v-if="type === 'text_array'"
         :value="getValue(valueDef[name], value)"
@@ -11,6 +9,8 @@
         :parse="parse"
         :name="name"
         :key="blockType + key"
+        :error="getError(parse)"
+        :placeholder="placeholder"
         inline
         @change="change"
       />
@@ -23,6 +23,7 @@
         :name="name"
         :key="blockType + key"
         :error="getError(parse)"
+        :placeholder="placeholder"
         inline
         @change="change"
       />
@@ -35,7 +36,9 @@
         :parse="parse"
         :name="name"
         :event="event"
+        :error="getError(parse)"
         :key="blockType + key"
+        :placeholder="placeholder"
         @change="change"
       />
       <Select
@@ -46,6 +49,8 @@
         :parse="parse"
         :name="name"
         :key="blockType + key"
+        :error="getError(parse)"
+        :placeholder="placeholder"
         @change="change"
       />
     </template>
@@ -53,27 +58,27 @@
 </template>
 
 <script>
-import Input from "@/components/forms/Input.vue";
-import Tuple from "@/components/forms/Tuple.vue";
-import Select from "@/components/forms/Select.vue";
+import Input from '@/components/forms/Input.vue';
+import Tuple from '@/components/forms/Tuple.vue';
+import Select from '@/components/forms/Select.vue';
 
 export default {
-  name: "Forms",
+  name: 'Forms',
   components: {
     Input,
     Select,
-    Tuple
+    Tuple,
   },
   props: {
     data: {
       type: Object,
-      default: () => ({ type: "main", items: [], value: {} }),
+      default: () => ({ type: 'main', items: [], value: {} }),
     },
-    id: Number
+    id: Number,
   },
   computed: {
     errors() {
-      return this.$store.getters['modeling/getErrorsFields'] || {}
+      return this.$store.getters['modeling/getErrorsFields'] || {};
     },
     items() {
       return this.data?.items || [];
@@ -83,35 +88,36 @@ export default {
       return this.data?.value || {};
     },
     type() {
-      return this.data?.type || "";
+      return this.data?.type || '';
     },
     blockType() {
-      return this.data?.blockType || "";
+      return this.data?.blockType || '';
     },
   },
   methods: {
     getError(parse) {
       if (!this.id) return;
-      const key = parse.replace('parameters', `[${this.id}][parameters]`)
-      // console.log(key)
+      // const key = parse.replace('parameters', `[${this.id}][parameters]`)
+      // console.log(parse)
+      // console.log(this.errors)
       // console.log(this.id)
-      return this.errors?.[key]?.[0] || ''
+      return this.errors?.[parse]?.[0] || '';
     },
     change(e) {
-      this.$emit("change", { type: this.type, ...e });
+      this.$emit('change', { type: this.type, ...e });
     },
     getValue(val, defVal) {
       const value = val ?? defVal;
       // if (typeof value === "object") {
       //   return value.join();
       // }
-      return value
+      return value;
     },
   },
   filters: {
     toString: function (value) {
       // console.log( value )
-      if (typeof value === "object") {
+      if (typeof value === 'object') {
         return value.join();
       }
       return value;

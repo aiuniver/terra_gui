@@ -156,6 +156,7 @@ export default {
       });
       commit('SET_STATUS', { isUpdate: true });
       const res = await dispatch('axios', { url: '/modeling/update/', data: { layers: semdBlocks } }, { root: true });
+      commit('SET_ERRORS_FIELDS', res?.data || {})
       return res
     },
     async getModel ({ dispatch }, value) {
