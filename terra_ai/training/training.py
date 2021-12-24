@@ -215,7 +215,7 @@ class GUINN:
                     current_status = state.state.status
                     state.state.set("stopped")
                     progress.pool(self.progress_name,
-                                  message="Найдено незавершенное обучение. Идет очистка. Подождите.")
+                                  message="Найдено незавершенное обучение. Идет очистка. Подождите.", finished=False)
                     one_thread.join()
                     state.state.set(current_status)
         except Exception as error:
@@ -227,7 +227,7 @@ class GUINN:
         try:
             # check and kill last training if it detect
             self._kill_last_training(state=training)
-            progress.pool.reset(self.progress_name)
+            progress.pool.reset(self.progress_name, finished=False)
 
             # save base training params for deploy
             if training.state.status != "addtrain":
