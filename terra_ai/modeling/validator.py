@@ -141,14 +141,14 @@ class ModelValidator:
     def get_validated(self):
         """Returns all necessary info about modeling"""
         # logger.debug(f"{self.name}, {self.get_validated.__name__}")
-        logger.info("Валидация модели...", extra={'type': "success"})
+        logger.info("Валидация модели...", extra={'type': "info"})
         self._model_validation()
         if self.valid:
             self.compile_keras_code()
             logger.info("Валидация модели прошла успешно", extra={'type': "success"})
         else:
             self.keras_code = None
-            logger.warning("Модель не прошла валидацию", extra={'type': "info"})
+            logger.warning("Модель не прошла валидацию", extra={'type': "warning"})
         for idx, layer in enumerate(self.filled_model.layers):
             # fill inputs
             if layer.group == LayerGroupChoice.input:
