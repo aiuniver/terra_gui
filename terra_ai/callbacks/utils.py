@@ -446,6 +446,7 @@ def get_autocorrelation_graphic(y_true, y_pred, depth=10) -> (list, list, list):
             if sa > 0 and sb > 0:
                 val = (mab - ma * mb) / (sa * sb)
             return val
+
         auto_corr_true = []
         for i in range(depth):
             if i == 0:
@@ -909,3 +910,14 @@ def get_dataset_length(options):
         raise exception.ErrorInModuleInMethodException(
             MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
         # print_error(f"None ({MODULE_NAME})", method_name, e)
+
+
+def set_preset_count(len_array: int, preset_percent: int) -> int:
+    if int(len_array * preset_percent / 100) >= 100:
+        return 100
+    elif int(len_array * preset_percent / 100) >= 10:
+        return 10
+    elif len_array >= 10:
+        return 10
+    else:
+        return len_array

@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 
 from terra_ai.callbacks.utils import sort_dict, get_y_true, get_distribution_histogram, get_correlation_matrix, \
-    get_scatter, fill_graph_front_structure, fill_graph_plot_data, fill_heatmap_front_structure, round_loss_metric
+    get_scatter, fill_graph_front_structure, fill_graph_plot_data, fill_heatmap_front_structure, round_loss_metric, \
+    set_preset_count
 from terra_ai.data.datasets.extra import LayerInputTypeChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
 from terra_ai.logging import logger
@@ -135,10 +136,11 @@ class DataframeRegressionCallback:
                     postprocess_array = array[i]
                 else:
                     postprocess_array = array
+                count = set_preset_count(len_array=len(postprocess_array), preset_percent=DEPLOY_PRESET_PERCENT)
                 example_idx = DataframeRegressionCallback().prepare_example_idx_to_show(
                     array=postprocess_array[:len(array)],
                     true_array=true_array[:len(array)],
-                    count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
+                    count=count
                 )
                 return_data[output_id] = {'preset': [], 'label': []}
                 source_col = []

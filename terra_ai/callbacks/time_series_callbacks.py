@@ -178,10 +178,11 @@ class TimeseriesCallback:
                     postprocess_array = array[i]
                 else:
                     postprocess_array = array
+                count = set_preset_count(len_array=len(postprocess_array), preset_percent=DEPLOY_PRESET_PERCENT)
                 example_idx = TimeseriesCallback().prepare_example_idx_to_show(
                     array=postprocess_array[:len(array)],
                     true_array=true_array[:len(array)],
-                    count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
+                    count=count
                 )
                 return_data[output_id] = []
                 preprocess = options.preprocessing.preprocessing.get(output_id)

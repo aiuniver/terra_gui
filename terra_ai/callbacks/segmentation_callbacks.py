@@ -10,7 +10,7 @@ from tensorflow.python.keras.utils.np_utils import to_categorical
 
 from terra_ai.callbacks.utils import dice_coef, sort_dict, get_y_true, get_image_class_colormap, get_confusion_matrix, \
     fill_heatmap_front_structure, get_classification_report, fill_table_front_structure, fill_graph_front_structure, \
-    fill_graph_plot_data, sequence_length_calculator, get_segmentation_confusion_matrix
+    fill_graph_plot_data, sequence_length_calculator, get_segmentation_confusion_matrix, set_preset_count
 from terra_ai.data.datasets.dataset import DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerEncodingChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
@@ -291,12 +291,13 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                     postprocess_array = array[i]
                 else:
                     postprocess_array = array
+                count = set_preset_count(len_array=len(postprocess_array), preset_percent=DEPLOY_PRESET_PERCENT)
                 example_idx = ImageSegmentationCallback().prepare_example_idx_to_show(
                     array=postprocess_array[:len(array)],
                     true_array=true_array[:len(array)],
                     options=options,
                     output=output_id,
-                    count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
+                    count=count
                 )
                 return_data[output_id] = []
                 data = []
@@ -732,13 +733,13 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                     postprocess_array = array[i]
                 else:
                     postprocess_array = array
+                count = set_preset_count(len_array=len(postprocess_array), preset_percent=DEPLOY_PRESET_PERCENT)
                 example_idx = TextSegmentationCallback().prepare_example_idx_to_show(
                     array=postprocess_array,
                     true_array=true_array[:len(array)],
                     options=options,
                     output=output_id,
-                    count=int(len(array) * DEPLOY_PRESET_PERCENT / 100),
-                    choice_type=ExampleChoiceTypeChoice.best,
+                    count=count,
                 )
                 return_data[output_id] = {"color_map": None, "data": []}
                 output_column = list(options.instructions.get(output_id).keys())[0]

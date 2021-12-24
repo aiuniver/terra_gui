@@ -9,6 +9,20 @@
           <TextCard :style="{ width: '224px', height: '80px' }">{{ classificationResult }}</TextCard>
         </div>
       </div>
+      <div v-if="type == 'video_classification'">
+        <div class="card__original">
+          <TableVideo :value="card.source" />
+        </div>
+        <div class="card__result">
+          <TextCard :style="{ width: '300px', height: '80px' }">
+            <div class="video_classification">
+              <template v-for="{ name, value } of getData">
+                <div class="video_classification__item" :key="name">{{ `${name}: ${value}%` }}</div>
+              </template>
+            </div>
+          </TextCard>
+        </div>
+      </div>
       <div v-if="type == 'text_classification'">
         <div class="card__original">
           <TextCard :style="{ width: '600px', color: '#A7BED3', height: '324px' }">{{ card.source }}</TextCard>
@@ -47,12 +61,12 @@
           <TextCard :style="{ width: '600px', height: '80px' }">{{ card.source }}</TextCard>
         </div>
         <div class="card__original">
-          <AudioCard :value="card.predict" />
+          <AudioCard :value="card.predict" :key="card.source" />
         </div>
       </div>
       <div v-if="type == 'audio_to_text'">
         <div class="card__original">
-          <AudioCard :value="card.source" />
+          <AudioCard :value="card.source" :key="card.predict" />
         </div>
         <div class="card__result">
           <TextCard :style="{ width: '600px', height: '80px' }">{{ card.predict }}</TextCard>
@@ -103,7 +117,6 @@
   </div>
 </template>
 <script>
-
 // ImageSegmentation = "image_segmentation"
 // ImageClassification = "image_classification"
 // TextSegmentation = "text_segmentation"
@@ -121,7 +134,7 @@
 // GoogleTTS = "text_to_audio"
 // Wav2Vec = "audio_to_text"
 // TinkoffAPI = "audio_to_text"
-    
+
 export default {
   name: 'IndexCard',
   components: {
@@ -195,8 +208,14 @@ export default {
       let text = this.card.data;
       let prepareText = '';
       text.sort((a, b) => (a[1] < b[1] ? 1 : -1));
-      for (let i = 0; i < text.length; i++) prepareText += `${text[i][0]} - ${text[i][1]}% \n`;
+      for (let i = 0; i < text.length; i++) prepareText += `${text[i][0]} - ${text[i][1]}%`;
       return prepareText;
+    },
+    getData() {
+      const arr = this.card?.data || [];
+      const text = arr.map(i => ({ name: i[0], value: i[1] }));
+
+      return text;
     },
   },
 };
@@ -239,6 +258,14 @@ export default {
   &__original {
     border: 1px solid #6c7883;
     border-radius: 4px;
+  }
+}
+.video_classification {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  &__item {
+    flex: 1 1 45%;
   }
 }
 </style>
