@@ -6,6 +6,7 @@ from transliterate import slugify
 from pydantic.error_wrappers import ValidationError
 
 from terra_ai.settings import TERRA_PATH
+from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.modeling.extra import LayerGroupChoice
 from terra_ai.data.modeling.model import ModelDetailsData
 
@@ -100,17 +101,28 @@ class UpdateAPIView(BaseAPIView):
 
 class ValidateAPIView(BaseAPIView):
     @staticmethod
-    def _reset_layers_shape(model: ModelDetailsData):
+    def _reset_layers_shape(model: ModelDetailsData, dataset_model: DatasetData = None):
         for layer in model.middles:
             layer.shape.input = []
             layer.shape.output = []
         for index, layer in enumerate(model.inputs):
             layer.shape.output = []
+            layer.shape.input = (
+                dataset_model.inputs.get(layer.id).shape.input if dataset_model else []
+            )
         for index, layer in enumerate(model.outputs):
             layer.shape.input = []
+            layer.shape.output = (
+                dataset_model.outputs.get(layer.id).shape.output
+                if dataset_model
+                else []
+            )
 
     def post(self, request, **kwargs):
-        self._reset_layers_shape(request.project.model)
+        self._reset_layers_shape(
+            request.project.model,
+            request.project.dataset.model if request.project.dataset else None,
+        )
         errors = self.terra_exchange(
             "model_validate",
             model=request.project.model,
