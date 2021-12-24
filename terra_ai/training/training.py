@@ -270,7 +270,7 @@ class GUINN:
             progress.pool(self.progress_name, finished=False, message="\n Начало обучения ...")
             compiled_model.fit(params=params, dataset=dataset)
         except Exception as error:
-            if self.callback.last_epoch <= 1 and params.state.status == StateStatusChoice.training:
+            if self.callback and self.callback.last_epoch <= 1 and params.state.status == StateStatusChoice.training:
                 params.state.set(StateStatusChoice.no_train)
             else:
                 params.state.set(StateStatusChoice.stopped)
