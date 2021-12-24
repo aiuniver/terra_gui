@@ -232,7 +232,7 @@ class BaseTerraModel:
                     if self.callback.stop_training:
                         break
 
-                logger.debug(f"Эпоха {epoch + 1}: сохранение весов текущей эпохи...", extra={"type": "info"})
+                logger.debug(f"Эпоха {epoch + 1}: сохранение весов текущей эпохи...")
                 self.save_weights()
                 if self.callback.stop_training:
                     logger.info(f"Эпоха {epoch + 1}: остановка обучения", extra={"type": "info"})
@@ -497,7 +497,7 @@ class YoloTerraModel(BaseTerraModel):
                     if self.callback.stop_training:
                         break
 
-                logger.info(f"Эпоха {epoch + 1}: сохраниеиние весов текущей эпохи...", extra={"type": "info"})
+                logger.debug(f"Эпоха {epoch + 1}: сохраниеиние весов текущей эпохи...")
                 self.save_weights()
                 if self.callback.stop_training:
                     logger.info(f"Эпоха {epoch + 1}: остановка обучения", extra={"type": "success"})
