@@ -47,12 +47,12 @@
           <TextCard :style="{ width: '600px', height: '80px' }">{{ card.source }}</TextCard>
         </div>
         <div class="card__original">
-          <AudioCard :value="card.predict" />
+          <AudioCard :value="card.predict" :key="card.source" />
         </div>
       </div>
       <div v-if="type == 'audio_to_text'">
         <div class="card__original">
-          <AudioCard :value="card.source" />
+          <AudioCard :value="card.source" :key="card.predict" />
         </div>
         <div class="card__result">
           <TextCard :style="{ width: '600px', height: '80px' }">{{ card.predict }}</TextCard>
@@ -103,7 +103,6 @@
   </div>
 </template>
 <script>
-
 // ImageSegmentation = "image_segmentation"
 // ImageClassification = "image_classification"
 // TextSegmentation = "text_segmentation"
@@ -121,7 +120,7 @@
 // GoogleTTS = "text_to_audio"
 // Wav2Vec = "audio_to_text"
 // TinkoffAPI = "audio_to_text"
-    
+
 export default {
   name: 'IndexCard',
   components: {
