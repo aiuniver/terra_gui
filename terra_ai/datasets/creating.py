@@ -44,30 +44,17 @@ class CreateDataset(object):
 
     progress_name = 'create_dataset'
 
-    formatter = logging.Formatter('%(levelname)s:%(asctime)s:%(name)s:%(message)s')
-    # file_handler = logging.FileHandler('dataset.log')
-    # file_handler.setFormatter(formatter)
-    # file_handler.setLevel(logging.ERROR)
-
-    stream_handler = logging.StreamHandler()
-    stream_handler.setFormatter(formatter)
-
-    logger = logging.getLogger(__name__)
-    # logger.addHandler(file_handler)
-    logger.addHandler(stream_handler)
-    logger.setLevel(logging.DEBUG)
-
     @progress.threading
     def __init__(self, cr_data: CreationData):
 
         progress.pool.reset(name=self.progress_name,
                             message='Начало',
                             finished=False)
-        self.logger.info(f'Начало формирования датасета {cr_data.name}')
+        logger.info(f'Начало формирования датасета {cr_data.name}')
         try:
             creation_data = self.preprocess_creation_data(cr_data)
         except Exception:
-            self.logger.error('Ошибка выбора параметров создания датасета')
+            logger.error('Ошибка выбора параметров создания датасета', extra={'type': "warning"})
             progress.pool(self.progress_name,
                           error='Ошибка выбора параметров создания датасета')
             raise
@@ -135,7 +122,7 @@ class CreateDataset(object):
                       finished=True,
                       data=self.datasetdata
                       )
-        self.logger.info(f'Создан датасет {creation_data.name}')
+        logger.info(f'Создан датасет {creation_data.name}', extra={'type': "info"})
 
     @staticmethod
     def postprocess_timeseries(full_array):
@@ -302,7 +289,7 @@ class CreateDataset(object):
                 )
             except Exception:
                 progress.pool(self.progress_name, error='Ошибка создания инструкций')
-                self.logger.exception('Ошибка создания инструкций')
+                logger.exception('Ошибка создания инструкций', extra={'type': "warning"})
                 raise
 
             return cut_data
@@ -315,7 +302,7 @@ class CreateDataset(object):
                 df = pd.read_csv(put.parameters.sources_paths[0], nrows=0, sep=None,
                                  engine='python', encoding=enc).columns
             except Exception:
-                self.logger.exception('Ошибка чтения csv-файла')
+                logger.exception('Ошибка чтения csv-файла', extra={'type': "warning"})
                 progress.pool(self.progress_name, error='Ошибка чтения csv-файла')
                 raise
             output_cols = list(put.parameters.cols_names.keys())
@@ -363,7 +350,7 @@ class CreateDataset(object):
                                 instructions_data.parameters['num_classes'] = len(list_of_classes)
                     except Exception:
                         progress.pool(self.progress_name, error='Ошибка создания инструкций')
-                        self.logger.exception('Ошибка создания инструкций')
+                        logger.exception('Ошибка создания инструкций', extra={'type': "warning"})
                         raise
                 else:
                     self.tags[put.id][f'{put.id}_{name}'] = decamelize(LayerInputTypeChoice.Raw)
@@ -394,7 +381,7 @@ class CreateDataset(object):
                                                                                  **instr['parameters'])
             except Exception:
                 progress.pool(self.progress_name, error='Ошибка создания инструкций')
-                self.logger.exception('Ошибка создания инструкций')
+                logger.exception('Ошибка создания инструкций', extra={'type': "warning"})
                 raise
 
             class_name = [os.path.basename(os.path.dirname(x)) for x in list(instr['instructions'].keys())]\
@@ -547,7 +534,7 @@ class CreateDataset(object):
                             self.preprocessing.preprocessing[key][col_name].fit(np.array(data.instructions).reshape(-1, 1))
                     except Exception:
                         progress.pool(self.progress_name, error='Ошибка обучения скейлера')
-                        self.logger.exception('Ошибка обучения скейлера')
+                        logger.exception('Ошибка обучения скейлера', extra={'type': "warning"})
                         raise
 
     def create_table(self, creation_data: CreationData):
@@ -598,7 +585,7 @@ class CreateDataset(object):
             message = 'Ошибка создания датасета. Несоответствие количества входных/выходных данных'
             progress.pool(self.progress_name,
                           error=message)
-            self.logger.exception(message)
+            logger.exception(message, extra={'type': "warning"})
             raise
         for key, value in split_sequence.items():
             self.dataframe[key] = dataframe.loc[value, :].reset_index(drop=True)
@@ -622,7 +609,7 @@ class CreateDataset(object):
                                                    sep=None, engine='python', encoding=enc).columns.to_list()
                     except Exception:
                         progress.pool(self.progress_name, error='Ошибка чтения csv-файла')
-                        self.logger.exception('Ошибка чтения csv-файла')
+                        logger.exception('Ошибка чтения csv-файла', extra={'type': "warning"})
                         raise
                     current_col_name = '_'.join(col_name.split('_')[1:])
                     idx = column_names.index(current_col_name)
@@ -795,7 +782,7 @@ class CreateDataset(object):
                                                    sep=None, engine='python', encoding=enc).columns.to_list()
                     except Exception:
                         progress.pool(self.progress_name, error='Ошибка чтения csv-файла')
-                        self.logger.exception('Ошибка чтения csv-файла')
+                        logger.exception('Ошибка чтения csv-файла', extra={'type': "warning"})
                         raise
                     current_col_name = '_'.join(col_name.split('_')[1:])
                     idx = column_names.index(current_col_name)
@@ -964,7 +951,7 @@ class CreateDataset(object):
                     full_array.append(arr)
                 except Exception:
                     progress.pool(self.progress_name, error='Ошибка создания массивов данных')
-                    self.logger.exception('Ошибка создания массивов данных')
+                    logger.exception('Ошибка создания массивов данных', extra={'type': "warning"})
                     raise
 
             return full_array  # , augm_data
@@ -1078,7 +1065,7 @@ class CreateDataset(object):
                                 else:
                                     array = np.concatenate(result, axis=0)
                                 if self.use_generator:
-                                    hdf[f'{split}/id_{key}'].create_dataset(str(i), data=array)
+                                    hdf[f'{split}/id_{key}'].create_dataset(str(i), data=array, compression="gzip")
                                 else:
                                     current_arrays.append(array)
 
@@ -1087,8 +1074,8 @@ class CreateDataset(object):
                             else:
                                 if self.use_generator:
                                     for n in range(3):
-                                        hdf[f'{split}/id_{key + n}'].create_dataset(str(i), data=result[0][n])
-                                        hdf[f'{split}/id_{key + n}_service'].create_dataset(str(i), data=result[0][n + 3])
+                                        hdf[f'{split}/id_{key + n}'].create_dataset(str(i), data=result[0][n], compression="gzip")
+                                        hdf[f'{split}/id_{key + n}_service'].create_dataset(str(i), data=result[0][n + 3], compression="gzip")
                                 else:
                                     for n in range(6):
                                         globals()[f'current_arrays_{n}'].append(result[0][n])
@@ -1230,7 +1217,7 @@ class CreateDataset(object):
 
         with open(os.path.join(self.paths.basepath, DATASET_CONFIG), 'w') as fp:
             json.dump(DatasetData(**data).native(), fp)
-        self.logger.debug(DatasetData(**data).native())
+        logger.debug(DatasetData(**data).native())
 
         return data
 

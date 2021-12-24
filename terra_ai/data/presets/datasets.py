@@ -1008,7 +1008,7 @@ DatasetsGroups = [
                 ],
             },
             {
-                "alias": "video",
+                "alias": "video_new",
                 "name": "Видео",
                 "group": DatasetGroupChoice.terra.value,
                 "inputs": {
@@ -1016,7 +1016,7 @@ DatasetsGroups = [
                         "datatype": "3D",
                         "dtype": "float64",
                         "name": "Input 1",
-                        "shape": (64, 100, 120, 3),
+                        "shape": (100, 128, 160, 3),
                         "task": LayerInputTypeChoice.Video.value,
                         "num_classes": 5,
                         "classes_names": [
@@ -1267,7 +1267,7 @@ DatasetsGroups = [
                 ],
             },
             {
-                "alias": "chess_v4",
+                "alias": "chess_v4_new",
                 "name": "Шахматы v4 (генератор)",
                 "group": DatasetGroupChoice.terra.value,
                 "inputs": {
@@ -1363,7 +1363,7 @@ DatasetsGroups = [
                 ],
             },
             {
-                "alias": "milk_v4",
+                "alias": "milk_v4_new",
                 "name": "Молоко v4 (генератор)",
                 "group": DatasetGroupChoice.terra.value,
                 "inputs": {
@@ -1579,7 +1579,7 @@ DatasetsGroups = [
                 ],
             },
             {
-                "alias": "trash_v4",
+                "alias": "trash_v4_new",
                 "name": "Подводный мусор v4 (генератор)",
                 "group": DatasetGroupChoice.terra.value,
                 "inputs": {
@@ -1675,7 +1675,7 @@ DatasetsGroups = [
                 ],
             },
             {
-                "alias": "bus_split",
+                "alias": "bus_split_new",
                 "name": "Автобусы v4 (генератор)",
                 "group": DatasetGroupChoice.terra.value,
                 "inputs": {

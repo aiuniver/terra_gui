@@ -960,7 +960,7 @@ class CreateArray(object):
                                              axis=2)
                 mask_ohe.append(color_array)
 
-            return np.concatenate(np.array(mask_ohe), axis=2)
+            return np.concatenate(np.array(mask_ohe), axis=2).astype(np.uint8)
 
         img = load_img(path=image_path, target_size=(options['height'], options['width']))
         array = np.array(img)
