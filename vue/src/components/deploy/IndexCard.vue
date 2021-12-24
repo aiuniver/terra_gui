@@ -17,7 +17,7 @@
           <TextCard :style="{ width: '300px', height: '80px' }">
             <div class="video_classification">
               <template v-for="{ name, value } of getData">
-                <div class="video_classification__item" :key="name">{{ `${name}: ${value}` }}</div>
+                <div class="video_classification__item" :key="name">{{ `${name}: ${value}%` }}</div>
               </template>
             </div>
           </TextCard>
