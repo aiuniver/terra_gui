@@ -657,7 +657,7 @@ class GANTerraModel(BaseTerraModel):
                     importlib.import_module(
                         loss_metric_config.get("loss").get(output_layer.loss.name, {}).get('module')),
                     output_layer.loss.name
-                )()
+                )(from_logits=True)
                 loss_dict.update({str(output_layer.task.name).lower(): loss_obj})
             return loss_dict
         except Exception as error:
@@ -760,6 +760,7 @@ class GANTerraModel(BaseTerraModel):
     @tf.function
     def __train_step(self, images, gen_batch, dis_batch, grad_penalty=False, gp_weight=1, **options):
         logger.debug(f"{GANTerraModel.name}, {GANTerraModel.__train_step.__name__}")
+        images = tf.cast(images, dtype='float32')
         noise_shape = [gen_batch]
         noise_shape.extend(list(self.noise))
         noise = tf.random.normal(noise_shape)
