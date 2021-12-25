@@ -94,7 +94,8 @@ class GANCallback:
             if choice_type == ExampleChoiceTypeChoice.seed:
                 example_idx = np.array(seed_array[:count*5], dtype='float32')
             else:
-                example_idx = np.array(array[np.random.randint(0, len(array), count*5)], dtype='float32')
+                example_idx = np.array(array[:count * 5], dtype='float32')
+                # example_idx = np.array(array[np.random.randint(0, len(array), count*5)], dtype='float32')
             return example_idx
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
@@ -119,7 +120,7 @@ class GANCallback:
                 _id = 1
                 data["y_pred"] = {"type": "image", "data": []}
                 for array in predict_array:
-                    print(array.shape, type(array))
+                    # print(array.shape, type(array))
                     y_pred_save_path = os.path.join(save_path, f"predict_gan_image_{image_id}_position_{_id}.webp")
                     matplotlib.image.imsave(y_pred_save_path, array)
                     data["y_pred"]["data"].append(

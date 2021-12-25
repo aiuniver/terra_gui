@@ -785,7 +785,7 @@ class GANTerraModel(BaseTerraModel):
             zip(gradients_of_generator, self.generator.trainable_variables))
         self.discriminator_optimizer.apply_gradients(
             zip(gradients_of_discriminator, self.discriminator.trainable_variables))
-        return generated_images, gen_loss, disc_loss, disc_real_loss, disc_fake_loss
+        return gen_loss, disc_loss, disc_real_loss, disc_fake_loss
 
     def fit(self, params: TrainingDetailsData, dataset: PrepareDataset):
         logger.debug(f"{GANTerraModel.name}, {GANTerraModel.fit.__name__}")
@@ -805,13 +805,13 @@ class GANTerraModel(BaseTerraModel):
 
             current_epoch = self.callback.last_epoch
             end_epoch = self.callback.total_epochs
-            num_batches = self.train_length if self.train_length % params.base.batch == 0 \
-                else (self.train_length // params.base.batch + 1) * params.base.batch
-            target_shape = [num_batches]
+            # num_batches = self.train_length if self.train_length % params.base.batch == 0 \
+            #     else (self.train_length // params.base.batch + 1) * params.base.batch
+            # target_shape = [num_batches]
             # target_shape, seed_shape = [params.base.batch * 10], [10]
-            target_shape.extend(list(self.generator.outputs[0].shape[1:]))
+            # target_shape.extend(list(self.generator.outputs[0].shape[1:]))
             # seed_shape.extend(list(self.generator.outputs[0].shape[1:]))
-            train_pred = np.zeros(target_shape).astype('float32')
+            # train_pred = np.zeros(target_shape).astype('float32')
             # seed_pred = np.zeros(seed_shape).astype('float32')
 
             train_data_idxs = np.arange(self.train_length).tolist()
@@ -829,10 +829,10 @@ class GANTerraModel(BaseTerraModel):
                                                 gen_batch=params.base.batch,
                                                 dis_batch=params.base.batch)
                     # generated_images, gen_loss, disc_loss, disc_real_loss, disc_fake_loss
-                    gen_loss += results[1].numpy()
-                    disc_loss += results[2].numpy()
-                    disc_real_loss += results[3].numpy()
-                    disc_fake_loss += results[4].numpy()
+                    gen_loss += results[0].numpy()
+                    disc_loss += results[1].numpy()
+                    disc_real_loss += results[2].numpy()
+                    disc_fake_loss += results[3].numpy()
                     if cur_step % 10:
                         logger.debug(f"Batch {cur_step}: "
                                      f"gen_loss={round(gen_loss / cur_step, 3)}, "
@@ -840,11 +840,11 @@ class GANTerraModel(BaseTerraModel):
                                      f"disc_real_loss={round(disc_real_loss / cur_step, 3)}, "
                                      f"disc_fake_loss={round(disc_fake_loss / cur_step, 3)}")
 
-                    length = results[0].shape[0]
+                    # length = results[0].shape[0]
                     # for i in range(len(train_pred)):
-                    train_pred[current_idx: current_idx + length] = results[0].numpy()
+                    # train_pred[current_idx: current_idx + length] = results[0].numpy()
                     # logger.debug(f"Batch {cur_step}: finish add array")
-                    current_idx += length
+                    # current_idx += length
                     # if cur_step == 10:
                     #     break
                     cur_step += 1
@@ -853,7 +853,7 @@ class GANTerraModel(BaseTerraModel):
                         self.callback.on_train_batch_end(
                             batch=cur_step,
                             arrays={
-                                "train": train_pred,
+                                "train": self.generator(self.__prepare_seed(self.noise)).numpy(),
                                 "seed": self.generator(self.seed).numpy()
                             }
                         )
@@ -876,7 +876,8 @@ class GANTerraModel(BaseTerraModel):
 
                 self.callback.on_epoch_end(
                     epoch=epoch + 1,
-                    arrays={"train": train_pred, "seed": self.generator(self.seed)},
+                    arrays={"train": self.generator(self.__prepare_seed(self.noise)).numpy(),
+                            "seed": self.generator(self.seed)},
                     train_data_idxs=train_data_idxs,
                     logs=current_logs
                 )
