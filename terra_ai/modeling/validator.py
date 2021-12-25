@@ -419,10 +419,10 @@ class ModelValidator:
                 self.val_dictionary[layer[0]] = comment
             if layer[1] == LayerTypeChoice.PretrainedYOLO:
                 if output_shape[0]:
-                    for i, down_link in enumerate(self.down_links[layer[0]]):
+                    for i, down_link in enumerate(sorted(self.down_links[layer[0]])):
                         self.layer_input_shapes[down_link].append(output_shape[i])
                 else:
-                    for down_link in self.down_links[layer[0]]:
+                    for down_link in sorted(self.down_links[layer[0]]):
                         self.layer_input_shapes[down_link].append(output_shape[0])
             else:
                 for down_link in self.down_links[layer[0]]:
@@ -1254,7 +1254,7 @@ class ModelCreator:
 if __name__ == "__main__":
     model_plan = [
         (1, 'Input', {'name': '1'}, [-1], [5]),
-        (5, 'PretrainedYOLO', {'num_classes': 13, 'name': 'PretrainedYOLO_5'}, [1], [2, 3, 4]),
+        (5, 'PretrainedYOLO', {'num_classes': 13, 'name': 'PretrainedYOLO_5', 'use_weights': False}, [1], [2, 3, 4]),
         (2, 'Reshape', {'target_shape': [52, 52, 3, 18], 'name': '2'}, [5], []),
         (3, 'Reshape', {'target_shape': [26, 26, 3, 18], 'name': '3'}, [5], []),
         (4, 'Reshape', {'target_shape': [13, 13, 3, 18], 'name': '4'}, [5], [])]
