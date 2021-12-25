@@ -749,8 +749,9 @@ class GANTerraModel(BaseTerraModel):
             optimizer_object = getattr(keras.optimizers, params.base.optimizer.type)
             parameters = params.base.optimizer.parameters.main.native()
             parameters.update(params.base.optimizer.parameters.extra.native())
-            self.generator_optimizer = optimizer_object(**parameters)
-            self.discriminator_optimizer = optimizer_object(**parameters)
+            return optimizer_object(**parameters)
+            # self.generator_optimizer = optimizer_object(**parameters)
+            # self.discriminator_optimizer = optimizer_object(**parameters)
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 GANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
@@ -792,6 +793,8 @@ class GANTerraModel(BaseTerraModel):
         method_name = 'fit'
         try:
             self.train_length = len(dataset.dataframe.get('train'))
+            self.generator_optimizer = self.set_optimizer(params=params)
+            self.discriminator_optimizer = self.set_optimizer(params=params)
             # yolo_parameters = self.__create_yolo_parameters(params=params, dataset=dataset)
             # num_class = yolo_parameters.get("parameters").get("num_class")
             # classes = yolo_parameters.get("parameters").get("classes")
