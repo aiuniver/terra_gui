@@ -804,8 +804,8 @@ class GANTerraModel(BaseTerraModel):
 
             current_epoch = self.callback.last_epoch
             end_epoch = self.callback.total_epochs
-            # target_shape, seed_shape = [self.train_length], [10]
-            target_shape, seed_shape = [params.base.batch * 10], [10]
+            target_shape, seed_shape = [self.train_length], [10]
+            # target_shape, seed_shape = [params.base.batch * 10], [10]
             target_shape.extend(list(self.generator.outputs[0].shape[1:]))
             seed_shape.extend(list(self.generator.outputs[0].shape[1:]))
             train_pred = np.zeros(target_shape).astype('float32')
