@@ -703,7 +703,7 @@ class GANTerraModel(BaseTerraModel):
         # logger.debug(f"{GANTerraModel.name}, {GANTerraModel.__discriminator_loss.__name__}")
         real_loss = loss_func(tf.ones_like(real_output), real_output)
         fake_loss = loss_func(tf.zeros_like(fake_output), fake_output)
-        total_loss = real_loss + fake_loss
+        total_loss = (real_loss + fake_loss) / 2
         return total_loss, real_loss, fake_loss
 
     @staticmethod
