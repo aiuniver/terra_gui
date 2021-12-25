@@ -839,8 +839,8 @@ class GANTerraModel(BaseTerraModel):
                     for i in range(len(train_pred)):
                         train_pred[current_idx: current_idx + length] = results[0].numpy().astype('float32')
                     current_idx += length
-                    if cur_step == 10:
-                        break
+                    # if cur_step == 10:
+                    #     break
                     cur_step += 1
                     if interactive.urgent_predict:
                         logger.debug(f"Эпоха {epoch + 1}: urgent_predict")
