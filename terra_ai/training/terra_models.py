@@ -804,12 +804,14 @@ class GANTerraModel(BaseTerraModel):
 
             current_epoch = self.callback.last_epoch
             end_epoch = self.callback.total_epochs
-            target_shape, seed_shape = [self.train_length], [10]
+            num_batches = self.train_length if self.train_length % params.base.batch == 0 \
+                else (self.train_length // params.base.batch + 1) * params.base.batch
+            target_shape = [num_batches]
             # target_shape, seed_shape = [params.base.batch * 10], [10]
             target_shape.extend(list(self.generator.outputs[0].shape[1:]))
-            seed_shape.extend(list(self.generator.outputs[0].shape[1:]))
+            # seed_shape.extend(list(self.generator.outputs[0].shape[1:]))
             train_pred = np.zeros(target_shape).astype('float32')
-            seed_pred = np.zeros(seed_shape).astype('float32')
+            # seed_pred = np.zeros(seed_shape).astype('float32')
 
             train_data_idxs = np.arange(self.train_length).tolist()
             self.callback.on_train_begin()
@@ -837,8 +839,8 @@ class GANTerraModel(BaseTerraModel):
                                  f"disc_fake_loss={round(disc_fake_loss / cur_step, 3)}")
 
                     length = results[0].shape[0]
-                    for i in range(len(train_pred)):
-                        train_pred[current_idx: current_idx + length] = results[0].numpy().astype('float32')
+                    # for i in range(len(train_pred)):
+                    train_pred[current_idx: current_idx + length] = results[0].numpy()
                     logger.debug(f"Batch {cur_step}: finish add array")
                     current_idx += length
                     # if cur_step == 10:
@@ -850,7 +852,7 @@ class GANTerraModel(BaseTerraModel):
                             batch=cur_step,
                             arrays={
                                 "train": train_pred,
-                                "seed": self.generator(self.seed).numpy().astype('float32')
+                                "seed": self.generator(self.seed).numpy()
                             }
                         )
                     else:
