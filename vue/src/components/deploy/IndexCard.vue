@@ -58,7 +58,11 @@
       </div>
       <div v-if="type == 'text_to_audio'">
         <div class="card__result">
-          <TextCard :style="{ width: '600px' }">{{ card.source }}</TextCard>
+          <TextCard :style="{ width: '600px', height: '200px' }">
+            <scrollbar :ops="ops">
+              {{ card.source }}
+            </scrollbar>
+          </TextCard>
         </div>
         <div class="card__original">
           <AudioCard :value="card.predict" :key="card.source" />
@@ -69,7 +73,11 @@
           <AudioCard :value="card.source" :key="card.predict" />
         </div>
         <div class="card__result">
-          <TextCard :style="{ width: '600px' }">{{ card.predict }}</TextCard>
+          <TextCard :style="{ width: '600px', height: '200px' }">
+            <scrollbar :ops="ops">
+              {{ card.predict }}
+            </scrollbar>
+          </TextCard>
         </div>
       </div>
 
