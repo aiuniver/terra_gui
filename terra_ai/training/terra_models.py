@@ -589,6 +589,7 @@ class GANTerraModel(BaseTerraModel):
         logger.debug(f"{GANTerraModel.name} is started")
         super().__init__(model=model, model_name=model_name, model_path=model_path)
         logger.debug(f'model: {model}')
+        self.saving_path = model_path
         self.generator: Model = model.get('generator')
         self.discriminator: Model = model.get('discriminator')
         self.file_path_gen_json = os.path.join(self.saving_path, "generator_json.trm")
@@ -699,7 +700,7 @@ class GANTerraModel(BaseTerraModel):
 
     @staticmethod
     def __discriminator_loss(loss_func, real_output, fake_output):
-        logger.debug(f"{GANTerraModel.name}, {GANTerraModel.__discriminator_loss.__name__}")
+        # logger.debug(f"{GANTerraModel.name}, {GANTerraModel.__discriminator_loss.__name__}")
         real_loss = loss_func(tf.ones_like(real_output), real_output)
         fake_loss = loss_func(tf.zeros_like(fake_output), fake_output)
         total_loss = real_loss + fake_loss
@@ -707,8 +708,8 @@ class GANTerraModel(BaseTerraModel):
 
     @staticmethod
     def __generator_loss(loss_func, fake_output):
-        logger.debug(f'__generator_loss loss_func {loss_func}')
-        logger.debug(f"{GANTerraModel.name}, {GANTerraModel.__generator_loss.__name__}")
+        # logger.debug(f'__generator_loss loss_func {loss_func}')
+        # logger.debug(f"{GANTerraModel.name}, {GANTerraModel.__generator_loss.__name__}")
         return loss_func(tf.ones_like(fake_output), fake_output)
 
     @staticmethod
@@ -803,11 +804,12 @@ class GANTerraModel(BaseTerraModel):
 
             current_epoch = self.callback.last_epoch
             end_epoch = self.callback.total_epochs
-            target_shape, seed_shape = [self.train_length], [10]
+            # target_shape, seed_shape = [self.train_length], [10]
+            target_shape, seed_shape = [params.base.batch * 10], [10]
             target_shape.extend(list(self.generator.outputs[0].shape[1:]))
             seed_shape.extend(list(self.generator.outputs[0].shape[1:]))
-            train_pred = np.zeros(target_shape)
-            # seed_pred = np.zeros(seed_shape)
+            train_pred = np.zeros(target_shape).astype('float32')
+            seed_pred = np.zeros(seed_shape).astype('float32')
 
             train_data_idxs = np.arange(self.train_length).tolist()
             self.callback.on_train_begin()
@@ -835,14 +837,20 @@ class GANTerraModel(BaseTerraModel):
 
                     length = results[0].shape[0]
                     for i in range(len(train_pred)):
-                        train_pred[current_idx: current_idx + length] = results[0].numpy()
+                        train_pred[current_idx: current_idx + length] = results[0].numpy().astype('float32')
                     current_idx += length
+                    if cur_step == 10:
+                        break
                     cur_step += 1
                     if interactive.urgent_predict:
                         logger.debug(f"Эпоха {epoch + 1}: urgent_predict")
-                        self.callback.on_train_batch_end(batch=cur_step, arrays={
-                            "train": train_pred, "seed": self.generator(self.seed)
-                        })
+                        self.callback.on_train_batch_end(
+                            batch=cur_step,
+                            arrays={
+                                "train": train_pred,
+                                "seed": self.generator(self.seed).numpy().astype('float32')
+                            }
+                        )
                     else:
                         self.callback.on_train_batch_end(batch=cur_step)
                     if self.callback.stop_training:

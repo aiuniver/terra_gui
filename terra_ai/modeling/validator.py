@@ -234,7 +234,7 @@ class ModelValidator:
             return mc.create_model()
 
     def _get_layer_str(self, _layer, name_dict, identifier="", _block_uplinks=None):
-        logger.debug(f"{self.name}, {self._get_layer_str.__name__}")
+        # logger.debug(f"{self.name}, {self._get_layer_str.__name__}")
         _layer_str = ""
         if _block_uplinks:
             _block_uplinks[_layer[0]] = f"{identifier}_{_layer[1]}_{_layer[0]}"
@@ -1220,7 +1220,7 @@ class ModelCreator:
 
     def _keras_layer_init(self, terra_layer):
         """Create keras layer_obj from terra_plan layer"""
-        logger.debug(f"{self.name}, {self._keras_layer_init.__name__}")
+        # logger.debug(f"{self.name}, {self._keras_layer_init.__name__}")
         module = importlib.import_module(self.layer_config.get(terra_layer[0]).module.value)
         if terra_layer[1] == LayerTypeChoice.Input:
             _input_shape = self.input_shape.get(int(terra_layer[2].get("name")))[0]
