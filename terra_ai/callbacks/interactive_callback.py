@@ -849,13 +849,13 @@ class InteractiveCallback:
                             label="Лучший результат дискриминатора"
                         )
                         disc_plot = fill_graph_plot_data(
-                            x=self.log_history.get("epochs"), y=disc_list, label="Проверочная выборка"
+                            x=self.log_history.get("epochs"), y=disc_list, label="Дискриминатор"
                         )
                         data_return.append(
                             fill_graph_front_structure(
                                 _id=loss_graph_config.id,
                                 _type='graphic',
-                                graph_name=f"Выход «{loss_graph_config.output_idx}» - График ошибки обучения",
+                                graph_name=f"Выход «{loss_graph_config.output_idx}» - График ошибки генератора и дискриминатора",
                                 short_name=f"{loss_graph_config.output_idx} - График ошибки обучения",
                                 x_label="Эпоха",
                                 y_label="Значение",
@@ -902,7 +902,7 @@ class InteractiveCallback:
                                 _id=loss_graph_config.id,
                                 _type='graphic',
                                 graph_name=f"Выход «{loss_graph_config.output_idx}» - "
-                                           f"График ошибки обучения по типу данных",
+                                           f"График ошибки дискриминатора на реальных и сгенерированных данных",
                                 short_name=f"{loss_graph_config.output_idx} - Тип данных",
                                 x_label="Эпоха",
                                 y_label="Значение",

@@ -856,7 +856,7 @@ class GANTerraModel(BaseTerraModel):
                             }
                         )
                     else:
-                        self.callback.on_train_batch_end(batch=cur_step)
+                        self.callback.on_train_batch_end(batch=cur_step - 1)
                     if self.callback.stop_training:
                         break
 
