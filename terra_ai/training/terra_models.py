@@ -816,7 +816,7 @@ class GANTerraModel(BaseTerraModel):
             train_data_idxs = np.arange(self.train_length).tolist()
             self.callback.on_train_begin()
             for epoch in range(current_epoch, end_epoch):
-                logger.debug(f"Эпоха {epoch + 1}")
+                # logger.debug(f"Эпоха {epoch + 1}")
                 self.callback.on_epoch_begin()
                 current_logs = {"epochs": epoch + 1, 'loss': {}, "metrics": {}}
                 current_idx = 0
@@ -841,7 +841,7 @@ class GANTerraModel(BaseTerraModel):
                     length = results[0].shape[0]
                     # for i in range(len(train_pred)):
                     train_pred[current_idx: current_idx + length] = results[0].numpy()
-                    logger.debug(f"Batch {cur_step}: finish add array")
+                    # logger.debug(f"Batch {cur_step}: finish add array")
                     current_idx += length
                     # if cur_step == 10:
                     #     break
