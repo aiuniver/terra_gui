@@ -821,6 +821,7 @@ class GANTerraModel(BaseTerraModel):
                 cur_step, gen_loss, disc_loss, disc_real_loss, disc_fake_loss = 1, 0, 0, 0, 0
                 logger.debug(f"Эпоха {epoch + 1}: обучение на тренировочной выборке...")
                 for image_data, _ in dataset.dataset.get('train').batch(params.base.batch):
+                    logger.debug(f"Batch {cur_step}: start...")
                     results = self.__train_step(images=image_data.get(self.discriminator.inputs[0].name),
                                                 gen_batch=params.base.batch,
                                                 dis_batch=params.base.batch)
@@ -838,6 +839,7 @@ class GANTerraModel(BaseTerraModel):
                     length = results[0].shape[0]
                     for i in range(len(train_pred)):
                         train_pred[current_idx: current_idx + length] = results[0].numpy().astype('float32')
+                    logger.debug(f"Batch {cur_step}: finish add array")
                     current_idx += length
                     # if cur_step == 10:
                     #     break
