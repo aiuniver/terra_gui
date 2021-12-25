@@ -127,7 +127,7 @@ class GANCallback:
                             "title": "Изображение",
                             "value": y_pred_save_path,
                             "color_mark": None,
-                            "size": "large"
+                            # "size": "large"
                         }
                     )
                     _id += 1
