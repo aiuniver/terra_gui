@@ -40,6 +40,16 @@ class LayerNetChoice(str, Enum):
         return list(map(lambda item: (item.name, item.value), LayerNetChoice))
 
 
+class LayerImageModeChoice(str, Enum):
+    stretch = "Растянуть"
+    fit = "Вписать"
+    cut = "Обрезать"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerImageModeChoice))
+
+
 class LayerScalerChoice(str, Enum):
     no_scaler = "Не применять"
     min_max_scaler = "MinMaxScaler"

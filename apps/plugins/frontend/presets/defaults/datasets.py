@@ -2,6 +2,7 @@ from ...choices import (
     LayerInputTypeChoice,
     LayerOutputTypeChoice,
     LayerNetChoice,
+    LayerImageModeChoice,
     LayerScalerImageChoice,
     LayerScalerAudioChoice,
     LayerScalerVideoChoice,
@@ -144,6 +145,22 @@ DataSetsColumnProcessing = [
                                         },
                                     ],
                                 },
+                            },
+                            {
+                                "type": "select",
+                                "label": "Режим изображения",
+                                "name": "image_mode",
+                                "parse": "image_mode",
+                                "value": LayerImageModeChoice.stretch.name,
+                                "list": list(
+                                    map(
+                                        lambda item: {
+                                            "value": item.name,
+                                            "label": item.value,
+                                        },
+                                        list(LayerImageModeChoice),
+                                    )
+                                ),
                             },
                         ],
                         "Text": [
